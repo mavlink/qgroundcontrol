@@ -106,6 +106,7 @@ bool QextSerialPortPrivate::open_sys(QIODevice::OpenMode mode)
         if (queryMode == QextSerialPort::EventDriven) {
             if (!SetCommMask(handle, EV_TXEMPTY | EV_RXCHAR | EV_DSR)) {
                 QESP_WARNING()<<"failed to set Comm Mask. Error code:"<<GetLastError();
+                translateError(GetLastError());
                 return false;
             }
             winEventNotifier = new QWinEventNotifier(overlap.hEvent, q);
@@ -115,6 +116,7 @@ bool QextSerialPortPrivate::open_sys(QIODevice::OpenMode mode)
         }
         return true;
     }
+    translateError(GetLastError());
     return false;
 }
 
@@ -159,30 +161,20 @@ qint64 QextSerialPortPrivate::bytesAvailable_sys() const
 */
 void QextSerialPortPrivate::translateError(ulong error)
 {
-    if (error & CE_BREAK) {
-        lastErr = E_BREAK_CONDITION;
-    }
-    else if (error & CE_FRAME) {
-        lastErr = E_FRAMING_ERROR;
-    }
-    else if (error & CE_IOE) {
-        lastErr = E_IO_ERROR;
-    }
-    else if (error & CE_MODE) {
-        lastErr = E_INVALID_FD;
-    }
-    else if (error & CE_OVERRUN) {
-        lastErr = E_BUFFER_OVERRUN;
-    }
-    else if (error & CE_RXPARITY) {
-        lastErr = E_RECEIVE_PARITY_ERROR;
-    }
-    else if (error & CE_RXOVER) {
-        lastErr = E_RECEIVE_OVERFLOW;
-    }
-    else if (error & CE_TXFULL) {
-        lastErr = E_TRANSMIT_OVERFLOW;
-    }
+    lastOSErr = error;
+    lastErr = E_OS_SPECIFIC;
+    
+    LPVOID lpMsgBuf;
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                  FORMAT_MESSAGE_FROM_SYSTEM |
+                  FORMAT_MESSAGE_IGNORE_INSERTS,
+                  NULL,
+                  error,
+                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                  (LPTSTR) &lpMsgBuf,
+                  0, NULL);
+    lastOSErrString = QString((char*)lpMsgBuf);
+    LocalFree(lpMsgBuf);
 }
 
 /*

@@ -68,6 +68,7 @@
 #define E_FILE_NOT_FOUND            15
 #define E_PERMISSION_DENIED         16
 #define E_AGAIN                     17
+#define E_OS_SPECIFIC               18  // Error did not translate, os error code in lastOSErr
 
 enum BaudRateType
 {
@@ -201,7 +202,7 @@ public:
     bool canReadLine() const;
     QByteArray readAll();
 
-    ulong lastError() const;
+    ulong lastError() const;    ulong lastOpenOSError() const;
 
     ulong lineStatus();
     QString errorString();

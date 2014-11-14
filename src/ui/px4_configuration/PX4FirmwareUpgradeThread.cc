@@ -121,10 +121,10 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
 
 void PX4FirmwareUpgradeThreadWorker::findBootloader(const QString portName, int msecTimeout)
 {
-    connect(_timerRetry, &QTimer::timeout, this, &PX4FirmwareUpgradeThreadWorker::_findBootloaderOnce);
+    Q_UNUSED(msecTimeout);
+    
+    // Once the port shows up, we only try to connect to the bootloader a single time
     _portName = portName;
-    _timerTimeout->start(msecTimeout);
-    _elapsed.start();
     _findBootloaderOnce();
 }
 
@@ -144,28 +144,16 @@ void PX4FirmwareUpgradeThreadWorker::_findBootloaderOnce(void)
                 qDebug() << "Found bootloader";
                 emit foundBootloader(bootloaderVersion, boardID, flashSize);
                 return;
-            } else {
-                _closeFind();
-                _bootloaderPort->close();
-                _bootloaderPort->deleteLater();
-                _bootloaderPort = NULL;
-                qDebug() << "Bootloader Get Board Info error:" << _bootloader->errorString();
-                emit error(commandBootloader, _bootloader->errorString());
-                return;
             }
-        } else {
-            _closeFind();
-            _bootloaderPort->close();
-            _bootloaderPort->deleteLater();
-            _bootloaderPort = NULL;
-            qDebug() << "Bootloader sync failed";
-            emit bootloaderSyncFailed();
-            return;
         }
     }
     
-    emit updateProgress(_elapsed.elapsed(), _timerTimeout->interval());
-    _timerRetry->start();
+    _closeFind();
+    _bootloaderPort->close();
+    _bootloaderPort->deleteLater();
+    _bootloaderPort = NULL;
+    qDebug() << "Bootloader error:" << _bootloader->errorString();
+    emit error(commandBootloader, _bootloader->errorString());
 }
 
 void PX4FirmwareUpgradeThreadWorker::_closeFind(void)
