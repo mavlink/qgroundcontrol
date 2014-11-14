@@ -662,12 +662,16 @@ SOURCES += \
 
 DebugBuild|WindowsDebugAndRelease {
 
+DEFINES += UNITTEST_BUILD
+
 INCLUDEPATH += \
 	src/qgcunittest
 
 HEADERS += \
 	src/qgcunittest/AutoTest.h \
 	src/qgcunittest/UASUnitTest.h \
+    src/qgcunittest/MockLink.h \
+    src/qgcunittest/MockLinkMissionItemHandler.h \
 	src/qgcunittest/MockUASManager.h \
 	src/qgcunittest/MockUAS.h \
 	src/qgcunittest/MockQGCUASParamManager.h \
@@ -682,6 +686,8 @@ HEADERS += \
 
 SOURCES += \
 	src/qgcunittest/UASUnitTest.cc \
+    src/qgcunittest/MockLink.cc \
+    src/qgcunittest/MockLinkMissionItemHandler.cc \
 	src/qgcunittest/MockUASManager.cc \
 	src/qgcunittest/MockUAS.cc \
 	src/qgcunittest/MockQGCUASParamManager.cc \
