@@ -472,7 +472,7 @@ void MockLink::_handleMissionRequest(const mavlink_message_t& msg)
     mavlink_msg_mission_request_decode(&msg, &request);
     
     if (request.target_system == _vehicleSystemId) {
-        if (request.seq >= 0 && request.seq < _missionItems.count()) {
+        if (request.seq < _missionItems.count()) {
             mavlink_message_t   responseMsg;
 
             mavlink_mission_item_t item = _missionItems[request.seq];
