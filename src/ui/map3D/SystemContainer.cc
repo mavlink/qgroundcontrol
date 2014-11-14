@@ -96,25 +96,3 @@ SystemContainer::waypointGroupNode(void)
 {
     return mWaypointGroupNode;
 }
-
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-
-osg::ref_ptr<ObstacleGroupNode>&
-SystemContainer::obstacleGroupNode(void)
-{
-    return mObstacleGroupNode;
-}
-
-QMap<QString,osg::ref_ptr<GLOverlayGeode> >&
-SystemContainer::overlayNodeMap(void)
-{
-    return mOverlayNodeMap;
-}
-
-osg::ref_ptr<osg::Geode>&
-SystemContainer::plannedPathNode(void)
-{
-    return mPlannedPathNode;
-}
-
-#endif

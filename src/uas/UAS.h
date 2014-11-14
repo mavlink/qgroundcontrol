@@ -334,65 +334,6 @@ public:
     bool isRotaryWing();
     bool isFixedWing();
 
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    px::GLOverlay getOverlay()
-    {
-        QMutexLocker locker(&overlayMutex);
-        return overlay;
-    }
-
-    px::GLOverlay getOverlay(qreal& receivedTimestamp)
-    {
-        receivedTimestamp = receivedOverlayTimestamp;
-        QMutexLocker locker(&overlayMutex);
-        return overlay;
-    }
-
-    px::ObstacleList getObstacleList() {
-        QMutexLocker locker(&obstacleListMutex);
-        return obstacleList;
-    }
-
-    px::ObstacleList getObstacleList(qreal& receivedTimestamp) {
-        receivedTimestamp = receivedObstacleListTimestamp;
-        QMutexLocker locker(&obstacleListMutex);
-        return obstacleList;
-    }
-
-    px::Path getPath() {
-        QMutexLocker locker(&pathMutex);
-        return path;
-    }
-
-    px::Path getPath(qreal& receivedTimestamp) {
-        receivedTimestamp = receivedPathTimestamp;
-        QMutexLocker locker(&pathMutex);
-        return path;
-    }
-
-    px::PointCloudXYZRGB getPointCloud() {
-        QMutexLocker locker(&pointCloudMutex);
-        return pointCloud;
-    }
-
-    px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) {
-        receivedTimestamp = receivedPointCloudTimestamp;
-        QMutexLocker locker(&pointCloudMutex);
-        return pointCloud;
-    }
-
-    px::RGBDImage getRGBDImage() {
-        QMutexLocker locker(&rgbdImageMutex);
-        return rgbdImage;
-    }
-
-    px::RGBDImage getRGBDImage(qreal& receivedTimestamp) {
-        receivedTimestamp = receivedRGBDImageTimestamp;
-        QMutexLocker locker(&rgbdImageMutex);
-        return rgbdImage;
-    }
-#endif
-
     friend class UASWaypointManager;
     friend class QGCUASFileManager;
 
@@ -524,28 +465,6 @@ protected: //COMMENTS FOR TEST UNIT
     quint64 imageStart;
     bool blockHomePositionChanges;   ///< Block changes to the home position
     bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
-
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    px::GLOverlay overlay;
-    QMutex overlayMutex;
-    qreal receivedOverlayTimestamp;
-
-    px::ObstacleList obstacleList;
-    QMutex obstacleListMutex;
-    qreal receivedObstacleListTimestamp;
-
-    px::Path path;
-    QMutex pathMutex;
-    qreal receivedPathTimestamp;
-
-    px::PointCloudXYZRGB pointCloud;
-    QMutex pointCloudMutex;
-    qreal receivedPointCloudTimestamp;
-
-    px::RGBDImage rgbdImage;
-    QMutex rgbdImageMutex;
-    qreal receivedRGBDImageTimestamp;
-#endif
 
     /// PARAMETERS
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters

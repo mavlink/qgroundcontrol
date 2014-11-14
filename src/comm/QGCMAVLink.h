@@ -32,12 +32,5 @@ This file is part of the QGROUNDCONTROL project
 
 #include <mavlink.h>
 
-//#ifdef MAVLINK_CONF
-//#define MY_MACRO(x) <x>
-//#include MY_MACRO(MAVLINK_CONF)
-//#include MAVLINK_CONF
-//#endif
-
-
 #endif // QGCMAVLINK_H
 

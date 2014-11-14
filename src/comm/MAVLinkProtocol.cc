@@ -24,7 +24,6 @@
 #include "UASManager.h"
 #include "UASInterface.h"
 #include "UAS.h"
-#include "PxQuadMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
 #include "QGCMAVLink.h"
