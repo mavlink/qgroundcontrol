@@ -102,11 +102,6 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
             portName = info.systemLocation();
             portDescription = info.description();
             
-#ifdef Q_OS_WIN
-            // Stupid windows fixes
-            portName.prepend("\\\\.\\");
-#endif
-            
             _closeFind();
             emit foundBoard(_findBoardFirstAttempt, portName, portDescription);
             return;
