@@ -10,7 +10,6 @@
 
 // INCLUDE ALL MAV/UAS CLASSES USING MAVLINK
 #include "UAS.h"
-#include "PxQuadMAV.h"
 
 class QGCMAVLinkUASFactory : public QObject
 {
