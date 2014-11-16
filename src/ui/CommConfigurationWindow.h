@@ -45,6 +45,9 @@ enum qgc_link_t {
     QGC_LINK_TCP,
     QGC_LINK_SIMULATION,
     QGC_LINK_FORWARDING,
+#ifdef UNITTEST_BUILD
+    QGC_LINK_MOCK,
+#endif
 #ifdef QGC_XBEE_ENABLED
     QGC_LINK_XBEE,
 #endif
