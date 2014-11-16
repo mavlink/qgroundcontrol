@@ -42,6 +42,9 @@ This file is part of the QGROUNDCONTROL project
 #include "UDPLink.h"
 #include "TCPLink.h"
 #include "MAVLinkSimulationLink.h"
+#ifdef UNITTEST_BUILD
+#include "MockLink.h"
+#endif
 #ifdef QGC_XBEE_ENABLED
 #include "XbeeLink.h"
 #include "XbeeConfigurationWindow.h"
@@ -85,10 +88,15 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     ui.linkType->addItem(tr("Serial"), QGC_LINK_SERIAL);
     ui.linkType->addItem(tr("UDP"), QGC_LINK_UDP);
     ui.linkType->addItem(tr("TCP"), QGC_LINK_TCP);
+    
     if(dynamic_cast<MAVLinkSimulationLink*>(link)) {
         //Only show simulation option if already setup elsewhere as a simulation
         ui.linkType->addItem(tr("Simulation"), QGC_LINK_SIMULATION);
     }
+    
+#ifdef UNITTEST_BUILD
+    ui.linkType->addItem(tr("Mock"), QGC_LINK_MOCK);
+#endif
 
 #ifdef QGC_RTLAB_ENABLED
     ui.linkType->addItem(tr("Opal-RT Link"), QGC_LINK_OPAL);
@@ -144,6 +152,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkGroupBox->setTitle(tr("Serial Link"));
         ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_SERIAL));
     }
+    
     UDPLink* udp = dynamic_cast<UDPLink*>(link);
     if (udp != 0) {
         QWidget* conf = new QGCUDPLinkConfiguration(udp, this);
@@ -151,6 +160,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkGroupBox->setTitle(tr("UDP Link"));
         ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_UDP));
     }
+    
     TCPLink* tcp = dynamic_cast<TCPLink*>(link);
     if (tcp != 0) {
         QWidget* conf = new QGCTCPLinkConfiguration(tcp, this);
@@ -158,12 +168,22 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkGroupBox->setTitle(tr("TCP Link"));
         ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_TCP));
     }
+    
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
     if (sim != 0) {
         ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_SIMULATION));
         ui.linkType->setEnabled(false); //Don't allow the user to change to a non-simulation
         ui.linkGroupBox->setTitle(tr("MAVLink Simulation Link"));
     }
+    
+#ifdef UNITTEST_BUILD
+    MockLink* mock = dynamic_cast<MockLink*>(link);
+    if (mock != 0) {
+        ui.linkGroupBox->setTitle(tr("Mock Link"));
+        ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_MOCK));
+    }
+#endif
+    
 #ifdef QGC_RTLAB_ENABLED
     OpalLink* opal = dynamic_cast<OpalLink*>(link);
     if (opal != 0) {
@@ -175,6 +195,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkGroupBox->setTitle(tr("Opal-RT Link"));
     }
 #endif
+    
 #ifdef QGC_XBEE_ENABLED
 	XbeeLink* xbee = dynamic_cast<XbeeLink*>(link); // new Konrad
 	if(xbee != 0)
@@ -187,7 +208,11 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 		connect(xbee,SIGNAL(tryConnectEnd(bool)),ui.actionConnect,SLOT(setEnabled(bool)));
 	}
 #endif // QGC_XBEE_ENABLED
+    
     if (serial == 0 && udp == 0 && sim == 0 && tcp == 0
+#ifdef UNITTEST_BUILD
+            && mock == 0
+#endif
 #ifdef QGC_RTLAB_ENABLED
             && opal == 0
 #endif
@@ -258,6 +283,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 				break;
 			}
 #endif // QGC_XBEE_ENABLED
+            
         case QGC_LINK_UDP:
 			{
 				UDPLink *udp = new UDPLink();
@@ -283,9 +309,18 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 				break;
 			}
 #endif // QGC_RTLAB_ENABLED
+            
+#ifdef UNITTEST_BUILD
+        case QGC_LINK_MOCK:
+        {
+            MockLink* mock = new MockLink;
+            tmpLink = mock;
+            MainWindow::instance()->addLink(tmpLink);
+            break;
+        }
+#endif
+            
 		default:
-			{
-			}
         case QGC_LINK_SERIAL:
 			{
 				SerialLink *serial = new SerialLink();

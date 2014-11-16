@@ -228,4 +228,7 @@
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>
     </qresource>
+    <qresource prefix="/unittest">
+        <file alias="MockLink.param">src/qgcunittest/MockLink.param</file>
+    </qresource>
 </RCC>
