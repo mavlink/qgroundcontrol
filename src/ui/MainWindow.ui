@@ -96,7 +96,7 @@
     </property>
     <addaction name="actionMissionView"/>
     <addaction name="actionFlightView"/>
-    <addaction name="actionHardwareConfig"/>
+    <addaction name="actionSetup"/>
     <addaction name="actionEngineersView"/>
     <addaction name="actionGoogleEarthView"/>
     <addaction name="actionLocal3DView"/>
@@ -277,7 +277,7 @@
      <normaloff>:/files/images/categories/applications-internet.svg</normaloff>:/files/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
-    <string>Mission</string>
+    <string>2. Plan</string>
    </property>
   </action>
   <action name="actionEngineersView">
@@ -289,7 +289,7 @@
      <normaloff>:/files/images/apps/utilities-system-monitor.svg</normaloff>:/files/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
-    <string>Plot</string>
+    <string>4. Analyze</string>
    </property>
   </action>
   <action name="actionMavlinkView">
@@ -313,7 +313,7 @@
      <normaloff>:/files/images/status/network-wireless-encrypted.svg</normaloff>:/files/images/status/network-wireless-encrypted.svg</iconset>
    </property>
    <property name="text">
-    <string>Instruments</string>
+    <string>3. Fly</string>
    </property>
   </action>
   <action name="actionNewCustomWidget">
@@ -428,7 +428,7 @@
     <bool>false</bool>
    </property>
   </action>
-  <action name="actionHardwareConfig">
+  <action name="actionSetup">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -437,10 +437,10 @@
      <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Vehicle Setup</string>
+    <string>1. Setup</string>
    </property>
    <property name="toolTip">
-    <string>Hardware setup of the vehicle</string>
+    <string>Setup of the vehicle</string>
    </property>
   </action>
   <action name="actionAdvanced_Mode">
