@@ -64,7 +64,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCTabbedInfoView.h"
 #include "UASRawStatusView.h"
 #include "PrimaryFlightDisplay.h"
-#include <QGCConfigView.h>
+#include "SetupView.h"
 #include "SerialSettingsDialog.h"
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
@@ -207,9 +207,10 @@ void MainWindow::init()
 
     // Add actions for average users (displayed next to each other)
     QList<QAction*> actions;
+    actions << ui.actionSetup;
     actions << ui.actionMissionView;
     actions << ui.actionFlightView;
-    actions << ui.actionHardwareConfig;
+    actions << ui.actionEngineersView;
 
     toolBar->setPerspectiveChangeActions(actions);
 
@@ -333,9 +334,9 @@ void MainWindow::init()
 
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
 #ifdef Q_OS_MACX
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
-    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
+    ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
     ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
     ui.actionGoogleEarthView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
     ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Meta+6", 0));
@@ -344,9 +345,9 @@ void MainWindow::init()
     ui.actionFirmwareUpdateView->setShortcut(QApplication::translate("MainWindow", "Meta+9", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
-    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
+    ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
     ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
     ui.actionGoogleEarthView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
     ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Ctrl+6", 0));
@@ -530,12 +531,12 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(terminalView, VIEW_TERMINAL, tr("Terminal View"));
     }
 
-    if (!configView)
+    if (!setupView)
     {
-        configView = new SubMainWindow(this);
-        configView->setObjectName("VIEW_HARDWARE_CONFIG");
-        configView->setCentralWidget(new QGCConfigView(this));
-        addToCentralStackedWidget(configView, VIEW_HARDWARE_CONFIG, "Config");
+        setupView = new SubMainWindow(this);
+        setupView->setObjectName("VIEW_SETUP");
+        setupView->setCentralWidget(new SetupView(this));
+        addToCentralStackedWidget(setupView, VIEW_SETUP, "Setup");
     }
 
     if (!engineeringView)
@@ -1160,7 +1161,7 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionFlightView);
     perspectives->addAction(ui.actionSimulationView);
     perspectives->addAction(ui.actionMissionView);
-    perspectives->addAction(ui.actionHardwareConfig);
+    perspectives->addAction(ui.actionSetup);
     perspectives->addAction(ui.actionTerminalView);
     perspectives->addAction(ui.actionGoogleEarthView);
     perspectives->addAction(ui.actionLocal3DView);
@@ -1195,10 +1196,10 @@ void MainWindow::connectCommonActions()
         ui.actionMissionView->setChecked(true);
         ui.actionMissionView->activate(QAction::Trigger);
     }
-    if (currentView == VIEW_HARDWARE_CONFIG)
+    if (currentView == VIEW_SETUP)
     {
-        ui.actionHardwareConfig->setChecked(true);
-        ui.actionHardwareConfig->activate(QAction::Trigger);
+        ui.actionSetup->setChecked(true);
+        ui.actionSetup->activate(QAction::Trigger);
     }
     if (currentView == VIEW_SOFTWARE_CONFIG)
     {
@@ -1250,10 +1251,9 @@ void MainWindow::connectCommonActions()
     connect(ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
-    connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
+    connect(ui.actionSetup,SIGNAL(triggered()),this,SLOT(loadSetupView()));
     connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
     connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
-    connect(ui.actionHardwareConfig, SIGNAL(triggered()), this, SLOT(loadHardwareConfigView()));
     connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
     connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
 
@@ -1624,8 +1624,8 @@ void MainWindow::loadViewState()
         // Load defaults
         switch (currentView)
         {
-        case VIEW_HARDWARE_CONFIG:
-            centerStack->setCurrentWidget(configView);
+        case VIEW_SETUP:
+            centerStack->setCurrentWidget(setupView);
             break;
         case VIEW_SOFTWARE_CONFIG:
             if (softwareConfigView)
@@ -1722,7 +1722,7 @@ void MainWindow::handleMisconfiguration(UASInterface* uas)
         UASManager::instance()->setActiveUAS(uas);
 
         // Flick to config view
-        loadHardwareConfigView();
+        loadSetupView();
     }
 }
 
@@ -1747,13 +1747,13 @@ void MainWindow::loadOperatorView()
         loadViewState();
     }
 }
-void MainWindow::loadHardwareConfigView()
+void MainWindow::loadSetupView()
 {
-    if (currentView != VIEW_HARDWARE_CONFIG)
+    if (currentView != VIEW_SETUP)
     {
         storeViewState();
-        currentView = VIEW_HARDWARE_CONFIG;
-        ui.actionHardwareConfig->setChecked(true);
+        currentView = VIEW_SETUP;
+        ui.actionSetup->setChecked(true);
         loadViewState();
     }
 }
