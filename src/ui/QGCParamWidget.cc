@@ -206,15 +206,17 @@ void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramNa
     }
 
     QTreeWidgetItem* paramItem = updateParameterDisplay(compId,paramName,value);
-    if (isPending) {
-        paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
-        paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
-        //ensure that the adjusted item is visible
-        tree->expandItem(paramItem->parent());
-    }
-    else {
-        paramItem->setBackground(0, Qt::NoBrush);
-        paramItem->setBackground(1, Qt::NoBrush);
+    if (paramItem) {
+        if (isPending) {
+            paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
+            paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
+            //ensure that the adjusted item is visible
+            tree->expandItem(paramItem->parent());
+        }
+        else {
+            paramItem->setBackground(0, Qt::NoBrush);
+            paramItem->setBackground(1, Qt::NoBrush);
+        }
     }
 
     updatingParamNameLock.clear();
@@ -348,6 +350,24 @@ void QGCParamWidget::insertParamAlphabetical(int indexLowerBound, int indexUpper
 QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, QVariant value)
 {
     //qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
+    
+    // Filter the parameters according to the filter list
+    if (_filterList.count() != 0) {
+        bool filterFound = false;
+        foreach(QString paramFilter, _filterList) {
+            if (paramFilter.endsWith("*") && parameterName.startsWith(paramFilter.left(paramFilter.size() - 1))) {
+                filterFound = true;
+                break;
+            }
+            if (paramFilter == parameterName) {
+                filterFound = true;
+                break;            
+            }
+        }
+        if (!filterFound) {
+            return NULL;
+        }
+    }
 
     // Reference to item in tree
     QTreeWidgetItem* paramItem = NULL;
