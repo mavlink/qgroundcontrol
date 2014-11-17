@@ -1067,41 +1067,62 @@ void MainWindow::enableAutoReconnect(bool enabled)
 
 bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
 {
+    bool success = true;
+    QString styles;
+    static const char* masterCssFile = ":/files/styles/style-dark.css";
+    
+    // Signal to the user that the app will pause to apply a new stylesheet
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    
     // Store the new style classification.
     currentStyle = style;
-
-    // Load the new stylesheet.
-    QFile styleSheet(cssFile);
-
-    // Attempt to open the stylesheet.
-    if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        // Signal to the user that the app will pause to apply a new stylesheet
-        qApp->setOverrideCursor(Qt::WaitCursor);
-
-        qApp->setStyleSheet(styleSheet.readAll());
-
-        // And save the new stylesheet path.
-        if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
-        {
-            lightStyleFileName = cssFile;
-        }
-        else
-        {
-            darkStyleFileName = cssFile;
-        }
-
-        // And trigger any changes to other UI elements that are watching for
-        // theme changes.
-        emit styleChanged(style);
-
-        // Finally restore the cursor before returning.
-        qApp->restoreOverrideCursor();
-        return true;
+    
+    // The dark style sheet is the master. Any other selected style sheet just overrides
+    // the colors of the master sheet.
+    QFile masterStyleSheet(masterCssFile);
+    if (masterStyleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        styles = masterStyleSheet.readAll();
+    } else {
+        qDebug() << "Unable to load master style sheet";
+        success = false;
+        goto Error;
     }
 
-    // Otherwise alert return a failure code.
-    return false;
+    if (cssFile != masterCssFile) {
+        // Load the slave user specified stylesheet.
+        QFile styleSheet(cssFile);
+        if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            
+            styles += styleSheet.readAll();
+
+            qApp->setStyleSheet(styles);
+
+            // And save the new stylesheet path.
+            if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
+            {
+                lightStyleFileName = cssFile;
+            }
+            else
+            {
+                darkStyleFileName = cssFile;
+            }
+
+            // And trigger any changes to other UI elements that are watching for
+            // theme changes.
+            emit styleChanged(style);
+        } else {
+            qDebug() << "Unable to load slave style sheet:" << cssFile;
+            success = false;
+            goto Error;
+        }
+    }
+
+Error:
+    // Finally restore the cursor before returning.
+    qApp->restoreOverrideCursor();
+    
+    return success;
 }
 
 /**

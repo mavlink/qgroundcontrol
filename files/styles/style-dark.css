@@ -1,3 +1,9 @@
+/*
+ This is the master style sheet as well as the dark style. This style sheet should contain both
+ color and size/positioning information for all styled controls. This sheet is always loaded first
+ Then the user specified style sheet is loaded after it to override and color settings.
+*/
+
 * {
     background-color: #222;
     color: #FFF;
