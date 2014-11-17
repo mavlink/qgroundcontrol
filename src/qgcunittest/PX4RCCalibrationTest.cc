@@ -244,12 +244,16 @@ void PX4RCCalibrationTest::_minRCChannels_test(void)
         }
         _multiSpyNextButtonMessageBox->clearAllSignals();
 
+        // The following test code no longer works since view update doesn't happens until parameters are received.
+        // Leaving code here because RC Cal could be restructured to handle this case at some point.
+#if 0
         // Only available channels should have visible widget. A ui update cycle needs to have passed so we wait a little.
         QTest::qWait(PX4RCCalibration::_updateInterval * 2);
         for (int chanWidget=0; chanWidget<PX4RCCalibration::_chanMax; chanWidget++) {
             //qDebug() << _rgValueWidget[chanWidget]->objectName() << chanWidget << chan;
             QCOMPARE(_rgValueWidget[chanWidget]->isVisible(), !!(chanWidget <= chan));
         }
+#endif
     }
 }
 

@@ -33,6 +33,7 @@ public:
     virtual int countPendingParams() = 0;
     virtual int countOnboardParams() = 0;
     virtual UASParameterDataModel* dataModel() = 0;
+    virtual bool parametersReady(void) = 0;
     
 public slots:
     virtual void setParameter(int component, QString parameterName, QVariant value) = 0;
