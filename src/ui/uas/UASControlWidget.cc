@@ -40,24 +40,10 @@ This file is part of the PIXHAWK project
 #include <UASManager.h>
 #include <UAS.h>
 #include "QGC.h"
-
-static struct full_mode_s modes_list_common[] = {
-    { MAV_MODE_FLAG_MANUAL_INPUT_ENABLED,
-            0 },
-    { (MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED),
-            0 },
-    { (MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED),
-            0 },
-    { (MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED),
-            0 },
-};
-
-static struct full_mode_s modes_list_px4[5];
+#include "AutoPilotPlugin.h"
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     uasID(-1),
-    modesList(NULL),
-    modesNum(0),
     modeIdx(0),
     armed(false)
 {
@@ -74,47 +60,23 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 
 void UASControlWidget::updateModesList()
 {
-    union px4_custom_mode px4_cm;
-    px4_cm.data = 0;
-    modes_list_px4[0].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
-    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
-    modes_list_px4[0].customMode = px4_cm.data;
-    modes_list_px4[1].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED;
-    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_ALTCTL;
-    modes_list_px4[1].customMode = px4_cm.data;
-    modes_list_px4[2].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED;
-    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_POSCTL;
-    modes_list_px4[2].customMode = px4_cm.data;
-    modes_list_px4[3].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED;
-    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_AUTO;
-    modes_list_px4[3].customMode = px4_cm.data;
-    modes_list_px4[4].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED;
-    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_OFFBOARD;
-    modes_list_px4[4].customMode = px4_cm.data;
-
     // Detect autopilot type
-    int autopilot = 0;
+    int autopilot = MAV_AUTOPILOT_GENERIC;
     if (this->uasID >= 0) {
         UASInterface *uas = UASManager::instance()->getUASForId(this->uasID);
         if (uas) {
             autopilot = UASManager::instance()->getUASForId(this->uasID)->getAutopilotType();
         }
     }
-
-    // Use corresponding modes list
-    if (autopilot == MAV_AUTOPILOT_PX4) {
-        modesList = modes_list_px4;
-        modesNum = sizeof(modes_list_px4) / sizeof(struct full_mode_s);
-    } else {
-        modesList = modes_list_common;
-        modesNum = sizeof(modes_list_common) / sizeof(struct full_mode_s);
-    }
+    
+    AutoPilotPlugin* autopilotPlugin = AutoPilotPlugin::getInstanceForAutoPilotPlugin(autopilot);
+    
+    _modeList = autopilotPlugin->getModes();
 
     // Set combobox items
     ui.modeComboBox->clear();
-    for (int i = 0; i < modesNum; i++) {
-        struct full_mode_s mode = modesList[i];
-        ui.modeComboBox->insertItem(i, UAS::getShortModeTextFor(mode.baseMode, mode.customMode, autopilot).remove(0, 2), i);
+    foreach (AutoPilotPlugin::FullMode_t fullMode, _modeList) {
+        ui.modeComboBox->addItem(UAS::getShortModeTextFor(fullMode.baseMode, fullMode.customMode, autopilot).remove(0, 2));
     }
 
     // Select first mode in list
@@ -235,24 +197,24 @@ void UASControlWidget::transmitMode()
 {
     UASInterface* uas_iface = UASManager::instance()->getUASForId(this->uasID);
     if (uas_iface) {
-        if (modeIdx >= 0 && modeIdx < modesNum) {
-            struct full_mode_s mode = modesList[modeIdx];
+        if (modeIdx >= 0 && modeIdx < _modeList.count()) {
+            AutoPilotPlugin::FullMode_t fullMode = _modeList[modeIdx];
             // include armed state
             if (armed) {
-                mode.baseMode |= MAV_MODE_FLAG_SAFETY_ARMED;
+                fullMode.baseMode |= MAV_MODE_FLAG_SAFETY_ARMED;
             } else {
-                mode.baseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+                fullMode.baseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
             }
 
             UAS* uas = dynamic_cast<UAS*>(uas_iface);
 
             if (uas->isHilEnabled()) {
-                mode.baseMode |= MAV_MODE_FLAG_HIL_ENABLED;
+                fullMode.baseMode |= MAV_MODE_FLAG_HIL_ENABLED;
             } else {
-                mode.baseMode &= ~MAV_MODE_FLAG_HIL_ENABLED;
+                fullMode.baseMode &= ~MAV_MODE_FLAG_HIL_ENABLED;
             }
 
-            uas->setMode(mode.baseMode, mode.customMode);
+            uas->setMode(fullMode.baseMode, fullMode.customMode);
             QString modeText = ui.modeComboBox->currentText();
 
             ui.lastActionLabel->setText(QString("Sent new mode %1 to %2").arg(modeText).arg(uas->getUASName()));
