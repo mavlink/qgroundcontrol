@@ -53,6 +53,7 @@ public slots:
         { Q_UNUSED(forceSend); setParameter(componentId, key, value); }
     virtual void sendPendingParameters(bool persistAfterSend = false, bool forceSend = false)
         { Q_UNUSED(persistAfterSend); Q_UNUSED(forceSend); }
+    virtual bool parametersReady(void) { return false; }
     
 public:
     // MockQGCUASParamManager methods

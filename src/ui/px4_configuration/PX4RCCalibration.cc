@@ -133,7 +133,6 @@ PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
     
     _updateTimer.setInterval(150);
     _updateTimer.start();
-    connect(&_updateTimer, &QTimer::timeout, this, &PX4RCCalibration::_updateView);
 
     connect(_ui->rcCalCancel, &QPushButton::clicked, this, &PX4RCCalibration::_stopCalibration);
     connect(_ui->rcCalSkip, &QPushButton::clicked, this, &PX4RCCalibration::_skipButton);
@@ -835,6 +834,10 @@ void PX4RCCalibration::_setActiveUAS(UASInterface* active)
 
         fSucceeded = connect(_paramMgr, SIGNAL(parameterListUpToDate()), this, SLOT(_parameterListUpToDate()));
         Q_ASSERT(fSucceeded);
+        
+        if (_paramMgr->parametersReady()) {
+            _parameterListUpToDate();
+        }
     }
 
     setEnabled(_mav ? true : false);
@@ -1074,6 +1077,9 @@ void PX4RCCalibration::_parameterListUpToDate(void)
 {
     _parameterListUpToDateSignalled = true;
     
+    // Don't start updating the view until we have parameters
+    connect(&_updateTimer, &QTimer::timeout, this, &PX4RCCalibration::_updateView);
+
     if (_currentStep == -1) {
         _setInternalCalibrationValuesFromParameters();
     }

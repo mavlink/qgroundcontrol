@@ -60,6 +60,9 @@ public:
 
     /** @return The data model managed by this class */
     virtual UASParameterDataModel* dataModel();
+    
+    /// @return true: first full set of parameters received
+    virtual bool parametersReady(void) { return _parametersReady; }
 
 protected:
 
@@ -119,6 +122,9 @@ public slots:
     virtual void copyVolatileParamsToPersistent();
     /** @brief Copy the parameters from persistent storage to volatile RAM  */
     virtual void copyPersistentParamsToVolatile();
+    
+private slots:
+    void _parameterListUpToDate(void);
 
 protected:
 
@@ -126,6 +132,8 @@ protected:
     UASInterface*           mav;   ///< The MAV this manager is controlling
     UASParameterDataModel  paramDataModel;///< Shared data model of parameters
     UASParameterCommsMgr   paramCommsMgr; ///< Shared comms mgr for parameters
+    
+    bool _parametersReady;
 
 };
 
