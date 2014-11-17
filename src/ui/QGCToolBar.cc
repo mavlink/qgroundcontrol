@@ -279,7 +279,7 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
 
         // Add the first button.
         QToolButton *first = new QToolButton(this);
-        first->setIcon(actions.first()->icon());
+        //first->setIcon(actions.first()->icon());
         first->setText(actions.first()->text());
         first->setToolTip(actions.first()->toolTip());
         first->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -298,7 +298,7 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         for (int i = 1; i < actions.count(); i++)
         {
             QToolButton *btn = new QToolButton(this);
-            btn->setIcon(actions.at(i)->icon());
+            //btn->setIcon(actions.at(i)->icon());
             btn->setText(actions.at(i)->text());
             btn->setToolTip(actions.at(i)->toolTip());
             btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
