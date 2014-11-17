@@ -28,7 +28,7 @@
 #include "SerialLink.h"
 #include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
-#include <comm/px4_custom_mode.h>
+#include "AutoPilotPlugin.h"
 
 /**
 * Gets the settings from the previous UAS (name, airframe, autopilot, battery specs)
@@ -3326,56 +3326,7 @@ QString UAS::getAudioModeTextFor(int id)
 */
 QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int autopilot)
 {
-    QString mode = "";
-
-    if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
-        // use custom_mode - autopilot-specific
-        if (autopilot == MAV_AUTOPILOT_PX4) {
-            union px4_custom_mode px4_mode;
-            px4_mode.data = custom_mode;
-            if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL) {
-                mode += "|MANUAL";
-            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_ALTCTL) {
-                mode += "|ALTCTL";
-            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_POSCTL) {
-                mode += "|POSCTL";
-            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_AUTO) {
-                mode += "|AUTO";
-                if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_READY) {
-                    mode += "|READY";
-                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF) {
-                    mode += "|TAKEOFF";
-                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_LOITER) {
-                    mode += "|LOITER";
-                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_MISSION) {
-                    mode += "|MISSION";
-                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_RTL) {
-                    mode += "|RTL";
-                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_LAND) {
-                    mode += "|LAND";
-                }
-            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_OFFBOARD) {
-                mode += "|OFFBOARD";
-            }
-        }
-    }
-
-    // fallback to using base_mode
-    if (mode.length() == 0) {
-        // use base_mode - not autopilot-specific
-        if (base_mode == 0) {
-            mode += "|PREFLIGHT";
-        } else if (base_mode & MAV_MODE_FLAG_DECODE_POSITION_AUTO) {
-            mode += "|AUTO";
-        } else if (base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) {
-            mode += "|MANUAL";
-            if (base_mode & MAV_MODE_FLAG_DECODE_POSITION_GUIDED) {
-                mode += "|GUIDED";
-            } else if (base_mode & MAV_MODE_FLAG_DECODE_POSITION_STABILIZE) {
-                mode += "|STABILIZED";
-            }
-        }
-    }
+    QString mode = AutoPilotPlugin::getInstanceForAutoPilotPlugin(autopilot)->getShortModeText(base_mode, custom_mode);
 
     if (mode.length() == 0)
     {
