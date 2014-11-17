@@ -9,7 +9,8 @@
 QGCUASParamManager::QGCUASParamManager(QObject *parent) :
     QGCUASParamManagerInterface(parent),
     mav(NULL),
-    paramDataModel(this)
+    paramDataModel(this),
+    _parametersReady(false)
 {
 
 
@@ -36,8 +37,7 @@ void QGCUASParamManager::connectToModelAndComms()
     connect(&paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
             this, SIGNAL(parameterStatusMsgUpdated(QString,int)));
 
-    connect(&paramCommsMgr, SIGNAL(parameterListUpToDate()),
-            this, SIGNAL(parameterListUpToDate()));
+    connect(&paramCommsMgr, SIGNAL(parameterListUpToDate()), this, SLOT(_parameterListUpToDate()));
 
     // Pass along data model updates
     connect(&paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
@@ -213,4 +213,10 @@ void QGCUASParamManager::copyPersistentParamsToVolatile()
 
 void QGCUASParamManager::requestRcCalibrationParamsUpdate() {
     paramCommsMgr.requestRcCalibrationParamsUpdate();
+}
+
+void QGCUASParamManager::_parameterListUpToDate(void)
+{
+    _parametersReady = true;
+    emit parameterListUpToDate();
 }

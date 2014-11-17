@@ -110,9 +110,9 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
-
     uncheckAll();
+    
+    setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
 void QGCPX4AirframeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
@@ -148,6 +148,19 @@ void QGCPX4AirframeConfig::setActiveUAS(UASInterface* uas)
     paramMgr = mav->getParamManager();
 
     connect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
+    
+    // If the parameters are ready, we aren't going to get paramterChanged signals. So fake them in order to make the UI work.
+    if (uas->getParamManager()->parametersReady()) {
+        QVariant value;
+        static const char* param = "SYS_AUTOSTART";
+
+        QGCUASParamManagerInterface* paramMgr = uas->getParamManager();
+        
+        QList<int> compIds = paramMgr->getComponentForParam(param);
+        Q_ASSERT(compIds.count() == 1);
+        paramMgr->getParameterValue(compIds[0], param, value);
+        parameterChanged(uas->getUASID(), compIds[0], param, value);
+    }
 }
 
 void QGCPX4AirframeConfig::uncheckAll()
