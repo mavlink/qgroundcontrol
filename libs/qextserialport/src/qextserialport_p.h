@@ -197,6 +197,8 @@ public:
     QextReadBuffer readBuffer;
     int settingsDirtyFlags;
     ulong lastErr;
+    ulong lastOSErr;
+    QString lastOSErrString;
     QextSerialPort::QueryMode queryMode;
 
     // platform specific members
