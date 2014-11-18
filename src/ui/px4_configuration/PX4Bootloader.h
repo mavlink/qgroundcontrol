@@ -43,9 +43,6 @@ public:
     /// @brief Returns the error message associated with the last failed call to one of the bootloader
     ///         utility routine below.
     QString errorString(void) { return _errorString; }
-
-    static const bool warnOnError = true;       ///< call qWarning to log error message on error
-    static const bool noWarnOnError = false;    ///< Don't call qWarning on error
     
     /// @brief Write a byte to the port
     ///     @param port Port to write to
@@ -58,13 +55,12 @@ public:
     /// @brief Read a set of bytes from the port
     ///     @param data Read bytes into this buffer
     ///     @param maxSize Number of bytes to read
-    ///     @param warnOnError true: Log error using qWarning
     ///     @param readTimeout Msecs to wait for bytes to become available on port
-    bool read(QextSerialPort* port, uint8_t* data, qint64 maxSize, bool warnOnError, int readTimeout = _readTimout);
+    bool read(QextSerialPort* port, uint8_t* data, qint64 maxSize, int readTimeout = _readTimout);
     
     /// @brief Read a PROTO_SYNC command response from the bootloader
     ///     @param responseTimeout Msecs to wait for response bytes to become available on port
-    bool getCommandResponse(QextSerialPort* port, bool warnOnError, const int responseTimeout = _responseTimeout);
+    bool getCommandResponse(QextSerialPort* port, const int responseTimeout = _responseTimeout);
     
     /// @brief Send a PROTO_GET_DEVICE command to retrieve a value from the bootloader
     ///     @param param Value to retrieve using INFO_BOARD_* enums
@@ -74,7 +70,7 @@ public:
     /// @brief Send a command to the bootloader
     ///     @param cmd Command to send using PROTO_* enums
     /// @return true: Command sent and valid sync response returned
-    bool sendCommand(QextSerialPort* port, uint8_t cmd, bool warnOnError, int responseTimeout = _responseTimeout);
+    bool sendCommand(QextSerialPort* port, uint8_t cmd, int responseTimeout = _responseTimeout);
     
     /// @brief Program the board with the specified firmware
     bool program(QextSerialPort* port, const QString& firmwareFilename);
