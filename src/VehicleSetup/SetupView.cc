@@ -118,7 +118,9 @@ void SetupView::_clearComponentButtons(void)
     QLayoutItem* item;
     while ((item = _ui->componentButtonLayout->itemAt(0))) {
         VehicleComponentButton* componentButton = dynamic_cast<VehicleComponentButton*>(item->widget());
+        // Make sure this is really a VehicleComponentButton. If it isn't the UI has changed but the code hasn't.
         Q_ASSERT(componentButton);
+        Q_UNUSED(componentButton);
         _ui->componentButtonLayout->removeWidget(item->widget());
     }
 }
