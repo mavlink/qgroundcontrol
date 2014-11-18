@@ -1085,10 +1085,9 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
     } else {
         qDebug() << "Unable to load master style sheet";
         success = false;
-        goto Error;
     }
 
-    if (cssFile != masterCssFile) {
+    if (success && cssFile != masterCssFile) {
         // Load the slave user specified stylesheet.
         QFile styleSheet(cssFile);
         if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -1114,11 +1113,9 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
         } else {
             qDebug() << "Unable to load slave style sheet:" << cssFile;
             success = false;
-            goto Error;
         }
     }
 
-Error:
     // Finally restore the cursor before returning.
     qApp->restoreOverrideCursor();
     
