@@ -277,7 +277,7 @@
      <normaloff>:/files/images/categories/applications-internet.svg</normaloff>:/files/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
-    <string>2. Plan</string>
+    <string>Plan</string>
    </property>
   </action>
   <action name="actionEngineersView">
@@ -289,7 +289,7 @@
      <normaloff>:/files/images/apps/utilities-system-monitor.svg</normaloff>:/files/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
-    <string>4. Analyze</string>
+    <string>Analyze</string>
    </property>
   </action>
   <action name="actionMavlinkView">
@@ -313,7 +313,7 @@
      <normaloff>:/files/images/status/network-wireless-encrypted.svg</normaloff>:/files/images/status/network-wireless-encrypted.svg</iconset>
    </property>
    <property name="text">
-    <string>3. Fly</string>
+    <string>Fly</string>
    </property>
   </action>
   <action name="actionNewCustomWidget">
@@ -437,7 +437,7 @@
      <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>1. Setup</string>
+    <string>Setup</string>
    </property>
    <property name="toolTip">
     <string>Setup of the vehicle</string>
