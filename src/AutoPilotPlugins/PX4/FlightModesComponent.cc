@@ -143,7 +143,7 @@ QList<QStringList> FlightModesComponent::summaryItems(void) const
                 // Switch is not mapped
                 if (i == 0) {
                     // Mode switch is required
-                    Q_ASSERT(switchList[0].param == "RC_MAP_MODE_SW");
+                    Q_ASSERT(strcmp(switchList[0].param, "RC_MAP_MODE_SW") == 0);
                     row << "Setup required";
                 } else {
                     row << "None";
