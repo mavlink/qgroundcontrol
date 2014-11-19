@@ -246,7 +246,7 @@ void UASControlWidget::transmitMode()
 
             UAS* uas = dynamic_cast<UAS*>(uas_iface);
 
-            if (uas->isHilEnabled()) {
+            if (uas->isHilEnabled() || uas->isHilActive()) {
                 mode.baseMode |= MAV_MODE_FLAG_HIL_ENABLED;
             } else {
                 mode.baseMode &= ~MAV_MODE_FLAG_HIL_ENABLED;
