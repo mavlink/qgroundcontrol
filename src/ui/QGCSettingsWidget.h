@@ -19,9 +19,6 @@ public:
 
 public slots:
     void styleChanged(int index);
-    void lineEditFinished();
-    void setDefaultStyle();
-    void selectStylesheet();
     void selectCustomMode(int mode);
 
 private slots:
