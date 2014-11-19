@@ -121,8 +121,6 @@ MainWindow::MainWindow(QWidget *parent):
     changingViewsFlag(false),
     mavlink(new MAVLinkProtocol()),
     centerStackActionGroup(new QActionGroup(this)),
-    darkStyleFileName(defaultDarkStyle),
-    lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
     simulationLink(NULL),
     lowPowerMode(false),
@@ -141,14 +139,7 @@ void MainWindow::init()
 
     emit initStatusChanged(tr("Loading style"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     qApp->setStyle("plastique");
-    if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
-    {
-        loadStyle(currentStyle, lightStyleFileName);
-    }
-    else
-    {
-        loadStyle(currentStyle, darkStyleFileName);
-    }
+    loadStyle(currentStyle);
 
     if (settings.contains("ADVANCED_MODE"))
     {
@@ -961,8 +952,6 @@ void MainWindow::loadSettings()
     settings.beginGroup("QGC_MAINWINDOW");
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
-    darkStyleFileName = settings.value("DARK_STYLE_FILENAME", darkStyleFileName).toString();
-    lightStyleFileName = settings.value("LIGHT_STYLE_FILENAME", lightStyleFileName).toString();
     lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
     bool dockWidgetTitleBarEnabled = settings.value("DOCK_WIDGET_TITLEBARS",menuActionHelper->dockWidgetTitleBarsEnabled()).toBool();
     settings.endGroup();
@@ -975,8 +964,6 @@ void MainWindow::storeSettings()
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue("AUTO_RECONNECT", autoReconnect);
     settings.setValue("CURRENT_STYLE", currentStyle);
-    settings.setValue("DARK_STYLE_FILENAME", darkStyleFileName);
-    settings.setValue("LIGHT_STYLE_FILENAME", lightStyleFileName);
     settings.endGroup();
     if (!aboutToCloseFlag && isVisible())
     {
@@ -1065,11 +1052,11 @@ void MainWindow::enableAutoReconnect(bool enabled)
     autoReconnect = enabled;
 }
 
-bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
+bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
 {
+    qDebug() << "LOAD STYLE" << style;
     bool success = true;
     QString styles;
-    static const char* masterCssFile = ":/files/styles/style-dark.css";
     
     // Signal to the user that the app will pause to apply a new stylesheet
     qApp->setOverrideCursor(Qt::WaitCursor);
@@ -1079,43 +1066,31 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
     
     // The dark style sheet is the master. Any other selected style sheet just overrides
     // the colors of the master sheet.
-    QFile masterStyleSheet(masterCssFile);
+    QFile masterStyleSheet(defaultDarkStyle);
     if (masterStyleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
         styles = masterStyleSheet.readAll();
     } else {
-        qDebug() << "Unable to load master style sheet";
+        qDebug() << "Unable to load master dark style sheet";
         success = false;
     }
 
-    if (success && cssFile != masterCssFile) {
-        // Load the slave user specified stylesheet.
-        QFile styleSheet(cssFile);
-        if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            
+    if (success && style == QGC_MAINWINDOW_STYLE_LIGHT) {
+        qDebug() << "LOADING LIGHT";
+        // Load the slave light stylesheet.
+        QFile styleSheet(defaultLightStyle);
+        if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
             styles += styleSheet.readAll();
-
-            qApp->setStyleSheet(styles);
-
-            // And save the new stylesheet path.
-            if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
-            {
-                lightStyleFileName = cssFile;
-            }
-            else
-            {
-                darkStyleFileName = cssFile;
-            }
-
-            // And trigger any changes to other UI elements that are watching for
-            // theme changes.
-            emit styleChanged(style);
         } else {
-            qDebug() << "Unable to load slave style sheet:" << cssFile;
+            qDebug() << "Unable to load slave light sheet:";
             success = false;
         }
     }
 
+    if (!styles.isEmpty()) {
+        qApp->setStyleSheet(styles);
+        emit styleChanged(style);
+    }
+    
     // Finally restore the cursor before returning.
     qApp->restoreOverrideCursor();
     
