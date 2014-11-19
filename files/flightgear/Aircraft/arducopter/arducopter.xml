@@ -60,7 +60,7 @@
       </location>
       <static_friction>  0.80 </static_friction>
       <dynamic_friction> 0.50 </dynamic_friction>
-      <spring_coeff unit="N/M">       800 </spring_coeff>
+      <spring_coeff unit="N/M">       100 </spring_coeff>
       <damping_coeff unit="N/M2/SEC2" type="SQUARE">  7 </damping_coeff>
       <damping_coeff_rebound unit="N/M2/SEC2" type="SQUARE">  300 </damping_coeff_rebound>
     </contact>
@@ -72,7 +72,7 @@
       </location>
       <static_friction>  0.80 </static_friction>
       <dynamic_friction> 0.50 </dynamic_friction>
-      <spring_coeff unit="N/M">       800 </spring_coeff>
+      <spring_coeff unit="N/M">       100 </spring_coeff>
       <damping_coeff unit="N/M2/SEC2" type="SQUARE">  7 </damping_coeff>
       <damping_coeff_rebound unit="N/M2/SEC2" type="SQUARE">  300 </damping_coeff_rebound>
     </contact>
@@ -84,7 +84,7 @@
       </location>
       <static_friction>  0.80 </static_friction>
       <dynamic_friction> 0.50 </dynamic_friction>
-      <spring_coeff unit="N/M">       800 </spring_coeff>
+      <spring_coeff unit="N/M">       100 </spring_coeff>
       <damping_coeff unit="N/M2/SEC2" type="SQUARE">  7 </damping_coeff>
       <damping_coeff_rebound unit="N/M2/SEC2" type="SQUARE">  300 </damping_coeff_rebound>
     </contact>
@@ -96,7 +96,7 @@
       </location>
       <static_friction>  0.80 </static_friction>
       <dynamic_friction> 0.50 </dynamic_friction>
-      <spring_coeff unit="N/M">       800 </spring_coeff>
+      <spring_coeff unit="N/M">       100 </spring_coeff>
       <damping_coeff unit="N/M2/SEC2" type="SQUARE">  7 </damping_coeff>
       <damping_coeff_rebound unit="N/M2/SEC2" type="SQUARE">  300 </damping_coeff_rebound>
     </contact>
