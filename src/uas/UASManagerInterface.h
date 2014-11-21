@@ -82,7 +82,6 @@ public slots:
     virtual bool returnActiveUAS() = 0;
     virtual bool stopActiveUAS() = 0;
     virtual bool killActiveUAS() = 0;
-    virtual void configureActiveUAS() = 0;
     virtual bool shutdownActiveUAS() = 0;
     virtual bool setHomePosition(double lat, double lon, double alt) = 0;
     virtual bool setHomePositionAndNotify(double lat, double lon, double alt) = 0;

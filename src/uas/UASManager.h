@@ -227,13 +227,6 @@ public slots:
      */
     bool killActiveUAS();
 
-    /**
-     * @brief Configure the currently active UAS
-     *
-     * This command will bring up the configuration dialog for the particular UAS.
-     */
-    void configureActiveUAS();
-
     /** @brief Shut down the onboard operating system down */
     bool shutdownActiveUAS();
 

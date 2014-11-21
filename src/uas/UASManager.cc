@@ -436,14 +436,6 @@ bool UASManager::shutdownActiveUAS()
     return (activeUAS);
 }
 
-void UASManager::configureActiveUAS()
-{
-    UASInterface* actUAS = getActiveUAS();
-    if(actUAS) {
-        // Do something
-    }
-}
-
 UASInterface* UASManager::getUASForId(int id)
 {
     UASInterface* system = NULL;
