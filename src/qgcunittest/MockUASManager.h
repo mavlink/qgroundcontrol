@@ -93,7 +93,6 @@ public slots:
     virtual bool returnActiveUAS() { Q_ASSERT(false); return false; }
     virtual bool stopActiveUAS() { Q_ASSERT(false); return false; }
     virtual bool killActiveUAS() { Q_ASSERT(false); return false; }
-    virtual void configureActiveUAS() { Q_ASSERT(false); }
     virtual bool shutdownActiveUAS() { Q_ASSERT(false); return false; }
     virtual bool setHomePosition(double lat, double lon, double alt)
         { Q_ASSERT(false); Q_UNUSED(lat); Q_UNUSED(lon); Q_UNUSED(alt); return false; }
