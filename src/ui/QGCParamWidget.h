@@ -52,6 +52,11 @@ class QGCParamWidget : public QGCBaseParamWidget
     Q_OBJECT
 public:
     QGCParamWidget(QWidget *parent = 0);
+    
+    /// @brief Sets the list of parameters which should be shown by this editor. Parameter names can be
+    ///         wildcarded at the end such as this: "RC*". Which will filter to all parameters which begin
+    ///         with "RC". The wildcard (*) can only be at the end of the string.
+    void setFilterList(const QStringList& filterList) { _filterList = filterList; }
 
 protected:
     virtual void setParameterStatusMsg(const QString& msg);
@@ -98,6 +103,7 @@ protected:
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups to organize component items
     QLabel* statusLabel; ///< User-facing parameter status label
     QTreeWidget* tree;   ///< The parameter tree
+    QStringList _filterList;
 
 };
 

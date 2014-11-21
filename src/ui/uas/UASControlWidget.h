@@ -38,12 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QPushButton>
 #include <ui_UASControl.h>
 #include <UASInterface.h>
-#include <comm/px4_custom_mode.h>
-
-struct full_mode_s {
-    uint8_t baseMode;
-    uint32_t customMode;
-};
+#include "AutoPilotPlugin.h"
 
 /**
  * @brief Widget controlling one MAV
@@ -83,11 +78,10 @@ protected slots:
     void setBackgroundColor(QColor color);
 
 protected:
-    int uasID;                        ///< Reference to the current uas
-    struct full_mode_s *modesList;  ///< Modes list for the current UAS
-    int modesNum;                   ///< Number of modes in list for the current UAS
-    int modeIdx;                    ///< Current uas mode index
-    bool armed;                  ///< Engine state
+    int uasID;                                      ///< Reference to the current uas
+    QList<AutoPilotPlugin::FullMode_t>  _modeList;  ///< Mode list for the current UAS
+    int modeIdx;                                    ///< Current uas mode index
+    bool armed;                                     ///< Engine state
 
 private:
     Ui::uasControl ui;
