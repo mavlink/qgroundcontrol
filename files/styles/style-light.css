@@ -309,6 +309,11 @@ QPushButton#flightModeMenuButton, QPushButton#safetyConfigButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #BBB, stop: 1 #777);
 }
 
+VehicleSetupButton, VehicleComponentButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #BBB, stop: 1 #777);
+    border-color: #465158;
+}
+
 QPushButton#planePushButton, QPushButton#flyingWingPushButton, QPushButton#quadXPushButton,
 QPushButton#quadPlusPushButton, QPushButton#hexaXPushButton, QPushButton#hexaPlusPushButton,
 QPushButton#octoXPushButton, QPushButton#octoPlusPushButton, QPushButton#hPushButton {
