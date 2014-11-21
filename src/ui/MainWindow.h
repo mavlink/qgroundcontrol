@@ -207,7 +207,7 @@ public slots:
     void setAdvancedMode(bool isAdvancedMode);
     void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
-    void loadHardwareConfigView();
+    void loadSetupView();
     void loadSoftwareConfigView();
     /** @brief Load view for pilot */
     void loadPilotView();
@@ -319,7 +319,7 @@ protected:
         VIEW_FLIGHT,
         VIEW_SIMULATION,
         VIEW_FIRMWAREUPDATE,
-        VIEW_HARDWARE_CONFIG,
+        VIEW_SETUP,
         VIEW_SOFTWARE_CONFIG,
         VIEW_TERMINAL,
         VIEW_LOCAL3D,
@@ -387,7 +387,7 @@ protected:
     // Center widgets
     QPointer<SubMainWindow> plannerView;
     QPointer<SubMainWindow> pilotView;
-    QPointer<SubMainWindow> configView;
+    QPointer<SubMainWindow> setupView;
     QPointer<SubMainWindow> softwareConfigView;
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;

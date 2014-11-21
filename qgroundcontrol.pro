@@ -194,6 +194,8 @@ ReleaseBuild {
     }
 }
 
+# qextserialport should not be used by general QGroundControl code. Use QSerialPort instead. This is only
+# here to support special case Firmware Upgrade code.
 include(libs/qextserialport/src/qextserialport.pri)
 
 #
@@ -249,7 +251,9 @@ INCLUDEPATH += \
     src/ui/designer \
     src/ui/configuration \
     src/ui/px4_configuration \
-    src/ui/main
+    src/ui/main \
+    src/VehicleSetup \
+    src/AutoPilotPlugins
 
 FORMS += \
     src/ui/MainWindow.ui \
@@ -312,7 +316,6 @@ FORMS += \
     src/ui/mission/QGCMissionNavSweep.ui \
     src/ui/mission/QGCMissionDoStartSearch.ui \
     src/ui/mission/QGCMissionDoFinishSearch.ui \
-    src/ui/QGCPX4VehicleConfig.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
@@ -325,7 +328,6 @@ FORMS += \
     src/ui/uas/QGCMessageView.ui \
     src/ui/JoystickButton.ui \
     src/ui/JoystickAxis.ui \
-    src/ui/QGCConfigView.ui \
     src/ui/configuration/terminalconsole.ui \
     src/ui/configuration/SerialSettingsDialog.ui \
     src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
@@ -452,7 +454,6 @@ HEADERS += \
     src/ui/mission/QGCMissionNavSweep.h \
     src/ui/mission/QGCMissionDoStartSearch.h \
     src/ui/mission/QGCMissionDoFinishSearch.h \
-    src/ui/QGCPX4VehicleConfig.h \
     src/comm/QGCHilLink.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
@@ -472,7 +473,6 @@ HEADERS += \
     src/ui/uas/QGCMessageView.h \
     src/ui/JoystickButton.h \
     src/ui/JoystickAxis.h \
-    src/ui/QGCConfigView.h \
     src/ui/configuration/console.h \
     src/ui/configuration/SerialSettingsDialog.h \
     src/ui/configuration/terminalconsole.h \
@@ -608,7 +608,6 @@ SOURCES += \
     src/ui/mission/QGCMissionNavSweep.cc \
     src/ui/mission/QGCMissionDoStartSearch.cc \
     src/ui/mission/QGCMissionDoFinishSearch.cc \
-    src/ui/QGCPX4VehicleConfig.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
@@ -627,7 +626,6 @@ SOURCES += \
     src/ui/JoystickButton.cc \
     src/ui/JoystickAxis.cc \
     src/ui/uas/QGCMessageView.cc \
-    src/ui/QGCConfigView.cc \
     src/ui/configuration/terminalconsole.cpp \
     src/ui/configuration/console.cpp \
     src/ui/configuration/SerialSettingsDialog.cc \
@@ -700,3 +698,42 @@ SOURCES += \
     src/qgcunittest/PX4RCCalibrationTest.cc
 
 }
+
+#
+# AutoPilot Plugin Support
+#
+FORMS += \
+    src/VehicleSetup/SetupView.ui \
+    src/VehicleSetup/SummaryPage.ui \
+    src/VehicleSetup/ParameterEditor.ui \
+    src/ui/QGCPX4VehicleConfig.ui
+
+HEADERS+= \
+    src/VehicleSetup/SetupView.h \
+    src/VehicleSetup/SummaryPage.h \
+    src/VehicleSetup/ParameterEditor.h \
+    src/VehicleSetup/VehicleSetupButton.h \
+    src/VehicleSetup/VehicleComponentButton.h \
+    src/VehicleSetup/VehicleComponent.h \
+    src/AutoPilotPlugins/AutoPilotPlugin.h \
+    src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
+    src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
+    src/AutoPilotPlugins/PX4/PX4Component.h \
+    src/AutoPilotPlugins/PX4/RadioComponent.h \
+    src/AutoPilotPlugins/PX4/FlightModesComponent.h \
+    src/AutoPilotPlugins/PX4/AirframeComponent.h \
+    src/AutoPilotPlugins/PX4/SensorsComponent.h
+
+SOURCES += \
+    src/VehicleSetup/SetupView.cc \
+    src/VehicleSetup/SummaryPage.cc \
+    src/VehicleSetup/ParameterEditor.cc \
+    src/VehicleSetup/VehicleComponent.cc \
+    src/AutoPilotPlugins/AutoPilotPlugin.cc \
+    src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
+    src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
+    src/AutoPilotPlugins/PX4/PX4Component.cc \
+    src/AutoPilotPlugins/PX4/RadioComponent.cc \
+    src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
+    src/AutoPilotPlugins/PX4/AirframeComponent.cc \
+    src/AutoPilotPlugins/PX4/SensorsComponent.cc
