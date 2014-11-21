@@ -181,18 +181,6 @@
     <string>Add Link</string>
    </property>
   </action>
-  <action name="actionConfiguration">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/categories/applications-system.svg</normaloff>:/files/images/categories/applications-system.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Preferences</string>
-   </property>
-   <property name="toolTip">
-    <string>Open UAS Preferences</string>
-   </property>
-  </action>
   <action name="actionJoystickSettings">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
@@ -375,6 +363,9 @@
    <property name="toolTip">
     <string>Application settings</string>
    </property>
+   <property name="menuRole">
+    <enum>QAction::PreferencesRole</enum>
+   </property>
   </action>
   <action name="actionFullscreen">
    <property name="checkable">
@@ -441,6 +432,9 @@
    </property>
    <property name="toolTip">
     <string>Setup of the vehicle</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
    </property>
   </action>
   <action name="actionAdvanced_Mode">
