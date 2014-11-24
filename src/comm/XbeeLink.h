@@ -39,8 +39,6 @@ public: // virtual functions from LinkInterface
     int getId() const;
     QString getName() const;
     bool isConnected() const;
-    bool connect();
-    bool disconnect();
 
     // Extensive statistics for scientific purposes
     qint64 getConnectionSpeed() const;
