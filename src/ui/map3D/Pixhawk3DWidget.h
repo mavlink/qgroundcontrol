@@ -78,10 +78,6 @@ private slots:
     void setBirdEyeView(void);
     void loadTerrainModel(void);
 
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    void addOverlay(UASInterface* uas);
-#endif
-
     void selectTargetHeading(void);
     void selectTarget(void);
     void setTarget(void);
@@ -162,21 +158,6 @@ private:
                       QMap<int, int>& trailIndexMap);
     void updateWaypoints(UASInterface* uas, MAV_FRAME frame,
                          osg::ref_ptr<WaypointGroupNode>& waypointGroupNode);
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    void updateRGBD(UASInterface* uas, MAV_FRAME frame,
-                    osg::ref_ptr<ImageWindowGeode>& rgbImageNode,
-                    osg::ref_ptr<ImageWindowGeode>& depthImageNode);
-    void updatePointCloud(UASInterface* uas, MAV_FRAME frame,
-                          double robotX, double robotY, double robotZ,
-                          osg::ref_ptr<osg::Geode>& pointCloudNode,
-                          bool colorPointCloudByDistance);
-    void updateObstacles(UASInterface* uas, MAV_FRAME frame,
-                         double robotX, double robotY, double robotZ,
-                         osg::ref_ptr<ObstacleGroupNode>& obstacleGroupNode);
-    void updatePlannedPath(UASInterface* uas, MAV_FRAME frame,
-                           double robotX, double robotY, double robotZ,
-                           osg::ref_ptr<osg::Geode>& plannedPathNode);
-#endif
 
     int findWaypoint(const QPoint& mousePos);
     bool findTarget(int mouseX, int mouseY);

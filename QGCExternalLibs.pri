@@ -31,12 +31,6 @@ else:exists(user_config.pri):infile(user_config.pri, MAVLINK_CONF) {
         message($$sprintf("Using MAVLink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
     }
 }
-# If no valid user selection is found, default to the pixhawk if it's available.
-# Note: This can be a list of several dialects.
-else {
-    MAVLINK_CONF=pixhawk
-    message($$sprintf("Using default MAVLink dialect '%1'.", $$MAVLINK_CONF))
-}
 
 # Then we add the proper include paths dependent on the dialect.
 INCLUDEPATH += $$MAVLINKPATH

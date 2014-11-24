@@ -75,9 +75,6 @@ This file is part of the QGROUNDCONTROL project
 #include "Q3DWidgetFactory.h"
 #endif
 
-// FIXME Move
-#include "PxQuadMAV.h"
-
 #include "LogCompressor.h"
 
 // Set up some constants
@@ -1540,25 +1537,6 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     // Load default custom widgets for this autopilot type
     loadCustomWidgetsFromDefaults(uas->getSystemTypeName(), uas->getAutopilotTypeName());
-
-
-    if (uas->getAutopilotType() == MAV_AUTOPILOT_PIXHAWK)
-    {
-        // Dock widgets
-        if (!detectionDockWidget)
-        {
-            detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
-            detectionDockWidget->setWidget( new ObjectDetectionView("files/images/patterns", this) );
-            detectionDockWidget->setObjectName("OBJECT_DETECTION_DOCK_WIDGET");
-        }
-
-        if (!watchdogControlDockWidget)
-        {
-            watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
-            watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
-            watchdogControlDockWidget->setObjectName("WATCHDOG_CONTROL_DOCKWIDGET");
-        }
-    }
 
     // Reload view state in case new widgets were added
     loadViewState();

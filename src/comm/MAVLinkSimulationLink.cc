@@ -197,10 +197,6 @@ void MAVLinkSimulationLink::mainloop()
 
     mavlink_attitude_t attitude;
     memset(&attitude, 0, sizeof(mavlink_attitude_t));
-#ifdef MAVLINK_ENABLED_PIXHAWK
-    mavlink_raw_aux_t rawAuxValues;
-    memset(&rawAuxValues, 0, sizeof(mavlink_raw_aux_t));
-#endif
     mavlink_raw_imu_t rawImuValues;
     memset(&rawImuValues, 0, sizeof(mavlink_raw_imu_t));
 
@@ -301,15 +297,6 @@ void MAVLinkSimulationLink::mainloop()
                         rawImuValues.zgyro = d;
                         attitude.yawspeed = ((d-29.000)/3000.0)*2.7-2.7-2.65;
                     }
-#ifdef MAVLINK_ENABLED_PIXHAWK
-                    if (keys.value(i, "") == "Pressure") {
-                        rawAuxValues.baro = d;
-                    }
-
-                    if (keys.value(i, "") == "Battery") {
-                        rawAuxValues.vbat = d;
-                    }
-#endif
                     if (keys.value(i, "") == "roll_IMU") {
                         attitude.roll = d;
                     }
@@ -473,46 +460,6 @@ void MAVLinkSimulationLink::mainloop()
 
         static int detectionCounter = 6;
         if (detectionCounter % 10 == 0) {
-#ifdef MAVLINK_ENABLED_PIXHAWK
-            mavlink_pattern_detected_t detected;
-            detected.confidence = 5.0f;
-            detected.type = 0;  // compiler confused into thinking type is used unitialized, bogus init to silence
-
-            if (detectionCounter == 10) {
-                char fileName[] = "patterns/face5.png";
-                memcpy(detected.file, fileName, sizeof(fileName));
-                detected.type = 0; // 0: Pattern, 1: Letter
-            } else if (detectionCounter == 20) {
-                char fileName[] = "7";
-                memcpy(detected.file, fileName, sizeof(fileName));
-                detected.type = 1; // 0: Pattern, 1: Letter
-            } else if (detectionCounter == 30) {
-                char fileName[] = "patterns/einstein.bmp";
-                memcpy(detected.file, fileName, sizeof(fileName));
-                detected.type = 0; // 0: Pattern, 1: Letter
-            } else if (detectionCounter == 40) {
-                char fileName[] = "F";
-                memcpy(detected.file, fileName, sizeof(fileName));
-                detected.type = 1; // 0: Pattern, 1: Letter
-            } else if (detectionCounter == 50) {
-                char fileName[] = "patterns/face2.png";
-                memcpy(detected.file, fileName, sizeof(fileName));
-                detected.type = 0; // 0: Pattern, 1: Letter
-            } else if (detectionCounter == 60) {
-                char fileName[] = "H";
-                memcpy(detected.file, fileName, sizeof(fileName));
-                detected.type = 1; // 0: Pattern, 1: Letter
-                detectionCounter = 0;
-            }
-            detected.detected = 1;
-            mavlink_msg_pattern_detected_encode(systemId, componentId, &msg, &detected);
-            // Allocate buffer with packet data
-            bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
-            //add data into datastream
-            memcpy(stream+streampointer,buffer, bufferlength);
-            streampointer += bufferlength;
-            //detectionCounter = 0;
-#endif
         }
         detectionCounter++;
 
@@ -701,14 +648,6 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 //                }
             }
             break;
-#ifdef MAVLINK_ENABLED_PIXHAWK
-            case MAVLINK_MSG_ID_MANUAL_CONTROL: {
-                mavlink_manual_control_t control;
-                mavlink_msg_manual_control_decode(&msg, &control);
-//                qDebug() << "\n" << "ROLL:" << control.x << "PITCH:" << control.y;
-            }
-            break;
-#endif
             case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
             {
 //                qDebug() << "GCS REQUESTED PARAM LIST FROM SIMULATION";
