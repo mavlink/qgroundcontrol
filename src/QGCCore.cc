@@ -1,29 +1,29 @@
 /*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 /**
  * @file
- *   @brief Implementation of class QGCCore
+ *   @brief Implementation of class QGCApplication
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -55,8 +55,14 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
 
-const char* QGCCore::deleteAllSettingsKey = "DeleteAllSettingsNextBoot";
-const char* QGCCore::_settingsVersionKey = "SettingsVersion";
+const char* QGCApplication::_deleteAllSettingsKey = "DeleteAllSettingsNextBoot";
+const char* QGCApplication::_settingsVersionKey = "SettingsVersion";
+const char* QGCApplication::_savedFilesLocationKey = "SavedFilesLocation";
+const char* QGCApplication::_promptFlightDataSave = "PromptFLightDataSave";
+
+const char* QGCApplication::_defaultSavedFileDirectoryName = "QGroundControl";
+const char* QGCApplication::_savedFileMavlinkLogDirectoryName = "FlightData";
+const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters";
 
 /**
  * @brief Constructor for the main application.
@@ -69,9 +75,9 @@ const char* QGCCore::_settingsVersionKey = "SettingsVersion";
  **/
 
 
-QGCCore::QGCCore(int &argc, char* argv[]) :
-    QApplication(argc, argv),
-    _mainWindow(NULL)
+QGCApplication::QGCApplication(int &argc, char* argv[]) :
+QApplication(argc, argv),
+_mainWindow(NULL)
 {
     // Set application information
     this->setApplicationName(QGC_APPLICATION_NAME);
@@ -101,7 +107,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) :
     QSettings settings;
     
     // The setting will delete all settings on this boot
-    fClearSettingsOptions |= settings.contains(deleteAllSettingsKey);
+    fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
     
     if (fClearSettingsOptions) {
         // User requested settings to be cleared on command line
@@ -112,7 +118,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) :
     
 }
 
-bool QGCCore::init(void)
+bool QGCApplication::init(void)
 {
     QSettings settings;
     
@@ -134,6 +140,40 @@ bool QGCCore::init(void)
     if (settingsUpgraded) {
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+    }
+    
+    // Load saved files location and validate
+    
+    QString savedFilesLocation;
+    if (settings.contains(_savedFilesLocationKey)) {
+        savedFilesLocation = settings.value(_savedFilesLocationKey).toString();
+    } else {
+        // No location set. Create a default one in Documents standard location.
+        
+        QString documentsLocation = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        
+        QDir documentsDir(documentsLocation);
+        Q_ASSERT(documentsDir.exists());
+        
+        if (documentsDir.mkpath(_defaultSavedFileDirectoryName)) {
+            savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
+        }
+    }
+    
+    if (!savedFilesLocation.isEmpty()) {
+        if (!validatePossibleSavedFilesLocation(savedFilesLocation)) {
+            savedFilesLocation.clear();
+        }
+    }
+    
+    // If we made it this far and we still don't have a location. Either the specfied location was invalid
+    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
+    /// settings.
+    if (savedFilesLocation.isEmpty()) {
+        QMessageBox::warning(MainWindow::instance(),
+                             tr("Bad save location"),
+                             tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
+        MainWindow::instance()->showSettings();
     }
     
     mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
@@ -169,9 +209,7 @@ bool QGCCore::init(void)
     
     // Start the user interface
     splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    
-    // The first call to instance() creates the MainWindow, so make sure it's passed the splashScreen.
-    _mainWindow = MainWindow::instance_mode(splashScreen, mode);
+    _mainWindow = MainWindow::_create(splashScreen, mode);
     
     UDPLink* udpLink = NULL;
     
@@ -196,6 +234,7 @@ bool QGCCore::init(void)
     
     // Remove splash screen
     splashScreen->finish(_mainWindow);
+    _mainWindow->splashScreenFinished();
     
     if (settingsUpgraded) {
         _mainWindow->showInfoMessage(tr("Settings Cleared"),
@@ -204,7 +243,7 @@ bool QGCCore::init(void)
     }
     
     // Check if link could be connected
-    if (udpLink && !udpLink->connect())
+    if (udpLink && !LinkManager::instance()->connectLink(udpLink))
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
@@ -232,7 +271,7 @@ bool QGCCore::init(void)
  * @brief Destructor for the groundstation. It destroys all loaded instances.
  *
  **/
-QGCCore::~QGCCore()
+QGCApplication::~QGCApplication()
 {
     delete UASManager::instance();
     delete LinkManager::instance();
@@ -244,7 +283,7 @@ QGCCore::~QGCCore()
  * The link manager keeps track of all communication links and provides the global
  * packet queue. It is the main communication hub
  **/
-void QGCCore::startLinkManager()
+void QGCApplication::startLinkManager()
 {
     LinkManager::instance();
 }
@@ -253,11 +292,11 @@ void QGCCore::startLinkManager()
  * @brief Start the Unmanned Air System Manager
  *
  **/
-void QGCCore::startUASManager()
+void QGCApplication::startUASManager()
 {
     // Load UAS plugins
     QDir pluginsDir = QDir(qApp->applicationDirPath());
-
+    
 #if defined(Q_OS_WIN)
     if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
         pluginsDir.cdUp();
@@ -272,13 +311,13 @@ void QGCCore::startUASManager()
     }
 #endif
     pluginsDir.cd("plugins");
-
+    
     UASManager::instance();
-
+    
     // Load plugins
-
+    
     QStringList pluginFileNames;
-
+    
     foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
         QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
         QObject *plugin = loader.instance();
@@ -288,4 +327,99 @@ void QGCCore::startUASManager()
             //printf(QString("Loaded plugin from " + fileName + "\n").toStdString().c_str());
         }
     }
+}
+
+void QGCApplication::deleteAllSettingsNextBoot(void)
+{
+    QSettings settings;
+    settings.setValue(_deleteAllSettingsKey, true);
+}
+
+void QGCApplication::clearDeleteAllSettingsNextBoot(void)
+{
+    QSettings settings;
+    settings.remove(_deleteAllSettingsKey);
+}
+
+void QGCApplication::setSavedFilesLocation(QString& location)
+{
+    QSettings settings;
+    settings.setValue(_savedFilesLocationKey, location);
+}
+
+bool QGCApplication::validatePossibleSavedFilesLocation(QString& location)
+{
+    // Make sure we can write to the directory
+    QString filename = QDir(location).filePath("QGCTempXXXXXXXX.tmp");
+    QTemporaryFile tempFile(filename);
+    if (!tempFile.open()) {
+        return false;
+    }
+    
+    return true;
+}
+
+QString QGCApplication::savedFilesLocation(void)
+{
+    QSettings settings;
+    
+    Q_ASSERT(settings.contains(_savedFilesLocationKey));
+    return settings.value(_savedFilesLocationKey).toString();
+}
+
+QString QGCApplication::savedParameterFilesLocation(void)
+{
+    QString location;
+    QDir    parentDir(savedFilesLocation());
+    
+    location = parentDir.filePath(_savedFileParameterDirectoryName);
+    
+    if (!QDir(location).exists()) {
+        // If directory doesn't exist, try to create it
+        if (!parentDir.mkpath(_savedFileParameterDirectoryName)) {
+            // Return an error
+            location.clear();
+        }
+    }
+    
+    return location;
+}
+
+QString QGCApplication::mavlinkLogFilesLocation(void)
+{
+    QString location;
+    QDir    parentDir(savedFilesLocation());
+    
+    location = parentDir.filePath(_savedFileMavlinkLogDirectoryName);
+    
+    if (!QDir(location).exists()) {
+        // If directory doesn't exist, try to create it
+        if (!parentDir.mkpath(_savedFileMavlinkLogDirectoryName)) {
+            // Return an error
+            location.clear();
+        }
+    }
+    
+    return location;
+}
+
+bool QGCApplication::promptFlightDataSave(void)
+{
+    QSettings settings;
+    
+    return settings.value(_promptFlightDataSave, true).toBool();
+}
+
+void QGCApplication::setPromptFlightDataSave(bool promptForSave)
+{
+    QSettings settings;
+    settings.setValue(_promptFlightDataSave, promptForSave);
+}
+
+/// @brief Returns the QGCApplication object singleton.
+QGCApplication* qgcApp(void)
+{
+    QGCApplication* app = dynamic_cast<QGCApplication*>(qApp);
+    Q_ASSERT(app);
+    return app;
 }
