@@ -33,14 +33,14 @@ This file is part of the APM_PLANNER project
  *
  */
 
-#ifndef SETTINGSDIALOG_H
-#define SETTINGSDIALOG_H
+#ifndef SERIALSETTINGSDIALOG_H
+#define SERIALSETTINGSDIALOG_H
 
 #include <QDialog>
 #include <QSerialPort>
 
 namespace Ui {
-class SettingsDialog;
+class SerialSettingsDialog;
 }
 
 class QIntValidator;
@@ -62,13 +62,13 @@ public:
     QSerialPort::FlowControl flowControl;
 };
 
-class SettingsDialog : public QDialog
+class SerialSettingsDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit SettingsDialog(QWidget *parent = 0);
-    ~SettingsDialog();
+    explicit SerialSettingsDialog(QWidget *parent = 0);
+    ~SerialSettingsDialog();
 
     const SerialSettings &settings() const;
 
@@ -83,9 +83,9 @@ private:
     void updateSettings();
 
 private:
-    Ui::SettingsDialog *ui;
+    Ui::SerialSettingsDialog *ui;
     SerialSettings m_currentSettings;
     QIntValidator *m_intValidator;
 };
 
-#endif // SETTINGSDIALOG_H
+#endif
