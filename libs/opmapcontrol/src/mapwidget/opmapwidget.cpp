@@ -225,7 +225,7 @@ namespace mapcontrol
     }
     void OPMapWidget::showEvent(QShowEvent *event)
     {
-        connect(&mscene,SIGNAL(sceneRectChanged(QRectF)),map,SLOT(resize(QRectF)));
+        connect(&mscene,SIGNAL(sceneRectChanged(QRectF)),map,SLOT(resize(QRectF)), Qt::UniqueConnection);
         map->start();
         QGraphicsView::showEvent(event);
     }
