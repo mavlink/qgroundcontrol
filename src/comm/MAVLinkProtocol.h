@@ -37,6 +37,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QFile>
 #include <QMap>
 #include <QByteArray>
+#include <QTemporaryFile>
+
 #include "ProtocolInterface.h"
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
@@ -69,10 +71,7 @@ public:
     bool heartbeatsEnabled() const {
         return m_heartbeatsEnabled;
     }
-    /** @brief Get logging state */
-    bool loggingEnabled() const {
-        return m_loggingEnabled;
-    }
+    
     /** @brief Get protocol version check state */
     bool versionCheckEnabled() const {
         return m_enable_version_check;
@@ -93,8 +92,6 @@ public:
     QString getAuthKey() {
         return m_authKey;
     }
-    /** @brief Get the name of the packet log file */
-    QString getLogfileName();
     /** @brief Get state of parameter retransmission */
     bool paramGuardEnabled() {
         return m_paramGuardEnabled;
@@ -140,7 +137,7 @@ public:
      * Reset the counters for all metadata for this link.
      */
     virtual void resetMetadataForLink(const LinkInterface *link);
-
+    
     void run();
 
 public slots:
@@ -161,9 +158,6 @@ public slots:
     /** @brief Enable / disable the heartbeat emission */
     void enableHeartbeats(bool enabled);
 
-    /** @brief Enable/disable binary packet logging */
-    void enableLogging(bool enabled);
-
     /** @brief Enabled/disable packet multiplexing */
     void enableMultiplexing(bool enabled);
 
@@ -181,9 +175,6 @@ public slots:
 
     /** @brief Set parameter read timeout */
     void setActionRetransmissionTimeout(int ms);
-
-    /** @brief Set log file name */
-    void setLogfileName(const QString& filename);
 
     /** @brief Enable / disable version check */
     void enableVersionCheck(bool enabled);
@@ -203,16 +194,22 @@ public slots:
     void loadSettings();
     /** @brief Store protocol settings */
     void storeSettings();
+    
+    /// @brief Suspend/Restart logging during replay. This must be emitted as a signal
+    ///         and not called directly in order to synchronize with the bytesReady signal
+    ///         which may be ahead of it in the signal queue.
+    void suspendLogForReplay(bool suspend);
 
-protected:
+protected:    
+    // Override from QObject
+    virtual void connectNotify(const QMetaMethod& signal);
+
     QTimer *heartbeatTimer;    ///< Timer to emit heartbeats
     int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
     bool m_authEnabled;        ///< Enable authentication token broadcast
     QString m_authKey;         ///< Authentication key
-    bool m_loggingEnabled;     ///< Enable/disable packet logging
-    QFile* m_logfile;           ///< Logfile
     bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
     int m_paramRetransmissionTimeout; ///< Timeout for parameter retransmission
     int m_paramRewriteTimeout;    ///< Timeout for sending re-write request
@@ -235,8 +232,6 @@ signals:
     void messageReceived(LinkInterface* link, mavlink_message_t message);
     /** @brief Emitted if heartbeat emission mode is changed */
     void heartbeatChanged(bool heartbeats);
-    /** @brief Emitted if logging is started / stopped */
-    void loggingChanged(bool enabled);
     /** @brief Emitted if multiplexing is started / stopped */
     void multiplexingChanged(bool enabled);
     /** @brief Emitted if authentication support is enabled / disabled */
@@ -272,6 +267,27 @@ signals:
      */
     void radioStatusChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi,
     unsigned txbuf, unsigned noise, unsigned remnoise);
+    
+    /// @brief Emitted when a temporary log file is ready for saving
+    void saveTempFlightDataLog(QString tempLogfile);
+    
+private:
+    bool _closeLogFile(void);
+    void _startLogging(void);
+    void _stopLogging(void);
+    void _checkLostLogFiles(void);
+    
+    QList<LinkInterface*> _connectedLinks;  ///< List of all links connected to protocol
+    
+    bool _logSuspendError;      ///< true: Logging suspended due to error
+    bool _logSuspendReplay;     ///< true: Logging suspended due to replay
+    
+    QTemporaryFile _tempLogFile;                ///< File to log to
+    static const char* _tempLogFileTemplate;    ///< Template for temporary log file
+    static const char* _logFileExtension;       ///< Extension for log files
+    
+    bool _protocolStatusMessageConnected;   ///< true: protocolStatusMessage signal has been connected
+    bool _saveTempFlightDataLogConnected;   ///< true: saveTempFlightDataLog signal has been connected
 };
 
 #endif // MAVLINKPROTOCOL_H_
