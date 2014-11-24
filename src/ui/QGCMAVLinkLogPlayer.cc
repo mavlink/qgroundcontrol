@@ -1,4 +1,3 @@
-#include <QFileDialog>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QtEndian>
@@ -10,6 +9,7 @@
 #include "ui_QGCMAVLinkLogPlayer.h"
 #include "QGCCore.h"
 #include "LinkManager.h"
+#include "QGCFileDialog.h"
 
 QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *parent) :
     QWidget(parent),
@@ -264,7 +264,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
         return;
     }
     
-    QString logFile = QFileDialog::getOpenFileName(this,
+    QString logFile = QGCFileDialog::getOpenFileName(this,
                                                     tr("Specify MAVLink log file name to replay"),
                                                     qgcApp()->mavlinkLogFilesLocation(),
                                                     tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log)"));

@@ -231,7 +231,7 @@ public slots:
     /** @brief Add a custom tool widget */
     void createCustomWidget();
 
-    /** @brief Load a custom tool widget from a file chosen by user (QFileDialog) */
+    /** @brief Load a custom tool widget from a file chosen by user (QGCFileDialog) */
     void loadCustomWidget();
 
     /** @brief Load a custom tool widget from a file */

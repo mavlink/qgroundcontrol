@@ -1,10 +1,11 @@
 #include "ImageryParamDialog.h"
 
 #include <QStandardPaths>
-#include <QFileDialog>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QPushButton>
+
+#include "QGCFileDialog.h"
 
 ImageryParamDialog::ImageryParamDialog(QWidget* parent)
  : QDialog(parent)
@@ -78,7 +79,7 @@ ImageryParamDialog::getImageryParams(GlobalViewParamsPtr &globalViewParams)
 void
 ImageryParamDialog::selectPath(void)
 {
-    QString filename = QFileDialog::getExistingDirectory(this, "Imagery path",
+    QString filename = QGCFileDialog::getExistingDirectory(this, "Imagery path",
                                                          QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
     if (filename.isNull())
     {

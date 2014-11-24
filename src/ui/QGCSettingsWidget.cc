@@ -34,6 +34,7 @@
 #include "MAVLinkSettingsWidget.h"
 #include "GAudioOutput.h"
 #include "QGCCore.h"
+#include "QGCFileDialog.h"
 
 SettingsDialog::SettingsDialog(JoystickInput *joystick, QWidget *parent, Qt::WindowFlags flags) :
 QDialog(parent, flags),
@@ -163,7 +164,7 @@ void SettingsDialog::_validateBeforeClose(void)
 /// @brief Displays a directory picker dialog to allow the user to select a saved file location
 void SettingsDialog::_selectSavedFilesDirectory(void)
 {
-    QString newLocation = QFileDialog::getExistingDirectory(this,
+    QString newLocation = QGCFileDialog::getExistingDirectory(this,
                                                             tr("Select the directory where you want to save files to."),
                                                             _ui->savedFilesLocation->text());
     if (!newLocation.isEmpty()) {

@@ -34,11 +34,14 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QDebug>
 #include <QMutexLocker>
+#include <QHostInfo>
+
 #include <iostream>
+
 #include "QGCFlightGearLink.h"
 #include "QGC.h"
-#include <QHostInfo>
 #include "MainWindow.h"
+#include "QGCFileDialog.h"
 
 // FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
@@ -754,7 +757,7 @@ bool QGCFlightGearLink::connectSimulation()
         }
         
         // Let the user pick the right directory
-        QString dirPath = QFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
+        QString dirPath = QGCFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
         if (dirPath.isEmpty()) {
             return false;
         }

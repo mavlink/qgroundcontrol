@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QApplication>
 #include <QDebug>
 #include <QFile>
-#include <QFileDialog>
 #include <QGridLayout>
 
 #include <QList>
