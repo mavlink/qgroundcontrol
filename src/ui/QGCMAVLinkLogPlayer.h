@@ -37,29 +37,15 @@ public:
         return logFile.isOpen();
     }
 
-    /**
-     * @brief Set the last log file name
-     * @param filename
-     */
-    void setLastLogFile(const QString& filename) {
-        lastLogDirectory = filename;
-    }
-
 public slots:
     /** @brief Toggle between play and pause */
     void playPauseToggle();
-    /** @brief Play / pause the log */
-    void playPause(bool play);
     /** @brief Replay the logfile */
     void play();
     /** @brief Pause the log player. */
     void pause();
     /** @brief Reset the internal log player state, including the UI */
     void reset();
-    /** @brief Select logfile */
-    bool selectLogFile(const QString startDirectory);
-    /** @brief Select logfile */
-    bool selectLogFile();
     /** @brief Load log file */
     bool loadLogFile(const QString& file);
     /** @brief Jump to a position in the logfile */
@@ -73,6 +59,9 @@ signals:
     /** @brief Send ready bytes */
     void bytesReady(LinkInterface* link, const QByteArray& bytes);
     void logFileEndReached();
+    
+    /// @brief Connected to the MAVLinkProtocol::suspendLogForReplay
+    void suspendLogForReplay(bool suspend);
 
 protected:
     quint64 playbackStartTime;     ///< The time when the logfile was first played back. This is used to pace out replaying the messages to fix long-term drift/skew. 0 indicates that the player hasn't initiated playback of this log file. In units of milliseconds since epoch UTC.
@@ -92,11 +81,10 @@ protected:
     unsigned int currPacketCount;
     static const int packetLen = MAVLINK_MAX_PACKET_LEN;
     static const int timeLen = sizeof(quint64);
-    QString lastLogDirectory;
     void changeEvent(QEvent *e);
-
-    void loadSettings();
-    void storeSettings();
+    
+private slots:
+    void _selectLogFileForPlayback(void);
 
 private:
     Ui::QGCMAVLinkLogPlayer *ui;
@@ -130,6 +118,9 @@ private:
      * @return True if the new file position was successfully jumped to, false otherwise
      */
     bool jumpToPlaybackLocation(float percentage);
+    
+    void _finishPlayback(void);
+    void _playbackError(void);
 };
 
 #endif // QGCMAVLINKLOGPLAYER_H

@@ -27,21 +27,15 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCStatusBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
+#include "QGCCore.h"
 
 QGCStatusBar::QGCStatusBar(QWidget *parent) :
     QStatusBar(parent),
-    toggleLoggingButton(NULL),
     player(NULL),
     changed(true),
     lastLogDirectory(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation))
 {
     setObjectName("QGC_STATUSBAR");
-
-    toggleLoggingButton = new QPushButton(tr("Log to file"), this);
-    toggleLoggingButton->setCheckable(true);
-
-    addPermanentWidget(toggleLoggingButton);
-
     loadSettings();
 }
 
@@ -58,58 +52,6 @@ void QGCStatusBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
 {
     this->player = player;
     addPermanentWidget(player);
-    connect(toggleLoggingButton, SIGNAL(clicked(bool)), this, SLOT(logging(bool)));
-}
-
-void QGCStatusBar::logging(bool checked)
-{
-    // Stop logging in any case
-    MainWindow::instance()->getMAVLink()->enableLogging(false);
-
-    if (!checked && player)
-    {
-        player->setLastLogFile(lastLogDirectory);
-    }
-
-	// If the user is enabling logging
-    if (checked)
-    {
-		// Prompt the user for a filename/location to save to
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file to save to"), lastLogDirectory, tr("MAVLink Logfile (*.mavlink *.log *.bin);;"));
-
-		// Check that they didn't cancel out
-		if (fileName.isNull())
-		{
-            toggleLoggingButton->setChecked(false);
-			return;
-		}
-
-		// Make sure the file's named properly
-        if (!fileName.endsWith(".mavlink"))
-        {
-            fileName.append(".mavlink");
-        }
-
-		// Check that we can save the logfile
-        QFileInfo file(fileName);
-        if ((file.exists() && !file.isWritable()))
-        {
-            QMessageBox msgBox;
-            msgBox.setIcon(QMessageBox::Critical);
-            msgBox.setText(tr("The selected logfile is not writable"));
-            msgBox.setInformativeText(tr("Please make sure that the file %1 is writable or select a different file").arg(fileName));
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
-        }
-		// Otherwise we're off and logging
-        else
-        {
-            MainWindow::instance()->getMAVLink()->setLogfileName(fileName);
-            MainWindow::instance()->getMAVLink()->enableLogging(true);
-            lastLogDirectory = file.absoluteDir().absolutePath(); //save last log directory
-        }
-    }
 }
 
 void QGCStatusBar::loadSettings()
@@ -132,5 +74,4 @@ void QGCStatusBar::storeSettings()
 QGCStatusBar::~QGCStatusBar()
 {
     storeSettings();
-    if (toggleLoggingButton) toggleLoggingButton->deleteLater();
 }
