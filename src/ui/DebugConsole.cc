@@ -782,9 +782,9 @@ void DebugConsole::handleConnectButton()
 {
     if (currLink) {
         if (currLink->isConnected()) {
-            currLink->disconnect();
+            LinkManager::instance()->disconnect(currLink);
         } else {
-            currLink->connect();
+            LinkManager::instance()->connectLink(currLink);
         }
     }
 }
