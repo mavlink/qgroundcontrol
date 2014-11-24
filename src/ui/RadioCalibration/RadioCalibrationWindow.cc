@@ -1,4 +1,5 @@
 #include "RadioCalibrationWindow.h"
+#include "QGCFileDialog.h"
 
 RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
     QWidget(parent, Qt::Window),
@@ -85,7 +86,7 @@ void RadioCalibrationWindow::setChannel(int ch, float raw)
 
 void RadioCalibrationWindow::saveFile()
 {
-    QString fileName(QFileDialog::getSaveFileName(this,
+    QString fileName(QGCFileDialog::getSaveFileName(this,
                      tr("Save RC Calibration"),
                      "settings/",
                      tr("XML Files (*.xml)")));
@@ -161,7 +162,7 @@ void RadioCalibrationWindow::saveFile()
 
 void RadioCalibrationWindow::loadFile()
 {
-    QString fileName(QFileDialog::getOpenFileName(this,
+    QString fileName(QGCFileDialog::getOpenFileName(this,
                      tr("Load RC Calibration"),
                      "settings/",
                      tr("XML Files (*.xml)")));

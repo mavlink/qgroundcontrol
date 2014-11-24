@@ -28,7 +28,6 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#include <QFileDialog>
 #include <QTemporaryFile>
 #include <QMessageBox>
 #include <QPrintDialog>
@@ -37,13 +36,15 @@ This file is part of the QGROUNDCONTROL project
 #include <QSvgGenerator>
 #include <QPrinter>
 #include <QStandardPaths>
+#include <QDebug>
+
+#include <cmath>
+
 #include "QGCDataPlot2D.h"
 #include "ui_QGCDataPlot2D.h"
 #include "MG.h"
 #include "MainWindow.h"
-#include <cmath>
-
-#include <QDebug>
+#include "QGCFileDialog.h"
 
 QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     QWidget(parent),
@@ -117,7 +118,7 @@ void QGCDataPlot2D::loadFile(QString file)
 void QGCDataPlot2D::savePlot()
 {
     QString fileName = "plot.svg";
-    fileName = QFileDialog::getSaveFileName(
+    fileName = QGCFileDialog::getSaveFileName(
                    this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                    "PDF Documents (*.pdf);;SVG Images (*.svg)");
     if (fileName.isEmpty())
@@ -137,7 +138,7 @@ void QGCDataPlot2D::savePlot()
         msgBox.setDefaultButton(QMessageBox::Ok);
         // Abort if cancelled
         if(msgBox.exec() == QMessageBox::Cancel) return;
-        fileName = QFileDialog::getSaveFileName(
+        fileName = QGCFileDialog::getSaveFileName(
                        this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                        "PDF Documents (*.pdf);;SVG Images (*.svg)");
         if (fileName.isEmpty())
@@ -260,11 +261,11 @@ void QGCDataPlot2D::selectFile()
     // Open a file dialog prompting the user for the file to load.
     // Note the special case for the Pixhawk.
     if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW")) {
-        fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.imu *.raw)");
+        fileName = QGCFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.imu *.raw)");
     }
     else
     {
-        fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
+        fileName = QGCFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
     }
 
     // Check if the user hit cancel, which results in a Null string.
@@ -693,7 +694,7 @@ bool QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, dou
 void QGCDataPlot2D::saveCsvLog()
 {
     QString fileName = "export.csv";
-    fileName = QFileDialog::getSaveFileName(
+    fileName = QGCFileDialog::getSaveFileName(
                    this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                    "CSV file (*.csv);;Text file (*.txt)");
     if (fileName.isEmpty())
@@ -719,7 +720,7 @@ void QGCDataPlot2D::saveCsvLog()
     //        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     //        msgBox.setDefaultButton(QMessageBox::Ok);
     //        if(msgBox.exec() == QMessageBox::Cancel) break;
-    //        fileName = QFileDialog::getSaveFileName(
+    //        fileName = QGCFileDialog::getSaveFileName(
     //                this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
     //            "CSV file (*.csv);;Text file (*.txt)");
     //    }

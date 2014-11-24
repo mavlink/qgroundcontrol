@@ -31,7 +31,6 @@ This file is part of the PIXHAWK project
 #include <QString>
 #include <QTimer>
 #include <QLabel>
-#include <QFileDialog>
 #include <QDebug>
 #include <QApplication>
 

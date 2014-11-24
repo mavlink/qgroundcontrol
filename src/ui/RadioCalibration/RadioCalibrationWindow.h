@@ -39,7 +39,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QHBoxLayout>
 #include <QDebug>
 #include <QPointer>
-#include <QFileDialog>
 #include <QFile>
 #include <QtXml>
 #include <QTextStream>

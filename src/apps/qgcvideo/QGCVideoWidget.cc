@@ -33,7 +33,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QContextMenuEvent>
 #include <QMenu>
 #include <QDesktopServices>
-#include <QFileDialog>
 
 #include <QDebug>
 #include <cmath>

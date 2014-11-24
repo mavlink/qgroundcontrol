@@ -33,7 +33,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QContextMenuEvent>
 #include <QMenu>
 #include <QStandardPaths>
-#include <QFileDialog>
 #include <QPaintEvent>
 #include <QDebug>
 
@@ -46,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HUD.h"
 #include "QGC.h"
 #include "MainWindow.h"
+#include "QGCFileDialog.h"
 
 /**
  * @warning The HUD widget will not start painting its content automatically
@@ -1314,7 +1314,7 @@ void HUD::saveImage()
 
 void HUD::selectOfflineDirectory()
 {
-    QString fileName = QFileDialog::getExistingDirectory(this, tr("Select image directory"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
+    QString fileName = QGCFileDialog::getExistingDirectory(this, tr("Select image directory"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
     if (fileName != "") {
         offlineDirectory = fileName;
     }
@@ -1393,10 +1393,7 @@ void HUD::saveImages(bool save)
 {
     if (save)
     {
-        QFileDialog dialog(this);
-        dialog.setFileMode(QFileDialog::DirectoryOnly);
-
-        imageLogDirectory = QFileDialog::getExistingDirectory(this, tr("Select image log directory"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
+        imageLogDirectory = QGCFileDialog::getExistingDirectory(this, tr("Select image log directory"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
 
         qDebug() << "Logging to:" << imageLogDirectory;
 
