@@ -58,7 +58,7 @@ MockLink::MockLink(void) :
 
 MockLink::~MockLink(void)
 {
-    disconnect();
+    _disconnect();
     deleteLater();
 }
 
@@ -67,7 +67,7 @@ void MockLink::readBytes(void)
     // FIXME: This is a bad virtual from LinkInterface?
 }
 
-bool MockLink::connect(void)
+bool MockLink::_connect(void)
 {
     _connected = true;
     
@@ -79,7 +79,7 @@ bool MockLink::connect(void)
     return true;
 }
 
-bool MockLink::disconnect(void)
+bool MockLink::_disconnect(void)
 {
     _connected = false;
     exit();
