@@ -39,6 +39,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
 #include <QQuickView>
+#include <QDesktopWidget>
+
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -69,8 +71,8 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 #include "QGCUASFileViewMulti.h"
-#include <QDesktopWidget>
 #include "QGCCore.h"
+#include "QGCFileDialog.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -137,7 +139,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
     
     connect(mavlink, SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
-    connect(mavlink, &MAVLinkProtocol::saveTempFlightDataLog, this, &MainWindow::_saveTempFlightDataLog);
+    connect(mavlink, SIGNAL(saveTempFlightDataLog(QString)), this, SLOT(_saveTempFlightDataLog(QString)));
     
     loadSettings();
     
@@ -839,7 +841,7 @@ void MainWindow::createCustomWidget()
 void MainWindow::loadCustomWidget()
 {
     QString widgetFileExtension(".qgw");
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
+    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
     if (fileName != "") loadCustomWidget(fileName);
 }
 void MainWindow::loadCustomWidget(const QString& fileName, int view)
@@ -1020,7 +1022,7 @@ void MainWindow::startVideoCapture()
     QString format = "bmp";
     QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
 
-    QString screenFileName = QFileDialog::getSaveFileName(this, tr("Save As"),
+    QString screenFileName = QGCFileDialog::getSaveFileName(this, tr("Save As"),
                                                           initialPath,
                                                           tr("%1 Files (*.%2);;All Files (*)")
                                                           .arg(format.toUpper())
@@ -1825,7 +1827,7 @@ void MainWindow::_saveTempFlightDataLog(QString tempLogfile)
 {
     if (qgcApp()->promptFlightDataSave()) {
         _hideSplashScreen();
-        QString saveFilename = QFileDialog::getSaveFileName(this,
+        QString saveFilename = QGCFileDialog::getSaveFileName(this,
                                                             tr("Select file to save Flight Data Log"),
                                                             qgcApp()->mavlinkLogFilesLocation(),
                                                             tr("Flight Data Log (*.mavlink)"));
