@@ -853,7 +853,7 @@ void MAVLinkSimulationLink::readBytes()
  * @return True if connection has been disconnected, false if connection
  * couldn't be disconnected.
  **/
-bool MAVLinkSimulationLink::disconnect()
+bool MAVLinkSimulationLink::_disconnect(void)
 {
 
     if(isConnected())
@@ -877,7 +877,7 @@ bool MAVLinkSimulationLink::disconnect()
  * @return True if connection has been established, false if connection
  * couldn't be established.
  **/
-bool MAVLinkSimulationLink::connect()
+bool MAVLinkSimulationLink::_connect(void)
 {
     _isConnected = true;
     emit connected();
@@ -889,36 +889,6 @@ bool MAVLinkSimulationLink::connect()
 //    MAVLinkSimulationMAV* mav2 = new MAVLinkSimulationMAV(this, 2, 47.375, 8.548, 1);
 //    Q_UNUSED(mav2);
     //    timer->start(rate);
-    return true;
-}
-
-/**
- * Connect the link.
- *
- * @param connect true connects the link, false disconnects it
- * @return True if connection has been established, false if connection
- * couldn't be established.
- **/
-void MAVLinkSimulationLink::connectLink()
-{
-    this->connect();
-}
-
-/**
- * Connect the link.
- *
- * @param connect true connects the link, false disconnects it
- * @return True if connection has been established, false if connection
- * couldn't be established.
- **/
-bool MAVLinkSimulationLink::connectLink(bool connect)
-{
-    _isConnected = connect;
-
-    if(connect) {
-        this->connect();
-    }
-
     return true;
 }
 
