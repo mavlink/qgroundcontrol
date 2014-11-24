@@ -7,7 +7,7 @@
 
 #include "QGCUASParamManagerInterface.h"
 #include "UASInterface.h"
-
+#include "QGCCore.h"
 
 QGCBaseParamWidget::QGCBaseParamWidget(QWidget *parent) :
     QWidget(parent),
@@ -99,7 +99,7 @@ void QGCBaseParamWidget::saveParametersToFile()
 {
     if (!mav)
         return;
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./parameters.txt", tr("Parameter File (*.txt)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), qgcApp()->savedParameterFilesLocation(), tr("Parameter File (*.txt)"));
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         return;
@@ -116,7 +116,7 @@ void QGCBaseParamWidget::loadParametersFromFile()
     if (!mav)
         return;
 
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Parameter file (*.txt)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), qgcApp()->savedParameterFilesLocation(), tr("Parameter file (*.txt)"));
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
