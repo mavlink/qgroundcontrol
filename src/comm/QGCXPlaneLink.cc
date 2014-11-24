@@ -624,7 +624,8 @@ void QGCXPlaneLink::readBytes()
 
 				fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
             }
-            else if (p.index == 6 && xPlaneVersion == 10)
+            // atmospheric pressue aircraft for XPlane 9 and 10
+            else if (p.index == 6)
             {
                 // inHg to hPa (hecto Pascal / millibar)
                 abs_pressure = p.f[0] * 33.863886666718317f;
