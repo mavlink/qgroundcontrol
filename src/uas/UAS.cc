@@ -3375,8 +3375,13 @@ void UAS::addLink(LinkInterface* link)
 void UAS::removeLink(QObject* object)
 {
     // Be careful of the fact that by the time this signal makes it through the queue
-    // the link object has already been destructed.
-    links->removeAt(links->indexOf((LinkInterface*)object));
+    // the link object has already been destructed. So no dynamic_cast for example.
+    
+    LinkInterface* link = (LinkInterface*)object;
+    
+    int index = links->indexOf(link);
+    Q_ASSERT(index != -1);
+    links->removeAt(index);
 }
 
 /**

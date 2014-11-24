@@ -301,7 +301,6 @@ void UASUnitTest::signalWayPoint_test()
 
 void UASUnitTest::signalUASLink_test()
 {
-
     QSignalSpy spy(uas, SIGNAL(modeChanged(int,QString,QString)));
     uas->setMode(2, 0);
     QCOMPARE(spy.count(), 0);// not solve for UAS not receiving message from UAS
@@ -347,7 +346,7 @@ void UASUnitTest::signalUASLink_test()
     delete link2;
 
     QCOMPARE(LinkManager::instance()->getLinks().count(), 1);
-    QCOMPARE(uas->getLinks()->count(), 2);
+    QCOMPARE(uas->getLinks()->count(), 1);
 
     QCOMPARE(static_cast<LinkInterface*>(LinkManager::instance()->getLinks().at(0))->getId(),
              static_cast<LinkInterface*>(uas->getLinks()->at(0))->getId());
