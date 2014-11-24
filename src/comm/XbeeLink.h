@@ -23,6 +23,11 @@ public: // virtual functions from XbeeLinkInterface
 	QString getPortName() const;
 	void requestReset() { }
 	int getBaudRate() const;
+    
+    // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
+    // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
+    bool connect(void);
+    bool disconnect(void);
 
 public slots: // virtual functions from XbeeLinkInterface
 	bool setPortName(QString portName);
@@ -63,7 +68,11 @@ protected:
 	quint32 m_addrLow;
 
 private:
-	bool hardwareConnect();
+    // From LinkInterface
+    virtual bool _connect(void);
+    virtual bool _disconnect(void);
+
+    bool hardwareConnect();
 	//void CALLTYPE portCallback(xbee_con *XbeeCon, xbee_pkt *XbeePkt);
 };
 

@@ -45,9 +45,13 @@
 
 //#define TCPLINK_READWRITE_DEBUG   // Use to debug data reads/writes
 
+class TCPLinkUnitTest;
+
 class TCPLink : public LinkInterface
 {
     Q_OBJECT
+    
+    friend class TCPLinkUnitTest;
     
 public:
     TCPLink(QHostAddress hostAddress = QHostAddress::LocalHost, quint16 socketPort = 5760);
@@ -65,14 +69,17 @@ public:
     virtual int     getId(void) const;
     virtual QString getName(void) const;
     virtual bool    isConnected(void) const;
-    virtual bool    connect(void);
-    virtual bool    disconnect(void);
     virtual void    requestReset(void) {};
 
     // Extensive statistics for scientific purposes
     qint64 getConnectionSpeed() const;
     qint64 getCurrentInDataRate() const;
     qint64 getCurrentOutDataRate() const;
+    
+    // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
+    // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
+    bool connect(void);
+    bool disconnect(void);
     
 public slots:
     void setHostAddress(const QString& hostAddress);
@@ -95,6 +102,10 @@ protected:
     virtual void run(void);
     
 private:
+    // From LinkInterface
+    virtual bool _connect(void);
+    virtual bool _disconnect(void);
+
     void _resetName(void);
 	bool _hardwareConnect(void);
 #ifdef TCPLINK_READWRITE_DEBUG

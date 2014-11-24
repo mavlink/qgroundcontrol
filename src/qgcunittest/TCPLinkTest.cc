@@ -113,7 +113,7 @@ void TCPLinkUnitTest::_connectFail_test(void)
     
     // With the new threading model connect will always succeed. We only get an error signal
     // for a failed connected.
-    QCOMPARE(_link->connect(), true);
+    QCOMPARE(_link->_connect(), true);
 
     // Make sure we get a linkError signal with the right link name
     QCOMPARE(_multiSpy->waitForSignalByIndex(communicationErrorSignalIndex, 1000), true);
@@ -122,11 +122,11 @@ void TCPLinkUnitTest::_connectFail_test(void)
     QCOMPARE(arguments.at(0).toString(), _link->getName());
     _multiSpy->clearSignalByIndex(communicationErrorSignalIndex);
     
-    _link->disconnect();
+    _link->_disconnect();
 
     // Try to connect again to make sure everything was cleaned up correctly from previous failed connection
     
-    QCOMPARE(_link->connect(), true);
+    QCOMPARE(_link->_connect(), true);
     
     // Make sure we get a linkError signal with the right link name
     QCOMPARE(_multiSpy->waitForSignalByIndex(communicationErrorSignalIndex, 1000), true);
@@ -147,7 +147,7 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     Q_CHECK_PTR(server);
     
     // Connect to the server
-    QCOMPARE(_link->connect(), true);
+    QCOMPARE(_link->_connect(), true);
     
     // Make sure we get the two different connected signals
     QCOMPARE(_multiSpy->waitForSignalByIndex(connectedSignalIndex, 10000), true);
@@ -184,7 +184,7 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     _multiSpy->clearAllSignals();
 
     // Disconnect the link
-    _link->disconnect();
+    _link->_disconnect();
     
     // Make sure we get the disconnected signals on link side
     QCOMPARE(_multiSpy->waitForSignalByIndex(disconnectedSignalIndex, 1000), true);
@@ -196,7 +196,7 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     // Try to connect again to make sure everything was cleaned up correctly from previous connection
     
     // Connect to the server
-    QCOMPARE(_link->connect(), true);
+    QCOMPARE(_link->_connect(), true);
     
     // Make sure we get the two different connected signals
     QCOMPARE(_multiSpy->waitForSignalByIndex(connectedSignalIndex, 1000), true);

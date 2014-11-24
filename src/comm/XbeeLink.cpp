@@ -35,7 +35,7 @@ XbeeLink::~XbeeLink()
 		delete m_portName;
 		m_portName = NULL;
 	}
-	this->disconnect();
+	_disconnect();
 }
 
 QString XbeeLink::getPortName() const
@@ -58,7 +58,7 @@ bool XbeeLink::setPortName(QString portName)
 	bool reconnect(false);
 	if(this->m_connected)
 	{
-		this->disconnect();
+		_disconnect();
 		reconnect = true;
 	}
 	if(m_portName)
@@ -87,7 +87,7 @@ bool XbeeLink::setPortName(QString portName)
 	bool retVal(true);
 	if(reconnect)
 	{
-		retVal = this->connect();
+		retVal = _connect();
 	}
 
 	return retVal;
@@ -98,14 +98,14 @@ bool XbeeLink::setBaudRate(int rate)
 	bool reconnect(false);
 	if(this->m_connected)
 	{
-		this->disconnect();
+		_disconnect();
 		reconnect = true;
 	}
 	bool retVal(true);
 	this->m_baudRate = rate;
 	if(reconnect)
 	{
-		retVal = this->connect();
+		retVal = _connect();
 	}
 	return retVal;
 }
@@ -145,7 +145,7 @@ bool XbeeLink::hardwareConnect()
 	emit tryConnectBegin(true);
 	if(this->isConnected())
 	{
-		this->disconnect();
+		_disconnect();
 	}
 	if (*this->m_portName == '\0')
 	{
@@ -166,14 +166,14 @@ bool XbeeLink::hardwareConnect()
 	return true;
 }
 
-bool XbeeLink::connect()
+bool XbeeLink::_connect(void)
 {
 	if (this->isRunning()) this->disconnect();
     this->start(LowPriority);
     return true;
 }
 
-bool XbeeLink::disconnect()
+bool XbeeLink::_disconnect(void)
 {
 	if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
 

@@ -38,6 +38,8 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 #include <QMutexLocker>
 #include <QMetaType>
 
+class LinkManager;
+
 /**
 * The link interface defines the interface for all links used to communicate
 * with the groundstation application.
@@ -46,6 +48,10 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 class LinkInterface : public QThread
 {
     Q_OBJECT
+    
+    // Only LinkManager is allowed to _connect or _disconnect a link
+    friend class LinkManager;
+    
 public:
     LinkInterface() :
         QThread(0)
@@ -132,20 +138,6 @@ public:
     {
         return getCurrentDataRate(outDataIndex, outDataWriteTimes, outDataWriteAmounts);
     }
-
-    /**
-     * @brief Connect this interface logically
-     *
-     * @return True if connection could be established, false otherwise
-     **/
-    virtual bool connect() = 0;
-
-    /**
-     * @brief Disconnect this interface logically
-     *
-     * @return True if connection could be terminated, false otherwise
-     **/
-    virtual bool disconnect() = 0;
 
 public slots:
 
@@ -323,6 +315,20 @@ protected slots:
      **/
     virtual void readBytes() = 0;
 
+private:
+    /**
+     * @brief Connect this interface logically
+     *
+     * @return True if connection could be established, false otherwise
+     **/
+    virtual bool _connect(void) = 0;
+    
+    /**
+     * @brief Disconnect this interface logically
+     *
+     * @return True if connection could be terminated, false otherwise
+     **/
+    virtual bool _disconnect(void) = 0;
 };
 
 #endif // _LINKINTERFACE_H_

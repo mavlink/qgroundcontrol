@@ -49,9 +49,12 @@ public:
     virtual void requestReset(void){ }
     virtual bool isConnected(void) const { return _connected; }
     virtual qint64 getConnectionSpeed(void) const { return 100000000; }
-    virtual bool connect(void);
-    virtual bool disconnect(void);
     virtual qint64 bytesAvailable(void) { return 0; }
+    
+    // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
+    // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
+    bool connect(void);
+    bool disconnect(void);
     
 signals:
     void error(const QString& errorMsg);
@@ -72,6 +75,10 @@ private slots:
     void _run50HzTasks(void);
     
 private:
+    // From LinkInterface
+    virtual bool _connect(void);
+    virtual bool _disconnect(void);
+    
     // QThread override
     virtual void run(void);
     

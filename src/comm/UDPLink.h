@@ -78,6 +78,11 @@ public:
     void run();
 
     int getId() const;
+    
+    // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
+    // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
+    bool connect(void);
+    bool disconnect(void);
 
 public slots:
     void setAddress(QHostAddress host);
@@ -96,8 +101,6 @@ public slots:
      * @param size The size of the bytes array
      **/
     void writeBytes(const char* data, qint64 length);
-    bool connect();
-    bool disconnect();
 
 protected:
     QString name;
@@ -114,6 +117,10 @@ protected:
     void setName(QString name);
 
 private:
+    // From LinkInterface
+    virtual bool _connect(void);
+    virtual bool _disconnect(void);
+
 	bool hardwareConnect(void);
 
 signals:
