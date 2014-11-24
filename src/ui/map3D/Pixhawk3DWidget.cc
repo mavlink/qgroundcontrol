@@ -48,11 +48,6 @@
 #include "QGC.h"
 #include "gpl.h"
 
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-#include <tr1/memory>
-#include <pixhawk/pixhawk.pb.h>
-#endif
-
 Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
  : kMessageTimeout(4.0)
  , mMode(DEFAULT_MODE)
@@ -148,10 +143,6 @@ Pixhawk3DWidget::systemCreated(UASInterface *uas)
             this, SLOT(setpointChanged(int,float,float,float,float)));
     connect(uas, SIGNAL(homePositionChanged(int,double,double,double)),
             this, SLOT(homePositionChanged(int,double,double,double)));
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    connect(uas, SIGNAL(overlayChanged(UASInterface*)),
-            this, SLOT(addOverlay(UASInterface*)));
-#endif
 
 //    mSystemContainerMap[systemId].gpsLocalOrigin() = QVector3D(47.397786, 8.544476, 428);
     initializeSystem(systemId, uas->getColor());
@@ -633,43 +624,6 @@ Pixhawk3DWidget::loadTerrainModel(void)
     }
 }
 
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-void
-Pixhawk3DWidget::addOverlay(UASInterface *uas)
-{
-    int systemId = uas->getUASID();
-
-    if (!mSystemContainerMap.contains(systemId))
-    {
-        return;
-    }
-
-    SystemContainer& systemData = mSystemContainerMap[systemId];
-
-    qreal receivedTimestamp;
-    px::GLOverlay overlay = uas->getOverlay(receivedTimestamp);
-
-    QString overlayName = QString::fromStdString(overlay.name());
-
-    osg::ref_ptr<SystemGroupNode>& systemNode = m3DWidget->systemGroup(systemId);
-
-    if (!systemData.overlayNodeMap().contains(overlayName))
-    {
-        osg::ref_ptr<GLOverlayGeode> overlayNode = new GLOverlayGeode;
-        systemData.overlayNodeMap().insert(overlayName, overlayNode);
-
-        systemNode->allocentricMap()->addChild(overlayNode, false);
-        systemNode->rollingMap()->addChild(overlayNode, false);
-
-        emit overlayCreatedSignal(systemId, overlayName);
-    }
-
-    osg::ref_ptr<GLOverlayGeode>& overlayNode = systemData.overlayNodeMap()[overlayName];
-    overlayNode->setOverlay(overlay);
-    overlayNode->setMessageTimestamp(receivedTimestamp);
-}
-#endif
-
 void
 Pixhawk3DWidget::selectTargetHeading(void)
 {
@@ -1123,42 +1077,6 @@ Pixhawk3DWidget::updateWidget(void)
                                   systemViewParams->displayTrails());
         rollingMap->setChildValue(systemData.waypointGroupNode(),
                                   systemViewParams->displayWaypoints());
-
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-        rollingMap->setChildValue(systemData.obstacleGroupNode(),
-                                  systemViewParams->displayObstacleList());
-
-        QMutableMapIterator<QString, osg::ref_ptr<GLOverlayGeode> > itOverlay(systemData.overlayNodeMap());
-        while (itOverlay.hasNext())
-        {
-            itOverlay.next();
-
-            osg::ref_ptr<GLOverlayGeode>& overlayNode = itOverlay.value();
-
-            bool displayOverlay = systemViewParams->displayOverlay().value(itOverlay.key());
-
-            bool visible;
-            visible = (overlayNode->coordinateFrameType() == px::GLOverlay::GLOBAL) &&
-                      displayOverlay &&
-                      (QGC::groundTimeSeconds() - overlayNode->messageTimestamp() < kMessageTimeout);
-
-            allocentricMap->setChildValue(overlayNode, visible);
-
-            visible = (overlayNode->coordinateFrameType() == px::GLOverlay::LOCAL) &&
-                      displayOverlay &&
-                      (QGC::groundTimeSeconds() - overlayNode->messageTimestamp() < kMessageTimeout);;
-
-            rollingMap->setChildValue(overlayNode, visible);
-        }
-
-        rollingMap->setChildValue(systemData.plannedPathNode(),
-                                  systemViewParams->displayPlannedPath());
-
-        m3DWidget->hudGroup()->setChildValue(systemData.depthImageNode(),
-                                             systemViewParams->displayRGBD());
-        m3DWidget->hudGroup()->setChildValue(systemData.rgbImageNode(),
-                                             systemViewParams->displayRGBD());
-#endif
     }
 
     if (mFollowCameraId != -1)
@@ -1248,41 +1166,6 @@ Pixhawk3DWidget::updateWidget(void)
         {
             updateWaypoints(uas, frame, systemData.waypointGroupNode());
         }
-
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-        if (systemViewParams->displayObstacleList())
-        {
-            updateObstacles(uas, frame, x, y, z, systemData.obstacleGroupNode());
-        }
-        if (systemViewParams->displayPlannedPath())
-        {
-            updatePlannedPath(uas, frame, x, y, z, systemData.plannedPathNode());
-        }
-        if (systemViewParams->displayPointCloud())
-        {
-            updatePointCloud(uas, frame, x, y, z, systemData.pointCloudNode(),
-                             systemViewParams->colorPointCloudByDistance());
-        }
-        if (systemViewParams->displayRGBD())
-        {
-            updateRGBD(uas, frame, systemData.rgbImageNode(),
-                       systemData.depthImageNode());
-        }
-
-        if (frame == MAV_FRAME_LOCAL_NED &&
-            mGlobalViewParams->imageryType() != Imagery::BLANK_MAP &&
-            !systemData.gpsLocalOrigin().isNull() &&
-            mActiveUAS->getUASID() == systemId)
-        {
-            const QVector3D& gpsLocalOrigin = systemData.gpsLocalOrigin();
-
-            double utmX, utmY;
-            QString utmZone;
-            Imagery::LLtoUTM(gpsLocalOrigin.x(), gpsLocalOrigin.y(), utmX, utmY, utmZone);
-
-            updateImagery(utmX, utmY, utmZone, frame);
-        }
-#endif
     }
 
     if (frame == MAV_FRAME_GLOBAL &&
@@ -1647,17 +1530,6 @@ Pixhawk3DWidget::initializeSystem(int systemId, const QColor& systemColor)
     systemData.waypointGroupNode() = new WaypointGroupNode(systemColor);
     systemData.waypointGroupNode()->init();
     systemNode->rollingMap()->addChild(systemData.waypointGroupNode(), false);
-
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    systemData.obstacleGroupNode() = new ObstacleGroupNode;
-    systemData.obstacleGroupNode()->init();
-    systemNode->rollingMap()->addChild(systemData.obstacleGroupNode(), false);
-
-    // generate path model
-    systemData.plannedPathNode() = new osg::Geode;
-    systemData.plannedPathNode()->addDrawable(createTrail(osg::Vec4(1.0f, 0.8f, 0.0f, 1.0f)));
-    systemNode->rollingMap()->addChild(systemData.plannedPathNode(), false);
-#endif
 
     systemData.rgbImageNode() = new ImageWindowGeode;
     systemData.rgbImageNode()->init("RGB Image", osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
@@ -2389,229 +2261,6 @@ Pixhawk3DWidget::updateWaypoints(UASInterface* uas, MAV_FRAME frame,
 {
     waypointGroupNode->update(uas, frame);
 }
-
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-
-void
-Pixhawk3DWidget::updateObstacles(UASInterface* uas, MAV_FRAME frame,
-                                 double robotX, double robotY, double robotZ,
-                                 osg::ref_ptr<ObstacleGroupNode>& obstacleGroupNode)
-{
-    if (frame == MAV_FRAME_GLOBAL)
-    {
-        obstacleGroupNode->clear();
-        return;
-    }
-
-    qreal receivedTimestamp;
-    px::ObstacleList obstacleList = uas->getObstacleList(receivedTimestamp);
-
-    if (QGC::groundTimeSeconds() - receivedTimestamp < kMessageTimeout)
-    {
-        obstacleGroupNode->update(robotX, robotY, robotZ, obstacleList);
-    }
-    else
-    {
-        obstacleGroupNode->clear();
-    }
-}
-
-void
-Pixhawk3DWidget::updatePlannedPath(UASInterface* uas, MAV_FRAME frame,
-                                   double robotX, double robotY, double robotZ,
-                                   osg::ref_ptr<osg::Geode>& plannedPathNode)
-{
-    Q_UNUSED(frame);
-
-    qreal receivedTimestamp;
-    px::Path path = uas->getPath(receivedTimestamp);
-
-    osg::Geometry* geometry = plannedPathNode->getDrawable(0)->asGeometry();
-    osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
-    osg::Vec4Array* colorArray = reinterpret_cast<osg::Vec4Array*>(geometry->getColorArray());
-
-    geometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
-    osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
-    linewidth->setWidth(2.0f);
-    geometry->getStateSet()->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
-
-    colorArray->clear();
-
-    osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
-
-    if (QGC::groundTimeSeconds() - receivedTimestamp < kMessageTimeout)
-    {
-        // find path length
-        float length = 0.0f;
-        for (int i = 0; i < path.waypoints_size() - 1; ++i)
-        {
-            const px::Waypoint& wp0 = path.waypoints(i);
-            const px::Waypoint& wp1 = path.waypoints(i+1);
-
-            length += qgc::hypot3f(wp0.x() - wp1.x(),
-                                   wp0.y() - wp1.y(),
-                                   wp0.z() - wp1.z());
-        }
-
-        // build path
-        if (path.waypoints_size() > 0)
-        {
-            const px::Waypoint& wp0 = path.waypoints(0);
-
-            vertices->push_back(osg::Vec3d(wp0.y() - robotY,
-                                           wp0.x() - robotX,
-                                           -(wp0.z() - robotZ)));
-
-            float r, g, b;
-            qgc::colormap("autumn", 0, r, g, b);
-            colorArray->push_back(osg::Vec4d(r, g, b, 1.0f));
-        }
-
-        float lengthCurrent = 0.0f;
-        for (int i = 0; i < path.waypoints_size() - 1; ++i)
-        {
-            const px::Waypoint& wp0 = path.waypoints(i);
-            const px::Waypoint& wp1 = path.waypoints(i+1);
-
-            lengthCurrent += qgc::hypot3f(wp0.x() - wp1.x(),
-                                          wp0.y() - wp1.y(),
-                                          wp0.z() - wp1.z());
-
-            vertices->push_back(osg::Vec3d(wp1.y() - robotY,
-                                           wp1.x() - robotX,
-                                           -(wp1.z() - robotZ)));
-
-            int colorIdx = lengthCurrent / length * 127.0f;
-
-            float r, g, b;
-            qgc::colormap("autumn", colorIdx, r, g, b);
-            colorArray->push_back(osg::Vec4f(r, g, b, 1.0f));
-        }
-    }
-
-    geometry->setVertexArray(vertices);
-    drawArrays->setFirst(0);
-    drawArrays->setCount(vertices->size());
-    geometry->dirtyBound();
-}
-
-void
-Pixhawk3DWidget::updateRGBD(UASInterface* uas, MAV_FRAME frame,
-                            osg::ref_ptr<ImageWindowGeode>& rgbImageNode,
-                            osg::ref_ptr<ImageWindowGeode>& depthImageNode)
-{
-    Q_UNUSED(frame);
-
-    qreal receivedTimestamp;
-    px::RGBDImage rgbdImage = uas->getRGBDImage(receivedTimestamp);
-
-    if (rgbdImage.rows() > 0 && rgbdImage.cols() > 0 &&
-        QGC::groundTimeSeconds() - receivedTimestamp < kMessageTimeout)
-    {
-        rgbImageNode->image()->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
-                                        GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE,
-                                        reinterpret_cast<unsigned char *>(&(*(rgbdImage.mutable_imagedata1()))[0]),
-                                        osg::Image::NO_DELETE);
-        rgbImageNode->image()->dirty();
-
-        QByteArray coloredDepth(rgbdImage.cols() * rgbdImage.rows() * 3, 0);
-        for (uint32_t r = 0; r < rgbdImage.rows(); ++r)
-        {
-            const float* depth = reinterpret_cast<const float*>(rgbdImage.imagedata2().c_str() + r * rgbdImage.step2());
-            uint8_t* pixel = reinterpret_cast<uint8_t*>(coloredDepth.data()) + r * rgbdImage.cols() * 3;
-            for (uint32_t c = 0; c < rgbdImage.cols(); ++c)
-            {
-                if (depth[c] != 0)
-                {
-                    int idx = fminf(depth[c], 7.0f) / 7.0f * 127.0f;
-                    idx = 127 - idx;
-
-                    float r, g, b;
-                    qgc::colormap("jet", idx, r, g, b);
-                    pixel[0] = r * 255.0f;
-                    pixel[1] = g * 255.0f;
-                    pixel[2] = b * 255.0f;
-                }
-
-                pixel += 3;
-            }
-        }
-
-        depthImageNode->image()->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
-                                          GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
-                                          reinterpret_cast<unsigned char *>(coloredDepth.data()),
-                                          osg::Image::NO_DELETE);
-        depthImageNode->image()->dirty();
-    }
-}
-
-void
-Pixhawk3DWidget::updatePointCloud(UASInterface* uas, MAV_FRAME frame,
-                                  double robotX, double robotY, double robotZ,
-                                  osg::ref_ptr<osg::Geode>& pointCloudNode,
-                                  bool colorPointCloudByDistance)
-{
-    Q_UNUSED(frame);
-
-    qreal receivedTimestamp;
-    px::PointCloudXYZRGB pointCloud = uas->getPointCloud(receivedTimestamp);
-
-    osg::Geometry* geometry = pointCloudNode->getDrawable(0)->asGeometry();
-    osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(geometry->getVertexArray());
-    osg::Vec4Array* colors = static_cast<osg::Vec4Array*>(geometry->getColorArray());
-
-    if (QGC::groundTimeSeconds() - receivedTimestamp > kMessageTimeout)
-    {
-        geometry->removePrimitiveSet(0, geometry->getNumPrimitiveSets());
-        return;
-    }
-
-    for (int i = 0; i < pointCloud.points_size(); ++i)
-    {
-        const px::PointCloudXYZRGB_PointXYZRGB& p = pointCloud.points(i);
-
-        double x = p.x() - robotX;
-        double y = p.y() - robotY;
-        double z = p.z() - robotZ;
-
-
-        (*vertices)[i].set(y, x, -z);
-
-        if (!colorPointCloudByDistance)
-        {
-            float rgb = p.rgb();
-
-            float b = *(reinterpret_cast<unsigned char*>(&rgb)) / 255.0f;
-            float g = *(1 + reinterpret_cast<unsigned char*>(&rgb)) / 255.0f;
-            float r = *(2 + reinterpret_cast<unsigned char*>(&rgb)) / 255.0f;
-
-            (*colors)[i].set(r, g, b, 1.0f);
-        }
-        else
-        {
-            double dist = sqrt(x * x + y * y + z * z);
-            int colorIndex = static_cast<int>(fmin(dist / 7.0 * 127.0, 127.0));
-
-            float r, g, b;
-            qgc::colormap("jet", colorIndex, r, g, b);
-
-            (*colors)[i].set(r, g, b, 1.0f);
-        }
-    }
-
-    if (geometry->getNumPrimitiveSets() == 0)
-    {
-        geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS,
-                                  0, pointCloud.points_size()));
-    }
-    else
-    {
-        osg::DrawArrays* drawarrays = static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
-        drawarrays->setCount(pointCloud.points_size());
-    }
-}
-
-#endif
 
 int
 Pixhawk3DWidget::findWaypoint(const QPoint& mousePos)

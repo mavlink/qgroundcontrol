@@ -10,11 +10,6 @@
 #include "ImageWindowGeode.h"
 #include "WaypointGroupNode.h"
 
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-#include "GLOverlayGeode.h"
-#include "ObstacleGroupNode.h"
-#endif
-
 class SystemContainer
 {
 public:
@@ -39,11 +34,6 @@ public:
     osg::ref_ptr<osg::Node>& targetNode(void);
     osg::ref_ptr<osg::Geode>& trailNode(void);
     osg::ref_ptr<WaypointGroupNode>& waypointGroupNode(void);
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    osg::ref_ptr<ObstacleGroupNode>& obstacleGroupNode(void);
-    QMap<QString,osg::ref_ptr<GLOverlayGeode> >& overlayNodeMap(void);
-    osg::ref_ptr<osg::Geode>& plannedPathNode(void);
-#endif
 
 private:
     QVector3D mGPSLocalOrigin;
@@ -66,11 +56,6 @@ private:
     osg::ref_ptr<osg::Node> mTargetNode;
     osg::ref_ptr<osg::Geode> mTrailNode;
     osg::ref_ptr<WaypointGroupNode> mWaypointGroupNode;
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    osg::ref_ptr<ObstacleGroupNode> mObstacleGroupNode;
-    QMap<QString,osg::ref_ptr<GLOverlayGeode> > mOverlayNodeMap;
-    osg::ref_ptr<osg::Geode> mPlannedPathNode;
-#endif
 };
 
 #endif // SYSTEMCONTAINER_H

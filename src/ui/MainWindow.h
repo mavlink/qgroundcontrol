@@ -48,7 +48,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASListWidget.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
-#include "ObjectDetectionView.h"
 #include "submainwindow.h"
 #include "input/JoystickInput.h"
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
@@ -57,7 +56,6 @@ This file is part of the QGROUNDCONTROL project
 #include "DebugConsole.h"
 #include "ParameterInterface.h"
 #include "HDDisplay.h"
-#include "WatchdogControl.h"
 #include "HSIDisplay.h"
 #include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
