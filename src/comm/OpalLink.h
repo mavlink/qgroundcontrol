@@ -79,15 +79,16 @@ public:
     qint64 getCurrentInDataRate() const;
     qint64 getCurrentOutDataRate() const;
 
-    bool connect();
-
-    bool disconnect();
-
     void run();
 
     int getOpalInstID() {
         return static_cast<int>(opalInstID);
     }
+    
+    // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
+    // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
+    bool connect(void);
+    bool disconnect(void);
 
 public slots:
 
@@ -144,6 +145,11 @@ protected:
     bool sendRCValues;
     bool sendRawController;
     bool sendPosition;
+    
+private:
+    // From LinkInterface
+    virtual bool _connect(void);
+    virtual bool _disconnect(void);
 };
 
 #endif // OPALLINK_H

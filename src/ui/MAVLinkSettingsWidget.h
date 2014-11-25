@@ -18,10 +18,6 @@ public:
     ~MAVLinkSettingsWidget();
 
 public slots:
-    /** @brief Update the log file name display */
-    void updateLogfileName(const QString& fileName);
-    /** @brief Start the file select dialog for the log file */
-    void chooseLogfileName();
     /** @brief Enable DroneOS forwarding */
     void enableDroneOS(bool enable);
 

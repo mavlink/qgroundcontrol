@@ -30,7 +30,7 @@ void QGCUnconnectedInfoWidget::simulate()
     foreach(LinkInterface* link, links) {
         MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
         if (sim) {
-            sim->connectLink();
+            LinkManager::instance()->connectLink(sim);
         }
     }
 }

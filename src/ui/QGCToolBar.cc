@@ -769,24 +769,25 @@ void QGCToolBar::updateLinkState(bool connected)
 
 void QGCToolBar::connectLink(bool connect)
 {
+    LinkManager* linkMgr = LinkManager::instance();
+    Q_ASSERT(linkMgr);
+    
     // No serial port yet present
-    if (connect && LinkManager::instance()->getSerialLinks().count() == 0)
-    {
+    if (connect && linkMgr->getSerialLinks().count() == 0) {
         MainWindow::instance()->addLink();
-        currentLink = LinkManager::instance()->getLinks().last();
+        currentLink = linkMgr->getLinks().last();
     } else if (connect) {
         SerialLink *link = qobject_cast<SerialLink*>(currentLink);
-        if (link)
-        {
+        
+        if (link) {
             link->setPortName(portComboBox->itemData(portComboBox->currentIndex()).toString().trimmed());
             int baud = baudcomboBox->currentText().toInt();
             link->setBaudRate(baud);
             QObject::connect(link, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
-            link->connect();
+            linkMgr->connectLink(link);
         }
-
     } else if (!connect && currentLink) {
-        currentLink->disconnect();
+        linkMgr->disconnectLink(currentLink);
         QObject::disconnect(currentLink, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
     }
 

@@ -39,6 +39,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
 #include <QQuickView>
+#include <QDesktopWidget>
+
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -69,7 +71,8 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 #include "QGCUASFileViewMulti.h"
-#include <QDesktopWidget>
+#include "QGCCore.h"
+#include "QGCFileDialog.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -77,41 +80,38 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LogCompressor.h"
 
+static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
+
 // Set up some constants
 const QString MainWindow::defaultDarkStyle = ":files/styles/style-dark.css";
 const QString MainWindow::defaultLightStyle = ":files/styles/style-light.css";
 
-MainWindow* MainWindow::instance_mode(QSplashScreen* screen, enum MainWindow::CUSTOM_MODE mode)
+MainWindow* MainWindow::_create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode)
 {
-    static MainWindow* _instance = 0;
-    if (_instance == 0)
-    {
-        _instance = new MainWindow();
-        _instance->setCustomMode(mode);
-        if (screen)
-        {
-            connect(_instance, SIGNAL(initStatusChanged(QString,int,QColor)),
-                    screen, SLOT(showMessage(QString,int,QColor)));
-        }
-        _instance->init();
-    }
+    Q_ASSERT(_instance == NULL);
+    Q_ASSERT(splashScreen);
+    
+    new MainWindow(splashScreen, mode);
+    
+    // _instance is set in constructor
+    Q_ASSERT(_instance);
+
     return _instance;
 }
 
-MainWindow* MainWindow::instance(QSplashScreen* screen)
+MainWindow* MainWindow::instance(void)
 {
-    return instance_mode(screen, CUSTOM_MODE_UNCHANGED);
+    // QGCAppication should have already called _create. Singleton is only created by call to _create
+    // not here.
+    Q_ASSERT(_instance);
+    
+    return _instance;
 }
 
-/**
-* Create new mainwindow. The constructor instantiates all parts of the user
-* interface. It does NOT show the mainwindow. To display it, call the show()
-* method.
-*
-* @see QMainWindow::show()
-**/
-MainWindow::MainWindow(QWidget *parent):
-    QMainWindow(parent),
+/// @brief Private constructor for MainWindow. MainWindow singleton is only ever created
+///         by MainWindow::_create method. Hence no other code should have access to
+///         constructor.
+MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode) :
     currentView(VIEW_FLIGHT),
     currentStyle(QGC_MAINWINDOW_STYLE_DARK),
     aboutToCloseFlag(false),
@@ -121,19 +121,25 @@ MainWindow::MainWindow(QWidget *parent):
     autoReconnect(false),
     simulationLink(NULL),
     lowPowerMode(false),
-    customMode(CUSTOM_MODE_NONE),
-    menuActionHelper(new MenuActionHelper())
+    customMode(mode),
+    menuActionHelper(new MenuActionHelper()),
+    _splashScreen(splashScreen)
 {
+    Q_ASSERT(splashScreen);
+    
+    Q_ASSERT(_instance == NULL);
+    _instance = this;
+    
+    connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
+    
     this->setAttribute(Qt::WA_DeleteOnClose);
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
-    //TODO:  move protocol outside UI
-    connect(mavlink, SIGNAL(protocolStatusMessage(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
+    
+    connect(mavlink, SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
+    connect(mavlink, SIGNAL(saveTempFlightDataLog(QString)), this, SLOT(_saveTempFlightDataLog(QString)));
+    
     loadSettings();
-}
-
-void MainWindow::init()
-{
-
+    
     emit initStatusChanged(tr("Loading style"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     qApp->setStyle("plastique");
     loadStyle(currentStyle);
@@ -258,11 +264,15 @@ void MainWindow::init()
     // Connect link
     if (autoReconnect)
     {
+        LinkManager* linkMgr = LinkManager::instance();
+        Q_ASSERT(linkMgr);
+        
         SerialLink* link = new SerialLink();
+        
         // Add to registry
-        LinkManager::instance()->add(link);
-        LinkManager::instance()->addProtocol(link, mavlink);
-        link->connect();
+        linkMgr->add(link);
+        linkMgr->addProtocol(link, mavlink);
+        linkMgr->connectLink(link);
     }
 
     // Set low power mode
@@ -828,7 +838,7 @@ void MainWindow::createCustomWidget()
 void MainWindow::loadCustomWidget()
 {
     QString widgetFileExtension(".qgw");
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
+    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
     if (fileName != "") loadCustomWidget(fileName);
 }
 void MainWindow::loadCustomWidget(const QString& fileName, int view)
@@ -1009,7 +1019,7 @@ void MainWindow::startVideoCapture()
     QString format = "bmp";
     QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
 
-    QString screenFileName = QFileDialog::getSaveFileName(this, tr("Save As"),
+    QString screenFileName = QGCFileDialog::getSaveFileName(this, tr("Save As"),
                                                           initialPath,
                                                           tr("%1 Files (*.%2);;All Files (*)")
                                                           .arg(format.toUpper())
@@ -1119,24 +1129,16 @@ void MainWindow::showStatusMessage(const QString& status)
 
 void MainWindow::showCriticalMessage(const QString& title, const QString& message)
 {
-    QMessageBox msgBox(this);
-    msgBox.setIcon(QMessageBox::Critical);
-    msgBox.setText(title);
-    msgBox.setInformativeText(message);
-    msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.setDefaultButton(QMessageBox::Ok);
-    msgBox.exec();
+    _hideSplashScreen();
+    qDebug() << "Critical" << title << message;
+    QMessageBox::critical(this, title, message);
 }
 
 void MainWindow::showInfoMessage(const QString& title, const QString& message)
 {
-    QMessageBox msgBox(this);
-    msgBox.setIcon(QMessageBox::Information);
-    msgBox.setText(title);
-    msgBox.setInformativeText(message);
-    msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.setDefaultButton(QMessageBox::Ok);
-    msgBox.exec();
+    _hideSplashScreen();
+    qDebug() << "Information" << title << message;
+    QMessageBox::information(this, title, message);
 }
 
 /**
@@ -1273,52 +1275,37 @@ void MainWindow::connectCommonActions()
     connect(ui.actionSimulate, SIGNAL(triggered(bool)), this, SLOT(simulateLink(bool)));
 }
 
+void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
+{
+    if(!QDesktopServices::openUrl(QUrl(url))) {
+        QMessageBox::critical(this,
+                              tr("Could not open information in browser"),
+                              errorMessage);
+    }
+}
+
 void MainWindow::showHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/users/start")))
-    {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not open help in browser");
-        msgBox.setInformativeText("To get to the online help, please open http://qgroundcontrol.org/user_guide in a browser.");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
-    }
+    _openUrl("http://qgroundcontrol.org/users/start",
+             tr("To get to the online help, please open http://qgroundcontrol.org/user_guide in a browser."));
 }
 
 void MainWindow::showCredits()
 {
-    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/credits")))
-    {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not open credits in browser");
-        msgBox.setInformativeText("To get to the online help, please open http://qgroundcontrol.org/credits in a browser.");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
-    }
+    _openUrl("http://qgroundcontrol.org/credits",
+             tr("To get to the credits, please open http://qgroundcontrol.org/credits in a browser."));
 }
 
 void MainWindow::showRoadMap()
 {
-    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/dev/roadmap")))
-    {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not open roadmap in browser");
-        msgBox.setInformativeText("To get to the online help, please open http://qgroundcontrol.org/roadmap in a browser.");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
-    }
+    _openUrl("http://qgroundcontrol.org/dev/roadmap",
+             tr("To get to the online help, please open http://qgroundcontrol.org/roadmap in a browser."));
 }
 
 void MainWindow::showSettings()
 {
-    QGCSettingsWidget* settings = new QGCSettingsWidget(joystick, this);
-    settings->show();
+    SettingsDialog settings(joystick, this);
+    settings.exec();
 }
 
 LinkInterface* MainWindow::addLink()
@@ -1409,9 +1396,16 @@ void MainWindow::addLink(LinkInterface *link)
 }
 
 void MainWindow::simulateLink(bool simulate) {
-    if (!simulationLink)
-        simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
-    simulationLink->connectLink(simulate);
+    if (simulate) {
+        if (!simulationLink) {
+            simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
+            Q_CHECK_PTR(simulationLink);
+        }
+        LinkManager::instance()->connectLink(simulationLink);
+    } else {
+        Q_ASSERT(simulationLink);
+        LinkManager::instance()->disconnectLink(simulationLink);
+    }
 }
 
 void MainWindow::commsWidgetDestroyed(QObject *obj)
@@ -1678,6 +1672,9 @@ void MainWindow::handleMisconfiguration(UASInterface* uas)
             return;
         }
     }
+    
+    _hideSplashScreen();
+    
     // Ask user if he wants to handle this now
     QMessageBox msgBox(this);
     msgBox.setIcon(QMessageBox::Information);
@@ -1803,6 +1800,31 @@ bool MainWindow::dockWidgetTitleBarsEnabled() const
 {
     return menuActionHelper->dockWidgetTitleBarsEnabled();
 }
+
+void MainWindow::_saveTempFlightDataLog(QString tempLogfile)
+{
+    if (qgcApp()->promptFlightDataSave()) {
+        _hideSplashScreen();
+        QString saveFilename = QGCFileDialog::getSaveFileName(this,
+                                                            tr("Select file to save Flight Data Log"),
+                                                            qgcApp()->mavlinkLogFilesLocation(),
+                                                            tr("Flight Data Log (*.mavlink)"));
+        if (!saveFilename.isEmpty()) {
+            QFile::copy(tempLogfile, saveFilename);
+        }
+    }
+    QFile::remove(tempLogfile);
+}
+
+/// @brief Hides the spash screen if it is currently being shown
+void MainWindow::_hideSplashScreen(void)
+{
+    if (_splashScreen) {
+        _splashScreen->hide();
+        _splashScreen = NULL;
+    }
+}
+
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
 bool MainWindow::x11Event(XEvent *event)

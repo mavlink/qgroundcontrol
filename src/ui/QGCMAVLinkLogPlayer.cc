@@ -1,4 +1,3 @@
-#include <QFileDialog>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QtEndian>
@@ -8,6 +7,9 @@
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGC.h"
 #include "ui_QGCMAVLinkLogPlayer.h"
+#include "QGCCore.h"
+#include "LinkManager.h"
+#include "QGCFileDialog.h"
 
 QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *parent) :
     QWidget(parent),
@@ -22,9 +24,10 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     binaryBaudRate(defaultBinaryBaudRate),
     isPlaying(false),
     currPacketCount(0),
-    lastLogDirectory(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)),
     ui(new Ui::QGCMAVLinkLogPlayer)
 {
+    Q_ASSERT(mavlink);
+    
     ui->setupUi(this);
     ui->horizontalLayout->setAlignment(Qt::AlignTop);
 
@@ -32,14 +35,18 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     connect(this, SIGNAL(bytesReady(LinkInterface*,QByteArray)), mavlink, SLOT(receiveBytes(LinkInterface*,QByteArray)));
 
     // Setup timer
-    connect(&loopTimer, SIGNAL(timeout()), this, SLOT(logLoop()));
+    connect(&loopTimer, &QTimer::timeout, this, &QGCMAVLinkLogPlayer::logLoop);
 
     // Setup buttons
-    connect(ui->selectFileButton, SIGNAL(clicked()), this, SLOT(selectLogFile()));
-    connect(ui->playButton, SIGNAL(clicked()), this, SLOT(playPauseToggle()));
-    connect(ui->speedSlider, SIGNAL(valueChanged(int)), this, SLOT(setAccelerationFactorInt(int)));
-    connect(ui->positionSlider, SIGNAL(valueChanged(int)), this, SLOT(jumpToSliderVal(int)));
-    connect(ui->positionSlider, SIGNAL(sliderPressed()), this, SLOT(pause()));
+    connect(ui->selectFileButton, &QPushButton::clicked, this, &QGCMAVLinkLogPlayer::_selectLogFileForPlayback);
+    connect(ui->playButton, &QPushButton::clicked, this, &QGCMAVLinkLogPlayer::playPauseToggle);
+    connect(ui->speedSlider, &QSlider::valueChanged, this, &QGCMAVLinkLogPlayer::setAccelerationFactorInt);
+    connect(ui->positionSlider, &QSlider::valueChanged, this, &QGCMAVLinkLogPlayer::jumpToSliderVal);
+    connect(ui->positionSlider, &QSlider::sliderPressed, this, &QGCMAVLinkLogPlayer::pause);
+    
+    // We use this to queue the signal over to mavlink. This way it will be behind any remaining
+    // bytesReady signals in the queue.
+    connect(this, &QGCMAVLinkLogPlayer::suspendLogForReplay, mavlink, &MAVLinkProtocol::suspendLogForReplay);
 
     setAccelerationFactorInt(49);
     ui->speedSlider->setValue(49);
@@ -53,27 +60,12 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     ui->logStatsLabel->setEnabled(false);
 
     // Monitor for when the end of the log file is reached. This is done using signals because the main work is in a timer.
-    connect(this, SIGNAL(logFileEndReached()), &loopTimer, SLOT(stop()));
-
-    loadSettings();
+    connect(this,  &QGCMAVLinkLogPlayer::logFileEndReached, &loopTimer, &QTimer::stop);
 }
 
 QGCMAVLinkLogPlayer::~QGCMAVLinkLogPlayer()
 {
-    storeSettings();
     delete ui;
-}
-
-void QGCMAVLinkLogPlayer::playPause(bool enabled)
-{
-    if (enabled)
-    {
-        play();
-    }
-    else
-    {
-        pause();
-    }
 }
 
 void QGCMAVLinkLogPlayer::playPauseToggle()
@@ -90,55 +82,49 @@ void QGCMAVLinkLogPlayer::playPauseToggle()
 
 void QGCMAVLinkLogPlayer::play()
 {
-    if (logFile.isOpen())
+    Q_ASSERT(logFile.isOpen());
+    
+    LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
+    emit suspendLogForReplay(true);
+    
+    // Disable the log file selector button
+    ui->selectFileButton->setEnabled(false);
+
+    // Make sure we aren't at the end of the file, if we are, reset to the beginning and play from there.
+    if (logFile.atEnd())
     {
-        // Disable the log file selector button
-        ui->selectFileButton->setEnabled(false);
+        reset();
+    }
 
-        // Make sure we aren't at the end of the file, if we are, reset to the beginning and play from there.
-        if (logFile.atEnd())
-        {
-            reset();
-        }
+    // Always correct the current start time such that the next message will play immediately at playback.
+    // We do this by subtracting the current file playback offset  from now()
+    playbackStartTime = (quint64)QDateTime::currentMSecsSinceEpoch() - (logCurrentTime - logStartTime) / 1000;
 
-        // Always correct the current start time such that the next message will play immediately at playback.
-        // We do this by subtracting the current file playback offset  from now()
-        playbackStartTime = (quint64)QDateTime::currentMSecsSinceEpoch() - (logCurrentTime - logStartTime) / 1000;
-
-        // Start timer
-        if (mavlinkLogFormat)
-        {
-            loopTimer.start(1);
-        }
-        else
-        {
-            // Read len bytes at a time
-            int len = 100;
-            // Calculate the number of times to read 100 bytes per second
-            // to guarantee the baud rate, then divide 1000 by the number of read
-            // operations to obtain the interval in milliseconds
-            int interval = 1000 / ((binaryBaudRate / 10) / len);
-            loopTimer.start(interval / accelerationFactor);
-        }
-        isPlaying = true;
-        ui->playButton->setChecked(true);
-        ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-pause.svg"));
+    // Start timer
+    if (mavlinkLogFormat)
+    {
+        loopTimer.start(1);
     }
     else
     {
-        ui->playButton->setChecked(false);
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText(tr("No logfile selected"));
-        msgBox.setInformativeText(tr("Please select first a MAVLink log file before playing it."));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
+        // Read len bytes at a time
+        int len = 100;
+        // Calculate the number of times to read 100 bytes per second
+        // to guarantee the baud rate, then divide 1000 by the number of read
+        // operations to obtain the interval in milliseconds
+        int interval = 1000 / ((binaryBaudRate / 10) / len);
+        loopTimer.start(interval / accelerationFactor);
     }
+    isPlaying = true;
+    ui->playButton->setChecked(true);
+    ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-pause.svg"));
 }
 
 void QGCMAVLinkLogPlayer::pause()
 {
+    LinkManager::instance()->setConnectionsAllowed();
+    emit suspendLogForReplay(false);
+
     loopTimer.stop();
     isPlaying = false;
     ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-start.svg"));
@@ -258,51 +244,33 @@ void QGCMAVLinkLogPlayer::updatePositionSliderUi(float percent)
     ui->positionSlider->blockSignals(false);
 }
 
-void QGCMAVLinkLogPlayer::loadSettings()
+/// @brief Displays a file dialog to allow the user to select a log file to play back.
+void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
 {
-    QSettings settings;
-    settings.beginGroup("QGC_MAVLINKLOGPLAYER");
-    lastLogDirectory = settings.value("LAST_LOG_DIRECTORY", lastLogDirectory).toString();
-    settings.endGroup();
-}
-
-void QGCMAVLinkLogPlayer::storeSettings()
-{
-    QSettings settings;
-    settings.beginGroup("QGC_MAVLINKLOGPLAYER");
-    settings.setValue("LAST_LOG_DIRECTORY", lastLogDirectory);
-    settings.endGroup();
-    settings.sync();
-}
-
-/**
- * @brief Select a log file
- * @param startDirectory Directory where the file dialog will be opened
- * @return filename of the logFile
- */
-bool QGCMAVLinkLogPlayer::selectLogFile()
-{
-    // Prompt the user for a new file using the last directory they searched.
-    return selectLogFile(lastLogDirectory);
-}
-
-/**
- * @brief Select a log file
- * @param startDirectory Directory where the file dialog will be opened
- * @return filename of the logFile
- */
-bool QGCMAVLinkLogPlayer::selectLogFile(const QString startDirectory)
-{
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name to replay"), startDirectory, tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log)"));
-
-    if (fileName == "")
-    {
-        return false;
+    // Disallow replay when any links are connected
+    
+    bool foundConnection = false;
+    LinkManager* linkMgr = LinkManager::instance();
+    QList<LinkInterface*> links = linkMgr->getLinks();
+    foreach(LinkInterface* link, links) {
+        if (link->isConnected()) {
+            foundConnection = true;
+            break;
+        }
     }
-    else
-    {
-        lastLogDirectory = fileName;
-        return loadLogFile(fileName);
+    
+    if (foundConnection) {
+        MainWindow::instance()->showInfoMessage(tr("Log Replay"), tr("You must close all connections prior to replaying a log."));
+        return;
+    }
+    
+    QString logFile = QGCFileDialog::getOpenFileName(this,
+                                                    tr("Specify MAVLink log file name to replay"),
+                                                    qgcApp()->mavlinkLogFilesLocation(),
+                                                    tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log)"));
+    
+    if (!logFile.isEmpty()) {
+        loadLogFile(logFile);
     }
 }
 
@@ -341,6 +309,114 @@ void QGCMAVLinkLogPlayer::setAccelerationFactorInt(int factor)
 
 bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
 {
+    // Make sure to stop the logging process and reset everything.
+    reset();
+    logFile.close();
+
+    // Now load the new file.
+    logFile.setFileName(file);
+    if (!logFile.open(QFile::ReadOnly)) {
+        MainWindow::instance()->showCriticalMessage(tr("The selected file is unreadable"), tr("Please make sure that the file %1 is readable or select a different file").arg(file));
+        _playbackError();
+        return false;
+    }
+    
+    QFileInfo logFileInfo(file);
+    ui->logFileNameLabel->setText(tr("File: %1").arg(logFileInfo.fileName()));
+
+    // If there's an existing MAVLinkSimulationLink() being used for an old file,
+    // we replace it.
+    if (logLink)
+    {
+        LinkManager::instance()->disconnectLink(logLink);
+        LinkManager::instance()->removeLink(logLink);
+        logLink->deleteLater();
+    }
+    logLink = new MAVLinkSimulationLink("");
+
+    // Select if binary or MAVLink log format is used
+    mavlinkLogFormat = file.endsWith(".mavlink");
+
+    if (mavlinkLogFormat)
+    {
+        // Get the first timestamp from the logfile
+        // This should be a big-endian uint64.
+        QByteArray timestamp = logFile.read(timeLen);
+        quint64 starttime = parseTimestamp(timestamp);
+
+        // Now find the last timestamp by scanning for the last MAVLink packet and
+        // find the timestamp before it. To do this we start searchin a little before
+        // the end of the file, specifically the maximum MAVLink packet size + the
+        // timestamp size. This guarantees that we will hit a MAVLink packet before
+        // the end of the file. Unfortunately, it basically guarantees that we will
+        // hit more than one. This is why we have to search for a bit.
+        qint64 fileLoc = logFile.size() - MAVLINK_MAX_PACKET_LEN - timeLen;
+        logFile.seek(fileLoc);
+        quint64 endtime = starttime; // Set a sane default for the endtime
+        mavlink_message_t msg;
+        quint64 newTimestamp;
+        while ((newTimestamp = findNextMavlinkMessage(&msg)) > endtime) {
+            endtime = newTimestamp;
+        }
+
+        if (endtime == starttime) {
+            MainWindow::instance()->showCriticalMessage(tr("The selected file is corrupt"), tr("No valid timestamps were found at the end of the file.").arg(file));
+            _playbackError();
+            return false;
+        }
+
+        // Remember the start and end time so we can move around this logfile with the slider.
+        logEndTime = endtime;
+        logStartTime = starttime;
+        logCurrentTime = logStartTime;
+
+        // Reset our log file so when we go to read it for the first time, we start at the beginning.
+        logFile.reset();
+
+        // Calculate the runtime in hours:minutes:seconds
+        // WARNING: Order matters in this computation
+        quint32 seconds = (endtime - starttime)/1000000;
+        quint32 minutes = seconds / 60;
+        quint32 hours = minutes / 60;
+        seconds -= 60*minutes;
+        minutes -= 60*hours;
+
+        // And show the user the details we found about this file.
+        QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
+        currPacketCount = logFileInfo.size()/(32 + MAVLINK_NUM_NON_PAYLOAD_BYTES + sizeof(quint64)); // Count packets by assuming an average payload size of 32 bytes
+        ui->logStatsLabel->setText(tr("%2 MB, ~%3 packets, %4").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(currPacketCount).arg(timelabel));
+    }
+    else
+    {
+        // Load in binary mode. In this mode, files should be have a filename postfix
+        // of the baud rate they were recorded at, like `test_run_115200.bin`. Then on
+        // playback, the datarate is equal to set to this value.
+
+        // Set baud rate if any present. Otherwise we default to 57600.
+        QStringList parts = logFileInfo.baseName().split("_");
+        binaryBaudRate = defaultBinaryBaudRate;
+        if (parts.count() > 1)
+        {
+            bool ok;
+            int rate = parts.last().toInt(&ok);
+            // 9600 baud to 100 MBit
+            if (ok && (rate > 9600 && rate < 100000000))
+            {
+                // Accept this as valid baudrate
+                binaryBaudRate = rate;
+            }
+        }
+
+        int seconds = logFileInfo.size() / (binaryBaudRate / 10);
+        int minutes = seconds / 60;
+        int hours = minutes / 60;
+        seconds -= 60*minutes;
+        minutes -= 60*hours;
+
+        QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
+        ui->logStatsLabel->setText(tr("%2 MB, %4 at %5 KB/s").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(timelabel).arg(binaryBaudRate/10.0f/1024.0f, 0, 'f', 2));
+    }
+
     // Enable controls
     ui->playButton->setEnabled(true);
     ui->speedSlider->setEnabled(true);
@@ -348,150 +424,10 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     ui->speedLabel->setEnabled(true);
     ui->logFileNameLabel->setEnabled(true);
     ui->logStatsLabel->setEnabled(true);
+    
+    play();
 
-    // Disable logging while replaying a log file.
-    if (mavlink->loggingEnabled())
-    {
-        mavlink->enableLogging(false);
-        MainWindow::instance()->showInfoMessage(tr("MAVLink Logging Stopped during Replay"), tr("MAVLink logging has been stopped during the log replay. To re-enable logging, use the link properties in the communication menu."));
-    }
-
-    // Make sure to stop the logging process and reset everything.
-    reset();
-
-    // And that the old file is closed nicely.
-    if (logFile.isOpen())
-    {
-        logFile.close();
-    }
-
-    // Now load the new file.
-    logFile.setFileName(file);
-    if (!logFile.open(QFile::ReadOnly))
-    {
-        MainWindow::instance()->showCriticalMessage(tr("The selected logfile is unreadable"), tr("Please make sure that the file %1 is readable or select a different file").arg(file));
-        logFile.setFileName("");
-        return false;
-    }
-    else
-    {
-        QFileInfo logFileInfo(file);
-        logFile.reset();
-        ui->logFileNameLabel->setText(tr("Logfile: %1").arg(logFileInfo.fileName()));
-
-        // If there's an existing MAVLinkSimulationLink() being used for an old file,
-        // we replace it.
-        if (logLink)
-        {
-            logLink->disconnect();
-            LinkManager::instance()->removeLink(logLink);
-            delete logLink;
-        }
-        logLink = new MAVLinkSimulationLink("");
-
-
-        // Select if binary or MAVLink log format is used
-        mavlinkLogFormat = file.endsWith(".mavlink");
-
-        if (mavlinkLogFormat)
-        {
-            // Get the first timestamp from the logfile
-            // This should be a big-endian uint64.
-            QByteArray timestamp = logFile.read(timeLen);
-            quint64 starttime = parseTimestamp(timestamp);
-
-            // Now find the last timestamp by scanning for the last MAVLink packet and
-            // find the timestamp before it. To do this we start searchin a little before
-            // the end of the file, specifically the maximum MAVLink packet size + the
-            // timestamp size. This guarantees that we will hit a MAVLink packet before
-            // the end of the file. Unfortunately, it basically guarantees that we will
-            // hit more than one. This is why we have to search for a bit.
-            qint64 fileLoc = logFile.size() - MAVLINK_MAX_PACKET_LEN - timeLen;
-            logFile.seek(fileLoc);
-            quint64 endtime = starttime; // Set a sane default for the endtime
-            mavlink_message_t msg;
-            quint64 newTimestamp;
-            while ((newTimestamp = findNextMavlinkMessage(&msg)) > endtime) {
-                endtime = newTimestamp;
-            }
-
-            if (endtime == starttime) {
-                MainWindow::instance()->showCriticalMessage(tr("The selected logfile cannot be processed"), tr("No valid timestamps were found at the end of the logfile.").arg(file));
-                logFile.setFileName("");
-                ui->logFileNameLabel->setText(tr("No logfile selected"));
-                return false;
-            }
-
-            // Remember the start and end time so we can move around this logfile with the slider.
-            logEndTime = endtime;
-            logStartTime = starttime;
-            logCurrentTime = logStartTime;
-
-            // Reset our log file so when we go to read it for the first time, we start at the beginning.
-            logFile.reset();
-
-            // Calculate the runtime in hours:minutes:seconds
-            // WARNING: Order matters in this computation
-            quint32 seconds = (endtime - starttime)/1000000;
-            quint32 minutes = seconds / 60;
-            quint32 hours = minutes / 60;
-            seconds -= 60*minutes;
-            minutes -= 60*hours;
-
-            // And show the user the details we found about this file.
-            QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
-            currPacketCount = logFileInfo.size()/(32 + MAVLINK_NUM_NON_PAYLOAD_BYTES + sizeof(quint64)); // Count packets by assuming an average payload size of 32 bytes
-            ui->logStatsLabel->setText(tr("%2 MB, ~%3 packets, %4").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(currPacketCount).arg(timelabel));
-        }
-        else
-        {
-            // Load in binary mode. In this mode, files should be have a filename postfix
-            // of the baud rate they were recorded at, like `test_run_115200.bin`. Then on
-            // playback, the datarate is equal to set to this value.
-
-            // Set baud rate if any present. Otherwise we default to 57600.
-            QStringList parts = logFileInfo.baseName().split("_");
-            binaryBaudRate = defaultBinaryBaudRate;
-            if (parts.count() > 1)
-            {
-                bool ok;
-                int rate = parts.last().toInt(&ok);
-                // 9600 baud to 100 MBit
-                if (ok && (rate > 9600 && rate < 100000000))
-                {
-                    // Accept this as valid baudrate
-                    binaryBaudRate = rate;
-                }
-            }
-
-            int seconds = logFileInfo.size() / (binaryBaudRate / 10);
-            int minutes = seconds / 60;
-            int hours = minutes / 60;
-            seconds -= 60*minutes;
-            minutes -= 60*hours;
-
-            QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
-            ui->logStatsLabel->setText(tr("%2 MB, %4 at %5 KB/s").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(timelabel).arg(binaryBaudRate/10.0f/1024.0f, 0, 'f', 2));
-        }
-
-        // Check if a serial link is connected
-
-        bool linkWarning = false;
-        foreach (LinkInterface* link, LinkManager::instance()->getLinks())
-        {
-            SerialLink* s = dynamic_cast<SerialLink*>(link);
-
-            if (s && s->isConnected())
-                linkWarning = true;
-        }
-
-        if (linkWarning)
-            MainWindow::instance()->showInfoMessage(tr("Active MAVLink links found"), tr("Currently other links are connected. It is recommended to disconnect any active link before replaying a log."));
-
-        play();
-
-        return true;
-    }
+    return true;
 }
 
 quint64 QGCMAVLinkLogPlayer::parseTimestamp(const QByteArray &data)
@@ -593,17 +529,8 @@ void QGCMAVLinkLogPlayer::logLoop()
             emit bytesReady(logLink, message);
 
             // If we've reached the end of the of the file, make sure we handle that well
-            if (logFile.atEnd())
-            {
-                // For some reason calling pause() here doesn't work, so we update the UI manually here.
-                isPlaying = false;
-                ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-start.svg"));
-                ui->playButton->setChecked(false);
-                ui->selectFileButton->setEnabled(true);
-
-                // Note that we explicitly set the slider to 100%, as it may not hit that by itself depending on log file size.
-                updatePositionSliderUi(100.0f);
-                emit logFileEndReached();
+            if (logFile.atEnd()) {
+                _finishPlayback();
                 return;
             }
 
@@ -633,12 +560,7 @@ void QGCMAVLinkLogPlayer::logLoop()
         // Check if reached end of file before reading next timestamp
         if (chunk.length() < len || logFile.atEnd())
         {
-            // Reached end of file
-            reset();
-
-            QString status = tr("Reached end of binary log file.");
-            ui->logStatsLabel->setText(status);
-            MainWindow::instance()->showStatusMessage(status);
+            _finishPlayback();
             return;
         }
     }
@@ -706,4 +628,41 @@ void QGCMAVLinkLogPlayer::paintEvent(QPaintEvent *)
     opt.init(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}
+
+/// @brief Called when playback is complete
+void QGCMAVLinkLogPlayer::_finishPlayback(void)
+{
+    pause();
+    
+    QString status = tr("Flight Data replay complete");
+    ui->logStatsLabel->setText(status);
+    MainWindow::instance()->showStatusMessage(status);
+    
+    // Note that we explicitly set the slider to 100%, as it may not hit that by itself depending on log file size.
+    updatePositionSliderUi(100.0f);
+    
+    emit logFileEndReached();
+    
+    emit suspendLogForReplay(false);
+    LinkManager::instance()->setConnectionsAllowed();
+}
+
+/// @brief Called when an error occurs during playback to reset playback system state.
+void QGCMAVLinkLogPlayer::_playbackError(void)
+{
+    pause();
+    
+    logFile.close();
+    logFile.setFileName("");
+    
+    ui->logFileNameLabel->setText(tr("No Flight Data selected"));    
+    
+    // Disable playback controls
+    ui->playButton->setEnabled(false);
+    ui->speedSlider->setEnabled(false);
+    ui->positionSlider->setEnabled(false);
+    ui->speedLabel->setEnabled(false);
+    ui->logFileNameLabel->setEnabled(false);
+    ui->logStatsLabel->setEnabled(false);
 }

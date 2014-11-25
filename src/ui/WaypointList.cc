@@ -33,11 +33,12 @@ This file is part of the PIXHAWK project
 
 #include "WaypointList.h"
 #include "ui_WaypointList.h"
+#include "QGCFileDialog.h"
+
 #include <UASInterface.h>
 #include <UAS.h>
 #include <UASManager.h>
 #include <QDebug>
-#include <QFileDialog>
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QTextEdit>
@@ -218,14 +219,14 @@ void WaypointList::setUAS(UASInterface* uas)
 void WaypointList::saveWaypoints()
 {
 
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./waypoints.txt", tr("Waypoint File (*.txt)"));
+    QString fileName = QGCFileDialog::getSaveFileName(this, tr("Save File"), "./waypoints.txt", tr("Waypoint File (*.txt)"));
     WPM->saveWaypoints(fileName);
 
 }
 
 void WaypointList::loadWaypoints()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
+    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
     WPM->loadWaypoints(fileName);
 }
 

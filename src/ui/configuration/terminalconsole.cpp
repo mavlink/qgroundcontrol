@@ -66,7 +66,7 @@ TerminalConsole::TerminalConsole(QWidget *parent) :
     layout->addWidget(m_statusBar);
 
     m_serial = new QSerialPort(this);
-    m_settingsDialog = new SettingsDialog;
+    m_settingsDialog = new SerialSettingsDialog;
 
     ui->connectButton->setEnabled(true);
     ui->disconnectButton->setEnabled(false);

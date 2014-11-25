@@ -88,7 +88,7 @@ private:
 
     Console *m_console;
     QStatusBar *m_statusBar;
-    SettingsDialog *m_settingsDialog;
+    SerialSettingsDialog *m_settingsDialog;
     QSerialPort *m_serial;
     SerialSettings m_settings;
     ConsoleMode m_consoleMode;
