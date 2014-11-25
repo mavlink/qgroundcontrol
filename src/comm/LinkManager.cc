@@ -132,9 +132,9 @@ QList<LinkInterface*> LinkManager::getLinksForProtocol(ProtocolInterface* protoc
 ProtocolInterface* LinkManager::getProtocolForLink(LinkInterface* link)
 {
     _dataMutex.lock();
-    ProtocolInterface* interface = _protocolLinks.key(link);
+    ProtocolInterface* protocol = _protocolLinks.key(link);
     _dataMutex.unlock();
-    return interface;
+	return protocol;
 }
 
 bool LinkManager::connectAll()
