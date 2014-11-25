@@ -289,7 +289,7 @@ FORMS += \
     src/ui/QGCUASFileViewMulti.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCTCPLinkConfiguration.ui \
-    src/ui/QGCSettingsWidget.ui \
+    src/ui/SettingsDialog.ui \
     src/ui/UASControlParameters.ui \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
@@ -334,7 +334,7 @@ FORMS += \
 
 HEADERS += \
     src/MG.h \
-    src/QGCCore.h \
+    src/QGCApplication.h \
     src/uas/UASInterface.h \
     src/uas/UAS.h \
     src/uas/UASManager.h \
@@ -413,7 +413,7 @@ HEADERS += \
     src/ui/QGCUASFileViewMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/QGCTCPLinkConfiguration.h \
-    src/ui/QGCSettingsWidget.h \
+    src/ui/SettingsDialog.h \
     src/ui/uas/UASControlParameters.h \
     src/uas/QGCUASParamManager.h \
     src/ui/map/QGCMapWidget.h \
@@ -492,7 +492,7 @@ HEADERS += \
 
 SOURCES += \
     src/main.cc \
-    src/QGCCore.cc \
+    src/QGCApplication.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
     src/comm/LinkManager.cc \
@@ -565,7 +565,7 @@ SOURCES += \
     src/ui/QGCUASFileViewMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/QGCTCPLinkConfiguration.cc \
-    src/ui/QGCSettingsWidget.cc \
+    src/ui/SettingsDialog.cc \
     src/ui/uas/UASControlParameters.cpp \
     src/uas/QGCUASParamManager.cc \
     src/ui/map/QGCMapWidget.cc \

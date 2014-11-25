@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QApplication>
 #include <QSslSocket>
 
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "MainWindow.h"
 #include "configuration.h"
 #include "SerialLink.h"
