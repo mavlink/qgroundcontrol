@@ -28,7 +28,7 @@
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 

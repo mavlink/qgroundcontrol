@@ -43,7 +43,7 @@
 
 #include "configuration.h"
 #include "QGC.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
 #include "CmdLineOptParser.h"

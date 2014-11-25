@@ -24,16 +24,16 @@
 #include <QSettings>
 #include <QDesktopWidget>
 
-#include "QGCSettingsWidget.h"
+#include "SettingsDialog.h"
 #include "MainWindow.h"
-#include "ui_QGCSettingsWidget.h"
+#include "ui_SettingsDialog.h"
 
 #include "JoystickWidget.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
 #include "GAudioOutput.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 
