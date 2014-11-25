@@ -3,6 +3,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QToolTip>
+#include <QDebug>
 
 #include "QGCComboBox.h"
 #include "ui_QGCComboBox.h"
