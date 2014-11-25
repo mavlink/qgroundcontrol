@@ -561,8 +561,9 @@ void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
 
 void QGCToolWidget::widgetRemoved()
 {
-    //Must static cast and not dynamic cast since the object is in the destructor
-    //and we only want to use it as a pointer value
+    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
+    // been destroyed.
+    
     QGCToolWidgetItem *widget = static_cast<QGCToolWidgetItem *>(QObject::sender());
     toolItemList.removeAll(widget);
     storeWidgetsToSettings();

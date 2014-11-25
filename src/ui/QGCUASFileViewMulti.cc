@@ -10,45 +10,44 @@ QGCUASFileViewMulti::QGCUASFileViewMulti(QWidget *parent) :
 {
     ui->setupUi(this);
     setMinimumSize(600, 80);
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(systemCreated(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(systemSetActive(int)));
+    connect(UASManager::instance(), &UASManager::UASCreated, this, &QGCUASFileViewMulti::systemCreated);
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(systemSetActive(UASInterface*)));
 
     if (UASManager::instance()->getActiveUAS()) {
         systemCreated(UASManager::instance()->getActiveUAS());
-        systemSetActive(UASManager::instance()->getActiveUAS()->getUASID());
+        systemSetActive(UASManager::instance()->getActiveUAS());
     }
 
 }
 
 void QGCUASFileViewMulti::systemDeleted(QObject* uas)
 {
-    UASInterface* mav = dynamic_cast<UASInterface*>(uas);
-    if (mav)
+    Q_ASSERT(uas);
+    
+    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
+    // been destroyed.
+    
+    UASInterface* mav = static_cast<UASInterface*>(uas);
+    QGCUASFileView* list = lists.value(mav, NULL);
+    if (list)
     {
-        int id = mav->getUASID();
-        QGCUASFileView* list = lists.value(id, NULL);
-        if (list)
-        {
-            delete list;
-            lists.remove(id);
-        }
+        delete list;
+        lists.remove(mav);
     }
 }
 
 void QGCUASFileViewMulti::systemCreated(UASInterface* uas)
 {
-    if (!uas) {
-        return;
-    }
+    Q_ASSERT(uas);
 
     QGCUASFileView* list = new QGCUASFileView(ui->stackedWidget, uas->getFileManager());
-    lists.insert(uas->getUASID(), list);
+    lists.insert(uas, list);
     ui->stackedWidget->addWidget(list);
     // Ensure widget is deleted when system is deleted
     connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(systemDeleted(QObject*)));
 }
 
-void QGCUASFileViewMulti::systemSetActive(int uas)
+void QGCUASFileViewMulti::systemSetActive(UASInterface* uas)
 {
     QGCUASFileView* list = lists.value(uas, NULL);
     if (list) {
