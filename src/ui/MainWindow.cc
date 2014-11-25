@@ -1410,6 +1410,9 @@ void MainWindow::simulateLink(bool simulate) {
 
 void MainWindow::commsWidgetDestroyed(QObject *obj)
 {
+    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
+    // been destroyed.
+
     if (commsWidgetList.contains(obj))
     {
         commsWidgetList.removeOne(obj);

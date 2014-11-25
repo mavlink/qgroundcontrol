@@ -25,7 +25,10 @@ QGCWaypointListMulti::QGCWaypointListMulti(QWidget *parent) :
 
 void QGCWaypointListMulti::systemDeleted(QObject* uas)
 {
-    UASInterface* mav = dynamic_cast<UASInterface*>(uas);
+    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
+    // been destroyed.
+
+    UASInterface* mav = static_cast<UASInterface*>(uas);
     if (mav)
     {
         int id = mav->getUASID();

@@ -25,7 +25,10 @@ QAction *MenuActionHelper::createToolAction(const QString &title, const QString 
 
 void MenuActionHelper::removeDockWidget()
 {
-    QObject *dockWidget = QObject::sender(); //Note that we can't cast to QDockWidget because we are in its destructor
+    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
+    // been destroyed.
+
+    QObject *dockWidget = QObject::sender();
     Q_ASSERT(dockWidget);
 
     qDebug() << "Dockwidget:"  << dockWidget->objectName() << "of type" << dockWidget->metaObject()->className();

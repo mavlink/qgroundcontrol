@@ -3352,8 +3352,8 @@ void UAS::addLink(LinkInterface* link)
 
 void UAS::removeLink(QObject* object)
 {
-    // Be careful of the fact that by the time this signal makes it through the queue
-    // the link object has already been destructed. So no dynamic_cast for example.
+    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
+    // been destroyed.
     
     LinkInterface* link = (LinkInterface*)object;
     
