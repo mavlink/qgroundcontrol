@@ -27,7 +27,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCStatusBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 
 QGCStatusBar::QGCStatusBar(QWidget *parent) :
     QStatusBar(parent),
