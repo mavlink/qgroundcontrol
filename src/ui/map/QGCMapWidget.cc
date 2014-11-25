@@ -6,6 +6,7 @@
 #include "MAV2DIcon.h"
 #include "Waypoint2DIcon.h"
 #include "UASWaypointManager.h"
+#include "QGCMessageBox.h"
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapcontrol::OPMapWidget(parent),
@@ -65,7 +66,7 @@ void QGCMapWidget::guidedActionTriggered()
 {
     if (!uas)
     {
-        QMessageBox::information(0,"Error","Please connect first");
+        QGCMessageBox::information(tr("Error"), tr("Please connect first"));
         return;
     }
     if (currWPManager)
@@ -91,7 +92,7 @@ bool QGCMapWidget::guidedAltActionTriggered()
 {
     if (!uas)
     {
-        QMessageBox::information(0,"Error","Please connect first");
+        QGCMessageBox::information(tr("Error"), tr("Please connect first"));
         return false;
     }
     bool ok = false;
@@ -113,7 +114,7 @@ bool QGCMapWidget::setHomeActionTriggered()
 {
     if (!uas)
     {
-        QMessageBox::information(0,"Error","Please connect first");
+        QGCMessageBox::information(tr("Error"), tr("Please connect first"));
         return false;
     }
     UASManagerInterface *uasManager = UASManager::instance();
@@ -597,13 +598,8 @@ void QGCMapWidget::cacheVisibleRegion()
 
     if (rect.IsEmpty())
     {
-        QMessageBox msgBox(this);
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText("Cannot cache tiles for offline use");
-        msgBox.setInformativeText("Please select an area first by holding down SHIFT or ALT and selecting the area with the left mouse button.");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
+        QGCMessageBox::information(tr("Cannot cache tiles for offline use"),
+                                   tr("Please select an area first by holding down SHIFT or ALT and selecting the area with the left mouse button."));
     }
     else
     {

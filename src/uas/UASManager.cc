@@ -10,13 +10,14 @@
 
 #include <QList>
 #include <QApplication>
-#include <QMessageBox>
 #include <QTimer>
 #include <QSettings>
+
 #include "UAS.h"
 #include "UASInterface.h"
 #include "UASManager.h"
 #include "QGC.h"
+#include "QGCMessageBox.h"
 
 #define PI 3.1415926535897932384626433832795
 #define MEAN_EARTH_DIAMETER	12756274.0
@@ -308,7 +309,7 @@ void UASManager::addUAS(UASInterface* uas)
         setActiveUAS(uas);
         if (offlineUASWaypointManager->getWaypointEditableList().size() > 0)
         {
-            if (QMessageBox::question(0,"Question","Do you want to append the offline waypoints to the ones currently on the UAV?",QMessageBox::Yes,QMessageBox::No) == QMessageBox::Yes)
+            if (QGCMessageBox::question(tr("Question"), tr("Do you want to append the offline waypoints to the ones currently on the UAV?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
             {
                 //Need to transfer all waypoints from the offline mode WPManager to the online mode.
                 for (int i=0;i<offlineUASWaypointManager->getWaypointEditableList().size();i++)

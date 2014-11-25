@@ -1,4 +1,3 @@
-#include <QMessageBox>
 #include <QStandardPaths>
 #include <QtEndian>
 
@@ -136,7 +135,9 @@ void QGCMAVLinkLogPlayer::reset()
 {
     pause();
     loopCounter = 0;
-    logFile.reset();
+    if (logFile.isOpen()) {
+        logFile.reset();
+    }
 
     // Now update the position slider to its default location
     updatePositionSliderUi(0.0);

@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 #include <QDockWidget>
 #include <QNetworkInterface>
-#include <QMessageBox>
 #include <QDebug>
 #include <QTimer>
 #include <QHostInfo>
@@ -73,6 +72,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCUASFileViewMulti.h"
 #include "QGCCore.h"
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -1131,14 +1131,14 @@ void MainWindow::showCriticalMessage(const QString& title, const QString& messag
 {
     _hideSplashScreen();
     qDebug() << "Critical" << title << message;
-    QMessageBox::critical(this, title, message);
+    QGCMessageBox::critical(title, message);
 }
 
 void MainWindow::showInfoMessage(const QString& title, const QString& message)
 {
     _hideSplashScreen();
     qDebug() << "Information" << title << message;
-    QMessageBox::information(this, title, message);
+    QGCMessageBox::information(title, message);
 }
 
 /**
@@ -1676,15 +1676,11 @@ void MainWindow::handleMisconfiguration(UASInterface* uas)
     _hideSplashScreen();
     
     // Ask user if he wants to handle this now
-    QMessageBox msgBox(this);
-    msgBox.setIcon(QMessageBox::Information);
-    msgBox.setText(tr("Missing or Invalid Onboard Configuration"));
-    msgBox.setInformativeText(tr("The onboard system configuration is missing or incomplete. Do you want to resolve this now?"));
-    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Ok);
-    int val = msgBox.exec();
-
-    if (val == QMessageBox::Ok) {
+    QMessageBox::StandardButton button = QGCMessageBox::question(tr("Missing or Invalid Onboard Configuration"),
+                                                                    tr("The onboard system configuration is missing or incomplete. Do you want to resolve this now?"),
+                                                                    QMessageBox::Ok | QMessageBox::Cancel,
+                                                                    QMessageBox::Ok);
+    if (button == QMessageBox::Ok) {
         // He wants to handle it, make sure this system is selected
         UASManager::instance()->setActiveUAS(uas);
 

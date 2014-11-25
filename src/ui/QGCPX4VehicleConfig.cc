@@ -10,7 +10,6 @@
 #include <QTimer>
 #include <QDir>
 #include <QXmlStreamReader>
-#include <QMessageBox>
 #include <QLabel>
 
 #include "QGCPX4VehicleConfig.h"
@@ -151,37 +150,6 @@ void QGCPX4VehicleConfig::firmwareMenuButtonClicked()
     ui->stackedWidget->setCurrentWidget(ui->firmwareTab);
     ui->tabTitleLabel->setText(tr("Firmware Upgrade"));
 }
-
-#if 0
-void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
-{
-    Q_UNUSED(enabled);
-    
-    if (!ui->dsm2RadioButton->isChecked() && !ui->dsmxRadioButton->isChecked()
-            && !ui->dsmx8RadioButton->isChecked()) {
-        // Reject
-        QMessageBox warnMsgBox;
-        warnMsgBox.setText(tr("Please select a Spektrum Protocol Version"));
-        warnMsgBox.setInformativeText(tr("Please select either DSM2 or DSM-X\ndirectly below the pair button,\nbased on the receiver type."));
-        warnMsgBox.setStandardButtons(QMessageBox::Ok);
-        warnMsgBox.setDefaultButton(QMessageBox::Ok);
-        (void)warnMsgBox.exec();
-        return;
-    }
-
-    UASInterface* mav = UASManager::instance()->getActiveUAS();
-    if (mav) {
-        int rxSubType;
-        if (ui->dsm2RadioButton->isChecked())
-            rxSubType = 0;
-        else if (ui->dsmxRadioButton->isChecked())
-            rxSubType = 1;
-        else // if (ui->dsmx8RadioButton->isChecked())
-            rxSubType = 2;
-        mav->pairRX(0, rxSubType);
-    }
-}
-#endif
 
 void QGCPX4VehicleConfig::menuButtonClicked()
 {

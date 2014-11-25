@@ -487,7 +487,8 @@ HEADERS += \
     src/uas/QGCUASWorker.h \
     src/CmdLineOptParser.h \
     src/uas/QGXPX4UAS.h \
-    src/QGCFileDialog.h
+    src/QGCFileDialog.h \
+    src/QGCMessageBox.h
 
 SOURCES += \
     src/main.cc \
