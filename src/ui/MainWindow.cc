@@ -61,7 +61,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASQuickView.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
-#include "UASActionsWidget.h"
 #include "QGCTabbedInfoView.h"
 #include "UASRawStatusView.h"
 #include "PrimaryFlightDisplay.h"
