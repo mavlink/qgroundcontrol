@@ -155,9 +155,11 @@ bool QGCApplication::init(void)
         QDir documentsDir(documentsLocation);
         Q_ASSERT(documentsDir.exists());
         
-        if (documentsDir.mkpath(_defaultSavedFileDirectoryName)) {
-            savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
-        }
+        bool pathCreated = documentsDir.mkpath(_defaultSavedFileDirectoryName);
+        Q_UNUSED(pathCreated);
+        Q_ASSERT(pathCreated);
+        savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
+        settings.setValue(_savedFilesLocationKey, savedFilesLocation);
     }
     
     if (!savedFilesLocation.isEmpty()) {
