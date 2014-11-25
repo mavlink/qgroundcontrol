@@ -98,30 +98,17 @@ public:
         CUSTOM_MODE_WIFI
     };
 
-    /**
-     * A static function for obtaining the sole instance of the MainWindow. The screen
-     * argument is only important on the FIRST call to this function. The provided splash
-     * screen is updated with some status messages that are emitted during init(). This
-     * function cannot be used within the MainWindow constructor!
-     */
-    static MainWindow* instance(QSplashScreen* screen = 0);
-    static MainWindow* instance_mode(QSplashScreen* screen = 0, enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_NONE);
+    /// @brief Returns the MainWindow singleton. Will not create the MainWindow if it has not already
+    ///         been created.
+    static MainWindow* instance(void);
+    
+    /// @brief Creates the MainWindow singleton. Should only be called once by QGCApplication.
+    static MainWindow* _create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
+    
+    /// @brief Called to indicate that splash screen is no longer being displayed.
+    void splashScreenFinished(void) { _splashScreen = NULL; }
 
-    /**
-     * Initializes the MainWindow. Some variables are initialized and the widget is hidden.
-     * Initialization of the MainWindow class really occurs in init(), which loads the UI
-     * and does everything important. The constructor is split in two like this so that
-     * the instance() is available for all classes.
-     */
-    MainWindow(QWidget *parent = NULL);
     ~MainWindow();
-
-    /**
-     * This function actually performs the non-trivial initialization of the MainWindow
-     * class. This is separate from the constructor because instance() won't work within
-     * code executed in the MainWindow constructor.
-     */
-    void init();
 
     enum QGC_MAINWINDOW_STYLE
     {
@@ -242,7 +229,7 @@ public slots:
     /** @brief Add a custom tool widget */
     void createCustomWidget();
 
-    /** @brief Load a custom tool widget from a file chosen by user (QFileDialog) */
+    /** @brief Load a custom tool widget from a file chosen by user (QGCFileDialog) */
     void loadCustomWidget();
 
     /** @brief Load a custom tool widget from a file */
@@ -270,7 +257,7 @@ public slots:
     void configureWindowName();
 
     void commsWidgetDestroyed(QObject *obj);
-
+    
 protected slots:
     void showDockWidget(const QString &name, bool show);
     /**
@@ -473,8 +460,18 @@ protected:
     QGCFlightGearLink* fgLink;
     QTimer windowNameUpdateTimer;
     CUSTOM_MODE customMode;
+    
+private slots:
+    /// @brief Save the specified Flight Data Log
+    void _saveTempFlightDataLog(QString tempLogfile);
 
 private:
+    /// Constructor is private since all creation should be through MainWindow::instance.
+    MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
+    
+    void _hideSplashScreen(void);
+    void _openUrl(const QString& url, const QString& errorMessage);
+    
     QList<QObject*> commsWidgetList;
     QMap<QString,QString> customWidgetNameToFilenameMap;
     MenuActionHelper *menuActionHelper;
@@ -487,6 +484,8 @@ private:
 
     QString getWindowStateKey();
     QString getWindowGeometryKey();
+    
+    QSplashScreen* _splashScreen;   ///< Splash screen, NULL is splash screen not currently being shown
 
     friend class MenuActionHelper; //For VIEW_SECTIONS
 };

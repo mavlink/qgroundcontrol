@@ -71,8 +71,15 @@ public:
 
     /** @brief Get a list of all protocols */
     const QList<ProtocolInterface*> getProtocols() {
-        return protocolLinks.uniqueKeys();
+        return _protocolLinks.uniqueKeys();
     }
+    
+    /// @brief Sets the lag to suspend the all new connections
+    ///     @param reason User visible reason to suspend connections
+    void setConnectionsSuspended(QString reason);
+    
+    /// @brief Sets the flag to allow new connections to be made
+    void setConnectionsAllowed(void) { _connectionsSuspended = false; }
 
 public slots:
 
@@ -88,19 +95,22 @@ public slots:
     bool disconnectAll();
     bool disconnectLink(LinkInterface* link);
 
-protected:
-    LinkManager();
-    QList<LinkInterface*> links;
-    QMultiMap<ProtocolInterface*,LinkInterface*> protocolLinks;
-    QMutex dataMutex;
-
-private:
-    static LinkManager* _instance;
-
 signals:
     void newLink(LinkInterface* link);
     void linkRemoved(LinkInterface* link);
-
+    
+private:
+    LinkManager(void);
+    
+    QList<LinkInterface*> _links;
+    QMultiMap<ProtocolInterface*,LinkInterface*> _protocolLinks;
+    QMutex _dataMutex;
+    
+    bool _connectionsSuspendedMsg(void);
+    static LinkManager* _instance;
+    
+    bool _connectionsSuspended;              ///< true: all new connections should not be allowed
+    QString _connectionsSuspendedReason;     ///< User visible reason for suspension
 };
 
-#endif // _LINKMANAGER_H_
+#endif

@@ -111,6 +111,11 @@ public:
     void run2();
 
     int getId() const;
+    
+    // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
+    // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
+    bool connect(void);
+    bool disconnect(void);
 
 signals: //[TODO] Refactor to Linkinterface
     void updateLink(LinkInterface*);
@@ -139,8 +144,6 @@ public slots:
      * @param size The size of the bytes array
      **/
     void writeBytes(const char* data, qint64 length);
-    bool connect();
-    bool disconnect();
 
     void linkError(QSerialPort::SerialPortError error);
 
@@ -161,6 +164,10 @@ protected:
     bool m_is_cdc;
 
 private:
+    // From LinkInterface
+    virtual bool _connect(void);
+    virtual bool _disconnect(void);
+
     volatile bool m_stopp;
     volatile bool m_reqReset;
     QMutex m_stoppMutex; // Mutex for accessing m_stopp

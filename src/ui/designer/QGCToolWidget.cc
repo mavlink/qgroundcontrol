@@ -7,7 +7,6 @@
 #include <QDockWidget>
 #include <QContextMenuEvent>
 #include <QSettings>
-#include <QFileDialog>
 #include <QStandardPaths>
 
 #include "QGCParamSlider.h"
@@ -16,6 +15,7 @@
 #include "QGCXYPlot.h"
 #include "QGCCommandButton.h"
 #include "UASManager.h"
+#include "QGCFileDialog.h"
 
 QGCToolWidget::QGCToolWidget(const QString& objectName, const QString& title, QWidget *parent, QSettings* settings) :
         QWidget(parent),
@@ -571,7 +571,7 @@ void QGCToolWidget::widgetRemoved()
 void QGCToolWidget::exportWidget()
 {
     const QString widgetFileExtension(".qgw");
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
+    QString fileName = QGCFileDialog::getSaveFileName(this, tr("Specify File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
     if (!fileName.endsWith(widgetFileExtension))
     {
         fileName = fileName.append(widgetFileExtension);
@@ -583,7 +583,7 @@ void QGCToolWidget::exportWidget()
 void QGCToolWidget::importWidget()
 {
     const QString widgetFileExtension(".qgw");
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
+    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Specify File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
     loadSettings(fileName);
 }
 

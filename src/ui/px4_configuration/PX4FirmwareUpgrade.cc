@@ -33,9 +33,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDir>
-#include <QFileDialog>
 #include <QDebug>
 #include <QMessageBox>
+
+#include "QGCFileDialog.h"
 
 /// @Brief Constructs a new PX4FirmwareUpgrade Widget. This widget is used within the PX4VehicleConfig set of screens.
 PX4FirmwareUpgrade::PX4FirmwareUpgrade(QWidget *parent) :
@@ -475,7 +476,7 @@ void PX4FirmwareUpgrade::_getFirmwareFile(void)
     _firmwareFilename = _ui->firmwareCombo->itemData(index).toString();
     Q_ASSERT(!_firmwareFilename.isEmpty());
     if (_firmwareFilename == "selectfile") {
-        _firmwareFilename = QFileDialog::getOpenFileName(this,
+        _firmwareFilename = QGCFileDialog::getOpenFileName(this,
                                                     tr("Select Firmware File"),                                             // Dialog title
                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),   // Initial directory
                                                      tr("Firmware Files (*.px4 *.bin)"));                                   // File filter

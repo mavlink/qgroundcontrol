@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QAbstractSocket::SocketError>();
     
 #ifdef QT_DEBUG
-    // We parse a small set of command line options here prior to QGCCore in order to handle the ones
+    // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
     // which need to be handled before a QApplication object is started.
     
     bool runUnitTests = false;          // Run unit test
@@ -140,12 +140,12 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    QGCCore* core = new QGCCore(argc, argv);
-    Q_CHECK_PTR(core);
+    QGCApplication* app = new QGCApplication(argc, argv);
+    Q_CHECK_PTR(app);
     
-    if (!core->init()) {
+    if (!app->init()) {
         return -1;
     }
 
-    return core->exec();
+    return app->exec();
 }

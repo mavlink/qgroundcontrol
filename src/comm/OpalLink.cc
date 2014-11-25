@@ -416,7 +416,7 @@ int8_t OpalLink::rescaleControllerOutput(double raw)
     return static_cast<int8_t>((raw>=0?raw*127:raw*128));
 }
 
-bool OpalLink::connect()
+bool OpalLink::_connect(void)
 {
     short modelState;
 
@@ -439,7 +439,7 @@ bool OpalLink::connect()
     return connectState;
 }
 
-bool OpalLink::disconnect()
+bool OpalLink::_disconnect(void)
 {
     // OpalDisconnect returns void so its success or failure cannot be tested
     OpalDisconnect();

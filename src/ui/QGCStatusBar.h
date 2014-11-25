@@ -43,8 +43,6 @@ public:
     ~QGCStatusBar();
 
 public slots:
-    /** @brief Start / stop logging */
-    void logging(bool checked);
     /** @brief Set log playing component */
     void setLogPlayer(QGCMAVLinkLogPlayer* player);
     virtual void paintEvent(QPaintEvent * event);
@@ -53,7 +51,6 @@ protected:
     void storeSettings();
     void loadSettings();
 
-    QPushButton* toggleLoggingButton;
     QGCMAVLinkLogPlayer* player;
     bool changed;
     QString lastLogDirectory;

@@ -36,13 +36,13 @@
    <item>
     <widget class="QToolButton" name="playButton">
      <property name="toolTip">
-      <string>Start to replay the logfile</string>
+      <string>Start to replay Flight Data</string>
      </property>
      <property name="statusTip">
-      <string>Start to replay the logfile</string>
+      <string>Start to replay Flight Data</string>
      </property>
      <property name="whatsThis">
-      <string>Start to replay the logfile</string>
+      <string>Start to replay Flight Data</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -129,23 +129,23 @@
    <item>
     <widget class="QLabel" name="logFileNameLabel">
      <property name="text">
-      <string>No logfile selected..</string>
+      <string>No Flight Data selected..</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QPushButton" name="selectFileButton">
      <property name="toolTip">
-      <string>Select the logfile to replay</string>
+      <string>Select the Flight Data to replay</string>
      </property>
      <property name="statusTip">
-      <string>Select the logfile to replay</string>
+      <string>Select the Flight Data to replay</string>
      </property>
      <property name="whatsThis">
-      <string>Select the logfile to replay</string>
+      <string>Select the Flight Data to replay</string>
      </property>
      <property name="text">
-      <string>Replay Logfile</string>
+      <string>Replay Flight Data</string>
      </property>
     </widget>
    </item>

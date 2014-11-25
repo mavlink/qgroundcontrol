@@ -44,6 +44,7 @@
 #include "PixhawkCheetahNode.h"
 #include "TerrainParamDialog.h"
 #include "UASManager.h"
+#include "QGCFileDialog.h"
 
 #include "QGC.h"
 #include "gpl.h"
@@ -585,7 +586,7 @@ Pixhawk3DWidget::setBirdEyeView(void)
 void
 Pixhawk3DWidget::loadTerrainModel(void)
 {
-    QString filename = QFileDialog::getOpenFileName(this, "Load Terrain Model",
+    QString filename = QGCFileDialog::getOpenFileName(this, "Load Terrain Model",
                                                     QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                                                     tr("Collada (*.dae)"));
 

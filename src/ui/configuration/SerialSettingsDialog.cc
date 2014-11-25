@@ -44,9 +44,9 @@ This file is part of the APM_PLANNER project
 
 QT_USE_NAMESPACE
 
-SettingsDialog::SettingsDialog(QWidget *parent) :
+SerialSettingsDialog::SerialSettingsDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::SettingsDialog)
+    ui(new Ui::SerialSettingsDialog)
 {
     ui->setupUi(this);
 
@@ -67,17 +67,17 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     updateSettings();
 }
 
-SettingsDialog::~SettingsDialog()
+SerialSettingsDialog::~SerialSettingsDialog()
 {
     delete ui;
 }
 
-const SerialSettings& SettingsDialog::settings() const
+const SerialSettings& SerialSettingsDialog::settings() const
 {
     return m_currentSettings;
 }
 
-void SettingsDialog::showPortInfo(int idx)
+void SerialSettingsDialog::showPortInfo(int idx)
 {
     if (idx != -1) {
         QStringList list = ui->serialPortInfoListBox->itemData(idx).toStringList();
@@ -89,13 +89,13 @@ void SettingsDialog::showPortInfo(int idx)
     }
 }
 
-void SettingsDialog::apply()
+void SerialSettingsDialog::apply()
 {
     updateSettings();
     hide();
 }
 
-void SettingsDialog::checkCustomBaudRatePolicy(int idx)
+void SerialSettingsDialog::checkCustomBaudRatePolicy(int idx)
 {
     bool isCustomBaudRate = !ui->baudRateBox->itemData(idx).isValid();
     ui->baudRateBox->setEditable(isCustomBaudRate);
@@ -106,7 +106,7 @@ void SettingsDialog::checkCustomBaudRatePolicy(int idx)
     }
 }
 
-void SettingsDialog::fillPortsParameters()
+void SerialSettingsDialog::fillPortsParameters()
 {
     // fill baud rate (is not the entire list of available values,
     // desired values??, add your independently)
@@ -145,7 +145,7 @@ void SettingsDialog::fillPortsParameters()
     ui->flowControlBox->addItem(QLatin1String("XON/XOFF"), QSerialPort::SoftwareControl);
 }
 
-void SettingsDialog::fillPortsInfo()
+void SerialSettingsDialog::fillPortsInfo()
 {
     ui->serialPortInfoListBox->clear();
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
@@ -161,7 +161,7 @@ void SettingsDialog::fillPortsInfo()
     }
 }
 
-void SettingsDialog::updateSettings()
+void SerialSettingsDialog::updateSettings()
 {
     m_currentSettings.name = ui->serialPortInfoListBox->currentText();
 
