@@ -168,7 +168,7 @@ bool XbeeLink::hardwareConnect()
 
 bool XbeeLink::_connect(void)
 {
-	if (this->isRunning()) this->disconnect();
+	if (this->isRunning()) _disconnect();
     this->start(LowPriority);
     return true;
 }
@@ -205,7 +205,7 @@ void XbeeLink::writeBytes(const char *bytes, qint64 length)  // TO DO: delete th
 	}
 	else
 	{
-		this->disconnect();
+		_disconnect();
 		emit communicationError(this->getName(), tr("Could not send data - link %1 is disconnected!").arg(this->getName()));
 	}
 }
