@@ -47,6 +47,7 @@
 #include "MainWindow.h"
 #include "GAudioOutput.h"
 #include "CmdLineOptParser.h"
+#include "QGCMessageBox.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -247,19 +248,12 @@ bool QGCApplication::init(void)
     // Check if link could be connected
     if (udpLink && !LinkManager::instance()->connectLink(udpLink))
     {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not connect UDP port. Is an instance of " + qAppName() + "already running?");
-        msgBox.setInformativeText("It is recommended to close the application and stop all instances. Click Yes to close.");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::No);
-        int ret = msgBox.exec();
-        
-        // Close the message box shortly after the click to prevent accidental clicks
-        QTimer::singleShot(15000, &msgBox, SLOT(reject()));
-        
+        QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Could not connect UDP port. Is an instance of %1 already running?").arg(qAppName()),
+                                                                     tr("It is recommended to close the application and stop all instances. Click Yes to close."),
+                                                                     QMessageBox::Yes | QMessageBox::No,
+                                                                     QMessageBox::No);
         // Exit application
-        if (ret == QMessageBox::Yes)
+        if (button == QMessageBox::Yes)
         {
             //mainWindow->close();
             QTimer::singleShot(200, _mainWindow, SLOT(close()));

@@ -1,4 +1,3 @@
-#include <QMessageBox>
 #include <QProgressDialog>
 #include <QDebug>
 #include <QTimer>
@@ -10,6 +9,7 @@
 #include "LinkManager.h"
 #include "UAS.h"
 #include "QGC.h"
+#include "QGCMessageBox.h"
 
 QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     QWidget(parent),
@@ -251,13 +251,8 @@ void QGCPX4AirframeConfig::applyAndReboot()
     // Guard against the case of an edit where we didn't receive all params yet
     if (selectedId <= 0)
     {
-        QMessageBox msgBox;
-        msgBox.setText(tr("No airframe selected"));
-        msgBox.setInformativeText(tr("Please select an airframe first."));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        (void)msgBox.exec();
-
+        QGCMessageBox::warning(tr("No airframe selected"),
+                               tr("Please select an airframe first."));
         return;
     }
 
@@ -276,25 +271,15 @@ void QGCPX4AirframeConfig::applyAndReboot()
     // Guard against the case of an edit where we didn't receive all params yet
     if (paramMgr->countPendingParams() > 0 || components.count() == 0)
     {
-        QMessageBox msgBox;
-        msgBox.setText(tr("Parameter sync with UAS not yet complete"));
-        msgBox.setInformativeText(tr("Please wait a few moments and retry"));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        (void)msgBox.exec();
-
+        QGCMessageBox::information(tr("Parameter sync with UAS not yet complete"),
+                                   tr("Please wait a few moments and retry"));
         return;
     }
 
     // Guard against multiple components responding - this will never show in practice
     if (components.count() != 1) {
-        QMessageBox msgBox;
-        msgBox.setText(tr("Invalid system setup detected"));
-        msgBox.setInformativeText(tr("None or more than one component advertised to provide the main system configuration option. This is an invalid system setup - please check your autopilot."));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        (void)msgBox.exec();
-
+        QGCMessageBox::warning(tr("Invalid system setup detected"),
+                               tr("None or more than one component advertised to provide the main system configuration option. This is an invalid system setup - please check your autopilot."));
         return;
     }
 

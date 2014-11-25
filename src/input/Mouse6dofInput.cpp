@@ -9,7 +9,7 @@
 #include "Mouse6dofInput.h"
 #include "UAS.h"
 #include "UASManager.h"
-#include "QMessageBox"
+#include "QGCMessageBox.h"
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
 #include <QX11Info>
@@ -86,14 +86,8 @@ Mouse6dofInput::Mouse6dofInput(QWidget* parent) :
         }
         if ( !MagellanInit( display, parent->winId() ) )
         {
-            QMessageBox msgBox;
-            msgBox.setIcon(QMessageBox::Information);
-            msgBox.setText(tr("No 3DxWare driver is running."));
-            msgBox.setInformativeText(tr("Enter in Terminal 'sudo /etc/3DxWare/daemon/3dxsrv -d usb' and then restart QGroundControl."));
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
-
+            QGCMessageBox::critical(tr("No 3DxWare driver is running."),
+                                    tr("Enter in Terminal 'sudo /etc/3DxWare/daemon/3dxsrv -d usb' and then restart QGroundControl."));
             qDebug() << "No 3DxWare driver is running!";
             return;
         }
