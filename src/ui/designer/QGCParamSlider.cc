@@ -3,6 +3,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QToolTip>
+#include <QDebug>
 
 #include "QGCParamSlider.h"
 #include "ui_QGCParamSlider.h"
