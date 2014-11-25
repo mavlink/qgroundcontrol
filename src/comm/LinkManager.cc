@@ -31,11 +31,11 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QList>
 #include <QApplication>
-#include <QMessageBox>
 #include <QDebug>
 
 #include "LinkManager.h"
 #include "MainWindow.h"
+#include "QGCMessageBox.h"
 
 LinkManager* LinkManager::instance()
 {
@@ -284,9 +284,8 @@ const QList<SerialLink*> LinkManager::getSerialLinks()
 bool LinkManager::_connectionsSuspendedMsg(void)
 {
     if (_connectionsSuspended) {
-        QMessageBox::information(MainWindow::instance(),
-                                 tr("Connect not allowed"),
-                                 tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
+        QGCMessageBox::information(tr("Connect not allowed"),
+                                   tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
         return true;
     } else {
         return false;

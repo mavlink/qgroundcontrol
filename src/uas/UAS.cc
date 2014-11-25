@@ -10,13 +10,14 @@
  */
 
 #include <QList>
-#include <QMessageBox>
 #include <QTimer>
 #include <QSettings>
 #include <iostream>
 #include <QDebug>
+
 #include <cmath>
 #include <qmath.h>
+
 #include "UAS.h"
 #include "LinkInterface.h"
 #include "UASManager.h"
@@ -29,6 +30,7 @@
 #include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
 #include "AutoPilotPlugin.h"
+#include "QGCMessageBox.h"
 
 /**
 * Gets the settings from the previous UAS (name, airframe, autopilot, battery specs)
@@ -1404,19 +1406,11 @@ void UAS::setHomePosition(double lat, double lon, double alt)
                 tr("UAS") + QString::number(getUASID())
               : getUASName();
 
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText(tr("Set a new home position for vehicle %1").arg(uasName));
-    msgBox.setInformativeText("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location");
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Cancel);
-    int ret = msgBox.exec();
-
-    // Close the message box shortly after the click to prevent accidental clicks
-    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
-
-
-    if (ret == QMessageBox::Yes)
+    QMessageBox::StandardButton button = QGCMessageBox::question(tr("Set a new home position for vehicle %1").arg(uasName),
+                                                                 tr("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location"),
+                                                                 QMessageBox::Yes | QMessageBox::Cancel,
+                                                                 QMessageBox::Cancel);
+    if (button == QMessageBox::Yes)
     {
         mavlink_message_t msg;
         mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_DO_SET_HOME, 1, 0, 0, 0, 0, lat, lon, alt);
@@ -1442,19 +1436,11 @@ void UAS::setHomePosition(double lat, double lon, double alt)
 **/
 void UAS::setLocalOriginAtCurrentGPSPosition()
 {
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("Set the home position at the current GPS position?");
-    msgBox.setInformativeText("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location");
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Cancel);
-    int ret = msgBox.exec();
-
-    // Close the message box shortly after the click to prevent accidental clicks
-    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
-
-
-    if (ret == QMessageBox::Yes)
+    QMessageBox::StandardButton button = QGCMessageBox::question(tr("Set the home position at the current GPS position?"),
+                                                                 tr("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location"),
+                                                                 QMessageBox::Yes | QMessageBox::Cancel,
+                                                                 QMessageBox::Cancel);
+    if (button == QMessageBox::Yes)
     {
         mavlink_message_t msg;
         mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_DO_SET_HOME, 1, 1, 0, 0, 0, 0, 0, 0);
@@ -3204,19 +3190,11 @@ void UAS::stopHil()
 
 void UAS::shutdown()
 {
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Critical);
-    msgBox.setText("Shutting down the UAS");
-    msgBox.setInformativeText("Do you want to shut down the onboard computer?");
-
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Cancel);
-    int ret = msgBox.exec();
-
-    // Close the message box shortly after the click to prevent accidental clicks
-    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
-
-    if (ret == QMessageBox::Yes)
+    QMessageBox::StandardButton button = QGCMessageBox::question(tr("Shutting down the UAS"),
+                                                                 tr("Do you want to shut down the onboard computer?"),
+                                                                 QMessageBox::Yes | QMessageBox::Cancel,
+                                                                 QMessageBox::Cancel);
+    if (button == QMessageBox::Yes)
     {
         // If the active UAS is set, execute command
         mavlink_message_t msg;

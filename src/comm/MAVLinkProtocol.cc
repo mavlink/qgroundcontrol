@@ -13,7 +13,6 @@
 #include <QDebug>
 #include <QTime>
 #include <QApplication>
-#include <QMessageBox>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QtEndian>

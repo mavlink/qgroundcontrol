@@ -31,7 +31,6 @@ This file is part of the QGROUNDCONTROL project
 #define OPALRT_H
 
 #include <QString>
-#include <QMessageBox>
 
 #include "OpalApi.h"
 
