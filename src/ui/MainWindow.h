@@ -59,7 +59,6 @@ This file is part of the QGROUNDCONTROL project
 #include "HDDisplay.h"
 #include "WatchdogControl.h"
 #include "HSIDisplay.h"
-#include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
 #ifdef QGC_GOOGLE_EARTH_ENABLED
 #include "QGCGoogleEarthView.h"
@@ -67,11 +66,11 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCToolBar.h"
 #include "LogCompressor.h"
 
-#include "UASControlParameters.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
 #include "QGCUASFileViewMulti.h"
+#include "QGCFlightGearLink.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;

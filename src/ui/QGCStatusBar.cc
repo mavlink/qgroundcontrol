@@ -24,6 +24,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QToolButton>
 #include <QLabel>
 #include <QSpacerItem>
+#include <QFileDialog>
+
 #include "QGCStatusBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
