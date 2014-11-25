@@ -23,11 +23,11 @@ public:
 public slots:
     void systemDeleted(QObject* uas);
     void systemCreated(UASInterface* uas);
-    void systemSetActive(int uas);
+    void systemSetActive(UASInterface* uas);
 
 protected:
     void changeEvent(QEvent *e);
-    QMap<int, QGCUASFileView*> lists;
+    QMap<UASInterface*, QGCUASFileView*> lists;
 
 private:
     Ui::QGCUASFileViewMulti *ui;
