@@ -1,6 +1,7 @@
 #include "UASParameterCommsMgr.h"
 
 #include <QSettings>
+#include <QDebug>
 
 #include "QGCUASParamManagerInterface.h"
 #include "UASInterface.h"

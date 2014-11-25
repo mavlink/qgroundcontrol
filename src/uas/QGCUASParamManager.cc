@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QMessageBox>
+#include <QDebug>
 
 #include "UASInterface.h"
 
