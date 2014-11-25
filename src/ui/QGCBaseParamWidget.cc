@@ -6,7 +6,7 @@
 
 #include "QGCUASParamManagerInterface.h"
 #include "UASInterface.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "QGCFileDialog.h"
 
 QGCBaseParamWidget::QGCBaseParamWidget(QWidget *parent) :

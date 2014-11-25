@@ -52,7 +52,7 @@ This file is part of the QGROUNDCONTROL project
 #include "GAudioOutput.h"
 #include "QGCToolWidget.h"
 #include "QGCMAVLinkLogPlayer.h"
-#include "QGCSettingsWidget.h"
+#include "SettingsDialog.h"
 #include "QGCMapTool.h"
 #include "MAVLinkDecoder.h"
 #include "QGCMAVLinkMessageSender.h"
@@ -70,7 +70,7 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 #include "QGCUASFileViewMulti.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 

@@ -6,7 +6,7 @@
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGC.h"
 #include "ui_QGCMAVLinkLogPlayer.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "LinkManager.h"
 #include "QGCFileDialog.h"
 
