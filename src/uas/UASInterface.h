@@ -43,7 +43,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASParameterDataModel.h"
 #include "UASWaypointManager.h"
 #include "QGCUASParamManagerInterface.h"
-#include "RadioCalibration/RadioCalibrationData.h"
 
 class QGCUASFileManager;
 
@@ -584,8 +583,6 @@ signals:
     void remoteControlChannelScaledChanged(int channelId, float normalized);
     /** @brief Remote control RSSI changed */
     void remoteControlRSSIChanged(float rssi);
-    /** @brief Radio Calibration Data has been received from the MAV*/
-    void radioCalibrationReceived(const QPointer<RadioCalibrationData>&);
 
     /**
      * @brief Localization quality changed

@@ -272,7 +272,6 @@ FORMS += \
     src/ui/AudioOutputWidget.ui \
     src/ui/QGCSensorSettingsWidget.ui \
     src/ui/QGCDataPlot2D.ui \
-    src/ui/QGCRemoteControlView.ui \
     src/ui/QMap3D.ui \
     src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
@@ -290,7 +289,6 @@ FORMS += \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCTCPLinkConfiguration.ui \
     src/ui/QGCSettingsWidget.ui \
-    src/ui/UASControlParameters.ui \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
     src/ui/QGCMAVLinkInspector.ui \
@@ -317,7 +315,6 @@ FORMS += \
     src/ui/QGCHilXPlaneConfiguration.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
-    src/ui/uas/UASActionsWidget.ui \
     src/ui/QGCTabbedInfoView.ui \
     src/ui/UASRawStatusView.ui \
     src/ui/uas/QGCMessageView.ui \
@@ -383,13 +380,6 @@ HEADERS += \
     src/QGC.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
-    src/ui/QGCRemoteControlView.h \
-    src/ui/RadioCalibration/RadioCalibrationData.h \
-    src/ui/RadioCalibration/RadioCalibrationWindow.h \
-    src/ui/RadioCalibration/AirfoilServoCalibrator.h \
-    src/ui/RadioCalibration/SwitchCalibrator.h \
-    src/ui/RadioCalibration/CurveCalibrator.h \
-    src/ui/RadioCalibration/AbstractCalibrator.h \
     src/comm/QGCMAVLink.h \
     src/ui/QGCWebView.h \
     src/ui/map3D/QGCWebPage.h \
@@ -414,7 +404,6 @@ HEADERS += \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/QGCTCPLinkConfiguration.h \
     src/ui/QGCSettingsWidget.h \
-    src/ui/uas/UASControlParameters.h \
     src/uas/QGCUASParamManager.h \
     src/ui/map/QGCMapWidget.h \
     src/ui/map/MAV2DIcon.h \
@@ -456,7 +445,6 @@ HEADERS += \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
     src/ui/uas/UASQuickViewGaugeItem.h \
-    src/ui/uas/UASActionsWidget.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/UASRawStatusView.h \
     src/ui/PrimaryFlightDisplay.h \
@@ -535,13 +523,6 @@ SOURCES += \
     src/QGC.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
-    src/ui/QGCRemoteControlView.cc \
-    src/ui/RadioCalibration/RadioCalibrationWindow.cc \
-    src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
-    src/ui/RadioCalibration/SwitchCalibrator.cc \
-    src/ui/RadioCalibration/CurveCalibrator.cc \
-    src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc \
     src/ui/QGCWebView.cc \
     src/ui/map3D/QGCWebPage.cc \
     src/ui/QGCMainWindowAPConfigurator.cc \
@@ -565,7 +546,6 @@ SOURCES += \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/QGCTCPLinkConfiguration.cc \
     src/ui/QGCSettingsWidget.cc \
-    src/ui/uas/UASControlParameters.cpp \
     src/uas/QGCUASParamManager.cc \
     src/ui/map/QGCMapWidget.cc \
     src/ui/map/MAV2DIcon.cc \
@@ -605,7 +585,6 @@ SOURCES += \
     src/ui/uas/UASQuickViewTextItem.cc \
     src/ui/uas/UASQuickViewGaugeItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
-    src/ui/uas/UASActionsWidget.cpp \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
     src/ui/PrimaryFlightDisplay.cc \

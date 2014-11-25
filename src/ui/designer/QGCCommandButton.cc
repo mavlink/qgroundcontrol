@@ -1,4 +1,5 @@
 #include <QDockWidget>
+#include <QDebug>
 
 #include "QGCCommandButton.h"
 #include "ui_QGCCommandButton.h"
