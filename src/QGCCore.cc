@@ -156,6 +156,7 @@ bool QGCApplication::init(void)
         Q_ASSERT(documentsDir.exists());
         
         bool pathCreated = documentsDir.mkpath(_defaultSavedFileDirectoryName);
+        Q_UNUSED(pathCreated);
         Q_ASSERT(pathCreated);
         savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
         settings.setValue(_savedFilesLocationKey, savedFilesLocation);
