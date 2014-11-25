@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightGearLink.h"
 #include "QGC.h"
 #include "MainWindow.h"
-#include "QGCFileDialog.h"
+#include <QFileDialog>
 
 // FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
