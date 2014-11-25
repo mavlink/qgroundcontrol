@@ -45,6 +45,7 @@
 #include "TerrainParamDialog.h"
 #include "UASManager.h"
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 #include "QGC.h"
 #include "gpl.h"
@@ -618,10 +619,8 @@ Pixhawk3DWidget::loadTerrainModel(void)
     }
     else
     {
-        QMessageBox msgBox(QMessageBox::Warning,
-                           "Error loading model",
-                           QString("Error: Unable to load terrain model (%1).").arg(filename));
-        msgBox.exec();
+        QGCMessageBox::warning(tr("Error loading model"),
+                               tr("Error: Unable to load terrain model (%1).").arg(filename));
     }
 }
 
