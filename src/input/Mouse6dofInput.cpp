@@ -38,7 +38,7 @@ Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
     bValue(0.0),
     cValue(0.0)
 {
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     // Connect 3DxWare SDK MotionEvent
     connect(mouseInput, SIGNAL(Move3d(std::vector<float>&)), this, SLOT(motion3DMouse(std::vector<float>&)));
     connect(mouseInput, SIGNAL(On3dmouseKeyDown(int)), this, SLOT(button3DMouseDown(int)));
@@ -62,7 +62,7 @@ Mouse6dofInput::Mouse6dofInput(QWidget* parent) :
     bValue(0.0),
     cValue(0.0)
 {
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     if (!mouseActive)
     {
@@ -141,7 +141,7 @@ void Mouse6dofInput::setActiveUAS(UASInterface* uas)
 void Mouse6dofInput::init()
 {
     // Make sure active UAS is set
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 }
 
 void Mouse6dofInput::run()

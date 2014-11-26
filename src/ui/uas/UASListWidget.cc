@@ -63,17 +63,17 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
 
     this->setVisible(false);
 
-    connect(LinkManager::instance(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
+    connect(qgcApp()->singletonLinkManager(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
 
     // Listen for when UASes are added or removed. This does not manage the UASView
     // widgets that are displayed within this widget.
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)),
             this, SLOT(addUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASDeleted(UASInterface*)),
             this, SLOT(removeUAS(UASInterface*)));
 
     // Get a list of all existing UAS
-    foreach (UASInterface* uas, UASManager::instance()->getUASList())
+    foreach (UASInterface* uas, qgcApp()->singletonUASManager()->getUASList())
     {
         addUAS(uas);
     }
@@ -118,13 +118,13 @@ void UASListWidget::updateStatus()
         LinkInterface* link = i.key();
 
         // Paranoid sanity check
-        if (!LinkManager::instance()->getLinks().contains(link))
+        if (!qgcApp()->singletonLinkManager()->getLinks().contains(link))
             continue;
 
         if (!link)
             continue;
 
-        ProtocolInterface* p = LinkManager::instance()->getProtocolForLink(link);
+        ProtocolInterface* p = qgcApp()->singletonLinkManager()->getProtocolForLink(link);
 
         // Build the tooltip out of the protocol parsing data: received, dropped, and parsing errors.
         QString displayString("");

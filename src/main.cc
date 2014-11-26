@@ -125,7 +125,16 @@ int main(int argc, char *argv[])
 #endif
     }
     
+    QGCApplication* app = new QGCApplication(argc, argv);
+    Q_CHECK_PTR(app);
+    
+    app->_initCommon();
+    
     if (runUnitTests) {
+        if (!app->_initForUnitTests()) {
+            return -1;
+        }
+        
         // Run the test
         int failures = AutoTest::run(argc-1, argv);
         if (failures == 0)
@@ -137,15 +146,14 @@ int main(int argc, char *argv[])
             qDebug() << failures << " TESTS FAILED!";
         }
         return failures;
+    } else {
+        if (!app->_initForNormalAppBoot()) {
+            return -1;
+        }
+        return app->exec();
     }
 #endif
 
-    QGCApplication* app = new QGCApplication(argc, argv);
-    Q_CHECK_PTR(app);
     
-    if (!app->init()) {
-        return -1;
-    }
 
-    return app->exec();
 }

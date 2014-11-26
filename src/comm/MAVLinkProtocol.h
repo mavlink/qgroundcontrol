@@ -56,7 +56,7 @@ class MAVLinkProtocol : public ProtocolInterface
     Q_OBJECT
 
 public:
-    MAVLinkProtocol();
+    MAVLinkProtocol(void);
     ~MAVLinkProtocol();
 
     /** @brief Get the human-friendly name of this protocol */

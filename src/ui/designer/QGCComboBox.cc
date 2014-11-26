@@ -364,7 +364,7 @@ void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
         }
     }
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 
     // Get param value after settings have been loaded
    // requestParameter();
@@ -404,7 +404,7 @@ void QGCComboBox::readSettings(const QSettings& settings)
         comboBoxTextToValMap[settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString()] = settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
     }*/
 
-    //setActiveUAS(UASManager::instance()->getActiveUAS());*/
+    //setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());*/
 
     // Get param value after settings have been loaded
     //requestParameter();

@@ -37,25 +37,13 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
 
-LinkManager* LinkManager::instance()
-{
-    static LinkManager* _instance = 0;
-    if(_instance == 0) {
-        _instance = new LinkManager();
-
-        /* Set the application as parent to ensure that this object
-         * will be destroyed when the main application exits */
-        _instance->setParent(qApp);
-    }
-    return _instance;
-}
-
 /**
  * @brief Private singleton constructor
  *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
-LinkManager::LinkManager() :
+LinkManager::LinkManager(QObject* parent) :
+    QObject(parent),
     _connectionsSuspended(false)
 {
     _links = QList<LinkInterface*>();

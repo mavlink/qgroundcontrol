@@ -50,7 +50,7 @@ OpalLink::OpalLink() :
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
     this->name = tr("OpalRT link ") + QString::number(getId());
-    LinkManager::instance()->add(this);
+    qgcApp()->singletonLinkManager()->add(this);
 
     // Start heartbeat timer, emitting a heartbeat at the configured rate
     QObject::connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(heartbeat()));

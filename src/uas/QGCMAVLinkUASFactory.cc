@@ -79,7 +79,7 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
     uas->addLink(link);
 
     // Now add UAS to "official" list, which makes the whole application aware of it
-    UASManager::instance()->addUAS(uas);
+    qgcApp()->singletonUASManager()->addUAS(uas);
 
     return uas;
 }

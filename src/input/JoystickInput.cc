@@ -52,7 +52,7 @@ JoystickInput::JoystickInput() :
     }
 
     // Make sure we initialize with the correct UAS.
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 
     // Start this thread. This allows the Joystick Settings window to work correctly even w/o any UASes connected.
     start();
@@ -364,8 +364,8 @@ void JoystickInput::init()
     setActiveJoystick(activeJoystick);
 
     // Now make sure we know what the current UAS is and track changes to it.
-    setActiveUAS(UASManager::instance()->getActiveUAS());
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
 
 void JoystickInput::shutdown()

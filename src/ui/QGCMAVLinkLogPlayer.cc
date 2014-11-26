@@ -83,7 +83,7 @@ void QGCMAVLinkLogPlayer::play()
 {
     Q_ASSERT(logFile.isOpen());
     
-    LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
+    qgcApp()->singletonLinkManager()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
     emit suspendLogForReplay(true);
     
     // Disable the log file selector button
@@ -121,7 +121,7 @@ void QGCMAVLinkLogPlayer::play()
 
 void QGCMAVLinkLogPlayer::pause()
 {
-    LinkManager::instance()->setConnectionsAllowed();
+    qgcApp()->singletonLinkManager()->setConnectionsAllowed();
     emit suspendLogForReplay(false);
 
     loopTimer.stop();
@@ -251,7 +251,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
     // Disallow replay when any links are connected
     
     bool foundConnection = false;
-    LinkManager* linkMgr = LinkManager::instance();
+    LinkManager* linkMgr = qgcApp()->singletonLinkManager();
     QList<LinkInterface*> links = linkMgr->getLinks();
     foreach(LinkInterface* link, links) {
         if (link->isConnected()) {
@@ -261,7 +261,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
     }
     
     if (foundConnection) {
-        MainWindow::instance()->showInfoMessage(tr("Log Replay"), tr("You must close all connections prior to replaying a log."));
+        qgcApp()->singletonMainWindow()->showInfoMessage(tr("Log Replay"), tr("You must close all connections prior to replaying a log."));
         return;
     }
     
@@ -317,7 +317,7 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     // Now load the new file.
     logFile.setFileName(file);
     if (!logFile.open(QFile::ReadOnly)) {
-        MainWindow::instance()->showCriticalMessage(tr("The selected file is unreadable"), tr("Please make sure that the file %1 is readable or select a different file").arg(file));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("The selected file is unreadable"), tr("Please make sure that the file %1 is readable or select a different file").arg(file));
         _playbackError();
         return false;
     }
@@ -329,8 +329,8 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     // we replace it.
     if (logLink)
     {
-        LinkManager::instance()->disconnectLink(logLink);
-        LinkManager::instance()->removeLink(logLink);
+        qgcApp()->singletonLinkManager()->disconnectLink(logLink);
+        qgcApp()->singletonLinkManager()->removeLink(logLink);
         logLink->deleteLater();
     }
     logLink = new MAVLinkSimulationLink("");
@@ -361,7 +361,7 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
         }
 
         if (endtime == starttime) {
-            MainWindow::instance()->showCriticalMessage(tr("The selected file is corrupt"), tr("No valid timestamps were found at the end of the file.").arg(file));
+            qgcApp()->singletonMainWindow()->showCriticalMessage(tr("The selected file is corrupt"), tr("No valid timestamps were found at the end of the file.").arg(file));
             _playbackError();
             return false;
         }
@@ -638,7 +638,7 @@ void QGCMAVLinkLogPlayer::_finishPlayback(void)
     
     QString status = tr("Flight Data replay complete");
     ui->logStatsLabel->setText(status);
-    MainWindow::instance()->showStatusMessage(status);
+    qgcApp()->singletonMainWindow()->showStatusMessage(status);
     
     // Note that we explicitly set the slider to 100%, as it may not hit that by itself depending on log file size.
     updatePositionSliderUi(100.0f);
@@ -646,7 +646,7 @@ void QGCMAVLinkLogPlayer::_finishPlayback(void)
     emit logFileEndReached();
     
     emit suspendLogForReplay(false);
-    LinkManager::instance()->setConnectionsAllowed();
+    qgcApp()->singletonLinkManager()->setConnectionsAllowed();
 }
 
 /// @brief Called when an error occurs during playback to reset playback system state.

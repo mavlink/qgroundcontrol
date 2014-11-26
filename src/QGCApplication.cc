@@ -1,4 +1,4 @@
-/*=====================================================================
+ /*=====================================================================
  
  QGroundControl Open Source Ground Control Station
  
@@ -48,6 +48,10 @@
 #include "GAudioOutput.h"
 #include "CmdLineOptParser.h"
 #include "QGCMessageBox.h"
+#include "LinkManager.h"
+#include "UASManager.h"
+#include "AutoPilotPluginManager.h"
+#include "MainWindow.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -55,6 +59,8 @@
 #include "UDPLink.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
+
+QGCApplication* QGCApplication::_app = NULL;
 
 const char* QGCApplication::_deleteAllSettingsKey = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey = "SettingsVersion";
@@ -77,9 +83,16 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
 
 
 QGCApplication::QGCApplication(int &argc, char* argv[]) :
-QApplication(argc, argv),
-_mainWindow(NULL)
+    QApplication(argc, argv),
+    _singletonAutoPilotPluginManager(NULL),
+    _singletonLinkManager(NULL),
+    _singletonUASManager(NULL),
+    _singletonMainWindow(NULL),
+    _singletonUASManagerSaveForMock(NULL)
 {
+    Q_ASSERT(_app == NULL);
+    _app = this;
+    
     // Set application information
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setOrganizationName(QGC_ORG_NAME);
@@ -119,7 +132,12 @@ _mainWindow(NULL)
     
 }
 
-bool QGCApplication::init(void)
+void QGCApplication::_initCommon(void)
+{
+    _createManagerSingletons();
+}
+
+bool QGCApplication::_initForNormalAppBoot(void)
 {
     QSettings settings;
     
@@ -169,16 +187,6 @@ bool QGCApplication::init(void)
         }
     }
     
-    // If we made it this far and we still don't have a location. Either the specfied location was invalid
-    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
-    /// settings.
-    if (savedFilesLocation.isEmpty()) {
-        QMessageBox::warning(MainWindow::instance(),
-                             tr("Bad save location"),
-                             tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
-        MainWindow::instance()->showSettings();
-    }
-    
     mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
     
     settings.sync();
@@ -212,41 +220,52 @@ bool QGCApplication::init(void)
     
     // Start the user interface
     splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    _mainWindow = MainWindow::_create(splashScreen, mode);
+    _singletonMainWindow = new MainWindow(splashScreen, mode);
+    Q_CHECK_PTR(_singletonMainWindow);
+    _singletonMainWindow->_init();
     
     UDPLink* udpLink = NULL;
     
-    if (_mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
+    if (_singletonMainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
     {
         // Connect links
         // to make sure that all components are initialized when the
         // first messages arrive
         udpLink = new UDPLink(QHostAddress::Any, 14550);
-        LinkManager::instance()->add(udpLink);
+        qgcApp()->singletonLinkManager()->add(udpLink);
     } else {
         // We want to have a default serial link available for "quick" connecting.
         SerialLink *slink = new SerialLink();
-        LinkManager::instance()->add(slink);
+        qgcApp()->singletonLinkManager()->add(slink);
     }
     
 #ifdef QGC_RTLAB_ENABLED
     // Add OpalRT Link, but do not connect
     OpalLink* opalLink = new OpalLink();
-    MainWindow::instance()->addLink(opalLink);
+    qgcApp()->singletonMainWindow()->addLink(opalLink);
 #endif
     
     // Remove splash screen
-    splashScreen->finish(_mainWindow);
-    _mainWindow->splashScreenFinished();
+    splashScreen->finish(_singletonMainWindow);
+    _singletonMainWindow->splashScreenFinished();
+    
+    // If we made it this far and we still don't have a location. Either the specfied location was invalid
+    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
+    /// settings.
+    if (savedFilesLocation.isEmpty()) {
+        QGCMessageBox::warning(tr("Bad save location"),
+                               tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
+        qgcApp()->singletonMainWindow()->showSettings();
+    }
     
     if (settingsUpgraded) {
-        _mainWindow->showInfoMessage(tr("Settings Cleared"),
-                                     tr("The format for QGroundControl saved settings has been modified. "
-                                        "Your saved settings have been reset to defaults."));
+        qgcApp()->singletonMainWindow()->showInfoMessage(tr("Settings Cleared"),
+                                              tr("The format for QGroundControl saved settings has been modified. "
+                                                 "Your saved settings have been reset to defaults."));
     }
     
     // Check if link could be connected
-    if (udpLink && !LinkManager::instance()->connectLink(udpLink))
+    if (udpLink && !qgcApp()->singletonLinkManager()->connectLink(udpLink))
     {
         QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Could not connect UDP port. Is an instance of %1 already running?").arg(qAppName()),
                                                                      tr("It is recommended to close the application and stop all instances. Click Yes to close."),
@@ -256,10 +275,15 @@ bool QGCApplication::init(void)
         if (button == QMessageBox::Yes)
         {
             //mainWindow->close();
-            QTimer::singleShot(200, _mainWindow, SLOT(close()));
+            QTimer::singleShot(200, _singletonMainWindow, SLOT(close()));
         }
     }
     
+    return true;
+}
+
+bool QGCApplication::_initForUnitTests(void)
+{
     return true;
 }
 
@@ -269,8 +293,8 @@ bool QGCApplication::init(void)
  **/
 QGCApplication::~QGCApplication()
 {
-    delete UASManager::instance();
-    delete LinkManager::instance();
+    delete qgcApp()->singletonUASManager();
+    delete qgcApp()->singletonLinkManager();
 }
 
 /**
@@ -281,7 +305,7 @@ QGCApplication::~QGCApplication()
  **/
 void QGCApplication::startLinkManager()
 {
-    LinkManager::instance();
+    qgcApp()->singletonLinkManager();
 }
 
 /**
@@ -291,7 +315,7 @@ void QGCApplication::startLinkManager()
 void QGCApplication::startUASManager()
 {
     // Load UAS plugins
-    QDir pluginsDir = QDir(qApp->applicationDirPath());
+    QDir pluginsDir = QDir(qgcApp()->applicationDirPath());
     
 #if defined(Q_OS_WIN)
     if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
@@ -308,7 +332,7 @@ void QGCApplication::startUASManager()
 #endif
     pluginsDir.cd("plugins");
     
-    UASManager::instance();
+    qgcApp()->singletonUASManager();
     
     // Load plugins
     
@@ -415,7 +439,72 @@ void QGCApplication::setPromptFlightDataSave(bool promptForSave)
 /// @brief Returns the QGCApplication object singleton.
 QGCApplication* qgcApp(void)
 {
-    QGCApplication* app = dynamic_cast<QGCApplication*>(qApp);
-    Q_ASSERT(app);
-    return app;
+    Q_ASSERT(QGCApplication::_app);
+    return QGCApplication::_app;
+}
+
+AutoPilotPluginManager* QGCApplication::singletonAutoPilotPluginManager(void)
+{
+    Q_ASSERT(_singletonAutoPilotPluginManager);
+    return _singletonAutoPilotPluginManager;
+}
+
+LinkManager* QGCApplication::singletonLinkManager(void)
+{
+    Q_ASSERT(_singletonLinkManager);
+    return _singletonLinkManager;
+}
+
+UASManagerInterface* QGCApplication::singletonUASManager(void)
+{
+    Q_ASSERT(_singletonUASManager);
+    return _singletonUASManager;
+}
+
+MainWindow* QGCApplication::singletonMainWindow(void)
+{
+    // MainWindow is only created by QGCApplication::_initForNormalAppBoot
+    Q_ASSERT(_singletonMainWindow);
+    return _singletonMainWindow;
+}
+
+void QGCApplication::setMockSingletonUASManager(UASManagerInterface* mockUASManager)
+{
+    Q_ASSERT(mockUASManager != NULL);
+    Q_ASSERT(_singletonUASManager != NULL);
+    _singletonUASManagerSaveForMock = _singletonUASManager;
+    _singletonUASManager = mockUASManager;
+}
+
+void QGCApplication::clearMockSingletonUASManager(void)
+{
+    Q_ASSERT(_singletonUASManagerSaveForMock != NULL);
+    Q_ASSERT(_singletonUASManager != NULL);
+    _singletonUASManager = _singletonUASManagerSaveForMock;
+}
+
+void QGCApplication::destroySingletonsForUnitTest(void)
+{
+    delete _singletonUASManager;
+    delete _singletonLinkManager;
+    delete _singletonAutoPilotPluginManager;
+    delete _singletonMainWindow;
+    
+    _singletonUASManager = NULL;
+    _singletonLinkManager = NULL;
+    _singletonAutoPilotPluginManager = NULL;
+    _singletonMainWindow = NULL;
+}
+
+/// @brief Creates all singletons except for MainWindow. This way they are all created on the correct
+///         thread.
+void QGCApplication::_createManagerSingletons(void)
+{
+    _singletonAutoPilotPluginManager = new AutoPilotPluginManager(this);
+    _singletonUASManager = new UASManager(this);
+    _singletonLinkManager = new LinkManager(this);
+    
+    Q_CHECK_PTR(_singletonAutoPilotPluginManager);
+    Q_CHECK_PTR(_singletonUASManager);
+    Q_CHECK_PTR(_singletonLinkManager);
 }

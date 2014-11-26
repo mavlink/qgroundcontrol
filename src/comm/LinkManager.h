@@ -36,9 +36,11 @@ This file is part of the PIXHAWK project
 #include <QList>
 #include <QMultiMap>
 #include <QMutex>
-#include <LinkInterface.h>
-#include <SerialLink.h>
-#include <ProtocolInterface.h>
+
+#include "LinkInterface.h"
+#include "SerialLink.h"
+#include "ProtocolInterface.h"
+#include "QGCApplication.h"
 
 /**
  * The Link Manager organizes the physical Links. It can manage arbitrary
@@ -51,7 +53,6 @@ class LinkManager : public QObject
     Q_OBJECT
 
 public:
-    static LinkManager* instance();
     ~LinkManager();
 
     void run();
@@ -100,7 +101,13 @@ signals:
     void linkRemoved(LinkInterface* link);
     
 private:
-    LinkManager(void);
+    /// @brief Only QGCApplication is allowed to create a LinkManager singleton. All access to the singleton
+    ///         should be through QGCApplication::singletonLinkManager.
+    LinkManager(QObject* parent = NULL);
+    
+    /// @brief Only QGCApplication is allowed to create a LinkManager singleton. All access to the singleton
+    ///         should be through QGCApplication::singletonLinkManager.
+    friend class QGCApplication;
     
     QList<LinkInterface*> _links;
     QMultiMap<ProtocolInterface*,LinkInterface*> _protocolLinks;

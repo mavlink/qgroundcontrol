@@ -201,16 +201,16 @@ void QGCToolBar::createUI()
     connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
 
     // Configure the toolbar for the current default UAS
-    setActiveUAS(UASManager::instance()->getActiveUAS());
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     // Update label if required
-    if (LinkManager::instance()->getSerialLinks().count() < 1) {
+    if (qgcApp()->singletonLinkManager()->getSerialLinks().count() < 1) {
         connectButton->setText(tr("New Serial Link"));
         toolBarPortAction->setVisible(false);
         toolBarBaudAction->setVisible(false);
     } else {
 
-        QList<SerialLink*> links = LinkManager::instance()->getSerialLinks();
+        QList<SerialLink*> links = qgcApp()->singletonLinkManager()->getSerialLinks();
 
         foreach(SerialLink* slink, links)
         {
@@ -218,8 +218,8 @@ void QGCToolBar::createUI()
         }
     }
 
-    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
-    connect(LinkManager::instance(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
+    connect(qgcApp()->singletonLinkManager(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+    connect(qgcApp()->singletonLinkManager(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
 
     loadSettings();
 
@@ -445,7 +445,7 @@ void QGCToolBar::updateView()
         toolBarBatteryBar->setValue(batteryPercent);
 
         if (batteryPercent < 30 && toolBarBatteryBar->value() >= 30) {
-            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+            if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
             {
                 toolBarBatteryBar->setStyleSheet("QProgressBar {color: #FFF} QProgressBar::chunk { background-color: #008000}");
             }
@@ -454,7 +454,7 @@ void QGCToolBar::updateView()
                 toolBarBatteryBar->setStyleSheet("QProgressBar {color: #000} QProgressBar QProgressBar::chunk { background-color: #0F0}");
             }
         } else if (batteryPercent >= 30 && toolBarBatteryBar->value() < 30){
-            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+            if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
             {
                 toolBarBatteryBar->setStyleSheet("QProgressBar {color: #FFF} QProgressBar::chunk { background-color: #808000}");
             }
@@ -493,7 +493,7 @@ void QGCToolBar::updateView()
     }
     else
     {
-        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
         {
             toolBarSafetyLabel->setStyleSheet("QLabel {color: #0D820D; font-size: 15pt;}");
         }
@@ -676,7 +676,7 @@ void QGCToolBar::removeLink(LinkInterface* link)
         currentLink = NULL;
 
         // Try to get a new serial link
-        foreach (SerialLink* s, LinkManager::instance()->getSerialLinks())
+        foreach (SerialLink* s, qgcApp()->singletonLinkManager()->getSerialLinks())
         {
             addLink(s);
         }
@@ -769,12 +769,12 @@ void QGCToolBar::updateLinkState(bool connected)
 
 void QGCToolBar::connectLink(bool connect)
 {
-    LinkManager* linkMgr = LinkManager::instance();
+    LinkManager* linkMgr = qgcApp()->singletonLinkManager();
     Q_ASSERT(linkMgr);
     
     // No serial port yet present
     if (connect && linkMgr->getSerialLinks().count() == 0) {
-        MainWindow::instance()->addLink();
+        qgcApp()->singletonMainWindow()->addLink();
         currentLink = linkMgr->getLinks().last();
     } else if (connect) {
         SerialLink *link = qobject_cast<SerialLink*>(currentLink);

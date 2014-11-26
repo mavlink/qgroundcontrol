@@ -39,7 +39,7 @@
 
 SettingsDialog::SettingsDialog(JoystickInput *joystick, QWidget *parent, Qt::WindowFlags flags) :
 QDialog(parent, flags),
-_mainWindow(MainWindow::instance()),
+_mainWindow(qgcApp()->singletonMainWindow()),
 _ui(new Ui::SettingsDialog)
 {
     _ui->setupUi(this);
@@ -53,7 +53,7 @@ _ui(new Ui::SettingsDialog)
     _ui->tabWidget->addTab(new JoystickWidget(joystick, this), "Controllers");
     
     // Add all protocols
-    QList<ProtocolInterface*> protocols = LinkManager::instance()->getProtocols();
+    QList<ProtocolInterface*> protocols = qgcApp()->singletonLinkManager()->getProtocols();
     foreach (ProtocolInterface* protocol, protocols) {
         MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
         if (mavlink) {

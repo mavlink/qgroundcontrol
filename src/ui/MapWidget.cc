@@ -243,16 +243,16 @@ void MapWidget::init()
 
         connect(goToButton, SIGNAL(clicked()), this, SLOT(goTo()));
 
-        QList<UASInterface*> systems = UASManager::instance()->getUASList();
+        QList<UASInterface*> systems = qgcApp()->singletonUASManager()->getUASList();
         foreach(UASInterface* system, systems) {
             addUAS(system);
         }
 
-        connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+        connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)),
                 this, SLOT(addUAS(UASInterface*)));
 
-        activeUASSet(UASManager::instance()->getActiveUAS());
-        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)));
+        activeUASSet(qgcApp()->singletonUASManager()->getActiveUAS());
+        connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)));
 
         connect(mc, SIGNAL(mouseEventCoordinate(const QMouseEvent*, const QPointF)),
                 this, SLOT(captureMapClick(const QMouseEvent*, const QPointF)));
@@ -470,7 +470,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
                 // Get the index of this waypoint
                 // note the call to getGlobalFrameAndNavTypeIndexOf()
                 // as we're only handling global waypoints
-                int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
+                int wpindex = qgcApp()->singletonUASManager()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
                 // If not found, return (this should never happen, but helps safety)
                 if (wpindex == -1) return;
 
@@ -519,7 +519,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
                 // waypoint list. This implies that the coordinate frame of this
                 // waypoint was changed and the list containing only global
                 // waypoints was shortened. Thus update the whole list
-                if (waypointPath->points().count() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeCount()) {
+                if (waypointPath->points().count() > qgcApp()->singletonUASManager()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeCount()) {
                     updateWaypointList(uas);
                 }
             }
@@ -670,7 +670,7 @@ void MapWidget::updateWaypointList(int uas)
 {
     if (mc) {
         // Get already existing waypoints
-        UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+        UASInterface* uasInstance = qgcApp()->singletonUASManager()->getUASForId(uas);
         if (uasInstance) {
             // Get update rect of old content, this is what will be redrawn
             // in the last step
@@ -772,7 +772,7 @@ void MapWidget::updateSystemSpecs(int uas)
             MAV2DIcon* icon = dynamic_cast<MAV2DIcon*>(p);
             if (icon && icon->getUASId() == uas) {
                 // Set new airframe
-                icon->setAirframe(UASManager::instance()->getUASForId(uas)->getAirframe());
+                icon->setAirframe(qgcApp()->singletonUASManager()->getUASForId(uas)->getAirframe());
                 icon->drawIcon();
             }
         }

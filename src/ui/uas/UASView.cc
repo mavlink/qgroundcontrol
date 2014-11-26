@@ -82,7 +82,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     setToolTip(""); // Make sure the QGroupBox's tooltip doesn't seep through.
 
     // FIXME XXX
-    lowPowerModeEnabled = MainWindow::instance()->lowPowerModeEnabled();
+    lowPowerModeEnabled = qgcApp()->singletonMainWindow()->lowPowerModeEnabled();
 
     hilAction->setCheckable(true);
 
@@ -101,7 +101,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int,int)));
     connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
-    connect(UASManager::instance(), SIGNAL(activeUASStatusChanged(UASInterface*,bool)), this, SLOT(updateActiveUAS(UASInterface*,bool)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASStatusChanged(UASInterface*,bool)), this, SLOT(updateActiveUAS(UASInterface*,bool)));
     connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(showStatusText(int, int, int, QString)));
     connect(uas, SIGNAL(navModeChanged(int, int, QString)), this, SLOT(updateNavMode(int, int, QString)));
 
@@ -196,7 +196,7 @@ void UASView::setUASasActive(bool active)
 {
     if (active)
     {
-        UASManager::instance()->setActiveUAS(this->uas);
+        qgcApp()->singletonUASManager()->setActiveUAS(this->uas);
     }
 }
 
@@ -229,7 +229,7 @@ void UASView::updateMode(int sysId, QString status, QString description)
 void UASView::mouseDoubleClickEvent (QMouseEvent * event)
 {
     Q_UNUSED(event);
-    UASManager::instance()->setActiveUAS(uas);
+    qgcApp()->singletonUASManager()->setActiveUAS(uas);
     // qDebug() << __FILE__ << __LINE__ << "DOUBLECLICKED";
 }
 
@@ -238,7 +238,7 @@ void UASView::enterEvent(QEvent* event)
     if (event->type() == QEvent::MouseMove)
     {
         emit uasInFocus(uas);
-        if (uas != UASManager::instance()->getActiveUAS())
+        if (uas != qgcApp()->singletonUASManager()->getActiveUAS())
         {
             grabMouse(QCursor(Qt::PointingHandCursor));
         }
@@ -555,13 +555,13 @@ void UASView::selectAirframe()
 
 void UASView::showHILUi()
 {
-     MainWindow::instance()->showHILConfigurationWidget(uas);
+     qgcApp()->singletonMainWindow()->showHILConfigurationWidget(uas);
 }
 
 void UASView::triggerUASDeletion()
 {
     refreshTimer->stop();
-    UASManager::instance()->removeUAS(uas);
+    qgcApp()->singletonUASManager()->removeUAS(uas);
 }
 
 void UASView::refresh()

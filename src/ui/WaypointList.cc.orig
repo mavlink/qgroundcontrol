@@ -82,7 +82,7 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     connect(m_ui->saveButton, SIGNAL(clicked()), this, SLOT(saveWaypoints()));
     connect(m_ui->loadButton, SIGNAL(clicked()), this, SLOT(loadWaypoints()));
 
-    //connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
+    //connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
 
     //VIEW TAB
 

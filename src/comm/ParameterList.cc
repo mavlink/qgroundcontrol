@@ -36,7 +36,7 @@ ParameterList::ParameterList()
      reqdServoParams(new QStringList())
 {
 
-    QDir settingsDir = QDir(qApp->applicationDirPath());
+    QDir settingsDir = QDir(qgcApp()->applicationDirPath());
     if (settingsDir.dirName() == "bin")
         settingsDir.cdUp();
     settingsDir.cd("data");

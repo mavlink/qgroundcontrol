@@ -38,7 +38,7 @@ void JoystickAxis::setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING newMapping)
     {
         ui->rangeCheckBox->hide();
     }
-    this->setActiveUAS(UASManager::instance()->getActiveUAS());
+    this->setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 }
 
 void JoystickAxis::setInverted(bool newValue)
@@ -55,7 +55,7 @@ void JoystickAxis::mappingComboBoxChanged(int newMapping)
 {
     JoystickInput::JOYSTICK_INPUT_MAPPING mapping = (JoystickInput::JOYSTICK_INPUT_MAPPING)newMapping;
     emit mappingChanged(id, mapping);
-    updateUIBasedOnUAS(UASManager::instance()->getActiveUAS(), mapping);
+    updateUIBasedOnUAS(qgcApp()->singletonUASManager()->getActiveUAS(), mapping);
 }
 
 void JoystickAxis::inversionCheckBoxChanged(bool inverted)

@@ -55,7 +55,7 @@ private:
     static StandardButton _messageBox(Icon icon, const QString& title, const QString& text, StandardButtons buttons, StandardButton defaultButton, QWidget* parent)
     {
         if (parent == NULL) {
-            parent = MainWindow::instance();
+            parent = qgcApp()->singletonMainWindow();
         }
         QString emptyTitle;
         QMessageBox box(icon, emptyTitle, title, buttons, parent);
@@ -67,7 +67,7 @@ private:
     static StandardButton _messageBox(Icon icon, const QString& title, const QString& text, StandardButtons buttons, StandardButton defaultButton, QWidget* parent)
     {
         if (parent == NULL) {
-            parent = MainWindow::instance();
+            parent = qgcApp()->singletonMainWindow();
         }
         QMessageBox box(icon, title, text, buttons, parent);
         box.setDefaultButton(defaultButton);

@@ -275,23 +275,23 @@ void QGCXPlaneLink::processError(QProcess::ProcessError err)
     switch(err)
     {
     case QProcess::FailedToStart:
-        MainWindow::instance()->showCriticalMessage(tr("X-Plane Failed to Start"), tr("Please check if the path and command is correct"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("X-Plane Failed to Start"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::Crashed:
-        MainWindow::instance()->showCriticalMessage(tr("X-Plane Crashed"), tr("This is a X-Plane-related problem. Please upgrade X-Plane"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("X-Plane Crashed"), tr("This is a X-Plane-related problem. Please upgrade X-Plane"));
         break;
     case QProcess::Timedout:
-        MainWindow::instance()->showCriticalMessage(tr("X-Plane Start Timed Out"), tr("Please check if the path and command is correct"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("X-Plane Start Timed Out"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::WriteError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with X-Plane"), tr("Please check if the path and command is correct"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("Could not Communicate with X-Plane"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::ReadError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with X-Plane"), tr("Please check if the path and command is correct"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("Could not Communicate with X-Plane"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::UnknownError:
     default:
-        MainWindow::instance()->showCriticalMessage(tr("X-Plane Error"), tr("Please check if the path and command is correct."));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("X-Plane Error"), tr("Please check if the path and command is correct."));
         break;
     }
 }

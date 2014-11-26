@@ -112,7 +112,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // Create configuration action for this link
     // Connect the current UAS
     action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", this);
-    LinkManager::instance()->add(link);
+    qgcApp()->singletonLinkManager()->add(link);
 	action->setData(link->getId());
     action->setEnabled(true);
     action->setVisible(true);
@@ -279,7 +279,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				XbeeLink *xbee = new XbeeLink();
 				tmpLink = xbee;
-				MainWindow::instance()->addLink(tmpLink);
+				qgcApp()->singletonMainWindow()->addLink(tmpLink);
 				break;
 			}
 #endif // QGC_XBEE_ENABLED
@@ -288,7 +288,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				UDPLink *udp = new UDPLink();
 				tmpLink = udp;
-				MainWindow::instance()->addLink(tmpLink);
+				qgcApp()->singletonMainWindow()->addLink(tmpLink);
 				break;
 			}
 			
@@ -296,7 +296,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
             {
             TCPLink *tcp = new TCPLink();
             tmpLink = tcp;
-            MainWindow::instance()->addLink(tmpLink);
+            qgcApp()->singletonMainWindow()->addLink(tmpLink);
             break;
             }
 
@@ -305,7 +305,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				OpalLink* opal = new OpalLink();
 				tmpLink = opal;
-				MainWindow::instance()->addLink(tmpLink);
+				qgcApp()->singletonMainWindow()->addLink(tmpLink);
 				break;
 			}
 #endif // QGC_RTLAB_ENABLED
@@ -315,7 +315,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
         {
             MockLink* mock = new MockLink;
             tmpLink = mock;
-            MainWindow::instance()->addLink(tmpLink);
+            qgcApp()->singletonMainWindow()->addLink(tmpLink);
             break;
         }
 #endif
@@ -325,16 +325,16 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				SerialLink *serial = new SerialLink();
 				tmpLink = serial;
-				MainWindow::instance()->addLink(tmpLink);
+				qgcApp()->singletonMainWindow()->addLink(tmpLink);
 				break;
 			}
 	}
 	// trigger new window
 
-	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(tmpLink));
-	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+	const int32_t& linkIndex(qgcApp()->singletonLinkManager()->getLinks().indexOf(tmpLink));
+	const int32_t& linkID(qgcApp()->singletonLinkManager()->getLinks()[linkIndex]->getId());
 
-	QList<QAction*> actions = MainWindow::instance()->listLinkMenuActions();
+	QList<QAction*> actions = qgcApp()->singletonMainWindow()->listLinkMenuActions();
 	foreach (QAction* act, actions) 
 	{
         if (act->data().toInt() == linkID) 
@@ -353,13 +353,13 @@ void CommConfigurationWindow::setProtocol(int protocol)
 void CommConfigurationWindow::setConnection()
 {
     if(!link->isConnected()) {
-        LinkManager::instance()->connectLink(link);
+        qgcApp()->singletonLinkManager()->connectLink(link);
         QGC::SLEEP::msleep(100);
         if (link->isConnected())
             // Auto-close window on connect
             this->window()->close();
     } else {
-        LinkManager::instance()->disconnectLink(link);
+        qgcApp()->singletonLinkManager()->disconnectLink(link);
     }
 }
 
@@ -376,7 +376,7 @@ void CommConfigurationWindow::remove()
     action=NULL;
 
     if(link) {
-        LinkManager::instance()->removeLink(link); //remove link from LinkManager list
+        qgcApp()->singletonLinkManager()->removeLink(link); //remove link from LinkManager list
         link->disconnect(); //disconnect port, and also calls terminate() to stop the thread
         if (link->isRunning()) link->terminate(); // terminate() the serial thread just in case it is still running
         link->wait(); // wait() until thread is stoped before deleting

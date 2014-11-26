@@ -23,31 +23,6 @@
 #define MEAN_EARTH_DIAMETER	12756274.0
 #define UMR	0.017453292519943295769236907684886
 
-UASManagerInterface* UASManager::_mockUASManager = NULL;
-
-
-void UASManager::setMockUASManager(UASManagerInterface* mockUASManager)
-{
-    _mockUASManager = mockUASManager;
-}
-
-UASManagerInterface* UASManager::instance()
-{
-    if (_mockUASManager) {
-        return _mockUASManager;
-    }
-    
-    static UASManager* _instance = 0;
-    if(_instance == 0) {
-        _instance = new UASManager();
-
-        // Set the application as parent to ensure that this object
-        // will be destroyed when the main application exits
-        _instance->setParent(qApp);
-    }
-    return _instance;
-}
-
 void UASManager::storeSettings()
 {
     QSettings settings;
@@ -256,13 +231,14 @@ void UASManager::uavChangedHomePosition(int uav, double lat, double lon, double 
  *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
-UASManager::UASManager() :
-        activeUAS(NULL),
-        offlineUASWaypointManager(NULL),
-        homeLat(47.3769),
-        homeLon(8.549444),
-        homeAlt(470.0),
-        homeFrame(MAV_FRAME_GLOBAL)
+UASManager::UASManager(QObject* parent) :
+    UASManagerInterface(parent),
+    activeUAS(NULL),
+    offlineUASWaypointManager(NULL),
+    homeLat(47.3769),
+    homeLon(8.549444),
+    homeAlt(470.0),
+    homeFrame(MAV_FRAME_GLOBAL)
 {
     loadSettings();
     setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);

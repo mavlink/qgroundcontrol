@@ -22,7 +22,7 @@ QGCRGBDView::QGCRGBDView(int width, int height, QWidget *parent) :
     enableDepthAction->setChecked(depthEnabled);
     connect(enableDepthAction, SIGNAL(triggered(bool)), this, SLOT(enableDepth(bool)));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     clearData();
     loadSettings();

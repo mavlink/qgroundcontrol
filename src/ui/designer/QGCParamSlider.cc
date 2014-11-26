@@ -501,7 +501,7 @@ void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 }
 
 void QGCParamSlider::readSettings(const QSettings& settings)
@@ -533,6 +533,6 @@ void QGCParamSlider::readSettings(const QSettings& settings)
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 
 }

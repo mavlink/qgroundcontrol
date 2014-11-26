@@ -29,19 +29,20 @@
  *
  */
 
-
 #ifndef QGCAPPLICATION_H
 #define QGCAPPLICATION_H
 
 #include <QApplication>
 
-#include "MainWindow.h"
-#include "UASManager.h"
-#include "LinkManager.h"
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
 
+// Work around circular header includes
+class AutoPilotPluginManager;
+class LinkManager;
+class UASManagerInterface;
+class MainWindow;
 
 /**
  * @brief The main application and management class.
@@ -57,10 +58,6 @@ class QGCApplication : public QApplication
 public:
     QGCApplication(int &argc, char* argv[]);
     ~QGCApplication();
-    
-    /// @brief Initialize the applicaation.
-    /// @return false: init failed, app should exit
-    bool init(void);
     
     /// @brief Sets the persistent flag to delete all settings the next time QGroundControl is started.
     void deleteAllSettingsNextBoot(void);
@@ -88,6 +85,40 @@ public:
     
     /// @brief Sets the flag to log all mavlink connections
     void setPromptFlightDataSave(bool promptForSave);
+
+    AutoPilotPluginManager* singletonAutoPilotPluginManager(void);
+    
+    LinkManager* singletonLinkManager(void);
+    
+    UASManagerInterface* singletonUASManager(void);
+    
+    MainWindow* singletonMainWindow(void);
+    
+#ifdef UNITTEST_BUILD
+    /// @brief Creates singletons for unit testing
+    void createSingletonsForUnitTest(void) { _createManagerSingletons(); }
+    
+    /// @brief Destroys all singletons. Used by unit test code to re-user QGCApplication.
+    void destroySingletonsForUnitTest(void);
+    
+    void setMockSingletonUASManager(UASManagerInterface* mockUASManager);
+    void clearMockSingletonUASManager(void);
+#endif
+    
+public:
+    /// @brief Perform initialize which is common to both normal application running and unit tests.
+    ///         Although public should only be called by main.
+    void _initCommon(void);
+
+    /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
+    ///         unit tests. Although public should only be called by main.
+    bool _initForNormalAppBoot(void);
+    
+    /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
+    ///         unit tests. Although public should only be called by main.
+    bool _initForUnitTests(void);
+    
+    static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
     
 protected:
     void startLinkManager();
@@ -100,7 +131,7 @@ protected:
     void startUASManager();
     
 private:
-    MainWindow* _mainWindow;
+    void _createManagerSingletons(void);
     
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
@@ -110,6 +141,13 @@ private:
     static const char* _defaultSavedFileDirectoryName;      ///< Default name for user visible save file directory
     static const char* _savedFileMavlinkLogDirectoryName;   ///< Name of mavlink log subdirectory
     static const char* _savedFileParameterDirectoryName;    ///< Name of parameter subdirectory
+
+    AutoPilotPluginManager* _singletonAutoPilotPluginManager;
+    LinkManager*            _singletonLinkManager;
+    UASManagerInterface*    _singletonUASManager;
+    MainWindow*             _singletonMainWindow;
+    
+    UASManagerInterface*    _singletonUASManagerSaveForMock;    ///< Saved true singleton, when replace with Mock
 };
 
 /// @brief Returns the QGCApplication object singleton.

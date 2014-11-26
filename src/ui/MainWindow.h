@@ -80,6 +80,7 @@ class Linecharts;
 class QGCDataPlot2D;
 class MenuActionHelper;
 class QGCUASFileViewMulti;
+class QGCApplication;
 
 /**
  * @brief Main Application Window
@@ -97,19 +98,12 @@ public:
         CUSTOM_MODE_PX4,
         CUSTOM_MODE_WIFI
     };
-
-    /// @brief Returns the MainWindow singleton. Will not create the MainWindow if it has not already
-    ///         been created.
-    static MainWindow* instance(void);
-    
-    /// @brief Creates the MainWindow singleton. Should only be called once by QGCApplication.
-    static MainWindow* _create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
     
     /// @brief Called to indicate that splash screen is no longer being displayed.
     void splashScreenFinished(void) { _splashScreen = NULL; }
 
     ~MainWindow();
-
+    
     enum QGC_MAINWINDOW_STYLE
     {
         QGC_MAINWINDOW_STYLE_DARK,
@@ -466,8 +460,17 @@ private slots:
     void _saveTempFlightDataLog(QString tempLogfile);
 
 private:
-    /// Constructor is private since all creation should be through MainWindow::instance.
+    /// @brief Only QGCApplication is allowed to create the singleton. All access to singleton is through
+    ///             QGCApplication::singletonMainWindow.
     MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
+    
+    /// @brief Two phase init for MainWindow. Need two phase so that new MainWindow can set singleton, and then
+    ///         any code called by _init has access to singleton.
+    void _init(void);
+    
+    /// @brief Only QGCApplication is allowed to create the singleton. All access to singleton is through
+    ///             QGCApplication::singletonMainWindow.
+    friend class QGCApplication;
     
     void _hideSplashScreen(void);
     void _openUrl(const QString& url, const QString& errorMessage);

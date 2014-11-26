@@ -53,7 +53,7 @@ UDPLink::UDPLink(QHostAddress host, quint16 port) :
     this->id = getNextLinkId();
 	this->name = tr("UDP Link (port:%1)").arg(this->port);
 	emit nameChanged(this->name);
-    // LinkManager::instance()->add(this);
+    // qgcApp()->singletonLinkManager()->add(this);
     qDebug() << "UDP Created " << name;
 }
 

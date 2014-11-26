@@ -25,11 +25,11 @@ void QGCToolWidgetItem::init()
     connect(stopEditAction, SIGNAL(triggered()), this, SLOT(endEditMode()));
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 
     // Set first UAS if it exists
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 }
 
 QGCToolWidgetItem::~QGCToolWidgetItem()

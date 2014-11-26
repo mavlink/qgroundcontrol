@@ -305,23 +305,23 @@ void UASUnitTest::signalUASLink_test()
     uas->setMode(2, 0);
     QCOMPARE(spy.count(), 0);// not solve for UAS not receiving message from UAS
 
-    QSignalSpy spyS(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)));
+    QSignalSpy spyS(qgcApp()->singletonLinkManager(), SIGNAL(newLink(LinkInterface*)));
     SerialLink* link = new SerialLink();
 
-    LinkManager::instance()->add(link);
-    LinkManager::instance()->addProtocol(link, mav);
+    qgcApp()->singletonLinkManager()->add(link);
+    qgcApp()->singletonLinkManager()->addProtocol(link, mav);
     QCOMPARE(spyS.count(), 1);
 
-    LinkManager::instance()->add(link);
-    LinkManager::instance()->addProtocol(link, mav);
+    qgcApp()->singletonLinkManager()->add(link);
+    qgcApp()->singletonLinkManager()->addProtocol(link, mav);
     QCOMPARE(spyS.count(), 1);// not add SerialLink, exist in list
 
     SerialLink* link2 = new SerialLink();
-    LinkManager::instance()->add(link2);
-    LinkManager::instance()->addProtocol(link2, mav);
+    qgcApp()->singletonLinkManager()->add(link2);
+    qgcApp()->singletonLinkManager()->addProtocol(link2, mav);
     QCOMPARE(spyS.count(), 2);// add SerialLink, not exist in list
 
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    QList<LinkInterface*> links = qgcApp()->singletonLinkManager()->getLinks();
     foreach(LinkInterface* link, links)
     {
         qDebug()<< link->getName();
@@ -342,59 +342,59 @@ void UASUnitTest::signalUASLink_test()
     QCOMPARE(uas->getLinks()->count(), 2);
 
     LinkInterface* ff99 = static_cast<LinkInterface*>(links.at(1));
-    LinkManager::instance()->removeLink(ff99);
+    qgcApp()->singletonLinkManager()->removeLink(ff99);
     delete link2;
 
-    QCOMPARE(LinkManager::instance()->getLinks().count(), 1);
+    QCOMPARE(qgcApp()->singletonLinkManager()->getLinks().count(), 1);
     QCOMPARE(uas->getLinks()->count(), 1);
 
-    QCOMPARE(static_cast<LinkInterface*>(LinkManager::instance()->getLinks().at(0))->getId(),
+    QCOMPARE(static_cast<LinkInterface*>(qgcApp()->singletonLinkManager()->getLinks().at(0))->getId(),
              static_cast<LinkInterface*>(uas->getLinks()->at(0))->getId());
 
     SerialLink* link3 = new SerialLink();
-    LinkManager::instance()->add(link3);
-    LinkManager::instance()->addProtocol(link3, mav);
+    qgcApp()->singletonLinkManager()->add(link3);
+    qgcApp()->singletonLinkManager()->addProtocol(link3, mav);
     QCOMPARE(spyS.count(), 3);
-    QCOMPARE(LinkManager::instance()->getLinks().count(), 2);
+    QCOMPARE(qgcApp()->singletonLinkManager()->getLinks().count(), 2);
 
     //all the links in LinkManager must be deleted because LinkManager::instance
     //is static. 
-    LinkManager::instance()->removeLink(link3);
+    qgcApp()->singletonLinkManager()->removeLink(link3);
     delete link3;
-    QCOMPARE(LinkManager::instance()->getLinks().count(), 1);
-    LinkManager::instance()->removeLink(link);
+    QCOMPARE(qgcApp()->singletonLinkManager()->getLinks().count(), 1);
+    qgcApp()->singletonLinkManager()->removeLink(link);
     delete link;
 
-    QCOMPARE(LinkManager::instance()->getLinks().count(), 0);
+    QCOMPARE(qgcApp()->singletonLinkManager()->getLinks().count(), 0);
 }
 
 void UASUnitTest::signalIdUASLink_test()
 {
 
-    QCOMPARE(LinkManager::instance()->getLinks().count(), 0);
+    QCOMPARE(qgcApp()->singletonLinkManager()->getLinks().count(), 0);
     SerialLink* myLink = new SerialLink();
     myLink->setPortName("COM 17");
-    LinkManager::instance()->add(myLink);
-    LinkManager::instance()->addProtocol(myLink, mav);
+    qgcApp()->singletonLinkManager()->add(myLink);
+    qgcApp()->singletonLinkManager()->addProtocol(myLink, mav);
 
     SerialLink* myLink2 = new SerialLink();
     myLink2->setPortName("COM 18");
-    LinkManager::instance()->add(myLink2);
-    LinkManager::instance()->addProtocol(myLink2, mav);
+    qgcApp()->singletonLinkManager()->add(myLink2);
+    qgcApp()->singletonLinkManager()->addProtocol(myLink2, mav);
 
     SerialLink* myLink3 = new SerialLink();
     myLink3->setPortName("COM 19");
-    LinkManager::instance()->add(myLink3);
-    LinkManager::instance()->addProtocol(myLink3, mav);
+    qgcApp()->singletonLinkManager()->add(myLink3);
+    qgcApp()->singletonLinkManager()->addProtocol(myLink3, mav);
 
     SerialLink* myLink4 = new SerialLink();
     myLink4->setPortName("COM 20");
-    LinkManager::instance()->add(myLink4);
-    LinkManager::instance()->addProtocol(myLink4, mav);
+    qgcApp()->singletonLinkManager()->add(myLink4);
+    qgcApp()->singletonLinkManager()->addProtocol(myLink4, mav);
 
-    QCOMPARE(LinkManager::instance()->getLinks().count(), 4);
+    QCOMPARE(qgcApp()->singletonLinkManager()->getLinks().count(), 4);
 
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    QList<LinkInterface*> links = qgcApp()->singletonLinkManager()->getLinks();
 
     LinkInterface* a = static_cast<LinkInterface*>(links.at(0));
     LinkInterface* b = static_cast<LinkInterface*>(links.at(1));
@@ -405,14 +405,14 @@ void UASUnitTest::signalIdUASLink_test()
     QCOMPARE(c->getName(), QString("COM 19"));
     QCOMPARE(d->getName(), QString("COM 20"));
 
-    LinkManager::instance()->removeLink(myLink4);
+    qgcApp()->singletonLinkManager()->removeLink(myLink4);
     delete myLink4;
-    LinkManager::instance()->removeLink(myLink3);
+    qgcApp()->singletonLinkManager()->removeLink(myLink3);
     delete myLink3;
-    LinkManager::instance()->removeLink(myLink2);
+    qgcApp()->singletonLinkManager()->removeLink(myLink2);
     delete myLink2;
-    LinkManager::instance()->removeLink(myLink);
+    qgcApp()->singletonLinkManager()->removeLink(myLink);
     delete myLink;
 
-    QCOMPARE(LinkManager::instance()->getLinks().count(), 0);
+    QCOMPARE(qgcApp()->singletonLinkManager()->getLinks().count(), 0);
 }

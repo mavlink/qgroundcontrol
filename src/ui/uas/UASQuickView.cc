@@ -17,11 +17,11 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
     m_verticalLayoutList.append(new QVBoxLayout());
     ui.horizontalLayout->addItem(m_verticalLayoutList[0]);
 
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(setActiveUAS(UASInterface*)));
-    connect(UASManager::instance(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
-    if (UASManager::instance()->getActiveUAS())
+    connect(qgcApp()->singletonUASManager(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
+    if (qgcApp()->singletonUASManager()->getActiveUAS())
     {
-        addUAS(UASManager::instance()->getActiveUAS());
+        addUAS(qgcApp()->singletonUASManager()->getActiveUAS());
     }
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 

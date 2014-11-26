@@ -80,33 +80,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LogCompressor.h"
 
-static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
-
 // Set up some constants
 const QString MainWindow::defaultDarkStyle = ":files/styles/style-dark.css";
 const QString MainWindow::defaultLightStyle = ":files/styles/style-light.css";
-
-MainWindow* MainWindow::_create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode)
-{
-    Q_ASSERT(_instance == NULL);
-    Q_ASSERT(splashScreen);
-    
-    new MainWindow(splashScreen, mode);
-    
-    // _instance is set in constructor
-    Q_ASSERT(_instance);
-
-    return _instance;
-}
-
-MainWindow* MainWindow::instance(void)
-{
-    // QGCAppication should have already called _create. Singleton is only created by call to _create
-    // not here.
-    Q_ASSERT(_instance);
-    
-    return _instance;
-}
 
 /// @brief Private constructor for MainWindow. MainWindow singleton is only ever created
 ///         by MainWindow::_create method. Hence no other code should have access to
@@ -116,7 +92,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     currentStyle(QGC_MAINWINDOW_STYLE_DARK),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
-    mavlink(new MAVLinkProtocol()),
+    mavlink(NULL),
     centerStackActionGroup(new QActionGroup(this)),
     autoReconnect(false),
     simulationLink(NULL),
@@ -125,23 +101,27 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     menuActionHelper(new MenuActionHelper()),
     _splashScreen(splashScreen)
 {
+    // We can't call any code in the constructor because it may turn back and call QGCApplication::singletonMainWindow since it isn't
+    // set yet.
+    
     Q_ASSERT(splashScreen);
+}
+
+void MainWindow::_init(void)
+{
+    mavlink = new MAVLinkProtocol();
     
-    Q_ASSERT(_instance == NULL);
-    _instance = this;
-    
-    connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
+    connect(this, &MainWindow::initStatusChanged, _splashScreen, &QSplashScreen::showMessage);
     
     this->setAttribute(Qt::WA_DeleteOnClose);
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
     
     connect(mavlink, SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
     connect(mavlink, SIGNAL(saveTempFlightDataLog(QString)), this, SLOT(_saveTempFlightDataLog(QString)));
-    
     loadSettings();
     
     emit initStatusChanged(tr("Loading style"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    qApp->setStyle("plastique");
+    qgcApp()->setStyle("plastique");
     loadStyle(currentStyle);
 
     if (settings.contains("ADVANCED_MODE"))
@@ -235,13 +215,13 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
 
     // Populate link menu
     emit initStatusChanged(tr("Populating link menu"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    QList<LinkInterface*> links = qgcApp()->singletonLinkManager()->getLinks();
     foreach(LinkInterface* link, links)
     {
         this->addLink(link);
     }
 
-    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+    connect(qgcApp()->singletonLinkManager(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
 
     // Connect user interface devices
     emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
@@ -264,7 +244,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     // Connect link
     if (autoReconnect)
     {
-        LinkManager* linkMgr = LinkManager::instance();
+        LinkManager* linkMgr = qgcApp()->singletonLinkManager();
         Q_ASSERT(linkMgr);
         
         SerialLink* link = new SerialLink();
@@ -419,9 +399,9 @@ void MainWindow::resizeEvent(QResizeEvent * event)
 
 QString MainWindow::getWindowStateKey()
 {
-    if (UASManager::instance()->getActiveUAS())
+    if (qgcApp()->singletonUASManager()->getActiveUAS())
     {
-        return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode()) + "_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
+        return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode()) + "_" + qgcApp()->singletonUASManager()->getActiveUAS()->getAutopilotTypeName();
     }
     else
         return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode());
@@ -662,7 +642,7 @@ void MainWindow::loadDockWidget(const QString& name)
     if (name.startsWith("HIL_CONFIG"))
     {
         //It's a HIL widget.
-        showHILConfigurationWidget(UASManager::instance()->getActiveUAS());
+        showHILConfigurationWidget(qgcApp()->singletonUASManager()->getActiveUAS());
     }
     else if (name == "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET")
     {
@@ -793,7 +773,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     aboutToCloseFlag = true;
     storeSettings();
     mavlink->storeSettings();
-    UASManager::instance()->storeSettings();
+    qgcApp()->singletonUASManager()->storeSettings();
     QMainWindow::closeEvent(event);
 }
 
@@ -923,8 +903,8 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
 
 void MainWindow::loadCustomWidgetsFromDefaults(const QString& systemType, const QString& autopilotType)
 {
-    QString defaultsDir = qApp->applicationDirPath() + "/files/" + autopilotType.toLower() + "/widgets/";
-    QString platformDir = qApp->applicationDirPath() + "/files/" + autopilotType.toLower() + "/" + systemType.toLower() + "/widgets/";
+    QString defaultsDir = qgcApp()->applicationDirPath() + "/files/" + autopilotType.toLower() + "/widgets/";
+    QString platformDir = qgcApp()->applicationDirPath() + "/files/" + autopilotType.toLower() + "/" + systemType.toLower() + "/widgets/";
 
     QDir widgets(defaultsDir);
     QStringList files = widgets.entryList();
@@ -979,9 +959,9 @@ void MainWindow::storeSettings()
         // Save the last current view in any case
         settings.setValue("CURRENT_VIEW", currentView);
         // Save the current window state, but only if a system is connected (else no real number of widgets would be present))
-        if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState());
+        if (qgcApp()->singletonUASManager()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState());
         // Save the current view only if a UAS is connected
-        if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
+        if (qgcApp()->singletonUASManager()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
         // Save the current power mode
     }
     settings.setValue("LOW_POWER_MODE", lowPowerMode);
@@ -993,7 +973,7 @@ void MainWindow::storeSettings()
 void MainWindow::configureWindowName()
 {
     QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
-    QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
+    QString windowname = qgcApp()->applicationName() + " " + qgcApp()->applicationVersion();
     bool prevAddr = false;
 
     windowname.append(" (" + QHostInfo::localHostName() + ": ");
@@ -1067,7 +1047,7 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
     QString styles;
     
     // Signal to the user that the app will pause to apply a new stylesheet
-    qApp->setOverrideCursor(Qt::WaitCursor);
+    qgcApp()->setOverrideCursor(Qt::WaitCursor);
     
     // Store the new style classification.
     currentStyle = style;
@@ -1095,12 +1075,12 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
     }
 
     if (!styles.isEmpty()) {
-        qApp->setStyleSheet(styles);
+        qgcApp()->setStyleSheet(styles);
         emit styleChanged(style);
     }
     
     // Finally restore the cursor before returning.
-    qApp->restoreOverrideCursor();
+    qgcApp()->restoreOverrideCursor();
     
     return success;
 }
@@ -1227,15 +1207,15 @@ void MainWindow::connectCommonActions()
     connect(ui.actionAdvanced_Mode,SIGNAL(toggled(bool)),this,SLOT(setAdvancedMode(bool)));
 
     // Connect internal actions
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     // Unmanned System controls
-    connect(ui.actionLiftoff, SIGNAL(triggered()), UASManager::instance(), SLOT(launchActiveUAS()));
-    connect(ui.actionLand, SIGNAL(triggered()), UASManager::instance(), SLOT(returnActiveUAS()));
-    connect(ui.actionEmergency_Land, SIGNAL(triggered()), UASManager::instance(), SLOT(stopActiveUAS()));
-    connect(ui.actionEmergency_Kill, SIGNAL(triggered()), UASManager::instance(), SLOT(killActiveUAS()));
-    connect(ui.actionShutdownMAV, SIGNAL(triggered()), UASManager::instance(), SLOT(shutdownActiveUAS()));
+    connect(ui.actionLiftoff, SIGNAL(triggered()), qgcApp()->singletonUASManager(), SLOT(launchActiveUAS()));
+    connect(ui.actionLand, SIGNAL(triggered()), qgcApp()->singletonUASManager(), SLOT(returnActiveUAS()));
+    connect(ui.actionEmergency_Land, SIGNAL(triggered()), qgcApp()->singletonUASManager(), SLOT(stopActiveUAS()));
+    connect(ui.actionEmergency_Kill, SIGNAL(triggered()), qgcApp()->singletonUASManager(), SLOT(killActiveUAS()));
+    connect(ui.actionShutdownMAV, SIGNAL(triggered()), qgcApp()->singletonUASManager(), SLOT(shutdownActiveUAS()));
 
     // Views actions
     connect(ui.actionFlightView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
@@ -1313,14 +1293,14 @@ LinkInterface* MainWindow::addLink()
     SerialLink* link = new SerialLink();
     // TODO This should be only done in the dialog itself
 
-    LinkManager::instance()->add(link);
-    LinkManager::instance()->addProtocol(link, mavlink);
+    qgcApp()->singletonLinkManager()->add(link);
+    qgcApp()->singletonLinkManager()->addProtocol(link, mavlink);
 
     // Go fishing for this link's configuration window
     QList<QAction*> actions = ui.menuNetwork->actions();
 
-    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+    const int32_t& linkIndex(qgcApp()->singletonLinkManager()->getLinks().indexOf(link));
+    const int32_t& linkID(qgcApp()->singletonLinkManager()->getLinks()[linkIndex]->getId());
 
     foreach (QAction* act, actions)
     {
@@ -1342,8 +1322,8 @@ bool MainWindow::configLink(LinkInterface *link)
 
     bool found(false);
 
-    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+    const int32_t& linkIndex(qgcApp()->singletonLinkManager()->getLinks().indexOf(link));
+    const int32_t& linkID(qgcApp()->singletonLinkManager()->getLinks()[linkIndex]->getId());
 
     foreach (QAction* action, actions)
     {
@@ -1363,16 +1343,16 @@ void MainWindow::addLink(LinkInterface *link)
     // THEY MAKE SURE THE LINK IS PROPERLY REGISTERED
     // BEFORE LINKING THE UI AGAINST IT
     // Register (does nothing if already registered)
-    LinkManager::instance()->add(link);
-    LinkManager::instance()->addProtocol(link, mavlink);
+    qgcApp()->singletonLinkManager()->add(link);
+    qgcApp()->singletonLinkManager()->addProtocol(link, mavlink);
 
     // Go fishing for this link's configuration window
     QList<QAction*> actions = ui.menuNetwork->actions();
 
     bool found(false);
 
-    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+    const int32_t& linkIndex(qgcApp()->singletonLinkManager()->getLinks().indexOf(link));
+    const int32_t& linkID(qgcApp()->singletonLinkManager()->getLinks()[linkIndex]->getId());
 
     foreach (QAction* act, actions)
     {
@@ -1401,10 +1381,10 @@ void MainWindow::simulateLink(bool simulate) {
             simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
             Q_CHECK_PTR(simulationLink);
         }
-        LinkManager::instance()->connectLink(simulationLink);
+        qgcApp()->singletonLinkManager()->connectLink(simulationLink);
     } else {
         Q_ASSERT(simulationLink);
-        LinkManager::instance()->disconnectLink(simulationLink);
+        qgcApp()->singletonLinkManager()->disconnectLink(simulationLink);
     }
 }
 
@@ -1685,7 +1665,7 @@ void MainWindow::handleMisconfiguration(UASInterface* uas)
                                                                     QMessageBox::Ok);
     if (button == QMessageBox::Ok) {
         // He wants to handle it, make sure this system is selected
-        UASManager::instance()->setActiveUAS(uas);
+        qgcApp()->singletonUASManager()->setActiveUAS(uas);
 
         // Flick to config view
         loadSetupView();

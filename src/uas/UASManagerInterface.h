@@ -55,6 +55,8 @@ class UASManagerInterface : public QObject
     Q_OBJECT
     
 public:
+    UASManagerInterface(QObject* parent = NULL) : QObject(parent) { };
+
     virtual UASInterface* getActiveUAS() = 0;
     virtual UASWaypointManager *getActiveUASWaypointManager() = 0;
     virtual UASInterface* silentGetActiveUAS() = 0;
@@ -107,6 +109,7 @@ signals:
     void activeUASStatusChanged(int systemId, bool active);
     /** @brief Current home position changed */
     void homePositionChanged(double lat, double lon, double alt);
+    
 };
 
 #endif // _UASMANAGERINTERFACE_H_

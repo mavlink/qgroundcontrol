@@ -31,8 +31,8 @@ QGCMessageView::QGCMessageView(QWidget *parent) :
     ui->plainTextEdit->addAction(clearAction);
 
     // Connect to the currently active UAS.
-    setActiveUAS(UASManager::instance()->getActiveUAS());
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
 
 QGCMessageView::~QGCMessageView()
