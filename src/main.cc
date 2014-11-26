@@ -131,6 +131,8 @@ int main(int argc, char *argv[])
     
     app->_initCommon();
     
+    int exitCode;
+    
 #ifdef QT_DEBUG
     if (runUnitTests) {
         if (!app->_initForUnitTests()) {
@@ -147,13 +149,17 @@ int main(int argc, char *argv[])
         {
             qDebug() << failures << " TESTS FAILED!";
         }
-        return -failures;
+        exitCode = -failures;
     } else
 #endif
     {
         if (!app->_initForNormalAppBoot()) {
             return -1;
         }
-        return app->exec();
+        exitCode = app->exec();
     }
+    
+    delete app;
+    
+    return exitCode;
 }

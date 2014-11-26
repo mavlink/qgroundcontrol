@@ -130,6 +130,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[]) :
     
 }
 
+QGCApplication::~QGCApplication()
+{
+    destroySingletonsForUnitTest();
+    delete _mainWindow;
+}
+
 void QGCApplication::_initCommon(void)
 {
     _createSingletons();
@@ -274,15 +280,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
 bool QGCApplication::_initForUnitTests(void)
 {
     return true;
-}
-
-/**
- * @brief Destructor for the groundstation. It destroys all loaded instances.
- *
- **/
-QGCApplication::~QGCApplication()
-{
-
 }
 
 void QGCApplication::deleteAllSettingsNextBoot(void)
