@@ -702,6 +702,7 @@ HEADERS+= \
     src/VehicleSetup/VehicleSetupButton.h \
     src/VehicleSetup/VehicleComponentButton.h \
     src/VehicleSetup/VehicleComponent.h \
+    src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
@@ -716,7 +717,7 @@ SOURCES += \
     src/VehicleSetup/SummaryPage.cc \
     src/VehicleSetup/ParameterEditor.cc \
     src/VehicleSetup/VehicleComponent.cc \
-    src/AutoPilotPlugins/AutoPilotPlugin.cc \
+    src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
