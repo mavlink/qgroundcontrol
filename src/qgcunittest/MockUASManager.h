@@ -53,6 +53,9 @@ public:
     // MockUASManager methods
     MockUASManager(void);
     
+    // Does not support singleton deletion
+    virtual void deleteInstance(void) { Q_ASSERT(false); }
+    
     /// Sets the currently active mock UAS
     /// @param mockUAS new mock uas, NULL for no active UAS
     void setMockActiveUAS(MockUAS* mockUAS);

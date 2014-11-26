@@ -335,6 +335,7 @@ FORMS += \
 HEADERS += \
     src/MG.h \
     src/QGCApplication.h \
+    src/QGCSingleton.h \
     src/uas/UASInterface.h \
     src/uas/UAS.h \
     src/uas/UASManager.h \
@@ -493,6 +494,7 @@ HEADERS += \
 SOURCES += \
     src/main.cc \
     src/QGCApplication.cc \
+    src/QGCSingleton.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
     src/comm/LinkManager.cc \

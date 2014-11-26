@@ -34,9 +34,11 @@
 #include <QThread>
 #include <QList>
 #include <QMutex>
-#include <UASInterface.h>
+
+#include "UASInterface.h"
 #include "../../libs/eigen/Eigen/Eigen"
 #include "QGCGeo.h"
+#include "QGCSingleton.h"
 
 /**
  * @brief Central manager for all connected aerial vehicles
@@ -50,11 +52,13 @@
  *
  * See UASManager.h for method documentation
  **/
-class UASManagerInterface : public QObject
+class UASManagerInterface : public QGCSingleton
 {
     Q_OBJECT
     
 public:
+    UASManagerInterface(QObject* parent = NULL) : QGCSingleton(parent) { }
+    
     virtual UASInterface* getActiveUAS() = 0;
     virtual UASWaypointManager *getActiveUASWaypointManager() = 0;
     virtual UASInterface* silentGetActiveUAS() = 0;
