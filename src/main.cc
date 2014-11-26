@@ -124,12 +124,14 @@ int main(int argc, char *argv[])
         _CrtSetReportHook(WindowsCrtReportHook);
 #endif
     }
+#endif
     
     QGCApplication* app = new QGCApplication(argc, argv);
     Q_CHECK_PTR(app);
     
     app->_initCommon();
     
+#ifdef QT_DEBUG
     if (runUnitTests) {
         if (!app->_initForUnitTests()) {
             return -1;
@@ -146,14 +148,12 @@ int main(int argc, char *argv[])
             qDebug() << failures << " TESTS FAILED!";
         }
         return failures;
-    } else {
+    } else
+#endif
+    {
         if (!app->_initForNormalAppBoot()) {
             return -1;
         }
         return app->exec();
     }
-#endif
-
-    
-
 }
