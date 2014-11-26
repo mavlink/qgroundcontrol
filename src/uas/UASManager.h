@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <UASInterface.h>
 #include "../../libs/eigen/Eigen/Eigen"
 #include "QGCGeo.h"
+#include "QGCApplication.h"
 
 /**
  * @brief Central manager for all connected aerial vehicles
@@ -50,7 +51,11 @@ class UASManager : public UASManagerInterface
     Q_OBJECT
 
 public:
-    static UASManagerInterface* instance();
+    /// @brief Returns the UASManager singleton
+    static UASManagerInterface* instance(void);
+    
+    virtual void deleteInstance(void);
+    
     ~UASManager();
     
     /**
@@ -249,7 +254,6 @@ public slots:
 
 
 protected:
-    UASManager();
     QList<UASInterface*> systems;
     UASInterface* activeUAS;
     UASWaypointManager *offlineUASWaypointManager;
@@ -266,6 +270,11 @@ protected:
     void initReference(const double & latitude, const double & longitude, const double & altitude);
     
 private:
+    /// @brief All access to UASManager singleton is through UASManager::instance
+    UASManager(QObject* parent = NULL);
+    
+    static UASManager* _instance;
+    
     static UASManagerInterface* _mockUASManager;
 
 public:

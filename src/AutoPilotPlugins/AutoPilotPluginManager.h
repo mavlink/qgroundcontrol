@@ -21,26 +21,44 @@
  
  ======================================================================*/
 
-#ifndef GENERICAUTOPILOT_H
-#define GENERICAUTOPILOT_H
+#ifndef AUTOPILOTPLUGINMANAGER_H
+#define AUTOPILOTPLUGINMANAGER_H
 
+#include <QObject>
+#include <QList>
+#include <QString>
+
+#include "UASInterface.h"
+#include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
+#include "QGCSingleton.h"
 
 /// @file
-///     @brief This is the generic implementation of the AutoPilotPlugin class for mavs
-///             we do not have a specific AutoPilotPlugin implementation.
+///     @brief The AutoPilotPlugin manager is a singleton which maintains the list of AutoPilotPlugin objects.
+///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class GenericAutoPilotPlugin : public AutoPilotPlugin
+class AutoPilotPluginManager : public QGCSingleton
 {
     Q_OBJECT
 
 public:
-    GenericAutoPilotPlugin(QObject* parent = NULL);
+    /// @brief Returns the AutoPilotPluginManager singleton
+    static AutoPilotPluginManager* instance(void);
     
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
+    virtual void deleteInstance(void);
+    
+    /// @brief Returns the singleton AutoPilot instance for the specified auto pilot type.
+    /// @param autopilotType Specified using the MAV_AUTOPILOT_* values.
+    AutoPilotPlugin* getInstanceForAutoPilotPlugin(int autopilotType);
+    
+private:
+    /// All access to singleton is through AutoPilotPluginManager::instance
+    AutoPilotPluginManager(QObject* parent = NULL);
+    
+    static AutoPilotPluginManager* _instance;
+    
+    QMap<int, AutoPilotPlugin*> _pluginMap;
 };
 
 #endif

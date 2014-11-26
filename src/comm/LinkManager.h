@@ -36,9 +36,11 @@ This file is part of the PIXHAWK project
 #include <QList>
 #include <QMultiMap>
 #include <QMutex>
-#include <LinkInterface.h>
-#include <SerialLink.h>
-#include <ProtocolInterface.h>
+
+#include "LinkInterface.h"
+#include "SerialLink.h"
+#include "ProtocolInterface.h"
+#include "QGCSingleton.h"
 
 /**
  * The Link Manager organizes the physical Links. It can manage arbitrary
@@ -46,12 +48,16 @@ This file is part of the PIXHAWK project
  * protocol instance to transport the link data into the application.
  *
  **/
-class LinkManager : public QObject
+class LinkManager : public QGCSingleton
 {
     Q_OBJECT
 
 public:
-    static LinkManager* instance();
+    /// @brief Returns the LinkManager singleton
+    static LinkManager* instance(void);
+    
+    virtual void deleteInstance(void);
+
     ~LinkManager();
 
     void run();
@@ -100,14 +106,16 @@ signals:
     void linkRemoved(LinkInterface* link);
     
 private:
-    LinkManager(void);
+    /// @brief All access to LinkManager is through LinkManager::instance
+    LinkManager(QObject* parent = NULL);
+    
+    static LinkManager* _instance;
     
     QList<LinkInterface*> _links;
     QMultiMap<ProtocolInterface*,LinkInterface*> _protocolLinks;
     QMutex _dataMutex;
     
     bool _connectionsSuspendedMsg(void);
-    static LinkManager* _instance;
     
     bool _connectionsSuspended;              ///< true: all new connections should not be allowed
     QString _connectionsSuspendedReason;     ///< User visible reason for suspension

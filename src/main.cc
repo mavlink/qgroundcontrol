@@ -124,8 +124,21 @@ int main(int argc, char *argv[])
         _CrtSetReportHook(WindowsCrtReportHook);
 #endif
     }
+#endif
     
+    QGCApplication* app = new QGCApplication(argc, argv);
+    Q_CHECK_PTR(app);
+    
+    app->_initCommon();
+    
+    int exitCode;
+    
+#ifdef QT_DEBUG
     if (runUnitTests) {
+        if (!app->_initForUnitTests()) {
+            return -1;
+        }
+        
         // Run the test
         int failures = AutoTest::run(argc-1, argv);
         if (failures == 0)
@@ -136,16 +149,19 @@ int main(int argc, char *argv[])
         {
             qDebug() << failures << " TESTS FAILED!";
         }
-        return failures;
-    }
+        exitCode = -failures;
+    } else
 #endif
-
-    QGCApplication* app = new QGCApplication(argc, argv);
-    Q_CHECK_PTR(app);
-    
-    if (!app->init()) {
-        return -1;
+    {
+        if (!app->_initForNormalAppBoot()) {
+            return -1;
+        }
+        exitCode = app->exec();
     }
-
-    return app->exec();
+    
+    delete app;
+    
+    qDebug() << "After app delete";
+    
+    return exitCode;
 }

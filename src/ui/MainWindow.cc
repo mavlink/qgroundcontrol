@@ -101,11 +101,12 @@ MainWindow* MainWindow::_create(QSplashScreen* splashScreen, enum MainWindow::CU
 
 MainWindow* MainWindow::instance(void)
 {
-    // QGCAppication should have already called _create. Singleton is only created by call to _create
-    // not here.
-    Q_ASSERT(_instance);
-    
     return _instance;
+}
+
+void MainWindow::deleteInstance(void)
+{
+    delete this;
 }
 
 /// @brief Private constructor for MainWindow. MainWindow singleton is only ever created
@@ -410,6 +411,8 @@ MainWindow::~MainWindow()
     {
         commsWidgetList[i]->deleteLater();
     }
+    
+    _instance = NULL;
 }
 
 void MainWindow::resizeEvent(QResizeEvent * event)

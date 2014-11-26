@@ -102,6 +102,9 @@ public:
     ///         been created.
     static MainWindow* instance(void);
     
+    /// @brief Deletes the MainWindow singleton
+    void deleteInstance(void);
+    
     /// @brief Creates the MainWindow singleton. Should only be called once by QGCApplication.
     static MainWindow* _create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
     
@@ -468,6 +471,11 @@ private slots:
 private:
     /// Constructor is private since all creation should be through MainWindow::instance.
     MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
+    
+    /// @brief Two phase construction such that MainWindow::instance is available to code
+    void _init(void);
+    
+    friend class QGCApplication;
     
     void _hideSplashScreen(void);
     void _openUrl(const QString& url, const QString& errorMessage);
