@@ -35,7 +35,7 @@ class PX4AutoPilotPlugin : public AutoPilotPlugin
     Q_OBJECT
 
 public:
-    PX4AutoPilotPlugin(void);
+    PX4AutoPilotPlugin(QObject* parent);
     
     virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
     virtual QList<FullMode_t> getModes(void) const;
