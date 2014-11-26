@@ -92,7 +92,7 @@ void LinkManager::add(LinkInterface* link)
     
     if (!_links.contains(link))
     {
-        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeObj(QObject*)));
+        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(_removeLink(QObject*)));
         _links.append(link);
         _dataMutex.unlock();
         emit newLink(link);
@@ -174,7 +174,7 @@ bool LinkManager::disconnectAll()
     foreach (LinkInterface* link, _links)
     {
         Q_ASSERT(link);
-        if (!link->disconnect()) {
+        if (!disconnectLink(link)) {
             allDisconnected = false;
         }
     }
@@ -200,39 +200,33 @@ bool LinkManager::disconnectLink(LinkInterface* link)
     return link->_disconnect();
 }
 
-void LinkManager::removeObj(QObject* link)
+void LinkManager::_removeLink(QObject* obj)
 {
     // Be careful of the fact that by the time this signal makes it through the queue
     // the link object has already been destructed.
-    removeLink((LinkInterface*)link);
-}
-
-bool LinkManager::removeLink(LinkInterface* link)
-{
-    if(link)
+    
+    Q_ASSERT(obj);
+    
+    LinkInterface* link = static_cast<LinkInterface*>(obj);
+    
+    _dataMutex.lock();
+    for (int i=0; i < _links.size(); i++)
     {
-        _dataMutex.lock();
-        for (int i=0; i < _links.size(); i++)
+        if(link==_links.at(i))
         {
-            if(link==_links.at(i))
-            {
-                _links.removeAt(i); //remove from link list
-            }
+            _links.removeAt(i); //remove from link list
         }
-        // Remove link from protocol map
-        QList<ProtocolInterface* > protocols = _protocolLinks.keys(link);
-        foreach (ProtocolInterface* proto, protocols)
-        {
-            _protocolLinks.remove(proto, link);
-        }
-        _dataMutex.unlock();
-
-        // Emit removal of link
-        emit linkRemoved(link);
-
-        return true;
     }
-    return false;
+    // Remove link from protocol map
+    QList<ProtocolInterface* > protocols = _protocolLinks.keys(link);
+    foreach (ProtocolInterface* proto, protocols)
+    {
+        _protocolLinks.remove(proto, link);
+    }
+    _dataMutex.unlock();
+
+    // Emit removal of link
+    emit linkRemoved(link);
 }
 
 /**

@@ -330,7 +330,6 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     if (logLink)
     {
         LinkManager::instance()->disconnectLink(logLink);
-        LinkManager::instance()->removeLink(logLink);
         logLink->deleteLater();
     }
     logLink = new MAVLinkSimulationLink("");

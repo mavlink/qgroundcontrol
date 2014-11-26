@@ -88,12 +88,10 @@ public:
     void setConnectionsAllowed(void) { _connectionsSuspended = false; }
 
 public slots:
-
+    /// @brief Adds the link to the LinkManager. No need to remove a link you added. Just delete it and LinkManager will pick up on
+    ///         that and remove the link from the list.
     void add(LinkInterface* link);
     void addProtocol(LinkInterface* link, ProtocolInterface* protocol);
-
-    void removeObj(QObject* obj);
-    bool removeLink(LinkInterface* link);
 
     bool connectAll();
     bool connectLink(LinkInterface* link);
@@ -110,6 +108,8 @@ private:
     LinkManager(QObject* parent = NULL);
     
     static LinkManager* _instance;
+    
+    void _removeLink(QObject* obj);
     
     QList<LinkInterface*> _links;
     QMultiMap<ProtocolInterface*,LinkInterface*> _protocolLinks;
