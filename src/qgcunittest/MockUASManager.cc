@@ -24,6 +24,7 @@
 #include "MockUASManager.h"
 
 MockUASManager::MockUASManager(void) :
+    UASManagerInterface(NULL, false /* do not register singleton with QGCApplication */),
     _mockUAS(NULL)
 {
     
