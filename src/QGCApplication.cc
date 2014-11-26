@@ -468,7 +468,6 @@ MainWindow* QGCApplication::singletonMainWindow(void)
     return _singletonMainWindow;
 }
 
-#ifdef BUILD_UNITTEST
 void QGCApplication::setMockSingletonUASManager(UASManagerInterface* mockUASManager)
 {
     Q_ASSERT(mockUASManager != NULL);
@@ -496,7 +495,6 @@ void QGCApplication::destroySingletonsForUnitTest(void)
     _singletonAutoPilotPluginManager = NULL;
     _singletonMainWindow = NULL;
 }
-#endif
 
 /// @brief Creates all singletons except for MainWindow. This way they are all created on the correct
 ///         thread.

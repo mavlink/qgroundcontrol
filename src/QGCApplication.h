@@ -94,7 +94,6 @@ public:
     
     MainWindow* singletonMainWindow(void);
     
-#ifdef UNITTEST_BUILD
     /// @brief Creates singletons for unit testing
     void createSingletonsForUnitTest(void) { _createManagerSingletons(); }
     
@@ -103,7 +102,6 @@ public:
     
     void setMockSingletonUASManager(UASManagerInterface* mockUASManager);
     void clearMockSingletonUASManager(void);
-#endif
     
 public:
     /// @brief Perform initialize which is common to both normal application running and unit tests.
