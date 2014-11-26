@@ -161,5 +161,7 @@ int main(int argc, char *argv[])
     
     delete app;
     
+    qDebug() << "After app delete";
+    
     return exitCode;
 }

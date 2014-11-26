@@ -85,8 +85,7 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
 
 
 QGCApplication::QGCApplication(int &argc, char* argv[]) :
-    QApplication(argc, argv),
-    _mainWindow(NULL)
+    QApplication(argc, argv)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -133,7 +132,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[]) :
 QGCApplication::~QGCApplication()
 {
     destroySingletonsForUnitTest();
-    delete _mainWindow;
 }
 
 void QGCApplication::_initCommon(void)
@@ -216,12 +214,12 @@ bool QGCApplication::_initForNormalAppBoot(void)
     
     // Start the user interface
     splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    _mainWindow = new MainWindow(splashScreen, mode);
-    Q_CHECK_PTR(_mainWindow);
+    MainWindow* mainWindow = new MainWindow(splashScreen, mode);
+    Q_CHECK_PTR(mainWindow);
     
     UDPLink* udpLink = NULL;
     
-    if (_mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
+    if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
     {
         // Connect links
         // to make sure that all components are initialized when the
@@ -241,8 +239,8 @@ bool QGCApplication::_initForNormalAppBoot(void)
 #endif
     
     // Remove splash screen
-    splashScreen->finish(_mainWindow);
-    _mainWindow->splashScreenFinished();
+    splashScreen->finish(mainWindow);
+    mainWindow->splashScreenFinished();
     
     // If we made it this far and we still don't have a location. Either the specfied location was invalid
     // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
@@ -250,11 +248,11 @@ bool QGCApplication::_initForNormalAppBoot(void)
     if (savedFilesLocation.isEmpty()) {
         QGCMessageBox::warning(tr("Bad save location"),
                                tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
-        _mainWindow->showSettings();
+        mainWindow->showSettings();
     }
     
     if (settingsUpgraded) {
-        _mainWindow->showInfoMessage(tr("Settings Cleared"),
+        mainWindow->showInfoMessage(tr("Settings Cleared"),
                                     tr("The format for QGroundControl saved settings has been modified. "
                                        "Your saved settings have been reset to defaults."));
     }
@@ -270,7 +268,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
         if (button == QMessageBox::Yes)
         {
             //mainWindow->close();
-            QTimer::singleShot(200, _mainWindow, SLOT(close()));
+            QTimer::singleShot(200, mainWindow, SLOT(close()));
         }
     }
     
@@ -402,9 +400,8 @@ void QGCApplication::destroySingletonsForUnitTest(void)
         singleton->deleteInstance();
     }
     
-    if (_mainWindow) {
-        _mainWindow->deleteInstance();
-        _mainWindow = NULL;
+    if (MainWindow::instance()) {
+        delete MainWindow::instance();
     }
     
     _singletons.clear();
