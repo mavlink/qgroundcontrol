@@ -30,13 +30,13 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#include <QApplication>
 #include <QSettings>
 #include <QTemporaryFile>
+#include <QDebug>
+
 #include "GAudioOutput.h"
 #include "MG.h"
-
-#include <QDebug>
+#include "QGCApplication.h"
 
 #if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
 #include <ApplicationServices/ApplicationServices.h>
@@ -73,7 +73,7 @@ GAudioOutput *GAudioOutput::instance()
         _instance = new GAudioOutput();
         // Set the application as parent to ensure that this object
         // will be destroyed when the main application exits
-        _instance->setParent(qApp);
+        _instance->setParent(qgcApp());
     }
 
     return _instance;

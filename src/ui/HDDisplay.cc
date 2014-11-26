@@ -126,8 +126,8 @@ HDDisplay::HDDisplay(const QStringList &plotList, QString title, QWidget *parent
     if (font.family() != fontFamilyName) qDebug() << "ERROR! Font not loaded: " << fontFamilyName;
 
     // Connect with UAS
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)), Qt::UniqueConnection);
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)), Qt::UniqueConnection);
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 }
 
 HDDisplay::~HDDisplay()
@@ -442,7 +442,7 @@ void HDDisplay::renderOverlay()
     const float spacing = 0.4f; // 40% of width
     const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.5f));
     QColor gaugeColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         gaugeColor = QColor(0, 0, 0);
     }
@@ -584,7 +584,7 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     // Select color scheme based on light or dark theme.
     QColor valueColor;
     QColor backgroundColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         valueColor = QColor(26, 75, 95);
         backgroundColor = QColor(246, 246, 246);

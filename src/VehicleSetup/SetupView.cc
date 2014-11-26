@@ -28,7 +28,7 @@
 #include "ui_SetupView.h"
 
 #include "UASManager.h"
-#include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
 #include "VehicleComponentButton.h"
 #include "SummaryPage.h"
@@ -49,7 +49,7 @@ SetupView::SetupView(QWidget* parent) :
 {
     _ui->setupUi(this);
     
-    bool fSucceeded = connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
+    bool fSucceeded = connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
     
@@ -208,7 +208,7 @@ void SetupView::_parametersReady(void)
     
     _ui->summaryButton->setVisible(true);
     
-    _components = AutoPilotPlugin::getInstanceForAutoPilotPlugin(_uasCurrent->getAutopilotType())->getVehicleComponents(_uasCurrent);
+    _components = qgcApp()->singletonAutoPilotPluginManager()->getInstanceForAutoPilotPlugin(_uasCurrent->getAutopilotType())->getVehicleComponents(_uasCurrent);
     
     foreach(VehicleComponent* component, _components) {
         VehicleComponentButton* button = new VehicleComponentButton(component, _ui->navBarWidget);

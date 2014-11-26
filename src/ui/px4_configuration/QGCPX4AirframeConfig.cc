@@ -108,11 +108,11 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(applyAndReboot()));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     uncheckAll();
     
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 }
 
 void QGCPX4AirframeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
@@ -393,12 +393,12 @@ void QGCPX4AirframeConfig::checkConfigState()
 
         if (pendingParams == 4) {
             qDebug() << "DISCONNECT AIRFRAME";
-            LinkManager::instance()->disconnectAll();
+            qgcApp()->singletonLinkManager()->disconnectAll();
         }
 
         if (pendingParams == 14) {
             qDebug() << "CONNECT AIRFRAME";
-            LinkManager::instance()->connectAll();
+            qgcApp()->singletonLinkManager()->connectAll();
         }
 
         if (pendingParams < pendingMax) {

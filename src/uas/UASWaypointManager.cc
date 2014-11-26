@@ -430,7 +430,7 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
     {
         // Check if this is the first waypoint in an offline list
         if (waypointsEditable.count() == 0 && uas == NULL)
-            MainWindow::instance()->showCriticalMessage(_offlineEditingModeTitle, _offlineEditingModeMessage);
+            qgcApp()->singletonMainWindow()->showCriticalMessage(_offlineEditingModeTitle, _offlineEditingModeMessage);
 
         wp->setId(waypointsEditable.count());
         if (enforceFirstActive && waypointsEditable.count() == 0)
@@ -453,7 +453,7 @@ Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 {
     // Check if this is the first waypoint in an offline list
     if (waypointsEditable.count() == 0 && uas == NULL)
-        MainWindow::instance()->showCriticalMessage(_offlineEditingModeTitle, _offlineEditingModeMessage);
+        qgcApp()->singletonMainWindow()->showCriticalMessage(_offlineEditingModeTitle, _offlineEditingModeMessage);
 
     Waypoint* wp = new Waypoint();
     wp->setId(waypointsEditable.count());
@@ -1102,7 +1102,7 @@ float UASWaypointManager::getAltitudeRecommendation()
     if (waypointsEditable.count() > 0) {
         return waypointsEditable.last()->getAltitude();
     } else {
-        return UASManager::instance()->getHomeAltitude() + getHomeAltitudeOffsetDefault();
+        return qgcApp()->singletonUASManager()->getHomeAltitude() + getHomeAltitudeOffsetDefault();
     }
 }
 

@@ -53,7 +53,7 @@ MockLink::MockLink(void) :
     moveToThread(this);
     _loadParams();
     QObject::connect(this, &MockLink::_incomingBytes, this, &MockLink::_handleIncomingBytes);
-    LinkManager::instance()->add(this);
+    qgcApp()->singletonLinkManager()->add(this);
 }
 
 MockLink::~MockLink(void)

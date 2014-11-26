@@ -29,7 +29,7 @@
 #include "SerialLink.h"
 #include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
-#include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
 
 /**
@@ -376,9 +376,9 @@ void UAS::updateState()
 */
 void UAS::setSelected()
 {
-    if (UASManager::instance()->getActiveUAS() != this)
+    if (qgcApp()->singletonUASManager()->getActiveUAS() != this)
     {
-        UASManager::instance()->setActiveUAS(this);
+        qgcApp()->singletonUASManager()->setActiveUAS(this);
         emit systemSelected(true);
     }
 }
@@ -388,7 +388,7 @@ void UAS::setSelected()
 **/
 bool UAS::getSelected() const
 {
-    return (UASManager::instance()->getActiveUAS() == this);
+    return (qgcApp()->singletonUASManager()->getActiveUAS() == this);
 }
 
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
@@ -1734,7 +1734,7 @@ void UAS::setModeArm(uint8_t newBaseMode, uint32_t newCustomMode)
 */
 void UAS::sendMessage(mavlink_message_t message)
 {
-    if (!LinkManager::instance())
+    if (!qgcApp()->singletonLinkManager())
     {
         qDebug() << "LINKMANAGER NOT AVAILABLE!";
         return;
@@ -1747,7 +1747,7 @@ void UAS::sendMessage(mavlink_message_t message)
     // Emit message on all links that are currently connected
     foreach (LinkInterface* link, *links)
     {
-        if (LinkManager::instance()->getLinks().contains(link))
+        if (qgcApp()->singletonLinkManager()->getLinks().contains(link))
         {
             if (link->isConnected())
                 sendMessage(link, message);
@@ -1767,7 +1767,7 @@ void UAS::sendMessage(mavlink_message_t message)
 void UAS::forwardMessage(mavlink_message_t message)
 {
     // Emit message on all links that are currently connected
-    QList<LinkInterface*>link_list = LinkManager::instance()->getLinksForProtocol(mavlink);
+    QList<LinkInterface*>link_list = qgcApp()->singletonLinkManager()->getLinksForProtocol(mavlink);
 
     foreach(LinkInterface* link, link_list)
     {
@@ -2806,10 +2806,10 @@ void UAS::home()
 {
     mavlink_message_t msg;
 
-    double latitude = UASManager::instance()->getHomeLatitude();
-    double longitude = UASManager::instance()->getHomeLongitude();
-    double altitude = UASManager::instance()->getHomeAltitude();
-    int frame = UASManager::instance()->getHomeFrame();
+    double latitude = qgcApp()->singletonUASManager()->getHomeLatitude();
+    double longitude = qgcApp()->singletonUASManager()->getHomeLongitude();
+    double altitude = qgcApp()->singletonUASManager()->getHomeAltitude();
+    int frame = qgcApp()->singletonUASManager()->getHomeFrame();
 
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_CONTINUE, MAV_GOTO_HOLD_AT_CURRENT_POSITION, frame, 0, latitude, longitude, altitude);
     sendMessage(msg);
@@ -3304,7 +3304,7 @@ QString UAS::getAudioModeTextFor(int id)
 */
 QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int autopilot)
 {
-    QString mode = AutoPilotPlugin::getInstanceForAutoPilotPlugin(autopilot)->getShortModeText(base_mode, custom_mode);
+    QString mode = qgcApp()->singletonAutoPilotPluginManager()->getInstanceForAutoPilotPlugin(autopilot)->getShortModeText(base_mode, custom_mode);
 
     if (mode.length() == 0)
     {

@@ -105,8 +105,8 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
 
     setStyleSheet("QScrollArea { border: 0px; } QPlainTextEdit { border: 0px }");
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     ui->progressBar->setValue(0);
 
     connect(ui->autopilotComboBox, SIGNAL(activated(int)), this, SLOT(setAutopilotOrientation(int)));

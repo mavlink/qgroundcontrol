@@ -50,7 +50,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clearView()));
 
     // Connect external connections
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 
     // Attach the UI's refresh rate to a timer.
@@ -97,7 +97,7 @@ void QGCMAVLinkInspector::rebuildComponentList()
     ui->componentComboBox->addItem(tr("All"), 0);
 
     // Fill
-    UASInterface* uas = UASManager::instance()->getUASForId(selectedSystemID);
+    UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(selectedSystemID);
     if (uas)
     {
         QMap<int, QString> components = uas->getComponents();
@@ -329,7 +329,7 @@ void QGCMAVLinkInspector::addUAStoTree(int sysId)
     if(!uasTreeWidgetItems.contains(sysId))
     {
         // Add the UAS to the main tree after it has been created
-        UASInterface* uas = UASManager::instance()->getUASForId(sysId);
+        UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(sysId);
 
         if (uas)
         {

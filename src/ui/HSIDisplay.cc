@@ -179,15 +179,15 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     // XXX this looks a potential recursive issue
     //connect(&statusClearTimer, SIGNAL(timeout()), this, SLOT(clearStatusMessage()));
 
-    if (UASManager::instance()->getActiveUAS())
+    if (qgcApp()->singletonUASManager()->getActiveUAS())
     {
-        setActiveUAS(UASManager::instance()->getActiveUAS());
+        setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
     }
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 
     setFocusPolicy(Qt::StrongFocus);
@@ -279,7 +279,7 @@ void HSIDisplay::renderOverlay()
     QColor statusColor;
     QColor waypointLineColor;
     QColor attitudeColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         ringColor = QGC::colorBlack;
         positionColor = QColor(20, 20, 200);
@@ -440,7 +440,7 @@ void HSIDisplay::renderOverlay()
 
     // Draw Safety
     double x1, y1, z1, x2, y2, z2;
-    UASManager::instance()->getLocalNEDSafetyLimits(&x1, &y1, &z1, &x2, &y2, &z2);
+    qgcApp()->singletonUASManager()->getLocalNEDSafetyLimits(&x1, &y1, &z1, &x2, &y2, &z2);
     //    drawSafetyArea(QPointF(x1, y1), QPointF(x2, y2), QGC::colorYellow, painter);
 
     // Draw status message
@@ -475,7 +475,7 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bo
 {
     QColor statusColor;
     QColor labelColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         statusColor = QColor(40, 40, 40);
         labelColor = QColor(26, 75, 95);
@@ -537,7 +537,7 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, b
     QColor intermediateStatusColor (Qt::yellow);
     QColor posStatusColor(20, 200, 20);
     QColor statusColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         statusColor = QColor(40, 40, 40);
         labelColor = QColor(26, 75, 95);
@@ -1361,7 +1361,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
 
                 // Transform the lat/lon for this waypoint into the local frame
                 double e, n, u;
-                UASManager::instance()->wgs84ToEnu(w->getX(), w->getY(),w->getZ(), &e, &n, &u);
+                qgcApp()->singletonUASManager()->wgs84ToEnu(w->getX(), w->getY(),w->getZ(), &e, &n, &u);
                 in = QPointF(n, e);
             }
             // Otherwise we don't process this waypoint.

@@ -142,7 +142,7 @@ void MAVLinkSettingsWidget::enableDroneOS(bool enable)
 
     // Delete from all lists first
     UDPLink* firstUdp = NULL;
-    QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(protocol);
+    QList<LinkInterface*> links = qgcApp()->singletonLinkManager()->getLinksForProtocol(protocol);
     foreach (LinkInterface* link, links)
     {
         UDPLink* udp = dynamic_cast<UDPLink*>(link);

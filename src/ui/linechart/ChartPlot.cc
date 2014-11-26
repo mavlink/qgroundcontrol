@@ -54,7 +54,7 @@ ChartPlot::ChartPlot(QWidget *parent):
     }
 
     // Now that all objects have been initialized, color everything.
-    styleChanged(MainWindow::instance()->getStyle());
+    styleChanged(qgcApp()->singletonMainWindow()->getStyle());
 }
 
 ChartPlot::~ChartPlot()

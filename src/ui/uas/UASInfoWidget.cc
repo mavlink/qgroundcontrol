@@ -48,8 +48,8 @@ UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
     this->name = name;
     activeUAS = NULL;
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 
     startTime = QGC::groundTimeMilliseconds();
 

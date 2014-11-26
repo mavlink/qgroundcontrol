@@ -85,14 +85,14 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
             this, SLOT(firmwareMenuButtonClicked()));
 
     //TODO connect buttons here to save/clear actions?
-    UASInterface* tmpMav = UASManager::instance()->getActiveUAS();
+    UASInterface* tmpMav = qgcApp()->singletonUASManager()->getActiveUAS();
     if (tmpMav) {
         ui->pendingCommitsWidget->initWithUAS(tmpMav);
         ui->pendingCommitsWidget->update();
         setActiveUAS(tmpMav);
     }
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 
     firmwareMenuButtonClicked();

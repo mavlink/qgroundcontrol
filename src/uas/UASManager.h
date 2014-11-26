@@ -31,13 +31,15 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _UASMANAGER_H_
 #define _UASMANAGER_H_
 
-#include "UASManagerInterface.h"
 #include <QThread>
 #include <QList>
 #include <QMutex>
-#include <UASInterface.h>
+
+#include "UASManagerInterface.h"
+#include "UASInterface.h"
 #include "../../libs/eigen/Eigen/Eigen"
 #include "QGCGeo.h"
+#include "QGCApplication.h"
 
 /**
  * @brief Central manager for all connected aerial vehicles
@@ -50,14 +52,8 @@ class UASManager : public UASManagerInterface
     Q_OBJECT
 
 public:
-    static UASManagerInterface* instance();
     ~UASManager();
     
-    /**
-     * @brief Sets a mock UASManager to be returned when a call is made to instance()
-     **/
-    static void setMockUASManager(UASManagerInterface* mockUASManager);
-
     /**
      * @brief Get the currently selected UAS
      *
@@ -249,7 +245,14 @@ public slots:
 
 
 protected:
-    UASManager();
+    /// @brief Only QGCApplication is allowed to create the UASManager singleton. All access to the singleton should be
+    ///         through QGCApplication::singletonUASManager.
+    UASManager(QObject* parent = NULL);
+    
+    /// @brief Only QGCApplication is allowed to create the UASManager singleton. All access to the singleton should be
+    ///         through QGCApplication::singletonUASManager.
+    friend class QGCApplication;
+    
     QList<UASInterface*> systems;
     UASInterface* activeUAS;
     UASWaypointManager *offlineUASWaypointManager;

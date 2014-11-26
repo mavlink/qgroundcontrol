@@ -84,9 +84,9 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 
     buildLayout();
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(activeSystemChanged(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)),
             this, SLOT(systemCreated(UASInterface*)));
     connect(mGlobalViewParams.data(), SIGNAL(followCameraChanged(int)),
             this, SLOT(followCameraChanged(int)));
@@ -403,7 +403,7 @@ Pixhawk3DWidget::setpointChanged(int uasId, float x, float y, float z,
         return;
     }
 
-    UASInterface* uas = UASManager::instance()->getUASForId(uasId);
+    UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(uasId);
     if (!uas)
     {
         return;
@@ -510,7 +510,7 @@ Pixhawk3DWidget::followCameraChanged(int systemId)
         mFollowCameraId = -1;
     }
 
-    UASInterface* uas = UASManager::instance()->getUASForId(systemId);
+    UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(systemId);
     if (!uas)
     {
         return;
@@ -544,7 +544,7 @@ Pixhawk3DWidget::recenterActiveCamera(void)
 {
     if (mFollowCameraId != -1)
     {
-        UASInterface* uas = UASManager::instance()->getUASForId(mFollowCameraId);
+        UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(mFollowCameraId);
         if (!uas)
         {
             return;
@@ -1081,7 +1081,7 @@ Pixhawk3DWidget::updateWidget(void)
 
     if (mFollowCameraId != -1)
     {
-        UASInterface* uas = UASManager::instance()->getUASForId(mFollowCameraId);
+        UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(mFollowCameraId);
         if (uas)
         {
             double x = 0.0, y = 0.0, z = 0.0;
@@ -1119,7 +1119,7 @@ Pixhawk3DWidget::updateWidget(void)
 
         int systemId = it.key();
 
-        UASInterface* uas = UASManager::instance()->getUASForId(systemId);
+        UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(systemId);
 
         SystemContainer& systemData = mSystemContainerMap[systemId];
         SystemViewParamsPtr& systemViewParams = it.value();

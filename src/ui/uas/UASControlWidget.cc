@@ -39,7 +39,7 @@ This file is part of the PIXHAWK project
 #include <UASManager.h>
 #include <UAS.h>
 #include "QGC.h"
-#include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     uasID(-1),
@@ -48,9 +48,9 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 {
     ui.setupUi(this);
 
-    this->setUAS(UASManager::instance()->getActiveUAS());
+    this->setUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
     connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
@@ -62,13 +62,13 @@ void UASControlWidget::updateModesList()
     // Detect autopilot type
     int autopilot = MAV_AUTOPILOT_GENERIC;
     if (this->uasID >= 0) {
-        UASInterface *uas = UASManager::instance()->getUASForId(this->uasID);
+        UASInterface *uas = qgcApp()->singletonUASManager()->getUASForId(this->uasID);
         if (uas) {
-            autopilot = UASManager::instance()->getUASForId(this->uasID)->getAutopilotType();
+            autopilot = qgcApp()->singletonUASManager()->getUASForId(this->uasID)->getAutopilotType();
         }
     }
     
-    AutoPilotPlugin* autopilotPlugin = AutoPilotPlugin::getInstanceForAutoPilotPlugin(autopilot);
+    AutoPilotPlugin* autopilotPlugin = qgcApp()->singletonAutoPilotPluginManager()->getInstanceForAutoPilotPlugin(autopilot);
     
     _modeList = autopilotPlugin->getModes();
 
@@ -87,7 +87,7 @@ void UASControlWidget::updateModesList()
 void UASControlWidget::setUAS(UASInterface* uas)
 {
     if (this->uasID > 0) {
-        UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uasID);
+        UASInterface* oldUAS = qgcApp()->singletonUASManager()->getUASForId(this->uasID);
         if (oldUAS) {
             disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(armSystem()));
             disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
@@ -194,7 +194,7 @@ void UASControlWidget::setMode(int mode)
 
 void UASControlWidget::transmitMode()
 {
-    UASInterface* uas_iface = UASManager::instance()->getUASForId(this->uasID);
+    UASInterface* uas_iface = qgcApp()->singletonUASManager()->getUASForId(this->uasID);
     if (uas_iface) {
         if (modeIdx >= 0 && modeIdx < _modeList.count()) {
             AutoPilotPlugin::FullMode_t fullMode = _modeList[modeIdx];
@@ -223,7 +223,7 @@ void UASControlWidget::transmitMode()
 
 void UASControlWidget::cycleContextButton()
 {
-    UAS* uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(this->uasID));
+    UAS* uas = dynamic_cast<UAS*>(qgcApp()->singletonUASManager()->getUASForId(this->uasID));
     if (uas) {
         if (!armed) {
             uas->armSystem();

@@ -9,7 +9,7 @@ JoystickButton::JoystickButton(int id, QWidget *parent) :
 {
     m_ui->setupUi(this);
     m_ui->joystickButtonLabel->setText(QString::number(id));
-    this->setActiveUAS(UASManager::instance()->getActiveUAS());
+    this->setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
     connect(m_ui->joystickAction, SIGNAL(currentIndexChanged(int)), this, SLOT(actionComboBoxChanged(int)));
 }
 

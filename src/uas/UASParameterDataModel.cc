@@ -269,7 +269,7 @@ void UASParameterDataModel::readUpdateParamsFromStream( QTextStream& stream)
                     //TODO warn the user somehow ?? Appears these are saved currently with mav ID 0 but mav ID is often nonzero?
                     QString msg = tr("The parameters in the stream have been saved from system %1, but the currently selected system has the ID %2.").arg(lineMavId).arg(uasId);
                     qDebug() << msg ;
-                    //MainWindow::instance()->showCriticalMessage(
+                    //qgcApp()->singletonMainWindow()->showCriticalMessage(
                     //            tr("Parameter loading warning"),
                     //            tr("The parameters from the file %1 have been saved from system %2, but the currently selected system has the ID %3. If this is unintentional, please click on <READ> to revert to the parameters that are currently onboard").arg(fileName).arg(wpParams.at(0).toInt()).arg(mav->getUASID()));
                     userWarned = true;

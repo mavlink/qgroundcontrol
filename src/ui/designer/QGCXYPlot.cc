@@ -206,7 +206,7 @@ QGCXYPlot::QGCXYPlot(QWidget *parent) :
 
     connect(ui->editFinishButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
 
-    connect(MainWindow::instance(), SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),
+    connect(qgcApp()->singletonMainWindow(), SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),
             this, SLOT(appendData(int,QString,QString,QVariant,quint64)));
 
     connect(ui->editXParam, SIGNAL(editTextChanged(QString)), this, SLOT(clearPlot()));
@@ -222,8 +222,8 @@ QGCXYPlot::QGCXYPlot(QWidget *parent) :
     plot->setAutoReplot();
     xycurve = new XYPlotCurve();
     xycurve->attach(plot);
-    styleChanged(MainWindow::instance()->getStyle());
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
+    styleChanged(qgcApp()->singletonMainWindow()->getStyle());
+    connect(qgcApp()->singletonMainWindow(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
             this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
     connect(ui->minX, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));
     connect(ui->maxX, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));

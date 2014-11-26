@@ -42,8 +42,8 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     connect(m_ui->enableCheckBox, SIGNAL(toggled(bool)), this->joystick, SLOT(setEnabled(bool)));
 
     // Update the button label colors based on the current theme and watch for future theme changes.
-    styleChanged(MainWindow::instance()->getStyle());
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
+    styleChanged(qgcApp()->singletonMainWindow()->getStyle());
+    connect(qgcApp()->singletonMainWindow(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
 
     // Display the widget above all other windows.
     this->raise();

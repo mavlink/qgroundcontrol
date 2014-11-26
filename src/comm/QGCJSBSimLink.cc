@@ -122,14 +122,14 @@ void QGCJSBSimLink::run()
     QFileInfo executable(processJSB);
     if (!executable.isExecutable())
     {
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim was not found at %1").arg(processJSB));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim was not found at %1").arg(processJSB));
         sane = false;
     }
 
     QFileInfo root(rootJSB);
     if (!root.isDir())
     {
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim data directory was not found at %1").arg(rootJSB));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim data directory was not found at %1").arg(rootJSB));
         sane = false;
     }
 
@@ -170,23 +170,23 @@ void QGCJSBSimLink::processError(QProcess::ProcessError err)
     switch(err)
     {
     case QProcess::FailedToStart:
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("Please check if the path and command is correct"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::Crashed:
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("JSBSim Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
         break;
     case QProcess::Timedout:
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Start Timed Out"), tr("Please check if the path and command is correct"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("JSBSim Start Timed Out"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::WriteError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with JSBSim"), tr("Please check if the path and command is correct"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("Could not Communicate with JSBSim"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::ReadError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with JSBSim"), tr("Please check if the path and command is correct"));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("Could not Communicate with JSBSim"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::UnknownError:
     default:
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Error"), tr("Please check if the path and command is correct."));
+        qgcApp()->singletonMainWindow()->showCriticalMessage(tr("JSBSim Error"), tr("Please check if the path and command is correct."));
         break;
     }
 }

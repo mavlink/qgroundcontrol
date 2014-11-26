@@ -9,10 +9,10 @@ UASActionsWidget::UASActionsWidget(QWidget *parent) : QWidget(parent)
     connect(ui.changeSpeedButton,SIGNAL(clicked()),this,SLOT(changeSpeedClicked()));
     connect(ui.goToWaypointButton,SIGNAL(clicked()),this,SLOT(goToWaypointClicked()));
     connect(ui.armDisarmButton,SIGNAL(clicked()),this,SLOT(armButtonClicked()));
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
-    if (UASManager::instance()->getActiveUAS())
+    connect(qgcApp()->singletonUASManager(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
+    if (qgcApp()->singletonUASManager()->getActiveUAS())
     {
-        activeUASSet(UASManager::instance()->getActiveUAS());
+        activeUASSet(qgcApp()->singletonUASManager()->getActiveUAS());
     }
 }
 

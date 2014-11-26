@@ -12,7 +12,7 @@ QGCConfigView::QGCConfigView(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASChanged(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASChanged(UASInterface*)));
 
     ui->gridLayout->removeWidget(ui->waitingLabel);
     ui->waitingLabel->setVisible(false);

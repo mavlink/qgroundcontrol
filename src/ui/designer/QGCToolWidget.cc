@@ -34,7 +34,7 @@ QGCToolWidget::QGCToolWidget(const QString& objectName, const QString& title, QW
     toolLayout->setSpacing(8);
 
     this->setTitle(widgetTitle);
-    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    QList<UASInterface*> systems = qgcApp()->singletonUASManager()->getUASList();
     foreach (UASInterface* uas, systems)
     {
         UAS* newMav = dynamic_cast<UAS*>(uas);
@@ -43,7 +43,7 @@ QGCToolWidget::QGCToolWidget(const QString& objectName, const QString& title, QW
             addUAS(uas);
         }
     }
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
 
     if(!objectName.isEmpty()) {
         instances()->insert(objectName, this);

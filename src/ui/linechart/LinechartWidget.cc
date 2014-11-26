@@ -141,7 +141,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     createLayout();
 
     // And make sure we're listening for future style changes
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(recolor()));
+    connect(qgcApp()->singletonMainWindow(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(recolor()));
 
     updateTimer->setInterval(updateInterval);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -490,7 +490,7 @@ void LinechartWidget::stopLogging()
         // Postprocess log file
         compressor = new LogCompressor(logFile->fileName(), logFile->fileName());
         connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
-        connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
+        connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), qgcApp()->singletonMainWindow(), SLOT(showStatusMessage(QString)));
 
         QMessageBox::StandardButton button = QGCMessageBox::question(tr("Starting Log Compression"),
                                                                      tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"),
@@ -680,7 +680,7 @@ void LinechartWidget::removeCurve(QString curve)
 
 void LinechartWidget::recolor()
 {
-    activePlot->styleChanged(MainWindow::instance()->getStyle());
+    activePlot->styleChanged(qgcApp()->singletonMainWindow()->getStyle());
     foreach (QString key, colorIcons.keys())
     {
         QWidget* colorIcon = colorIcons.value(key, 0);

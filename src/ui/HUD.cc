@@ -160,11 +160,11 @@ HUD::HUD(int width, int height, QWidget* parent)
             this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
 
     // Connect with UAS
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     createActions();
 
-    if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
+    if (qgcApp()->singletonUASManager()->getActiveUAS() != NULL) setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 }
 
 HUD::~HUD()
@@ -1226,7 +1226,7 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
         }
 
         // Fill first channel of image with black pixels
-        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        if (qgcApp()->singletonMainWindow()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
         {
             image->fill(255);
         }

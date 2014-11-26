@@ -39,7 +39,7 @@ const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Ext
  * The default constructor will create a new MAVLink object sending heartbeats at
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
  */
-MAVLinkProtocol::MAVLinkProtocol() :
+MAVLinkProtocol::MAVLinkProtocol(void) :
     heartbeatTimer(NULL),
     heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
     m_heartbeatsEnabled(true),
@@ -347,7 +347,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // If the matching UAS object does not yet exist, it has to be created
             // before emitting the packetReceived signal
 
-            UASInterface* uas = UASManager::instance()->getUASForId(message.sysid);
+            UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(message.sysid);
 
             // Check and (if necessary) create UAS object
             if (uas == NULL && message.msgid == MAVLINK_MSG_ID_HEARTBEAT)
@@ -446,7 +446,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             if (m_multiplexingEnabled)
             {
                 // Get all links connected to this unit
-                QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
+                QList<LinkInterface*> links = qgcApp()->singletonLinkManager()->getLinksForProtocol(this);
 
                 // Emit message on all links that are currently connected
                 foreach (LinkInterface* currLink, links)
@@ -491,7 +491,7 @@ int MAVLinkProtocol::getComponentId()
 void MAVLinkProtocol::sendMessage(mavlink_message_t message)
 {
     // Get all links connected to this unit
-    QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
+    QList<LinkInterface*> links = qgcApp()->singletonLinkManager()->getLinksForProtocol(this);
 
     // Emit message on all links that are currently connected
     QList<LinkInterface*>::iterator i;

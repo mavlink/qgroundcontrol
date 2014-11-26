@@ -63,7 +63,7 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
 //    calibrationWindow = new RadioCalibrationWindow(this);
 //    connect(calibrate, SIGNAL(clicked()), calibrationWindow, SLOT(show()));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(setUASId(int)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(int)), this, SLOT(setUASId(int)));
 
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(redraw()));
     updateTimer.start(1500);
@@ -85,7 +85,7 @@ void QGCRemoteControlView::setUASId(int id)
 {
     if (uasId != -1)
     {
-        UASInterface* uas = UASManager::instance()->getUASForId(uasId);
+        UASInterface* uas = qgcApp()->singletonUASManager()->getUASForId(uasId);
         if (uas)
         {
             // The UAS exists, disconnect any existing connections
@@ -119,7 +119,7 @@ void QGCRemoteControlView::setUASId(int id)
     progressBars.resize(0);
 
     // Connect the new UAS
-    UASInterface* newUAS = UASManager::instance()->getUASForId(id);
+    UASInterface* newUAS = qgcApp()->singletonUASManager()->getUASForId(id);
     if (newUAS)
     {
         // New UAS exists, connect

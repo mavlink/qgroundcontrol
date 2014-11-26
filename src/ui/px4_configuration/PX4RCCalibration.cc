@@ -120,13 +120,13 @@ PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
     _rgAttitudeControl[4].function = rcCalFunctionFlaps;
     _rgAttitudeControl[4].valueWidget = _ui->flapsValue;
     
-    _setActiveUAS(UASManager::instance()->getActiveUAS());
+    _setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
     
     // Connect signals
     bool fSucceeded;
     Q_UNUSED(fSucceeded);
     
-    fSucceeded = connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
+    fSucceeded = connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
     Q_ASSERT(fSucceeded);
 
     connect(_ui->spektrumBind, &QPushButton::clicked, this, &PX4RCCalibration::_spektrumBind);

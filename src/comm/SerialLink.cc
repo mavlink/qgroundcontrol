@@ -73,7 +73,7 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
              << parity << dataBits << stopBits;
     qDebug() << "m_portName " << m_portName;
 
-    LinkManager::instance()->add(this);
+    qgcApp()->singletonLinkManager()->add(this);
     qDebug() << "link added to link manager";
 }
 

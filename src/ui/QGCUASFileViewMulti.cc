@@ -10,12 +10,12 @@ QGCUASFileViewMulti::QGCUASFileViewMulti(QWidget *parent) :
 {
     ui->setupUi(this);
     setMinimumSize(600, 80);
-    connect(UASManager::instance(), &UASManager::UASCreated, this, &QGCUASFileViewMulti::systemCreated);
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(systemSetActive(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), &UASManager::UASCreated, this, &QGCUASFileViewMulti::systemCreated);
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(systemSetActive(UASInterface*)));
 
-    if (UASManager::instance()->getActiveUAS()) {
-        systemCreated(UASManager::instance()->getActiveUAS());
-        systemSetActive(UASManager::instance()->getActiveUAS());
+    if (qgcApp()->singletonUASManager()->getActiveUAS()) {
+        systemCreated(qgcApp()->singletonUASManager()->getActiveUAS());
+        systemSetActive(qgcApp()->singletonUASManager()->getActiveUAS());
     }
 
 }

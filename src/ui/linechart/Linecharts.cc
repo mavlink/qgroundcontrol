@@ -12,15 +12,15 @@ Linecharts::Linecharts(QWidget *parent) :
 {
     this->setVisible(false);
     // Get current MAV list
-    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    QList<UASInterface*> systems = qgcApp()->singletonUASManager()->getUASList();
 
     // Add each of them
     foreach (UASInterface* sys, systems) {
         addSystem(sys);
     }
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)),
             this, SLOT(addSystem(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(int)),
             this, SLOT(selectSystem(int)));
 }
 

@@ -24,33 +24,30 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
 #include "PX4/PX4AutoPilotPlugin.h"
 #include "Generic/GenericAutoPilotPlugin.h"
 
-static AutoPilotPlugin* PX4_AutoPilot = NULL;       ///< Singleton plugin for MAV_AUTOPILOT_PX4
-static AutoPilotPlugin* Generic_AutoPilot = NULL;   ///< Singleton plugin for AutoPilots which do not have a specifically implemented plugin
-
-AutoPilotPlugin::AutoPilotPlugin(void)
+AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
+    QObject(parent)
 {
-    
+    // All plugins are constructed here so that they end up on the correct thread
+    _pluginMap[MAV_AUTOPILOT_PX4] = new PX4AutoPilotPlugin(this);
+    Q_ASSERT(_pluginMap.contains(MAV_AUTOPILOT_PX4));
+
+    _pluginMap[MAV_AUTOPILOT_GENERIC] = new GenericAutoPilotPlugin(this);
+    Q_ASSERT(_pluginMap.contains(MAV_AUTOPILOT_GENERIC));
 }
 
-AutoPilotPlugin* AutoPilotPlugin::getInstanceForAutoPilotPlugin(int autopilotType)
+AutoPilotPlugin* AutoPilotPluginManager::getInstanceForAutoPilotPlugin(int autopilotType)
 {
     switch (autopilotType) {
         case MAV_AUTOPILOT_PX4:
-            if (PX4_AutoPilot == NULL) {
-                PX4_AutoPilot = new PX4AutoPilotPlugin;
-            }
-            Q_ASSERT(PX4_AutoPilot);
-            return PX4_AutoPilot;
+            Q_ASSERT(_pluginMap.contains(MAV_AUTOPILOT_PX4));
+            return _pluginMap[MAV_AUTOPILOT_PX4];
             
         default:
-            if (Generic_AutoPilot == NULL) {
-                Generic_AutoPilot = new GenericAutoPilotPlugin;
-            }
-            Q_ASSERT(Generic_AutoPilot);
-            return Generic_AutoPilot;
+            Q_ASSERT(_pluginMap.contains(MAV_AUTOPILOT_GENERIC));
+            return _pluginMap[MAV_AUTOPILOT_GENERIC];
     }
 }

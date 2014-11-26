@@ -22,7 +22,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     zoomBlocked(false),
     uas(NULL)
 {
-    currWPManager = UASManager::instance()->getActiveUASWaypointManager();
+    currWPManager = qgcApp()->singletonUASManager()->getActiveUASWaypointManager();
     waypointLines.insert(0, new QGraphicsItemGroup(map));
     connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
     connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
@@ -117,7 +117,7 @@ bool QGCMapWidget::setHomeActionTriggered()
         QGCMessageBox::information(tr("Error"), tr("Please connect first"));
         return false;
     }
-    UASManagerInterface *uasManager = UASManager::instance();
+    UASManagerInterface *uasManager = qgcApp()->singletonUASManager();
     if (!uasManager) { return false; }
 
     // Enter an altitude
@@ -178,11 +178,11 @@ void QGCMapWidget::showEvent(QShowEvent* event)
     // Connect map updates to the adapter slots
     connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)), Qt::UniqueConnection);
 
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)), Qt::UniqueConnection);
-    connect(UASManager::instance(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(updateHomePosition(double,double,double)), Qt::UniqueConnection);
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)), Qt::UniqueConnection);
+    connect(qgcApp()->singletonUASManager(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(updateHomePosition(double,double,double)), Qt::UniqueConnection);
 
-    foreach (UASInterface* uas, UASManager::instance()->getUASList())
+    foreach (UASInterface* uas, qgcApp()->singletonUASManager()->getUASList())
     {
         addUAS(uas);
     }
@@ -203,15 +203,15 @@ void QGCMapWidget::showEvent(QShowEvent* event)
         setFrameStyle(QFrame::NoFrame);      // no border frame
         setBackgroundBrush(QBrush(Qt::black)); // tile background
 
-        if (!UASManager::instance()->getActiveUAS()) {
+        if (!qgcApp()->singletonUASManager()->getActiveUAS()) {
             SetCurrentPosition(pos_lat_lon);         // set the map position to default
         }
 
         // Set home
-        updateHomePosition(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
+        updateHomePosition(qgcApp()->singletonUASManager()->getHomeLatitude(), qgcApp()->singletonUASManager()->getHomeLongitude(), qgcApp()->singletonUASManager()->getHomeAltitude());
 
         // Set currently selected system
-        activeUASSet(UASManager::instance()->getActiveUAS());
+        activeUASSet(qgcApp()->singletonUASManager()->getActiveUAS());
         setFocus();
 
         // Start timer
@@ -447,7 +447,7 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
  */
 void QGCMapWidget::updateGlobalPosition()
 {
-    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    QList<UASInterface*> systems = qgcApp()->singletonUASManager()->getUASList();
     foreach (UASInterface* system, systems)
     {
         // Get reference to graphic UAV item
@@ -475,7 +475,7 @@ void QGCMapWidget::updateGlobalPosition()
 
 void QGCMapWidget::updateLocalPosition()
 {
-    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    QList<UASInterface*> systems = qgcApp()->singletonUASManager()->getUASList();
     foreach (UASInterface* system, systems)
     {
         // Get reference to graphic UAV item
@@ -515,7 +515,7 @@ void QGCMapWidget::updateSystemSpecs(int uas)
         if (icon && icon->getUASId() == uas)
         {
             // Set new airframe
-            icon->setAirframe(UASManager::instance()->getUASForId(uas)->getAirframe());
+            icon->setAirframe(qgcApp()->singletonUASManager()->getUASForId(uas)->getAirframe());
             icon->drawIcon();
         }
     }
@@ -662,7 +662,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
     }
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
-    UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+    UASInterface* uasInstance = qgcApp()->singletonUASManager()->getUASForId(uas);
     if (currWPManager)
     {
         // Only accept waypoints in global coordinate frame
@@ -772,7 +772,7 @@ void QGCMapWidget::updateWaypointList(int uas)
     qDebug() << "UPDATE WP LIST IN 2D MAP CALLED FOR UAS" << uas;
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
-    UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+    UASInterface* uasInstance = qgcApp()->singletonUASManager()->getUASForId(uas);
     if (currWPManager)
     {
         // ORDER MATTERS HERE!

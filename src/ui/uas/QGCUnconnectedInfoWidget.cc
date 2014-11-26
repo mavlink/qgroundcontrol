@@ -26,11 +26,11 @@ QGCUnconnectedInfoWidget::~QGCUnconnectedInfoWidget()
 void QGCUnconnectedInfoWidget::simulate()
 {
     // Try to get reference to MAVLinkSimulationlink
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    QList<LinkInterface*> links = qgcApp()->singletonLinkManager()->getLinks();
     foreach(LinkInterface* link, links) {
         MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
         if (sim) {
-            LinkManager::instance()->connectLink(sim);
+            qgcApp()->singletonLinkManager()->connectLink(sim);
         }
     }
 }
@@ -40,5 +40,5 @@ void QGCUnconnectedInfoWidget::simulate()
  */
 void QGCUnconnectedInfoWidget::addLink()
 {
-    MainWindow::instance()->addLink();
+    qgcApp()->singletonMainWindow()->addLink();
 }

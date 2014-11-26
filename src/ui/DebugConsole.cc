@@ -87,18 +87,18 @@ DebugConsole::DebugConsole(QWidget *parent) :
 
     // First connect management slots, then make sure to add all existing objects
     // Connect to link manager to get notified about new links
-    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+    connect(qgcApp()->singletonLinkManager(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
     // Connect to UAS manager to get notified about new UAS
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(uasCreated(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(uasCreated(UASInterface*)));
 
     // Get a list of all existing links
     links = QList<LinkInterface*>();
-    foreach (LinkInterface* link, LinkManager::instance()->getLinks()) {
+    foreach (LinkInterface* link, qgcApp()->singletonLinkManager()->getLinks()) {
         addLink(link);
     }
 
     // Get a list of all existing UAS
-    foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
+    foreach (UASInterface* uas, qgcApp()->singletonUASManager()->getUASList()) {
         uasCreated(uas);
     }
 
@@ -286,7 +286,7 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
     Q_UNUSED(severity);
     if (isVisible())
     {
-        QString name = UASManager::instance()->getUASForId(id)->getUASName();
+        QString name = qgcApp()->singletonUASManager()->getUASForId(id)->getUASName();
         QString comp;
         // Get a human readable name if possible
         switch (component) {
@@ -312,7 +312,7 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
         m_ui->receiveText->setUpdatesEnabled(false);
         QScrollBar *scroller = m_ui->receiveText->verticalScrollBar();
 
-        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), name, comp, text));
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(%2:%3) %4</font>\n").arg(qgcApp()->singletonUASManager()->getUASForId(id)->getColor().name(), name, comp, text));
 
         // Ensure text area scrolls correctly
         scroller->setValue(scroller->maximum());
@@ -782,9 +782,9 @@ void DebugConsole::handleConnectButton()
 {
     if (currLink) {
         if (currLink->isConnected()) {
-            LinkManager::instance()->disconnect(currLink);
+            qgcApp()->singletonLinkManager()->disconnect(currLink);
         } else {
-            LinkManager::instance()->connectLink(currLink);
+            qgcApp()->singletonLinkManager()->connectLink(currLink);
         }
     }
 }

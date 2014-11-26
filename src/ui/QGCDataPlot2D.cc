@@ -73,7 +73,7 @@ QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     connect(ui->style, SIGNAL(currentIndexChanged(QString)), plot, SLOT(setStyleText(QString)));
 
     // Allow style changes to propagate through this widget
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
+    connect(qgcApp()->singletonMainWindow(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
             plot, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
 }
 
@@ -304,7 +304,7 @@ void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFil
     // Postprocess log file
     logFile = new QTemporaryFile("qt_qgc_temp_log.XXXXXX.csv");
     compressor = new LogCompressor(file, logFile->fileName());
-    connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
+    connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), qgcApp()->singletonMainWindow(), SLOT(showStatusMessage(QString)));
     connect(compressor, SIGNAL(finishedFile(QString)), this, SLOT(loadFile(QString)));
     compressor->startCompression();
 }

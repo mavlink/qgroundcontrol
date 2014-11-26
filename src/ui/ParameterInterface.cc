@@ -49,7 +49,7 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
     QSettings settings;
 
     // Get current MAV list
-    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    QList<UASInterface*> systems = qgcApp()->singletonUASManager()->getUASList();
 
     // Add each of them
     foreach (UASInterface* sys, systems) {
@@ -57,8 +57,8 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
     }
 
     // Setup MAV connections
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSetListIndex(int)), this, SLOT(selectUAS(int)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSetListIndex(int)), this, SLOT(selectUAS(int)));
     this->setVisible(false);
 }
 

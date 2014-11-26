@@ -143,11 +143,11 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(QWidget *parent) :
     setMinimumSize(120, 80);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 
     // Connect with UAS signal
-    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(forgetUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(forgetUAS(UASInterface*)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);

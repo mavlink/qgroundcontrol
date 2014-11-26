@@ -90,7 +90,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     connect(ui->atmosphereCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableAtmosphere(bool)));
     connect(ui->daylightCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableDaylight(bool)));
 
-    connect(UASManager::instance(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(setHome(double,double,double)));
+    connect(qgcApp()->singletonUASManager(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(setHome(double,double,double)));
 }
 
 QGCGoogleEarthView::~QGCGoogleEarthView()
@@ -239,7 +239,7 @@ void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
         // Get the index of this waypoint
         // note the call to getGlobalFrameAndNavTypeIndexOf()
         // as we're only handling global waypoints
-        int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
+        int wpindex = qgcApp()->singletonUASManager()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
         // If not found, return (this should never happen, but helps safety)
         if (wpindex == -1)
         {
@@ -261,7 +261,7 @@ void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
 void QGCGoogleEarthView::updateWaypointList(int uas)
 {
     // Get already existing waypoints
-    UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+    UASInterface* uasInstance = qgcApp()->singletonUASManager()->getUASForId(uas);
     if (uasInstance)
     {
         // Get all waypoints, including non-global waypoints
@@ -288,7 +288,7 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, dou
 
 void QGCGoogleEarthView::clearTrails()
 {
-    QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+    QList<UASInterface*> mavs = qgcApp()->singletonUASManager()->getUASList();
     foreach (UASInterface* currMav, mavs)
     {
         javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
@@ -300,7 +300,7 @@ void QGCGoogleEarthView::showTrail(bool state)
     // Check if the current trail has to be hidden
     if (trailEnabled && !state)
     {
-        QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+        QList<UASInterface*> mavs = qgcApp()->singletonUASManager()->getUASList();
         foreach (UASInterface* currMav, mavs)
         {
             javaScript(QString("hideTrail(%1);").arg(currMav->getUASID()));
@@ -310,7 +310,7 @@ void QGCGoogleEarthView::showTrail(bool state)
     // Check if the current trail has to be shown
     if (!trailEnabled && state)
     {
-        QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+        QList<UASInterface*> mavs = qgcApp()->singletonUASManager()->getUASList();
         foreach (UASInterface* currMav, mavs)
         {
             javaScript(QString("showTrail(%1);").arg(currMav->getUASID()));
@@ -541,20 +541,20 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             gEarthInitialized = true;
 
             // Set home location
-            setHome(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
+            setHome(qgcApp()->singletonUASManager()->getHomeLatitude(), qgcApp()->singletonUASManager()->getHomeLongitude(), qgcApp()->singletonUASManager()->getHomeAltitude());
 
             // Add all MAVs
-            QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+            QList<UASInterface*> mavs = qgcApp()->singletonUASManager()->getUASList();
             foreach (UASInterface* currMav, mavs) {
                 addUAS(currMav);
             }
 
             // Set current UAS
-            setActiveUAS(UASManager::instance()->getActiveUAS());
+            setActiveUAS(qgcApp()->singletonUASManager()->getActiveUAS());
 
             // Add any further MAV automatically
-            connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
-            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)), Qt::UniqueConnection);
+            connect(qgcApp()->singletonUASManager(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
+            connect(qgcApp()->singletonUASManager(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)), Qt::UniqueConnection);
 
             // Connect UI signals/slots
 
@@ -624,7 +624,7 @@ void QGCGoogleEarthView::updateState()
         float yaw = 0.0f;
 
         // Update all MAVs
-        QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+        QList<UASInterface*> mavs = qgcApp()->singletonUASManager()->getUASList();
         foreach (UASInterface* currMav, mavs)
         {
             // Only update if known
@@ -704,7 +704,7 @@ void QGCGoogleEarthView::updateState()
                 if (idText == "HOME")
                 {
                     qDebug() << "HOME UPDATED!";
-                    UASManager::instance()->setHomePosition(latitude, longitude, altitude);
+                    qgcApp()->singletonUASManager()->setHomePosition(latitude, longitude, altitude);
                     ui->setHomeButton->setChecked(false);
                 }
                 else

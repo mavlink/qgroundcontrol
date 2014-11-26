@@ -152,7 +152,7 @@ void PX4RCCalibrationTest::init(void)
     _mockUASManager = new MockUASManager();
     Q_ASSERT(_mockUASManager);
     
-    UASManager::setMockUASManager(_mockUASManager);
+    qgcApp()->setMockSingletonUASManager(_mockUASManager);
     
     _mockUAS = new MockUAS();
     Q_CHECK_PTR(_mockUAS);
@@ -199,10 +199,10 @@ void PX4RCCalibrationTest::cleanup(void)
     Q_ASSERT(_calWidget);
     delete _calWidget;
     
+    qgcApp()->clearMockSingletonUASManager();
+    
     Q_ASSERT(_mockUAS);
     delete _mockUAS;
-    
-    UASManager::setMockUASManager(NULL);
     
     Q_ASSERT(_mockUASManager);
     delete _mockUASManager;
