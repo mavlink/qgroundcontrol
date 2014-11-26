@@ -120,8 +120,6 @@ private:
     static const char* _defaultSavedFileDirectoryName;      ///< Default name for user visible save file directory
     static const char* _savedFileMavlinkLogDirectoryName;   ///< Name of mavlink log subdirectory
     static const char* _savedFileParameterDirectoryName;    ///< Name of parameter subdirectory
-
-    MainWindow* _mainWindow;
     
     QList<QGCSingleton*> _singletons;    ///< List of registered global singletons
 };
