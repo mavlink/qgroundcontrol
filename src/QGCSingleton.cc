@@ -29,8 +29,10 @@
 #include "QGCSingleton.h"
 #include "QGCApplication.h"
 
-QGCSingleton::QGCSingleton(QObject* parent) :
+QGCSingleton::QGCSingleton(QObject* parent, bool registerSingleton) :
     QObject(parent)
 {
-    qgcApp()->registerSingleton(this);
+    if (registerSingleton) {
+        qgcApp()->registerSingleton(this);
+    }
 }

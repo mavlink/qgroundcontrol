@@ -57,7 +57,10 @@ class UASManagerInterface : public QGCSingleton
     Q_OBJECT
     
 public:
-    UASManagerInterface(QObject* parent = NULL) : QGCSingleton(parent) { }
+    /// @brief Contructor will register singleton to QGCApplication
+    ///     @param parent Parent object
+    ///     @param registerSingleton true: register with QGCApplication, false: do not register (only used for Mock implementations)
+    UASManagerInterface(QObject* parent = NULL, bool registerSingleton = true) : QGCSingleton(parent, registerSingleton) { }
     
     virtual UASInterface* getActiveUAS() = 0;
     virtual UASWaypointManager *getActiveUASWaypointManager() = 0;

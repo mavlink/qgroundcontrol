@@ -39,7 +39,9 @@ class QGCSingleton : public QObject
     
 public:
     /// @brief Contructor will register singleton to QGCApplication
-    QGCSingleton(QObject* parent = NULL);
+    ///     @param parent Parent object
+    ///     @param registerSingleton true: register with QGCApplication, false: do not register (only used for Mock implementations)
+    QGCSingleton(QObject* parent = NULL, bool registerSingleton = true);
     
     /// @brief Implementation should delete the singleton such that next call to instance
     ///         will create a new singleton.
