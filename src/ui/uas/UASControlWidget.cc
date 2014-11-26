@@ -39,7 +39,7 @@ This file is part of the PIXHAWK project
 #include <UASManager.h>
 #include <UAS.h>
 #include "QGC.h"
-#include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     uasID(-1),
@@ -68,7 +68,7 @@ void UASControlWidget::updateModesList()
         }
     }
     
-    AutoPilotPlugin* autopilotPlugin = AutoPilotPlugin::getInstanceForAutoPilotPlugin(autopilot);
+    AutoPilotPlugin* autopilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(autopilot);
     
     _modeList = autopilotPlugin->getModes();
 

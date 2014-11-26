@@ -11,6 +11,7 @@
 #include <QList>
 #include <QString>
 #include <QSharedPointer>
+#include "QGCApplication.h"
 
 namespace AutoTest
 {
@@ -51,10 +52,11 @@ namespace AutoTest
     inline int run(int argc, char *argv[])
     { 
 	int ret = 0;
-	QApplication t(argc, argv);
 	foreach (QObject* test, testList())
-	{  
-            ret += QTest::qExec(test, argc, argv);
+	{
+        qgcApp()->destroySingletonsForUnitTest();
+        qgcApp()->createSingletonsForUnitTest();
+        ret += QTest::qExec(test, argc, argv);
 	}
 	
 	return ret;
@@ -75,11 +77,5 @@ public:
 };
 
 #define DECLARE_TEST(className) static Test<className> t(#className);
-
-#define TEST_MAIN \
-    int main(int argc, char *argv[]) \
-    { \
-      return AutoTest::run(argc, argv); \
-  }
 
 #endif // AUTOTEST_H

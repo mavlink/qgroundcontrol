@@ -167,7 +167,7 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
             mode = "|OFFBOARD";
         }
     } else {
-        mode = qgcApp()->singletonAutoPilotPluginManager()->getInstanceForAutoPilotPlugin(MAV_AUTOPILOT_GENERIC)->getShortModeText(baseMode, customMode);
+        mode = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(MAV_AUTOPILOT_GENERIC)->getShortModeText(baseMode, customMode);
     }
     
     return mode;

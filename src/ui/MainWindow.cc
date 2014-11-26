@@ -108,6 +108,12 @@ MainWindow* MainWindow::instance(void)
     return _instance;
 }
 
+void MainWindow::deleteInstance(void)
+{
+    delete _instance;
+    _instance = NULL;
+}
+
 /// @brief Private constructor for MainWindow. MainWindow singleton is only ever created
 ///         by MainWindow::_create method. Hence no other code should have access to
 ///         constructor.

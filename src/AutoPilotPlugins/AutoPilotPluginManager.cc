@@ -27,9 +27,30 @@
 #include "AutoPilotPluginManager.h"
 #include "PX4/PX4AutoPilotPlugin.h"
 #include "Generic/GenericAutoPilotPlugin.h"
+#include "QGCApplication.h"
+
+AutoPilotPluginManager* AutoPilotPluginManager::_instance = NULL;
+
+AutoPilotPluginManager* AutoPilotPluginManager::instance(void)
+{
+    if (_instance == NULL) {
+        _instance = new AutoPilotPluginManager(qgcApp());
+        Q_CHECK_PTR(_instance);
+    }
+    
+    Q_ASSERT(_instance);
+    
+    return _instance;
+}
+
+void AutoPilotPluginManager::deleteInstance(void)
+{
+    _instance = NULL;
+    delete this;
+}
 
 AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
-    QObject(parent)
+    QGCSingleton(parent)
 {
     // All plugins are constructed here so that they end up on the correct thread
     _pluginMap[MAV_AUTOPILOT_PX4] = new PX4AutoPilotPlugin(this);

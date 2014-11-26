@@ -30,32 +30,33 @@
 
 #include "UASInterface.h"
 #include "VehicleComponent.h"
-#include "QGCApplication.h"
 #include "AutoPilotPlugin.h"
+#include "QGCSingleton.h"
 
 /// @file
 ///     @brief The AutoPilotPlugin manager is a singleton which maintains the list of AutoPilotPlugin objects.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class AutoPilotPluginManager : public QObject
+class AutoPilotPluginManager : public QGCSingleton
 {
     Q_OBJECT
 
 public:
+    /// @brief Returns the AutoPilotPluginManager singleton
+    static AutoPilotPluginManager* instance(void);
+    
+    virtual void deleteInstance(void);
     
     /// @brief Returns the singleton AutoPilot instance for the specified auto pilot type.
     /// @param autopilotType Specified using the MAV_AUTOPILOT_* values.
     AutoPilotPlugin* getInstanceForAutoPilotPlugin(int autopilotType);
     
 private:
-    /// @brief Only QGCQpplication is allowed to call constructor. All access to singleton is through
-    ///         QGCApplication::singletonAutoPilotPluginManager.
+    /// All access to singleton is through AutoPilotPluginManager::instance
     AutoPilotPluginManager(QObject* parent = NULL);
     
-    /// @brief Only QGCQpplication is allowed to call constructor. All access to singleton is through
-    ///         QGCApplication::singletonAutoPilotPluginManager.
-    friend class QGCApplication;
+    static AutoPilotPluginManager* _instance;
     
     QMap<int, AutoPilotPlugin*> _pluginMap;
 };
