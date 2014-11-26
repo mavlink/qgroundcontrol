@@ -335,6 +335,7 @@ FORMS += \
 HEADERS += \
     src/MG.h \
     src/QGCApplication.h \
+    src/QGCSingleton.h \
     src/uas/UASInterface.h \
     src/uas/UAS.h \
     src/uas/UASManager.h \
@@ -493,6 +494,7 @@ HEADERS += \
 SOURCES += \
     src/main.cc \
     src/QGCApplication.cc \
+    src/QGCSingleton.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
     src/comm/LinkManager.cc \
@@ -702,6 +704,7 @@ HEADERS+= \
     src/VehicleSetup/VehicleSetupButton.h \
     src/VehicleSetup/VehicleComponentButton.h \
     src/VehicleSetup/VehicleComponent.h \
+    src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
@@ -716,7 +719,7 @@ SOURCES += \
     src/VehicleSetup/SummaryPage.cc \
     src/VehicleSetup/ParameterEditor.cc \
     src/VehicleSetup/VehicleComponent.cc \
-    src/AutoPilotPlugins/AutoPilotPlugin.cc \
+    src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \

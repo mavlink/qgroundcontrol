@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -21,26 +21,18 @@
  
  ======================================================================*/
 
-#ifndef GENERICAUTOPILOT_H
-#define GENERICAUTOPILOT_H
-
-#include "AutoPilotPlugin.h"
-
 /// @file
-///     @brief This is the generic implementation of the AutoPilotPlugin class for mavs
-///             we do not have a specific AutoPilotPlugin implementation.
+///     @brief Base class for global singletons
+///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class GenericAutoPilotPlugin : public AutoPilotPlugin
+#include "QGCSingleton.h"
+#include "QGCApplication.h"
+
+QGCSingleton::QGCSingleton(QObject* parent, bool registerSingleton) :
+    QObject(parent)
 {
-    Q_OBJECT
-
-public:
-    GenericAutoPilotPlugin(QObject* parent = NULL);
-    
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
-};
-
-#endif
+    if (registerSingleton) {
+        qgcApp()->registerSingleton(this);
+    }
+}

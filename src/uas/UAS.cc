@@ -29,7 +29,7 @@
 #include "SerialLink.h"
 #include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
-#include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
 
 /**
@@ -3304,7 +3304,7 @@ QString UAS::getAudioModeTextFor(int id)
 */
 QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int autopilot)
 {
-    QString mode = AutoPilotPlugin::getInstanceForAutoPilotPlugin(autopilot)->getShortModeText(base_mode, custom_mode);
+    QString mode = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(autopilot)->getShortModeText(base_mode, custom_mode);
 
     if (mode.length() == 0)
     {
