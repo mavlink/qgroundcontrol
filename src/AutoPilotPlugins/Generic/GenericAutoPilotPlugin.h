@@ -36,7 +36,7 @@ class GenericAutoPilotPlugin : public AutoPilotPlugin
     Q_OBJECT
 
 public:
-    GenericAutoPilotPlugin(void);
+    GenericAutoPilotPlugin(QObject* parent = NULL);
     
     virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
     virtual QList<FullMode_t> getModes(void) const;
