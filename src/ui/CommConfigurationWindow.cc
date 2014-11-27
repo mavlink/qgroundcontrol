@@ -376,10 +376,7 @@ void CommConfigurationWindow::remove()
     action=NULL;
 
     if(link) {
-        LinkManager::instance()->removeLink(link); //remove link from LinkManager list
-        link->disconnect(); //disconnect port, and also calls terminate() to stop the thread
-        if (link->isRunning()) link->terminate(); // terminate() the serial thread just in case it is still running
-        link->wait(); // wait() until thread is stoped before deleting
+        LinkManager::instance()->disconnectLink(link);  // disconnect connection
         link->deleteLater();
     }
     link=NULL;
