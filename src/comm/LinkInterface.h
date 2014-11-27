@@ -49,7 +49,7 @@ class LinkInterface : public QThread
 {
     Q_OBJECT
     
-    // Only LinkManager is allowed to _connect or _disconnect a link
+    // Only LinkManager is allowed to _connect, _disconnect or delete a link
     friend class LinkManager;
     
 public:
@@ -338,8 +338,6 @@ private:
     
     bool _ownedByLinkManager;   ///< true: This link has been added to LinkManager, false: Link not added to LinkManager
     bool _deletedByLinkManager; ///< true: Link being deleted from LinkManager, false: error, Links should only be deleted from LinkManager
-    
-    friend class LinkManager;
 };
 
 #endif // _LINKINTERFACE_H_
