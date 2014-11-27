@@ -39,13 +39,24 @@ void ParseCmdLineOptions(int&           argc,                   ///< count of ar
 {
     // Start with all options off
     for (size_t iOption=0; iOption<cOpts; iOption++) {
-        *prgOpts[iOption].flag = false;
+        *prgOpts[iOption].optionFound = false;
     }
     
     for (int iArg=1; iArg<argc; iArg++) {
         for (size_t iOption=0; iOption<cOpts; iOption++) {
-            if (QString(argv[iArg]).compare(prgOpts[iOption].optionStr, Qt::CaseInsensitive) == 0) {
-                *prgOpts[iOption].flag = true;
+            bool found = false;
+            
+            QString arg(argv[iArg]);
+            QString optionStr(prgOpts[iOption].optionStr);
+            
+            if (arg.startsWith(QString("%1:").arg(optionStr), Qt::CaseInsensitive)) {
+                found = true;
+                prgOpts[iOption].optionArg = arg.right(arg.length() - (optionStr.length() + 1));
+            } else if (arg.compare(optionStr, Qt::CaseInsensitive) == 0) {
+                found = true;
+            }
+            if (found) {
+                *prgOpts[iOption].optionFound = true;
                 if (removeParsedOptions) {
                     for (int iShift=iArg; iShift<argc-1; iShift++) {
                         argv[iShift] = argv[iShift+1];

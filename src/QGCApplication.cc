@@ -109,7 +109,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[]) :
     bool fClearSettingsOptions = false; // Clear stored settings
     
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions },
+        { "--clear-settings",   &fClearSettingsOptions, QString() },
         // Add additional command line option flags here
     };
     
@@ -136,12 +136,14 @@ QGCApplication::~QGCApplication()
 
 void QGCApplication::_initCommon(void)
 {
-    _createSingletons();
+
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
 {
     QSettings settings;
+    
+    _createSingletons();
     
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));

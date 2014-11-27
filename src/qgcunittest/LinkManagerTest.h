@@ -21,28 +21,57 @@
  
  ======================================================================*/
 
+#ifndef UASUNITTEST_H
+#define UASUNITTEST_H
+
+#include <QObject>
+#include <QtTest>
+
+#include "AutoTest.h"
+#include "LinkManager.h"
+#include "MultiSignalSpy.h"
+
 /// @file
-///     @brief Command line option parser
+///     @brief LinkManager Unit Test
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef CMDLINEOPTPARSER_H
-#define CMDLINEOPTPARSER_H
+class LinkManagerTest : public QObject
+{
+    Q_OBJECT
+    
+public:
+    LinkManagerTest(void);
+    
+private slots:
+    void init(void);
+    void cleanup(void);
+    
+    void _instance_test(void);
+    void _add_test(void);
+    void _delete_test(void);
+    void _addSignals_test(void);
+    void _deleteSignals_test(void);
+    
+private:
+    enum {
+        newLinkSignalIndex = 0,
+        linkDeletedSignalIndex,
+        maxSignalIndex
+    };
+    
+    enum {
+        newLinkSignalMask =     1 << newLinkSignalIndex,
+        linkDeletedSignalMask = 1 << linkDeletedSignalIndex,
+    };
 
-#include <QString>
-#include <cstring>
+    LinkManager*        _linkMgr;
+    MultiSignalSpy*     _multiSpy;
+    static const size_t _cSignals = maxSignalIndex;
+    const char*         _rgSignals[_cSignals];
 
-/// @brief Structure used to pass command line options to the ParseCmdLineOptions function.
-typedef struct {
-    const char* optionStr;      ///< command line option, for example "--foo"
-    bool*       optionFound;    ///< if option is found this variable will be set to true
-    QString     optionArg;      ///< Option has additional argument, form is option:arg
-} CmdLineOpt_t;
+};
 
-void ParseCmdLineOptions(int&           argc,
-                         char*          argv[],
-                         CmdLineOpt_t*  prgOpts,
-                         size_t         cOpts,
-                         bool           removeParsedOptions);
+DECLARE_TEST(LinkManagerTest)
 
 #endif

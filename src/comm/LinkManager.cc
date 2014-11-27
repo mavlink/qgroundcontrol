@@ -63,8 +63,8 @@ void LinkManager::deleteInstance(void)
  *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
-LinkManager::LinkManager(QObject* parent) :
-    QGCSingleton(parent),
+LinkManager::LinkManager(QObject* parent, bool registerSingleton) :
+    QGCSingleton(parent, registerSingleton),
     _connectionsSuspended(false)
 {
     _links = QList<LinkInterface*>();
@@ -75,24 +75,23 @@ LinkManager::~LinkManager()
 {
     disconnectAll();
     
-    _dataMutex.lock();
     foreach (LinkInterface* link, _links) {
         Q_ASSERT(link);
-        link->deleteLater();
+        deleteLink(link);
     }
     _links.clear();
-    _dataMutex.unlock();
 }
 
 void LinkManager::add(LinkInterface* link)
 {
     Q_ASSERT(link);
     
+    // Take ownership for delete
+    link->_ownedByLinkManager = true;
+    
     _dataMutex.lock();
     
-    if (!_links.contains(link))
-    {
-        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeObj(QObject*)));
+    if (!_links.contains(link)) {
         _links.append(link);
         _dataMutex.unlock();
         emit newLink(link);
@@ -174,7 +173,7 @@ bool LinkManager::disconnectAll()
     foreach (LinkInterface* link, _links)
     {
         Q_ASSERT(link);
-        if (!link->disconnect()) {
+        if (!link->_disconnect()) {
             allDisconnected = false;
         }
     }
@@ -200,62 +199,30 @@ bool LinkManager::disconnectLink(LinkInterface* link)
     return link->_disconnect();
 }
 
-void LinkManager::removeObj(QObject* link)
+void LinkManager::deleteLink(LinkInterface* link)
 {
-    // Be careful of the fact that by the time this signal makes it through the queue
-    // the link object has already been destructed.
-    removeLink((LinkInterface*)link);
-}
-
-bool LinkManager::removeLink(LinkInterface* link)
-{
-    if(link)
-    {
-        _dataMutex.lock();
-        for (int i=0; i < _links.size(); i++)
-        {
-            if(link==_links.at(i))
-            {
-                _links.removeAt(i); //remove from link list
-            }
-        }
-        // Remove link from protocol map
-        QList<ProtocolInterface* > protocols = _protocolLinks.keys(link);
-        foreach (ProtocolInterface* proto, protocols)
-        {
-            _protocolLinks.remove(proto, link);
-        }
-        _dataMutex.unlock();
-
-        // Emit removal of link
-        emit linkRemoved(link);
-
-        return true;
-    }
-    return false;
-}
-
-/**
- * The access time is linear in the number of links.
- *
- * @param id link identifier to search for
- * @return A pointer to the link or NULL if not found
- */
-LinkInterface* LinkManager::getLinkForId(int id)
-{
+    Q_ASSERT(link);
+    
     _dataMutex.lock();
-    LinkInterface* linkret = NULL;
-    foreach (LinkInterface* link, _links)
-    {
-        Q_ASSERT(link);
-        
-        if (link->getId() == id)
-        {
-            linkret = link;
-        }
+    
+    Q_ASSERT(_links.contains(link));
+    _links.removeOne(link);
+    Q_ASSERT(!_links.contains(link));
+
+    // Remove link from protocol map
+    QList<ProtocolInterface* > protocols = _protocolLinks.keys(link);
+    foreach (ProtocolInterface* proto, protocols) {
+        _protocolLinks.remove(proto, link);
     }
+             
     _dataMutex.unlock();
-    return linkret;
+             
+    // Emit removal of link
+    emit linkDeleted(link);
+    
+    Q_ASSERT(link->_ownedByLinkManager);
+    link->_deletedByLinkManager = true;   // Signal that this is a valid delete
+    delete link;
 }
 
 /**
@@ -307,4 +274,3 @@ void LinkManager::setConnectionsSuspended(QString reason)
     _connectionsSuspendedReason = reason;
     Q_ASSERT(!reason.isEmpty());
 }
-
