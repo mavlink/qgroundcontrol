@@ -1,6 +1,8 @@
 #include "MAVLinkDecoder.h"
 #include "UASManager.h"
 
+#include <QDebug>
+
 MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     QThread()
 {

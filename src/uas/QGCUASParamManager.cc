@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QDebug>
 
 #include "UASInterface.h"
 #include "QGCMessageBox.h"
