@@ -49,14 +49,16 @@ namespace AutoTest
 	}
     }
 
-    inline int run(int argc, char *argv[])
+    inline int run(int argc, char *argv[], QString& singleTest)
     { 
 	int ret = 0;
 	foreach (QObject* test, testList())
 	{
-        qgcApp()->destroySingletonsForUnitTest();
-        qgcApp()->createSingletonsForUnitTest();
-        ret += QTest::qExec(test, argc, argv);
+        if (singleTest.isEmpty() || singleTest == test->objectName()) {
+            qgcApp()->destroySingletonsForUnitTest();
+            qgcApp()->createSingletonsForUnitTest();
+            ret += QTest::qExec(test, argc, argv);
+        }
 	}
 	
 	return ret;
