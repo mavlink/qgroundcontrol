@@ -253,7 +253,6 @@ UAS::~UAS()
     writeSettings();
 
     _thread->quit();
-    _thread->wait();
 
     delete links;
     delete simulation;
