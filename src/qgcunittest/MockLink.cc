@@ -27,8 +27,6 @@
 #include <QDebug>
 #include <QFile>
 
-#include "LinkManager.h"
-
 #include <string.h>
 
 /// @file
@@ -53,7 +51,6 @@ MockLink::MockLink(void) :
     moveToThread(this);
     _loadParams();
     QObject::connect(this, &MockLink::_incomingBytes, this, &MockLink::_handleIncomingBytes);
-    LinkManager::instance()->add(this);
 }
 
 MockLink::~MockLink(void)
