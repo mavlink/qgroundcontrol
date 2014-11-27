@@ -327,10 +327,8 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
 
     // If there's an existing MAVLinkSimulationLink() being used for an old file,
     // we replace it.
-    if (logLink)
-    {
-        LinkManager::instance()->disconnectLink(logLink);
-        logLink->deleteLater();
+    if (logLink) {
+        LinkManager::instance()->deleteLink(logLink);
     }
     logLink = new MAVLinkSimulationLink("");
 
