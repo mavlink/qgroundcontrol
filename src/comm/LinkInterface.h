@@ -54,7 +54,9 @@ class LinkInterface : public QThread
     
 public:
     LinkInterface() :
-        QThread(0)
+        QThread(0),
+        _ownedByLinkManager(false),
+        _deletedByLinkManager(false)
     {
         // Initialize everything for the data rate calculation buffers.
         inDataIndex = 0;
@@ -73,7 +75,9 @@ public:
     }
 
     virtual ~LinkInterface() {
-        emit this->deleteLink(this);
+        // LinkManager take ownership of Links once they are added to it. Once added to LinkManager
+        // user LinkManager::deleteLink to remove if necessary/
+        Q_ASSERT(!_ownedByLinkManager || _deletedByLinkManager);
     }
 
     /* Connection management */
@@ -196,9 +200,6 @@ signals:
     void communicationError(const QString& linkname, const QString& error);
 
     void communicationUpdate(const QString& linkname, const QString& text);
-
-    /** @brief destroying element */
-    void deleteLink(LinkInterface* const link);
 
 protected:
 
@@ -334,6 +335,11 @@ private:
      * @return True if connection could be terminated, false otherwise
      **/
     virtual bool _disconnect(void) = 0;
+    
+    bool _ownedByLinkManager;   ///< true: This link has been added to LinkManager, false: Link not added to LinkManager
+    bool _deletedByLinkManager; ///< true: Link being deleted from LinkManager, false: error, Links should only be deleted from LinkManager
+    
+    friend class LinkManager;
 };
 
 #endif // _LINKINTERFACE_H_
