@@ -15,7 +15,6 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include "SerialLink.h"
-#include "LinkManager.h"
 #include "QGC.h"
 #include <MG.h>
 
@@ -72,9 +71,6 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     qDebug() << "create SerialLink " << portname << baudRate << hardwareFlowControl
              << parity << dataBits << stopBits;
     qDebug() << "m_portName " << m_portName;
-
-    LinkManager::instance()->add(this);
-    qDebug() << "link added to link manager";
 }
 
 void SerialLink::requestReset()
