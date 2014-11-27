@@ -42,6 +42,8 @@ This file is part of the PIXHAWK project
 #include "ProtocolInterface.h"
 #include "QGCSingleton.h"
 
+class LinkManagerTest;
+
 /**
  * The Link Manager organizes the physical Links. It can manage arbitrary
  * links and takes care of connecting them as well assigning the correct
@@ -60,14 +62,9 @@ public:
 
     ~LinkManager();
 
-    void run();
-
     QList<LinkInterface*> getLinksForProtocol(ProtocolInterface* protocol);
 
     ProtocolInterface* getProtocolForLink(LinkInterface* link);
-
-    /** @brief Get the link for this id */
-    LinkInterface* getLinkForId(int id);
 
     /** @brief Get a list of all links */
     const QList<LinkInterface*> getLinks();
@@ -86,11 +83,15 @@ public:
     
     /// @brief Sets the flag to allow new connections to be made
     void setConnectionsAllowed(void) { _connectionsSuspended = false; }
+    
+    /// @brief Deletes the specified link. Will disconnect if connected.
+    void deleteLink(LinkInterface* link);
 
 public slots:
-    /// @brief Adds the link to the LinkManager. No need to remove a link you added. Just delete it and LinkManager will pick up on
-    ///         that and remove the link from the list.
+    /// @brief Adds the link to the LinkManager. LinkManager takes ownership of this object. To delete
+    //          it, call LinkManager::deleteLink.
     void add(LinkInterface* link);
+    
     void addProtocol(LinkInterface* link, ProtocolInterface* protocol);
 
     bool connectAll();
@@ -101,15 +102,16 @@ public slots:
 
 signals:
     void newLink(LinkInterface* link);
-    void linkRemoved(LinkInterface* link);
+    void linkDeleted(LinkInterface* link);
     
 private:
     /// @brief All access to LinkManager is through LinkManager::instance
-    LinkManager(QObject* parent = NULL);
+    LinkManager(QObject* parent = NULL, bool registerSingleton = true);
+    
+    // LinkManager unit test is allowed to new LinkManager objects
+    friend class LinkManagerTest;
     
     static LinkManager* _instance;
-    
-    void _removeLink(QObject* obj);
     
     QList<LinkInterface*> _links;
     QMultiMap<ProtocolInterface*,LinkInterface*> _protocolLinks;
