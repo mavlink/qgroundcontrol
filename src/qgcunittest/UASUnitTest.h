@@ -54,8 +54,6 @@ private slots:
   void getWaypointList_test();
   void signalWayPoint_test();
   void getWaypoint_test();
-  void signalUASLink_test();
-  void signalIdUASLink_test();
 };
 
 DECLARE_TEST(UASUnitTest)
