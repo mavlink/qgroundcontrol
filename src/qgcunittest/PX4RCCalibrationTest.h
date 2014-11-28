@@ -24,7 +24,7 @@
 #ifndef PX4RCCALIBRATIONTEST_H
 #define PX4RCCALIBRATIONTEST_H
 
-#include "AutoTest.h"
+#include "UnitTest.h"
 #include "MockUASManager.h"
 #include "MockUAS.h"
 #include "MultiSignalSpy.h"
@@ -36,7 +36,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 ///     @brief PX4RCCalibration Widget unit test
-class PX4RCCalibrationTest : public QObject
+class PX4RCCalibrationTest : public UnitTest
 {
     Q_OBJECT
     
@@ -45,6 +45,7 @@ public:
     
 private slots:
     void initTestCase(void);
+    UT_DECLARE_DEFAULT_cleanupTestCase
     void init(void);
     void cleanup(void);
     
@@ -128,7 +129,5 @@ private:
 	
 	static const int _rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax];
 };
-
-DECLARE_TEST(PX4RCCalibrationTest)
 
 #endif

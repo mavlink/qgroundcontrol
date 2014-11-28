@@ -21,54 +21,37 @@
  
  ======================================================================*/
 
-#ifndef UASUNITTEST_H
-#define UASUNITTEST_H
-
-#include "UnitTest.h"
-#include "LinkManager.h"
-#include "MultiSignalSpy.h"
-
 /// @file
-///     @brief LinkManager Unit Test
+///     @brief The tests the unit test QGCMessageBox catching mechanism.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class LinkManagerTest : public UnitTest
+#ifndef MESSAGEBOXTEST_H
+#define MESSAGEBOXTEST_H
+
+#include "UnitTest.h"
+
+class MessageBoxTest : public UnitTest
 {
     Q_OBJECT
     
 public:
-    LinkManagerTest(void);
+    MessageBoxTest(void);
     
 private slots:
     UT_DECLARE_DEFAULT_initTestCase
     UT_DECLARE_DEFAULT_cleanupTestCase
-    
-    void init(void);
+    UT_DECLARE_DEFAULT_init
     void cleanup(void);
     
-    void _instance_test(void);
-    void _add_test(void);
-    void _delete_test(void);
-    void _addSignals_test(void);
-    void _deleteSignals_test(void);
+    void _messageBoxExpected_test(void);
+    void _messageBoxUnexpected_test(void);
+    void _previousMessageBox_test(void);
+    void _noMessageBox_test(void);
+    void _badResponseButton_test(void);
     
 private:
-    enum {
-        newLinkSignalIndex = 0,
-        linkDeletedSignalIndex,
-        maxSignalIndex
-    };
-    
-    enum {
-        newLinkSignalMask =     1 << newLinkSignalIndex,
-        linkDeletedSignalMask = 1 << linkDeletedSignalIndex,
-    };
-
-    LinkManager*        _linkMgr;
-    MultiSignalSpy*     _multiSpy;
-    static const size_t _cSignals = maxSignalIndex;
-    const char*         _rgSignals[_cSignals];
+    bool _expectMissedMessageBox;
 };
 
 #endif

@@ -633,7 +633,8 @@ INCLUDEPATH += \
 	src/qgcunittest
 
 HEADERS += \
-	src/qgcunittest/AutoTest.h \
+    src/qgcunittest/UnitTest.h \
+    src/qgcunittest/MessageBoxTest.h \
 	src/qgcunittest/UASUnitTest.h \
     src/qgcunittest/MockLink.h \
     src/qgcunittest/MockLinkMissionItemHandler.h \
@@ -651,7 +652,9 @@ HEADERS += \
     src/qgcunittest/LinkManagerTest.h
 
 SOURCES += \
+    src/qgcunittest/UnitTest.cc \
 	src/qgcunittest/UASUnitTest.cc \
+    src/qgcunittest/MessageBoxTest.cc \
     src/qgcunittest/MockLink.cc \
     src/qgcunittest/MockLinkMissionItemHandler.cc \
 	src/qgcunittest/MockUASManager.cc \

@@ -27,6 +27,8 @@
 #include <QMessageBox>
 
 #include "MainWindow.h"
+#include "QGCApplication.h"
+#include "UnitTest.h"
 
 /// @file
 ///     @brief Subclass of QMessageBox which re-implements the static public functions. There are two reasons for this:
@@ -50,30 +52,81 @@ public:
     static StandardButton warning(const QString& title, const QString& text, StandardButtons buttons = Ok, StandardButton defaultButton = NoButton, QWidget* parent = NULL)
         { return _messageBox(QMessageBox::Warning, title, text, buttons, defaultButton, parent); }
     
+private slots:
+    /// @brief The exec slot is private becasue when only want QGCMessageBox users to use the static methods. Otherwise it will break
+    ///         unit testing.
+    int exec(void) { return QMessageBox::exec(); }
+    
 private:
+    static QWidget* _validateParameters(StandardButtons buttons, StandardButton* defaultButton, QWidget* parent)
+    {
+        // This is an obsolete bit which unit tests use for signalling. It should not be used in regular code.
+        Q_ASSERT(!(buttons & QMessageBox::Escape));
+        
+        // If there is more than one button displayed, make sure a default button is set. Without this unit test code
+        // will not be able to respond to unexpected message boxes.
+        
+        unsigned int bits = static_cast<unsigned int>(buttons);
+        int buttonCount = 0;
+        for (size_t i=0; i<sizeof(bits)*8; i++) {
+            if (bits & (1 << i)) {
+                buttonCount++;
+            }
+        }
+        Q_ASSERT(buttonCount != 0);
+        
+        if (buttonCount > 1) {
+            Q_ASSERT(buttons & *defaultButton);
+        } else {
+            // Force default button to be set correctly for single button case to make unit test code simpler
+            *defaultButton = static_cast<QMessageBox::StandardButton>(static_cast<int>(buttons));
+        }
+        
+        return (parent == NULL) ? MainWindow::instance() : parent;
+    }
+
 #ifdef Q_OS_MAC
     static StandardButton _messageBox(Icon icon, const QString& title, const QString& text, StandardButtons buttons, StandardButton defaultButton, QWidget* parent)
     {
-        if (parent == NULL) {
-            parent = MainWindow::instance();
+        // You can't use QGCMessageBox if QGCApplication is not created yet.
+        Q_ASSERT(qgcApp());
+        
+        parent = _validateParameters(buttons, &defaultButton, parent);
+        
+#ifdef QT_DEBUG
+        if (qgcApp()->runningUnitTests()) {
+            return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);
+        } else
+#endif // QT_DEBUG
+        {
+            QString emptyTitle;
+            QMessageBox box(icon, emptyTitle, title, buttons, parent);
+            box.setDefaultButton(defaultButton);
+            box.setInformativeText(text);
+            return static_cast<QMessageBox::StandardButton>(box.exec());
         }
-        QString emptyTitle;
-        QMessageBox box(icon, emptyTitle, title, buttons, parent);
-        box.setDefaultButton(defaultButton);
-        box.setInformativeText(text);
-        return static_cast<QMessageBox::StandardButton>(box.exec());
     }
 #else
     static StandardButton _messageBox(Icon icon, const QString& title, const QString& text, StandardButtons buttons, StandardButton defaultButton, QWidget* parent)
     {
-        if (parent == NULL) {
-            parent = MainWindow::instance();
+        // You can't use QGCMessageBox if QGCApplication is not created yet.
+        Q_ASSERT(qgcApp());
+        
+        parent = _validateParameters(buttons, &defaultButton, parent);
+        
+#ifdef QT_DEBUG
+        if (qgcApp()->runningUnitTests()) {
+            return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);
+        } else
+#endif // QT_DEBUG
+        {
+            QMessageBox box(icon, title, text, buttons, parent);
+            box.setDefaultButton(defaultButton);
+            return static_cast<QMessageBox::StandardButton>(box.exec());
         }
-        QMessageBox box(icon, title, text, buttons, parent);
-        box.setDefaultButton(defaultButton);
-        return static_cast<QMessageBox::StandardButton>(box.exec());
     }
-#endif
+    
+#endif // Q_OS_MAC
 };
 
 #endif
