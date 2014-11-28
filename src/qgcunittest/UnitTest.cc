@@ -87,7 +87,6 @@ void UnitTest::initTestCase(void)
 {
     _initTestCaseCalled = true;
     
-    _activeUnitTest = this;
     _missedMessageBoxCount = 0;
     _badResponseButton = false;
 }
@@ -97,10 +96,7 @@ void UnitTest::initTestCase(void)
 void UnitTest::cleanupTestCase(void)
 {
     _cleanupTestCaseCalled = true;
-    
-    Q_ASSERT(_activeUnitTest != NULL);
-    _activeUnitTest = NULL;
-    
+        
     int missedMessageBoxCount = _missedMessageBoxCount;
     _missedMessageBoxCount = 0;
     
