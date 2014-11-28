@@ -29,6 +29,8 @@
 #include "LinkManagerTest.h"
 #include "MockLink.h"
 
+UT_REGISTER_TEST(LinkManagerTest)
+
 LinkManagerTest::LinkManagerTest(void) :
     _linkMgr(NULL),
     _multiSpy(NULL)
@@ -38,6 +40,8 @@ LinkManagerTest::LinkManagerTest(void) :
 
 void LinkManagerTest::init(void)
 {
+    UnitTest::init();
+    
     Q_ASSERT(_linkMgr == NULL);
     Q_ASSERT(_multiSpy == NULL);
     
@@ -53,6 +57,8 @@ void LinkManagerTest::init(void)
 
 void LinkManagerTest::cleanup(void)
 {
+    UnitTest::cleanup();
+    
     Q_ASSERT(_linkMgr);
     Q_ASSERT(_multiSpy);
     

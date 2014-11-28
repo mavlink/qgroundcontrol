@@ -54,7 +54,7 @@ class QGCApplication : public QApplication
     Q_OBJECT
     
 public:
-    QGCApplication(int &argc, char* argv[]);
+    QGCApplication(int &argc, char* argv[], bool unitTesting);
     ~QGCApplication();
     
     /// @brief Sets the persistent flag to delete all settings the next time QGroundControl is started.
@@ -94,6 +94,9 @@ public:
     /// @brief Destroys all singletons. Used by unit test code to reset global state.
     void destroySingletonsForUnitTest(void);
     
+    /// @brief Returns truee if unit test are being run
+    bool runningUnitTests(void) { return _runningUnitTests; }
+    
 public:
     /// @brief Perform initialize which is common to both normal application running and unit tests.
     ///         Although public should only be called by main.
@@ -122,6 +125,8 @@ private:
     static const char* _savedFileParameterDirectoryName;    ///< Name of parameter subdirectory
     
     QList<QGCSingleton*> _singletons;    ///< List of registered global singletons
+    
+    bool _runningUnitTests; ///< true: running unit tests, false: normal app
 };
 
 /// @brief Returns the QGCApplication object singleton.

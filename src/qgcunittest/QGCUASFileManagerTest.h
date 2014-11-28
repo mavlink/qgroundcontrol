@@ -27,7 +27,7 @@
 #include <QObject>
 #include <QtTest/QtTest>
 
-#include "AutoTest.h"
+#include "UnitTest.h"
 #include "MockUAS.h"
 #include "MockMavlinkFileServer.h"
 #include "QGCUASFileManager.h"
@@ -38,7 +38,7 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class QGCUASFileManagerUnitTest : public QObject
+class QGCUASFileManagerUnitTest : public UnitTest
 {
     Q_OBJECT
     
@@ -48,6 +48,7 @@ public:
 private slots:
     // Test case initialization
     void initTestCase(void);
+    UT_DECLARE_DEFAULT_cleanupTestCase
     void init(void);
     void cleanup(void);
     
@@ -99,7 +100,5 @@ private:
     
     QStringList _fileListReceived;
 };
-
-DECLARE_TEST(QGCUASFileManagerUnitTest)
 
 #endif

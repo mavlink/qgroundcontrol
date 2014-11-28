@@ -30,17 +30,20 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
+UT_REGISTER_TEST(QGCUASFileManagerUnitTest)
+
 QGCUASFileManagerUnitTest::QGCUASFileManagerUnitTest(void) :
     _mockFileServer(_systemIdQGC, _systemIdServer),
     _fileManager(NULL),
     _multiSpy(NULL)
 {
-    
 }
 
 // Called once before all test cases are run
 void QGCUASFileManagerUnitTest::initTestCase(void)
 {
+    UnitTest::initTestCase();
+
     _mockUAS.setMockSystemId(_systemIdServer);
     _mockUAS.setMockMavlinkPlugin(&_mockFileServer);
 }
@@ -48,6 +51,8 @@ void QGCUASFileManagerUnitTest::initTestCase(void)
 // Called before every test case
 void QGCUASFileManagerUnitTest::init(void)
 {
+    UnitTest::init();
+    
     Q_ASSERT(_multiSpy == NULL);
     
     _fileManager = new QGCUASFileManager(NULL, &_mockUAS, _systemIdQGC);
@@ -77,6 +82,8 @@ void QGCUASFileManagerUnitTest::init(void)
 // Called after every test case
 void QGCUASFileManagerUnitTest::cleanup(void)
 {
+    UnitTest::cleanup();
+    
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_fileManager);
     
