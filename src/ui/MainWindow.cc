@@ -66,6 +66,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCTabbedInfoView.h"
 #include "UASRawStatusView.h"
 #include "PrimaryFlightDisplay.h"
+#include "HUDPanel.h"
 #include "SetupView.h"
 #include "SerialSettingsDialog.h"
 #include "terminalconsole.h"
@@ -161,6 +162,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         if (currentViewCandidate != VIEW_ENGINEER &&
                 currentViewCandidate != VIEW_MISSION &&
                 currentViewCandidate != VIEW_FLIGHT &&
+                currentViewCandidate != VIEW_HUD &&
                 currentViewCandidate != VIEW_DEFAULT)
         {
             currentView = currentViewCandidate;
@@ -468,6 +470,9 @@ void MainWindow::buildCustomWidget()
             case VIEW_FLIGHT:
                 dock = createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
+            case VIEW_HUD:
+                dock = createDockWidget(hudView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
             case VIEW_SIMULATION:
                 dock = createDockWidget(simView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
@@ -518,6 +523,15 @@ void MainWindow::buildCommonWidgets()
         pilotView->setObjectName("VIEW_FLIGHT");
         pilotView->setCentralWidget(new PrimaryFlightDisplay(this));
         addToCentralStackedWidget(pilotView, VIEW_FLIGHT, "Pilot");
+    }
+
+    //hudView
+    if (!hudView)
+    {
+        hudView = new SubMainWindow(this);
+        hudView->setObjectName("VIEW_HUD");
+        hudView->setCentralWidget(new HUDPanel(this));
+        addToCentralStackedWidget(hudView, VIEW_HUD, "HUD");
     }
 
     if (!terminalView)
@@ -855,6 +869,9 @@ void MainWindow::loadCustomWidget(const QString& fileName, int view)
         case VIEW_FLIGHT:
             createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
+        case VIEW_HUD:
+            createDockWidget(hudView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
         case VIEW_SIMULATION:
             createDockWidget(simView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
@@ -894,6 +911,9 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
             break;
         case VIEW_FLIGHT:
             createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        case VIEW_HUD:
+            createDockWidget(hudView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         case VIEW_SIMULATION:
             createDockWidget(simView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
@@ -1151,6 +1171,7 @@ void MainWindow::connectCommonActions()
     QActionGroup* perspectives = new QActionGroup(ui.menuPerspectives);
     perspectives->addAction(ui.actionEngineersView);
     perspectives->addAction(ui.actionFlightView);
+    perspectives->addAction(ui.actionHUDView);
     perspectives->addAction(ui.actionSimulationView);
     perspectives->addAction(ui.actionMissionView);
     perspectives->addAction(ui.actionSetup);
@@ -1177,6 +1198,11 @@ void MainWindow::connectCommonActions()
     {
         ui.actionFlightView->setChecked(true);
         ui.actionFlightView->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_HUD)
+    {
+        ui.actionHUDView->setChecked(true);
+        ui.actionHUDView->activate(QAction::Trigger);
     }
     if (currentView == VIEW_SIMULATION)
     {
@@ -1239,6 +1265,7 @@ void MainWindow::connectCommonActions()
 
     // Views actions
     connect(ui.actionFlightView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
+    connect(ui.actionHUDView, SIGNAL(triggered()), this, SLOT(loadHUDView()));
     connect(ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
@@ -1439,6 +1466,8 @@ void MainWindow::UASCreated(UASInterface* uas)
     ui.actionFlightView->setEnabled(true);
     ui.actionMissionView->setEnabled(true);
     ui.actionEngineersView->setEnabled(true);
+    // Also added HUD view
+    ui.actionHUDView->setEnabled(true);
     // The UAS actions are not enabled without connection to system
     ui.actionLiftoff->setEnabled(true);
     ui.actionLand->setEnabled(true);
@@ -1600,6 +1629,9 @@ void MainWindow::loadViewState()
             break;
         case VIEW_FLIGHT:
             centerStack->setCurrentWidget(pilotView);
+            break;
+        case VIEW_HUD:
+            centerStack->setCurrentWidget(hudView);
             break;
         case VIEW_MISSION:
             centerStack->setCurrentWidget(plannerView);
@@ -1779,6 +1811,18 @@ void MainWindow::loadPilotView()
         loadViewState();
     }
 }
+
+void MainWindow::loadHUDView()
+{
+    if (currentView != VIEW_HUD)
+    {
+        storeViewState();
+        currentView = VIEW_HUD;
+        ui.actionHUDView->setChecked(true);
+        loadViewState();
+    }
+}
+
 
 void MainWindow::loadSimulationView()
 {

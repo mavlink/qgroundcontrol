@@ -196,6 +196,8 @@ public slots:
     void loadSoftwareConfigView();
     /** @brief Load view for pilot */
     void loadPilotView();
+    /** @brief HUD view for pilot */
+    void loadHUDView();
     /** @brief Load view for simulation */
     void loadSimulationView();
     /** @brief Load view for engineer */
@@ -309,6 +311,7 @@ protected:
         VIEW_TERMINAL,
         VIEW_LOCAL3D,
         VIEW_GOOGLEEARTH,
+        VIEW_HUD,
         VIEW_DEFAULT
     } VIEW_SECTIONS;
 
@@ -372,6 +375,7 @@ protected:
     // Center widgets
     QPointer<SubMainWindow> plannerView;
     QPointer<SubMainWindow> pilotView;
+    QPointer<SubMainWindow> hudView;
     QPointer<SubMainWindow> setupView;
     QPointer<SubMainWindow> softwareConfigView;
     QPointer<SubMainWindow> engineeringView;

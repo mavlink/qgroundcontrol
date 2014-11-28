@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -95,8 +95,10 @@
      <string>Perspectives</string>
     </property>
     <addaction name="actionMissionView"/>
+    <addaction name="separator"/>
     <addaction name="actionFlightView"/>
     <addaction name="actionSetup"/>
+    <addaction name="actionHUDView"/>
     <addaction name="actionEngineersView"/>
     <addaction name="actionGoogleEarthView"/>
     <addaction name="actionLocal3DView"/>
@@ -495,6 +497,17 @@
    </property>
    <property name="text">
     <string>Local 3D View</string>
+   </property>
+  </action>
+  <action name="actionHUDView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>HUD</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
    </property>
   </action>
  </widget>
