@@ -51,8 +51,6 @@
 class QGCMessageBox;
 class UnitTest;
 
-static UnitTest* _activeUnitTest = NULL;    ///< Currently active unit test
-
 class UnitTest : public QObject
 {
     Q_OBJECT
