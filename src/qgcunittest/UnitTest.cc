@@ -33,7 +33,6 @@ bool UnitTest::_messageBoxRespondedTo = false;
 bool UnitTest::_badResponseButton = false;
 QMessageBox::StandardButton UnitTest::_messageBoxResponseButton = QMessageBox::NoButton;
 int UnitTest::_missedMessageBoxCount = 0;
-UnitTest::UnitTestList_t UnitTest::_tests;
 
 UnitTest::UnitTest(void) :
     _unitTestRun(false),
@@ -58,9 +57,11 @@ UnitTest::~UnitTest()
 
 void UnitTest::_addTest(QObject* test)
 {
-    Q_ASSERT(!_tests.contains(test));
+	QList<QObject*>& tests = _testList();
+
+    Q_ASSERT(!tests.contains(test));
     
-    _tests.append(test);
+    tests.append(test);
 }
 
 void UnitTest::_unitTestCalled(void)
@@ -68,11 +69,18 @@ void UnitTest::_unitTestCalled(void)
     _unitTestRun = true;
 }
 
+/// @brief Returns the list of unit tests.
+QList<QObject*>& UnitTest::_testList(void)
+{
+	static QList<QObject*> tests;
+	return tests;
+}
+
 int UnitTest::run(int argc, char *argv[], QString& singleTest)
 {
     int ret = 0;
     
-    foreach (QObject* test, _tests) {
+    foreach (QObject* test, _testList()) {
         if (singleTest.isEmpty() || singleTest == test->objectName()) {
             ret += QTest::qExec(test, argc, argv);
         }
@@ -196,3 +204,4 @@ QMessageBox::StandardButton UnitTest::_messageBox(QMessageBox::Icon icon, const 
     
     return retButton;
 }
+

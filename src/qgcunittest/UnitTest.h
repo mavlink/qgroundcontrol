@@ -79,9 +79,9 @@ public:
     //          @param Expected failure response flags
     void checkExpectedMessageBox(int expectFailFlags = expectFailNoFailure);
     
-    // Should only be called by UnitTestWrapper
+    /// @brief Adds a unit test to the list. Should only be called by UnitTestWrapper.
     static void _addTest(QObject* test);
-    
+
 protected slots:
     
     // These are all pure virtuals to force the derived class to implement each one and in turn
@@ -124,7 +124,8 @@ private:
     friend class QGCMessageBox;
     
     void _unitTestCalled(void);
-    
+	static QList<QObject*>& _testList(void);
+
     static bool                         _messageBoxRespondedTo;     ///< Message box was responded to
     static bool                         _badResponseButton;         ///< Attempt to repond to expected message box with button not being displayed
     static QMessageBox::StandardButton  _messageBoxResponseButton;  ///< Response to next message box
@@ -135,10 +136,6 @@ private:
     bool _cleanupTestCaseCalled;    ///< true: UnitTest::_cleanupTestCase was called
     bool _initCalled;               ///< true: UnitTest::_init was called
     bool _cleanupCalled;            ///< true: UnitTest::_cleanup was called
-    
-    typedef QList<QObject*> UnitTestList_t;
-    
-    static UnitTestList_t   _tests;
 };
 
 template <class T>
