@@ -28,7 +28,9 @@
 
 #include "MainWindow.h"
 #include "QGCApplication.h"
+#ifdef QT_DEBUG
 #include "UnitTest.h"
+#endif
 
 /// @file
 ///     @brief Subclass of QMessageBox which re-implements the static public functions. There are two reasons for this:
