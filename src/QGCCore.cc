@@ -58,7 +58,7 @@
 const char* QGCApplication::_deleteAllSettingsKey = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey = "SettingsVersion";
 const char* QGCApplication::_savedFilesLocationKey = "SavedFilesLocation";
-const char* QGCApplication::_promptFlightDataSave = "PromptFLightDataSave";
+const char* QGCApplication::_promptFlightDataSave = "PromptFlightDataSave";
 
 const char* QGCApplication::_defaultSavedFileDirectoryName = "QGroundControl";
 const char* QGCApplication::_savedFileMavlinkLogDirectoryName = "FlightData";
@@ -158,6 +158,8 @@ bool QGCApplication::init(void)
         if (documentsDir.mkpath(_defaultSavedFileDirectoryName)) {
             savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
         }
+
+        setSavedFilesLocation(savedFilesLocation);
     }
     
     if (!savedFilesLocation.isEmpty()) {
@@ -175,6 +177,7 @@ bool QGCApplication::init(void)
                              tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
         MainWindow::instance()->showSettings();
     }
+
     
     mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
     
