@@ -22,7 +22,7 @@
  ======================================================================*/
 
 /// @file
-///     @brief The tests the unit test QGCMessageBox catching mechanism.
+///     @brief Unit test for QGCMessageBox catching mechanism.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
