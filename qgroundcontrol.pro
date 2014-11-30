@@ -476,7 +476,9 @@ HEADERS += \
     src/uas/QGCUASWorker.h \
     src/CmdLineOptParser.h \
     src/uas/QGXPX4UAS.h \
-    src/QGCFileDialog.h
+    src/QGCFileDialog.h \
+    src/ui/HUDPanel.h \
+    src/ui/HUDPanelWidget.h
 
 SOURCES += \
     src/main.cc \
@@ -614,7 +616,9 @@ SOURCES += \
     src/ui/QGCUASFileView.cc \
     src/uas/QGCUASWorker.cc \
     src/CmdLineOptParser.cc \
-    src/uas/QGXPX4UAS.cc
+    src/uas/QGXPX4UAS.cc \
+    src/ui/HUDPanel.cpp \
+    src/ui/HUDPanelWidget.cpp
 
 #
 # Unit Test specific configuration goes here
