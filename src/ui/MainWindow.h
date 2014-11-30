@@ -468,13 +468,8 @@ private slots:
     void _saveTempFlightDataLog(QString tempLogfile);
 
 private:
-    /// Constructor is private since all creation should be through MainWindow::instance.
+    /// Constructor is private since all creation should be through MainWindow::_create
     MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
-    
-    /// @brief Two phase construction such that MainWindow::instance is available to code
-    void _init(void);
-    
-    friend class QGCApplication;
     
     void _hideSplashScreen(void);
     void _openUrl(const QString& url, const QString& errorMessage);
