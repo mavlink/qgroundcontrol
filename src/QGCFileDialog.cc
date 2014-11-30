@@ -108,6 +108,7 @@ void QGCFileDialog::_validate(QString* selectedFilter, Options& options)
     Q_ASSERT(qgcApp());
     
     // Support for selectedFilter is not yet implemented through the unit test framework
+    Q_UNUSED(selectedFilter);
     Q_ASSERT(selectedFilter == NULL);
     
     // On OSX native dialog can hang so we always use Qt dialogs
