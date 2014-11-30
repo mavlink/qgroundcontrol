@@ -39,9 +39,6 @@ public:
     MessageBoxTest(void);
     
 private slots:
-    UT_DECLARE_DEFAULT_initTestCase
-    UT_DECLARE_DEFAULT_cleanupTestCase
-    UT_DECLARE_DEFAULT_init
     void cleanup(void);
     
     void _messageBoxExpected_test(void);
