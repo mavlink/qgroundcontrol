@@ -31,13 +31,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QApplication>
 #include <QSslSocket>
 
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "MainWindow.h"
 #include "configuration.h"
 #include "SerialLink.h"
 #include "TCPLink.h"
 #ifdef QT_DEBUG
-#include "AutoTest.h"
+#include "UnitTest.h"
 #include "CmdLineOptParser.h"
 #ifdef Q_OS_WIN
 #include <crtdbg.h>
@@ -104,16 +104,17 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QSerialPort::SerialPortError>();
     qRegisterMetaType<QAbstractSocket::SocketError>();
     
+    bool runUnitTests = false;          // Run unit tests
+    
 #ifdef QT_DEBUG
     // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
     // which need to be handled before a QApplication object is started.
     
-    bool runUnitTests = false;          // Run unit test
     bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
     
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--unittest",             &runUnitTests },
-        { "--no-windows-assert-ui", &quietWindowsAsserts },
+        { "--unittest",             &runUnitTests,          QString() },
+        { "--no-windows-assert-ui", &quietWindowsAsserts,   QString() },
         // Add additional command line option flags here
     };
     
@@ -124,28 +125,41 @@ int main(int argc, char *argv[])
         _CrtSetReportHook(WindowsCrtReportHook);
 #endif
     }
-    
-    if (runUnitTests) {
-        // Run the test
-        int failures = AutoTest::run(argc-1, argv);
-        if (failures == 0)
-        {
-            qDebug() << "ALL TESTS PASSED";
-        }
-        else
-        {
-            qDebug() << failures << " TESTS FAILED!";
-        }
-        return failures;
-    }
 #endif
-
-    QGCApplication* app = new QGCApplication(argc, argv);
+    
+    QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
     
-    if (!app->init()) {
-        return -1;
+    app->_initCommon();
+    
+    int exitCode;
+    
+#ifdef QT_DEBUG
+    if (runUnitTests) {
+        if (!app->_initForUnitTests()) {
+            return -1;
+        }
+        
+        // Run the test
+        int failures = UnitTest::run(argc-1, argv, rgCmdLineOptions[0].optionArg);
+        if (failures == 0) {
+            qDebug() << "ALL TESTS PASSED";
+        } else {
+            qDebug() << failures << " TESTS FAILED!";
+        }
+        exitCode = -failures;
+    } else
+#endif
+    {
+        if (!app->_initForNormalAppBoot()) {
+            return -1;
+        }
+        exitCode = app->exec();
     }
-
-    return app->exec();
+    
+    delete app;
+    
+    qDebug() << "After app delete";
+    
+    return exitCode;
 }

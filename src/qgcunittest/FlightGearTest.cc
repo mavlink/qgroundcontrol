@@ -29,21 +29,11 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
+UT_REGISTER_TEST(FlightGearUnitTest)
+
 FlightGearUnitTest::FlightGearUnitTest(void)
 {
     
-}
-
-// Called before every test
-void FlightGearUnitTest::init(void)
-{
-    // Nothing here yet
-}
-
-// Called after every test
-void FlightGearUnitTest::cleanup(void)
-{
-    // Nothing here yet
 }
 
 /// @brief The QGCFlightGearLink::parseUIArguments method is fairly involved so we have a unit

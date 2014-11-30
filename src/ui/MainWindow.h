@@ -57,7 +57,6 @@ This file is part of the QGROUNDCONTROL project
 #include "ParameterInterface.h"
 #include "HDDisplay.h"
 #include "HSIDisplay.h"
-#include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
 #ifdef QGC_GOOGLE_EARTH_ENABLED
 #include "QGCGoogleEarthView.h"
@@ -65,11 +64,11 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCToolBar.h"
 #include "LogCompressor.h"
 
-#include "UASControlParameters.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
 #include "QGCUASFileViewMulti.h"
+#include "QGCFlightGearLink.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;
@@ -101,6 +100,9 @@ public:
     /// @brief Returns the MainWindow singleton. Will not create the MainWindow if it has not already
     ///         been created.
     static MainWindow* instance(void);
+    
+    /// @brief Deletes the MainWindow singleton
+    void deleteInstance(void);
     
     /// @brief Creates the MainWindow singleton. Should only be called once by QGCApplication.
     static MainWindow* _create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
@@ -472,6 +474,11 @@ private slots:
 private:
     /// Constructor is private since all creation should be through MainWindow::instance.
     MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
+    
+    /// @brief Two phase construction such that MainWindow::instance is available to code
+    void _init(void);
+    
+    friend class QGCApplication;
     
     void _hideSplashScreen(void);
     void _openUrl(const QString& url, const QString& errorMessage);

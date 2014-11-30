@@ -33,7 +33,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QGridLayout>
 
 #include <QList>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
 #include <QTime>

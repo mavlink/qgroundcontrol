@@ -24,17 +24,18 @@
 #include <QSettings>
 #include <QDesktopWidget>
 
-#include "QGCSettingsWidget.h"
+#include "SettingsDialog.h"
 #include "MainWindow.h"
-#include "ui_QGCSettingsWidget.h"
+#include "ui_SettingsDialog.h"
 
 #include "JoystickWidget.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
 #include "GAudioOutput.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 SettingsDialog::SettingsDialog(JoystickInput *joystick, QWidget *parent, Qt::WindowFlags flags) :
 QDialog(parent, flags),
@@ -122,11 +123,10 @@ void SettingsDialog::selectCustomMode(int mode)
 void SettingsDialog::_deleteSettingsToggled(bool checked)
 {
     if (checked){
-        QMessageBox::StandardButton answer = QMessageBox::question(this,
-                                                                   tr("Delete Settings"),
-                                                                   tr("All saved settings will be deleted the next time you start QGroundControl. Is this really what you want?"),
-                                                                   QMessageBox::Yes | QMessageBox::No,
-                                                                   QMessageBox::No);
+        QGCMessageBox::StandardButton answer = QGCMessageBox::question(tr("Delete Settings"),
+                                                                       tr("All saved settings will be deleted the next time you start QGroundControl. Is this really what you want?"),
+                                                                       QMessageBox::Yes | QMessageBox::No,
+                                                                       QMessageBox::No);
         if (answer == QMessageBox::Yes) {
             qgcApp()->deleteAllSettingsNextBoot();
         } else {
@@ -146,9 +146,8 @@ void SettingsDialog::_validateBeforeClose(void)
     
     QString saveLocation = _ui->savedFilesLocation->text();
     if (!app->validatePossibleSavedFilesLocation(saveLocation)) {
-        QMessageBox::warning(_mainWindow,
-                             tr("Bad save location"),
-                             tr("The location to save files to is invalid, or cannot be written to. Please provide a valid directory."));
+        QGCMessageBox::warning(tr("Bad save location"),
+                               tr("The location to save files to is invalid, or cannot be written to. Please provide a valid directory."));
         return;
     }
     

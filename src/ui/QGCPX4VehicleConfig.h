@@ -7,7 +7,6 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QStringList>
-#include <QMessageBox>
 #include <QGraphicsScene>
 
 #include "QGCToolWidget.h"
@@ -78,7 +77,6 @@ protected:
     QPixmap planeSide;
     QGCPX4SensorCalibration* px4SensorCalibration;
     PX4RCCalibration* px4RCCalibration;
-    QMessageBox msgBox;
     QGraphicsScene scene;
     QPushButton* skipActionButton;
 

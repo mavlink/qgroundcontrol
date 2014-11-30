@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 #include <QDockWidget>
 #include <QNetworkInterface>
-#include <QMessageBox>
 #include <QDebug>
 #include <QTimer>
 #include <QHostInfo>
@@ -53,7 +52,7 @@ This file is part of the QGROUNDCONTROL project
 #include "GAudioOutput.h"
 #include "QGCToolWidget.h"
 #include "QGCMAVLinkLogPlayer.h"
-#include "QGCSettingsWidget.h"
+#include "SettingsDialog.h"
 #include "QGCMapTool.h"
 #include "MAVLinkDecoder.h"
 #include "QGCMAVLinkMessageSender.h"
@@ -62,7 +61,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASQuickView.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
-#include "UASActionsWidget.h"
 #include "QGCTabbedInfoView.h"
 #include "UASRawStatusView.h"
 #include "PrimaryFlightDisplay.h"
@@ -72,8 +70,9 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 #include "QGCUASFileViewMulti.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -102,11 +101,12 @@ MainWindow* MainWindow::_create(QSplashScreen* splashScreen, enum MainWindow::CU
 
 MainWindow* MainWindow::instance(void)
 {
-    // QGCAppication should have already called _create. Singleton is only created by call to _create
-    // not here.
-    Q_ASSERT(_instance);
-    
     return _instance;
+}
+
+void MainWindow::deleteInstance(void)
+{
+    delete this;
 }
 
 /// @brief Private constructor for MainWindow. MainWindow singleton is only ever created
@@ -412,6 +412,8 @@ MainWindow::~MainWindow()
     {
         commsWidgetList[i]->deleteLater();
     }
+    
+    _instance = NULL;
 }
 
 void MainWindow::resizeEvent(QResizeEvent * event)
@@ -1151,14 +1153,14 @@ void MainWindow::showCriticalMessage(const QString& title, const QString& messag
 {
     _hideSplashScreen();
     qDebug() << "Critical" << title << message;
-    QMessageBox::critical(this, title, message);
+    QGCMessageBox::critical(title, message);
 }
 
 void MainWindow::showInfoMessage(const QString& title, const QString& message)
 {
     _hideSplashScreen();
     qDebug() << "Information" << title << message;
-    QMessageBox::information(this, title, message);
+    QGCMessageBox::information(title, message);
 }
 
 /**
@@ -1437,6 +1439,9 @@ void MainWindow::simulateLink(bool simulate) {
 
 void MainWindow::commsWidgetDestroyed(QObject *obj)
 {
+    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
+    // been destroyed.
+
     if (commsWidgetList.contains(obj))
     {
         commsWidgetList.removeOne(obj);
@@ -1708,15 +1713,11 @@ void MainWindow::handleMisconfiguration(UASInterface* uas)
     _hideSplashScreen();
     
     // Ask user if he wants to handle this now
-    QMessageBox msgBox(this);
-    msgBox.setIcon(QMessageBox::Information);
-    msgBox.setText(tr("Missing or Invalid Onboard Configuration"));
-    msgBox.setInformativeText(tr("The onboard system configuration is missing or incomplete. Do you want to resolve this now?"));
-    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Ok);
-    int val = msgBox.exec();
-
-    if (val == QMessageBox::Ok) {
+    QMessageBox::StandardButton button = QGCMessageBox::question(tr("Missing or Invalid Onboard Configuration"),
+                                                                    tr("The onboard system configuration is missing or incomplete. Do you want to resolve this now?"),
+                                                                    QMessageBox::Ok | QMessageBox::Cancel,
+                                                                    QMessageBox::Ok);
+    if (button == QMessageBox::Ok) {
         // He wants to handle it, make sure this system is selected
         UASManager::instance()->setActiveUAS(uas);
 

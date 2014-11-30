@@ -1,4 +1,5 @@
 #include "OpalRT.h"
+#include "QGCMessageBox.h"
 
 namespace OpalRT
 {
@@ -7,10 +8,7 @@ void OpalErrorMsg::displayLastErrorMsg()
 {
     static QString lastErrorMsg;
     setLastErrorMsg();
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Critical);
-    msgBox.setText(lastErrorMsg);
-    msgBox.exec();
+    QGCMessageBox::critical(QString(), lastErrorMsg);
 }
 
 void OpalErrorMsg::setLastErrorMsg()

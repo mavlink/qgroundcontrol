@@ -13,7 +13,6 @@
 #include <QDebug>
 #include <QTime>
 #include <QApplication>
-#include <QMessageBox>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QtEndian>
@@ -29,7 +28,7 @@
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 

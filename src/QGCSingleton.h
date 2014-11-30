@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -21,26 +21,31 @@
  
  ======================================================================*/
 
-#ifndef GENERICAUTOPILOT_H
-#define GENERICAUTOPILOT_H
-
-#include "AutoPilotPlugin.h"
-
 /// @file
-///     @brief This is the generic implementation of the AutoPilotPlugin class for mavs
-///             we do not have a specific AutoPilotPlugin implementation.
+///     @brief Base class for global singletons
+///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class GenericAutoPilotPlugin : public AutoPilotPlugin
+#ifndef QGCSINGLETON_H
+#define QGCSINGLETON_H
+
+#include <QObject>
+
+#include "QGCApplication.h"
+
+class QGCSingleton : public QObject
 {
     Q_OBJECT
-
-public:
-    GenericAutoPilotPlugin(QObject* parent = NULL);
     
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
+public:
+    /// @brief Contructor will register singleton to QGCApplication
+    ///     @param parent Parent object
+    ///     @param registerSingleton true: register with QGCApplication, false: do not register (only used for Mock implementations)
+    QGCSingleton(QObject* parent = NULL, bool registerSingleton = true);
+    
+    /// @brief Implementation should delete the singleton such that next call to instance
+    ///         will create a new singleton.
+    virtual void deleteInstance(void) = 0;
 };
 
 #endif

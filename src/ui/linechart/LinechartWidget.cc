@@ -43,7 +43,6 @@ This file is part of the PIXHAWK project
 #include <QColor>
 #include <QPalette>
 #include <QStandardPaths>
-#include <QMessageBox>
 #include <QShortcut>
 
 #include "LinechartWidget.h"
@@ -53,6 +52,7 @@ This file is part of the PIXHAWK project
 #include "QGC.h"
 #include "MG.h"
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent),
     sysid(systemid),
@@ -442,13 +442,7 @@ void LinechartWidget::startLogging()
 
     // Check if any curve is enabled
     if (!activePlot->anyCurveVisible()) {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("No curves selected for logging.");
-        msgBox.setInformativeText("Please check all curves you want to log. Currently no data would be logged, aborting the logging.");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
+        QGCMessageBox::critical(tr("No curves selected for logging."), tr("Please check all curves you want to log. Currently no data would be logged, aborting the logging."));
         return;
     }
 
@@ -458,14 +452,11 @@ void LinechartWidget::startLogging()
     QString fileName = QGCFileDialog::getSaveFileName(this, tr("Specify log file name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("Logfile (*.log);;"));
 
     while (!(fileName.endsWith(".log")) && !abort && fileName != "") {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Unsuitable file extension for logfile");
-        msgBox.setInformativeText("Please choose .log as file extension. Click OK to change the file extension, cancel to not start logging.");
-        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        if(msgBox.exec() != QMessageBox::Ok)
-        {
+        QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Unsuitable file extension for logfile"),
+                                                                     tr("Please choose .log as file extension. Click OK to change the file extension, cancel to not start logging."),
+                                                                     QMessageBox::Ok | QMessageBox::Cancel,
+                                                                     QMessageBox::Ok);
+        if (button != QMessageBox::Ok) {
             abort = true;
             break;
         }
@@ -501,15 +492,12 @@ void LinechartWidget::stopLogging()
         connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
         connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
 
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Question);
-        msgBox.setText(tr("Starting Log Compression"));
-        msgBox.setInformativeText(tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"));
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::No);
-        int ret = msgBox.exec();
+        QMessageBox::StandardButton button = QGCMessageBox::question(tr("Starting Log Compression"),
+                                                                     tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"),
+                                                                     QMessageBox::Yes | QMessageBox::No,
+                                                                     QMessageBox::No);
         bool fill;
-        if (ret == QMessageBox::Yes)
+        if (button == QMessageBox::Yes)
         {
             fill = true;
         }

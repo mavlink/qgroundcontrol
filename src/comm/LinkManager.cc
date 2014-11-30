@@ -31,23 +31,31 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QList>
 #include <QApplication>
-#include <QMessageBox>
 #include <QDebug>
 
 #include "LinkManager.h"
 #include "MainWindow.h"
+#include "QGCMessageBox.h"
+#include "QGCApplication.h"
 
-LinkManager* LinkManager::instance()
+LinkManager* LinkManager::_instance = NULL;
+
+LinkManager* LinkManager::instance(void)
 {
-    static LinkManager* _instance = 0;
     if(_instance == 0) {
-        _instance = new LinkManager();
-
-        /* Set the application as parent to ensure that this object
-         * will be destroyed when the main application exits */
-        _instance->setParent(qApp);
+        _instance = new LinkManager(qgcApp());
+        Q_CHECK_PTR(_instance);
     }
+    
+    Q_ASSERT(_instance);
+    
     return _instance;
+}
+
+void LinkManager::deleteInstance(void)
+{
+    _instance = NULL;
+    delete this;
 }
 
 /**
@@ -55,7 +63,8 @@ LinkManager* LinkManager::instance()
  *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
-LinkManager::LinkManager() :
+LinkManager::LinkManager(QObject* parent, bool registerSingleton) :
+    QGCSingleton(parent, registerSingleton),
     _connectionsSuspended(false)
 {
     _links = QList<LinkInterface*>();
@@ -66,24 +75,23 @@ LinkManager::~LinkManager()
 {
     disconnectAll();
     
-    _dataMutex.lock();
     foreach (LinkInterface* link, _links) {
         Q_ASSERT(link);
-        link->deleteLater();
+        deleteLink(link);
     }
     _links.clear();
-    _dataMutex.unlock();
 }
 
 void LinkManager::add(LinkInterface* link)
 {
     Q_ASSERT(link);
     
+    // Take ownership for delete
+    link->_ownedByLinkManager = true;
+    
     _dataMutex.lock();
     
-    if (!_links.contains(link))
-    {
-        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeObj(QObject*)));
+    if (!_links.contains(link)) {
         _links.append(link);
         _dataMutex.unlock();
         emit newLink(link);
@@ -165,7 +173,7 @@ bool LinkManager::disconnectAll()
     foreach (LinkInterface* link, _links)
     {
         Q_ASSERT(link);
-        if (!link->disconnect()) {
+        if (!link->_disconnect()) {
             allDisconnected = false;
         }
     }
@@ -191,62 +199,30 @@ bool LinkManager::disconnectLink(LinkInterface* link)
     return link->_disconnect();
 }
 
-void LinkManager::removeObj(QObject* link)
+void LinkManager::deleteLink(LinkInterface* link)
 {
-    // Be careful of the fact that by the time this signal makes it through the queue
-    // the link object has already been destructed.
-    removeLink((LinkInterface*)link);
-}
-
-bool LinkManager::removeLink(LinkInterface* link)
-{
-    if(link)
-    {
-        _dataMutex.lock();
-        for (int i=0; i < _links.size(); i++)
-        {
-            if(link==_links.at(i))
-            {
-                _links.removeAt(i); //remove from link list
-            }
-        }
-        // Remove link from protocol map
-        QList<ProtocolInterface* > protocols = _protocolLinks.keys(link);
-        foreach (ProtocolInterface* proto, protocols)
-        {
-            _protocolLinks.remove(proto, link);
-        }
-        _dataMutex.unlock();
-
-        // Emit removal of link
-        emit linkRemoved(link);
-
-        return true;
-    }
-    return false;
-}
-
-/**
- * The access time is linear in the number of links.
- *
- * @param id link identifier to search for
- * @return A pointer to the link or NULL if not found
- */
-LinkInterface* LinkManager::getLinkForId(int id)
-{
+    Q_ASSERT(link);
+    
     _dataMutex.lock();
-    LinkInterface* linkret = NULL;
-    foreach (LinkInterface* link, _links)
-    {
-        Q_ASSERT(link);
-        
-        if (link->getId() == id)
-        {
-            linkret = link;
-        }
+    
+    Q_ASSERT(_links.contains(link));
+    _links.removeOne(link);
+    Q_ASSERT(!_links.contains(link));
+
+    // Remove link from protocol map
+    QList<ProtocolInterface* > protocols = _protocolLinks.keys(link);
+    foreach (ProtocolInterface* proto, protocols) {
+        _protocolLinks.remove(proto, link);
     }
+             
     _dataMutex.unlock();
-    return linkret;
+             
+    // Emit removal of link
+    emit linkDeleted(link);
+    
+    Q_ASSERT(link->_ownedByLinkManager);
+    link->_deletedByLinkManager = true;   // Signal that this is a valid delete
+    delete link;
 }
 
 /**
@@ -284,9 +260,8 @@ const QList<SerialLink*> LinkManager::getSerialLinks()
 bool LinkManager::_connectionsSuspendedMsg(void)
 {
     if (_connectionsSuspended) {
-        QMessageBox::information(MainWindow::instance(),
-                                 tr("Connect not allowed"),
-                                 tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
+        QGCMessageBox::information(tr("Connect not allowed"),
+                                   tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
         return true;
     } else {
         return false;
@@ -299,4 +274,3 @@ void LinkManager::setConnectionsSuspended(QString reason)
     _connectionsSuspendedReason = reason;
     Q_ASSERT(!reason.isEmpty());
 }
-

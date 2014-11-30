@@ -29,7 +29,6 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QTemporaryFile>
-#include <QMessageBox>
 #include <QPrintDialog>
 #include <QProgressDialog>
 #include <QHBoxLayout>
@@ -45,6 +44,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MG.h"
 #include "MainWindow.h"
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     QWidget(parent),
@@ -130,14 +130,14 @@ void QGCDataPlot2D::savePlot()
     }
 
     while(!(fileName.endsWith(".svg") || fileName.endsWith(".pdf"))) {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Unsuitable file extension for PDF or SVG");
-        msgBox.setInformativeText("Please choose .pdf or .svg as file extension. Click OK to change the file extension, cancel to not save the file.");
-        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Ok);
+        QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Unsuitable file extension for PDF or SVG"),
+                                                                     tr("Please choose .pdf or .svg as file extension. Click OK to change the file extension, cancel to not save the file."),
+                                                                     QMessageBox::Ok | QMessageBox::Cancel,
+                                                                     QMessageBox::Ok);
         // Abort if cancelled
-        if(msgBox.exec() == QMessageBox::Cancel) return;
+        if (button == QMessageBox::Cancel) {
+            return;
+        }
         fileName = QGCFileDialog::getSaveFileName(
                        this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                        "PDF Documents (*.pdf);;SVG Images (*.svg)");
@@ -279,13 +279,8 @@ void QGCDataPlot2D::selectFile()
     QFileInfo fileInfo(fileName);
     if (!fileInfo.isReadable())
     {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not open file");
-        msgBox.setInformativeText(tr("The file is owned by user %1. Is the file currently used by another program?").arg(fileInfo.owner()));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
+        QGCMessageBox::critical(tr("Could not open file"),
+                                tr("The file is owned by user %1. Is the file currently used by another program?").arg(fileInfo.owner()));
         ui->filenameLabel->setText(tr("Could not open %1").arg(fileInfo.baseName()+"."+fileInfo.completeSuffix()));
     }
     else
@@ -704,26 +699,6 @@ void QGCDataPlot2D::saveCsvLog()
         // .csv is default extension
         fileName.append(".csv");
     }
-
-    //    QFileInfo fileInfo(fileName);
-    //
-    //    // Check if we could create a new file in this directory
-    //    QDir dir(fileInfo.absoluteDir());
-    //    QFileInfo dirInfo(dir);
-    //
-    //    while(!(dirInfo.isWritable()))
-    //    {
-    //        QMessageBox msgBox;
-    //        msgBox.setIcon(QMessageBox::Critical);
-    //        msgBox.setText("File cannot be written, Operating System denies permission");
-    //        msgBox.setInformativeText("Please choose a different file name or directory. Click OK to change the file, cancel to not save the file.");
-    //        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    //        msgBox.setDefaultButton(QMessageBox::Ok);
-    //        if(msgBox.exec() == QMessageBox::Cancel) break;
-    //        fileName = QGCFileDialog::getSaveFileName(
-    //                this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-    //            "CSV file (*.csv);;Text file (*.txt)");
-    //    }
 
     bool success = logFile->copy(fileName);
 

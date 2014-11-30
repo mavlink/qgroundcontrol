@@ -39,7 +39,6 @@ This file is part of the PIXHAWK project
 #include <UAS.h>
 #include <UASManager.h>
 #include <QDebug>
-#include <QMessageBox>
 #include <QMouseEvent>
 #include <QTextEdit>
 

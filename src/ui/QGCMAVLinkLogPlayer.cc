@@ -1,4 +1,3 @@
-#include <QMessageBox>
 #include <QStandardPaths>
 #include <QtEndian>
 
@@ -7,7 +6,7 @@
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGC.h"
 #include "ui_QGCMAVLinkLogPlayer.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "LinkManager.h"
 #include "QGCFileDialog.h"
 
@@ -136,7 +135,9 @@ void QGCMAVLinkLogPlayer::reset()
 {
     pause();
     loopCounter = 0;
-    logFile.reset();
+    if (logFile.isOpen()) {
+        logFile.reset();
+    }
 
     // Now update the position slider to its default location
     updatePositionSliderUi(0.0);
@@ -326,11 +327,8 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
 
     // If there's an existing MAVLinkSimulationLink() being used for an old file,
     // we replace it.
-    if (logLink)
-    {
-        LinkManager::instance()->disconnectLink(logLink);
-        LinkManager::instance()->removeLink(logLink);
-        logLink->deleteLater();
+    if (logLink) {
+        LinkManager::instance()->deleteLink(logLink);
     }
     logLink = new MAVLinkSimulationLink("");
 

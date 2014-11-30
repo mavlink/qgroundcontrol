@@ -34,9 +34,9 @@
 #include <QJsonObject>
 #include <QDir>
 #include <QDebug>
-#include <QMessageBox>
 
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 /// @Brief Constructs a new PX4FirmwareUpgrade Widget. This widget is used within the PX4VehicleConfig set of screens.
 PX4FirmwareUpgrade::PX4FirmwareUpgrade(QWidget *parent) :
@@ -294,7 +294,7 @@ void PX4FirmwareUpgrade::_foundBoard(bool firstTry, const QString portName, QStr
 {
     if (firstTry) {
         // Board is still plugged
-        QMessageBox::critical(this, tr("Firmware Upgrade"), tr("You must unplug you board before beginning the Firmware Upgrade process."));
+        QGCMessageBox::critical(tr("Firmware Upgrade"), tr("You must unplug you board before beginning the Firmware Upgrade process."));
         _cancel();
     } else {
         _portName = portName;

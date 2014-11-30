@@ -22,35 +22,36 @@
  ======================================================================*/
 
 /// @file
+///     @brief The tests the unit test QGCMessageBox catching mechanism.
+///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "AutoPilotPlugin.h"
-#include "PX4/PX4AutoPilotPlugin.h"
-#include "Generic/GenericAutoPilotPlugin.h"
+#ifndef MESSAGEBOXTEST_H
+#define MESSAGEBOXTEST_H
 
-static AutoPilotPlugin* PX4_AutoPilot = NULL;       ///< Singleton plugin for MAV_AUTOPILOT_PX4
-static AutoPilotPlugin* Generic_AutoPilot = NULL;   ///< Singleton plugin for AutoPilots which do not have a specifically implemented plugin
+#include "UnitTest.h"
 
-AutoPilotPlugin::AutoPilotPlugin(void)
+class MessageBoxTest : public UnitTest
 {
+    Q_OBJECT
     
-}
+public:
+    MessageBoxTest(void);
+    
+private slots:
+    UT_DECLARE_DEFAULT_initTestCase
+    UT_DECLARE_DEFAULT_cleanupTestCase
+    UT_DECLARE_DEFAULT_init
+    void cleanup(void);
+    
+    void _messageBoxExpected_test(void);
+    void _messageBoxUnexpected_test(void);
+    void _previousMessageBox_test(void);
+    void _noMessageBox_test(void);
+    void _badResponseButton_test(void);
+    
+private:
+    bool _expectMissedMessageBox;
+};
 
-AutoPilotPlugin* AutoPilotPlugin::getInstanceForAutoPilotPlugin(int autopilotType)
-{
-    switch (autopilotType) {
-        case MAV_AUTOPILOT_PX4:
-            if (PX4_AutoPilot == NULL) {
-                PX4_AutoPilot = new PX4AutoPilotPlugin;
-            }
-            Q_ASSERT(PX4_AutoPilot);
-            return PX4_AutoPilot;
-            
-        default:
-            if (Generic_AutoPilot == NULL) {
-                Generic_AutoPilot = new GenericAutoPilotPlugin;
-            }
-            Q_ASSERT(Generic_AutoPilot);
-            return Generic_AutoPilot;
-    }
-}
+#endif

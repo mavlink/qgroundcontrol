@@ -26,6 +26,7 @@
 #include "RadioComponent.h"
 #include "SensorsComponent.h"
 #include "FlightModesComponent.h"
+#include "AutoPilotPluginManager.h"
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
@@ -61,7 +62,8 @@ union px4_custom_mode {
     float data_float;
 };
 
-PX4AutoPilotPlugin::PX4AutoPilotPlugin(void)
+PX4AutoPilotPlugin::PX4AutoPilotPlugin(QObject* parent) :
+    AutoPilotPlugin(parent)
 {
     
 }
@@ -165,7 +167,7 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
             mode = "|OFFBOARD";
         }
     } else {
-        mode = AutoPilotPlugin::getInstanceForAutoPilotPlugin(MAV_AUTOPILOT_GENERIC)->getShortModeText(baseMode, customMode);
+        mode = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(MAV_AUTOPILOT_GENERIC)->getShortModeText(baseMode, customMode);
     }
     
     return mode;

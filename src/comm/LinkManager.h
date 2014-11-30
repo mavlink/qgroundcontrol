@@ -36,9 +36,13 @@ This file is part of the PIXHAWK project
 #include <QList>
 #include <QMultiMap>
 #include <QMutex>
-#include <LinkInterface.h>
-#include <SerialLink.h>
-#include <ProtocolInterface.h>
+
+#include "LinkInterface.h"
+#include "SerialLink.h"
+#include "ProtocolInterface.h"
+#include "QGCSingleton.h"
+
+class LinkManagerTest;
 
 /**
  * The Link Manager organizes the physical Links. It can manage arbitrary
@@ -46,22 +50,21 @@ This file is part of the PIXHAWK project
  * protocol instance to transport the link data into the application.
  *
  **/
-class LinkManager : public QObject
+class LinkManager : public QGCSingleton
 {
     Q_OBJECT
 
 public:
-    static LinkManager* instance();
-    ~LinkManager();
+    /// @brief Returns the LinkManager singleton
+    static LinkManager* instance(void);
+    
+    virtual void deleteInstance(void);
 
-    void run();
+    ~LinkManager();
 
     QList<LinkInterface*> getLinksForProtocol(ProtocolInterface* protocol);
 
     ProtocolInterface* getProtocolForLink(LinkInterface* link);
-
-    /** @brief Get the link for this id */
-    LinkInterface* getLinkForId(int id);
 
     /** @brief Get a list of all links */
     const QList<LinkInterface*> getLinks();
@@ -80,14 +83,16 @@ public:
     
     /// @brief Sets the flag to allow new connections to be made
     void setConnectionsAllowed(void) { _connectionsSuspended = false; }
+    
+    /// @brief Deletes the specified link. Will disconnect if connected.
+    void deleteLink(LinkInterface* link);
 
 public slots:
-
+    /// @brief Adds the link to the LinkManager. LinkManager takes ownership of this object. To delete
+    //          it, call LinkManager::deleteLink.
     void add(LinkInterface* link);
+    
     void addProtocol(LinkInterface* link, ProtocolInterface* protocol);
-
-    void removeObj(QObject* obj);
-    bool removeLink(LinkInterface* link);
 
     bool connectAll();
     bool connectLink(LinkInterface* link);
@@ -97,17 +102,22 @@ public slots:
 
 signals:
     void newLink(LinkInterface* link);
-    void linkRemoved(LinkInterface* link);
+    void linkDeleted(LinkInterface* link);
     
 private:
-    LinkManager(void);
+    /// @brief All access to LinkManager is through LinkManager::instance
+    LinkManager(QObject* parent = NULL, bool registerSingleton = true);
+    
+    // LinkManager unit test is allowed to new LinkManager objects
+    friend class LinkManagerTest;
+    
+    static LinkManager* _instance;
     
     QList<LinkInterface*> _links;
     QMultiMap<ProtocolInterface*,LinkInterface*> _protocolLinks;
     QMutex _dataMutex;
     
     bool _connectionsSuspendedMsg(void);
-    static LinkManager* _instance;
     
     bool _connectionsSuspended;              ///< true: all new connections should not be allowed
     QString _connectionsSuspendedReason;     ///< User visible reason for suspension

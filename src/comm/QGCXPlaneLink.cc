@@ -624,7 +624,7 @@ void QGCXPlaneLink::readBytes()
 
 				fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
             }
-            // atmospheric pressue aircraft for XPlane 9 and 10
+            // atmospheric pressure aircraft for XPlane 9 and 10
             else if (p.index == 6)
             {
                 // inHg to hPa (hecto Pascal / millibar)
@@ -736,7 +736,7 @@ void QGCXPlaneLink::readBytes()
 				alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
 				alt_agl = p.f[3] * 0.3048f; //convert feet (AGL) to meters
             }
-            else if (p.index == 21 && xPlaneVersion == 10)
+            else if (p.index == 21)
             {
                 vy = p.f[3];
                 vx = -p.f[5];

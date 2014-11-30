@@ -28,7 +28,6 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QFileInfo>
-#include <QMessageBox>
 #include <QStandardPaths>
 
 #include "MAVLinkSettingsWidget.h"

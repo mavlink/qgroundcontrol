@@ -29,19 +29,18 @@
  *
  */
 
-
 #ifndef QGCAPPLICATION_H
 #define QGCAPPLICATION_H
 
 #include <QApplication>
 
-#include "MainWindow.h"
-#include "UASManager.h"
-#include "LinkManager.h"
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
 
+// Work around circular header includes
+class QGCSingleton;
+class MainWindow;
 
 /**
  * @brief The main application and management class.
@@ -55,12 +54,8 @@ class QGCApplication : public QApplication
     Q_OBJECT
     
 public:
-    QGCApplication(int &argc, char* argv[]);
+    QGCApplication(int &argc, char* argv[], bool unitTesting);
     ~QGCApplication();
-    
-    /// @brief Initialize the applicaation.
-    /// @return false: init failed, app should exit
-    bool init(void);
     
     /// @brief Sets the persistent flag to delete all settings the next time QGroundControl is started.
     void deleteAllSettingsNextBoot(void);
@@ -88,19 +83,37 @@ public:
     
     /// @brief Sets the flag to log all mavlink connections
     void setPromptFlightDataSave(bool promptForSave);
+
+    /// @brief All global singletons must be registered such that QGCApplication::destorySingletonsForUnitTest
+    ///         can work correctly.
+    void registerSingleton(QGCSingleton* singleton);
     
-protected:
-    void startLinkManager();
+    /// @brief Creates non-ui based singletons for unit testing
+    void createSingletonsForUnitTest(void) { _createSingletons(); }
     
-    /**
-     * @brief Start the robot managing system
-     *
-     * The robot manager keeps track of the configured robots.
-     **/
-    void startUASManager();
+    /// @brief Destroys all singletons. Used by unit test code to reset global state.
+    void destroySingletonsForUnitTest(void);
+    
+    /// @brief Returns truee if unit test are being run
+    bool runningUnitTests(void) { return _runningUnitTests; }
+    
+public:
+    /// @brief Perform initialize which is common to both normal application running and unit tests.
+    ///         Although public should only be called by main.
+    void _initCommon(void);
+
+    /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
+    ///         unit tests. Although public should only be called by main.
+    bool _initForNormalAppBoot(void);
+    
+    /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
+    ///         unit tests. Although public should only be called by main.
+    bool _initForUnitTests(void);
+    
+    static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
     
 private:
-    MainWindow* _mainWindow;
+    void _createSingletons(void);
     
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
@@ -110,6 +123,10 @@ private:
     static const char* _defaultSavedFileDirectoryName;      ///< Default name for user visible save file directory
     static const char* _savedFileMavlinkLogDirectoryName;   ///< Name of mavlink log subdirectory
     static const char* _savedFileParameterDirectoryName;    ///< Name of parameter subdirectory
+    
+    QList<QGCSingleton*> _singletons;    ///< List of registered global singletons
+    
+    bool _runningUnitTests; ///< true: running unit tests, false: normal app
 };
 
 /// @brief Returns the QGCApplication object singleton.

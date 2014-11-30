@@ -1,4 +1,4 @@
-/*=====================================================================
+ /*=====================================================================
  
  QGroundControl Open Source Ground Control Station
  
@@ -43,22 +43,31 @@
 
 #include "configuration.h"
 #include "QGC.h"
-#include "QGCCore.h"
+#include "QGCApplication.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
 #include "CmdLineOptParser.h"
+#include "QGCMessageBox.h"
+#include "MainWindow.h"
+#include "UDPLink.h"
+#include "MAVLinkSimulationLink.h"
+#include "SerialLink.h"
+#include "QGCSingleton.h"
+#include "LinkManager.h"
+#include "UASManager.h"
+#include "AutoPilotPluginManager.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
-#include "UDPLink.h"
-#include "MAVLinkSimulationLink.h"
-#include "SerialLink.h"
+
+
+QGCApplication* QGCApplication::_app = NULL;
 
 const char* QGCApplication::_deleteAllSettingsKey = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey = "SettingsVersion";
 const char* QGCApplication::_savedFilesLocationKey = "SavedFilesLocation";
-const char* QGCApplication::_promptFlightDataSave = "PromptFlightDataSave";
+const char* QGCApplication::_promptFlightDataSave = "PromptFLightDataSave";
 
 const char* QGCApplication::_defaultSavedFileDirectoryName = "QGroundControl";
 const char* QGCApplication::_savedFileMavlinkLogDirectoryName = "FlightData";
@@ -75,10 +84,13 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
  **/
 
 
-QGCApplication::QGCApplication(int &argc, char* argv[]) :
-QApplication(argc, argv),
-_mainWindow(NULL)
+QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
+    QApplication(argc, argv),
+    _runningUnitTests(unitTesting)
 {
+    Q_ASSERT(_app == NULL);
+    _app = this;
+    
     // Set application information
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setOrganizationName(QGC_ORG_NAME);
@@ -98,7 +110,7 @@ _mainWindow(NULL)
     bool fClearSettingsOptions = false; // Clear stored settings
     
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions },
+        { "--clear-settings",   &fClearSettingsOptions, QString() },
         // Add additional command line option flags here
     };
     
@@ -109,6 +121,13 @@ _mainWindow(NULL)
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
     
+    // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
+    // name. Also we want to run unit tests with clean settings every time.
+    if (_runningUnitTests) {
+        setApplicationName(applicationName().append("UnitTest"));
+        fClearSettingsOptions = true;
+    }
+    
     if (fClearSettingsOptions) {
         // User requested settings to be cleared on command line
         settings.clear();
@@ -118,9 +137,21 @@ _mainWindow(NULL)
     
 }
 
-bool QGCApplication::init(void)
+QGCApplication::~QGCApplication()
+{
+    destroySingletonsForUnitTest();
+}
+
+void QGCApplication::_initCommon(void)
+{
+
+}
+
+bool QGCApplication::_initForNormalAppBoot(void)
 {
     QSettings settings;
+    
+    _createSingletons();
     
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
@@ -155,11 +186,11 @@ bool QGCApplication::init(void)
         QDir documentsDir(documentsLocation);
         Q_ASSERT(documentsDir.exists());
         
-        if (documentsDir.mkpath(_defaultSavedFileDirectoryName)) {
-            savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
-        }
-
-        setSavedFilesLocation(savedFilesLocation);
+        bool pathCreated = documentsDir.mkpath(_defaultSavedFileDirectoryName);
+        Q_UNUSED(pathCreated);
+        Q_ASSERT(pathCreated);
+        savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
+        settings.setValue(_savedFilesLocationKey, savedFilesLocation);
     }
     
     if (!savedFilesLocation.isEmpty()) {
@@ -177,7 +208,6 @@ bool QGCApplication::init(void)
                              tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
         MainWindow::instance()->showSettings();
     }
-
     
     mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
     
@@ -202,21 +232,14 @@ bool QGCApplication::init(void)
     //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
     // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
     
-    // Start the comm link manager
-    splashScreen->showMessage(tr("Starting communication links"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    startLinkManager();
-    
-    // Start the UAS Manager
-    splashScreen->showMessage(tr("Starting UAS manager"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    startUASManager();
-    
     // Start the user interface
     splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    _mainWindow = MainWindow::_create(splashScreen, mode);
+    MainWindow* mainWindow = new MainWindow(splashScreen, mode);
+    Q_CHECK_PTR(mainWindow);
     
     UDPLink* udpLink = NULL;
     
-    if (_mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
+    if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
     {
         // Connect links
         // to make sure that all components are initialized when the
@@ -232,104 +255,49 @@ bool QGCApplication::init(void)
 #ifdef QGC_RTLAB_ENABLED
     // Add OpalRT Link, but do not connect
     OpalLink* opalLink = new OpalLink();
-    MainWindow::instance()->addLink(opalLink);
+    _mainWindow->addLink(opalLink);
 #endif
     
     // Remove splash screen
-    splashScreen->finish(_mainWindow);
-    _mainWindow->splashScreenFinished();
+    splashScreen->finish(mainWindow);
+    mainWindow->splashScreenFinished();
+    
+    // If we made it this far and we still don't have a location. Either the specfied location was invalid
+    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
+    /// settings.
+    if (savedFilesLocation.isEmpty()) {
+        QGCMessageBox::warning(tr("Bad save location"),
+                               tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
+        mainWindow->showSettings();
+    }
     
     if (settingsUpgraded) {
-        _mainWindow->showInfoMessage(tr("Settings Cleared"),
-                                     tr("The format for QGroundControl saved settings has been modified. "
-                                        "Your saved settings have been reset to defaults."));
+        mainWindow->showInfoMessage(tr("Settings Cleared"),
+                                    tr("The format for QGroundControl saved settings has been modified. "
+                                       "Your saved settings have been reset to defaults."));
     }
     
     // Check if link could be connected
-    if (udpLink && !LinkManager::instance()->connectLink(udpLink))
+    if (udpLink && LinkManager::instance()->connectLink(udpLink))
     {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not connect UDP port. Is an instance of " + qAppName() + "already running?");
-        msgBox.setInformativeText("It is recommended to close the application and stop all instances. Click Yes to close.");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::No);
-        int ret = msgBox.exec();
-        
-        // Close the message box shortly after the click to prevent accidental clicks
-        QTimer::singleShot(15000, &msgBox, SLOT(reject()));
-        
+        QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Could not connect UDP port. Is an instance of %1 already running?").arg(qAppName()),
+                                                                     tr("It is recommended to close the application and stop all instances. Click Yes to close."),
+                                                                     QMessageBox::Yes | QMessageBox::No,
+                                                                     QMessageBox::No);
         // Exit application
-        if (ret == QMessageBox::Yes)
+        if (button == QMessageBox::Yes)
         {
             //mainWindow->close();
-            QTimer::singleShot(200, _mainWindow, SLOT(close()));
+            QTimer::singleShot(200, mainWindow, SLOT(close()));
         }
     }
     
     return true;
 }
 
-/**
- * @brief Destructor for the groundstation. It destroys all loaded instances.
- *
- **/
-QGCApplication::~QGCApplication()
+bool QGCApplication::_initForUnitTests(void)
 {
-    delete UASManager::instance();
-    delete LinkManager::instance();
-}
-
-/**
- * @brief Start the link managing component.
- *
- * The link manager keeps track of all communication links and provides the global
- * packet queue. It is the main communication hub
- **/
-void QGCApplication::startLinkManager()
-{
-    LinkManager::instance();
-}
-
-/**
- * @brief Start the Unmanned Air System Manager
- *
- **/
-void QGCApplication::startUASManager()
-{
-    // Load UAS plugins
-    QDir pluginsDir = QDir(qApp->applicationDirPath());
-    
-#if defined(Q_OS_WIN)
-    if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
-        pluginsDir.cdUp();
-#elif defined(Q_OS_LINUX)
-    if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
-        pluginsDir.cdUp();
-#elif defined(Q_OS_MAC)
-    if (pluginsDir.dirName() == "MacOS") {
-        pluginsDir.cdUp();
-        pluginsDir.cdUp();
-        pluginsDir.cdUp();
-    }
-#endif
-    pluginsDir.cd("plugins");
-    
-    UASManager::instance();
-    
-    // Load plugins
-    
-    QStringList pluginFileNames;
-    
-    foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
-        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-        QObject *plugin = loader.instance();
-        if (plugin) {
-            //populateMenus(plugin);
-            pluginFileNames += fileName;
-            //printf(QString("Loaded plugin from " + fileName + "\n").toStdString().c_str());
-        }
-    }
+    return true;
 }
 
 void QGCApplication::deleteAllSettingsNextBoot(void)
@@ -422,7 +390,47 @@ void QGCApplication::setPromptFlightDataSave(bool promptForSave)
 /// @brief Returns the QGCApplication object singleton.
 QGCApplication* qgcApp(void)
 {
-    QGCApplication* app = dynamic_cast<QGCApplication*>(qApp);
-    Q_ASSERT(app);
-    return app;
+    Q_ASSERT(QGCApplication::_app);
+    return QGCApplication::_app;
+}
+
+/// @brief We create all the non-ui based singletons here instead of allowing them to be created randomly
+///         by calls to instance. The reason being that depending on boot sequence the singleton may end
+///         up being creating on something other than the main thread.
+void QGCApplication::_createSingletons(void)
+{
+    
+    LinkManager* linkManager = LinkManager::instance();
+    Q_UNUSED(linkManager);
+    Q_ASSERT(linkManager);
+
+    UASManagerInterface* uasManager = UASManager::instance();
+    Q_UNUSED(uasManager);
+    Q_ASSERT(uasManager);
+
+    AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::instance();
+    Q_UNUSED(pluginManager);
+    Q_ASSERT(pluginManager);
+}
+
+void QGCApplication::destroySingletonsForUnitTest(void)
+{
+    foreach(QGCSingleton* singleton, _singletons) {
+        Q_ASSERT(singleton);
+        singleton->deleteInstance();
+    }
+    
+    if (MainWindow::instance()) {
+        delete MainWindow::instance();
+    }
+    
+    _singletons.clear();
+}
+
+void QGCApplication::registerSingleton(QGCSingleton* singleton)
+{
+    Q_ASSERT(singleton);
+    Q_ASSERT(!_singletons.contains(singleton));
+    
+    _singletons.append(singleton);
 }

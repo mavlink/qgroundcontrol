@@ -45,7 +45,6 @@ linux {
     macx-clang | macx-llvm {
         message("Mac build")
         CONFIG += MacBuild
-        QMAKE_MAC_SDK = macosx10.9
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
@@ -131,6 +130,7 @@ MacBuild {
     CONFIG += x86_64
     CONFIG -= x86
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    QMAKE_MAC_SDK = macosx10.9
     ICON = $$BASEDIR/files/images/icons/macx.icns
     QT += quickwidgets
 }
@@ -272,7 +272,6 @@ FORMS += \
     src/ui/AudioOutputWidget.ui \
     src/ui/QGCSensorSettingsWidget.ui \
     src/ui/QGCDataPlot2D.ui \
-    src/ui/QGCRemoteControlView.ui \
     src/ui/QMap3D.ui \
     src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
@@ -289,8 +288,7 @@ FORMS += \
     src/ui/QGCUASFileViewMulti.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCTCPLinkConfiguration.ui \
-    src/ui/QGCSettingsWidget.ui \
-    src/ui/UASControlParameters.ui \
+    src/ui/SettingsDialog.ui \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
     src/ui/QGCMAVLinkInspector.ui \
@@ -317,7 +315,6 @@ FORMS += \
     src/ui/QGCHilXPlaneConfiguration.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
-    src/ui/uas/UASActionsWidget.ui \
     src/ui/QGCTabbedInfoView.ui \
     src/ui/UASRawStatusView.ui \
     src/ui/uas/QGCMessageView.ui \
@@ -334,7 +331,8 @@ FORMS += \
 
 HEADERS += \
     src/MG.h \
-    src/QGCCore.h \
+    src/QGCApplication.h \
+    src/QGCSingleton.h \
     src/uas/UASInterface.h \
     src/uas/UAS.h \
     src/uas/UASManager.h \
@@ -383,13 +381,6 @@ HEADERS += \
     src/QGC.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
-    src/ui/QGCRemoteControlView.h \
-    src/ui/RadioCalibration/RadioCalibrationData.h \
-    src/ui/RadioCalibration/RadioCalibrationWindow.h \
-    src/ui/RadioCalibration/AirfoilServoCalibrator.h \
-    src/ui/RadioCalibration/SwitchCalibrator.h \
-    src/ui/RadioCalibration/CurveCalibrator.h \
-    src/ui/RadioCalibration/AbstractCalibrator.h \
     src/comm/QGCMAVLink.h \
     src/ui/QGCWebView.h \
     src/ui/map3D/QGCWebPage.h \
@@ -413,8 +404,7 @@ HEADERS += \
     src/ui/QGCUASFileViewMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/QGCTCPLinkConfiguration.h \
-    src/ui/QGCSettingsWidget.h \
-    src/ui/uas/UASControlParameters.h \
+    src/ui/SettingsDialog.h \
     src/uas/QGCUASParamManager.h \
     src/ui/map/QGCMapWidget.h \
     src/ui/map/MAV2DIcon.h \
@@ -456,7 +446,6 @@ HEADERS += \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
     src/ui/uas/UASQuickViewGaugeItem.h \
-    src/ui/uas/UASActionsWidget.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/UASRawStatusView.h \
     src/ui/PrimaryFlightDisplay.h \
@@ -487,13 +476,12 @@ HEADERS += \
     src/uas/QGCUASWorker.h \
     src/CmdLineOptParser.h \
     src/uas/QGXPX4UAS.h \
-    src/QGCFileDialog.h \
-    src/ui/HUDPanel.h \
-    src/ui/HUDPanelWidget.h
+    src/QGCFileDialog.h
 
 SOURCES += \
     src/main.cc \
-    src/QGCCore.cc \
+    src/QGCApplication.cc \
+    src/QGCSingleton.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
     src/comm/LinkManager.cc \
@@ -537,13 +525,6 @@ SOURCES += \
     src/QGC.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
-    src/ui/QGCRemoteControlView.cc \
-    src/ui/RadioCalibration/RadioCalibrationWindow.cc \
-    src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
-    src/ui/RadioCalibration/SwitchCalibrator.cc \
-    src/ui/RadioCalibration/CurveCalibrator.cc \
-    src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc \
     src/ui/QGCWebView.cc \
     src/ui/map3D/QGCWebPage.cc \
     src/ui/QGCMainWindowAPConfigurator.cc \
@@ -566,8 +547,7 @@ SOURCES += \
     src/ui/QGCUASFileViewMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/QGCTCPLinkConfiguration.cc \
-    src/ui/QGCSettingsWidget.cc \
-    src/ui/uas/UASControlParameters.cpp \
+    src/ui/SettingsDialog.cc \
     src/uas/QGCUASParamManager.cc \
     src/ui/map/QGCMapWidget.cc \
     src/ui/map/MAV2DIcon.cc \
@@ -607,7 +587,6 @@ SOURCES += \
     src/ui/uas/UASQuickViewTextItem.cc \
     src/ui/uas/UASQuickViewGaugeItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
-    src/ui/uas/UASActionsWidget.cpp \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
     src/ui/PrimaryFlightDisplay.cc \
@@ -635,9 +614,7 @@ SOURCES += \
     src/ui/QGCUASFileView.cc \
     src/uas/QGCUASWorker.cc \
     src/CmdLineOptParser.cc \
-    src/uas/QGXPX4UAS.cc \
-    src/ui/HUDPanel.cpp \
-    src/ui/HUDPanelWidget.cpp
+    src/uas/QGXPX4UAS.cc
 
 #
 # Unit Test specific configuration goes here
@@ -656,7 +633,8 @@ INCLUDEPATH += \
 	src/qgcunittest
 
 HEADERS += \
-	src/qgcunittest/AutoTest.h \
+    src/qgcunittest/UnitTest.h \
+    src/qgcunittest/MessageBoxTest.h \
 	src/qgcunittest/UASUnitTest.h \
     src/qgcunittest/MockLink.h \
     src/qgcunittest/MockLinkMissionItemHandler.h \
@@ -670,10 +648,13 @@ HEADERS += \
 	src/qgcunittest/TCPLinkTest.h \
 	src/qgcunittest/TCPLoopBackServer.h \
 	src/qgcunittest/QGCUASFileManagerTest.h \
-    src/qgcunittest/PX4RCCalibrationTest.h
+    src/qgcunittest/PX4RCCalibrationTest.h \
+    src/qgcunittest/LinkManagerTest.h
 
 SOURCES += \
+    src/qgcunittest/UnitTest.cc \
 	src/qgcunittest/UASUnitTest.cc \
+    src/qgcunittest/MessageBoxTest.cc \
     src/qgcunittest/MockLink.cc \
     src/qgcunittest/MockLinkMissionItemHandler.cc \
 	src/qgcunittest/MockUASManager.cc \
@@ -685,8 +666,8 @@ SOURCES += \
 	src/qgcunittest/TCPLinkTest.cc \
 	src/qgcunittest/TCPLoopBackServer.cc \
 	src/qgcunittest/QGCUASFileManagerTest.cc \
-    src/qgcunittest/PX4RCCalibrationTest.cc
-
+    src/qgcunittest/PX4RCCalibrationTest.cc \
+    src/qgcunittest/LinkManagerTest.cc
 }
 
 #
@@ -705,6 +686,7 @@ HEADERS+= \
     src/VehicleSetup/VehicleSetupButton.h \
     src/VehicleSetup/VehicleComponentButton.h \
     src/VehicleSetup/VehicleComponent.h \
+    src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
@@ -719,7 +701,7 @@ SOURCES += \
     src/VehicleSetup/SummaryPage.cc \
     src/VehicleSetup/ParameterEditor.cc \
     src/VehicleSetup/VehicleComponent.cc \
-    src/AutoPilotPlugins/AutoPilotPlugin.cc \
+    src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \

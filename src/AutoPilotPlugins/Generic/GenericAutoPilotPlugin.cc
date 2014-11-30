@@ -26,7 +26,8 @@
 
 #include "GenericAutoPilotPlugin.h"
 
-GenericAutoPilotPlugin::GenericAutoPilotPlugin(void)
+GenericAutoPilotPlugin::GenericAutoPilotPlugin(QObject* parent) :
+    AutoPilotPlugin(parent)
 {
     
 }

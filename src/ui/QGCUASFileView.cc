@@ -27,7 +27,7 @@
 
 #include <QFileDialog>
 #include <QDir>
-#include <QMessageBox>
+#include <QDebug>
 
 QGCUASFileView::QGCUASFileView(QWidget *parent, QGCUASFileManager *manager) :
     QWidget(parent),

@@ -30,6 +30,8 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
+UT_REGISTER_TEST(PX4RCCalibrationTest)
+
 // This will check for the wizard buttons being enabled of disabled according to the mask you pass in.
 // We use a macro instead of a method so that we get better line number reporting on failure.
 #define CHK_BUTTONS(mask) \
@@ -137,6 +139,8 @@ PX4RCCalibrationTest::PX4RCCalibrationTest(void) :
 /// @brief Called one time before any test cases are run.
 void PX4RCCalibrationTest::initTestCase(void)
 {
+    UnitTest::initTestCase();
+    
 	// Validate that our function to channel mapping is still correct.
 	for (int function=0; function<PX4RCCalibration::rcCalFunctionMax; function++) {
 		int chanIndex = _rgFunctionChannelMap[function];
@@ -149,6 +153,8 @@ void PX4RCCalibrationTest::initTestCase(void)
 
 void PX4RCCalibrationTest::init(void)
 {
+    UnitTest::init();
+    
     _mockUASManager = new MockUASManager();
     Q_ASSERT(_mockUASManager);
     
@@ -196,6 +202,8 @@ void PX4RCCalibrationTest::init(void)
 
 void PX4RCCalibrationTest::cleanup(void)
 {
+    UnitTest::cleanup();
+    
     Q_ASSERT(_calWidget);
     delete _calWidget;
     

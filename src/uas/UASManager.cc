@@ -10,18 +10,21 @@
 
 #include <QList>
 #include <QApplication>
-#include <QMessageBox>
 #include <QTimer>
 #include <QSettings>
+
 #include "UAS.h"
 #include "UASInterface.h"
 #include "UASManager.h"
 #include "QGC.h"
+#include "QGCMessageBox.h"
+#include "QGCApplication.h"
 
 #define PI 3.1415926535897932384626433832795
 #define MEAN_EARTH_DIAMETER	12756274.0
 #define UMR	0.017453292519943295769236907684886
 
+UASManager* UASManager::_instance = NULL;
 UASManagerInterface* UASManager::_mockUASManager = NULL;
 
 
@@ -36,15 +39,20 @@ UASManagerInterface* UASManager::instance()
         return _mockUASManager;
     }
     
-    static UASManager* _instance = 0;
-    if(_instance == 0) {
-        _instance = new UASManager();
-
-        // Set the application as parent to ensure that this object
-        // will be destroyed when the main application exits
-        _instance->setParent(qApp);
+    if(_instance == NULL) {
+        _instance = new UASManager(qgcApp());
+        Q_CHECK_PTR(_instance);
     }
+    
+    Q_ASSERT(_instance);
+    
     return _instance;
+}
+
+void UASManager::deleteInstance(void)
+{
+    _instance = NULL;
+    delete this;
 }
 
 void UASManager::storeSettings()
@@ -255,13 +263,14 @@ void UASManager::uavChangedHomePosition(int uav, double lat, double lon, double 
  *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
-UASManager::UASManager() :
-        activeUAS(NULL),
-        offlineUASWaypointManager(NULL),
-        homeLat(47.3769),
-        homeLon(8.549444),
-        homeAlt(470.0),
-        homeFrame(MAV_FRAME_GLOBAL)
+UASManager::UASManager(QObject* parent) :
+    UASManagerInterface(parent),
+    activeUAS(NULL),
+    offlineUASWaypointManager(NULL),
+    homeLat(47.3769),
+    homeLon(8.549444),
+    homeAlt(470.0),
+    homeFrame(MAV_FRAME_GLOBAL)
 {
     loadSettings();
     setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
@@ -308,7 +317,7 @@ void UASManager::addUAS(UASInterface* uas)
         setActiveUAS(uas);
         if (offlineUASWaypointManager->getWaypointEditableList().size() > 0)
         {
-            if (QMessageBox::question(0,"Question","Do you want to append the offline waypoints to the ones currently on the UAV?",QMessageBox::Yes,QMessageBox::No) == QMessageBox::Yes)
+            if (QGCMessageBox::question(tr("Question"), tr("Do you want to append the offline waypoints to the ones currently on the UAV?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
             {
                 //Need to transfer all waypoints from the offline mode WPManager to the online mode.
                 for (int i=0;i<offlineUASWaypointManager->getWaypointEditableList().size();i++)

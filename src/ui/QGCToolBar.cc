@@ -219,7 +219,7 @@ void QGCToolBar::createUI()
     }
 
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
-    connect(LinkManager::instance(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
+    connect(LinkManager::instance(), SIGNAL(linkDeleted(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
 
     loadSettings();
 

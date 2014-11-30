@@ -21,26 +21,54 @@
  
  ======================================================================*/
 
-#ifndef GENERICAUTOPILOT_H
-#define GENERICAUTOPILOT_H
+#ifndef UASUNITTEST_H
+#define UASUNITTEST_H
 
-#include "AutoPilotPlugin.h"
+#include "UnitTest.h"
+#include "LinkManager.h"
+#include "MultiSignalSpy.h"
 
 /// @file
-///     @brief This is the generic implementation of the AutoPilotPlugin class for mavs
-///             we do not have a specific AutoPilotPlugin implementation.
+///     @brief LinkManager Unit Test
+///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class GenericAutoPilotPlugin : public AutoPilotPlugin
+class LinkManagerTest : public UnitTest
 {
     Q_OBJECT
-
-public:
-    GenericAutoPilotPlugin(QObject* parent = NULL);
     
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
+public:
+    LinkManagerTest(void);
+    
+private slots:
+    UT_DECLARE_DEFAULT_initTestCase
+    UT_DECLARE_DEFAULT_cleanupTestCase
+    
+    void init(void);
+    void cleanup(void);
+    
+    void _instance_test(void);
+    void _add_test(void);
+    void _delete_test(void);
+    void _addSignals_test(void);
+    void _deleteSignals_test(void);
+    
+private:
+    enum {
+        newLinkSignalIndex = 0,
+        linkDeletedSignalIndex,
+        maxSignalIndex
+    };
+    
+    enum {
+        newLinkSignalMask =     1 << newLinkSignalIndex,
+        linkDeletedSignalMask = 1 << linkDeletedSignalIndex,
+    };
+
+    LinkManager*        _linkMgr;
+    MultiSignalSpy*     _multiSpy;
+    static const size_t _cSignals = maxSignalIndex;
+    const char*         _rgSignals[_cSignals];
 };
 
 #endif

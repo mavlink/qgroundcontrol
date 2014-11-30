@@ -302,6 +302,9 @@ void WaypointEditableView::initializeActionView(int actionID)
 
 void WaypointEditableView::deleted(QObject* waypoint)
 {
+    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
+    // been destroyed.
+
     Q_UNUSED(waypoint);
 }
 

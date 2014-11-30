@@ -43,10 +43,6 @@ class AutoPilotPlugin : public QObject
     Q_OBJECT
 
 public:
-    /// @brief Returns the singleton AutoPilot instance for the specified auto pilot type.
-    /// @param autopilotType Specified using the MAV_AUTOPILOT_* values.
-    static AutoPilotPlugin* getInstanceForAutoPilotPlugin(int autopilotType);
-    
     /// @brief Returns the list of VehicleComponent objects associated with the AutoPilot.
     virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const = 0;
     
@@ -63,7 +59,7 @@ public:
     
 protected:
     // All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
-    AutoPilotPlugin(void);
+    AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
 };
 
 #endif

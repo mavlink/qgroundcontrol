@@ -2,9 +2,10 @@
 
 #include <QApplication>
 #include <QDir>
-#include <QMessageBox>
+#include <QDebug>
 
 #include "UASInterface.h"
+#include "QGCMessageBox.h"
 
 QGCUASParamManager::QGCUASParamManager(QObject *parent) :
     QGCUASParamManagerInterface(parent),
@@ -193,9 +194,8 @@ void QGCUASParamManager::copyVolatileParamsToPersistent()
     int changedParamCount = paramDataModel.countPendingParams();
 
     if (changedParamCount > 0) {
-        QMessageBox msgBox;
-        msgBox.setText(tr("There are locally changed parameters. Please transmit them first (<TRANSMIT>) or update them with the onboard values (<REFRESH>) before storing onboard from RAM to ROM."));
-        msgBox.exec();
+        QGCMessageBox::warning(tr("Warning"),
+                                   tr("There are locally changed parameters. Please transmit them first (<TRANSMIT>) or update them with the onboard values (<REFRESH>) before storing onboard from RAM to ROM."));
     }
     else {
         paramCommsMgr.writeParamsToPersistentStorage();
