@@ -22,36 +22,29 @@
  ======================================================================*/
 
 /// @file
-///     @brief Unit test for QGCMessageBox catching mechanism.
+///     @brief Simple MainWindow unit test
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef MESSAGEBOXTEST_H
-#define MESSAGEBOXTEST_H
+#ifndef MAINWINDOWTEST_H
+#define MAINWINDOWTEST_H
 
 #include "UnitTest.h"
 
-class MessageBoxTest : public UnitTest
+class MainWindowTest : public UnitTest
 {
     Q_OBJECT
     
 public:
-    MessageBoxTest(void);
+    MainWindowTest(void);
     
 private slots:
     UT_DECLARE_DEFAULT_initTestCase
     UT_DECLARE_DEFAULT_cleanupTestCase
-    UT_DECLARE_DEFAULT_init
+    void init(void);
     void cleanup(void);
     
-    void _messageBoxExpected_test(void);
-    void _messageBoxUnexpected_test(void);
-    void _previousMessageBox_test(void);
-    void _noMessageBox_test(void);
-    void _badResponseButton_test(void);
-    
-private:
-    bool _expectMissedMessageBox;
+    void _simpleDisplay_test(void);
 };
 
 #endif

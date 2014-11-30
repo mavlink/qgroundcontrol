@@ -650,7 +650,8 @@ HEADERS += \
 	src/qgcunittest/TCPLoopBackServer.h \
 	src/qgcunittest/QGCUASFileManagerTest.h \
     src/qgcunittest/PX4RCCalibrationTest.h \
-    src/qgcunittest/LinkManagerTest.h
+    src/qgcunittest/LinkManagerTest.h \
+    src/qgcunittest/MainWindowTest.h
 
 SOURCES += \
     src/qgcunittest/UnitTest.cc \
@@ -668,7 +669,8 @@ SOURCES += \
 	src/qgcunittest/TCPLoopBackServer.cc \
 	src/qgcunittest/QGCUASFileManagerTest.cc \
     src/qgcunittest/PX4RCCalibrationTest.cc \
-    src/qgcunittest/LinkManagerTest.cc
+    src/qgcunittest/LinkManagerTest.cc \
+    src/qgcunittest/MainWindowTest.cc
 }
 
 #
