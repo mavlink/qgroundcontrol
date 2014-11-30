@@ -130,6 +130,7 @@ MacBuild {
     CONFIG += x86_64
     CONFIG -= x86
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    QMAKE_MAC_SDK = macosx10.9
     ICON = $$BASEDIR/files/images/icons/macx.icns
     QT += quickwidgets
 }
@@ -633,7 +634,8 @@ INCLUDEPATH += \
 	src/qgcunittest
 
 HEADERS += \
-	src/qgcunittest/AutoTest.h \
+    src/qgcunittest/UnitTest.h \
+    src/qgcunittest/MessageBoxTest.h \
 	src/qgcunittest/UASUnitTest.h \
     src/qgcunittest/MockLink.h \
     src/qgcunittest/MockLinkMissionItemHandler.h \
@@ -651,7 +653,9 @@ HEADERS += \
     src/qgcunittest/LinkManagerTest.h
 
 SOURCES += \
+    src/qgcunittest/UnitTest.cc \
 	src/qgcunittest/UASUnitTest.cc \
+    src/qgcunittest/MessageBoxTest.cc \
     src/qgcunittest/MockLink.cc \
     src/qgcunittest/MockLinkMissionItemHandler.cc \
 	src/qgcunittest/MockUASManager.cc \
