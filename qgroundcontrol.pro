@@ -30,7 +30,7 @@ message(Qt version $$[QT_VERSION])
 linux {
     linux-g++ | linux-g++-64 {
         message("Linux build")
-        CONFIG += LinuxBuild
+        CONFIG += LinuxBuild link_pkgconfig
     } else {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
