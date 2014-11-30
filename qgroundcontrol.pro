@@ -615,7 +615,9 @@ SOURCES += \
     src/ui/QGCUASFileView.cc \
     src/uas/QGCUASWorker.cc \
     src/CmdLineOptParser.cc \
-    src/uas/QGXPX4UAS.cc
+    src/uas/QGXPX4UAS.cc \
+    src/QGCFileDialog.cc
+
 
 #
 # Unit Test specific configuration goes here
@@ -636,6 +638,7 @@ INCLUDEPATH += \
 HEADERS += \
     src/qgcunittest/UnitTest.h \
     src/qgcunittest/MessageBoxTest.h \
+    src/qgcunittest/FileDialogTest.h \
 	src/qgcunittest/UASUnitTest.h \
     src/qgcunittest/MockLink.h \
     src/qgcunittest/MockLinkMissionItemHandler.h \
@@ -655,8 +658,9 @@ HEADERS += \
 
 SOURCES += \
     src/qgcunittest/UnitTest.cc \
-	src/qgcunittest/UASUnitTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
+    src/qgcunittest/FileDialogTest.cc \
+	src/qgcunittest/UASUnitTest.cc \
     src/qgcunittest/MockLink.cc \
     src/qgcunittest/MockLinkMissionItemHandler.cc \
 	src/qgcunittest/MockUASManager.cc \
