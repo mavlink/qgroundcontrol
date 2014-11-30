@@ -144,21 +144,12 @@ QGCApplication::~QGCApplication()
 
 void QGCApplication::_initCommon(void)
 {
-
-}
-
-bool QGCApplication::_initForNormalAppBoot(void)
-{
     QSettings settings;
     
     _createSingletons();
     
-    // Exit main application when last window is closed
-    connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
-    
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
-    enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_PX4;
     if (settings.contains(_settingsVersionKey)) {
         if (settings.value(_settingsVersionKey).toInt() != QGC_SETTINGS_VERSION) {
             settingsUpgraded = true;
@@ -171,6 +162,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
     if (settingsUpgraded) {
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+        QGCMessageBox::information(tr("Settings Cleared"),
+                                   tr("The format for QGroundControl saved settings has been modified. "
+                                      "Your saved settings have been reset to defaults."));
     }
     
     // Load saved files location and validate
@@ -190,7 +184,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
         Q_UNUSED(pathCreated);
         Q_ASSERT(pathCreated);
         savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
-        settings.setValue(_savedFilesLocationKey, savedFilesLocation);
     }
     
     if (!savedFilesLocation.isEmpty()) {
@@ -198,10 +191,24 @@ bool QGCApplication::_initForNormalAppBoot(void)
             savedFilesLocation.clear();
         }
     }
+    settings.setValue(_savedFilesLocationKey, savedFilesLocation);
+
+    // Load application font
+    QFontDatabase fontDatabase = QFontDatabase();
+    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
+    //const QString fontFamilyName = "Bitstream Vera Sans";
+    if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
+    fontDatabase.addApplicationFont(fontFileName);
+    // Avoid Using setFont(). In the Qt docu you can read the following:
+    //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
+    // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
+}
+
+bool QGCApplication::_initForNormalAppBoot(void)
+{
+    QSettings settings;
     
-    mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
-    
-    settings.sync();
+    enum MainWindow::CUSTOM_MODE mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
     
     // Show splash screen
     QPixmap splashImage(":/files/images/splash.png");
@@ -212,20 +219,23 @@ bool QGCApplication::_initForNormalAppBoot(void)
     processEvents();
     splashScreen->showMessage(tr("Loading application fonts"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     
-    // Load application font
-    QFontDatabase fontDatabase = QFontDatabase();
-    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
-    //const QString fontFamilyName = "Bitstream Vera Sans";
-    if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
-    fontDatabase.addApplicationFont(fontFileName);
-    // Avoid Using setFont(). In the Qt docu you can read the following:
-    //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
-    // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
-    
+    // Exit main application when last window is closed
+    connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
+
     // Start the user interface
     splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    MainWindow* mainWindow = new MainWindow(splashScreen, mode);
+    MainWindow* mainWindow = MainWindow::_create(splashScreen, mode);
     Q_CHECK_PTR(mainWindow);
+    
+    // If we made it this far and we still don't have a location. Either the specfied location was invalid
+    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
+    /// settings.
+    QString savedFilesLocation = settings.value(_savedFilesLocationKey).toString();
+    if (savedFilesLocation.isEmpty()) {
+        QGCMessageBox::warning(tr("Bad save location"),
+                               tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
+        mainWindow->showSettings();
+    }
     
     UDPLink* udpLink = NULL;
     
@@ -252,20 +262,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
     splashScreen->finish(mainWindow);
     mainWindow->splashScreenFinished();
     
-    // If we made it this far and we still don't have a location. Either the specfied location was invalid
-    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
-    /// settings.
-    if (savedFilesLocation.isEmpty()) {
-        QGCMessageBox::warning(tr("Bad save location"),
-                               tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
-        mainWindow->showSettings();
-    }
-    
-    if (settingsUpgraded) {
-        mainWindow->showInfoMessage(tr("Settings Cleared"),
-                                    tr("The format for QGroundControl saved settings has been modified. "
-                                       "Your saved settings have been reset to defaults."));
-    }
     
     // Check if link could be connected
     if (udpLink && LinkManager::instance()->connectLink(udpLink))
