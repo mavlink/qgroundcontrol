@@ -41,11 +41,6 @@ public:
     FlightGearUnitTest(void);
     
 private slots:
-    UT_DECLARE_DEFAULT_initTestCase
-    UT_DECLARE_DEFAULT_cleanupTestCase
-    UT_DECLARE_DEFAULT_init
-    UT_DECLARE_DEFAULT_cleanup
-    
     void _parseUIArguments_test(void);
 };
 

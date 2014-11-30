@@ -45,7 +45,6 @@ public:
     
 private slots:
     void initTestCase(void);
-    UT_DECLARE_DEFAULT_cleanupTestCase
     void init(void);
     void cleanup(void);
     

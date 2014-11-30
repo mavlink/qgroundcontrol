@@ -35,19 +35,6 @@
 
 #define UT_REGISTER_TEST(className) static UnitTestWrapper<className> t(#className);
 
-/// @brief If you don't need you own specific implemenation of the test case setup methods
-///         you can use these macros to declare the default implementation which just calls
-///         the base class.
-
-#define UT_DECLARE_DEFAULT_initTestCase 
-//virtual void initTestCase(void) { UnitTest::_initTestCase(); }
-#define UT_DECLARE_DEFAULT_cleanupTestCase 
-// virtual void cleanupTestCase(void) { UnitTest::_cleanupTestCase(); }
-#define UT_DECLARE_DEFAULT_init 
-//virtual void init(void) { UnitTest::_init(); }
-#define UT_DECLARE_DEFAULT_cleanup 
-//virtual void cleanup(void) { UnitTest::_cleanup(); }
-
 class QGCMessageBox;
 class UnitTest;
 
