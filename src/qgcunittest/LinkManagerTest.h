@@ -41,9 +41,6 @@ public:
     LinkManagerTest(void);
     
 private slots:
-    UT_DECLARE_DEFAULT_initTestCase
-    UT_DECLARE_DEFAULT_cleanupTestCase
-    
     void init(void);
     void cleanup(void);
     
