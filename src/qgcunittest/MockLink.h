@@ -118,7 +118,8 @@ private:
     typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
     MissionList_t   _missionItems;
     
-    uint8_t _mavMode;
+    uint8_t _mavBaseMode;
+    uint8_t _mavCustomMode;
     uint8_t _mavState;
 };
 

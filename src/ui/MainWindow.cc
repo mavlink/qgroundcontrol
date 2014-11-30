@@ -88,7 +88,6 @@ const QString MainWindow::defaultLightStyle = ":files/styles/style-light.css";
 MainWindow* MainWindow::_create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode)
 {
     Q_ASSERT(_instance == NULL);
-    Q_ASSERT(splashScreen);
     
     new MainWindow(splashScreen, mode);
     
@@ -125,12 +124,12 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     menuActionHelper(new MenuActionHelper()),
     _splashScreen(splashScreen)
 {
-    Q_ASSERT(splashScreen);
-    
     Q_ASSERT(_instance == NULL);
     _instance = this;
     
-    connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
+    if (splashScreen) {
+        connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
+    }
     
     this->setAttribute(Qt::WA_DeleteOnClose);
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
