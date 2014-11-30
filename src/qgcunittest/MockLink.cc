@@ -34,6 +34,35 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
+enum PX4_CUSTOM_MAIN_MODE {
+    PX4_CUSTOM_MAIN_MODE_MANUAL = 1,
+    PX4_CUSTOM_MAIN_MODE_ALTCTL,
+    PX4_CUSTOM_MAIN_MODE_POSCTL,
+    PX4_CUSTOM_MAIN_MODE_AUTO,
+    PX4_CUSTOM_MAIN_MODE_ACRO,
+    PX4_CUSTOM_MAIN_MODE_OFFBOARD,
+};
+
+enum PX4_CUSTOM_SUB_MODE_AUTO {
+    PX4_CUSTOM_SUB_MODE_AUTO_READY = 1,
+    PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,
+    PX4_CUSTOM_SUB_MODE_AUTO_LOITER,
+    PX4_CUSTOM_SUB_MODE_AUTO_MISSION,
+    PX4_CUSTOM_SUB_MODE_AUTO_RTL,
+    PX4_CUSTOM_SUB_MODE_AUTO_LAND,
+    PX4_CUSTOM_SUB_MODE_AUTO_RTGS
+};
+
+union px4_custom_mode {
+    struct {
+        uint16_t reserved;
+        uint8_t main_mode;
+        uint8_t sub_mode;
+    };
+    uint32_t data;
+    float data_float;
+};
+
 MockLink::MockLink(void) :
     _linkId(getNextLinkId()),
     _name("MockLink"),
@@ -42,9 +71,15 @@ MockLink::MockLink(void) :
     _vehicleComponentId(200),  // FIXME: magic number?
     _inNSH(false),
     _mavlinkStarted(false),
-    _mavMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED),
+    _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED),
     _mavState(MAV_STATE_STANDBY)
 {
+    union px4_custom_mode   px4_cm;
+
+    px4_cm.data = 0;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
+    _mavCustomMode = px4_cm.data;
+
     _missionItemHandler = new MockLinkMissionItemHandler(_vehicleSystemId, this);
     Q_CHECK_PTR(_missionItemHandler);
     
@@ -56,7 +91,6 @@ MockLink::MockLink(void) :
 MockLink::~MockLink(void)
 {
     _disconnect();
-    deleteLater();
 }
 
 void MockLink::readBytes(void)
@@ -184,8 +218,8 @@ void MockLink::_sendHeartBeat(void)
                                &msg,
                                MAV_TYPE_QUADROTOR,  // MAV_TYPE
                                MAV_AUTOPILOT_PX4,   // MAV_AUTOPILOT
-                               _mavMode,            // MAV_MODE
-                               0,                   // custom mode
+                               _mavBaseMode,        // MAV_MODE
+                               _mavCustomMode,      // custom mode
                                _mavState);          // MAV_STATE
 
     int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
@@ -323,7 +357,8 @@ void MockLink::_handleSetMode(const mavlink_message_t& msg)
     mavlink_msg_set_mode_decode(&msg, &request);
     
     if (request.target_system == _vehicleSystemId) {
-        _mavMode = request.base_mode;
+        _mavBaseMode = request.base_mode;
+        _mavCustomMode = request.custom_mode;
     } else {
         _errorInvalidTargetSystem(request.target_system);
     }
