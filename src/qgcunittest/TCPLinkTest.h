@@ -24,11 +24,7 @@
 #ifndef TCPLINKTEST_H
 #define TCPLINKTEST_H
 
-#include <QObject>
-#include <QtTest/QtTest>
-#include <QApplication>
-
-#include "AutoTest.h"
+#include "UnitTest.h"
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
 
@@ -37,7 +33,7 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class TCPLinkUnitTest : public QObject
+class TCPLinkUnitTest : public UnitTest
 {
     Q_OBJECT
 
@@ -49,6 +45,8 @@ signals:
     void waitForReadyRead(int msecs);
 
 private slots:
+    UT_DECLARE_DEFAULT_initTestCase
+    UT_DECLARE_DEFAULT_cleanupTestCase
     void init(void);
     void cleanup(void);
     
@@ -88,9 +86,5 @@ private:
     static const size_t _cSignals = maxSignalIndex;
     const char*         _rgSignals[_cSignals];
 };
-
-// This unit test has gotten too flaky to run reliably under TeamCity. Removing for now till there is
-// time to debug.
-//DECLARE_TEST(TCPLinkUnitTest)
 
 #endif

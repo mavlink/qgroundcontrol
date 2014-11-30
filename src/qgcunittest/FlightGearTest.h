@@ -24,11 +24,7 @@
 #ifndef TCPLINKTEST_H
 #define TCPLINKTEST_H
 
-#include <QObject>
-#include <QtTest>
-#include <QApplication>
-
-#include "AutoTest.h"
+#include "UnitTest.h"
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
 
@@ -37,7 +33,7 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class FlightGearUnitTest : public QObject
+class FlightGearUnitTest : public UnitTest
 {
     Q_OBJECT
     
@@ -45,14 +41,12 @@ public:
     FlightGearUnitTest(void);
     
 private slots:
-    void init(void);
-    void cleanup(void);
+    UT_DECLARE_DEFAULT_initTestCase
+    UT_DECLARE_DEFAULT_cleanupTestCase
+    UT_DECLARE_DEFAULT_init
+    UT_DECLARE_DEFAULT_cleanup
     
     void _parseUIArguments_test(void);
-    
-private:
 };
-
-DECLARE_TEST(FlightGearUnitTest)
 
 #endif

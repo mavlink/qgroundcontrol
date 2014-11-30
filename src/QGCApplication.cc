@@ -84,8 +84,9 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
  **/
 
 
-QGCApplication::QGCApplication(int &argc, char* argv[]) :
-    QApplication(argc, argv)
+QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
+    QApplication(argc, argv),
+    _runningUnitTests(unitTesting)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -119,6 +120,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[]) :
     
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
+    
+    // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
+    // name. Also we want to run unit tests with clean settings every time.
+    if (_runningUnitTests) {
+        setApplicationName(applicationName().append("UnitTest"));
+        fClearSettingsOptions = true;
+    }
     
     if (fClearSettingsOptions) {
         // User requested settings to be cleared on command line
