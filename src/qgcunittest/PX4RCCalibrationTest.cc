@@ -139,8 +139,6 @@ PX4RCCalibrationTest::PX4RCCalibrationTest(void) :
 /// @brief Called one time before any test cases are run.
 void PX4RCCalibrationTest::initTestCase(void)
 {
-    UnitTest::initTestCase();
-    
 	// Validate that our function to channel mapping is still correct.
 	for (int function=0; function<PX4RCCalibration::rcCalFunctionMax; function++) {
 		int chanIndex = _rgFunctionChannelMap[function];
