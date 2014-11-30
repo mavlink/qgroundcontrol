@@ -61,8 +61,6 @@ TCPLink::~TCPLink()
     quit();
     // Wait for it to exit
     wait();
-
-	deleteLater();
 }
 
 void TCPLink::run()
