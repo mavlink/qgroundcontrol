@@ -42,8 +42,6 @@ QGCUASFileManagerUnitTest::QGCUASFileManagerUnitTest(void) :
 // Called once before all test cases are run
 void QGCUASFileManagerUnitTest::initTestCase(void)
 {
-    UnitTest::initTestCase();
-
     _mockUAS.setMockSystemId(_systemIdServer);
     _mockUAS.setMockMavlinkPlugin(&_mockFileServer);
 }

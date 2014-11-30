@@ -39,16 +39,11 @@ public:
     MessageBoxTest(void);
     
 private slots:
-    void cleanup(void);
-    
     void _messageBoxExpected_test(void);
     void _messageBoxUnexpected_test(void);
     void _previousMessageBox_test(void);
     void _noMessageBox_test(void);
     void _badResponseButton_test(void);
-    
-private:
-    bool _expectMissedMessageBox;
 };
 
 #endif
