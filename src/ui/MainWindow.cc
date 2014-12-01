@@ -571,7 +571,6 @@ void MainWindow::buildCommonWidgets()
     }
 
     // Add dock widgets for the planner view
-    createDockWidget(plannerView, new PrimaryFlightDisplay(this), tr("Primary Flight Display"), "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET", VIEW_MISSION, Qt::LeftDockWidgetArea);
     createDockWidget(plannerView, new UASListWidget(this), tr("Unmanned Systems"), "UNMANNED_SYSTEM_LIST_DOCKWIDGET", VIEW_MISSION, Qt::LeftDockWidgetArea);
     createDockWidget(plannerView, new QGCWaypointListMulti(this), tr("Mission Plan"), "WAYPOINT_LIST_DOCKWIDGET", VIEW_MISSION, Qt::BottomDockWidgetArea);
 
