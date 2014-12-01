@@ -29,23 +29,46 @@
 /// @file
 ///     @brief Subclass of QFileDialog which re-implements the static public functions. The reason for this
 ///             is that the QFileDialog implementations of these use the native os dialogs. On OSX these
-///             these can intermittently hang. So instead here we use the native dialogs.
+///             these can intermittently hang. So instead here we use the native dialogs. It also allows
+///             use to catch these dialogs for unit testing.
 ///     @author Don Gagne <don@thegagnes.com>
 
 class QGCFileDialog : public QFileDialog {
     
 public:
-    static QString getExistingDirectory(QWidget* parent = 0, const QString& caption = QString(), const QString& dir = QString(), Options options = ShowDirsOnly)
-        { return QFileDialog::getExistingDirectory(parent, caption, dir, options | DontUseNativeDialog); }
+    static QString getExistingDirectory(QWidget* parent = 0,
+                                        const QString& caption = QString(),
+                                        const QString& dir = QString(),
+                                        Options options = ShowDirsOnly);
     
-    static QString getOpenFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& dir = QString(), const QString& filter = QString(), QString* selectedFilter = 0, Options options = 0)
-        { return QFileDialog::getOpenFileName(parent, caption, dir, filter, selectedFilter, options | DontUseNativeDialog); }
+    static QString getOpenFileName(QWidget* parent = 0,
+                                   const QString& caption = QString(),
+                                   const QString& dir = QString(),
+                                   const QString& filter = QString(),
+                                   QString* selectedFilter = 0,
+                                   Options options = 0);
     
-    static QStringList getOpenFileNames(QWidget* parent = 0, const QString& caption = QString(), const QString& dir = QString(), const QString& filter = QString(), QString* selectedFilter = 0, Options options = 0)
-        { return QFileDialog::getOpenFileNames(parent, caption, dir, filter, selectedFilter, options | DontUseNativeDialog); }
+    static QStringList getOpenFileNames(QWidget* parent = 0,
+                                        const QString& caption = QString(),
+                                        const QString& dir = QString(),
+                                        const QString& filter = QString(),
+                                        QString* selectedFilter = 0,
+                                        Options options = 0);
     
-    static QString getSaveFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& dir = QString(), const QString& filter = QString(), QString* selectedFilter = 0, Options options = 0)
-        { return QFileDialog::getSaveFileName(parent, caption, dir, filter, selectedFilter, options | DontUseNativeDialog); }
+    static QString getSaveFileName(QWidget* parent = 0,
+                                   const QString& caption = QString(),
+                                   const QString& dir = QString(),
+                                   const QString& filter = QString(),
+                                   QString* selectedFilter = 0,
+                                   Options options = 0);
+    
+private slots:
+    /// @brief The exec slot is private becasue when only want QGCFileDialog users to use the static methods. Otherwise it will break
+    ///         unit testing.
+    int exec(void) { return QGCFileDialog::exec(); }
+    
+private:
+    static void _validate(QString* selectedFilter, Options& options);
 };
 
 
