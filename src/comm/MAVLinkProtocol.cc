@@ -90,7 +90,6 @@ void MAVLinkProtocol::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
     enableHeartbeats(settings.value("HEARTBEATS_ENABLED", m_heartbeatsEnabled).toBool());
     enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", m_enable_version_check).toBool());
@@ -133,8 +132,6 @@ void MAVLinkProtocol::storeSettings()
     settings.setValue("PARAMETER_REWRITE_TIMEOUT", m_paramRewriteTimeout);
     settings.setValue("PARAMETER_TRANSMISSION_GUARD_ENABLED", m_paramGuardEnabled);
     settings.endGroup();
-    settings.sync();
-    //qDebug() << "Storing settings!";
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()

@@ -306,7 +306,6 @@ void QGCMapWidget::storeSettings()
     settings.setValue("TRAIL_TYPE", static_cast<int>(trailType));
     settings.setValue("TRAIL_INTERVAL", trailInterval);
     settings.endGroup();
-    settings.sync();
 }
 
 void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)

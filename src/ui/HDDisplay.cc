@@ -233,13 +233,11 @@ void HDDisplay::saveState()
     // qDebug() << "Saving" << instruments;
 
     settings.setValue(windowTitle()+"_gauges", instruments);
-    settings.sync();
 }
 
 void HDDisplay::restoreState()
 {
     QSettings settings;
-    settings.sync();
 
     acceptList->clear();
 

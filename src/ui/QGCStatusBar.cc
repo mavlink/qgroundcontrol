@@ -70,7 +70,6 @@ void QGCStatusBar::storeSettings()
     settings.beginGroup("QGC_MAVLINKLOGPLAYER");
     settings.setValue("LAST_LOG_DIRECTORY", lastLogDirectory);
     settings.endGroup();
-    settings.sync();
 }
 
 QGCStatusBar::~QGCStatusBar()

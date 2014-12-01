@@ -104,7 +104,6 @@ void UASQuickView::saveSettings()
     }
     settings.endArray();
     settings.setValue("UAS_QUICK_VIEW_COLUMNS",m_columnCount);
-    settings.sync();
 }
 void UASQuickView::loadSettings()
 {
