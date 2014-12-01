@@ -571,7 +571,7 @@ void MainWindow::buildCommonWidgets()
     }
 
     // Add dock widgets for the planner view
-    createDockWidget(plannerView, new PrimaryFlightDisplay(this), tr("Primary Flight Display"), "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET", VIEW_FLIGHT, Qt::LeftDockWidgetArea);
+    createDockWidget(plannerView, new PrimaryFlightDisplay(this), tr("Primary Flight Display"), "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET", VIEW_MISSION, Qt::LeftDockWidgetArea);
     createDockWidget(plannerView, new UASListWidget(this), tr("Unmanned Systems"), "UNMANNED_SYSTEM_LIST_DOCKWIDGET", VIEW_MISSION, Qt::LeftDockWidgetArea);
     createDockWidget(plannerView, new QGCWaypointListMulti(this), tr("Mission Plan"), "WAYPOINT_LIST_DOCKWIDGET", VIEW_MISSION, Qt::BottomDockWidgetArea);
 
@@ -591,7 +591,7 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(engineeringView, new QGCMAVLinkInspector(mavlink, this), tr("MAVLink Inspector"), "MAVLINK_INSPECTOR_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
     createDockWidget(engineeringView, new ParameterInterface(this), tr("Onboard Parameters"), "PARAMETER_INTERFACE_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
     createDockWidget(engineeringView, new QGCUASFileViewMulti(this), tr("Onboard Files"), "FILE_VIEW_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
-    createDockWidget(engineeringView, new HUD(320, 240, this), tr("Video Downlink"), "HEAD_UP_DISPLAY_DOCKWIDGET", VIEW_FLIGHT, Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView, new HUD(320, 240, this), tr("Video Downlink"), "HEAD_UP_DISPLAY_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
 
     // Add some extra widgets to the Tool Widgets menu
     menuActionHelper->createToolAction(tr("Map View"), "MAP_VIEW_DOCKWIDGET");
