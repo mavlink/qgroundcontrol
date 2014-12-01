@@ -88,6 +88,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     QApplication(argc, argv),
     _runningUnitTests(unitTesting)
 {
+    qWarning() << "Testing";
+    
     Q_ASSERT(_app == NULL);
     _app = this;
     
