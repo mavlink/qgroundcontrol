@@ -598,7 +598,6 @@ void MainWindow::buildCommonWidgets()
     menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Flight Display"), "HEAD_DOWN_DISPLAY_1_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
-    menuActionHelper->createToolAction(tr("Radio Control")); // FIXME: Remove as this menu item does nothing
 
     // Add any custom widgets last to all menus and layouts
     buildCustomWidget();
@@ -713,10 +712,6 @@ void MainWindow::loadDockWidget(const QString& name)
         HDDisplay *hddisplay = new HDDisplay(acceptList,"Actuator Status",this);
         hddisplay->addSource(mavlinkDecoder);
         createDockWidget(centerStack->currentWidget(),hddisplay,tr("Actuator Status"),"HEAD_DOWN_DISPLAY_2_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
-    }
-    else if (name == "Radio Control")
-    {
-        qDebug() << "Error loading window:" << name << "Unknown window type";
     }
     else if (name == "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET")
     {
