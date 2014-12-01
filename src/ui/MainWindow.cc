@@ -148,21 +148,36 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         menuActionHelper->setAdvancedMode(settings.value("ADVANCED_MODE").toBool());
     }
 
+    // Select the proper view. Default to the flight view or load the last one used if it's supported.
     if (!settings.contains("CURRENT_VIEW"))
     {
-        // Set this view as default view
         settings.setValue("CURRENT_VIEW", currentView);
     }
     else
     {
-        // LOAD THE LAST VIEW
         VIEW_SECTIONS currentViewCandidate = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", currentView).toInt();
-        if (currentViewCandidate != VIEW_ENGINEER &&
-                currentViewCandidate != VIEW_MISSION &&
-                currentViewCandidate != VIEW_FLIGHT &&
-                currentViewCandidate != VIEW_DEFAULT)
-        {
-            currentView = currentViewCandidate;
+        switch (currentViewCandidate) {
+            case VIEW_ENGINEER:
+            case VIEW_MISSION:
+            case VIEW_FLIGHT:
+            case VIEW_SIMULATION:
+            case VIEW_SETUP:
+            case VIEW_SOFTWARE_CONFIG:
+            case VIEW_TERMINAL:
+
+// And only re-load views if they're supported with the current QGC build
+#ifdef QGC_OSG_ENABLED
+            case VIEW_LOCAL3D:
+#endif
+#ifdef QGC_GOOGLE_EARTH_ENABLED
+            case VIEW_GOOGLEEARTH:
+#endif
+
+                currentView = currentViewCandidate;
+            default:
+                // If an invalid view candidate was found in the settings file, just use the default view and re-save.
+                settings.setValue("CURRENT_VIEW", currentView);
+                break;
         }
     }
 
@@ -466,6 +481,7 @@ void MainWindow::buildCustomWidget()
             case VIEW_ENGINEER:
                 dock = createDockWidget(engineeringView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
+            default: // Flight view is the default.
             case VIEW_FLIGHT:
                 dock = createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
@@ -481,7 +497,6 @@ void MainWindow::buildCustomWidget()
             case VIEW_LOCAL3D:
                 dock = createDockWidget(local3DView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
-            default:
                 dock = createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
             }
@@ -838,6 +853,7 @@ void MainWindow::loadCustomWidget(const QString& fileName, int view)
         case VIEW_ENGINEER:
             createDockWidget(engineeringView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
+        default: // Flight view is the default.
         case VIEW_FLIGHT:
             createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
@@ -846,14 +862,6 @@ void MainWindow::loadCustomWidget(const QString& fileName, int view)
             break;
         case VIEW_MISSION:
             createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
-            break;
-        default:
-            {
-            //Delete tool, create menu item to tie it to.
-            customWidgetNameToFilenameMap[tool->objectName()+"DOCK"] = fileName;
-            menuActionHelper->createToolAction(tool->getTitle(), tool->objectName()+"DOCK");
-            tool->deleteLater();
-            }
             break;
         }
     }
@@ -878,6 +886,7 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
         case VIEW_ENGINEER:
             createDockWidget(engineeringView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
+        default: // Flight view is the default.
         case VIEW_FLIGHT:
             createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
@@ -886,15 +895,6 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
             break;
         case VIEW_MISSION:
             createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
-            break;
-        default:
-            {
-            //Delete tool, create menu item to tie it to.
-            customWidgetNameToFilenameMap[tool->objectName()+"DOCK"] = fileName;
-            QAction *action = menuActionHelper->createToolAction(tool->getTitle(), tool->objectName()+"DOCK");
-            ui.menuTools->addAction(action);
-            tool->deleteLater();
-            }
             break;
         }
 
@@ -1587,6 +1587,7 @@ void MainWindow::loadViewState()
         case VIEW_ENGINEER:
             centerStack->setCurrentWidget(engineeringView);
             break;
+        default: // Default to the flight view
         case VIEW_FLIGHT:
             centerStack->setCurrentWidget(pilotView);
             break;
@@ -1606,17 +1607,6 @@ void MainWindow::loadViewState()
             break;
         case VIEW_LOCAL3D:
             centerStack->setCurrentWidget(local3DView);
-            break;
-        case VIEW_DEFAULT:
-        default:
-            if (controlDockWidget)
-            {
-                controlDockWidget->hide();
-            }
-            if (listDockWidget)
-            {
-                listDockWidget->show();
-            }
             break;
         }
     }
