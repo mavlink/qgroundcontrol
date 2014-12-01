@@ -42,8 +42,8 @@ class MockUAS : public UASInterface
     
 signals:
     // The following UASInterface signals are supported
-    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
-    void remoteControlChannelRawChanged(int channelId, float raw);
+    //  void parameterChanged(int uas, int component, QString parameterName, QVariant value);
+    //  void remoteControlChannelRawChanged(int channelId, float raw);
     
 public:
     // Implemented UASInterface overrides
