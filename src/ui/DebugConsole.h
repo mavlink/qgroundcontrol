@@ -66,7 +66,7 @@ public slots:
     /** @brief Add a UAS to the list of monitored UAS */
     void uasCreated(UASInterface* uas);
     /** @brief Remove a link from the list */
-    void removeLink(LinkInterface* const link);
+    void removeLink(LinkInterface* link);
     /** @brief Update a link name */
     void updateLinkName(QString name);
     /** @brief Select a link for the active view */
