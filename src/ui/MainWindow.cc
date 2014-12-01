@@ -503,7 +503,7 @@ void MainWindow::buildCommonWidgets()
     logPlayer = new QGCMAVLinkLogPlayer(mavlink, customStatusBar);
     customStatusBar->setLogPlayer(logPlayer);
 
-    // Center widgets
+    // Initialize all of the views, if they haven't been already, and add their central widgets
     if (!plannerView)
     {
         plannerView = new SubMainWindow(this);
@@ -511,8 +511,6 @@ void MainWindow::buildCommonWidgets()
         plannerView->setCentralWidget(new QGCMapTool(this));
         addToCentralStackedWidget(plannerView, VIEW_MISSION, "Maps");
     }
-
-    //pilotView (aka Flight or Mission View)
     if (!pilotView)
     {
         pilotView = new SubMainWindow(this);
@@ -520,7 +518,6 @@ void MainWindow::buildCommonWidgets()
         pilotView->setCentralWidget(new PrimaryFlightDisplay(this));
         addToCentralStackedWidget(pilotView, VIEW_FLIGHT, "Pilot");
     }
-
     if (!terminalView)
     {
         terminalView = new SubMainWindow(this);
@@ -529,7 +526,6 @@ void MainWindow::buildCommonWidgets()
         terminalView->setCentralWidget(terminalConsole);
         addToCentralStackedWidget(terminalView, VIEW_TERMINAL, tr("Terminal View"));
     }
-
     if (!setupView)
     {
         setupView = new SubMainWindow(this);
@@ -537,7 +533,6 @@ void MainWindow::buildCommonWidgets()
         setupView->setCentralWidget(new SetupView(this));
         addToCentralStackedWidget(setupView, VIEW_SETUP, "Setup");
     }
-
     if (!engineeringView)
     {
         engineeringView = new SubMainWindow(this);
@@ -545,7 +540,6 @@ void MainWindow::buildCommonWidgets()
         engineeringView->setCentralWidget(new QGCDataPlot2D(this));
         addToCentralStackedWidget(engineeringView, VIEW_ENGINEER, tr("Logfile Plot"));
     }
-
 #ifdef QGC_GOOGLE_EARTH_ENABLED
     if (!googleEarthView)
     {
@@ -555,7 +549,6 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(googleEarthView, VIEW_GOOGLEEARTH, tr("Google Earth View"));
     }
 #endif
-
 #ifdef QGC_OSG_ENABLED
     if (!local3DView)
     {
@@ -577,39 +570,37 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(simView, VIEW_SIMULATION, tr("Simulation View"));
     }
 
-    // Dock widgets
-    createDockWidget(simView,new UASControlWidget(this),tr("Control"),"UNMANNED_SYSTEM_CONTROL_DOCKWIDGET",VIEW_SIMULATION,Qt::LeftDockWidgetArea);
+    // Add dock widgets for the planner view
+    createDockWidget(plannerView, new PrimaryFlightDisplay(this), tr("Primary Flight Display"), "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET", VIEW_FLIGHT, Qt::LeftDockWidgetArea);
+    createDockWidget(plannerView, new UASListWidget(this), tr("Unmanned Systems"), "UNMANNED_SYSTEM_LIST_DOCKWIDGET", VIEW_MISSION, Qt::LeftDockWidgetArea);
+    createDockWidget(plannerView, new QGCWaypointListMulti(this), tr("Mission Plan"), "WAYPOINT_LIST_DOCKWIDGET", VIEW_MISSION, Qt::BottomDockWidgetArea);
 
-    createDockWidget(plannerView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_MISSION,Qt::LeftDockWidgetArea);
-    createDockWidget(plannerView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_MISSION,Qt::BottomDockWidgetArea);
-
-    createDockWidget(simView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
-    createDockWidget(engineeringView,new QGCMAVLinkInspector(mavlink,this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
-
-    createDockWidget(engineeringView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
-    createDockWidget(engineeringView,new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
-    createDockWidget(simView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
-
-    menuActionHelper->createToolAction(tr("Map View"), "MAP_VIEW_DOCKWIDGET");
-
-    menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
-
+    // Add dock widgets for the pilot view
     createDockWidget(pilotView, new DebugConsole(this), tr("Communications Console"), "COMMUNICATION_CONSOLE_DOCKWIDGET", VIEW_FLIGHT, Qt::LeftDockWidgetArea);
-
-    menuActionHelper->createToolAction(tr("Flight Display"), "HEAD_DOWN_DISPLAY_1_DOCKWIDGET");
-    menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
-    menuActionHelper->createToolAction(tr("Radio Control"));
-
-    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
-
-    createDockWidget(simView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
-    createDockWidget(plannerView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
-
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
     infoview->addSource(mavlinkDecoder);
-    createDockWidget(pilotView,infoview,tr("Info View"),"UAS_INFO_INFOVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
+    createDockWidget(pilotView, infoview, tr("Info View"), "UAS_INFO_INFOVIEW_DOCKWIDGET", VIEW_FLIGHT, Qt::LeftDockWidgetArea);
 
-    // Custom widgets, added last to all menus and layouts
+    // Add dock widgets for the simulation view
+    createDockWidget(simView,new UASControlWidget(this),tr("Control"),"UNMANNED_SYSTEM_CONTROL_DOCKWIDGET",VIEW_SIMULATION,Qt::LeftDockWidgetArea);
+    createDockWidget(simView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
+    createDockWidget(simView, new ParameterInterface(this), tr("Onboard Parameters"), "PARAMETER_INTERFACE_DOCKWIDGET", VIEW_SIMULATION, Qt::RightDockWidgetArea);
+    createDockWidget(simView, new PrimaryFlightDisplay(this), tr("Primary Flight Display"), "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET", VIEW_SIMULATION, Qt::RightDockWidgetArea);
+
+    // Add dock widgets for the engineering view
+    createDockWidget(engineeringView, new QGCMAVLinkInspector(mavlink, this), tr("MAVLink Inspector"), "MAVLINK_INSPECTOR_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView, new ParameterInterface(this), tr("Onboard Parameters"), "PARAMETER_INTERFACE_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView, new QGCUASFileViewMulti(this), tr("Onboard Files"), "FILE_VIEW_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView, new HUD(320, 240, this), tr("Video Downlink"), "HEAD_UP_DISPLAY_DOCKWIDGET", VIEW_FLIGHT, Qt::RightDockWidgetArea);
+
+    // Add some extra widgets to the Tool Widgets menu
+    menuActionHelper->createToolAction(tr("Map View"), "MAP_VIEW_DOCKWIDGET");
+    menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
+    menuActionHelper->createToolAction(tr("Flight Display"), "HEAD_DOWN_DISPLAY_1_DOCKWIDGET");
+    menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
+    menuActionHelper->createToolAction(tr("Radio Control")); // FIXME: Remove as this menu item does nothing
+
+    // Add any custom widgets last to all menus and layouts
     buildCustomWidget();
 }
 

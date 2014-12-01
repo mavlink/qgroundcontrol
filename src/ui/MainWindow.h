@@ -301,17 +301,17 @@ protected:
 
     typedef enum _VIEW_SECTIONS
     {
-        VIEW_ENGINEER,
-        VIEW_MISSION,
-        VIEW_FLIGHT,
-        VIEW_SIMULATION,
-        VIEW_FIRMWAREUPDATE,
-        VIEW_SETUP,
-        VIEW_SOFTWARE_CONFIG,
-        VIEW_TERMINAL,
-        VIEW_LOCAL3D,
-        VIEW_GOOGLEEARTH,
-        VIEW_DEFAULT
+        VIEW_ENGINEER,         // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
+        VIEW_MISSION,          // Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
+        VIEW_FLIGHT,           // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle
+        VIEW_SIMULATION,       // Simulation view. Useful overview of the entire system for simulation.
+        VIEW_FIRMWAREUPDATE,   // Firmware Update view. Used for modifying the onboard vehicle firmware. UNUSED.
+        VIEW_SETUP,            // Setup view. Used for initializing the system for operation. Includes UI for calibration, firmware updating/checking, and parameter modifcation.
+        VIEW_SOFTWARE_CONFIG,  // Software view. Used for configuring the onboard software/firmware.
+        VIEW_TERMINAL,         // Terminal interface. Used for communicating with the remote system, usually in a special configuration input mode.
+        VIEW_LOCAL3D,          // A local 3D view. Provides a local 3D view that makes visualizing 3D attitude/orientation/pose easy while in operation.
+        VIEW_GOOGLEEARTH,      // 3D Google Earth view. A 3D terrain view, though the vehicle is still 2D.
+        VIEW_DEFAULT           // Not a real view. Merely a programming abstraction to simplify the code.
     } VIEW_SECTIONS;
 
     /**
