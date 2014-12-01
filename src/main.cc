@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 #endif
 
     
-    if (rununitTests) {
+    if (runUnitTests) {
 #ifdef Q_OS_WIN
         // Don't pop ap dialog when app crashes
         DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
