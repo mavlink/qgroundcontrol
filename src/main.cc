@@ -126,7 +126,19 @@ int main(int argc, char *argv[])
 #endif
     }
 #endif
+
     
+    if (runUnitTests) {
+#ifdef Q_OS_WIN
+        // Don't pop ap dialog when app crashes
+        DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+#endif
+        // FIXME: Don't merge this. Just testing TeamCity crash handling
+        char *p = NULL;
+        p[0] = 0;
+    }
+
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
     
