@@ -236,7 +236,7 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
         group->addChild(geode);
 
         // text indicates component id
-        colorRGB.lighter();
+        colorRGB = colorRGB.lighter();
         color = osg::Vec4(colorRGB.redF(), colorRGB.greenF(), colorRGB.blueF(), 1.0f);
 
         osg::ref_ptr<osgText::Text> text = new osgText::Text;
