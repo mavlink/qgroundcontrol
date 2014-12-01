@@ -125,7 +125,16 @@ int main(int argc, char *argv[])
         _CrtSetReportHook(WindowsCrtReportHook);
 #endif
     }
+
+#ifdef Q_OS_WIN
+    if (runUnitTests) {
+        // Don't pop up Windows Error Reporting dialog when app crashes. This prevents TeamCity from
+        // hanging.
+        DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+    }
 #endif
+#endif // QT_DEBUG
     
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
