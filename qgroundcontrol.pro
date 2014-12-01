@@ -105,15 +105,18 @@ QT += network \
     opengl \
     svg \
     xml \
-    webkit \
     concurrent \
     widgets \
     gui \
     serialport \
     sql \
     printsupport \
-    webkitwidgets \
     quick
+
+!contains(DEFINES, DISABLE_GOOGLE_EARTH) {
+    QT += webkit webkitwidgets
+}
+
 
 #  testlib is needed even in release flavor for QSignalSpy support
 QT += testlib
@@ -273,7 +276,6 @@ FORMS += \
     src/ui/QGCSensorSettingsWidget.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QMap3D.ui \
-    src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/designer/QGCToolWidget.ui \
@@ -382,8 +384,6 @@ HEADERS += \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
     src/comm/QGCMAVLink.h \
-    src/ui/QGCWebView.h \
-    src/ui/map3D/QGCWebPage.h \
     src/ui/QGCMainWindowAPConfigurator.h \
     src/comm/MAVLinkSwarmSimulationLink.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
@@ -526,8 +526,6 @@ SOURCES += \
     src/QGC.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
-    src/ui/QGCWebView.cc \
-    src/ui/map3D/QGCWebPage.cc \
     src/ui/QGCMainWindowAPConfigurator.cc \
     src/comm/MAVLinkSwarmSimulationLink.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
