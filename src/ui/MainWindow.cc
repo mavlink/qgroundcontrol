@@ -113,7 +113,6 @@ void MainWindow::deleteInstance(void)
 MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode) :
     currentView(VIEW_FLIGHT),
     currentStyle(QGC_MAINWINDOW_STYLE_DARK),
-    changingViewsFlag(false),
     mavlink(new MAVLinkProtocol()),
     centerStackActionGroup(new QActionGroup(this)),
     autoReconnect(false),
