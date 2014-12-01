@@ -22,28 +22,28 @@
  ======================================================================*/
 
 /// @file
-///     @brief Unit test for QGCMessageBox catching mechanism.
+///     @brief Unit test for QGCFileDialog catching mechanism.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef MESSAGEBOXTEST_H
-#define MESSAGEBOXTEST_H
+#ifndef FILEDIALOGTEST_H
+#define FILEDIALOGTEST_H
 
 #include "UnitTest.h"
 
-class MessageBoxTest : public UnitTest
+class FileDialogTest : public UnitTest
 {
     Q_OBJECT
     
 public:
-    MessageBoxTest(void);
+    FileDialogTest(void);
     
 private slots:
-    void _messageBoxExpected_test(void);
-    void _messageBoxUnexpected_test(void);
-    void _previousMessageBox_test(void);
-    void _noMessageBox_test(void);
-    void _badResponseButton_test(void);
+    void _fileDialogExpected_test(void);
+    void _fileDialogUnexpected_test(void);
+    void _previousFileDialog_test(void);
+    void _noFileDialog_test(void);
+    void _fileDialogExpectedIncorrect_test(void);
 };
 
 #endif
