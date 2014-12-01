@@ -179,7 +179,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         }
     }
 
-    settings.sync();
     emit initStatusChanged(tr("Setting up user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Setup user interface
@@ -938,7 +937,6 @@ void MainWindow::loadCustomWidgetsFromDefaults(const QString& systemType, const 
 void MainWindow::loadSettings()
 {
     QSettings settings;
-    settings.sync();
 
     customMode = static_cast<enum MainWindow::CUSTOM_MODE>(settings.value("QGC_CUSTOM_MODE", (unsigned int)MainWindow::CUSTOM_MODE_NONE).toInt());
 
@@ -977,7 +975,6 @@ void MainWindow::storeSettings()
 
     // And save any custom weidgets
     QGCToolWidget::storeWidgetsToSettings(settings);
-    settings.sync();
 }
 
 void MainWindow::configureWindowName()
@@ -1042,7 +1039,6 @@ void MainWindow::enableDockWidgetTitleBars(bool enabled)
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue("DOCK_WIDGET_TITLEBARS",enabled);
     settings.endGroup();
-    settings.sync();
 }
 
 void MainWindow::enableAutoReconnect(bool enabled)

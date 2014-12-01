@@ -809,7 +809,6 @@ void QGCToolBar::storeSettings()
     QSettings settings;
     settings.beginGroup("QGC_TOOLBAR");
     settings.endGroup();
-    settings.sync();
 }
 
 void QGCToolBar::clearStatusString()

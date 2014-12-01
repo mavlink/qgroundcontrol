@@ -92,7 +92,6 @@ void QGCXPlaneLink::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
     settings.beginGroup("QGC_XPLANE_LINK");
     setRemoteHost(settings.value("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort)).toString());
     setVersion(settings.value("XPLANE_VERSION", 10).toInt());
@@ -111,7 +110,6 @@ void QGCXPlaneLink::storeSettings()
     settings.setValue("AIRFRAME", airframeName);
     settings.setValue("SENSOR_HIL", _sensorHilEnabled);
     settings.endGroup();
-    settings.sync();
 }
 
 void QGCXPlaneLink::setVersion(const QString& version)

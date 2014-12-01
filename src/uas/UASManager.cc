@@ -63,13 +63,11 @@ void UASManager::storeSettings()
     settings.setValue("HOMELON", homeLon);
     settings.setValue("HOMEALT", homeAlt);
     settings.endGroup();
-    settings.sync();
 }
 
 void UASManager::loadSettings()
 {
     QSettings settings;
-    settings.sync();
     settings.beginGroup("QGC_UASMANAGER");
     bool changed =  setHomePosition(settings.value("HOMELAT", homeLat).toDouble(),
                                     settings.value("HOMELON", homeLon).toDouble(),
