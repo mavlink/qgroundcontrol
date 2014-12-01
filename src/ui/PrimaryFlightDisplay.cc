@@ -114,6 +114,7 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(QWidget *parent) :
     heading(0),
 
     altitudeAMSL(std::numeric_limits<double>::quiet_NaN()),
+    altitudeWGS84(std::numeric_limits<double>::quiet_NaN()),
     altitudeRelative(std::numeric_limits<double>::quiet_NaN()),
 
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
@@ -898,7 +899,7 @@ void PrimaryFlightDisplay::drawAltimeter(
     ) {
 
     float primaryAltitude = altitudeWGS84;
-    float secondaryAltitude = 0;
+    float secondaryAltitude = std::numeric_limits<double>::quiet_NaN();
 
     painter.resetTransform();
     fillInstrumentBackground(painter, area);
