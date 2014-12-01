@@ -347,7 +347,6 @@ protected:
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
     QGC_MAINWINDOW_STYLE currentStyle;
-    bool aboutToCloseFlag;
     bool changingViewsFlag;
 
     void storeViewState();

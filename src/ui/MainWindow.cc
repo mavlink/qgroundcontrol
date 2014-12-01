@@ -113,7 +113,6 @@ void MainWindow::deleteInstance(void)
 MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode) :
     currentView(VIEW_FLIGHT),
     currentStyle(QGC_MAINWINDOW_STYLE_DARK),
-    aboutToCloseFlag(false),
     changingViewsFlag(false),
     mavlink(new MAVLinkProtocol()),
     centerStackActionGroup(new QActionGroup(this)),
@@ -790,12 +789,11 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (isVisible()) storeViewState();
-    aboutToCloseFlag = true;
+    storeViewState();
     storeSettings();
     mavlink->storeSettings();
     UASManager::instance()->storeSettings();
-    QMainWindow::closeEvent(event);
+    event->accept();
 }
 
 /**
@@ -942,36 +940,43 @@ void MainWindow::loadSettings()
 {
     QSettings settings;
     settings.sync();
+
     customMode = static_cast<enum MainWindow::CUSTOM_MODE>(settings.value("QGC_CUSTOM_MODE", (unsigned int)MainWindow::CUSTOM_MODE_NONE).toInt());
+
     settings.beginGroup("QGC_MAINWINDOW");
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
     lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
     bool dockWidgetTitleBarEnabled = settings.value("DOCK_WIDGET_TITLEBARS",menuActionHelper->dockWidgetTitleBarsEnabled()).toBool();
     settings.endGroup();
+
     enableDockWidgetTitleBars(dockWidgetTitleBarEnabled);
 }
 
 void MainWindow::storeSettings()
 {
     QSettings settings;
+
+    settings.setValue("QGC_CUSTOM_MODE", (int)customMode);
+
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue("AUTO_RECONNECT", autoReconnect);
     settings.setValue("CURRENT_STYLE", currentStyle);
-    settings.endGroup();
-    if (!aboutToCloseFlag && isVisible())
-    {
-        settings.setValue(getWindowGeometryKey(), saveGeometry());
-        // Save the last current view in any case
-        settings.setValue("CURRENT_VIEW", currentView);
-        // Save the current window state, but only if a system is connected (else no real number of widgets would be present))
-        if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState());
-        // Save the current view only if a UAS is connected
-        if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
-        // Save the current power mode
-    }
     settings.setValue("LOW_POWER_MODE", lowPowerMode);
-    settings.setValue("QGC_CUSTOM_MODE", (int)customMode);
+    settings.endGroup();
+
+    settings.setValue(getWindowGeometryKey(), saveGeometry());
+
+    // Save the last current view in any case
+    settings.setValue("CURRENT_VIEW", currentView);
+
+    // Save the current window state, but only if a system is connected (else no real number of widgets would be present))
+    if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState());
+
+    // Save the current UAS view if a UAS is connected
+    if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
+
+    // And save any custom weidgets
     QGCToolWidget::storeWidgetsToSettings(settings);
     settings.sync();
 }
@@ -1536,27 +1541,24 @@ void MainWindow::UASDeleted(UASInterface* uas)
  */
 void MainWindow::storeViewState()
 {
-    if (!aboutToCloseFlag)
+    // Save current state
+    SubMainWindow *win = qobject_cast<SubMainWindow*>(centerStack->currentWidget());
+    QList<QDockWidget*> widgets = win->findChildren<QDockWidget*>();
+    QString widgetnames = "";
+    for (int i=0;i<widgets.size();i++)
     {
-        // Save current state
-        SubMainWindow *win = qobject_cast<SubMainWindow*>(centerStack->currentWidget());
-        QList<QDockWidget*> widgets = win->findChildren<QDockWidget*>();
-        QString widgetnames = "";
-        for (int i=0;i<widgets.size();i++)
-        {
-            widgetnames += widgets[i]->objectName() + ",";
-        }
-        widgetnames = widgetnames.mid(0,widgetnames.length()-1);
-
-        settings.setValue(getWindowStateKey() + "WIDGETS",widgetnames);
-        settings.setValue(getWindowStateKey(), win->saveState());
-        settings.setValue(getWindowStateKey()+"CENTER_WIDGET", centerStack->currentIndex());
-        // Although we want save the state of the window, we do not want to change the top-leve state (minimized, maximized, etc)
-        // therefore this state is stored here and restored after applying the rest of the settings in the new
-        // perspective.
-        windowStateVal = this->windowState();
-        settings.setValue(getWindowGeometryKey(), saveGeometry());
+        widgetnames += widgets[i]->objectName() + ",";
     }
+    widgetnames = widgetnames.mid(0,widgetnames.length()-1);
+
+    settings.setValue(getWindowStateKey() + "WIDGETS",widgetnames);
+    settings.setValue(getWindowStateKey(), win->saveState());
+    settings.setValue(getWindowStateKey()+"CENTER_WIDGET", centerStack->currentIndex());
+    // Although we want save the state of the window, we do not want to change the top-leve state (minimized, maximized, etc)
+    // therefore this state is stored here and restored after applying the rest of the settings in the new
+    // perspective.
+    windowStateVal = this->windowState();
+    settings.setValue(getWindowGeometryKey(), saveGeometry());
 }
 
 void MainWindow::loadViewState()
