@@ -88,7 +88,6 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 {
     // Load settings
     QSettings settings;
-    settings.sync();
     muted = settings.value(QGC_GAUDIOOUTPUT_KEY + "muted", muted).toBool();
 
 
@@ -157,7 +156,6 @@ void GAudioOutput::mute(bool mute)
         this->muted = mute;
         QSettings settings;
         settings.setValue(QGC_GAUDIOOUTPUT_KEY + "muted", this->muted);
-        settings.sync();
         emit mutedChanged(muted);
     }
 }
