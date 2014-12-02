@@ -454,7 +454,7 @@
      <normaloff>:/files/images/apps/accessories-calculator.svg</normaloff>:/files/images/apps/accessories-calculator.svg</iconset>
    </property>
    <property name="text">
-    <string>Simulation</string>
+    <string>HIL Simulation</string>
    </property>
   </action>
   <action name="actionTerminalView">
