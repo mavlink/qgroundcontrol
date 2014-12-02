@@ -494,8 +494,6 @@ void MainWindow::buildCustomWidget()
             case VIEW_LOCAL3D:
                 dock = createDockWidget(local3DView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
-                dock = createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
-                break;
             }
 
             // XXX temporary "fix"
