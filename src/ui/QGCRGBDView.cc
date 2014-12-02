@@ -40,7 +40,6 @@ void QGCRGBDView::storeSettings()
     settings.setValue("STREAM_RGB_ON", rgbEnabled);
     settings.setValue("STREAM_DEPTH_ON", depthEnabled);
     settings.endGroup();
-    settings.sync();
 }
 
 void QGCRGBDView::loadSettings()

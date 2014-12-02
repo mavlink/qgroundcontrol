@@ -132,7 +132,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         // User requested settings to be cleared on command line
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
-        settings.sync();
     }
     
 }

@@ -170,7 +170,6 @@ void MAVLinkSettingsWidget::enableDroneOS(bool enable)
         protocol->setAuthKey(m_ui->droneOSLineEdit->text().trimmed());
         QSettings settings;
         settings.setValue("DRONEOS_HOST", m_ui->droneOSComboBox->currentText());
-        settings.sync();
     }
     protocol->enableAuth(enable);
 }
