@@ -90,9 +90,7 @@ namespace core {
                 return false;
             }
         }
-        QSqlDatabase db;
-
-        db = QSqlDatabase::addDatabase("QSQLITE",QLatin1String("CreateConn"));
+        QSqlDatabase db(QSqlDatabase::addDatabase("QSQLITE",QLatin1String("CreateConn")));
         db.setDatabaseName(file);
         if (!db.open())
         {
@@ -181,8 +179,7 @@ namespace core {
         qlonglong id=++ConnCounter;
         Mcounter.unlock();
         {
-            QSqlDatabase cn;
-            cn = QSqlDatabase::addDatabase("QSQLITE",QString::number(id));
+            QSqlDatabase cn(QSqlDatabase::addDatabase("QSQLITE",QString::number(id)));
             QString db=gtilecache+"Data.qmdb";
             cn.setDatabaseName(db);
             cn.setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
@@ -228,9 +225,7 @@ namespace core {
 
             QString db=dir+"Data.qmdb";
 			{
-				QSqlDatabase cn;
-			
-				cn = QSqlDatabase::addDatabase("QSQLITE",QString::number(id));
+				QSqlDatabase cn(QSqlDatabase::addDatabase("QSQLITE",QString::number(id)));
 
 	            cn.setDatabaseName(db);
 		        cn.setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
@@ -262,11 +257,10 @@ namespace core {
             ret=QFileInfo(db).exists();
             if(ret)
             {
-                QSqlDatabase cn;
                 Mcounter.lock();
                 qlonglong id=++ConnCounter;
                 Mcounter.unlock();
-                cn = QSqlDatabase::addDatabase("QSQLITE",QString::number(id));
+                QSqlDatabase cn(QSqlDatabase::addDatabase("QSQLITE",QString::number(id)));
                 cn.setDatabaseName(db);
                 cn.setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
                 if(cn.open())
@@ -304,12 +298,12 @@ namespace core {
             ret=CreateEmptyDB(destFile);
         }
         if(!ret) return false;
-        QSqlDatabase ca = QSqlDatabase::addDatabase("QSQLITE","ca");
+        QSqlDatabase ca(QSqlDatabase::addDatabase("QSQLITE","ca"));
         ca.setDatabaseName(sourceFile);
 
         if(ca.open())
         {
-            QSqlDatabase cb = QSqlDatabase::addDatabase("QSQLITE","cb");
+            QSqlDatabase cb(QSqlDatabase::addDatabase("QSQLITE","cb"));
             cb.setDatabaseName(destFile);
             if(cb.open())
             {
