@@ -139,6 +139,13 @@ int main(int argc, char *argv[])
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
     
+    // There appears to be a threading issue in qRegisterMetaType which can cause it to throw a qWarning
+    // about duplicate type converters. This is caused by a race condition in the Qt code. Still working
+    // with them on tracking down the bug. For now we register the type which is giving us problems here
+    // while we only have the main thread. That should prevent it from hitting the race condition later
+    // on in the code.
+    qRegisterMetaType<QList<QPair<QByteArray,QByteArray> > >();
+    
     app->_initCommon();
     
     int exitCode;
