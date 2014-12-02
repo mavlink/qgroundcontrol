@@ -160,7 +160,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
             case VIEW_FLIGHT:
             case VIEW_SIMULATION:
             case VIEW_SETUP:
-            case VIEW_SOFTWARE_CONFIG:
             case VIEW_TERMINAL:
 
 // And only re-load views if they're supported with the current QGC build
@@ -210,23 +209,20 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     toolBar = new QGCToolBar(this);
     this->addToolBar(toolBar);
 
-    // Add actions for average users (displayed next to each other)
+    // Add the perspectives to the toolbar
     QList<QAction*> actions;
     actions << ui.actionSetup;
     actions << ui.actionMissionView;
     actions << ui.actionFlightView;
     actions << ui.actionEngineersView;
-
     toolBar->setPerspectiveChangeActions(actions);
 
     // Add actions for advanced users (displayed in dropdown under "advanced")
     QList<QAction*> advancedActions;
     advancedActions << ui.actionGoogleEarthView;
     advancedActions << ui.actionLocal3DView;
-    advancedActions << ui.actionSoftwareConfig;
     advancedActions << ui.actionTerminalView;
     advancedActions << ui.actionSimulationView;
-
     toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
 
     customStatusBar = new QGCStatusBar(this);
@@ -1176,11 +1172,6 @@ void MainWindow::connectCommonActions()
         ui.actionSetup->setChecked(true);
         ui.actionSetup->activate(QAction::Trigger);
     }
-    if (currentView == VIEW_SOFTWARE_CONFIG)
-    {
-        ui.actionSoftwareConfig->setChecked(true);
-        ui.actionSoftwareConfig->activate(QAction::Trigger);
-    }
     if (currentView == VIEW_TERMINAL)
     {
         ui.actionTerminalView->setChecked(true);
@@ -1228,7 +1219,6 @@ void MainWindow::connectCommonActions()
     connect(ui.actionSetup,SIGNAL(triggered()),this,SLOT(loadSetupView()));
     connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
     connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
-    connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
     connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
 
     // Help Actions
@@ -1574,10 +1564,6 @@ void MainWindow::loadViewState()
         case VIEW_SETUP:
             centerStack->setCurrentWidget(setupView);
             break;
-        case VIEW_SOFTWARE_CONFIG:
-            if (softwareConfigView)
-                centerStack->setCurrentWidget(softwareConfigView);
-            break;
         case VIEW_ENGINEER:
             centerStack->setCurrentWidget(engineeringView);
             break;
@@ -1588,11 +1574,9 @@ void MainWindow::loadViewState()
         case VIEW_MISSION:
             centerStack->setCurrentWidget(plannerView);
             break;
-
         case VIEW_SIMULATION:
             centerStack->setCurrentWidget(simView);
             break;
-
         case VIEW_TERMINAL:
             centerStack->setCurrentWidget(terminalView);
             break;
@@ -1690,17 +1674,6 @@ void MainWindow::loadSetupView()
         storeViewState();
         currentView = VIEW_SETUP;
         ui.actionSetup->setChecked(true);
-        loadViewState();
-    }
-}
-
-void MainWindow::loadSoftwareConfigView()
-{
-    if (currentView != VIEW_SOFTWARE_CONFIG)
-    {
-        storeViewState();
-        currentView = VIEW_SOFTWARE_CONFIG;
-        ui.actionSoftwareConfig->setChecked(true);
         loadViewState();
     }
 }
