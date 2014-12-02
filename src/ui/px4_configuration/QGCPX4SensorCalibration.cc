@@ -402,13 +402,13 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
 
     ui->instructionLabel->setText(QString("%1").arg(text));
 
-    if (text.startsWith("accel measurement started: ")) {
-        QString axis = text.split("measurement started: ").last().left(2);
+    if (text.startsWith("Hold still, starting to measure ")) {
+        QString axis = text.section(" ", -2, -2);
         setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
     }
 
-    if (text.startsWith("directions left: ")) {
-        QString axis = text.split("directions left: ").last().left(2);
+    if (text.startsWith("pending: ")) {
+        QString axis = text.section(" ", 1, 1);
         setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
     }
 
