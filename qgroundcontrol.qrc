@@ -168,12 +168,12 @@
         <file>files/images/px4/airframes/plane_aert.png</file>
         <file>files/images/px4/airframes/quad_h.png</file>
         <file>files/images/px4/calibration/arrows.png</file>
-        <file>files/images/px4/calibration/accel_front.png</file>
         <file>files/images/px4/calibration/accel_back.png</file>
-        <file>files/images/px4/calibration/accel_left.png</file>
-        <file>files/images/px4/calibration/accel_up.png</file>
-        <file>files/images/px4/calibration/accel_down.png</file>
+        <file>files/images/px4/calibration/accel_front.png</file>
         <file>files/images/px4/calibration/accel_right.png</file>
+        <file>files/images/px4/calibration/accel_down.png</file>
+        <file>files/images/px4/calibration/accel_up.png</file>
+        <file>files/images/px4/calibration/accel_left.png</file>
         <file>files/images/px4/calibration/mag_calibration_figure8.png</file>
         <file>files/images/px4/calibration/mode1/radioCenter.png</file>
         <file>files/images/px4/calibration/mode1/radioHome.png</file>
