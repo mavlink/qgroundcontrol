@@ -58,7 +58,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionJoystick_Settings"/>
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionMuteAudioOutput"/>
@@ -87,22 +86,21 @@
      <string>Help</string>
     </property>
     <addaction name="actionOnline_Documentation"/>
-    <addaction name="actionProject_Roadmap_2"/>
+    <addaction name="actionProject_Roadmap"/>
     <addaction name="actionDeveloper_Credits"/>
    </widget>
    <widget class="QMenu" name="menuPerspectives">
     <property name="title">
      <string>Perspectives</string>
     </property>
+    <addaction name="actionSetup"/>
     <addaction name="actionMissionView"/>
     <addaction name="actionFlightView"/>
-    <addaction name="actionSetup"/>
     <addaction name="actionEngineersView"/>
     <addaction name="actionGoogleEarthView"/>
     <addaction name="actionLocal3DView"/>
     <addaction name="actionTerminalView"/>
     <addaction name="actionSimulationView"/>
-    <addaction name="actionFirmwareUpdateView"/>
     <addaction name="separator"/>
     <addaction name="actionFullscreen"/>
     <addaction name="actionNormal"/>
@@ -181,18 +179,6 @@
     <string>Add Link</string>
    </property>
   </action>
-  <action name="actionJoystickSettings">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/devices/input-gaming.svg</normaloff>:/files/images/devices/input-gaming.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Joystick Configuration</string>
-   </property>
-   <property name="visible">
-    <bool>true</bool>
-   </property>
-  </action>
   <action name="actionSimulate">
    <property name="checkable">
     <bool>true</bool>
@@ -208,27 +194,6 @@
     <string>Simulate one vehicle to test and evaluate this application</string>
    </property>
   </action>
-  <action name="actionShow_Slugs_View">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/contrib/slugs.png</normaloff>:/files/images/contrib/slugs.png</iconset>
-   </property>
-   <property name="text">
-    <string>Show Slugs View</string>
-   </property>
-  </action>
-  <action name="actionJoystick_Settings">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/devices/input-gaming.svg</normaloff>:/files/images/devices/input-gaming.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Joystick Settings</string>
-   </property>
-   <property name="visible">
-    <bool>false</bool>
-   </property>
-  </action>
   <action name="actionOnline_Documentation">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
@@ -238,7 +203,7 @@
     <string>Online Documentation</string>
    </property>
   </action>
-  <action name="actionProject_Roadmap_2">
+  <action name="actionProject_Roadmap">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
@@ -280,18 +245,6 @@
     <string>Analyze</string>
    </property>
   </action>
-  <action name="actionMavlinkView">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/devices/network-wired.svg</normaloff>:/files/images/devices/network-wired.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Mavlink</string>
-   </property>
-  </action>
   <action name="actionFlightView">
    <property name="checkable">
     <bool>true</bool>
@@ -327,18 +280,6 @@
    </property>
    <property name="text">
     <string>Mute Audio Output</string>
-   </property>
-  </action>
-  <action name="actionUnconnectedView">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Unconnected</string>
    </property>
   </action>
   <action name="actionShutdownMAV">
@@ -401,24 +342,6 @@
     <string>Load Custom Widget File</string>
    </property>
   </action>
-  <action name="actionFirmwareUpdateView">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Firmware Update</string>
-   </property>
-   <property name="toolTip">
-    <string>Update the firmware of one of the connected autopilots</string>
-   </property>
-   <property name="visible">
-    <bool>false</bool>
-   </property>
-  </action>
   <action name="actionSetup">
    <property name="checkable">
     <bool>true</bool>
@@ -454,19 +377,7 @@
      <normaloff>:/files/images/apps/accessories-calculator.svg</normaloff>:/files/images/apps/accessories-calculator.svg</iconset>
    </property>
    <property name="text">
-    <string>Simulation</string>
-   </property>
-  </action>
-  <action name="actionSoftwareConfig">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/categories/applications-system.svg</normaloff>:/files/images/categories/applications-system.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Software</string>
+    <string>HIL Simulation</string>
    </property>
   </action>
   <action name="actionTerminalView">

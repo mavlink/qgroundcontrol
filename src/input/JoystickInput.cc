@@ -69,7 +69,6 @@ void JoystickInput::loadGeneralSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
 
     // Deal with settings specific to the JoystickInput
     settings.beginGroup("JOYSTICK_INPUT");
@@ -86,7 +85,6 @@ void JoystickInput::loadJoystickSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
 
     // Now for the current joystick
     settings.beginGroup(joystickName);
@@ -162,7 +160,6 @@ void JoystickInput::storeGeneralSettings() const
     settings.setValue("ENABLED", isEnabled);
     settings.setValue("JOYSTICK_NAME", joystickName);
     settings.endGroup();
-    settings.sync();
 }
 
 void JoystickInput::storeJoystickSettings() const
@@ -254,7 +251,6 @@ void JoystickInput::storeJoystickSettings() const
     }
     settings.endArray(); // AUTOPILOTS
     settings.endGroup();
-    settings.sync();
 }
 
 void JoystickInput::setActiveUAS(UASInterface* uas)

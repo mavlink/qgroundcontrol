@@ -136,7 +136,6 @@ void SerialLink::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
     if (settings.contains("SERIALLINK_COMM_PORT"))
     {
         m_portName = settings.value("SERIALLINK_COMM_PORT").toString();
@@ -160,7 +159,6 @@ void SerialLink::writeSettings()
     settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBits());
     settings.setValue("SERIALLINK_COMM_DATABITS", getDataBits());
     settings.setValue("SERIALLINK_COMM_FLOW_CONTROL", getFlowType());
-    settings.sync();
 }
 
 void SerialLink::checkIfCDC()

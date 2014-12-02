@@ -267,7 +267,6 @@ void TerminalConsole::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
     if (settings.contains("TERMINALCONSOLE_COMM_PORT"))
     {
         m_settings.name = settings.value("TERMINALCONSOLE_COMM_PORT").toString();
@@ -295,7 +294,6 @@ void TerminalConsole::writeSettings()
     settings.setValue("TERMINALCONSOLE_COMM_STOPBITS", m_settings.stopBits);
     settings.setValue("TERMINALCONSOLE_COMM_DATABITS", m_settings.dataBits);
     settings.setValue("TERMINALCONSOLE_COMM_FLOW_CONTROL", m_settings.flowControl);
-    settings.sync();
 }
 
 

@@ -42,7 +42,6 @@ QGCHilConfiguration::~QGCHilConfiguration()
     settings.beginGroup("QGC_HILCONFIG");
     settings.setValue("SIMULATOR_INDEX", ui->simComboBox->currentIndex());
     settings.endGroup();
-    settings.sync();
     delete ui;
 }
 
