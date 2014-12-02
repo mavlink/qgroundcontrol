@@ -1137,6 +1137,7 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionSimulationView);
     perspectives->addAction(ui.actionMissionView);
     perspectives->addAction(ui.actionSetup);
+    perspectives->addAction(ui.actionSoftwareConfig);
     perspectives->addAction(ui.actionTerminalView);
     perspectives->addAction(ui.actionGoogleEarthView);
     perspectives->addAction(ui.actionLocal3DView);
