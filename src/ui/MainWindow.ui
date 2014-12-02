@@ -457,18 +457,6 @@
     <string>Simulation</string>
    </property>
   </action>
-  <action name="actionSoftwareConfig">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/categories/applications-system.svg</normaloff>:/files/images/categories/applications-system.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Software</string>
-   </property>
-  </action>
   <action name="actionTerminalView">
    <property name="checkable">
     <bool>true</bool>
