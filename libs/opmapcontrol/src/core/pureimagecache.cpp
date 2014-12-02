@@ -29,6 +29,8 @@
 #include <QSettings>
 //#define DEBUG_PUREIMAGECACHE
 namespace core {
+    static QMutex addDatabaseMutex; // QSqlDatabase::addDatabase is not thread safe when loadingn plugins
+
     qlonglong PureImageCache::ConnCounter=0;
 
     PureImageCache::PureImageCache()
@@ -90,7 +92,9 @@ namespace core {
                 return false;
             }
         }
+        addDatabaseMutex.lock();
         QSqlDatabase db(QSqlDatabase::addDatabase("QSQLITE",QLatin1String("CreateConn")));
+        addDatabaseMutex.unlock();
         db.setDatabaseName(file);
         if (!db.open())
         {
@@ -179,7 +183,9 @@ namespace core {
         qlonglong id=++ConnCounter;
         Mcounter.unlock();
         {
+            addDatabaseMutex.lock();
             QSqlDatabase cn(QSqlDatabase::addDatabase("QSQLITE",QString::number(id)));
+            addDatabaseMutex.unlock();
             QString db=gtilecache+"Data.qmdb";
             cn.setDatabaseName(db);
             cn.setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
@@ -225,7 +231,9 @@ namespace core {
 
             QString db=dir+"Data.qmdb";
 			{
+                addDatabaseMutex.lock();
 				QSqlDatabase cn(QSqlDatabase::addDatabase("QSQLITE",QString::number(id)));
+                addDatabaseMutex.unlock();
 
 	            cn.setDatabaseName(db);
 		        cn.setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
@@ -260,7 +268,9 @@ namespace core {
                 Mcounter.lock();
                 qlonglong id=++ConnCounter;
                 Mcounter.unlock();
+                addDatabaseMutex.lock();
                 QSqlDatabase cn(QSqlDatabase::addDatabase("QSQLITE",QString::number(id)));
+                addDatabaseMutex.unlock();
                 cn.setDatabaseName(db);
                 cn.setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
                 if(cn.open())
@@ -298,12 +308,16 @@ namespace core {
             ret=CreateEmptyDB(destFile);
         }
         if(!ret) return false;
+        addDatabaseMutex.lock();
         QSqlDatabase ca(QSqlDatabase::addDatabase("QSQLITE","ca"));
+        addDatabaseMutex.unlock();
         ca.setDatabaseName(sourceFile);
 
         if(ca.open())
         {
+            addDatabaseMutex.lock();
             QSqlDatabase cb(QSqlDatabase::addDatabase("QSQLITE","cb"));
+            addDatabaseMutex.unlock();
             cb.setDatabaseName(destFile);
             if(cb.open())
             {
