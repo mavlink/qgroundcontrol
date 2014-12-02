@@ -312,12 +312,12 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         // Add last button
         advancedButton = new QToolButton(this);
         advancedButton->setIcon(QIcon(":/files/images/apps/utilities-system-monitor.svg"));
-        advancedButton->setText(tr("Pro"));
+        advancedButton->setText(tr("More"));
         advancedButton->setToolTip(tr("Options for advanced users"));
         advancedButton->setCheckable(true);
         advancedButton->setObjectName("advancedButton");
         advancedButton->setPopupMode(QToolButton::InstantPopup);
-        advancedButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        advancedButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
         addWidget(advancedButton);
         group->addButton(advancedButton);
     } else {
