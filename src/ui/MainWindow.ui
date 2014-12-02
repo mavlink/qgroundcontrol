@@ -94,9 +94,9 @@
     <property name="title">
      <string>Perspectives</string>
     </property>
+    <addaction name="actionSetup"/>
     <addaction name="actionMissionView"/>
     <addaction name="actionFlightView"/>
-    <addaction name="actionSetup"/>
     <addaction name="actionEngineersView"/>
     <addaction name="actionGoogleEarthView"/>
     <addaction name="actionLocal3DView"/>
