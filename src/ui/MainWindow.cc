@@ -221,7 +221,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
 
     // Add actions for advanced users (displayed in dropdown under "advanced")
     QList<QAction*> advancedActions;
-    advancedActions << ui.actionEngineersView;
     advancedActions << ui.actionGoogleEarthView;
     advancedActions << ui.actionLocal3DView;
     advancedActions << ui.actionSoftwareConfig;
