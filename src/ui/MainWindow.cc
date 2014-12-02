@@ -346,7 +346,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Meta+6", 0));
     ui.actionTerminalView->setShortcut(QApplication::translate("MainWindow", "Meta+7", 0));
     ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+8", 0));
-    ui.actionFirmwareUpdateView->setShortcut(QApplication::translate("MainWindow", "Meta+9", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
     ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
@@ -357,7 +356,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Ctrl+6", 0));
     ui.actionTerminalView->setShortcut(QApplication::translate("MainWindow", "Ctrl+7", 0));
     ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+8", 0));
-    ui.actionFirmwareUpdateView->setShortcut(QApplication::translate("MainWindow", "Ctrl+9", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
@@ -1224,7 +1222,7 @@ void MainWindow::connectCommonActions()
     // Help Actions
     connect(ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionDeveloper_Credits, SIGNAL(triggered()), this, SLOT(showCredits()));
-    connect(ui.actionProject_Roadmap_2, SIGNAL(triggered()), this, SLOT(showRoadMap()));
+    connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
 
     // Custom widget actions
     connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
@@ -1234,13 +1232,6 @@ void MainWindow::connectCommonActions()
     ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
     connect(GAudioOutput::instance(), SIGNAL(mutedChanged(bool)), ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
     connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
-
-    // User interaction
-    // NOTE: Joystick thread is not started and
-    // configuration widget is not instantiated
-    // unless it is actually used
-    // so no ressources spend on this.
-    ui.actionJoystickSettings->setVisible(true);
 
     // Application Settings
     connect(ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
