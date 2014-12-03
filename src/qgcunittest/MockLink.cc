@@ -382,6 +382,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
             mavlink_message_t   responseMsg;
             char paramId[MAVLINK_MSG_ID_PARAM_VALUE_LEN];
 
+            Q_ASSERT(param.key().length() <= MAVLINK_MSG_ID_PARAM_VALUE_LEN);
             strncpy(paramId, param.key().toLocal8Bit().constData(), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
             mavlink_msg_param_value_pack(_vehicleSystemId,
                                          _vehicleComponentId,
