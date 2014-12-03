@@ -782,6 +782,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
     storeSettings();
     mavlink->storeSettings();
     UASManager::instance()->storeSettings();
+    // FIXME: If connected links, should prompt before close
+    LinkManager::instance()->disconnectAll();
     event->accept();
 }
 
@@ -1039,7 +1041,7 @@ void MainWindow::enableAutoReconnect(bool enabled)
 
 bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
 {
-    qDebug() << "LOAD STYLE" << style;
+    //qDebug() << "LOAD STYLE" << style;
     bool success = true;
     QString styles;
     
@@ -1587,7 +1589,7 @@ void MainWindow::loadViewState()
         {
             if (widgetname != "")
             {
-                qDebug() << "Loading widget:" << widgetname;
+                //qDebug() << "Loading widget:" << widgetname;
                 loadDockWidget(widgetname);
             }
         }
