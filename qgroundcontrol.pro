@@ -654,7 +654,8 @@ HEADERS += \
     src/qgcunittest/PX4RCCalibrationTest.h \
     src/qgcunittest/LinkManagerTest.h \
     src/qgcunittest/MainWindowTest.h \
-    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.h
+    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.h \
+    src/qgcunittest/MavlinkLogTest.h
 
 SOURCES += \
     src/qgcunittest/UnitTest.cc \
@@ -675,7 +676,8 @@ SOURCES += \
     src/qgcunittest/PX4RCCalibrationTest.cc \
     src/qgcunittest/LinkManagerTest.cc \
     src/qgcunittest/MainWindowTest.cc \
-    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.cc
+    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.cc \
+    src/qgcunittest/MavlinkLogTest.cc
 }
 
 #
