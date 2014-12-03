@@ -23,6 +23,7 @@
 
 #include "QGCFileDialog.h"
 #include "QGCApplication.h"
+#include "MainWindow.h"
 #ifdef QT_DEBUG
 #include "UnitTest.h"
 #endif
@@ -113,4 +114,8 @@ void QGCFileDialog::_validate(QString* selectedFilter, Options& options)
     
     // On OSX native dialog can hang so we always use Qt dialogs
     options |= DontUseNativeDialog;
+    
+    if (MainWindow::instance()) {
+        MainWindow::instance()->hideSplashScreen();
+    }
 }
