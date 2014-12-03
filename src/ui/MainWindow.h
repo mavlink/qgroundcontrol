@@ -158,6 +158,8 @@ public:
     }
 
     QList<QAction*> listLinkMenuActions();
+    
+    void hideSplashScreen(void);
 
 public slots:
     /** @brief Shows a status message on the bottom status bar */
@@ -467,7 +469,6 @@ private:
     /// Constructor is private since all creation should be through MainWindow::_create
     MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
     
-    void _hideSplashScreen(void);
     void _openUrl(const QString& url, const QString& errorMessage);
     
     QList<QObject*> commsWidgetList;
