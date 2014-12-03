@@ -100,23 +100,24 @@ void MockLink::readBytes(void)
 
 bool MockLink::_connect(void)
 {
-    _connected = true;
-    
-    start();
-    
-    emit connected();
-    emit connected(true);
+    if (!_connected) {
+        _connected = true;
+        start();
+        emit connected();
+        emit connected(true);
+    }
     
     return true;
 }
 
 bool MockLink::_disconnect(void)
 {
-    _connected = false;
-    exit();
-    
-    emit disconnected();
-    emit connected(false);
+    if (_connected) {
+        _connected = false;
+        exit();        
+        emit disconnected();
+        emit connected(false);
+    }
     
     return true;
 }
@@ -136,9 +137,6 @@ void MockLink::run(void)
     _timer50HzTasks.start(20);
     
     exec();
-    
-    emit disconnected();
-    emit connected(false);
 }
 
 void MockLink::_run1HzTasks(void)
@@ -382,15 +380,17 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
         
         for (param = _parameters.begin(); param != _parameters.end(); param++) {
             mavlink_message_t   responseMsg;
+            char paramId[MAVLINK_MSG_ID_PARAM_VALUE_LEN];
 
+            strncpy(paramId, param.key().toLocal8Bit().constData(), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
             mavlink_msg_param_value_pack(_vehicleSystemId,
                                          _vehicleComponentId,
-                                         &responseMsg,                          // Outgoing message
-                                         param.key().toLocal8Bit().constData(), // Parameter name
-                                         param.value().toFloat(),               // Parameter vluae
-                                         MAV_PARAM_TYPE_REAL32,                 // FIXME: Pull from QVariant type
-                                         _cParameters,                          // Total number of parameters
-                                         paramIndex++);                         // Index of this parameter
+                                         &responseMsg,              // Outgoing message
+                                         paramId,                   // Parameter name
+                                         param.value().toFloat(),   // Parameter vluae
+                                         MAV_PARAM_TYPE_REAL32,     // FIXME: Pull from QVariant type
+                                         _cParameters,              // Total number of parameters
+                                         paramIndex++);             // Index of this parameter
             _emitMavlinkMessage(responseMsg);
         }
     } else {
