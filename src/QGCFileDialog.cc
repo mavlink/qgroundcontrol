@@ -112,5 +112,5 @@ void QGCFileDialog::_validate(QString* selectedFilter, Options& options)
     Q_ASSERT(selectedFilter == NULL);
     
     // On OSX native dialog can hang so we always use Qt dialogs
-    options | DontUseNativeDialog;
+    options |= DontUseNativeDialog;
 }
