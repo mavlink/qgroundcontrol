@@ -220,7 +220,7 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
     // Track the links which are connected to the protocol
     QList<LinkInterface*> _connectedLinks;  ///< List of all links connected to protocol
 
-    qDebug() << "linkStatusChanged" << connected;
+    //qDebug() << "linkStatusChanged" << connected;
     
 
     if (link) {
