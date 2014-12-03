@@ -92,9 +92,14 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     _app = this;
     
     // Set application information
-    this->setApplicationName(QGC_APPLICATION_NAME);
-    this->setOrganizationName(QGC_ORG_NAME);
-    this->setOrganizationDomain(QGC_ORG_DOMAIN);
+    setApplicationName(QGC_APPLICATION_NAME);
+    setOrganizationName(QGC_ORG_NAME);
+    setOrganizationDomain(QGC_ORG_DOMAIN);
+    
+    if (_runningUnitTests) {
+        // Change the application name when running unit test so it gets it's own space for QSettings
+        setApplicationName(applicationName() + "-unittest");
+    }
     
     // Version string is build from component parts. Format is:
     //  vMajor.Minor.BuildNumber BuildType
@@ -133,7 +138,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
-    
 }
 
 QGCApplication::~QGCApplication()
