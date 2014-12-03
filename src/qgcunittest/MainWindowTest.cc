@@ -27,7 +27,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "MainWindowTest.h"
-#include "MainWindow.h"
+#include "QGCToolBar.h"
 
 UT_REGISTER_TEST(MainWindowTest)
 
@@ -39,19 +39,30 @@ MainWindowTest::MainWindowTest(void)
 void MainWindowTest::init(void)
 {
     UnitTest::init();
+
+    _mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
+    Q_CHECK_PTR(_mainWindow);
 }
 
 void MainWindowTest::cleanup(void)
 {
+    _mainWindow->close();
+    delete _mainWindow;
+    
     UnitTest::cleanup();
 }
 
-void MainWindowTest::_simpleDisplay_test(void)
+void MainWindowTest::_clickThrough_test(void)
 {
-    MainWindow* mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
-    Q_CHECK_PTR(mainWindow);
+    QGCToolBar* toolbar = _mainWindow->findChild<QGCToolBar*>();
+    Q_ASSERT(toolbar);
     
-    mainWindow->close();
+    QList<QToolButton*> buttons = toolbar->findChildren<QToolButton*>();
+    foreach(QToolButton* button, buttons) {
+        if (!button->menu()) {
+            QTest::mouseClick(button, Qt::LeftButton);
+            QTest::qWait(1000);
+        }
+    }
     
-    delete mainWindow;
 }

@@ -30,6 +30,7 @@
 #define MAINWINDOWTEST_H
 
 #include "UnitTest.h"
+#include "MainWindow.h"
 
 class MainWindowTest : public UnitTest
 {
@@ -42,7 +43,10 @@ private slots:
     void init(void);
     void cleanup(void);
     
-    void _simpleDisplay_test(void);
+    void _clickThrough_test(void);
+    
+private:
+    MainWindow* _mainWindow;
 };
 
 #endif
