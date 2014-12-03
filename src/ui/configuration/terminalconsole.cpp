@@ -118,7 +118,7 @@ void TerminalConsole::fillPortsInfo(QComboBox &comboxBox)
              << (info.productIdentifier() ? QString::number(info.productIdentifier(), 16) : QString());
 
         comboxBox.insertItem(0,list.first(), list);
-        qDebug() << "Inserting " << list.first();
+        //qDebug() << "Inserting " << list.first();
     }
 }
 
