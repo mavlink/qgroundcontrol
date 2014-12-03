@@ -296,6 +296,8 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     // Restore the window position and size
     if (settings.contains(getWindowGeometryKey()))
     {
+        qDebug() << settings.allKeys();
+        
         // Restore the window geometry
         restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
         show();

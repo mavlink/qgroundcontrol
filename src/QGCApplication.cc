@@ -92,14 +92,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     _app = this;
     
     // Set application information
-    setApplicationName(QGC_APPLICATION_NAME);
+    if (_runningUnitTests) {
+        // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
+        // name. Also we want to run unit tests with clean settings every time.
+        setApplicationName(QString("%1_unittest").arg(QGC_APPLICATION_NAME));
+    } else {
+        setApplicationName(QGC_APPLICATION_NAME);
+    }
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
-    
-    if (_runningUnitTests) {
-        // Change the application name when running unit test so it gets it's own space for QSettings
-        setApplicationName(applicationName() + "-unittest");
-    }
     
     // Version string is build from component parts. Format is:
     //  vMajor.Minor.BuildNumber BuildType
@@ -126,10 +127,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
     
-    // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
-    // name. Also we want to run unit tests with clean settings every time.
     if (_runningUnitTests) {
-        setApplicationName(applicationName().append("UnitTest"));
+        // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }
     
