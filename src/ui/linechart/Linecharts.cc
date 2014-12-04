@@ -18,10 +18,7 @@ Linecharts::Linecharts(QWidget *parent) :
     foreach (UASInterface* sys, systems) {
         addSystem(sys);
     }
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
-            this, SLOT(addSystem(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
-            this, SLOT(selectSystem(int)));
+    connect(UASManager::instance(), &UASManager::UASCreated, this, &Linecharts::addSystem);
 }
 
 void Linecharts::showEvent(QShowEvent* event)
@@ -57,32 +54,6 @@ void Linecharts::hideEvent(QHideEvent* event)
     }
     QWidget::hideEvent(event);
     emit visibilityChanged(false);
-}
-
-void Linecharts::selectSystem(int systemid)
-{
-	Q_UNUSED(systemid);
-//    QWidget* prevWidget = currentWidget();
-//    if (prevWidget)
-//    {
-//        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-//        if (chart)
-//        {
-//            chart->setActive(false);
-//            chart->setActiveSystem(systemid);
-//        }
-//    }
-//    QWidget* widget = plots.value(systemid, NULL);
-//    if (widget)
-//    {
-//        setCurrentWidget(widget);
-//        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(widget);
-//        if (chart)
-//        {
-//            chart->setActive(true);
-//            chart->setActiveSystem(systemid);
-//        }
-//    }
 }
 
 void Linecharts::addSystem(UASInterface* uas)

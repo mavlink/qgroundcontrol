@@ -20,8 +20,6 @@ signals:
     void visibilityChanged(bool visible);
 
 public slots:
-    /** @brief Select plot for one system */
-    void selectSystem(int systemid);
     /** @brief Add a new system to the list of plots */
     void addSystem(UASInterface* uas);
     /** @brief Add a new generic message source (not a system) */
