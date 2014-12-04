@@ -10,7 +10,7 @@
 #include <QStandardPaths>
 
 #include "QGCParamSlider.h"
-#include "QGCComboBox.h"
+#include "QGCToolWidgetComboBox.h"
 #include "QGCTextLabel.h"
 #include "QGCXYPlot.h"
 #include "QGCCommandButton.h"
@@ -230,7 +230,7 @@ void QGCToolWidget::setParameterValue(int uas, int component, QString parameterN
             QString checkparam = settingsMap.value(widgetName + "\\" + QString::number(j) + "\\" + "QGC_PARAM_COMBOBOX_PARAMID").toString();
             if (checkparam == parameterName)
             {
-                item = new QGCComboBox(this);
+                item = new QGCToolWidgetComboBox(this);
                 addToolWidget(item);
                 item->readSettings(widgetName + "\\" + QString::number(j) + "\\",settingsMap);
                 paramToItemMap[parameterName] = item;
@@ -274,7 +274,7 @@ void QGCToolWidget::loadSettings(QVariantMap& settings)
             }
             else if (type == "COMBO")
             {
-                item = new QGCComboBox(this);
+                item = new QGCToolWidgetComboBox(this);
                 //qDebug() << "CREATED COMBOBOX";
             }
             else if (type == "XYPLOT")
@@ -330,7 +330,7 @@ void QGCToolWidget::loadSettings(QSettings& settings)
             }
             else if (type == "COMBO")
             {
-                item = new QGCComboBox(this);
+                item = new QGCToolWidgetComboBox(this);
                 item->setActiveUAS(mav);
                 qDebug() << "CREATED PARAM COMBOBOX";
             }

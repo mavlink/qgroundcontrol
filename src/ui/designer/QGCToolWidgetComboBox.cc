@@ -5,13 +5,13 @@
 #include <QToolTip>
 #include <QDebug>
 
-#include "QGCComboBox.h"
-#include "ui_QGCComboBox.h"
+#include "QGCToolWidgetComboBox.h"
+#include "ui_QGCToolWidgetComboBox.h"
 #include "UASInterface.h"
 #include "UASManager.h"
 
 
-QGCComboBox::QGCComboBox(QWidget *parent) :
+QGCToolWidgetComboBox::QGCToolWidgetComboBox(QWidget *parent) :
     QGCToolWidgetItem("Combo", parent),
     parameterName(""),
     parameterValue(0.0f),
@@ -19,7 +19,7 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     parameterMin(0.0f),
     parameterMax(0.0f),
     componentId(0),
-    ui(new Ui::QGCComboBox)
+    ui(new Ui::QGCToolWidgetComboBox)
 {
     ui->setupUi(this);
     uas = NULL;
@@ -64,12 +64,12 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     init();
 }
 
-QGCComboBox::~QGCComboBox()
+QGCToolWidgetComboBox::~QGCToolWidgetComboBox()
 {
     delete ui;
 }
 
-void QGCComboBox::showTooltip()
+void QGCToolWidgetComboBox::showTooltip()
 {
     QWidget* sender = dynamic_cast<QWidget*>(QObject::sender());
 
@@ -80,7 +80,7 @@ void QGCComboBox::showTooltip()
     }
 }
 
-void QGCComboBox::refreshParameter()
+void QGCToolWidgetComboBox::refreshParameter()
 {
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
@@ -90,7 +90,7 @@ void QGCComboBox::refreshParameter()
     }
 }
 
-void QGCComboBox::setActiveUAS(UASInterface* activeUas)
+void QGCToolWidgetComboBox::setActiveUAS(UASInterface* activeUas)
 {
     if (activeUas)
     {
@@ -119,7 +119,7 @@ void QGCComboBox::setActiveUAS(UASInterface* activeUas)
     }
 }
 
-void QGCComboBox::requestParameter()
+void QGCToolWidgetComboBox::requestParameter()
 {
     if (!parameterName.isEmpty() && uas)
     {
@@ -127,18 +127,18 @@ void QGCComboBox::requestParameter()
     }
 }
 
-void QGCComboBox::showInfo(bool enable)
+void QGCToolWidgetComboBox::showInfo(bool enable)
 {
     ui->editInfoCheckBox->setChecked(enable);
     ui->infoLabel->setVisible(enable);
 }
 
-void QGCComboBox::selectComponent(int componentIndex)
+void QGCToolWidgetComboBox::selectComponent(int componentIndex)
 {
     this->componentId = ui->editSelectComponentComboBox->itemData(componentIndex).toInt();
 }
 
-void QGCComboBox::selectParameter(int paramIndex)
+void QGCToolWidgetComboBox::selectParameter(int paramIndex)
 {
     // Set name
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
@@ -165,7 +165,7 @@ void QGCComboBox::selectParameter(int paramIndex)
     }
 }
 
-void QGCComboBox::setEditMode(bool editMode)
+void QGCToolWidgetComboBox::setEditMode(bool editMode)
 {
     if(!editMode) {
         // Store component id
@@ -203,7 +203,7 @@ void QGCComboBox::setEditMode(bool editMode)
     QGCToolWidgetItem::setEditMode(editMode);
 }
 
-void QGCComboBox::setParamPending()
+void QGCToolWidgetComboBox::setParamPending()
 {
     if (uas)  {
         uas->getParamManager()->setPendingParam(componentId, parameterName, parameterValue);
@@ -220,7 +220,7 @@ void QGCComboBox::setParamPending()
  * @brief parameterName Key/name of the parameter
  * @brief value Value of the parameter
  */
-void QGCComboBox::setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, QVariant value)
+void QGCToolWidgetComboBox::setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, QVariant value)
 {
     Q_UNUSED(paramCount);
     // Check if this component and parameter are part of the list
@@ -301,7 +301,7 @@ void QGCComboBox::setParameterValue(int uas, int component, int paramCount, int 
     }
 }
 
-void QGCComboBox::changeEvent(QEvent *e)
+void QGCToolWidgetComboBox::changeEvent(QEvent *e)
 {
     QWidget::changeEvent(e);
     switch (e->type()) {
@@ -314,7 +314,7 @@ void QGCComboBox::changeEvent(QEvent *e)
 }
 
 
-void QGCComboBox::writeSettings(QSettings& settings)
+void QGCToolWidgetComboBox::writeSettings(QSettings& settings)
 {
     settings.setValue("TYPE", "COMBOBOX");
     settings.setValue("QGC_PARAM_COMBOBOX_DESCRIPTION", ui->nameLabel->text());
@@ -331,7 +331,7 @@ void QGCComboBox::writeSettings(QSettings& settings)
     }
     settings.sync();
 }
-void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
+void QGCToolWidgetComboBox::readSettings(const QString& pre,const QVariantMap& settings)
 {
     parameterName = settings.value(pre + "QGC_PARAM_COMBOBOX_PARAMID").toString();
     componentId = settings.value(pre + "QGC_PARAM_COMBOBOX_COMPONENTID").toInt();
@@ -370,7 +370,7 @@ void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
     // Get param value after settings have been loaded
    // requestParameter();
 }
-void QGCComboBox::readSettings(const QSettings& settings)
+void QGCToolWidgetComboBox::readSettings(const QSettings& settings)
 {
     QVariantMap map;
     foreach (QString key,settings.allKeys())
@@ -410,19 +410,19 @@ void QGCComboBox::readSettings(const QSettings& settings)
     // Get param value after settings have been loaded
     //requestParameter();
 }
-void QGCComboBox::addButtonClicked()
+void QGCToolWidgetComboBox::addButtonClicked()
 {
     ui->editOptionComboBox->addItem(ui->editItemNameLabel->text());
     comboBoxTextToValMap[ui->editItemNameLabel->text()] = ui->editItemValueSpinBox->value();
 }
 
-void QGCComboBox::delButtonClicked()
+void QGCToolWidgetComboBox::delButtonClicked()
 {
     int index = ui->editOptionComboBox->currentIndex();
     comboBoxTextToValMap.remove(ui->editOptionComboBox->currentText());
     ui->editOptionComboBox->removeItem(index);
 }
-void QGCComboBox::comboBoxIndexChanged(QString val)
+void QGCToolWidgetComboBox::comboBoxIndexChanged(QString val)
 {
     ui->imageLabel->setPixmap(comboBoxIndexToPixmap[ui->editOptionComboBox->currentIndex()]);
     if (comboBoxTextToParamMap.contains(ui->editOptionComboBox->currentText()))

@@ -1,5 +1,5 @@
-#ifndef QGCCOMBOBOX_H
-#define QGCCOMBOBOX_H
+#ifndef QGCToolWidgetComboBox_H
+#define QGCToolWidgetComboBox_H
 
 #include <QWidget>
 #include <QAction>
@@ -11,16 +11,16 @@ class QGCUASParamManagerInterface;
 
 namespace Ui
 {
-class QGCComboBox;
+class QGCToolWidgetComboBox;
 }
 
-class QGCComboBox : public QGCToolWidgetItem
+class QGCToolWidgetComboBox : public QGCToolWidgetItem
 {
     Q_OBJECT
 
 public:
-    explicit QGCComboBox(QWidget *parent = 0);
-    ~QGCComboBox();
+    explicit QGCToolWidgetComboBox(QWidget *parent = 0);
+    ~QGCToolWidgetComboBox();
 
     virtual void setEditMode(bool editMode);
 
@@ -70,7 +70,7 @@ protected:
     void changeEvent(QEvent *e);
 
 private:
-    Ui::QGCComboBox *ui;
+    Ui::QGCToolWidgetComboBox *ui;
 };
 
-#endif // QGCCOMBOBOX_H
+#endif // QGCToolWidgetComboBox_H
