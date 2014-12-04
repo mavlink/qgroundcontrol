@@ -41,7 +41,6 @@ class MockUASManager : public UASManagerInterface
 signals:
     // The following signals from UASManager interface are supported:
     //      void activeUASSet(UASInterface* UAS);
-    //      void activeUASSet(int systemId);
     //      void activeUASStatusChanged(UASInterface* UAS, bool active);
     //      void activeUASStatusChanged(int systemId, bool active);
     
