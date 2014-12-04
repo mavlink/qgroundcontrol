@@ -97,6 +97,8 @@ public slots:
     virtual void copyPersistentParamsToVolatile() { Q_ASSERT(false); }
     
 private:
+    void _loadParams(void);
+    
     ParamMap_t          _mapParams;
     
     static const int    _defaultComponentId = 50;
