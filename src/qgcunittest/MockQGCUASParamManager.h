@@ -24,7 +24,11 @@
 #ifndef MOCKQGCUASPARAMMANAGER_H
 #define MOCKQGCUASPARAMMANAGER_H
 
+#include <QLoggingCategory>
+
 #include "QGCUASParamManagerInterface.h"
+
+Q_DECLARE_LOGGING_CATEGORY(MockQGCUASParamManagerLog)
 
 /// @file
 ///     @brief This is a mock implementation of QGCUASParamManager for writing Unit Tests.
@@ -39,11 +43,12 @@ class MockQGCUASParamManager : public QGCUASParamManagerInterface
 signals:
     // The following QGCSUASParamManagerInterface signals are supported
     void parameterListUpToDate();   // You can connect to this signal, but it will never be emitted
+    void parameterUpdated(int compId, QString paramName, QVariant value);
     
 public:
     // Implemented QGCSUASParamManager overrides
     virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
-    virtual int getDefaultComponentId(void) { return 0; }
+    virtual int getDefaultComponentId(void) { return _defaultComponentId; }
     virtual int countOnboardParams(void) { return _mapParams.count(); }
     
 public slots:
@@ -53,7 +58,7 @@ public slots:
         { Q_UNUSED(forceSend); setParameter(componentId, key, value); }
     virtual void sendPendingParameters(bool persistAfterSend = false, bool forceSend = false)
         { Q_UNUSED(persistAfterSend); Q_UNUSED(forceSend); }
-    virtual bool parametersReady(void) { return false; }
+    virtual bool parametersReady(void) { return true; }
     
 public:
     // MockQGCUASParamManager methods
@@ -66,9 +71,9 @@ public:
     void setMockParameters(ParamMap_t& map) { _mapParams = map; }
     
     /// Returns the parameters which were set by calls to setParameter calls
-    ParamMap_t getMockSetParameters(void) { return _mapParamsSet; }
+    ParamMap_t getMockSetParameters(void) { return _mapParams; }
     /// Clears the set of parameters set by setParameter calls
-    void clearMockSetParameters(void) { _mapParamsSet.clear(); }
+    void clearMockSetParameters(void) { _mapParams.clear(); }
     
 public:
     // Unimplemented QGCUASParamManagerInterface overrides
@@ -93,7 +98,8 @@ public slots:
     
 private:
     ParamMap_t          _mapParams;
-    ParamMap_t          _mapParamsSet;
+    
+    static const int    _defaultComponentId = 50;
 
     // Bogus variables used for return types of NYI methods
     QList<int>          _bogusQListInt;

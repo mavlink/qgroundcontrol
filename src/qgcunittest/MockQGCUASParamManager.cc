@@ -25,6 +25,8 @@
 #include <QTest>
 #include <QDebug>
 
+Q_LOGGING_CATEGORY(MockQGCUASParamManagerLog, "MockQGCUASParamManagerLog")
+
 MockQGCUASParamManager::MockQGCUASParamManager(void)
 {
     
@@ -36,13 +38,17 @@ bool MockQGCUASParamManager::getParameterValue(int component, const QString& par
     
     if (_mapParams.contains(parameter)) {
         value = _mapParams[parameter];
+        return true;
     }
+    
+    qCDebug(MockQGCUASParamManagerLog) << QString("getParameterValue: parameter not found %1").arg(parameter);
     return false;
 }
 
 void MockQGCUASParamManager::setParameter(int component, QString parameterName, QVariant value)
 {
-    Q_UNUSED(component);
-
-    _mapParamsSet[parameterName] = value;
+    qCDebug(MockQGCUASParamManagerLog) << QString("setParameter: component(%1) parameter(%2) value(%3)").arg(component).arg(parameterName).arg(value.toString());
+    
+    _mapParams[parameterName] = value;
+    emit parameterUpdated(_defaultComponentId, parameterName, value);
 }
