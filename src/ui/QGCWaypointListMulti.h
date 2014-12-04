@@ -23,7 +23,7 @@ public:
 public slots:
     void systemDeleted(QObject* uas);
     void systemCreated(UASInterface* uas);
-    void systemSetActive(int uas);
+    void systemSetActive(UASInterface* uas);
 
 protected:
     quint16 offline_uas_id;

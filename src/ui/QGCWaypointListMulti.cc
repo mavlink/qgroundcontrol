@@ -10,7 +10,7 @@ QGCWaypointListMulti::QGCWaypointListMulti(QWidget *parent) :
     ui->setupUi(this);
     setMinimumSize(600, 80);
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(systemCreated(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(systemSetActive(int)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(systemSetActive(UASInterface*)));
 
     WaypointList* list = new WaypointList(ui->stackedWidget, UASManager::instance()->getActiveUASWaypointManager());
     lists.insert(offline_uas_id, list);
@@ -18,7 +18,7 @@ QGCWaypointListMulti::QGCWaypointListMulti(QWidget *parent) :
 
     if (UASManager::instance()->getActiveUAS()) {
         systemCreated(UASManager::instance()->getActiveUAS());
-        systemSetActive(UASManager::instance()->getActiveUAS()->getUASID());
+        systemSetActive(UASManager::instance()->getActiveUAS());
     }
 
 }
@@ -50,9 +50,9 @@ void QGCWaypointListMulti::systemCreated(UASInterface* uas)
     connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(systemDeleted(QObject*)));
 }
 
-void QGCWaypointListMulti::systemSetActive(int uas)
+void QGCWaypointListMulti::systemSetActive(UASInterface* uas)
 {
-    WaypointList* list = lists.value(uas, NULL);
+    WaypointList* list = lists.value(uas->getUASID(), NULL);
     if (list) {
         ui->stackedWidget->setCurrentWidget(list);
     }

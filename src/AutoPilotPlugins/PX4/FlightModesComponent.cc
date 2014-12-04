@@ -25,9 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FlightModesComponent.h"
-
-#include <QVBoxLayout>
-#include <QLabel>
+#include "FlightModeConfig.h"
 
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
@@ -115,13 +113,7 @@ QStringList FlightModesComponent::paramFilterList(void) const
 
 QWidget* FlightModesComponent::setupWidget(void) const
 {
-    QWidget* widget = new QWidget;
-    QVBoxLayout* layout = new QVBoxLayout(widget);
-    QLabel* label = new QLabel("Coming Soon\nUse Radio setup for Main Mode Switch setup\n(Use Flight Modes Parameters for everything else)", widget);
-    label->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-    layout->addWidget(label);
-    
-    return widget;
+    return new FlightModeConfig();
 }
 
 QList<QStringList> FlightModesComponent::summaryItems(void) const

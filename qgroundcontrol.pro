@@ -682,7 +682,8 @@ FORMS += \
     src/VehicleSetup/SetupView.ui \
     src/VehicleSetup/SummaryPage.ui \
     src/VehicleSetup/ParameterEditor.ui \
-    src/ui/QGCPX4VehicleConfig.ui
+    src/ui/QGCPX4VehicleConfig.ui \
+    src/AutoPilotPlugins/PX4/FlightModeConfig.ui
 
 HEADERS+= \
     src/VehicleSetup/SetupView.h \
@@ -698,6 +699,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/PX4Component.h \
     src/AutoPilotPlugins/PX4/RadioComponent.h \
     src/AutoPilotPlugins/PX4/FlightModesComponent.h \
+    src/AutoPilotPlugins/PX4/FlightModeConfig.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h
 
@@ -712,5 +714,6 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
     src/AutoPilotPlugins/PX4/RadioComponent.cc \
     src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
+    src/AutoPilotPlugins/PX4/FlightModeConfig.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc
