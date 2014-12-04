@@ -154,11 +154,14 @@ void FlightModeConfig::_updateChannelCombo(QComboBox* combo)
         QVariant value;
         
         bool found = _paramMgr->getParameterValue(_componentId, param, value);
-        Q_ASSERT(found);
-        
-        int channel = value.toInt();
-        if (channel != 0) {
-            mapChannelUsed2Description[channel] = _mapParam2FunctionInfo[param];
+        if (found) {
+            int channel = value.toInt();
+            if (channel != 0) {
+                mapChannelUsed2Description[channel] = _mapParam2FunctionInfo[param];
+            }
+        } else {
+            // Parameter should not be missing
+            Q_ASSERT(found);
         }
     }
     
@@ -199,7 +202,7 @@ void FlightModeConfig::_channelSelected(int requestedMapping)
     
     if (requestedMapping != 0) {
         foreach(QString param, _mapParam2FunctionInfo.keys()) {
-            bool found = _paramMgr->getParameterValue(_componentId, param, value);
+            found = _paramMgr->getParameterValue(_componentId, param, value);
             Q_ASSERT(found);
 
             if (requestedMapping == value.toInt()) {
