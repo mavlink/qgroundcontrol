@@ -105,8 +105,6 @@ signals:
     /** @brief The UAS currently under main operator control changed */
     void activeUASSet(UASInterface* UAS);
     /** @brief The UAS currently under main operator control changed */
-    void activeUASSet(int systemId);
-    /** @brief The UAS currently under main operator control changed */
     void activeUASSetListIndex(int listIndex);
     /** @brief The UAS currently under main operator control changed */
     void activeUASStatusChanged(UASInterface* UAS, bool active);
