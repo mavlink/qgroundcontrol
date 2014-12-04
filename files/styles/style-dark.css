@@ -166,12 +166,13 @@ QGCToolBar QProgressBar {
 
 QGCToolBar QToolButton {
     margin: 0;
-    padding: 0;
+    padding: 0 2px;
     border: none;
     border-top: 1px solid #333;
     border-bottom: 1px solid #333;
     border-radius: 0;
     height: 24px;
+    min-width: 30px;
     margin-bottom: 4px;
     text-align: left;
     font-weight: bold;
@@ -191,8 +192,7 @@ QGCToolBar QToolButton:hover {
 QGCToolBar QToolButton#advancedButton {
     margin-left: 0;
     margin-right: 13px;
-    padding: 0 12px 0 4px;
-    padding-right: 8px;
+    padding-right: 10px;
     border-radius: 0;
     border-bottom-right-radius: 6px;
     border-top-right-radius: 6px;
@@ -200,7 +200,7 @@ QGCToolBar QToolButton#advancedButton {
 }
 
 QGCToolBar QToolButton#firstAction {
-    margin-left: 8px;
+    margin-left: 2px;
     border-bottom-left-radius: 6px;
     border-top-left-radius: 6px;
     border-right: none;
