@@ -161,13 +161,14 @@ void PX4RCCalibrationTest::init(void)
     _mockUAS = new MockUAS();
     Q_CHECK_PTR(_mockUAS);
     
-    // This will instatiate the widget with no active UAS set
+    _mockUASManager->setMockActiveUAS(_mockUAS);
+    
+    // This will instatiate the widget with an active uas with ready parameters
     _calWidget = new PX4RCCalibration();
     Q_CHECK_PTR(_calWidget);
     _calWidget->_setUnitTestMode();
     _calWidget->setVisible(true);
     
-    _mockUASManager->setMockActiveUAS(_mockUAS);
 
     // Get pointers to the push buttons
     _cancelButton = _calWidget->findChild<QPushButton*>("rcCalCancel");
@@ -213,17 +214,6 @@ void PX4RCCalibrationTest::cleanup(void)
     Q_ASSERT(_mockUASManager);
     delete _mockUASManager;
     
-}
-
-/// @brief Tests for correct behavior when active UAS is set into widget.
-void PX4RCCalibrationTest::_setUAS_test(void)
-{
-    // Widget is initialized with UAS, so it should be enabled
-    QCOMPARE(_calWidget->isEnabled(), true);
-
-    // Take away the UAS and widget should disable
-    _mockUASManager->setMockActiveUAS(NULL);
-    QCOMPARE(_calWidget->isEnabled(), false);
 }
 
 /// @brief Test for correct behavior in determining minimum numbers of channels for flight.

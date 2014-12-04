@@ -48,7 +48,6 @@ private slots:
     void init(void);
     void cleanup(void);
     
-    void _setUAS_test(void);
     void _minRCChannels_test(void);
     void _fullCalibration_test(void);
     
