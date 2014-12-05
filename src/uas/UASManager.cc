@@ -279,7 +279,8 @@ UASManager::~UASManager()
     storeSettings();
     // Delete all systems
     foreach (UASInterface* mav, systems) {
-        delete mav;
+		// deleteLater so it ends up on correct thread
+        mav->deleteLater();
     }
 }
 
