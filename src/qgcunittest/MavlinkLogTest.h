@@ -49,6 +49,8 @@ private slots:
     void _connectLogWindowClose_test(void);
     
 private:
+    void _createTempLogFile(bool zeroLength);
+    
     static const char* _tempLogFileTemplate;    ///< Template for temporary log file
     static const char* _logFileExtension;       ///< Extension for log files
     static const char* _saveLogFilename;        ///< Filename to save log files to

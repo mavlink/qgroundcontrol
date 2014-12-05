@@ -29,6 +29,7 @@
 #include "MavlinkLogTest.h"
 #include "MainWindow.h"
 #include "MockLink.h"
+#include "QGCTemporaryFile.h"
 
 UT_REGISTER_TEST(MavlinkLogTest)
 
@@ -66,17 +67,21 @@ void MavlinkLogTest::cleanup(void)
     QCOMPARE(logFiles.count(), 0);
 }
 
+void MavlinkLogTest::_createTempLogFile(bool zeroLength)
+{
+    QGCTemporaryFile tempLogFile(QString("%1.%2").arg(_tempLogFileTemplate).arg(_logFileExtension));
+    
+    tempLogFile.open();
+    if (!zeroLength) {
+        tempLogFile.write("foo");
+    }
+    tempLogFile.close();
+}
+
 void MavlinkLogTest::_bootLogDetectionCancel_test(void)
 {
     // Create a fake mavlink log
-    
-    QTemporaryFile tempLogFile;
-    tempLogFile.setFileTemplate(QString("%1/%2.%3").arg(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).arg(_tempLogFileTemplate).arg(_logFileExtension));
-    tempLogFile.setAutoRemove(false);
-    
-    tempLogFile.open();
-    tempLogFile.write("foo");
-    tempLogFile.close();
+    _createTempLogFile(false);
 
     // We should get a message box, followed by a getSaveFileName dialog.
     setExpectedMessageBox(QMessageBox::Ok);
@@ -96,14 +101,7 @@ void MavlinkLogTest::_bootLogDetectionCancel_test(void)
 void MavlinkLogTest::_bootLogDetectionSave_test(void)
 {
     // Create a fake mavlink log
-    
-    QTemporaryFile tempLogFile;
-    tempLogFile.setFileTemplate(QString("%1/%2.%3").arg(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).arg(_tempLogFileTemplate).arg(_logFileExtension));
-    tempLogFile.setAutoRemove(false);
-    
-    tempLogFile.open();
-    tempLogFile.write("foo");
-    tempLogFile.close();
+    _createTempLogFile(false);
     
     // We should get a message box, followed by a getSaveFileName dialog.
     setExpectedMessageBox(QMessageBox::Ok);
@@ -127,15 +125,8 @@ void MavlinkLogTest::_bootLogDetectionSave_test(void)
 
 void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
 {
-    // Create a fake mavlink log
-    
-    QTemporaryFile tempLogFile;
-    tempLogFile.setFileTemplate(QString("%1/%2.%3").arg(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).arg(_tempLogFileTemplate).arg(_logFileExtension));
-    tempLogFile.setAutoRemove(false);
-
-    // Zero length file
-    tempLogFile.open();
-    tempLogFile.close();
+    // Create a fake eempty mavlink log
+    _createTempLogFile(true);
     
     // Zero length log files should not generate any additional UI pop-ups. It should just be deleted silently.
     MainWindow* mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
