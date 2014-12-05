@@ -56,6 +56,7 @@
 #include "LinkManager.h"
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
+#include "QGCTemporaryFile.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -309,11 +310,14 @@ void QGCApplication::setSavedFilesLocation(QString& location)
 bool QGCApplication::validatePossibleSavedFilesLocation(QString& location)
 {
     // Make sure we can write to the directory
+    
     QString filename = QDir(location).filePath("QGCTempXXXXXXXX.tmp");
-    QTemporaryFile tempFile(filename);
+    QGCTemporaryFile tempFile(filename);
     if (!tempFile.open()) {
         return false;
     }
+    
+    tempFile.remove();
     
     return true;
 }

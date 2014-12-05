@@ -478,7 +478,8 @@ HEADERS += \
     src/uas/QGXPX4UAS.h \
     src/QGCFileDialog.h \
     src/QGCMessageBox.h \
-    src/QGCComboBox.h
+    src/QGCComboBox.h \
+    src/QGCTemporaryFile.h
 
 SOURCES += \
     src/main.cc \
@@ -616,7 +617,9 @@ SOURCES += \
     src/CmdLineOptParser.cc \
     src/uas/QGXPX4UAS.cc \
     src/QGCFileDialog.cc \
-    src/QGCComboBox.cc
+    src/QGCComboBox.cc \
+    src/QGCTemporaryFile.cc
+
 
 #
 # Unit Test specific configuration goes here
@@ -654,7 +657,8 @@ HEADERS += \
     src/qgcunittest/PX4RCCalibrationTest.h \
     src/qgcunittest/LinkManagerTest.h \
     src/qgcunittest/MainWindowTest.h \
-    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.h
+    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.h \
+    src/qgcunittest/MavlinkLogTest.h
 
 SOURCES += \
     src/qgcunittest/UnitTest.cc \
@@ -675,7 +679,8 @@ SOURCES += \
     src/qgcunittest/PX4RCCalibrationTest.cc \
     src/qgcunittest/LinkManagerTest.cc \
     src/qgcunittest/MainWindowTest.cc \
-    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.cc
+    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.cc \
+    src/qgcunittest/MavlinkLogTest.cc
 }
 
 #

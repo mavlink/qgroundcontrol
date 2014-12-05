@@ -480,7 +480,7 @@ void UASParameterDataModel::loadParamMetaInfoFromStream(QTextStream& stream)
         {
             // tooltip
             paramDescriptions.insert(parts.at(0).trimmed(), parts.at(6).trimmed());
-            qDebug() << "PARAM META:" << parts.at(0).trimmed();
+            //qDebug() << "PARAM META:" << parts.at(0).trimmed();
         }
     }
 }
