@@ -48,6 +48,7 @@ public:
 private slots:
     // Test case initialization
     void initTestCase(void);
+    void cleanupTestCase(void);
     void init(void);
     void cleanup(void);
     
@@ -84,7 +85,7 @@ private:
     static const uint8_t    _systemIdQGC = 255;
     static const uint8_t    _systemIdServer = 128;
 
-    MockUAS                 _mockUAS;
+    MockUAS*                _mockUAS;
     MockMavlinkFileServer   _mockFileServer;
     
     QGCUASFileManager*  _fileManager;

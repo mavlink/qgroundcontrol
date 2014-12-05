@@ -42,8 +42,16 @@ QGCUASFileManagerUnitTest::QGCUASFileManagerUnitTest(void) :
 // Called once before all test cases are run
 void QGCUASFileManagerUnitTest::initTestCase(void)
 {
-    _mockUAS.setMockSystemId(_systemIdServer);
-    _mockUAS.setMockMavlinkPlugin(&_mockFileServer);
+    _mockUAS = new MockUAS();
+    Q_CHECK_PTR(_mockUAS);
+    
+    _mockUAS->setMockSystemId(_systemIdServer);
+    _mockUAS->setMockMavlinkPlugin(&_mockFileServer);
+}
+
+void QGCUASFileManagerUnitTest::cleanupTestCase(void)
+{
+    delete _mockUAS;
 }
 
 // Called before every test case
@@ -53,7 +61,7 @@ void QGCUASFileManagerUnitTest::init(void)
     
     Q_ASSERT(_multiSpy == NULL);
     
-    _fileManager = new QGCUASFileManager(NULL, &_mockUAS, _systemIdQGC);
+    _fileManager = new QGCUASFileManager(NULL, _mockUAS, _systemIdQGC);
     Q_CHECK_PTR(_fileManager);
     
     // Reset any internal state back to normal

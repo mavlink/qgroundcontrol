@@ -71,9 +71,6 @@ private slots:
     void _updateView(void);
     
     void _remoteControlChannelRawChanged(int chan, float val);
-    void _setActiveUAS(UASInterface* uas);
-    
-    void _parameterListUpToDate(void);
     
 private:
     /// @brief These identify the various controls functions. They are also used as indices into the _rgFunctioInfo
@@ -256,8 +253,6 @@ private:
 
     UASInterface* _mav;                  ///< The current MAV
     QGCUASParamManagerInterface* _paramMgr;
-    
-    bool _parameterListUpToDateSignalled;   ///< true: we have received a parameterListUpToDate signal
     
     Ui::PX4RCCalibration* _ui;
     
