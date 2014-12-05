@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
-#include <QTemporaryFile>
 #include <QTextStream>
 #include <QStringList>
 #include <QFileInfo>

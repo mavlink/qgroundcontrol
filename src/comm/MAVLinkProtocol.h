@@ -37,12 +37,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QFile>
 #include <QMap>
 #include <QByteArray>
-#include <QTemporaryFile>
 
 #include "ProtocolInterface.h"
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
 #include "QGC.h"
+#include "QGCTemporaryFile.h"
 
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.
@@ -282,9 +282,9 @@ private:
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay
     
-    QTemporaryFile _tempLogFile;                ///< File to log to
-    static const char* _tempLogFileTemplate;    ///< Template for temporary log file
-    static const char* _logFileExtension;       ///< Extension for log files
+    QGCTemporaryFile    _tempLogFile;            ///< File to log to
+    static const char*  _tempLogFileTemplate;    ///< Template for temporary log file
+    static const char*  _logFileExtension;       ///< Extension for log files
     
     bool _protocolStatusMessageConnected;   ///< true: protocolStatusMessage signal has been connected
     bool _saveTempFlightDataLogConnected;   ///< true: saveTempFlightDataLog signal has been connected

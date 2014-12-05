@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QApplication>
 #include <QSettings>
-#include <QTemporaryFile>
 #include "GAudioOutput.h"
 #include "MG.h"
 

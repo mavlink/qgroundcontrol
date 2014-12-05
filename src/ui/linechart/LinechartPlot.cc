@@ -471,7 +471,7 @@ void LinechartPlot::setCurveColor(QString id, QColor color)
     // Change the color of the curve.
     curve->setPen(QPen(QBrush(color), curveWidth));
 
-    qDebug() << "Setting curve" << id << "to" << color;
+    //qDebug() << "Setting curve" << id << "to" << color;
 
     // And change the color of the symbol, making sure to preserve the symbol style
     const QwtSymbol *oldSymbol = curve->symbol();
