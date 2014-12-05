@@ -140,6 +140,7 @@ void FlightModeConfigTest::cleanup(void)
     delete _mockUASManager;
     
     _mapChannelCombo2Param.clear();
+    _mapChannelCombo2ButtonGroup.clear();
 }
 
 /// @brief Returns channel mapping for the specified parameters
