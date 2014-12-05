@@ -56,15 +56,13 @@ MAVLinkProtocol::MAVLinkProtocol() :
     _should_exit(false),
     _logSuspendError(false),
     _logSuspendReplay(false),
+    _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension)),
     _protocolStatusMessageConnected(false),
     _saveTempFlightDataLogConnected(false)
 
 {
     qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
     
-    _tempLogFile.setFileTemplate(QString("%1/%2.%3").arg(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).arg(_tempLogFileTemplate).arg(_logFileExtension));
-    _tempLogFile.setAutoRemove(false);
-
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
     moveToThread(this);

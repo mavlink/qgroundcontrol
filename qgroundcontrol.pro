@@ -478,7 +478,8 @@ HEADERS += \
     src/uas/QGXPX4UAS.h \
     src/QGCFileDialog.h \
     src/QGCMessageBox.h \
-    src/QGCComboBox.h
+    src/QGCComboBox.h \
+    src/QGCTemporaryFile.h
 
 SOURCES += \
     src/main.cc \
@@ -616,7 +617,9 @@ SOURCES += \
     src/CmdLineOptParser.cc \
     src/uas/QGXPX4UAS.cc \
     src/QGCFileDialog.cc \
-    src/QGCComboBox.cc
+    src/QGCComboBox.cc \
+    src/QGCTemporaryFile.cc
+
 
 #
 # Unit Test specific configuration goes here
