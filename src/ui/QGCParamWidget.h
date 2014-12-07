@@ -104,7 +104,9 @@ protected:
     QLabel* statusLabel; ///< User-facing parameter status label
     QTreeWidget* tree;   ///< The parameter tree
     QStringList _filterList;
-
+    
+private:
+    bool _fullParamListLoaded;
 };
 
 #endif // QGCPARAMWIDGET_H

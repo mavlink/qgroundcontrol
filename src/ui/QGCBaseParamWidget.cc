@@ -40,8 +40,6 @@ void QGCBaseParamWidget::setUAS(UASInterface* uas)
             connectToParamManager();
             connectViewSignalsAndSlots();
             layoutWidget();
-
-            paramMgr->requestParameterListIfEmpty();
         }
     }
 
@@ -62,6 +60,9 @@ void QGCBaseParamWidget::connectToParamManager()
     // Listen for param list reload finished
     connect(paramMgr, SIGNAL(parameterListUpToDate()),
             this, SLOT(handleOnboardParameterListUpToDate()));
+    if (paramMgr->parametersReady()) {
+        handleOnboardParameterListUpToDate();
+    }
 
     // Listen to communications status messages so we can display them
     connect(paramMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
