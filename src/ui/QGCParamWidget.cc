@@ -51,7 +51,8 @@ QGCParamWidget::QGCParamWidget(QWidget *parent) :
     QGCBaseParamWidget(parent),
     componentItems(new QMap<int, QTreeWidgetItem*>()),
     statusLabel(new QLabel(this)),
-    tree(new QTreeWidget(this))
+    tree(new QTreeWidget(this)),
+    _fullParamListLoaded(false)
 {
 
 
@@ -236,9 +237,15 @@ void QGCParamWidget::handleOnboardParamUpdate(int compId, const QString& paramNa
 
 void QGCParamWidget::handleOnboardParameterListUpToDate()
 {
+    // Don't load full param list more than once
+    if (_fullParamListLoaded) {
+        return;
+    }
+    
+    _fullParamListLoaded = true;
+    
     //turn off updates while we refresh the entire list
     tree->setUpdatesEnabled(false);
-    qDebug() << "WARN: LIST UPDATE";
 
     //rewrite the component item tree after receiving the full list
     QMap<int, QMap<QString, QVariant>*>::iterator i;
