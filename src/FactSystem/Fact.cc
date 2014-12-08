@@ -21,39 +21,32 @@
  
  ======================================================================*/
 
-#ifndef PX4AUTOPILOT_H
-#define PX4AUTOPILOT_H
-
-#include "AutoPilotPlugin.h"
-#include "UASInterface.h"
-#include "PX4ParameterFacts.h"
-
 /// @file
-///     @brief This is the PX4 specific implementation of the AutoPilot class.
+<<<<<<< HEAD
+=======
+///     @brief Object which exposes a Fact
+///
+>>>>>>> FETCH_HEAD
 ///     @author Don Gagne <don@thegagnes.com>
 
-class PX4AutoPilotPlugin : public AutoPilotPlugin
+#include "Fact.h"
+
+#include <QtQml>
+
+Fact::Fact(QObject* parent) :
+    QObject(parent)
 {
-    Q_OBJECT
 
-public:
-    PX4AutoPilotPlugin(QObject* parent);
-    ~PX4AutoPilotPlugin();
+}
 
-    // Overrides from AutoPilotPlugin
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
-    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const;
-    
-private slots:
-    void _uasCreated(UASInterface* uas);
-    void _uasDeleted(UASInterface* uas);
-    
-private:
-    PX4ParameterFacts* _parameterFactsForUas(UASInterface* uas) const;
-    
-    QMap<UASInterface*, PX4ParameterFacts*> _mapUas2ParameterFacts;
-};
+void Fact::setValue(QVariant& value)
+{
+    _value = value;
+    emit valueUpdated(value);
+}
 
-#endif
+void Fact::updateValue(QVariant& value)
+{
+    _value = value;
+    emit valueChanged(value);
+}

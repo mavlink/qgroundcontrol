@@ -85,3 +85,11 @@ QString GenericAutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t cust
     return mode;
 }
 
+void GenericAutoPilotPlugin::addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const
+{
+    Q_UNUSED(context);
+    Q_UNUSED(uas);
+    
+    // Qml not yet supported for Generic
+    Q_ASSERT(false);
+}
