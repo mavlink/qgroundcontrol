@@ -20,7 +20,7 @@
 #endif
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-ISpVoice *GAudioOutput::pVoice = NULL;
+ISpVoice *QGCAudioWorker::pVoice = NULL;
 #endif
 
 #define QGC_GAUDIOOUTPUT_KEY QString("QGC_AUDIOOUTPUT_")
