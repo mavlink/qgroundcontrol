@@ -199,6 +199,7 @@ void PX4AutoPilotPlugin::addFactsToQmlContext(QQmlContext* context, UASInterface
     Q_ASSERT(uas);
     
     QGCUASParamManagerInterface* paramMgr = uas->getParamManager();
+    Q_UNUSED(paramMgr);
     Q_ASSERT(paramMgr);
     Q_ASSERT(paramMgr->parametersReady());
     
