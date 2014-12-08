@@ -479,7 +479,8 @@ HEADERS += \
     src/QGCFileDialog.h \
     src/QGCMessageBox.h \
     src/QGCComboBox.h \
-    src/QGCTemporaryFile.h
+    src/QGCTemporaryFile.h \
+    src/QGCQuickWidget.h
 
 SOURCES += \
     src/main.cc \
@@ -618,8 +619,8 @@ SOURCES += \
     src/uas/QGXPX4UAS.cc \
     src/QGCFileDialog.cc \
     src/QGCComboBox.cc \
-    src/QGCTemporaryFile.cc
-
+    src/QGCTemporaryFile.cc \
+    src/QGCQuickWidget.cc
 
 #
 # Unit Test specific configuration goes here
@@ -709,7 +710,8 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/FlightModesComponent.h \
     src/AutoPilotPlugins/PX4/FlightModeConfig.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
-    src/AutoPilotPlugins/PX4/SensorsComponent.h
+    src/AutoPilotPlugins/PX4/SensorsComponent.h \
+    src/AutoPilotPlugins/PX4/PX4ParameterFacts.h \
 
 SOURCES += \
     src/VehicleSetup/SetupView.cc \
@@ -724,4 +726,22 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
     src/AutoPilotPlugins/PX4/FlightModeConfig.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
-    src/AutoPilotPlugins/PX4/SensorsComponent.cc
+    src/AutoPilotPlugins/PX4/SensorsComponent.cc \
+    src/AutoPilotPlugins/PX4/PX4ParameterFacts.cc \
+
+# Fact System code
+
+INCLUDEPATH += \
+    src/FactSystem
+
+HEADERS += \
+    src/FactSystem/FactSystem.h \
+    src/FactSystem/Fact.h \
+    src/FactSystem/FactMetaData.h \
+    src/FactSystem/FactValidator.h \
+
+SOURCES += \
+    src/FactSystem/FactSystem.cc \
+    src/FactSystem/Fact.cc \
+    src/FactSystem/FactMetaData.cc \
+    src/FactSystem/FactValidator.cc \
