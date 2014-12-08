@@ -79,7 +79,7 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
     uas->addLink(link);
 
     // First thing we do with a new UAS is get the parameters
-    uas->requestParameters();
+    uas->getParamManager()->requestParameterList();
     
     // Now add UAS to "official" list, which makes the whole application aware of it
     UASManager::instance()->addUAS(uas);
