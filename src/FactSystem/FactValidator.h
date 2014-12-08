@@ -21,39 +21,49 @@
  
  ======================================================================*/
 
-#ifndef PX4AUTOPILOT_H
-#define PX4AUTOPILOT_H
-
-#include "AutoPilotPlugin.h"
-#include "UASInterface.h"
-#include "PX4ParameterFacts.h"
-
 /// @file
-///     @brief This is the PX4 specific implementation of the AutoPilot class.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class PX4AutoPilotPlugin : public AutoPilotPlugin
+#ifndef FactValidator_H
+#define FactValidator_H
+
+#include <QValidator>
+
+class Fact;
+
+/// QML Validator for Facts (Work In Progress)
+///
+/// The validator uses the FactMetaData to impose restrictions on the input. It is used as follows:
+/// @code{.unparsed}
+///     TextInput {
+///         validator: FactValidator { fact: parameterFacts.RC_MAP_THROTTLE; }
+///     }
+/// @endcode
+class FactValidator : public QValidator
 {
     Q_OBJECT
-
-public:
-    PX4AutoPilotPlugin(QObject* parent);
-    ~PX4AutoPilotPlugin();
-
-    // Overrides from AutoPilotPlugin
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
-    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const;
     
-private slots:
-    void _uasCreated(UASInterface* uas);
-    void _uasDeleted(UASInterface* uas);
+    Q_PROPERTY(Fact* fact READ fact WRITE setFact)
+    
+public:
+    FactValidator(QObject* parent = NULL);
+    
+    // Property system methods
+    
+    /// Read accessor for fact property
+    Fact* fact(void) { return _fact; }
+    
+    /// Write accessor for fact property
+    void setFact(Fact* fact) { _fact = fact; }
+    
+    /// Override from QValidator
+    virtual void fixup(QString& input) const;
+    
+    /// Override from QValidator
+    virtual State validate(QString& input, int& pos) const;
     
 private:
-    PX4ParameterFacts* _parameterFactsForUas(UASInterface* uas) const;
-    
-    QMap<UASInterface*, PX4ParameterFacts*> _mapUas2ParameterFacts;
+    Fact* _fact;    ///< Fact that the validator is working on
 };
 
 #endif
