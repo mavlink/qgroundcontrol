@@ -43,7 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCXPlaneLink.h"
 #include "QGCUASParamManager.h"
 #include "QGCUASFileManager.h"
-
+#include "FactSystem.h"
 
 /**
  * @brief A generic MAVLINK-connected MAV/UAV

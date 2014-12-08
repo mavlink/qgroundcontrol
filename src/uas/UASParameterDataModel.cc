@@ -150,7 +150,7 @@ void UASParameterDataModel::setParamWithTypeInMap(int compId, const QString& key
     }
         break;
     default:
-        qCritical() << "ABORTED PARAM UPDATE, NO VALID QVARIANT TYPE";
+        qCritical() << "ABORTED PARAM UPDATE, NO VALID QVARIANT TYPE:" << value.type();
         return;
     }
 }

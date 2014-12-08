@@ -27,9 +27,11 @@
 #include <QObject>
 #include <QList>
 #include <QString>
+#include <QQmlContext>
 
 #include "UASInterface.h"
 #include "VehicleComponent.h"
+#include "FactSystem.h"
 
 /// @file
 ///     @brief The AutoPilotPlugin class is an abstract base class which represent the methods and objects
@@ -56,6 +58,9 @@ public:
     
     /// @brief Returns a human readable short description for the specified mode.
     virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const = 0;
+    
+    /// @brief Adds the FactSystem properties associated with this AutoPilot to the Qml context.
+    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const = 0;
     
 protected:
     // All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin

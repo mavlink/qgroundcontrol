@@ -503,6 +503,22 @@ background-color: rgb(80, 80, 80);s</string>
       </layout>
      </item>
      <item>
+      <widget class="QGCQuickWidget" name="quickWidget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>100</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="verticalSpacer_3">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -1212,6 +1228,11 @@ background-color: rgb(179, 179, 179);</string>
    <extends>QWidget</extends>
    <header>RCValueWidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QGCQuickWidget</class>
+   <extends>QQuickWidget</extends>
+   <header>QGCQuickWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

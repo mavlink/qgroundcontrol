@@ -43,6 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASParameterDataModel.h"
 #include "UASWaypointManager.h"
 #include "QGCUASParamManagerInterface.h"
+#include "MAVLinkProtocol.h"
 
 class QGCUASFileManager;
 
@@ -473,7 +474,7 @@ signals:
     void connecting();
     /** @brief The robot is connected **/
     void connected();
-    /** @brief The robot is disconnected **/
+    /** @brief The robot is disconnec2c0d56cted **/
     void disconnected();
     /** @brief The robot is active **/
     void activated();
@@ -629,7 +630,6 @@ protected:
 
     // TIMEOUT CONSTANTS
     static const unsigned int timeoutIntervalHeartbeat = 3500 * 1000; ///< Heartbeat timeout is 3.5 seconds
-
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0")
