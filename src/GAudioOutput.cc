@@ -84,6 +84,7 @@ GAudioOutput::~GAudioOutput()
 void GAudioOutput::mute(bool mute)
 {
     // XXX handle muting
+    Q_UNUSED(mute);
 }
 
 bool GAudioOutput::isMuted()
