@@ -92,6 +92,36 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     Q_ASSERT(_app == NULL);
     _app = this;
     
+    
+#ifdef QT_DEBUG
+    // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
+    // it to the correct location. This way default debug builds will have logging turned off.
+    
+    bool loggingDirectoryOk = false;
+    QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
+    if (!iniFileLocation.cd("QtProjects")) {
+        if (!iniFileLocation.mkdir("QtProjects")) {
+            qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath("QtProjects");
+        } else {
+            if (!iniFileLocation.cd("QtProjects")) {
+                qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath("QtProjects");;
+            }
+            loggingDirectoryOk = true;
+        }
+    } else {
+        loggingDirectoryOk = true;
+    }
+    
+    if (loggingDirectoryOk) {
+        qDebug () << iniFileLocation;
+        if (!iniFileLocation.exists("qtlogging.ini")) {
+            if (!QFile::copy(":QLoggingCategory/qtlogging.ini", iniFileLocation.filePath("qtlogging.ini"))) {
+                qDebug() << "Unable to copy qtlogging.ini to" << iniFileLocation;
+            }
+        }
+    }
+#endif
+    
     // Set application information
     if (_runningUnitTests) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
