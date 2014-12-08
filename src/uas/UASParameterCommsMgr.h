@@ -6,11 +6,12 @@
 #include <QTimer>
 #include <QVariant>
 #include <QVector>
+#include <QLoggingCategory>
 
 class UASInterface;
 class UASParameterDataModel;
 
-
+Q_DECLARE_LOGGING_CATEGORY(UASParameterCommsMgrLog)
 
 class UASParameterCommsMgr : public QObject
 {
@@ -122,6 +123,9 @@ private slots:
     /// @brief We signal this to ourselves in order to get timer started/stopped on our own thread.
     void _startSilenceTimerOnThisThread(void);
     void _stopSilenceTimerOnThisThread(void);
+    
+private:
+    void _sendParamRequestListMsg(void);
 };
     
 
