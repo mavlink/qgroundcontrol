@@ -65,6 +65,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 {
     worker->moveToThread(thread);
     connect(this, SIGNAL(textToSpeak(QString,int)), worker, SLOT(say(QString,int)));
+    connect(this, SIGNAL(beepOnce()), worker, SLOT(beep()));
     thread->start();
 }
 
@@ -146,7 +147,6 @@ bool GAudioOutput::startEmergency()
 //        emergency = true;
 
 //        // Beep immediately and then start timer
-//        if (!muted) beep();
 
 //        emergencyTimer->start(1500);
 //        QTimer::singleShot(5000, this, SLOT(stopEmergency()));
@@ -174,13 +174,5 @@ bool GAudioOutput::stopEmergency()
 
 void GAudioOutput::beep()
 {
-    if (!muted)
-    {
-        // FIXME: Re-enable audio beeps
-        // Use QFile to transform path for all OS
-        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
-        //qDebug() << "FILE:" << f.fileName();
-        //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-        //m_media->play();
-    }
+    emit beepOnce();
 }
