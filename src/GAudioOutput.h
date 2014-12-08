@@ -86,6 +86,7 @@ public slots:
 signals:
     void mutedChanged(bool);
     bool textToSpeak(QString text, int severity = 1);
+    void beepOnce();
 
 protected:
     bool muted;

@@ -32,6 +32,9 @@ public slots:
     /** @brief Say this text if current output priority matches */
     void say(QString text, int severity = 1);
 
+    /** @brief Sound a single beep */
+    void beep();
+
 protected:
 #if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
     //NSSpeechSynthesizer
