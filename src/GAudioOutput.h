@@ -34,31 +34,10 @@ This file is part of the PIXHAWK project
 
 #include <QObject>
 #include <QTimer>
+#include <QThread>
 #include <QStringList>
-#ifdef Q_OS_MAC
-//#include <MediaObject>
-//#include <AudioOutput>
-#endif
-#ifdef Q_OS_LINUX
-//#include <phonon/MediaObject>
-//#include <phonon/AudioOutput>
-#endif
-#ifdef Q_OS_WIN
-//#include <Phonon/MediaObject>
-//#include <Phonon/AudioOutput>
-#endif
 
-/* For Snow leopard and later
-#if defined Q_OS_MAC & defined QGC_SPEECH_ENABLED
-#include <NSSpeechSynthesizer.h>
-#endif
-   */
-
-
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-// Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
-#include <sapi.h>
-#endif
+#include <QGCAudioWorker.h>
 
 /**
  * @brief Audio Output (speech synthesizer and "beep" output)
@@ -91,10 +70,10 @@ public slots:
     bool startEmergency();
     /** @brief Stop emergency sound */
     bool stopEmergency();
-    /** @brief Select female voice */
-    void selectFemaleVoice();
-    /** @brief Select male voice */
-    void selectMaleVoice();
+//    /** @brief Select female voice */
+//    void selectFemaleVoice();
+//    /** @brief Select male voice */
+//    void selectMaleVoice();
     /** @brief Play emergency sound once */
     void beep();
     /** @brief Notify about positive event */
@@ -106,23 +85,12 @@ public slots:
 
 signals:
     void mutedChanged(bool);
+    bool textToSpeak(QString text, int severity = 1);
 
 protected:
-#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
-    //NSSpeechSynthesizer
-#endif
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    //cst_voice* voice; ///< The flite voice object
-#endif
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-    static ISpVoice *pVoice;
-#endif
-    int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
-    //Phonon::MediaObject *m_media; ///< The output object for audio
-    //Phonon::AudioOutput *m_audioOutput;
-    bool emergency;   ///< Emergency status flag
-    QTimer *emergencyTimer;
     bool muted;
+    QThread* thread;
+    QGCAudioWorker* worker;
 private:
     GAudioOutput(QObject *parent = NULL);
     ~GAudioOutput();

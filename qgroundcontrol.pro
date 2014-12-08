@@ -243,6 +243,7 @@ INCLUDEPATH += \
     src/ui/map \
     src/uas \
     src/comm \
+    src/audio \
     include/ui \
     src/input \
     src/lib/qmapcontrol \
@@ -479,7 +480,8 @@ HEADERS += \
     src/QGCFileDialog.h \
     src/QGCMessageBox.h \
     src/QGCComboBox.h \
-    src/QGCTemporaryFile.h
+    src/QGCTemporaryFile.h \
+    src/audio/QGCAudioWorker.h
 
 SOURCES += \
     src/main.cc \
@@ -618,7 +620,8 @@ SOURCES += \
     src/uas/QGXPX4UAS.cc \
     src/QGCFileDialog.cc \
     src/QGCComboBox.cc \
-    src/QGCTemporaryFile.cc
+    src/QGCTemporaryFile.cc \
+    src/audio/QGCAudioWorker.cpp
 
 
 #
