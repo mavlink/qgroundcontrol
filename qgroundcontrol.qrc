@@ -231,4 +231,7 @@
     <qresource prefix="/unittest">
         <file alias="MockLink.param">src/qgcunittest/MockLink.param</file>
     </qresource>
+    <qresource prefix="/QLoggingCategory">
+        <file alias="qtlogging.ini">files/QLoggingCategory/qtlogging.ini</file>
+    </qresource>
 </RCC>
