@@ -46,7 +46,6 @@ private slots:
     void _bootLogDetectionSave_test(void);
     void _bootLogDetectionZeroLength_test(void);
     void _connectLog_test(void);
-    void _connectLogWindowClose_test(void);
     
 private:
     void _createTempLogFile(bool zeroLength);
