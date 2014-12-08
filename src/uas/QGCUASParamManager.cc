@@ -217,6 +217,8 @@ void QGCUASParamManager::requestRcCalibrationParamsUpdate() {
 
 void QGCUASParamManager::_parameterListUpToDate(void)
 {
+    qDebug() << "Emitting parameters ready, count:" << paramDataModel.countOnboardParams();
+
     _parametersReady = true;
     emit parameterListUpToDate();
 }
