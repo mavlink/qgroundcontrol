@@ -133,7 +133,6 @@ public slots:
     virtual void setTargetPosition(float x, float y, float z, float yaw) { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
     virtual void setLocalOriginAtCurrentGPSPosition() { Q_ASSERT(false); };
     virtual void setHomePosition(double lat, double lon, double alt) { Q_UNUSED(lat); Q_UNUSED(lon); Q_UNUSED(alt); Q_ASSERT(false); };
-    virtual void requestParameters() { Q_ASSERT(false); };
     virtual void requestParameter(int component, const QString& parameter) { Q_UNUSED(component); Q_UNUSED(parameter); Q_ASSERT(false); };
     virtual void writeParametersToStorage() { Q_ASSERT(false); };
     virtual void readParametersFromStorage() { Q_ASSERT(false); };
