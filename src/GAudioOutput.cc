@@ -64,6 +64,8 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
     worker(new QGCAudioWorker())
 {
     worker->moveToThread(thread);
+    // Initialize within right thread context
+    worker->init();
     connect(this, SIGNAL(textToSpeak(QString,int)), worker, SLOT(say(QString,int)));
     connect(this, SIGNAL(beepOnce()), worker, SLOT(beep()));
     thread->start();

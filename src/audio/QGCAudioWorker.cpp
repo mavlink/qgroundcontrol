@@ -1,5 +1,8 @@
 #include <QSettings>
 #include <QDebug>
+#include <QCoreApplication>
+#include <QFile>
+#include <QSound>
 
 #include "QGC.h"
 #include "QGCAudioWorker.h"
@@ -19,22 +22,26 @@
 #include <espeak/speak_lib.h>
 #endif
 
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-ISpVoice *QGCAudioWorker::pVoice = NULL;
-#endif
-
 #define QGC_GAUDIOOUTPUT_KEY QString("QGC_AUDIOOUTPUT_")
 
 QGCAudioWorker::QGCAudioWorker(QObject *parent) :
     QObject(parent),
     voiceIndex(0),
     emergency(false),
-    muted(false)
+    muted(false),
+    #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
+    pVoice(NULL),
+    #endif
+    sound(NULL)
 {
     // Load settings
     QSettings settings;
     muted = settings.value(QGC_GAUDIOOUTPUT_KEY + "muted", muted).toBool();
+}
 
+void QGCAudioWorker::init()
+{
+    sound = new QSound("");
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
@@ -48,13 +55,11 @@ QGCAudioWorker::QGCAudioWorker(QObject *parent) :
 #endif
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-    pVoice = NULL;
 
     if (FAILED(::CoInitialize(NULL)))
     {
         qDebug() << "ERROR: Creating COM object for audio output failed!";
     }
-
     else
     {
 
@@ -90,38 +95,39 @@ void QGCAudioWorker::say(QString text, int severity)
         // TODO Add severity filter
         Q_UNUSED(severity);
 
-        if (!emergency)
-        {
-
-    #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-            pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
-
-    #elif defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-            // Set size of string for espeak: +1 for the null-character
-            unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
-            espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
-
-    #elif defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
-            // Slashes necessary to have the right start to the sentence
-            // copying data prevents SpeakString from reading additional chars
-            text = "\\" + text;
-            std::wstring str = text.toStdWString();
-            unsigned char str2[1024] = {};
-            memcpy(str2, text.toLatin1().data(), str.length());
-            SpeakString(str2);
-
-            // Block the thread while busy
-            // because we run in our own thread, this doesn't
-            // halt the main application
-            while (SpeechBusy()) {
-                QGC::SLEEP::msleep(100);
-            }
-
-    #else
-            // Make sure there isn't an unused variable warning when speech output is disabled
-            Q_UNUSED(text);
-    #endif
+        // Wait for the last sound to finish
+        while (!sound->isFinished()) {
+            QGC::SLEEP::msleep(100);
         }
+
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
+        pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
+
+#elif defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
+        // Set size of string for espeak: +1 for the null-character
+        unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
+        espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
+
+#elif defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
+        // Slashes necessary to have the right start to the sentence
+        // copying data prevents SpeakString from reading additional chars
+        text = "\\" + text;
+        std::wstring str = text.toStdWString();
+        unsigned char str2[1024] = {};
+        memcpy(str2, text.toLatin1().data(), str.length());
+        SpeakString(str2);
+
+        // Block the thread while busy
+        // because we run in our own thread, this doesn't
+        // halt the main application
+        while (SpeechBusy()) {
+            QGC::SLEEP::msleep(100);
+        }
+
+#else
+        // Make sure there isn't an unused variable warning when speech output is disabled
+        Q_UNUSED(text);
+#endif
     }
 }
 
@@ -138,16 +144,13 @@ void QGCAudioWorker::mute(bool mute)
 
 void QGCAudioWorker::beep()
 {
-    // XXX beep beep
 
     if (!muted)
     {
-        // FIXME: Re-enable audio beeps
         // Use QFile to transform path for all OS
-        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
-        //qDebug() << "FILE:" << f.fileName();
-        //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-        //m_media->play();
+        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
+        qDebug() << "SOUND FILE:" << f.fileName();
+        sound->play(f.fileName());
     }
 }
 
