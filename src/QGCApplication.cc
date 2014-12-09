@@ -433,6 +433,11 @@ void QGCApplication::_createSingletons(void)
     AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::instance();
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
+
+    // Must be after UASManager since FactSystem connects to UASManager
+    FactSystem* factSystem = FactSystem::instance();
+    Q_UNUSED(factSystem);
+    Q_ASSERT(factSystem);
 }
 
 void QGCApplication::destroySingletonsForUnitTest(void)

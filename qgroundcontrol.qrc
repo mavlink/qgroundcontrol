@@ -234,4 +234,11 @@
     <qresource prefix="/QLoggingCategory">
         <file alias="qtlogging.ini">files/QLoggingCategory/qtlogging.ini</file>
     </qresource>
+    <qresource prefix="/qml">
+        <file alias="QGroundControlFactControls/qmldir">files/qml/qmldir</file>
+        <file alias="QGroundControlFactControls/FactTextInput.qml">files/qml/FactTextInput.qml</file>
+    </qresource>
+    <qresource prefix="/AutoPilotPlugins/PX4">
+        <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
+    </qresource>
 </RCC>
