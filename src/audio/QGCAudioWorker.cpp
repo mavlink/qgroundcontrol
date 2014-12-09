@@ -45,7 +45,7 @@ void QGCAudioWorker::init()
     sound = new QSound("");
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    espeak_Initialize(AUDIO_OUTPUT_SYNCHRONOUS, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
+    espeak_Initialize(AUDIO_OUTPUT_SYNCH_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
     espeak_VOICE *espeak_voice = espeak_GetCurrentVoice();
     espeak_voice->languages = "en-uk"; // Default to British English
     espeak_voice->identifier = NULL; // no specific voice file specified
