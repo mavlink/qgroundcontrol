@@ -796,6 +796,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     // Should not be any active connections
     foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
+        Q_UNUSED(link);
         Q_ASSERT(!link->isConnected());
     }
 
