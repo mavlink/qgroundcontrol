@@ -103,7 +103,7 @@ void QGCAudioWorker::say(QString text, int severity)
         }
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-        pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
+        pVoice->Speak(text.toStdWString().c_str(), SPF_DEFAULT, NULL);
 
 #elif defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
         // Set size of string for espeak: +1 for the null-character
