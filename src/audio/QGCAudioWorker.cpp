@@ -90,6 +90,7 @@ QGCAudioWorker::~QGCAudioWorker()
     pVoice = NULL;
     ::CoUninitialize();
 #endif
+    delete emergencyTimer;
 }
 
 void QGCAudioWorker::say(QString text, int severity)

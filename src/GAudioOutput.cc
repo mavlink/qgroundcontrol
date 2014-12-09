@@ -77,10 +77,8 @@ GAudioOutput::~GAudioOutput()
     while (thread->isRunning()) {
         QGC::SLEEP::usleep(100);
     }
-    worker->deleteLater();
-    thread->deleteLater();
-    worker = NULL;
-    thread = NULL;
+    delete worker;
+    delete thread;
 }
 
 
