@@ -57,7 +57,6 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkDecoder.h"
 #include "QGCMAVLinkMessageSender.h"
 #include "QGCRGBDView.h"
-#include "QGCStatusBar.h"
 #include "UASQuickView.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
@@ -225,8 +224,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     advancedActions << ui.actionSimulationView;
     toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
 
-    customStatusBar = new QGCStatusBar(this);
-    setStatusBar(customStatusBar);
+    setStatusBar(new QStatusBar(this));
     statusBar()->setSizeGripEnabled(true);
 
     emit initStatusChanged(tr("Building common widgets."), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
@@ -503,8 +501,8 @@ void MainWindow::buildCommonWidgets()
                       this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
 
     // Log player
-    logPlayer = new QGCMAVLinkLogPlayer(mavlink, customStatusBar);
-    customStatusBar->setLogPlayer(logPlayer);
+    logPlayer = new QGCMAVLinkLogPlayer(mavlink, statusBar());
+    statusBar()->addPermanentWidget(logPlayer);
 
     // Initialize all of the views, if they haven't been already, and add their central widgets
     if (!plannerView)
