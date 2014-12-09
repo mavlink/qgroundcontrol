@@ -77,6 +77,7 @@ void QGCAudioWorker::init()
     // Prepare regular emergency signal, will be fired off on calling startEmergency()
     emergencyTimer = new QTimer();
     connect(emergencyTimer, SIGNAL(timeout()), this, SLOT(beep()));
+
 }
 
 QGCAudioWorker::~QGCAudioWorker()
@@ -149,9 +150,7 @@ void QGCAudioWorker::beep()
 
     if (!muted)
     {
-        // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
-        sound->play(f.fileName());
+        sound->play(":/files/audio/alert.wav");
     }
 }
 
