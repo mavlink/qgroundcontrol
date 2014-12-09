@@ -114,6 +114,10 @@ QT += network \
     quick \
     quickwidgets
 
+contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
+    QT += multimedia
+}
+
 !contains(DEFINES, DISABLE_GOOGLE_EARTH) {
     QT += webkit webkitwidgets
 }
@@ -244,6 +248,7 @@ INCLUDEPATH += \
     src/ui/map \
     src/uas \
     src/comm \
+    src/audio \
     include/ui \
     src/input \
     src/lib/qmapcontrol \
@@ -480,6 +485,7 @@ HEADERS += \
     src/QGCMessageBox.h \
     src/QGCComboBox.h \
     src/QGCTemporaryFile.h \
+    src/audio/QGCAudioWorker.h \
     src/QGCQuickWidget.h
 
 SOURCES += \
@@ -619,6 +625,7 @@ SOURCES += \
     src/QGCFileDialog.cc \
     src/QGCComboBox.cc \
     src/QGCTemporaryFile.cc \
+    src/audio/QGCAudioWorker.cpp \
     src/QGCQuickWidget.cc
 
 #
