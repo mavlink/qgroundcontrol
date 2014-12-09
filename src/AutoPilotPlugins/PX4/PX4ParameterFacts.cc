@@ -26,6 +26,7 @@
 
 #include "PX4ParameterFacts.h"
 
+#include <QFile>
 #include <QDebug>
 
 Q_LOGGING_CATEGORY(PX4ParameterFactsLog, "PX4ParameterFactsLog")
