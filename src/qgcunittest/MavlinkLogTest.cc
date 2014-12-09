@@ -125,7 +125,7 @@ void MavlinkLogTest::_bootLogDetectionSave_test(void)
 
 void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
 {
-    // Create a fake eempty mavlink log
+    // Create a fake empty mavlink log
     _createTempLogFile(true);
     
     // Zero length log files should not generate any additional UI pop-ups. It should just be deleted silently.
@@ -170,3 +170,13 @@ void MavlinkLogTest::_connectLog_test(void)
     QTest::qWait(1000); // Need to allow signals to move between threads to shutdown MainWindow
 }
 
+void MavlinkLogTest::_deleteTempLogFiles_test(void)
+{
+    // Verify that the MAVLinkProtocol::deleteTempLogFiles api works correctly
+    
+    _createTempLogFile(false);
+    MAVLinkProtocol::deleteTempLogFiles();
+    QDir tmpDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    QStringList logFiles(tmpDir.entryList(QStringList(QString("*.%1").arg(_logFileExtension)), QDir::Files));
+    QCOMPARE(logFiles.count(), 0);
+}

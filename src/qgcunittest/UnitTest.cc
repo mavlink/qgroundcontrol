@@ -28,6 +28,7 @@
 
 #include "UnitTest.h"
 #include "QGCApplication.h"
+#include "MAVLinkProtocol.h"
 
 bool UnitTest::_messageBoxRespondedTo = false;
 bool UnitTest::_badResponseButton = false;
@@ -115,6 +116,8 @@ void UnitTest::init(void)
     // Each test gets a clean global state
     qgcApp()->destroySingletonsForUnitTest();
     qgcApp()->createSingletonsForUnitTest();
+    
+    MAVLinkProtocol::deleteTempLogFiles();
 }
 
 /// @brief Called after each test.
