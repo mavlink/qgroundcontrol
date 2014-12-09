@@ -3,7 +3,9 @@
 
 #include <QObject>
 #include <QTimer>
+#ifdef QGC_NOTIFY_TUNES_ENABLED
 #include <QSound>
+#endif
 
 /* For Snow leopard and later
 #if defined Q_OS_MAC & defined QGC_SPEECH_ENABLED
@@ -38,20 +40,16 @@ public slots:
     void beep();
 
 protected:
-#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
-    //NSSpeechSynthesizer
-#endif
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    //cst_voice* voice; ///< The flite voice object
-#endif
+    int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     ISpVoice *pVoice;
 #endif
-    int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
+#ifdef QGC_NOTIFY_TUNES_ENABLED
+    QSound *sound;
+#endif
     bool emergency;   ///< Emergency status flag
     QTimer *emergencyTimer;
     bool muted;
-    QSound *sound;
 };
 
 #endif // QGCAUDIOWORKER_H

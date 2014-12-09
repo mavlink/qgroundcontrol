@@ -111,8 +111,11 @@ QT += network \
     serialport \
     sql \
     printsupport \
-    quick \
-    multimedia
+    quick
+
+contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
+    QT += multimedia
+}
 
 !contains(DEFINES, DISABLE_GOOGLE_EARTH) {
     QT += webkit webkitwidgets

@@ -2,7 +2,6 @@
 #include <QDebug>
 #include <QCoreApplication>
 #include <QFile>
-#include <QSound>
 
 #include "QGC.h"
 #include "QGCAudioWorker.h"
@@ -28,12 +27,14 @@
 QGCAudioWorker::QGCAudioWorker(QObject *parent) :
     QObject(parent),
     voiceIndex(0),
-    emergency(false),
-    muted(false),
     #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     pVoice(NULL),
     #endif
-    sound(NULL)
+    #ifdef QGC_NOTIFY_TUNES_ENABLED
+    sound(NULL),
+    #endif
+    emergency(false),
+    muted(false)
 {
     // Load settings
     QSettings settings;
@@ -42,7 +43,9 @@ QGCAudioWorker::QGCAudioWorker(QObject *parent) :
 
 void QGCAudioWorker::init()
 {
-    sound = new QSound("");
+#ifdef QGC_NOTIFY_TUNES_ENABLED
+    sound = new QSound(":/files/audio/alert.wav");
+#endif
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     espeak_Initialize(AUDIO_OUTPUT_SYNCH_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
@@ -98,10 +101,12 @@ void QGCAudioWorker::say(QString text, int severity)
             beep();
         }
 
+#ifdef QGC_NOTIFY_TUNES_ENABLED
         // Wait for the last sound to finish
         while (!sound->isFinished()) {
             QGC::SLEEP::msleep(100);
         }
+#endif
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
         pVoice->Speak(text.toStdWString().c_str(), SPF_DEFAULT, NULL);
@@ -150,7 +155,9 @@ void QGCAudioWorker::beep()
 
     if (!muted)
     {
+#ifdef QGC_NOTIFY_TUNES_ENABLED
         sound->play(":/files/audio/alert.wav");
+#endif
     }
 }
 
