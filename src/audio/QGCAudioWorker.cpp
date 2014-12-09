@@ -6,6 +6,7 @@
 
 #include "QGC.h"
 #include "QGCAudioWorker.h"
+#include "GAudioOutput.h"
 
 #if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
 #include <ApplicationServices/ApplicationServices.h>
@@ -89,11 +90,12 @@ QGCAudioWorker::~QGCAudioWorker()
 
 void QGCAudioWorker::say(QString text, int severity)
 {
-    qDebug() << "TEXT" << text;
     if (!muted)
     {
-        // TODO Add severity filter
-        Q_UNUSED(severity);
+        // Prepend high priority text with alert beep
+        if (severity < GAudioOutput::AUDIO_SEVERITY_CRITICAL) {
+            beep();
+        }
 
         // Wait for the last sound to finish
         while (!sound->isFinished()) {
@@ -149,7 +151,6 @@ void QGCAudioWorker::beep()
     {
         // Use QFile to transform path for all OS
         QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
-        qDebug() << "SOUND FILE:" << f.fileName();
         sound->play(f.fileName());
     }
 }
