@@ -694,7 +694,11 @@ void MAVLinkProtocol::_startLogging(void)
 void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
-        emit saveTempFlightDataLog(_tempLogFile.fileName());
+        if (qgcApp()->promptFlightDataSave()) {
+            emit saveTempFlightDataLog(_tempLogFile.fileName());
+        } else {
+            QFile::remove(_tempLogFile.fileName());
+        }
     }
 }
 
