@@ -694,7 +694,11 @@ void MAVLinkProtocol::_startLogging(void)
 void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
-        emit saveTempFlightDataLog(_tempLogFile.fileName());
+        if (qgcApp()->promptFlightDataSave()) {
+            emit saveTempFlightDataLog(_tempLogFile.fileName());
+        } else {
+            QFile::remove(_tempLogFile.fileName());
+        }
     }
 }
 
@@ -752,4 +756,16 @@ void MAVLinkProtocol::suspendLogForReplay(bool suspend)
     Q_ASSERT(QThread::currentThread() == this);
     
     _logSuspendReplay = suspend;
+}
+
+void MAVLinkProtocol::deleteTempLogFiles(void)
+{
+    QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    
+    QString filter(QString("*.%1").arg(_logFileExtension));
+    QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
+    
+    foreach(const QFileInfo fileInfo, fileInfoList) {
+        QFile::remove(fileInfo.filePath());
+    }
 }

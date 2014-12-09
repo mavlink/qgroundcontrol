@@ -57,7 +57,6 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkDecoder.h"
 #include "QGCMAVLinkMessageSender.h"
 #include "QGCRGBDView.h"
-#include "QGCStatusBar.h"
 #include "UASQuickView.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
@@ -225,8 +224,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     advancedActions << ui.actionSimulationView;
     toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
 
-    customStatusBar = new QGCStatusBar(this);
-    setStatusBar(customStatusBar);
+    setStatusBar(new QStatusBar(this));
     statusBar()->setSizeGripEnabled(true);
 
     emit initStatusChanged(tr("Building common widgets."), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
@@ -503,8 +501,8 @@ void MainWindow::buildCommonWidgets()
                       this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
 
     // Log player
-    logPlayer = new QGCMAVLinkLogPlayer(mavlink, customStatusBar);
-    customStatusBar->setLogPlayer(logPlayer);
+    logPlayer = new QGCMAVLinkLogPlayer(mavlink, statusBar());
+    statusBar()->addPermanentWidget(logPlayer);
 
     // Initialize all of the views, if they haven't been already, and add their central widgets
     if (!plannerView)
@@ -778,12 +776,32 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    // Disallow window close if there are active connections
+    
+    bool foundConnections = false;
+    foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
+        if (link->isConnected()) {
+            foundConnections = true;
+            break;
+        }
+    }
+    
+    if (foundConnections) {
+        QGCMessageBox::warning(tr("QGroundControl close"), tr("There are still active connections to vehicles. Please disconnect all connections before closing QGroundControl."));
+        event->ignore();
+        return;
+    }
+
+    // Should not be any active connections
+    foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
+        Q_UNUSED(link);
+        Q_ASSERT(!link->isConnected());
+    }
+
     storeViewState();
     storeSettings();
     mavlink->storeSettings();
     UASManager::instance()->storeSettings();
-    // FIXME: If connected links, should prompt before close
-    LinkManager::instance()->disconnectAll();
     event->accept();
 }
 
@@ -1734,14 +1752,12 @@ bool MainWindow::dockWidgetTitleBarsEnabled() const
 
 void MainWindow::_saveTempFlightDataLog(QString tempLogfile)
 {
-    if (qgcApp()->promptFlightDataSave()) {
-        QString saveFilename = QGCFileDialog::getSaveFileName(this,
-                                                            tr("Select file to save Flight Data Log"),
-                                                            qgcApp()->mavlinkLogFilesLocation(),
-                                                            tr("Flight Data Log (*.mavlink)"));
-        if (!saveFilename.isEmpty()) {
-            QFile::copy(tempLogfile, saveFilename);
-        }
+    QString saveFilename = QGCFileDialog::getSaveFileName(this,
+                                                        tr("Select file to save Flight Data Log"),
+                                                        qgcApp()->mavlinkLogFilesLocation(),
+                                                        tr("Flight Data Log (*.mavlink)"));
+    if (!saveFilename.isEmpty()) {
+        QFile::copy(tempLogfile, saveFilename);
     }
     QFile::remove(tempLogfile);
 }

@@ -92,6 +92,39 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     Q_ASSERT(_app == NULL);
     _app = this;
     
+    
+#ifdef QT_DEBUG
+    // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
+    // it to the correct location. This way default debug builds will have logging turned off.
+    
+    static const char* qtProjectDir = "QtProject";
+    static const char* qtLoggingFile = "qtlogging.ini";
+    bool loggingDirectoryOk = false;
+    
+    QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
+    if (!iniFileLocation.cd(qtProjectDir)) {
+        if (!iniFileLocation.mkdir(qtProjectDir)) {
+            qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);
+        } else {
+            if (!iniFileLocation.cd(qtProjectDir)) {
+                qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);;
+            }
+            loggingDirectoryOk = true;
+        }
+    } else {
+        loggingDirectoryOk = true;
+    }
+    
+    if (loggingDirectoryOk) {
+        qDebug () << iniFileLocation;
+        if (!iniFileLocation.exists(qtLoggingFile)) {
+            if (!QFile::copy(":QLoggingCategory/qtlogging.ini", iniFileLocation.filePath(qtLoggingFile))) {
+                qDebug() << "Unable to copy" << QString(qtLoggingFile) << "to" << iniFileLocation;
+            }
+        }
+    }
+#endif
+    
     // Set application information
     if (_runningUnitTests) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
@@ -403,6 +436,11 @@ void QGCApplication::_createSingletons(void)
     AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::instance();
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
+
+    // Must be after UASManager since FactSystem connects to UASManager
+    FactSystem* factSystem = FactSystem::instance();
+    Q_UNUSED(factSystem);
+    Q_ASSERT(factSystem);
 }
 
 void QGCApplication::destroySingletonsForUnitTest(void)

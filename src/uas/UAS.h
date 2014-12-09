@@ -830,9 +830,6 @@ public slots:
     /** @brief Set current mode of operation, e.g. auto or manual, does not check the arming status, for anything else than arming/disarming operations use setMode instead */
     void setModeArm(uint8_t newBaseMode, uint32_t newCustomMode);
 
-    /** @brief Request all parameters */
-    void requestParameters();
-
     /** @brief Request a single parameter by name */
     void requestParameter(int component, const QString& parameter);
     /** @brief Request a single parameter by index */

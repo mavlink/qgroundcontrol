@@ -111,7 +111,8 @@ QT += network \
     serialport \
     sql \
     printsupport \
-    quick
+    quick \
+    quickwidgets
 
 contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
     QT += multimedia
@@ -418,7 +419,6 @@ HEADERS += \
     src/ui/map/QGCMapToolBar.h \
     src/QGCGeo.h \
     src/ui/QGCToolBar.h \
-    src/ui/QGCStatusBar.h \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/WaypointViewOnlyView.h \
@@ -485,7 +485,8 @@ HEADERS += \
     src/QGCMessageBox.h \
     src/QGCComboBox.h \
     src/QGCTemporaryFile.h \
-    src/audio/QGCAudioWorker.h
+    src/audio/QGCAudioWorker.h \
+    src/QGCQuickWidget.h
 
 SOURCES += \
     src/main.cc \
@@ -562,7 +563,6 @@ SOURCES += \
     src/ui/map/QGCMapTool.cc \
     src/ui/map/QGCMapToolBar.cc \
     src/ui/QGCToolBar.cc \
-    src/ui/QGCStatusBar.cc \
     src/ui/QGCMAVLinkInspector.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/WaypointViewOnlyView.cc \
@@ -625,8 +625,8 @@ SOURCES += \
     src/QGCFileDialog.cc \
     src/QGCComboBox.cc \
     src/QGCTemporaryFile.cc \
-    src/audio/QGCAudioWorker.cpp
-
+    src/audio/QGCAudioWorker.cpp \
+    src/QGCQuickWidget.cc
 
 #
 # Unit Test specific configuration goes here
@@ -716,7 +716,8 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/FlightModesComponent.h \
     src/AutoPilotPlugins/PX4/FlightModeConfig.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
-    src/AutoPilotPlugins/PX4/SensorsComponent.h
+    src/AutoPilotPlugins/PX4/SensorsComponent.h \
+    src/AutoPilotPlugins/PX4/PX4ParameterFacts.h \
 
 SOURCES += \
     src/VehicleSetup/SetupView.cc \
@@ -731,4 +732,22 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
     src/AutoPilotPlugins/PX4/FlightModeConfig.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
-    src/AutoPilotPlugins/PX4/SensorsComponent.cc
+    src/AutoPilotPlugins/PX4/SensorsComponent.cc \
+    src/AutoPilotPlugins/PX4/PX4ParameterFacts.cc \
+
+# Fact System code
+
+INCLUDEPATH += \
+    src/FactSystem
+
+HEADERS += \
+    src/FactSystem/FactSystem.h \
+    src/FactSystem/Fact.h \
+    src/FactSystem/FactMetaData.h \
+    src/FactSystem/FactValidator.h \
+
+SOURCES += \
+    src/FactSystem/FactSystem.cc \
+    src/FactSystem/Fact.cc \
+    src/FactSystem/FactMetaData.cc \
+    src/FactSystem/FactValidator.cc \
