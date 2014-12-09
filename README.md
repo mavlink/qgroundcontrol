@@ -46,11 +46,6 @@ QGroundControl builds are supported for OSX, Linux and Windows. See the individu
 ### Build on Mac OSX
 Supported builds are 64 bit, built using the clang compiler.
 
-#### Install SDL prerequisite
-
-1. Download SDL 1.2 from:  <http://www.libsdl.org/release/SDL-1.2.14.dmg>
-2. From the SDL disk image, copy the `sdl.framework` bundle to `/Library/Frameworks` directory (if you are not an admin copy to `~/Library/Frameworks`)
-
 #### Install QT
 - - -
 1. Download Qt 5.3 from: <http://download.qt-project.org/official_releases/qt/5.3/5.3.1/qt-opensource-mac-x64-clang-5.3.1.dmg>
