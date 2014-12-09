@@ -27,6 +27,9 @@
 #include "SensorsComponent.h"
 #include "FlightModesComponent.h"
 #include "AutoPilotPluginManager.h"
+#include "UASManager.h"
+#include "QGCUASParamManagerInterface.h"
+#include "PX4ParameterFacts.h"
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
@@ -65,7 +68,24 @@ union px4_custom_mode {
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(QObject* parent) :
     AutoPilotPlugin(parent)
 {
+    UASManagerInterface* uasMgr = UASManager::instance();
+    Q_ASSERT(uasMgr);
     
+    // We need to track uas coming and going so that we can create PX4ParameterFacts instances for each uas
+    connect(uasMgr, &UASManagerInterface::UASCreated, this, &PX4AutoPilotPlugin::_uasCreated);
+    connect(uasMgr, &UASManagerInterface::UASDeleted, this, &PX4AutoPilotPlugin::_uasDeleted);
+    
+    PX4ParameterFacts::loadParameterFactMetaData();
+}
+
+PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
+{
+    PX4ParameterFacts::deleteParameterFactMetaData();
+    
+    foreach(UASInterface* uas, _mapUas2ParameterFacts.keys()) {
+        delete _mapUas2ParameterFacts[uas];
+    }
+    _mapUas2ParameterFacts.clear();
 }
 
 QList<VehicleComponent*> PX4AutoPilotPlugin::getVehicleComponents(UASInterface* uas) const
@@ -171,4 +191,47 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
     }
     
     return mode;
+}
+
+void PX4AutoPilotPlugin::addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const
+{
+    Q_ASSERT(context);
+    Q_ASSERT(uas);
+    
+    QGCUASParamManagerInterface* paramMgr = uas->getParamManager();
+    Q_UNUSED(paramMgr);
+    Q_ASSERT(paramMgr);
+    Q_ASSERT(paramMgr->parametersReady());
+    
+    PX4ParameterFacts* facts = _parameterFactsForUas(uas);
+    Q_ASSERT(facts);
+    
+    context->setContextProperty("parameterFacts", facts);
+}
+
+/// @brief When a new uas is create we add a new set of parameter facts for it
+void PX4AutoPilotPlugin::_uasCreated(UASInterface* uas)
+{
+    Q_ASSERT(uas);
+    Q_ASSERT(!_mapUas2ParameterFacts.contains(uas));
+    
+    // Each uas has it's own set of parameter facts
+    PX4ParameterFacts* facts = new PX4ParameterFacts(uas, this);
+    Q_CHECK_PTR(facts);
+    _mapUas2ParameterFacts[uas] = facts;
+}
+
+/// @brief When the uas is deleted we remove the parameter facts for it from the system
+void PX4AutoPilotPlugin::_uasDeleted(UASInterface* uas)
+{
+    delete _parameterFactsForUas(uas);
+    _mapUas2ParameterFacts.remove(uas);
+}
+
+PX4ParameterFacts* PX4AutoPilotPlugin::_parameterFactsForUas(UASInterface* uas) const
+{
+    Q_ASSERT(uas);
+    Q_ASSERT(_mapUas2ParameterFacts.contains(uas));
+    
+    return _mapUas2ParameterFacts[uas];
 }

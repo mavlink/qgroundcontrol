@@ -21,39 +21,26 @@
  
  ======================================================================*/
 
-#ifndef PX4AUTOPILOT_H
-#define PX4AUTOPILOT_H
-
-#include "AutoPilotPlugin.h"
-#include "UASInterface.h"
-#include "PX4ParameterFacts.h"
-
 /// @file
-///     @brief This is the PX4 specific implementation of the AutoPilot class.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class PX4AutoPilotPlugin : public AutoPilotPlugin
+#include "FactValidator.h"
+
+FactValidator::FactValidator(QObject* parent) :
+    QValidator(parent)
 {
-    Q_OBJECT
 
-public:
-    PX4AutoPilotPlugin(QObject* parent);
-    ~PX4AutoPilotPlugin();
+}
+    
+void FactValidator::fixup(QString& input) const
+{
+    Q_UNUSED(input);
+}
 
-    // Overrides from AutoPilotPlugin
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
-    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const;
+FactValidator::State FactValidator::validate(QString& input, int& pos) const
+{
+    Q_UNUSED(input);
+    Q_UNUSED(pos);
     
-private slots:
-    void _uasCreated(UASInterface* uas);
-    void _uasDeleted(UASInterface* uas);
-    
-private:
-    PX4ParameterFacts* _parameterFactsForUas(UASInterface* uas) const;
-    
-    QMap<UASInterface*, PX4ParameterFacts*> _mapUas2ParameterFacts;
-};
-
-#endif
+    return Acceptable;
+}
