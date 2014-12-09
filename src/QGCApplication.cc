@@ -97,14 +97,17 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
     // it to the correct location. This way default debug builds will have logging turned off.
     
+    static const char* qtProjectDir = "QtProject";
+    static const char* qtLoggingFile = "qtlogging.ini";
     bool loggingDirectoryOk = false;
+    
     QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
-    if (!iniFileLocation.cd("QtProjects")) {
-        if (!iniFileLocation.mkdir("QtProjects")) {
-            qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath("QtProjects");
+    if (!iniFileLocation.cd(qtProjectDir)) {
+        if (!iniFileLocation.mkdir(qtProjectDir)) {
+            qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);
         } else {
-            if (!iniFileLocation.cd("QtProjects")) {
-                qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath("QtProjects");;
+            if (!iniFileLocation.cd(qtProjectDir)) {
+                qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);;
             }
             loggingDirectoryOk = true;
         }
@@ -114,9 +117,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     
     if (loggingDirectoryOk) {
         qDebug () << iniFileLocation;
-        if (!iniFileLocation.exists("qtlogging.ini")) {
-            if (!QFile::copy(":QLoggingCategory/qtlogging.ini", iniFileLocation.filePath("qtlogging.ini"))) {
-                qDebug() << "Unable to copy qtlogging.ini to" << iniFileLocation;
+        if (!iniFileLocation.exists(qtLoggingFile)) {
+            if (!QFile::copy(":QLoggingCategory/qtlogging.ini", iniFileLocation.filePath(qtLoggingFile))) {
+                qDebug() << "Unable to copy" << QString(qtLoggingFile) << "to" << iniFileLocation;
             }
         }
     }
