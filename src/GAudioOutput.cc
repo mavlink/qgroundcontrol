@@ -107,7 +107,7 @@ bool GAudioOutput::say(QString text, int severity)
  */
 bool GAudioOutput::alert(QString text)
 {
-    emit textToSpeak(text, 2);
+    emit textToSpeak(text, 1);
     return true;
 }
 

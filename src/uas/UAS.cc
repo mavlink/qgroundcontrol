@@ -333,7 +333,7 @@ void UAS::updateState()
         connectionLost = true;
         receivedMode = false;
         QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
-        GAudioOutput::instance()->say(audiostring.toLower());
+        GAudioOutput::instance()->say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_ALERT);
     }
 
     // Update connection loss time on each iteration
@@ -347,7 +347,7 @@ void UAS::updateState()
     if (connectionLost && (heartbeatInterval < timeoutIntervalHeartbeat))
     {
         QString audiostring = QString("Link regained to system %1").arg(this->getUASID());
-        GAudioOutput::instance()->say(audiostring.toLower());
+        GAudioOutput::instance()->say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_NOTICE);
         connectionLost = false;
         connectionLossTime = 0;
         emit heartbeatTimeout(false, 0);
@@ -574,7 +574,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if (statechanged && ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY))
             {
-                GAudioOutput::instance()->say(QString("emergency for system %1").arg(this->getUASID()));
+                GAudioOutput::instance()->say(QString("emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
                 QTimer::singleShot(3000, GAudioOutput::instance(), SLOT(startEmergency()));
             }
             else if (modechanged || statechanged)

@@ -58,12 +58,24 @@ public:
         VOICE_FEMALE
     } QGVoice;
 
+    enum AUDIO_SEVERITY
+    {
+        AUDIO_SEVERITY_EMERGENCY = 0,
+        AUDIO_SEVERITY_ALERT = 1,
+        AUDIO_SEVERITY_CRITICAL = 2,
+        AUDIO_SEVERITY_ERROR = 3,
+        AUDIO_SEVERITY_WARNING = 4,
+        AUDIO_SEVERITY_NOTICE = 5,
+        AUDIO_SEVERITY_INFO = 6,
+        AUDIO_SEVERITY_DEBUG = 7
+    };
+
     /** @brief Get the mute state */
     bool isMuted();
 
 public slots:
     /** @brief Say this text if current output priority matches */
-    bool say(QString text, int severity = 1);
+    bool say(QString text, int severity = 6);
     /** @brief Play alert sound and say notification message */
     bool alert(QString text);
     /** @brief Start emergency sound */
