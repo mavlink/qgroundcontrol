@@ -1,0 +1,47 @@
+<RCC>
+    <qresource prefix="/">
+        <file>files/images/status/weather-storm.svg</file>
+        <file>files/images/status/weather-snow.svg</file>
+        <file>files/images/status/weather-showers.svg</file>
+        <file>files/images/status/weather-showers-scattered.svg</file>
+        <file>files/images/status/weather-severe-alert.svg</file>
+        <file>files/images/status/weather-overcast.svg</file>
+        <file>files/images/status/weather-few-clouds.svg</file>
+        <file>files/images/status/weather-few-clouds-night.svg</file>
+        <file>files/images/status/weather-clear.svg</file>
+        <file>files/images/status/weather-clear-night.svg</file>
+        <file>files/images/status/user-trash-full.svg</file>
+        <file>files/images/status/software-update-urgent.svg</file>
+        <file>files/images/status/software-update-available.svg</file>
+        <file>files/images/status/printer-error.svg</file>
+        <file>files/images/status/network-wireless-encrypted.svg</file>
+        <file>files/images/status/network-transmit.svg</file>
+        <file>files/images/status/network-transmit-receive.svg</file>
+        <file>files/images/status/network-receive.svg</file>
+        <file>files/images/status/network-offline.svg</file>
+        <file>files/images/status/network-idle.svg</file>
+        <file>files/images/status/network-error.svg</file>
+        <file>files/images/status/mail-attachment.svg</file>
+        <file>files/images/status/image-missing.svg</file>
+        <file>files/images/status/image-loading.svg</file>
+        <file>files/images/status/folder-visiting.svg</file>
+        <file>files/images/status/folder-open.svg</file>
+        <file>files/images/status/folder-drag-accept.svg</file>
+        <file>files/images/status/dialog-information.svg</file>
+        <file>files/images/status/battery-caution.svg</file>
+        <file>files/images/status/audio-volume-muted.svg</file>
+        <file>files/images/status/audio-volume-medium.svg</file>
+        <file>files/images/status/audio-volume-low.svg</file>
+        <file>files/images/status/audio-volume-high.svg</file>
+        <file>files/images/status/colorbars.png</file>
+ 		<file>files/images/status/gps.svg</file>
+ 		<file>files/images/status/battery_0.svg</file>
+ 		<file>files/images/status/battery_20.svg</file>
+ 		<file>files/images/status/battery_40.svg</file>
+ 		<file>files/images/status/battery_60.svg</file>
+ 		<file>files/images/status/battery_80.svg</file>
+ 		<file>files/images/status/battery_100.svg</file>
+ 		<file>files/images/status/message_megaphone.png</file>
+ 		<file>files/images/status/message_triangle.png</file> 
+    </qresource>
+</RCC>

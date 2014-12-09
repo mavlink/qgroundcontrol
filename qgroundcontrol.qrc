@@ -4,23 +4,6 @@
         <file>files/images/status/dialog-error.svg</file>
         <file>files/images/status/dialog-warning.svg</file>
         <file>files/images/control/land.svg</file>
-        <file>files/images/actions/media-record.svg</file>
-        <file>files/images/actions/media-playback-stop.svg</file>
-        <file>files/images/actions/media-playback-start.svg</file>
-        <file>files/images/actions/media-playback-pause.svg</file>
-        <file>files/images/actions/list-remove.svg</file>
-        <file>files/images/actions/list-add.svg</file>
-        <file>files/images/actions/go-up.svg</file>
-        <file>files/images/actions/go-top.svg</file>
-        <file>files/images/actions/go-previous.svg</file>
-        <file>files/images/actions/go-next.svg</file>
-        <file>files/images/actions/go-last.svg</file>
-        <file>files/images/actions/go-jump.svg</file>
-        <file>files/images/actions/go-home.svg</file>
-        <file>files/images/actions/go-first.svg</file>
-        <file>files/images/actions/go-down.svg</file>
-        <file>files/images/actions/go-bottom.svg</file>
-        <file>files/images/actions/process-stop.svg</file>
         <file>files/images/categories/preferences-system.svg</file>
         <file>files/images/categories/applications-system.svg</file>
         <file>files/images/categories/applications-internet.svg</file>
@@ -32,88 +15,20 @@
         <file>files/images/apps/accessories-text-editor.svg</file>
         <file>files/images/apps/accessories-calculator.svg</file>
         <file>files/images/devices/input-gaming.svg</file>
-        <file>files/images/mavs/helicopter.svg</file>
-        <file>files/images/mavs/unknown.svg</file>
-        <file>files/images/mavs/fixed-wing.svg</file>
-        <file>files/images/mavs/groundstation.svg</file>
-        <file>files/images/mavs/generic.svg</file>
-        <file>files/images/mavs/quadrotor.svg</file>
-        <file>files/images/mavs/coaxial.svg</file>
-        <file>files/images/mavs/airship.svg</file>
-        <file>files/images/mavs/antenna-tracker.svg</file>
-        <file>files/images/mavs/flapping-wing.svg</file>
-        <file>files/images/mavs/free-balloon.svg</file>
-        <file>files/images/mavs/ground-rover.svg</file>
-        <file>files/images/mavs/hexarotor.svg</file>
-        <file>files/images/mavs/kite.svg</file>
-        <file>files/images/mavs/octorotor.svg</file>
-        <file>files/images/mavs/rocket.svg</file>
-        <file>files/images/mavs/submarine.svg</file>
-        <file>files/images/mavs/surface-boat.svg</file>
-        <file>files/images/mavs/tricopter.svg</file>
-        <file>files/images/actions/system-shutdown.svg</file>
-        <file>files/images/actions/system-log-out.svg</file>
-        <file>files/images/actions/system-lock-screen.svg</file>
-        <file>files/images/status/gps.svg</file>
-        <file>files/images/status/battery_0.svg</file>
-        <file>files/images/status/battery_20.svg</file>
-        <file>files/images/status/battery_40.svg</file>
-        <file>files/images/status/battery_60.svg</file>
-        <file>files/images/status/battery_80.svg</file>
-        <file>files/images/status/battery_100.svg</file>
-        <file>files/images/status/message_megaphone.png</file>
-        <file>files/images/status/message_triangle.png</file>
-        <file>files/images/status/weather-storm.svg</file>
-        <file>files/images/status/weather-snow.svg</file>
-        <file>files/images/status/weather-showers.svg</file>
-        <file>files/images/status/weather-showers-scattered.svg</file>
-        <file>files/images/status/weather-severe-alert.svg</file>
-        <file>files/images/status/weather-overcast.svg</file>
-        <file>files/images/status/weather-few-clouds.svg</file>
-        <file>files/images/status/weather-few-clouds-night.svg</file>
-        <file>files/images/status/weather-clear.svg</file>
-        <file>files/images/status/weather-clear-night.svg</file>
-        <file>files/images/status/user-trash-full.svg</file>
-        <file>files/images/status/software-update-urgent.svg</file>
-        <file>files/images/status/software-update-available.svg</file>
-        <file>files/images/status/printer-error.svg</file>
-        <file>files/images/status/network-wireless-encrypted.svg</file>
-        <file>files/images/status/network-transmit.svg</file>
-        <file>files/images/status/network-transmit-receive.svg</file>
-        <file>files/images/status/network-receive.svg</file>
-        <file>files/images/status/network-offline.svg</file>
-        <file>files/images/status/network-idle.svg</file>
-        <file>files/images/status/network-error.svg</file>
-        <file>files/images/status/mail-attachment.svg</file>
-        <file>files/images/status/image-missing.svg</file>
-        <file>files/images/status/image-loading.svg</file>
-        <file>files/images/status/folder-visiting.svg</file>
-        <file>files/images/status/folder-open.svg</file>
-        <file>files/images/status/folder-drag-accept.svg</file>
-        <file>files/images/status/dialog-information.svg</file>
-        <file>files/images/status/battery-caution.svg</file>
-        <file>files/images/status/audio-volume-muted.svg</file>
-        <file>files/images/status/audio-volume-medium.svg</file>
-        <file>files/images/status/audio-volume-low.svg</file>
-        <file>files/images/status/audio-volume-high.svg</file>
-        <file>files/images/status/colorbars.png</file>
         <file>files/styles/style-dark.css</file>
         <file>files/images/splash.png</file>
         <file>files/audio/alert.wav</file>
         <file>demo-log.txt</file>
+        <file>files/styles/style-light.css</file>
         <file>files/images/mapproviders/openstreetmap.png</file>
         <file>files/images/mapproviders/google.png</file>
         <file>files/images/mapproviders/yahoo.png</file>
         <file>files/images/earth.html</file>
         <file>files/images/mapproviders/googleearth.svg</file>
         <file>files/images/contrib/slugs.png</file>
-        <file>files/styles/style-light.css</file>
         <file>files/images/patterns/lenna.jpg</file>
         <file>files/images/rc_stick.svg</file>
         <file>files/images/actions/qgroundcontrol-connect.svg</file>
-        <file>files/images/mavs/frames_plus.png</file>
-        <file>files/images/mavs/frames_x.png</file>
-        <file>files/images/mavs/frames-05.png</file>
         <file>files/images/devices/BR-HMC5883-01-2.jpg</file>
         <file>files/images/devices/BR-APMPWRDEAN-2.jpg</file>
         <file>files/images/devices/AC-0004-11-2.jpg</file>
@@ -124,115 +39,6 @@
         <file>files/images/devices/cameraGimalRoll1.png</file>
         <file>files/images/devices/cameraGimalYaw.png</file>
         <file>files/images/devices/Shutter.png</file>
-        <file>files/images/actions/qgroundcontrol-generic.svg</file>
-        <file>files/images/actions/qgroundcontrol-px4.svg</file>
-        <file>files/images/actions/qgroundcontrol-apm.svg</file>
-        <file>files/images/actions/qgroundcontrol-ardrone.svg</file>
-        <file>files/images/actions/qgroundcontrol-wifi.svg</file>
-        <file>files/images/firmware/apmcopter.png</file>
-        <file>files/images/firmware/apmplane.png</file>
-        <file>files/images/firmware/apmrover.png</file>
-        <file>files/images/firmware/FW icons 2013+logos.ai</file>
-        <file>files/images/firmware/heli.png</file>
-        <file>files/images/firmware/heli_off.png</file>
-        <file>files/images/firmware/heli_on.png</file>
-        <file>files/images/firmware/hexa_off.png</file>
-        <file>files/images/firmware/hexa_on.png</file>
-        <file>files/images/firmware/hexaplus.png</file>
-        <file>files/images/firmware/hexax.png</file>
-        <file>files/images/firmware/hexay.png</file>
-        <file>files/images/firmware/octaplus.png</file>
-        <file>files/images/firmware/octax.png</file>
-        <file>files/images/firmware/octo_off.png</file>
-        <file>files/images/firmware/octo_on.png</file>
-        <file>files/images/firmware/octx.png</file>
-        <file>files/images/firmware/plane.png</file>
-        <file>files/images/firmware/plane_off.png</file>
-        <file>files/images/firmware/plane_on.png</file>
-        <file>files/images/firmware/quad_off.png</file>
-        <file>files/images/firmware/quad_on.png</file>
-        <file>files/images/firmware/quad_T_off.png</file>
-        <file>files/images/firmware/quad_T_on.png</file>
-        <file>files/images/firmware/quadplus.png</file>
-        <file>files/images/firmware/quadx.png</file>
-        <file>files/images/firmware/quady.png</file>
-        <file>files/images/firmware/rover.png</file>
-        <file>files/images/firmware/rover_off.png</file>
-        <file>files/images/firmware/rover_on.png</file>
-        <file>files/images/firmware/Tir_off.png</file>
-        <file>files/images/firmware/Tir_on.png</file>
-        <file>files/images/firmware/triy.png</file>
-        <file>files/images/firmware/X8.png</file>
-        <file>files/images/firmware/X8_on.png</file>
-        <file>files/images/firmware/Y6_off.png</file>
-        <file>files/images/firmware/Y6_on.png</file>
-        <file>files/images/px4/airframes/quad_x.png</file>
-        <file>files/images/px4/airframes/quad_+.png</file>
-        <file>files/images/px4/airframes/octo_+.png</file>
-        <file>files/images/px4/airframes/hexa_+.png</file>
-        <file>files/images/px4/airframes/hexa_x.png</file>
-        <file>files/images/px4/airframes/octo_x.png</file>
-        <file>files/images/px4/airframes/flying_wing.png</file>
-        <file>files/images/px4/airframes/plane_ert.png</file>
-        <file>files/images/px4/airframes/plane_aert.png</file>
-        <file>files/images/px4/airframes/quad_h.png</file>
-        <file>files/images/px4/calibration/arrows.png</file>
-        <file>files/images/px4/calibration/accel_back.png</file>
-        <file>files/images/px4/calibration/accel_front.png</file>
-        <file>files/images/px4/calibration/accel_right.png</file>
-        <file>files/images/px4/calibration/accel_down.png</file>
-        <file>files/images/px4/calibration/accel_up.png</file>
-        <file>files/images/px4/calibration/accel_left.png</file>
-        <file>files/images/px4/calibration/mag_calibration_figure8.png</file>
-        <file>files/images/px4/calibration/mode1/radioCenter.png</file>
-        <file>files/images/px4/calibration/mode1/radioHome.png</file>
-        <file>files/images/px4/calibration/mode1/radioRollLeft.png</file>
-        <file>files/images/px4/calibration/mode1/radioRollRight.png</file>
-        <file>files/images/px4/calibration/mode1/radioPitchUp.png</file>
-        <file>files/images/px4/calibration/mode1/radioPitchDown.png</file>
-        <file>files/images/px4/calibration/mode1/radioYawLeft.png</file>
-        <file>files/images/px4/calibration/mode1/radioYawRight.png</file>
-        <file>files/images/px4/calibration/mode1/radioThrottleUp.png</file>
-        <file>files/images/px4/calibration/mode1/radioThrottleDown.png</file>
-        <file>files/images/px4/calibration/mode1/radioSwitchMinMax.png</file>
-        <file>files/images/px4/calibration/mode2/radioCenter.png</file>
-        <file>files/images/px4/calibration/mode2/radioHome.png</file>
-        <file>files/images/px4/calibration/mode2/radioRollLeft.png</file>
-        <file>files/images/px4/calibration/mode2/radioRollRight.png</file>
-        <file>files/images/px4/calibration/mode2/radioPitchUp.png</file>
-        <file>files/images/px4/calibration/mode2/radioPitchDown.png</file>
-        <file>files/images/px4/calibration/mode2/radioYawLeft.png</file>
-        <file>files/images/px4/calibration/mode2/radioYawRight.png</file>
-        <file>files/images/px4/calibration/mode2/radioThrottleUp.png</file>
-        <file>files/images/px4/calibration/mode2/radioThrottleDown.png</file>
-        <file>files/images/px4/calibration/mode2/radioSwitchMinMax.png</file>
-        <file>files/images/px4/menu/sensors.png</file>
-        <file>files/images/px4/menu/firmware_upgrade.png</file>
-        <file>files/images/px4/menu/plane.png</file>
-        <file>files/images/px4/menu/remote.png</file>
-        <file>files/images/px4/menu/cogwheels.png</file>
-        <file>files/images/px4/rc/cessna_back.png</file>
-        <file>files/images/px4/rc/cessna_side.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_15.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_14.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_13.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_12.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_19.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_18.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_17.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_16.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_07.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_06.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_04.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_03.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_02.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_01.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_24.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_00.png</file>
-        <file>files/images/px4/menu/toggle_switch.png</file>
-        <file>files/images/px4/boards/px4flow_1.x.png</file>
-        <file>files/images/px4/boards/px4fmu_1.x.png</file>
-        <file>files/images/px4/boards/px4fmu_2.x.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>
