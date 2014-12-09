@@ -95,6 +95,12 @@ QGCAudioWorker::~QGCAudioWorker()
 
 void QGCAudioWorker::say(QString text, int severity)
 {
+	static bool threadInit = false;
+	if (!threadInit) {
+		threadInit = true;
+		init();
+	}
+
     if (!muted)
     {
         // Prepend high priority text with alert beep
@@ -110,8 +116,10 @@ void QGCAudioWorker::say(QString text, int severity)
 #endif
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-        pVoice->Speak(text.toStdWString().c_str(), SPF_DEFAULT, NULL);
-
+        HRESULT hr = pVoice->Speak(text.toStdWString().c_str(), SPF_DEFAULT, NULL);
+		if (FAILED(hr)) {
+			qDebug() << "Speak failed, HR:" << QString("%1").arg(hr, 0, 16);
+		}
 #elif defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
         // Set size of string for espeak: +1 for the null-character
         unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
