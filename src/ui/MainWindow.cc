@@ -778,12 +778,32 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    // Disallow window close if there are active connections
+    
+    bool foundConnections = false;
+    foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
+        if (link->isConnected()) {
+            foundConnections = true;
+            break;
+        }
+    }
+    
+    if (foundConnections) {
+        QGCMessageBox::warning(tr("QGroundControl close"), tr("There are still active connections to vehicles. Please disconnect all connections before closing QGroundControl."));
+        event->ignore();
+        return;
+    }
+
+    // Should not be any active connections
+    foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
+        Q_UNUSED(link);
+        Q_ASSERT(!link->isConnected());
+    }
+
     storeViewState();
     storeSettings();
     mavlink->storeSettings();
     UASManager::instance()->storeSettings();
-    // FIXME: If connected links, should prompt before close
-    LinkManager::instance()->disconnectAll();
     event->accept();
 }
 
@@ -1734,14 +1754,12 @@ bool MainWindow::dockWidgetTitleBarsEnabled() const
 
 void MainWindow::_saveTempFlightDataLog(QString tempLogfile)
 {
-    if (qgcApp()->promptFlightDataSave()) {
-        QString saveFilename = QGCFileDialog::getSaveFileName(this,
-                                                            tr("Select file to save Flight Data Log"),
-                                                            qgcApp()->mavlinkLogFilesLocation(),
-                                                            tr("Flight Data Log (*.mavlink)"));
-        if (!saveFilename.isEmpty()) {
-            QFile::copy(tempLogfile, saveFilename);
-        }
+    QString saveFilename = QGCFileDialog::getSaveFileName(this,
+                                                        tr("Select file to save Flight Data Log"),
+                                                        qgcApp()->mavlinkLogFilesLocation(),
+                                                        tr("Flight Data Log (*.mavlink)"));
+    if (!saveFilename.isEmpty()) {
+        QFile::copy(tempLogfile, saveFilename);
     }
     QFile::remove(tempLogfile);
 }

@@ -44,6 +44,7 @@ private slots:
     void cleanup(void);
     
     void _clickThrough_test(void);
+    void _connectWindowClose_test(void);
     
 private:
     MainWindow* _mainWindow;

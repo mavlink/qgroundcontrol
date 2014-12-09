@@ -28,6 +28,8 @@
 
 #include "MainWindowTest.h"
 #include "QGCToolBar.h"
+#include "MockLink.h"
+#include "QGCMessageBox.h"
 
 UT_REGISTER_TEST(MainWindowTest)
 
@@ -65,4 +67,29 @@ void MainWindowTest::_clickThrough_test(void)
         }
     }
     
+}
+
+void MainWindowTest::_connectWindowClose_test(void)
+{
+    LinkManager* linkMgr = LinkManager::instance();
+    Q_CHECK_PTR(linkMgr);
+    
+    MockLink* link = new MockLink();
+    Q_CHECK_PTR(link);
+    // FIXME: LinkManager/MainWindow needs to be re-architected so that you don't have to addLink to MainWindow to get things to work
+    _mainWindow->addLink(link);
+    linkMgr->connectLink(link);
+    QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
+    
+    // On MainWindow close we should get a message box telling the user to disconnect first
+    setExpectedMessageBox(QGCMessageBox::Ok);
+    _mainWindow->close();
+    QTest::qWait(1000); // Need to allow signals to move between threads    
+    checkExpectedMessageBox();
+
+    // We are going to disconnect the link which is going to pop a save file dialog
+    setExpectedFileDialog(getSaveFileName, QStringList());
+    linkMgr->disconnectLink(link);
+    QTest::qWait(1000); // Need to allow signals to move between threads
+    checkExpectedFileDialog();
 }
