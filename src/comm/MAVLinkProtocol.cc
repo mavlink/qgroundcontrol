@@ -757,3 +757,15 @@ void MAVLinkProtocol::suspendLogForReplay(bool suspend)
     
     _logSuspendReplay = suspend;
 }
+
+void MAVLinkProtocol::deleteTempLogFiles(void)
+{
+    QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    
+    QString filter(QString("*.%1").arg(_logFileExtension));
+    QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
+    
+    foreach(const QFileInfo fileInfo, fileInfoList) {
+        QFile::remove(fileInfo.filePath());
+    }
+}
