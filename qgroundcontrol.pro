@@ -111,7 +111,8 @@ QT += network \
     serialport \
     sql \
     printsupport \
-    quick
+    quick \
+    multimedia
 
 !contains(DEFINES, DISABLE_GOOGLE_EARTH) {
     QT += webkit webkitwidgets
