@@ -33,7 +33,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QComboBox>
 #include <QTimer>
 #include "UASInterface.h"
-#include "QGCMAVLinkLogPlayer.h"
 #include "SerialLink.h"
 
 class QGCToolBar : public QToolBar
@@ -124,7 +123,6 @@ protected:
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
 
-    QGCMAVLinkLogPlayer* player;
     QComboBox *portComboBox;
     QComboBox *baudcomboBox;
     QTimer portBoxTimer;
