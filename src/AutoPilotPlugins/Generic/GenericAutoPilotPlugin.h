@@ -38,9 +38,11 @@ class GenericAutoPilotPlugin : public AutoPilotPlugin
 public:
     GenericAutoPilotPlugin(QObject* parent = NULL);
     
+    // Overrides from AutoPilotPlugin
     virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
     virtual QList<FullMode_t> getModes(void) const;
     virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
+    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const;
 };
 
 #endif

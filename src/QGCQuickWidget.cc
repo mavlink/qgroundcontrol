@@ -21,39 +21,31 @@
  
  ======================================================================*/
 
-#ifndef PX4AUTOPILOT_H
-#define PX4AUTOPILOT_H
+#include "QGCQuickWidget.h"
+#include "UASManager.h"
+#include "AutoPilotPluginManager.h"
 
-#include "AutoPilotPlugin.h"
-#include "UASInterface.h"
-#include "PX4ParameterFacts.h"
+#include <QQmlContext>
+#include <QQmlEngine>
 
 /// @file
-///     @brief This is the PX4 specific implementation of the AutoPilot class.
+///     @brief Subclass of QQuickWidget which injects Facts and the Pallete object into
+///             the QML context.
+///
 ///     @author Don Gagne <don@thegagnes.com>
 
-class PX4AutoPilotPlugin : public AutoPilotPlugin
+QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
+    QQuickWidget(parent)
 {
-    Q_OBJECT
-
-public:
-    PX4AutoPilotPlugin(QObject* parent);
-    ~PX4AutoPilotPlugin();
-
-    // Overrides from AutoPilotPlugin
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
-    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const;
+    UASManagerInterface* uasMgr = UASManager::instance();
+    Q_ASSERT(uasMgr);
     
-private slots:
-    void _uasCreated(UASInterface* uas);
-    void _uasDeleted(UASInterface* uas);
+    UASInterface* uas = uasMgr->getActiveUAS();
+    Q_ASSERT(uas);
     
-private:
-    PX4ParameterFacts* _parameterFactsForUas(UASInterface* uas) const;
+    AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas->getAutopilotType())->addFactsToQmlContext(rootContext(), uas);
     
-    QMap<UASInterface*, PX4ParameterFacts*> _mapUas2ParameterFacts;
-};
-
-#endif
+    rootContext()->engine()->addImportPath("qrc:/qml");
+    
+    setSource(QUrl::fromLocalFile("/Users/Don/repos/qgroundcontrol/test.qml"));
+}
