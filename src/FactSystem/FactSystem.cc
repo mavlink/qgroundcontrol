@@ -21,39 +21,48 @@
  
  ======================================================================*/
 
-#ifndef PX4AUTOPILOT_H
-#define PX4AUTOPILOT_H
-
-#include "AutoPilotPlugin.h"
-#include "UASInterface.h"
-#include "PX4ParameterFacts.h"
-
 /// @file
-///     @brief This is the PX4 specific implementation of the AutoPilot class.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class PX4AutoPilotPlugin : public AutoPilotPlugin
+#include "FactSystem.h"
+#include "UASManager.h"
+
+#include <QtQml>
+
+FactSystem* FactSystem::_instance = NULL;
+QMutex FactSystem::_singletonLock;
+const char* FactSystem::_factSystemQmlUri = "QGroundControl.FactSystem";
+
+FactSystem* FactSystem::instance(void)
 {
-    Q_OBJECT
-
-public:
-    PX4AutoPilotPlugin(QObject* parent);
-    ~PX4AutoPilotPlugin();
-
-    // Overrides from AutoPilotPlugin
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
-    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const;
+    if(_instance == 0) {
+        _singletonLock.lock();
+        if (_instance == 0) {
+            _instance = new FactSystem(qgcApp());
+            Q_CHECK_PTR(_instance);
+        }
+        _singletonLock.unlock();
+    }
     
-private slots:
-    void _uasCreated(UASInterface* uas);
-    void _uasDeleted(UASInterface* uas);
+    Q_ASSERT(_instance);
     
-private:
-    PX4ParameterFacts* _parameterFactsForUas(UASInterface* uas) const;
-    
-    QMap<UASInterface*, PX4ParameterFacts*> _mapUas2ParameterFacts;
-};
+    return _instance;
+}
 
-#endif
+void FactSystem::deleteInstance(void)
+{
+    _instance = NULL;
+    delete this;
+}
+
+FactSystem::FactSystem(QObject* parent, bool registerSingleton) :
+    QGCSingleton(parent, registerSingleton)
+{
+    qmlRegisterType<Fact>(_factSystemQmlUri, 1, 0, "Fact");
+    qmlRegisterType<FactValidator>(_factSystemQmlUri, 1, 0, "FactValidator");
+}
+
+FactSystem::~FactSystem()
+{
+
+}

@@ -125,7 +125,7 @@ void MavlinkLogTest::_bootLogDetectionSave_test(void)
 
 void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
 {
-    // Create a fake eempty mavlink log
+    // Create a fake empty mavlink log
     _createTempLogFile(true);
     
     // Zero length log files should not generate any additional UI pop-ups. It should just be deleted silently.
@@ -170,32 +170,13 @@ void MavlinkLogTest::_connectLog_test(void)
     QTest::qWait(1000); // Need to allow signals to move between threads to shutdown MainWindow
 }
 
-void MavlinkLogTest::_connectLogWindowClose_test(void)
+void MavlinkLogTest::_deleteTempLogFiles_test(void)
 {
-    MainWindow* mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
-    Q_CHECK_PTR(mainWindow);
+    // Verify that the MAVLinkProtocol::deleteTempLogFiles api works correctly
     
-    LinkManager* linkMgr = LinkManager::instance();
-    Q_CHECK_PTR(linkMgr);
-    
-    MockLink* link = new MockLink();
-    Q_CHECK_PTR(link);
-    // FIXME: LinkManager/MainWindow needs to be re-architected so that you don't have to addLink to MainWindow to get things to work
-    mainWindow->addLink(link);
-    linkMgr->connectLink(link);
-    QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
-    
-    // On Disconnect: We should get a getSaveFileName dialog.
-    QDir logSaveDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-    QString logSaveFile(logSaveDir.filePath(_saveLogFilename));
-    setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
-    
-    // MainWindow deletes itself on close
-    mainWindow->close();
-    QTest::qWait(1000); // Need to allow signals to move between threads
-    
-    checkExpectedFileDialog();
-    
-    // Make sure the file is there and delete it
-    QCOMPARE(logSaveDir.remove(_saveLogFilename), true);
+    _createTempLogFile(false);
+    MAVLinkProtocol::deleteTempLogFiles();
+    QDir tmpDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    QStringList logFiles(tmpDir.entryList(QStringList(QString("*.%1").arg(_logFileExtension)), QDir::Files));
+    QCOMPARE(logFiles.count(), 0);
 }

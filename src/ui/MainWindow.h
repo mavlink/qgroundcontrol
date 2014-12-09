@@ -416,7 +416,6 @@ protected:
     QPointer<QDockWidget> hudDockWidget;
 
     QPointer<QGCToolBar> toolBar;
-    QPointer<QGCStatusBar> customStatusBar;
 
     QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;

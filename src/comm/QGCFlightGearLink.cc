@@ -43,6 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "MainWindow.h"
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 // FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
@@ -860,11 +861,47 @@ bool QGCFlightGearLink::connectSimulation()
         return false;
     }
     
+    // Make sure we can find the communication protocol file in QGC install
+    QString fgProtocolXmlFile = fgProtocol + ".xml";
+    QString qgcProtocolFileFullyQualified = qgcProtocolDir.absoluteFilePath(fgProtocolXmlFile);
+    if (!QFileInfo(qgcProtocolFileFullyQualified).exists()) {
+        MainWindow::instance()->showCriticalMessage(tr("Incorrect QGroundControl installation"), tr("FlightGear protocol file missing: %1").arg(qgcProtocolFileFullyQualified));
+        return false;
+    }
+    
     // Communication protocol must be in FlightGear protocol directory. There does not appear to be any way
     // around this by specifying something on the FlightGear command line. FG code does direct append
     // of protocol xml file to $FG_ROOT and $FG_ROOT only allows a single directory to be specified.
-    QString fgProtocolXmlFile = fgProtocol + ".xml";
     _fgProtocolFileFullyQualified = fgProtocolDir.absoluteFilePath(fgProtocolXmlFile);
+    
+    if (QFileInfo(_fgProtocolFileFullyQualified).exists()) {
+        // Verify that the file is current by comparing it against the one in QGC
+        
+        QFile fgFile(_fgProtocolFileFullyQualified);
+        QFile qgcFile(qgcProtocolFileFullyQualified);
+        
+        if (!fgFile.open(QIODevice::ReadOnly) ||
+            !qgcFile.open(QIODevice::ReadOnly)) {
+            QGCMessageBox::warning(tr("FlightGear HIL"), tr("Unable to verify that protocol file %1 is current. "
+                                                            "If file is out of date, you may experience problems. "
+                                                            "Safest approach is to delete the file manually and allow QGroundControl install the latest file.").arg(_fgProtocolFileFullyQualified));
+        }
+        
+        QByteArray fgBytes = fgFile.readAll();
+        QByteArray qgcBytes = qgcFile.readAll();
+        
+        fgFile.close();
+        qgcFile.close();
+        
+        if (fgBytes != qgcBytes) {
+            QGCMessageBox::warning(tr("FlightGear HIL"), tr("FlightGear protocol file %1 is out of date. It will be deleted, which will cause QGroundControl to install the latest version of the file.").arg(_fgProtocolFileFullyQualified));
+            if (!QFile::remove(_fgProtocolFileFullyQualified)) {
+                QGCMessageBox::warning(tr("FlightGear HIL"), tr("Delete of protocol file failed. You will have to manually delete the file."));
+                return false;
+            }
+        }
+    }
+    
     if (!QFileInfo(_fgProtocolFileFullyQualified).exists()) {
         QMessageBox msgBox(QMessageBox::Critical,
                            tr("FlightGear Failed to Start"),
@@ -874,13 +911,6 @@ bool QGCFlightGearLink::connectSimulation()
         msgBox.setWindowModality(Qt::ApplicationModal);
         msgBox.addButton(tr("Fix it for me"), QMessageBox::ActionRole);
         if (msgBox.exec() == QMessageBox::Cancel) {
-            return false;
-        }
-        
-        // Make sure we can find the communication protocol file in QGC install before we attempt to copy to FlightGear
-        QString qgcProtocolFileFullyQualified = qgcProtocolDir.absoluteFilePath(fgProtocolXmlFile);
-        if (!QFileInfo(qgcProtocolFileFullyQualified).exists()) {
-            MainWindow::instance()->showCriticalMessage(tr("Incorrect QGroundControl installation"), tr("FlightGear protocol file missing: %1").arg(qgcProtocolFileFullyQualified));
             return false;
         }
         

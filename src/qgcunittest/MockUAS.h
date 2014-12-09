@@ -103,7 +103,7 @@ public:
     virtual QList<LinkInterface*>* getLinks() { Q_ASSERT(false); return NULL; };
     virtual bool systemCanReverse() const { Q_ASSERT(false); return false; };
     virtual QString getSystemTypeName() { Q_ASSERT(false); return _bogusString; };
-    virtual int getAutopilotType() { Q_ASSERT(false); return 0; };
+    virtual int getAutopilotType() { return MAV_AUTOPILOT_PX4; };
     virtual QGCUASFileManager* getFileManager() {Q_ASSERT(false); return NULL; }
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
@@ -133,7 +133,6 @@ public slots:
     virtual void setTargetPosition(float x, float y, float z, float yaw) { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
     virtual void setLocalOriginAtCurrentGPSPosition() { Q_ASSERT(false); };
     virtual void setHomePosition(double lat, double lon, double alt) { Q_UNUSED(lat); Q_UNUSED(lon); Q_UNUSED(alt); Q_ASSERT(false); };
-    virtual void requestParameters() { Q_ASSERT(false); };
     virtual void requestParameter(int component, const QString& parameter) { Q_UNUSED(component); Q_UNUSED(parameter); Q_ASSERT(false); };
     virtual void writeParametersToStorage() { Q_ASSERT(false); };
     virtual void readParametersFromStorage() { Q_ASSERT(false); };

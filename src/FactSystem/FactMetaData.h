@@ -21,39 +21,46 @@
  
  ======================================================================*/
 
-#ifndef PX4AUTOPILOT_H
-#define PX4AUTOPILOT_H
-
-#include "AutoPilotPlugin.h"
-#include "UASInterface.h"
-#include "PX4ParameterFacts.h"
-
 /// @file
-///     @brief This is the PX4 specific implementation of the AutoPilot class.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class PX4AutoPilotPlugin : public AutoPilotPlugin
+#ifndef FactMetaData_H
+#define FactMetaData_H
+
+#include <QObject>
+#include <QString>
+#include <QVariant>
+
+/// Holds the meta data associated with a Fact.
+///
+/// Holds the meta data associated with a Fact. This is kept in a seperate object from the Fact itself
+/// since you may have multiple instances of the same Fact. But there is only ever one FactMetaData
+/// instance or each Fact.
+class FactMetaData : public QObject
 {
     Q_OBJECT
-
+    
 public:
-    PX4AutoPilotPlugin(QObject* parent);
-    ~PX4AutoPilotPlugin();
-
-    // Overrides from AutoPilotPlugin
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
-    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const;
+    FactMetaData(QObject* parent = NULL);
     
-private slots:
-    void _uasCreated(UASInterface* uas);
-    void _uasDeleted(UASInterface* uas);
+    typedef enum {
+        valueTypeUint8,
+        valueTypeInt8,
+        valueTypeUint16,
+        valueTypeInt16,
+        valueTypeUint32,
+        valueTypeInt32,
+        valueTypeFloat,
+        valueTypeDouble
+    } ValueType_t;
     
-private:
-    PX4ParameterFacts* _parameterFactsForUas(UASInterface* uas) const;
-    
-    QMap<UASInterface*, PX4ParameterFacts*> _mapUas2ParameterFacts;
+    QVariant    defaultValue;
+    ValueType_t type;
+    QString     shortDescription;
+    QString     longDescription;
+    QString     units;
+    QVariant    min;
+    QVariant    max;
 };
 
 #endif
