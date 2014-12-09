@@ -199,6 +199,9 @@ public slots:
     ///         and not called directly in order to synchronize with the bytesReady signal
     ///         which may be ahead of it in the signal queue.
     void suspendLogForReplay(bool suspend);
+    
+    /// @brief Deletes any log files which are in the temp directory
+    static void deleteTempLogFiles(void);
 
 protected:    
     // Override from QObject
