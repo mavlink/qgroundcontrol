@@ -49,14 +49,13 @@ class LinkManagerTest;
 class LinkManager : public QGCSingleton
 {
     Q_OBJECT
-
-public:
-    /// @brief Returns the LinkManager singleton
-    static LinkManager* instance(void);
     
-    virtual void deleteInstance(void);
-
-    ~LinkManager();
+    DECLARE_QGC_SINGLETON(LinkManager, LinkManager)
+    
+    /// Unit Test has access to private constructor/destructor
+    friend class LinkManagerTest;
+    
+public:
 
     /// Returns list of all links
     const QList<LinkInterface*> getLinks();
@@ -99,18 +98,14 @@ signals:
     
 private:
     /// All access to LinkManager is through LinkManager::instance
-    LinkManager(QObject* parent = NULL, bool registerSingleton = true);
+    LinkManager(QObject* parent = NULL);
     
-    /// LinkManager unit test is allowed to new LinkManager objects
-    friend class LinkManagerTest;
-    
+    ~LinkManager();
+
     bool _connectionsSuspendedMsg(void);
-    
-    static LinkManager* _instance;  /// LinkManager singleton
     
     QList<LinkInterface*>   _links;         ///< List of available links
     QMutex                  _linkListMutex; ///< Mutex for thread safe access to _links list
-    
     
     bool    _connectionsSuspended;          ///< true: all new connections should not be allowed
     QString _connectionsSuspendedReason;    ///< User visible reason for suspension

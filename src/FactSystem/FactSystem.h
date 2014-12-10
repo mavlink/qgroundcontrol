@@ -33,8 +33,6 @@
 #include "QGCSingleton.h"
 #include "FactValidator.h"
 
-#include <QMutex>
-
 /// FactSystem is a singleton which provides access to the Facts in the system
 ///
 /// The components of the FactSystem are a Fact which holds an individual value. FactMetaData holds
@@ -47,22 +45,14 @@ class FactSystem : public QGCSingleton
 {
     Q_OBJECT
     
-public:
-    /// Returns the FactSystem singleton
-    static FactSystem* instance(void);
-    
-    /// Override from QGCSingleton
-    virtual void deleteInstance(void);
-    
-    ~FactSystem();
+    DECLARE_QGC_SINGLETON(FactSystem, FactSystem)
     
 private:
     /// All access to FactSystem is through FactSystem::instance, so constructor is private
-    FactSystem(QObject* parent = NULL, bool registerSingleton = true);
+    FactSystem(QObject* parent = NULL);
     
-    static QMutex _singletonLock;   ///< Mutex to make calls to instance thread-safe
+    ~FactSystem();
     
-    static FactSystem* _instance;           ///< FactSystem singleton
     static const char* _factSystemQmlUri;   ///< URI for FactSystem QML imports
 };
 

@@ -29,25 +29,7 @@
 #include "Generic/GenericAutoPilotPlugin.h"
 #include "QGCApplication.h"
 
-AutoPilotPluginManager* AutoPilotPluginManager::_instance = NULL;
-
-AutoPilotPluginManager* AutoPilotPluginManager::instance(void)
-{
-    if (_instance == NULL) {
-        _instance = new AutoPilotPluginManager(qgcApp());
-        Q_CHECK_PTR(_instance);
-    }
-    
-    Q_ASSERT(_instance);
-    
-    return _instance;
-}
-
-void AutoPilotPluginManager::deleteInstance(void)
-{
-    _instance = NULL;
-    delete this;
-}
+IMPLEMENT_QGC_SINGLETON(AutoPilotPluginManager, AutoPilotPluginManager)
 
 AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
     QGCSingleton(parent)

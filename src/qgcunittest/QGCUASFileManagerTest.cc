@@ -88,8 +88,6 @@ void QGCUASFileManagerUnitTest::init(void)
 // Called after every test case
 void QGCUASFileManagerUnitTest::cleanup(void)
 {
-    UnitTest::cleanup();
-    
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_fileManager);
     
@@ -98,6 +96,8 @@ void QGCUASFileManagerUnitTest::cleanup(void)
     
     _fileManager = NULL;
     _multiSpy = NULL;
+    
+    UnitTest::cleanup();
 }
 
 /// @brief Connected to QGCUASFileManager listEntry signal in order to catch list entries

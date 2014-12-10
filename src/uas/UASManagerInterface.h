@@ -57,11 +57,6 @@ class UASManagerInterface : public QGCSingleton
     Q_OBJECT
     
 public:
-    /// @brief Contructor will register singleton to QGCApplication
-    ///     @param parent Parent object
-    ///     @param registerSingleton true: register with QGCApplication, false: do not register (only used for Mock implementations)
-    UASManagerInterface(QObject* parent = NULL, bool registerSingleton = true) : QGCSingleton(parent, registerSingleton) { }
-    
     virtual UASInterface* getActiveUAS() = 0;
     virtual UASWaypointManager *getActiveUASWaypointManager() = 0;
     virtual UASInterface* silentGetActiveUAS() = 0;
@@ -112,6 +107,11 @@ signals:
     void activeUASStatusChanged(int systemId, bool active);
     /** @brief Current home position changed */
     void homePositionChanged(double lat, double lon, double alt);
+    
+protected:
+    // FIXME: Do we need this here?
+    UASManagerInterface(QObject* parent = NULL) :
+        QGCSingleton(parent) { }
 };
 
 #endif // _UASMANAGERINTERFACE_H_

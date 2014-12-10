@@ -84,16 +84,6 @@ public:
     /// @brief Sets the flag to log all mavlink connections
     void setPromptFlightDataSave(bool promptForSave);
 
-    /// @brief All global singletons must be registered such that QGCApplication::destorySingletonsForUnitTest
-    ///         can work correctly.
-    void registerSingleton(QGCSingleton* singleton);
-    
-    /// @brief Creates non-ui based singletons for unit testing
-    void createSingletonsForUnitTest(void) { _createSingletons(); }
-    
-    /// @brief Destroys all singletons. Used by unit test code to reset global state.
-    void destroySingletonsForUnitTest(void);
-    
     /// @brief Returns truee if unit test are being run
     bool runningUnitTests(void) { return _runningUnitTests; }
     
@@ -114,6 +104,7 @@ public:
     
 private:
     void _createSingletons(void);
+    void _destroySingletons(void);
     
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
@@ -124,9 +115,10 @@ private:
     static const char* _savedFileMavlinkLogDirectoryName;   ///< Name of mavlink log subdirectory
     static const char* _savedFileParameterDirectoryName;    ///< Name of parameter subdirectory
     
-    QList<QGCSingleton*> _singletons;    ///< List of registered global singletons
-    
     bool _runningUnitTests; ///< true: running unit tests, false: normal app
+    
+    /// Unit Test have access to creating and destroying singletons
+    friend class UnitTest;
 };
 
 /// @brief Returns the QGCApplication object singleton.

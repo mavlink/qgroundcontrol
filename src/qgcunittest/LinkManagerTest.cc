@@ -45,7 +45,7 @@ void LinkManagerTest::init(void)
     Q_ASSERT(_linkMgr == NULL);
     Q_ASSERT(_multiSpy == NULL);
     
-    _linkMgr = new LinkManager(NULL /* no parent */, false /* don't register singleton */);
+    _linkMgr = new LinkManager(NULL /* no parent */);
     Q_CHECK_PTR(_linkMgr);
     
     _rgSignals[newLinkSignalIndex] = SIGNAL(newLink(LinkInterface*));
@@ -57,8 +57,6 @@ void LinkManagerTest::init(void)
 
 void LinkManagerTest::cleanup(void)
 {
-    UnitTest::cleanup();
-    
     Q_ASSERT(_linkMgr);
     Q_ASSERT(_multiSpy);
     
@@ -67,17 +65,10 @@ void LinkManagerTest::cleanup(void)
     
     _linkMgr = NULL;
     _multiSpy = NULL;
-}
-
-
-void LinkManagerTest::_instance_test(void)
-{
-    LinkManager *linkManager = new LinkManager(NULL /* no parent */, false /* don't register singleton */);
     
-    // If the flag to not register singleton is not working this will cause QGCApplication to crash on
-    // desctrucion since it will try to de-reference a deleted singleton.
-    delete linkManager;
+    UnitTest::cleanup();
 }
+
 
 void LinkManagerTest::_add_test(void)
 {
