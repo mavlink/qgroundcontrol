@@ -273,7 +273,6 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				XbeeLink *xbee = new XbeeLink();
 				tmpLink = xbee;
-				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 #endif // QGC_XBEE_ENABLED

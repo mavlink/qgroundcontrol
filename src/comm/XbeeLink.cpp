@@ -162,7 +162,6 @@ bool XbeeLink::hardwareConnect()
 	emit tryConnectEnd(true);
 	this->m_connected = true;
 	emit connected();
-	emit connected(true);
 	return true;
 }
 
@@ -185,7 +184,6 @@ bool XbeeLink::_disconnect(void)
 	this->m_connected = false;
 
 	emit disconnected();
-	emit connected(false);
 	return true;
 }
 
