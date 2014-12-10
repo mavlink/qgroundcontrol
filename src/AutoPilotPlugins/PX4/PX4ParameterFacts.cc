@@ -105,7 +105,7 @@ void PX4ParameterFacts::_parameterChanged(int uas, int component, QString parame
         _mapParameterName2Fact[parameterName] = fact;
         _mapFact2ParameterName[fact] = parameterName;
     }
-    _mapParameterName2Fact[parameterName]->updateValue(value);
+    _mapParameterName2Fact[parameterName]->setValue(value);
 }
 
 /// Connected to Fact::valueUpdated

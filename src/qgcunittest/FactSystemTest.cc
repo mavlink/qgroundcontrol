@@ -22,20 +22,27 @@
  ======================================================================*/
 
 /// @file
+///     @brief Simple MainWindow unit test
+///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "Fact.h"
+#include "FactSystemTest.h"
 
-#include <QtQml>
+UT_REGISTER_TEST(FactSystemTest)
 
-Fact::Fact(QObject* parent) :
-    QObject(parent)
+FactSystemTest::FactSystemTest(void)
 {
-
+    
 }
 
-void Fact::setValue(QVariant& value)
+void FactSystemTest::init(void)
 {
-    _value = value;
-    emit valueUpdated(value);
+    UnitTest::init();
 }
+
+void FactSystemTest::cleanup(void)
+{
+    UnitTest::cleanup();
+}
+
+// FIXME: Need to clean up LinkManager so you don't need a MainWindow

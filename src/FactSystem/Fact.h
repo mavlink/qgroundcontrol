@@ -85,11 +85,6 @@ public:
     /// Read accesor for max property
     QVariant max(void) { return _metaData->max; }
     
-    /// Used to update the value property from C++ code.
-    ///
-    /// The setValue method is only for use by the QObject Property system. It should not be called directly by C++ app code.
-    void updateValue(QVariant& value);
-    
     /// Sets the meta data associated with the Fact.
     void setMetaData(FactMetaData* metaData) { _metaData = metaData; }
     

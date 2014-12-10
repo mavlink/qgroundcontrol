@@ -24,18 +24,29 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "Fact.h"
+#ifndef FactSystemTest_H
+#define FactSystemTest_H
 
-#include <QtQml>
+#include "UnitTest.h"
+#include "MainWindow.h"
 
-Fact::Fact(QObject* parent) :
-    QObject(parent)
+// Unit Test for Fact System
+class FactSystemTest : public UnitTest
 {
+    Q_OBJECT
+    
+public:
+    FactSystemTest(void);
+    
+private slots:
+    void init(void);
+    void cleanup(void);
+    
+    void _clickThrough_test(void);
+    void _connectWindowClose_test(void);
+    
+private:
+    MainWindow* _mainWindow;
+};
 
-}
-
-void Fact::setValue(QVariant& value)
-{
-    _value = value;
-    emit valueUpdated(value);
-}
+#endif
