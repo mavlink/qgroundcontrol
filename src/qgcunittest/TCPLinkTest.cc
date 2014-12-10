@@ -56,7 +56,6 @@ void TCPLinkUnitTest::init(void)
     _rgSignals[bytesReceivedSignalIndex] = SIGNAL(bytesReceived(LinkInterface*, QByteArray));
     _rgSignals[connectedSignalIndex] = SIGNAL(connected(void));
     _rgSignals[disconnectedSignalIndex] = SIGNAL(disconnected(void));
-    _rgSignals[connected2SignalIndex] = SIGNAL(connected(bool));
     _rgSignals[nameChangedSignalIndex] = SIGNAL(nameChanged(QString));
     _rgSignals[communicationErrorSignalIndex] = SIGNAL(communicationError(const QString&, const QString&));
     _rgSignals[communicationUpdateSignalIndex] = SIGNAL(communicationUpdate(const QString&, const QString&));
@@ -157,11 +156,9 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     // Connect to the server
     QCOMPARE(_link->_connect(), true);
     
-    // Make sure we get the two different connected signals
+    // Make sure we get the connected signals
     QCOMPARE(_multiSpy->waitForSignalByIndex(connectedSignalIndex, 10000), true);
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(connectedSignalMask | connected2SignalMask), true);
-    QList<QVariant> arguments = _multiSpy->getSpyByIndex(connected2SignalIndex)->takeFirst();
-    QCOMPARE(arguments.at(0).toBool(), true);
+    QCOMPARE(_multiSpy->checkOnlySignalByMask(connectedSignalMask), true);
     _multiSpy->clearAllSignals();
     
     // Test link->server data path
@@ -186,7 +183,7 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     QCOMPARE(_multiSpy->checkOnlySignalByMask(bytesReceivedSignalMask), true);
     
     // Read the data and make sure it matches
-    arguments = _multiSpy->getSpyByIndex(bytesReceivedSignalIndex)->takeFirst();
+    QList<QVariant> arguments = _multiSpy->getSpyByIndex(bytesReceivedSignalIndex)->takeFirst();
     QVERIFY(arguments.at(1).toByteArray() == bytesOut);
     
     _multiSpy->clearAllSignals();
@@ -194,11 +191,9 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     // Disconnect the link
     _link->_disconnect();
     
-    // Make sure we get the disconnected signals on link side
+    // Make sure we get the disconnected signal on link side
     QCOMPARE(_multiSpy->waitForSignalByIndex(disconnectedSignalIndex, 1000), true);
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(disconnectedSignalMask | connected2SignalMask), true);
-    arguments = _multiSpy->getSpyByIndex(connected2SignalIndex)->takeFirst();
-    QCOMPARE(arguments.at(0).toBool(), false);
+    QCOMPARE(_multiSpy->checkOnlySignalByMask(disconnectedSignalMask), true);
     _multiSpy->clearAllSignals();
     
     // Try to connect again to make sure everything was cleaned up correctly from previous connection
@@ -206,11 +201,9 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     // Connect to the server
     QCOMPARE(_link->_connect(), true);
     
-    // Make sure we get the two different connected signals
+    // Make sure we get the connected signal
     QCOMPARE(_multiSpy->waitForSignalByIndex(connectedSignalIndex, 1000), true);
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(connectedSignalMask | connected2SignalMask), true);
-    arguments = _multiSpy->getSpyByIndex(connected2SignalIndex)->takeFirst();
-    QCOMPARE(arguments.at(0).toBool(), true);
+    QCOMPARE(_multiSpy->checkOnlySignalByMask(connectedSignalMask), true);
     _multiSpy->clearAllSignals();
     
     server->quit();

@@ -187,11 +187,6 @@ signals:
     void disconnected();
 
     /**
-     * @brief This signal is emitted instantly when the link status changes
-     **/
-    void connected(bool connected);
-
-    /**
      * @brief This signal is emitted if the human readable name of this link changes
      */
     void nameChanged(QString name);

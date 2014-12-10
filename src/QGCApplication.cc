@@ -281,11 +281,11 @@ bool QGCApplication::_initForNormalAppBoot(void)
         // to make sure that all components are initialized when the
         // first messages arrive
         udpLink = new UDPLink(QHostAddress::Any, 14550);
-        LinkManager::instance()->add(udpLink);
+        LinkManager::instance()->addLink(udpLink);
     } else {
         // We want to have a default serial link available for "quick" connecting.
         SerialLink *slink = new SerialLink();
-        LinkManager::instance()->add(slink);
+        LinkManager::instance()->addLink(slink);
     }
     
 #ifdef QGC_RTLAB_ENABLED

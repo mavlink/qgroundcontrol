@@ -15,11 +15,13 @@ public:
     explicit OpalLinkConfigurationWindow(OpalLink* link, QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
 signals:
 
-public slots:
-
-    void allowSettingsAccess(bool enabled);
+private slots:
+    void _linkConnected(void);
+    void _linkDisconnected(void);
 
 private:
+    void _allowSettingsAccess(bool enabled);
+    
     Ui::OpalLinkSettings ui;
     OpalLink* link;
 };

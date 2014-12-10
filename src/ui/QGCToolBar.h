@@ -52,8 +52,6 @@ public slots:
     void addLink(LinkInterface* link);
     /** @brief Remove link which is currently handled */
     void removeLink(LinkInterface* link);
-    /** @brief Update the link state */
-    void updateLinkState(bool connected);
     /** @brief Set the system state */
     void updateState(UASInterface* system, QString name, QString description);
     /** @brief Set the system mode */
@@ -146,6 +144,14 @@ protected:
     QAction* firstAction;
     QToolButton *advancedButton;
     QButtonGroup *group;
+    
+private slots:
+    void _linkConnected(void);
+    void _linkDisconnected(void);
+    
+private:
+    /** @brief Update the link state */
+    void _updateLinkState(bool connected);
 };
 
 #endif // QGCTOOLBAR_H
