@@ -100,6 +100,7 @@ private:
         
 #ifdef QT_DEBUG
         if (qgcApp()->runningUnitTests()) {
+            qDebug() << "QGCMessageBox (unit testing)" << title << text;
             return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);
         } else
 #endif

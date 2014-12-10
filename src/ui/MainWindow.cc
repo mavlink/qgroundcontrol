@@ -787,10 +787,22 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
     
     if (foundConnections) {
-        QGCMessageBox::warning(tr("QGroundControl close"), tr("There are still active connections to vehicles. Please disconnect all connections before closing QGroundControl."));
-        event->ignore();
-        return;
+        QGCMessageBox::StandardButton button = QGCMessageBox::warning(tr("QGroundControl close"),
+                                                                      tr("There are still active connections to vehicles. Do you want to disconnect these before closing?"),
+                                                                      QMessageBox::Yes | QMessageBox::Cancel,
+                                                                      QMessageBox::Cancel);
+        if (button == QMessageBox::Yes) {
+            foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
+                LinkManager::instance()->disconnectLink(link);
+            }
+        } else {
+            event->ignore();
+            return;
+        }
     }
+
+    // This will process any remaining flight log save dialogs
+    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
 
     // Should not be any active connections
     foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
