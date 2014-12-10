@@ -135,6 +135,8 @@ void UnitTest::cleanup(void)
         QEXPECT_FAIL("", "Expecting failure due internal testing", Continue);
     }
     QCOMPARE(_missedFileDialogCount, 0);
+    
+    qgcApp()->destroySingletonsForUnitTest();
 }
 
 void UnitTest::setExpectedMessageBox(QMessageBox::StandardButton response)

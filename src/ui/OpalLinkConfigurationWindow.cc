@@ -14,11 +14,22 @@ OpalLinkConfigurationWindow::OpalLinkConfigurationWindow(OpalLink* link,
     ui.opalInstIDSpinBox->setValue(this->link->getOpalInstID());
 
     connect(ui.opalInstIDSpinBox, SIGNAL(valueChanged(int)), link, SLOT(setOpalInstID(int)));
-    connect(link, SIGNAL(connected(bool)), this, SLOT(allowSettingsAccess(bool)));
+    connect(link, &LinkInterface::connected, this, OpalLinkConfigurationWindow::_linkConnected);
+    connect(link, &LinkInterface::disconnected, this, OpalLinkConfigurationWindow::_linkDisConnected);
     this->show();
 }
 
-void OpalLinkConfigurationWindow::allowSettingsAccess(bool enabled)
+void OpalLinkConfigurationWindow::_linkConnected(void)
+{
+    _allowSettingsAccess(true);
+}
+
+void OpalLinkConfigurationWindow::_linkConnected(void)
+{
+    _allowSettingsAccess(false);
+}
+
+void OpalLinkConfigurationWindow::_allowSettingsAccess(bool enabled)
 {
     ui.paramFileButton->setEnabled(enabled);
     ui.servoConfigFileButton->setEnabled(enabled);

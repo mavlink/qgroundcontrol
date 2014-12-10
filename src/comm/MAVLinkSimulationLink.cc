@@ -106,7 +106,7 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     srand(QTime::currentTime().msec());
     maxTimeNoise = 0;
     this->id = getNextLinkId();
-    LinkManager::instance()->add(this);
+    LinkManager::instance()->addLink(this);
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
@@ -802,7 +802,6 @@ bool MAVLinkSimulationLink::_disconnect(void)
         _isConnected = false;
 
         emit disconnected();
-        emit connected(false);
 
         //exit();
     }
@@ -820,7 +819,6 @@ bool MAVLinkSimulationLink::_connect(void)
 {
     _isConnected = true;
     emit connected();
-    emit connected(true);
 
     start(LowPriority);
     MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 37.480391, -122.282883);

@@ -38,7 +38,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QMap>
 #include <QByteArray>
 
-#include "ProtocolInterface.h"
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
 #include "QGC.h"
@@ -51,10 +50,10 @@ This file is part of the QGROUNDCONTROL project
  * for more information, please see the official website.
  * @ref http://pixhawk.ethz.ch/software/mavlink/
  **/
-class MAVLinkProtocol : public ProtocolInterface
+class MAVLinkProtocol : public QThread
 {
     Q_OBJECT
-
+    
 public:
     MAVLinkProtocol();
     ~MAVLinkProtocol();
@@ -143,7 +142,10 @@ public:
 public slots:
     /** @brief Receive bytes from a communication interface */
     void receiveBytes(LinkInterface* link, QByteArray b);
-    void linkStatusChanged(bool connected);
+    
+    void linkConnected(void);
+    void linkDisconnected(void);
+    
     /** @brief Send MAVLink message through serial interface */
     void sendMessage(mavlink_message_t message);
     /** @brief Send MAVLink message */
@@ -257,6 +259,9 @@ signals:
     void actionGuardChanged(bool enabled);
     /** @brief Emitted if actiion request timeout changed */
     void actionRetransmissionTimeoutChanged(int ms);
+    /** @brief Update the packet loss from one system */
+    void receiveLossChanged(int uasId, float loss);
+
     /**
      * @brief Emitted if a new radio status packet received
      *
@@ -275,6 +280,7 @@ signals:
     void saveTempFlightDataLog(QString tempLogfile);
     
 private:
+    void _linkStatusChanged(LinkInterface* link, bool connected);
     bool _closeLogFile(void);
     void _startLogging(void);
     void _stopLogging(void);
