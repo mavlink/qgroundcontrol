@@ -68,10 +68,12 @@ LinkManager::LinkManager(QObject* parent, bool registerSingleton) :
     _connectionsSuspended(false),
     _mavlink(NULL)
 {
-    Q_ASSERT(_instance == NULL);
-    _instance = this;
+    if (registerSingleton) {
+        Q_ASSERT(_instance == NULL);
+        _instance = this;
+    }
     
-    _mavlink = new MAVLinkProtocol;
+    _mavlink = new MAVLinkProtocol(this);
     Q_CHECK_PTR(_mavlink);
 }
 
