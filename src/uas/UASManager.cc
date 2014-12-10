@@ -314,7 +314,7 @@ void UASManager::addUAS(UASInterface* uas)
     if (firstUAS)
     {
         setActiveUAS(uas);
-        if (offlineUASWaypointManager->getWaypointEditableList().size() > 0)
+        if (getActiveUASWaypointManager()->getWaypointEditableList().size() > 0)
         {
             if (QGCMessageBox::question(tr("Question"), tr("Do you want to append the offline waypoints to the ones currently on the UAV?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
             {
