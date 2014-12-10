@@ -57,6 +57,7 @@
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
+#include "GAudioOutput.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -424,6 +425,9 @@ QGCApplication* qgcApp(void)
 ///         up being creating on something other than the main thread.
 void QGCApplication::_createSingletons(void)
 {
+    GAudioOutput* audioOutput = GAudioOutput::instance();
+    Q_UNUSED(audioOutput);
+    Q_ASSERT(audioOutput);
     
     LinkManager* linkManager = LinkManager::instance();
     Q_UNUSED(linkManager);
