@@ -175,7 +175,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 
 QGCApplication::~QGCApplication()
 {
-    destroySingletonsForUnitTest();
+    _destroySingletons();
 }
 
 void QGCApplication::_initCommon(void)
@@ -424,43 +424,33 @@ QGCApplication* qgcApp(void)
 ///         up being creating on something other than the main thread.
 void QGCApplication::_createSingletons(void)
 {
-    
-    LinkManager* linkManager = LinkManager::instance();
+    // The order here is important since the singletons reference each other
+    LinkManager* linkManager = LinkManager::_createSingleton();
     Q_UNUSED(linkManager);
     Q_ASSERT(linkManager);
 
-    UASManagerInterface* uasManager = UASManager::instance();
+    // Needs LinkManager
+    UASManagerInterface* uasManager = UASManager::_createSingleton();
     Q_UNUSED(uasManager);
     Q_ASSERT(uasManager);
 
-    AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::instance();
+    // Need UASManager
+    AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::_createSingleton();
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
 
-    // Must be after UASManager since FactSystem connects to UASManager
-    FactSystem* factSystem = FactSystem::instance();
+    // Needs UASManager
+    FactSystem* factSystem = FactSystem::_createSingleton();
     Q_UNUSED(factSystem);
     Q_ASSERT(factSystem);
 }
 
-void QGCApplication::destroySingletonsForUnitTest(void)
+void QGCApplication::_destroySingletons(void)
 {
-    foreach(QGCSingleton* singleton, _singletons) {
-        Q_ASSERT(singleton);
-        singleton->deleteInstance();
-    }
-    
-    if (MainWindow::instance()) {
-        delete MainWindow::instance();
-    }
-    
-    _singletons.clear();
-}
+    // Take down singletons in reverse order of creation
 
-void QGCApplication::registerSingleton(QGCSingleton* singleton)
-{
-    Q_ASSERT(singleton);
-    Q_ASSERT(!_singletons.contains(singleton));
-    
-    _singletons.append(singleton);
+    FactSystem::_deleteSingleton();
+    AutoPilotPluginManager::_deleteSingleton();
+    UASManager::_deleteSingleton();
+    LinkManager::_deleteSingleton();
 }

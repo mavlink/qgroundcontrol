@@ -68,8 +68,6 @@ void TCPLinkUnitTest::init(void)
 // Called after every test
 void TCPLinkUnitTest::cleanup(void)
 {
-    UnitTest::cleanup();
-    
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_link);
 
@@ -78,6 +76,8 @@ void TCPLinkUnitTest::cleanup(void)
 
     _multiSpy = NULL;
     _link = NULL;
+    
+    UnitTest::cleanup();
 }
 
 void TCPLinkUnitTest::_properties_test(void)

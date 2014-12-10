@@ -20,13 +20,13 @@ void UASUnitTest::init()
 //this function is called after every test
 void UASUnitTest::cleanup()
 {
-    UnitTest::cleanup();
-    
     delete _uas;
     _uas = NULL;
 
     delete _mavlink;
     _mavlink = NULL;
+    
+    UnitTest::cleanup();
 }
 
 void UASUnitTest::getUASID_test()
