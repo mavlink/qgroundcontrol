@@ -39,7 +39,7 @@ const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Ext
  * The default constructor will create a new MAVLink object sending heartbeats at
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
  */
-MAVLinkProtocol::MAVLinkProtocol() :
+MAVLinkProtocol::MAVLinkProtocol(LinkManager* linkMgr) :
     heartbeatTimer(NULL),
     heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
     m_heartbeatsEnabled(true),
@@ -58,8 +58,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
     _logSuspendReplay(false),
     _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension)),
     _protocolStatusMessageConnected(false),
-    _saveTempFlightDataLogConnected(false)
-
+    _saveTempFlightDataLogConnected(false),
+    _linkMgr(linkMgr)
 {
     qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
     
@@ -179,14 +179,25 @@ void MAVLinkProtocol::resetMetadataForLink(const LinkInterface *link)
     currLossCounter[linkId] = 0;
 }
 
-void MAVLinkProtocol::linkStatusChanged(bool connected)
+void MAVLinkProtocol::linkConnected(void)
 {
     LinkInterface* link = qobject_cast<LinkInterface*>(QObject::sender());
+    Q_ASSERT(link);
     
-    if (link == NULL) {
-        Q_ASSERT(false);
-        return;
-    }
+    _linkStatusChanged(link, true);
+}
+
+void MAVLinkProtocol::linkDisconnected(void)
+{
+    LinkInterface* link = qobject_cast<LinkInterface*>(QObject::sender());
+    Q_ASSERT(link);
+    
+    _linkStatusChanged(link, false);
+}
+
+void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
+{
+    Q_ASSERT(link);
     
     if (connected) {
         Q_ASSERT(!_connectedLinks.contains(link));
@@ -441,7 +452,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             if (m_multiplexingEnabled)
             {
                 // Get all links connected to this unit
-                QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
+                QList<LinkInterface*> links = _linkMgr->getLinks();
 
                 // Emit message on all links that are currently connected
                 foreach (LinkInterface* currLink, links)
@@ -486,7 +497,7 @@ int MAVLinkProtocol::getComponentId()
 void MAVLinkProtocol::sendMessage(mavlink_message_t message)
 {
     // Get all links connected to this unit
-    QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
+    QList<LinkInterface*> links = _linkMgr->getLinks();
 
     // Emit message on all links that are currently connected
     QList<LinkInterface*>::iterator i;
