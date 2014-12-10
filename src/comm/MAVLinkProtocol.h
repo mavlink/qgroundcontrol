@@ -43,6 +43,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "QGCTemporaryFile.h"
 
+class LinkManager;
+
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.
  *
@@ -55,7 +57,7 @@ class MAVLinkProtocol : public QThread
     Q_OBJECT
     
 public:
-    MAVLinkProtocol();
+    MAVLinkProtocol(LinkManager *linkMgr);
     ~MAVLinkProtocol();
 
     /** @brief Get the human-friendly name of this protocol */
@@ -297,6 +299,8 @@ private:
     
     bool _protocolStatusMessageConnected;   ///< true: protocolStatusMessage signal has been connected
     bool _saveTempFlightDataLogConnected;   ///< true: saveTempFlightDataLog signal has been connected
+    
+    LinkManager* _linkMgr;
 };
 
 #endif // MAVLINKPROTOCOL_H_
