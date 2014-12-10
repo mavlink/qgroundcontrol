@@ -240,7 +240,6 @@ void SerialLink::run()
                 m_port = NULL;
 
                 emit disconnected();
-                emit connected(false);
             }
 
             QGC::SLEEP::msleep(500);
@@ -340,7 +339,6 @@ void SerialLink::run()
         m_port = NULL;
 
         emit disconnected();
-        emit connected(false);
     }
 }
 
@@ -503,7 +501,6 @@ bool SerialLink::hardwareConnect(QString &type)
     emit communicationUpdate(getName(),"Opened port!");
 
     emit connected();
-    emit connected(true);
 
     qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "type:" << type << "with settings" << m_port->portName()
              << getBaudRate() << getDataBits() << getParityType() << getStopBits();

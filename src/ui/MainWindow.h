@@ -46,7 +46,6 @@ This file is part of the QGROUNDCONTROL project
 #include "WaypointList.h"
 #include "CameraView.h"
 #include "UASListWidget.h"
-#include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
 #include "submainwindow.h"
 #include "input/JoystickInput.h"
@@ -175,7 +174,6 @@ public slots:
     void showSettings();
     /** @brief Add a communication link */
     LinkInterface* addLink();
-    void addLink(LinkInterface* link);
     bool configLink(LinkInterface *link);
     /** @brief Simulate a link */
     void simulateLink(bool simulate);
@@ -293,11 +291,6 @@ public:
         return logPlayer;
     }
 
-    MAVLinkProtocol* getMAVLink()
-    {
-        return mavlink;
-    }
-
 protected:
 
     typedef enum _VIEW_SECTIONS
@@ -360,8 +353,6 @@ protected:
     void loadSettings();
     void storeSettings();
 
-    // TODO Should be moved elsewhere, as the protocol does not belong to the UI
-    QPointer<MAVLinkProtocol> mavlink;
 
     LinkInterface* udpLink;
 
@@ -461,8 +452,8 @@ protected:
     CUSTOM_MODE customMode;
     
 private slots:
-    /// @brief Save the specified Flight Data Log
     void _saveTempFlightDataLog(QString tempLogfile);
+    void _addLinkMenu(LinkInterface* link);
 
 private:
     /// Constructor is private since all creation should be through MainWindow::_create

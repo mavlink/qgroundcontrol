@@ -217,7 +217,7 @@ void DebugConsole::linkSelected(int linkId)
     if (currLink)
     {
         disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
-        disconnect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
+        disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
         disconnect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
         snapShotTimer.stop();
     }
@@ -229,9 +229,9 @@ void DebugConsole::linkSelected(int linkId)
     if (linkId != -1) {
         currLink = links[linkId];
         connect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
-        connect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
+        disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
         connect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
-        setConnectionState(currLink->isConnected());
+        _setConnectionState(currLink->isConnected());
         snapShotTimer.start();
     }
 }
@@ -761,10 +761,20 @@ void DebugConsole::hold(bool hold)
     }
 }
 
+void DebugConsole::_linkConnected(void)
+{
+    _setConnectionState(true);
+}
+
+void DebugConsole::_linkDisconnected(void)
+{
+    _setConnectionState(false);
+}
+
 /**
  * Sets the connection state the widget shows to this state
  */
-void DebugConsole::setConnectionState(bool connected)
+void DebugConsole::_setConnectionState(bool connected)
 {
     if(connected) {
         m_ui->connectButton->setText(tr("Disconn."));

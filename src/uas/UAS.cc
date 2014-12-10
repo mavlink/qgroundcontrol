@@ -1765,7 +1765,7 @@ void UAS::sendMessage(mavlink_message_t message)
 void UAS::forwardMessage(mavlink_message_t message)
 {
     // Emit message on all links that are currently connected
-    QList<LinkInterface*>link_list = LinkManager::instance()->getLinksForProtocol(mavlink);
+    QList<LinkInterface*>link_list = LinkManager::instance()->getLinks();
 
     foreach(LinkInterface* link, link_list)
     {

@@ -104,7 +104,6 @@ bool MockLink::_connect(void)
         _connected = true;
         start();
         emit connected();
-        emit connected(true);
     }
     
     return true;
@@ -116,7 +115,6 @@ bool MockLink::_disconnect(void)
         _connected = false;
         exit();        
         emit disconnected();
-        emit connected(false);
     }
     
     return true;

@@ -81,8 +81,6 @@ public slots:
     void MAVLINKfilterEnabled(bool filter);
     /** @brief Freeze input, do not store new incoming data */
     void hold(bool hold);
-    /** @brief Set connection state of the current link */
-    void setConnectionState(bool);
     /** @brief Handle the connect button */
     void handleConnectButton();
     /** @brief Enable auto-freeze mode if traffic intensity is too high to display */
@@ -144,8 +142,15 @@ protected:
     QStringList commandHistory;
     QString currCommand;
     int commandIndex;
+    
+private slots:
+    void _linkConnected(void);
+    void _linkDisconnected(void);
 
 private:
+    /** @brief Set connection state of the current link */
+    void _setConnectionState(bool);
+
     Ui::DebugConsole *m_ui;
 };
 

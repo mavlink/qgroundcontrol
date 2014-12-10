@@ -112,7 +112,6 @@ void MainWindow::deleteInstance(void)
 MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode) :
     currentView(VIEW_FLIGHT),
     currentStyle(QGC_MAINWINDOW_STYLE_DARK),
-    mavlink(new MAVLinkProtocol()),
     centerStackActionGroup(new QActionGroup(this)),
     autoReconnect(false),
     simulationLink(NULL),
@@ -131,8 +130,8 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     this->setAttribute(Qt::WA_DeleteOnClose);
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
     
-    connect(mavlink, SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
-    connect(mavlink, SIGNAL(saveTempFlightDataLog(QString)), this, SLOT(_saveTempFlightDataLog(QString)));
+    connect(LinkManager::instance()->mavlink(), SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
+    connect(LinkManager::instance()->mavlink(), SIGNAL(saveTempFlightDataLog(QString)), this, SLOT(_saveTempFlightDataLog(QString)));
     
     loadSettings();
     
@@ -242,11 +241,11 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     QList<LinkInterface*> links = LinkManager::instance()->getLinks();
     foreach(LinkInterface* link, links)
     {
-        this->addLink(link);
+        _addLinkMenu(link);
     }
 
-    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
-
+    connect(LinkManager::instance(), &LinkManager::newLink, this, &MainWindow::_addLinkMenu);
+    
     // Connect user interface devices
     emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     joystick = new JoystickInput();
@@ -274,8 +273,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         SerialLink* link = new SerialLink();
         
         // Add to registry
-        linkMgr->add(link);
-        linkMgr->addProtocol(link, mavlink);
+        linkMgr->addLink(link);
         linkMgr->connectLink(link);
     }
 
@@ -365,11 +363,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
 
 MainWindow::~MainWindow()
 {
-    if (mavlink)
-    {
-        delete mavlink;
-        mavlink = NULL;
-    }
     if (simulationLink)
     {
         delete simulationLink;
@@ -496,12 +489,12 @@ void MainWindow::buildCustomWidget()
 void MainWindow::buildCommonWidgets()
 {
     // Add generic MAVLink decoder
-    mavlinkDecoder = new MAVLinkDecoder(mavlink, this);
+    mavlinkDecoder = new MAVLinkDecoder(LinkManager::instance()->mavlink(), this);
     connect(mavlinkDecoder, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),
                       this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
 
     // Log player
-    logPlayer = new QGCMAVLinkLogPlayer(mavlink, statusBar());
+    logPlayer = new QGCMAVLinkLogPlayer(LinkManager::instance()->mavlink(), statusBar());
     statusBar()->addPermanentWidget(logPlayer);
 
     // Initialize all of the views, if they haven't been already, and add their central widgets
@@ -588,7 +581,7 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(simView, new PrimaryFlightDisplay(this), tr("Primary Flight Display"), "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET", VIEW_SIMULATION, Qt::RightDockWidgetArea);
 
     // Add dock widgets for the engineering view
-    createDockWidget(engineeringView, new QGCMAVLinkInspector(mavlink, this), tr("MAVLink Inspector"), "MAVLINK_INSPECTOR_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView, new QGCMAVLinkInspector(LinkManager::instance()->mavlink(), this), tr("MAVLink Inspector"), "MAVLINK_INSPECTOR_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
     createDockWidget(engineeringView, new ParameterInterface(this), tr("Onboard Parameters"), "PARAMETER_INTERFACE_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
     createDockWidget(engineeringView, new QGCUASFileViewMulti(this), tr("Onboard Files"), "FILE_VIEW_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
     createDockWidget(engineeringView, new HUD(320, 240, this), tr("Video Downlink"), "HEAD_UP_DISPLAY_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
@@ -669,7 +662,7 @@ void MainWindow::loadDockWidget(const QString& name)
     }
     else if (name == "MAVLINK_INSPECTOR_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new QGCMAVLinkInspector(mavlink,this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new QGCMAVLinkInspector(LinkManager::instance()->mavlink(),this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "PARAMETER_INTERFACE_DOCKWIDGET")
     {
@@ -812,7 +805,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     storeViewState();
     storeSettings();
-    mavlink->storeSettings();
     UASManager::instance()->storeSettings();
     event->accept();
 }
@@ -824,7 +816,7 @@ void MainWindow::connectCommonWidgets()
 {
     if (infoDockWidget && infoDockWidget->widget())
     {
-        connect(mavlink, SIGNAL(receiveLossChanged(int, float)),
+        connect(LinkManager::instance()->mavlink(), SIGNAL(receiveLossChanged(int, float)),
                 infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
     }
 }
@@ -1302,13 +1294,13 @@ void MainWindow::showSettings()
     settings.exec();
 }
 
+// FIXME: Where is this called from
 LinkInterface* MainWindow::addLink()
 {
     SerialLink* link = new SerialLink();
     // TODO This should be only done in the dialog itself
 
-    LinkManager::instance()->add(link);
-    LinkManager::instance()->addProtocol(link, mavlink);
+    LinkManager::instance()->addLink(link);
 
     // Go fishing for this link's configuration window
     QList<QAction*> actions = ui.menuNetwork->actions();
@@ -1351,41 +1343,29 @@ bool MainWindow::configLink(LinkInterface *link)
     return found;
 }
 
-void MainWindow::addLink(LinkInterface *link)
+void MainWindow::_addLinkMenu(LinkInterface *link)
 {
-    // IMPORTANT! KEEP THESE TWO LINES
-    // THEY MAKE SURE THE LINK IS PROPERLY REGISTERED
-    // BEFORE LINKING THE UI AGAINST IT
-    // Register (does nothing if already registered)
-    LinkManager::instance()->add(link);
-    LinkManager::instance()->addProtocol(link, mavlink);
-
     // Go fishing for this link's configuration window
     QList<QAction*> actions = ui.menuNetwork->actions();
 
-    bool found(false);
+    bool alreadyAdded = false;
 
     const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
     const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
 
-    foreach (QAction* act, actions)
-    {
-        if (act->data().toInt() == linkID)
-        {
-            found = true;
+    foreach (QAction* act, actions) {
+        if (act->data().toInt() == linkID) {
+            alreadyAdded = true;
+            break;
         }
     }
 
-    if (!found)
-    {
-        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
+    if (!alreadyAdded) {
+        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, this);
         commsWidgetList.append(commWidget);
         connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
         QAction* action = commWidget->getAction();
         ui.menuNetwork->addAction(action);
-
-        // Error handling
-        connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
     }
 }
 
@@ -1762,6 +1742,7 @@ bool MainWindow::dockWidgetTitleBarsEnabled() const
     return menuActionHelper->dockWidgetTitleBarsEnabled();
 }
 
+/// @brief Save the specified Flight Data Log
 void MainWindow::_saveTempFlightDataLog(QString tempLogfile)
 {
     QString saveFilename = QGCFileDialog::getSaveFileName(this,

@@ -52,15 +52,8 @@ _ui(new Ui::SettingsDialog)
     // Add the joystick settings pane
     _ui->tabWidget->addTab(new JoystickWidget(joystick, this), "Controllers");
     
-    // Add all protocols
-    QList<ProtocolInterface*> protocols = LinkManager::instance()->getProtocols();
-    foreach (ProtocolInterface* protocol, protocols) {
-        MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
-        if (mavlink) {
-            MAVLinkSettingsWidget* msettings = new MAVLinkSettingsWidget(mavlink, this);
-            _ui->tabWidget->addTab(msettings, "MAVLink");
-        }
-    }
+    MAVLinkSettingsWidget* msettings = new MAVLinkSettingsWidget(LinkManager::instance()->mavlink(), this);
+    _ui->tabWidget->addTab(msettings, "MAVLink");
     
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
     
