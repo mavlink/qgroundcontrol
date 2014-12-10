@@ -36,6 +36,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QGC.h>
 
+GAudioOutput* GAudioOutput::_instance = NULL;
+QMutex GAudioOutput::_singletonLock;
+
 /**
  * This class follows the singleton design pattern
  * @see http://en.wikipedia.org/wiki/Singleton_pattern
@@ -43,22 +46,31 @@ This file is part of the QGROUNDCONTROL project
  * the call can occur at any place in the code, no reference to the
  * GAudioOutput object has to be passed.
  */
-GAudioOutput *GAudioOutput::instance()
+
+GAudioOutput* GAudioOutput::instance(void)
 {
-    static GAudioOutput *_instance = 0;
-
-    if (_instance == 0)
-    {
-        _instance = new GAudioOutput();
-        // Set the application as parent to ensure that this object
-        // will be destroyed when the main application exits
-        _instance->setParent(qApp);
+    if(_instance == 0) {
+        _singletonLock.lock();
+        if (_instance == 0) {
+            _instance = new GAudioOutput(qgcApp());
+            Q_CHECK_PTR(_instance);
+        }
+        _singletonLock.unlock();
     }
-
+    
+    Q_ASSERT(_instance);
+    
     return _instance;
 }
 
-GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
+void GAudioOutput::deleteInstance(void)
+{
+    _instance = NULL;
+    delete this;
+}
+
+GAudioOutput::GAudioOutput(QObject* parent, bool registerSingleton) :
+    QGCSingleton(parent, registerSingleton),
     muted(false),
     thread(new QThread()),
     worker(new QGCAudioWorker())
