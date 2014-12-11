@@ -238,8 +238,6 @@ void SerialLink::run()
                 m_port->close();
                 delete m_port;
                 m_port = NULL;
-
-                emit disconnected();
             }
 
             QGC::SLEEP::msleep(500);
@@ -337,8 +335,6 @@ void SerialLink::run()
         m_port->close();
         delete m_port;
         m_port = NULL;
-
-        emit disconnected();
     }
 }
 
