@@ -24,35 +24,29 @@
 #define MEAN_EARTH_DIAMETER	12756274.0
 #define UMR	0.017453292519943295769236907684886
 
-UASManager* UASManager::_instance = NULL;
-UASManagerInterface* UASManager::_mockUASManager = NULL;
+IMPLEMENT_QGC_SINGLETON(UASManager, UASManagerInterface)
 
-
-void UASManager::setMockUASManager(UASManagerInterface* mockUASManager)
+UASManager::UASManager(QObject* parent) :
+    UASManagerInterface(parent),
+    activeUAS(NULL),
+    offlineUASWaypointManager(NULL),
+    homeLat(47.3769),
+    homeLon(8.549444),
+    homeAlt(470.0),
+    homeFrame(MAV_FRAME_GLOBAL)
 {
-    _mockUASManager = mockUASManager;
+    loadSettings();
+    setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
 }
 
-UASManagerInterface* UASManager::instance()
+UASManager::~UASManager()
 {
-    if (_mockUASManager) {
-        return _mockUASManager;
+    storeSettings();
+    // Delete all systems
+    foreach (UASInterface* mav, systems) {
+        // deleteLater so it ends up on correct thread
+        mav->deleteLater();
     }
-    
-    if(_instance == NULL) {
-        _instance = new UASManager(qgcApp());
-        Q_CHECK_PTR(_instance);
-    }
-    
-    Q_ASSERT(_instance);
-    
-    return _instance;
-}
-
-void UASManager::deleteInstance(void)
-{
-    _instance = NULL;
-    delete this;
 }
 
 void UASManager::storeSettings()
@@ -253,34 +247,6 @@ void UASManager::uavChangedHomePosition(int uav, double lat, double lon, double 
 //                }
 //            }
         }
-    }
-}
-
-/**
- * @brief Private singleton constructor
- *
- * This class implements the singleton design pattern and has therefore only a private constructor.
- **/
-UASManager::UASManager(QObject* parent) :
-    UASManagerInterface(parent),
-    activeUAS(NULL),
-    offlineUASWaypointManager(NULL),
-    homeLat(47.3769),
-    homeLon(8.549444),
-    homeAlt(470.0),
-    homeFrame(MAV_FRAME_GLOBAL)
-{
-    loadSettings();
-    setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
-}
-
-UASManager::~UASManager()
-{
-    storeSettings();
-    // Delete all systems
-    foreach (UASInterface* mav, systems) {
-		// deleteLater so it ends up on correct thread
-        mav->deleteLater();
     }
 }
 

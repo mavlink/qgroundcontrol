@@ -54,7 +54,7 @@ void FlightModeConfigTest::init(void)
     _mockUASManager = new MockUASManager();
     Q_ASSERT(_mockUASManager);
     
-    UASManager::setMockUASManager(_mockUASManager);
+    UASManager::setMockInstance(_mockUASManager);
     
     _mockUAS = new MockUAS();
     Q_CHECK_PTR(_mockUAS);
@@ -126,21 +126,21 @@ void FlightModeConfigTest::init(void)
 
 void FlightModeConfigTest::cleanup(void)
 {
-    UnitTest::cleanup();
-    
     Q_ASSERT(_configWidget);
     delete _configWidget;
     
     Q_ASSERT(_mockUAS);
     delete _mockUAS;
     
-    UASManager::setMockUASManager(NULL);
+    UASManager::setMockInstance(NULL);
     
     Q_ASSERT(_mockUASManager);
     delete _mockUASManager;
     
     _mapChannelCombo2Param.clear();
     _mapChannelCombo2ButtonGroup.clear();
+    
+    UnitTest::cleanup();
 }
 
 /// @brief Returns channel mapping for the specified parameters

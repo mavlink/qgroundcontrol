@@ -26,37 +26,16 @@
 
 #include "FactSystem.h"
 #include "UASManager.h"
+#include "QGCApplication.h"
 
 #include <QtQml>
 
-FactSystem* FactSystem::_instance = NULL;
-QMutex FactSystem::_singletonLock;
+IMPLEMENT_QGC_SINGLETON(FactSystem, FactSystem)
+
 const char* FactSystem::_factSystemQmlUri = "QGroundControl.FactSystem";
 
-FactSystem* FactSystem::instance(void)
-{
-    if(_instance == 0) {
-        _singletonLock.lock();
-        if (_instance == 0) {
-            _instance = new FactSystem(qgcApp());
-            Q_CHECK_PTR(_instance);
-        }
-        _singletonLock.unlock();
-    }
-    
-    Q_ASSERT(_instance);
-    
-    return _instance;
-}
-
-void FactSystem::deleteInstance(void)
-{
-    _instance = NULL;
-    delete this;
-}
-
-FactSystem::FactSystem(QObject* parent, bool registerSingleton) :
-    QGCSingleton(parent, registerSingleton)
+FactSystem::FactSystem(QObject* parent) :
+    QGCSingleton(parent)
 {
     qmlRegisterType<Fact>(_factSystemQmlUri, 1, 0, "Fact");
     qmlRegisterType<FactValidator>(_factSystemQmlUri, 1, 0, "FactValidator");

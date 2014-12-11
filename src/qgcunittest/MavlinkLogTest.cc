@@ -59,12 +59,12 @@ void MavlinkLogTest::init(void)
 
 void MavlinkLogTest::cleanup(void)
 {
-    UnitTest::cleanup();
-
     // Make sure no left over logs in temp directory
     QDir tmpDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
     QStringList logFiles(tmpDir.entryList(QStringList(QString("*.%1").arg(_logFileExtension)), QDir::Files));
     QCOMPARE(logFiles.count(), 0);
+    
+    UnitTest::cleanup();
 }
 
 void MavlinkLogTest::_createTempLogFile(bool zeroLength)

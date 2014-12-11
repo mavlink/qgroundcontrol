@@ -44,7 +44,6 @@ private slots:
     void init(void);
     void cleanup(void);
     
-    void _instance_test(void);
     void _add_test(void);
     void _delete_test(void);
     void _addSignals_test(void);

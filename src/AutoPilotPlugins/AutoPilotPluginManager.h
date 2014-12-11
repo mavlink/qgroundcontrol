@@ -41,13 +41,10 @@
 class AutoPilotPluginManager : public QGCSingleton
 {
     Q_OBJECT
+    
+    DECLARE_QGC_SINGLETON(AutoPilotPluginManager, AutoPilotPluginManager)
 
 public:
-    /// @brief Returns the AutoPilotPluginManager singleton
-    static AutoPilotPluginManager* instance(void);
-    
-    virtual void deleteInstance(void);
-    
     /// @brief Returns the singleton AutoPilot instance for the specified auto pilot type.
     /// @param autopilotType Specified using the MAV_AUTOPILOT_* values.
     AutoPilotPlugin* getInstanceForAutoPilotPlugin(int autopilotType);
@@ -55,8 +52,6 @@ public:
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     AutoPilotPluginManager(QObject* parent = NULL);
-    
-    static AutoPilotPluginManager* _instance;
     
     QMap<int, AutoPilotPlugin*> _pluginMap;
 };

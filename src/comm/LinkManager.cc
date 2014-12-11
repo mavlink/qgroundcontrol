@@ -38,41 +38,18 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
 
-LinkManager* LinkManager::_instance = NULL;
-
-LinkManager* LinkManager::instance(void)
-{
-    if(_instance == 0) {
-        new LinkManager(qgcApp());
-        Q_CHECK_PTR(_instance);
-    }
-    
-    Q_ASSERT(_instance);
-    
-    return _instance;
-}
-
-void LinkManager::deleteInstance(void)
-{
-    _instance = NULL;
-    delete this;
-}
+IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
 
 /**
  * @brief Private singleton constructor
  *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
-LinkManager::LinkManager(QObject* parent, bool registerSingleton) :
-    QGCSingleton(parent, registerSingleton),
+LinkManager::LinkManager(QObject* parent) :
+    QGCSingleton(parent),
     _connectionsSuspended(false),
     _mavlink(NULL)
 {
-    if (registerSingleton) {
-        Q_ASSERT(_instance == NULL);
-        _instance = this;
-    }
-    
     _mavlink = new MAVLinkProtocol(this);
     Q_CHECK_PTR(_mavlink);
 }
