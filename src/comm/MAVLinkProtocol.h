@@ -37,6 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QFile>
 #include <QMap>
 #include <QByteArray>
+#include <QLoggingCategory>
 
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
@@ -44,6 +45,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCTemporaryFile.h"
 
 class LinkManager;
+
+Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.

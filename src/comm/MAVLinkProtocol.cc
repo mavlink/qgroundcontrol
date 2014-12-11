@@ -31,6 +31,7 @@
 #include "QGCApplication.h"
 
 Q_DECLARE_METATYPE(mavlink_message_t)
+Q_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
 
 const char* MAVLinkProtocol::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Extension for log files
@@ -186,6 +187,7 @@ void MAVLinkProtocol::linkDisconnected(void)
 
 void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
 {
+    qCDebug(MAVLinkProtocolLog) << "_linkStatusChanged" << QString("%1").arg((long)link, 0, 16) << connected;
     Q_ASSERT(link);
     
     if (connected) {
