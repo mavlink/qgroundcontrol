@@ -43,9 +43,7 @@ QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
     UASInterface* uas = uasMgr->getActiveUAS();
     Q_ASSERT(uas);
     
-    AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas->getAutopilotType())->addFactsToQmlContext(rootContext(), uas);
-    
     rootContext()->engine()->addImportPath("qrc:/qml");
     
-    setSource(QUrl::fromLocalFile("/Users/Don/repos/qgroundcontrol/test.qml"));
+    AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas)->addFactsToQmlContext(rootContext());
 }
