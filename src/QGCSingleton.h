@@ -143,7 +143,7 @@ class UnitTest;
 ///     // Other class methods...
 ///
 /// @endcode
-/// The example above does use an inteface so the second parameter to the macro is the class name as well.
+/// The example above does not use an inteface so the second parameter to the macro is the class name as well.
 
 class QGCSingleton : public QObject
 {
