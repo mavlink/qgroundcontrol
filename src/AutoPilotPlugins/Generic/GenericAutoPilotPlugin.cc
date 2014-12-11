@@ -26,24 +26,22 @@
 
 #include "GenericAutoPilotPlugin.h"
 
-GenericAutoPilotPlugin::GenericAutoPilotPlugin(QObject* parent) :
+GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* parent) :
     AutoPilotPlugin(parent)
 {
-    
+    Q_UNUSED(uas);
 }
 
-QList<VehicleComponent*> GenericAutoPilotPlugin::getVehicleComponents(UASInterface* uas) const
+QList<VehicleComponent*> GenericAutoPilotPlugin::getVehicleComponents(void) const
 {
-    Q_UNUSED(uas);
-    
     // Generic autopilot has no configurable components
     return QList<VehicleComponent*>();
 }
 
-QList<AutoPilotPlugin::FullMode_t> GenericAutoPilotPlugin::getModes(void) const
+QList<AutoPilotPluginManager::FullMode_t> GenericAutoPilotPlugin::getModes(void)
 {
-    QList<FullMode_t>       modeList;
-    FullMode_t              fullMode;
+    AutoPilotPluginManager::FullMode_t fullMode;
+    QList<AutoPilotPluginManager::FullMode_t> modeList;
 
     fullMode.customMode = 0;
     
@@ -62,7 +60,7 @@ QList<AutoPilotPlugin::FullMode_t> GenericAutoPilotPlugin::getModes(void) const
     return modeList;
 }
 
-QString GenericAutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMode) const
+QString GenericAutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMode)
 {
     Q_UNUSED(customMode);
     
@@ -85,11 +83,20 @@ QString GenericAutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t cust
     return mode;
 }
 
-void GenericAutoPilotPlugin::addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const
+void GenericAutoPilotPlugin::addFactsToQmlContext(QQmlContext* context) const
 {
     Q_UNUSED(context);
-    Q_UNUSED(uas);
     
     // Qml not yet supported for Generic
     Q_ASSERT(false);
+}
+
+QObject* GenericAutoPilotPlugin::parameterFacts(void) const
+{
+    return NULL;
+}
+
+void GenericAutoPilotPlugin::clearStaticData(void)
+{
+    // No Static data yet
 }

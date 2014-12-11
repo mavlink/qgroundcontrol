@@ -28,29 +28,107 @@
 #include "PX4/PX4AutoPilotPlugin.h"
 #include "Generic/GenericAutoPilotPlugin.h"
 #include "QGCApplication.h"
+#include "UASManager.h"
 
 IMPLEMENT_QGC_SINGLETON(AutoPilotPluginManager, AutoPilotPluginManager)
 
 AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
     QGCSingleton(parent)
 {
-    // All plugins are constructed here so that they end up on the correct thread
-    _pluginMap[MAV_AUTOPILOT_PX4] = new PX4AutoPilotPlugin(this);
-    Q_ASSERT(_pluginMap.contains(MAV_AUTOPILOT_PX4));
-
-    _pluginMap[MAV_AUTOPILOT_GENERIC] = new GenericAutoPilotPlugin(this);
-    Q_ASSERT(_pluginMap.contains(MAV_AUTOPILOT_GENERIC));
+    UASManagerInterface* uasMgr = UASManager::instance();
+    Q_ASSERT(uasMgr);
+    
+    // We need to track uas coming and going so that we can instantiate plugins for each uas
+    connect(uasMgr, &UASManagerInterface::UASCreated, this, &AutoPilotPluginManager::_uasCreated);
+    connect(uasMgr, &UASManagerInterface::UASDeleted, this, &AutoPilotPluginManager::_uasDeleted);
 }
 
-AutoPilotPlugin* AutoPilotPluginManager::getInstanceForAutoPilotPlugin(int autopilotType)
+AutoPilotPluginManager::~AutoPilotPluginManager()
+{
+    foreach(MAV_AUTOPILOT mavType, _pluginMap.keys()) {
+        Q_ASSERT_X(_pluginMap[mavType].count() == 0, "AutoPilotPluginManager", "LinkManager::_shutdown should have already closed all uas");
+    }
+    _pluginMap.clear();
+    
+    PX4AutoPilotPlugin::clearStaticData();
+    GenericAutoPilotPlugin::clearStaticData();
+}
+
+/// Create the plugin for this uas
+void AutoPilotPluginManager::_uasCreated(UASInterface* uas)
+{
+    Q_ASSERT(uas);
+    
+    MAV_AUTOPILOT autopilotType = static_cast<MAV_AUTOPILOT>(uas->getAutopilotType());
+    int uasId = uas->getUASID();
+    Q_ASSERT(uasId != 0);
+    
+    if (_pluginMap.contains(autopilotType)) {
+        Q_ASSERT_X(!_pluginMap[autopilotType].contains(uasId), "AutoPilotPluginManager", "Either we have duplicate UAS ids, or a UAS was not removed correctly.");
+    }
+
+    AutoPilotPlugin* plugin;
+    switch (autopilotType) {
+        case MAV_AUTOPILOT_PX4:
+            plugin = new PX4AutoPilotPlugin(uas, this);
+            Q_CHECK_PTR(plugin);
+            _pluginMap[MAV_AUTOPILOT_PX4][uasId] = plugin;
+            break;
+        case MAV_AUTOPILOT_GENERIC:
+        default:
+            plugin = new GenericAutoPilotPlugin(uas, this);
+            Q_CHECK_PTR(plugin);
+            _pluginMap[MAV_AUTOPILOT_GENERIC][uasId] = plugin;
+    }
+}
+
+/// Destroy the plugin associated with this uas
+void AutoPilotPluginManager::_uasDeleted(UASInterface* uas)
+{
+    Q_ASSERT(uas);
+    
+    MAV_AUTOPILOT autopilotType = static_cast<MAV_AUTOPILOT>(uas->getAutopilotType());
+    int uasId = uas->getUASID();
+    Q_ASSERT(uasId != 0);
+    
+    Q_ASSERT(_pluginMap.contains(autopilotType));
+    Q_ASSERT(_pluginMap[autopilotType].contains(uasId));
+    delete _pluginMap[autopilotType][uasId];
+    _pluginMap[autopilotType].remove(uasId);
+}
+
+AutoPilotPlugin* AutoPilotPluginManager::getInstanceForAutoPilotPlugin(UASInterface* uas)
+{
+    Q_ASSERT(uas);
+    
+    MAV_AUTOPILOT autopilotType = static_cast<MAV_AUTOPILOT>(uas->getAutopilotType());
+    int uasId = uas->getUASID();
+    Q_ASSERT(uasId != 0);
+    
+    Q_ASSERT(_pluginMap.contains(autopilotType));
+    Q_ASSERT(_pluginMap[autopilotType].contains(uasId));
+    
+    return _pluginMap[autopilotType][uasId];
+}
+
+QList<AutoPilotPluginManager::FullMode_t> AutoPilotPluginManager::getModes(int autopilotType) const
 {
     switch (autopilotType) {
         case MAV_AUTOPILOT_PX4:
-            Q_ASSERT(_pluginMap.contains(MAV_AUTOPILOT_PX4));
-            return _pluginMap[MAV_AUTOPILOT_PX4];
-            
+            return PX4AutoPilotPlugin::getModes();
+        case MAV_AUTOPILOT_GENERIC:
         default:
-            Q_ASSERT(_pluginMap.contains(MAV_AUTOPILOT_GENERIC));
-            return _pluginMap[MAV_AUTOPILOT_GENERIC];
+            return GenericAutoPilotPlugin::getModes();
+    }
+}
+
+QString AutoPilotPluginManager::getShortModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const
+{
+    switch (autopilotType) {
+        case MAV_AUTOPILOT_PX4:
+            return PX4AutoPilotPlugin::getShortModeText(baseMode, customMode);
+        case MAV_AUTOPILOT_GENERIC:
+        default:
+            return GenericAutoPilotPlugin::getShortModeText(baseMode, customMode);
     }
 }
