@@ -1,6 +1,5 @@
 #include "QGCMAVLinkUASFactory.h"
 #include "UASManager.h"
-#include "QGCUASWorker.h"
 #include "QGXPX4UAS.h"
 
 QGCMAVLinkUASFactory::QGCMAVLinkUASFactory(QObject *parent) :
@@ -23,7 +22,7 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
 
     UASInterface* uas;
 
-    QGCUASWorker* worker = new QGCUASWorker();
+    QThread* worker = new QThread();
 
     switch (heartbeat->autopilot)
     {

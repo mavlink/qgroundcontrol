@@ -42,10 +42,19 @@ UASManager::UASManager(QObject* parent) :
 UASManager::~UASManager()
 {
     storeSettings();
-    // Delete all systems
-    foreach (UASInterface* mav, systems) {
-        // deleteLater so it ends up on correct thread
-        mav->deleteLater();
+    Q_ASSERT_X(systems.count() == 0, "~UASManager", "_shutdown should have already removed all uas");
+}
+
+void UASManager::_shutdown(void)
+{
+    QList<UASInterface*> uasList;
+    
+    foreach(UASInterface* uas, systems) {
+        uasList.append(uas);
+    }
+    
+    foreach(UASInterface* uas, uasList) {
+        removeUAS(uas);
     }
 }
 
@@ -280,7 +289,8 @@ void UASManager::addUAS(UASInterface* uas)
     if (firstUAS)
     {
         setActiveUAS(uas);
-        if (offlineUASWaypointManager->getWaypointEditableList().size() > 0)
+        // Call getActiveUASWaypointManager instead of referencing variable to make sure of creation
+        if (getActiveUASWaypointManager()->getWaypointEditableList().size() > 0)
         {
             if (QGCMessageBox::question(tr("Question"), tr("Do you want to append the offline waypoints to the ones currently on the UAV?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
             {

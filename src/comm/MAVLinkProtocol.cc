@@ -53,13 +53,13 @@ MAVLinkProtocol::MAVLinkProtocol(LinkManager* linkMgr) :
     m_actionRetransmissionTimeout(100),
     versionMismatchIgnore(false),
     systemId(QGC::defaultSystemId),
-    _should_exit(false),
     _logSuspendError(false),
     _logSuspendReplay(false),
     _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension)),
     _protocolStatusMessageConnected(false),
     _saveTempFlightDataLogConnected(false),
-    _linkMgr(linkMgr)
+    _linkMgr(linkMgr),
+    _exitAfterLastConnection(false)
 {
     qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
     
@@ -135,12 +135,8 @@ void MAVLinkProtocol::storeSettings()
 MAVLinkProtocol::~MAVLinkProtocol()
 {
     storeSettings();
-    
     _closeLogFile();
-
-    // Tell the thread to exit
-    _should_exit = true;
-    // Wait for it to exit
+    _exitAfterLastConnection = true;
     wait();
 }
 
@@ -156,14 +152,7 @@ void MAVLinkProtocol::run()
     connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
     heartbeatTimer->start(1000/heartbeatRate);
 
-    while(!_should_exit) {
-
-        if (isFinished()) {
-            delete heartbeatTimer;
-            qDebug() << "MAVLINK WORKER DONE!";
-            return;
-        }
-
+    while(!_exitAfterLastConnection || _connectedLinks.count() != 0) {
         QCoreApplication::processEvents();
         QGC::SLEEP::msleep(2);
     }
@@ -705,7 +694,8 @@ void MAVLinkProtocol::_startLogging(void)
 void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
-        if (qgcApp()->promptFlightDataSave()) {
+        // If the signals are not connected it means we are running a unit test. In that case just delete log files
+        if (_protocolStatusMessageConnected && _saveTempFlightDataLogConnected && qgcApp()->promptFlightDataSave()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());
@@ -779,4 +769,9 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
     foreach(const QFileInfo fileInfo, fileInfoList) {
         QFile::remove(fileInfo.filePath());
     }
+}
+
+void MAVLinkProtocol::exitAfterLastConnection(void)
+{
+    _exitAfterLastConnection = true;
 }

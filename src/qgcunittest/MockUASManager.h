@@ -106,6 +106,7 @@ public slots:
         { Q_ASSERT(false); Q_UNUSED(uav); Q_UNUSED(lat); Q_UNUSED(lon); Q_UNUSED(alt); }
     virtual void loadSettings() { Q_ASSERT(false); }
     virtual void storeSettings() { Q_ASSERT(false); }
+    virtual void _shutdown(void) { Q_ASSERT(false); }
     
 private:
     MockUAS*                _mockUAS;

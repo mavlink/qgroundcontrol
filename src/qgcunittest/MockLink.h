@@ -25,10 +25,13 @@
 #define MOCKLINK_H
 
 #include <QMap>
+#include <QLoggingCategory>
 
 #include "MockLinkMissionItemHandler.h"
 #include "LinkInterface.h"
-#include "mavlink.h"
+#include "QGCMavlink.h"
+
+Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
 
 /// @file
 ///     @brief Mock implementation of a Link.
@@ -57,8 +60,6 @@ public:
     bool disconnect(void);
     
 signals:
-    void error(const QString& errorMsg);
-    
     /// @brief Used internally to move data to the thread.
     void _incomingBytes(const QByteArray bytes);
     
@@ -88,7 +89,6 @@ private:
     void _handleIncomingNSHBytes(const char* bytes, int cBytes);
     void _handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes);
     void _loadParams(void);
-    void _errorInvalidTargetSystem(int targetId);
     void _emitMavlinkMessage(const mavlink_message_t& msg);
     void _handleHeartBeat(const mavlink_message_t& msg);
     void _handleSetMode(const mavlink_message_t& msg);
@@ -98,7 +98,9 @@ private:
     void _handleMissionRequestList(const mavlink_message_t& msg);
     void _handleMissionRequest(const mavlink_message_t& msg);
     void _handleMissionItem(const mavlink_message_t& msg);
-    
+    float _floatUnionForParam(const QString& paramName);
+    void _setParamFloatUnionIntoMap(const QString& paramName, float paramFloat);
+
     MockLinkMissionItemHandler* _missionItemHandler;
     
     int     _linkId;
@@ -111,9 +113,8 @@ private:
     bool    _inNSH;
     bool    _mavlinkStarted;
     
-    typedef QMap<QString, QVariant> ParamMap_t;
-    ParamMap_t  _parameters;
-    uint16_t    _cParameters;
+    QMap<QString, QVariant>         _mapParamName2Value;
+    QMap<QString, MAV_PARAM_TYPE>   _mapParamName2MavParamType;
     
     typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
     MissionList_t   _missionItems;

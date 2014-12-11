@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
         }
         
         // Run the test
-        int failures = UnitTest::run(argc-1, argv, rgCmdLineOptions[0].optionArg);
+        int failures = UnitTest::run(rgCmdLineOptions[0].optionArg);
         if (failures == 0) {
             qDebug() << "ALL TESTS PASSED";
         } else {

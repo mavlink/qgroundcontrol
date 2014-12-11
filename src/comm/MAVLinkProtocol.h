@@ -140,6 +140,8 @@ public:
     virtual void resetMetadataForLink(const LinkInterface *link);
     
     void run();
+    
+    void exitAfterLastConnection(void);
 
 public slots:
     /** @brief Receive bytes from a communication interface */
@@ -232,7 +234,6 @@ protected:
     int currLossCounter[MAVLINK_COMM_NUM_BUFFERS];        ///< Lost messages during this sample time window. Used for calculating loss %.
     bool versionMismatchIgnore;
     int systemId;
-    bool _should_exit;
 
 signals:
     /** @brief Message received and directly copied via signal */
@@ -301,6 +302,8 @@ private:
     bool _saveTempFlightDataLogConnected;   ///< true: saveTempFlightDataLog signal has been connected
     
     LinkManager* _linkMgr;
+    
+    bool _exitAfterLastConnection;
 };
 
 #endif // MAVLINKPROTOCOL_H_
