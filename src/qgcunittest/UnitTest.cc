@@ -114,8 +114,8 @@ void UnitTest::init(void)
     _expectMissedMessageBox = false;
     
     // Each test gets a clean global state
-    qgcApp()->destroySingletonsForUnitTest();
-    qgcApp()->createSingletonsForUnitTest();
+    qgcApp()->_destroySingletons();
+    qgcApp()->_createSingletons();
     
     MAVLinkProtocol::deleteTempLogFiles();
 }
@@ -136,7 +136,7 @@ void UnitTest::cleanup(void)
     }
     QCOMPARE(_missedFileDialogCount, 0);
     
-    qgcApp()->destroySingletonsForUnitTest();
+    qgcApp()->_destroySingletons();
 }
 
 void UnitTest::setExpectedMessageBox(QMessageBox::StandardButton response)

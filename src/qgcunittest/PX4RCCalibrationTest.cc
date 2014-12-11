@@ -156,7 +156,7 @@ void PX4RCCalibrationTest::init(void)
     _mockUASManager = new MockUASManager();
     Q_ASSERT(_mockUASManager);
     
-    UASManager::setMockUASManager(_mockUASManager);
+    UASManager::setMockInstance(_mockUASManager);
     
     _mockUAS = new MockUAS();
     Q_CHECK_PTR(_mockUAS);
@@ -201,19 +201,18 @@ void PX4RCCalibrationTest::init(void)
 
 void PX4RCCalibrationTest::cleanup(void)
 {
-    UnitTest::cleanup();
-    
     Q_ASSERT(_calWidget);
     delete _calWidget;
     
     Q_ASSERT(_mockUAS);
     delete _mockUAS;
     
-    UASManager::setMockUASManager(NULL);
+    UASManager::setMockInstance(NULL);
     
     Q_ASSERT(_mockUASManager);
     delete _mockUASManager;
     
+    UnitTest::cleanup();
 }
 
 /// @brief Test for correct behavior in determining minimum numbers of channels for flight.
