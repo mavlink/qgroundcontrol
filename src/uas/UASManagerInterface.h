@@ -31,7 +31,6 @@
 #ifndef _UASMANAGERINTERFACE_H_
 #define _UASMANAGERINTERFACE_H_
 
-#include <QThread>
 #include <QList>
 #include <QMutex>
 

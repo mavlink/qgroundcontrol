@@ -1,7 +1,6 @@
 #include "UASUnitTest.h"
 #include <stdio.h>
 #include <QObject>
-#include <QThread>
 
 UT_REGISTER_TEST(UASUnitTest)
 
@@ -14,7 +13,7 @@ void UASUnitTest::init()
     UnitTest::init();
     
     _mavlink = new MAVLinkProtocol();
-    _uas = new UAS(_mavlink, QThread::currentThread(), UASID);
+    _uas = new UAS(_mavlink, UASID);
     _uas->deleteSettings();
 }
 //this function is called after every test
@@ -32,7 +31,7 @@ void UASUnitTest::cleanup()
 void UASUnitTest::getUASID_test()
 {
     // Test a default ID of zero is assigned
-    UAS* uas2 = new UAS(_mavlink, QThread::currentThread());
+    UAS* uas2 = new UAS(_mavlink);
     QCOMPARE(uas2->getUASID(), 0);
     delete uas2;
 
@@ -57,7 +56,7 @@ void UASUnitTest::getUASName_test()
 
 void UASUnitTest::getUpTime_test()
 {
-    UAS* uas2 = new UAS(_mavlink, QThread::currentThread());
+    UAS* uas2 = new UAS(_mavlink);
     // Test that the uptime starts at zero to a
     // precision of seconds
     QCOMPARE(floor(uas2->getUptime()/1000.0), 0.0);
@@ -289,7 +288,7 @@ void UASUnitTest::signalWayPoint_test()
     delete _uas;// delete(destroyed) _uas for validating
     _uas = NULL;
     QCOMPARE(spyDestroyed.count(), 1);// count destroyed _uas should are 1
-    _uas = new UAS(_mavlink, QThread::currentThread(), UASID);
+    _uas = new UAS(_mavlink, UASID);
     QSignalSpy spy2(_uas->getWaypointManager(), SIGNAL(waypointEditableListChanged()));
     QCOMPARE(spy2.count(), 0);
     Waypoint* wp2 = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");

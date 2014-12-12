@@ -27,7 +27,6 @@ This file is part of the PIXHAWK project
 #ifndef _LINKMANAGER_H_
 #define _LINKMANAGER_H_
 
-#include <QThread>
 #include <QList>
 #include <QMultiMap>
 #include <QMutex>
@@ -89,9 +88,6 @@ public:
     /// Disconnect the specified link
     bool disconnectLink(LinkInterface* link);
     
-    /// Returns the one mavlink protocol object in the system
-    MAVLinkProtocol* mavlink(void) { return _mavlink; }
-    
 signals:
     void newLink(LinkInterface* link);
     void linkDeleted(LinkInterface* link);
@@ -109,8 +105,6 @@ private:
     
     bool    _connectionsSuspended;          ///< true: all new connections should not be allowed
     QString _connectionsSuspendedReason;    ///< User visible reason for suspension
-    
-    MAVLinkProtocol* _mavlink;  ///< The one and only mavlink protocol
 };
 
 #endif

@@ -47,11 +47,9 @@ IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
  **/
 LinkManager::LinkManager(QObject* parent) :
     QGCSingleton(parent),
-    _connectionsSuspended(false),
-    _mavlink(NULL)
+    _connectionsSuspended(false)
 {
-    _mavlink = new MAVLinkProtocol(this);
-    Q_CHECK_PTR(_mavlink);
+
 }
 
 LinkManager::~LinkManager()
@@ -66,8 +64,6 @@ LinkManager::~LinkManager()
     
     // Clear out the queue so disconnects make it all the way through threads
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-    
-    delete _mavlink;
 }
 
 void LinkManager::addLink(LinkInterface* link)
@@ -92,10 +88,11 @@ void LinkManager::addLink(LinkInterface* link)
         connect(link, SIGNAL(communicationError(QString,QString)), MainWindow::instance(), SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
     }
     
-    connect(link, &LinkInterface::bytesReceived, _mavlink, &MAVLinkProtocol::receiveBytes);
-    connect(link, &LinkInterface::connected, _mavlink, &MAVLinkProtocol::linkConnected);
-    connect(link, &LinkInterface::disconnected, _mavlink, &MAVLinkProtocol::linkDisconnected);
-    _mavlink->resetMetadataForLink(link);
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+    connect(link, &LinkInterface::bytesReceived, mavlink, &MAVLinkProtocol::receiveBytes);
+    connect(link, &LinkInterface::connected, mavlink, &MAVLinkProtocol::linkConnected);
+    connect(link, &LinkInterface::disconnected, mavlink, &MAVLinkProtocol::linkDisconnected);
+    mavlink->resetMetadataForLink(link);
 }
 
 bool LinkManager::connectAll()

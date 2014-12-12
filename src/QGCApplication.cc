@@ -31,7 +31,6 @@
 
 #include <QFile>
 #include <QFlags>
-#include <QThread>
 #include <QSplashScreen>
 #include <QPixmap>
 #include <QDesktopWidget>
@@ -443,12 +442,18 @@ void QGCApplication::_createSingletons(void)
     FactSystem* factSystem = FactSystem::_createSingleton();
     Q_UNUSED(factSystem);
     Q_ASSERT(factSystem);
+    
+    // Needs everything!
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::_createSingleton();
+    Q_UNUSED(mavlink);
+    Q_ASSERT(mavlink);
 }
 
 void QGCApplication::_destroySingletons(void)
 {
     // Take down singletons in reverse order of creation
 
+    MAVLinkProtocol::_deleteSingleton();
     FactSystem::_deleteSingleton();
     AutoPilotPluginManager::_deleteSingleton();
     UASManager::_deleteSingleton();

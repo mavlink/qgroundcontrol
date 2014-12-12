@@ -39,7 +39,7 @@
 * creating the UAS.
 */
 
-UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
+UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lipoFull(4.2f),
     lipoEmpty(3.5f),
     uasId(id),
@@ -49,7 +49,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     commStatus(COMM_DISCONNECTED),
     receiveDropRate(0),
     sendDropRate(0),
-    statusTimeout(thread),
 
     name(""),
     type(MAV_TYPE_GENERIC),
@@ -150,7 +149,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     paramsOnceRequested(false),
     paramMgr(this),
     simulation(0),
-    _thread(thread),
 
     // The protected members.
     connectionLost(false),
@@ -163,7 +161,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     lastSendTimeSensors(0),
     lastSendTimeOpticalFlow(0)
 {
-    moveToThread(thread);
 
     for (unsigned int i = 0; i<255;++i)
     {
@@ -176,57 +173,57 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     // Store a list of available actions for this UAS.
     // Basically everything exposed as a SLOT with no return value or arguments.
 
-    QAction* newAction = new QAction(tr("Arm"), thread);
+    QAction* newAction = new QAction(tr("Arm"), this);
     newAction->setToolTip(tr("Enable the UAS so that all actuators are online"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(armSystem()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Disarm"), thread);
+    newAction = new QAction(tr("Disarm"), this);
     newAction->setToolTip(tr("Disable the UAS so that all actuators are offline"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(disarmSystem()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Toggle armed"), thread);
+    newAction = new QAction(tr("Toggle armed"), this);
     newAction->setToolTip(tr("Toggle between armed and disarmed"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go home"), thread);
+    newAction = new QAction(tr("Go home"), this);
     newAction->setToolTip(tr("Command the UAS to return to its home position"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(home()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Land"), thread);
+    newAction = new QAction(tr("Land"), this);
     newAction->setToolTip(tr("Command the UAS to land"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(land()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Launch"), thread);
+    newAction = new QAction(tr("Launch"), this);
     newAction->setToolTip(tr("Command the UAS to launch itself and begin its mission"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(launch()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Resume"), thread);
+    newAction = new QAction(tr("Resume"), this);
     newAction->setToolTip(tr("Command the UAS to continue its mission"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(go()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Stop"), thread);
+    newAction = new QAction(tr("Stop"), this);
     newAction->setToolTip(tr("Command the UAS to halt and hold position"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(halt()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go autonomous"), thread);
+    newAction = new QAction(tr("Go autonomous"), this);
     newAction->setToolTip(tr("Set the UAS into an autonomous control mode"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(goAutonomous()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go manual"), thread);
+    newAction = new QAction(tr("Go manual"), this);
     newAction->setToolTip(tr("Set the UAS into a manual control mode"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(goManual()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Toggle autonomy"), thread);
+    newAction = new QAction(tr("Toggle autonomy"), this);
     newAction->setToolTip(tr("Toggle between manual and full-autonomy"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
@@ -251,8 +248,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 UAS::~UAS()
 {
     writeSettings();
-
-    _thread->quit();
 
     delete links;
     delete simulation;

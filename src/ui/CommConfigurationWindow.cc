@@ -224,7 +224,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, QWidget *p
     connect(ui.linkType,SIGNAL(currentIndexChanged(int)),this,SLOT(linkCurrentIndexChanged(int)));
 
     // Open details pane for MAVLink if necessary
-    MAVLinkProtocol* mavlink = LinkManager::instance()->mavlink();
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
     QWidget* conf = new MAVLinkSettingsWidget(mavlink, this);
     ui.protocolScrollArea->setWidget(conf);
     ui.protocolGroupBox->setTitle(mavlink->getName()+" (Global Settings)");
