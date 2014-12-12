@@ -470,7 +470,7 @@ bool SerialLink::hardwareConnect(QString &type)
         return false; // couldn't create serial port.
     }
 
-    QObject::connect(m_port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
+    QObject::connect(m_port, SIGNAL(aboutToClose()), this, SIGNAL(rerouteDisconnected()));
     QObject::connect(m_port, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(linkError(QSerialPort::SerialPortError)));
 
     checkIfCDC();
@@ -894,4 +894,10 @@ bool SerialLink::setStopBitsType(int stopBits)
         emit updateLink(this);
     }
     return accepted;
+}
+
+// We catch the QSerialPort::aboutToClose here to send the disconnected signal from the right object
+void SerialLink::_rerouteDisconnected(void)
+{
+    emit disconnected();
 }
