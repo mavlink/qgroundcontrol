@@ -61,7 +61,6 @@ MAVLinkProtocol::MAVLinkProtocol(QObject* parent) :
     _linkMgr(LinkManager::instance()),
     _heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
     _heartbeatsEnabled(true)
-    _linkMgr(linkMgr)
 {
     qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
     
@@ -749,9 +748,4 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
     foreach(const QFileInfo fileInfo, fileInfoList) {
         QFile::remove(fileInfo.filePath());
     }
-}
-
-void MAVLinkProtocol::exitAfterLastConnection(void)
-{
-    _exitAfterLastConnection = true;
 }

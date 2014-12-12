@@ -249,14 +249,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 UAS::~UAS()
 {
     writeSettings();
-
-<<<<<<< HEAD
-    delete links;
-=======
-    _thread->quit();
-
->>>>>>> commit
-    delete simulation;
 }
 
 /**

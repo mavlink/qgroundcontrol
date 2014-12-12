@@ -22,11 +22,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
 
     UASInterface* uas;
 
-<<<<<<< HEAD
-=======
-    QThread* worker = new QThread();
-
->>>>>>> commit
     switch (heartbeat->autopilot)
     {
     case MAV_AUTOPILOT_GENERIC:
