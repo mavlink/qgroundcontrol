@@ -86,14 +86,15 @@ QString GenericAutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t cust
 void GenericAutoPilotPlugin::addFactsToQmlContext(QQmlContext* context) const
 {
     Q_UNUSED(context);
-    
-    // Qml not yet supported for Generic
-    Q_ASSERT(false);
+    Q_ASSERT_X(false, "Not yet implemented", "");
 }
 
-QObject* GenericAutoPilotPlugin::parameterFacts(void) const
+const QVariantMap& GenericAutoPilotPlugin::parameterFacts(void) const
 {
-    return NULL;
+    static QVariantMap staticMap;
+    
+    Q_ASSERT_X(false, "Not yet implemented", "");
+    return staticMap;
 }
 
 void GenericAutoPilotPlugin::clearStaticData(void)

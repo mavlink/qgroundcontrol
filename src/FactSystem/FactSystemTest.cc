@@ -96,13 +96,11 @@ void FactSystemTest::_parameter_test(void)
     AutoPilotPlugin* plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas);
     Q_ASSERT(plugin);
     
-    QObject* parameterFacts = plugin->parameterFacts();
-    QVERIFY(parameterFacts != NULL);
+    const QVariantMap& parameterFacts = plugin->parameterFacts();
     
     // Compare the value in the Parameter Manager with the value from the FactSystem
     
-    QVariant factVariant = parameterFacts->property("RC_MAP_THROTTLE");
-    Fact* fact = factVariant.value<Fact*>();
+    Fact* fact = parameterFacts["RC_MAP_THROTTLE"].value<Fact*>();
     QVERIFY(fact != NULL);
     QVariant factValue = fact->value();
     QCOMPARE(factValue.isValid(), true);
@@ -142,11 +140,9 @@ void FactSystemTest::_paramMgrSignal_test(void)
     AutoPilotPlugin* plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas);
     Q_ASSERT(plugin);
     
-    QObject* parameterFacts = plugin->parameterFacts();
-    QVERIFY(parameterFacts != NULL);
+    const QVariantMap& parameterFacts = plugin->parameterFacts();
     
-    QVariant factVariant = parameterFacts->property("RC_MAP_THROTTLE");
-    Fact* fact = factVariant.value<Fact*>();
+    Fact* fact = parameterFacts["RC_MAP_THROTTLE"].value<Fact*>();
     QVERIFY(fact != NULL);
     
     // Setting a new value into the parameter should trigger a valueChanged signal on the Fact

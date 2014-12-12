@@ -53,10 +53,9 @@ public:
     
     /// Returns the parameter facts for the specified UAS.
     ///
-    /// Access to parameter properties is done through QObject::property or the full
-    /// QMetaObject methods. The property name is the parameter name. You should not
-    /// request parameter facts until the plugin reports that it is ready.
-    virtual QObject* parameterFacts(void) const = 0;
+    /// Key is parameter name. Get Fact object like this: _mapParameterName2Variant["RC_MAP_THROTTLE"].value<Fact*>().
+    /// You should not request parameter facts until the plugin reports that it is ready.
+    virtual const QVariantMap& parameterFacts(void) const = 0;
     
     /// Adds the FactSystem properties to the Qml context. You should not call
     /// this method until the plugin reports that it is ready.

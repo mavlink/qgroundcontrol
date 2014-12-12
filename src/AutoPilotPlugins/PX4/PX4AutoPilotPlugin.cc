@@ -212,7 +212,7 @@ void PX4AutoPilotPlugin::addFactsToQmlContext(QQmlContext* context) const
     
     Q_ASSERT(_parameterFacts->factsAreReady());
     
-    context->setContextProperty("parameterFacts", _parameterFacts);
+    context->setContextProperty("parameters", _parameterFacts->factMap());
 }
 
 void PX4AutoPilotPlugin::clearStaticData(void)
