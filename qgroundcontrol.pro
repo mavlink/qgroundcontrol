@@ -484,7 +484,6 @@ HEADERS += \
     src/uas/QGCUASParamManagerInterface.h \
     src/uas/QGCUASFileManager.h \
     src/ui/QGCUASFileView.h \
-    src/uas/QGCUASWorker.h \
     src/CmdLineOptParser.h \
     src/uas/QGXPX4UAS.h \
     src/QGCFileDialog.h \
@@ -625,7 +624,6 @@ SOURCES += \
     src/ui/menuactionhelper.cpp \
     src/uas/QGCUASFileManager.cc \
     src/ui/QGCUASFileView.cc \
-    src/uas/QGCUASWorker.cc \
     src/CmdLineOptParser.cc \
     src/uas/QGXPX4UAS.cc \
     src/QGCFileDialog.cc \

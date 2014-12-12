@@ -481,7 +481,7 @@ void QGCUASFileManager::_sendRequest(Request* request)
     request->hdr.seqNumber = _lastOutgoingSeqNumber;
     
     if (_systemIdQGC == 0) {
-        _systemIdQGC = LinkManager::instance()->mavlink()->getSystemId();
+        _systemIdQGC = MAVLinkProtocol::instance()->getSystemId();
     }
     
     Q_ASSERT(_mav);

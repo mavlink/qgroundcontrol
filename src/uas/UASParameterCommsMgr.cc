@@ -71,7 +71,7 @@ void UASParameterCommsMgr::loadParamCommsSettings()
 
 void UASParameterCommsMgr::_sendParamRequestListMsg(void)
 {
-    MAVLinkProtocol* mavlink = LinkManager::instance()->mavlink();
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
     Q_ASSERT(mavlink);
     
     mavlink_message_t msg;

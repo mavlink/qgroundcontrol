@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 #define _UASMANAGER_H_
 
 #include "UASManagerInterface.h"
-#include <QThread>
 #include <QList>
 #include <QMutex>
 #include <UASInterface.h>

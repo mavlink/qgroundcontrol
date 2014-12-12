@@ -59,9 +59,6 @@ signals:
     /** @brief Send ready bytes */
     void bytesReady(LinkInterface* link, const QByteArray& bytes);
     void logFileEndReached();
-    
-    /// @brief Connected to the MAVLinkProtocol::suspendLogForReplay
-    void suspendLogForReplay(bool suspend);
 
 protected:
     quint64 playbackStartTime;     ///< The time when the logfile was first played back. This is used to pace out replaying the messages to fix long-term drift/skew. 0 indicates that the player hasn't initiated playback of this log file. In units of milliseconds since epoch UTC.

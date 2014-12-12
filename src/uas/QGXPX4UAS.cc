@@ -1,7 +1,7 @@
 #include "QGXPX4UAS.h"
 
-QGXPX4UAS::QGXPX4UAS(MAVLinkProtocol* mavlink, QThread* thread, int id) :
-    UAS(mavlink, thread, id)
+QGXPX4UAS::QGXPX4UAS(MAVLinkProtocol* mavlink, int id) :
+    UAS(mavlink, id)
 {
 }
 

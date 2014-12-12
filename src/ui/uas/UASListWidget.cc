@@ -124,7 +124,7 @@ void UASListWidget::updateStatus()
         if (!link)
             continue;
 
-        MAVLinkProtocol* mavlink = LinkManager::instance()->mavlink();
+        MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
 
         // Build the tooltip out of the protocol parsing data: received, dropped, and parsing errors.
         QString displayString("");
