@@ -81,8 +81,10 @@ void QGCAudioWorker::init()
 QGCAudioWorker::~QGCAudioWorker()
 {
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-    pVoice->Release();
-    pVoice = NULL;
+	if (pVoice) {
+		pVoice->Release();
+		pVoice = NULL;
+	}
     ::CoUninitialize();
 #endif
 }
