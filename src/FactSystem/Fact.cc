@@ -34,14 +34,15 @@ Fact::Fact(QObject* parent) :
 
 }
 
-void Fact::setValue(QVariant& value)
+void Fact::setValue(const QVariant& value)
 {
     _value = value;
-    emit valueUpdated(value);
+    emit valueChanged(_value);
+    emit _containerValueChanged(_value);
 }
 
-void Fact::updateValue(QVariant& value)
+void Fact::_containerSetValue(const QVariant& value)
 {
     _value = value;
-    emit valueChanged(value);
+    emit valueChanged(_value);
 }

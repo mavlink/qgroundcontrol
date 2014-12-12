@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
         // Add additional command line option flags here
     };
     
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), true);
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
     
     if (quietWindowsAsserts) {
 #ifdef Q_OS_WIN
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
         }
         
         // Run the test
-        int failures = UnitTest::run(argc-1, argv, rgCmdLineOptions[0].optionArg);
+        int failures = UnitTest::run(rgCmdLineOptions[0].optionArg);
         if (failures == 0) {
             qDebug() << "ALL TESTS PASSED";
         } else {

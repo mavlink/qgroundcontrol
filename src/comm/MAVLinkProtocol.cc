@@ -31,6 +31,8 @@
 #include "QGCApplication.h"
 
 Q_DECLARE_METATYPE(mavlink_message_t)
+IMPLEMENT_QGC_SINGLETON(MAVLinkProtocol, MAVLinkProtocol)
+Q_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
 
 const char* MAVLinkProtocol::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Extension for log files
@@ -39,10 +41,8 @@ const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Ext
  * The default constructor will create a new MAVLink object sending heartbeats at
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
  */
-MAVLinkProtocol::MAVLinkProtocol(LinkManager* linkMgr) :
-    heartbeatTimer(NULL),
-    heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
-    m_heartbeatsEnabled(true),
+MAVLinkProtocol::MAVLinkProtocol(QObject* parent) :
+    QGCSingleton(parent),
     m_multiplexingEnabled(false),
     m_authEnabled(false),
     m_enable_version_check(true),
@@ -53,19 +53,19 @@ MAVLinkProtocol::MAVLinkProtocol(LinkManager* linkMgr) :
     m_actionRetransmissionTimeout(100),
     versionMismatchIgnore(false),
     systemId(QGC::defaultSystemId),
-    _should_exit(false),
     _logSuspendError(false),
     _logSuspendReplay(false),
     _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension)),
     _protocolStatusMessageConnected(false),
     _saveTempFlightDataLogConnected(false),
-    _linkMgr(linkMgr)
+    _linkMgr(LinkManager::instance()),
+    _heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
+    _heartbeatsEnabled(true)
 {
     qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
     
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
-    moveToThread(this);
 
     // All the *Counter variables are not initialized here, as they should be initialized
     // on a per-link basis before those links are used. @see resetMetadataForLink().
@@ -78,10 +78,19 @@ MAVLinkProtocol::MAVLinkProtocol(LinkManager* linkMgr) :
             lastIndex[i][j] = -1;
         }
     }
-
-    start(QThread::HighPriority);
+    
+    // Start heartbeat timer, emitting a heartbeat at the configured rate
+    connect(&_heartbeatTimer, &QTimer::timeout, this, &MAVLinkProtocol::sendHeartbeat);
+    _heartbeatTimer.start(1000/_heartbeatRate);
 
     emit versionCheckChanged(m_enable_version_check);
+}
+
+MAVLinkProtocol::~MAVLinkProtocol()
+{
+    storeSettings();
+    
+    _closeLogFile();
 }
 
 void MAVLinkProtocol::loadSettings()
@@ -89,7 +98,7 @@ void MAVLinkProtocol::loadSettings()
     // Load defaults from settings
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    enableHeartbeats(settings.value("HEARTBEATS_ENABLED", m_heartbeatsEnabled).toBool());
+    enableHeartbeats(settings.value("HEARTBEATS_ENABLED", _heartbeatsEnabled).toBool());
     enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", m_enable_version_check).toBool());
     enableMultiplexing(settings.value("MULTIPLEXING_ENABLED", m_multiplexingEnabled).toBool());
 
@@ -119,7 +128,7 @@ void MAVLinkProtocol::storeSettings()
     // Store settings
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    settings.setValue("HEARTBEATS_ENABLED", m_heartbeatsEnabled);
+    settings.setValue("HEARTBEATS_ENABLED", _heartbeatsEnabled);
     settings.setValue("VERSION_CHECK_ENABLED", m_enable_version_check);
     settings.setValue("MULTIPLEXING_ENABLED", m_multiplexingEnabled);
     settings.setValue("GCS_SYSTEM_ID", systemId);
@@ -130,43 +139,6 @@ void MAVLinkProtocol::storeSettings()
     settings.setValue("PARAMETER_REWRITE_TIMEOUT", m_paramRewriteTimeout);
     settings.setValue("PARAMETER_TRANSMISSION_GUARD_ENABLED", m_paramGuardEnabled);
     settings.endGroup();
-}
-
-MAVLinkProtocol::~MAVLinkProtocol()
-{
-    storeSettings();
-    
-    _closeLogFile();
-
-    // Tell the thread to exit
-    _should_exit = true;
-    // Wait for it to exit
-    wait();
-}
-
-/**
- * @brief Runs the thread
- *
- **/
-void MAVLinkProtocol::run()
-{
-    heartbeatTimer = new QTimer();
-    heartbeatTimer->moveToThread(this);
-    // Start heartbeat timer, emitting a heartbeat at the configured rate
-    connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
-    heartbeatTimer->start(1000/heartbeatRate);
-
-    while(!_should_exit) {
-
-        if (isFinished()) {
-            delete heartbeatTimer;
-            qDebug() << "MAVLINK WORKER DONE!";
-            return;
-        }
-
-        QCoreApplication::processEvents();
-        QGC::SLEEP::msleep(2);
-    }
 }
 
 void MAVLinkProtocol::resetMetadataForLink(const LinkInterface *link)
@@ -197,6 +169,7 @@ void MAVLinkProtocol::linkDisconnected(void)
 
 void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
 {
+    qCDebug(MAVLinkProtocolLog) << "_linkStatusChanged" << QString("%1").arg((long)link, 0, 16) << connected;
     Q_ASSERT(link);
     
     if (connected) {
@@ -559,7 +532,7 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
  */
 void MAVLinkProtocol::sendHeartbeat()
 {
-    if (m_heartbeatsEnabled)
+    if (_heartbeatsEnabled)
     {
         mavlink_message_t beat;
         mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL_ARMED, 0, MAV_STATE_ACTIVE);
@@ -576,10 +549,10 @@ void MAVLinkProtocol::sendHeartbeat()
     }
 }
 
-/** @param enabled true to enable heartbeats emission at heartbeatRate, false to disable */
+/** @param enabled true to enable heartbeats emission at _heartbeatRate, false to disable */
 void MAVLinkProtocol::enableHeartbeats(bool enabled)
 {
-    m_heartbeatsEnabled = enabled;
+    _heartbeatsEnabled = enabled;
     emit heartbeatChanged(enabled);
 }
 
@@ -655,14 +628,14 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
  */
 void MAVLinkProtocol::setHeartbeatRate(int rate)
 {
-    heartbeatRate = rate;
-    heartbeatTimer->setInterval(1000/heartbeatRate);
+    _heartbeatRate = rate;
+    _heartbeatTimer.setInterval(1000/_heartbeatRate);
 }
 
 /** @return heartbeat rate in Hertz */
 int MAVLinkProtocol::getHeartbeatRate()
 {
-    return heartbeatRate;
+    return _heartbeatRate;
 }
 
 /// @brief Closes the log file if it is open
@@ -705,7 +678,8 @@ void MAVLinkProtocol::_startLogging(void)
 void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
-        if (qgcApp()->promptFlightDataSave()) {
+        // If the signals are not connected it means we are running a unit test. In that case just delete log files
+        if (_protocolStatusMessageConnected && _saveTempFlightDataLogConnected && qgcApp()->promptFlightDataSave()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());
@@ -761,11 +735,6 @@ void MAVLinkProtocol::_checkLostLogFiles(void)
 
 void MAVLinkProtocol::suspendLogForReplay(bool suspend)
 {
-    // This must come through a slot so that we handle this on the right thread. This will
-    // also cause the signal to be queued behind any bytesReady signals which must be flushed
-    // out of the queue before we change suspend state.
-    Q_ASSERT(QThread::currentThread() == this);
-    
     _logSuspendReplay = suspend;
 }
 

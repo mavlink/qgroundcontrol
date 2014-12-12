@@ -32,37 +32,22 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QApplication>
 #include <QSettings>
-#include "GAudioOutput.h"
 #include <QDebug>
-#include <QGC.h>
 
-/**
- * This class follows the singleton design pattern
- * @see http://en.wikipedia.org/wiki/Singleton_pattern
- * A call to this function thus returns the only instance of this object
- * the call can occur at any place in the code, no reference to the
- * GAudioOutput object has to be passed.
- */
-GAudioOutput *GAudioOutput::instance()
-{
-    static GAudioOutput *_instance = 0;
+#include "GAudioOutput.h"
+#include "QGCApplication.h"
+#include "QGC.h"
 
-    if (_instance == 0)
-    {
-        _instance = new GAudioOutput();
-        // Set the application as parent to ensure that this object
-        // will be destroyed when the main application exits
-        _instance->setParent(qApp);
-    }
+IMPLEMENT_QGC_SINGLETON(GAudioOutput, GAudioOutput)
 
-    return _instance;
-}
-
-GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
+GAudioOutput::GAudioOutput(QObject *parent) :
+    QGCSingleton(parent),
     muted(false),
     thread(new QThread()),
     worker(new QGCAudioWorker())
 {
+    muted = qgcApp()->runningUnitTests();
+    
     worker->moveToThread(thread);
     connect(this, SIGNAL(textToSpeak(QString,int)), worker, SLOT(say(QString,int)));
     connect(this, SIGNAL(beepOnce()), worker, SLOT(beep()));
@@ -72,9 +57,8 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 GAudioOutput::~GAudioOutput()
 {
     thread->quit();
-    while (thread->isRunning()) {
-        QGC::SLEEP::usleep(100);
-    }
+    thread->wait();
+
     delete worker;
     delete thread;
 }
@@ -82,19 +66,19 @@ GAudioOutput::~GAudioOutput()
 
 void GAudioOutput::mute(bool mute)
 {
-    // XXX handle muting
-    Q_UNUSED(mute);
+    muted = mute;
 }
 
 bool GAudioOutput::isMuted()
 {
-    // XXX return right stuff
-    return false;
+    return muted;
 }
 
 bool GAudioOutput::say(QString text, int severity)
 {
-    emit textToSpeak(text, severity);
+    if (!muted) {
+        emit textToSpeak(text, severity);
+    }
     return true;
 }
 
@@ -103,7 +87,9 @@ bool GAudioOutput::say(QString text, int severity)
  */
 bool GAudioOutput::alert(QString text)
 {
-    emit textToSpeak(text, 1);
+    if (!muted) {
+        emit textToSpeak(text, 1);
+    }
     return true;
 }
 
@@ -172,5 +158,7 @@ bool GAudioOutput::stopEmergency()
 
 void GAudioOutput::beep()
 {
-    emit beepOnce();
+    if (!muted) {
+        emit beepOnce();
+    }
 }

@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _UAS_H_
 #define _UAS_H_
 
-#include <QThread>
 #include "UASInterface.h"
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
@@ -44,6 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCUASParamManager.h"
 #include "QGCUASFileManager.h"
 
+Q_DECLARE_LOGGING_CATEGORY(UASLog)
 
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
@@ -57,7 +57,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, QThread* thread, int id = 0);
+    UAS(MAVLinkProtocol* protocol, int id = 0);
     ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
@@ -72,7 +72,7 @@ public:
     /** @brief Get short mode */
     const QString& getShortMode() const;
     /** @brief Translate from mode id to text */
-    static QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int autopilot);
+    QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const;
     /** @brief Translate from mode id to audio text */
     static QString getAudioModeTextFor(int id);
     /** @brief Get the unique system id */
@@ -92,7 +92,7 @@ public:
     /** @brief Add one measurement and get low-passed voltage */
     float filterVoltage(float value) const;
     /** @brief Get the links associated with this robot */
-    QList<LinkInterface*>* getLinks();
+    QList<LinkInterface*> getLinks();
 
     Q_PROPERTY(double localX READ getLocalX WRITE setLocalX NOTIFY localXChanged)
     Q_PROPERTY(double localY READ getLocalY WRITE setLocalY NOTIFY localYChanged)
@@ -341,7 +341,7 @@ protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
     QMap<int, QString> components;///< IDs and names of all detected onboard components
-    QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
+    QList<LinkInterface*> links;  ///< List of links this UAS can be reached by
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     CommStatus commStatus;        ///< Communication status
@@ -473,7 +473,6 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
-    QThread* _thread;
 
 public:
     /** @brief Set the current battery type */
@@ -952,13 +951,6 @@ protected slots:
     void writeSettings();
     /** @brief Read settings from disk */
     void readSettings();
-
-//    // MESSAGE RECEPTION
-//    /** @brief Receive a named value message */
-//    void receiveMessageNamedValue(const mavlink_message_t& message);
-
-private:
-//    unsigned int mode;          ///< The current mode of the MAV
 };
 
 

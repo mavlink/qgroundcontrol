@@ -21,6 +21,9 @@
  
  ======================================================================*/
 
+/// @file
+///     @author Don Gagne <don@thegagnes.com>
+
 #ifndef AUTOPILOTPLUGINMANAGER_H
 #define AUTOPILOTPLUGINMANAGER_H
 
@@ -32,11 +35,10 @@
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
 #include "QGCSingleton.h"
+#include "QGCMAVLink.h"
 
-/// @file
-///     @brief The AutoPilotPlugin manager is a singleton which maintains the list of AutoPilotPlugin objects.
-///
-///     @author Don Gagne <don@thegagnes.com>
+
+/// AutoPilotPlugin manager is a singleton which maintains the list of AutoPilotPlugin objects.
 
 class AutoPilotPluginManager : public QGCSingleton
 {
@@ -45,15 +47,31 @@ class AutoPilotPluginManager : public QGCSingleton
     DECLARE_QGC_SINGLETON(AutoPilotPluginManager, AutoPilotPluginManager)
 
 public:
-    /// @brief Returns the singleton AutoPilot instance for the specified auto pilot type.
-    /// @param autopilotType Specified using the MAV_AUTOPILOT_* values.
-    AutoPilotPlugin* getInstanceForAutoPilotPlugin(int autopilotType);
+    /// Returns the singleton AutoPilotPlugin instance for the specified uas.
+    ///     @param uas Uas to get plugin for
+    AutoPilotPlugin* getInstanceForAutoPilotPlugin(UASInterface* uas);
     
+    typedef struct {
+        uint8_t baseMode;
+        uint32_t customMode;
+    } FullMode_t;
+
+    /// Returns the list of modes which are available for the specified autopilot type.
+    QList<FullMode_t> getModes(int autopilotType) const;
+    
+    /// @brief Returns a human readable short description for the specified mode.
+    QString getShortModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const;
+
+private slots:
+    void _uasCreated(UASInterface* uas);
+    void _uasDeleted(UASInterface* uas);
+
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     AutoPilotPluginManager(QObject* parent = NULL);
+    ~AutoPilotPluginManager();
     
-    QMap<int, AutoPilotPlugin*> _pluginMap;
+    QMap<MAV_AUTOPILOT, QMap<int, AutoPilotPlugin*> > _pluginMap; ///< Map of AutoPilot plugins _pluginMap[MAV_TYPE][UASid]
 };
 
 #endif
