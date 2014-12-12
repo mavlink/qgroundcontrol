@@ -95,8 +95,9 @@ signals:
 private:
     /// All access to LinkManager is through LinkManager::instance
     LinkManager(QObject* parent = NULL);
-    
     ~LinkManager();
+    
+    virtual void _shutdown(void);
 
     bool _connectionsSuspendedMsg(void);
     

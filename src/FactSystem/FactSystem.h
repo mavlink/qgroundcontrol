@@ -50,7 +50,6 @@ class FactSystem : public QGCSingleton
 private:
     /// All access to FactSystem is through FactSystem::instance, so constructor is private
     FactSystem(QObject* parent = NULL);
-    
     ~FactSystem();
     
     static const char* _factSystemQmlUri;   ///< URI for FactSystem QML imports

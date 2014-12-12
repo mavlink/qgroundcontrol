@@ -76,11 +76,6 @@ void QGCAudioWorker::init()
     }
 
 #endif
-
-    // Prepare regular emergency signal, will be fired off on calling startEmergency()
-    emergencyTimer = new QTimer();
-    connect(emergencyTimer, SIGNAL(timeout()), this, SLOT(beep()));
-
 }
 
 QGCAudioWorker::~QGCAudioWorker()
@@ -90,7 +85,6 @@ QGCAudioWorker::~QGCAudioWorker()
     pVoice = NULL;
     ::CoUninitialize();
 #endif
-    delete emergencyTimer;
 }
 
 void QGCAudioWorker::say(QString text, int severity)

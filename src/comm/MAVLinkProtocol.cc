@@ -32,6 +32,7 @@
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 IMPLEMENT_QGC_SINGLETON(MAVLinkProtocol, MAVLinkProtocol)
+Q_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
 
 const char* MAVLinkProtocol::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Extension for log files
@@ -60,6 +61,7 @@ MAVLinkProtocol::MAVLinkProtocol(QObject* parent) :
     _linkMgr(LinkManager::instance()),
     _heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
     _heartbeatsEnabled(true)
+    _linkMgr(linkMgr)
 {
     qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
     
@@ -168,6 +170,7 @@ void MAVLinkProtocol::linkDisconnected(void)
 
 void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
 {
+    qCDebug(MAVLinkProtocolLog) << "_linkStatusChanged" << QString("%1").arg((long)link, 0, 16) << connected;
     Q_ASSERT(link);
     
     if (connected) {
@@ -676,7 +679,8 @@ void MAVLinkProtocol::_startLogging(void)
 void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
-        if (qgcApp()->promptFlightDataSave()) {
+        // If the signals are not connected it means we are running a unit test. In that case just delete log files
+        if (_protocolStatusMessageConnected && _saveTempFlightDataLogConnected && qgcApp()->promptFlightDataSave()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());
@@ -745,4 +749,9 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
     foreach(const QFileInfo fileInfo, fileInfoList) {
         QFile::remove(fileInfo.filePath());
     }
+}
+
+void MAVLinkProtocol::exitAfterLastConnection(void)
+{
+    _exitAfterLastConnection = true;
 }

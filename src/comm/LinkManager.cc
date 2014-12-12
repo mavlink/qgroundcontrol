@@ -54,16 +54,10 @@ LinkManager::LinkManager(QObject* parent) :
 
 LinkManager::~LinkManager()
 {
-    disconnectAll();
-    
-    foreach (LinkInterface* link, _links) {
-        Q_ASSERT(link);
-        deleteLink(link);
-    }
-    _links.clear();
-    
-    // Clear out the queue so disconnects make it all the way through threads
-    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+    Q_ASSERT_X(_links.count() == 0, "LinkManager", "LinkManager::_shutdown should have been called previously");
+    Q_ASSERT(_mavlink->isFinished());
+
+    delete _mavlink;
 }
 
 void LinkManager::addLink(LinkInterface* link)
@@ -217,4 +211,15 @@ void LinkManager::setConnectionsSuspended(QString reason)
     _connectionsSuspended = true;
     _connectionsSuspendedReason = reason;
     Q_ASSERT(!reason.isEmpty());
+}
+
+void LinkManager::_shutdown(void)
+{
+    _mavlink->exitAfterLastConnection();
+    QList<LinkInterface*> links = _links;
+    foreach(LinkInterface* link, links) {
+        disconnectLink(link);
+        deleteLink(link);
+    }
+    _mavlink->wait();
 }

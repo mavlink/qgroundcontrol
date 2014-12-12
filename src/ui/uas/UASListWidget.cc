@@ -167,10 +167,10 @@ void UASListWidget::addUAS(UASInterface* uas)
     if (!uasViews.contains(uas))
     {
         // Only display the UAS in a single link.
-        QList<LinkInterface*>* x = uas->getLinks();
-        if (x->size())
+        QList<LinkInterface*> x = uas->getLinks();
+        if (x.size())
         {
-            LinkInterface* li = x->first();
+            LinkInterface* li = x.first();
 
             // Find an existing QGroupBox for this LinkInterface or create a
             // new one.
