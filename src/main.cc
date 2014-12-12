@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
         // Add additional command line option flags here
     };
     
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), true);
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
     
     if (quietWindowsAsserts) {
 #ifdef Q_OS_WIN
