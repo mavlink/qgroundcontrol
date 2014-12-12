@@ -3246,9 +3246,6 @@ QString UAS::getAudioModeTextFor(int id)
 */
 QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const
 {
-    UASInterface* uasInterface = qobject_cast<UASInterface*>(this);
-    Q_ASSERT(uasInterface);
-    
     QString mode = AutoPilotPluginManager::instance()->getShortModeText(base_mode, custom_mode, autopilot);
 
     if (mode.length() == 0)
