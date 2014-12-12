@@ -35,7 +35,7 @@
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
 #include "QGCSingleton.h"
-#include "QGCMAVlink.h"
+#include "QGCMAVLink.h"
 
 
 /// AutoPilotPlugin manager is a singleton which maintains the list of AutoPilotPlugin objects.
