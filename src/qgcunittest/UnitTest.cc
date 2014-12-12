@@ -81,13 +81,15 @@ QList<QObject*>& UnitTest::_testList(void)
 	return tests;
 }
 
-int UnitTest::run(int argc, char *argv[], QString& singleTest)
+int UnitTest::run(QString& singleTest)
 {
     int ret = 0;
     
     foreach (QObject* test, _testList()) {
         if (singleTest.isEmpty() || singleTest == test->objectName()) {
-            ret += QTest::qExec(test, argc, argv);
+            QStringList args;
+            args << "*" << "-maxwarnings" << "0";
+            ret += QTest::qExec(test, args);
         }
     }
     

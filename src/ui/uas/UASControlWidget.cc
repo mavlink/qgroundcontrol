@@ -59,23 +59,19 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 
 void UASControlWidget::updateModesList()
 {
-    // Detect autopilot type
-    int autopilot = MAV_AUTOPILOT_GENERIC;
-    if (this->uasID >= 0) {
-        UASInterface *uas = UASManager::instance()->getUASForId(this->uasID);
-        if (uas) {
-            autopilot = UASManager::instance()->getUASForId(this->uasID)->getAutopilotType();
-        }
+    if (this->uasID == 0) {
+        return;
     }
     
-    AutoPilotPlugin* autopilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(autopilot);
+    UASInterface*uas = UASManager::instance()->getUASForId(this->uasID);
+    Q_ASSERT(uas);
     
-    _modeList = autopilotPlugin->getModes();
+    _modeList = AutoPilotPluginManager::instance()->getModes(uas->getAutopilotType());
 
     // Set combobox items
     ui.modeComboBox->clear();
-    foreach (AutoPilotPlugin::FullMode_t fullMode, _modeList) {
-        ui.modeComboBox->addItem(UAS::getShortModeTextFor(fullMode.baseMode, fullMode.customMode, autopilot).remove(0, 2));
+    foreach (AutoPilotPluginManager::FullMode_t fullMode, _modeList) {
+        ui.modeComboBox->addItem(uas->getShortModeTextFor(fullMode.baseMode, fullMode.customMode).remove(0, 2));
     }
 
     // Select first mode in list
@@ -197,7 +193,7 @@ void UASControlWidget::transmitMode()
     UASInterface* uas_iface = UASManager::instance()->getUASForId(this->uasID);
     if (uas_iface) {
         if (modeIdx >= 0 && modeIdx < _modeList.count()) {
-            AutoPilotPlugin::FullMode_t fullMode = _modeList[modeIdx];
+            AutoPilotPluginManager::FullMode_t fullMode = _modeList[modeIdx];
             // include armed state
             if (armed) {
                 fullMode.baseMode |= MAV_MODE_FLAG_SAFETY_ARMED;

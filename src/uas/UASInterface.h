@@ -103,7 +103,7 @@ public:
     /** @brief Get short mode */
     virtual const QString& getShortMode() const = 0;
     /** @brief Translate mode id into text */
-    static QString getShortModeTextFor(int id);
+    virtual QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const = 0;
     //virtual QColor getColor() = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
@@ -187,7 +187,7 @@ public:
          *         based on the fact that a message for this robot has been received through that
          *         interface. The LinkInterface can support multiple protocols.
          **/
-    virtual QList<LinkInterface*>* getLinks() = 0;
+    virtual QList<LinkInterface*> getLinks() = 0;
 
     /**
      * @brief Get the color for this UAS

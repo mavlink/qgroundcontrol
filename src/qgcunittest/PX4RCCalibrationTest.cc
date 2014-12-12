@@ -166,9 +166,7 @@ void PX4RCCalibrationTest::init(void)
     // This will instatiate the widget with an active uas with ready parameters
     _calWidget = new PX4RCCalibration();
     Q_CHECK_PTR(_calWidget);
-    _calWidget->_setUnitTestMode();
-    _calWidget->setVisible(true);
-    
+    _calWidget->_setUnitTestMode();    
 
     // Get pointers to the push buttons
     _cancelButton = _calWidget->findChild<QPushButton*>("rcCalCancel");

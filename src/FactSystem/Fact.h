@@ -62,7 +62,7 @@ public:
     QVariant value(void) const { return _value; }
     
     /// Write accessor for value property
-    void setValue(QVariant& value);
+    void setValue(const QVariant& value);
     
     /// Read accesor for defaultValue property
     QVariant defaultValue(void) { return _metaData->defaultValue; }
@@ -85,24 +85,21 @@ public:
     /// Read accesor for max property
     QVariant max(void) { return _metaData->max; }
     
-    /// Used to update the value property from C++ code.
-    ///
-    /// The setValue method is only for use by the QObject Property system. It should not be called directly by C++ app code.
-    void updateValue(QVariant& value);
-    
     /// Sets the meta data associated with the Fact.
     void setMetaData(FactMetaData* metaData) { _metaData = metaData; }
+    
+    void _containerSetValue(const QVariant& value);
     
 signals:
     /// QObject Property System signal for value property changes
     ///
     /// This signal is only meant for use by the QT property system. It should not be connected to by client code.
-    void valueChanged(QVariant& value);
+    void valueChanged(QVariant value);
     
     /// Signalled when property has been changed by a call to the property write accessor
     ///
-    /// This signal is meant for use by client code.
-    void valueUpdated(QVariant& value);
+    /// This signal is meant for use by Fact container implementations.
+    void _containerValueChanged(QVariant& value);
     
 private:
     QVariant        _value;     ///< Fact value

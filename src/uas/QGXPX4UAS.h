@@ -8,7 +8,7 @@ class QGXPX4UAS : public UAS
     Q_OBJECT
     Q_INTERFACES(UASInterface)
 public:
-    QGXPX4UAS(MAVLinkProtocol* mavlink, QThread* thread, int id);
+    QGXPX4UAS(MAVLinkProtocol* mavlink, int id);
 
 public slots:
     /** @brief Receive a MAVLink message from this MAV */

@@ -130,8 +130,8 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     this->setAttribute(Qt::WA_DeleteOnClose);
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
     
-    connect(LinkManager::instance()->mavlink(), SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
-    connect(LinkManager::instance()->mavlink(), SIGNAL(saveTempFlightDataLog(QString)), this, SLOT(_saveTempFlightDataLog(QString)));
+    connect(MAVLinkProtocol::instance(), SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
+    connect(MAVLinkProtocol::instance(), SIGNAL(saveTempFlightDataLog(QString)), this, SLOT(_saveTempFlightDataLog(QString)));
     
     loadSettings();
     
@@ -294,7 +294,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     {
         // Restore the window geometry
         restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
-        show();
     }
     else
     {
@@ -305,12 +304,10 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         if (screenWidth < 1500)
         {
             resize(screenWidth, screenHeight - 80);
-            show();
         }
         else
         {
             resize(screenWidth*0.67f, qMin(screenHeight, (int)(screenWidth*0.67f*0.67f)));
-            show();
         }
 
     }
@@ -358,7 +355,10 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
     emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    show();
+
+	if (!qgcApp()->runningUnitTests()) {
+		show();
+	}
 }
 
 MainWindow::~MainWindow()
@@ -489,12 +489,12 @@ void MainWindow::buildCustomWidget()
 void MainWindow::buildCommonWidgets()
 {
     // Add generic MAVLink decoder
-    mavlinkDecoder = new MAVLinkDecoder(LinkManager::instance()->mavlink(), this);
+    mavlinkDecoder = new MAVLinkDecoder(MAVLinkProtocol::instance(), this);
     connect(mavlinkDecoder, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),
                       this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
 
     // Log player
-    logPlayer = new QGCMAVLinkLogPlayer(LinkManager::instance()->mavlink(), statusBar());
+    logPlayer = new QGCMAVLinkLogPlayer(MAVLinkProtocol::instance(), statusBar());
     statusBar()->addPermanentWidget(logPlayer);
 
     // Initialize all of the views, if they haven't been already, and add their central widgets
@@ -581,7 +581,7 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(simView, new PrimaryFlightDisplay(this), tr("Primary Flight Display"), "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET", VIEW_SIMULATION, Qt::RightDockWidgetArea);
 
     // Add dock widgets for the engineering view
-    createDockWidget(engineeringView, new QGCMAVLinkInspector(LinkManager::instance()->mavlink(), this), tr("MAVLink Inspector"), "MAVLINK_INSPECTOR_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView, new QGCMAVLinkInspector(MAVLinkProtocol::instance(), this), tr("MAVLink Inspector"), "MAVLINK_INSPECTOR_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
     createDockWidget(engineeringView, new ParameterInterface(this), tr("Onboard Parameters"), "PARAMETER_INTERFACE_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
     createDockWidget(engineeringView, new QGCUASFileViewMulti(this), tr("Onboard Files"), "FILE_VIEW_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
     createDockWidget(engineeringView, new HUD(320, 240, this), tr("Video Downlink"), "HEAD_UP_DISPLAY_DOCKWIDGET", VIEW_ENGINEER, Qt::RightDockWidgetArea);
@@ -662,7 +662,7 @@ void MainWindow::loadDockWidget(const QString& name)
     }
     else if (name == "MAVLINK_INSPECTOR_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new QGCMAVLinkInspector(LinkManager::instance()->mavlink(),this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new QGCMAVLinkInspector(MAVLinkProtocol::instance(),this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "PARAMETER_INTERFACE_DOCKWIDGET")
     {
@@ -816,7 +816,7 @@ void MainWindow::connectCommonWidgets()
 {
     if (infoDockWidget && infoDockWidget->widget())
     {
-        connect(LinkManager::instance()->mavlink(), SIGNAL(receiveLossChanged(int, float)),
+        connect(MAVLinkProtocol::instance(), SIGNAL(receiveLossChanged(int, float)),
                 infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
     }
 }

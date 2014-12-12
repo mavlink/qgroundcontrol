@@ -21,6 +21,9 @@
  
  ======================================================================*/
 
+/// @file
+///     @author Don Gagne <don@thegagnes.com>
+
 #ifndef AUTOPILOTPLUGIN_H
 #define AUTOPILOTPLUGIN_H
 
@@ -33,12 +36,12 @@
 #include "VehicleComponent.h"
 #include "FactSystem.h"
 
-/// @file
-///     @brief The AutoPilotPlugin class is an abstract base class which represent the methods and objects
-///             which are specific to a certain AutoPilot. This is the only place where AutoPilot specific
-///             code should reside in QGroundControl. The remainder of the QGroundControl source is
-///             generic to a common mavlink implementation.
-///     @author Don Gagne <don@thegagnes.com>
+/// This is the base class for AutoPilot plugins
+///
+/// The AutoPilotPlugin class is an abstract base class which represent the methods and objects
+/// which are specific to a certain AutoPilot. This is the only place where AutoPilot specific
+/// code should reside in QGroundControl. The remainder of the QGroundControl source is
+/// generic to a common mavlink implementation.
 
 class AutoPilotPlugin : public QObject
 {
@@ -46,21 +49,28 @@ class AutoPilotPlugin : public QObject
 
 public:
     /// @brief Returns the list of VehicleComponent objects associated with the AutoPilot.
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const = 0;
+    virtual QList<VehicleComponent*> getVehicleComponents(void) const = 0;
     
-    typedef struct {
-        uint8_t baseMode;
-        uint32_t customMode;
-    } FullMode_t;
+    /// Returns the parameter facts for the specified UAS.
+    ///
+    /// Access to parameter properties is done through QObject::property or the full
+    /// QMetaObject methods. The property name is the parameter name. You should not
+    /// request parameter facts until the plugin reports that it is ready.
+    virtual QObject* parameterFacts(void) const = 0;
     
-    /// @brief Returns the list of modes which are available for this AutoPilot.
-    virtual QList<FullMode_t> getModes(void) const = 0;
+    /// Adds the FactSystem properties to the Qml context. You should not call
+    /// this method until the plugin reports that it is ready.
+    virtual void addFactsToQmlContext(QQmlContext* context) const = 0;
     
-    /// @brief Returns a human readable short description for the specified mode.
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const = 0;
+    /// Returns true if the plugin is ready for use
+    virtual bool pluginIsReady(void) const = 0;
     
-    /// @brief Adds the FactSystem properties associated with this AutoPilot to the Qml context.
-    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const = 0;
+    /// FIXME: Kind of hacky
+    static void clearStaticData(void);
+    
+signals:
+    /// Signalled when plugin is ready for use
+    void pluginReady(void);
     
 protected:
     // All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
