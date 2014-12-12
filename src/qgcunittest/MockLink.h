@@ -29,7 +29,7 @@
 
 #include "MockLinkMissionItemHandler.h"
 #include "LinkInterface.h"
-#include "QGCMavlink.h"
+#include "QGCMAVLink.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
 
