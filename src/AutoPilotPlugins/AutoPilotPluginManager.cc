@@ -45,9 +45,11 @@ AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
 
 AutoPilotPluginManager::~AutoPilotPluginManager()
 {
+#ifdef QT_DEBUG
     foreach(MAV_AUTOPILOT mavType, _pluginMap.keys()) {
         Q_ASSERT_X(_pluginMap[mavType].count() == 0, "AutoPilotPluginManager", "LinkManager::_shutdown should have already closed all uas");
     }
+#endif
     _pluginMap.clear();
     
     PX4AutoPilotPlugin::clearStaticData();
