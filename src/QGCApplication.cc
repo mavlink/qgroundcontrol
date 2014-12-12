@@ -182,8 +182,6 @@ void QGCApplication::_initCommon(void)
 {
     QSettings settings;
     
-    _createSingletons();
-    
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
     if (settings.contains(_settingsVersionKey)) {
@@ -243,6 +241,8 @@ void QGCApplication::_initCommon(void)
 bool QGCApplication::_initForNormalAppBoot(void)
 {
     QSettings settings;
+    
+    _createSingletons();
     
     enum MainWindow::CUSTOM_MODE mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
     
@@ -425,6 +425,11 @@ QGCApplication* qgcApp(void)
 void QGCApplication::_createSingletons(void)
 {
     // The order here is important since the singletons reference each other
+    
+    GAudioOutput* audio = GAudioOutput::_createSingleton();
+    Q_UNUSED(audio);
+    Q_ASSERT(audio);
+    
     LinkManager* linkManager = LinkManager::_createSingleton();
     Q_UNUSED(linkManager);
     Q_ASSERT(linkManager);
@@ -447,10 +452,24 @@ void QGCApplication::_createSingletons(void)
 
 void QGCApplication::_destroySingletons(void)
 {
+    if (LinkManager::instance(true /* nullOk */)) {
+        // This will close/delete all connections
+        LinkManager::instance()->_shutdown();
+    }
+
+    if (UASManager::instance(true /* nullOk */)) {
+        // This will delete all uas from the system
+        UASManager::instance()->_shutdown();
+    }
+    
+    // Let the signals flow through the main thread
+    processEvents(QEventLoop::ExcludeUserInputEvents);
+    
     // Take down singletons in reverse order of creation
 
     FactSystem::_deleteSingleton();
     AutoPilotPluginManager::_deleteSingleton();
     UASManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
+    GAudioOutput::_deleteSingleton();
 }
