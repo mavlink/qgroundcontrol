@@ -238,8 +238,6 @@ void SerialLink::run()
                 m_port->close();
                 delete m_port;
                 m_port = NULL;
-
-                emit disconnected();
             }
 
             QGC::SLEEP::msleep(500);
@@ -337,8 +335,6 @@ void SerialLink::run()
         m_port->close();
         delete m_port;
         m_port = NULL;
-
-        emit disconnected();
     }
 }
 
@@ -474,7 +470,9 @@ bool SerialLink::hardwareConnect(QString &type)
         return false; // couldn't create serial port.
     }
 
-    QObject::connect(m_port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
+    // We need to catch this signal and then emit disconnected. You can't connect
+    // signal to signal otherwise disonnected will have the wrong QObject::Sender
+    QObject::connect(m_port, SIGNAL(aboutToClose()), this, SLOT(_rerouteDisconnected()));
     QObject::connect(m_port, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(linkError(QSerialPort::SerialPortError)));
 
     checkIfCDC();
@@ -898,4 +896,9 @@ bool SerialLink::setStopBitsType(int stopBits)
         emit updateLink(this);
     }
     return accepted;
+}
+
+void SerialLink::_rerouteDisconnected(void)
+{
+    emit disconnected();
 }

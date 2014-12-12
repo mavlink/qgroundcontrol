@@ -43,10 +43,6 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     connect(ui->positionSlider, &QSlider::valueChanged, this, &QGCMAVLinkLogPlayer::jumpToSliderVal);
     connect(ui->positionSlider, &QSlider::sliderPressed, this, &QGCMAVLinkLogPlayer::pause);
     
-    // We use this to queue the signal over to mavlink. This way it will be behind any remaining
-    // bytesReady signals in the queue.
-    connect(this, &QGCMAVLinkLogPlayer::suspendLogForReplay, mavlink, &MAVLinkProtocol::suspendLogForReplay);
-
     setAccelerationFactorInt(49);
     ui->speedSlider->setValue(49);
     updatePositionSliderUi(0.0);
@@ -84,7 +80,7 @@ void QGCMAVLinkLogPlayer::play()
     Q_ASSERT(logFile.isOpen());
     
     LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
-    emit suspendLogForReplay(true);
+    mavlink->suspendLogForReplay(true);
     
     // Disable the log file selector button
     ui->selectFileButton->setEnabled(false);
@@ -122,7 +118,7 @@ void QGCMAVLinkLogPlayer::play()
 void QGCMAVLinkLogPlayer::pause()
 {
     LinkManager::instance()->setConnectionsAllowed();
-    emit suspendLogForReplay(false);
+    mavlink->suspendLogForReplay(false);
 
     loopTimer.stop();
     isPlaying = false;
@@ -642,7 +638,7 @@ void QGCMAVLinkLogPlayer::_finishPlayback(void)
     
     emit logFileEndReached();
     
-    emit suspendLogForReplay(false);
+    mavlink->suspendLogForReplay(false);
     LinkManager::instance()->setConnectionsAllowed();
 }
 

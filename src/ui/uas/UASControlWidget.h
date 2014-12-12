@@ -38,7 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QPushButton>
 #include <ui_UASControl.h>
 #include <UASInterface.h>
-#include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
 
 /**
  * @brief Widget controlling one MAV
@@ -79,7 +79,7 @@ protected slots:
 
 protected:
     int uasID;                                      ///< Reference to the current uas
-    QList<AutoPilotPlugin::FullMode_t>  _modeList;  ///< Mode list for the current UAS
+    QList<AutoPilotPluginManager::FullMode_t> _modeList;  ///< Mode list for the current UAS
     int modeIdx;                                    ///< Current uas mode index
     bool armed;                                     ///< Engine state
 

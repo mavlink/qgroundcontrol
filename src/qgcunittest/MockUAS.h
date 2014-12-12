@@ -81,7 +81,7 @@ public:
     virtual QString getUASName() const { Q_ASSERT(false); return _bogusString; };
     virtual const QString& getShortState() const { Q_ASSERT(false); return _bogusString; };
     virtual const QString& getShortMode() const { Q_ASSERT(false); return _bogusString; };
-    static QString getShortModeTextFor(int id) { Q_UNUSED(id); Q_ASSERT(false); return _bogusStaticString; };
+    virtual QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const { Q_UNUSED(base_mode); Q_UNUSED(custom_mode); Q_ASSERT(false); return _bogusStaticString; };
     virtual quint64 getUptime() const { Q_ASSERT(false); return 0; };
     virtual int getCommunicationStatus() const { Q_ASSERT(false); return 0; };
     virtual double getLocalX() const { Q_ASSERT(false); return std::numeric_limits<double>::quiet_NaN(); };
@@ -100,7 +100,7 @@ public:
     virtual bool isArmed() const { Q_ASSERT(false); return false; };
     virtual int getAirframe() const { Q_ASSERT(false); return 0; };
     virtual UASWaypointManager* getWaypointManager(void) { Q_ASSERT(false); return NULL; };
-    virtual QList<LinkInterface*>* getLinks() { Q_ASSERT(false); return NULL; };
+    virtual QList<LinkInterface*> getLinks() { Q_ASSERT(false); return QList<LinkInterface*>(); };
     virtual bool systemCanReverse() const { Q_ASSERT(false); return false; };
     virtual QString getSystemTypeName() { Q_ASSERT(false); return _bogusString; };
     virtual int getAutopilotType() { return MAV_AUTOPILOT_PX4; };

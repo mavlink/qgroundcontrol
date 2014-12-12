@@ -49,10 +49,8 @@ public:
     virtual ~UnitTest(void);
     
     /// @brief Called to run all the registered unit tests
-    ///     @param argc argc from main
-    ///     @param argv argv from main
     ///     @param singleTest Name of test to just run a single test
-    static int run(int argc, char *argv[], QString& singleTest);
+    static int run(QString& singleTest);
     
     /// @brief Sets up for an expected QGCMessageBox
     ///     @param response Response to take on message box
@@ -103,18 +101,6 @@ protected slots:
     virtual void cleanup(void);
     
 protected:
-    /// @brief Must be called first by derived class implementation
-    void _initTestCase(void);
-    
-    /// @brief Must be called first by derived class implementation
-    void _cleanupTestCase(void);
-    
-    /// @brief Must be called first by derived class implementation
-    void _init(void);
-    
-    /// @brief Must be called first by derived class implementation
-    void _cleanup(void);
-    
     bool _expectMissedFileDialog;   // true: expect a missed file dialog, used for internal testing
     bool _expectMissedMessageBox;   // true: expect a missed message box, used for internal testing
     

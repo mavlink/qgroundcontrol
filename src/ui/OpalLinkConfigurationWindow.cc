@@ -15,7 +15,7 @@ OpalLinkConfigurationWindow::OpalLinkConfigurationWindow(OpalLink* link,
 
     connect(ui.opalInstIDSpinBox, SIGNAL(valueChanged(int)), link, SLOT(setOpalInstID(int)));
     connect(link, &LinkInterface::connected, this, OpalLinkConfigurationWindow::_linkConnected);
-    connect(link, &LinkInterface::disconnected, this, OpalLinkConfigurationWindow::_linkDisConnected);
+    connect(link, &LinkInterface::disconnected, this, OpalLinkConfigurationWindow::_linkDisconnected);
     this->show();
 }
 
