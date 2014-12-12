@@ -25,6 +25,7 @@
 #define PX4AUTOPILOT_H
 
 #include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
 #include "UASInterface.h"
 #include "PX4ParameterFacts.h"
 
@@ -37,23 +38,23 @@ class PX4AutoPilotPlugin : public AutoPilotPlugin
     Q_OBJECT
 
 public:
-    PX4AutoPilotPlugin(QObject* parent);
+    PX4AutoPilotPlugin(UASInterface* uas, QObject* parent);
     ~PX4AutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
-    virtual void addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const;
-    
-private slots:
-    void _uasCreated(UASInterface* uas);
-    void _uasDeleted(UASInterface* uas);
+    virtual QList<VehicleComponent*> getVehicleComponents(void) const ;
+    virtual void addFactsToQmlContext(QQmlContext* context) const;
+    virtual QObject* parameterFacts(void) const { return _parameterFacts; }
+    virtual bool pluginIsReady(void) const;
+
+    static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
+    static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
+    static void clearStaticData(void);
     
 private:
-    PX4ParameterFacts* _parameterFactsForUas(UASInterface* uas) const;
-    
-    QMap<UASInterface*, PX4ParameterFacts*> _mapUas2ParameterFacts;
+    UASInterface*       _uas;
+    PX4ParameterFacts*  _parameterFacts;
+    bool                _pluginReady;
 };
 
 #endif

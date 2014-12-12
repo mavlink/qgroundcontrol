@@ -37,7 +37,7 @@
 ///             For example DECLARE_QGC_SINGLETON(UASManager, UASManagerInterface)
 #define DECLARE_QGC_SINGLETON(className, interfaceName) \
     public: \
-        static interfaceName* instance(void); \
+        static interfaceName* instance(bool nullOk = false); \
         static void setMockInstance(interfaceName* mock); \
     private: \
         static interfaceName* _createSingleton(void); \
@@ -75,9 +75,11 @@
         } \
     } \
     \
-    interfaceName* className::instance(void) \
+    interfaceName* className::instance(bool nullOk) \
     { \
-        Q_ASSERT_X(_instance, "QGCSingleton", "If you hit this, then you have run into a startup or shutdown sequence bug."); \
+        if (!nullOk) { \
+            Q_ASSERT_X(_instance, "QGCSingleton", "If you hit this, then you have run into a startup or shutdown sequence bug."); \
+        } \
         return _instance; \
     } \
     \

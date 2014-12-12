@@ -65,59 +65,59 @@ union px4_custom_mode {
     float data_float;
 };
 
-PX4AutoPilotPlugin::PX4AutoPilotPlugin(QObject* parent) :
-    AutoPilotPlugin(parent)
+PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
+    AutoPilotPlugin(parent),
+    _uas(uas),
+    _parameterFacts(NULL)
 {
-    UASManagerInterface* uasMgr = UASManager::instance();
-    Q_ASSERT(uasMgr);
+    Q_ASSERT(uas);
     
-    // We need to track uas coming and going so that we can create PX4ParameterFacts instances for each uas
-    connect(uasMgr, &UASManagerInterface::UASCreated, this, &PX4AutoPilotPlugin::_uasCreated);
-    connect(uasMgr, &UASManagerInterface::UASDeleted, this, &PX4AutoPilotPlugin::_uasDeleted);
+    _parameterFacts = new PX4ParameterFacts(uas, this);
+    Q_CHECK_PTR(_parameterFacts);
+    
+    connect(_parameterFacts, &PX4ParameterFacts::factsReady, this, &PX4AutoPilotPlugin::pluginReady);
     
     PX4ParameterFacts::loadParameterFactMetaData();
 }
 
 PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
 {
+    delete _parameterFacts;
     PX4ParameterFacts::deleteParameterFactMetaData();
-    
-    foreach(UASInterface* uas, _mapUas2ParameterFacts.keys()) {
-        delete _mapUas2ParameterFacts[uas];
-    }
-    _mapUas2ParameterFacts.clear();
 }
 
-QList<VehicleComponent*> PX4AutoPilotPlugin::getVehicleComponents(UASInterface* uas) const
+QList<VehicleComponent*> PX4AutoPilotPlugin::getVehicleComponents(void) const
 {
+    Q_ASSERT(_uas);
+    
     QList<VehicleComponent*> components;
     
     VehicleComponent* component;
     
-    component = new AirframeComponent(uas);
+    component = new AirframeComponent(_uas);
     Q_CHECK_PTR(component);
     components.append(component);
     
-    component = new RadioComponent(uas);
+    component = new RadioComponent(_uas);
     Q_CHECK_PTR(component);
     components.append(component);
     
-    component = new FlightModesComponent(uas);
+    component = new FlightModesComponent(_uas);
     Q_CHECK_PTR(component);
     components.append(component);
     
-    component = new SensorsComponent(uas);
+    component = new SensorsComponent(_uas);
     Q_CHECK_PTR(component);
     components.append(component);
     
     return components;
 }
 
-QList<AutoPilotPlugin::FullMode_t> PX4AutoPilotPlugin::getModes(void) const
+QList<AutoPilotPluginManager::FullMode_t> PX4AutoPilotPlugin::getModes(void)
 {
-    QList<FullMode_t>       modeList;
-    FullMode_t              fullMode;
-    union px4_custom_mode   px4_cm;
+    union px4_custom_mode                       px4_cm;
+    AutoPilotPluginManager::FullMode_t          fullMode;
+    QList<AutoPilotPluginManager::FullMode_t>   modeList;
     
     px4_cm.data = 0;
     px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
@@ -152,7 +152,7 @@ QList<AutoPilotPlugin::FullMode_t> PX4AutoPilotPlugin::getModes(void) const
     return modeList;
 }
 
-QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMode) const
+QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMode)
 {
     QString mode;
     
@@ -187,51 +187,40 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
             mode = "|OFFBOARD";
         }
     } else {
-        mode = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(MAV_AUTOPILOT_GENERIC)->getShortModeText(baseMode, customMode);
+        // use base_mode - not autopilot-specific
+        if (baseMode == 0) {
+            mode = "|PREFLIGHT";
+        } else if (baseMode & MAV_MODE_FLAG_DECODE_POSITION_AUTO) {
+            mode = "|AUTO";
+        } else if (baseMode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) {
+            mode = "|MANUAL";
+            if (baseMode & MAV_MODE_FLAG_DECODE_POSITION_GUIDED) {
+                mode += "|GUIDED";
+            } else if (baseMode & MAV_MODE_FLAG_DECODE_POSITION_STABILIZE) {
+                mode += "|STABILIZED";
+            }
+        }
+
     }
     
     return mode;
 }
 
-void PX4AutoPilotPlugin::addFactsToQmlContext(QQmlContext* context, UASInterface* uas) const
+void PX4AutoPilotPlugin::addFactsToQmlContext(QQmlContext* context) const
 {
     Q_ASSERT(context);
-    Q_ASSERT(uas);
     
-    QGCUASParamManagerInterface* paramMgr = uas->getParamManager();
-    Q_UNUSED(paramMgr);
-    Q_ASSERT(paramMgr);
-    Q_ASSERT(paramMgr->parametersReady());
+    Q_ASSERT(_parameterFacts->factsAreReady());
     
-    PX4ParameterFacts* facts = _parameterFactsForUas(uas);
-    Q_ASSERT(facts);
-    
-    context->setContextProperty("parameterFacts", facts);
+    context->setContextProperty("parameterFacts", _parameterFacts);
 }
 
-/// @brief When a new uas is create we add a new set of parameter facts for it
-void PX4AutoPilotPlugin::_uasCreated(UASInterface* uas)
+void PX4AutoPilotPlugin::clearStaticData(void)
 {
-    Q_ASSERT(uas);
-    Q_ASSERT(!_mapUas2ParameterFacts.contains(uas));
-    
-    // Each uas has it's own set of parameter facts
-    PX4ParameterFacts* facts = new PX4ParameterFacts(uas, this);
-    Q_CHECK_PTR(facts);
-    _mapUas2ParameterFacts[uas] = facts;
+    PX4ParameterFacts::clearStaticData();
 }
 
-/// @brief When the uas is deleted we remove the parameter facts for it from the system
-void PX4AutoPilotPlugin::_uasDeleted(UASInterface* uas)
+bool PX4AutoPilotPlugin::pluginIsReady(void) const
 {
-    delete _parameterFactsForUas(uas);
-    _mapUas2ParameterFacts.remove(uas);
-}
-
-PX4ParameterFacts* PX4AutoPilotPlugin::_parameterFactsForUas(UASInterface* uas) const
-{
-    Q_ASSERT(uas);
-    Q_ASSERT(_mapUas2ParameterFacts.contains(uas));
-    
-    return _mapUas2ParameterFacts[uas];
+    return _parameterFacts->factsAreReady();
 }

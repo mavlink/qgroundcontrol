@@ -25,6 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "PX4ParameterFacts.h"
+#include "QGCApplication.h"
 
 #include <QFile>
 #include <QDebug>
@@ -32,12 +33,14 @@
 Q_LOGGING_CATEGORY(PX4ParameterFactsLog, "PX4ParameterFactsLog")
 Q_LOGGING_CATEGORY(PX4ParameterFactsMetaDataLog, "PX4ParameterFactsMetaDataLog")
 
+bool PX4ParameterFacts::_parameterMetaDataLoaded = false;
 QMap<QString, FactMetaData*> PX4ParameterFacts::_mapParameterName2FactMetaData;
 
 PX4ParameterFacts::PX4ParameterFacts(UASInterface* uas, QObject* parent) :
     QObject(parent),
     _lastSeenComponent(-1),
-    _paramMgr(NULL)
+    _paramMgr(NULL),
+    _factsReady(false)
 {
     Q_ASSERT(uas);
 
@@ -46,11 +49,14 @@ PX4ParameterFacts::PX4ParameterFacts(UASInterface* uas, QObject* parent) :
     _paramMgr = uas->getParamManager();
     Q_ASSERT(_paramMgr);
     
+    // We need to be initialized before param mgr starts sending parameters so we catch each one
+    Q_ASSERT(!_paramMgr->parametersReady());
+    
+    // We need to know when the param mgr is done sending the initial set of paramters
+    connect(_paramMgr, SIGNAL(parameterListUpToDate()), this, SLOT(_paramMgrParameterListUpToDate()));
+    
     // UASInterface::parameterChanged has multiple overrides so we need to use SIGNAL/SLOT style connect
     connect(uas, SIGNAL(parameterChanged(int, int, QString, QVariant)), this, SLOT(_parameterChanged(int, int, QString, QVariant)));
-    
-    // Fact meta data should already be loaded
-    Q_ASSERT(_mapParameterName2FactMetaData.count() != 0);
 }
 
 PX4ParameterFacts::~PX4ParameterFacts()
@@ -90,7 +96,7 @@ void PX4ParameterFacts::_parameterChanged(int uas, int component, QString parame
     // If we don't have meta data for the parameter it can't be part of the FactSystem
     if (!_mapParameterName2FactMetaData.contains(parameterName)) {
         // FIXME: Debug or Warning. Warning will fail TC
-        qCDebug(PX4ParameterFactsLog) << "FactSystem meta data out of date. Missing parameter:" << parameterName;
+        qDebug() << "FactSystem meta data out of date. Missing parameter:" << parameterName;
         return;
     }
     
@@ -99,19 +105,22 @@ void PX4ParameterFacts::_parameterChanged(int uas, int component, QString parame
         
         fact->setMetaData(_mapParameterName2FactMetaData[parameterName]);
         
-        // We need to know when the fact changes so that we can send the new value to the parameter managers
-        connect(fact, &Fact::valueUpdated, this, &PX4ParameterFacts::_valueUpdated);
-        
         _mapParameterName2Fact[parameterName] = fact;
         _mapFact2ParameterName[fact] = parameterName;
+        
+        // We need to know when the fact changes so that we can send the new value to the parameter manager
+        connect(fact, &Fact::_containerValueChanged, this, &PX4ParameterFacts::_valueUpdated);
+        
+        //qDebug() << "Adding new fact" << parameterName;
     }
-    _mapParameterName2Fact[parameterName]->updateValue(value);
+    //qDebug() << "Updating fact value" << parameterName << value;
+    _mapParameterName2Fact[parameterName]->_containerSetValue(value);
 }
 
 /// Connected to Fact::valueUpdated
 ///
 /// Sets the new value into the Parameter Manager. Paramter is persisted after send.
-void PX4ParameterFacts::_valueUpdated(QVariant& value)
+void PX4ParameterFacts::_valueUpdated(QVariant value)
 {
     Fact* fact = qobject_cast<Fact*>(sender());
     Q_ASSERT(fact);
@@ -285,6 +294,11 @@ QVariant PX4ParameterFacts::_stringToTypedVariant(const QString& string, FactMet
 /// The meta data comes from firmware parameters.xml file.
 void PX4ParameterFacts::loadParameterFactMetaData(void)
 {
+    if (_parameterMetaDataLoaded) {
+        return;
+    }
+    _parameterMetaDataLoaded = true;
+    
     qCDebug(PX4ParameterFactsMetaDataLog) << "Loading PX4 parameter fact meta data";
 
     Q_ASSERT(_mapParameterName2FactMetaData.count() == 0);
@@ -346,4 +360,30 @@ void PX4ParameterFacts::loadParameterFactMetaData(void)
         }
         xml.readNext();
     }
+}
+
+// Called when param mgr list is up to date
+void PX4ParameterFacts::_paramMgrParameterListUpToDate(void)
+{
+    if (!_factsReady) {
+        _factsReady = true;
+        
+        // We don't need this any more
+        disconnect(_paramMgr, SIGNAL(parameterListUpToDate()), this, SLOT(_paramMgrParameterListUpToDate()));
+
+        // There may be parameterUpdated signals still in our queue. Flush them out.
+        qgcApp()->processEvents();
+        
+        // We should have all paramters now so we can signal ready
+        emit factsReady();
+    }
+}
+
+void PX4ParameterFacts::clearStaticData(void)
+{
+    foreach(QString parameterName, _mapParameterName2FactMetaData.keys()) {
+        delete _mapParameterName2FactMetaData[parameterName];
+    }
+    _mapParameterName2FactMetaData.clear();
+    _parameterMetaDataLoaded = false;
 }

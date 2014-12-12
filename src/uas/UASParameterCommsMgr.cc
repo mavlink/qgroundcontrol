@@ -71,7 +71,7 @@ void UASParameterCommsMgr::loadParamCommsSettings()
 
 void UASParameterCommsMgr::_sendParamRequestListMsg(void)
 {
-    MAVLinkProtocol* mavlink = LinkManager::instance()->mavlink();
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
     Q_ASSERT(mavlink);
     
     mavlink_message_t msg;
@@ -411,7 +411,7 @@ void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg, ParamCommsS
 
 void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int paramCount, int paramId, QString paramName, QVariant value)
 {
-    qCDebug(UASParameterCommsMgrLog) << QString("Received parameter update for: name(%1) count(%2) index(%3)").arg(paramName).arg(paramCount).arg(paramId);
+    qCDebug(UASParameterCommsMgrLog) << "Received parameter update for:" << paramName << "count" << paramCount << "index" << paramId << "value" << value;
 
     Q_UNUSED(uas); //this object is assigned to one UAS only
     lastReceiveTime = QGC::groundTimeMilliseconds();

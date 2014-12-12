@@ -21,29 +21,38 @@
  
  ======================================================================*/
 
-#include "QGCQuickWidget.h"
-#include "UASManager.h"
-#include "AutoPilotPluginManager.h"
-
-#include <QQmlContext>
-#include <QQmlEngine>
-
 /// @file
-///     @brief Subclass of QQuickWidget which injects Facts and the Pallete object into
-///             the QML context.
-///
 ///     @author Don Gagne <don@thegagnes.com>
 
-QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
-    QQuickWidget(parent)
+#ifndef FactSystemTest_H
+#define FactSystemTest_H
+
+#include "UnitTest.h"
+#include "UASInterface.h"
+#include "AutoPilotPlugin.h"
+
+// Unit Test for Fact System
+class FactSystemTest : public UnitTest
 {
-    UASManagerInterface* uasMgr = UASManager::instance();
-    Q_ASSERT(uasMgr);
+    Q_OBJECT
     
-    UASInterface* uas = uasMgr->getActiveUAS();
-    Q_ASSERT(uas);
+public:
+    FactSystemTest(void);
     
-    rootContext()->engine()->addImportPath("qrc:/qml");
+private slots:
+    void init(void);
+    void cleanup(void);
     
-    AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas)->addFactsToQmlContext(rootContext());
-}
+    void _parameter_test(void);
+    void _qml_test(void);
+    void _paramMgrSignal_test(void);
+    void _qmlUpdate_test(void);
+    
+private:
+    UASInterface*                   _uas;
+    QGCUASParamManagerInterface*    _paramMgr;
+    AutoPilotPlugin*                _plugin;
+    LinkManager*                    _linkMgr;
+};
+
+#endif
