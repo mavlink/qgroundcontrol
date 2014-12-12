@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 #define _UASMANAGER_H_
 
 #include "UASManagerInterface.h"
-#include <QThread>
 #include <QList>
 #include <QMutex>
 #include <UASInterface.h>
@@ -241,6 +240,8 @@ public slots:
     void loadSettings();
     /** @brief Store settings */
     void storeSettings();
+    
+    void _shutdown(void);
 
 
 protected:
@@ -262,7 +263,6 @@ protected:
 private:
     /// @brief All access to UASManager singleton is through UASManager::instance
     UASManager(QObject* parent = NULL);
-    
     ~UASManager();
 
 public:

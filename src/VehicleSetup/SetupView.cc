@@ -208,7 +208,7 @@ void SetupView::_parametersReady(void)
     
     _ui->summaryButton->setVisible(true);
     
-    _components = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent->getAutopilotType())->getVehicleComponents(_uasCurrent);
+    _components = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent)->getVehicleComponents();
     
     foreach(VehicleComponent* component, _components) {
         VehicleComponentButton* button = new VehicleComponentButton(component, _ui->navBarWidget);

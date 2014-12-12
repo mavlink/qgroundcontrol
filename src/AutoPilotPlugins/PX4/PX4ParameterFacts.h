@@ -487,6 +487,7 @@ class PX4ParameterFacts : public QObject
     Q_PROPERTY(Fact* UAVCAN_BITRATE READ getUAVCAN_BITRATE CONSTANT) Fact* getUAVCAN_BITRATE(void) { return _mapParameterName2Fact["UAVCAN_BITRATE"]; }
     Q_PROPERTY(Fact* UAVCAN_ENABLE READ getUAVCAN_ENABLE CONSTANT) Fact* getUAVCAN_ENABLE(void) { return _mapParameterName2Fact["UAVCAN_ENABLE"]; }
     Q_PROPERTY(Fact* UAVCAN_NODE_ID READ getUAVCAN_NODE_ID CONSTANT) Fact* getUAVCAN_NODE_ID(void) { return _mapParameterName2Fact["UAVCAN_NODE_ID"]; }
+    Q_PROPERTY(QString testString READ getTestString CONSTANT)
     
 public:
     /// @param uas Uas which this set of facts is associated with
@@ -496,13 +497,20 @@ public:
     
     static void loadParameterFactMetaData(void);
     static void deleteParameterFactMetaData(void);
+    static void clearStaticData(void);
+    
+    /// Returns true if the full set of facts are ready
+    bool factsAreReady(void) { return _factsReady; }
+    
+signals:
+    /// Signalled when the full set of facts are ready
+    void factsReady(void);
     
 private slots:
-    /// Connected to UASInterface::parameterChanged
     void _parameterChanged(int uas, int component, QString parameterName, QVariant value);
-    
-    /// Signalled from Fact to indicate value was changed through the property write accessor
-    void _valueUpdated(QVariant& value);
+    void _valueUpdated(QVariant value);
+    void _paramMgrParameterListUpToDate(void);
+    QString getTestString(void) { return QString("foo"); }
     
 private:
     static FactMetaData* _parseParameter(QXmlStreamReader& xml, const QString& group);
@@ -512,12 +520,15 @@ private:
     QMap<QString, Fact*> _mapParameterName2Fact;    ///< Maps from a parameter name to a Fact
     QMap<Fact*, QString> _mapFact2ParameterName;    ///< Maps from a Fact to a parameter name
     
+    static bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
     static QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData
     
     int _uasId;             ///< Id for uas which this set of Facts are associated with
     int _lastSeenComponent;
     
     QGCUASParamManagerInterface* _paramMgr;
+    
+    bool _factsReady;   ///< All facts received from param mgr
 };
 
 #endif

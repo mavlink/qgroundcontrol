@@ -162,6 +162,9 @@ protected:
     QMutex m_writeMutex;      // Mutex for accessing the m_transmitBuffer.
     QString type;
     bool m_is_cdc;
+    
+private slots:
+    void _rerouteDisconnected(void);
 
 private:
     // From LinkInterface

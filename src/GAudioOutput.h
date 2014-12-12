@@ -37,19 +37,21 @@ This file is part of the PIXHAWK project
 #include <QThread>
 #include <QStringList>
 
-#include <QGCAudioWorker.h>
+#include "QGCAudioWorker.h"
+#include "QGCSingleton.h"
 
 /**
  * @brief Audio Output (speech synthesizer and "beep" output)
  * This class follows the singleton design pattern
  * @see http://en.wikipedia.org/wiki/Singleton_pattern
  */
-class GAudioOutput : public QObject
+class GAudioOutput : public QGCSingleton
 {
     Q_OBJECT
+    
+    DECLARE_QGC_SINGLETON(GAudioOutput, GAudioOutput)
+    
 public:
-    /** @brief Get the singleton instance */
-    static GAudioOutput *instance();
     /** @brief List available voices */
     QStringList listVoices(void);
     enum
@@ -104,6 +106,7 @@ protected:
     bool muted;
     QThread* thread;
     QGCAudioWorker* worker;
+    
 private:
     GAudioOutput(QObject *parent = NULL);
     ~GAudioOutput();

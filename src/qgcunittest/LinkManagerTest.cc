@@ -60,6 +60,8 @@ void LinkManagerTest::cleanup(void)
     Q_ASSERT(_linkMgr);
     Q_ASSERT(_multiSpy);
     
+    _linkMgr->_shutdown();
+    
     delete _linkMgr;
     delete _multiSpy;
     

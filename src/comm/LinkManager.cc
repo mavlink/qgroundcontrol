@@ -47,27 +47,14 @@ IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
  **/
 LinkManager::LinkManager(QObject* parent) :
     QGCSingleton(parent),
-    _connectionsSuspended(false),
-    _mavlink(NULL)
+    _connectionsSuspended(false)
 {
-    _mavlink = new MAVLinkProtocol(this);
-    Q_CHECK_PTR(_mavlink);
+
 }
 
 LinkManager::~LinkManager()
 {
-    disconnectAll();
-    
-    foreach (LinkInterface* link, _links) {
-        Q_ASSERT(link);
-        deleteLink(link);
-    }
-    _links.clear();
-    
-    // Clear out the queue so disconnects make it all the way through threads
-    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-    
-    delete _mavlink;
+    Q_ASSERT_X(_links.count() == 0, "LinkManager", "LinkManager::_shutdown should have been called previously");
 }
 
 void LinkManager::addLink(LinkInterface* link)
@@ -92,10 +79,11 @@ void LinkManager::addLink(LinkInterface* link)
         connect(link, SIGNAL(communicationError(QString,QString)), MainWindow::instance(), SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
     }
     
-    connect(link, &LinkInterface::bytesReceived, _mavlink, &MAVLinkProtocol::receiveBytes);
-    connect(link, &LinkInterface::connected, _mavlink, &MAVLinkProtocol::linkConnected);
-    connect(link, &LinkInterface::disconnected, _mavlink, &MAVLinkProtocol::linkDisconnected);
-    _mavlink->resetMetadataForLink(link);
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+    connect(link, &LinkInterface::bytesReceived, mavlink, &MAVLinkProtocol::receiveBytes);
+    connect(link, &LinkInterface::connected, mavlink, &MAVLinkProtocol::linkConnected);
+    connect(link, &LinkInterface::disconnected, mavlink, &MAVLinkProtocol::linkDisconnected);
+    mavlink->resetMetadataForLink(link);
 }
 
 bool LinkManager::connectAll()
@@ -220,4 +208,13 @@ void LinkManager::setConnectionsSuspended(QString reason)
     _connectionsSuspended = true;
     _connectionsSuspendedReason = reason;
     Q_ASSERT(!reason.isEmpty());
+}
+
+void LinkManager::_shutdown(void)
+{
+    QList<LinkInterface*> links = _links;
+    foreach(LinkInterface* link, links) {
+        disconnectLink(link);
+        deleteLink(link);
+    }
 }
