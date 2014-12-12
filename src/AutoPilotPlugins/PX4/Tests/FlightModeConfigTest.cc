@@ -93,7 +93,6 @@ void FlightModeConfigTest::init(void)
 
     _configWidget = new FlightModeConfig;
     Q_CHECK_PTR(_configWidget);
-    _configWidget->setVisible(true);
     
     // Setup combo maps
     

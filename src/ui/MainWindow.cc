@@ -294,7 +294,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     {
         // Restore the window geometry
         restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
-        show();
     }
     else
     {
@@ -305,12 +304,10 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         if (screenWidth < 1500)
         {
             resize(screenWidth, screenHeight - 80);
-            show();
         }
         else
         {
             resize(screenWidth*0.67f, qMin(screenHeight, (int)(screenWidth*0.67f*0.67f)));
-            show();
         }
 
     }
@@ -358,7 +355,10 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
     emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    show();
+
+	if (!qgcApp()->runningUnitTests()) {
+		show();
+	}
 }
 
 MainWindow::~MainWindow()
