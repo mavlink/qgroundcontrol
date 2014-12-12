@@ -6,7 +6,7 @@
 Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal latitude, qreal longitude, qreal altitude, int listindex, QString name, QString description, int radius)
     : mapcontrol::WayPointItem(internals::PointLatLng(latitude, longitude), altitude, description, map),
     parent(parent),
-    waypoint(NULL),
+    waypoint(),
     radius(radius),
     showAcceptanceRadius(true),
     showOrbit(false),
@@ -55,7 +55,7 @@ void Waypoint2DIcon::SetHeading(float heading)
 
 void Waypoint2DIcon::updateWaypoint()
 {
-    if (waypoint) {
+    if (!waypoint.isNull()) {
         // Store old size
         static QRectF oldSize;
 
@@ -97,13 +97,16 @@ QRectF Waypoint2DIcon::boundingRect() const
     int loiter = 0;
     int acceptance = 0;
     internals::PointLatLng coord = (internals::PointLatLng)Coord();
-    if (waypoint && showAcceptanceRadius && (waypoint->getAction() == (int)MAV_CMD_NAV_WAYPOINT))
-    {
-        acceptance = map->metersToPixels(waypoint->getAcceptanceRadius(), coord);
-    }
-    if (waypoint && ((waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_UNLIM) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)))
-    {
-        loiter = map->metersToPixels(waypoint->getLoiterOrbit(), coord);
+
+    if (!waypoint.isNull()) {
+        if (showAcceptanceRadius && (waypoint->getAction() == (int)MAV_CMD_NAV_WAYPOINT))
+        {
+            acceptance = map->metersToPixels(waypoint->getAcceptanceRadius(), coord);
+        }
+        if (((waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_UNLIM) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)))
+        {
+            loiter = map->metersToPixels(waypoint->getLoiterOrbit(), coord);
+        }
     }
 
     int width = qMax(picture.width()/2, qMax(loiter, acceptance));
@@ -156,7 +159,7 @@ void Waypoint2DIcon::drawIcon()
     // If this is not a waypoint (only the default representation)
     // or it is a waypoint, but not one where direction has no meaning
     // then draw the heading indicator
-    if (!waypoint || (waypoint && (
+    if (waypoint.isNull() || (waypoint && (
             (waypoint->getAction() != (int)MAV_CMD_NAV_TAKEOFF) &&
             (waypoint->getAction() != (int)MAV_CMD_NAV_LAND) &&
             (waypoint->getAction() != (int)MAV_CMD_NAV_LOITER_UNLIM) &&
@@ -171,7 +174,7 @@ void Waypoint2DIcon::drawIcon()
         painter.drawLine(p.x(), p.y(), p.x()+sin(Heading()/180.0f*M_PI) * rad, p.y()-cos(Heading()/180.0f*M_PI) * rad);
     }
 
-    if ((waypoint != NULL) && (waypoint->getAction() == (int)MAV_CMD_NAV_TAKEOFF))
+    if (((!waypoint.isNull())) && (waypoint->getAction() == (int)MAV_CMD_NAV_TAKEOFF))
     {
         // Takeoff waypoint
         int width = picture.width()-penWidth;
@@ -187,7 +190,7 @@ void Waypoint2DIcon::drawIcon()
         painter.setPen(pen2);
         painter.drawRect(width*0.3, height*0.3f, width*0.6f, height*0.6f);
     }
-    else if ((waypoint != NULL) && (waypoint->getAction() == (int)MAV_CMD_NAV_LAND))
+    else if (((!waypoint.isNull())) && (waypoint->getAction() == (int)MAV_CMD_NAV_LAND))
     {
         // Landing waypoint
         int width = (picture.width())/2-penWidth;
@@ -199,7 +202,7 @@ void Waypoint2DIcon::drawIcon()
         painter.drawEllipse(p, width, height);
         painter.drawLine(p.x()-width/2, p.y()-height/2, 2*width, 2*height);
     }
-    else if ((waypoint != NULL) && ((waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_UNLIM) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)))
+    else if (((!waypoint.isNull())) && ((waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_UNLIM) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)))
     {
         // Loiter waypoint
         int width = (picture.width()-penWidth)/2;
@@ -211,7 +214,7 @@ void Waypoint2DIcon::drawIcon()
         painter.drawEllipse(p, width, height);
         painter.drawPoint(p);
     }
-    else if ((waypoint != NULL) && (waypoint->getAction() == (int)MAV_CMD_NAV_RETURN_TO_LAUNCH))
+    else if (((!waypoint.isNull())) && (waypoint->getAction() == (int)MAV_CMD_NAV_RETURN_TO_LAUNCH))
     {
         // Return to launch waypoint
         int width = picture.width()-penWidth;
@@ -284,7 +287,7 @@ void Waypoint2DIcon::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     penBlack.setWidth(4);
     pen.setColor(color);
 
-    if ((waypoint) && (waypoint->getAction() == (int)MAV_CMD_NAV_WAYPOINT) && showAcceptanceRadius)
+    if ((!waypoint.isNull()) && (waypoint->getAction() == (int)MAV_CMD_NAV_WAYPOINT) && showAcceptanceRadius)
     {
         QPen redPen = QPen(pen);
         redPen.setColor(Qt::yellow);
@@ -298,7 +301,7 @@ void Waypoint2DIcon::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
             painter->drawEllipse(QPointF(0, 0), acceptance, acceptance);
         }
     }
-    if ((waypoint) && ((waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_UNLIM) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)))
+    if ((!waypoint.isNull()) && ((waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_UNLIM) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)))
     {
         QPen penDash(color);
         penDash.setWidth(1);
