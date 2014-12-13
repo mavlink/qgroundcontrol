@@ -32,10 +32,7 @@ Rectangle {
                     height: 200
                     title: modelData.name
                     setupComplete: modelData.setupComplete
-<<<<<<< HEAD
                     summaryModel: modelData.summaryItems
-=======
->>>>>>> FETCH_HEAD
                 }
             }
         }
