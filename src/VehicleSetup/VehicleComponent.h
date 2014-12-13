@@ -46,6 +46,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(QString setupStateDescription READ setupStateDescription STORED false)
     Q_PROPERTY(QString icon READ icon CONSTANT)
     Q_PROPERTY(QWidget* setupWidget READ setupWidget STORED false)
+    Q_PROPERTY(QObjectList& summaryItems READ summaryItems STORED false);
     
 public:
     VehicleComponent(UASInterface* uas, QObject* parent = NULL);

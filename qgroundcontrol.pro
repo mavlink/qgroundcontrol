@@ -704,7 +704,6 @@ FORMS += \
 
 HEADERS+= \
     src/VehicleSetup/SetupView.h \
-    src/VehicleSetup/SummaryPage.h \
     src/VehicleSetup/ParameterEditor.h \
     src/VehicleSetup/VehicleSetupButton.h \
     src/VehicleSetup/VehicleComponentButton.h \
@@ -723,7 +722,6 @@ HEADERS+= \
 
 SOURCES += \
     src/VehicleSetup/SetupView.cc \
-    src/VehicleSetup/SummaryPage.cc \
     src/VehicleSetup/ParameterEditor.cc \
     src/VehicleSetup/VehicleComponent.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
