@@ -237,7 +237,9 @@
     </qresource>
     <qresource prefix="/qml">
         <file alias="QGroundControlFactControls/qmldir">files/qml/qmldir</file>
-        <file alias="QGroundControlFactControls/FactTextInput.qml">files/qml/FactTextInput.qml</file>
+        <file alias="QGroundControlFactControls/SetupButton.qml">src/VehicleSetup/SetupButton.qml</file>
+        <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
+        <file alias="VehicleComponentSummaryButton.qml">src/VehicleSetup/VehicleComponentSummaryButton.qml</file>
     </qresource>
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>

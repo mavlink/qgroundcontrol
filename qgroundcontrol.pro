@@ -698,8 +698,6 @@ SOURCES += \
 # AutoPilot Plugin Support
 #
 FORMS += \
-    src/VehicleSetup/SetupView.ui \
-    src/VehicleSetup/SummaryPage.ui \
     src/VehicleSetup/ParameterEditor.ui \
     src/ui/QGCPX4VehicleConfig.ui \
     src/AutoPilotPlugins/PX4/FlightModeConfig.ui

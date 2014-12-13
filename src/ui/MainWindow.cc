@@ -524,7 +524,7 @@ void MainWindow::buildCommonWidgets()
     {
         setupView = new SubMainWindow(this);
         setupView->setObjectName("VIEW_SETUP");
-        setupView->setCentralWidget(new SetupView(this));
+        setupView->setCentralWidget((QWidget*)new SetupView(this));
         addToCentralStackedWidget(setupView, VIEW_SETUP, "Setup");
     }
     if (!engineeringView)
