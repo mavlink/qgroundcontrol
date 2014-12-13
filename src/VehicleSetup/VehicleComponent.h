@@ -39,6 +39,7 @@
 class VehicleComponent : public QObject
 {
     Q_OBJECT
+    
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString description READ description CONSTANT)
     Q_PROPERTY(bool requiresSetup READ requiresSetup CONSTANT)
@@ -46,7 +47,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(QString setupStateDescription READ setupStateDescription STORED false)
     Q_PROPERTY(QString icon READ icon CONSTANT)
     Q_PROPERTY(QWidget* setupWidget READ setupWidget STORED false)
-    Q_PROPERTY(QObjectList& summaryItems READ summaryItems STORED false);
+    Q_PROPERTY(QVariantList summaryItems READ summaryItems CONSTANT);
     
 public:
     VehicleComponent(UASInterface* uas, QObject* parent = NULL);
@@ -60,9 +61,7 @@ public:
     virtual QString setupStateDescription(void) const = 0;
     virtual QWidget* setupWidget(void) const = 0;
     virtual QStringList paramFilterList(void) const = 0;
-    virtual QList<QStringList> summaryItems(void) const = 0;
-    
-    virtual void addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent);
+    virtual const QVariantList& summaryItems(void) = 0;
     
 signals:
     void setupCompleteChanged(void);

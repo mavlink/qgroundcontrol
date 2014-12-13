@@ -21,39 +21,37 @@
  
  ======================================================================*/
 
-#ifndef FLIGHTMODESCOMPONENT_H
-#define FLIGHTMODESCOMPONENT_H
+#ifndef VehicleComponentSummaryItem_H
+#define VehicleComponentSummaryItem_H
 
-#include "PX4Component.h"
+#include <QObject>
+#include <QQmlContext>
+#include <QQuickItem>
+
+#include "UASInterface.h"
 
 /// @file
-///     @brief The FlightModes VehicleComponent is used to set the associated Flight Mode switches.
+///     @brief Vehicle Component class. A vehicle component is an object which
+///             abstracts the physical portion of a vehicle into a set of
+///             configurable values and user interface.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class FlightModesComponent : public PX4Component
+class VehicleComponentSummaryItem : public QObject
 {
     Q_OBJECT
     
+    Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(QString state READ state CONSTANT)
+    
 public:
-    FlightModesComponent(UASInterface* uas, QObject* parent = NULL);
+    VehicleComponentSummaryItem(const QString& name, const QString& state, QObject* parent = NULL);
     
-    // Virtuals from PX4Component
-    virtual const char** setupCompleteChangedTriggerList(void) const;
+    QString name(void) const { return _name; }
+    QString state(void) const { return _state; }
     
-    // Virtuals from VehicleComponent
-    virtual QString name(void) const;
-    virtual QString description(void) const;
-    virtual QString icon(void) const;
-    virtual bool requiresSetup(void) const;
-    virtual bool setupComplete(void) const;
-    virtual QString setupStateDescription(void) const;
-    virtual QWidget* setupWidget(void) const;
-    virtual QStringList paramFilterList(void) const;
-    virtual const QVariantList& summaryItems(void);
-    
-private:
-    const QString   _name;
-    QVariantList    _summaryItems;
+protected:
+    QString _name;
+    QString _state;
 };
 
 #endif

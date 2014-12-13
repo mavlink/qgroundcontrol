@@ -42,7 +42,8 @@ FactSystem::FactSystem(QObject* parent) :
     qmlRegisterType<FactValidator>(_factSystemQmlUri, 1, 0, "FactValidator");
     
     // FIXME: Where should this go? Also creation string
-    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only refernce VehicleComponent");
+    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference VehicleComponent");
+    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponentSummaryItem", "Can only reference VehicleComponentSummaryItem");
 }
 
 FactSystem::~FactSystem()

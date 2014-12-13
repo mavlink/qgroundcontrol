@@ -32,6 +32,7 @@ Rectangle {
                     height: 200
                     title: modelData.name
                     setupComplete: modelData.setupComplete
+                    summaryModel: modelData.summaryItems
                 }
             }
         }

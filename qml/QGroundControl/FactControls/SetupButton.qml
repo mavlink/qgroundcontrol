@@ -6,6 +6,7 @@ Rectangle {
 
     property alias title: titleBar.text
     property alias setupComplete: setupIndicator.setupComplete
+    property alias summaryModel: summaryList.model
 
     border.color: "#888"
     radius: 10
@@ -64,13 +65,14 @@ Rectangle {
         }
 
         ListView {
+            id: summaryList
             anchors.fill: parent
             model: ListModel {
-                        ListElement { [ "Row 1", "Val 1"] }
-                        ListElement { [ "Row 2", "Val 2"] }
-                        ListElement { [ "Row 2", "Val 2"] }
+                        ListElement { name: "Row 1"; state: "State 1" }
+                        ListElement { name: "Row 2"; state: "State 2" }
+                        ListElement { name: "Row 3"; state: "State 3" }
             }
-            delegate: Text { text: "text" }
+            delegate: Row { Text { text: modelData.name } Text { text: modelData.state } }
         }
     }
 }
