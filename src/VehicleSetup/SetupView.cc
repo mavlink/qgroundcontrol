@@ -79,17 +79,14 @@ void SetupView::_pluginReady(void)
     Q_ASSERT(_uasCurrent);
     Q_ASSERT(_autoPilotPlugin);
     
+    QObjectList list;
+    foreach(VehicleComponent* v, _autoPilotPlugin->getVehicleComponents()) {
+        list << v;
+    }
+    
     setUAS(_uasCurrent);
+    rootContext()->setContextProperty("vehicleComponents", QVariant::fromValue(list));
+    
     setSource(QUrl::fromUserInput("qrc:qml/SetupView.qml"));
     disconnect(_autoPilotPlugin);
-    
-    QObject* flowObject = rootObject()->findChild<QObject*>("flow");
-    Q_ASSERT(flowObject);
-    QQuickItem* flowItem = qobject_cast<QQuickItem*>(flowObject);
-    Q_ASSERT(flowItem);
-    
-    QList<VehicleComponent*> components = _autoPilotPlugin->getVehicleComponents();
-    foreach(VehicleComponent* component, components) {
-        component->addSummaryQmlComponent(rootContext(), flowItem);
-    }
 }
