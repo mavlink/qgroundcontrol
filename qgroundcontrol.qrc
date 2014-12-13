@@ -240,6 +240,7 @@
         <file alias="QGroundControl/FactControls/SetupButton.qml">qml/QGroundControl/FactControls/SetupButton.qml</file>
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
         <file alias="VehicleComponentSummaryButton.qml">src/VehicleSetup/VehicleComponentSummaryButton.qml</file>
+        <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
     </qresource>
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
