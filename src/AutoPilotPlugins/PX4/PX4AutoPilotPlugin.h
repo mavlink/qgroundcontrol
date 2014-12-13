@@ -44,7 +44,7 @@ public:
     // Overrides from AutoPilotPlugin
     virtual QList<VehicleComponent*> getVehicleComponents(void) const ;
     virtual void addFactsToQmlContext(QQmlContext* context) const;
-    virtual QObject* parameterFacts(void) const { return _parameterFacts; }
+    virtual const QVariantMap& parameterFacts(void) const { return _parameterFacts->factMap(); }
     virtual bool pluginIsReady(void) const;
 
     static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
