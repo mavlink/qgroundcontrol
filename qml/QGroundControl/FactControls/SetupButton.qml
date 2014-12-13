@@ -6,7 +6,10 @@ Rectangle {
 
     property alias title: titleBar.text
     property alias setupComplete: setupIndicator.setupComplete
+<<<<<<< HEAD
     property alias summaryModel: summaryList.model
+=======
+>>>>>>> FETCH_HEAD
 
     border.color: "#888"
     radius: 10
@@ -65,6 +68,7 @@ Rectangle {
         }
 
         ListView {
+<<<<<<< HEAD
             id: summaryList
             anchors.fill: parent
             model: ListModel {
@@ -73,6 +77,15 @@ Rectangle {
                         ListElement { name: "Row 3"; state: "State 3" }
             }
             delegate: Row { Text { text: modelData.name } Text { text: modelData.state } }
+=======
+            anchors.fill: parent
+            model: ListModel {
+                        ListElement { [ "Row 1", "Val 1"] }
+                        ListElement { [ "Row 2", "Val 2"] }
+                        ListElement { [ "Row 2", "Val 2"] }
+            }
+            delegate: Text { text: "text" }
+>>>>>>> FETCH_HEAD
         }
     }
 }

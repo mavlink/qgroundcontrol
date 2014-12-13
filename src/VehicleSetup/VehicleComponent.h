@@ -63,6 +63,8 @@ public:
     virtual QStringList paramFilterList(void) const = 0;
     virtual const QVariantList& summaryItems(void) = 0;
     
+    virtual void addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent);
+    
 signals:
     void setupCompleteChanged(void);
     
