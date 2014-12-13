@@ -39,6 +39,9 @@ class QGCQuickWidget : public QQuickWidget {
     
 public:
     QGCQuickWidget(QWidget* parent = NULL);
+    
+    /// Sets the UAS into the widget which in turn will load facts into the context
+    void setUAS(UASInterface* uas);
 };
 
 

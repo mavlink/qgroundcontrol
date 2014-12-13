@@ -25,6 +25,8 @@
 #define VEHICLECOMPONENT_H
 
 #include <QObject>
+#include <QQmlContext>
+#include <QQuickItem>
 
 #include "UASInterface.h"
 
@@ -58,6 +60,8 @@ public:
     virtual QWidget* setupWidget(void) const = 0;
     virtual QStringList paramFilterList(void) const = 0;
     virtual QList<QStringList> summaryItems(void) const = 0;
+    
+    virtual void addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent);
     
 signals:
     void setupCompleteChanged(void);
