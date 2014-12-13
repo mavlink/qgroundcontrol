@@ -36,7 +36,7 @@ class Fact;
 /// The validator uses the FactMetaData to impose restrictions on the input. It is used as follows:
 /// @code{.unparsed}
 ///     TextInput {
-///         validator: FactValidator { fact: parameterFacts.RC_MAP_THROTTLE; }
+///         validator: FactValidator { fact: parameters["RC_MAP_THROTTLE"]; }
 ///     }
 /// @endcode
 class FactValidator : public QValidator

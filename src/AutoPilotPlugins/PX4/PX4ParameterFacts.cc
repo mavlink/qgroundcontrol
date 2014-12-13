@@ -64,7 +64,7 @@ PX4ParameterFacts::~PX4ParameterFacts()
     foreach(Fact* fact, _mapFact2ParameterName.keys()) {
         delete fact;
     }
-    _mapParameterName2Fact.clear();
+    _mapParameterName2Variant.clear();
     _mapFact2ParameterName.clear();
 }
 
@@ -93,28 +93,31 @@ void PX4ParameterFacts::_parameterChanged(int uas, int component, QString parame
         Q_ASSERT(component == _lastSeenComponent);
     }
     
-    // If we don't have meta data for the parameter it can't be part of the FactSystem
-    if (!_mapParameterName2FactMetaData.contains(parameterName)) {
-        // FIXME: Debug or Warning. Warning will fail TC
-        qDebug() << "FactSystem meta data out of date. Missing parameter:" << parameterName;
-        return;
-    }
-    
-    if (!_mapParameterName2Fact.contains(parameterName)) {
+    if (!_mapParameterName2Variant.contains(parameterName)) {
         Fact* fact = new Fact(this);
         
-        fact->setMetaData(_mapParameterName2FactMetaData[parameterName]);
+        if (_mapParameterName2FactMetaData.contains(parameterName)) {
+            fact->setMetaData(_mapParameterName2FactMetaData[parameterName]);
+        } else {
+            qDebug() << "FactSystem meta data out of date. Missing parameter:" << parameterName;
+        }
         
-        _mapParameterName2Fact[parameterName] = fact;
+        _mapParameterName2Variant[parameterName] = QVariant::fromValue(fact);
         _mapFact2ParameterName[fact] = parameterName;
         
         // We need to know when the fact changes so that we can send the new value to the parameter manager
         connect(fact, &Fact::_containerValueChanged, this, &PX4ParameterFacts::_valueUpdated);
-        
-        //qDebug() << "Adding new fact" << parameterName;
+
+        qCDebug(PX4ParameterFactsLog) << "Adding new fact" << parameterName;
     }
-    //qDebug() << "Updating fact value" << parameterName << value;
-    _mapParameterName2Fact[parameterName]->_containerSetValue(value);
+    
+    Q_ASSERT(_mapParameterName2Variant.contains(parameterName));
+    
+    qCDebug(PX4ParameterFactsLog) << "Updating fact value" << parameterName << value;
+    
+    Fact* fact = _mapParameterName2Variant[parameterName].value<Fact*>();
+    Q_ASSERT(fact);
+    fact->_containerSetValue(value);
 }
 
 /// Connected to Fact::valueUpdated

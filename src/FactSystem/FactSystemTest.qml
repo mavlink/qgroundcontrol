@@ -6,11 +6,11 @@ import QGroundControlFactControls 1.0
 Item {
     TextInput {
         objectName: "testControl"
-        text: parameterFacts.RC_MAP_THROTTLE.value
+        text: parameters["RC_MAP_THROTTLE"].value
         font.family: "Helvetica"
         font.pointSize: 24
         color: "red"
         focus: true
-        onAccepted: { parameterFacts.RC_MAP_THROTTLE.value = text; }
+        onAccepted: { parameters["RC_MAP_THROTTLE"].value = text; }
     }
 }
