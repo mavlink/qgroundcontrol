@@ -29,8 +29,6 @@
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
-#include "VehicleComponentButton.h"
-#include "SummaryPage.h"
 #include "PX4FirmwareUpgrade.h"
 
 #

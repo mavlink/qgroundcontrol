@@ -3,9 +3,6 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
 Button {
-    width: 200
-    height: 200
-
     text: "Button"
     property bool setupComplete: false
 
@@ -75,7 +72,10 @@ Button {
                     id: summaryList
                     anchors.fill: parent
                     model: control.summaryModel
-                    delegate: Row { Text { text: modelData.name } Text { text: modelData.state } }
+                    delegate: Row {
+                        Text { text: modelData.name }
+                        Text { text: modelData.state }
+                    }
                 }
             }
         }
