@@ -45,6 +45,8 @@ SetupView::SetupView(QWidget* parent) :
     bool fSucceeded = connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
+    
+    _setActiveUAS(NULL);
 }
 
 SetupView::~SetupView()
@@ -69,6 +71,8 @@ void SetupView::_setActiveUAS(UASInterface* uas)
         if (_autoPilotPlugin->pluginIsReady()) {
             _pluginReady();
         }
+    } else {
+        setSource(QUrl::fromUserInput("qrc:qml/SetupViewDisconnected.qml"));
     }
 }
 
