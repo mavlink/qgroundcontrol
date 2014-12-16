@@ -76,14 +76,8 @@ void SetupView::_pluginReady(void)
 {
     Q_ASSERT(_uasCurrent);
     Q_ASSERT(_autoPilotPlugin);
-    
-    QObjectList list;
-    foreach(VehicleComponent* v, _autoPilotPlugin->getVehicleComponents()) {
-        list << v;
-    }
-    
-    setUAS(_uasCurrent);
-    rootContext()->setContextProperty("vehicleComponents", QVariant::fromValue(list));
+
+    setAutoPilot(_autoPilotPlugin);
     
     setSource(QUrl::fromUserInput("qrc:qml/SetupView.qml"));
     disconnect(_autoPilotPlugin);

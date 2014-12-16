@@ -86,33 +86,6 @@ PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
     PX4ParameterFacts::deleteParameterFactMetaData();
 }
 
-QList<VehicleComponent*> PX4AutoPilotPlugin::getVehicleComponents(void) const
-{
-    Q_ASSERT(_uas);
-    
-    QList<VehicleComponent*> components;
-    
-    VehicleComponent* component;
-    
-    component = new AirframeComponent(_uas);
-    Q_CHECK_PTR(component);
-    components.append(component);
-    
-    component = new RadioComponent(_uas);
-    Q_CHECK_PTR(component);
-    components.append(component);
-    
-    component = new FlightModesComponent(_uas);
-    Q_CHECK_PTR(component);
-    components.append(component);
-    
-    component = new SensorsComponent(_uas);
-    Q_CHECK_PTR(component);
-    components.append(component);
-    
-    return components;
-}
-
 QList<AutoPilotPluginManager::FullMode_t> PX4AutoPilotPlugin::getModes(void)
 {
     union px4_custom_mode                       px4_cm;
@@ -206,15 +179,6 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
     return mode;
 }
 
-void PX4AutoPilotPlugin::addFactsToQmlContext(QQmlContext* context) const
-{
-    Q_ASSERT(context);
-    
-    Q_ASSERT(_parameterFacts->factsAreReady());
-    
-    context->setContextProperty("parameters", _parameterFacts->factMap());
-}
-
 void PX4AutoPilotPlugin::clearStaticData(void)
 {
     PX4ParameterFacts::clearStaticData();
@@ -223,4 +187,41 @@ void PX4AutoPilotPlugin::clearStaticData(void)
 bool PX4AutoPilotPlugin::pluginIsReady(void) const
 {
     return _parameterFacts->factsAreReady();
+}
+
+const QVariantList& PX4AutoPilotPlugin::components(void)
+{
+    if (_components.count() == 0) {
+        VehicleComponent* component;
+
+        Q_ASSERT(_uas);
+        
+        component = new AirframeComponent(_uas);
+        Q_CHECK_PTR(component);
+        _components.append(QVariant::fromValue(component));
+        
+        component = new RadioComponent(_uas);
+        Q_CHECK_PTR(component);
+        _components.append(QVariant::fromValue(component));
+        
+        component = new FlightModesComponent(_uas);
+        Q_CHECK_PTR(component);
+        _components.append(QVariant::fromValue(component));
+        
+        component = new SensorsComponent(_uas);
+        Q_CHECK_PTR(component);
+        _components.append(QVariant::fromValue(component));
+    }
+    
+    return _components;
+}
+
+const QVariantMap& PX4AutoPilotPlugin::parameters(void)
+{
+    return _parameterFacts->factMap();
+}
+
+QUrl PX4AutoPilotPlugin::setupBackgroundImage(void)
+{
+    return QUrl::fromUserInput("qrc:/qml/octo_x.png");
 }

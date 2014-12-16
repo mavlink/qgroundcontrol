@@ -236,6 +236,7 @@
         <file alias="qtlogging.ini">files/QLoggingCategory/qtlogging.ini</file>
     </qresource>
     <qresource prefix="/qml">
+        <file alias="test.qml">src/test.qml</file>
         <file alias="QGroundControl/FactControls/qmldir">qml/QGroundControl/FactControls/qmldir</file>
         <file alias="QGroundControl/FactControls/SetupButton.qml">qml/QGroundControl/FactControls/SetupButton.qml</file>
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>

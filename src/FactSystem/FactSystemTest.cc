@@ -96,7 +96,7 @@ void FactSystemTest::_parameter_test(void)
     AutoPilotPlugin* plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas);
     Q_ASSERT(plugin);
     
-    const QVariantMap& parameterFacts = plugin->parameterFacts();
+    const QVariantMap& parameterFacts = plugin->parameters();
     
     // Compare the value in the Parameter Manager with the value from the FactSystem
     
@@ -140,7 +140,7 @@ void FactSystemTest::_paramMgrSignal_test(void)
     AutoPilotPlugin* plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas);
     Q_ASSERT(plugin);
     
-    const QVariantMap& parameterFacts = plugin->parameterFacts();
+    const QVariantMap& parameterFacts = plugin->parameters();
     
     Fact* fact = parameterFacts["RC_MAP_THROTTLE"].value<Fact*>();
     QVERIFY(fact != NULL);

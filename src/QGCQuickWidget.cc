@@ -39,7 +39,7 @@ QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
     rootContext()->engine()->addImportPath("qrc:/qml");
 }
 
-void QGCQuickWidget::setUAS(UASInterface* uas)
+void QGCQuickWidget::setAutoPilot(AutoPilotPlugin* autoPilot)
 {
-    AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas)->addFactsToQmlContext(rootContext());
+    rootContext()->setContextProperty("autopilot", autoPilot);
 }
