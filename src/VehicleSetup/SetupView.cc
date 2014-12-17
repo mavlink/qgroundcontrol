@@ -30,6 +30,7 @@
 #include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
 #include "PX4FirmwareUpgrade.h"
+#include "ParameterEditor.h"
 #include "SetupWidgetHolder.h"
 #include "MainWindow.h"
 
@@ -127,7 +128,13 @@ void SetupView::_firmwareButtonClicked(void)
 
 void SetupView::_parametersButtonClicked(void)
 {
+    SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
+    dialog->setModal(true);
+    dialog->setWindowTitle("Parameter Editor");
     
+    ParameterEditor* setup = new ParameterEditor(_uasCurrent, QStringList(), dialog);
+    dialog->setInnerWidget(setup);
+    dialog->exec();
 }
 
 void SetupView::_setupButtonClicked(const QVariant& component)

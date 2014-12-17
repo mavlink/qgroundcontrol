@@ -223,5 +223,5 @@ const QVariantMap& PX4AutoPilotPlugin::parameters(void)
 
 QUrl PX4AutoPilotPlugin::setupBackgroundImage(void)
 {
-    return QUrl::fromUserInput("qrc:/qml/octo_x.png");
+    return QUrl::fromUserInput("qrc:/qml/px4fmu_2.x.png");
 }
