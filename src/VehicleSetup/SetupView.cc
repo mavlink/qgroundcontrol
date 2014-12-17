@@ -139,6 +139,9 @@ void SetupView::_setupButtonClicked(const QVariant& component)
     dialog->setModal(true);
     dialog->setWindowTitle(vehicle->name());
     
-    dialog->setInnerWidget(vehicle->setupWidget());
+    QWidget* setupWidget = vehicle->setupWidget();
+    qDebug() << setupWidget->minimumSize();
+    dialog->resize(setupWidget->minimumSize());
+    dialog->setInnerWidget(setupWidget);
     dialog->exec();
 }
