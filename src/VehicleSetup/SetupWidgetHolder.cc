@@ -2,7 +2,7 @@
 #include "ui_SetupWidgetHolder.h"
 
 SetupWidgetHolder::SetupWidgetHolder(QWidget *parent) :
-    QWidget(parent),
+    QDialog(parent),
     ui(new Ui::SetupWidgetHolder)
 {
     ui->setupUi(this);
@@ -11,4 +11,9 @@ SetupWidgetHolder::SetupWidgetHolder(QWidget *parent) :
 SetupWidgetHolder::~SetupWidgetHolder()
 {
     delete ui;
+}
+
+void SetupWidgetHolder::setInnerWidget(QWidget* widget)
+{
+    ui->setupWidgetLayout->addWidget(widget);
 }

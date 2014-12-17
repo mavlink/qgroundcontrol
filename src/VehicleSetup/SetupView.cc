@@ -31,6 +31,7 @@
 #include "VehicleComponent.h"
 #include "PX4FirmwareUpgrade.h"
 #include "SetupWidgetHolder.h"
+#include "MainWindow.h"
 
 #include <QQmlError>
 #include <QQmlContext>
@@ -107,9 +108,13 @@ void SetupView::_setConnectedView(void)
 
 void SetupView::_firmwareButtonClicked(void)
 {
-    QWidget* widget = new SetupWidgetHolder(this);
-    widget->resize(width(), height());
-    widget->show();
+    SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
+    dialog->setModal(true);
+    dialog->setWindowTitle("Firmware Upgrade");
+    
+    PX4FirmwareUpgrade* setup = new PX4FirmwareUpgrade(dialog);
+    dialog->setInnerWidget(setup);
+    dialog->exec();
 }
 
 void SetupView::_parametersButtonClicked(void)
