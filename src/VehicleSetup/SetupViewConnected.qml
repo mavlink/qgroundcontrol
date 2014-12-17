@@ -1,11 +1,15 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
-//import QGroundControl.FactControls 1.0
 
 Rectangle {
+    id: topLevel
+    objectName: "topLevel"
+
     anchors.fill: parent
     color: "#222"
+
+    signal buttonClicked(variant component);
 
     Image {
         anchors.fill: parent
@@ -25,7 +29,7 @@ Rectangle {
 
         Flow {
             width: parent.width;
-            height: parent.height - header.height
+            height: parent.height - header.height - footer.height
             spacing: 5
 
             Repeater {
@@ -108,8 +112,23 @@ Rectangle {
 
                     label: Item {}
                     }
+
+                onClicked: topLevel.buttonClicked(modelData)
                 }
             }
         }
+
+        Rectangle { id: footer; color: "lightblue"; radius: 10.0; width: parent.width; height: titleText.height + 20; opacity: 0.8;
+
+            property real spacing: (width - firmwareButton.width - parametersButton.width) / 3
+
+            Button { id: firmwareButton; objectName: "firmwareButton";
+                x: parent.spacing; anchors.verticalCenter: parent.verticalCenter;
+                text: "Firmware Upgrade" }
+            Button { id: parametersButton; objectName: "parametersButton"
+                x: firmwareButton.width + (parent.spacing*2); anchors.verticalCenter: parent.verticalCenter;
+                text: "Parameters" }
+        }
+
     }
 }

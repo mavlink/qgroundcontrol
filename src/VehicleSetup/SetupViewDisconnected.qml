@@ -23,14 +23,10 @@ Rectangle {
 
         Rectangle { id: footer; anchors.bottom: parent.bottom; color: "lightblue"; radius: 10.0; width: parent.width; height: titleText.height + 20; opacity: 0.8;
 
-            property real spacing: (width - firmwareButton.width - parametersButton.width) / 3
-
             Button { id: firmwareButton; objectName: "firmwareButton";
-                x: parent.spacing; anchors.verticalCenter: parent.verticalCenter;
-                text: "Firmware Upgrade" }
-            Button { id: parametersButton; objectName: "parametersButton"
-                x: firmwareButton.width + (parent.spacing*2); anchors.verticalCenter: parent.verticalCenter;
-                text: "Parameters" }
+                anchors.horizontalCenter: parent.horizontalCenter; anchors.verticalCenter: parent.verticalCenter;
+                text: "Firmware Upgrade"
+            }
         }
     }
 }

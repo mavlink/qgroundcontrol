@@ -48,10 +48,12 @@ private slots:
     void _pluginReady(void);
     void _firmwareButtonClicked(void);
     void _parametersButtonClicked(void);
+    void _setupButtonClicked(const QVariant& component);
 
 private:
     void _setConnectedView(void);
     void _setDisconnectedView(void);
+    void _setViewConnections(void);
     
     UASInterface*       _uasCurrent;        ///< Currently active UAS
     bool                _initComplete;      ///< true: parameters are ready and ui has been setup

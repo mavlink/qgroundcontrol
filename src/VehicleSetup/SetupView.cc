@@ -82,17 +82,22 @@ void SetupView::_pluginReady(void)
     _setConnectedView();
 }
 
-void SetupView::_setDisconnectedView(void)
+void SetupView::_setViewConnections(void)
 {
-    setSource(QUrl::fromUserInput("qrc:qml/SetupViewDisconnected.qml"));
-    
     QObject*button = rootObject()->findChild<QObject*>("firmwareButton");
     Q_ASSERT(button);
     connect(button, SIGNAL(clicked()), this, SLOT(_firmwareButtonClicked()));
     
     button = rootObject()->findChild<QObject*>("parametersButton");
-    Q_ASSERT(button);
-    connect(button, SIGNAL(clicked()), this, SLOT(_parametersButtonClicked()));
+    if (button) {
+        connect(button, SIGNAL(clicked()), this, SLOT(_parametersButtonClicked()));
+    }
+}
+
+void SetupView::_setDisconnectedView(void)
+{
+    setSource(QUrl::fromUserInput("qrc:qml/SetupViewDisconnected.qml"));
+    _setViewConnections();
 }
 
 void SetupView::_setConnectedView(void)
@@ -102,8 +107,11 @@ void SetupView::_setConnectedView(void)
     
     setAutoPilot(_autoPilotPlugin);
     
-    setSource(QUrl::fromUserInput("qrc:qml/SetupView.qml"));
+    setSource(QUrl::fromUserInput("qrc:qml/SetupViewConnected.qml"));
     disconnect(_autoPilotPlugin);
+    _setViewConnections();
+    
+    connect((QObject*)rootObject(), SIGNAL(buttonClicked(QVariant)), this, SLOT(_setupButtonClicked(QVariant)));
 }
 
 void SetupView::_firmwareButtonClicked(void)
@@ -120,4 +128,17 @@ void SetupView::_firmwareButtonClicked(void)
 void SetupView::_parametersButtonClicked(void)
 {
     
+}
+
+void SetupView::_setupButtonClicked(const QVariant& component)
+{
+    VehicleComponent* vehicle = qobject_cast<VehicleComponent*>(component.value<QObject*>());
+    Q_ASSERT(vehicle);
+    
+    SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
+    dialog->setModal(true);
+    dialog->setWindowTitle(vehicle->name());
+    
+    dialog->setInnerWidget(vehicle->setupWidget());
+    dialog->exec();
 }
