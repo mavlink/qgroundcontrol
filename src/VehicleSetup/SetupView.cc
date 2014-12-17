@@ -30,8 +30,8 @@
 #include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
 #include "PX4FirmwareUpgrade.h"
+#include "SetupWidgetHolder.h"
 
-#
 #include <QQmlError>
 #include <QQmlContext>
 #include <QDebug>
@@ -69,20 +69,50 @@ void SetupView::_setActiveUAS(UASInterface* uas)
         
         connect(_autoPilotPlugin, &AutoPilotPlugin::pluginReady, this, &SetupView::_pluginReady);
         if (_autoPilotPlugin->pluginIsReady()) {
-            _pluginReady();
+            _setConnectedView();
         }
     } else {
-        setSource(QUrl::fromUserInput("qrc:qml/SetupViewDisconnected.qml"));
+        _setDisconnectedView();
     }
 }
 
 void SetupView::_pluginReady(void)
 {
+    _setConnectedView();
+}
+
+void SetupView::_setDisconnectedView(void)
+{
+    setSource(QUrl::fromUserInput("qrc:qml/SetupViewDisconnected.qml"));
+    
+    QObject*button = rootObject()->findChild<QObject*>("firmwareButton");
+    Q_ASSERT(button);
+    connect(button, SIGNAL(clicked()), this, SLOT(_firmwareButtonClicked()));
+    
+    button = rootObject()->findChild<QObject*>("parametersButton");
+    Q_ASSERT(button);
+    connect(button, SIGNAL(clicked()), this, SLOT(_parametersButtonClicked()));
+}
+
+void SetupView::_setConnectedView(void)
+{
     Q_ASSERT(_uasCurrent);
     Q_ASSERT(_autoPilotPlugin);
-
+    
     setAutoPilot(_autoPilotPlugin);
     
     setSource(QUrl::fromUserInput("qrc:qml/SetupView.qml"));
     disconnect(_autoPilotPlugin);
+}
+
+void SetupView::_firmwareButtonClicked(void)
+{
+    QWidget* widget = new SetupWidgetHolder(this);
+    widget->resize(width(), height());
+    widget->show();
+}
+
+void SetupView::_parametersButtonClicked(void)
+{
+    
 }

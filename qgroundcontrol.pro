@@ -630,7 +630,7 @@ SOURCES += \
     src/QGCComboBox.cc \
     src/QGCTemporaryFile.cc \
     src/audio/QGCAudioWorker.cpp \
-    src/QGCQuickWidget.cc
+    src/QGCQuickWidget.cc \
 
 #
 # Unit Test specific configuration goes here
@@ -700,7 +700,8 @@ SOURCES += \
 FORMS += \
     src/VehicleSetup/ParameterEditor.ui \
     src/ui/QGCPX4VehicleConfig.ui \
-    src/AutoPilotPlugins/PX4/FlightModeConfig.ui
+    src/AutoPilotPlugins/PX4/FlightModeConfig.ui \
+    src/VehicleSetup/SetupWidgetHolder.ui \
 
 HEADERS+= \
     src/VehicleSetup/SetupView.h \
@@ -720,6 +721,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/PX4ParameterFacts.h \
+    src/VehicleSetup/SetupWidgetHolder.h \
 
 SOURCES += \
     src/VehicleSetup/SetupView.cc \
@@ -736,6 +738,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/PX4ParameterFacts.cc \
+    src/VehicleSetup/SetupWidgetHolder.cc \
 
 # Fact System code
 

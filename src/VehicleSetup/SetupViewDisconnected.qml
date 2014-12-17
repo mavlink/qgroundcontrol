@@ -25,8 +25,12 @@ Rectangle {
 
             property real spacing: (width - firmwareButton.width - parametersButton.width) / 3
 
-            Button { id: firmwareButton; x: parent.spacing; anchors.verticalCenter: parent.verticalCenter; text: "Firmware Upgrade" }
-            Button { id: parametersButton; x: firmwareButton.width + (parent.spacing*2); anchors.verticalCenter: parent.verticalCenter; text: "Parameters" }
+            Button { id: firmwareButton; objectName: "firmwareButton";
+                x: parent.spacing; anchors.verticalCenter: parent.verticalCenter;
+                text: "Firmware Upgrade" }
+            Button { id: parametersButton; objectName: "parametersButton"
+                x: firmwareButton.width + (parent.spacing*2); anchors.verticalCenter: parent.verticalCenter;
+                text: "Parameters" }
         }
     }
 }

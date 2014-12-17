@@ -46,8 +46,12 @@ public:
 private slots:
     void _setActiveUAS(UASInterface* uas);
     void _pluginReady(void);
+    void _firmwareButtonClicked(void);
+    void _parametersButtonClicked(void);
 
 private:
+    void _setConnectedView(void);
+    void _setDisconnectedView(void);
     
     UASInterface*       _uasCurrent;        ///< Currently active UAS
     bool                _initComplete;      ///< true: parameters are ready and ui has been setup
