@@ -127,7 +127,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
     }
     
-    this->setAttribute(Qt::WA_DeleteOnClose);
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
     
     connect(MAVLinkProtocol::instance(), SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
