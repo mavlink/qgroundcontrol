@@ -104,8 +104,6 @@ void UASWaypointManager::timeout()
         current_state = WP_IDLE;
         current_count = 0;
         current_wp_id = 0;
-        current_partner_systemid = 0;
-        current_partner_compid = 0;
     }
 }
 
@@ -167,8 +165,6 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
             current_state = WP_IDLE;
             current_count = 0;
             current_wp_id = 0;
-            current_partner_systemid = 0;
-            current_partner_compid = 0;
         }
 
 
@@ -208,8 +204,6 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 current_state = WP_IDLE;
                 current_count = 0;
                 current_wp_id = 0;
-                current_partner_systemid = 0;
-                current_partner_compid = 0;
 
                 emit _stopProtocolTimer(); // Stop timer on our thread
                 emit readGlobalWPFromUAS(false);
