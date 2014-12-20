@@ -49,10 +49,11 @@ public:
     virtual QString setupStateDescription(void) const;
     virtual QWidget* setupWidget(void) const;
     virtual QStringList paramFilterList(void) const;
-    virtual QList<QStringList> summaryItems(void) const;
+    virtual const QVariantList& summaryItems(void);
     
 private:
-    const QString               _name;
+    const QString   _name;
+    QVariantList    _summaryItems;
 };
 
 #endif

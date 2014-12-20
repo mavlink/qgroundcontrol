@@ -26,7 +26,7 @@
 
 #include <QQuickWidget>
 
-#include "UASInterface.h"
+#include "AutoPilotPlugin.h"
 
 /// @file
 ///     @brief Subclass of QQuickWidget which injects Facts and the Pallete object into
@@ -39,7 +39,9 @@ class QGCQuickWidget : public QQuickWidget {
     
 public:
     QGCQuickWidget(QWidget* parent = NULL);
+    
+    /// Sets the UAS into the widget which in turn will load facts into the context
+    void setAutoPilot(AutoPilotPlugin* autoPilot);
 };
-
 
 #endif
