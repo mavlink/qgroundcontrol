@@ -24,21 +24,18 @@
 #ifndef SETUPVIEW_H
 #define SETUPVIEW_H
 
-#include <QWidget>
 
 #include "UASInterface.h"
 #include "ParameterEditor.h"
 #include "VehicleComponent.h"
+#include "QGCQuickWidget.h"
+#include "AutoPilotPlugin.h"
 
 /// @file
 ///     @brief This class is used to display the UI for the VehicleComponent objects.
 ///     @author Don Gagne <don@thegagnes.com>
 
-namespace Ui {
-class SetupView;
-}
-
-class SetupView : public QWidget
+class SetupView : public QGCQuickWidget
 {
     Q_OBJECT
 
@@ -48,26 +45,19 @@ public:
     
 private slots:
     void _setActiveUAS(UASInterface* uas);
-    void _summaryButtonClicked(void);
+    void _pluginReady(void);
     void _firmwareButtonClicked(void);
-    void _componentButtonClicked(void);
-    void _parametersReady(void);
-    void _uasConnected(void);
-    void _uasDisconnected(void);
+    void _parametersButtonClicked(void);
+    void _setupButtonClicked(const QVariant& component);
 
 private:
-    void _clearWidgets(void);
-    void _clearComponentButtons(void);
-    void _showOnlySetupTab(void);
-    void _showBothTabs(void);
-    void _uncheckAllButtons(void);
+    void _setConnectedView(void);
+    void _setDisconnectedView(void);
+    void _setViewConnections(void);
     
-    UASInterface*               _uasCurrent;        ///< Currently active UAS
-    QList<VehicleComponent*>    _components;        ///< VehicleComponents for active UAS
-    QWidget*                    _setupWidget;       ///< Currently active setup widget
-    ParameterEditor*            _parameterWidget;   ///< Currently active parameter editor wdiget
-    bool                        _initComplete;      ///< true: parameters are ready and ui has been setup
-    Ui::SetupView*              _ui;
+    UASInterface*       _uasCurrent;        ///< Currently active UAS
+    bool                _initComplete;      ///< true: parameters are ready and ui has been setup
+    AutoPilotPlugin*    _autoPilotPlugin;
 };
 
 #endif
