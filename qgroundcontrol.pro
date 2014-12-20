@@ -630,7 +630,7 @@ SOURCES += \
     src/QGCComboBox.cc \
     src/QGCTemporaryFile.cc \
     src/audio/QGCAudioWorker.cpp \
-    src/QGCQuickWidget.cc
+    src/QGCQuickWidget.cc \
 
 #
 # Unit Test specific configuration goes here
@@ -698,19 +698,18 @@ SOURCES += \
 # AutoPilot Plugin Support
 #
 FORMS += \
-    src/VehicleSetup/SetupView.ui \
-    src/VehicleSetup/SummaryPage.ui \
     src/VehicleSetup/ParameterEditor.ui \
     src/ui/QGCPX4VehicleConfig.ui \
-    src/AutoPilotPlugins/PX4/FlightModeConfig.ui
+    src/AutoPilotPlugins/PX4/FlightModeConfig.ui \
+    src/VehicleSetup/SetupWidgetHolder.ui \
 
 HEADERS+= \
     src/VehicleSetup/SetupView.h \
-    src/VehicleSetup/SummaryPage.h \
     src/VehicleSetup/ParameterEditor.h \
     src/VehicleSetup/VehicleSetupButton.h \
     src/VehicleSetup/VehicleComponentButton.h \
     src/VehicleSetup/VehicleComponent.h \
+    src/VehicleSetup/VehicleComponentSummaryItem.h \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
@@ -722,12 +721,13 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/PX4ParameterFacts.h \
+    src/VehicleSetup/SetupWidgetHolder.h \
 
 SOURCES += \
     src/VehicleSetup/SetupView.cc \
-    src/VehicleSetup/SummaryPage.cc \
     src/VehicleSetup/ParameterEditor.cc \
     src/VehicleSetup/VehicleComponent.cc \
+    src/VehicleSetup/VehicleComponentSummaryItem.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
@@ -738,6 +738,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/PX4ParameterFacts.cc \
+    src/VehicleSetup/SetupWidgetHolder.cc \
 
 # Fact System code
 

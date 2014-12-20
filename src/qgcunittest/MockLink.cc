@@ -137,6 +137,10 @@ void MockLink::run(void)
     _timer50HzTasks.start(20);
     
     exec();
+    
+    QObject::disconnect(&_timer1HzTasks, &QTimer::timeout, this, &MockLink::_run1HzTasks);
+    QObject::disconnect(&_timer10HzTasks, &QTimer::timeout, this, &MockLink::_run10HzTasks);
+    QObject::disconnect(&_timer50HzTasks, &QTimer::timeout, this, &MockLink::_run50HzTasks);
 }
 
 void MockLink::_run1HzTasks(void)

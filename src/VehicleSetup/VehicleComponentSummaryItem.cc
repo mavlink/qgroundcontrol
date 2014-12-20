@@ -21,39 +21,15 @@
  
  ======================================================================*/
 
-#ifndef FLIGHTMODESCOMPONENT_H
-#define FLIGHTMODESCOMPONENT_H
-
-#include "PX4Component.h"
-
 /// @file
-///     @brief The FlightModes VehicleComponent is used to set the associated Flight Mode switches.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class FlightModesComponent : public PX4Component
-{
-    Q_OBJECT
-    
-public:
-    FlightModesComponent(UASInterface* uas, QObject* parent = NULL);
-    
-    // Virtuals from PX4Component
-    virtual const char** setupCompleteChangedTriggerList(void) const;
-    
-    // Virtuals from VehicleComponent
-    virtual QString name(void) const;
-    virtual QString description(void) const;
-    virtual QString icon(void) const;
-    virtual bool requiresSetup(void) const;
-    virtual bool setupComplete(void) const;
-    virtual QString setupStateDescription(void) const;
-    virtual QWidget* setupWidget(void) const;
-    virtual QStringList paramFilterList(void) const;
-    virtual const QVariantList& summaryItems(void);
-    
-private:
-    const QString   _name;
-    QVariantList    _summaryItems;
-};
+#include "VehicleComponentSummaryItem.h"
 
-#endif
+VehicleComponentSummaryItem::VehicleComponentSummaryItem(const QString& name, const QString& state, QObject* parent) :
+    QObject(parent),
+    _name(name),
+    _state(state)
+{
+    
+}

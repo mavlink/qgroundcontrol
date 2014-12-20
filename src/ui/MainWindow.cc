@@ -127,7 +127,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
     }
     
-    this->setAttribute(Qt::WA_DeleteOnClose);
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
     
     connect(MAVLinkProtocol::instance(), SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
@@ -524,7 +523,7 @@ void MainWindow::buildCommonWidgets()
     {
         setupView = new SubMainWindow(this);
         setupView->setObjectName("VIEW_SETUP");
-        setupView->setCentralWidget(new SetupView(this));
+        setupView->setCentralWidget((QWidget*)new SetupView(this));
         addToCentralStackedWidget(setupView, VIEW_SETUP, "Setup");
     }
     if (!engineeringView)
