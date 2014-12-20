@@ -22,7 +22,6 @@
  ======================================================================*/
 
 #include "QGCQuickWidget.h"
-#include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 
 #include <QQmlContext>
@@ -37,13 +36,10 @@
 QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
     QQuickWidget(parent)
 {
-    UASManagerInterface* uasMgr = UASManager::instance();
-    Q_ASSERT(uasMgr);
-    
-    UASInterface* uas = uasMgr->getActiveUAS();
-    Q_ASSERT(uas);
-    
     rootContext()->engine()->addImportPath("qrc:/qml");
-    
-    AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas)->addFactsToQmlContext(rootContext());
+}
+
+void QGCQuickWidget::setAutoPilot(AutoPilotPlugin* autoPilot)
+{
+    rootContext()->setContextProperty("autopilot", autoPilot);
 }

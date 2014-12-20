@@ -258,7 +258,9 @@ void QGCPX4SensorCalibration::setInstructionImage(const QString &path)
 
 void QGCPX4SensorCalibration::setAutopilotImage(int index)
 {
-    setAutopilotImage(QString(":/files/images/px4/calibration/pixhawk_%1.png").arg(index, 2, 10, QChar('0')));
+    Q_UNUSED(index);
+    // FIXME: This was referencing a non-existent png. Need to figure out what this was trying to do.
+    //setAutopilotImage(QString(":/files/images/px4/calibration/pixhawk_%1.png").arg(index, 2, 10, QChar('0')));
 }
 
 void QGCPX4SensorCalibration::setGpsImage(int index)

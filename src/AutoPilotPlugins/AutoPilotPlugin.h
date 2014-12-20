@@ -48,18 +48,14 @@ class AutoPilotPlugin : public QObject
     Q_OBJECT
 
 public:
-    /// @brief Returns the list of VehicleComponent objects associated with the AutoPilot.
-    virtual QList<VehicleComponent*> getVehicleComponents(void) const = 0;
+    Q_PROPERTY(QVariantMap parameters READ parameters CONSTANT)
+    Q_PROPERTY(QVariantList components READ components CONSTANT)
+    Q_PROPERTY(QUrl setupBackgroundImage READ setupBackgroundImage CONSTANT)
     
-    /// Returns the parameter facts for the specified UAS.
-    ///
-    /// Key is parameter name. Get Fact object like this: _mapParameterName2Variant["RC_MAP_THROTTLE"].value<Fact*>().
-    /// You should not request parameter facts until the plugin reports that it is ready.
-    virtual const QVariantMap& parameterFacts(void) const = 0;
-    
-    /// Adds the FactSystem properties to the Qml context. You should not call
-    /// this method until the plugin reports that it is ready.
-    virtual void addFactsToQmlContext(QQmlContext* context) const = 0;
+    // Property accessors
+    virtual const QVariantList& components(void) = 0;
+    virtual const QVariantMap& parameters(void) = 0;    
+    virtual QUrl setupBackgroundImage(void) = 0;
     
     /// Returns true if the plugin is ready for use
     virtual bool pluginIsReady(void) const = 0;
@@ -72,8 +68,9 @@ signals:
     void pluginReady(void);
     
 protected:
-    // All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
+    /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
     AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
+    
 };
 
 #endif

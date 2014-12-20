@@ -1,2 +1,2 @@
 Module QGroundControl.FactControls
-FactTextInput 1.0 FactTextInput.qml
+SetupButton 1.0 SetupButton.qml

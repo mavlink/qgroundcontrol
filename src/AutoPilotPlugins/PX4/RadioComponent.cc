@@ -26,6 +26,7 @@
 
 #include "RadioComponent.h"
 #include "PX4RCCalibration.h"
+#include "VehicleComponentSummaryItem.h"
 
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
@@ -100,48 +101,54 @@ QWidget* RadioComponent::setupWidget(void) const
     return new PX4RCCalibration;
 }
 
-QList<QStringList> RadioComponent::summaryItems(void) const
+const QVariantList& RadioComponent::summaryItems(void)
 {
-    QList<QStringList> items;
-    
-    QStringList row;
-    
-    // FIXME: Need to pull receiver type from RSSI value
-    row << "Receiver type:" << "n/a";
-    items << row;
-    
-    static const char* stickParams[] = { "RC_MAP_ROLL", "RC_MAP_PITCH", "RC_MAP_YAW", "RC_MAP_THROTTLE" };
-    
-    QString summary("Chan ");
-    
-    bool allSticksMapped = true;
-    for (size_t i=0; i<sizeof(stickParams)/sizeof(stickParams[0]); i++) {
-        QVariant value;
+    if (!_summaryItems.count()) {
+        QString name;
+        QString state;
         
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), stickParams[i], value)) {
-            if (value.toInt() == 0) {
-                allSticksMapped = false;
-                break;
-            } else {
-                if (i != 0) {
-                    summary += ",";
-                }
-                summary += value.toString();
-            }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-            summary += "?";
-        }
-    }
-    
-    if (!allSticksMapped) {
-        summary = "Not mapped";
-    }
+        // FIXME: Need to pull receiver type from RSSI value
+        name = "Receiver type:";
+        state = "n/a";
 
-    row.clear();
-    row << "Ail, Ele, Rud, Throt:" << summary;
-    items << row;
+        VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
+        _summaryItems.append(QVariant::fromValue(item));
+        
+        static const char* stickParams[] = { "RC_MAP_ROLL", "RC_MAP_PITCH", "RC_MAP_YAW", "RC_MAP_THROTTLE" };
+        
+        QString summary("Chan ");
+        
+        bool allSticksMapped = true;
+        for (size_t i=0; i<sizeof(stickParams)/sizeof(stickParams[0]); i++) {
+            QVariant value;
+            
+            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), stickParams[i], value)) {
+                if (value.toInt() == 0) {
+                    allSticksMapped = false;
+                    break;
+                } else {
+                    if (i != 0) {
+                        summary += ",";
+                    }
+                    summary += value.toString();
+                }
+            } else {
+                // Why is the parameter missing?
+                Q_ASSERT(false);
+                summary += "?";
+            }
+        }
+        
+        if (!allSticksMapped) {
+            summary = "Not mapped";
+        }
+
+        name = "Ail, Ele, Rud, Throt:";
+        state = summary;
+        
+        item = new VehicleComponentSummaryItem(name, state, this);
+        _summaryItems.append(QVariant::fromValue(item));
+    }
     
-    return items;
+    return _summaryItems;
 }

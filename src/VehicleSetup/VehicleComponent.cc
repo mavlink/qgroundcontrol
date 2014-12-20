@@ -38,3 +38,20 @@ VehicleComponent::~VehicleComponent()
 {
     
 }
+
+void VehicleComponent::addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent)
+{
+    Q_ASSERT(context);
+    
+    // FIXME: We own this object now, need to delete somewhere
+    QQmlComponent component(context->engine(), QUrl::fromUserInput("qrc:/qml/VehicleComponentSummaryButton.qml"));
+    if (component.status() == QQmlComponent::Error) {
+        qDebug() << component.errors();
+        Q_ASSERT(false);
+    }
+    
+    QQuickItem* item = qobject_cast<QQuickItem*>(component.create(context));
+    Q_ASSERT(item);
+    item->setParentItem(parent);
+    item->setProperty("vehicleComponent", QVariant::fromValue(this));
+}

@@ -26,6 +26,7 @@
 
 #include "FlightModesComponent.h"
 #include "FlightModeConfig.h"
+#include "VehicleComponentSummaryItem.h"
 
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
@@ -116,41 +117,44 @@ QWidget* FlightModesComponent::setupWidget(void) const
     return new FlightModeConfig();
 }
 
-QList<QStringList> FlightModesComponent::summaryItems(void) const
+const QVariantList& FlightModesComponent::summaryItems(void)
 {
-    QList<QStringList> items;
-    
-    // Create summary items for each mode switch
-    
-    for (size_t i=0; i<cSwitchList; i++) {
-        QVariant    value;
-        QStringList row;
+    if (!_summaryItems.count()) {
+
+        // Create summary items for each mode switch
         
-        row << switchList[i].name;
-        
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), switchList[i].param, value)) {
-            int chan = value.toInt();
+        for (size_t i=0; i<cSwitchList; i++) {
+            QString name;
+            QString state;
+            QVariant value;
             
-            if (chan == 0) {
-                // Switch is not mapped
-                if (i == 0) {
-                    // Mode switch is required
-                    Q_ASSERT(strcmp(switchList[0].param, "RC_MAP_MODE_SW") == 0);
-                    row << "Setup required";
+            name = switchList[i].name;
+            
+            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), switchList[i].param, value)) {
+                int chan = value.toInt();
+                
+                if (chan == 0) {
+                    // Switch is not mapped
+                    if (i == 0) {
+                        // Mode switch is required
+                        Q_ASSERT(strcmp(switchList[0].param, "RC_MAP_MODE_SW") == 0);
+                        state = "Setup required";
+                    } else {
+                        state = "None";
+                    }
                 } else {
-                    row << "None";
+                    state = tr("Chan %1").arg(chan);
                 }
             } else {
-                row << tr("Chan %1").arg(chan);
+                // Why is the parameter missing?
+                Q_ASSERT(false);
+                state = "Unknown";
             }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-            row << "Unknown";
+            
+            VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
+            _summaryItems.append(QVariant::fromValue(item));
         }
-        
-        items << row;
     }
     
-    return items;
+    return _summaryItems;
 }
