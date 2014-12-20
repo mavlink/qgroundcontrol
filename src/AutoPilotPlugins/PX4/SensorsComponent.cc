@@ -26,6 +26,7 @@
 
 #include "SensorsComponent.h"
 #include "QGCPX4SensorCalibration.h"
+#include "VehicleComponentSummaryItem.h"
 
 // These two list must be kept in sync
 
@@ -116,106 +117,108 @@ QWidget* SensorsComponent::setupWidget(void) const
     return new QGCPX4SensorCalibration;
 }
 
-QList<QStringList> SensorsComponent::summaryItems(void) const
+const QVariantList& SensorsComponent::summaryItems(void)
 {
-    QList<QStringList> items;
-    
-    // Summary item for each Sensor
-    
-    int i = 0;
-    while (triggerParams[i] != NULL) {
-        QVariant value;
-        QStringList row;
+    if (!_summaryItems.count()) {
+        QString name;
+        QString state;
         
-        row << tr("%1:").arg(triggerSensors[i]);
+        // Summary item for each Sensor
         
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParams[i], value)) {
-            if (value.toFloat() == 0.0f) {
-                row << "Setup required";
+        int i = 0;
+        while (triggerParams[i] != NULL) {
+            QVariant value;
+            
+            name = tr("%1:").arg(triggerSensors[i]);
+            
+            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParams[i], value)) {
+                if (value.toFloat() == 0.0f) {
+                    state = "Setup required";
+                } else {
+                    state = "Ready";
+                }
             } else {
-                row << "Ready";
+                // Why is the parameter missing?
+                Q_ASSERT(false);
             }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-        }
-        items << row;
-        
-        i++;
-    }
-    
-    // Summary item for each orientation param
-    
-    static const char* orientationSensors[] = { "Autopilot orientation:", "Compass orientation:" };
-    static const char* orientationParams[] = {  "SENS_BOARD_ROT",         "SENS_EXT_MAG_ROT" };
-    static const size_t cOrientationSensors = sizeof(orientationSensors)/sizeof(orientationSensors[0]);
-    
-    static const char* orientationValues[] = {
-            "Line of flight",
-            "Yaw:45",
-            "Yaw:90",
-            "Yaw:135",
-            "Yaw:180",
-            "Yaw:225",
-            "Yaw:270",
-            "Yaw:315",
-            "Roll:180",
-            "Roll:180 Yaw:45",
-            "Roll:180 Yaw:90",
-            "Roll:180 Yaw:135",
-            "Pitch:180",
-            "Roll:180 Yaw:225",
-            "Roll:180 Yaw:270",
-            "Roll:180 Yaw:315",
-            "Roll:90",
-            "Roll:90 Yaw:45",
-            "Roll:90 Yaw:90",
-            "Roll:90 Yaw:135",
-            "Roll:270",
-            "Roll:270 Yaw:45",
-            "Roll:270 Yaw:90",
-            "Roll:270 Yaw:135",
-            "Pitch:90",
-            "Pitch:270",
-            "Pitch:180",
-            "Pitch:180 Yaw:90",
-            "Pitch:180 Yaw:270",
-            "Roll:90 Pitch:90",
-            "Roll:180 Pitch:90",
-            "Roll:270 Pitch:90",
-            "Roll:90 Pitch:180",
-            "Roll:270 Pitch:180",
-            "Roll:90 Pitch:270",
-            "Roll:180 Pitch:270",
-            "Roll:270 Pitch:270",
-            "Roll:90 Pitch:180 Yaw:90",
-            "Roll:90 Yaw:270"
-    };
-    static const size_t cOrientationValues = sizeof(orientationValues)/sizeof(orientationValues[0]);
-    
-    for (size_t i=0; i<cOrientationSensors; i++) {
-        QVariant value;
-        QStringList row;
-        
-        row.clear();
-        
-        row << orientationSensors[i];
-        
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), orientationParams[i], value)) {
-            int index = value.toInt();
-            if (index < 0 || index >= (int)cOrientationValues) {
-                row << "Setup required";
-            } else {
-                row << orientationValues[index];
-            }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-            row << "Unknown";
+
+            VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
+            _summaryItems.append(QVariant::fromValue(item));
+            
+            i++;
         }
         
-        items << row;
+        // Summary item for each orientation param
+        
+        static const char* orientationSensors[] = { "Autopilot orientation:", "Compass orientation:" };
+        static const char* orientationParams[] = {  "SENS_BOARD_ROT",         "SENS_EXT_MAG_ROT" };
+        static const size_t cOrientationSensors = sizeof(orientationSensors)/sizeof(orientationSensors[0]);
+        
+        static const char* orientationValues[] = {
+                "Line of flight",
+                "Yaw:45",
+                "Yaw:90",
+                "Yaw:135",
+                "Yaw:180",
+                "Yaw:225",
+                "Yaw:270",
+                "Yaw:315",
+                "Roll:180",
+                "Roll:180 Yaw:45",
+                "Roll:180 Yaw:90",
+                "Roll:180 Yaw:135",
+                "Pitch:180",
+                "Roll:180 Yaw:225",
+                "Roll:180 Yaw:270",
+                "Roll:180 Yaw:315",
+                "Roll:90",
+                "Roll:90 Yaw:45",
+                "Roll:90 Yaw:90",
+                "Roll:90 Yaw:135",
+                "Roll:270",
+                "Roll:270 Yaw:45",
+                "Roll:270 Yaw:90",
+                "Roll:270 Yaw:135",
+                "Pitch:90",
+                "Pitch:270",
+                "Pitch:180",
+                "Pitch:180 Yaw:90",
+                "Pitch:180 Yaw:270",
+                "Roll:90 Pitch:90",
+                "Roll:180 Pitch:90",
+                "Roll:270 Pitch:90",
+                "Roll:90 Pitch:180",
+                "Roll:270 Pitch:180",
+                "Roll:90 Pitch:270",
+                "Roll:180 Pitch:270",
+                "Roll:270 Pitch:270",
+                "Roll:90 Pitch:180 Yaw:90",
+                "Roll:90 Yaw:270"
+        };
+        static const size_t cOrientationValues = sizeof(orientationValues)/sizeof(orientationValues[0]);
+        
+        for (size_t i=0; i<cOrientationSensors; i++) {
+            QVariant value;
+            
+            name = orientationSensors[i];
+            
+            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), orientationParams[i], value)) {
+                int index = value.toInt();
+                if (index < 0 || index >= (int)cOrientationValues) {
+                    state = "Setup required";
+                } else {
+                    state = orientationValues[index];
+                }
+            } else {
+                // Why is the parameter missing?
+                Q_ASSERT(false);
+                state = "Unknown";
+            }
+            
+            VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
+            _summaryItems.append(QVariant::fromValue(item));
+        }
     }
     
-    return items;
+    return _summaryItems;
 }

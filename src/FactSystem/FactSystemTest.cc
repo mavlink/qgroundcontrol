@@ -90,13 +90,7 @@ void FactSystemTest::_parameter_test(void)
 {
     // Get the parameter facts from the AutoPilot
     
-    AutoPilotPluginManager* pluginMgr = AutoPilotPluginManager::instance();
-    Q_ASSERT(pluginMgr);
-    
-    AutoPilotPlugin* plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas);
-    Q_ASSERT(plugin);
-    
-    const QVariantMap& parameterFacts = plugin->parameterFacts();
+    const QVariantMap& parameterFacts = _plugin->parameters();
     
     // Compare the value in the Parameter Manager with the value from the FactSystem
     
@@ -116,6 +110,8 @@ void FactSystemTest::_qml_test(void)
 {
     QGCQuickWidget* widget = new QGCQuickWidget;
     
+    widget->setAutoPilot(_plugin);
+    
     widget->setSource(QUrl::fromUserInput("qrc:unittest/FactSystemTest.qml"));
     
     QQuickItem* rootObject = widget->rootObject();
@@ -134,13 +130,7 @@ void FactSystemTest::_paramMgrSignal_test(void)
 {
     // Get the parameter Fact from the AutoPilot
     
-    AutoPilotPluginManager* pluginMgr = AutoPilotPluginManager::instance();
-    Q_ASSERT(pluginMgr);
-    
-    AutoPilotPlugin* plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas);
-    Q_ASSERT(plugin);
-    
-    const QVariantMap& parameterFacts = plugin->parameterFacts();
+    const QVariantMap& parameterFacts = _plugin->parameters();
     
     Fact* fact = parameterFacts["RC_MAP_THROTTLE"].value<Fact*>();
     QVERIFY(fact != NULL);
@@ -169,6 +159,8 @@ void FactSystemTest::_paramMgrSignal_test(void)
 void FactSystemTest::_qmlUpdate_test(void)
 {
     QGCQuickWidget* widget = new QGCQuickWidget;
+    
+    widget->setAutoPilot(_plugin);
     
     widget->setSource(QUrl::fromUserInput("qrc:unittest/FactSystemTest.qml"));
     
