@@ -89,7 +89,7 @@ void AutoPilotPluginManager::_uasDeleted(UASInterface* uas)
 {
     Q_ASSERT(uas);
     
-    MAV_AUTOPILOT autopilotType = static_cast<MAV_AUTOPILOT>(uas->getAutopilotType());
+    MAV_AUTOPILOT autopilotType = _installedAutopilotType(static_cast<MAV_AUTOPILOT>(uas->getAutopilotType()));
     int uasId = uas->getUASID();
     Q_ASSERT(uasId != 0);
     
@@ -103,7 +103,7 @@ AutoPilotPlugin* AutoPilotPluginManager::getInstanceForAutoPilotPlugin(UASInterf
 {
     Q_ASSERT(uas);
     
-    MAV_AUTOPILOT autopilotType = static_cast<MAV_AUTOPILOT>(uas->getAutopilotType());
+    MAV_AUTOPILOT autopilotType = _installedAutopilotType(static_cast<MAV_AUTOPILOT>(uas->getAutopilotType()));
     int uasId = uas->getUASID();
     Q_ASSERT(uasId != 0);
     
@@ -133,4 +133,10 @@ QString AutoPilotPluginManager::getShortModeText(uint8_t baseMode, uint32_t cust
         default:
             return GenericAutoPilotPlugin::getShortModeText(baseMode, customMode);
     }
+}
+
+/// If autopilot is not an installed plugin, returns MAV_AUTOPILOT_GENERIC
+MAV_AUTOPILOT AutoPilotPluginManager::_installedAutopilotType(MAV_AUTOPILOT autopilot)
+{
+    return _pluginMap.contains(autopilot) ? autopilot : MAV_AUTOPILOT_GENERIC;
 }

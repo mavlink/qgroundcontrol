@@ -21,43 +21,69 @@
  
  ======================================================================*/
 
-#ifndef PX4ParameterFacts_h
-#define PX4ParameterFacts_h
+#ifndef FactLoader_h
+#define FactLoader_h
 
 #include <QObject>
 #include <QMap>
 #include <QXmlStreamReader>
 #include <QLoggingCategory>
 
-#include "FactSystem.h"
+#include "Fact.h"
 #include "UASInterface.h"
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-Q_DECLARE_LOGGING_CATEGORY(PX4ParameterFactsMetaDataLog)
+Q_DECLARE_LOGGING_CATEGORY(FactLoaderLog)
 
-/// Collection of Parameter Facts for PX4 AutoPilot
+/// Connects to Parameter Manager to load/update Facts
+///
+/// These Facts are available for binding within QML code. For example:
+/// @code{.unparsed}
+///     TextInput {
+///         text: autopilot.parameters["RC_MAP_THROTTLE"].value
+///     }
+/// @endcode
 
-class PX4ParameterFacts : public FactLoader
+class FactLoader : public QObject
 {
     Q_OBJECT
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    PX4ParameterFacts(UASInterface* uas, QObject* parent = NULL);
+    FactLoader(UASInterface* uas, QObject* parent = NULL);
     
-    static void loadParameterFactMetaData(void);
-    static void deleteParameterFactMetaData(void);
-    static void clearStaticData(void);
+    ~FactLoader();
+    
+    /// Returns true if the full set of facts are ready
+    bool factsAreReady(void) { return _factsReady; }
+
+    /// Returns the fact QVariantMap
+    const QVariantMap& factMap(void) { return _mapParameterName2Variant; }
+    
+signals:
+    /// Signalled when the full set of facts are ready
+    void factsReady(void);
+    
+private slots:
+    void _parameterChanged(int uas, int component, QString parameterName, QVariant value);
+    void _valueUpdated(QVariant value);
+    void _paramMgrParameterListUpToDate(void);
     
 private:
-    static FactMetaData* _parseParameter(QXmlStreamReader& xml, const QString& group);
-    static void _initMetaData(FactMetaData* metaData);
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
 
-    static bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
-    static QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData
+    QMap<Fact*, QString> _mapFact2ParameterName;    ///< Maps from a Fact to a parameter name
+    
+    int _uasId;             ///< Id for uas which this set of Facts are associated with
+    int _lastSeenComponent;
+    
+    QGCUASParamManagerInterface* _paramMgr;
+    
+    QVariantMap _mapParameterName2Variant;
+    
+    bool _factsReady;   ///< All facts received from param mgr
 };
 
 #endif
