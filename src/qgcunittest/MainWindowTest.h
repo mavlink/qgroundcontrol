@@ -44,9 +44,11 @@ private slots:
     void cleanup(void);
     
     void _clickThrough_test(void);
-    void _connectWindowClose_test(void);
+    void _connectWindowClosePX4_test(void);
+    void _connectWindowCloseGeneric_test(void);
     
 private:
+    void _connectWindowClose_test(MAV_AUTOPILOT autopilot);
     MainWindow* _mainWindow;
 };
 

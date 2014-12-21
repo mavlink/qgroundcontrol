@@ -21,8 +21,8 @@
  
  ======================================================================*/
 
-#ifndef PX4ParameterFacts_h
-#define PX4ParameterFacts_h
+#ifndef GenericParameterFacts_h
+#define GenericParameterFacts_h
 
 #include <QObject>
 #include <QMap>
@@ -35,29 +35,15 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-Q_DECLARE_LOGGING_CATEGORY(PX4ParameterFactsMetaDataLog)
+/// Collection of Parameter Facts for Generic AutoPilot
 
-/// Collection of Parameter Facts for PX4 AutoPilot
-
-class PX4ParameterFacts : public FactLoader
+class GenericParameterFacts : public FactLoader
 {
     Q_OBJECT
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    PX4ParameterFacts(UASInterface* uas, QObject* parent = NULL);
-    
-    static void loadParameterFactMetaData(void);
-    static void deleteParameterFactMetaData(void);
-    static void clearStaticData(void);
-    
-private:
-    static FactMetaData* _parseParameter(QXmlStreamReader& xml, const QString& group);
-    static void _initMetaData(FactMetaData* metaData);
-    static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
-
-    static bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
-    static QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData
+    GenericParameterFacts(UASInterface* uas, QObject* parent = NULL);
 };
 
 #endif
