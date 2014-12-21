@@ -45,5 +45,5 @@ FactSystemTestGeneric::FactSystemTestGeneric(void)
 void FactSystemTestGeneric::init(void)
 {
     UnitTest::init();
-    _init(MAV_AUTOPILOT_GENERIC);
+    _init(MAV_AUTOPILOT_ARDUPILOTMEGA);
 }

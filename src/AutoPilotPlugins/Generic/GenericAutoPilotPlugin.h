@@ -41,7 +41,7 @@ public:
     GenericAutoPilotPlugin(UASInterface* uas, QObject* parent = NULL);
     
     // Overrides from AutoPilotPlugin
-    virtual bool pluginIsReady(void) const { return true; }
+    virtual bool pluginIsReady(void) const { return _parameterFacts->factsAreReady(); }
     virtual QUrl setupBackgroundImage(void);
     virtual const QVariantList& components(void);
     virtual const QVariantMap& parameters(void);

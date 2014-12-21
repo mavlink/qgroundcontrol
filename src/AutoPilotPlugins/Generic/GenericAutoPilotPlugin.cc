@@ -90,10 +90,9 @@ void GenericAutoPilotPlugin::clearStaticData(void)
 
 const QVariantList& GenericAutoPilotPlugin::components(void)
 {
-    static QVariantList staticList;
+    static QVariantList emptyList;
     
-    Q_ASSERT_X(false, "Not yet implemented", "");
-    return staticList;
+    return emptyList;
 }
 
 const QVariantMap& GenericAutoPilotPlugin::parameters(void)
@@ -103,8 +102,5 @@ const QVariantMap& GenericAutoPilotPlugin::parameters(void)
 
 QUrl GenericAutoPilotPlugin::setupBackgroundImage(void)
 {
-    static QUrl url;
-    
-    Q_ASSERT_X(false, "Not yet implemented", "");
-    return url;
+    return QUrl::fromUserInput("qrc:/qml/px4fmu_2.x.png");
 }

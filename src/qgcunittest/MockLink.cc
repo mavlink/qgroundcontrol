@@ -146,20 +146,20 @@ void MockLink::run(void)
 
 void MockLink::_run1HzTasks(void)
 {
-    if (_mavlinkStarted) {
+    if (_mavlinkStarted && _connected) {
         _sendHeartBeat();
     }
 }
 
 void MockLink::_run10HzTasks(void)
 {
-    if (_mavlinkStarted) {
+    if (_mavlinkStarted && _connected) {
     }
 }
 
 void MockLink::_run50HzTasks(void)
 {
-    if (_mavlinkStarted) {
+    if (_mavlinkStarted && _connected) {
     }
 }
 
