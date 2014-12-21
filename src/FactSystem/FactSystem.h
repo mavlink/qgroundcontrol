@@ -28,6 +28,7 @@
 #define FactSystem_h
 
 #include "Fact.h"
+#include "FactLoader.h"
 #include "FactMetaData.h"
 #include "UASInterface.h"
 #include "QGCSingleton.h"

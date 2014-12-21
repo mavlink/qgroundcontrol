@@ -30,6 +30,12 @@ GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* paren
     AutoPilotPlugin(parent)
 {
     Q_UNUSED(uas);
+    
+    _parameterFacts = new GenericParameterFacts(uas, this);
+    Q_CHECK_PTR(_parameterFacts);
+    
+    connect(_parameterFacts, &GenericParameterFacts::factsReady, this, &GenericAutoPilotPlugin::pluginReady);
+
 }
 
 QList<AutoPilotPluginManager::FullMode_t> GenericAutoPilotPlugin::getModes(void)
@@ -84,24 +90,17 @@ void GenericAutoPilotPlugin::clearStaticData(void)
 
 const QVariantList& GenericAutoPilotPlugin::components(void)
 {
-    static QVariantList staticList;
+    static QVariantList emptyList;
     
-    Q_ASSERT_X(false, "Not yet implemented", "");
-    return staticList;
+    return emptyList;
 }
 
 const QVariantMap& GenericAutoPilotPlugin::parameters(void)
 {
-    static QVariantMap staticMap;
-    
-    Q_ASSERT_X(false, "Not yet implemented", "");
-    return staticMap;
+    return _parameterFacts->factMap();
 }
 
 QUrl GenericAutoPilotPlugin::setupBackgroundImage(void)
 {
-    static QUrl url;
-    
-    Q_ASSERT_X(false, "Not yet implemented", "");
-    return url;
+    return QUrl::fromUserInput("qrc:/qml/px4fmu_2.x.png");
 }

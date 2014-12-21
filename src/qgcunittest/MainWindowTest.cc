@@ -69,13 +69,14 @@ void MainWindowTest::_clickThrough_test(void)
     
 }
 
-void MainWindowTest::_connectWindowClose_test(void)
+void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
 {
     LinkManager* linkMgr = LinkManager::instance();
     Q_CHECK_PTR(linkMgr);
     
     MockLink* link = new MockLink();
     Q_CHECK_PTR(link);
+    link->setAutopilotType(autopilot);
     LinkManager::instance()->addLink(link);
     linkMgr->connectLink(link);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
@@ -91,4 +92,12 @@ void MainWindowTest::_connectWindowClose_test(void)
     linkMgr->disconnectLink(link);
     QTest::qWait(1000); // Need to allow signals to move between threads
     checkExpectedFileDialog();
+}
+
+void MainWindowTest::_connectWindowClosePX4_test(void) {
+    _connectWindowClose_test(MAV_AUTOPILOT_PX4);
+}
+
+void MainWindowTest::_connectWindowCloseGeneric_test(void) {
+    _connectWindowClose_test(MAV_AUTOPILOT_ARDUPILOTMEGA);
 }

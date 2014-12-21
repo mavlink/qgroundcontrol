@@ -24,7 +24,7 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "FactSystemTest.h"
+#include "FactSystemTestBase.h"
 #include "LinkManager.h"
 #include "MockLink.h"
 #include "AutoPilotPluginManager.h"
@@ -34,21 +34,20 @@
 
 #include <QQuickItem>
 
-UT_REGISTER_TEST(FactSystemTest)
-
 /// FactSystem Unit Test
-FactSystemTest::FactSystemTest(void)
+FactSystemTestBase::FactSystemTestBase(void)
 {
     
 }
 
-void FactSystemTest::init(void)
+void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
 {
     UnitTest::init();
     
     LinkManager* _linkMgr = LinkManager::instance();
     
     MockLink* link = new MockLink();
+    link->setAutopilotType(autopilot);
     _linkMgr->addLink(link);
     _linkMgr->connectLink(link);
     
@@ -80,13 +79,13 @@ void FactSystemTest::init(void)
     Q_ASSERT(_plugin->pluginIsReady());
 }
 
-void FactSystemTest::cleanup(void)
+void FactSystemTestBase::_cleanup(void)
 {
     UnitTest::cleanup();
 }
 
 /// Basic test of parameter values in Fact System
-void FactSystemTest::_parameter_test(void)
+void FactSystemTestBase::_parameter_test(void)
 {
     // Get the parameter facts from the AutoPilot
     
@@ -106,7 +105,7 @@ void FactSystemTest::_parameter_test(void)
 }
 
 /// Test that QML can reference a Fact
-void FactSystemTest::_qml_test(void)
+void FactSystemTestBase::_qml_test(void)
 {
     QGCQuickWidget* widget = new QGCQuickWidget;
     
@@ -126,7 +125,7 @@ void FactSystemTest::_qml_test(void)
 }
 
 // Test correct behavior when the Param Manager gets a parameter update
-void FactSystemTest::_paramMgrSignal_test(void)
+void FactSystemTestBase::_paramMgrSignal_test(void)
 {
     // Get the parameter Fact from the AutoPilot
     
@@ -156,7 +155,7 @@ void FactSystemTest::_paramMgrSignal_test(void)
 }
 
 /// Test QML getting an updated Fact value
-void FactSystemTest::_qmlUpdate_test(void)
+void FactSystemTestBase::_qmlUpdate_test(void)
 {
     QGCQuickWidget* widget = new QGCQuickWidget;
     
