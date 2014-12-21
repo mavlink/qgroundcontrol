@@ -30,6 +30,12 @@ GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* paren
     AutoPilotPlugin(parent)
 {
     Q_UNUSED(uas);
+    
+    _parameterFacts = new GenericParameterFacts(uas, this);
+    Q_CHECK_PTR(_parameterFacts);
+    
+    connect(_parameterFacts, &GenericParameterFacts::factsReady, this, &GenericAutoPilotPlugin::pluginReady);
+
 }
 
 QList<AutoPilotPluginManager::FullMode_t> GenericAutoPilotPlugin::getModes(void)
@@ -92,10 +98,7 @@ const QVariantList& GenericAutoPilotPlugin::components(void)
 
 const QVariantMap& GenericAutoPilotPlugin::parameters(void)
 {
-    static QVariantMap staticMap;
-    
-    Q_ASSERT_X(false, "Not yet implemented", "");
-    return staticMap;
+    return _parameterFacts->factMap();
 }
 
 QUrl GenericAutoPilotPlugin::setupBackgroundImage(void)

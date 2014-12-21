@@ -74,7 +74,8 @@ MockLink::MockLink(void) :
     _inNSH(false),
     _mavlinkStarted(false),
     _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED),
-    _mavState(MAV_STATE_STANDBY)
+    _mavState(MAV_STATE_STANDBY),
+    _autopilotType(MAV_AUTOPILOT_PX4)
 {
     union px4_custom_mode   px4_cm;
 
@@ -219,7 +220,7 @@ void MockLink::_sendHeartBeat(void)
                                _vehicleComponentId,
                                &msg,
                                MAV_TYPE_QUADROTOR,  // MAV_TYPE
-                               MAV_AUTOPILOT_PX4,   // MAV_AUTOPILOT
+                               _autopilotType,      // MAV_AUTOPILOT
                                _mavBaseMode,        // MAV_MODE
                                _mavCustomMode,      // custom mode
                                _mavState);          // MAV_STATE
