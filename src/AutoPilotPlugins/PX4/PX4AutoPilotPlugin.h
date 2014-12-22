@@ -56,7 +56,6 @@ public:
 private:
     UASInterface*       _uas;
     PX4ParameterFacts*  _parameterFacts;
-    bool                _pluginReady;
     QVariantList        _components;
 };
 

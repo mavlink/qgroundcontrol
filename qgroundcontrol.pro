@@ -669,7 +669,9 @@ HEADERS += \
     src/qgcunittest/MainWindowTest.h \
     src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.h \
     src/qgcunittest/MavlinkLogTest.h \
-    src/FactSystem/FactSystemTest.h
+    src/FactSystem/FactSystemTestBase.h \
+    src/FactSystem/FactSystemTestPX4.h \
+    src/FactSystem/FactSystemTestGeneric.h
 
 SOURCES += \
     src/qgcunittest/UnitTest.cc \
@@ -691,7 +693,9 @@ SOURCES += \
     src/qgcunittest/MainWindowTest.cc \
     src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.cc \
     src/qgcunittest/MavlinkLogTest.cc \
-    src/FactSystem/FactSystemTest.cc
+    src/FactSystem/FactSystemTestBase.cc \
+    src/FactSystem/FactSystemTestPX4.cc \
+    src/FactSystem/FactSystemTestGeneric.cc
 }
 
 #
@@ -713,6 +717,7 @@ HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
+    src/AutoPilotPlugins/Generic/GenericParameterFacts.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4Component.h \
     src/AutoPilotPlugins/PX4/RadioComponent.h \
@@ -730,6 +735,7 @@ SOURCES += \
     src/VehicleSetup/VehicleComponentSummaryItem.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
+    src/AutoPilotPlugins/Generic/GenericParameterFacts.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
     src/AutoPilotPlugins/PX4/RadioComponent.cc \
@@ -750,9 +756,11 @@ HEADERS += \
     src/FactSystem/Fact.h \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactValidator.h \
+    src/FactSystem/FactLoader.h \
 
 SOURCES += \
     src/FactSystem/FactSystem.cc \
     src/FactSystem/Fact.cc \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactValidator.cc \
+    src/FactSystem/FactLoader.cc \

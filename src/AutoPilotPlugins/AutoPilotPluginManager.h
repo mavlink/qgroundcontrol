@@ -71,6 +71,8 @@ private:
     AutoPilotPluginManager(QObject* parent = NULL);
     ~AutoPilotPluginManager();
     
+    MAV_AUTOPILOT _installedAutopilotType(MAV_AUTOPILOT autopilot);
+    
     QMap<MAV_AUTOPILOT, QMap<int, AutoPilotPlugin*> > _pluginMap; ///< Map of AutoPilot plugins _pluginMap[MAV_TYPE][UASid]
 };
 
