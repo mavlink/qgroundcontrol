@@ -38,111 +38,52 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
 
-LinkManager* LinkManager::_instance = NULL;
-
-LinkManager* LinkManager::instance(void)
-{
-    if(_instance == 0) {
-        _instance = new LinkManager(qgcApp());
-        Q_CHECK_PTR(_instance);
-    }
-    
-    Q_ASSERT(_instance);
-    
-    return _instance;
-}
-
-void LinkManager::deleteInstance(void)
-{
-    _instance = NULL;
-    delete this;
-}
+IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
 
 /**
  * @brief Private singleton constructor
  *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
-LinkManager::LinkManager(QObject* parent, bool registerSingleton) :
-    QGCSingleton(parent, registerSingleton),
+LinkManager::LinkManager(QObject* parent) :
+    QGCSingleton(parent),
     _connectionsSuspended(false)
 {
-    _links = QList<LinkInterface*>();
-    _protocolLinks = QMap<ProtocolInterface*, LinkInterface*>();
+
 }
 
 LinkManager::~LinkManager()
 {
-    disconnectAll();
-    
-    foreach (LinkInterface* link, _links) {
-        Q_ASSERT(link);
-        deleteLink(link);
-    }
-    _links.clear();
+    Q_ASSERT_X(_links.count() == 0, "LinkManager", "LinkManager::_shutdown should have been called previously");
 }
 
-void LinkManager::add(LinkInterface* link)
+void LinkManager::addLink(LinkInterface* link)
 {
     Q_ASSERT(link);
     
     // Take ownership for delete
     link->_ownedByLinkManager = true;
     
-    _dataMutex.lock();
+    _linkListMutex.lock();
     
     if (!_links.contains(link)) {
         _links.append(link);
-        _dataMutex.unlock();
+        _linkListMutex.unlock();
         emit newLink(link);
     } else {
-        _dataMutex.unlock();
+        _linkListMutex.unlock();
     }
-}
-
-void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
-{
-    Q_ASSERT(link);
-    Q_ASSERT(protocol);
     
-    // Connect link to protocol
-    // the protocol will receive new bytes from the link
-    _dataMutex.lock();
-    QList<LinkInterface*> linkList = _protocolLinks.values(protocol);
-
-    // If protocol has not been added before (list length == 0)
-    // OR if link has not been added to protocol, add
-    if (!linkList.contains(link))
-    {
-        // Protocol is new, add
-        connect(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)), protocol, SLOT(receiveBytes(LinkInterface*, QByteArray)));
-        // Add status
-        connect(link, SIGNAL(connected(bool)), protocol, SLOT(linkStatusChanged(bool)));
-        // Store the connection information in the protocol links map
-        _protocolLinks.insertMulti(protocol, link);
-        _dataMutex.unlock();
-        // Make sure the protocol clears its metadata for this link.
-        protocol->resetMetadataForLink(link);
-    } else {
-        _dataMutex.unlock();
+    // MainWindow may be around when doing things like running unit tests
+    if (MainWindow::instance()) {
+        connect(link, SIGNAL(communicationError(QString,QString)), MainWindow::instance(), SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
     }
-    //qDebug() << __FILE__ << __LINE__ << "ADDED LINK TO PROTOCOL" << link->getName() << protocol->getName() << "NEW SIZE OF LINK LIST:" << _protocolLinks.size();
-}
-
-QList<LinkInterface*> LinkManager::getLinksForProtocol(ProtocolInterface* protocol)
-{
-    _dataMutex.lock();
-    QList<LinkInterface*> links = _protocolLinks.values(protocol);
-    _dataMutex.unlock();
-    return links;
-}
-
-ProtocolInterface* LinkManager::getProtocolForLink(LinkInterface* link)
-{
-    _dataMutex.lock();
-    ProtocolInterface* protocol = _protocolLinks.key(link);
-    _dataMutex.unlock();
-	return protocol;
+    
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+    connect(link, &LinkInterface::bytesReceived, mavlink, &MAVLinkProtocol::receiveBytes);
+    connect(link, &LinkInterface::connected, mavlink, &MAVLinkProtocol::linkConnected);
+    connect(link, &LinkInterface::disconnected, mavlink, &MAVLinkProtocol::linkDisconnected);
+    mavlink->resetMetadataForLink(link);
 }
 
 bool LinkManager::connectAll()
@@ -153,14 +94,14 @@ bool LinkManager::connectAll()
     
     bool allConnected = true;
 
-    _dataMutex.lock();
+    _linkListMutex.lock();
     foreach (LinkInterface* link, _links) {
         Q_ASSERT(link);
         if (!link->_connect()) {
             allConnected = false;
         }
     }
-    _dataMutex.unlock();
+    _linkListMutex.unlock();
 
     return allConnected;
 }
@@ -169,7 +110,7 @@ bool LinkManager::disconnectAll()
 {
     bool allDisconnected = true;
 
-    _dataMutex.lock();
+    _linkListMutex.lock();
     foreach (LinkInterface* link, _links)
     {
         Q_ASSERT(link);
@@ -177,7 +118,7 @@ bool LinkManager::disconnectAll()
             allDisconnected = false;
         }
     }
-    _dataMutex.unlock();
+    _linkListMutex.unlock();
 
     return allDisconnected;
 }
@@ -203,19 +144,13 @@ void LinkManager::deleteLink(LinkInterface* link)
 {
     Q_ASSERT(link);
     
-    _dataMutex.lock();
+    _linkListMutex.lock();
     
     Q_ASSERT(_links.contains(link));
     _links.removeOne(link);
     Q_ASSERT(!_links.contains(link));
 
-    // Remove link from protocol map
-    QList<ProtocolInterface* > protocols = _protocolLinks.keys(link);
-    foreach (ProtocolInterface* proto, protocols) {
-        _protocolLinks.remove(proto, link);
-    }
-             
-    _dataMutex.unlock();
+    _linkListMutex.unlock();
              
     // Emit removal of link
     emit linkDeleted(link);
@@ -230,15 +165,15 @@ void LinkManager::deleteLink(LinkInterface* link)
  */
 const QList<LinkInterface*> LinkManager::getLinks()
 {
-    _dataMutex.lock();
+    _linkListMutex.lock();
     QList<LinkInterface*> ret(_links);
-    _dataMutex.unlock();
+    _linkListMutex.unlock();
     return ret;
 }
 
 const QList<SerialLink*> LinkManager::getSerialLinks()
 {
-    _dataMutex.lock();
+    _linkListMutex.lock();
     QList<SerialLink*> s;
 
     foreach (LinkInterface* link, _links)
@@ -250,7 +185,7 @@ const QList<SerialLink*> LinkManager::getSerialLinks()
         if (serialLink)
             s.append(serialLink);
     }
-    _dataMutex.unlock();
+    _linkListMutex.unlock();
 
     return s;
 }
@@ -273,4 +208,13 @@ void LinkManager::setConnectionsSuspended(QString reason)
     _connectionsSuspended = true;
     _connectionsSuspendedReason = reason;
     Q_ASSERT(!reason.isEmpty());
+}
+
+void LinkManager::_shutdown(void)
+{
+    QList<LinkInterface*> links = _links;
+    foreach(LinkInterface* link, links) {
+        disconnectLink(link);
+        deleteLink(link);
+    }
 }

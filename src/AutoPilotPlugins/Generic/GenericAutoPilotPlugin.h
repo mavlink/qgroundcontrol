@@ -25,6 +25,8 @@
 #define GENERICAUTOPILOT_H
 
 #include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
+#include "GenericParameterFacts.h"
 
 /// @file
 ///     @brief This is the generic implementation of the AutoPilotPlugin class for mavs
@@ -36,11 +38,20 @@ class GenericAutoPilotPlugin : public AutoPilotPlugin
     Q_OBJECT
 
 public:
-    GenericAutoPilotPlugin(QObject* parent = NULL);
+    GenericAutoPilotPlugin(UASInterface* uas, QObject* parent = NULL);
     
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
+    // Overrides from AutoPilotPlugin
+    virtual bool pluginIsReady(void) const { return _parameterFacts->factsAreReady(); }
+    virtual QUrl setupBackgroundImage(void);
+    virtual const QVariantList& components(void);
+    virtual const QVariantMap& parameters(void);
+
+    static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
+    static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
+    static void clearStaticData(void);
+    
+private:
+    GenericParameterFacts*  _parameterFacts;
 };
 
 #endif

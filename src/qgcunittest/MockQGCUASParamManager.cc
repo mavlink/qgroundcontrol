@@ -22,12 +22,16 @@
  ======================================================================*/
 
 #include "MockQGCUASParamManager.h"
+#include "mavlink.h"
+
 #include <QTest>
 #include <QDebug>
 
+Q_LOGGING_CATEGORY(MockQGCUASParamManagerLog, "MockQGCUASParamManagerLog")
+
 MockQGCUASParamManager::MockQGCUASParamManager(void)
 {
-    
+    _loadParams();
 }
 
 bool MockQGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const
@@ -36,13 +40,65 @@ bool MockQGCUASParamManager::getParameterValue(int component, const QString& par
     
     if (_mapParams.contains(parameter)) {
         value = _mapParams[parameter];
+        return true;
     }
+    
+    qCDebug(MockQGCUASParamManagerLog) << QString("getParameterValue: parameter not found %1").arg(parameter);
     return false;
 }
 
 void MockQGCUASParamManager::setParameter(int component, QString parameterName, QVariant value)
 {
-    Q_UNUSED(component);
+    qCDebug(MockQGCUASParamManagerLog) << QString("setParameter: component(%1) parameter(%2) value(%3)").arg(component).arg(parameterName).arg(value.toString());
+    
+    _mapParams[parameterName] = value;
+    emit parameterUpdated(_defaultComponentId, parameterName, value);
+}
 
-    _mapParamsSet[parameterName] = value;
+void MockQGCUASParamManager::_loadParams(void)
+{
+    QFile paramFile(":/unittest/MockLink.param");
+    
+    bool success = paramFile.open(QFile::ReadOnly);
+    Q_UNUSED(success);
+    Q_ASSERT(success);
+    
+    QTextStream paramStream(&paramFile);
+    
+    while (!paramStream.atEnd()) {
+        QString line = paramStream.readLine();
+        
+        if (line.startsWith("#")) {
+            continue;
+        }
+        
+        QStringList paramData = line.split("\t");
+        Q_ASSERT(paramData.count() == 5);
+        
+        QString paramName = paramData.at(2);
+        QString valStr = paramData.at(3);
+        uint paramType = paramData.at(4).toUInt();
+        
+        QVariant paramValue;
+        switch (paramType) {
+            case MAV_PARAM_TYPE_REAL32:
+                paramValue = QVariant(valStr.toFloat());
+                break;
+            case MAV_PARAM_TYPE_UINT32:
+                paramValue = QVariant(valStr.toUInt());
+                break;
+            case MAV_PARAM_TYPE_INT32:
+                paramValue = QVariant(valStr.toInt());
+                break;
+            case MAV_PARAM_TYPE_INT8:
+                paramValue = QVariant((unsigned char)valStr.toUInt());
+                break;
+            default:
+                Q_ASSERT(false);
+                break;
+        }
+        
+        Q_ASSERT(!_mapParams.contains(paramName));
+        _mapParams[paramName] = paramValue;
+    }
 }

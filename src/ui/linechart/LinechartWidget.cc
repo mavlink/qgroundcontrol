@@ -185,13 +185,11 @@ void LinechartWidget::writeSettings()
     if (ui.showUnitsCheckBox) settings.setValue("SHOW_UNITS", ui.showUnitsCheckBox->isChecked());
     if (ui.shortNameCheckBox) settings.setValue("SHORT_NAMES", ui.shortNameCheckBox->isChecked());
     settings.endGroup();
-    settings.sync();
 }
 
 void LinechartWidget::readSettings()
 {
     QSettings settings;
-    settings.sync();
     settings.beginGroup("LINECHART");
     if (activePlot) {
         timeButton->setChecked(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());

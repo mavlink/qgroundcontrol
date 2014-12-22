@@ -258,7 +258,9 @@ void QGCPX4SensorCalibration::setInstructionImage(const QString &path)
 
 void QGCPX4SensorCalibration::setAutopilotImage(int index)
 {
-    setAutopilotImage(QString(":/files/images/px4/calibration/pixhawk_%1.png").arg(index, 2, 10, QChar('0')));
+    Q_UNUSED(index);
+    // FIXME: This was referencing a non-existent png. Need to figure out what this was trying to do.
+    //setAutopilotImage(QString(":/files/images/px4/calibration/pixhawk_%1.png").arg(index, 2, 10, QChar('0')));
 }
 
 void QGCPX4SensorCalibration::setGpsImage(int index)
@@ -402,13 +404,13 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
 
     ui->instructionLabel->setText(QString("%1").arg(text));
 
-    if (text.startsWith("accel measurement started: ")) {
-        QString axis = text.split("measurement started: ").last().left(2);
+    if (text.startsWith("Hold still, starting to measure ")) {
+        QString axis = text.section(" ", -2, -2);
         setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
     }
 
-    if (text.startsWith("directions left: ")) {
-        QString axis = text.split("directions left: ").last().left(2);
+    if (text.startsWith("pending: ")) {
+        QString axis = text.section(" ", 1, 1);
         setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
     }
 

@@ -260,6 +260,8 @@ void QGCMapWidget::loadSettings(bool changePosition)
     trailInterval = settings.value("TRAIL_INTERVAL", trailInterval).toFloat();
     settings.endGroup();
 
+#if 0
+    // FIXME: NYI
     // SET CORRECT MENU CHECKBOXES
     // Set the correct trail interval
     if (trailType == mapcontrol::UAVTrailType::ByDistance)
@@ -272,6 +274,7 @@ void QGCMapWidget::loadSettings(bool changePosition)
         // XXX
         qDebug() << "WARNING: Settings loading for trail type (ByTimeElapsed) not implemented";
     }
+#endif
 
     // SET TRAIL TYPE
     foreach (mapcontrol::UAVItem* uav, GetUAVS())
@@ -306,7 +309,6 @@ void QGCMapWidget::storeSettings()
     settings.setValue("TRAIL_TYPE", static_cast<int>(trailType));
     settings.setValue("TRAIL_INTERVAL", trailInterval);
     settings.endGroup();
-    settings.sync();
 }
 
 void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)

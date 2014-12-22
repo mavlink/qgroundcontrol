@@ -87,48 +87,36 @@ private:
         return (parent == NULL) ? MainWindow::instance() : parent;
     }
 
-#ifdef Q_OS_MAC
     static StandardButton _messageBox(Icon icon, const QString& title, const QString& text, StandardButtons buttons, StandardButton defaultButton, QWidget* parent)
     {
         // You can't use QGCMessageBox if QGCApplication is not created yet.
         Q_ASSERT(qgcApp());
         
         parent = _validateParameters(buttons, &defaultButton, parent);
+
+        if (MainWindow::instance()) {
+            MainWindow::instance()->hideSplashScreen();
+        }
         
 #ifdef QT_DEBUG
         if (qgcApp()->runningUnitTests()) {
+            qDebug() << "QGCMessageBox (unit testing)" << title << text;
             return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);
         } else
-#endif // QT_DEBUG
+#endif
         {
+#ifdef Q_OS_MAC
             QString emptyTitle;
             QMessageBox box(icon, emptyTitle, title, buttons, parent);
             box.setDefaultButton(defaultButton);
             box.setInformativeText(text);
-            return static_cast<QMessageBox::StandardButton>(box.exec());
-        }
-    }
 #else
-    static StandardButton _messageBox(Icon icon, const QString& title, const QString& text, StandardButtons buttons, StandardButton defaultButton, QWidget* parent)
-    {
-        // You can't use QGCMessageBox if QGCApplication is not created yet.
-        Q_ASSERT(qgcApp());
-        
-        parent = _validateParameters(buttons, &defaultButton, parent);
-        
-#ifdef QT_DEBUG
-        if (qgcApp()->runningUnitTests()) {
-            return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);
-        } else
-#endif // QT_DEBUG
-        {
             QMessageBox box(icon, title, text, buttons, parent);
             box.setDefaultButton(defaultButton);
+#endif
             return static_cast<QMessageBox::StandardButton>(box.exec());
         }
     }
-    
-#endif // Q_OS_MAC
 };
 
 #endif

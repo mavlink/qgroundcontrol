@@ -21,18 +21,12 @@ This file is part of the PIXHAWK project
 
 ======================================================================*/
 
-/**
- * @file
- *   @brief Manage communication links
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
+/// @file
+///     @author Lorenz Meier <mavteam@student.ethz.ch>
 
 #ifndef _LINKMANAGER_H_
 #define _LINKMANAGER_H_
 
-#include <QThread>
 #include <QList>
 #include <QMultiMap>
 #include <QMutex>
@@ -41,86 +35,77 @@ This file is part of the PIXHAWK project
 #include "SerialLink.h"
 #include "ProtocolInterface.h"
 #include "QGCSingleton.h"
+#include "MAVLinkProtocol.h"
 
 class LinkManagerTest;
 
-/**
- * The Link Manager organizes the physical Links. It can manage arbitrary
- * links and takes care of connecting them as well assigning the correct
- * protocol instance to transport the link data into the application.
- *
- **/
+/// Manage communication links
+///
+/// The Link Manager organizes the physical Links. It can manage arbitrary
+/// links and takes care of connecting them as well assigning the correct
+/// protocol instance to transport the link data into the application.
+
 class LinkManager : public QGCSingleton
 {
     Q_OBJECT
-
-public:
-    /// @brief Returns the LinkManager singleton
-    static LinkManager* instance(void);
     
-    virtual void deleteInstance(void);
+    DECLARE_QGC_SINGLETON(LinkManager, LinkManager)
+    
+    /// Unit Test has access to private constructor/destructor
+    friend class LinkManagerTest;
+    
+public:
 
-    ~LinkManager();
-
-    QList<LinkInterface*> getLinksForProtocol(ProtocolInterface* protocol);
-
-    ProtocolInterface* getProtocolForLink(LinkInterface* link);
-
-    /** @brief Get a list of all links */
+    /// Returns list of all links
     const QList<LinkInterface*> getLinks();
 
-    /** @brief Get a list of all serial links */
+    // Returns list of all serial links
     const QList<SerialLink*> getSerialLinks();
 
-    /** @brief Get a list of all protocols */
-    const QList<ProtocolInterface*> getProtocols() {
-        return _protocolLinks.uniqueKeys();
-    }
-    
-    /// @brief Sets the lag to suspend the all new connections
+    /// Sets the flag to suspend the all new connections
     ///     @param reason User visible reason to suspend connections
     void setConnectionsSuspended(QString reason);
     
-    /// @brief Sets the flag to allow new connections to be made
+    /// Sets the flag to allow new connections to be made
     void setConnectionsAllowed(void) { _connectionsSuspended = false; }
     
-    /// @brief Deletes the specified link. Will disconnect if connected.
-    void deleteLink(LinkInterface* link);
-
-public slots:
-    /// @brief Adds the link to the LinkManager. LinkManager takes ownership of this object. To delete
-    //          it, call LinkManager::deleteLink.
-    void add(LinkInterface* link);
+    /// Adds the link to the LinkManager. LinkManager takes ownership of this object. To delete
+    /// it, call LinkManager::deleteLink.
+    void addLink(LinkInterface* link);
     
-    void addProtocol(LinkInterface* link, ProtocolInterface* protocol);
-
+    /// Deletes the specified link. Will disconnect if connected.
+    void deleteLink(LinkInterface* link);
+    
+    /// Re-connects all existing links
     bool connectAll();
-    bool connectLink(LinkInterface* link);
-
+    
+    /// Disconnects all existing links
     bool disconnectAll();
+    
+    /// Connect the specified link
+    bool connectLink(LinkInterface* link);
+    
+    /// Disconnect the specified link
     bool disconnectLink(LinkInterface* link);
-
+    
 signals:
     void newLink(LinkInterface* link);
     void linkDeleted(LinkInterface* link);
     
 private:
-    /// @brief All access to LinkManager is through LinkManager::instance
-    LinkManager(QObject* parent = NULL, bool registerSingleton = true);
+    /// All access to LinkManager is through LinkManager::instance
+    LinkManager(QObject* parent = NULL);
+    ~LinkManager();
     
-    // LinkManager unit test is allowed to new LinkManager objects
-    friend class LinkManagerTest;
-    
-    static LinkManager* _instance;
-    
-    QList<LinkInterface*> _links;
-    QMultiMap<ProtocolInterface*,LinkInterface*> _protocolLinks;
-    QMutex _dataMutex;
-    
+    virtual void _shutdown(void);
+
     bool _connectionsSuspendedMsg(void);
     
-    bool _connectionsSuspended;              ///< true: all new connections should not be allowed
-    QString _connectionsSuspendedReason;     ///< User visible reason for suspension
+    QList<LinkInterface*>   _links;         ///< List of available links
+    QMutex                  _linkListMutex; ///< Mutex for thread safe access to _links list
+    
+    bool    _connectionsSuspended;          ///< true: all new connections should not be allowed
+    QString _connectionsSuspendedReason;    ///< User visible reason for suspension
 };
 
 #endif

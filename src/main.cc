@@ -118,17 +118,33 @@ int main(int argc, char *argv[])
         // Add additional command line option flags here
     };
     
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), true);
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
     
     if (quietWindowsAsserts) {
 #ifdef Q_OS_WIN
         _CrtSetReportHook(WindowsCrtReportHook);
 #endif
     }
+
+#ifdef Q_OS_WIN
+    if (runUnitTests) {
+        // Don't pop up Windows Error Reporting dialog when app crashes. This prevents TeamCity from
+        // hanging.
+        DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+    }
 #endif
+#endif // QT_DEBUG
     
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
+    
+    // There appears to be a threading issue in qRegisterMetaType which can cause it to throw a qWarning
+    // about duplicate type converters. This is caused by a race condition in the Qt code. Still working
+    // with them on tracking down the bug. For now we register the type which is giving us problems here
+    // while we only have the main thread. That should prevent it from hitting the race condition later
+    // on in the code.
+    qRegisterMetaType<QList<QPair<QByteArray,QByteArray> > >();
     
     app->_initCommon();
     
@@ -141,7 +157,7 @@ int main(int argc, char *argv[])
         }
         
         // Run the test
-        int failures = UnitTest::run(argc-1, argv, rgCmdLineOptions[0].optionArg);
+        int failures = UnitTest::run(rgCmdLineOptions[0].optionArg);
         if (failures == 0) {
             qDebug() << "ALL TESTS PASSED";
         } else {

@@ -139,8 +139,6 @@ PX4RCCalibrationTest::PX4RCCalibrationTest(void) :
 /// @brief Called one time before any test cases are run.
 void PX4RCCalibrationTest::initTestCase(void)
 {
-    UnitTest::initTestCase();
-    
 	// Validate that our function to channel mapping is still correct.
 	for (int function=0; function<PX4RCCalibration::rcCalFunctionMax; function++) {
 		int chanIndex = _rgFunctionChannelMap[function];
@@ -158,18 +156,17 @@ void PX4RCCalibrationTest::init(void)
     _mockUASManager = new MockUASManager();
     Q_ASSERT(_mockUASManager);
     
-    UASManager::setMockUASManager(_mockUASManager);
+    UASManager::setMockInstance(_mockUASManager);
     
     _mockUAS = new MockUAS();
     Q_CHECK_PTR(_mockUAS);
     
-    // This will instatiate the widget with no active UAS set
+    _mockUASManager->setMockActiveUAS(_mockUAS);
+    
+    // This will instatiate the widget with an active uas with ready parameters
     _calWidget = new PX4RCCalibration();
     Q_CHECK_PTR(_calWidget);
-    _calWidget->_setUnitTestMode();
-    _calWidget->setVisible(true);
-    
-    _mockUASManager->setMockActiveUAS(_mockUAS);
+    _calWidget->_setUnitTestMode();    
 
     // Get pointers to the push buttons
     _cancelButton = _calWidget->findChild<QPushButton*>("rcCalCancel");
@@ -202,30 +199,18 @@ void PX4RCCalibrationTest::init(void)
 
 void PX4RCCalibrationTest::cleanup(void)
 {
-    UnitTest::cleanup();
-    
     Q_ASSERT(_calWidget);
     delete _calWidget;
     
     Q_ASSERT(_mockUAS);
     delete _mockUAS;
     
-    UASManager::setMockUASManager(NULL);
+    UASManager::setMockInstance(NULL);
     
     Q_ASSERT(_mockUASManager);
     delete _mockUASManager;
     
-}
-
-/// @brief Tests for correct behavior when active UAS is set into widget.
-void PX4RCCalibrationTest::_setUAS_test(void)
-{
-    // Widget is initialized with UAS, so it should be enabled
-    QCOMPARE(_calWidget->isEnabled(), true);
-
-    // Take away the UAS and widget should disable
-    _mockUASManager->setMockActiveUAS(NULL);
-    QCOMPARE(_calWidget->isEnabled(), false);
+    UnitTest::cleanup();
 }
 
 /// @brief Test for correct behavior in determining minimum numbers of channels for flight.

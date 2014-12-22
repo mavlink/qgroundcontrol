@@ -136,7 +136,6 @@ void SerialLink::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
     if (settings.contains("SERIALLINK_COMM_PORT"))
     {
         m_portName = settings.value("SERIALLINK_COMM_PORT").toString();
@@ -160,7 +159,6 @@ void SerialLink::writeSettings()
     settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBits());
     settings.setValue("SERIALLINK_COMM_DATABITS", getDataBits());
     settings.setValue("SERIALLINK_COMM_FLOW_CONTROL", getFlowType());
-    settings.sync();
 }
 
 void SerialLink::checkIfCDC()
@@ -240,9 +238,6 @@ void SerialLink::run()
                 m_port->close();
                 delete m_port;
                 m_port = NULL;
-
-                emit disconnected();
-                emit connected(false);
             }
 
             QGC::SLEEP::msleep(500);
@@ -340,9 +335,6 @@ void SerialLink::run()
         m_port->close();
         delete m_port;
         m_port = NULL;
-
-        emit disconnected();
-        emit connected(false);
     }
 }
 
@@ -478,7 +470,9 @@ bool SerialLink::hardwareConnect(QString &type)
         return false; // couldn't create serial port.
     }
 
-    QObject::connect(m_port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
+    // We need to catch this signal and then emit disconnected. You can't connect
+    // signal to signal otherwise disonnected will have the wrong QObject::Sender
+    QObject::connect(m_port, SIGNAL(aboutToClose()), this, SLOT(_rerouteDisconnected()));
     QObject::connect(m_port, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(linkError(QSerialPort::SerialPortError)));
 
     checkIfCDC();
@@ -505,7 +499,6 @@ bool SerialLink::hardwareConnect(QString &type)
     emit communicationUpdate(getName(),"Opened port!");
 
     emit connected();
-    emit connected(true);
 
     qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "type:" << type << "with settings" << m_port->portName()
              << getBaudRate() << getDataBits() << getParityType() << getStopBits();
@@ -903,4 +896,9 @@ bool SerialLink::setStopBitsType(int stopBits)
         emit updateLink(this);
     }
     return accepted;
+}
+
+void SerialLink::_rerouteDisconnected(void)
+{
+    emit disconnected();
 }

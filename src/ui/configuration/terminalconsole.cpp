@@ -118,7 +118,7 @@ void TerminalConsole::fillPortsInfo(QComboBox &comboxBox)
              << (info.productIdentifier() ? QString::number(info.productIdentifier(), 16) : QString());
 
         comboxBox.insertItem(0,list.first(), list);
-        qDebug() << "Inserting " << list.first();
+        //qDebug() << "Inserting " << list.first();
     }
 }
 
@@ -267,7 +267,6 @@ void TerminalConsole::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
     if (settings.contains("TERMINALCONSOLE_COMM_PORT"))
     {
         m_settings.name = settings.value("TERMINALCONSOLE_COMM_PORT").toString();
@@ -295,7 +294,6 @@ void TerminalConsole::writeSettings()
     settings.setValue("TERMINALCONSOLE_COMM_STOPBITS", m_settings.stopBits);
     settings.setValue("TERMINALCONSOLE_COMM_DATABITS", m_settings.dataBits);
     settings.setValue("TERMINALCONSOLE_COMM_FLOW_CONTROL", m_settings.flowControl);
-    settings.sync();
 }
 
 

@@ -42,7 +42,7 @@ public:
 
 protected:
     mapcontrol::OPMapWidget* parent; ///< Parent widget
-    Waypoint* waypoint;   ///< Waypoint data container this icon represents
+    QPointer<Waypoint> waypoint;   ///< Waypoint data container this icon represents
     int radius;           ///< Radius / diameter of the icon in pixels
     bool showAcceptanceRadius;
     bool showOrbit;

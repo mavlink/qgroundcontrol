@@ -39,11 +39,10 @@ class MockUASManager : public UASManagerInterface
     Q_OBJECT
     
 signals:
-    // The following signals from UASManager interface are supported
-    void activeUASSet(UASInterface* UAS);
-    void activeUASSet(int systemId);
-    void activeUASStatusChanged(UASInterface* UAS, bool active);
-    void activeUASStatusChanged(int systemId, bool active);
+    // The following signals from UASManager interface are supported:
+    //      void activeUASSet(UASInterface* UAS);
+    //      void activeUASStatusChanged(UASInterface* UAS, bool active);
+    //      void activeUASStatusChanged(int systemId, bool active);
     
 public:
     // Implemented UASManagerInterface overrides
@@ -107,6 +106,7 @@ public slots:
         { Q_ASSERT(false); Q_UNUSED(uav); Q_UNUSED(lat); Q_UNUSED(lon); Q_UNUSED(alt); }
     virtual void loadSettings() { Q_ASSERT(false); }
     virtual void storeSettings() { Q_ASSERT(false); }
+    virtual void _shutdown(void) { Q_ASSERT(false); }
     
 private:
     MockUAS*                _mockUAS;

@@ -61,8 +61,6 @@ TCPLink::~TCPLink()
     quit();
     // Wait for it to exit
     wait();
-
-	deleteLater();
 }
 
 void TCPLink::run()
@@ -193,7 +191,6 @@ bool TCPLink::_disconnect(void)
 		_socket = NULL;
 
         emit disconnected();
-        emit connected(false);
 	}
     
     return true;
@@ -243,7 +240,6 @@ bool TCPLink::_hardwareConnect(void)
     }
     
     _socketIsConnected = true;
-    emit connected(true);
     emit connected();
 
     return true;

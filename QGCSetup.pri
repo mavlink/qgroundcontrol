@@ -175,6 +175,7 @@ WindowsBuild {
         $$DLL_DIR\\Qt5PrintSupport$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Qml$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Quick$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5QuickWidgets$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Sensors$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5SerialPort$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5OpenGL$${DLL_QT_DEBUGCHAR}.dll \

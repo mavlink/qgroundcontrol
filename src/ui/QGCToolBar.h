@@ -33,7 +33,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QComboBox>
 #include <QTimer>
 #include "UASInterface.h"
-#include "QGCMAVLinkLogPlayer.h"
 #include "SerialLink.h"
 
 class QGCToolBar : public QToolBar
@@ -53,8 +52,6 @@ public slots:
     void addLink(LinkInterface* link);
     /** @brief Remove link which is currently handled */
     void removeLink(LinkInterface* link);
-    /** @brief Update the link state */
-    void updateLinkState(bool connected);
     /** @brief Set the system state */
     void updateState(UASInterface* system, QString name, QString description);
     /** @brief Set the system mode */
@@ -124,7 +121,6 @@ protected:
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
 
-    QGCMAVLinkLogPlayer* player;
     QComboBox *portComboBox;
     QComboBox *baudcomboBox;
     QTimer portBoxTimer;
@@ -148,6 +144,14 @@ protected:
     QAction* firstAction;
     QToolButton *advancedButton;
     QButtonGroup *group;
+    
+private slots:
+    void _linkConnected(void);
+    void _linkDisconnected(void);
+    
+private:
+    /** @brief Update the link state */
+    void _updateLinkState(bool connected);
 };
 
 #endif // QGCTOOLBAR_H

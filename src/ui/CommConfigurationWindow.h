@@ -73,7 +73,7 @@ class CommConfigurationWindow : public QDialog
     Q_OBJECT
 
 public:
-    CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent = 0);
+    CommConfigurationWindow(LinkInterface* link, QWidget *parent = 0);
     ~CommConfigurationWindow();
 
     QAction* getAction();
@@ -86,12 +86,16 @@ public slots:
     /** @brief Set the protocol for this link */
     void setProtocol(int protocol);
     void setConnection();
-    void connectionState(bool connect);
     void setLinkName(QString name);
     /** @brief Disconnects the associated link, removes it from all menus and closes the window. */
     void remove();
 
+private slots:
+    void _linkConnected(void);
+    void _linkDisconnected(void);
+    
 private:
+    void _connectionState(bool connect);
 
     Ui::commSettings ui;
     LinkInterface* link;

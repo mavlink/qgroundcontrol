@@ -5,10 +5,12 @@
 
 #include "QGCUASParamManagerInterface.h"
 #include "UASInterface.h"
-
-
+#include "MAVLinkProtocol.h"
+#include "MainWindow.h"
 
 #define RC_CAL_CHAN_MAX 8
+
+Q_LOGGING_CATEGORY(UASParameterCommsMgrLog, "UASParameterCommsMgrLog")
 
 UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent) :
     QObject(parent),
@@ -67,7 +69,15 @@ void UASParameterCommsMgr::loadParamCommsSettings()
     settings.endGroup();
 }
 
-
+void UASParameterCommsMgr::_sendParamRequestListMsg(void)
+{
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+    Q_ASSERT(mavlink);
+    
+    mavlink_message_t msg;
+    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, mav->getUASID(), MAV_COMP_ID_ALL);
+    mav->sendMessage(msg);
+}
 
 /**
  * Send a request to deliver the list of onboard parameters
@@ -78,16 +88,20 @@ void UASParameterCommsMgr::requestParameterList()
     if (!mav) {
         return;
     }
+    
 
     if (!transmissionListMode) {
+        qCDebug(UASParameterCommsMgrLog) << "Requesting full parameter list";
         transmissionListMode = true;//TODO eliminate?
         //we use (compId 0, paramId 0) as  indicating all params for the system
         markReadParamWaiting(0,0);
-        mav->requestParameters();
+        
+        _sendParamRequestListMsg();
+        
         updateSilenceTimer();
     }
     else {
-        qDebug() << __FILE__ << __LINE__ << "Ignoring requestParameterList because we're receiving params list";
+        qCDebug(UASParameterCommsMgrLog) << "Ignoring requestParameterList because we're receiving params list";
     }
 
 }
@@ -119,7 +133,7 @@ void UASParameterCommsMgr::markWriteParamWaiting(int compId, QString paramName, 
 */
 void UASParameterCommsMgr::clearRetransmissionLists(int& missingReadCount, int& missingWriteCount )
 {
-    qDebug() << __FILE__ << __LINE__ << "clearRetransmissionLists";
+    qCDebug(UASParameterCommsMgrLog) << "Clearing re-transmission lists";
 
     missingReadCount = 0;
     QList<int> compIds = readsWaiting.keys();
@@ -192,7 +206,7 @@ void UASParameterCommsMgr::resendReadWriteRequests()
         qDebug() << "compId " << compId << "readsWaiting:" << missingReadParams->count();
         foreach (int paramId, *missingReadParams) {
             if (0 == paramId && 0 == compId) {
-                mav->requestParameters();
+                _sendParamRequestListMsg();
                 //don't request any other params individually for this component
                 break;
             }
@@ -203,7 +217,7 @@ void UASParameterCommsMgr::resendReadWriteRequests()
                 requestedReadCount++;
             }
             else {
-                qDebug() << "Throttling read retransmit requests at" << requestedReadCount;
+                qCDebug(UASParameterCommsMgrLog) << "Throttling read retransmit requests at" << requestedReadCount;
                 break;
             }
         }
@@ -223,7 +237,7 @@ void UASParameterCommsMgr::resendReadWriteRequests()
                 requestedWriteCount++;
             }
             else {
-                qDebug() << "Throttling write retransmit requests at" << requestedWriteCount;
+                qCDebug(UASParameterCommsMgrLog) << "Throttling write retransmit requests at" << requestedWriteCount;
                 break;
             }
         }
@@ -243,7 +257,7 @@ void UASParameterCommsMgr::silenceTimerExpired()
 {
     quint64 curTime = QGC::groundTimeMilliseconds();
     int elapsed = (int)(curTime - lastSilenceTimerReset);
-    qDebug() << "silenceTimerExpired elapsed:" << elapsed;
+    qCDebug(UASParameterCommsMgrLog) << "silenceTimerExpired elapsed:" << elapsed;
 
     if (elapsed < silenceTimeout) {
         //reset the guard timer: it fired prematurely
@@ -253,7 +267,7 @@ void UASParameterCommsMgr::silenceTimerExpired()
 
     int totalElapsed = (int)(curTime - lastReceiveTime);
     if (totalElapsed > maxSilenceTimeout) {
-        qDebug() << "maxSilenceTimeout exceeded: " << totalElapsed;
+        qCDebug(UASParameterCommsMgrLog) << "maxSilenceTimeout exceeded: " << totalElapsed;
         int missingReads, missingWrites;
         clearRetransmissionLists(missingReads,missingWrites);
         emit _stopSilenceTimer(); // Stop timer on our thread;
@@ -299,7 +313,7 @@ void UASParameterCommsMgr::requestRcCalibrationParamsUpdate()
         }
     }
     else {
-        qDebug() << __FILE__ << __LINE__ << "Ignoring requestRcCalibrationParamsUpdate because we're receiving params list";
+        qCDebug(UASParameterCommsMgrLog) << "Ignoring requestRcCalibrationParamsUpdate because we're receiving params list";
     }
 }
 
@@ -377,6 +391,7 @@ void UASParameterCommsMgr::updateSilenceTimer()
     }
     else {
         //all parameters have been received, broadcast to UI
+        qCDebug(UASParameterCommsMgrLog) << "emitting parameterListUpToDate";
         emit parameterListUpToDate();
         resetAfterListReceive();
         emit _stopSilenceTimer(); // Stop timer on our thread;
@@ -396,6 +411,8 @@ void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg, ParamCommsS
 
 void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int paramCount, int paramId, QString paramName, QVariant value)
 {
+    qCDebug(UASParameterCommsMgrLog) << "Received parameter update for:" << paramName << "count" << paramCount << "index" << paramId << "value" << value;
+
     Q_UNUSED(uas); //this object is assigned to one UAS only
     lastReceiveTime = QGC::groundTimeMilliseconds();
     // qDebug() << "compId" << compId << "receivedParameterUpdate:" << paramName;
@@ -423,7 +440,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             //remove our placeholder read request for all params
             readsWaiting.value(0)->remove(0);
 
-            qDebug() << "Mark all parameters as missing: " << paramCount;
+            qCDebug(UASParameterCommsMgrLog) << "receivedParameterUpdate: Mark all parameters as missing: " << paramCount;
             for (int i = 1; i < paramCount; ++i) { //param Id 0 is  "all parameters" and not valid
                 compMissingReads->insert(i);
             }
@@ -533,7 +550,7 @@ void UASParameterCommsMgr::sendPendingParameters(bool copyToPersistent, bool for
     }
     else {
         setParameterStatusMsg(tr("Transmitting %1 parameters.").arg(parametersSent));
-        qDebug() << "Pending parameters now:" << paramDataModel->countPendingParams();
+        qCDebug(UASParameterCommsMgrLog) << "Pending parameters now:" << paramDataModel->countPendingParams();
     }
 
 
@@ -546,7 +563,7 @@ UASParameterCommsMgr::~UASParameterCommsMgr()
 
     QString ptrStr;
     ptrStr.sprintf("%8p", this);
-    qDebug() <<  "UASParameterCommsMgr destructor: " << ptrStr ;
+    qCDebug(UASParameterCommsMgrLog) <<  "UASParameterCommsMgr destructor: " << ptrStr ;
 
 }
 

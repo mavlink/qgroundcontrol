@@ -103,7 +103,7 @@ public:
     /** @brief Get short mode */
     virtual const QString& getShortMode() const = 0;
     /** @brief Translate mode id into text */
-    static QString getShortModeTextFor(int id);
+    virtual QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const = 0;
     //virtual QColor getColor() = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
@@ -187,7 +187,7 @@ public:
          *         based on the fact that a message for this robot has been received through that
          *         interface. The LinkInterface can support multiple protocols.
          **/
-    virtual QList<LinkInterface*>* getLinks() = 0;
+    virtual QList<LinkInterface*> getLinks() = 0;
 
     /**
      * @brief Get the color for this UAS
@@ -315,8 +315,6 @@ public slots:
     virtual void setLocalOriginAtCurrentGPSPosition() = 0;
     /** @brief Set world frame origin / home position at this GPS position */
     virtual void setHomePosition(double lat, double lon, double alt) = 0;
-    /** @brief Request all onboard parameters of all components */
-    virtual void requestParameters() = 0;
     /** @brief Request one specific onboard parameter */
     virtual void requestParameter(int component, const QString& parameter) = 0;
     /** @brief Write parameter to permanent storage */

@@ -31,7 +31,7 @@ void MenuActionHelper::removeDockWidget()
     QObject *dockWidget = QObject::sender();
     Q_ASSERT(dockWidget);
 
-    qDebug() << "Dockwidget:"  << dockWidget->objectName() << "of type" << dockWidget->metaObject()->className();
+    //qDebug() << "Dockwidget:"  << dockWidget->objectName() << "of type" << dockWidget->metaObject()->className();
 
     QAction *action = m_menuToDockNameMap.key(dockWidget->objectName());
     if(action) {

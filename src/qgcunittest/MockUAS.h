@@ -42,8 +42,8 @@ class MockUAS : public UASInterface
     
 signals:
     // The following UASInterface signals are supported
-    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
-    void remoteControlChannelRawChanged(int channelId, float raw);
+    //  void parameterChanged(int uas, int component, QString parameterName, QVariant value);
+    //  void remoteControlChannelRawChanged(int channelId, float raw);
     
 public:
     // Implemented UASInterface overrides
@@ -81,7 +81,7 @@ public:
     virtual QString getUASName() const { Q_ASSERT(false); return _bogusString; };
     virtual const QString& getShortState() const { Q_ASSERT(false); return _bogusString; };
     virtual const QString& getShortMode() const { Q_ASSERT(false); return _bogusString; };
-    static QString getShortModeTextFor(int id) { Q_UNUSED(id); Q_ASSERT(false); return _bogusStaticString; };
+    virtual QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const { Q_UNUSED(base_mode); Q_UNUSED(custom_mode); Q_ASSERT(false); return _bogusStaticString; };
     virtual quint64 getUptime() const { Q_ASSERT(false); return 0; };
     virtual int getCommunicationStatus() const { Q_ASSERT(false); return 0; };
     virtual double getLocalX() const { Q_ASSERT(false); return std::numeric_limits<double>::quiet_NaN(); };
@@ -100,10 +100,10 @@ public:
     virtual bool isArmed() const { Q_ASSERT(false); return false; };
     virtual int getAirframe() const { Q_ASSERT(false); return 0; };
     virtual UASWaypointManager* getWaypointManager(void) { Q_ASSERT(false); return NULL; };
-    virtual QList<LinkInterface*>* getLinks() { Q_ASSERT(false); return NULL; };
+    virtual QList<LinkInterface*> getLinks() { Q_ASSERT(false); return QList<LinkInterface*>(); };
     virtual bool systemCanReverse() const { Q_ASSERT(false); return false; };
     virtual QString getSystemTypeName() { Q_ASSERT(false); return _bogusString; };
-    virtual int getAutopilotType() { Q_ASSERT(false); return 0; };
+    virtual int getAutopilotType() { return MAV_AUTOPILOT_PX4; };
     virtual QGCUASFileManager* getFileManager() {Q_ASSERT(false); return NULL; }
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
@@ -133,7 +133,6 @@ public slots:
     virtual void setTargetPosition(float x, float y, float z, float yaw) { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
     virtual void setLocalOriginAtCurrentGPSPosition() { Q_ASSERT(false); };
     virtual void setHomePosition(double lat, double lon, double alt) { Q_UNUSED(lat); Q_UNUSED(lon); Q_UNUSED(alt); Q_ASSERT(false); };
-    virtual void requestParameters() { Q_ASSERT(false); };
     virtual void requestParameter(int component, const QString& parameter) { Q_UNUSED(component); Q_UNUSED(parameter); Q_ASSERT(false); };
     virtual void writeParametersToStorage() { Q_ASSERT(false); };
     virtual void readParametersFromStorage() { Q_ASSERT(false); };

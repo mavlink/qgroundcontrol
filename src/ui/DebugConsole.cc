@@ -138,7 +138,6 @@ void DebugConsole::loadSettings()
 {
     // Load defaults from settings
     QSettings settings;
-    settings.sync();
     settings.beginGroup("QGC_DEBUG_CONSOLE");
     m_ui->specialComboBox->setCurrentIndex(settings.value("SPECIAL_SYMBOL", m_ui->specialComboBox->currentIndex()).toInt());
     m_ui->specialCheckBox->setChecked(settings.value("SPECIAL_SYMBOL_CHECKBOX_STATE", m_ui->specialCheckBox->isChecked()).toBool());
@@ -159,7 +158,6 @@ void DebugConsole::storeSettings()
     settings.setValue("MAVLINK_FILTER_ENABLED", filterMAVLINK);
     settings.setValue("AUTO_HOLD_ENABLED", autoHold);
     settings.endGroup();
-    settings.sync();
 }
 
 void DebugConsole::uasCreated(UASInterface* uas)
@@ -183,7 +181,7 @@ void DebugConsole::addLink(LinkInterface* link)
 
     // Register for name changes
     connect(link, SIGNAL(nameChanged(QString)), this, SLOT(updateLinkName(QString)), Qt::UniqueConnection);
-    connect(link, SIGNAL(linkDeleted(LinkInterface* const)), this, SLOT(removeLink(LinkInterface* const)), Qt::UniqueConnection);
+    connect(LinkManager::instance(), &LinkManager::linkDeleted, this, &DebugConsole::removeLink, Qt::UniqueConnection);
 }
 
 void DebugConsole::removeLink(LinkInterface* const linkInterface)
@@ -219,7 +217,7 @@ void DebugConsole::linkSelected(int linkId)
     if (currLink)
     {
         disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
-        disconnect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
+        disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
         disconnect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
         snapShotTimer.stop();
     }
@@ -231,9 +229,9 @@ void DebugConsole::linkSelected(int linkId)
     if (linkId != -1) {
         currLink = links[linkId];
         connect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
-        connect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
+        disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
         connect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
-        setConnectionState(currLink->isConnected());
+        _setConnectionState(currLink->isConnected());
         snapShotTimer.start();
     }
 }
@@ -763,10 +761,20 @@ void DebugConsole::hold(bool hold)
     }
 }
 
+void DebugConsole::_linkConnected(void)
+{
+    _setConnectionState(true);
+}
+
+void DebugConsole::_linkDisconnected(void)
+{
+    _setConnectionState(false);
+}
+
 /**
  * Sets the connection state the widget shows to this state
  */
-void DebugConsole::setConnectionState(bool connected)
+void DebugConsole::_setConnectionState(bool connected)
 {
     if(connected) {
         m_ui->connectButton->setText(tr("Disconn."));

@@ -124,20 +124,20 @@ void UASListWidget::updateStatus()
         if (!link)
             continue;
 
-        ProtocolInterface* p = LinkManager::instance()->getProtocolForLink(link);
+        MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
 
         // Build the tooltip out of the protocol parsing data: received, dropped, and parsing errors.
         QString displayString("");
         int c;
-        if ((c = p->getReceivedPacketCount(link)) != -1)
+        if ((c = mavlink->getReceivedPacketCount(link)) != -1)
         {
             displayString += QString(tr("<br/>Received: %2")).arg(QString::number(c));
         }
-        if ((c = p->getDroppedPacketCount(link)) != -1)
+        if ((c = mavlink->getDroppedPacketCount(link)) != -1)
         {
             displayString += QString(tr("<br/>Dropped: %2")).arg(QString::number(c));
         }
-        if ((c = p->getParsingErrorCount(link)) != -1)
+        if ((c = mavlink->getParsingErrorCount(link)) != -1)
         {
             displayString += QString(tr("<br/>Errors: %2")).arg(QString::number(c));
         }
@@ -167,10 +167,10 @@ void UASListWidget::addUAS(UASInterface* uas)
     if (!uasViews.contains(uas))
     {
         // Only display the UAS in a single link.
-        QList<LinkInterface*>* x = uas->getLinks();
-        if (x->size())
+        QList<LinkInterface*> x = uas->getLinks();
+        if (x.size())
         {
-            LinkInterface* li = x->first();
+            LinkInterface* li = x.first();
 
             // Find an existing QGroupBox for this LinkInterface or create a
             // new one.

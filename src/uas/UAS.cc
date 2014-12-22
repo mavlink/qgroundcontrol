@@ -32,6 +32,8 @@
 #include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
 
+Q_LOGGING_CATEGORY(UASLog, "UASLog")
+
 /**
 * Gets the settings from the previous UAS (name, airframe, autopilot, battery specs)
 * by calling readSettings. This means the new UAS will have the same settings
@@ -39,17 +41,15 @@
 * creating the UAS.
 */
 
-UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
+UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lipoFull(4.2f),
     lipoEmpty(3.5f),
     uasId(id),
-    links(new QList<LinkInterface*>()),
     unknownPackets(),
     mavlink(protocol),
     commStatus(COMM_DISCONNECTED),
     receiveDropRate(0),
     sendDropRate(0),
-    statusTimeout(thread),
 
     name(""),
     type(MAV_TYPE_GENERIC),
@@ -150,7 +150,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     paramsOnceRequested(false),
     paramMgr(this),
     simulation(0),
-    _thread(thread),
 
     // The protected members.
     connectionLost(false),
@@ -163,7 +162,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     lastSendTimeSensors(0),
     lastSendTimeOpticalFlow(0)
 {
-    moveToThread(thread);
 
     for (unsigned int i = 0; i<255;++i)
     {
@@ -176,57 +174,57 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     // Store a list of available actions for this UAS.
     // Basically everything exposed as a SLOT with no return value or arguments.
 
-    QAction* newAction = new QAction(tr("Arm"), thread);
+    QAction* newAction = new QAction(tr("Arm"), this);
     newAction->setToolTip(tr("Enable the UAS so that all actuators are online"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(armSystem()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Disarm"), thread);
+    newAction = new QAction(tr("Disarm"), this);
     newAction->setToolTip(tr("Disable the UAS so that all actuators are offline"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(disarmSystem()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Toggle armed"), thread);
+    newAction = new QAction(tr("Toggle armed"), this);
     newAction->setToolTip(tr("Toggle between armed and disarmed"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go home"), thread);
+    newAction = new QAction(tr("Go home"), this);
     newAction->setToolTip(tr("Command the UAS to return to its home position"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(home()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Land"), thread);
+    newAction = new QAction(tr("Land"), this);
     newAction->setToolTip(tr("Command the UAS to land"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(land()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Launch"), thread);
+    newAction = new QAction(tr("Launch"), this);
     newAction->setToolTip(tr("Command the UAS to launch itself and begin its mission"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(launch()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Resume"), thread);
+    newAction = new QAction(tr("Resume"), this);
     newAction->setToolTip(tr("Command the UAS to continue its mission"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(go()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Stop"), thread);
+    newAction = new QAction(tr("Stop"), this);
     newAction->setToolTip(tr("Command the UAS to halt and hold position"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(halt()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go autonomous"), thread);
+    newAction = new QAction(tr("Go autonomous"), this);
     newAction->setToolTip(tr("Set the UAS into an autonomous control mode"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(goAutonomous()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go manual"), thread);
+    newAction = new QAction(tr("Go manual"), this);
     newAction->setToolTip(tr("Set the UAS into a manual control mode"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(goManual()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Toggle autonomy"), thread);
+    newAction = new QAction(tr("Toggle autonomy"), this);
     newAction->setToolTip(tr("Toggle between manual and full-autonomy"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
@@ -251,11 +249,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 UAS::~UAS()
 {
     writeSettings();
-
-    _thread->quit();
-
-    delete links;
-    delete simulation;
 }
 
 /**
@@ -271,7 +264,6 @@ void UAS::writeSettings()
     settings.setValue("AP_TYPE", this->autopilot);
     settings.setValue("BATTERY_SPECS", getBatterySpecs());
     settings.endGroup();
-    settings.sync();
 }
 
 /**
@@ -334,7 +326,7 @@ void UAS::updateState()
         connectionLost = true;
         receivedMode = false;
         QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
-        GAudioOutput::instance()->say(audiostring.toLower());
+        GAudioOutput::instance()->say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_ALERT);
     }
 
     // Update connection loss time on each iteration
@@ -348,7 +340,7 @@ void UAS::updateState()
     if (connectionLost && (heartbeatInterval < timeoutIntervalHeartbeat))
     {
         QString audiostring = QString("Link regained to system %1").arg(this->getUASID());
-        GAudioOutput::instance()->say(audiostring.toLower());
+        GAudioOutput::instance()->say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_NOTICE);
         connectionLost = false;
         connectionLossTime = 0;
         emit heartbeatTimeout(false, 0);
@@ -392,8 +384,7 @@ bool UAS::getSelected() const
 
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
-    if (!link) return;
-    if (!links->contains(link))
+    if (!links.contains(link))
     {
         addLink(link);
         //        qDebug() << __FILE__ << __LINE__ << "ADDED LINK!" << link->getName();
@@ -551,7 +542,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 modechanged = true;
                 this->base_mode = state.base_mode;
                 this->custom_mode = state.custom_mode;
-                shortModeText = getShortModeTextFor(this->base_mode, this->custom_mode, this->autopilot);
+                shortModeText = getShortModeTextFor(this->base_mode, this->custom_mode);
 
                 emit modeChanged(this->getUASID(), shortModeText, "");
 
@@ -575,7 +566,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if (statechanged && ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY))
             {
-                GAudioOutput::instance()->say(QString("emergency for system %1").arg(this->getUASID()));
+                GAudioOutput::instance()->say(QString("emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
                 QTimer::singleShot(3000, GAudioOutput::instance(), SLOT(startEmergency()));
             }
             else if (modechanged || statechanged)
@@ -1739,22 +1730,14 @@ void UAS::sendMessage(mavlink_message_t message)
         return;
     }
 
-    if (links->count() < 1) {
+    if (links.count() < 1) {
         qDebug() << "NO LINK AVAILABLE TO SEND!";
     }
 
     // Emit message on all links that are currently connected
-    foreach (LinkInterface* link, *links)
-    {
-        if (LinkManager::instance()->getLinks().contains(link))
-        {
-            if (link->isConnected())
-                sendMessage(link, message);
-        }
-        else
-        {
-            // Remove from list
-            links->removeAt(links->indexOf(link));
+    foreach (LinkInterface* link, links) {
+        if (link->isConnected()) {
+            sendMessage(link, message);
         }
     }
 }
@@ -1766,7 +1749,7 @@ void UAS::sendMessage(mavlink_message_t message)
 void UAS::forwardMessage(mavlink_message_t message)
 {
     // Emit message on all links that are currently connected
-    QList<LinkInterface*>link_list = LinkManager::instance()->getLinksForProtocol(mavlink);
+    QList<LinkInterface*>link_list = LinkManager::instance()->getLinks();
 
     foreach(LinkInterface* link, link_list)
     {
@@ -1775,9 +1758,9 @@ void UAS::forwardMessage(mavlink_message_t message)
             SerialLink* serial = dynamic_cast<SerialLink*>(link);
             if(serial != 0)
             {
-                for(int i=0; i<links->size(); i++)
+                for(int i=0; i<links.size(); i++)
                 {
-                    if(serial != links->at(i))
+                    if(serial != links.at(i))
                     {
                         if (link->isConnected()) {
                             qDebug()<<"Antenna tracking: Forwarding Over link: "<<serial->getName()<<" "<<serial;
@@ -1967,16 +1950,6 @@ quint64 UAS::getUptime() const
 int UAS::getCommunicationStatus() const
 {
     return commStatus;
-}
-
-void UAS::requestParameters()
-{
-    mavlink_message_t msg;
-    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_ALL);
-    sendMessage(msg);
-
-    QDateTime time = QDateTime::currentDateTime();
-    qDebug() << __FILE__ << ":" << __LINE__ << time.toString() << "LOADING PARAM LIST";
 }
 
 void UAS::writeParametersToStorage()
@@ -2366,7 +2339,7 @@ void UAS::setParameter(const int compId, const QString& paramId, const QVariant&
 
 
 //TODO update this to use the parameter manager / param data model instead
-void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName, const mavlink_param_value_t& rawValue,  mavlink_param_union_t& paramValue)
+void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName, const mavlink_param_value_t& rawValue,  mavlink_param_union_t& paramUnion)
 {
     int compId = msg.compid;
 
@@ -2380,105 +2353,68 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
         parameters.value(compId)->remove(paramName);
     }
 
-    QVariant param;
+    QVariant paramValue;
 
     // Insert with correct type
     // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
-    switch (rawValue.param_type)
-    {
-    case MAV_PARAM_TYPE_REAL32:
-    {
-        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-            param = QVariant(paramValue.param_float);
-        }
-        else {
-            param = QVariant(paramValue.param_float);
-        }
-        parameters.value(compId)->insert(paramName, param);
-        // Emit change
-        emit parameterChanged(uasId, compId, paramName, param);
-        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
-//                qDebug() << "RECEIVED PARAM:" << param;
+    
+    switch (rawValue.param_type) {
+        case MAV_PARAM_TYPE_REAL32:
+            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                paramValue = QVariant(paramUnion.param_float);
+            } else {
+                paramValue = QVariant(paramUnion.param_float);
+            }
+            break;
+            
+        case MAV_PARAM_TYPE_UINT8:
+            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                paramValue = QVariant(QChar((unsigned char)paramUnion.param_float));
+            } else {
+                paramValue = QVariant(QChar((unsigned char)paramUnion.param_uint8));
+            }
+            break;
+            
+        case MAV_PARAM_TYPE_INT8:
+            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                paramValue = QVariant(QChar((char)paramUnion.param_float));
+            } else  {
+                paramValue = QVariant(QChar((char)paramUnion.param_int8));
+            }
+            break;
+            
+        case MAV_PARAM_TYPE_INT16:
+            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                paramValue = QVariant((short)paramUnion.param_float);
+            } else {
+                paramValue = QVariant(paramUnion.param_int16);
+            }
+            break;
+            
+        case MAV_PARAM_TYPE_UINT32:
+            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                paramValue = QVariant((unsigned int)paramUnion.param_float);
+            } else {
+                paramValue = QVariant(paramUnion.param_uint32);
+            }
+            break;
+        case MAV_PARAM_TYPE_INT32:
+            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                paramValue = QVariant((int)paramUnion.param_float);
+            } else {
+                paramValue = QVariant(paramUnion.param_int32);
+            }
+            break;
+            
+        default:
+            qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << rawValue.param_type;
     }
-        break;
-    case MAV_PARAM_TYPE_UINT8:
-    {
-        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-            param = QVariant(QChar((unsigned char)paramValue.param_float));
-        }
-        else {
-            param = QVariant(QChar((unsigned char)paramValue.param_uint8));
-        }
-        parameters.value(compId)->insert(paramName, param);
-        // Emit change
-        emit parameterChanged(uasId, compId, paramName, param);
-        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
-        //qDebug() << "RECEIVED PARAM:" << param;
-    }
-        break;
-    case MAV_PARAM_TYPE_INT8:
-    {
-        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-            param = QVariant(QChar((char)paramValue.param_float));
-        }
-        else  {
-            param = QVariant(QChar((char)paramValue.param_int8));
-        }
-        parameters.value(compId)->insert(paramName, param);
-        // Emit change
-        emit parameterChanged(uasId, compId, paramName, param);
-        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
-        //qDebug() << "RECEIVED PARAM:" << param;
-    }
-        break;
-    case MAV_PARAM_TYPE_INT16:
-    {
-        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-            param = QVariant((short)paramValue.param_float);
-        }
-        else {
-            param = QVariant(paramValue.param_int16);
-        }
-        parameters.value(compId)->insert(paramName, param);
-        // Emit change
-        emit parameterChanged(uasId, compId, paramName, param);
-        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
-        //qDebug() << "RECEIVED PARAM:" << param;
-    }
-        break;
-    case MAV_PARAM_TYPE_UINT32:
-    {
-        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-            param = QVariant((unsigned int)paramValue.param_float);
-        }
-        else {
-            param = QVariant(paramValue.param_uint32);
-        }
-        parameters.value(compId)->insert(paramName, param);
-        // Emit change
-        emit parameterChanged(uasId, compId, paramName, param);
-        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
-    }
-        break;
-    case MAV_PARAM_TYPE_INT32:
-    {
-        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-            param = QVariant((int)paramValue.param_float);
-        }
-        else {
-            param = QVariant(paramValue.param_int32);
-        }
-        parameters.value(compId)->insert(paramName, param);
-        // Emit change
-        emit parameterChanged(uasId, compId, paramName, param);
-        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
-//                qDebug() << "RECEIVED PARAM:" << param;
-    }
-        break;
-    default:
-        qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << rawValue.param_type;
-    } //switch (value.param_type)
 
+    qCDebug(UASLog) << "Received PARAM_VALUE" << paramName << paramValue << rawValue.param_type;
+    
+    parameters.value(compId)->insert(paramName, paramValue);
+    emit parameterChanged(uasId, compId, paramName, paramValue);
+    emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, paramValue);
 }
 
 /**
@@ -3301,9 +3237,9 @@ QString UAS::getAudioModeTextFor(int id)
 * The mode returned can be auto, stabilized, test, manual, preflight or unknown.
 * @return the short text of the mode for the id given.
 */
-QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int autopilot)
+QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const
 {
-    QString mode = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(autopilot)->getShortModeText(base_mode, custom_mode);
+    QString mode = AutoPilotPluginManager::instance()->getShortModeText(base_mode, custom_mode, autopilot);
 
     if (mode.length() == 0)
     {
@@ -3342,29 +3278,33 @@ const QString& UAS::getShortMode() const
 */
 void UAS::addLink(LinkInterface* link)
 {
-    if (!links->contains(link))
+    if (!links.contains(link))
     {
-        links->append(link);
+        links.append(link);
+        qCDebug(UASLog) << "addLink:" << QString("%1").arg((ulong)link, 0, 16);
         connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
     }
 }
 
 void UAS::removeLink(QObject* object)
 {
+    qCDebug(UASLog) << "removeLink:" << QString("%1").arg((ulong)object, 0, 16);
+    qCDebug(UASLog) << "link count:" << links.count();
+    
     // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
     // been destroyed.
     
     LinkInterface* link = (LinkInterface*)object;
     
-    int index = links->indexOf(link);
+    int index = links.indexOf(link);
     Q_ASSERT(index != -1);
-    links->removeAt(index);
+    links.removeAt(index);
 }
 
 /**
 * @return the list of links
 */
-QList<LinkInterface*>* UAS::getLinks()
+QList<LinkInterface*> UAS::getLinks()
 {
     return links;
 }

@@ -312,12 +312,12 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         // Add last button
         advancedButton = new QToolButton(this);
         advancedButton->setIcon(QIcon(":/files/images/apps/utilities-system-monitor.svg"));
-        advancedButton->setText(tr("Pro"));
+        advancedButton->setText(tr("More"));
         advancedButton->setToolTip(tr("Options for advanced users"));
         advancedButton->setCheckable(true);
         advancedButton->setObjectName("advancedButton");
         advancedButton->setPopupMode(QToolButton::InstantPopup);
-        advancedButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        advancedButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
         addWidget(advancedButton);
         group->addButton(advancedButton);
     } else {
@@ -661,8 +661,8 @@ void QGCToolBar::addLink(LinkInterface* link)
         toolBarBaudAction->setVisible(true);
 
         currentLink = link;
-        connect(currentLink, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
-        updateLinkState(link->isConnected());
+        connect(currentLink, &LinkInterface::connected, this, &QGCToolBar::_linkConnected);
+        _updateLinkState(link->isConnected());
 
         qDebug() << "ADD LINK";
 
@@ -683,7 +683,7 @@ void QGCToolBar::removeLink(LinkInterface* link)
 
         // Update GUI according to scan result
         if (currentLink) {
-            updateLinkState(currentLink->isConnected());
+            _updateLinkState(currentLink->isConnected());
         } else {
             connectButton->setText(tr("New Serial Link"));
             portComboBox->hide();
@@ -740,7 +740,17 @@ void QGCToolBar::updateComboBox()
     }
 }
 
-void QGCToolBar::updateLinkState(bool connected)
+void QGCToolBar::_linkConnected(void)
+{
+    _updateLinkState(true);
+}
+
+void QGCToolBar::_linkDisconnected(void)
+{
+    _updateLinkState(false);
+}
+
+void QGCToolBar::_updateLinkState(bool connected)
 {
     Q_UNUSED(connected);
     if (currentLink && currentLink->isConnected() && portComboBox->isVisible())
@@ -767,32 +777,32 @@ void QGCToolBar::updateLinkState(bool connected)
     }
 }
 
-void QGCToolBar::connectLink(bool connect)
+void QGCToolBar::connectLink(bool connectLink)
 {
     LinkManager* linkMgr = LinkManager::instance();
     Q_ASSERT(linkMgr);
     
     // No serial port yet present
-    if (connect && linkMgr->getSerialLinks().count() == 0) {
+    if (connectLink && linkMgr->getSerialLinks().count() == 0) {
         MainWindow::instance()->addLink();
         currentLink = linkMgr->getLinks().last();
-    } else if (connect) {
+    } else if (connectLink) {
         SerialLink *link = qobject_cast<SerialLink*>(currentLink);
         
         if (link) {
             link->setPortName(portComboBox->itemData(portComboBox->currentIndex()).toString().trimmed());
             int baud = baudcomboBox->currentText().toInt();
             link->setBaudRate(baud);
-            QObject::connect(link, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
+            connect(link, &LinkInterface::connected, this, &QGCToolBar::_linkConnected);
             linkMgr->connectLink(link);
         }
-    } else if (!connect && currentLink) {
+    } else if (!connectLink && currentLink) {
         linkMgr->disconnectLink(currentLink);
-        QObject::disconnect(currentLink, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
+        disconnect(currentLink, &LinkInterface::connected, this, &QGCToolBar::_linkConnected);
     }
 
     if (currentLink) {
-        updateLinkState(currentLink->isConnected());
+        _updateLinkState(currentLink->isConnected());
     }
 }
 
@@ -809,7 +819,6 @@ void QGCToolBar::storeSettings()
     QSettings settings;
     settings.beginGroup("QGC_TOOLBAR");
     settings.endGroup();
-    settings.sync();
 }
 
 void QGCToolBar::clearStatusString()

@@ -66,7 +66,7 @@ public slots:
     /** @brief Add a UAS to the list of monitored UAS */
     void uasCreated(UASInterface* uas);
     /** @brief Remove a link from the list */
-    void removeLink(LinkInterface* const link);
+    void removeLink(LinkInterface* link);
     /** @brief Update a link name */
     void updateLinkName(QString name);
     /** @brief Select a link for the active view */
@@ -81,8 +81,6 @@ public slots:
     void MAVLINKfilterEnabled(bool filter);
     /** @brief Freeze input, do not store new incoming data */
     void hold(bool hold);
-    /** @brief Set connection state of the current link */
-    void setConnectionState(bool);
     /** @brief Handle the connect button */
     void handleConnectButton();
     /** @brief Enable auto-freeze mode if traffic intensity is too high to display */
@@ -144,8 +142,15 @@ protected:
     QStringList commandHistory;
     QString currCommand;
     int commandIndex;
+    
+private slots:
+    void _linkConnected(void);
+    void _linkDisconnected(void);
 
 private:
+    /** @brief Set connection state of the current link */
+    void _setConnectionState(bool);
+
     Ui::DebugConsole *m_ui;
 };
 

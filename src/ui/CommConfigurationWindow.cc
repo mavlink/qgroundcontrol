@@ -60,7 +60,7 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkManager.h"
 #include "MainWindow.h"
 
-CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent) : QDialog(parent)
+CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, QWidget *parent) : QDialog(parent)
 {
     this->link = link;
 
@@ -112,7 +112,6 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // Create configuration action for this link
     // Connect the current UAS
     action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", this);
-    LinkManager::instance()->add(link);
 	action->setData(link->getId());
     action->setEnabled(true);
     action->setVisible(true);
@@ -127,12 +126,11 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     connect(ui.closeButton, SIGNAL(clicked()), this->window(), SLOT(close()));
     connect(ui.deleteButton, SIGNAL(clicked()), this, SLOT(remove()));
 
-    connect(this->link, SIGNAL(connected(bool)), this, SLOT(connectionState(bool)));
-
+    connect(link, &LinkInterface::connected, this, &CommConfigurationWindow::_linkConnected);
+    connect(link, &LinkInterface::disconnected, this, &CommConfigurationWindow::_linkDisconnected);
 
     // Fill in the current data
     if(this->link->isConnected()) ui.connectButton->setChecked(true);
-    //connect(this->link, SIGNAL(connected(bool)), ui.connectButton, SLOT(setChecked(bool)));
 
     if(this->link->isConnected()) {
         ui.connectionStatusLabel->setText(tr("Connected"));
@@ -226,14 +224,10 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     connect(ui.linkType,SIGNAL(currentIndexChanged(int)),this,SLOT(linkCurrentIndexChanged(int)));
 
     // Open details pane for MAVLink if necessary
-    MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
-    if (mavlink != 0) {
-        QWidget* conf = new MAVLinkSettingsWidget(mavlink, this);
-        ui.protocolScrollArea->setWidget(conf);
-        ui.protocolGroupBox->setTitle(protocol->getName()+" (Global Settings)");
-    } else {
-        qDebug() << "Protocol is NOT MAVLink, can't open configuration window";
-    }
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+    QWidget* conf = new MAVLinkSettingsWidget(mavlink, this);
+    ui.protocolScrollArea->setWidget(conf);
+    ui.protocolGroupBox->setTitle(mavlink->getName()+" (Global Settings)");
 
     // Open details for UDP link if necessary
     // TODO
@@ -279,7 +273,6 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				XbeeLink *xbee = new XbeeLink();
 				tmpLink = xbee;
-				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 #endif // QGC_XBEE_ENABLED
@@ -288,7 +281,6 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				UDPLink *udp = new UDPLink();
 				tmpLink = udp;
-				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 			
@@ -296,7 +288,6 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
             {
             TCPLink *tcp = new TCPLink();
             tmpLink = tcp;
-            MainWindow::instance()->addLink(tmpLink);
             break;
             }
 
@@ -305,7 +296,6 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				OpalLink* opal = new OpalLink();
 				tmpLink = opal;
-				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 #endif // QGC_RTLAB_ENABLED
@@ -315,7 +305,6 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
         {
             MockLink* mock = new MockLink;
             tmpLink = mock;
-            MainWindow::instance()->addLink(tmpLink);
             break;
         }
 #endif
@@ -325,10 +314,13 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			{
 				SerialLink *serial = new SerialLink();
 				tmpLink = serial;
-				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 	}
+    
+    if (tmpLink) {
+        LinkManager::instance()->addLink(tmpLink);
+    }
 	// trigger new window
 
 	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(tmpLink));
@@ -385,7 +377,15 @@ void CommConfigurationWindow::remove()
     this->deleteLater();
 }
 
-void CommConfigurationWindow::connectionState(bool connect)
+void CommConfigurationWindow::_linkConnected(void) {
+    _connectionState(true);
+}
+
+void CommConfigurationWindow::_linkDisconnected(void) {
+    _connectionState(false);
+}
+
+void CommConfigurationWindow::_connectionState(bool connect)
 {
     ui.connectButton->setChecked(connect);
     if(connect) {

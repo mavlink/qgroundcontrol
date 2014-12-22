@@ -31,7 +31,6 @@
 
 #include <QFile>
 #include <QFlags>
-#include <QThread>
 #include <QSplashScreen>
 #include <QPixmap>
 #include <QDesktopWidget>
@@ -56,6 +55,7 @@
 #include "LinkManager.h"
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
+#include "QGCTemporaryFile.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -91,10 +91,49 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     Q_ASSERT(_app == NULL);
     _app = this;
     
+    
+#ifdef QT_DEBUG
+    // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
+    // it to the correct location. This way default debug builds will have logging turned off.
+    
+    static const char* qtProjectDir = "QtProject";
+    static const char* qtLoggingFile = "qtlogging.ini";
+    bool loggingDirectoryOk = false;
+    
+    QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
+    if (!iniFileLocation.cd(qtProjectDir)) {
+        if (!iniFileLocation.mkdir(qtProjectDir)) {
+            qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);
+        } else {
+            if (!iniFileLocation.cd(qtProjectDir)) {
+                qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);;
+            }
+            loggingDirectoryOk = true;
+        }
+    } else {
+        loggingDirectoryOk = true;
+    }
+    
+    if (loggingDirectoryOk) {
+        qDebug () << iniFileLocation;
+        if (!iniFileLocation.exists(qtLoggingFile)) {
+            if (!QFile::copy(":QLoggingCategory/qtlogging.ini", iniFileLocation.filePath(qtLoggingFile))) {
+                qDebug() << "Unable to copy" << QString(qtLoggingFile) << "to" << iniFileLocation;
+            }
+        }
+    }
+#endif
+    
     // Set application information
-    this->setApplicationName(QGC_APPLICATION_NAME);
-    this->setOrganizationName(QGC_ORG_NAME);
-    this->setOrganizationDomain(QGC_ORG_DOMAIN);
+    if (_runningUnitTests) {
+        // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
+        // name. Also we want to run unit tests with clean settings every time.
+        setApplicationName(QString("%1_unittest").arg(QGC_APPLICATION_NAME));
+    } else {
+        setApplicationName(QGC_APPLICATION_NAME);
+    }
+    setOrganizationName(QGC_ORG_NAME);
+    setOrganizationDomain(QGC_ORG_DOMAIN);
     
     // Version string is build from component parts. Format is:
     //  vMajor.Minor.BuildNumber BuildType
@@ -121,10 +160,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
     
-    // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
-    // name. Also we want to run unit tests with clean settings every time.
     if (_runningUnitTests) {
-        setApplicationName(applicationName().append("UnitTest"));
+        // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }
     
@@ -132,33 +169,20 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         // User requested settings to be cleared on command line
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
-        settings.sync();
     }
-    
 }
 
 QGCApplication::~QGCApplication()
 {
-    destroySingletonsForUnitTest();
+    _destroySingletons();
 }
 
 void QGCApplication::_initCommon(void)
 {
-
-}
-
-bool QGCApplication::_initForNormalAppBoot(void)
-{
     QSettings settings;
-    
-    _createSingletons();
-    
-    // Exit main application when last window is closed
-    connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
     
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
-    enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_PX4;
     if (settings.contains(_settingsVersionKey)) {
         if (settings.value(_settingsVersionKey).toInt() != QGC_SETTINGS_VERSION) {
             settingsUpgraded = true;
@@ -171,6 +195,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
     if (settingsUpgraded) {
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+        QGCMessageBox::information(tr("Settings Cleared"),
+                                   tr("The format for QGroundControl saved settings has been modified. "
+                                      "Your saved settings have been reset to defaults."));
     }
     
     // Load saved files location and validate
@@ -190,7 +217,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
         Q_UNUSED(pathCreated);
         Q_ASSERT(pathCreated);
         savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
-        settings.setValue(_savedFilesLocationKey, savedFilesLocation);
     }
     
     if (!savedFilesLocation.isEmpty()) {
@@ -198,20 +224,26 @@ bool QGCApplication::_initForNormalAppBoot(void)
             savedFilesLocation.clear();
         }
     }
+    settings.setValue(_savedFilesLocationKey, savedFilesLocation);
+
+    // Load application font
+    QFontDatabase fontDatabase = QFontDatabase();
+    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
+    //const QString fontFamilyName = "Bitstream Vera Sans";
+    if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
+    fontDatabase.addApplicationFont(fontFileName);
+    // Avoid Using setFont(). In the Qt docu you can read the following:
+    //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
+    // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
+}
+
+bool QGCApplication::_initForNormalAppBoot(void)
+{
+    QSettings settings;
     
-    // If we made it this far and we still don't have a location. Either the specfied location was invalid
-    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
-    /// settings.
-    if (savedFilesLocation.isEmpty()) {
-        QMessageBox::warning(MainWindow::instance(),
-                             tr("Bad save location"),
-                             tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
-        MainWindow::instance()->showSettings();
-    }
+    _createSingletons();
     
-    mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
-    
-    settings.sync();
+    enum MainWindow::CUSTOM_MODE mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
     
     // Show splash screen
     QPixmap splashImage(":/files/images/splash.png");
@@ -222,20 +254,23 @@ bool QGCApplication::_initForNormalAppBoot(void)
     processEvents();
     splashScreen->showMessage(tr("Loading application fonts"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     
-    // Load application font
-    QFontDatabase fontDatabase = QFontDatabase();
-    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
-    //const QString fontFamilyName = "Bitstream Vera Sans";
-    if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
-    fontDatabase.addApplicationFont(fontFileName);
-    // Avoid Using setFont(). In the Qt docu you can read the following:
-    //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
-    // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
-    
+    // Exit main application when last window is closed
+    connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
+
     // Start the user interface
     splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    MainWindow* mainWindow = new MainWindow(splashScreen, mode);
+    MainWindow* mainWindow = MainWindow::_create(splashScreen, mode);
     Q_CHECK_PTR(mainWindow);
+    
+    // If we made it this far and we still don't have a location. Either the specfied location was invalid
+    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
+    /// settings.
+    QString savedFilesLocation = settings.value(_savedFilesLocationKey).toString();
+    if (savedFilesLocation.isEmpty()) {
+        QGCMessageBox::warning(tr("Bad save location"),
+                               tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
+        mainWindow->showSettings();
+    }
     
     UDPLink* udpLink = NULL;
     
@@ -245,11 +280,11 @@ bool QGCApplication::_initForNormalAppBoot(void)
         // to make sure that all components are initialized when the
         // first messages arrive
         udpLink = new UDPLink(QHostAddress::Any, 14550);
-        LinkManager::instance()->add(udpLink);
+        LinkManager::instance()->addLink(udpLink);
     } else {
         // We want to have a default serial link available for "quick" connecting.
         SerialLink *slink = new SerialLink();
-        LinkManager::instance()->add(slink);
+        LinkManager::instance()->addLink(slink);
     }
     
 #ifdef QGC_RTLAB_ENABLED
@@ -262,20 +297,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
     splashScreen->finish(mainWindow);
     mainWindow->splashScreenFinished();
     
-    // If we made it this far and we still don't have a location. Either the specfied location was invalid
-    // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
-    /// settings.
-    if (savedFilesLocation.isEmpty()) {
-        QGCMessageBox::warning(tr("Bad save location"),
-                               tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
-        mainWindow->showSettings();
-    }
-    
-    if (settingsUpgraded) {
-        mainWindow->showInfoMessage(tr("Settings Cleared"),
-                                    tr("The format for QGroundControl saved settings has been modified. "
-                                       "Your saved settings have been reset to defaults."));
-    }
     
     // Check if link could be connected
     if (udpLink && LinkManager::instance()->connectLink(udpLink))
@@ -321,11 +342,14 @@ void QGCApplication::setSavedFilesLocation(QString& location)
 bool QGCApplication::validatePossibleSavedFilesLocation(QString& location)
 {
     // Make sure we can write to the directory
+    
     QString filename = QDir(location).filePath("QGCTempXXXXXXXX.tmp");
-    QTemporaryFile tempFile(filename);
+    QGCTemporaryFile tempFile(filename);
     if (!tempFile.open()) {
         return false;
     }
+    
+    tempFile.remove();
     
     return true;
 }
@@ -399,38 +423,62 @@ QGCApplication* qgcApp(void)
 ///         up being creating on something other than the main thread.
 void QGCApplication::_createSingletons(void)
 {
+    // The order here is important since the singletons reference each other
     
-    LinkManager* linkManager = LinkManager::instance();
+    GAudioOutput* audio = GAudioOutput::_createSingleton();
+    Q_UNUSED(audio);
+    Q_ASSERT(audio);
+    
+    LinkManager* linkManager = LinkManager::_createSingleton();
     Q_UNUSED(linkManager);
     Q_ASSERT(linkManager);
 
-    UASManagerInterface* uasManager = UASManager::instance();
+    // Needs LinkManager
+    UASManagerInterface* uasManager = UASManager::_createSingleton();
     Q_UNUSED(uasManager);
     Q_ASSERT(uasManager);
 
-    AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::instance();
+    // Need UASManager
+    AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::_createSingleton();
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
+
+    // Needs UASManager
+    FactSystem* factSystem = FactSystem::_createSingleton();
+    Q_UNUSED(factSystem);
+    Q_ASSERT(factSystem);
+    
+    // Needs everything!
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::_createSingleton();
+    Q_UNUSED(mavlink);
+    Q_ASSERT(mavlink);
 }
 
-void QGCApplication::destroySingletonsForUnitTest(void)
+void QGCApplication::_destroySingletons(void)
 {
-    foreach(QGCSingleton* singleton, _singletons) {
-        Q_ASSERT(singleton);
-        singleton->deleteInstance();
-    }
-    
     if (MainWindow::instance()) {
         delete MainWindow::instance();
     }
     
-    _singletons.clear();
-}
+    if (LinkManager::instance(true /* nullOk */)) {
+        // This will close/delete all connections
+        LinkManager::instance()->_shutdown();
+    }
 
-void QGCApplication::registerSingleton(QGCSingleton* singleton)
-{
-    Q_ASSERT(singleton);
-    Q_ASSERT(!_singletons.contains(singleton));
+    if (UASManager::instance(true /* nullOk */)) {
+        // This will delete all uas from the system
+        UASManager::instance()->_shutdown();
+    }
     
-    _singletons.append(singleton);
+    // Let the signals flow through the main thread
+    processEvents(QEventLoop::ExcludeUserInputEvents);
+    
+    // Take down singletons in reverse order of creation
+
+    MAVLinkProtocol::_deleteSingleton();
+    FactSystem::_deleteSingleton();
+    AutoPilotPluginManager::_deleteSingleton();
+    UASManager::_deleteSingleton();
+    LinkManager::_deleteSingleton();
+    GAudioOutput::_deleteSingleton();
 }

@@ -45,8 +45,6 @@ signals:
     void waitForReadyRead(int msecs);
 
 private slots:
-    UT_DECLARE_DEFAULT_initTestCase
-    UT_DECLARE_DEFAULT_cleanupTestCase
     void init(void);
     void cleanup(void);
     
@@ -60,7 +58,6 @@ private:
         bytesReceivedSignalIndex = 0,
         connectedSignalIndex,
         disconnectedSignalIndex,
-        connected2SignalIndex,
         nameChangedSignalIndex,
         communicationErrorSignalIndex,
         communicationUpdateSignalIndex,
@@ -72,7 +69,6 @@ private:
         bytesReceivedSignalMask =       1 << bytesReceivedSignalIndex,
         connectedSignalMask =           1 << connectedSignalIndex,
         disconnectedSignalMask =        1 << disconnectedSignalIndex,
-        connected2SignalMask =          1 << connected2SignalIndex,
         nameChangedSignalMask =         1 << nameChangedSignalIndex,
         communicationErrorSignalMask =  1 << communicationErrorSignalIndex,
         communicationUpdateSignalMask = 1 << communicationUpdateSignalIndex,

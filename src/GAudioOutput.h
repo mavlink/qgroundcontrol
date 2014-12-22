@@ -34,43 +34,24 @@ This file is part of the PIXHAWK project
 
 #include <QObject>
 #include <QTimer>
+#include <QThread>
 #include <QStringList>
-#ifdef Q_OS_MAC
-//#include <MediaObject>
-//#include <AudioOutput>
-#endif
-#ifdef Q_OS_LINUX
-//#include <phonon/MediaObject>
-//#include <phonon/AudioOutput>
-#endif
-#ifdef Q_OS_WIN
-//#include <Phonon/MediaObject>
-//#include <Phonon/AudioOutput>
-#endif
 
-/* For Snow leopard and later
-#if defined Q_OS_MAC & defined QGC_SPEECH_ENABLED
-#include <NSSpeechSynthesizer.h>
-#endif
-   */
-
-
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-// Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
-#include <sapi.h>
-#endif
+#include "QGCAudioWorker.h"
+#include "QGCSingleton.h"
 
 /**
  * @brief Audio Output (speech synthesizer and "beep" output)
  * This class follows the singleton design pattern
  * @see http://en.wikipedia.org/wiki/Singleton_pattern
  */
-class GAudioOutput : public QObject
+class GAudioOutput : public QGCSingleton
 {
     Q_OBJECT
+    
+    DECLARE_QGC_SINGLETON(GAudioOutput, GAudioOutput)
+    
 public:
-    /** @brief Get the singleton instance */
-    static GAudioOutput *instance();
     /** @brief List available voices */
     QStringList listVoices(void);
     enum
@@ -79,22 +60,34 @@ public:
         VOICE_FEMALE
     } QGVoice;
 
+    enum AUDIO_SEVERITY
+    {
+        AUDIO_SEVERITY_EMERGENCY = 0,
+        AUDIO_SEVERITY_ALERT = 1,
+        AUDIO_SEVERITY_CRITICAL = 2,
+        AUDIO_SEVERITY_ERROR = 3,
+        AUDIO_SEVERITY_WARNING = 4,
+        AUDIO_SEVERITY_NOTICE = 5,
+        AUDIO_SEVERITY_INFO = 6,
+        AUDIO_SEVERITY_DEBUG = 7
+    };
+
     /** @brief Get the mute state */
     bool isMuted();
 
 public slots:
     /** @brief Say this text if current output priority matches */
-    bool say(QString text, int severity = 1);
+    bool say(QString text, int severity = 6);
     /** @brief Play alert sound and say notification message */
     bool alert(QString text);
     /** @brief Start emergency sound */
     bool startEmergency();
     /** @brief Stop emergency sound */
     bool stopEmergency();
-    /** @brief Select female voice */
-    void selectFemaleVoice();
-    /** @brief Select male voice */
-    void selectMaleVoice();
+//    /** @brief Select female voice */
+//    void selectFemaleVoice();
+//    /** @brief Select male voice */
+//    void selectMaleVoice();
     /** @brief Play emergency sound once */
     void beep();
     /** @brief Notify about positive event */
@@ -106,23 +99,14 @@ public slots:
 
 signals:
     void mutedChanged(bool);
+    bool textToSpeak(QString text, int severity = 1);
+    void beepOnce();
 
 protected:
-#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
-    //NSSpeechSynthesizer
-#endif
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    //cst_voice* voice; ///< The flite voice object
-#endif
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-    static ISpVoice *pVoice;
-#endif
-    int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
-    //Phonon::MediaObject *m_media; ///< The output object for audio
-    //Phonon::AudioOutput *m_audioOutput;
-    bool emergency;   ///< Emergency status flag
-    QTimer *emergencyTimer;
     bool muted;
+    QThread* thread;
+    QGCAudioWorker* worker;
+    
 private:
     GAudioOutput(QObject *parent = NULL);
     ~GAudioOutput();

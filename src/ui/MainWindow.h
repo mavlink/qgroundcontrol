@@ -46,7 +46,6 @@ This file is part of the QGROUNDCONTROL project
 #include "WaypointList.h"
 #include "CameraView.h"
 #include "UASListWidget.h"
-#include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
 #include "submainwindow.h"
 #include "input/JoystickInput.h"
@@ -158,6 +157,8 @@ public:
     }
 
     QList<QAction*> listLinkMenuActions();
+    
+    void hideSplashScreen(void);
 
 public slots:
     /** @brief Shows a status message on the bottom status bar */
@@ -173,7 +174,6 @@ public slots:
     void showSettings();
     /** @brief Add a communication link */
     LinkInterface* addLink();
-    void addLink(LinkInterface* link);
     bool configLink(LinkInterface *link);
     /** @brief Simulate a link */
     void simulateLink(bool simulate);
@@ -195,11 +195,8 @@ public slots:
     void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
     void loadSetupView();
-    void loadSoftwareConfigView();
     /** @brief Load view for pilot */
     void loadPilotView();
-    /** @brief HUD view for pilot */
-    void loadHUDView();
     /** @brief Load view for simulation */
     void loadSimulationView();
     /** @brief Load view for engineer */
@@ -294,11 +291,6 @@ public:
         return logPlayer;
     }
 
-    MAVLinkProtocol* getMAVLink()
-    {
-        return mavlink;
-    }
-
 protected:
 
     typedef enum _VIEW_SECTIONS
@@ -313,7 +305,6 @@ protected:
         VIEW_TERMINAL,
         VIEW_LOCAL3D,
         VIEW_GOOGLEEARTH,
-        VIEW_HUD,
         VIEW_DEFAULT
     } VIEW_SECTIONS;
 
@@ -351,8 +342,6 @@ protected:
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
     QGC_MAINWINDOW_STYLE currentStyle;
-    bool aboutToCloseFlag;
-    bool changingViewsFlag;
 
     void storeViewState();
     void loadViewState();
@@ -365,8 +354,6 @@ protected:
     void loadSettings();
     void storeSettings();
 
-    // TODO Should be moved elsewhere, as the protocol does not belong to the UI
-    QPointer<MAVLinkProtocol> mavlink;
 
     LinkInterface* udpLink;
 
@@ -377,7 +364,6 @@ protected:
     // Center widgets
     QPointer<SubMainWindow> plannerView;
     QPointer<SubMainWindow> pilotView;
-    QPointer<SubMainWindow> hudView;
     QPointer<SubMainWindow> setupView;
     QPointer<SubMainWindow> softwareConfigView;
     QPointer<SubMainWindow> engineeringView;
@@ -422,7 +408,6 @@ protected:
     QPointer<QDockWidget> hudDockWidget;
 
     QPointer<QGCToolBar> toolBar;
-    QPointer<QGCStatusBar> customStatusBar;
 
     QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
@@ -468,19 +453,13 @@ protected:
     CUSTOM_MODE customMode;
     
 private slots:
-    /// @brief Save the specified Flight Data Log
     void _saveTempFlightDataLog(QString tempLogfile);
+    void _addLinkMenu(LinkInterface* link);
 
 private:
-    /// Constructor is private since all creation should be through MainWindow::instance.
+    /// Constructor is private since all creation should be through MainWindow::_create
     MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
     
-    /// @brief Two phase construction such that MainWindow::instance is available to code
-    void _init(void);
-    
-    friend class QGCApplication;
-    
-    void _hideSplashScreen(void);
     void _openUrl(const QString& url, const QString& errorMessage);
     
     QList<QObject*> commsWidgetList;

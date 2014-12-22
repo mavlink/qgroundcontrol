@@ -22,7 +22,7 @@
  ======================================================================*/
 
 /// @file
-///     @brief The tests the unit test QGCMessageBox catching mechanism.
+///     @brief Unit test for QGCMessageBox catching mechanism.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -39,19 +39,11 @@ public:
     MessageBoxTest(void);
     
 private slots:
-    UT_DECLARE_DEFAULT_initTestCase
-    UT_DECLARE_DEFAULT_cleanupTestCase
-    UT_DECLARE_DEFAULT_init
-    void cleanup(void);
-    
     void _messageBoxExpected_test(void);
     void _messageBoxUnexpected_test(void);
     void _previousMessageBox_test(void);
     void _noMessageBox_test(void);
     void _badResponseButton_test(void);
-    
-private:
-    bool _expectMissedMessageBox;
 };
 
 #endif

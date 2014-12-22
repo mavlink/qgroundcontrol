@@ -37,12 +37,17 @@ This file is part of the QGROUNDCONTROL project
 #include <QFile>
 #include <QMap>
 #include <QByteArray>
-#include <QTemporaryFile>
+#include <QLoggingCategory>
 
-#include "ProtocolInterface.h"
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
 #include "QGC.h"
+#include "QGCTemporaryFile.h"
+#include "QGCSingleton.h"
+
+class LinkManager;
+
+Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.
@@ -51,14 +56,13 @@ This file is part of the QGROUNDCONTROL project
  * for more information, please see the official website.
  * @ref http://pixhawk.ethz.ch/software/mavlink/
  **/
-class MAVLinkProtocol : public ProtocolInterface
+class MAVLinkProtocol : public QGCSingleton
 {
     Q_OBJECT
+    
+    DECLARE_QGC_SINGLETON(MAVLinkProtocol, MAVLinkProtocol)
 
 public:
-    MAVLinkProtocol();
-    ~MAVLinkProtocol();
-
     /** @brief Get the human-friendly name of this protocol */
     QString getName();
     /** @brief Get the system id of this application */
@@ -69,7 +73,7 @@ public:
     int getHeartbeatRate();
     /** @brief Get heartbeat state */
     bool heartbeatsEnabled() const {
-        return m_heartbeatsEnabled;
+        return _heartbeatsEnabled;
     }
     
     /** @brief Get protocol version check state */
@@ -138,12 +142,16 @@ public:
      */
     virtual void resetMetadataForLink(const LinkInterface *link);
     
-    void run();
+    /// Suspend/Restart logging during replay.
+    void suspendLogForReplay(bool suspend);
 
 public slots:
     /** @brief Receive bytes from a communication interface */
     void receiveBytes(LinkInterface* link, QByteArray b);
-    void linkStatusChanged(bool connected);
+    
+    void linkConnected(void);
+    void linkDisconnected(void);
+    
     /** @brief Send MAVLink message through serial interface */
     void sendMessage(mavlink_message_t message);
     /** @brief Send MAVLink message */
@@ -195,18 +203,13 @@ public slots:
     /** @brief Store protocol settings */
     void storeSettings();
     
-    /// @brief Suspend/Restart logging during replay. This must be emitted as a signal
-    ///         and not called directly in order to synchronize with the bytesReady signal
-    ///         which may be ahead of it in the signal queue.
-    void suspendLogForReplay(bool suspend);
+    /// @brief Deletes any log files which are in the temp directory
+    static void deleteTempLogFiles(void);
 
 protected:    
     // Override from QObject
     virtual void connectNotify(const QMetaMethod& signal);
 
-    QTimer *heartbeatTimer;    ///< Timer to emit heartbeats
-    int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
-    bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
     bool m_authEnabled;        ///< Enable authentication token broadcast
     QString m_authKey;         ///< Authentication key
@@ -225,7 +228,6 @@ protected:
     int currLossCounter[MAVLINK_COMM_NUM_BUFFERS];        ///< Lost messages during this sample time window. Used for calculating loss %.
     bool versionMismatchIgnore;
     int systemId;
-    bool _should_exit;
 
 signals:
     /** @brief Message received and directly copied via signal */
@@ -254,6 +256,9 @@ signals:
     void actionGuardChanged(bool enabled);
     /** @brief Emitted if actiion request timeout changed */
     void actionRetransmissionTimeoutChanged(int ms);
+    /** @brief Update the packet loss from one system */
+    void receiveLossChanged(int uasId, float loss);
+
     /**
      * @brief Emitted if a new radio status packet received
      *
@@ -272,6 +277,10 @@ signals:
     void saveTempFlightDataLog(QString tempLogfile);
     
 private:
+    MAVLinkProtocol(QObject* parent = NULL);
+    ~MAVLinkProtocol();
+
+    void _linkStatusChanged(LinkInterface* link, bool connected);
     bool _closeLogFile(void);
     void _startLogging(void);
     void _stopLogging(void);
@@ -282,12 +291,18 @@ private:
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay
     
-    QTemporaryFile _tempLogFile;                ///< File to log to
-    static const char* _tempLogFileTemplate;    ///< Template for temporary log file
-    static const char* _logFileExtension;       ///< Extension for log files
+    QGCTemporaryFile    _tempLogFile;            ///< File to log to
+    static const char*  _tempLogFileTemplate;    ///< Template for temporary log file
+    static const char*  _logFileExtension;       ///< Extension for log files
     
     bool _protocolStatusMessageConnected;   ///< true: protocolStatusMessage signal has been connected
     bool _saveTempFlightDataLogConnected;   ///< true: saveTempFlightDataLog signal has been connected
+    
+    LinkManager* _linkMgr;
+    
+    QTimer  _heartbeatTimer;    ///< Timer to emit heartbeats
+    int     _heartbeatRate;     ///< Heartbeat rate, controls the timer interval
+    bool    _heartbeatsEnabled; ///< Enabled/disable heartbeat emission
 };
 
 #endif // MAVLINKPROTOCOL_H_

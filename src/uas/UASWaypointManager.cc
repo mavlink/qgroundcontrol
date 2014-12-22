@@ -47,7 +47,7 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
       current_state(WP_IDLE),
       current_partner_systemid(0),
       current_partner_compid(0),
-      currentWaypointEditable(NULL),
+      currentWaypointEditable(),
       protocol_timer(this)
 {
     
@@ -113,7 +113,7 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
 {
     Q_UNUSED(mav);
     Q_UNUSED(time);
-    if (waypointsEditable.count() > 0 && currentWaypointEditable && (currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_NED || currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_ENU))
+    if (waypointsEditable.count() > 0 && !currentWaypointEditable.isNull() && (currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_NED || currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_ENU))
     {
         double xdiff = x-currentWaypointEditable->getX();
         double ydiff = y-currentWaypointEditable->getY();
@@ -131,7 +131,7 @@ void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double l
     Q_UNUSED(altWGS84);
 	Q_UNUSED(lon);
 	Q_UNUSED(lat);
-    if (waypointsEditable.count() > 0 && currentWaypointEditable && (currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL || currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT))
+    if (waypointsEditable.count() > 0 && !currentWaypointEditable.isNull() && (currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL || currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT))
     {
         // TODO FIXME Calculate distance
         double dist = 0;

@@ -21,10 +21,9 @@ There are three ways to obtain the QGroundControl source code from our GitHub re
 ### Clone the Repository
 This option assumes that you have Git already. To clone (checkout) the QGC repository, run the following command in the directory that you want the qgroundcontrol folder to be created:
 
-git clone git://github.com/mavlink/qgroundcontrol.git
-cd qgroundcontrol
-git submodule init
-git submodule update
+```
+git clone --recursive git://github.com/mavlink/qgroundcontrol.git
+```
 
 ### Fork the Repository
 If you plan to contribute to the development of QGC, you will want this option, which also requires that you have Git set up. To fork the QGC repository, do the following:
@@ -46,11 +45,6 @@ QGroundControl builds are supported for OSX, Linux and Windows. See the individu
 ### Build on Mac OSX
 Supported builds are 64 bit, built using the clang compiler.
 
-#### Install SDL prerequisite
-
-1. Download SDL 1.2 from:  <http://www.libsdl.org/release/SDL-1.2.14.dmg>
-2. From the SDL disk image, copy the `sdl.framework` bundle to `/Library/Frameworks` directory (if you are not an admin copy to `~/Library/Frameworks`)
-
 #### Install QT
 - - -
 1. Download Qt 5.3 from: <http://download.qt-project.org/official_releases/qt/5.3/5.3.1/qt-opensource-mac-x64-clang-5.3.1.dmg>
@@ -64,8 +58,8 @@ Supported builds are 64 bit, built using the clang compiler.
 ### Build on Linux
 Supported builds for Linux are 32 or 64-bit, built using gcc.
 
-#### Install Qt5.1+ and SDL1.2 prerequistites
-* For Ubuntu: `sudo apt-get install qtcreator qttools5-dev qtbase5-dev qt5-default qtdeclarative5-dev libqt5serialport5-dev libqt5svg5-dev libqt5webkit5-dev libsdl1.2-dev build-essential libudev-dev`
+#### Install Qt5.3+ and SDL1.2 prerequistites
+* For Ubuntu (requires 14.10 for Qt5.3): `sudo apt-get install qtcreator qttools5-dev qtbase5-dev qt5-default qtdeclarative5-dev libqt5serialport5-dev libqt5svg5-dev libqt5webkit5-dev libsdl1.2-dev build-essential libudev-dev`
 * For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel`
 * For Arch Linux: `pacman -Sy qtcreator qt5-base qt5-declarative qt5-serialport qt5-svg qt5-webkit`
 
@@ -104,16 +98,18 @@ Download Qt 5.3 from here: <http://download.qt-project.org/official_releases/qt/
 ### Additional build notes for all supported OS
 
 * Debug Builds: By default qmake will create makefiles for a release build. If you want a debug build add `CONFIG+=debug` to the command line.
-* Warnings as Errors: Specifying `CONFIG+=WarningsAsErrorsOn` will turn all warnings into errors which break the build. If you are working on a pull request you plan to submit to github for consideration, you should always run with this settings turned on, since it is required for all pull requests.
+* Warnings as Errors: Specifying `CONFIG+=WarningsAsErrorsOn` will turn all warnings into errors which break the build. If you are working on a pull request you plan to submit to github for consideration, you should always run with this settings turned on, since it is required for all pull requests. NOTE: Putting this line into a file called "user_config.pri" in the top-level directory will set this flag on all builds without interfering with the GIT history.
 * Parallel builds: For Linux and OSX you can use the '-j#' option to run parellel builds. On Windows parallel builds are on by default.
 * Location of built files: Individual build file results can be found in the `build_debug` or `build_release` directories. The built executable can be found in the `debug` or `release` directory.
 * Incremental builds: Incremental builds may not be 100% reliable. If you find something strange happening that seems like a bad build. Delete your `build_debug` and `build_release` directories and run qmake again.
 * Single release congfiguration on Windows: If you want to build a vs project that does not create both debug and release builds. Include `CONFIG-=debug_and_release` on the qmake command line plus either `CONFIG+=debug` or 
 `CONFIG+=release` depending on the build type you want.
 * Build using QtCreator: It is possible to build and debug using QtCreator as well. The above instructions should provide you with enough information to setup QtCreator on OSX and Linux. QtCreator on Windows is supposedly possible but we don't have any instructions available for that.
+* Google Earth is only supported on 32 bit builds, which by default means only Windows builds.
+* QGroundControl is using the Qt QLoggingCategory class for logging (<http://qt-project.org/doc/qt-5/qloggingcategory.html>). Since logging is on by default, an example qtlogging.ini file is included at the root of the repository which disables logging. Follow the instructions from Qt as to why and where to put this file. You can then edit the file to get a logging level that suits your needs.
 
 ## Additional functionality
-QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values for variables either at the command line when calling `qmake` or in the `user_config.pri`. When calling `qmake` additional variables can be set using the syntax `VARIABLE="SPACE_SEPARATED_VALUES"`, which can be repeated for multiple variables. For example: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH" MAVLINK_CONF="sensesoar"` disables the QUpgrade widget, speech functionality, and sets the MAVLink dialect to sensesoar. These values can be more permanently specified by setting them in the `user_config.pri` file in the root directly. Copy the `user_config.pri.dist` file and name the copy `user_config.pri`, uncommenting the lines with the variables to modify and set their values as you desire.
+QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values for variables either at the command line when calling `qmake` or in the `user_config.pri`. When calling `qmake` additional variables can be set using the syntax `VARIABLE="SPACE_SEPARATED_VALUES"`, which can be repeated for multiple variables. For example: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH" MAVLINK_CONF="sensesoar"` disables the QUpgrade widget, speech functionality, and sets the MAVLink dialect to sensesoar. These values can be more permanently specified by setting them in the `user_config.pri` file in the root directly. Create this file as a plain text file and ensure it ends in .pri (not .pri.txt!).
 
 **NOTE:** Any variables specified at the command line call to `qmake` will override those set in `user_config.pri`.
 

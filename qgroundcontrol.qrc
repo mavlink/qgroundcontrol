@@ -168,12 +168,12 @@
         <file>files/images/px4/airframes/plane_aert.png</file>
         <file>files/images/px4/airframes/quad_h.png</file>
         <file>files/images/px4/calibration/arrows.png</file>
-        <file>files/images/px4/calibration/accel_front.png</file>
         <file>files/images/px4/calibration/accel_back.png</file>
-        <file>files/images/px4/calibration/accel_left.png</file>
-        <file>files/images/px4/calibration/accel_up.png</file>
-        <file>files/images/px4/calibration/accel_down.png</file>
+        <file>files/images/px4/calibration/accel_front.png</file>
         <file>files/images/px4/calibration/accel_right.png</file>
+        <file>files/images/px4/calibration/accel_down.png</file>
+        <file>files/images/px4/calibration/accel_up.png</file>
+        <file>files/images/px4/calibration/accel_left.png</file>
         <file>files/images/px4/calibration/mag_calibration_figure8.png</file>
         <file>files/images/px4/calibration/mode1/radioCenter.png</file>
         <file>files/images/px4/calibration/mode1/radioHome.png</file>
@@ -230,5 +230,21 @@
     </qresource>
     <qresource prefix="/unittest">
         <file alias="MockLink.param">src/qgcunittest/MockLink.param</file>
+        <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
+    </qresource>
+    <qresource prefix="/QLoggingCategory">
+        <file alias="qtlogging.ini">files/QLoggingCategory/qtlogging.ini</file>
+    </qresource>
+    <qresource prefix="/qml">
+        <file alias="test.qml">src/test.qml</file>
+        <file alias="QGroundControl/FactControls/qmldir">qml/QGroundControl/FactControls/qmldir</file>
+        <file alias="QGroundControl/FactControls/SetupButton.qml">qml/QGroundControl/FactControls/SetupButton.qml</file>
+        <file alias="SetupViewConnected.qml">src/VehicleSetup/SetupViewConnected.qml</file>
+        <file alias="SetupViewDisconnected.qml">src/VehicleSetup/SetupViewDisconnected.qml</file>
+        <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
+        <file alias="px4fmu_2.x.png">files/images/px4/boards/px4fmu_2.x.png</file>
+    </qresource>
+    <qresource prefix="/AutoPilotPlugins/PX4">
+        <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>
 </RCC>

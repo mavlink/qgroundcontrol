@@ -22,7 +22,7 @@
  ======================================================================*/
 
 /// @file
-///     @brief The tests the unit test QGCMessageBox catching mechanism.
+///     @brief Unit test for QGCMessageBox catching mechanism.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -31,19 +31,9 @@
 
 UT_REGISTER_TEST(MessageBoxTest)
 
-MessageBoxTest::MessageBoxTest(void) :
-    _expectMissedMessageBox(false)
+MessageBoxTest::MessageBoxTest(void)
 {
     
-}
-
-void MessageBoxTest::cleanup(void)
-{
-    if (_expectMissedMessageBox) {
-        _expectMissedMessageBox = false;
-        QEXPECT_FAIL("", "Supposed to fail in cleanup with a missed message box", Continue);
-    }
-    UnitTest::cleanup();
 }
 
 void MessageBoxTest::_messageBoxExpected_test(void)
@@ -57,7 +47,7 @@ void MessageBoxTest::_messageBoxExpected_test(void)
 
 void MessageBoxTest::_messageBoxUnexpected_test(void)
 {
-    // This should cause the test to fail in the cleanup method
+    // This should cause an expected failure in the cleanup method
     QGCMessageBox::information(QString(), QString());
     _expectMissedMessageBox = true;
 }
@@ -75,7 +65,7 @@ void MessageBoxTest::_previousMessageBox_test(void)
 void MessageBoxTest::_noMessageBox_test(void)
 {
     setExpectedMessageBox(QMessageBox::Ok);
-    checkExpectedMessageBox(expectFailNoMessageBox);
+    checkExpectedMessageBox(expectFailNoDialog);
 }
 
 void MessageBoxTest::_badResponseButton_test(void)

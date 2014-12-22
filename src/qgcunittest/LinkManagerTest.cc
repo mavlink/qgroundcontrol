@@ -45,7 +45,7 @@ void LinkManagerTest::init(void)
     Q_ASSERT(_linkMgr == NULL);
     Q_ASSERT(_multiSpy == NULL);
     
-    _linkMgr = new LinkManager(NULL /* no parent */, false /* don't register singleton */);
+    _linkMgr = new LinkManager(NULL /* no parent */);
     Q_CHECK_PTR(_linkMgr);
     
     _rgSignals[newLinkSignalIndex] = SIGNAL(newLink(LinkInterface*));
@@ -57,27 +57,20 @@ void LinkManagerTest::init(void)
 
 void LinkManagerTest::cleanup(void)
 {
-    UnitTest::cleanup();
-    
     Q_ASSERT(_linkMgr);
     Q_ASSERT(_multiSpy);
+    
+    _linkMgr->_shutdown();
     
     delete _linkMgr;
     delete _multiSpy;
     
     _linkMgr = NULL;
     _multiSpy = NULL;
-}
-
-
-void LinkManagerTest::_instance_test(void)
-{
-    LinkManager *linkManager = new LinkManager(NULL /* no parent */, false /* don't register singleton */);
     
-    // If the flag to not register singleton is not working this will cause QGCApplication to crash on
-    // desctrucion since it will try to de-reference a deleted singleton.
-    delete linkManager;
+    UnitTest::cleanup();
 }
+
 
 void LinkManagerTest::_add_test(void)
 {
@@ -85,7 +78,7 @@ void LinkManagerTest::_add_test(void)
     Q_ASSERT(_linkMgr->getLinks().count() == 0);
     
     MockLink* link = new MockLink();
-    _linkMgr->add(link);
+    _linkMgr->addLink(link);
     
     QList<LinkInterface*> links = _linkMgr->getLinks();
     QCOMPARE(links.count(), 1);
@@ -98,7 +91,7 @@ void LinkManagerTest::_delete_test(void)
     Q_ASSERT(_linkMgr->getLinks().count() == 0);
     
     MockLink* link = new MockLink();
-    _linkMgr->add(link);
+    _linkMgr->addLink(link);
     _linkMgr->deleteLink(link);
     
     QCOMPARE(_linkMgr->getLinks().count(), 0);
@@ -111,7 +104,7 @@ void LinkManagerTest::_addSignals_test(void)
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
     MockLink* link = new MockLink();
-    _linkMgr->add(link);
+    _linkMgr->addLink(link);
     
     QCOMPARE(_multiSpy->checkOnlySignalByMask(newLinkSignalMask), true);
     QSignalSpy* spy = _multiSpy->getSpyByIndex(newLinkSignalIndex);
@@ -132,7 +125,7 @@ void LinkManagerTest::_deleteSignals_test(void)
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
     MockLink* link = new MockLink();
-    _linkMgr->add(link);
+    _linkMgr->addLink(link);
     _multiSpy->clearAllSignals();
     
     _linkMgr->deleteLink(link);

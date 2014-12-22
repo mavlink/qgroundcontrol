@@ -45,11 +45,9 @@ public:
     
 private slots:
     void initTestCase(void);
-    UT_DECLARE_DEFAULT_cleanupTestCase
     void init(void);
     void cleanup(void);
     
-    void _setUAS_test(void);
     void _minRCChannels_test(void);
     void _fullCalibration_test(void);
     

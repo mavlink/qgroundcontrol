@@ -25,6 +25,11 @@
 #define PX4AUTOPILOT_H
 
 #include "AutoPilotPlugin.h"
+#include "AutoPilotPluginManager.h"
+#include "UASInterface.h"
+#include "PX4ParameterFacts.h"
+
+#include <QImage>
 
 /// @file
 ///     @brief This is the PX4 specific implementation of the AutoPilot class.
@@ -35,11 +40,23 @@ class PX4AutoPilotPlugin : public AutoPilotPlugin
     Q_OBJECT
 
 public:
-    PX4AutoPilotPlugin(QObject* parent);
+    PX4AutoPilotPlugin(UASInterface* uas, QObject* parent);
+    ~PX4AutoPilotPlugin();
+
+    // Overrides from AutoPilotPlugin
+    virtual bool pluginIsReady(void) const;
+    virtual const QVariantList& components(void);
+    virtual const QVariantMap& parameters(void);
+    virtual QUrl setupBackgroundImage(void);
+
+    static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
+    static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
+    static void clearStaticData(void);
     
-    virtual QList<VehicleComponent*> getVehicleComponents(UASInterface* uas) const ;
-    virtual QList<FullMode_t> getModes(void) const;
-    virtual QString getShortModeText(uint8_t baseMode, uint32_t customMode) const;
+private:
+    UASInterface*       _uas;
+    PX4ParameterFacts*  _parameterFacts;
+    QVariantList        _components;
 };
 
 #endif

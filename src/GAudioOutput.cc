@@ -32,183 +32,54 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QApplication>
 #include <QSettings>
-#include <QTemporaryFile>
-#include "GAudioOutput.h"
-#include "MG.h"
-
 #include <QDebug>
 
-#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
-#include <ApplicationServices/ApplicationServices.h>
-#endif
+#include "GAudioOutput.h"
+#include "QGCApplication.h"
+#include "QGC.h"
 
-// Speech synthesis is only supported with MSVC compiler
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-// Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
-#include <sapi.h>
-#endif
+IMPLEMENT_QGC_SINGLETON(GAudioOutput, GAudioOutput)
 
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-// Using eSpeak for speech synthesis: following https://github.com/mondhs/espeak-sample/blob/master/sampleSpeak.cpp
-#include <espeak/speak_lib.h>
-#endif
-
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-ISpVoice *GAudioOutput::pVoice = NULL;
-#endif
-
-/**
- * This class follows the singleton design pattern
- * @see http://en.wikipedia.org/wiki/Singleton_pattern
- * A call to this function thus returns the only instance of this object
- * the call can occur at any place in the code, no reference to the
- * GAudioOutput object has to be passed.
- */
-GAudioOutput *GAudioOutput::instance()
+GAudioOutput::GAudioOutput(QObject *parent) :
+    QGCSingleton(parent),
+    muted(false),
+    thread(new QThread()),
+    worker(new QGCAudioWorker())
 {
-    static GAudioOutput *_instance = 0;
-
-    if (_instance == 0)
-    {
-        _instance = new GAudioOutput();
-        // Set the application as parent to ensure that this object
-        // will be destroyed when the main application exits
-        _instance->setParent(qApp);
-    }
-
-    return _instance;
-}
-
-#define QGC_GAUDIOOUTPUT_KEY QString("QGC_AUDIOOUTPUT_")
-
-GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
-    voiceIndex(0),
-    emergency(false),
-    muted(false)
-{
-    // Load settings
-    QSettings settings;
-    settings.sync();
-    muted = settings.value(QGC_GAUDIOOUTPUT_KEY + "muted", muted).toBool();
-
-
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
-    espeak_VOICE *espeak_voice = espeak_GetCurrentVoice();
-    espeak_voice->languages = "en-uk"; // Default to British English
-    espeak_voice->identifier = NULL; // no specific voice file specified
-    espeak_voice->name = "klatt"; // espeak voice name
-    espeak_voice->gender = 2; // Female
-    espeak_voice->age = 0; // age not specified
-    espeak_SetVoiceByProperties(espeak_voice);
-#endif
-
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-    pVoice = NULL;
-
-    if (FAILED(::CoInitialize(NULL)))
-    {
-        qDebug() << "ERROR: Creating COM object for audio output failed!";
-    }
-
-    else
-    {
-
-        HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice);
-
-        if (FAILED(hr))
-        {
-            qDebug() << "ERROR: Initializing voice for audio output failed!";
-        }
-    }
-
-#endif
-
-    // Prepare regular emergency signal, will be fired off on calling startEmergency()
-    emergencyTimer = new QTimer();
-    connect(emergencyTimer, SIGNAL(timeout()), this, SLOT(beep()));
-
-    switch (voiceIndex)
-    {
-    case 0:
-        selectFemaleVoice();
-        break;
-
-    default:
-        selectMaleVoice();
-        break;
-    }
+    muted = qgcApp()->runningUnitTests();
+    
+    worker->moveToThread(thread);
+    connect(this, SIGNAL(textToSpeak(QString,int)), worker, SLOT(say(QString,int)));
+    connect(this, SIGNAL(beepOnce()), worker, SLOT(beep()));
+    thread->start();
 }
 
 GAudioOutput::~GAudioOutput()
 {
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-    pVoice->Release();
-    pVoice = NULL;
-    ::CoUninitialize();
-#endif
+    thread->quit();
+    thread->wait();
+
+    delete worker;
+    delete thread;
 }
 
 
 void GAudioOutput::mute(bool mute)
 {
-    if (mute != muted)
-    {
-        this->muted = mute;
-        QSettings settings;
-        settings.setValue(QGC_GAUDIOOUTPUT_KEY + "muted", this->muted);
-        settings.sync();
-        emit mutedChanged(muted);
-    }
+    muted = mute;
 }
 
 bool GAudioOutput::isMuted()
 {
-    return this->muted;
+    return muted;
 }
 
 bool GAudioOutput::say(QString text, int severity)
 {
-    if (!muted)
-    {
-        // TODO Add severity filter
-        Q_UNUSED(severity);
-        bool res = false;
-
-        if (!emergency)
-        {
-
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-            pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
-
-#elif defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-            // Set size of string for espeak: +1 for the null-character
-            unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
-            espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
-
-#elif defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
-            // Slashes necessary to have the right start to the sentence
-            // copying data prevents SpeakString from reading additional chars
-            text = "\\" + text;
-            std::wstring str = text.toStdWString();
-            unsigned char str2[1024] = {};
-            memcpy(str2, text.toLatin1().data(), str.length());
-            SpeakString(str2);
-            res = true;
-
-#else
-            // Make sure there isn't an unused variable warning when speech output is disabled
-            Q_UNUSED(text);
-#endif
-        }
-
-        return res;
+    if (!muted) {
+        emit textToSpeak(text, severity);
     }
-
-    else
-    {
-        return false;
-    }
+    return true;
 }
 
 /**
@@ -216,19 +87,10 @@ bool GAudioOutput::say(QString text, int severity)
  */
 bool GAudioOutput::alert(QString text)
 {
-    if (!emergency || !muted)
-    {
-        // Play alert sound
-        beep();
-        // Say alert message
-        say(text, 2);
-        return true;
+    if (!muted) {
+        emit textToSpeak(text, 1);
     }
-
-    else
-    {
-        return false;
-    }
+    return true;
 }
 
 void GAudioOutput::notifyPositive()
@@ -264,16 +126,15 @@ void GAudioOutput::notifyNegative()
  */
 bool GAudioOutput::startEmergency()
 {
-    if (!emergency)
-    {
-        emergency = true;
+//    if (!emergency)
+//    {
+//        emergency = true;
 
-        // Beep immediately and then start timer
-        if (!muted) beep();
+//        // Beep immediately and then start timer
 
-        emergencyTimer->start(1500);
-        QTimer::singleShot(5000, this, SLOT(stopEmergency()));
-    }
+//        emergencyTimer->start(1500);
+//        QTimer::singleShot(5000, this, SLOT(stopEmergency()));
+//    }
 
     return true;
 }
@@ -286,47 +147,18 @@ bool GAudioOutput::startEmergency()
  */
 bool GAudioOutput::stopEmergency()
 {
-    if (emergency)
-    {
-        emergency = false;
-        emergencyTimer->stop();
-    }
+//    if (emergency)
+//    {
+//        emergency = false;
+//        emergencyTimer->stop();
+//    }
 
     return true;
 }
 
 void GAudioOutput::beep()
 {
-    if (!muted)
-    {
-        // FIXME: Re-enable audio beeps
-        // Use QFile to transform path for all OS
-        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
-        //qDebug() << "FILE:" << f.fileName();
-        //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-        //m_media->play();
+    if (!muted) {
+        emit beepOnce();
     }
-}
-
-void GAudioOutput::selectFemaleVoice()
-{
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    // FIXME: Enable selecting a female voice on all platforms
-    //this->voice = register_cmu_us_slt(NULL);
-#endif
-}
-
-void GAudioOutput::selectMaleVoice()
-{
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    // FIXME: Enable selecting a male voice on all platforms
-    //this->voice = register_cmu_us_rms(NULL);
-#endif
-}
-
-QStringList GAudioOutput::listVoices(void)
-{
-    // No voice selection is currently supported, so just return an empty list
-    QStringList l;
-    return l;
 }
