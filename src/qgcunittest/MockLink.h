@@ -54,6 +54,10 @@ public:
     virtual qint64 getConnectionSpeed(void) const { return 100000000; }
     virtual qint64 bytesAvailable(void) { return 0; }
     
+    // MockLink methods
+    MAV_AUTOPILOT getAutopilotType(void) { return _autopilotType; }
+    void setAutopilotType(MAV_AUTOPILOT autopilot) { _autopilotType = autopilot; }
+    
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);
@@ -122,6 +126,8 @@ private:
     uint8_t _mavBaseMode;
     uint8_t _mavCustomMode;
     uint8_t _mavState;
+    
+    MAV_AUTOPILOT _autopilotType;
 };
 
 #endif

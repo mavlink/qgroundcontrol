@@ -21,37 +21,32 @@
  
  ======================================================================*/
 
-#ifndef GENERICAUTOPILOT_H
-#define GENERICAUTOPILOT_H
-
-#include "AutoPilotPlugin.h"
-#include "AutoPilotPluginManager.h"
-#include "GenericParameterFacts.h"
-
 /// @file
-///     @brief This is the generic implementation of the AutoPilotPlugin class for mavs
-///             we do not have a specific AutoPilotPlugin implementation.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class GenericAutoPilotPlugin : public AutoPilotPlugin
+#ifndef FactSystemTestPX4_H
+#define FactSystemTestPX4_H
+
+#include "FactSystemTestBase.h"
+#include "UASInterface.h"
+#include "AutoPilotPlugin.h"
+
+// Unit Test for Fact System on PX4 autopilot
+class FactSystemTestPX4 : public FactSystemTestBase
 {
     Q_OBJECT
-
+    
 public:
-    GenericAutoPilotPlugin(UASInterface* uas, QObject* parent = NULL);
+    FactSystemTestPX4(void);
     
-    // Overrides from AutoPilotPlugin
-    virtual bool pluginIsReady(void) const { return _parameterFacts->factsAreReady(); }
-    virtual QUrl setupBackgroundImage(void);
-    virtual const QVariantList& components(void);
-    virtual const QVariantMap& parameters(void);
-
-    static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
-    static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
-    static void clearStaticData(void);
+private slots:
+    void init(void);
+    void cleanup(void) { _cleanup(); }
     
-private:
-    GenericParameterFacts*  _parameterFacts;
+    void parameter_test(void) { _parameter_test(); }
+    void qml_test(void) { _qml_test(); }
+    void paramMgrSignal_test(void) { _paramMgrSignal_test(); }
+    void qmlUpdate_test(void) { _qmlUpdate_test(); }
 };
 
 #endif
