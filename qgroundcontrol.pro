@@ -487,7 +487,11 @@ HEADERS += \
     src/CmdLineOptParser.h \
     src/uas/QGXPX4UAS.h \
     src/QGCFileDialog.h \
-    src/QGCMessageBox.h
+    src/QGCMessageBox.h \
+    src/QGCComboBox.h \
+    src/QGCTemporaryFile.h \
+    src/audio/QGCAudioWorker.h \
+    src/QGCQuickWidget.h
 
 SOURCES += \
     src/main.cc \
@@ -621,7 +625,12 @@ SOURCES += \
     src/uas/QGCUASFileManager.cc \
     src/ui/QGCUASFileView.cc \
     src/CmdLineOptParser.cc \
-    src/uas/QGXPX4UAS.cc
+    src/uas/QGXPX4UAS.cc \
+    src/QGCFileDialog.cc \
+    src/QGCComboBox.cc \
+    src/QGCTemporaryFile.cc \
+    src/audio/QGCAudioWorker.cpp \
+    src/QGCQuickWidget.cc \
 
 #
 # Unit Test specific configuration goes here
