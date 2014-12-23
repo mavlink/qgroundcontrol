@@ -837,6 +837,12 @@ void PX4RCCalibration::_validateCalibration(void)
                     case rcCalFunctionYaw:
                     case rcCalFunctionRoll:
                     case rcCalFunctionPitch:
+                        // Make sure trim is within min/max
+                        if (info->rcTrim < info->rcMin) {
+                            info->rcTrim = info->rcMin;
+                        } else if (info->rcTrim > info->rcMax) {
+                            info->rcTrim = info->rcMax;
+                        }
                         break;
                     default:
                         // Non-attitude control channels have calculated trim
@@ -858,7 +864,6 @@ void PX4RCCalibration::_validateCalibration(void)
 
 
 /// @brief Saves the rc calibration values to the board parameters.
-///     @param trimsOnly true: write only trim values, false: write all calibration values
 void PX4RCCalibration::_writeCalibration(void)
 {
     if (!_mav) return;
