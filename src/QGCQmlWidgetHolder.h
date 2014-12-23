@@ -21,40 +21,39 @@
  
  ======================================================================*/
 
-#ifndef RADIOCOMPONENT_H
-#define RADIOCOMPONENT_H
-
-#include "PX4Component.h"
+#ifndef QGCQmlWidgetHolder_h
+#define QGCQmlWidgetHolder_h
 
 /// @file
-///     @brief The Radio VehicleComponent is used to calibrate the trasmitter and assign function mapping
-///             to channels.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class RadioComponent : public PX4Component
+#include <QWidget>
+
+#include "ui_QGCQmlWidgetHolder.h"
+#include "AutoPilotPlugin.h"
+
+namespace Ui {
+class QGCQmlWidgetHolder;
+}
+
+/// This is used to create widgets which are implemented in QML.
+
+class QGCQmlWidgetHolder : public QWidget
 {
     Q_OBJECT
-    
+
 public:
-    RadioComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    explicit QGCQmlWidgetHolder(QWidget *parent = 0);
+    ~QGCQmlWidgetHolder();
     
-    // Virtuals from PX4Component
-    virtual const char** setupCompleteChangedTriggerList(void) const;
-    
-    // Virtuals from VehicleComponent
-    virtual QString name(void) const;
-    virtual QString description(void) const;
-    virtual QString icon(void) const;
-    virtual bool requiresSetup(void) const;
-    virtual bool setupComplete(void) const;
-    virtual QString setupStateDescription(void) const;
-    virtual QWidget* setupWidget(void) const;
-    virtual QStringList paramFilterList(void) const;
-    virtual const QVariantList& summaryItems(void);
-    
+    /// Sets the UAS into the widget which in turn will load facts into the context
+    void setAutoPilot(AutoPilotPlugin* autoPilot);
+
+    /// Sets the QML into the control
+    void setSource(const QUrl& qmlUrl);
+
 private:
-    const QString   _name;
-    QVariantList    _summaryItems;
+    Ui::QGCQmlWidgetHolder _ui;
 };
 
 #endif

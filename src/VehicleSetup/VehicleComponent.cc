@@ -25,13 +25,18 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "VehicleComponent.h"
+#include "AutoPilotPlugin.h"
 
-VehicleComponent::VehicleComponent(UASInterface* uas, QObject* parent) :
+VehicleComponent::VehicleComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     QObject(parent),
     _uas(uas),
-    _paramMgr(_uas->getParamManager())
+    _autopilot(autopilot)
 {
+    Q_ASSERT(uas);
+    Q_ASSERT(autopilot);
     
+    _paramMgr = _uas->getParamManager();
+    Q_ASSERT(_paramMgr);
 }
 
 VehicleComponent::~VehicleComponent()

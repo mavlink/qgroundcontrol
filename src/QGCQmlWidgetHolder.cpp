@@ -24,30 +24,26 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "PX4Component.h"
+#include "QGCQmlWidgetHolder.h"
 
-PX4Component::PX4Component(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(uas, autopilot, parent)
+QGCQmlWidgetHolder::QGCQmlWidgetHolder(QWidget *parent) :
+    QWidget(parent)
 {
-    bool fSuccess = connect(_paramMgr, SIGNAL(parameterUpdated(int, QString, QVariant)), this, SLOT(_parameterUpdated(int, QString, QVariant)));
-    Q_ASSERT(fSuccess);
-    Q_UNUSED(fSuccess);
+    _ui.setupUi(this);
 }
 
-void PX4Component::_parameterUpdated(int compId, QString paramName, QVariant value)
+QGCQmlWidgetHolder::~QGCQmlWidgetHolder()
 {
-    Q_UNUSED(value);
-    
-    if (compId == _paramMgr->getDefaultComponentId()) {
-        const char** prgTriggers = setupCompleteChangedTriggerList();
-        Q_ASSERT(prgTriggers);
-        
-        while (*prgTriggers != NULL) {
-            if (paramName == *prgTriggers) {
-                emit setupCompleteChanged();
-                return;
-            }
-            prgTriggers++;
-        }
-    }
+
+}
+
+void QGCQmlWidgetHolder::setAutoPilot(AutoPilotPlugin* autoPilot)
+{
+    _ui.qmlWidget->rootContext()->setContextProperty("autopilot", autoPilot);
+}
+
+void QGCQmlWidgetHolder::setSource(const QUrl& qmlUrl)
+{
+    _ui.qmlWidget->setSource(qmlUrl);
+    _ui.qmlWidget->setMinimumSize(_ui.qmlWidget->rootObject()->width(), _ui.qmlWidget->rootObject()->height());
 }

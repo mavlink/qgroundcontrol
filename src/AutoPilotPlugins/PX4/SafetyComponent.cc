@@ -24,85 +24,86 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "RadioComponent.h"
+#include "SafetyComponent.h"
 #include "PX4RCCalibration.h"
 #include "VehicleComponentSummaryItem.h"
+#include "QGCQmlWidgetHolder.h"
 
 /// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
+static const char* triggerParams[] = { NULL };
 
-RadioComponent::RadioComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
+SafetyComponent::SafetyComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
-    _name(tr("Radio"))
+    _name(tr("Safety"))
 {
 }
 
-QString RadioComponent::name(void) const
+QString SafetyComponent::name(void) const
 {
     return _name;
 }
 
-QString RadioComponent::description(void) const
+QString SafetyComponent::description(void) const
 {
-    return tr("The Radio Component is used to setup which channels on your RC Transmitter you will use for each vehicle control such as Roll, Pitch, Yaw and Throttle. "
-              "It also allows you to assign switches and dials to the various flight modes. "
-              "Prior to flight you must also calibrate the extents for all of your channels.");
+    return tr("The Safety Component is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
 }
 
-QString RadioComponent::icon(void) const
+QString SafetyComponent::icon(void) const
 {
     return ":/files/images/px4/menu/remote.png";
 }
 
-bool RadioComponent::requiresSetup(void) const
+bool SafetyComponent::requiresSetup(void) const
 {
+    return false;
+}
+
+bool SafetyComponent::setupComplete(void) const
+{
+    // FIXME: What aboout invalid settings?
     return true;
 }
 
-bool RadioComponent::setupComplete(void) const
-{
-    QVariant value;
-    if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParams[0], value)) {
-        return value.toInt() != 0;
-    } else {
-        Q_ASSERT(false);
-        return false;
-    }
-}
-
-QString RadioComponent::setupStateDescription(void) const
+QString SafetyComponent::setupStateDescription(void) const
 {
     const char* stateDescription;
     
     if (requiresSetup()) {
-        stateDescription = "Requires calibration";
+        stateDescription = "Requires setup";
     } else {
-        stateDescription = "Calibrated";
+        stateDescription = "Setup complete";
     }
     return QString(stateDescription);
 }
 
-const char** RadioComponent::setupCompleteChangedTriggerList(void) const
+const char** SafetyComponent::setupCompleteChangedTriggerList(void) const
 {
     return triggerParams;
 }
 
-QStringList RadioComponent::paramFilterList(void) const
+QStringList SafetyComponent::paramFilterList(void) const
 {
     QStringList list;
-    
-    list << "RC*";
     
     return list;
 }
 
-QWidget* RadioComponent::setupWidget(void) const
+QWidget* SafetyComponent::setupWidget(void) const
 {
-    return new PX4RCCalibration;
+    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
+    Q_CHECK_PTR(holder);
+    
+    holder->setAutoPilot(_autopilot);
+    
+    holder->setSource(QUrl::fromUserInput("qrc:/qml/SafetyComponent.qml"));
+    
+    return holder;
 }
 
-const QVariantList& RadioComponent::summaryItems(void)
+const QVariantList& SafetyComponent::summaryItems(void)
 {
+    // FIXME: No summary items yet
+#if 0
     if (!_summaryItems.count()) {
         QString name;
         QString state;
@@ -149,6 +150,7 @@ const QVariantList& RadioComponent::summaryItems(void)
         item = new VehicleComponentSummaryItem(name, state, this);
         _summaryItems.append(QVariant::fromValue(item));
     }
+#endif
     
     return _summaryItems;
 }
