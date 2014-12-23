@@ -109,17 +109,17 @@ const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChan
 	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
 	
 	// Channels 1-11 are mapped to all available modes
-	{ PX4RCCalibration::rcCalFunctionRoll,			_testMinValue,		_testMaxValue,        _testCenterValue, true },
-    { PX4RCCalibration::rcCalFunctionPitch,			_testMinValue,		_testMaxValue,        _testCenterValue, false },
-    { PX4RCCalibration::rcCalFunctionYaw,			_testMinValue,		_testMaxValue,        _testCenterValue, true },
-    { PX4RCCalibration::rcCalFunctionThrottle,		_testMinValue,		_testMaxValue,        _testMinValue,    false },
-    { PX4RCCalibration::rcCalFunctionModeSwitch,	_testMinValue,		_testMaxValue,        _testCenterValue, false },
-    { PX4RCCalibration::rcCalFunctionPosCtlSwitch,	_testMinValue,		_testMaxValue,        _testCenterValue, false },
-    { PX4RCCalibration::rcCalFunctionLoiterSwitch,	_testMinValue,		_testMaxValue,        _testCenterValue, false },
-    { PX4RCCalibration::rcCalFunctionReturnSwitch,	_testMinValue,		_testMaxValue,        _testCenterValue, false },
-    { PX4RCCalibration::rcCalFunctionFlaps,			_testMinValue,		_testMaxValue,        _testCenterValue, false },
-    { PX4RCCalibration::rcCalFunctionAux1,			_testMinValue,		_testMaxValue,        _testCenterValue, false },
-    { PX4RCCalibration::rcCalFunctionAux2,			_testMinValue,		_testMaxValue,        _testCenterValue, false },
+	{ PX4RCCalibration::rcCalFunctionRoll,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
+    { PX4RCCalibration::rcCalFunctionPitch,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { PX4RCCalibration::rcCalFunctionYaw,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
+    { PX4RCCalibration::rcCalFunctionThrottle,		_testMinValue,                              _testMaxValue,                              _testMinValue,                                  false },
+    { PX4RCCalibration::rcCalFunctionModeSwitch,	_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { PX4RCCalibration::rcCalFunctionPosCtlSwitch,	_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { PX4RCCalibration::rcCalFunctionLoiterSwitch,	_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { PX4RCCalibration::rcCalFunctionReturnSwitch,	_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { PX4RCCalibration::rcCalFunctionFlaps,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { PX4RCCalibration::rcCalFunctionAux1,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { PX4RCCalibration::rcCalFunctionAux2,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
 	
 	// Channels 12-17 are not mapped and should be set to defaults
 	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
@@ -435,8 +435,9 @@ void PX4RCCalibrationTest::_channelHomePosition(void)
         _mockUAS->emitRemoteControlChannelRawChanged(i, (float)PX4RCCalibration::_rcCalPWMCenterPoint);
     }
     
-    // Throttle to low position (throttle is not reversed)/
-    _mockUAS->emitRemoteControlChannelRawChanged(_rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionThrottle], _testMinValue);
+    // Throttle to min - 1 (throttle is not reversed). We do this so that the trim value is below the min value. This should end up
+    // being validated and raised to min value. If not, something is wrong with RC Cal code.
+    _mockUAS->emitRemoteControlChannelRawChanged(_rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionThrottle], _testMinValue - 1);
 }
 
 void PX4RCCalibrationTest::_validateParameters(void)
