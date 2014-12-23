@@ -42,6 +42,7 @@ class Fact : public QObject
 {
     Q_OBJECT
     
+    Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
     Q_PROPERTY(QVariant defaultValue READ defaultValue CONSTANT)
     Q_PROPERTY(FactMetaData::ValueType_t type READ type CONSTANT)
@@ -54,9 +55,12 @@ class Fact : public QObject
     Q_ENUMS(FactMetaData::ValueType_t)
     
 public:
-    Fact(QObject* parent = NULL);
+    Fact(QString name = "", QObject* parent = NULL);
     
     // Property system methods
+    
+    /// Read accessor or name property
+    QString name(void) const { return _name; }
     
     /// Read accessor for value property
     QVariant value(void) const { return _value; }
@@ -102,6 +106,7 @@ signals:
     void _containerValueChanged(QVariant& value);
     
 private:
+    QString         _name;      ///< Fact name
     QVariant        _value;     ///< Fact value
     FactMetaData*   _metaData;  ///< FactMetaData object for Fact
 };

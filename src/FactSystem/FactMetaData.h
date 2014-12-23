@@ -54,8 +54,12 @@ public:
         valueTypeDouble
     } ValueType_t;
     
-    QVariant    defaultValue;
+    /// Initialize the meta data given only the type.
+    void initFromTypeOnly(ValueType_t initType);
+
+    // FIXME: This needs to switch over to Q_PROPERTY mechanism
     ValueType_t type;
+    QVariant    defaultValue;
     QString     shortDescription;
     QString     longDescription;
     QString     units;
