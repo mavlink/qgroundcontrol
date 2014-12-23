@@ -36,8 +36,8 @@ static const char* triggerParams[] = {  "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS
 /// @brief Used to translate from parameter name to user string
 static const char* triggerSensors[] = { "Compass",       "Gyro",           "Acceleromter",  "Airspeed",       NULL };
 
-SensorsComponent::SensorsComponent(UASInterface* uas, QObject* parent) :
-    PX4Component(uas, parent),
+SensorsComponent::SensorsComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(uas, autopilot, parent),
     _name(tr("Sensors"))
 {
 }

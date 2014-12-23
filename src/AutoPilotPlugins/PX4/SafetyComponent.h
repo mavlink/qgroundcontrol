@@ -21,8 +21,8 @@
  
  ======================================================================*/
 
-#ifndef RADIOCOMPONENT_H
-#define RADIOCOMPONENT_H
+#ifndef SafetyComponent_H
+#define SafetyComponent_H
 
 #include "PX4Component.h"
 
@@ -31,12 +31,12 @@
 ///             to channels.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class RadioComponent : public PX4Component
+class SafetyComponent : public PX4Component
 {
     Q_OBJECT
     
 public:
-    RadioComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    SafetyComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from PX4Component
     virtual const char** setupCompleteChangedTriggerList(void) const;

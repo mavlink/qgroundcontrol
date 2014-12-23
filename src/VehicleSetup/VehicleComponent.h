@@ -21,6 +21,9 @@
  
  ======================================================================*/
 
+/// @file
+///     @author Don Gagne <don@thegagnes.com>
+
 #ifndef VEHICLECOMPONENT_H
 #define VEHICLECOMPONENT_H
 
@@ -30,11 +33,10 @@
 
 #include "UASInterface.h"
 
-/// @file
-///     @brief Vehicle Component class. A vehicle component is an object which
-///             abstracts the physical portion of a vehicle into a set of
-///             configurable values and user interface.
-///     @author Don Gagne <don@thegagnes.com>
+class AutoPilotPlugin;
+
+/// A vehicle component is an object which abstracts the physical portion of a vehicle into a set of
+/// configurable values and user interface.
 
 class VehicleComponent : public QObject
 {
@@ -50,7 +52,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(QVariantList summaryItems READ summaryItems CONSTANT);
     
 public:
-    VehicleComponent(UASInterface* uas, QObject* parent = NULL);
+    VehicleComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     ~VehicleComponent();
     
     virtual QString name(void) const = 0;
@@ -70,6 +72,7 @@ signals:
     
 protected:
     UASInterface*                   _uas;
+    AutoPilotPlugin*                _autopilot;
     QGCUASParamManagerInterface*    _paramMgr;
 };
 

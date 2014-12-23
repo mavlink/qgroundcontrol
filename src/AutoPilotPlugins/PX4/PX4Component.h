@@ -35,7 +35,7 @@ class PX4Component : public VehicleComponent
     Q_OBJECT
     
 public:
-    PX4Component(UASInterface* uas, QObject* parent = NULL);
+    PX4Component(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     /// @brief Returns an array of parameter names for which a change should cause the setupCompleteChanged
     ///         signal to be emitted. Last element is signalled by NULL. Must be implemented by upper level class.
@@ -45,7 +45,6 @@ private slots:
     /// @brief Connected to QGCUASParamManagerInterface::parameterUpdated signal in order to signal
     ///         setupCompleteChanged at appropriate times.
     void _parameterUpdated(int compId, QString paramName, QVariant value);
-    
 };
 
 #endif

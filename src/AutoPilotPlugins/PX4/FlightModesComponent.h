@@ -35,7 +35,7 @@ class FlightModesComponent : public PX4Component
     Q_OBJECT
     
 public:
-    FlightModesComponent(UASInterface* uas, QObject* parent = NULL);
+    FlightModesComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from PX4Component
     virtual const char** setupCompleteChangedTriggerList(void) const;
