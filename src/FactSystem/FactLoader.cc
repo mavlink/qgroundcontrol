@@ -83,7 +83,9 @@ void FactLoader::_parameterChanged(int uas, int component, QString parameterName
     }
     
     if (!_mapParameterName2Variant.contains(parameterName)) {
-        Fact* fact = new Fact(this);
+        qCDebug(FactLoaderLog) << "Adding new fact" << parameterName;
+        
+        Fact* fact = new Fact(parameterName, this);
         
         _mapParameterName2Variant[parameterName] = QVariant::fromValue(fact);
         _mapFact2ParameterName[fact] = parameterName;
@@ -91,7 +93,7 @@ void FactLoader::_parameterChanged(int uas, int component, QString parameterName
         // We need to know when the fact changes from QML so that we can send the new value to the parameter manager
         connect(fact, &Fact::_containerValueChanged, this, &FactLoader::_valueUpdated);
 
-        qCDebug(FactLoaderLog) << "Adding new fact" << parameterName;
+        _addMetaDataToFact(fact);
     }
     
     Q_ASSERT(_mapParameterName2Variant.contains(parameterName));
@@ -105,7 +107,7 @@ void FactLoader::_parameterChanged(int uas, int component, QString parameterName
 
 /// Connected to Fact::valueUpdated
 ///
-/// Sets the new value into the Parameter Manager. Paramter is persisted after send.
+/// Sets the new value into the Parameter Manager. Parameter is persisted after send.
 void FactLoader::_valueUpdated(QVariant value)
 {
     Fact* fact = qobject_cast<Fact*>(sender());
@@ -156,4 +158,43 @@ void FactLoader::_paramMgrParameterListUpToDate(void)
         // We should have all paramters now so we can signal ready
         emit factsReady();
     }
+}
+
+void FactLoader::_addMetaDataToFact(Fact* fact)
+{
+    // Create generic meta data based on value variant type
+    
+    FactMetaData::ValueType_t factType = FactMetaData::valueTypeInt32;  // init to in32 to silence compiler warning
+    
+    switch ((QMetaType::Type)fact->value().type()) {
+        case QMetaType::Int:
+            factType = FactMetaData::valueTypeInt32;
+            break;
+            
+        case QMetaType::UInt:
+            factType = FactMetaData::valueTypeUint32;
+            break;
+            
+        case QMetaType::Double:
+            factType = FactMetaData::valueTypeDouble;
+            
+        case QMetaType::Short:
+            factType = FactMetaData::valueTypeInt16;
+            break;
+            
+        case QMetaType::UShort:
+            factType = FactMetaData::valueTypeUint16;
+            break;
+            
+        case QMetaType::Float:
+            factType = FactMetaData::valueTypeFloat;
+            break;
+            
+        default:
+            qCWarning(FactLoaderLog) << "Invalid variant type" << fact->value().type();
+            break;
+    }
+    
+    FactMetaData* metaData = new FactMetaData(this);
+    metaData->initFromTypeOnly(factType);
 }

@@ -66,6 +66,11 @@ signals:
     /// Signalled when the full set of facts are ready
     void factsReady(void);
     
+protected:
+    /// Base implementation adds generic meta data based on variant type. Derived class can override to provide
+    /// more details meta data.
+    virtual void _addMetaDataToFact(Fact* fact);
+    
 private slots:
     void _parameterChanged(int uas, int component, QString parameterName, QVariant value);
     void _valueUpdated(QVariant value);

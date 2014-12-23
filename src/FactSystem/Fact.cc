@@ -28,10 +28,12 @@
 
 #include <QtQml>
 
-Fact::Fact(QObject* parent) :
-    QObject(parent)
+Fact::Fact(QString name, QObject* parent) :
+    QObject(parent),
+    _name(name),
+    _metaData(NULL)
 {
-
+    _value = "";
 }
 
 void Fact::setValue(const QVariant& value)
