@@ -142,13 +142,15 @@ void SetupView::_setupButtonClicked(const QVariant& component)
     VehicleComponent* vehicle = qobject_cast<VehicleComponent*>(component.value<QObject*>());
     Q_ASSERT(vehicle);
     
-    SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
-    dialog->setModal(true);
-    dialog->setWindowTitle(vehicle->name());
+    SetupWidgetHolder dialog(MainWindow::instance());
+    dialog.setModal(true);
+    dialog.setWindowTitle(vehicle->name());
     
     QWidget* setupWidget = vehicle->setupWidget();
-    qDebug() << setupWidget->minimumSize();
-    dialog->resize(setupWidget->minimumSize());
-    dialog->setInnerWidget(setupWidget);
-    dialog->exec();
+    
+    dialog.resize(setupWidget->minimumSize());
+    dialog.setInnerWidget(setupWidget);
+    dialog.exec();
+    
+    delete setupWidget;
 }
