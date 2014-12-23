@@ -1,10 +1,13 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
+import QGroundControl.FactSystem 1.0
 
 Rectangle {
+    QGCPalette { id: palette; colorGroup: QGCPalette.Active }
+
     anchors.fill: parent
-    color: "#222"
+    color: palette.window
 
     Item {
         anchors.margins: 20
@@ -16,7 +19,7 @@ Rectangle {
 
         Text { width: parent.width; height: parent.height - header.height - footer.height;
             anchors.top: header.bottom
-            color: "white"
+            color: palette.windowText
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             text: "No vehicle currently connected. Vehicle Setup is only available while vehicle is connected." }
