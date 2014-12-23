@@ -26,6 +26,7 @@
 #include "RadioComponent.h"
 #include "SensorsComponent.h"
 #include "FlightModesComponent.h"
+#include "SafetyComponent.h"
 #include "AutoPilotPluginManager.h"
 #include "UASManager.h"
 #include "QGCUASParamManagerInterface.h"
@@ -196,19 +197,23 @@ const QVariantList& PX4AutoPilotPlugin::components(void)
 
         Q_ASSERT(_uas);
         
-        component = new AirframeComponent(_uas);
+        component = new AirframeComponent(_uas, this);
         Q_CHECK_PTR(component);
         _components.append(QVariant::fromValue(component));
         
-        component = new RadioComponent(_uas);
+        component = new RadioComponent(_uas, this);
         Q_CHECK_PTR(component);
         _components.append(QVariant::fromValue(component));
         
-        component = new FlightModesComponent(_uas);
+        component = new FlightModesComponent(_uas, this);
         Q_CHECK_PTR(component);
         _components.append(QVariant::fromValue(component));
         
-        component = new SensorsComponent(_uas);
+        component = new SensorsComponent(_uas, this);
+        Q_CHECK_PTR(component);
+        _components.append(QVariant::fromValue(component));
+
+        component = new SafetyComponent(_uas, this);
         Q_CHECK_PTR(component);
         _components.append(QVariant::fromValue(component));
     }

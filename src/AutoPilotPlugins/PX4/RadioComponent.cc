@@ -31,8 +31,8 @@
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
 
-RadioComponent::RadioComponent(UASInterface* uas, QObject* parent) :
-    PX4Component(uas, parent),
+RadioComponent::RadioComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(uas, autopilot, parent),
     _name(tr("Radio"))
 {
 }
