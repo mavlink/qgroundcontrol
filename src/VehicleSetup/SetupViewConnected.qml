@@ -1,13 +1,16 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
+import QGroundControl.FactSystem 1.0
 
 Rectangle {
+    QGCPalette { id: palette; colorGroup: QGCPalette.Active }
+
     id: topLevel
     objectName: "topLevel"
 
     anchors.fill: parent
-    color: "#222"
+    color: palette.window
 
     signal buttonClicked(variant component);
 
