@@ -104,8 +104,6 @@ void UASWaypointManager::timeout()
         current_state = WP_IDLE;
         current_count = 0;
         current_wp_id = 0;
-        current_partner_systemid = 0;
-        current_partner_compid = 0;
     }
 }
 
@@ -167,8 +165,6 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
             current_state = WP_IDLE;
             current_count = 0;
             current_wp_id = 0;
-            current_partner_systemid = 0;
-            current_partner_compid = 0;
         }
 
 
@@ -208,8 +204,6 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 current_state = WP_IDLE;
                 current_count = 0;
                 current_wp_id = 0;
-                current_partner_systemid = 0;
-                current_partner_compid = 0;
 
                 emit _stopProtocolTimer(); // Stop timer on our thread
                 emit readGlobalWPFromUAS(false);
@@ -220,6 +214,16 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         } else {
             emit updateStatusString(tr("Waypoint ID mismatch, rejecting waypoint"));
         }
+    } else if (systemId == current_partner_systemid
+            && wp->seq < waypointsViewOnly.size() && waypointsViewOnly[wp->seq]->getAction()) {
+        // accept single sent waypoints because they can contain updates about remaining DO_JUMP repetitions
+        // but only update view only side
+        Waypoint *lwp_vo = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
+
+        waypointsViewOnly.replace(wp->seq, lwp_vo);
+        emit waypointViewOnlyListChanged();
+        emit waypointViewOnlyListChanged(uasid);
+
     } else {
         qDebug("Rejecting waypoint message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST_GETWPS, current_partner_systemid, systemId, current_partner_compid, compId);
     }
