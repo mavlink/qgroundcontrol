@@ -78,7 +78,7 @@
     interfaceName* className::instance(bool nullOk) \
     { \
         if (!nullOk) { \
-            Q_ASSERT_X(_instance, "QGCSingleton", "If you hit this, then you have run into a startup or shutdown sequence bug."); \
+            Q_ASSERT_X(_instance, "QGCSingleton", "Request for singleton that is NULL. If you hit this, then you have likely run into a startup or shutdown sequence bug (possibly intermittent)."); \
         } \
         return _instance; \
     } \
