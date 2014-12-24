@@ -264,3 +264,14 @@ void PX4ParameterFacts::clearStaticData(void)
     _mapParameterName2FactMetaData.clear();
     _parameterMetaDataLoaded = false;
 }
+
+/// Override from FactLoad which connects the meta data to the fact
+void PX4ParameterFacts::_addMetaDataToFact(Fact* fact)
+{
+    if (_mapParameterName2FactMetaData.contains(fact->name())) {
+        fact->setMetaData(_mapParameterName2FactMetaData[fact->name()]);
+    } else {
+        // Use generic meta data
+        FactLoader::_addMetaDataToFact(fact);
+    }
+}
