@@ -12,9 +12,17 @@ Rectangle {
     color: palette.window
 
     Column {
-        Label { text: "Work in Progress"; color: palette.windowText }
-        Label { text: "Return to Land Altitude"; color: palette.windowText }
-        FactLabel { fact: autopilot.parameters["RTL_RETURN_ALT"] }
-        FactTextField { fact: autopilot.parameters["RTL_RETURN_ALT"] }
+        anchors.fill: parent
+        Label { text: "Safety Config"; color: palette.windowText; font.pointSize: 20 }
+        Label { text: "Return to Land setup"; color: palette.windowText }
+        Label { text: "Return to Land Triggers"; color: palette.windowText }
+        Row {
+            CheckBox { text: "Telemetry signal timeout - Return to Land after" }
+            FactTextField { fact: autopilot.parameters["NAV_DLL_N"] }
+        }
+        Row {
+            CheckBox { text: "RC Transmitter signal loss - Return to Land after" }
+            FactTextField { fact: autopilot.parameters["COM_RC_LOSS_T"] }
+        }
     }
 }
