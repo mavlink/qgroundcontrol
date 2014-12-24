@@ -47,7 +47,8 @@ QColor QGCPalette::_window[QGCPalette::_cColorGroups];
 QColor QGCPalette::_windowText[QGCPalette::_cColorGroups];
 
 QGCPalette::QGCPalette(QObject* parent) :
-    QObject(parent)
+    QObject(parent),
+    _colorGroup(Active)
 {
     if (!_paletteLoaded) {
         _paletteLoaded = true;
