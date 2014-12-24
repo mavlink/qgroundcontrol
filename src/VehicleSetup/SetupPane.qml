@@ -5,10 +5,8 @@ import QtQuick.Controls.Styles 1.2
 
 Item {
     id: item1
-    Row {
-        Text { text: "Label"; anchors.baseline: parent.baseline }
-        TextField { text: "field"; anchors.baseline: parent.baseline }
-    }
+    width: 500
+    height: 500
 
     Rectangle {
         id: innerRect

@@ -13,51 +13,71 @@ Rectangle {
 
     Column {
         anchors.fill: parent
-        Label { text: "Safety Config (Work in Progress)"; color: palette.windowText; font.pointSize: 20 }
+        spacing: 20
 
-        Label { text: "Return to Land setup"; color: palette.windowText }
-        Row {
-            Label { text: "Climb to minimum altitude "; color: palette.windowText }
-            FactTextField { fact: autopilot.parameters["RTL_RETURN_ALT"]; showUnits: true }
-        }
-        Row {
-            Label { text: "When Home is reached, descend to altitude "; color: palette.windowText }
-            FactTextField { fact: autopilot.parameters["RTL_DESCEND_ALT"]; showUnits: true }
-        }
-        Row {
-            FactCheckBox {
-                id: homeLoiterCheckbox
-                fact: autopilot.parameters["RTL_LAND_DELAY"]
-                checkedValue: 60
-                uncheckedValue: -1
-                text: "Loiter at Home altitude for "
+        Column {
+            spacing: 10
+
+            Label { text: "Return to Land setup"; color: palette.windowText; font.pointSize: 20 }
+            Row {
+                Label { text: "Climb to minimum altitude of "; color: palette.windowText; anchors.baseline: climbField.baseline }
+                FactTextField { id: climbField; fact: autopilot.parameters["RTL_RETURN_ALT"]; showUnits: true }
             }
-            FactTextField {
-                fact: autopilot.parameters["RTL_LAND_DELAY"];
-                showUnits: true
-                enabled: homeLoiterCheckbox.checked
+            Row {
+                Label { text: "When Home is reached, descend to altitude of "; color: palette.windowText; anchors.baseline: descendField.baseline }
+                FactTextField { id: descendField; fact: autopilot.parameters["RTL_DESCEND_ALT"]; showUnits: true }
+            }
+            Row {
+                CheckBox {
+                    id: homeLoiterCheckbox
+                    property Fact fact: autopilot.parameters["RTL_LAND_DELAY"]
+
+                    checked: fact.value < 0
+                    text: "Loiter at Home altitude for "
+
+                    onClicked: {
+                        fact.value = checked ? 60 : -1
+                    }
+
+                    style: CheckBoxStyle {
+                        label: Text {
+                            color: palette.windowText
+                            text: control.text
+                        }
+                    }
+                }
+                FactTextField {
+                    fact: autopilot.parameters["RTL_LAND_DELAY"];
+                    showUnits: true
+                    anchors.baseline: homeLoiterCheckbox.baseline
+                }
             }
         }
 
-        Label { text: "Return to Land Triggers"; color: palette.windowText }
-        Row {
-            FactCheckBox {
-                id: telemetryLossCheckbox
-                fact: autopilot.parameters["COM_DL_LOSS_EN"]
-                checkedValue: 1
-                uncheckedValue: 0
-                text: "Telemetry signal timeout - Return to Land"
+        Column {
+            spacing: 10
+
+            Label { text: "Return to Land Triggers"; color: palette.windowText; font.pointSize: 20 }
+            Row {
+                FactCheckBox {
+                    id: telemetryLossCheckbox
+                    fact: autopilot.parameters["COM_DL_LOSS_EN"]
+                    checkedValue: 1
+                    uncheckedValue: 0
+                    text: "Telemetry signal timeout - Return to Land"
+                    anchors.baseline: telemetryLossField.baseline
+                }
+                Label { text: " after "; color: palette.windowText; anchors.baseline: telemetryLossField.baseline }
+                FactTextField {
+                    id: telemetryLossField
+                    fact: autopilot.parameters["NAV_DLL_N"];
+                    showUnits: true
+                }
             }
-            Label { text: " after "; color: palette.windowText }
-            FactTextField {
-                fact: autopilot.parameters["NAV_DLL_N"];
-                showUnits: true
-                enabled: telemetryLossCheckbox.checked
+            Row {
+                Label { text: "RC Transmitter signal loss - Return to Land after "; color: palette.windowText; anchors.baseline: rcLossField.baseline }
+                FactTextField { id: rcLossField; fact: autopilot.parameters["COM_RC_LOSS_T"]; showUnits: true }
             }
-        }
-        Row {
-            Label { text: "RC Transmitter signal loss - Return to Land after "; color: palette.windowText }
-            FactTextField { fact: autopilot.parameters["COM_RC_LOSS_T"]; showUnits: true }
         }
 
         Text {

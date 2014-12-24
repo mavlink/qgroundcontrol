@@ -251,6 +251,7 @@
 
         <file alias="SetupViewConnected.qml">src/VehicleSetup/SetupViewConnected.qml</file>
         <file alias="SetupViewDisconnected.qml">src/VehicleSetup/SetupViewDisconnected.qml</file>
+        <file alias="SetupPane.qml">src/VehicleSetup/SetupPane.qml</file>
 
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
     </qresource>

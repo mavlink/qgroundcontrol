@@ -6,8 +6,10 @@ import QGroundControl.FactSystem 1.0
 TextField {
     property Fact fact: Fact { value: 0 }
     property bool showUnits: false
+    QGCPalette { id: palette; colorGroup: enabled ? QGCPalette.Active : QGCPalette.Disabled }
 
     text: fact.valueString
+    textColor: palette.text
 
     Label {
         id: unitsLabelWidthGenerator
@@ -19,34 +21,38 @@ TextField {
     style: TextFieldStyle {
         background: Item {
             id: backgroundItem
-            property real unitsLabelWidth: 10
+
             Rectangle {
                 anchors.fill: parent
                 anchors.bottomMargin: -1
                 color: "#44ffffff"
             }
+
             Rectangle {
-                id: baserect
-                gradient: Gradient {
-                    GradientStop {color: "#e0e0e0" ; position: 0}
-                    GradientStop {color: "#fff" ; position: 0.1}
-                    GradientStop {color: "#fff" ; position: 1}
-                }
                 anchors.fill: parent
+
                 border.color: control.activeFocus ? "#47b" : "#999"
+                color: palette.base
             }
-            Label {
+
+            Text {
                 id: unitsLabel
+
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                width: unitsLabelWidthGenerator.width
-                x: parent.width - width
+
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
+
+                x: parent.width - width
+                width: unitsLabelWidthGenerator.width
+
                 text: control.fact.units
+                color: control.textColor
                 visible: control.showUnits
             }
         }
+
         padding.right: control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight/3
     }
 
