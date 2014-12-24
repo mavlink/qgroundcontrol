@@ -82,18 +82,18 @@ void FactLoader::_parameterChanged(int uas, int component, QString parameterName
         Q_ASSERT(component == _lastSeenComponent);
     }
     
+    bool setMetaData = false;
     if (!_mapParameterName2Variant.contains(parameterName)) {
         qCDebug(FactLoaderLog) << "Adding new fact" << parameterName;
         
         Fact* fact = new Fact(parameterName, this);
+        setMetaData = true;
         
         _mapParameterName2Variant[parameterName] = QVariant::fromValue(fact);
         _mapFact2ParameterName[fact] = parameterName;
         
         // We need to know when the fact changes from QML so that we can send the new value to the parameter manager
         connect(fact, &Fact::_containerValueChanged, this, &FactLoader::_valueUpdated);
-
-        _addMetaDataToFact(fact);
     }
     
     Q_ASSERT(_mapParameterName2Variant.contains(parameterName));
@@ -103,6 +103,10 @@ void FactLoader::_parameterChanged(int uas, int component, QString parameterName
     Fact* fact = _mapParameterName2Variant[parameterName].value<Fact*>();
     Q_ASSERT(fact);
     fact->_containerSetValue(value);
+    
+    if (setMetaData) {
+        _addMetaDataToFact(fact);
+    }
 }
 
 /// Connected to Fact::valueUpdated
@@ -122,23 +126,26 @@ void FactLoader::_valueUpdated(QVariant value)
         case FactMetaData::valueTypeInt8:
         case FactMetaData::valueTypeInt16:
         case FactMetaData::valueTypeInt32:
-            typedValue = QVariant(value.value<int>());
+            typedValue.setValue(QVariant(value.toInt()));
+            break;
             
         case FactMetaData::valueTypeUint8:
         case FactMetaData::valueTypeUint16:
         case FactMetaData::valueTypeUint32:
-            typedValue = QVariant(value.value<uint>());
+            typedValue.setValue(value.toUInt());
             break;
             
         case FactMetaData::valueTypeFloat:
-            typedValue = QVariant(value.toFloat());
+            typedValue.setValue(value.toFloat());
             break;
             
         case FactMetaData::valueTypeDouble:
-            typedValue = QVariant(value.toDouble());
+            typedValue.setValue(value.toDouble());
             break;
     }
     
+    qCDebug(FactLoaderLog) << "Set parameter" << fact->name() << typedValue;
+
     _paramMgr->setParameter(_lastSeenComponent, _mapFact2ParameterName[fact], typedValue);
     _paramMgr->sendPendingParameters(true /* persistAfterSend */, false /* forceSend */);
 }
@@ -191,7 +198,7 @@ void FactLoader::_addMetaDataToFact(Fact* fact)
             break;
             
         default:
-            qCWarning(FactLoaderLog) << "Invalid variant type" << fact->value().type();
+            qWarning() << fact->name() << "Invalid variant type" << fact->value().type();
             break;
     }
     

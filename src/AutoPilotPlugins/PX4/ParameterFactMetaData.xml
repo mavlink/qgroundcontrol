@@ -159,6 +159,7 @@
             <default>2</default>
             <min>0</min>
             <max>1000</max>
+            <unit>timeouts</unit>
         </parameter>
         <parameter name="NAV_DLL_CHSK" type="INT32">
             <short_desc>Skip comms hold wp</short_desc>
@@ -2041,7 +2042,7 @@
             <default>0.5</default>
             <min>0</min>
             <max>35</max>
-            <unit>second</unit>
+            <unit>seconds</unit>
         </parameter>
     </group>
     <group name="mTECS">
