@@ -32,6 +32,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariant>
+#include <QDebug>
 
 /// @brief A Fact is used to hold a single value within the system.
 ///
@@ -44,6 +45,7 @@ class Fact : public QObject
     
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
+    Q_PROPERTY(QVariant valueString READ valueString NOTIFY valueChanged)
     Q_PROPERTY(QVariant defaultValue READ defaultValue CONSTANT)
     Q_PROPERTY(FactMetaData::ValueType_t type READ type CONSTANT)
     Q_PROPERTY(QString shortDescription READ shortDescription CONSTANT)
@@ -60,37 +62,40 @@ public:
     // Property system methods
     
     /// Read accessor or name property
-    QString name(void) const { return _name; }
+    QString name(void) const;
     
     /// Read accessor for value property
-    QVariant value(void) const { return _value; }
+    QVariant value(void) const;
+    
+    /// Read accessor for valueString property
+    QString valueString(void) const;
     
     /// Write accessor for value property
     void setValue(const QVariant& value);
     
     /// Read accesor for defaultValue property
-    QVariant defaultValue(void) { return _metaData->defaultValue; }
+    QVariant defaultValue(void);
     
     /// Read accesor for type property
-    FactMetaData::ValueType_t type(void) { return _metaData->type; }
+    FactMetaData::ValueType_t type(void);
     
     /// Read accesor for shortDescription property
-    QString shortDescription(void) { return _metaData->shortDescription; }
+    QString shortDescription(void);
     
     /// Read accesor for longDescription property
-    QString longDescription(void) { return _metaData->longDescription; }
+    QString longDescription(void);
     
     /// Read accesor for units property
-    QString units(void) { return _metaData->units; }
+    QString units(void);
     
     /// Read accesor for min property
-    QVariant min(void) { return _metaData->min; }
+    QVariant min(void);
 
     /// Read accesor for max property
-    QVariant max(void) { return _metaData->max; }
+    QVariant max(void);
     
     /// Sets the meta data associated with the Fact.
-    void setMetaData(FactMetaData* metaData) { _metaData = metaData; }
+    void setMetaData(FactMetaData* metaData);
     
     void _containerSetValue(const QVariant& value);
     
