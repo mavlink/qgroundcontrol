@@ -110,6 +110,8 @@ protected:
 private:
     GAudioOutput(QObject *parent = NULL);
     ~GAudioOutput();
+    
+    static const char* _mutedKey;
 };
 
 #endif // AUDIOOUTPUT_H
