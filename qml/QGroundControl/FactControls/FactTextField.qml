@@ -7,7 +7,7 @@ TextField {
     property Fact fact: Fact { value: 0 }
     property bool showUnits: false
 
-    text: fact.value
+    text: fact.valueString
 
     Label {
         id: unitsLabelWidthGenerator

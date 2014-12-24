@@ -48,3 +48,58 @@ void Fact::_containerSetValue(const QVariant& value)
     _value = value;
     emit valueChanged(_value);
 }
+
+QString Fact::name(void) const
+{
+    return _name;
+}
+
+QVariant Fact::value(void) const
+{
+    return _value;
+}
+
+QString Fact::valueString(void) const
+{
+    return _value.toString();
+}
+
+QVariant Fact::defaultValue(void)
+{
+    return _metaData->defaultValue;
+}
+
+FactMetaData::ValueType_t Fact::type(void)
+{
+    return _metaData->type;
+}
+
+QString Fact::shortDescription(void)
+{
+    return _metaData->shortDescription;
+}
+
+QString Fact::longDescription(void)
+{
+    return _metaData->longDescription;
+}
+
+QString Fact::units(void)
+{
+    return _metaData->units;
+}
+
+QVariant Fact::min(void)
+{
+    return _metaData->min;
+}
+
+QVariant Fact::max(void)
+{
+    return _metaData->max;
+}
+
+void Fact::setMetaData(FactMetaData* metaData)
+{
+    _metaData = metaData;
+}
