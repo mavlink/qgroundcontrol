@@ -55,7 +55,7 @@ class QGCPalette : public QObject
 
 public:
     enum ColorGroup {
-        Disabled,
+        Disabled = 0,
         Active,
         Inactive
     };
