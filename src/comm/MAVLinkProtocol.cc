@@ -198,17 +198,6 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
             _stopLogging();
         }
     }
-    
-    // Track the links which are connected to the protocol
-    QList<LinkInterface*> _connectedLinks;  ///< List of all links connected to protocol
-
-    //qDebug() << "linkStatusChanged" << connected;
-    
-
-    if (link) {
-        if (connected) {
-        }
-    }
 }
 
 /**
@@ -294,9 +283,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             // Log data
             
-            Q_ASSERT(_logSuspendError || _logSuspendReplay || _tempLogFile.isOpen());
-            
-            if (!_logSuspendError && !_logSuspendReplay) {
+            if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
                 uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)];
 
                 // Write the uint64 time in microseconds in big endian format before the message.
