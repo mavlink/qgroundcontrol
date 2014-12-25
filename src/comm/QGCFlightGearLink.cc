@@ -69,7 +69,7 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
     setRemoteHost(remoteHost);
     
     // We need a mechanism so show error message from our FGLink thread on the UI thread. This signal connection will do that for us.
-    connect(this, SIGNAL(showCriticalMessageFromThread(const QString&, const QString&)), MainWindow::instance(), SLOT(showCriticalMessage(const QString&, const QString&)));
+    connect(this, &QGCFlightGearLink::showCriticalMessageFromThread, qgcApp(), &QGCApplication::criticalMessageBoxOnMainThread);
 }
 
 QGCFlightGearLink::~QGCFlightGearLink()
@@ -825,7 +825,7 @@ bool QGCFlightGearLink::connectSimulation()
         } else {
             errMsg = tr("Unable to automatically determine --fg-scenery directory location. You will need to specify --fg-scenery=directory as an additional command line parameter from ui.");
         }
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), errMsg);
+        QGCMessageBox::critical(tr("FlightGear HIL"), errMsg);
         return false;
     }
 #else
