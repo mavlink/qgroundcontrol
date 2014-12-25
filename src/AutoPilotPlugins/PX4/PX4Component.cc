@@ -44,7 +44,7 @@ void PX4Component::_parameterUpdated(int compId, QString paramName, QVariant val
         
         while (*prgTriggers != NULL) {
             if (paramName == *prgTriggers) {
-                emit setupCompleteChanged();
+                emit setupCompleteChanged(setupComplete());
                 return;
             }
             prgTriggers++;

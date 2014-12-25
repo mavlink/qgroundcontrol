@@ -27,6 +27,7 @@
 #include "SensorsComponent.h"
 #include "QGCPX4SensorCalibration.h"
 #include "VehicleComponentSummaryItem.h"
+#include "PX4AutoPilotPlugin.h"
 
 // These two list must be kept in sync
 
@@ -117,4 +118,16 @@ QWidget* SensorsComponent::setupWidget(void) const
 QUrl SensorsComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/SensorsComponentSummary.qml");
+}
+
+QString SensorsComponent::prerequisiteSetup(void) const
+{
+    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
+    Q_ASSERT(plugin);
+    
+    if (!plugin->airframeComponent()->setupComplete()) {
+        return plugin->airframeComponent()->name();
+    }
+    
+    return QString();
 }
