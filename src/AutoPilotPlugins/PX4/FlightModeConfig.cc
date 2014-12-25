@@ -104,12 +104,6 @@ void FlightModeConfig::_initUi(void) {
     }
     
     _updateAllSwitches();
-    
-    // Finally if RC Calibration has not been performed disable the entire widget and inform user
-    if (_getChannelMapForParam(_modeSwitchParam) == 0) {
-        // FIXME: Do something more than disable
-        setEnabled(false);
-    }
 }
 
 void FlightModeConfig::_updateAllSwitches(void)

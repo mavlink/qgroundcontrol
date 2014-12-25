@@ -28,6 +28,11 @@
 #include "AutoPilotPluginManager.h"
 #include "UASInterface.h"
 #include "PX4ParameterFacts.h"
+#include "AirframeComponent.h"
+#include "RadioComponent.h"
+#include "FlightModesComponent.h"
+#include "SensorsComponent.h"
+#include "SafetyComponent.h"
 
 #include <QImage>
 
@@ -53,10 +58,22 @@ public:
     static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
     static void clearStaticData(void);
     
+    // These methods should only be used by objects within the plugin
+    AirframeComponent* airframeComponent(void) { return _airframeComponent; }
+    RadioComponent* radioComponent(void) { return _radioComponent; }
+    FlightModesComponent* flightModesComponent(void) { return _flightModesComponent; }
+    SensorsComponent* sensorsComponent(void) { return _sensorsComponent; }
+    SafetyComponent* safetyComponent(void) { return _safetyComponent; }
+    
 private:
-    UASInterface*       _uas;
-    PX4ParameterFacts*  _parameterFacts;
-    QVariantList        _components;
+    UASInterface*           _uas;
+    PX4ParameterFacts*      _parameterFacts;
+    QVariantList            _components;
+    AirframeComponent*      _airframeComponent;
+    RadioComponent*         _radioComponent;
+    FlightModesComponent*   _flightModesComponent;
+    SensorsComponent*       _sensorsComponent;
+    SafetyComponent*        _safetyComponent;
 };
 
 #endif

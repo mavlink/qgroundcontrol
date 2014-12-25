@@ -27,6 +27,7 @@
 #include "RadioComponent.h"
 #include "PX4RCCalibration.h"
 #include "VehicleComponentSummaryItem.h"
+#include "PX4AutoPilotPlugin.h"
 
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
@@ -104,4 +105,16 @@ QWidget* RadioComponent::setupWidget(void) const
 QUrl RadioComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/RadioComponentSummary.qml");
+}
+
+QString RadioComponent::prerequisiteSetup(void) const
+{
+    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
+    Q_ASSERT(plugin);
+    
+    if (!plugin->airframeComponent()->setupComplete()) {
+        return plugin->airframeComponent()->name();
+    }
+    
+    return QString();
 }
