@@ -100,37 +100,7 @@ QWidget* SafetyComponent::setupWidget(void) const
     return holder;
 }
 
-const QVariantList& SafetyComponent::summaryItems(void)
+QUrl SafetyComponent::summaryQmlSource(void) const
 {
-    if (!_summaryItems.count()) {
-        QString name;
-        QString state;
-        
-        name = "RTL min alt:";
-
-        VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-        
-        name = "RTL home alt:";
-        
-        item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-
-        name = "RTL home loiter:";
-        
-        item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-        
-        name = "Telemetry loss RTL:";
-        
-        item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-        
-        name = "RC loss RTL:";
-        
-        item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-    }
-    
-    return _summaryItems;
+    return QUrl::fromUserInput("qrc:/qml/SafetyComponentSummary.qml");
 }

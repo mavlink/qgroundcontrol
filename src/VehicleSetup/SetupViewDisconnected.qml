@@ -14,7 +14,7 @@ Rectangle {
         anchors.fill: parent
 
         Rectangle { id: header; color: "lightblue"; radius: 10.0; width: parent.width; height: titleText.height + 20; opacity: 0.8;
-            Text { id: titleText; anchors.centerIn: parent; font.pointSize: 24; text: "Vehicle Summary" }
+            Text { id: titleText; anchors.centerIn: parent; font.pointSize: 24; text: "Vehicle Setup" }
         }
 
         Text { width: parent.width; height: parent.height - header.height - footer.height;
@@ -22,7 +22,7 @@ Rectangle {
             color: palette.windowText
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            text: "No vehicle currently connected. Vehicle Setup is only available while vehicle is connected." }
+            text: "Vehicle Setup is only available while vehicle is connected." }
 
         Rectangle { id: footer; anchors.bottom: parent.bottom; color: "lightblue"; radius: 10.0; width: parent.width; height: titleText.height + 20; opacity: 0.8;
 

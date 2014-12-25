@@ -66,6 +66,8 @@ AirframeComponent::AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopil
     PX4Component(uas, autopilot, parent),
     _name(tr("Airframe"))
 {
+    Q_UNUSED(mavTypeInfo);  // Keeping this around for later use
+    
     // Validate that our mavTypeInfo array hasn't gotten out of sync
     
     Q_ASSERT(cMavTypes == MAV_TYPE_ENUM_END);
@@ -93,8 +95,9 @@ AirframeComponent::AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopil
         MAV_TYPE_VTOL_DUOROTOR,
         MAV_TYPE_VTOL_QUADROTOR
     };
+    Q_UNUSED(mavTypes); // Keeping this around for later use
     
-    for (size_t i=0; i<sizeof(mavTypes)/sizeof(mavTypes[0]); i++) {
+    for (size_t i=0; i<cMavTypes; i++) {
         Q_ASSERT(mavTypeInfo[i].type == mavTypes[i]);
     }
 }
@@ -162,65 +165,7 @@ QWidget* AirframeComponent::setupWidget(void) const
     return new QGCPX4AirframeConfig;
 }
 
-const QVariantList& AirframeComponent::summaryItems(void)
+QUrl AirframeComponent::summaryQmlSource(void) const
 {
-    // Fill the items on first reference
-    // FIXME: These items are not live
-    
-    if (!_summaryItems.count()) {
-        QString name;
-        QString state;
-        QVariant value;
-        
-        name = "System ID:";
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "MAV_SYS_ID", value)) {
-            if (value.toInt() == 0) {
-                state = "Setup required";
-            } else {
-                state = value.toString();
-            }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-        }
-        
-        VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-        
-        name = "Airframe:";
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "SYS_AUTOSTART", value)) {
-            if (value.toInt() == 0) {
-                state = "Setup required";
-            } else {
-                state = value.toString();
-            }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-        }
-
-        item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-        
-        name = "Type:";
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "MAV_TYPE", value)) {
-            int index = value.toInt();
-            
-            if (index < 0 || index >= (int)cMavTypes) {
-                state = "Unknown";
-            } else {
-                state = mavTypeInfo[index].description;
-            }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-            state = "Unknown";
-        }
-
-        item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-    }
-        
-    return _summaryItems;
+    return QUrl::fromUserInput("qrc:/qml/AirframeComponentSummary.qml");
 }
-
