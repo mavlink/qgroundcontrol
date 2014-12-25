@@ -56,6 +56,7 @@
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
+#include "QGCFileDialog.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -313,6 +314,10 @@ bool QGCApplication::_initForNormalAppBoot(void)
         }
     }
     
+    // Now that main window is upcheck for lost log files
+    connect(this, &QGCApplication::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
+    emit checkForLostLogFiles();
+    
     return true;
 }
 
@@ -481,4 +486,31 @@ void QGCApplication::_destroySingletons(void)
     UASManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
+}
+
+void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)
+{
+    QGCMessageBox::information(title, msg);
+}
+
+void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
+{
+    QGCMessageBox::warning(title, msg);
+}
+
+void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const QString& msg)
+{
+    QGCMessageBox::critical(title, msg);
+}
+
+void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
+{
+    QString saveFilename = QGCFileDialog::getSaveFileName(MainWindow::instance(),
+                                                          tr("Select file to save Flight Data Log"),
+                                                          qgcApp()->mavlinkLogFilesLocation(),
+                                                          tr("Flight Data Log (*.mavlink)"));
+    if (!saveFilename.isEmpty()) {
+        QFile::copy(tempLogfile, saveFilename);
+    }
+    QFile::remove(tempLogfile);
 }

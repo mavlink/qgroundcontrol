@@ -76,7 +76,7 @@ void LinkManager::addLink(LinkInterface* link)
     
     // MainWindow may be around when doing things like running unit tests
     if (MainWindow::instance()) {
-        connect(link, SIGNAL(communicationError(QString,QString)), MainWindow::instance(), SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
+        connect(link, &LinkInterface::communicationError, qgcApp(), &QGCApplication::criticalMessageBoxOnMainThread);
     }
     
     MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();

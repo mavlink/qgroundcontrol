@@ -42,7 +42,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCDataPlot2D.h"
 #include "ui_QGCDataPlot2D.h"
 #include "MG.h"
-#include "MainWindow.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 
@@ -304,7 +303,6 @@ void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFil
     // Postprocess log file
     logFile = new QTemporaryFile("qt_qgc_temp_log.XXXXXX.csv");
     compressor = new LogCompressor(file, logFile->fileName());
-    connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
     connect(compressor, SIGNAL(finishedFile(QString)), this, SLOT(loadFile(QString)));
     compressor->startCompression();
 }
