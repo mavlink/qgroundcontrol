@@ -50,6 +50,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(QString icon READ icon CONSTANT)
     Q_PROPERTY(QWidget* setupWidget READ setupWidget STORED false)
     Q_PROPERTY(QUrl summaryQmlSource READ summaryQmlSource CONSTANT);
+    Q_PROPERTY(QString prerequisiteSetup READ prerequisiteSetup)
     
 public:
     VehicleComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
@@ -64,11 +65,12 @@ public:
     virtual QWidget* setupWidget(void) const = 0;
     virtual QStringList paramFilterList(void) const = 0;
     virtual QUrl summaryQmlSource(void) const = 0;
+    virtual QString prerequisiteSetup(void) const = 0;
     
     virtual void addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent);
     
 signals:
-    void setupCompleteChanged(void);
+    void setupCompleteChanged(bool setupComplete);
     
 protected:
     UASInterface*                   _uas;
