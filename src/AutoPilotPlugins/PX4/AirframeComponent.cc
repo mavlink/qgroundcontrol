@@ -162,65 +162,7 @@ QWidget* AirframeComponent::setupWidget(void) const
     return new QGCPX4AirframeConfig;
 }
 
-const QVariantList& AirframeComponent::summaryItems(void)
+QUrl AirframeComponent::summaryQmlSource(void) const
 {
-    // Fill the items on first reference
-    // FIXME: These items are not live
-    
-    if (!_summaryItems.count()) {
-        QString name;
-        QString state;
-        QVariant value;
-        
-        name = "System ID:";
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "MAV_SYS_ID", value)) {
-            if (value.toInt() == 0) {
-                state = "Setup required";
-            } else {
-                state = value.toString();
-            }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-        }
-        
-        VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-        
-        name = "Airframe:";
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "SYS_AUTOSTART", value)) {
-            if (value.toInt() == 0) {
-                state = "Setup required";
-            } else {
-                state = value.toString();
-            }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-        }
-
-        item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-        
-        name = "Type:";
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "MAV_TYPE", value)) {
-            int index = value.toInt();
-            
-            if (index < 0 || index >= (int)cMavTypes) {
-                state = "Unknown";
-            } else {
-                state = mavTypeInfo[index].description;
-            }
-        } else {
-            // Why is the parameter missing?
-            Q_ASSERT(false);
-            state = "Unknown";
-        }
-
-        item = new VehicleComponentSummaryItem(name, state, this);
-        _summaryItems.append(QVariant::fromValue(item));
-    }
-        
-    return _summaryItems;
+    return QUrl::fromUserInput("qrc:/qml/AirframeComponentSummary.qml");
 }
-

@@ -33,9 +33,6 @@
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = {  "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", "SENS_DPRES_OFF", NULL };
 
-/// @brief Used to translate from parameter name to user string
-static const char* triggerSensors[] = { "Compass",       "Gyro",           "Acceleromter",  "Airspeed",       NULL };
-
 SensorsComponent::SensorsComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
     _name(tr("Sensors"))
@@ -117,108 +114,7 @@ QWidget* SensorsComponent::setupWidget(void) const
     return new QGCPX4SensorCalibration;
 }
 
-const QVariantList& SensorsComponent::summaryItems(void)
+QUrl SensorsComponent::summaryQmlSource(void) const
 {
-    if (!_summaryItems.count()) {
-        QString name;
-        QString state;
-        
-        // Summary item for each Sensor
-        
-        int i = 0;
-        while (triggerParams[i] != NULL) {
-            QVariant value;
-            
-            name = tr("%1:").arg(triggerSensors[i]);
-            
-            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParams[i], value)) {
-                if (value.toFloat() == 0.0f) {
-                    state = "Setup required";
-                } else {
-                    state = "Ready";
-                }
-            } else {
-                // Why is the parameter missing?
-                Q_ASSERT(false);
-            }
-
-            VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
-            _summaryItems.append(QVariant::fromValue(item));
-            
-            i++;
-        }
-        
-        // Summary item for each orientation param
-        
-        static const char* orientationSensors[] = { "Autopilot orientation:", "Compass orientation:" };
-        static const char* orientationParams[] = {  "SENS_BOARD_ROT",         "SENS_EXT_MAG_ROT" };
-        static const size_t cOrientationSensors = sizeof(orientationSensors)/sizeof(orientationSensors[0]);
-        
-        static const char* orientationValues[] = {
-                "Line of flight",
-                "Yaw:45",
-                "Yaw:90",
-                "Yaw:135",
-                "Yaw:180",
-                "Yaw:225",
-                "Yaw:270",
-                "Yaw:315",
-                "Roll:180",
-                "Roll:180 Yaw:45",
-                "Roll:180 Yaw:90",
-                "Roll:180 Yaw:135",
-                "Pitch:180",
-                "Roll:180 Yaw:225",
-                "Roll:180 Yaw:270",
-                "Roll:180 Yaw:315",
-                "Roll:90",
-                "Roll:90 Yaw:45",
-                "Roll:90 Yaw:90",
-                "Roll:90 Yaw:135",
-                "Roll:270",
-                "Roll:270 Yaw:45",
-                "Roll:270 Yaw:90",
-                "Roll:270 Yaw:135",
-                "Pitch:90",
-                "Pitch:270",
-                "Pitch:180",
-                "Pitch:180 Yaw:90",
-                "Pitch:180 Yaw:270",
-                "Roll:90 Pitch:90",
-                "Roll:180 Pitch:90",
-                "Roll:270 Pitch:90",
-                "Roll:90 Pitch:180",
-                "Roll:270 Pitch:180",
-                "Roll:90 Pitch:270",
-                "Roll:180 Pitch:270",
-                "Roll:270 Pitch:270",
-                "Roll:90 Pitch:180 Yaw:90",
-                "Roll:90 Yaw:270"
-        };
-        static const size_t cOrientationValues = sizeof(orientationValues)/sizeof(orientationValues[0]);
-        
-        for (size_t i=0; i<cOrientationSensors; i++) {
-            QVariant value;
-            
-            name = orientationSensors[i];
-            
-            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), orientationParams[i], value)) {
-                int index = value.toInt();
-                if (index < 0 || index >= (int)cOrientationValues) {
-                    state = "Setup required";
-                } else {
-                    state = orientationValues[index];
-                }
-            } else {
-                // Why is the parameter missing?
-                Q_ASSERT(false);
-                state = "Unknown";
-            }
-            
-            VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
-            _summaryItems.append(QVariant::fromValue(item));
-        }
-    }
-    
-    return _summaryItems;
+    return QUrl::fromUserInput("qrc:/qml/SensorsComponentSummary.qml");
 }

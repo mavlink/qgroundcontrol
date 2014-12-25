@@ -27,7 +27,7 @@ Rectangle {
         spacing: 5
 
         Rectangle { id: header; color: "lightblue"; radius: 10.0; width: parent.width; height: titleText.height + 20; opacity: 0.8;
-            Text { id: titleText; anchors.centerIn: parent; font.pointSize: 24; text: "Vehicle Summary" }
+            Text { id: titleText; anchors.centerIn: parent; font.pointSize: 24; text: "Vehicle Setup" }
         }
 
         Flow {
@@ -42,7 +42,7 @@ Rectangle {
                     width: 250
                     height: 200
 
-                    property var summaryModel: modelData.summaryItems
+                    property var summaryQmlSource: modelData.summaryQmlSource
                     text: modelData.name
                     property bool setupComplete: modelData.setupComplete
 
@@ -100,15 +100,9 @@ Rectangle {
                                     GradientStop { position: 1; color: "#000000" }
                                 }
 
-                                ListView {
-                                    id: summaryList
+                                Loader {
                                     anchors.fill: parent
-                                    anchors.margins: 4
-                                    model: control.summaryModel
-                                        delegate: Row { width: parent.width
-                                            Text { id: firstCol; text: modelData.name }
-                                            Text { horizontalAlignment: Text.AlignRight; width: parent.width - firstCol.contentWidth; text: modelData.state }
-                                    }
+                                    source: summaryQmlSource
                                 }
                             }
                         }
