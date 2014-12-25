@@ -32,7 +32,7 @@ Rectangle {
                     id: homeLoiterCheckbox
                     property Fact fact: autopilot.parameters["RTL_LAND_DELAY"]
 
-                    checked: fact.value < 0
+                    checked: fact.value > 0
                     text: "Loiter at Home altitude for "
 
                     onClicked: {
