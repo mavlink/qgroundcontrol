@@ -192,7 +192,7 @@ signals:
     void nameChanged(QString name);
 
     /** @brief Communication error occured */
-    void communicationError(const QString& linkname, const QString& error);
+    void communicationError(const QString& title, const QString& error);
 
     void communicationUpdate(const QString& linkname, const QString& text);
 

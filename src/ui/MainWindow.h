@@ -161,15 +161,6 @@ public:
     void hideSplashScreen(void);
 
 public slots:
-    /** @brief Shows a status message on the bottom status bar */
-    void showStatusMessage(const QString& status, int timeout);
-    /** @brief Shows a status message on the bottom status bar */
-    void showStatusMessage(const QString& status);
-    /** @brief Shows a critical message as popup or as widget */
-    void showCriticalMessage(const QString& title, const QString& message);
-    /** @brief Shows an info message as popup or as widget */
-    void showInfoMessage(const QString& title, const QString& message);
-
     /** @brief Show the application settings */
     void showSettings();
     /** @brief Add a communication link */
@@ -452,7 +443,6 @@ protected:
     CUSTOM_MODE customMode;
     
 private slots:
-    void _saveTempFlightDataLog(QString tempLogfile);
     void _addLinkMenu(LinkInterface* link);
 
 private:

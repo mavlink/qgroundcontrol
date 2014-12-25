@@ -190,7 +190,6 @@ private:
     // XXX export to settings
     static const float defaultAltitudeHomeOffset;    ///< Altitude offset in meters from home for new waypoints
     
-    QString _offlineEditingModeTitle;
     QString _offlineEditingModeMessage;
 };
 

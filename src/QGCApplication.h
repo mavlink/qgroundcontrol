@@ -87,7 +87,27 @@ public:
     /// @brief Returns truee if unit test are being run
     bool runningUnitTests(void) { return _runningUnitTests; }
     
+public slots:
+    /// You can connect to this slot to show an information message box from a different thread.
+    void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
+    
+    /// You can connect to this slot to show a warning message box from a different thread.
+    void warningMessageBoxOnMainThread(const QString& title, const QString& msg);
+    
+    /// You can connect to this slot to show a critical message box from a different thread.
+    void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
+    
+    /// Save the specified Flight Data Log
+    void saveTempFlightDataLogOnMainThread(QString tempLogfile);
+    
+signals:
+    /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
+    /// on the MAVLinkProtocol thread;
+    void checkForLostLogFiles(void);
+    
 public:
+    // Although public, these methods are internal and should only be called by UnitTest code
+    
     /// @brief Perform initialize which is common to both normal application running and unit tests.
     ///         Although public should only be called by main.
     void _initCommon(void);

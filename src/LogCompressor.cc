@@ -27,6 +27,9 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#include "LogCompressor.h"
+#include "QGCApplication.h"
+
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
@@ -34,8 +37,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QStringList>
 #include <QFileInfo>
 #include <QList>
-#include "LogCompressor.h"
-
 #include <QDebug>
 
 /**
@@ -50,6 +51,7 @@ LogCompressor::LogCompressor(QString logFileName, QString outFileName, QString d
     delimiter(delimiter),
     holeFillingEnabled(true)
 {
+    connect(this, &LogCompressor::logProcessingCriticalError, qgcApp(), &QGCApplication::criticalMessageBoxOnMainThread);
 }
 
 void LogCompressor::run()
@@ -57,7 +59,7 @@ void LogCompressor::run()
 	// Verify that the input file is useable
 	QFile infile(logFileName);
 	if (!infile.exists() || !infile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-		emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since input file %1 is not readable").arg(QFileInfo(infile.fileName()).absoluteFilePath()));
+		_signalCriticalError(tr("Log Compressor: Cannot start/compress log file, since input file %1 is not readable").arg(QFileInfo(infile.fileName()).absoluteFilePath()));
 		return;
 	}
 
@@ -74,7 +76,7 @@ void LogCompressor::run()
 	// Verify that the output file is useable
     QFile outTmpFile(outFileName);
     if (!outTmpFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-		emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outTmpFile.fileName()).absoluteFilePath()));
+		_signalCriticalError(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outTmpFile.fileName()).absoluteFilePath()));
 		return;
 	}
 
@@ -112,7 +114,7 @@ void LogCompressor::run()
     headerLine = headerLine.replace(".", "");
 	outTmpFile.write(headerLine.toLocal8Bit());
 
-    emit logProcessingStatusChanged(tr("Log compressor: Dataset contains dimensions: ") + headerLine);
+    _signalCriticalError(tr("Log compressor: Dataset contains dimensions: ") + headerLine);
 
     // Template list stores a list for populating with data as it's parsed from messages.
     QStringList templateList;
@@ -191,11 +193,8 @@ void LogCompressor::run()
 	// We're now done with the source file
 	infile.close();
 
-    emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
-
 	// Clean up and update the status before we return.
 	currentDataLine = 0;
-    emit logProcessingStatusChanged(tr("Log compressor: Finished processing file: %1").arg(outFileName));
 	emit finishedFile(outFileName);
 	running = false;
 }
@@ -218,4 +217,10 @@ bool LogCompressor::isFinished()
 int LogCompressor::getCurrentLine()
 {
 	return currentDataLine;
+}
+
+
+void LogCompressor::_signalCriticalError(const QString& msg)
+{
+    emit logProcessingCriticalError(tr("Log Compressor"), msg);
 }
