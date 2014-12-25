@@ -235,7 +235,9 @@
     <qresource prefix="/QLoggingCategory">
         <file alias="qtlogging.ini">files/QLoggingCategory/qtlogging.ini</file>
     </qresource>
+
     <qresource prefix="/qml">
+
         <file alias="test.qml">src/test.qml</file>
 
         <file alias="QGroundControl/FactControls/qmldir">qml/QGroundControl/FactControls/qmldir</file>
@@ -254,7 +256,15 @@
         <file alias="SetupPane.qml">src/VehicleSetup/SetupPane.qml</file>
 
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
+
+        <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
+        <file alias="SensorsComponentSummary.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
+        <file alias="RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/RadioComponentSummary.qml</file>
+        <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
+        <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
+
     </qresource>
+
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>

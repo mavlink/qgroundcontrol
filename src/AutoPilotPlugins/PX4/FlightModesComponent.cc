@@ -117,44 +117,7 @@ QWidget* FlightModesComponent::setupWidget(void) const
     return new FlightModeConfig();
 }
 
-const QVariantList& FlightModesComponent::summaryItems(void)
+QUrl FlightModesComponent::summaryQmlSource(void) const
 {
-    if (!_summaryItems.count()) {
-
-        // Create summary items for each mode switch
-        
-        for (size_t i=0; i<cSwitchList; i++) {
-            QString name;
-            QString state;
-            QVariant value;
-            
-            name = switchList[i].name;
-            
-            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), switchList[i].param, value)) {
-                int chan = value.toInt();
-                
-                if (chan == 0) {
-                    // Switch is not mapped
-                    if (i == 0) {
-                        // Mode switch is required
-                        Q_ASSERT(strcmp(switchList[0].param, "RC_MAP_MODE_SW") == 0);
-                        state = "Setup required";
-                    } else {
-                        state = "None";
-                    }
-                } else {
-                    state = tr("Chan %1").arg(chan);
-                }
-            } else {
-                // Why is the parameter missing?
-                Q_ASSERT(false);
-                state = "Unknown";
-            }
-            
-            VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
-            _summaryItems.append(QVariant::fromValue(item));
-        }
-    }
-    
-    return _summaryItems;
+    return QUrl::fromUserInput("qrc:/qml/FlightModesComponentSummary.qml");
 }
