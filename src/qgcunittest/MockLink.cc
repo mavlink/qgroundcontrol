@@ -206,6 +206,8 @@ void MockLink::_loadParams(void)
                 break;
         }
         
+        qCDebug(MockLinkLog) << "Loading param" << paramName << paramValue;
+        
         _mapParamName2Value[paramName] = paramValue;
         _mapParamName2MavParamType[paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
     }
@@ -460,6 +462,8 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
         
         Q_ASSERT(paramName.length() <= MAVLINK_MSG_ID_PARAM_VALUE_LEN);
         strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
+        
+        qCDebug(MockLinkLog) << "Sending msg_param_value" << paramId << paramType;
         
         mavlink_msg_param_value_pack(_vehicleSystemId,
                                      _vehicleComponentId,

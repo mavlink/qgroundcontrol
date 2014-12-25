@@ -102,55 +102,35 @@ QWidget* SafetyComponent::setupWidget(void) const
 
 const QVariantList& SafetyComponent::summaryItems(void)
 {
-    // FIXME: No summary items yet
-#if 0
     if (!_summaryItems.count()) {
         QString name;
         QString state;
         
-        // FIXME: Need to pull receiver type from RSSI value
-        name = "Receiver type:";
-        state = "n/a";
+        name = "RTL min alt:";
 
         VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
         _summaryItems.append(QVariant::fromValue(item));
         
-        static const char* stickParams[] = { "RC_MAP_ROLL", "RC_MAP_PITCH", "RC_MAP_YAW", "RC_MAP_THROTTLE" };
+        name = "RTL home alt:";
         
-        QString summary("Chan ");
-        
-        bool allSticksMapped = true;
-        for (size_t i=0; i<sizeof(stickParams)/sizeof(stickParams[0]); i++) {
-            QVariant value;
-            
-            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), stickParams[i], value)) {
-                if (value.toInt() == 0) {
-                    allSticksMapped = false;
-                    break;
-                } else {
-                    if (i != 0) {
-                        summary += ",";
-                    }
-                    summary += value.toString();
-                }
-            } else {
-                // Why is the parameter missing?
-                Q_ASSERT(false);
-                summary += "?";
-            }
-        }
-        
-        if (!allSticksMapped) {
-            summary = "Not mapped";
-        }
+        item = new VehicleComponentSummaryItem(name, state, this);
+        _summaryItems.append(QVariant::fromValue(item));
 
-        name = "Ail, Ele, Rud, Throt:";
-        state = summary;
+        name = "RTL home loiter:";
+        
+        item = new VehicleComponentSummaryItem(name, state, this);
+        _summaryItems.append(QVariant::fromValue(item));
+        
+        name = "Telemetry loss RTL:";
+        
+        item = new VehicleComponentSummaryItem(name, state, this);
+        _summaryItems.append(QVariant::fromValue(item));
+        
+        name = "RC loss RTL:";
         
         item = new VehicleComponentSummaryItem(name, state, this);
         _summaryItems.append(QVariant::fromValue(item));
     }
-#endif
     
     return _summaryItems;
 }
