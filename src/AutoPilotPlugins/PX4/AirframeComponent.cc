@@ -95,6 +95,7 @@ AirframeComponent::AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopil
         MAV_TYPE_VTOL_DUOROTOR,
         MAV_TYPE_VTOL_QUADROTOR
     };
+    Q_UNUSED(mavTypes); // Keeping this around for later use
     
     for (size_t i=0; i<cMavTypes; i++) {
         Q_ASSERT(mavTypeInfo[i].type == mavTypes[i]);
