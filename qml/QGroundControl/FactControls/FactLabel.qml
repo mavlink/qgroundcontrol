@@ -9,5 +9,5 @@ Label {
 
     color: palette.windowText
 
-    text: fact.value
+    text: fact.valueString
 }
