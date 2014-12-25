@@ -33,6 +33,7 @@
 #include "ParameterEditor.h"
 #include "SetupWidgetHolder.h"
 #include "MainWindow.h"
+#include "QGCMessageBox.h"
 
 #include <QQmlError>
 #include <QQmlContext>
@@ -117,6 +118,11 @@ void SetupView::_setConnectedView(void)
 
 void SetupView::_firmwareButtonClicked(void)
 {
+    if (_uasCurrent->isArmed()) {
+        QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
+        return;
+    }
+    
     SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
     dialog->setModal(true);
     dialog->setWindowTitle("Firmware Upgrade");
@@ -139,8 +145,19 @@ void SetupView::_parametersButtonClicked(void)
 
 void SetupView::_setupButtonClicked(const QVariant& component)
 {
+    if (_uasCurrent->isArmed()) {
+        QGCMessageBox::warning("Setup", "Setup cannot be performed while vehicle is armed.");
+        return;
+    }
+
     VehicleComponent* vehicle = qobject_cast<VehicleComponent*>(component.value<QObject*>());
     Q_ASSERT(vehicle);
+    
+    QString setupPrereq = vehicle->prerequisiteSetup();
+    if (!setupPrereq.isEmpty()) {
+        QGCMessageBox::warning("Setup", QString("%1 setup must be completed prior to %2 setup.").arg(setupPrereq).arg(vehicle->name()));
+        return;
+    }
     
     SetupWidgetHolder dialog(MainWindow::instance());
     dialog.setModal(true);
