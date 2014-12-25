@@ -66,6 +66,8 @@ AirframeComponent::AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopil
     PX4Component(uas, autopilot, parent),
     _name(tr("Airframe"))
 {
+    Q_UNUSED(mavTypeInfo);  // Keeping this around for later use
+    
     // Validate that our mavTypeInfo array hasn't gotten out of sync
     
     Q_ASSERT(cMavTypes == MAV_TYPE_ENUM_END);
@@ -94,7 +96,7 @@ AirframeComponent::AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopil
         MAV_TYPE_VTOL_QUADROTOR
     };
     
-    for (size_t i=0; i<sizeof(mavTypes)/sizeof(mavTypes[0]); i++) {
+    for (size_t i=0; i<cMavTypes; i++) {
         Q_ASSERT(mavTypeInfo[i].type == mavTypes[i]);
     }
 }
