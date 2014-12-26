@@ -232,7 +232,7 @@ bool TCPLink::_hardwareConnect(void)
         // Whether a failed connection emits an error signal or not is platform specific.
         // So in cases where it is not emitted, we emit one ourselves.
         if (errorSpy.count() == 0) {
-            emit communicationError(getName(), "Connection failed");
+            emit communicationError(tr("Link Error"), QString("Error on link %1. Connection failed").arg(getName()));
         }
         delete _socket;
         _socket = NULL;
@@ -248,7 +248,7 @@ bool TCPLink::_hardwareConnect(void)
 void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
 {
     Q_UNUSED(socketError);
-    emit communicationError(getName(), "Error on socket: " + _socket->errorString());
+    emit communicationError(tr("Link Error"), QString("Error on link %1. Error on socket: %2.").arg(getName()).arg(_socket->errorString()));
 }
 
 /**

@@ -24,15 +24,18 @@ protected:
     bool holeFillingEnabled;        ///< Enables the filling of holes in the dataset with the previous value (or NaN if none exists)
 
 signals:
-    /** @brief This signal is emitted when there is a change in the status of the parsing algorithm. For instance if an error is encountered.
-     * @param status A status message
-     */
-    void logProcessingStatusChanged(QString status);
-
     /** @brief This signal is emitted once a logfile has been finished writing
      * @param fileName The name of the output (CSV) file
      */
     void finishedFile(QString fileName);
+    
+    /// This signal is connected to QGCApplication::showCriticalMessage to show critical errors which come from the thread.
+    /// There is no need for clients to connect to this signal.
+    void logProcessingCriticalError(const QString& title, const QString& msg);
+    
+private:
+    void _signalCriticalError(const QString& msg);
+    
 };
 
 #endif // LOGCOMPRESSOR_H

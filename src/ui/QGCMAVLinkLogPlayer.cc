@@ -9,6 +9,7 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "QGCFileDialog.h"
+#include "QGCMessageBox.h"
 
 QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *parent) :
     QWidget(parent),
@@ -257,7 +258,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
     }
     
     if (foundConnection) {
-        MainWindow::instance()->showInfoMessage(tr("Log Replay"), tr("You must close all connections prior to replaying a log."));
+        QGCMessageBox::information(tr("Log Replay"), tr("You must close all connections prior to replaying a log."));
         return;
     }
     
@@ -313,7 +314,7 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     // Now load the new file.
     logFile.setFileName(file);
     if (!logFile.open(QFile::ReadOnly)) {
-        MainWindow::instance()->showCriticalMessage(tr("The selected file is unreadable"), tr("Please make sure that the file %1 is readable or select a different file").arg(file));
+        QGCMessageBox::critical(tr("Log Replay"), tr("The selected file is unreadable. Please make sure that the file %1 is readable or select a different file").arg(file));
         _playbackError();
         return false;
     }
@@ -354,7 +355,7 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
         }
 
         if (endtime == starttime) {
-            MainWindow::instance()->showCriticalMessage(tr("The selected file is corrupt"), tr("No valid timestamps were found at the end of the file.").arg(file));
+            QGCMessageBox::critical(tr("Log Replay"), tr("The selected file is corrupt. No valid timestamps were found at the end of the file.").arg(file));
             _playbackError();
             return false;
         }
@@ -631,7 +632,6 @@ void QGCMAVLinkLogPlayer::_finishPlayback(void)
     
     QString status = tr("Flight Data replay complete");
     ui->logStatsLabel->setText(status);
-    MainWindow::instance()->showStatusMessage(status);
     
     // Note that we explicitly set the slider to 100%, as it may not hit that by itself depending on log file size.
     updatePositionSliderUi(100.0f);

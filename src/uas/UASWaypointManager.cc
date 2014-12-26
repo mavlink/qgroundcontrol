@@ -33,7 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 #include "mavlink_types.h"
 #include "UASManager.h"
-#include "MainWindow.h"
+#include "QGCMessageBox.h"
 
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
 #define PROTOCOL_DELAY_MS 20        ///< minimum delay between sent messages
@@ -50,8 +50,6 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
       currentWaypointEditable(),
       protocol_timer(this)
 {
-    
-    _offlineEditingModeTitle = tr("OFFLINE Waypoint Editing Mode");
     _offlineEditingModeMessage = tr("You are in offline editing mode. Make sure to save your mission to a file before connecting to a system - you will need to load the file into the system, the offline list will be cleared on connect.");
     
     if (uas)
@@ -433,8 +431,9 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
     if (wp)
     {
         // Check if this is the first waypoint in an offline list
-        if (waypointsEditable.count() == 0 && uas == NULL)
-            MainWindow::instance()->showCriticalMessage(_offlineEditingModeTitle, _offlineEditingModeMessage);
+        if (waypointsEditable.count() == 0 && uas == NULL) {
+            QGCMessageBox::critical(tr("Waypoint Manager"),  _offlineEditingModeMessage);
+        }
 
         wp->setId(waypointsEditable.count());
         if (enforceFirstActive && waypointsEditable.count() == 0)
@@ -456,8 +455,9 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
 Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 {
     // Check if this is the first waypoint in an offline list
-    if (waypointsEditable.count() == 0 && uas == NULL)
-        MainWindow::instance()->showCriticalMessage(_offlineEditingModeTitle, _offlineEditingModeMessage);
+    if (waypointsEditable.count() == 0 && uas == NULL) {
+        QGCMessageBox::critical(tr("Waypoint Manager"),  _offlineEditingModeMessage);
+    }
 
     Waypoint* wp = new Waypoint();
     wp->setId(waypointsEditable.count());

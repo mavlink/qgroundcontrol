@@ -30,6 +30,7 @@
 #include "MainWindow.h"
 #include "MockLink.h"
 #include "QGCTemporaryFile.h"
+#include "QGCApplication.h"
 
 UT_REGISTER_TEST(MavlinkLogTest)
 
@@ -82,20 +83,18 @@ void MavlinkLogTest::_bootLogDetectionCancel_test(void)
 {
     // Create a fake mavlink log
     _createTempLogFile(false);
-
+    
     // We should get a message box, followed by a getSaveFileName dialog.
     setExpectedMessageBox(QMessageBox::Ok);
     setExpectedFileDialog(getSaveFileName, QStringList());
 
-    MainWindow* mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
-    Q_CHECK_PTR(mainWindow);
+    // Kick the protocol to check for lost log files and wait for signals to move through
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
+    emit checkForLostLogFiles();
+    QTest::qWait(1000);
     
     checkExpectedMessageBox();
     checkExpectedFileDialog();
-
-    mainWindow->close();
-    
-    delete mainWindow;
 }
 
 void MavlinkLogTest::_bootLogDetectionSave_test(void)
@@ -109,18 +108,16 @@ void MavlinkLogTest::_bootLogDetectionSave_test(void)
     QString logSaveFile(logSaveDir.filePath(_saveLogFilename));
     setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
     
-    MainWindow* mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
-    Q_CHECK_PTR(mainWindow);
+    // Kick the protocol to check for lost log files and wait for signals to move through
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
+    emit checkForLostLogFiles();
+    QTest::qWait(1000);
     
     checkExpectedMessageBox();
     checkExpectedFileDialog();
     
     // Make sure the file is there and delete it
     QCOMPARE(logSaveDir.remove(_saveLogFilename), true);
-    
-    mainWindow->close();
-    
-    delete mainWindow;
 }
 
 void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
@@ -128,20 +125,16 @@ void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
     // Create a fake empty mavlink log
     _createTempLogFile(true);
     
+    // Kick the protocol to check for lost log files and wait for signals to move through
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
+    emit checkForLostLogFiles();
+    QTest::qWait(1000);
+    
     // Zero length log files should not generate any additional UI pop-ups. It should just be deleted silently.
-    MainWindow* mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
-    Q_CHECK_PTR(mainWindow);
-    
-    mainWindow->close();
-    
-    delete mainWindow;
 }
 
 void MavlinkLogTest::_connectLog_test(void)
 {
-    MainWindow* mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
-    Q_CHECK_PTR(mainWindow);
-    
     LinkManager* linkMgr = LinkManager::instance();
     Q_CHECK_PTR(linkMgr);
     
@@ -163,10 +156,6 @@ void MavlinkLogTest::_connectLog_test(void)
     
     // Make sure the file is there and delete it
     QCOMPARE(logSaveDir.remove(_saveLogFilename), true);
-    
-    // MainWindow deletes itself on close
-    mainWindow->close();
-    QTest::qWait(1000); // Need to allow signals to move between threads to shutdown MainWindow
 }
 
 void MavlinkLogTest::_deleteTempLogFiles_test(void)
