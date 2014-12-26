@@ -128,10 +128,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     }
     
     connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
-    
-    connect(MAVLinkProtocol::instance(), SIGNAL(protocolStatusMessage(const QString&, const QString&)), this, SLOT(showCriticalMessage(const QString&, const QString&)));
-    connect(MAVLinkProtocol::instance(), SIGNAL(saveTempFlightDataLog(QString)), this, SLOT(_saveTempFlightDataLog(QString)));
-    
+        
     loadSettings();
     
     emit initStatusChanged(tr("Loading style"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
@@ -931,7 +928,6 @@ void MainWindow::loadCustomWidgetsFromDefaults(const QString& systemType, const 
     {
         qDebug() << "No default custom widgets for system " << systemType << "autopilot" << autopilotType << " found";
         qDebug() << "Tried with path: " << defaultsDir;
-        showStatusMessage(tr("Did not find any custom widgets in %1").arg(defaultsDir));
     }
 
     // Load all custom widgets found in the AP folder
@@ -943,7 +939,6 @@ void MainWindow::loadCustomWidgetsFromDefaults(const QString& systemType, const 
             // Will only be loaded if not already a custom widget with
             // the same name is present
             loadCustomWidget(defaultsDir+"/"+file, true);
-            showStatusMessage(tr("Loaded custom widget %1").arg(defaultsDir+"/"+file));
         }
     }
 }
@@ -1103,40 +1098,6 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
     qApp->restoreOverrideCursor();
     
     return success;
-}
-
-/**
- * The status message will be overwritten if a new message is posted to this function
- *
- * @param status message text
- * @param timeout how long the status should be displayed
- */
-void MainWindow::showStatusMessage(const QString& status, int timeout)
-{
-    statusBar()->showMessage(status, timeout);
-}
-
-/**
- * The status message will be overwritten if a new message is posted to this function.
- * it will be automatically hidden after 5 seconds.
- *
- * @param status message text
- */
-void MainWindow::showStatusMessage(const QString& status)
-{
-    statusBar()->showMessage(status, 20000);
-}
-
-void MainWindow::showCriticalMessage(const QString& title, const QString& message)
-{
-    qDebug() << "Critical" << title << message;
-    QGCMessageBox::critical(title, message);
-}
-
-void MainWindow::showInfoMessage(const QString& title, const QString& message)
-{
-    qDebug() << "Information" << title << message;
-    QGCMessageBox::information(title, message);
 }
 
 /**
@@ -1739,19 +1700,6 @@ QList<QAction*> MainWindow::listLinkMenuActions()
 bool MainWindow::dockWidgetTitleBarsEnabled() const
 {
     return menuActionHelper->dockWidgetTitleBarsEnabled();
-}
-
-/// @brief Save the specified Flight Data Log
-void MainWindow::_saveTempFlightDataLog(QString tempLogfile)
-{
-    QString saveFilename = QGCFileDialog::getSaveFileName(this,
-                                                        tr("Select file to save Flight Data Log"),
-                                                        qgcApp()->mavlinkLogFilesLocation(),
-                                                        tr("Flight Data Log (*.mavlink)"));
-    if (!saveFilename.isEmpty()) {
-        QFile::copy(tempLogfile, saveFilename);
-    }
-    QFile::remove(tempLogfile);
 }
 
 /// @brief Hides the spash screen if it is currently being shown

@@ -48,6 +48,9 @@ private slots:
     void _connectLog_test(void);
     void _deleteTempLogFiles_test(void);
     
+signals:
+    void checkForLostLogFiles(void);
+    
 private:
     void _createTempLogFile(bool zeroLength);
     

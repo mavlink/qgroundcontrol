@@ -48,7 +48,6 @@ This file is part of the PIXHAWK project
 #include "LinechartWidget.h"
 #include "LinechartPlot.h"
 #include "LogCompressor.h"
-#include "MainWindow.h"
 #include "QGC.h"
 #include "MG.h"
 #include "QGCFileDialog.h"
@@ -488,7 +487,6 @@ void LinechartWidget::stopLogging()
         // Postprocess log file
         compressor = new LogCompressor(logFile->fileName(), logFile->fileName());
         connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
-        connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
 
         QMessageBox::StandardButton button = QGCMessageBox::question(tr("Starting Log Compression"),
                                                                      tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"),

@@ -208,7 +208,7 @@ void SerialLink::run()
         if (m_port) {
             err = m_port->errorString();
         }
-        emit communicationError(getName(),"Error connecting: " + err);
+        _emitLinkError("Error connecting: " + err);
         return;
     }
 
@@ -348,7 +348,7 @@ void SerialLink::writeBytes(const char* data, qint64 size)
         m_writeMutex.unlock();
     } else {
         // Error occured
-        emit communicationError(getName(), tr("Could not send data - link %1 is disconnected!").arg(getName()));
+        _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(getName()));
     }
 }
 
@@ -901,4 +901,11 @@ bool SerialLink::setStopBitsType(int stopBits)
 void SerialLink::_rerouteDisconnected(void)
 {
     emit disconnected();
+}
+
+void SerialLink::_emitLinkError(const QString& errorMsg)
+{
+    QString msg("Error on link %1. %2");
+    
+    emit communicationError(tr("Link Error"), msg.arg(getName()).arg(errorMsg));
 }

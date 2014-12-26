@@ -56,8 +56,6 @@ MAVLinkProtocol::MAVLinkProtocol(QObject* parent) :
     _logSuspendError(false),
     _logSuspendReplay(false),
     _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension)),
-    _protocolStatusMessageConnected(false),
-    _saveTempFlightDataLogConnected(false),
     _linkMgr(LinkManager::instance()),
     _heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
     _heartbeatsEnabled(true)
@@ -82,6 +80,9 @@ MAVLinkProtocol::MAVLinkProtocol(QObject* parent) :
     // Start heartbeat timer, emitting a heartbeat at the configured rate
     connect(&_heartbeatTimer, &QTimer::timeout, this, &MAVLinkProtocol::sendHeartbeat);
     _heartbeatTimer.start(1000/_heartbeatRate);
+
+    connect(this, &MAVLinkProtocol::protocolStatusMessage, qgcApp(), &QGCApplication::criticalMessageBoxOnMainThread);
+    connect(this, &MAVLinkProtocol::saveTempFlightDataLog, qgcApp(), &QGCApplication::saveTempFlightDataLogOnMainThread);
 
     emit versionCheckChanged(m_enable_version_check);
 }
@@ -233,7 +234,10 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             warnedUser = true;
             // Obviously the user tries to use a 0.9 autopilot
             // with QGroundControl built for version 1.0
-            emit protocolStatusMessage("MAVLink Version or Baud Rate Mismatch", "Your MAVLink device seems to use the deprecated version 0.9, while QGroundControl only supports version 1.0+. Please upgrade the MAVLink version of your autopilot. If your autopilot is using version 1.0, check if the baud rates of QGroundControl and your autopilot are the same.");
+            emit protocolStatusMessage(tr("MAVLink Protocol"), tr("There is a MAVLink Version or Baud Rate Mismatch. "
+                                                                  "Your MAVLink device seems to use the deprecated version 0.9, while QGroundControl only supports version 1.0+. "
+                                                                  "Please upgrade the MAVLink version of your autopilot. "
+                                                                  "If your autopilot is using version 1.0, check if the baud rates of QGroundControl and your autopilot are the same."));
         }
 
         if (decodeState == 0 && !decodedFirstPacket)
@@ -250,7 +254,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 else
                 {
                     warnedUserNonMavlink = true;
-                    emit protocolStatusMessage("MAVLink Baud Rate Mismatch", "Please check if the baud rates of QGroundControl and your autopilot are the same.");
+                    emit protocolStatusMessage(tr("MAVLink Protocol"), tr("There is a MAVLink Version or Baud Rate Mismatch. "
+                                                                          "Please check if the baud rates of QGroundControl and your autopilot are the same."));
                 }
             }
         }
@@ -303,7 +308,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 if(_tempLogFile.write(b) != len)
                 {
                     // If there's an error logging data, raise an alert and stop logging.
-                    emit protocolStatusMessage(tr("MAVLink Logging failed"), tr("Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
+                    emit protocolStatusMessage(tr("MAVLink Protocol"), tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
                     _stopLogging();
                     _logSuspendError = true;
                 }
@@ -327,7 +332,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // Check if the UAS has the same id like this system
                 if (message.sysid == getSystemId())
                 {
-                    emit protocolStatusMessage(tr("SYSTEM ID CONFLICT!"), tr("Warning: A second system is using the same system id (%1)").arg(getSystemId()));
+                    emit protocolStatusMessage(tr("MAVLink Protocol"), tr("Warning: A second system is using the same system id (%1)").arg(getSystemId()));
                 }
 
                 // Create a new UAS based on the heartbeat received
@@ -347,8 +352,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     // Bring up dialog to inform user
                     if (!versionMismatchIgnore)
                     {
-                        emit protocolStatusMessage(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"),
-                                                   tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
+                        emit protocolStatusMessage(tr("MAVLink Protocol"), tr("The MAVLink protocol version on the MAV and QGroundControl mismatch! "
+                                                                              "It is unsafe to use different MAVLink versions. "
+                                                                              "QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
                         versionMismatchIgnore = true;
                     }
 
@@ -649,8 +655,8 @@ void MAVLinkProtocol::_startLogging(void)
 
     if (!_logSuspendReplay) {
         if (!_tempLogFile.open()) {
-            emit protocolStatusMessage(tr("Opening Flight Data file for writing failed"),
-                                       tr("Unable to write to %1. Please choose a different file location.").arg(_tempLogFile.fileName()));
+            emit protocolStatusMessage(tr("MAVLink Protocol"), tr("Opening Flight Data file for writing failed. "
+                                                                  "Unable to write to %1. Please choose a different file location.").arg(_tempLogFile.fileName()));
             _closeLogFile();
             _logSuspendError = true;
             return;
@@ -666,7 +672,7 @@ void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
         // If the signals are not connected it means we are running a unit test. In that case just delete log files
-        if (_protocolStatusMessageConnected && _saveTempFlightDataLogConnected && qgcApp()->promptFlightDataSave()) {
+        if (qgcApp()->promptFlightDataSave()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());
@@ -674,28 +680,10 @@ void MAVLinkProtocol::_stopLogging(void)
     }
 }
 
-/// @brief We override this virtual from QObject so that we can track when the
-///         protocolStatusMessage and saveTempFlightDataLog signals are connected.
-///         Once both are connected we can check for lost log files.
-void MAVLinkProtocol::connectNotify(const QMetaMethod& signal)
-{
-    if (signal == QMetaMethod::fromSignal(&MAVLinkProtocol::protocolStatusMessage)) {
-        _protocolStatusMessageConnected = true;
-        if (_saveTempFlightDataLogConnected) {
-            _checkLostLogFiles();
-        }
-    } else if (signal == QMetaMethod::fromSignal(&MAVLinkProtocol::saveTempFlightDataLog)) {
-        _saveTempFlightDataLogConnected = true;
-        if (_protocolStatusMessageConnected) {
-            _checkLostLogFiles();
-        }
-    }
-}
-
 /// @brief Checks the temp directory for log files which may have been left there.
 ///         This could happen if QGC crashes without the temp log file being saved.
 ///         Give the user an option to save these orphaned files.
-void MAVLinkProtocol::_checkLostLogFiles(void)
+void MAVLinkProtocol::checkForLostLogFiles(void)
 {
     QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
     

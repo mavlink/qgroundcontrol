@@ -41,7 +41,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QGCFlightGearLink.h"
 #include "QGC.h"
-#include "MainWindow.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 
@@ -70,7 +69,7 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
     setRemoteHost(remoteHost);
     
     // We need a mechanism so show error message from our FGLink thread on the UI thread. This signal connection will do that for us.
-    connect(this, SIGNAL(showCriticalMessageFromThread(const QString&, const QString&)), MainWindow::instance(), SLOT(showCriticalMessage(const QString&, const QString&)));
+    connect(this, &QGCFlightGearLink::showCriticalMessageFromThread, qgcApp(), &QGCApplication::criticalMessageBoxOnMainThread);
 }
 
 QGCFlightGearLink::~QGCFlightGearLink()
@@ -553,7 +552,7 @@ bool QGCFlightGearLink::parseUIArguments(QString uiArgs, QStringList& argList)
 					// We have a space that is finishing an argument
 					previousSpace = true;
 					if (inQuotedString) {
-						MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Mismatched quotes in specified command line options"));
+                        QGCMessageBox::critical(tr("FlightGear HIL"), tr("FlightGear failed to start. There are mismatched quotes in specified command line options"));
 						return false;
 					}
 					if (!currentArg.isEmpty()) {
@@ -643,7 +642,7 @@ bool QGCFlightGearLink::connectSimulation()
     QStringList uiArgList;
     bool mismatchedQuotes = parseUIArguments(startupArguments, uiArgList);
     if (!mismatchedQuotes) {
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), tr("Mismatched quotes in specified command line options"));
+        QGCMessageBox::critical(tr("FlightGear HIL"), tr("FlightGear failed to start. There are mismatched quotes in specified command line options"));
         return false;
     }
 #ifdef DEBUG_FLIGHTGEAR_CONNECT
@@ -798,7 +797,7 @@ bool QGCFlightGearLink::connectSimulation()
         } else if (fgRootPath.isEmpty()) {
             errMsg = tr("Unable to automatically determine --fg-root directory location. You will need to specify --fg-root=<directory> as an additional command line parameter from ui.");
         }
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), errMsg);
+        QGCMessageBox::critical(tr("FlightGear HIL"), errMsg);
         return false;
     }
 
@@ -826,7 +825,7 @@ bool QGCFlightGearLink::connectSimulation()
         } else {
             errMsg = tr("Unable to automatically determine --fg-scenery directory location. You will need to specify --fg-scenery=directory as an additional command line parameter from ui.");
         }
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), errMsg);
+        QGCMessageBox::critical(tr("FlightGear HIL"), errMsg);
         return false;
     }
 #else
@@ -836,7 +835,7 @@ bool QGCFlightGearLink::connectSimulation()
     // Setup and verify directory which contains QGC provided aircraft files
     QString qgcAircraftDir(QApplication::applicationDirPath() + "/files/flightgear/Aircraft");
     if (!QFileInfo(qgcAircraftDir).isDir()) {
-        MainWindow::instance()->showCriticalMessage(tr("Incorrect QGroundControl installation"), tr("Aircraft directory is missing: '%1'.").arg(qgcAircraftDir));
+        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. Aircraft directory is missing: '%1'.").arg(qgcAircraftDir));
         return false;
     }
     _fgArgList += "--fg-aircraft=" + qgcAircraftDir;
@@ -850,14 +849,14 @@ bool QGCFlightGearLink::connectSimulation()
     // Verify directory where FlightGear stores communicaton protocols.
     QDir fgProtocolDir(fgRootPath);
     if (!fgProtocolDir.cd("Protocol")) {
-        MainWindow::instance()->showCriticalMessage(tr("Incorrect FlightGear setup"), tr("Protocol directory is missing: '%1'. Command line parameter for --fg-root may be set incorrectly.").arg(fgProtocolDir.path()));
+        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect FlightGear setup. Protocol directory is missing: '%1'. Command line parameter for --fg-root may be set incorrectly.").arg(fgProtocolDir.path()));
         return false;
     }
     
     // Verify directory which contains QGC provided FlightGear communication protocol files
     QDir qgcProtocolDir(QApplication::applicationDirPath() + "/files/flightgear/Protocol/");
     if (!qgcProtocolDir.isReadable()) {
-        MainWindow::instance()->showCriticalMessage(tr("Incorrect QGroundControl installation"), tr("Protocol directory is missing (%1).").arg(qgcProtocolDir.path()));
+        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. Protocol directory is missing (%1).").arg(qgcProtocolDir.path()));
         return false;
     }
     
@@ -865,7 +864,7 @@ bool QGCFlightGearLink::connectSimulation()
     QString fgProtocolXmlFile = fgProtocol + ".xml";
     QString qgcProtocolFileFullyQualified = qgcProtocolDir.absoluteFilePath(fgProtocolXmlFile);
     if (!QFileInfo(qgcProtocolFileFullyQualified).exists()) {
-        MainWindow::instance()->showCriticalMessage(tr("Incorrect QGroundControl installation"), tr("FlightGear protocol file missing: %1").arg(qgcProtocolFileFullyQualified));
+        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. FlightGear protocol file missing: %1").arg(qgcProtocolFileFullyQualified));
         return false;
     }
     
