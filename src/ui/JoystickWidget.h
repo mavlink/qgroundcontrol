@@ -71,7 +71,7 @@ public slots:
     /** @brief Trigger a UI change based on a button being released */
     void joystickButtonReleased(int key);
     /** @brief Update the UI color scheme when the MainWindow theme changes. */
-    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE);
+    void styleChanged(bool styleIsDark);
     /** Update the UI assuming the joystick has stayed the same. */
     void updateUI();
 
