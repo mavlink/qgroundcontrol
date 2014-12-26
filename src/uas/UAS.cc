@@ -2357,7 +2357,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
 
     // Insert with correct type
     // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
-    
+
     switch (rawValue.param_type) {
         case MAV_PARAM_TYPE_REAL32:
             if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
@@ -2366,7 +2366,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
                 paramValue = QVariant(paramUnion.param_float);
             }
             break;
-            
+
         case MAV_PARAM_TYPE_UINT8:
             if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
                 paramValue = QVariant(QChar((unsigned char)paramUnion.param_float));
@@ -2374,7 +2374,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
                 paramValue = QVariant(QChar((unsigned char)paramUnion.param_uint8));
             }
             break;
-            
+
         case MAV_PARAM_TYPE_INT8:
             if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
                 paramValue = QVariant(QChar((char)paramUnion.param_float));
@@ -2382,7 +2382,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
                 paramValue = QVariant(QChar((char)paramUnion.param_int8));
             }
             break;
-            
+
         case MAV_PARAM_TYPE_INT16:
             if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
                 paramValue = QVariant((short)paramUnion.param_float);
@@ -2390,7 +2390,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
                 paramValue = QVariant(paramUnion.param_int16);
             }
             break;
-            
+
         case MAV_PARAM_TYPE_UINT32:
             if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
                 paramValue = QVariant((unsigned int)paramUnion.param_float);
@@ -2405,13 +2405,13 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
                 paramValue = QVariant(paramUnion.param_int32);
             }
             break;
-            
+
         default:
             qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << rawValue.param_type;
     }
 
     qCDebug(UASLog) << "Received PARAM_VALUE" << paramName << paramValue << rawValue.param_type;
-    
+
     parameters.value(compId)->insert(paramName, paramValue);
     emit parameterChanged(uasId, compId, paramName, paramValue);
     emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, paramValue);
@@ -3290,12 +3290,12 @@ void UAS::removeLink(QObject* object)
 {
     qCDebug(UASLog) << "removeLink:" << QString("%1").arg((ulong)object, 0, 16);
     qCDebug(UASLog) << "link count:" << links.count();
-    
+
     // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
     // been destroyed.
-    
+
     LinkInterface* link = (LinkInterface*)object;
-    
+
     int index = links.indexOf(link);
     Q_ASSERT(index != -1);
     links.removeAt(index);
@@ -3467,3 +3467,41 @@ void UAS::stopLowBattAlarm()
         lowBattAlarm = false;
     }
 }
+
+void UAS::sendMapRCToParam(QString param_id, float scale, float current_value, quint8 param_rc_channel_index)
+{
+    qDebug() << "sendMapRCToParam" << param_id << "scale" << scale << "curval" << current_value << "param rc chan index" << param_rc_channel_index;
+    mavlink_message_t message;
+
+    mavlink_msg_param_map_rc_pack(mavlink->getSystemId(),
+                                  mavlink->getComponentId(),
+                                  &message,
+                                  this->uasId,
+                                  0,
+                                  param_id.toStdString().c_str(),
+                                  -1,
+                                  param_rc_channel_index,
+                                  current_value,
+                                  scale);
+    sendMessage(message);
+    qDebug() << "Mavlink message sent";
+}
+void UAS::unsetRCToParameterMap()
+{
+    qDebug() << "unsetRCToParameterMap";
+    for (int i = 0; i < 3; i++) {
+        mavlink_message_t message;
+        mavlink_msg_param_map_rc_pack(mavlink->getSystemId(),
+                                      mavlink->getComponentId(),
+                                      &message,
+                                      this->uasId,
+                                      0,
+                                      "",
+                                      -2,
+                                      i,
+                                      0.0f,
+                                      0.0f);
+        sendMessage(message);
+    }
+}
+
