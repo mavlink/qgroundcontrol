@@ -35,18 +35,16 @@ This file is part of the QGROUNDCONTROL project
 #include <QGraphicsScene>
 #include <QHBoxLayout>
 #include <QDoubleSpinBox>
+#include <QDebug>
+
 #include "UASManager.h"
 #include "HSIDisplay.h"
 #include "QGC.h"
 #include "Waypoint.h"
 #include "UASWaypointManager.h"
 #include <qmath.h>
-//#include "Waypoint2DIcon.h"
 #include "MAV2DIcon.h"
-#include "MainWindow.h"
-
-#include <QDebug>
-
+#include "QGCApplication.h"
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
     HDDisplay(QStringList(), "HSI", parent),
@@ -279,18 +277,7 @@ void HSIDisplay::renderOverlay()
     QColor statusColor;
     QColor waypointLineColor;
     QColor attitudeColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-    {
-        ringColor = QGC::colorBlack;
-        positionColor = QColor(20, 20, 200);
-        setpointColor = QColor(150, 250, 150);
-        labelColor = QColor(26, 75, 95);
-        valueColor = QColor(40, 40, 40);
-        statusColor = QGC::colorOrange;
-        waypointLineColor = QGC::colorDarkYellow;
-        attitudeColor = QColor(200, 20, 20);
-    }
-    else
+    if (qgcApp()->styleIsDark())
     {
         ringColor = QColor(255, 255, 255);
         positionColor = QColor(20, 20, 200);
@@ -299,6 +286,17 @@ void HSIDisplay::renderOverlay()
         valueColor = QColor(255, 255, 255);
         statusColor = QGC::colorOrange;
         waypointLineColor = QGC::colorYellow;
+        attitudeColor = QColor(200, 20, 20);
+    }
+    else
+    {
+        ringColor = QGC::colorBlack;
+        positionColor = QColor(20, 20, 200);
+        setpointColor = QColor(150, 250, 150);
+        labelColor = QColor(26, 75, 95);
+        valueColor = QColor(40, 40, 40);
+        statusColor = QGC::colorOrange;
+        waypointLineColor = QGC::colorDarkYellow;
         attitudeColor = QColor(200, 20, 20);
     }
 
@@ -475,15 +473,15 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bo
 {
     QColor statusColor;
     QColor labelColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-    {
-        statusColor = QColor(40, 40, 40);
-        labelColor = QColor(26, 75, 95);
-    }
-    else
+    if (qgcApp()->styleIsDark())
     {
         statusColor = QColor(250, 250, 250);
         labelColor = QGC::colorCyan;
+    }
+    else
+    {
+        statusColor = QColor(40, 40, 40);
+        labelColor = QColor(26, 75, 95);
     }
 
     // Draw the label.
@@ -537,15 +535,15 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, b
     QColor intermediateStatusColor (Qt::yellow);
     QColor posStatusColor(20, 200, 20);
     QColor statusColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-    {
-        statusColor = QColor(40, 40, 40);
-        labelColor = QColor(26, 75, 95);
-    }
-    else
+    if (qgcApp()->styleIsDark())
     {
         statusColor = QColor(250, 250, 250);
         labelColor = QGC::colorCyan;
+    }
+    else
+    {
+        statusColor = QColor(40, 40, 40);
+        labelColor = QColor(26, 75, 95);
     }
 
     // Draw the label.

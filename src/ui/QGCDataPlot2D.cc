@@ -72,8 +72,7 @@ QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     connect(ui->style, SIGNAL(currentIndexChanged(QString)), plot, SLOT(setStyleText(QString)));
 
     // Allow style changes to propagate through this widget
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
-            plot, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
+    connect(qgcApp(), &QGCApplication::styleChanged, plot, &IncrementalPlot::styleChanged);
 }
 
 void QGCDataPlot2D::reloadFile()

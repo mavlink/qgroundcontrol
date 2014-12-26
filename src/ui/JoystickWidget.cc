@@ -1,5 +1,5 @@
 #include "JoystickWidget.h"
-#include "MainWindow.h"
+#include "QGCApplication.h"
 #include "ui_JoystickWidget.h"
 #include "JoystickButton.h"
 #include "JoystickAxis.h"
@@ -42,8 +42,8 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     connect(m_ui->enableCheckBox, SIGNAL(toggled(bool)), this->joystick, SLOT(setEnabled(bool)));
 
     // Update the button label colors based on the current theme and watch for future theme changes.
-    styleChanged(MainWindow::instance()->getStyle());
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
+    styleChanged(qgcApp()->styleIsDark());
+    connect(qgcApp(), &QGCApplication::styleChanged, this, &JoystickWidget::styleChanged);
 
     // Display the widget above all other windows.
     this->raise();
@@ -81,15 +81,15 @@ void JoystickWidget::initUI()
     }
 }
 
-void JoystickWidget::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newStyle)
+void JoystickWidget::styleChanged(bool styleIsDark)
 {
-    if (newStyle == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    if (styleIsDark)
     {
-        buttonLabelColor = QColor(0x73, 0xD9, 0x5D);
+        buttonLabelColor = QColor(0x14, 0xC6, 0x14);
     }
     else
     {
-        buttonLabelColor = QColor(0x14, 0xC6, 0x14);
+        buttonLabelColor = QColor(0x73, 0xD9, 0x5D);
     }
 }
 
