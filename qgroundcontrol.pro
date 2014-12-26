@@ -166,10 +166,10 @@ WindowsBuild {
 }
 
 #
-# By default warnings as errors are turned off. Even so, in order for a pull request 
-# to be accepted you must compile cleanly with warnings as errors turned on the default 
-# set of OS builds. See http://www.qgroundcontrol.org/dev/contribute for more details. 
-# You can use the WarningsAsErrorsOn CONFIG switch to turn warnings as errors on for your 
+# By default warnings as errors are turned off. Even so, in order for a pull request
+# to be accepted you must compile cleanly with warnings as errors turned on the default
+# set of OS builds. See http://www.qgroundcontrol.org/dev/contribute for more details.
+# You can use the WarningsAsErrorsOn CONFIG switch to turn warnings as errors on for your
 # own builds.
 #
 
@@ -239,7 +239,7 @@ RESOURCES += qgroundcontrol.qrc
 TRANSLATIONS += \
     es-MX.ts \
     en-US.ts
-    
+
 DEPENDPATH += \
     . \
     plugins
@@ -343,6 +343,7 @@ FORMS += \
     src/ui/px4_configuration/PX4FirmwareUpgrade.ui \
     src/ui/QGCUASFileView.ui \
     src/QGCQmlWidgetHolder.ui \
+    src/ui/QGCMapRCToParamDialog.ui
 
 HEADERS += \
     src/MG.h \
@@ -495,6 +496,8 @@ HEADERS += \
     src/QGCQuickWidget.h \
     src/QGCPalette.h \
     src/QGCQmlWidgetHolder.h \
+    src/ui/QGCParamTreeWidget.h \
+    src/ui/QGCMapRCToParamDialog.h
 
 SOURCES += \
     src/main.cc \
@@ -636,13 +639,15 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCPalette.cc \
     src/QGCQmlWidgetHolder.cpp \
+    src/ui/QGCParamTreeWidget.cpp \
+    src/ui/QGCMapRCToParamDialog.cpp
 
 #
 # Unit Test specific configuration goes here
 #
 # We have to special case Windows debug_and_release builds because you can't have files
-# which are only in the debug variant [QTBUG-40351]. So in this case we include unit tests 
-# even in the release variant. If you want a Windows release build with no unit tests run 
+# which are only in the debug variant [QTBUG-40351]. So in this case we include unit tests
+# even in the release variant. If you want a Windows release build with no unit tests run
 # qmake with CONFIG-=debug_and_release CONFIG+=release.
 #
 

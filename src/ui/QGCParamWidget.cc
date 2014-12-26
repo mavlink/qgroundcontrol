@@ -36,12 +36,15 @@ This file is part of the QGROUNDCONTROL project
 #include <QPushButton>
 #include <QSettings>
 #include <QTime>
+#include <QTimer>
+#include <QEventLoop>
 
 #include "MainWindow.h"
 #include "QGC.h"
 #include "QGCParamWidget.h"
 #include "UASInterface.h"
 #include "UASParameterCommsMgr.h"
+#include "QGCMapRCToParamDialog.h"
 
 /**
  * @param uas MAV to set the parameters on
@@ -51,7 +54,7 @@ QGCParamWidget::QGCParamWidget(QWidget *parent) :
     QGCBaseParamWidget(parent),
     componentItems(new QMap<int, QTreeWidgetItem*>()),
     statusLabel(new QLabel(this)),
-    tree(new QTreeWidget(this)),
+    tree(new QGCParamTreeWidget(this)),
     _fullParamListLoaded(false)
 {
 
@@ -64,6 +67,8 @@ void QGCParamWidget::disconnectViewSignalsAndSlots()
 {
     disconnect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
             this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
+    disconnect(tree, &QGCParamTreeWidget::mapRCToParamRequest, this,
+            &QGCParamWidget::configureRCToParam);
 }
 
 
@@ -72,6 +77,8 @@ void QGCParamWidget::connectViewSignalsAndSlots()
     // Listen for edits to the tree UI
     connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
             this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
+    connect(tree, &QGCParamTreeWidget::mapRCToParamRequest, this,
+            &QGCParamWidget::configureRCToParam);
 }
 
 
@@ -118,6 +125,13 @@ void QGCParamWidget::addActionButtonsToLayout(QGridLayout* layout)
     connect(readButton, SIGNAL(clicked()),
             paramMgr, SLOT(copyPersistentParamsToVolatile()));
     layout->addWidget(readButton, 3, 2);
+
+    QPushButton* unsetRCToParamMapButton = new QPushButton(tr("Clear Rc to Param"));
+    unsetRCToParamMapButton->setToolTip(tr("Remove any bindings between RC channels and parameters."));
+    unsetRCToParamMapButton->setWhatsThis(tr("Remove any bindings between RC channels and parameters."));
+    connect(unsetRCToParamMapButton, &QPushButton::clicked,
+            mav, &UASInterface::unsetRCToParameterMap);
+    layout->addWidget(unsetRCToParamMapButton, 4, 1);
 
 }
 
@@ -241,9 +255,9 @@ void QGCParamWidget::handleOnboardParameterListUpToDate()
     if (_fullParamListLoaded) {
         return;
     }
-    
+
     _fullParamListLoaded = true;
-    
+
     //turn off updates while we refresh the entire list
     tree->setUpdatesEnabled(false);
 
@@ -355,7 +369,7 @@ void QGCParamWidget::insertParamAlphabetical(int indexLowerBound, int indexUpper
 QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, QVariant value)
 {
     //qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
-    
+
     // Filter the parameters according to the filter list
     if (_filterList.count() != 0) {
         bool filterFound = false;
@@ -366,7 +380,7 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
             }
             if (paramFilter == parameterName) {
                 filterFound = true;
-                break;            
+                break;
             }
         }
         if (!filterFound) {
@@ -509,7 +523,6 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
     }
 }
 
-
 void QGCParamWidget::setParameterStatusMsg(const QString& msg)
 {
     statusLabel->setText(msg);
@@ -543,4 +556,10 @@ void QGCParamWidget::handleParamStatusMsgUpdate(QString msg, int level)
     pal.setColor(backgroundRole(), bgColor);
     statusLabel->setPalette(pal);
     statusLabel->setText(msg);
+}
+
+void QGCParamWidget::configureRCToParam(QString param_id) {
+    QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(param_id,
+            mav, this);
+    d->exec();
 }
