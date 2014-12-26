@@ -52,6 +52,7 @@ This file is part of the PIXHAWK project
 #include "MG.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
+#include "QGCApplication.h"
 
 LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent),
     sysid(systemid),
@@ -140,7 +141,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     createLayout();
 
     // And make sure we're listening for future style changes
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(recolor()));
+    connect(qgcApp(), &QGCApplication::styleChanged, this, &LinechartWidget::recolor);
 
     updateTimer->setInterval(updateInterval);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -676,7 +677,7 @@ void LinechartWidget::removeCurve(QString curve)
 
 void LinechartWidget::recolor()
 {
-    activePlot->styleChanged(MainWindow::instance()->getStyle());
+    activePlot->styleChanged(qgcApp()->styleIsDark());
     foreach (QString key, colorIcons.keys())
     {
         QWidget* colorIcon = colorIcons.value(key, 0);

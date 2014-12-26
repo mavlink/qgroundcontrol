@@ -28,6 +28,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCToolBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
+#include "QGCApplication.h"
 
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
@@ -445,23 +446,13 @@ void QGCToolBar::updateView()
         toolBarBatteryBar->setValue(batteryPercent);
 
         if (batteryPercent < 30 && toolBarBatteryBar->value() >= 30) {
-            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-            {
-                toolBarBatteryBar->setStyleSheet("QProgressBar {color: #FFF} QProgressBar::chunk { background-color: #008000}");
-            }
-            else
-            {
-                toolBarBatteryBar->setStyleSheet("QProgressBar {color: #000} QProgressBar QProgressBar::chunk { background-color: #0F0}");
-            }
+            toolBarBatteryBar->setStyleSheet(qgcApp()->styleIsDark() ?
+                                             "QProgressBar {color: #000} QProgressBar QProgressBar::chunk { background-color: #0F0}" :
+                                             "QProgressBar {color: #FFF} QProgressBar::chunk { background-color: #008000}");
         } else if (batteryPercent >= 30 && toolBarBatteryBar->value() < 30){
-            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-            {
-                toolBarBatteryBar->setStyleSheet("QProgressBar {color: #FFF} QProgressBar::chunk { background-color: #808000}");
-            }
-            else
-            {
-                toolBarBatteryBar->setStyleSheet("QProgressBar {color: #000} QProgressBar QProgressBar::chunk { background-color: #FF0}");
-            }
+            toolBarBatteryBar->setStyleSheet(qgcApp()->styleIsDark() ?
+                                             "QProgressBar {color: #000} QProgressBar QProgressBar::chunk { background-color: #FF0}" :
+                                             "QProgressBar {color: #FFF} QProgressBar::chunk { background-color: #808000}");
         }
 
     }
@@ -493,14 +484,9 @@ void QGCToolBar::updateView()
     }
     else
     {
-        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-        {
-            toolBarSafetyLabel->setStyleSheet("QLabel {color: #0D820D; font-size: 15pt;}");
-        }
-        else
-        {
-            toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814; font-size: 15pt;}");
-        }
+        toolBarSafetyLabel->setStyleSheet(qgcApp()->styleIsDark() ?
+                                          "QLabel {color: #14C814; font-size: 15pt;}" :
+                                          "QLabel {color: #0D820D; font-size: 15pt;}");
         toolBarSafetyLabel->setText(tr("DISARMED"));
     }
 

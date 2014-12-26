@@ -24,7 +24,7 @@
 #include "ui_HDDisplay.h"
 #include "MG.h"
 #include "QGC.h"
-#include "MainWindow.h"
+#include "QGCApplication.h"
 #include <QDebug>
 
 HDDisplay::HDDisplay(const QStringList &plotList, QString title, QWidget *parent) :
@@ -440,14 +440,7 @@ void HDDisplay::renderOverlay()
     const float spacing = 0.4f; // 40% of width
     const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.5f));
     QColor gaugeColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-    {
-        gaugeColor = QColor(0, 0, 0);
-    }
-    else
-    {
-        gaugeColor = QColor(255, 255, 255);
-    }
+    gaugeColor = qgcApp()->styleIsDark() ? gaugeColor = QColor(255, 255, 255) : gaugeColor = QColor(0, 0, 0);
     //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
     //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
     //drawGauge(15.0f+gaugeWidth*1.7f, 15.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
@@ -582,15 +575,15 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     // Select color scheme based on light or dark theme.
     QColor valueColor;
     QColor backgroundColor;
-    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-    {
-        valueColor = QColor(26, 75, 95);
-        backgroundColor = QColor(246, 246, 246);
-    }
-    else
+    if (qgcApp()->styleIsDark())
     {
         valueColor = QGC::colorCyan;
         backgroundColor = QColor(34, 34, 34);
+    }
+    else
+    {
+        valueColor = QColor(26, 75, 95);
+        backgroundColor = QColor(246, 246, 246);
     }
 
     // Draw the circle
