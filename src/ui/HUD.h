@@ -60,7 +60,7 @@ public:
     void resize(int w, int h);
 
 public slots:
-    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
+    void styleChanged(bool styleIsDark);
 
     /** @brief Set the currently monitored UAS */
     virtual void setActiveUAS(UASInterface* uas);

@@ -2,7 +2,6 @@
 #define QGCXYPLOT_H
 
 #include "QGCToolWidgetItem.h"
-#include "MainWindow.h"
 
 namespace Ui
 {
@@ -28,7 +27,7 @@ public slots:
     void readSettings(const QString& pre,const QVariantMap& settings);
     void appendData(int uasId, const QString& curve, const QString& unit, const QVariant& variant, quint64 usec);
     void clearPlot();
-    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style);
+    void styleChanged(bool styleIsDark);
     void updateMinMaxSettings();
 
 
