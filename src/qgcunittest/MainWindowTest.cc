@@ -42,7 +42,7 @@ void MainWindowTest::init(void)
 {
     UnitTest::init();
 
-    _mainWindow = MainWindow::_create(NULL, MainWindow::CUSTOM_MODE_PX4);
+    _mainWindow = MainWindow::_create(NULL);
     Q_CHECK_PTR(_mainWindow);
 }
 

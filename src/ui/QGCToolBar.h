@@ -32,8 +32,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QProgressBar>
 #include <QComboBox>
 #include <QTimer>
+
 #include "UASInterface.h"
 #include "SerialLink.h"
+#include "LinkManager.h"
 
 class QGCToolBar : public QToolBar
 {
@@ -43,15 +45,10 @@ public:
     explicit QGCToolBar(QWidget* parent = 0);
     void setPerspectiveChangeActions(const QList<QAction*> &action);
     void setPerspectiveChangeAdvancedActions(const QList<QAction*> &action);
-    ~QGCToolBar();
 
 public slots:
     /** @brief Set the system that is currently displayed by this widget */
     void setActiveUAS(UASInterface* active);
-    /** @brief Set the link which is currently handled with connecting / disconnecting */
-    void addLink(LinkInterface* link);
-    /** @brief Remove link which is currently handled */
-    void removeLink(LinkInterface* link);
     /** @brief Set the system state */
     void updateState(UASInterface* system, QString name, QString description);
     /** @brief Set the system mode */
@@ -74,31 +71,12 @@ public slots:
     void updateView();
     /** @brief Update connection timeout time */
     void heartbeatTimeout(bool timeout, unsigned int ms);
-    /** @brief Update global position */
-    void globalPositionChanged(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
-    /** @brief Create or connect link */
-    void connectLink(bool connect);
     /** @brief Clear status string */
     void clearStatusString();
     /** @brief Set an activity action as checked in menu */
     void advancedActivityTriggered(QAction* action);
-    void updateComboBox();
-
-    /**
-     * @brief User selected baud rate
-     * @param index The current index of the combo box
-     */
-    void baudSelected(int index);
-
-    /**
-     * @brief User selected port
-     * @param index The current index of the combo box
-     */
-    void portSelected(int index);
 
 protected:
-    void storeSettings();
-    void loadSettings();
     void createUI();
     void resetToolbarUI();
     UASInterface* mav;
@@ -107,8 +85,6 @@ protected:
     QLabel* toolBarTimeoutLabel;
     QAction* toolBarTimeoutAction; ///< Needed to set label (in)visible.
     QAction* toolBarMessageAction;
-    QAction* toolBarPortAction;
-    QAction* toolBarBaudAction;
     QAction* toolBarWpAction;
     QAction* toolBarBatteryBarAction;
     QAction* toolBarBatteryVoltageAction;
@@ -117,21 +93,14 @@ protected:
     QLabel* toolBarStateLabel;
     QLabel* toolBarWpLabel;
     QLabel* toolBarMessageLabel;
-    QPushButton* connectButton;
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
 
-    QComboBox *portComboBox;
-    QComboBox *baudcomboBox;
-    QTimer portBoxTimer;
-    bool userBaudChoice;
-    bool userPortChoice;
     bool changed;
     float batteryPercent;
     float batteryVoltage;
     int wpId;
     double wpDistance;
-    float altitudeMSL;
     float altitudeRel;
     QString state;
     QString mode;
@@ -146,12 +115,28 @@ protected:
     QButtonGroup *group;
     
 private slots:
-    void _linkConnected(void);
-    void _linkDisconnected(void);
+    void _linkConnected(LinkInterface* link);
+    void _linkDisconnected(LinkInterface* link);
+    void _disconnectFromMenu(bool checked);
+    void _connectButtonClicked(bool checked);
+    void _linkComboActivated(int index);
     
 private:
-    /** @brief Update the link state */
-    void _updateLinkState(bool connected);
+    void _updateConnectButton(void);
+    void _updatePortList(void);
+    
+    LinkManager*    _linkMgr;
+    
+    QComboBox*  _linkCombo;
+    QAction*    _linkComboAction;
+    bool        _linkSelectedOnce;
+    QTimer      _portListTimer;
+    
+    QComboBox*  _baudCombo;
+    QAction*    _baudComboAction;
+    
+    QPushButton*    _connectButton;
+    bool            _linksConnected;
 };
 
 #endif // QGCTOOLBAR_H

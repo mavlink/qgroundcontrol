@@ -40,11 +40,10 @@ public:
     SettingsDialog(JoystickInput *joystick, QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
     ~SettingsDialog();
     
-    public slots:
+public slots:
     void styleChanged(int index);
-    void selectCustomMode(int mode);
     
-    private slots:
+private slots:
     void _deleteSettingsToggled(bool checked);
     void _selectSavedFilesDirectory(void);
     void _validateBeforeClose(void);

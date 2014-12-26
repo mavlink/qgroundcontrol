@@ -84,6 +84,9 @@ void LinkManager::addLink(LinkInterface* link)
     connect(link, &LinkInterface::connected, mavlink, &MAVLinkProtocol::linkConnected);
     connect(link, &LinkInterface::disconnected, mavlink, &MAVLinkProtocol::linkDisconnected);
     mavlink->resetMetadataForLink(link);
+    
+    connect(link, &LinkInterface::connected, this, &LinkManager::_linkConnected);
+    connect(link, &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 }
 
 bool LinkManager::connectAll()
@@ -131,13 +134,22 @@ bool LinkManager::connectLink(LinkInterface* link)
         return false;
     }
 
-    return link->_connect();
+    if (link->_connect()) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool LinkManager::disconnectLink(LinkInterface* link)
 {
     Q_ASSERT(link);
-    return link->_disconnect();
+    
+    if (link->_disconnect()) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void LinkManager::deleteLink(LinkInterface* link)
@@ -217,4 +229,14 @@ void LinkManager::_shutdown(void)
         disconnectLink(link);
         deleteLink(link);
     }
+}
+
+void LinkManager::_linkConnected(void)
+{
+    emit linkConnected((LinkInterface*)sender());
+}
+
+void LinkManager::_linkDisconnected(void)
+{
+    emit linkDisconnected((LinkInterface*)sender());
 }

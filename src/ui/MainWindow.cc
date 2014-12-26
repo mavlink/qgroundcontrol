@@ -80,11 +80,11 @@ This file is part of the QGROUNDCONTROL project
 
 static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
 
-MainWindow* MainWindow::_create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode)
+MainWindow* MainWindow::_create(QSplashScreen* splashScreen)
 {
     Q_ASSERT(_instance == NULL);
     
-    new MainWindow(splashScreen, mode);
+    new MainWindow(splashScreen);
     
     // _instance is set in constructor
     Q_ASSERT(_instance);
@@ -105,13 +105,12 @@ void MainWindow::deleteInstance(void)
 /// @brief Private constructor for MainWindow. MainWindow singleton is only ever created
 ///         by MainWindow::_create method. Hence no other code should have access to
 ///         constructor.
-MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode) :
+MainWindow::MainWindow(QSplashScreen* splashScreen) :
     currentView(VIEW_FLIGHT),
     centerStackActionGroup(new QActionGroup(this)),
     autoReconnect(false),
     simulationLink(NULL),
     lowPowerMode(false),
-    customMode(mode),
     menuActionHelper(new MenuActionHelper()),
     _splashScreen(splashScreen)
 {
@@ -405,10 +404,10 @@ QString MainWindow::getWindowStateKey()
 {
     if (UASManager::instance()->getActiveUAS())
     {
-        return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode()) + "_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
+        return QString::number(currentView)+"_windowstate_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
     }
     else
-        return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode());
+        return QString::number(currentView)+"_windowstate_";
 }
 
 QString MainWindow::getWindowGeometryKey()
@@ -938,8 +937,6 @@ void MainWindow::loadSettings()
 {
     QSettings settings;
 
-    customMode = static_cast<enum MainWindow::CUSTOM_MODE>(settings.value("QGC_CUSTOM_MODE", (unsigned int)MainWindow::CUSTOM_MODE_NONE).toInt());
-
     settings.beginGroup("QGC_MAINWINDOW");
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
@@ -952,8 +949,6 @@ void MainWindow::loadSettings()
 void MainWindow::storeSettings()
 {
     QSettings settings;
-
-    settings.setValue("QGC_CUSTOM_MODE", (int)customMode);
 
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue("AUTO_RECONNECT", autoReconnect);

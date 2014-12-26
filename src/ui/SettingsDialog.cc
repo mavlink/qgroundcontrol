@@ -76,15 +76,6 @@ _ui(new Ui::SettingsDialog)
     
     connect(_ui->deleteSettings, &QAbstractButton::toggled, this, &SettingsDialog::_deleteSettingsToggled);
     
-    // Custom mode
-    
-    _ui->customModeComboBox->addItem(tr("Default: Generic MAVLink and serial links"), MainWindow::CUSTOM_MODE_NONE);
-    _ui->customModeComboBox->addItem(tr("Wifi: Generic MAVLink, wifi or serial links"), MainWindow::CUSTOM_MODE_WIFI);
-    _ui->customModeComboBox->addItem(tr("PX4: Optimized for PX4 Autopilot Users"), MainWindow::CUSTOM_MODE_PX4);
-    
-    _ui->customModeComboBox->setCurrentIndex(_ui->customModeComboBox->findData(_mainWindow->getCustomMode()));
-    connect(_ui->customModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectCustomMode(int)));
-    
     // Application color style
     _ui->styleChooser->setCurrentIndex(qgcApp()->styleIsDark() ? 0 : 1);
     
@@ -105,11 +96,6 @@ SettingsDialog::~SettingsDialog()
 void SettingsDialog::styleChanged(int index)
 {
     qgcApp()->setStyle(index == 0);
-}
-
-void SettingsDialog::selectCustomMode(int mode)
-{
-    _mainWindow->setCustomMode(static_cast<enum MainWindow::CUSTOM_MODE>(_ui->customModeComboBox->itemData(mode).toInt()));
 }
 
 void SettingsDialog::_deleteSettingsToggled(bool checked)
