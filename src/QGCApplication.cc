@@ -97,6 +97,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     Q_ASSERT(_app == NULL);
     _app = this;
     
+    // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
+    setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     
 #ifdef QT_DEBUG
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
