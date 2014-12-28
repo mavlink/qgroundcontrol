@@ -9,7 +9,6 @@ Rectangle {
     id: topLevel
     objectName: "topLevel"
 
-    anchors.fill: parent
     color: palette.window
 
     signal buttonClicked(variant component);

@@ -49,6 +49,8 @@ SetupView::SetupView(QWidget* parent) :
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
     
+    setResizeMode(SizeRootObjectToView);
+    
     _setActiveUAS(NULL);
 }
 
