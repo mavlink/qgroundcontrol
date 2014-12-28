@@ -79,6 +79,8 @@ void QGCParamWidget::connectViewSignalsAndSlots()
             this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
     connect(tree, &QGCParamTreeWidget::mapRCToParamRequest, this,
             &QGCParamWidget::configureRCToParam);
+    connect(tree, &QGCParamTreeWidget::refreshParamRequest, this,
+            &QGCParamWidget::requestOnboardParamUpdate);
 }
 
 

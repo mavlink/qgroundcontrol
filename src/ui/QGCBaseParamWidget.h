@@ -29,7 +29,7 @@ protected:
     virtual void disconnectFromParamManager(); ///< Disconnect from any connected param manager signals
 
 signals:
-    
+
 public slots:
     virtual void handleOnboardParamUpdate(int component,const QString& parameterName, QVariant value) = 0;
     virtual void handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending) = 0;
@@ -42,6 +42,9 @@ public slots:
 
     /** @brief Request list of parameters from MAV */
     virtual void requestOnboardParamsUpdate();
+
+    /** @brief Request single parameter from MAV */
+    virtual void requestOnboardParamUpdate(QString parameterName);
 
 
     /** @brief Store parameters to a file */

@@ -60,9 +60,19 @@ void QGCParamTreeWidget::showContextMenu(const QPoint &pos)
         return;
     }
 
-
     QString param_id = item->data(0, Qt::DisplayRole).toString();
-    QAction* act = new QAction(tr("Map Parameter to RC"), this);
+
+    // Refresh single parameter
+    QAction* act = new QAction(tr("Refresh this param"), this);
+    act->setProperty("action", "refresh");
+    act->setProperty("param_id", param_id);
+    connect(act, &QAction::triggered, this,
+            &QGCParamTreeWidget::contextMenuAction);
+    menu.addAction(act);
+
+    // RC to parameter mapping
+    act = new QAction(tr("Map Parameter to RC"), this);
+    act->setProperty("action", "maprc");
     act->setProperty("param_id", param_id);
     connect(act, &QAction::triggered, this,
             &QGCParamTreeWidget::contextMenuAction);
@@ -71,7 +81,16 @@ void QGCParamTreeWidget::showContextMenu(const QPoint &pos)
 }
 
 void QGCParamTreeWidget::contextMenuAction() {
+    QString action = qobject_cast<QAction*>(
+            sender())->property("action").toString();
     QString param_id = qobject_cast<QAction*>(
             sender())->property("param_id").toString();
-    emit mapRCToParamRequest(param_id);
+
+    if (action == "refresh") {
+        emit refreshParamRequest(param_id);
+    } else if (action == "maprc") {
+        emit mapRCToParamRequest(param_id);
+    } else {
+        qDebug() << "Undefined context menu action";
+    }
 }
