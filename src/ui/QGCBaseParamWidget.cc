@@ -95,6 +95,11 @@ void QGCBaseParamWidget::requestOnboardParamsUpdate()
     paramMgr->requestParameterList();
 }
 
+void QGCBaseParamWidget::requestOnboardParamUpdate(QString parameterName)
+{
+    paramMgr->requestParameterUpdate(paramMgr->getDefaultComponentId(), parameterName);
+}
+
 
 void QGCBaseParamWidget::saveParametersToFile()
 {

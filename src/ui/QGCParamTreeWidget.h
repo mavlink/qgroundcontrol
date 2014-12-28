@@ -40,6 +40,7 @@ public:
 
 signals:
     void mapRCToParamRequest(QString param_id);
+    void refreshParamRequest(QString param_id);
 
 public slots:
     void showContextMenu(const QPoint &pos);
