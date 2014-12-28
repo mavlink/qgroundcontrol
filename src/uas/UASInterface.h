@@ -392,7 +392,7 @@ public slots:
                             float flow_comp_m_y, quint8 quality, float ground_distance) = 0;
 
     /** @brief Send command to map a RC channel to a parameter */
-    virtual void sendMapRCToParam(QString param_id, float scale, float current_value, quint8 param_rc_channel_index) = 0;
+    virtual void sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax) = 0;
 
     /** @brief Send command to disable all bindings/maps between RC and parameters */
     virtual void unsetRCToParameterMap() = 0;
