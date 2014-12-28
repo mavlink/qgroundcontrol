@@ -30,6 +30,7 @@ QGCQmlWidgetHolder::QGCQmlWidgetHolder(QWidget *parent) :
     QWidget(parent)
 {
     _ui.setupUi(this);
+    _ui.qmlWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
 }
 
 QGCQmlWidgetHolder::~QGCQmlWidgetHolder()
