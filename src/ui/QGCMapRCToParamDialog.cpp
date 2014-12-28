@@ -67,7 +67,9 @@ void QGCMapRCToParamDialog::accept() {
     emit mapRCToParamDialogResult(param_id,
             (float)ui->scaleDoubleSpinBox->value(),
             (float)ui->value0DoubleSpinBox->value(),
-            (quint8)ui->rcParamChannelComboBox->currentIndex());
+            (quint8)ui->rcParamChannelComboBox->currentIndex(),
+            (float)ui->minValueDoubleSpinBox->value(),
+            (float)ui->maxValueDoubleSpinBox->value());
 
     QDialog::accept();
 }

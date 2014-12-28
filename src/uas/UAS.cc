@@ -3468,9 +3468,9 @@ void UAS::stopLowBattAlarm()
     }
 }
 
-void UAS::sendMapRCToParam(QString param_id, float scale, float current_value, quint8 param_rc_channel_index)
+void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax)
 {
-    qDebug() << "sendMapRCToParam" << param_id << "scale" << scale << "curval" << current_value << "param rc chan index" << param_rc_channel_index;
+    qDebug() << "sendMapRCToParam" << param_id << "scale" << scale << "value0" << value0 << "param rc chan index" << param_rc_channel_index;
     mavlink_message_t message;
 
     mavlink_msg_param_map_rc_pack(mavlink->getSystemId(),
@@ -3481,11 +3481,14 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float current_value, q
                                   param_id.toStdString().c_str(),
                                   -1,
                                   param_rc_channel_index,
-                                  current_value,
-                                  scale);
+                                  value0,
+                                  scale,
+                                  valueMin,
+                                  valueMax);
     sendMessage(message);
     qDebug() << "Mavlink message sent";
 }
+
 void UAS::unsetRCToParameterMap()
 {
     qDebug() << "unsetRCToParameterMap";
@@ -3500,8 +3503,9 @@ void UAS::unsetRCToParameterMap()
                                       -2,
                                       i,
                                       0.0f,
+                                      0.0f,
+                                      0.0f,
                                       0.0f);
         sendMessage(message);
     }
 }
-

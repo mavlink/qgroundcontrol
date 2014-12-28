@@ -885,7 +885,7 @@ public slots:
     void triggerAction(int action);
 
     /** @brief Send command to map a RC channel to a parameter */
-    void sendMapRCToParam(QString param_id, float scale, float current_value, quint8 param_rc_channel_index);
+    void sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax);
 
     /** @brief Send command to disable all bindings/maps between RC and parameters */
     void unsetRCToParameterMap();

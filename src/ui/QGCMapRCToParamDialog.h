@@ -76,8 +76,8 @@ public:
     ~QGCMapRCToParamDialog();
 
 signals:
-    void mapRCToParamDialogResult(QString param_id, float scale, float current_value,
-            quint8 param_rc_channel_index);
+    void mapRCToParamDialogResult(QString param_id, float scale, float value0,
+            quint8 param_rc_channel_index, float valueMin, float valueMax);
     void refreshParam();
 
 public slots:
