@@ -166,36 +166,40 @@ OSGDependency {
 # [OPTIONAL] Google Earth dependency. Provides Google Earth view to supplement 2D map view.
 # Only supported on Mac and Windows where Google Earth can be installed.
 #
-contains(DEFINES, DISABLE_GOOGLE_EARTH) {
-    message("Skipping support for Google Earth view (manual override from command line)")
-    DEFINES -= DISABLE_GOOGLE_EARTH
-}
-# Otherwise the user can still disable this feature in the user_config.pri file.
-else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EARTH) {
-    message("Skipping support for Google Earth view (manual override from user_config.pri)")
-} else:MacBuild {
-    message("Including support for Google Earth view")
-    DEFINES += QGC_GOOGLE_EARTH_ENABLED
-    HEADERS += src/ui/map3D/QGCGoogleEarthView.h \
-                src/ui/map3D/QGCWebPage.h \
-                src/ui/QGCWebView.h
-    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc \
-                src/ui/map3D/QGCWebPage.cc \
-                src/ui/QGCWebView.cc
-    FORMS += src/ui/QGCWebView.ui
-} else:WindowsBuild {
-    message("Including support for Google Earth view")
-    DEFINES += QGC_GOOGLE_EARTH_ENABLED
-    HEADERS += src/ui/map3D/QGCGoogleEarthView.h \
-                src/ui/map3D/QGCWebPage.h \
-                src/ui/QGCWebView.h
-    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc \
-                src/ui/map3D/QGCWebPage.cc \
-                src/ui/QGCWebView.cc
-    FORMS += src/ui/QGCWebView.ui
-    QT += axcontainer
+GoogleEarthDisableOverride {
+    contains(DEFINES, DISABLE_GOOGLE_EARTH) {
+        message("Skipping support for Google Earth view (manual override from command line)")
+        DEFINES -= DISABLE_GOOGLE_EARTH
+    }
+    # Otherwise the user can still disable this feature in the user_config.pri file.
+    else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EARTH) {
+        message("Skipping support for Google Earth view (manual override from user_config.pri)")
+    } else:MacBuild {
+        message("Including support for Google Earth view")
+        DEFINES += QGC_GOOGLE_EARTH_ENABLED
+        HEADERS += src/ui/map3D/QGCGoogleEarthView.h \
+                    src/ui/map3D/QGCWebPage.h \
+                    src/ui/QGCWebView.h
+        SOURCES += src/ui/map3D/QGCGoogleEarthView.cc \
+                    src/ui/map3D/QGCWebPage.cc \
+                    src/ui/QGCWebView.cc
+        FORMS += src/ui/QGCWebView.ui
+    } else:WindowsBuild {
+            message("Including support for Google Earth view")
+            DEFINES += QGC_GOOGLE_EARTH_ENABLED
+            HEADERS += src/ui/map3D/QGCGoogleEarthView.h \
+                        src/ui/map3D/QGCWebPage.h \
+                        src/ui/QGCWebView.h
+            SOURCES += src/ui/map3D/QGCGoogleEarthView.cc \
+                        src/ui/map3D/QGCWebPage.cc \
+                        src/ui/QGCWebView.cc
+            FORMS += src/ui/QGCWebView.ui
+            QT += axcontainer
+    } else {
+        message("Skipping support for Google Earth view (unsupported platform)")
+    }
 } else {
-    message("Skipping support for Google Earth view (unsupported platform)")
+    message("Skipping support for Google Earth due to Issue 1157")
 }
 
 #
