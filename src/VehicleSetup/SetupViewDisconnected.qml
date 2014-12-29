@@ -6,7 +6,6 @@ import QGroundControl.FactSystem 1.0
 Rectangle {
     QGCPalette { id: palette; colorGroup: QGCPalette.Active }
 
-    anchors.fill: parent
     color: palette.window
 
     Item {
