@@ -1269,7 +1269,7 @@ void MainWindow::_storeCurrentViewState(void)
 /// Restores the state of the toolbar, status bar and widgets associated with the current view
 void MainWindow::_loadCurrentViewState(void)
 {
-    QWidget* centerView;
+    QWidget* centerView = NULL;
     QString defaultWidgets;
     
     switch (_currentView) {
