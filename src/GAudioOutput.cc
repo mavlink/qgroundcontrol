@@ -40,13 +40,18 @@ This file is part of the QGROUNDCONTROL project
 
 IMPLEMENT_QGC_SINGLETON(GAudioOutput, GAudioOutput)
 
+const char* GAudioOutput::_mutedKey = "AudioMuted";
+
 GAudioOutput::GAudioOutput(QObject *parent) :
     QGCSingleton(parent),
     muted(false),
     thread(new QThread()),
     worker(new QGCAudioWorker())
 {
-    muted = qgcApp()->runningUnitTests();
+    QSettings settings;
+    
+    muted = settings.value(_mutedKey, false).toBool();
+    muted |= qgcApp()->runningUnitTests();
     
     worker->moveToThread(thread);
     connect(this, SIGNAL(textToSpeak(QString,int)), worker, SLOT(say(QString,int)));
@@ -66,7 +71,12 @@ GAudioOutput::~GAudioOutput()
 
 void GAudioOutput::mute(bool mute)
 {
+    QSettings settings;
+    
     muted = mute;
+    settings.setValue(_mutedKey, mute);
+    
+    emit mutedChanged(mute);
 }
 
 bool GAudioOutput::isMuted()

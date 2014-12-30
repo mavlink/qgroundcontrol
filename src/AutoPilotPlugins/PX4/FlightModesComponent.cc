@@ -27,6 +27,7 @@
 #include "FlightModesComponent.h"
 #include "FlightModeConfig.h"
 #include "VehicleComponentSummaryItem.h"
+#include "PX4AutoPilotPlugin.h"
 
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
@@ -45,8 +46,8 @@ static const SwitchListItem switchList[] = {
 };
 static const size_t cSwitchList = sizeof(switchList) / sizeof(switchList[0]);
 
-FlightModesComponent::FlightModesComponent(UASInterface* uas, QObject* parent) :
-    PX4Component(uas, parent),
+FlightModesComponent::FlightModesComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(uas, autopilot, parent),
     _name(tr("Flight Modes"))
 {
 }
@@ -117,44 +118,21 @@ QWidget* FlightModesComponent::setupWidget(void) const
     return new FlightModeConfig();
 }
 
-const QVariantList& FlightModesComponent::summaryItems(void)
+QUrl FlightModesComponent::summaryQmlSource(void) const
 {
-    if (!_summaryItems.count()) {
+    return QUrl::fromUserInput("qrc:/qml/FlightModesComponentSummary.qml");
+}
 
-        // Create summary items for each mode switch
-        
-        for (size_t i=0; i<cSwitchList; i++) {
-            QString name;
-            QString state;
-            QVariant value;
-            
-            name = switchList[i].name;
-            
-            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), switchList[i].param, value)) {
-                int chan = value.toInt();
-                
-                if (chan == 0) {
-                    // Switch is not mapped
-                    if (i == 0) {
-                        // Mode switch is required
-                        Q_ASSERT(strcmp(switchList[0].param, "RC_MAP_MODE_SW") == 0);
-                        state = "Setup required";
-                    } else {
-                        state = "None";
-                    }
-                } else {
-                    state = tr("Chan %1").arg(chan);
-                }
-            } else {
-                // Why is the parameter missing?
-                Q_ASSERT(false);
-                state = "Unknown";
-            }
-            
-            VehicleComponentSummaryItem* item = new VehicleComponentSummaryItem(name, state, this);
-            _summaryItems.append(QVariant::fromValue(item));
-        }
+QString FlightModesComponent::prerequisiteSetup(void) const
+{
+    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
+    Q_ASSERT(plugin);
+
+    if (!plugin->airframeComponent()->setupComplete()) {
+        return plugin->airframeComponent()->name();
+    } else if (!plugin->radioComponent()->setupComplete()) {
+        return plugin->radioComponent()->name();
     }
     
-    return _summaryItems;
+    return QString();
 }

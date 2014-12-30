@@ -92,10 +92,15 @@ private:
         // You can't use QGCMessageBox if QGCApplication is not created yet.
         Q_ASSERT(qgcApp());
         
+        Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCMessageBox can only be called from main thread");
+        
         parent = _validateParameters(buttons, &defaultButton, parent);
 
         if (MainWindow::instance()) {
             MainWindow::instance()->hideSplashScreen();
+            if (parent == NULL) {
+                parent = MainWindow::instance();
+            }
         }
         
 #ifdef QT_DEBUG

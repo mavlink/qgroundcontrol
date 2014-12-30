@@ -42,7 +42,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCDataPlot2D.h"
 #include "ui_QGCDataPlot2D.h"
 #include "MG.h"
-#include "MainWindow.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 
@@ -73,8 +72,7 @@ QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     connect(ui->style, SIGNAL(currentIndexChanged(QString)), plot, SLOT(setStyleText(QString)));
 
     // Allow style changes to propagate through this widget
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
-            plot, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
+    connect(qgcApp(), &QGCApplication::styleChanged, plot, &IncrementalPlot::styleChanged);
 }
 
 void QGCDataPlot2D::reloadFile()
@@ -304,7 +302,6 @@ void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFil
     // Postprocess log file
     logFile = new QTemporaryFile("qt_qgc_temp_log.XXXXXX.csv");
     compressor = new LogCompressor(file, logFile->fileName());
-    connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
     connect(compressor, SIGNAL(finishedFile(QString)), this, SLOT(loadFile(QString)));
     compressor->startCompression();
 }

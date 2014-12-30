@@ -26,8 +26,8 @@
 
 #include "PX4Component.h"
 
-PX4Component::PX4Component(UASInterface* uas, QObject* parent) :
-    VehicleComponent(uas, parent)
+PX4Component::PX4Component(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
+    VehicleComponent(uas, autopilot, parent)
 {
     bool fSuccess = connect(_paramMgr, SIGNAL(parameterUpdated(int, QString, QVariant)), this, SLOT(_parameterUpdated(int, QString, QVariant)));
     Q_ASSERT(fSuccess);
@@ -44,7 +44,7 @@ void PX4Component::_parameterUpdated(int compId, QString paramName, QVariant val
         
         while (*prgTriggers != NULL) {
             if (paramName == *prgTriggers) {
-                emit setupCompleteChanged();
+                emit setupCompleteChanged(setupComplete());
                 return;
             }
             prgTriggers++;

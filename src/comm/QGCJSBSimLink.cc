@@ -33,11 +33,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QDebug>
 #include <QMutexLocker>
+#include <QHostInfo>
+
 #include <iostream>
+
 #include "QGCJSBSimLink.h"
 #include "QGC.h"
-#include <QHostInfo>
-#include "MainWindow.h"
+#include "QGCMessageBox.h"
 
 QGCJSBSimLink::QGCJSBSimLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
     socket(NULL),
@@ -122,14 +124,14 @@ void QGCJSBSimLink::run()
     QFileInfo executable(processJSB);
     if (!executable.isExecutable())
     {
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim was not found at %1").arg(processJSB));
+        QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim was not found at %1").arg(processJSB));
         sane = false;
     }
 
     QFileInfo root(rootJSB);
     if (!root.isDir())
     {
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim data directory was not found at %1").arg(rootJSB));
+        QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim data directory was not found at %1").arg(rootJSB));
         sane = false;
     }
 
@@ -167,28 +169,33 @@ void QGCJSBSimLink::setPort(int port)
 
 void QGCJSBSimLink::processError(QProcess::ProcessError err)
 {
-    switch(err)
-    {
-    case QProcess::FailedToStart:
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("Please check if the path and command is correct"));
-        break;
-    case QProcess::Crashed:
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
-        break;
-    case QProcess::Timedout:
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Start Timed Out"), tr("Please check if the path and command is correct"));
-        break;
-    case QProcess::WriteError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with JSBSim"), tr("Please check if the path and command is correct"));
-        break;
-    case QProcess::ReadError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with JSBSim"), tr("Please check if the path and command is correct"));
-        break;
-    case QProcess::UnknownError:
-    default:
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Error"), tr("Please check if the path and command is correct."));
-        break;
+    QString msg;
+    
+    switch(err) {
+        case QProcess::FailedToStart:
+            msg = tr("JSBSim Failed to start. Please check if the path and command is correct");
+            break;
+            
+        case QProcess::Crashed:
+            msg = tr("JSBSim crashed. This is a JSBSim-related problem, check for JSBSim upgrade.");
+            break;
+            
+        case QProcess::Timedout:
+            msg = tr("JSBSim start timed out. Please check if the path and command is correct");
+            break;
+            
+        case QProcess::ReadError:
+        case QProcess::WriteError:
+            msg = tr("Could not communicate with JSBSim. Please check if the path and command are correct");
+            break;
+            
+        case QProcess::UnknownError:
+        default:
+            msg = tr("JSBSim error occurred. Please check if the path and command is correct.");
+            break;
     }
+    
+    QGCMessageBox::critical("JSBSim HIL", msg);
 }
 
 /**

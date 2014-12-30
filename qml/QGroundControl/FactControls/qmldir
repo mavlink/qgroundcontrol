@@ -1,2 +1,4 @@
 Module QGroundControl.FactControls
-SetupButton 1.0 SetupButton.qml
+FactLabel 1.0 FactLabel.qml
+FactTextField 1.0 FactTextField.qml
+FactCheckBox 1.0 FactCheckBox.qml

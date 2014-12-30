@@ -87,7 +87,37 @@ public:
     /// @brief Returns truee if unit test are being run
     bool runningUnitTests(void) { return _runningUnitTests; }
     
+    /// @return true: dark ui style, false: light ui style
+    bool styleIsDark(void) { return _styleIsDark; }
+    
+    /// Set the current UI style
+    void setStyle(bool styleIsDark);
+    
+public slots:
+    /// You can connect to this slot to show an information message box from a different thread.
+    void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
+    
+    /// You can connect to this slot to show a warning message box from a different thread.
+    void warningMessageBoxOnMainThread(const QString& title, const QString& msg);
+    
+    /// You can connect to this slot to show a critical message box from a different thread.
+    void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
+    
+    /// Save the specified Flight Data Log
+    void saveTempFlightDataLogOnMainThread(QString tempLogfile);
+    
+signals:
+    /// Signals that the style has changed
+    ///     @param darkStyle true: dark style, false: light style
+    void styleChanged(bool darkStyle);
+    
+    /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
+    /// on the MAVLinkProtocol thread;
+    void checkForLostLogFiles(void);
+    
 public:
+    // Although public, these methods are internal and should only be called by UnitTest code
+    
     /// @brief Perform initialize which is common to both normal application running and unit tests.
     ///         Although public should only be called by main.
     void _initCommon(void);
@@ -105,17 +135,23 @@ public:
 private:
     void _createSingletons(void);
     void _destroySingletons(void);
+    void _loadCurrentStyle(void);
     
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
     static const char* _savedFilesLocationKey;          ///< Settings key for user visible saved files location
     static const char* _promptFlightDataSave;           ///< Settings key to prompt for saving Flight Data Log for all flights
+    static const char* _styleKey;                       ///< Settings key for UI style
     
     static const char* _defaultSavedFileDirectoryName;      ///< Default name for user visible save file directory
     static const char* _savedFileMavlinkLogDirectoryName;   ///< Name of mavlink log subdirectory
     static const char* _savedFileParameterDirectoryName;    ///< Name of parameter subdirectory
     
     bool _runningUnitTests; ///< true: running unit tests, false: normal app
+    
+    static const char*  _darkStyleFile;
+    static const char*  _lightStyleFile;
+    bool                _styleIsDark;      ///< true: dark style, false: light style
     
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;

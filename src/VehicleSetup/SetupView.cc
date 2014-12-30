@@ -33,6 +33,7 @@
 #include "ParameterEditor.h"
 #include "SetupWidgetHolder.h"
 #include "MainWindow.h"
+#include "QGCMessageBox.h"
 
 #include <QQmlError>
 #include <QQmlContext>
@@ -47,6 +48,8 @@ SetupView::SetupView(QWidget* parent) :
     bool fSucceeded = connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
+    
+    setResizeMode(SizeRootObjectToView);
     
     _setActiveUAS(NULL);
 }
@@ -117,6 +120,11 @@ void SetupView::_setConnectedView(void)
 
 void SetupView::_firmwareButtonClicked(void)
 {
+    if (_uasCurrent->isArmed()) {
+        QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
+        return;
+    }
+    
     SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
     dialog->setModal(true);
     dialog->setWindowTitle("Firmware Upgrade");
@@ -139,16 +147,29 @@ void SetupView::_parametersButtonClicked(void)
 
 void SetupView::_setupButtonClicked(const QVariant& component)
 {
+    if (_uasCurrent->isArmed()) {
+        QGCMessageBox::warning("Setup", "Setup cannot be performed while vehicle is armed.");
+        return;
+    }
+
     VehicleComponent* vehicle = qobject_cast<VehicleComponent*>(component.value<QObject*>());
     Q_ASSERT(vehicle);
     
-    SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
-    dialog->setModal(true);
-    dialog->setWindowTitle(vehicle->name());
+    QString setupPrereq = vehicle->prerequisiteSetup();
+    if (!setupPrereq.isEmpty()) {
+        QGCMessageBox::warning("Setup", QString("%1 setup must be completed prior to %2 setup.").arg(setupPrereq).arg(vehicle->name()));
+        return;
+    }
+    
+    SetupWidgetHolder dialog(MainWindow::instance());
+    dialog.setModal(true);
+    dialog.setWindowTitle(vehicle->name());
     
     QWidget* setupWidget = vehicle->setupWidget();
-    qDebug() << setupWidget->minimumSize();
-    dialog->resize(setupWidget->minimumSize());
-    dialog->setInnerWidget(setupWidget);
-    dialog->exec();
+    
+    dialog.resize(setupWidget->minimumSize());
+    dialog.setInnerWidget(setupWidget);
+    dialog.exec();
+    
+    delete setupWidget;
 }

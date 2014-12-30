@@ -86,8 +86,7 @@ _ui(new Ui::SettingsDialog)
     connect(_ui->customModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectCustomMode(int)));
     
     // Application color style
-    MainWindow::QGC_MAINWINDOW_STYLE style = _mainWindow->getStyle();
-    _ui->styleChooser->setCurrentIndex(style);
+    _ui->styleChooser->setCurrentIndex(qgcApp()->styleIsDark() ? 0 : 1);
     
     _ui->savedFilesLocation->setText(qgcApp()->savedFilesLocation());
     _ui->promptFlightDataSave->setChecked(qgcApp()->promptFlightDataSave());
@@ -105,7 +104,7 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::styleChanged(int index)
 {
-    _mainWindow->loadStyle((index == 1) ? MainWindow::QGC_MAINWINDOW_STYLE_LIGHT : MainWindow::QGC_MAINWINDOW_STYLE_DARK);
+    qgcApp()->setStyle(index == 0);
 }
 
 void SettingsDialog::selectCustomMode(int mode)

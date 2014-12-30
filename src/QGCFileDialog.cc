@@ -108,6 +108,8 @@ void QGCFileDialog::_validate(QString* selectedFilter, Options& options)
     // You can't use QGCFileDialog if QGCApplication is not created yet.
     Q_ASSERT(qgcApp());
     
+    Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
+    
     // Support for selectedFilter is not yet implemented through the unit test framework
     Q_UNUSED(selectedFilter);
     Q_ASSERT(selectedFilter == NULL);

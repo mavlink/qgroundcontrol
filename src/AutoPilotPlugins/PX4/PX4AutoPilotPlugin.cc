@@ -22,10 +22,6 @@
  ======================================================================*/
 
 #include "PX4AutoPilotPlugin.h"
-#include "AirframeComponent.h"
-#include "RadioComponent.h"
-#include "SensorsComponent.h"
-#include "FlightModesComponent.h"
 #include "AutoPilotPluginManager.h"
 #include "UASManager.h"
 #include "QGCUASParamManagerInterface.h"
@@ -34,7 +30,6 @@
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
 ///     @author Don Gagne <don@thegagnes.com>
-
 
 enum PX4_CUSTOM_MAIN_MODE {
     PX4_CUSTOM_MAIN_MODE_MANUAL = 1,
@@ -68,7 +63,12 @@ union px4_custom_mode {
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     AutoPilotPlugin(parent),
     _uas(uas),
-    _parameterFacts(NULL)
+    _parameterFacts(NULL),
+    _airframeComponent(NULL),
+    _radioComponent(NULL),
+    _flightModesComponent(NULL),
+    _sensorsComponent(NULL),
+    _safetyComponent(NULL)
 {
     Q_ASSERT(uas);
     
@@ -192,25 +192,27 @@ bool PX4AutoPilotPlugin::pluginIsReady(void) const
 const QVariantList& PX4AutoPilotPlugin::components(void)
 {
     if (_components.count() == 0) {
-        VehicleComponent* component;
-
         Q_ASSERT(_uas);
         
-        component = new AirframeComponent(_uas);
-        Q_CHECK_PTR(component);
-        _components.append(QVariant::fromValue(component));
+        _airframeComponent = new AirframeComponent(_uas, this);
+        Q_CHECK_PTR(_airframeComponent);
+        _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
         
-        component = new RadioComponent(_uas);
-        Q_CHECK_PTR(component);
-        _components.append(QVariant::fromValue(component));
+        _radioComponent = new RadioComponent(_uas, this);
+        Q_CHECK_PTR(_radioComponent);
+        _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
         
-        component = new FlightModesComponent(_uas);
-        Q_CHECK_PTR(component);
-        _components.append(QVariant::fromValue(component));
+        _flightModesComponent = new FlightModesComponent(_uas, this);
+        Q_CHECK_PTR(_flightModesComponent);
+        _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
         
-        component = new SensorsComponent(_uas);
-        Q_CHECK_PTR(component);
-        _components.append(QVariant::fromValue(component));
+        _sensorsComponent = new SensorsComponent(_uas, this);
+        Q_CHECK_PTR(_sensorsComponent);
+        _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
+
+        _safetyComponent = new SafetyComponent(_uas, this);
+        Q_CHECK_PTR(_safetyComponent);
+        _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
     }
     
     return _components;

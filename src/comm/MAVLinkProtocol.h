@@ -205,11 +205,11 @@ public slots:
     
     /// @brief Deletes any log files which are in the temp directory
     static void deleteTempLogFiles(void);
+    
+    /// Checks for lost log files
+    void checkForLostLogFiles(void);
 
-protected:    
-    // Override from QObject
-    virtual void connectNotify(const QMetaMethod& signal);
-
+protected:
     bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
     bool m_authEnabled;        ///< Enable authentication token broadcast
     QString m_authKey;         ///< Authentication key
@@ -284,7 +284,6 @@ private:
     bool _closeLogFile(void);
     void _startLogging(void);
     void _stopLogging(void);
-    void _checkLostLogFiles(void);
     
     QList<LinkInterface*> _connectedLinks;  ///< List of all links connected to protocol
     
@@ -294,9 +293,6 @@ private:
     QGCTemporaryFile    _tempLogFile;            ///< File to log to
     static const char*  _tempLogFileTemplate;    ///< Template for temporary log file
     static const char*  _logFileExtension;       ///< Extension for log files
-    
-    bool _protocolStatusMessageConnected;   ///< true: protocolStatusMessage signal has been connected
-    bool _saveTempFlightDataLogConnected;   ///< true: saveTempFlightDataLog signal has been connected
     
     LinkManager* _linkMgr;
     

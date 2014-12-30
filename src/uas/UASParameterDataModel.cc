@@ -184,9 +184,8 @@ void UASParameterDataModel::handleParamUpdate(int compId, const QString &paramNa
         }
     }
 
-    emit parameterUpdated(compId,paramName,value);
     setOnboardParam(compId,paramName,value);
-
+    emit parameterUpdated(compId,paramName,value);
 }
 
 bool UASParameterDataModel::getOnboardParamValue(int componentId, const QString& key, QVariant& value) const

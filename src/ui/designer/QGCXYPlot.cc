@@ -6,6 +6,8 @@
 #include "MAVLinkProtocol.h"
 #include "UASManager.h"
 #include "IncrementalPlot.h"
+#include "QGCApplication.h"
+
 #include <float.h>
 #include <qwt_plot.h>
 #include <qwt_plot_layout.h>
@@ -222,9 +224,8 @@ QGCXYPlot::QGCXYPlot(QWidget *parent) :
     plot->setAutoReplot();
     xycurve = new XYPlotCurve();
     xycurve->attach(plot);
-    styleChanged(MainWindow::instance()->getStyle());
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
-            this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
+    styleChanged(qgcApp()->styleIsDark());
+    connect(qgcApp(), &QGCApplication::styleChanged, this, &QGCXYPlot::styleChanged);
     connect(ui->minX, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));
     connect(ui->maxX, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));
     connect(ui->minY, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));
@@ -401,12 +402,9 @@ void QGCXYPlot::appendData(int uasId, const QString& curve, const QString& unit,
     }
 }
 
-void QGCXYPlot::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style)
+void QGCXYPlot::styleChanged(bool styleIsDark)
 {
-    if (style == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-        xycurve->setColor(Qt::black);
-    else
-        xycurve->setColor(Qt::white);
+    xycurve->setColor(styleIsDark ? Qt::white : Qt::black);
 }
 
 void QGCXYPlot::updateMinMaxSettings()

@@ -111,22 +111,6 @@ public:
 
     ~MainWindow();
 
-    enum QGC_MAINWINDOW_STYLE
-    {
-        QGC_MAINWINDOW_STYLE_DARK,
-        QGC_MAINWINDOW_STYLE_LIGHT
-    };
-
-    // Declare default dark and light stylesheets. These should be file-resource
-    // paths.
-    static const QString defaultDarkStyle;
-    static const QString defaultLightStyle;
-
-    /** @brief Get current visual style */
-    QGC_MAINWINDOW_STYLE getStyle() const
-    {
-        return currentStyle;
-    }
 
     /** @brief Get auto link reconnect setting */
     bool autoReconnectEnabled() const
@@ -161,15 +145,6 @@ public:
     void hideSplashScreen(void);
 
 public slots:
-    /** @brief Shows a status message on the bottom status bar */
-    void showStatusMessage(const QString& status, int timeout);
-    /** @brief Shows a status message on the bottom status bar */
-    void showStatusMessage(const QString& status);
-    /** @brief Shows a critical message as popup or as widget */
-    void showCriticalMessage(const QString& title, const QString& message);
-    /** @brief Shows an info message as popup or as widget */
-    void showInfoMessage(const QString& title, const QString& message);
-
     /** @brief Show the application settings */
     void showSettings();
     /** @brief Add a communication link */
@@ -224,8 +199,6 @@ public slots:
 
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
-    /** @brief Load the specified style. */
-    bool loadStyle(QGC_MAINWINDOW_STYLE style);
 
     /** @brief Add a custom tool widget */
     void createCustomWidget();
@@ -275,7 +248,6 @@ protected slots:
     void normalActionItemCallback();
 
 signals:
-    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
     /** Emitted when any value changes from any source */
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
@@ -340,7 +312,6 @@ protected:
 
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
-    QGC_MAINWINDOW_STYLE currentStyle;
 
     void storeViewState();
     void loadViewState();
@@ -452,7 +423,6 @@ protected:
     CUSTOM_MODE customMode;
     
 private slots:
-    void _saveTempFlightDataLog(QString tempLogfile);
     void _addLinkMenu(LinkInterface* link);
 
 private:

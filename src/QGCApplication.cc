@@ -56,6 +56,7 @@
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
+#include "QGCFileDialog.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -68,10 +69,14 @@ const char* QGCApplication::_deleteAllSettingsKey = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey = "SettingsVersion";
 const char* QGCApplication::_savedFilesLocationKey = "SavedFilesLocation";
 const char* QGCApplication::_promptFlightDataSave = "PromptFLightDataSave";
+const char* QGCApplication::_styleKey = "StyleIsDark";
 
 const char* QGCApplication::_defaultSavedFileDirectoryName = "QGroundControl";
 const char* QGCApplication::_savedFileMavlinkLogDirectoryName = "FlightData";
 const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters";
+
+const char* QGCApplication::_darkStyleFile = ":files/styles/style-dark.css";
+const char* QGCApplication::_lightStyleFile = ":files/styles/style-light.css";
 
 /**
  * @brief Constructor for the main application.
@@ -86,11 +91,14 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     QApplication(argc, argv),
-    _runningUnitTests(unitTesting)
+    _runningUnitTests(unitTesting),
+    _styleIsDark(true)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
     
+    // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
+    setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     
 #ifdef QT_DEBUG
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
@@ -199,6 +207,9 @@ void QGCApplication::_initCommon(void)
                                    tr("The format for QGroundControl saved settings has been modified. "
                                       "Your saved settings have been reset to defaults."));
     }
+    
+    _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
+    _loadCurrentStyle();
     
     // Load saved files location and validate
     
@@ -312,6 +323,10 @@ bool QGCApplication::_initForNormalAppBoot(void)
             QTimer::singleShot(200, mainWindow, SLOT(close()));
         }
     }
+    
+    // Now that main window is upcheck for lost log files
+    connect(this, &QGCApplication::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
+    emit checkForLostLogFiles();
     
     return true;
 }
@@ -481,4 +496,84 @@ void QGCApplication::_destroySingletons(void)
     UASManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
+}
+
+void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)
+{
+    QGCMessageBox::information(title, msg);
+}
+
+void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
+{
+    QGCMessageBox::warning(title, msg);
+}
+
+void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const QString& msg)
+{
+    QGCMessageBox::critical(title, msg);
+}
+
+void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
+{
+    QString saveFilename = QGCFileDialog::getSaveFileName(MainWindow::instance(),
+                                                          tr("Select file to save Flight Data Log"),
+                                                          qgcApp()->mavlinkLogFilesLocation(),
+                                                          tr("Flight Data Log (*.mavlink)"));
+    if (!saveFilename.isEmpty()) {
+        QFile::copy(tempLogfile, saveFilename);
+    }
+    QFile::remove(tempLogfile);
+}
+
+void QGCApplication::setStyle(bool styleIsDark)
+{
+    QSettings settings;
+    
+    settings.setValue(_styleKey, styleIsDark);
+    _styleIsDark = styleIsDark;
+    _loadCurrentStyle();
+    emit styleChanged(_styleIsDark);
+}
+
+void QGCApplication::_loadCurrentStyle(void)
+{
+    bool success = true;
+    QString styles;
+    
+    // Signal to the user that the app will pause to apply a new stylesheet
+    setOverrideCursor(Qt::WaitCursor);
+    
+    // The dark style sheet is the master. Any other selected style sheet just overrides
+    // the colors of the master sheet.
+    QFile masterStyleSheet(_darkStyleFile);
+    if (masterStyleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        styles = masterStyleSheet.readAll();
+    } else {
+        qDebug() << "Unable to load master dark style sheet";
+        success = false;
+    }
+    
+    if (success && !_styleIsDark) {
+        qDebug() << "LOADING LIGHT";
+        // Load the slave light stylesheet.
+        QFile styleSheet(_lightStyleFile);
+        if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            styles += styleSheet.readAll();
+        } else {
+            qDebug() << "Unable to load slave light sheet:";
+            success = false;
+        }
+    }
+    
+    if (!styles.isEmpty()) {
+        setStyleSheet(styles);
+    }
+    
+    if (!success) {
+        // Fall back to plastique if we can't load our own
+        setStyle("plastique");
+    }
+    
+    // Finally restore the cursor before returning.
+    restoreOverrideCursor();
 }

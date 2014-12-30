@@ -35,7 +35,7 @@ class AirframeComponent : public PX4Component
     Q_OBJECT
     
 public:
-    AirframeComponent(UASInterface* uas, QObject* parent = NULL);
+    AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from PX4Component
     virtual const char** setupCompleteChangedTriggerList(void) const;
@@ -49,7 +49,8 @@ public:
     virtual QString setupStateDescription(void) const;
     virtual QWidget* setupWidget(void) const;
     virtual QStringList paramFilterList(void) const;
-    virtual const QVariantList& summaryItems(void);
+    virtual QUrl summaryQmlSource(void) const;    
+    virtual QString prerequisiteSetup(void) const;
 
 private:
     const QString   _name;
