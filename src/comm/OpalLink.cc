@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
 #include "OpalLink.h"
 
 OpalLink::OpalLink() :
+    LinkInterface(dynamic_cast<QGCSettingsGroup*>(LinkManager::instance()), "OpalLink"),
     connectState(false),
     heartbeatTimer(new QTimer(this)),
     heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
@@ -363,11 +364,6 @@ void OpalLink::getSignals()
 void OpalLink::run()
 {
 //    qDebug() << "OpalLink::run():: Starting the thread";
-}
-
-int OpalLink::getId() const
-{
-    return id;
 }
 
 QString OpalLink::getName() const

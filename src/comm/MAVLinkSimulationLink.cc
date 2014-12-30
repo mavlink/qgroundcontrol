@@ -56,6 +56,7 @@ This file is part of the QGROUNDCONTROL project
  * @param rate The rate at which the messages are sent (in intervals of milliseconds)
  **/
 MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate) :
+    LinkInterface(dynamic_cast<QGCSettingsGroup*>(LinkManager::instance()), "SimulationLink"),
     readyBytes(0),
     timeOffset(0)
 {
@@ -837,11 +838,6 @@ bool MAVLinkSimulationLink::_connect(void)
 bool MAVLinkSimulationLink::isConnected() const
 {
     return _isConnected;
-}
-
-int MAVLinkSimulationLink::getId() const
-{
-    return id;
 }
 
 QString MAVLinkSimulationLink::getName() const

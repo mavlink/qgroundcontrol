@@ -28,6 +28,7 @@
 #include <QFile>
 
 #include <string.h>
+#include "LinkManager.h"
 
 Q_LOGGING_CATEGORY(MockLinkLog, "MockLinkLog")
 
@@ -66,7 +67,8 @@ union px4_custom_mode {
 };
 
 MockLink::MockLink(void) :
-    _linkId(getNextLinkId()),
+    LinkInterface(dynamic_cast<QGCSettingsGroup*>(LinkManager::instance()), "MockLink"),
+    _linkId(LinkManager::instance()->getNextLinkID()),
     _name("MockLink"),
     _connected(false),
     _vehicleSystemId(128),     // FIXME: Pull from eventual parameter manager

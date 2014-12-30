@@ -251,7 +251,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
 #endif //QGC_MOUSE_ENABLED_LINUX
 
-    // Connect link
+/*    // Connect link
     if (autoReconnect)
     {
         LinkManager* linkMgr = LinkManager::instance();
@@ -263,7 +263,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE
         linkMgr->addLink(link);
         linkMgr->connectLink(link);
     }
-
+*/
     // Set low power mode
     enableLowPowerMode(lowPowerMode);
 

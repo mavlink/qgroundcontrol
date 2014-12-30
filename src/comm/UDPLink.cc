@@ -37,9 +37,38 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkManager.h"
 #include "QGC.h"
 #include <QHostInfo>
+#include <QSettings>
 //#include <netinet/in.h>
 
+
+UDPLink::UDPLink(QGCSettingsGroup* pparentGroup, QString groupName) :
+    LinkInterface(pparentGroup, groupName),
+    socket(NULL)
+{
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
+    this->connectState = false;
+
+    // Set unique ID and add link to the list of links
+    int temp_id = groupName.split("_").value(1).toInt();
+    if(LinkManager::instance()->isIDinLinks(temp_id))
+        this->link_id = LinkManager::instance()->getNextLinkID();
+    else
+        this->link_id = temp_id;
+
+    loadGroup();
+
+    this->name = tr("UDP Link (port:%1)").arg(this->port);
+//    this->name = name;
+    emit nameChanged(this->name);
+    // LinkManager::instance()->add(this);
+    qDebug() << "UDP Created " << name;
+}
+
 UDPLink::UDPLink(QHostAddress host, quint16 port) :
+    LinkInterface(dynamic_cast<QGCSettingsGroup*>(LinkManager::instance()), "default"),
     socket(NULL)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
@@ -50,7 +79,7 @@ UDPLink::UDPLink(QHostAddress host, quint16 port) :
     this->port = port;
     this->connectState = false;
     // Set unique ID and add link to the list of links
-    this->id = getNextLinkId();
+    this->link_id = LinkManager::instance()->getNextLinkID();
 	this->name = tr("UDP Link (port:%1)").arg(this->port);
 	emit nameChanged(this->name);
     // LinkManager::instance()->add(this);
@@ -67,6 +96,19 @@ UDPLink::~UDPLink()
     wait();
 
 	this->deleteLater();
+}
+
+void UDPLink::serialize(QSettings* psettings)
+{
+    psettings->setValue("TYPE", "UDPLink");
+    psettings->setValue("UDPLINK_PORT", this->port);
+    psettings->setValue("UDPLINK_HOST", this->host.toString());
+}
+
+void UDPLink::deserialize(QSettings* psettings)
+{
+    this->host = QHostAddress(psettings->value("UDPLINK_HOST").toString());
+    setPort(psettings->value("UDPLINK_PORT").toInt());
 }
 
 /**
@@ -368,10 +410,6 @@ bool UDPLink::isConnected() const
     return connectState;
 }
 
-int UDPLink::getId() const
-{
-    return id;
-}
 
 QString UDPLink::getName() const
 {

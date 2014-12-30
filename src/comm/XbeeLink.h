@@ -36,7 +36,6 @@ public slots: // virtual functions from XbeeLinkInterface
 	bool setRemoteAddressLow(quint32 low);
 
 public: // virtual functions from LinkInterface
-    int getId() const;
     QString getName() const;
     bool isConnected() const;
 

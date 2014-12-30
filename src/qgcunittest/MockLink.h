@@ -47,7 +47,6 @@ public:
     ~MockLink(void);
     
     // Virtuals from LinkInterface
-    virtual int getId(void) const { return _linkId; }
     virtual QString getName(void) const { return _name; }
     virtual void requestReset(void){ }
     virtual bool isConnected(void) const { return _connected; }

@@ -110,10 +110,6 @@ bool XbeeLink::setBaudRate(int rate)
 	return retVal;
 }
 
-int XbeeLink::getId() const
-{
-	return this->m_id;
-}
 
 QString XbeeLink::getName() const
 {
