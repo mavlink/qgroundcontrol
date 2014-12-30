@@ -121,8 +121,11 @@ bool LinkManager::loadAllLinks(){
         // If a new interface is created then connect it to a protocol
         if(pnewIF != NULL){
             addLink(pnewIF);
+            foundLink = true;
         }
     }
+
+    return foundLink;
 }
 
 bool LinkManager::connectAll()
@@ -260,7 +263,6 @@ void LinkManager::_shutdown(void)
 
 int LinkManager::getNextLinkID(void){
     int nextLink = 1;
-    bool nextLinkFound = false;
 
     while(isIDinLinks(nextLink) == true){
         nextLink++;

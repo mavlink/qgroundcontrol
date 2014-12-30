@@ -68,8 +68,8 @@ UDPLink::UDPLink(QGCSettingsGroup* pparentGroup, QString groupName) :
 }
 
 UDPLink::UDPLink(QHostAddress host, quint16 port) :
-    socket(NULL),
-    LinkInterface(dynamic_cast<QGCSettingsGroup*>(LinkManager::instance()), "default")
+    LinkInterface(dynamic_cast<QGCSettingsGroup*>(LinkManager::instance()), "default"),
+    socket(NULL)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
