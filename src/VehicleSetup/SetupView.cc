@@ -51,7 +51,7 @@ SetupView::SetupView(QWidget* parent) :
     
     setResizeMode(SizeRootObjectToView);
     
-    _setActiveUAS(NULL);
+    _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
 SetupView::~SetupView()
