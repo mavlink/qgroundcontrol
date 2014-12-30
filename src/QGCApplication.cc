@@ -182,6 +182,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 
 QGCApplication::~QGCApplication()
 {
+    LinkManager::instance()->saveGroup();
     _destroySingletons();
 }
 
@@ -293,9 +294,11 @@ bool QGCApplication::_initForNormalAppBoot(void)
         udpLink = new UDPLink(QHostAddress::Any, 14550);
         LinkManager::instance()->addLink(udpLink);
     } else {
-        // We want to have a default serial link available for "quick" connecting.
-        SerialLink *slink = new SerialLink();
-        LinkManager::instance()->addLink(slink);
+        if(LinkManager::instance()->loadAllLinks() == false){
+            // We want to have a default serial link available for "quick" connecting.
+            SerialLink *slink = new SerialLink();
+            LinkManager::instance()->addLink(slink);
+        }
     }
     
 #ifdef QGC_RTLAB_ENABLED
@@ -323,10 +326,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
             QTimer::singleShot(200, mainWindow, SLOT(close()));
         }
     }
-    
-    // Now that main window is upcheck for lost log files
-    connect(this, &QGCApplication::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
-    emit checkForLostLogFiles();
     
     return true;
 }

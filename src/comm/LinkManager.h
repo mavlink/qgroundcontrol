@@ -35,7 +35,7 @@ This file is part of the PIXHAWK project
 #include "SerialLink.h"
 #include "ProtocolInterface.h"
 #include "QGCSingleton.h"
-#include "MAVLinkProtocol.h"
+#include "QGCSettingsGroup.h"
 
 class LinkManagerTest;
 
@@ -45,7 +45,7 @@ class LinkManagerTest;
 /// links and takes care of connecting them as well assigning the correct
 /// protocol instance to transport the link data into the application.
 
-class LinkManager : public QGCSingleton
+class LinkManager : public QGCSingleton, public QGCSettingsGroup
 {
     Q_OBJECT
     
@@ -87,10 +87,24 @@ public:
     
     /// Disconnect the specified link
     bool disconnectLink(LinkInterface* link);
-    
+
+    /// Returns the identifier of the link.  Used by settings storage
+    int getNextLinkID(void);
+
+    /// Check if identifier is in the list of added links
+    bool isIDinLinks(int id);
+
+	/// laod all of the link from settings
+    bool loadAllLinks();
+
+
 signals:
     void newLink(LinkInterface* link);
     void linkDeleted(LinkInterface* link);
+
+protected:
+    /// overide of QGCSettingsGroup saveChildren to save all child links
+    void saveChildren(void);
     
 private:
     /// All access to LinkManager is through LinkManager::instance
@@ -106,6 +120,7 @@ private:
     
     bool    _connectionsSuspended;          ///< true: all new connections should not be allowed
     QString _connectionsSuspendedReason;    ///< User visible reason for suspension
+
 };
 
 #endif

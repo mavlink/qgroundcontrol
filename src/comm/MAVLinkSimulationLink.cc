@@ -57,7 +57,8 @@ This file is part of the QGROUNDCONTROL project
  **/
 MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate) :
     readyBytes(0),
-    timeOffset(0)
+    timeOffset(0),
+    LinkInterface(dynamic_cast<QGCSettingsGroup*>(LinkManager::instance()), "SimulationLink")
 {
     this->rate = rate;
     _isConnected = false;
@@ -837,11 +838,6 @@ bool MAVLinkSimulationLink::_connect(void)
 bool MAVLinkSimulationLink::isConnected() const
 {
     return _isConnected;
-}
-
-int MAVLinkSimulationLink::getId() const
-{
-    return id;
 }
 
 QString MAVLinkSimulationLink::getName() const

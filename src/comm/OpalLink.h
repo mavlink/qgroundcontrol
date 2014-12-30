@@ -71,7 +71,6 @@ public:
     OpalLink();
     /* Connection management */
 
-    int getId() const;
     QString getName() const;
     bool isConnected() const;
 

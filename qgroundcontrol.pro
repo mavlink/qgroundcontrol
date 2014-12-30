@@ -495,6 +495,7 @@ HEADERS += \
     src/QGCQuickWidget.h \
     src/QGCPalette.h \
     src/QGCQmlWidgetHolder.h \
+    src/QGCSettingsGroup.h
 
 SOURCES += \
     src/main.cc \
@@ -636,6 +637,8 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCPalette.cc \
     src/QGCQmlWidgetHolder.cpp \
+    src/QGCSettingsGroup.cc \
+    src/comm/LinkInterface.cpp
 
 #
 # Unit Test specific configuration goes here

@@ -37,6 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
+#include "UDPLink.h"
 
 IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
 
@@ -47,6 +48,7 @@ IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
  **/
 LinkManager::LinkManager(QObject* parent) :
     QGCSingleton(parent),
+    QGCSettingsGroup(NULL, "Links"),
     _connectionsSuspended(false)
 {
 
@@ -84,6 +86,43 @@ void LinkManager::addLink(LinkInterface* link)
     connect(link, &LinkInterface::connected, mavlink, &MAVLinkProtocol::linkConnected);
     connect(link, &LinkInterface::disconnected, mavlink, &MAVLinkProtocol::linkDisconnected);
     mavlink->resetMetadataForLink(link);
+}
+
+bool LinkManager::loadAllLinks(){
+    bool foundLink = false;
+    QSettings settings;
+    QString linkType;
+    QString linkName;
+    QString path;
+
+    QStringList links;
+
+    settings.beginGroup(getGroupPath());
+    links = settings.childGroups();
+    settings.endGroup();
+
+    loadGroup();
+
+    foreach(linkName, links){
+        path = getGroupName() + "/" + linkName + "/TYPE";
+        linkType = settings.value(path).toString();
+        LinkInterface* pnewIF = NULL;
+
+        if(linkType == "UDPLink"){
+            pnewIF = new UDPLink(this, linkName);
+            foundLink = true;
+        };
+
+        if(linkType == "SerialLink"){
+            pnewIF = new SerialLink(this, linkName);
+            foundLink = true;
+        };
+
+        // If a new interface is created then connect it to a protocol
+        if(pnewIF != NULL){
+            addLink(pnewIF);
+        }
+    }
 }
 
 bool LinkManager::connectAll()
@@ -216,5 +255,30 @@ void LinkManager::_shutdown(void)
     foreach(LinkInterface* link, links) {
         disconnectLink(link);
         deleteLink(link);
+    }
+}
+
+int LinkManager::getNextLinkID(void){
+    int nextLink = 1;
+    bool nextLinkFound = false;
+
+    while(isIDinLinks(nextLink) == true){
+        nextLink++;
+    }
+    return nextLink;
+}
+
+bool LinkManager::isIDinLinks(int id){
+    foreach(LinkInterface* link, _links){
+        if(link->getId() == id)
+            return true;
+    }
+    return false;
+}
+
+
+void LinkManager::saveChildren(void){
+    foreach(LinkInterface* link, _links){
+        link->saveGroup();
     }
 }

@@ -66,7 +66,6 @@ public:
     void signalBytesWritten(void);
 
     // LinkInterface methods
-    virtual int     getId(void) const;
     virtual QString getName(void) const;
     virtual bool    isConnected(void) const;
     virtual void    requestReset(void) {};
