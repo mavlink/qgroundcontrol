@@ -62,7 +62,6 @@
     <addaction name="separator"/>
     <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionSettings"/>
-    <addaction name="actionAdvanced_Mode"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
