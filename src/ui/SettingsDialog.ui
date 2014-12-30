@@ -63,16 +63,6 @@
                                 </widget>
                             </item>
                             <item>
-                                <widget class="QCheckBox" name="titleBarCheckBox">
-                                    <property name="text">
-                                        <string>Show Docked Widget title bars when NOT in advanced Mode.</string>
-                                    </property>
-                                    <property name="checked">
-                                        <bool>false</bool>
-                                    </property>
-                                </widget>
-                            </item>
-                            <item>
                                 <widget class="QCheckBox" name="promptFlightDataSave">
                                     <property name="text">
                                         <string>Prompt to save Flight Data Log after each flight</string>

@@ -70,10 +70,6 @@ _ui(new Ui::SettingsDialog)
     _ui->lowPowerCheckBox->setChecked(_mainWindow->lowPowerModeEnabled());
     connect(_ui->lowPowerCheckBox, SIGNAL(clicked(bool)), _mainWindow, SLOT(enableLowPowerMode(bool)));
     
-    // Dock widget title bars
-    _ui->titleBarCheckBox->setChecked(_mainWindow->dockWidgetTitleBarsEnabled());
-    connect(_ui->titleBarCheckBox,SIGNAL(clicked(bool)),_mainWindow,SLOT(enableDockWidgetTitleBars(bool)));
-    
     connect(_ui->deleteSettings, &QAbstractButton::toggled, this, &SettingsDialog::_deleteSettingsToggled);
     
     // Custom mode
