@@ -451,7 +451,6 @@ HEADERS += \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilJSBSimConfiguration.h \
     src/ui/QGCHilXPlaneConfiguration.h \
-    src/ui/submainwindow.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewItem.h \
     src/ui/linechart/ChartPlot.h \
@@ -480,7 +479,6 @@ HEADERS += \
     src/ui/px4_configuration/PX4Bootloader.h \
     src/ui/px4_configuration/PX4FirmwareUpgradeThread.h \
     src/ui/px4_configuration/PX4FirmwareUpgrade.h \
-    src/ui/menuactionhelper.h \
     src/uas/UASManagerInterface.h \
     src/uas/QGCUASParamManagerInterface.h \
     src/uas/QGCUASFileManager.h \
@@ -495,6 +493,7 @@ HEADERS += \
     src/QGCQuickWidget.h \
     src/QGCPalette.h \
     src/QGCQmlWidgetHolder.h \
+    src/QGCDockWidget.h \
 
 SOURCES += \
     src/main.cc \
@@ -595,7 +594,6 @@ SOURCES += \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
     src/ui/QGCHilXPlaneConfiguration.cc \
-    src/ui/submainwindow.cpp \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickView.cc \
     src/ui/linechart/ChartPlot.cc \
@@ -624,7 +622,6 @@ SOURCES += \
     src/ui/px4_configuration/PX4Bootloader.cc \
     src/ui/px4_configuration/PX4FirmwareUpgradeThread.cc \
     src/ui/px4_configuration/PX4FirmwareUpgrade.cc \
-    src/ui/menuactionhelper.cpp \
     src/uas/QGCUASFileManager.cc \
     src/ui/QGCUASFileView.cc \
     src/CmdLineOptParser.cc \
@@ -636,6 +633,7 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCPalette.cc \
     src/QGCQmlWidgetHolder.cpp \
+    src/QGCDockWidget.cc \
 
 #
 # Unit Test specific configuration goes here
