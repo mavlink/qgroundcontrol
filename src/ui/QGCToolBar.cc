@@ -162,7 +162,7 @@ void QGCToolBar::createUI()
     addWidget(spacer);
 
     _linkCombo = new QComboBox(this);
-    _linkCombo->addItem("WiFi");
+    _linkCombo->addItem("UDP");
     connect(_linkCombo, SIGNAL(activated(int)), SLOT(_linkComboActivated(int)));
     
     _linkCombo->setToolTip(tr("Choose the link to use"));
@@ -701,7 +701,7 @@ void QGCToolBar::_connectButtonClicked(bool checked)
         
         QString linkName = _linkCombo->currentText();
         
-        if (linkName == "WiFi") {
+        if (linkName == "UDP") {
             UDPLink* link = new UDPLink;
             Q_CHECK_PTR(link);
             
