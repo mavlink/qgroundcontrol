@@ -368,7 +368,6 @@ void CommConfigurationWindow::remove()
     action=NULL;
 
     if(link) {
-        LinkManager::instance()->disconnectLink(link);  // disconnect connection
         link->deleteLater();
     }
     link=NULL;

@@ -91,6 +91,12 @@ public:
 signals:
     void newLink(LinkInterface* link);
     void linkDeleted(LinkInterface* link);
+    void linkConnected(LinkInterface* link);
+    void linkDisconnected(LinkInterface* link);
+    
+private slots:
+    void _linkConnected(void);
+    void _linkDisconnected(void);
     
 private:
     /// All access to LinkManager is through LinkManager::instance

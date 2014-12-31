@@ -254,8 +254,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
     
     _createSingletons();
     
-    enum MainWindow::CUSTOM_MODE mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
-    
     // Show splash screen
     QPixmap splashImage(":/files/images/splash.png");
     QSplashScreen* splashScreen = new QSplashScreen(splashImage);
@@ -270,7 +268,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     // Start the user interface
     splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    MainWindow* mainWindow = MainWindow::_create(splashScreen, mode);
+    MainWindow* mainWindow = MainWindow::_create(splashScreen);
     Q_CHECK_PTR(mainWindow);
     
     // If we made it this far and we still don't have a location. Either the specfied location was invalid
@@ -283,47 +281,10 @@ bool QGCApplication::_initForNormalAppBoot(void)
         mainWindow->showSettings();
     }
     
-    UDPLink* udpLink = NULL;
-    
-    if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
-    {
-        // Connect links
-        // to make sure that all components are initialized when the
-        // first messages arrive
-        udpLink = new UDPLink(QHostAddress::Any, 14550);
-        LinkManager::instance()->addLink(udpLink);
-    } else {
-        // We want to have a default serial link available for "quick" connecting.
-        SerialLink *slink = new SerialLink();
-        LinkManager::instance()->addLink(slink);
-    }
-    
-#ifdef QGC_RTLAB_ENABLED
-    // Add OpalRT Link, but do not connect
-    OpalLink* opalLink = new OpalLink();
-    _mainWindow->addLink(opalLink);
-#endif
-    
     // Remove splash screen
     splashScreen->finish(mainWindow);
     mainWindow->splashScreenFinished();
-    
-    
-    // Check if link could be connected
-    if (udpLink && LinkManager::instance()->connectLink(udpLink))
-    {
-        QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Could not connect UDP port. Is an instance of %1 already running?").arg(qAppName()),
-                                                                     tr("It is recommended to close the application and stop all instances. Click Yes to close."),
-                                                                     QMessageBox::Yes | QMessageBox::No,
-                                                                     QMessageBox::No);
-        // Exit application
-        if (button == QMessageBox::Yes)
-        {
-            //mainWindow->close();
-            QTimer::singleShot(200, mainWindow, SLOT(close()));
-        }
-    }
-    
+
     // Now that main window is upcheck for lost log files
     connect(this, &QGCApplication::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();

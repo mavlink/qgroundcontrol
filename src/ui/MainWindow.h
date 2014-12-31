@@ -88,14 +88,6 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-
-    enum CUSTOM_MODE {
-        CUSTOM_MODE_UNCHANGED = 0,
-        CUSTOM_MODE_NONE,
-        CUSTOM_MODE_PX4,
-        CUSTOM_MODE_WIFI
-    };
-
     /// @brief Returns the MainWindow singleton. Will not create the MainWindow if it has not already
     ///         been created.
     static MainWindow* instance(void);
@@ -104,7 +96,7 @@ public:
     void deleteInstance(void);
     
     /// @brief Creates the MainWindow singleton. Should only be called once by QGCApplication.
-    static MainWindow* _create(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
+    static MainWindow* _create(QSplashScreen* splashScreen);
     
     /// @brief Called to indicate that splash screen is no longer being displayed.
     void splashScreenFinished(void) { _splashScreen = NULL; }
@@ -125,19 +117,6 @@ public:
     bool lowPowerModeEnabled() const
     {
         return lowPowerMode;
-    }
-
-    void setCustomMode(MainWindow::CUSTOM_MODE mode)
-    {
-        if (mode != CUSTOM_MODE_UNCHANGED)
-        {
-            customMode = mode;
-        }
-    }
-
-    MainWindow::CUSTOM_MODE getCustomMode() const
-    {
-        return customMode;
     }
 
     QList<QAction*> listLinkMenuActions();
@@ -420,14 +399,13 @@ protected:
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
     QTimer windowNameUpdateTimer;
-    CUSTOM_MODE customMode;
     
 private slots:
     void _addLinkMenu(LinkInterface* link);
 
 private:
     /// Constructor is private since all creation should be through MainWindow::_create
-    MainWindow(QSplashScreen* splashScreen, enum MainWindow::CUSTOM_MODE mode);
+    MainWindow(QSplashScreen* splashScreen);
     
     void _openUrl(const QString& url, const QString& errorMessage);
     
