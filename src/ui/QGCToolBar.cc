@@ -24,43 +24,41 @@ This file is part of the QGROUNDCONTROL project
 #include <QToolButton>
 #include <QLabel>
 #include <QSpacerItem>
+#include <QSerialPortInfo>
+
 #include "SerialLink.h"
+#include "UDPLink.h"
 #include "QGCToolBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
 #include "QGCApplication.h"
+#include "CommConfigurationWindow.h"
 
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
     mav(NULL),
-    userBaudChoice(false),
-    userPortChoice(false),
     changed(true),
     batteryPercent(0),
     batteryVoltage(0),
     wpId(0),
     wpDistance(0),
-    altitudeMSL(0),
     altitudeRel(0),
     systemArmed(false),
     currentLink(NULL),
-    firstAction(NULL)
+    firstAction(NULL),
+    _linkMgr(LinkManager::instance()),
+    _linkCombo(NULL),
+    _linkComboAction(NULL),
+    _linkSelectedOnce(false),
+    _baudCombo(NULL),
+    _baudComboAction(NULL),
+    _linksConnected(false)
 {
     setObjectName("QGCToolBar");
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
-    // Do not load UI, wait for actions
-}
-
-void QGCToolBar::globalPositionChanged(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec)
-{
-    Q_UNUSED(uas);
-    Q_UNUSED(lat);
-    Q_UNUSED(lon);
-    Q_UNUSED(altWGS84);
-    Q_UNUSED(usec);
-    altitudeMSL = altAMSL;
-    changed = true;
+    connect(LinkManager::instance(), &LinkManager::linkConnected, this, &QGCToolBar::_linkConnected);
+    connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &QGCToolBar::_linkDisconnected);
 }
 
 void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
@@ -163,36 +161,36 @@ void QGCToolBar::createUI()
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     addWidget(spacer);
 
-    portComboBox = new QComboBox(this);
-    portComboBox->setToolTip(tr("Choose the COM port to use"));
-    portComboBox->setEnabled(true);
-    portComboBox->setMinimumWidth(100);
-    toolBarPortAction = addWidget(portComboBox);
+    _linkCombo = new QComboBox(this);
+    _linkCombo->addItem("UDP");
+    connect(_linkCombo, SIGNAL(activated(int)), SLOT(_linkComboActivated(int)));
+    
+    _linkCombo->setToolTip(tr("Choose the link to use"));
+    _linkCombo->setEnabled(true);
+    _linkCombo->setMinimumWidth(100);
+    
+    _linkComboAction = addWidget(_linkCombo);
 
-    baudcomboBox = new QComboBox(this);
-    baudcomboBox->setToolTip(tr("Choose what baud rate to use"));
-    baudcomboBox->setEnabled(true);
-    baudcomboBox->setMinimumWidth(40);
-    baudcomboBox->addItem("9600", 9600);
-    baudcomboBox->addItem("14400", 14400);
-    baudcomboBox->addItem("19200", 19200);
-    baudcomboBox->addItem("38400", 38400);
-    baudcomboBox->addItem("57600", 57600);
-    baudcomboBox->addItem("115200", 115200);
-    baudcomboBox->addItem("230400", 230400);
-    baudcomboBox->addItem("460800", 460800);
-    baudcomboBox->addItem("921600", 921600);
-    baudcomboBox->setCurrentIndex(baudcomboBox->findData(57600));
-    toolBarBaudAction = addWidget(baudcomboBox);
-    connect(baudcomboBox, SIGNAL(activated(int)), this, SLOT(baudSelected(int)));
-    connect(portComboBox, SIGNAL(activated(int)), this, SLOT(portSelected(int)));
+    _baudCombo = new QComboBox(this);
+    _baudCombo->setToolTip(tr("Choose what baud rate to use"));
+    _baudCombo->setEnabled(true);
+    _baudCombo->setMinimumWidth(40);
+    _baudCombo->addItem("9600", 9600);
+    _baudCombo->addItem("14400", 14400);
+    _baudCombo->addItem("19200", 19200);
+    _baudCombo->addItem("38400", 38400);
+    _baudCombo->addItem("57600", 57600);
+    _baudCombo->addItem("115200", 115200);
+    _baudCombo->addItem("230400", 230400);
+    _baudCombo->addItem("460800", 460800);
+    _baudCombo->addItem("921600", 921600);
+    _baudCombo->setCurrentIndex(_baudCombo->findData(57600));
+    _baudComboAction = addWidget(_baudCombo);
 
-    connectButton = new QPushButton(tr("Connect"), this);
-    connectButton->setObjectName("connectButton");
-    connectButton->setToolTip(tr("Connect wireless link to MAV"));
-    connectButton->setCheckable(true);
-    addWidget(connectButton);
-    connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
+    _connectButton = new QPushButton(tr("Connect"), this);
+    _connectButton->setObjectName("connectButton");
+    addWidget(_connectButton);
+    connect(_connectButton, &QPushButton::clicked, this, &QGCToolBar::_connectButtonClicked);
 
     resetToolbarUI();
 
@@ -204,28 +202,9 @@ void QGCToolBar::createUI()
     // Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    // Update label if required
-    if (LinkManager::instance()->getSerialLinks().count() < 1) {
-        connectButton->setText(tr("New Serial Link"));
-        toolBarPortAction->setVisible(false);
-        toolBarBaudAction->setVisible(false);
-    } else {
 
-        QList<SerialLink*> links = LinkManager::instance()->getSerialLinks();
-
-        foreach(SerialLink* slink, links)
-        {
-            addLink(slink);
-        }
-    }
-
-    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
-    connect(LinkManager::instance(), SIGNAL(linkDeleted(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
-
-    loadSettings();
-
-    connect(&portBoxTimer, SIGNAL(timeout()), this, SLOT(updateComboBox()));
-    portBoxTimer.start(500);
+    connect(&_portListTimer, &QTimer::timeout, this, &QGCToolBar::_updatePortList);
+    _portListTimer.start(500);
 
     toolBarMessageAction->setVisible(false);
     toolBarBatteryBarAction->setVisible(false);
@@ -257,18 +236,6 @@ void QGCToolBar::resetToolbarUI()
     symbolLabel->clear();
     toolBarMessageAction->setVisible(false);
     toolBarBatteryBarAction->setVisible(false);
-}
-
-void QGCToolBar::baudSelected(int index)
-{
-    Q_UNUSED(index);
-    userBaudChoice = true;
-}
-
-void QGCToolBar::portSelected(int index)
-{
-    Q_UNUSED(index);
-    userPortChoice = true;
 }
 
 void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
@@ -372,7 +339,6 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(batteryChanged(UASInterface*, double, double, double,int)), this, SLOT(updateBatteryRemaining(UASInterface*, double, double, double, int)));
         disconnect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
         disconnect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
-        disconnect(active, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,double,quint64)));
         if (mav->getWaypointManager())
         {
             disconnect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
@@ -397,7 +363,6 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         connect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,double,int)));
         connect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
         connect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
-        connect(mav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,double,quint64)));
         if (mav->getWaypointManager())
         {
             connect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
@@ -636,175 +601,135 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
     lastSystemMessageTimeMs = QGC::groundTimeMilliseconds();
 }
 
-void QGCToolBar::addLink(LinkInterface* link)
+void QGCToolBar::_updatePortList(void)
 {
-    // Accept only serial links as current link
-    SerialLink* serial = qobject_cast<SerialLink*>(link);
-
-    if (serial && !currentLink)
-    {
-        toolBarPortAction->setVisible(true);
-        toolBarBaudAction->setVisible(true);
-
-        currentLink = link;
-        connect(currentLink, &LinkInterface::connected, this, &QGCToolBar::_linkConnected);
-        _updateLinkState(link->isConnected());
-
-        qDebug() << "ADD LINK";
-
-        updateComboBox();
+    if (!_linkCombo->isVisible()) {
+        return;
     }
-}
 
-void QGCToolBar::removeLink(LinkInterface* link)
-{
-    if (link == currentLink) {
-        currentLink = NULL;
-
-        // Try to get a new serial link
-        foreach (SerialLink* s, LinkManager::instance()->getSerialLinks())
-        {
-            addLink(s);
-        }
-
-        // Update GUI according to scan result
-        if (currentLink) {
-            _updateLinkState(currentLink->isConnected());
-        } else {
-            connectButton->setText(tr("New Serial Link"));
-            portComboBox->hide();
-            baudcomboBox->hide();
-        }
-    }
-    updateComboBox();
-}
-void QGCToolBar::updateComboBox()
-{
-    if (currentLink && !currentLink->isConnected())
-    {
-        // Do not update if not visible
-        if (!portComboBox->isVisible())
-            return;
-
-        SerialLink *slink = qobject_cast<SerialLink*>(currentLink);
-        QList<QString> portlist = slink->getCurrentPorts();
-        foreach (QString port, portlist)
-        {
-            if (portComboBox->findText(port) == -1)
-            {
-                portComboBox->addItem(port, port);
-            }
-        }
-
-        if (!userPortChoice) {
-            if (slink->getPortName().trimmed().length() > 0)
-            {
-                int portIndex = portComboBox->findData(slink->getPortName());
-                if (portIndex >= 0) {
-                    portComboBox->setCurrentIndex(portIndex);
-                    portComboBox->setEditText(slink->getPortName());
-                }
-            }
-            else
-            {
-                if (portlist.length() > 0)
-                {
-                    portComboBox->setEditText(portlist.last());
-                }
-                else
-                {
-                    portComboBox->setEditText(tr("No serial port found"));
-                }
-            }
-        }
-
-        if (!userBaudChoice) {
-            int index = baudcomboBox->findData(slink->getBaudRate());
-            if (index >= 0)
-                baudcomboBox->setCurrentIndex(index);
-        }
-    }
-}
-
-void QGCToolBar::_linkConnected(void)
-{
-    _updateLinkState(true);
-}
-
-void QGCToolBar::_linkDisconnected(void)
-{
-    _updateLinkState(false);
-}
-
-void QGCToolBar::_updateLinkState(bool connected)
-{
-    Q_UNUSED(connected);
-    if (currentLink && currentLink->isConnected() && portComboBox->isVisible())
-    {
-        connectButton->setText(tr("Disconnect"));
-        connectButton->blockSignals(true);
-        connectButton->setChecked(true);
-        connectButton->blockSignals(false);
-        toolBarPortAction->setVisible(false);
-        toolBarBaudAction->setVisible(false);
-        toolBarMessageAction->setVisible(true);
-        toolBarWpAction->setVisible(true);
-    }
-    else
-    {
-        connectButton->setText(tr("Connect"));
-        connectButton->blockSignals(true);
-        connectButton->setChecked(false);
-        connectButton->blockSignals(false);
-        toolBarPortAction->setVisible(true);
-        toolBarBaudAction->setVisible(true);
-        toolBarMessageAction->setVisible(false);
-        toolBarWpAction->setVisible(false);
-    }
-}
-
-void QGCToolBar::connectLink(bool connectLink)
-{
-    LinkManager* linkMgr = LinkManager::instance();
-    Q_ASSERT(linkMgr);
+    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
     
-    // No serial port yet present
-    if (connectLink && linkMgr->getSerialLinks().count() == 0) {
-        MainWindow::instance()->addLink();
-        currentLink = linkMgr->getLinks().last();
-    } else if (connectLink) {
-        SerialLink *link = qobject_cast<SerialLink*>(currentLink);
-        
-        if (link) {
-            link->setPortName(portComboBox->itemData(portComboBox->currentIndex()).toString().trimmed());
-            int baud = baudcomboBox->currentText().toInt();
-            link->setBaudRate(baud);
-            connect(link, &LinkInterface::connected, this, &QGCToolBar::_linkConnected);
-            linkMgr->connectLink(link);
+    foreach (QSerialPortInfo portInfo, portList) {
+        if (_linkCombo->findText(portInfo.portName()) == -1) {
+            _linkCombo->addItem(portInfo.portName());
+            if (!_linkSelectedOnce && portInfo.vendorIdentifier() == 9900) {
+                // Pre-Select 3DR connection
+                _linkSelectedOnce = true;
+                _linkCombo->setCurrentIndex(_linkCombo->findText(portInfo.portName()));
+            }
         }
-    } else if (!connectLink && currentLink) {
-        linkMgr->disconnectLink(currentLink);
-        disconnect(currentLink, &LinkInterface::connected, this, &QGCToolBar::_linkConnected);
-    }
-
-    if (currentLink) {
-        _updateLinkState(currentLink->isConnected());
     }
 }
 
-
-void QGCToolBar::loadSettings()
+void QGCToolBar::_linkConnected(LinkInterface* link)
 {
-    QSettings settings;
-    settings.beginGroup("QGC_TOOLBAR");
-    settings.endGroup();
+    Q_UNUSED(link);
+    _updateConnectButton();
 }
 
-void QGCToolBar::storeSettings()
+void QGCToolBar::_linkDisconnected(LinkInterface* link)
 {
-    QSettings settings;
-    settings.beginGroup("QGC_TOOLBAR");
-    settings.endGroup();
+    Q_UNUSED(link);
+    _updateConnectButton();
+}
+
+void QGCToolBar::_updateConnectButton(void)
+{
+    QMenu* menu = new QMenu(this);
+    
+    // If there are multiple connected links add/update the connect button menu
+    
+    int connectedCount = 0;
+    QList<LinkInterface*> links = _linkMgr->getLinks();
+    foreach(LinkInterface* link, links) {
+        if (link->isConnected()) {
+            connectedCount++;
+            QAction* action = menu->addAction(link->getName());
+            action->setData(QVariant::fromValue((void*)link));
+            connect(action, &QAction::triggered, this, &QGCToolBar::_disconnectFromMenu);
+        }
+    }
+    
+    // Remove old menu
+    QMenu* oldMenu = _connectButton->menu();
+    _connectButton->setMenu(NULL);
+    if (oldMenu) {
+        oldMenu->deleteLater();
+    }
+    
+    // Add new menu if needed
+    if (connectedCount > 1) {
+        _connectButton->setMenu(menu);
+    } else {
+        delete menu;
+    }
+    
+    _linksConnected = connectedCount != 0;
+    
+    _connectButton->setText(_linksConnected ? tr("Disconnect") : tr("Connect"));
+
+    _linkComboAction->setVisible(!_linksConnected);
+    _baudComboAction->setVisible(!_linksConnected);
+    toolBarMessageAction->setVisible(_linksConnected);
+    toolBarWpAction->setVisible(_linksConnected);
+}
+
+void QGCToolBar::_connectButtonClicked(bool checked)
+{
+    Q_UNUSED(checked);
+    
+    if (_linksConnected) {
+        // Disconnect
+        
+        // Should be just one connected link, disconnect it
+        
+        int connectedCount = 0;
+        LinkInterface* connectedLink = NULL;
+        QList<LinkInterface*> links = _linkMgr->getLinks();
+        foreach(LinkInterface* link, links) {
+            if (link->isConnected()) {
+                connectedCount++;
+                connectedLink = link;
+            }
+        }
+        Q_ASSERT(connectedCount == 1);
+        Q_ASSERT(connectedLink);
+        
+        _linkMgr->disconnectLink(connectedLink);
+    } else {
+        // Connect
+        
+        QString linkName = _linkCombo->currentText();
+        
+        if (linkName == "UDP") {
+            UDPLink* link = new UDPLink;
+            Q_CHECK_PTR(link);
+            
+            _linkMgr->addLink(link);
+            CommConfigurationWindow* commDialog = new CommConfigurationWindow(link, this);
+            commDialog->exec();
+        } else {
+            // Must be a serial port
+            SerialLink* link = new SerialLink(linkName, _baudCombo->currentText().toInt());
+            Q_CHECK_PTR(link);
+            
+            _linkMgr->addLink(link);
+            _linkMgr->connectLink(link);
+        }
+    }
+}
+
+void QGCToolBar::_disconnectFromMenu(bool checked)
+{
+    Q_UNUSED(checked);
+    
+    QAction* action = qobject_cast<QAction*>(sender());
+    Q_ASSERT(action);
+    
+    LinkInterface* link = (LinkInterface*)(action->data().value<void *>());
+    Q_ASSERT(link);
+    
+    _linkMgr->disconnectLink(link);
 }
 
 void QGCToolBar::clearStatusString()
@@ -816,7 +741,9 @@ void QGCToolBar::clearStatusString()
     }
 }
 
-QGCToolBar::~QGCToolBar()
+void QGCToolBar::_linkComboActivated(int index)
 {
-    storeSettings();
+    Q_UNUSED(index);
+    
+    _linkSelectedOnce = true;
 }

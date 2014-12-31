@@ -277,16 +277,15 @@ bool UDPLink::_disconnect(void)
 	this->quit();
 	this->wait();
 
-        if(socket)
-	{
+    if (socket) {
 		// Make sure delete happen on correct thread
 		socket->deleteLater();
 		socket = NULL;
+        emit disconnected();
 	}
 
     connectState = false;
 
-    emit disconnected();
     return !connectState;
 }
 
