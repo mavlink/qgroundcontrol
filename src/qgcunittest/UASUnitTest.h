@@ -58,5 +58,5 @@ private slots:
   void signalIdUASLink_test();
 };
 
-DECLARE_TEST(UASUnitTest)
+//DECLARE_TEST(UASUnitTest)
 #endif // UASUNITTEST_H
