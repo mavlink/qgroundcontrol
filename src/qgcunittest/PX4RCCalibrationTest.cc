@@ -438,8 +438,9 @@ void PX4RCCalibrationTest::_channelHomePosition(void)
         _mockUAS->emitRemoteControlChannelRawChanged(i, (float)PX4RCCalibration::_rcCalPWMCenterPoint);
     }
     
-    // Throttle to low position (throttle is not reversed)/
-    _mockUAS->emitRemoteControlChannelRawChanged(_rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionThrottle], _testMinValue);
+    // Throttle to min - 1 (throttle is not reversed). We do this so that the trim value is below the min value. This should end up
+    // being validated and raised to min value. If not, something is wrong with RC Cal code.
+    _mockUAS->emitRemoteControlChannelRawChanged(_rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionThrottle], _testMinValue - 1);
 }
 
 void PX4RCCalibrationTest::_validateParameters(void)
