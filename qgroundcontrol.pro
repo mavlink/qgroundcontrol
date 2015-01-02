@@ -638,7 +638,7 @@ SOURCES += \
     src/QGCPalette.cc \
     src/QGCQmlWidgetHolder.cpp \
     src/QGCSettingsGroup.cc \
-    src/comm/LinkInterface.cpp
+    src/comm/LinkInterface.cc
 
 #
 # Unit Test specific configuration goes here
