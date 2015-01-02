@@ -100,6 +100,7 @@ UDPLink::~UDPLink()
 
 void UDPLink::serialize(QSettings* psettings)
 {
+    LinkInterface::serialize((psettings));
     psettings->setValue("TYPE", "UDPLink");
     psettings->setValue("UDPLINK_PORT", this->port);
     psettings->setValue("UDPLINK_HOST", this->host.toString());
@@ -107,6 +108,7 @@ void UDPLink::serialize(QSettings* psettings)
 
 void UDPLink::deserialize(QSettings* psettings)
 {
+    LinkInterface::deserialize((psettings));
     this->host = QHostAddress(psettings->value("UDPLINK_HOST").toString());
     setPort(psettings->value("UDPLINK_PORT").toInt());
 }

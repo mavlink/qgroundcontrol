@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>324</width>
-    <height>475</height>
+    <height>506</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -63,13 +63,20 @@
            <x>0</x>
            <y>0</y>
            <width>298</width>
-           <height>90</height>
+           <height>92</height>
           </rect>
          </property>
         </widget>
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="autoConnectCheckBox">
+     <property name="text">
+      <string>Auto connect at startup</string>
+     </property>
     </widget>
    </item>
    <item>
@@ -155,7 +162,7 @@
            <x>0</x>
            <y>0</y>
            <width>298</width>
-           <height>90</height>
+           <height>92</height>
           </rect>
          </property>
         </widget>
@@ -245,8 +252,7 @@
   <zorder>connectionStatusLabel</zorder>
   <zorder>advCheckBox</zorder>
   <zorder>protocolTypeGroupBox</zorder>
-  <zorder>linkType</zorder>
-  <zorder>label</zorder>
+  <zorder>autoConnectCheckBox</zorder>
  </widget>
  <tabstops>
   <tabstop>linkType</tabstop>

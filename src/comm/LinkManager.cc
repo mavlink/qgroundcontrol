@@ -128,6 +128,15 @@ bool LinkManager::loadAllLinks(){
     return foundLink;
 }
 
+void LinkManager::startupConnect(){
+    LinkInterface* plink;
+    foreach(plink, _links){
+        if(plink->getAutoConnect()){
+            plink->_connect();
+        }
+    }
+}
+
 bool LinkManager::connectAll()
 {
     if (_connectionsSuspendedMsg()) {

@@ -163,8 +163,8 @@ bool SerialLink::isBootloader()
 
 void SerialLink::serialize(QSettings* psettings)
 {
+    LinkInterface::serialize((psettings));
     psettings->setValue("TYPE", "SerialLink");
-    psettings->setValue("NAME", this->getName());
     psettings->setValue("SERIALLINK_COMM_PORT", getPortName());
     psettings->setValue("SERIALLINK_COMM_BAUD", getBaudRateType());
     psettings->setValue("SERIALLINK_COMM_PARITY", getParityType());
@@ -175,10 +175,9 @@ void SerialLink::serialize(QSettings* psettings)
 
 void SerialLink::deserialize(QSettings* psettings)
 {
+    LinkInterface::deserialize((psettings));
     m_portName = psettings->value("SERIALLINK_COMM_PORT").toString();
-
-//    this->m_portName = psettings->value("NAME").toString();
-    checkIfCDC();
+    //checkIfCDC(); //Don't do this here
 
     m_baud = psettings->value("SERIALLINK_COMM_BAUD").toInt();
     m_parity = psettings->value("SERIALLINK_COMM_PARITY").toInt();

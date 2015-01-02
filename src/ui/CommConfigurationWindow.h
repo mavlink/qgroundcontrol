@@ -93,6 +93,7 @@ public slots:
 private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
+    void _setAutoConnect(bool state);
     
 private:
     void _connectionState(bool connect);

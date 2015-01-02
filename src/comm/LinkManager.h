@@ -75,6 +75,9 @@ public:
     
     /// Deletes the specified link. Will disconnect if connected.
     void deleteLink(LinkInterface* link);
+
+    /// Reconnects only links that have startup connection enabled
+    void startupConnect();
     
     /// Re-connects all existing links
     bool connectAll();

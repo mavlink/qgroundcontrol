@@ -299,6 +299,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
             SerialLink *slink = new SerialLink();
             LinkManager::instance()->addLink(slink);
         }
+        else{
+            LinkManager::instance()->startupConnect();
+        }
     }
     
 #ifdef QGC_RTLAB_ENABLED

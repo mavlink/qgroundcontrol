@@ -126,11 +126,15 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, QWidget *p
     connect(ui.closeButton, SIGNAL(clicked()), this->window(), SLOT(close()));
     connect(ui.deleteButton, SIGNAL(clicked()), this, SLOT(remove()));
 
+    connect(ui.autoConnectCheckBox, SIGNAL(clicked(bool)), this, SLOT(_setAutoConnect(bool)) );
+
     connect(link, &LinkInterface::connected, this, &CommConfigurationWindow::_linkConnected);
     connect(link, &LinkInterface::disconnected, this, &CommConfigurationWindow::_linkDisconnected);
 
     // Fill in the current data
     if(this->link->isConnected()) ui.connectButton->setChecked(true);
+
+    ui.autoConnectCheckBox->setChecked(this->link->getAutoConnect());       // auto connect at startup
 
     if(this->link->isConnected()) {
         ui.connectionStatusLabel->setText(tr("Connected"));
@@ -398,4 +402,9 @@ void CommConfigurationWindow::_connectionState(bool connect)
         ui.connectionStatusLabel->setText(tr("Disconnected"));
         ui.connectButton->setText(tr("Connect"));
     }
+}
+
+void CommConfigurationWindow::_setAutoConnect(bool state)
+{
+    link->setAutoConnect(state);
 }

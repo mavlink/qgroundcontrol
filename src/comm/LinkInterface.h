@@ -126,7 +126,28 @@ public:
     {
         return getCurrentDataRate(outDataIndex, outDataWriteTimes, outDataWriteAmounts);
     }
+
+    /**
+     * @Brief Get the auto connect at startup flag
+     *
+     * @return True is enalbed
+     **/
+    bool getAutoConnect(void){
+        return _connectAtStartup;
+    }
     
+    /**
+     * @Brief Serialize common link settings into QSettings
+     *
+     **/
+    void serialize(QSettings* psettings);
+
+    /**
+     * @Brief Deserialize common link settings from QSettings
+     *
+     **/
+    void deserialize(QSettings* psettings);
+
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);
@@ -145,6 +166,17 @@ public slots:
      * @param length The length of the data array
      **/
     virtual void writeBytes(const char *bytes, qint64 length) = 0;
+
+    /**
+     * @brief This method allows setting of startup auto connection.
+     *
+     * If the underlying communication is packet oriented,
+     * one write command equals a datagram. In case of serial
+     * communication arbitrary byte lengths can be written
+     *
+     * @param enable true: Connect at startup is enabled
+     **/
+     void setAutoConnect(bool enable);
 
 signals:
 
@@ -300,6 +332,8 @@ protected:
         return nextId++;
     }
 
+
+
 protected slots:
 
     /**
@@ -327,6 +361,7 @@ private:
     
     bool _ownedByLinkManager;   ///< true: This link has been added to LinkManager, false: Link not added to LinkManager
     bool _deletedByLinkManager; ///< true: Link being deleted from LinkManager, false: error, Links should only be deleted from LinkManager
+    bool _connectAtStartup;     ///< true: Link will attempt to connect at start, false: Link will not auto connect at start
 };
 
 #endif // _LINKINTERFACE_H_
