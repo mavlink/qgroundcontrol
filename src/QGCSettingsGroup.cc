@@ -85,11 +85,11 @@ QString QGCSettingsGroup::getGroupPath(){
 }
 
 void QGCSettingsGroup::serialize(QSettings* psettings){
-
+    psettings = psettings;
 }
 
 void QGCSettingsGroup::deserialize(QSettings* psettings){
-
+    psettings = psettings;
 }
 
 QString QGCSettingsGroup::getGroupName(void){
