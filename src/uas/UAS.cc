@@ -3473,12 +3473,22 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 p
     qDebug() << "sendMapRCToParam" << param_id << "scale" << scale << "value0" << value0 << "param rc chan index" << param_rc_channel_index;
     mavlink_message_t message;
 
+    char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
+    // Copy string into buffer, ensuring not to exceed the buffer size
+    for (unsigned int i = 0; i < sizeof(param_id_cstr); i++)
+    {
+        if ((int)i < param_id.length())
+        {
+            param_id_cstr[i] = param_id.toLatin1()[i];
+        }
+    }
+
     mavlink_msg_param_map_rc_pack(mavlink->getSystemId(),
                                   mavlink->getComponentId(),
                                   &message,
                                   this->uasId,
                                   0,
-                                  param_id.toStdString().c_str(),
+                                  param_id_cstr,
                                   -1,
                                   param_rc_channel_index,
                                   value0,
@@ -3492,6 +3502,8 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 p
 void UAS::unsetRCToParameterMap()
 {
     qDebug() << "unsetRCToParameterMap";
+    char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
+
     for (int i = 0; i < 3; i++) {
         mavlink_message_t message;
         mavlink_msg_param_map_rc_pack(mavlink->getSystemId(),
@@ -3499,7 +3511,7 @@ void UAS::unsetRCToParameterMap()
                                       &message,
                                       this->uasId,
                                       0,
-                                      "",
+                                      param_id_cstr,
                                       -2,
                                       i,
                                       0.0f,
