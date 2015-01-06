@@ -3470,7 +3470,6 @@ void UAS::stopLowBattAlarm()
 
 void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax)
 {
-    qDebug() << "sendMapRCToParam" << param_id << "scale" << scale << "value0" << value0 << "param rc chan index" << param_rc_channel_index;
     mavlink_message_t message;
 
     char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
@@ -3501,7 +3500,6 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 p
 
 void UAS::unsetRCToParameterMap()
 {
-    qDebug() << "unsetRCToParameterMap";
     char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
 
     for (int i = 0; i < 3; i++) {
