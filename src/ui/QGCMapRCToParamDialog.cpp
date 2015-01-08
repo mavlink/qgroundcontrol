@@ -36,9 +36,9 @@
 QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id,
         UASInterface *mav, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::QGCMapRCToParamDialog),
     param_id(param_id),
-    mav(mav)
+    mav(mav),
+    ui(new Ui::QGCMapRCToParamDialog)
 {
     ui->setupUi(this);
 
@@ -126,6 +126,8 @@ void ParamLoader::load()
 
 void ParamLoader::handleParameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(component);
+    Q_UNUSED(value);
     if (uas == mav->getUASID() && parameterName == param_id) {
         param_received = true;
         emit correctParameterChanged();
