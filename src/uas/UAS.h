@@ -883,6 +883,12 @@ public slots:
 
     /** @brief Triggers the action associated with the given ID. */
     void triggerAction(int action);
+
+    /** @brief Send command to map a RC channel to a parameter */
+    void sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax);
+
+    /** @brief Send command to disable all bindings/maps between RC and parameters */
+    void unsetRCToParameterMap();
 signals:
     /** @brief The main/battery voltage has changed/was updated */
     //void voltageChanged(int uasId, double voltage); // Defined in UASInterface already
