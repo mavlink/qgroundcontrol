@@ -67,8 +67,10 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 
 ##### Install Qt5.3+ on Mint
 Note: These instructions are based on Mint 17.1 'Rebecca'. Please be aware that the time of writing, Qt5.3 is unavailable in the official repositories. If it has become available since, please follow the instructions for installing Qt5.3 on Ubuntu.
-* Add this `ppa` to your sources.list: `ppa:beineri/opt-qt532-trusty`
-* Run the following in your terminal: `sudo apt-get update && sudo apt-get install qt53tools qt53base qt53declarative qt53serialport qt53svg qt53webkit
+* Add this ppa to your sources.list: `ppa:beineri/opt-qt532-trusty`
+* Run the following in your terminal: `sudo apt-get update && sudo apt-get install qt53tools qt53base qt53declarative qt53serialport qt53svg qt53webkit`
+* Next, set the environment variables by executing in the terminal: `source /opt/qt53/bin/qt53-env.sh` or copy and paste the contents to your ~/.profile to set them on login.
+* Verify that the variables have been set: echo $PATH && echo $QTDIR. The output should read `/opt/qt53/bin:...` and `/opt/qt53`.
 
 #### [Optional] Install additional libraries
 * For text-to-speech (espeak)
