@@ -354,6 +354,7 @@ void
 Q3DWidget::redraw(void)
 {
     emit update();
+    emit updateWidget();
 #if (QGC_EVENTLOOP_DEBUG)
     qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif
