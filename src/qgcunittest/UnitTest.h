@@ -142,7 +142,8 @@ private:
                                     const QString& dir,
                                     const QString& filter,
                                     QString* selectedFilter,
-                                    QFileDialog::Options options);
+                                    QFileDialog::Options options,
+                                    QString* defaultSuffix);
     
     static QString _fileDialogResponseSingle(enum FileDialogType type);
 
