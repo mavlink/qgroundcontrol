@@ -88,7 +88,8 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
                                   const QString& dir,
                                   const QString& filter,
                                   QString* selectedFilter,
-                                  Options options)
+                                  Options options,
+                                  QString* defaultSuffix)
 {
     _validate(selectedFilter, options);
     
@@ -98,7 +99,17 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
     } else
 #endif
     {
-        return QFileDialog::getSaveFileName(parent, caption, dir, filter, selectedFilter, options);
+        QFileDialog dlg(parent, caption, dir, filter);
+        if (selectedFilter)
+            dlg.selectNameFilter(*selectedFilter);
+        if (options)
+            dlg.setOptions(options);
+        if (defaultSuffix)
+            dlg.setDefaultSuffix(*defaultSuffix);
+        if (dlg.exec())
+            if (dlg.selectedFiles().count())
+                return dlg.selectedFiles().first();
+        return QString("");
     }
 }
 

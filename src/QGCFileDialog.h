@@ -55,12 +55,16 @@ public:
                                         QString* selectedFilter = 0,
                                         Options options = 0);
     
+    /// @brief getSaveFileName with an extra (optional) argument to define the extension (suffix) to
+    ///        be added if none is given by the user. If set, don't add the preceding period (i.e.
+    ///        use "mavlink" instead of ".mavlink")
     static QString getSaveFileName(QWidget* parent = 0,
                                    const QString& caption = QString(),
                                    const QString& dir = QString(),
                                    const QString& filter = QString(),
                                    QString* selectedFilter = 0,
-                                   Options options = 0);
+                                   Options options = 0,
+                                   QString* defaultSuffix = 0);
     
 private slots:
     /// @brief The exec slot is private becasue when only want QGCFileDialog users to use the static methods. Otherwise it will break
