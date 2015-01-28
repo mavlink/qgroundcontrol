@@ -95,7 +95,7 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
     
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
-        return UnitTest::_getSaveFileName(parent, caption, dir, filter, selectedFilter, options);
+        return UnitTest::_getSaveFileName(parent, caption, dir, filter, selectedFilter, options, defaultSuffix);
     } else
 #endif
     {
