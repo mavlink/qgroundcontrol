@@ -111,21 +111,27 @@ void QGCDataPlot2D::loadFile(QString file)
 }
 
 /**
- * This function brings up a file name dialog and exports to either PDF or SVG, depending on the filename
+ * This function brings up a file name dialog and asks the user to enter a file to save to
+ */
+QString QGCDataPlot2D::getSavePlotFilename()
+{
+    QString defaultSuffix("pdf");
+    QString fileName = QGCFileDialog::getSaveFileName(
+        this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        "PDF Documents (*.pdf);;SVG Images (*.svg)",
+        0,0,
+        &defaultSuffix);
+    return fileName;
+}
+
+/**
+ * This function aks the user for a filename and exports to either PDF or SVG, depending on the filename
  */
 void QGCDataPlot2D::savePlot()
 {
-    QString fileName = "plot.svg";
-    fileName = QGCFileDialog::getSaveFileName(
-                   this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-                   "PDF Documents (*.pdf);;SVG Images (*.svg)");
+    QString fileName = getSavePlotFilename();
     if (fileName.isEmpty())
         return;
-
-    if (!fileName.contains(".")) {
-        // .pdf is default extension
-        fileName.append(".pdf");
-    }
 
     while(!(fileName.endsWith(".svg") || fileName.endsWith(".pdf"))) {
         QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Unsuitable file extension for PDF or SVG"),
@@ -136,9 +142,8 @@ void QGCDataPlot2D::savePlot()
         if (button == QMessageBox::Cancel) {
             return;
         }
-        fileName = QGCFileDialog::getSaveFileName(
-                       this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-                       "PDF Documents (*.pdf);;SVG Images (*.svg)");
+
+        fileName = getSavePlotFilename();
         if (fileName.isEmpty())
             return; //Abort if cancelled
     }
@@ -685,21 +690,19 @@ bool QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, dou
 
 void QGCDataPlot2D::saveCsvLog()
 {
-    QString fileName = "export.csv";
-    fileName = QGCFileDialog::getSaveFileName(
-                   this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-                   "CSV file (*.csv);;Text file (*.txt)");
+    QString defaultSuffix("csv");
+    QString fileName = QGCFileDialog::getSaveFileName(
+        this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        "CSV file (*.csv);;Text file (*.txt)",
+        0,0,
+        &defaultSuffix);
+
     if (fileName.isEmpty())
         return; //User cancelled
 
-    if (!fileName.contains(".")) {
-        // .csv is default extension
-        fileName.append(".csv");
-    }
-
     bool success = logFile->copy(fileName);
 
-    qDebug() << "Saved CSV log. Success: " << success;
+    qDebug() << "Saved CSV log (" << fileName << "). Success: " << success;
 
     //qDebug() << "READE TO SAVE CSV LOG TO " << fileName;
 }

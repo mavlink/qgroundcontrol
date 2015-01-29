@@ -476,7 +476,7 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 
 void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
 {
-    QString defaultSuffix = "mavlink";
+    QString defaultSuffix("mavlink");
     QString saveFilename = QGCFileDialog::getSaveFileName(MainWindow::instance(),
                                                           tr("Select file to save Flight Data Log"),
                                                           qgcApp()->mavlinkLogFilesLocation(),

@@ -63,6 +63,7 @@ protected:
     }
 
     void changeEvent(QEvent *e);
+    QString getSavePlotFilename();
     IncrementalPlot* plot;
     LogCompressor* compressor;
     QFile* logFile;
