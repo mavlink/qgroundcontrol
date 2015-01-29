@@ -61,7 +61,7 @@ public:
       \param caption The caption displayed at the top of the dialog.
       \param dir The initial directory shown to the user.
       \param filter The filter used for selecting the file type.
-      \param selectedFilter **NOT IMPLEMENTED** Returns the filter that the user selected in the file dialog.
+      \param selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
       \param options Set the various options that affect the look and feel of the dialog.
       \return The full path and filename to be opened or QString("") if none.
       \sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getOpenFileName">QFileDialog::getOpenFileName()</a>
@@ -79,7 +79,7 @@ public:
       \param caption The caption displayed at the top of the dialog.
       \param dir The initial directory shown to the user.
       \param filter The filter used for selecting the file type.
-      \param selectedFilter **NOT IMPLEMENTED** Returns the filter that the user selected in the file dialog.
+      \param selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
       \param options Set the various options that affect the look and feel of the dialog.
       \return A QStringList object containing zero or more files to be opened.
       \sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getOpenFileNames">QFileDialog::getOpenFileNames()</a>
@@ -97,7 +97,7 @@ public:
       \param caption The caption displayed at the top of the dialog.
       \param dir The initial directory shown to the user.
       \param filter The filter used for selecting the file type.
-      \param selectedFilter **NOT IMPLEMENTED** Returns the filter that the user selected in the file dialog.
+      \param selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
       \param options Set the various options that affect the look and feel of the dialog.
       \param defaultSuffix Specifies a string that will be added to the filename if it has no suffix already. The suffix is typically used to indicate the file type (e.g. "txt" indicates a text file).
       \return The full path and filename to be used to save the file or QString("") if none.
