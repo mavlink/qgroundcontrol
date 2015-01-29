@@ -431,11 +431,21 @@ void LinechartWidget::refresh()
     setUpdatesEnabled(true);
 }
 
+QString LinechartWidget::getLogSaveFilename()
+{
+    QString defaultSuffix("log");
+    QString fileName = QGCFileDialog::getSaveFileName(this,
+        tr("Specify log file name"),
+        QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        tr("Logfile (*.log);;"),
+        0,0,
+        &defaultSuffix);
+    return fileName;
+}
 
 void LinechartWidget::startLogging()
 {
     // Store reference to file
-    // Append correct file ending if needed
     bool abort = false;
 
     // Check if any curve is enabled
@@ -445,9 +455,9 @@ void LinechartWidget::startLogging()
     }
 
     // Let user select the log file name
-    //QDate date(QDate::currentDate());
+    // QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    QString fileName = QGCFileDialog::getSaveFileName(this, tr("Specify log file name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("Logfile (*.log);;"));
+    QString fileName = getLogSaveFilename();
 
     while (!(fileName.endsWith(".log")) && !abort && fileName != "") {
         QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Unsuitable file extension for logfile"),
@@ -458,10 +468,10 @@ void LinechartWidget::startLogging()
             abort = true;
             break;
         }
-        fileName = QGCFileDialog::getSaveFileName(this, tr("Specify log file name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("Logfile (*.log);;"));
+        fileName = getLogSaveFilename();
     }
 
-    qDebug() << "SAVE FILE" << fileName;
+    qDebug() << "SAVE FILE " << fileName;
 
     // Check if the user did not abort the file save dialog
     if (!abort && fileName != "") {

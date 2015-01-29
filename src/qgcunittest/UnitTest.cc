@@ -353,10 +353,11 @@ QString UnitTest::_getSaveFileName(QWidget* parent,
     Q_UNUSED(dir);
     Q_UNUSED(filter);
     Q_UNUSED(options);
-    Q_UNUSED(defaultSuffix);
 
-    // Support for selectedFilter (elsewhere) is not yet implemented. Until it is added for all
-    // file dialogs, this stays here.
+    if(defaultSuffix)
+        Q_ASSERT(defaultSuffix->startsWith(".") == false);
+
+    // Support for selectedFilter is not yet implemented
     Q_ASSERT(selectedFilter == NULL);
 
     return _fileDialogResponseSingle(getSaveFileName);

@@ -105,7 +105,8 @@ void QGCBaseParamWidget::saveParametersToFile()
 {
     if (!mav)
         return;
-    QString fileName = QGCFileDialog::getSaveFileName(this, tr("Save File"), qgcApp()->savedParameterFilesLocation(), tr("Parameter File (*.txt)"));
+    QString defaultSuffix("txt");
+    QString fileName = QGCFileDialog::getSaveFileName(this, tr("Save File"), qgcApp()->savedParameterFilesLocation(), tr("Parameter File (*.txt)"), 0, 0, &defaultSuffix);
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         return;
