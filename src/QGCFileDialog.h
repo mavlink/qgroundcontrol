@@ -43,12 +43,12 @@ public:
 
     //! Static helper that will return an existing directory selected by the user.
     /*!
-      \param parent The parent QWidget.
-      \param caption The caption displayed at the top of the dialog.
-      \param dir The initial directory shown to the user.
-      \param options Set the various options that affect the look and feel of the dialog.
-      \return The chosen path or QString("") if none.
-      \sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getExistingDirectory">QFileDialog::getExistingDirectory()</a>
+      @param[in] parent The parent QWidget.
+      @param[in] caption The caption displayed at the top of the dialog.
+      @param[in] dir The initial directory shown to the user.
+      @param[in] options Set the various options that affect the look and feel of the dialog.
+      @return The chosen path or \c QString("") if none.
+      @sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getExistingDirectory">QFileDialog::getExistingDirectory()</a>
     */
     static QString getExistingDirectory(QWidget* parent = 0,
                                         const QString& caption = QString(),
@@ -57,14 +57,14 @@ public:
     
     //! Static helper that invokes a File Open dialog where the user can select a file to be opened.
     /*!
-      \param parent The parent QWidget.
-      \param caption The caption displayed at the top of the dialog.
-      \param dir The initial directory shown to the user.
-      \param filter The filter used for selecting the file type.
-      \param selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
-      \param options Set the various options that affect the look and feel of the dialog.
-      \return The full path and filename to be opened or QString("") if none.
-      \sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getOpenFileName">QFileDialog::getOpenFileName()</a>
+      @param[in] parent The parent QWidget.
+      @param[in] caption The caption displayed at the top of the dialog.
+      @param[in] dir The initial directory shown to the user.
+      @param[in] filter The filter used for selecting the file type.
+      @param[out] selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
+      @param[in] options Set the various options that affect the look and feel of the dialog.
+      @return The full path and filename to be opened or \c QString("") if none.
+      @sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getOpenFileName">QFileDialog::getOpenFileName()</a>
     */
     static QString getOpenFileName(QWidget* parent = 0,
                                    const QString& caption = QString(),
@@ -75,14 +75,14 @@ public:
     
     //! Static helper that invokes a File Open dialog where the user can select one or more files to be opened.
     /*!
-      \param parent The parent QWidget.
-      \param caption The caption displayed at the top of the dialog.
-      \param dir The initial directory shown to the user.
-      \param filter The filter used for selecting the file type.
-      \param selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
-      \param options Set the various options that affect the look and feel of the dialog.
-      \return A QStringList object containing zero or more files to be opened.
-      \sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getOpenFileNames">QFileDialog::getOpenFileNames()</a>
+      @param[in] parent The parent QWidget.
+      @param[in] caption The caption displayed at the top of the dialog.
+      @param[in] dir The initial directory shown to the user.
+      @param[in] filter The filter used for selecting the file type.
+      @param[out] selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
+      @param[in] options Set the various options that affect the look and feel of the dialog.
+      @return A <a href="http://qt-project.org/doc/qt-4.8/qstringlist.html">QStringList</a> object containing zero or more files to be opened.
+      @sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getOpenFileNames">QFileDialog::getOpenFileNames()</a>
     */
     static QStringList getOpenFileNames(QWidget* parent = 0,
                                         const QString& caption = QString(),
@@ -93,15 +93,17 @@ public:
     
     //! Static helper that invokes a File Save dialog where the user can select a directory and enter a filename to be saved.
     /*!
-      \param parent The parent QWidget.
-      \param caption The caption displayed at the top of the dialog.
-      \param dir The initial directory shown to the user.
-      \param filter The filter used for selecting the file type.
-      \param selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
-      \param options Set the various options that affect the look and feel of the dialog.
-      \param defaultSuffix Specifies a string that will be added to the filename if it has no suffix already. The suffix is typically used to indicate the file type (e.g. "txt" indicates a text file).
-      \return The full path and filename to be used to save the file or QString("") if none.
-      \sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getSaveFileName">QFileDialog::getSaveFileName()</a>
+      @param[in] parent The parent QWidget.
+      @param[in] caption The caption displayed at the top of the dialog.
+      @param[in] dir The initial directory shown to the user.
+      @param[in] filter The filter used for selecting the file type.
+      @param[out] selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
+      @param[in] options Set the various options that affect the look and feel of the dialog.
+      @param[in] defaultSuffix Specifies a string that will be added to the filename if it has no suffix already. The suffix is typically used to indicate the file type (e.g. "txt" indicates a text file).
+      @return The full path and filename to be used to save the file or \c QString("") if none.
+      @sa <a href="http://qt-project.org/doc/qt-4.8/qfiledialog.html#getSaveFileName">QFileDialog::getSaveFileName()</a>
+      @remark If a default suffix is given, it will be appended to the filename if the user does not enter one themselves. That is, if the user simply enters \e foo and the default suffix is set to \e bar,
+      the returned filename will be \e foo.bar. However, if the user specifies a suffix, none will be added. That is, if the user enters \e foo.txt, that's what you will receive in return.
     */
     static QString getSaveFileName(QWidget* parent = 0,
                                    const QString& caption = QString(),
