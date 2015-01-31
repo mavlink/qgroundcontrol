@@ -109,8 +109,9 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
         }
         if (defaultSuffix) {
             //-- Make sure dot is not present
-            if (defaultSuffix->startsWith("."))
+            if (defaultSuffix->startsWith(".")) {
                 defaultSuffix->remove(0,1);
+            }
             dlg.setDefaultSuffix(*defaultSuffix);
         }
         if (dlg.exec()) {
