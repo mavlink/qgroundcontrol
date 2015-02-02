@@ -118,32 +118,33 @@ private:
     
     // When the app is running in unit test mode the QGCFileDialog methods are re-routed here.
     
-    static QString _getExistingDirectory(QWidget* parent,
-                                         const QString& caption,
-                                         const QString& dir,
-                                         QFileDialog::Options options);
+    static QString _getExistingDirectory(
+        QWidget* parent,
+        const QString& caption,
+        const QString& dir,
+        QFileDialog::Options options);
     
-    static QString _getOpenFileName(QWidget* parent,
-                                    const QString& caption,
-                                    const QString& dir,
-                                    const QString& filter,
-                                    QString* selectedFilter,
-                                    QFileDialog::Options options);
+    static QString _getOpenFileName(
+        QWidget* parent,
+        const QString& caption,
+        const QString& dir,
+        const QString& filter,
+        QFileDialog::Options options);
     
-    static QStringList _getOpenFileNames(QWidget* parent,
-                                         const QString& caption,
-                                         const QString& dir,
-                                         const QString& filter,
-                                         QString* selectedFilter,
-                                         QFileDialog::Options options);
+    static QStringList _getOpenFileNames(
+        QWidget* parent,
+        const QString& caption,
+        const QString& dir,
+        const QString& filter,
+        QFileDialog::Options options);
     
-    static QString _getSaveFileName(QWidget* parent,
-                                    const QString& caption,
-                                    const QString& dir,
-                                    const QString& filter,
-                                    QString* selectedFilter,
-                                    QFileDialog::Options options,
-                                    QString* defaultSuffix);
+    static QString _getSaveFileName(
+        QWidget* parent,
+        const QString& caption,
+        const QString& dir,
+        const QString& filter,
+        QFileDialog::Options options,
+        QString* defaultSuffix);
     
     static QString _fileDialogResponseSingle(enum FileDialogType type);
 

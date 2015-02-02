@@ -435,10 +435,10 @@ QString LinechartWidget::getLogSaveFilename()
 {
     QString defaultSuffix("log");
     QString fileName = QGCFileDialog::getSaveFileName(this,
-        tr("Specify log file name"),
+        tr("Specify Log File Name"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        tr("Logfile (*.log)"),
-        0,0,
+        tr("Log file (*.log)"),
+        0,
         &defaultSuffix);
     return fileName;
 }

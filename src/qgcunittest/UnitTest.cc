@@ -273,10 +273,11 @@ QString UnitTest::_fileDialogResponseSingle(enum FileDialogType type)
     return retFile;
 }
 
-QString UnitTest::_getExistingDirectory(QWidget* parent,
-                                        const QString& caption,
-                                        const QString& dir,
-                                        QFileDialog::Options options)
+QString UnitTest::_getExistingDirectory(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    QFileDialog::Options options)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
@@ -286,12 +287,12 @@ QString UnitTest::_getExistingDirectory(QWidget* parent,
     return _fileDialogResponseSingle(getExistingDirectory);
 }
 
-QString UnitTest::_getOpenFileName(QWidget* parent,
-                                   const QString& caption,
-                                   const QString& dir,
-                                   const QString& filter,
-                                   QString* selectedFilter,
-                                   QFileDialog::Options options)
+QString UnitTest::_getOpenFileName(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    QFileDialog::Options options)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
@@ -299,27 +300,21 @@ QString UnitTest::_getOpenFileName(QWidget* parent,
     Q_UNUSED(filter);
     Q_UNUSED(options);
     
-    // Support for selectedFilter is not yet implemented
-    Q_ASSERT(selectedFilter == NULL);
-
     return _fileDialogResponseSingle(getOpenFileName);
 }
 
-QStringList UnitTest::_getOpenFileNames(QWidget* parent,
-                                        const QString& caption,
-                                        const QString& dir,
-                                        const QString& filter,
-                                        QString* selectedFilter,
-                                        QFileDialog::Options options)
+QStringList UnitTest::_getOpenFileNames(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    QFileDialog::Options options)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
     Q_UNUSED(dir);
     Q_UNUSED(filter);
     Q_UNUSED(options);
-
-    // Support for selectedFilter is not yet implemented
-    Q_ASSERT(selectedFilter == NULL);
 
     QStringList retFiles;
     
@@ -340,13 +335,13 @@ QStringList UnitTest::_getOpenFileNames(QWidget* parent,
     return retFiles;
 }
 
-QString UnitTest::_getSaveFileName(QWidget* parent,
-                                   const QString& caption,
-                                   const QString& dir,
-                                   const QString& filter,
-                                   QString* selectedFilter,
-                                   QFileDialog::Options options,
-                                   QString* defaultSuffix)
+QString UnitTest::_getSaveFileName(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    QFileDialog::Options options,
+    QString* defaultSuffix)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
@@ -356,9 +351,6 @@ QString UnitTest::_getSaveFileName(QWidget* parent,
 
     if(defaultSuffix)
         Q_ASSERT(defaultSuffix->startsWith(".") == false);
-
-    // Support for selectedFilter is not yet implemented
-    Q_ASSERT(selectedFilter == NULL);
 
     return _fileDialogResponseSingle(getSaveFileName);
 }

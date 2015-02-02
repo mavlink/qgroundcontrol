@@ -28,12 +28,13 @@
 #include "UnitTest.h"
 #endif
 
-QString QGCFileDialog::getExistingDirectory(QWidget* parent,
-                                       const QString& caption,
-                                       const QString& dir,
-                                       Options options)
+QString QGCFileDialog::getExistingDirectory(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    Options options)
 {
-    _validate(NULL, options);
+    _validate(options);
     
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
@@ -45,65 +46,62 @@ QString QGCFileDialog::getExistingDirectory(QWidget* parent,
     }
 }
 
-QString QGCFileDialog::getOpenFileName(QWidget* parent,
-                                  const QString& caption,
-                                  const QString& dir,
-                                  const QString& filter,
-                                  QString* selectedFilter,
-                                  Options options)
+QString QGCFileDialog::getOpenFileName(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    Options options)
 {
-    _validate(selectedFilter, options);
+    _validate(options);
     
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
-        return UnitTest::_getOpenFileName(parent, caption, dir, filter, selectedFilter, options);
+        return UnitTest::_getOpenFileName(parent, caption, dir, filter, options);
     } else
 #endif
     {
-        return QFileDialog::getOpenFileName(parent, caption, dir, filter, selectedFilter, options);
+        return QFileDialog::getOpenFileName(parent, caption, dir, filter, NULL, options);
     }
 }
 
-QStringList QGCFileDialog::getOpenFileNames(QWidget* parent,
-                                       const QString& caption,
-                                       const QString& dir,
-                                       const QString& filter,
-                                       QString* selectedFilter,
-                                       Options options)
+QStringList QGCFileDialog::getOpenFileNames(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    Options options)
 {
-    _validate(selectedFilter, options);
+    _validate(options);
     
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
-        return UnitTest::_getOpenFileNames(parent, caption, dir, filter, selectedFilter, options);
+        return UnitTest::_getOpenFileNames(parent, caption, dir, filter, options);
     } else
 #endif
     {
-        return QFileDialog::getOpenFileNames(parent, caption, dir, filter, selectedFilter, options);
+        return QFileDialog::getOpenFileNames(parent, caption, dir, filter, NULL, options);
     }
 }
 
-QString QGCFileDialog::getSaveFileName(QWidget* parent,
-                                  const QString& caption,
-                                  const QString& dir,
-                                  const QString& filter,
-                                  QString* selectedFilter,
-                                  Options options,
-                                  QString* defaultSuffix)
+QString QGCFileDialog::getSaveFileName(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    Options options,
+    QString* defaultSuffix)
 {
-    _validate(selectedFilter, options);
+    _validate(options);
 
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
-        return UnitTest::_getSaveFileName(parent, caption, dir, filter, selectedFilter, options, defaultSuffix);
+        return UnitTest::_getSaveFileName(parent, caption, dir, filter, options, defaultSuffix);
     } else
 #endif
     {
         QFileDialog dlg(parent, caption, dir, filter);
         dlg.setAcceptMode(QFileDialog::AcceptSave);
-        if (selectedFilter) {
-            dlg.selectNameFilter(*selectedFilter);
-        }
         if (options) {
             dlg.setOptions(options);
         }
@@ -124,16 +122,12 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
 }
 
 /// @brief Validates and updates the parameters for the file dialog calls
-void QGCFileDialog::_validate(QString* selectedFilter, Options& options)
+void QGCFileDialog::_validate(Options& options)
 {
     // You can't use QGCFileDialog if QGCApplication is not created yet.
     Q_ASSERT(qgcApp());
     
     Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
-    
-    // Support for selectedFilter is not yet implemented through the unit test framework
-    Q_UNUSED(selectedFilter);
-    Q_ASSERT(selectedFilter == NULL);
     
     // On OSX native dialog can hang so we always use Qt dialogs
     options |= DontUseNativeDialog;
