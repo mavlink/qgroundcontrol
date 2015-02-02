@@ -119,7 +119,7 @@ QString QGCDataPlot2D::getSavePlotFilename()
     QString fileName = QGCFileDialog::getSaveFileName(
         this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         "PDF Documents (*.pdf);;SVG Images (*.svg)",
-        0,0,
+        0,
         &defaultSuffix);
     return fileName;
 }
@@ -694,7 +694,7 @@ void QGCDataPlot2D::saveCsvLog()
     QString fileName = QGCFileDialog::getSaveFileName(
         this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         "CSV file (*.csv);;Text file (*.txt)",
-        0,0,
+        0,
         &defaultSuffix);
 
     if (fileName.isEmpty())
