@@ -101,9 +101,6 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
     {
         QFileDialog dlg(parent, caption, dir, filter);
         dlg.setAcceptMode(QFileDialog::AcceptSave);
-        if (selectedFilter) {
-            dlg.selectNameFilter(*selectedFilter);
-        }
         if (options) {
             dlg.setOptions(options);
         }
