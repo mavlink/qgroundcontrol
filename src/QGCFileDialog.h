@@ -125,7 +125,9 @@ private slots:
     int exec(void) { return QGCFileDialog::exec(); }
     
 private:
-    static void _validate(QString* selectedFilter, Options& options);
+    static void    _validate(QString* selectedFilter, Options& options);
+    static bool    _validateExtension(const QString& filter, const QString& extension);
+    static QString _getFirstExtensionInFilter(const QString& filter);
 };
 
 
