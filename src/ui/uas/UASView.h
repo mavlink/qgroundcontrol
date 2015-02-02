@@ -65,7 +65,6 @@ public slots:
     void updateMode(int sysId, QString status, QString description);
     void updateLoad(UASInterface* uas, double load);
     //void receiveValue(int uasid, QString id, double value, quint64 time);
-    void showHILUi();
     /**
      * Request that the UASManager deletes this UAS. This doesn't delete this widget
      * yet, it waits for the approprait uasDeleted signal.
