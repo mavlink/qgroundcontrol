@@ -23,6 +23,7 @@
 
 #include "QGCFileDialog.h"
 #include "QGCApplication.h"
+#include "QRegularExpression.h"
 #include "MainWindow.h"
 #ifdef QT_DEBUG
 #include "UnitTest.h"
@@ -105,9 +106,6 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
     {
         QFileDialog dlg(parent, caption, dir, filter);
         dlg.setAcceptMode(QFileDialog::AcceptSave);
-        if (selectedFilter) {
-            dlg.selectNameFilter(*selectedFilter);
-        }
         if (options) {
             dlg.setOptions(options);
         }
@@ -121,13 +119,80 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
         while (true) {
             if (dlg.exec()) {
                 if (dlg.selectedFiles().count()) {
-                    return dlg.selectedFiles().first();
+                    QString result = dlg.selectedFiles().first();
+                    //-- If we don't care about the extension, just return it
+                    if (!strict) {
+                        return result;
+                    } else {
+                        //-- We must enforce the file extension
+                        QFileInfo fi(result);
+                        QString userSuffix(fi.suffix());
+                        if (_validateExtension(filter, userSuffix)) {
+                            return result;
+                        }
+#if 0                   //-- If we ever want to propose replacing the extension, we can guess the replacement below
+                        //-- Do we have a default extension?
+                        QString localDefaultSuffix;
+                        if (!defaultSuffix) {
+                            //-- We don't, so get the first one in the filter
+                            localDefaultSuffix = _getFirstExtensionInFilter(filter);
+                            defaultSuffix = &localDefaultSuffix;
+                        }
+                        Q_ASSERT(defaultSuffix->isEmpty() == false);
+                        QString proposed = fi.completeBaseName();
+                        proposed += ".";
+                        proposed += *defaultSuffix;
+#endif
+                        //-- Ask user what to do
+                        QMessageBox msgBox(
+                            QMessageBox::Critical,
+                            tr("Invalid File Extension."),
+                            tr("The given extension (.%1) is not a valid extension for this type of file.").arg(userSuffix),
+                            QMessageBox::Cancel,
+                            parent);
+                        msgBox.setDefaultButton(QMessageBox::Cancel);
+                        msgBox.setWindowModality(Qt::ApplicationModal);
+                        QPushButton *retryButton = msgBox.addButton(tr("Retry"), QMessageBox::ActionRole);
+                        msgBox.exec();
+                        if (msgBox.clickedButton() == retryButton) {
+                            continue;
+                        }
+                    }
                 }
             }
             break;
         }
         return QString("");
     }
+}
+
+/// @brief Make sure filename is using one of the valid extensions defined in the filter
+bool QGCFileDialog::_validateExtension(const QString& filter, const QString& extension) {
+    QRegularExpression re("(\\*\\.\\w+)");
+    QRegularExpressionMatchIterator i = re.globalMatch(filter);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        if (match.hasMatch()) {
+            //-- Compare "foo" with "*.foo"
+            if(extension == match.captured(0).mid(2)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/// @brief Returns first extension found in filter
+QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
+    QRegularExpression re("(\\*\\.\\w+)");
+    QRegularExpressionMatchIterator i = re.globalMatch(filter);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        if (match.hasMatch()) {
+             return match.captured(0).mid(1);
+        }
+    }
+    return QString("");
 }
 
 /// @brief Validates and updates the parameters for the file dialog calls
