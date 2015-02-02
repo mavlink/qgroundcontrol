@@ -28,10 +28,11 @@
 #include "UnitTest.h"
 #endif
 
-QString QGCFileDialog::getExistingDirectory(QWidget* parent,
-                                       const QString& caption,
-                                       const QString& dir,
-                                       Options options)
+QString QGCFileDialog::getExistingDirectory(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    Options options)
 {
     _validate(NULL, options);
     
@@ -45,12 +46,13 @@ QString QGCFileDialog::getExistingDirectory(QWidget* parent,
     }
 }
 
-QString QGCFileDialog::getOpenFileName(QWidget* parent,
-                                  const QString& caption,
-                                  const QString& dir,
-                                  const QString& filter,
-                                  QString* selectedFilter,
-                                  Options options)
+QString QGCFileDialog::getOpenFileName(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    QString* selectedFilter,
+    Options options)
 {
     _validate(selectedFilter, options);
     
@@ -64,12 +66,13 @@ QString QGCFileDialog::getOpenFileName(QWidget* parent,
     }
 }
 
-QStringList QGCFileDialog::getOpenFileNames(QWidget* parent,
-                                       const QString& caption,
-                                       const QString& dir,
-                                       const QString& filter,
-                                       QString* selectedFilter,
-                                       Options options)
+QStringList QGCFileDialog::getOpenFileNames(
+    QWidget* parent,
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    QString* selectedFilter,
+    Options options)
 {
     _validate(selectedFilter, options);
     
@@ -84,12 +87,13 @@ QStringList QGCFileDialog::getOpenFileNames(QWidget* parent,
 }
 
 QString QGCFileDialog::getSaveFileName(QWidget* parent,
-                                  const QString& caption,
-                                  const QString& dir,
-                                  const QString& filter,
-                                  QString* selectedFilter,
-                                  Options options,
-                                  QString* defaultSuffix)
+    const QString& caption,
+    const QString& dir,
+    const QString& filter,
+    QString* selectedFilter,
+    Options options,
+    QString* defaultSuffix,
+    bool strict)
 {
     _validate(selectedFilter, options);
 
@@ -114,10 +118,13 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
             }
             dlg.setDefaultSuffix(*defaultSuffix);
         }
-        if (dlg.exec()) {
-            if (dlg.selectedFiles().count()) {
-                return dlg.selectedFiles().first();
+        while (true) {
+            if (dlg.exec()) {
+                if (dlg.selectedFiles().count()) {
+                    return dlg.selectedFiles().first();
+                }
             }
+            break;
         }
         return QString("");
     }

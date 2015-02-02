@@ -998,14 +998,14 @@ void MainWindow::startVideoCapture()
 {
     QString format("bmp");
     QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
-
-    QString screenFileName = QGCFileDialog::getSaveFileName(this, tr("Save As"),
-                                                          initialPath,
-                                                          tr("%1 Files (*.%2);;All Files (*)")
-                                                          .arg(format.toUpper())
-                                                          .arg(format),
-                                                          0,0,
-                                                          &format);
+    QString screenFileName = QGCFileDialog::getSaveFileName(
+        this, tr("Save As"),
+        initialPath,
+        tr("%1 Files (*.%2);;All Files (*)")
+        .arg(format.toUpper())
+        .arg(format),
+        0,0,
+        &format);
     delete videoTimer;
     videoTimer = new QTimer(this);
 }

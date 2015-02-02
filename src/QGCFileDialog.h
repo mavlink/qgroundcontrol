@@ -50,10 +50,11 @@ public:
       @return The chosen path or \c QString("") if none.
       @sa <a href="http://qt-project.org/doc/qt-5/qfiledialog.html#getExistingDirectory">QFileDialog::getExistingDirectory()</a>
     */
-    static QString getExistingDirectory(QWidget* parent = 0,
-                                        const QString& caption = QString(),
-                                        const QString& dir = QString(),
-                                        Options options = ShowDirsOnly);
+    static QString getExistingDirectory(
+        QWidget* parent = 0,
+        const QString& caption = QString(),
+        const QString& dir = QString(),
+        Options options = ShowDirsOnly);
     
     //! Static helper that invokes a File Open dialog where the user can select a file to be opened.
     /*!
@@ -66,12 +67,13 @@ public:
       @return The full path and filename to be opened or \c QString("") if none.
       @sa <a href="http://qt-project.org/doc/qt-5/qfiledialog.html#getOpenFileName">QFileDialog::getOpenFileName()</a>
     */
-    static QString getOpenFileName(QWidget* parent = 0,
-                                   const QString& caption = QString(),
-                                   const QString& dir = QString(),
-                                   const QString& filter = QString(),
-                                   QString* selectedFilter = 0,
-                                   Options options = 0);
+    static QString getOpenFileName(
+        QWidget* parent = 0,
+        const QString& caption = QString(),
+        const QString& dir = QString(),
+        const QString& filter = QString(),
+        QString* selectedFilter = 0,
+        Options options = 0);
     
     //! Static helper that invokes a File Open dialog where the user can select one or more files to be opened.
     /*!
@@ -84,12 +86,13 @@ public:
       @return A <a href="http://qt-project.org/doc/qt-5/qstringlist.html">QStringList</a> object containing zero or more files to be opened.
       @sa <a href="http://qt-project.org/doc/qt-5/qfiledialog.html#getOpenFileNames">QFileDialog::getOpenFileNames()</a>
     */
-    static QStringList getOpenFileNames(QWidget* parent = 0,
-                                        const QString& caption = QString(),
-                                        const QString& dir = QString(),
-                                        const QString& filter = QString(),
-                                        QString* selectedFilter = 0,
-                                        Options options = 0);
+    static QStringList getOpenFileNames(
+        QWidget* parent = 0,
+        const QString& caption = QString(),
+        const QString& dir = QString(),
+        const QString& filter = QString(),
+        QString* selectedFilter = 0,
+        Options options = 0);
     
     //! Static helper that invokes a File Save dialog where the user can select a directory and enter a filename to be saved.
     /*!
@@ -100,18 +103,21 @@ public:
       @param[out] selectedFilter **NOT IMPLEMENTED - Set to NULL** Returns the filter that the user selected in the file dialog.
       @param[in] options Set the various options that affect the look and feel of the dialog.
       @param[in] defaultSuffix Specifies a string that will be added to the filename if it has no suffix already. The suffix is typically used to indicate the file type (e.g. "txt" indicates a text file).
+      @param[in] strict Makes the default suffix mandatory. Only files with those extensions will be allowed.
       @return The full path and filename to be used to save the file or \c QString("") if none.
       @sa <a href="http://qt-project.org/doc/qt-5/qfiledialog.html#getSaveFileName">QFileDialog::getSaveFileName()</a>
       @remark If a default suffix is given, it will be appended to the filename if the user does not enter one themselves. That is, if the user simply enters \e foo and the default suffix is set to \e bar,
       the returned filename will be \e foo.bar. However, if the user specifies a suffix, none will be added. That is, if the user enters \e foo.txt, that's what you will receive in return.
     */
-    static QString getSaveFileName(QWidget* parent = 0,
-                                   const QString& caption = QString(),
-                                   const QString& dir = QString(),
-                                   const QString& filter = QString(),
-                                   QString* selectedFilter = 0,
-                                   Options options = 0,
-                                   QString* defaultSuffix = 0);
+    static QString getSaveFileName(
+        QWidget* parent = 0,
+        const QString& caption = QString(),
+        const QString& dir = QString(),
+        const QString& filter = QString(),
+        QString* selectedFilter = 0,
+        Options options = 0,
+        QString* defaultSuffix = 0,
+        bool strict = false);
     
 private slots:
     /// @brief The exec slot is private becasue when only want QGCFileDialog users to use the static methods. Otherwise it will break

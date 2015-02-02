@@ -439,7 +439,8 @@ QString LinechartWidget::getLogSaveFilename()
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         tr("Logfile (*.log)"),
         0,0,
-        &defaultSuffix);
+        &defaultSuffix,
+        true);
     return fileName;
 }
 
