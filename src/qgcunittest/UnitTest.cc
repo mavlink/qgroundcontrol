@@ -340,8 +340,8 @@ QString UnitTest::_getSaveFileName(
     const QString& caption,
     const QString& dir,
     const QString& filter,
-    QFileDialog::Options options,
-    QString* defaultSuffix)
+    const QString& defaultSuffix,
+    QFileDialog::Options options)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
@@ -349,8 +349,8 @@ QString UnitTest::_getSaveFileName(
     Q_UNUSED(filter);
     Q_UNUSED(options);
 
-    if(defaultSuffix)
-        Q_ASSERT(defaultSuffix->startsWith(".") == false);
+    if(!defaultSuffix.isEmpty())
+        Q_ASSERT(defaultSuffix.startsWith(".") == false);
 
     return _fileDialogResponseSingle(getSaveFileName);
 }

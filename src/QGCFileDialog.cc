@@ -89,14 +89,14 @@ QString QGCFileDialog::getSaveFileName(
     const QString& caption,
     const QString& dir,
     const QString& filter,
-    Options options,
-    QString* defaultSuffix)
+    const QString& defaultSuffix,
+    Options options)
 {
     _validate(options);
 
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
-        return UnitTest::_getSaveFileName(parent, caption, dir, filter, options, defaultSuffix);
+        return UnitTest::_getSaveFileName(parent, caption, dir, filter, defaultSuffix, options);
     } else
 #endif
     {
@@ -105,12 +105,13 @@ QString QGCFileDialog::getSaveFileName(
         if (options) {
             dlg.setOptions(options);
         }
-        if (defaultSuffix) {
+        if (!defaultSuffix.isEmpty()) {
+            QString suffixCopy(defaultSuffix);
             //-- Make sure dot is not present
-            if (defaultSuffix->startsWith(".")) {
-                defaultSuffix->remove(0,1);
+            if (suffixCopy.startsWith(".")) {
+                suffixCopy.remove(0,1);
             }
-            dlg.setDefaultSuffix(*defaultSuffix);
+            dlg.setDefaultSuffix(suffixCopy);
         }
         if (dlg.exec()) {
             if (dlg.selectedFiles().count()) {
