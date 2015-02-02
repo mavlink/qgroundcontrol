@@ -130,7 +130,6 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
                         if (_validateExtension(filter, userSuffix)) {
                             return result;
                         }
-#if 0                   //-- If we ever want to propose replacing the extension, we can guess the replacement below
                         //-- Do we have a default extension?
                         QString localDefaultSuffix;
                         if (!defaultSuffix) {
@@ -139,23 +138,30 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
                             defaultSuffix = &localDefaultSuffix;
                         }
                         Q_ASSERT(defaultSuffix->isEmpty() == false);
-                        QString proposed = fi.completeBaseName();
-                        proposed += ".";
-                        proposed += *defaultSuffix;
-#endif
-                        //-- Ask user what to do
-                        QMessageBox msgBox(
-                            QMessageBox::Critical,
-                            tr("Invalid File Extension."),
-                            tr("The given extension (.%1) is not a valid extension for this type of file.").arg(userSuffix),
-                            QMessageBox::Cancel,
-                            parent);
-                        msgBox.setDefaultButton(QMessageBox::Cancel);
-                        msgBox.setWindowModality(Qt::ApplicationModal);
-                        QPushButton *retryButton = msgBox.addButton(tr("Retry"), QMessageBox::ActionRole);
-                        msgBox.exec();
-                        if (msgBox.clickedButton() == retryButton) {
-                            continue;
+                        //-- Forcefully append our desired extension
+                        result += ".";
+                        result += *defaultSuffix;
+                        //-- Check and see if this new file already exists
+                        fi.setFile(result);
+                        if (fi.exists()) {
+                            //-- Ask user what to do
+                            QMessageBox msgBox(
+                                QMessageBox::Warning,
+                                tr("File Exists"),
+                                tr("%1 already exists.\nDo you want to replace it?").arg(fi.fileName()),
+                                QMessageBox::Cancel,
+                                parent);
+                            msgBox.addButton(QMessageBox::Retry);
+                            QPushButton *overwriteButton = msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
+                            msgBox.setDefaultButton(QMessageBox::Retry);
+                            msgBox.setWindowModality(Qt::ApplicationModal);
+                            if (msgBox.exec() == QMessageBox::Retry) {
+                                continue;
+                            } else if (msgBox.clickedButton() == overwriteButton) {
+                                return result;
+                            }
+                        } else {
+                            return result;
                         }
                     }
                 }
