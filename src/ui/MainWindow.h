@@ -47,7 +47,6 @@ This file is part of the QGROUNDCONTROL project
 #include "CameraView.h"
 #include "UASListWidget.h"
 #include "MAVLinkSimulationLink.h"
-#include "submainwindow.h"
 #include "input/JoystickInput.h"
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
@@ -68,6 +67,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkDecoder.h"
 #include "QGCUASFileViewMulti.h"
 #include "QGCFlightGearLink.h"
+#include "QGCToolWidget.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;
@@ -110,9 +110,6 @@ public:
         return autoReconnect;
     }
 
-    /** @brief Get title bar mode setting */
-    bool dockWidgetTitleBarsEnabled() const;
-
     /** @brief Get low power mode setting */
     bool lowPowerModeEnabled() const
     {
@@ -144,8 +141,6 @@ public slots:
     void stopVideoCapture();
     void saveScreen();
 
-    /** @brief Sets advanced mode, allowing for editing of tool widget locations */
-    void setAdvancedMode(bool isAdvancedMode);
     void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
     void loadSetupView();
@@ -171,40 +166,13 @@ public slots:
     /** @brief Show the project roadmap */
     void showRoadMap();
 
-    /** @breif Enable title bars on dock widgets when no in advanced mode */
-    void enableDockWidgetTitleBars(bool enabled);
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
 
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
 
-    /** @brief Add a custom tool widget */
-    void createCustomWidget();
-
-    /** @brief Load a custom tool widget from a file chosen by user (QGCFileDialog) */
-    void loadCustomWidget();
-
-    /** @brief Load a custom tool widget from a file */
-    void loadCustomWidget(const QString& fileName, bool singleinstance=false);
-    void loadCustomWidget(const QString& fileName, int view);
-
-    /** @brief Load custom widgets from default file */
-    void loadCustomWidgetsFromDefaults(const QString& systemType, const QString& autopilotType);
-
-    /** @brief Loads and shows the HIL Configuration Widget for the given UAS*/
-    void showHILConfigurationWidget(UASInterface *uas);
-
     void closeEvent(QCloseEvent* event);
-
-    /**
-     * @brief Shows a Widget from the center stack based on the action sender
-     *
-     * This slot is written to be used in conjunction with the addCentralWidget() function
-     * It shows the Widget based on the action sender
-     *
-     */
-    void showCentralWidget();
 
     /** @brief Update the window name */
     void configureWindowName();
@@ -212,7 +180,6 @@ public slots:
     void commsWidgetDestroyed(QObject *obj);
     
 protected slots:
-    void showDockWidget(const QString &name, bool show);
     /**
      * @brief Unchecks the normalActionItem.
      * Used as a triggered() callback by the fullScreenAction to make sure only one of it or the
@@ -250,54 +217,15 @@ protected:
         VIEW_MISSION,          // Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
         VIEW_FLIGHT,           // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
         VIEW_SIMULATION,       // HIL Simulation view. Useful overview of the entire system when doing hardware-in-the-loop simulations.
-        UNUSED1,               // Unused spacer for backwards compatibility with older settings files.
         VIEW_SETUP,            // Setup view. Used for initializing the system for operation. Includes UI for calibration, firmware updating/checking, and parameter modifcation.
-        UNUSED2,               // Unused spacer for backwards compatibility with older settings files.
         VIEW_TERMINAL,         // Terminal interface. Used for communicating with the remote system, usually in a special configuration input mode.
         VIEW_LOCAL3D,          // A local 3D view. Provides a local 3D view that makes visualizing 3D attitude/orientation/pose easy while in operation.
         VIEW_GOOGLEEARTH       // 3D Google Earth view. A 3D terrain view, though the vehicle is still 2D.
     } VIEW_SECTIONS;
 
-    /**
-     * @brief Adds an already instantiated QDockedWidget to the Tools Menu
-     *
-     * This function does all the hosekeeping to have a QDockedWidget added to the
-     * tools menu and connects the QMenuAction to a slot that shows the widget and
-     * checks/unchecks the tools menu item
-     *
-     * @param widget    The QDockWidget being added
-     * @param title     The entry that will appear in the Menu and in the QDockedWidget title bar
-     * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
-     */
-    void addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area);
-    void loadDockWidget(const QString &name);
-
-    QDockWidget* createDockWidget(QWidget *subMainWindowParent,QWidget *child,const QString& title,const QString& objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,const QSize& minSize = QSize());
-    /**
-     * @brief Adds an already instantiated QWidget to the center stack
-     *
-     * This function does all the hosekeeping to have a QWidget added to the tools menu
-     * tools menu and connects the QMenuAction to a slot that shows the widget and
-     * checks/unchecks the tools menu item. This is used for all the central widgets (those in
-     * the center stack.
-     *
-     * @param widget        The QWidget being added
-     * @param title         The entry that will appear in the Menu
-     */
-    void addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title);
-
     /** @brief Catch window resize events */
     void resizeEvent(QResizeEvent * event);
 
-    /** @brief Keeps track of the current view */
-    VIEW_SECTIONS currentView;
-
-    void storeViewState();
-    void loadViewState();
-
-    void buildCustomWidget();
-    void buildCommonWidgets();
-    void connectCommonWidgets();
     void connectCommonActions();
 
     void loadSettings();
@@ -307,19 +235,7 @@ protected:
     LinkInterface* udpLink;
 
     QSettings settings;
-    QStackedWidget *centerStack;
     QActionGroup* centerStackActionGroup;
-
-    // Center widgets
-    QPointer<SubMainWindow> plannerView;
-    QPointer<SubMainWindow> pilotView;
-    QPointer<SubMainWindow> setupView;
-    QPointer<SubMainWindow> softwareConfigView;
-    QPointer<SubMainWindow> engineeringView;
-    QPointer<SubMainWindow> simView;
-    QPointer<SubMainWindow> terminalView;
-    QPointer<SubMainWindow> googleEarthView;
-    QPointer<SubMainWindow> local3DView;
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
@@ -331,38 +247,12 @@ protected:
 #endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
-    // Dock widgets
-    QPointer<QDockWidget> controlDockWidget;
-    QPointer<QDockWidget> controlParameterWidget;
-    QPointer<QDockWidget> infoDockWidget;
-    QPointer<QDockWidget> cameraDockWidget;
-    QPointer<QDockWidget> listDockWidget;
-    QPointer<QDockWidget> waypointsDockWidget;
-    QPointer<QDockWidget> detectionDockWidget;
-    QPointer<QDockWidget> debugConsoleDockWidget;
-    QPointer<QDockWidget> parametersDockWidget;
-    QPointer<QDockWidget> headDown1DockWidget;
-    QPointer<QDockWidget> headDown2DockWidget;
-    QPointer<QDockWidget> watchdogControlDockWidget;
-
-    QPointer<QDockWidget> headUpDockWidget;
-    QPointer<QDockWidget> video1DockWidget;
-    QPointer<QDockWidget> video2DockWidget;
-    QPointer<QDockWidget> rgbd1DockWidget;
-    QPointer<QDockWidget> rgbd2DockWidget;
-    QPointer<QDockWidget> logPlayerDockWidget;
-
-    QPointer<QDockWidget> hsiDockWidget;
-    QPointer<QDockWidget> rcViewDockWidget;
-    QPointer<QDockWidget> hudDockWidget;
-
     QPointer<QGCToolBar> toolBar;
 
     QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
     QPointer<QDockWidget> mavlinkSenderWidget;
     QGCMAVLinkLogPlayer* logPlayer;
-    QMap<int, QDockWidget*> hilDocks;
 
     QPointer<QGCUASFileViewMulti> fileWidget;
 
@@ -395,13 +285,15 @@ protected:
     QTimer* videoTimer;
     bool autoReconnect;
     MAVLinkSimulationLink* simulationLink;
-    Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
     QTimer windowNameUpdateTimer;
     
 private slots:
     void _addLinkMenu(LinkInterface* link);
+    void _showDockWidgetAction(bool show);
+    void _loadCustomWidgetFromFile(void);
+    void _createNewCustomWidget(void);
 
 private:
     /// Constructor is private since all creation should be through MainWindow::_create
@@ -409,15 +301,68 @@ private:
     
     void _openUrl(const QString& url, const QString& errorMessage);
     
+    // Center widgets
+    QPointer<QWidget> _plannerView;
+    QPointer<QWidget> _pilotView;
+    QPointer<QWidget> _setupView;
+    QPointer<QWidget> _engineeringView;
+    QPointer<QWidget> _simView;
+    QPointer<QWidget> _terminalView;
+    QPointer<QWidget> _googleEarthView;
+    QPointer<QWidget> _local3DView;
+    
+    VIEW_SECTIONS   _currentView;       ///< Currently displayed view
+    QWidget*        _currentViewWidget; ///< Currently displayed view widget
+    
+    // Dock widget names
+    static const char* _uasControlDockWidgetName;
+    static const char* _uasListDockWidgetName;
+    static const char* _waypointsDockWidgetName;
+    static const char* _mavlinkDockWidgetName;
+    static const char* _parametersDockWidgetName;
+    static const char* _filesDockWidgetName;
+    static const char* _uasStatusDetailsDockWidgetName;
+    static const char* _mapViewDockWidgetName;
+    static const char* _hsiDockWidgetName;
+    static const char* _hdd1DockWidgetName;
+    static const char* _hdd2DockWidgetName;
+    static const char* _pfdDockWidgetName;
+    static const char* _hudDockWidgetName;
+    static const char* _uasInfoViewDockWidgetName;
+    static const char* _debugConsoleDockWidgetName;
+    
+    QMap<QString, QDockWidget*>     _mapName2DockWidget;
+    QMap<int, QDockWidget*>         _mapUasId2HilDockWidget;
+    QMap<QDockWidget*, QAction*>    _mapDockWidget2Action;
+    
+    void _buildPlannerView(void);
+    void _buildPilotView(void);
+    void _buildSetupView(void);
+    void _buildEngineeringView(void);
+    void _buildSimView(void);
+    void _buildTerminalView(void);
+    void _buildGoogleEarthView(void);
+    void _buildLocal3DView(void);
+    
+    void _storeCurrentViewState(void);
+    void _loadCurrentViewState(void);
+    
+    void _createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget);
+    void _createInnerDockWidget(const QString& widgetName);
+    void _buildCustomWidgets(void);
+    void _buildCommonWidgets(void);
+    void _hideAllHilDockWidgets(void);
+    void _hideAllDockWidgets(void);
+    void _showDockWidget(const QString &name, bool show);
+    void _showHILConfigurationWidgets(void);
+    
+    QList<QGCToolWidget*> _customWidgets;
+    
+    QVBoxLayout* _centralLayout;
+    
     QList<QObject*> commsWidgetList;
-    QMap<QString,QString> customWidgetNameToFilenameMap;
     MenuActionHelper *menuActionHelper;
     Ui::MainWindow ui;
-
-    /** @brief Set the appropriate titlebar for a given dock widget.
-      * Relies on the isAdvancedMode and dockWidgetTitleBarEnabled member variables.
-      */
-    void setDockWidgetTitleBar(QDockWidget* widget);
 
     QString getWindowStateKey();
     QString getWindowGeometryKey();
