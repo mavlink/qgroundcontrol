@@ -571,14 +571,12 @@ void QGCToolWidget::widgetRemoved()
 
 void QGCToolWidget::exportWidget()
 {
-    QString defaultSuffix("qgw");
     const QString widgetFileExtension(".qgw");
     QString fileName = QGCFileDialog::getSaveFileName(
         this, tr("Specify Widget File Name"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         tr("QGroundControl Widget (*%1)").arg(widgetFileExtension),
-        0,
-        &defaultSuffix);
+        "qgw");
     //-- Note that if the user enters foo.bar, this will end up foo.bar.qgw
     if (!fileName.endsWith(widgetFileExtension))
     {

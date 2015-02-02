@@ -143,9 +143,9 @@ private:
         const QString& caption,
         const QString& dir,
         const QString& filter,
-        QFileDialog::Options options,
-        QString* defaultSuffix);
-    
+        const QString& defaultSuffix,
+        QFileDialog::Options options);
+
     static QString _fileDialogResponseSingle(enum FileDialogType type);
 
     // This allows the private calls to the file dialog methods
