@@ -578,7 +578,8 @@ void QGCToolWidget::exportWidget()
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         tr("QGroundControl Widget (*%1)").arg(widgetFileExtension),
         0,0,
-        &defaultSuffix);
+        &defaultSuffix,
+        true);
     //-- Note that if the user enters foo.bar, this will end up foo.bar.qgw
     if (!fileName.endsWith(widgetFileExtension))
     {
