@@ -100,13 +100,17 @@ void QGCDataPlot2D::loadFile()
 
 void QGCDataPlot2D::loadFile(QString file)
 {
+    // TODO This "filename" is a private/protected member variable. It should be named in such way
+    // it indicates so. This same name is used in several places within this file in local scopes.
     fileName = file;
-    if (QFileInfo(fileName).isReadable()) {
-        if (fileName.contains(".raw") || fileName.contains(".imu")) {
+    QFileInfo fi(fileName);
+    if (fi.isReadable()) {
+        if (fi.suffix() == QString("raw") || fi.suffix() == QString("imu")) {
             loadRawLog(fileName);
-        } else if (fileName.contains(".txt") || fileName.contains(".csv") || fileName.contains(".csv")) {
+        } else if (fi.suffix() == QString("txt") || fi.suffix() == QString("csv")) {
             loadCsvLog(fileName);
         }
+        // TODO Else, tell the user it doesn't know what to do with the file...
     }
 }
 
@@ -116,7 +120,7 @@ void QGCDataPlot2D::loadFile(QString file)
 QString QGCDataPlot2D::getSavePlotFilename()
 {
     QString fileName = QGCFileDialog::getSaveFileName(
-        this, "Export Plot File", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        this, "Save Plot File", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         "PDF Documents (*.pdf);;SVG Images (*.svg)",
         "pdf");
     return fileName;
@@ -691,7 +695,7 @@ bool QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, dou
 void QGCDataPlot2D::saveCsvLog()
 {
     QString fileName = QGCFileDialog::getSaveFileName(
-        this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        this, "Save CSV Log File", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         "CSV file (*.csv);;Text file (*.txt)",
         "csv");
 
