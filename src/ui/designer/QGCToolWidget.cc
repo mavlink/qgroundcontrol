@@ -571,29 +571,29 @@ void QGCToolWidget::widgetRemoved()
 
 void QGCToolWidget::exportWidget()
 {
-    QString defaultSuffix("qgw");
-    const QString widgetFileExtension(".qgw");
+    //-- Get file to save
     QString fileName = QGCFileDialog::getSaveFileName(
-        this, tr("Specify File Name"),
+        this, tr("Save Widget File"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        tr("QGroundControl Widget (*%1)").arg(widgetFileExtension),
-        0,0,
-        &defaultSuffix,
+        tr("QGroundControl Widget (*.qgw)"),
+        "qgw",
         true);
-    //-- Note that if the user enters foo.bar, this will end up foo.bar.qgw
-    if (!fileName.endsWith(widgetFileExtension))
-    {
-        fileName = fileName.append(widgetFileExtension);
+    //-- Save it if we have it
+    if (!fileName.isEmpty()) {
+        QSettings settings(fileName, QSettings::IniFormat);
+        storeSettings(settings);
     }
-    QSettings settings(fileName, QSettings::IniFormat);
-    storeSettings(settings);
 }
 
 void QGCToolWidget::importWidget()
 {
-    const QString widgetFileExtension(".qgw");
-    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Specify File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1)").arg(widgetFileExtension));
-    loadSettings(fileName);
+    QString fileName = QGCFileDialog::getOpenFileName(
+        this, tr("Load Widget File"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        tr("QGroundControl Widget (*.qgw);;All Files (*)"));
+    if (!fileName.isEmpty()) {
+        // TODO There is no error checking. If the load fails, there is nothing telling the user what happened.
+        loadSettings(fileName);
+    }
 }
 
 QString QGCToolWidget::getTitle() const

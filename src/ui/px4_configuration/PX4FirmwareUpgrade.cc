@@ -476,11 +476,11 @@ void PX4FirmwareUpgrade::_getFirmwareFile(void)
     _firmwareFilename = _ui->firmwareCombo->itemData(index).toString();
     Q_ASSERT(!_firmwareFilename.isEmpty());
     if (_firmwareFilename == "selectfile") {
-        _firmwareFilename = QGCFileDialog::getOpenFileName(this,
-                                                    tr("Select Firmware File"),                                             // Dialog title
-                                                     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),   // Initial directory
-                                                     tr("Firmware Files (*.px4 *.bin)"));                                   // File filter
-
+        _firmwareFilename = QGCFileDialog::getOpenFileName(
+            this,
+            tr("Load Firmware File"),                                              // Dialog Caption
+            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),   // Initial directory
+            tr("Firmware Files (*.px4 *.bin)"));                                   // File filter
     }
     if (!_firmwareFilename.isEmpty()) {
         _downloadFirmware();

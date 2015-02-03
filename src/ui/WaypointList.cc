@@ -217,14 +217,15 @@ void WaypointList::setUAS(UASInterface* uas)
 
 void WaypointList::saveWaypoints()
 {
-    QString defaultSuffix("waypoints");
-    QString fileName = QGCFileDialog::getSaveFileName(this, tr("Save File"), "./unnamed.waypoints", tr("Waypoint File (*.waypoints)"), 0, 0, &defaultSuffix);
+    // TODO Need better default directory
+    QString fileName = QGCFileDialog::getSaveFileName(this, tr("Save Waypoint File"), "./untitled.waypoints", tr("Waypoint File (*.waypoints)"), "waypoints", true);
     WPM->saveWaypoints(fileName);
 }
 
 void WaypointList::loadWaypoints()
 {
-    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.waypoints)"));
+    // TODO Need better default directory
+    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Load Waypoint File"), ".", tr("Waypoint File (*.waypoints);;All Files (*)"));
     WPM->loadWaypoints(fileName);
 }
 
