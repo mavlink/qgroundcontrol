@@ -766,7 +766,7 @@ void MainWindow::_loadCustomWidgetFromFile(void)
     QString fileName = QGCFileDialog::getOpenFileName(
         this, tr("Load Widget File"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        tr("QGroundControl Widget (*.qgw);;All Files (*)"));
+        tr("QGroundControl Widgets (*.qgw);;All Files (*)"));
     if (!fileName.isEmpty()) {
         QGCToolWidget* tool = new QGCToolWidget("", "", this);
         if (tool->loadSettings(fileName, true)) {

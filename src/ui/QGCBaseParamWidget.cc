@@ -126,7 +126,7 @@ void QGCBaseParamWidget::loadParametersFromFile()
         return;
     QString fileName = QGCFileDialog::getOpenFileName(
         this, tr("Load Parameters"), qgcApp()->savedParameterFilesLocation(),
-        tr("Parameter files (*.params);;All Files (*)"));
+        tr("Parameter Files (*.params);;All Files (*)"));
     QFile file(fileName);
     // TODO Display error message to the user if the file can't be opened
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {

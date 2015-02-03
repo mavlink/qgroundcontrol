@@ -447,7 +447,7 @@ void LinechartWidget::startLogging()
     QString fileName = QGCFileDialog::getSaveFileName(this,
         tr("Save Log File"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        tr("Log files (*.log)"),
+        tr("Log Files (*.log)"),
         "log", // Default type
         true); // Enforce default type
 

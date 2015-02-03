@@ -589,7 +589,7 @@ void QGCToolWidget::importWidget()
 {
     QString fileName = QGCFileDialog::getOpenFileName(
         this, tr("Load Widget File"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        tr("QGroundControl Widget Files (*.qgw);;All Files (*)"));
+        tr("QGroundControl Widgets (*.qgw);;All Files (*)"));
     if (!fileName.isEmpty()) {
         // TODO There is no error checking. If the load fails, there is nothing telling the user what happened.
         loadSettings(fileName);
