@@ -266,7 +266,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
         this,
         tr("Load MAVLink Log File"),
         qgcApp()->mavlinkLogFilesLocation(),
-        tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log);;All Files (*)"));
+        tr("MAVLink or Binary Log Files (*.mavlink *.bin *.log);;All Files (*)"));
 
     if (!logFile.isEmpty()) {
         loadLogFile(logFile);
