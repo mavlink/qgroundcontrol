@@ -434,7 +434,7 @@ void LinechartWidget::refresh()
 QString LinechartWidget::getLogSaveFilename()
 {
     QString fileName = QGCFileDialog::getSaveFileName(this,
-        tr("Specify Log File Name"),
+        tr("Save Log File"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         tr("Log file (*.log)"),
         "log");

@@ -573,7 +573,7 @@ void QGCToolWidget::exportWidget()
 {
     const QString widgetFileExtension(".qgw");
     QString fileName = QGCFileDialog::getSaveFileName(
-        this, tr("Specify Widget File Name"),
+        this, tr("Save Widget File"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         tr("QGroundControl Widget (*%1)").arg(widgetFileExtension),
         "qgw");
@@ -589,7 +589,7 @@ void QGCToolWidget::exportWidget()
 void QGCToolWidget::importWidget()
 {
     const QString widgetFileExtension(".qgw");
-    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Specify File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1)").arg(widgetFileExtension));
+    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Load Widget File"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1)").arg(widgetFileExtension));
     loadSettings(fileName);
 }
 
