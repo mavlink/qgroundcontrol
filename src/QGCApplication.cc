@@ -478,7 +478,7 @@ void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
 {
     QString saveFilename = QGCFileDialog::getSaveFileName(
         MainWindow::instance(),
-        tr("Select file to save Flight Data Log"),
+        tr("Save Flight Data Log"),
         qgcApp()->mavlinkLogFilesLocation(),
         tr("Flight Data Log (*.mavlink)"),
         "mavlink");
