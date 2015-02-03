@@ -195,7 +195,8 @@ QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
         if (match.hasMatch()) {
-             return match.captured(0).mid(1);
+            //-- Return "foo" from "*.foo"
+            return match.captured(0).mid(2);
         }
     }
     return QString("");
