@@ -269,11 +269,11 @@ void QGCDataPlot2D::selectFile()
     // Open a file dialog prompting the user for the file to load.
     // Note the special case for the Pixhawk.
     if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW")) {
-        fileName = QGCFileDialog::getOpenFileName(this, tr("Load Log File"), QString(), "Log files (*.imu *.raw)");
+        fileName = QGCFileDialog::getOpenFileName(this, tr("Load Log File"), QString(), "Log Files (*.imu *.raw)");
     }
     else
     {
-        fileName = QGCFileDialog::getOpenFileName(this, tr("Load Log File"), QString(), "Log files (*.csv);;All Files (*)");
+        fileName = QGCFileDialog::getOpenFileName(this, tr("Load Log File"), QString(), "Log Files (*.csv);;All Files (*)");
     }
 
     // Check if the user hit cancel, which results in an empty string.
@@ -699,7 +699,7 @@ void QGCDataPlot2D::saveCsvLog()
 {
     QString fileName = QGCFileDialog::getSaveFileName(
         this, "Save CSV Log File", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        "CSV files (*.csv)",
+        "CSV Files (*.csv)",
         "csv",
         true);
 
