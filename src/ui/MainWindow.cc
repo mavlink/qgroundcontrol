@@ -836,16 +836,17 @@ void MainWindow::configureWindowName()
 
 void MainWindow::startVideoCapture()
 {
+    // TODO: What is this? What kind of "Video" is saved to bmp?
     QString format("bmp");
     QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
 
-    QString screenFileName = QGCFileDialog::getSaveFileName(this, tr("Save As"),
-                                                          initialPath,
-                                                          tr("%1 Files (*.%2);;All Files (*)")
-                                                          .arg(format.toUpper())
-                                                          .arg(format),
-                                                          0,0,
-                                                          &format);
+    QString screenFileName = QGCFileDialog::getSaveFileName(
+        this, tr("Save Video Capture"),
+        initialPath,
+        tr("%1 Files (*.%2);;All Files (*)")
+        .arg(format.toUpper())
+        .arg(format),
+        format);
     delete videoTimer;
     videoTimer = new QTimer(this);
 }
