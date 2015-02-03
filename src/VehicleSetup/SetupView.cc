@@ -51,7 +51,7 @@ SetupView::SetupView(QWidget* parent) :
     
     setResizeMode(SizeRootObjectToView);
     
-    _setActiveUAS(NULL);
+    _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
 SetupView::~SetupView()
@@ -120,7 +120,7 @@ void SetupView::_setConnectedView(void)
 
 void SetupView::_firmwareButtonClicked(void)
 {
-    if (_uasCurrent->isArmed()) {
+    if (_uasCurrent && _uasCurrent->isArmed()) {
         QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
         return;
     }

@@ -105,17 +105,11 @@ void QGCBaseParamWidget::saveParametersToFile()
 {
     if (!mav)
         return;
-    QString defaultSuffix("params");
     QString fileName = QGCFileDialog::getSaveFileName(
-        this,
-        tr("Save Parameters"),
-        qgcApp()->savedParameterFilesLocation(),
-        tr("Parameter File (*.params)"),
-        0, 0,
-        &defaultSuffix,
-        true);
+        this, tr("Save Parameters"), qgcApp()->savedParameterFilesLocation(), tr("Parameter File (*.params)"), "params", true);
     if (!fileName.isEmpty()) {
         QFile file(fileName);
+        // TODO Display error message to the user if the file can't be created
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             return;
         }
@@ -130,15 +124,15 @@ void QGCBaseParamWidget::loadParametersFromFile()
 {
     if (!mav)
         return;
-
-    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Load File"), qgcApp()->savedParameterFilesLocation(), tr("Parameter file (*.params)"));
+    QString fileName = QGCFileDialog::getOpenFileName(
+        this, tr("Load Parameters"), qgcApp()->savedParameterFilesLocation(),
+        tr("Parameter file (*.params);;All Files (*)"));
     QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    // TODO Display error message to the user if the file can't be opened
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return;
-
+    }
     QTextStream in(&file);
     paramMgr->readPendingParamsFromStream(in);
     file.close();
 }
-
-

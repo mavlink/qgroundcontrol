@@ -35,7 +35,7 @@ QString QGCFileDialog::getExistingDirectory(
     const QString& dir,
     Options options)
 {
-    _validate(NULL, options);
+    _validate(options);
     
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
@@ -52,18 +52,17 @@ QString QGCFileDialog::getOpenFileName(
     const QString& caption,
     const QString& dir,
     const QString& filter,
-    QString* selectedFilter,
     Options options)
 {
-    _validate(selectedFilter, options);
+    _validate(options);
     
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
-        return UnitTest::_getOpenFileName(parent, caption, dir, filter, selectedFilter, options);
+        return UnitTest::_getOpenFileName(parent, caption, dir, filter, options);
     } else
 #endif
     {
-        return QFileDialog::getOpenFileName(parent, caption, dir, filter, selectedFilter, options);
+        return QFileDialog::getOpenFileName(parent, caption, dir, filter, NULL, options);
     }
 }
 
@@ -72,49 +71,49 @@ QStringList QGCFileDialog::getOpenFileNames(
     const QString& caption,
     const QString& dir,
     const QString& filter,
-    QString* selectedFilter,
     Options options)
 {
-    _validate(selectedFilter, options);
+    _validate(options);
     
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
-        return UnitTest::_getOpenFileNames(parent, caption, dir, filter, selectedFilter, options);
+        return UnitTest::_getOpenFileNames(parent, caption, dir, filter, options);
     } else
 #endif
     {
-        return QFileDialog::getOpenFileNames(parent, caption, dir, filter, selectedFilter, options);
+        return QFileDialog::getOpenFileNames(parent, caption, dir, filter, NULL, options);
     }
 }
 
-QString QGCFileDialog::getSaveFileName(QWidget* parent,
+QString QGCFileDialog::getSaveFileName(
+    QWidget* parent,
     const QString& caption,
     const QString& dir,
     const QString& filter,
-    QString* selectedFilter,
-    Options options,
-    QString* defaultSuffix,
-    bool strict)
+    const QString& defaultSuffix,
+    bool strict,
+    Options options)
 {
-    _validate(selectedFilter, options);
+    _validate(options);
 
 #ifdef QT_DEBUG
     if (qgcApp()->runningUnitTests()) {
-        return UnitTest::_getSaveFileName(parent, caption, dir, filter, selectedFilter, options, defaultSuffix);
+        return UnitTest::_getSaveFileName(parent, caption, dir, filter, defaultSuffix, options);
     } else
 #endif
     {
+        QString defaultSuffixCopy(defaultSuffix);
         QFileDialog dlg(parent, caption, dir, filter);
         dlg.setAcceptMode(QFileDialog::AcceptSave);
         if (options) {
             dlg.setOptions(options);
         }
-        if (defaultSuffix) {
+        if (!defaultSuffixCopy.isEmpty()) {
             //-- Make sure dot is not present
-            if (defaultSuffix->startsWith(".")) {
-                defaultSuffix->remove(0,1);
+            if (defaultSuffixCopy.startsWith(".")) {
+                defaultSuffixCopy.remove(0,1);
             }
-            dlg.setDefaultSuffix(*defaultSuffix);
+            dlg.setDefaultSuffix(defaultSuffixCopy);
         }
         while (true) {
             if (dlg.exec()) {
@@ -131,16 +130,15 @@ QString QGCFileDialog::getSaveFileName(QWidget* parent,
                             return result;
                         }
                         //-- Do we have a default extension?
-                        QString localDefaultSuffix;
-                        if (!defaultSuffix) {
+                        if (defaultSuffixCopy.isEmpty()) {
                             //-- We don't, so get the first one in the filter
-                            localDefaultSuffix = _getFirstExtensionInFilter(filter);
-                            defaultSuffix = &localDefaultSuffix;
+                            defaultSuffixCopy = _getFirstExtensionInFilter(filter);
                         }
-                        Q_ASSERT(defaultSuffix->isEmpty() == false);
+                        //-- If this is set to strict, we have to have a default extension
+                        Q_ASSERT(defaultSuffixCopy.isEmpty() == false);
                         //-- Forcefully append our desired extension
                         result += ".";
-                        result += *defaultSuffix;
+                        result += defaultSuffixCopy;
                         //-- Check and see if this new file already exists
                         fi.setFile(result);
                         if (fi.exists()) {
@@ -203,16 +201,12 @@ QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
 }
 
 /// @brief Validates and updates the parameters for the file dialog calls
-void QGCFileDialog::_validate(QString* selectedFilter, Options& options)
+void QGCFileDialog::_validate(Options& options)
 {
     // You can't use QGCFileDialog if QGCApplication is not created yet.
     Q_ASSERT(qgcApp());
     
     Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
-    
-    // Support for selectedFilter is not yet implemented through the unit test framework
-    Q_UNUSED(selectedFilter);
-    Q_ASSERT(selectedFilter == NULL);
     
     // On OSX native dialog can hang so we always use Qt dialogs
     options |= DontUseNativeDialog;
