@@ -106,7 +106,7 @@ void QGCBaseParamWidget::saveParametersToFile()
     if (!mav)
         return;
     QString fileName = QGCFileDialog::getSaveFileName(
-        this, tr("Save Parameters"), qgcApp()->savedParameterFilesLocation(), tr("Parameter File (*.params)"), "params", true);
+        this, tr("Save Parameters"), qgcApp()->savedParameterFilesLocation(), tr("Parameter Files (*.params)"), "params", true);
     if (!fileName.isEmpty()) {
         QFile file(fileName);
         // TODO Display error message to the user if the file can't be created
@@ -126,7 +126,7 @@ void QGCBaseParamWidget::loadParametersFromFile()
         return;
     QString fileName = QGCFileDialog::getOpenFileName(
         this, tr("Load Parameters"), qgcApp()->savedParameterFilesLocation(),
-        tr("Parameter file (*.params);;All Files (*)"));
+        tr("Parameter files (*.params);;All Files (*)"));
     QFile file(fileName);
     // TODO Display error message to the user if the file can't be opened
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {

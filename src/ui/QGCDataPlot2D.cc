@@ -699,7 +699,7 @@ void QGCDataPlot2D::saveCsvLog()
 {
     QString fileName = QGCFileDialog::getSaveFileName(
         this, "Save CSV Log File", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        "CSV file (*.csv)",
+        "CSV files (*.csv)",
         "csv",
         true);
 
