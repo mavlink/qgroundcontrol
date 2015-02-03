@@ -113,7 +113,10 @@ public:
       @return The full path and filename to be used to save the file or \c QString("") if none.
       @sa <a href="http://qt-project.org/doc/qt-5/qfiledialog.html#getSaveFileName">QFileDialog::getSaveFileName()</a>
       @remark If a default suffix is given, it will be appended to the filename if the user does not enter one themselves. That is, if the user simply enters \e foo and the default suffix is set to \e bar,
-      the returned filename will be \e foo.bar. However, if the user specifies a suffix, none will be added. That is, if the user enters \e foo.txt, that's what you will receive in return.
+      the returned filename will be \e foo.bar. However, if the user specifies a suffix, the \e strict flag will determine what is done. If the user enters \e foo.txt and \e strict is false, the function
+      returns \e foo.txt (no suffix enforced). If \e strict is true however, the default suffix is appended no matter what. In the case above, the function will return \e foo.txt.bar (suffix enforced).
+      @remark If \e strict is set and the file name given by the user is renamed (the \e foo.txt.bar example above), the function will check and see if the file already exists. If that's the case, it will
+      ask the user if they want to overwrite it.
     */
     static QString getSaveFileName(
         QWidget* parent = 0,
