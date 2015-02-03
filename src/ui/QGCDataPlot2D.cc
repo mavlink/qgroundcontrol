@@ -116,7 +116,7 @@ void QGCDataPlot2D::loadFile(QString file)
 QString QGCDataPlot2D::getSavePlotFilename()
 {
     QString fileName = QGCFileDialog::getSaveFileName(
-        this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        this, "Export Plot File", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         "PDF Documents (*.pdf);;SVG Images (*.svg)",
         "pdf");
     return fileName;
@@ -131,11 +131,13 @@ void QGCDataPlot2D::savePlot()
     if (fileName.isEmpty())
         return;
 
+    // TODO This will change once we add "strict" file types in file selection dialogs
     while(!(fileName.endsWith(".svg") || fileName.endsWith(".pdf"))) {
-        QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Unsuitable file extension for PDF or SVG"),
-                                                                     tr("Please choose .pdf or .svg as file extension. Click OK to change the file extension, cancel to not save the file."),
-                                                                     QMessageBox::Ok | QMessageBox::Cancel,
-                                                                     QMessageBox::Ok);
+        QMessageBox::StandardButton button = QGCMessageBox::warning(
+            tr("Unsuitable file extension for Plot document type."),
+            tr("Please choose .pdf or .svg as file extension. Click OK to change the file extension, cancel to not save the file."),
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok);
         // Abort if cancelled
         if (button == QMessageBox::Cancel) {
             return;
