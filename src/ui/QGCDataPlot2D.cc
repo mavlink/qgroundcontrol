@@ -157,6 +157,7 @@ void QGCDataPlot2D::savePlot()
     } else if (fileName.endsWith(".svg")) {
         exportSVG(fileName);
     }
+    // TODO Tell the user the name (type) was invalid (neither pdf nor svg) and nothing is being done.
 }
 
 
@@ -272,7 +273,7 @@ void QGCDataPlot2D::selectFile()
     }
     else
     {
-        fileName = QGCFileDialog::getOpenFileName(this, tr("Load Log File"), QString(), "Log files (*.csv *.txt *.log)");
+        fileName = QGCFileDialog::getOpenFileName(this, tr("Load Log File"), QString(), "Log files (*.csv);;All Files (*)");
     }
 
     // Check if the user hit cancel, which results in an empty string.
@@ -698,11 +699,13 @@ void QGCDataPlot2D::saveCsvLog()
 {
     QString fileName = QGCFileDialog::getSaveFileName(
         this, "Save CSV Log File", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        "CSV file (*.csv);;Text file (*.txt)",
-        "csv");
+        "CSV file (*.csv)",
+        "csv",
+        true);
 
-    if (fileName.isEmpty())
+    if (fileName.isEmpty()) {
         return; //User cancelled
+    }
 
     bool success = logFile->copy(fileName);
 
