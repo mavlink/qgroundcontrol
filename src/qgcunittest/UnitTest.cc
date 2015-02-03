@@ -349,8 +349,9 @@ QString UnitTest::_getSaveFileName(
     Q_UNUSED(filter);
     Q_UNUSED(options);
 
-    if(!defaultSuffix.isEmpty())
+    if(!defaultSuffix.isEmpty()) {
         Q_ASSERT(defaultSuffix.startsWith(".") == false);
+    }
 
     return _fileDialogResponseSingle(getSaveFileName);
 }
