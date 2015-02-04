@@ -4,34 +4,29 @@ import QtQuick.Controls.Styles 1.2
 import QGroundControl.FactSystem 1.0
 
 Rectangle {
+    width: 600
+    height: 400
+
     QGCPalette { id: palette; colorGroup: QGCPalette.Active }
 
     id: topLevel
     objectName: "topLevel"
 
     color: palette.window
-
-    signal buttonClicked(variant component);
-
     Image {
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
         smooth: true
         source: autopilot.setupBackgroundImage;
     }
-
     Column {
         anchors.margins: 20
         anchors.fill: parent
         spacing: 5
 
-        Rectangle { id: header; color: "lightblue"; radius: 10.0; width: parent.width; height: titleText.height + 20; opacity: 0.8;
-            Text { id: titleText; anchors.centerIn: parent; font.pointSize: 24; text: "Vehicle Setup" }
-        }
-
         Flow {
             width: parent.width;
-            height: parent.height - header.height - footer.height
+            height: parent.height
             spacing: 5
 
             Repeater {
@@ -54,9 +49,8 @@ Rectangle {
                             border.color: "#888"
                             radius: 10
 
-                            color: control.activeFocus ? "#47b" : "white"
-                            opacity: control.hovered || control.activeFocus ? 1 : 0.8
-                            Behavior on opacity {NumberAnimation{ duration: 100 }}
+                            color: "white"
+                            opacity: 0.8
 
                             Text {
                                 id: titleBar
@@ -108,23 +102,8 @@ Rectangle {
 
                     label: Item {}
                     }
-
-                onClicked: topLevel.buttonClicked(modelData)
                 }
             }
         }
-
-        Rectangle { id: footer; color: "lightblue"; radius: 10.0; width: parent.width; height: titleText.height + 20; opacity: 0.8;
-
-            property real spacing: (width - firmwareButton.width - parametersButton.width) / 3
-
-            Button { id: firmwareButton; objectName: "firmwareButton";
-                x: parent.spacing; anchors.verticalCenter: parent.verticalCenter;
-                text: "Firmware Upgrade" }
-            Button { id: parametersButton; objectName: "parametersButton"
-                x: firmwareButton.width + (parent.spacing*2); anchors.verticalCenter: parent.verticalCenter;
-                text: "Parameters" }
-        }
-
     }
 }

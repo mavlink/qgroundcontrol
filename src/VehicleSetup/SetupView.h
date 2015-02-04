@@ -24,18 +24,22 @@
 #ifndef SETUPVIEW_H
 #define SETUPVIEW_H
 
-
 #include "UASInterface.h"
 #include "ParameterEditor.h"
 #include "VehicleComponent.h"
-#include "QGCQuickWidget.h"
 #include "AutoPilotPlugin.h"
+
+#include <QWidget>
 
 /// @file
 ///     @brief This class is used to display the UI for the VehicleComponent objects.
 ///     @author Don Gagne <don@thegagnes.com>
 
-class SetupView : public QGCQuickWidget
+namespace Ui {
+    class SetupView;
+}
+
+class SetupView : public QWidget
 {
     Q_OBJECT
 
@@ -48,16 +52,18 @@ private slots:
     void _pluginReady(void);
     void _firmwareButtonClicked(void);
     void _parametersButtonClicked(void);
+    void _summaryButtonClicked(void);
     void _setupButtonClicked(const QVariant& component);
 
 private:
-    void _setConnectedView(void);
-    void _setDisconnectedView(void);
-    void _setViewConnections(void);
-    
+    void _changeSetupWidget(QWidget* newWidget);
+
     UASInterface*       _uasCurrent;        ///< Currently active UAS
     bool                _initComplete;      ///< true: parameters are ready and ui has been setup
     AutoPilotPlugin*    _autoPilotPlugin;
+    QWidget*            _currentSetupWidget;
+    
+    Ui::SetupView* _ui;
 };
 
 #endif
