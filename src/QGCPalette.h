@@ -22,6 +22,11 @@
  ======================================================================*/
 
 /// @file
+///     @brief QGCPalette is used by QML ui to bind colors to the QGC pallete. The implementation
+///             is similar to the QML SystemPalette and should be used in the same way. Refer to
+///             that documentation for details. The one difference is that QGCPalette also supports
+///             a light and dark theme which you can switch between.
+///
 ///     @author Don Gagne <don@thegagnes.com>
 
 #ifndef QGCPalette_h
@@ -42,13 +47,6 @@ class QGCPalette : public QObject
     Q_PROPERTY(QColor base READ base NOTIFY paletteChanged)
     Q_PROPERTY(QColor button READ button NOTIFY paletteChanged)
     Q_PROPERTY(QColor buttonText READ buttonText NOTIFY paletteChanged)
-    Q_PROPERTY(QColor dark READ dark NOTIFY paletteChanged)
-    Q_PROPERTY(QColor highlight READ highlight NOTIFY paletteChanged)
-    Q_PROPERTY(QColor highlightedText READ highlightedText NOTIFY paletteChanged)
-    Q_PROPERTY(QColor light READ light NOTIFY paletteChanged)
-    Q_PROPERTY(QColor mid READ mid NOTIFY paletteChanged)
-    Q_PROPERTY(QColor midlight READ midlight NOTIFY paletteChanged)
-    Q_PROPERTY(QColor shadow READ shadow NOTIFY paletteChanged)
     Q_PROPERTY(QColor text READ text NOTIFY paletteChanged)
     Q_PROPERTY(QColor window READ window NOTIFY paletteChanged)
     Q_PROPERTY(QColor windowText READ windowText NOTIFY paletteChanged)
@@ -60,50 +58,49 @@ public:
         Inactive
     };
     
+    enum Theme {
+        Light = 0,
+        Dark
+    };
+    
     QGCPalette(QObject* parent = NULL);
     ~QGCPalette();
     
     ColorGroup colorGroup(void) const { return _colorGroup; }
     void setColorGroup(ColorGroup colorGroup);
     
-    QColor alternateBase(void) const { return _alternateBase[_colorGroup]; }
-    QColor base(void) const { return _base[_colorGroup]; }
-    QColor button(void) const { return _button[_colorGroup]; }
-    QColor buttonText(void) const { return _buttonText[_colorGroup]; }
-    QColor dark(void) const { return _dark[_colorGroup]; }
-    QColor highlight(void) const { return _highlight[_colorGroup]; }
-    QColor highlightedText(void) const { return _highlightedText[_colorGroup]; }
-    QColor light(void) const { return _light[_colorGroup]; }
-    QColor mid(void) const { return _mid[_colorGroup]; }
-    QColor midlight(void) const { return _midlight[_colorGroup]; }
-    QColor shadow(void) const { return _shadow[_colorGroup]; }
-    QColor text(void) const { return _text[_colorGroup]; }
-    QColor window(void) const { return _window[_colorGroup]; }
-    QColor windowText(void) const { return _windowText[_colorGroup]; }
+    QColor alternateBase(void) const { return _alternateBase[_theme][_colorGroup]; }
+    QColor base(void) const { return _base[_theme][_colorGroup]; }
+    QColor button(void) const { return _button[_theme][_colorGroup]; }
+    QColor buttonText(void) const { return _buttonText[_theme][_colorGroup]; }
+    QColor text(void) const { return _text[_theme][_colorGroup]; }
+    QColor window(void) const { return _window[_theme][_colorGroup]; }
+    QColor windowText(void) const { return _windowText[_theme][_colorGroup]; }
+    
+    static Theme globalTheme(void) { return _theme; }
+    static void setGlobalTheme(Theme newTheme);
     
 signals:
     void paletteChanged(void);
     
 private:
-    ColorGroup _colorGroup;
+    static Theme    _theme;         ///< There is a single theme for all palettes
+    ColorGroup      _colorGroup;    ///< Currently selected ColorGroup
     
-    static bool _paletteLoaded;
-    
+    static const int _cThemes = 2;
     static const int _cColorGroups = 3;
-    static QColor _alternateBase[_cColorGroups];
-    static QColor _base[_cColorGroups];
-    static QColor _button[_cColorGroups];
-    static QColor _buttonText[_cColorGroups];
-    static QColor _dark[_cColorGroups];
-    static QColor _highlight[_cColorGroups];
-    static QColor _highlightedText[_cColorGroups];
-    static QColor _light[_cColorGroups];
-    static QColor _mid[_cColorGroups];
-    static QColor _midlight[_cColorGroups];
-    static QColor _shadow[_cColorGroups];
-    static QColor _text[_cColorGroups];
-    static QColor _window[_cColorGroups];
-    static QColor _windowText[_cColorGroups];
+    
+    static QColor _alternateBase[_cThemes][_cColorGroups];
+    static QColor _base[_cThemes][_cColorGroups];
+    static QColor _button[_cThemes][_cColorGroups];
+    static QColor _buttonText[_cThemes][_cColorGroups];
+    static QColor _text[_cThemes][_cColorGroups];
+    static QColor _window[_cThemes][_cColorGroups];
+    static QColor _windowText[_cThemes][_cColorGroups];
+    
+    void _themeChanged(void);
+    
+    static QList<QGCPalette*>   _paletteObjects;    ///< List of all active QGCPalette objects
 };
 
 #endif
