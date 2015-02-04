@@ -26,7 +26,6 @@
 
 #include "AirframeComponent.h"
 #include "QGCPX4AirframeConfig.h"
-#include "VehicleComponentSummaryItem.h"
 
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = { "SYS_AUTOSTART", NULL };

@@ -26,7 +26,6 @@
 
 #include "SafetyComponent.h"
 #include "PX4RCCalibration.h"
-#include "VehicleComponentSummaryItem.h"
 #include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 

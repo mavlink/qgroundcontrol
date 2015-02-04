@@ -26,7 +26,6 @@
 
 #include "SensorsComponent.h"
 #include "QGCPX4SensorCalibration.h"
-#include "VehicleComponentSummaryItem.h"
 #include "PX4AutoPilotPlugin.h"
 
 // These two list must be kept in sync

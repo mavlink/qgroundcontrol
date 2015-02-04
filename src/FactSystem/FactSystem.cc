@@ -44,7 +44,6 @@ FactSystem::FactSystem(QObject* parent) :
     
     // FIXME: Where should these go?
     qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference VehicleComponent");
-    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponentSummaryItem", "Can only reference VehicleComponentSummaryItem");
     qmlRegisterType<QGCPalette>(_factSystemQmlUri, 1, 0, "QGCPalette");
 }
 
