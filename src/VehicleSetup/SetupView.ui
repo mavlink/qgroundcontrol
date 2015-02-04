@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SetupView</class>
+ <widget class="QWidget" name="SetupView">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>946</width>
+    <height>821</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QGCQuickWidget" name="buttonHolder">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>160</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>160</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="resizeMode">
+      <enum>QGCQuickWidget::SizeRootObjectToView</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="setupWidget">
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>400</width>
+                <height>300</height>
+            </rect>
+        </property>
+        <property name="windowTitle">
+            <string>Form</string>
+        </property>
+        <property name="autoFillBackground">
+            <bool>true</bool>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+                <layout class="QVBoxLayout" name="setupWidgetLayout"/>
+            </item>
+            <item>
+                <spacer name="verticalSpacer">
+                    <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                        <size>
+                            <width>20</width>
+                            <height>40</height>
+                        </size>
+                    </property>
+                </spacer>
+            </item>
+        </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+     <customwidget>
+         <class>QGCQuickWidget</class>
+         <extends>QQuickWidget</extends>
+         <header>QGCQuickWidget.h</header>
+         <container>1</container>
+     </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

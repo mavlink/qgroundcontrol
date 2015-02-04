@@ -241,19 +241,18 @@
         <file alias="test.qml">src/test.qml</file>
 
         <file alias="QGroundControl/FactControls/qmldir">qml/QGroundControl/FactControls/qmldir</file>
-
-
-        <file alias="QGroundControl/FactControls/SetupButton.qml">qml/QGroundControl/FactControls/SetupButton.qml</file>
         <file alias="QGroundControl/FactControls/FactLabel.qml">qml/QGroundControl/FactControls/FactLabel.qml</file>
         <file alias="QGroundControl/FactControls/FactTextField.qml">qml/QGroundControl/FactControls/FactTextField.qml</file>
         <file alias="QGroundControl/FactControls/FactCheckBox.qml">qml/QGroundControl/FactControls/FactCheckBox.qml</file>
 
+        <file alias="QGroundControl/Controls/qmldir">qml/QGroundControl/Controls/qmldir</file>
+        <file alias="QGroundControl/Controls/SetupButton.qml">qml/QGroundControl/Controls/SetupButton.qml</file>
+
         <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
         <file alias="px4fmu_2.x.png">files/images/px4/boards/px4fmu_2.x.png</file>
 
-        <file alias="SetupViewConnected.qml">src/VehicleSetup/SetupViewConnected.qml</file>
-        <file alias="SetupViewDisconnected.qml">src/VehicleSetup/SetupViewDisconnected.qml</file>
-        <file alias="SetupPane.qml">src/VehicleSetup/SetupPane.qml</file>
+        <file alias="SetupViewButtons.qml">src/VehicleSetup/SetupViewButtons.qml</file>
+        <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
 
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
 
@@ -262,6 +261,8 @@
         <file alias="RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/RadioComponentSummary.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
+
+        <file alias="QGroundControl/Controls/setupButtonImage.png">files/Setup/cogwheels.png</file>
 
     </qresource>
 

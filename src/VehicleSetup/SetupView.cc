@@ -25,13 +25,14 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SetupView.h"
+#include "ui_SetupView.h"
 
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
 #include "PX4FirmwareUpgrade.h"
 #include "ParameterEditor.h"
-#include "SetupWidgetHolder.h"
+#include "QGCQmlWidgetHolder.h"
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
 
@@ -40,16 +41,38 @@
 #include <QDebug>
 
 SetupView::SetupView(QWidget* parent) :
-    QGCQuickWidget(parent),
+    QWidget(parent),
     _uasCurrent(NULL),
     _initComplete(false),
-    _autoPilotPlugin(NULL)
+    _autoPilotPlugin(NULL),
+    _currentSetupWidget(NULL),
+    _ui(new Ui::SetupView)
 {
+    _ui->setupUi(this);
+
     bool fSucceeded = connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
     
-    setResizeMode(SizeRootObjectToView);
+    //setResizeMode(SizeRootObjectToView);
+    
+    _ui->buttonHolder->setAutoPilot(NULL);
+    _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtons.qml"));
+    
+    QObject* rootObject = (QObject*)_ui->buttonHolder->rootObject();
+    Q_ASSERT(rootObject);
+    
+    fSucceeded = connect(rootObject, SIGNAL(setupButtonClicked(QVariant)), this, SLOT(_setupButtonClicked(QVariant)));
+    Q_ASSERT(fSucceeded);
+    
+    fSucceeded = connect(rootObject, SIGNAL(firmwareButtonClicked()), this, SLOT(_firmwareButtonClicked()));
+    Q_ASSERT(fSucceeded);
+    
+    fSucceeded = connect(rootObject, SIGNAL(parametersButtonClicked()), this, SLOT(_parametersButtonClicked()));
+    Q_ASSERT(fSucceeded);
+    
+    fSucceeded = connect(rootObject, SIGNAL(summaryButtonClicked()), this, SLOT(_summaryButtonClicked()));
+    Q_ASSERT(fSucceeded);
     
     _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
@@ -63,10 +86,16 @@ void SetupView::_setActiveUAS(UASInterface* uas)
 {
     if (_uasCurrent) {
         Q_ASSERT(_autoPilotPlugin);
-        disconnect(_autoPilotPlugin);
-        _autoPilotPlugin = NULL;
+        disconnect(_autoPilotPlugin, &AutoPilotPlugin::pluginReady, this, &SetupView::_pluginReady);
     }
 
+    _autoPilotPlugin = NULL;
+    _ui->buttonHolder->setAutoPilot(NULL);
+    _firmwareButtonClicked();
+    QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("firmwareButton");
+    Q_ASSERT(button);
+    button->setProperty("checked", true);
+    
     _uasCurrent = uas;
     
     if (_uasCurrent) {
@@ -74,48 +103,27 @@ void SetupView::_setActiveUAS(UASInterface* uas)
         
         connect(_autoPilotPlugin, &AutoPilotPlugin::pluginReady, this, &SetupView::_pluginReady);
         if (_autoPilotPlugin->pluginIsReady()) {
-            _setConnectedView();
+            _pluginReady();
         }
-    } else {
-        _setDisconnectedView();
     }
 }
 
 void SetupView::_pluginReady(void)
 {
-    _setConnectedView();
-}
-
-void SetupView::_setViewConnections(void)
-{
-    QObject*button = rootObject()->findChild<QObject*>("firmwareButton");
+    _ui->buttonHolder->setAutoPilot(_autoPilotPlugin);
+    _summaryButtonClicked();
+    QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("summaryButton");
     Q_ASSERT(button);
-    connect(button, SIGNAL(clicked()), this, SLOT(_firmwareButtonClicked()));
-    
-    button = rootObject()->findChild<QObject*>("parametersButton");
-    if (button) {
-        connect(button, SIGNAL(clicked()), this, SLOT(_parametersButtonClicked()));
+    button->setProperty("checked", true);
+}
+
+void SetupView::_changeSetupWidget(QWidget* newWidget)
+{
+    if (_currentSetupWidget) {
+        delete _currentSetupWidget;
     }
-}
-
-void SetupView::_setDisconnectedView(void)
-{
-    setSource(QUrl::fromUserInput("qrc:qml/SetupViewDisconnected.qml"));
-    _setViewConnections();
-}
-
-void SetupView::_setConnectedView(void)
-{
-    Q_ASSERT(_uasCurrent);
-    Q_ASSERT(_autoPilotPlugin);
-    
-    setAutoPilot(_autoPilotPlugin);
-    
-    setSource(QUrl::fromUserInput("qrc:qml/SetupViewConnected.qml"));
-    disconnect(_autoPilotPlugin);
-    _setViewConnections();
-    
-    connect((QObject*)rootObject(), SIGNAL(buttonClicked(QVariant)), this, SLOT(_setupButtonClicked(QVariant)));
+    _currentSetupWidget = newWidget;
+    _ui->setupWidgetLayout->addWidget(newWidget);
 }
 
 void SetupView::_firmwareButtonClicked(void)
@@ -125,24 +133,27 @@ void SetupView::_firmwareButtonClicked(void)
         return;
     }
     
-    SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
-    dialog->setModal(true);
-    dialog->setWindowTitle("Firmware Upgrade");
-    
-    PX4FirmwareUpgrade* setup = new PX4FirmwareUpgrade(dialog);
-    dialog->setInnerWidget(setup);
-    dialog->exec();
+    PX4FirmwareUpgrade* setup = new PX4FirmwareUpgrade(this);
+    _changeSetupWidget(setup);
 }
 
 void SetupView::_parametersButtonClicked(void)
 {
-    SetupWidgetHolder* dialog = new SetupWidgetHolder(MainWindow::instance());
-    dialog->setModal(true);
-    dialog->setWindowTitle("Parameter Editor");
+    ParameterEditor* setup = new ParameterEditor(_uasCurrent, QStringList(), this);
+    _changeSetupWidget(setup);
+}
+
+void SetupView::_summaryButtonClicked(void)
+{
+    Q_ASSERT(_autoPilotPlugin);
     
-    ParameterEditor* setup = new ParameterEditor(_uasCurrent, QStringList(), dialog);
-    dialog->setInnerWidget(setup);
-    dialog->exec();
+    QGCQmlWidgetHolder* summary = new QGCQmlWidgetHolder;
+    Q_CHECK_PTR(summary);
+
+    summary->setAutoPilot(_autoPilotPlugin);
+    summary->setSource(QUrl::fromUserInput("qrc:/qml/VehicleSummary.qml"));
+
+    _changeSetupWidget(summary);
 }
 
 void SetupView::_setupButtonClicked(const QVariant& component)
@@ -161,15 +172,5 @@ void SetupView::_setupButtonClicked(const QVariant& component)
         return;
     }
     
-    SetupWidgetHolder dialog(MainWindow::instance());
-    dialog.setModal(true);
-    dialog.setWindowTitle(vehicle->name());
-    
-    QWidget* setupWidget = vehicle->setupWidget();
-    
-    dialog.resize(setupWidget->minimumSize());
-    dialog.setInnerWidget(setupWidget);
-    dialog.exec();
-    
-    delete setupWidget;
+    _changeSetupWidget(vehicle->setupWidget());
 }
