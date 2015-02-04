@@ -448,8 +448,7 @@ void LinechartWidget::startLogging()
         tr("Save Log File"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         tr("Log Files (*.log)"),
-        "log", // Default type
-        true); // Enforce default type
+        "log"); // Default type
 
     qDebug() << "SAVE FILE " << fileName;
 
