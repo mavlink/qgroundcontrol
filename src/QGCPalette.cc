@@ -29,81 +29,79 @@
 #include <QApplication>
 #include <QPalette>
 
-bool QGCPalette::_paletteLoaded = false;
+QList<QGCPalette*>   QGCPalette::_paletteObjects;
 
-QColor QGCPalette::_alternateBase[QGCPalette::_cColorGroups];
-QColor QGCPalette::_base[QGCPalette::_cColorGroups];
-QColor QGCPalette::_button[QGCPalette::_cColorGroups];
-QColor QGCPalette::_buttonText[QGCPalette::_cColorGroups];
-QColor QGCPalette::_dark[QGCPalette::_cColorGroups];
-QColor QGCPalette::_highlight[QGCPalette::_cColorGroups];
-QColor QGCPalette::_highlightedText[QGCPalette::_cColorGroups];
-QColor QGCPalette::_light[QGCPalette::_cColorGroups];
-QColor QGCPalette::_mid[QGCPalette::_cColorGroups];
-QColor QGCPalette::_midlight[QGCPalette::_cColorGroups];
-QColor QGCPalette::_shadow[QGCPalette::_cColorGroups];
-QColor QGCPalette::_text[QGCPalette::_cColorGroups];
-QColor QGCPalette::_window[QGCPalette::_cColorGroups];
-QColor QGCPalette::_windowText[QGCPalette::_cColorGroups];
+QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
+
+QColor QGCPalette::_alternateBase[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0xF6, 0xF6, 0xF6), QColor(0xF6, 0xF6, 0xF6), QColor(0xF6, 0xF6, 0xF6) },
+    { QColor(2, 2, 2), QColor(2, 2, 2), QColor(2, 2, 2) }
+};
+
+QColor QGCPalette::_base[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0xF6, 0xF6, 0xF6), QColor(0xF6, 0xF6, 0xF6), QColor(0xF6, 0xF6, 0xF6) },
+    { QColor(2, 2, 2), QColor(2, 2, 2), QColor(2, 2, 2) }
+};
+
+QColor QGCPalette::_button[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0x58, 0x58, 0x58), QColor(0x1b, 0x6f, 0xad), QColor(0x1b, 0x6f, 0xad) },
+    { QColor(0x58, 0x58, 0x58), QColor(0x1b, 0x6f, 0xad), QColor(0x1b, 0x6f, 0xad) },
+};
+
+QColor QGCPalette::_buttonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0, 0, 0), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) },
+    { QColor(0, 0, 0), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) },
+};
+
+QColor QGCPalette::_text[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0, 0, 0), QColor(0, 0, 0), QColor(0, 0, 0) },
+    { QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) }
+};
+
+QColor QGCPalette::_window[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0xF6, 0xF6, 0xF6), QColor(0xF6, 0xF6, 0xF6), QColor(0xF6, 0xF6, 0xF6) },
+    { QColor(0x22, 0x22, 0x22), QColor(0x22, 0x22, 0x22), QColor(0x22, 0x22, 0x22) }
+};
+
+QColor QGCPalette::_windowText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0, 0, 0), QColor(0, 0, 0), QColor(0, 0, 0) },
+    { QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) }
+};
 
 QGCPalette::QGCPalette(QObject* parent) :
     QObject(parent),
     _colorGroup(Active)
 {
-    if (!_paletteLoaded) {
-        _paletteLoaded = true;
-        
-        struct Group2Group {
-            ColorGroup              qgcColorGroup;
-            QPalette::ColorGroup    qtColorGroup;
-        };
-        
-        static struct Group2Group rgGroup2Group[] = {
-            { Disabled, QPalette::Disabled },
-            { Active, QPalette::Active },
-            { Inactive, QPalette::Inactive }
-        };
-        static const size_t crgGroup2Group = sizeof(rgGroup2Group) / sizeof(rgGroup2Group[0]);
-        Q_ASSERT(crgGroup2Group == _cColorGroups);
-        
-        for (size_t i=0; i<crgGroup2Group; i++) {
-            ColorGroup colorGroup = rgGroup2Group[i].qgcColorGroup;
-            _window[colorGroup] = QColor(34, 34, 34);
-            _windowText[colorGroup] = QColor(255, 255, 255);
-        }
-        
-        for (size_t i=0; i<crgGroup2Group; i++) {
-            struct Group2Group* prgGroup2Group = &rgGroup2Group[i];
-            
-            QPalette syspal = QApplication::palette();
-            syspal.setCurrentColorGroup(prgGroup2Group->qtColorGroup);
-            
-            ColorGroup qgcColorGroup = prgGroup2Group->qgcColorGroup;
-            
-            _alternateBase[qgcColorGroup] = syspal.color(QPalette::AlternateBase);
-            _base[qgcColorGroup] = syspal.color(QPalette::Base);
-            _button[qgcColorGroup] = syspal.color(QPalette::Button);
-            _buttonText[qgcColorGroup] = syspal.color(QPalette::ButtonText);
-            _text[qgcColorGroup] = syspal.color(QPalette::Text);
-            
-            _shadow[qgcColorGroup] = syspal.shadow().color();
-            _dark[qgcColorGroup] = syspal.dark().color();
-            _highlight[qgcColorGroup] = syspal.highlight().color();
-            _highlightedText[qgcColorGroup] = syspal.highlightedText().color();
-            _light[qgcColorGroup] = syspal.light().color();
-            _mid[qgcColorGroup] = syspal.mid().color();
-            _midlight[qgcColorGroup] = syspal.midlight().color();
-        }
-    }
+    // We have to keep track of all QGCPalette objects in the system so we can signal theme change to all of them
+    _paletteObjects += this;
 }
 
 QGCPalette::~QGCPalette()
 {
-    
+    bool fSuccess = _paletteObjects.removeOne(this);
+    Q_ASSERT(fSuccess);
+    Q_UNUSED(fSuccess);
 }
 
 void QGCPalette::setColorGroup(ColorGroup colorGroup)
 {
     _colorGroup = colorGroup;
+    emit paletteChanged();
+}
+
+void QGCPalette::setGlobalTheme(Theme newTheme)
+{
+    if (_theme != newTheme) {
+        _theme = newTheme;
+        
+        // Notify all objects of the new theme
+        foreach(QGCPalette* palette, _paletteObjects) {
+            palette->_themeChanged();
+        }
+    }
+}
+
+void QGCPalette::_themeChanged(void)
+{
     emit paletteChanged();
 }

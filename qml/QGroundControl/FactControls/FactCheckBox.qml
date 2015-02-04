@@ -8,6 +8,8 @@ CheckBox {
     property variant checkedValue: 1
     property variant uncheckedValue: 0
 
+    property var __qgcpal: QGCPalette { colorGroup: QGCPalette.Active }
+
     partiallyCheckedEnabled: fact.value != checkedValue && fact.value != uncheckedValue
     checkedState: fact.value == checkedValue ? Qt.Checked : (fact.value == uncheckedValue ? Qt.Unchecked : Qt.PartiallyChecked)
 
@@ -19,7 +21,7 @@ CheckBox {
 
     style: CheckBoxStyle {
         label: Text {
-            color: palette.windowText
+            color: __qgcpal.windowText
             text: control.text
         }
     }
