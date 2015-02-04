@@ -57,6 +57,7 @@
 #include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
 #include "QGCFileDialog.h"
+#include "QGCPalette.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -536,6 +537,8 @@ void QGCApplication::_loadCurrentStyle(void)
         // Fall back to plastique if we can't load our own
         setStyle("plastique");
     }
+    
+    QGCPalette::setGlobalTheme(_styleIsDark ? QGCPalette::Dark : QGCPalette::Light);
     
     // Finally restore the cursor before returning.
     restoreOverrideCursor();
