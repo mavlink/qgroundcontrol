@@ -23,7 +23,7 @@
 
 #include "QGCFileDialog.h"
 #include "QGCApplication.h"
-#include "QRegularExpression.h"
+#include <QRegularExpression>
 #include "MainWindow.h"
 #ifdef QT_DEBUG
 #include "UnitTest.h"
