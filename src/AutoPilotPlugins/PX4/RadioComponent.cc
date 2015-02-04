@@ -26,7 +26,6 @@
 
 #include "RadioComponent.h"
 #include "PX4RCCalibration.h"
-#include "VehicleComponentSummaryItem.h"
 #include "PX4AutoPilotPlugin.h"
 
 /// @brief Parameters which signal a change in setupComplete state
