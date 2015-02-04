@@ -26,7 +26,6 @@
 
 #include "FlightModesComponent.h"
 #include "FlightModeConfig.h"
-#include "VehicleComponentSummaryItem.h"
 #include "PX4AutoPilotPlugin.h"
 
 /// @brief Parameters which signal a change in setupComplete state
