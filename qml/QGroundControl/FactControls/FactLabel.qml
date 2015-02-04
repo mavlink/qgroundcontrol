@@ -5,9 +5,10 @@ import QGroundControl.FactSystem 1.0
 
 Label {
     property Fact fact: Fact { value: "FactLabel" }
-    QGCPalette { id: palette; colorGroup: QGCPalette.Active }
 
-    color: palette.windowText
+    property var __qgcpal: QGCPalette { colorGroup: QGCPalette.Active }
+
+    color: __qgcpal.windowText
 
     text: fact.valueString
 }

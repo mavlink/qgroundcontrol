@@ -6,10 +6,11 @@ import QGroundControl.FactSystem 1.0
 TextField {
     property Fact fact: Fact { value: 0 }
     property bool showUnits: false
-    QGCPalette { id: palette; colorGroup: enabled ? QGCPalette.Active : QGCPalette.Disabled }
+
+    property var __qgcpal: QGCPalette { colorGroup: QGCPalette.Active }
 
     text: fact.valueString
-    textColor: palette.text
+    textColor: __qgcpal.text
 
     Label {
         id: unitsLabelWidthGenerator
@@ -32,7 +33,7 @@ TextField {
                 anchors.fill: parent
 
                 border.color: control.activeFocus ? "#47b" : "#999"
-                color: palette.base
+                color: __qgcpal.base
             }
 
             Text {
