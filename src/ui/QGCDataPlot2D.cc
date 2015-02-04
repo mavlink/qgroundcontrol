@@ -135,7 +135,6 @@ void QGCDataPlot2D::savePlot()
     if (fileName.isEmpty())
         return;
 
-    // TODO This will change once we add "strict" file types in file selection dialogs
     while(!(fileName.endsWith(".svg") || fileName.endsWith(".pdf"))) {
         QMessageBox::StandardButton button = QGCMessageBox::warning(
             tr("Unsuitable file extension for Plot document type."),
@@ -157,7 +156,6 @@ void QGCDataPlot2D::savePlot()
     } else if (fileName.endsWith(".svg")) {
         exportSVG(fileName);
     }
-    // TODO Tell the user the name (type) was invalid (neither pdf nor svg) and nothing is being done.
 }
 
 
