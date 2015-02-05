@@ -8,7 +8,7 @@ Rectangle {
     QGCPalette { id: palette; colorGroup: QGCPalette.Active }
 
     width: 600
-    height: 400
+    height: 600
     color: palette.window
     property var leftColWidth: 350
 
@@ -117,7 +117,7 @@ Rectangle {
             width: parent.width
             font.pointSize: 14
             text: "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
-            visible: autopilot.parameters["NAV_RCL_OBC"].value == 1
+            visible: autopilot.parameters["NAV_RCL_OBC"].value == 0
             color: palette.windowText
             wrapMode: Text.Wrap
         }
@@ -125,7 +125,7 @@ Rectangle {
             width: parent.width
             font.pointSize: 14
             text: "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
-            visible: autopilot.parameters["NAV_DLL_OBC"].value == 1
+            visible: autopilot.parameters["NAV_DLL_OBC"].value == 0
             color: palette.windowText
             wrapMode: Text.Wrap
         }
