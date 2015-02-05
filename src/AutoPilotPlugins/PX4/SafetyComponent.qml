@@ -21,31 +21,31 @@ Rectangle {
             spacing: 18
             Label { text: "Triggers For Return Home"; color: palette.windowText; font.pointSize: 20 }
             Row {
-                FactCheckBox {
-                    id: telemetryLossCheckbox
-                    fact: autopilot.parameters["COM_DL_LOSS_EN"]
-                    width: leftColWidth
-                    checkedValue: 1
-                    uncheckedValue: 0
-                    text: "Telemetry signal timeout - Return Home After"
-                    anchors.baseline: telemetryLossField.baseline
-                }
-                FactTextField {
-                    id: telemetryLossField
-                    fact: autopilot.parameters["NAV_DLL_N"];
-                    showUnits: true
-                }
-            }
-            Row {
                 Label {
                     width: leftColWidth
-                    text: "RC Transmitter signal loss - Return Home After"
+                    text: "RC Transmitter Signal Loss - Return Home After"
                     color: palette.windowText
                     anchors.baseline: rcLossField.baseline
                 }
                 FactTextField {
                     id: rcLossField
                     fact: autopilot.parameters["COM_RC_LOSS_T"]
+                    showUnits: true
+                }
+            }
+            Row {
+                FactCheckBox {
+                    id: telemetryLossCheckbox
+                    fact: autopilot.parameters["COM_DL_LOSS_EN"]
+                    width: leftColWidth
+                    checkedValue: 1
+                    uncheckedValue: 0
+                    text: "Telemetry Signal Timeout - Return Home After"
+                    anchors.baseline: telemetryLossField.baseline
+                }
+                FactTextField {
+                    id: telemetryLossField
+                    fact: autopilot.parameters["NAV_DLL_N"];
                     showUnits: true
                 }
             }
