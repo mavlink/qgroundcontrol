@@ -132,8 +132,17 @@ void SetupView::_firmwareButtonClicked(void)
         QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
         return;
     }
-    
+
+#if 1
     PX4FirmwareUpgrade* setup = new PX4FirmwareUpgrade(this);
+#else
+    // NYI
+    QGCQmlWidgetHolder* setup = new QGCQmlWidgetHolder;
+    Q_CHECK_PTR(setup);
+    
+    //setup->setAutoPilot(_autoPilotPlugin);
+    setup->setSource(QUrl::fromUserInput("qrc:/qml/FirmwareUpgrade.qml"));
+#endif
     _changeSetupWidget(setup);
 }
 
