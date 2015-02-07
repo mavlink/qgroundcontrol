@@ -247,6 +247,9 @@ void QGCApplication::_initCommon(void)
     // Avoid Using setFont(). In the Qt docu you can read the following:
     //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
     // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
+    
+    // Register our Qml palette before anyone tries to use it
+    qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
