@@ -71,6 +71,10 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMessageBox.h"
 #include "QGCDockWidget.h"
 
+#ifdef UNITTEST_BUILD
+#include "QmlControls/QmlTestWidget.h"
+#endif
+
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
 #endif
@@ -185,6 +189,12 @@ MainWindow::MainWindow(QSplashScreen* splashScreen) :
     // TODO: Check that this is still necessary on Qt5 on Ubuntu
 #ifdef Q_OS_LINUX
     menuBar()->setNativeMenuBar(false);
+#endif
+    
+#ifdef UNITTEST_BUILD
+    QAction* qmlTestAction = new QAction("Test QML palette and controls", NULL);
+    connect(qmlTestAction, &QAction::triggered, this, &MainWindow::_showQmlTestWidget);
+    ui.menuTools->addAction(qmlTestAction);
 #endif
 
     // Setup UI state machines
@@ -338,7 +348,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen) :
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
     emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-
+    
 	if (!qgcApp()->runningUnitTests()) {
 		show();
 	}
@@ -1519,3 +1529,11 @@ bool MainWindow::x11Event(XEvent *event)
     return false;
 }
 #endif // QGC_MOUSE_ENABLED_LINUX
+
+#ifdef UNITTEST_BUILD
+void MainWindow::_showQmlTestWidget(void)
+{
+    new QmlTestWidget();
+}
+#endif
+

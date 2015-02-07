@@ -294,7 +294,10 @@ private slots:
     void _showDockWidgetAction(bool show);
     void _loadCustomWidgetFromFile(void);
     void _createNewCustomWidget(void);
-
+#ifdef UNITTEST_BUILD
+    void _showQmlTestWidget(void);
+#endif
+    
 private:
     /// Constructor is private since all creation should be through MainWindow::_create
     MainWindow(QSplashScreen* splashScreen);
