@@ -6,7 +6,7 @@ import QGroundControl.FactSystem 1.0
 
 Button {
     checkable: true
-    height: 80
+    height: 30
 
     text: "Button"
     property bool setupComplete: true
@@ -53,32 +53,6 @@ Button {
 
                     radius: indicatorRadius
                     color: control.setupIndicator ? (control.setupComplete ? "green" : "red") : innerRect.color
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: parent.height - parent.titleHeight
-
-                y: parent.titleHeight
-
-                color: __qgcpal.window
-                border.color: control.checked ? "#eee333" : "#676767"
-
-                Image {
-                    id: buttonImage
-                    source: "setupButtonImage.png"
-                    sourceSize: Qt.size(parent.width - 20, parent.height - 20)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    smooth: true
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: buttonImage
-                    source: buttonImage
-                    color: control.checked ? "#eee333" : "#58585a"
                 }
             }
         }
