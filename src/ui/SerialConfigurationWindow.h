@@ -59,6 +59,10 @@ public slots:
     void setParityOdd(bool accept);
     void setParityEven(bool accept);
     void setPortName(QString port);
+    void setBaudRate(QString rate);
+    void setDataBits(int dataBits);
+    void setStopBits(int stopBits);
+
     void setLinkName(QString name);
     /**
      * @brief setupPortList Populates the dropdown with the list of available serial ports.

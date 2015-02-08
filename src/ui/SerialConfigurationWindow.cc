@@ -29,12 +29,13 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QDebug>
-
-#include <SerialConfigurationWindow.h>
-#include <SerialLinkInterface.h>
 #include <QDir>
 #include <QSettings>
 #include <QFileInfoList>
+
+#include "SerialConfigurationWindow.h"
+#include "SerialLinkInterface.h"
+#include "SerialLink.h"
 
 SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidget *parent, Qt::WindowFlags flags) : QWidget(parent, flags),
     userConfigured(false)
@@ -125,13 +126,13 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         // Connect the individual user interface inputs
         connect(ui.portName, SIGNAL(editTextChanged(QString)), this, SLOT(setPortName(QString)));
         connect(ui.portName, SIGNAL(currentIndexChanged(QString)), this, SLOT(setPortName(QString)));
-        connect(ui.baudRate, SIGNAL(activated(QString)), this->link, SLOT(setBaudRateString(QString)));
+        connect(ui.baudRate, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), this, &SerialConfigurationWindow::setBaudRate);
         connect(ui.flowControlCheckBox, SIGNAL(toggled(bool)), this, SLOT(enableFlowControl(bool)));
         connect(ui.parNone, SIGNAL(toggled(bool)), this, SLOT(setParityNone(bool)));
         connect(ui.parOdd, SIGNAL(toggled(bool)), this, SLOT(setParityOdd(bool)));
         connect(ui.parEven, SIGNAL(toggled(bool)), this, SLOT(setParityEven(bool)));
-        connect(ui.dataBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setDataBits(int)));
-        connect(ui.stopBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setStopBits(int)));
+        connect(ui.dataBitsSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &SerialConfigurationWindow::setDataBits);
+        connect(ui.stopBitsSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &SerialConfigurationWindow::setStopBits);
         connect(ui.advCheckBox, SIGNAL(clicked(bool)), ui.advGroupBox, SLOT(setVisible(bool)));
         ui.advCheckBox->setCheckable(true);
         ui.advCheckBox->setChecked(false);
@@ -282,6 +283,28 @@ void SerialConfigurationWindow::setPortName(QString port)
         link->setPortName(port);
     }
     userConfigured = true;
+}
+
+void SerialConfigurationWindow::setBaudRate(QString rate)
+{
+	bool ok;
+	int intrate = rate.toInt(&ok);
+	if (ok) {
+		link->setBaudRate(intrate);
+	}
+	userConfigured = true;
+}
+
+void SerialConfigurationWindow::setDataBits(int dataBits)
+{
+	link->setDataBitsType(static_cast<QSerialPort::DataBits>(dataBits));
+	userConfigured = true;
+}
+
+void SerialConfigurationWindow::setStopBits(int stopBits)
+{
+	link->setStopBitsType(static_cast<QSerialPort::DataBits>(stopBits));
+	userConfigured = true;
 }
 
 void SerialConfigurationWindow::setLinkName(QString name)
