@@ -21,7 +21,7 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/**
+/*!
  * @file
  *   @brief UDP connection (server) for unmanned vehicles
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
@@ -36,39 +36,120 @@ This file is part of the QGROUNDCONTROL project
 #include <QMap>
 #include <QMutex>
 #include <QUdpSocket>
-#include <LinkInterface.h>
+
 #include "QGCConfig.h"
+#include "LinkManager.h"
+
+#define QGC_UDP_PORT 14550
+
+class UDPConfiguration : public LinkConfiguration
+{
+public:
+
+    /*!
+     * @brief Regular constructor
+     *
+     * @param[in] name Configuration (user friendly) name
+     */
+    UDPConfiguration(const QString& name);
+
+    /*!
+     * @brief Copy contructor
+     *
+     * When manipulating data, you create a copy of the configuration, edit it
+     * and then transfer its content to the original (using copyFrom() below). Use this
+     * contructor to create an editable copy.
+     *
+     * @param[in] source Original configuration
+     */
+    UDPConfiguration(UDPConfiguration* source);
+
+    /*!
+     * @brief Begin iteration through the list of target hosts
+     *
+     * @param[out] host Host name
+     * @param[out] port Port number
+     * @return Returns false if list is empty
+     */
+    bool firstHost      (QString& host, int& port);
+
+    /*!
+     * @brief Continues iteration through the list of target hosts
+     *
+     * @param[out] host Host name
+     * @param[out] port Port number
+     * @return Returns false if reached the end of the list (in which case, both host and port are unchanged)
+     */
+    bool nextHost       (QString& host, int& port);
+
+    /*!
+     * @brief Get the number of target hosts
+     *
+     * @return Number of hosts in list
+     */
+    int hostCount       () { return _hosts.count(); }
+
+    /*!
+     * @brief The UDP port we bind to
+     *
+     * @return Port number
+     */
+    quint16 localPort   () { return _localPort; }
+
+    /*!
+     * @brief Add a target host
+     *
+     * @param[in] host Host name in standard formatt, e.g. localhost:14551 or 192.168.1.1:14551
+     */
+    void addHost        (const QString& host);
+
+    /*!
+     * @brief Add a target host
+     *
+     * @param[in] host Host name, e.g. localhost or 192.168.1.1
+     * @param[in] port Port number
+     */
+    void addHost        (const QString& host, int port);
+
+    /*!
+     * @brief Remove a target host from the list
+     *
+     * @param[in] host Host name, e.g. localhost or 192.168.1.1
+     */
+    void removeHost     (const QString& host);
+
+    /*!
+     * @brief Set the UDP port we bind to
+     *
+     * @param[in] port Port number
+     */
+    void setLocalPort   (quint16 port);
+
+    /// From LinkConfiguration
+    int  type() { return LinkConfiguration::TypeUdp; }
+    void copyFrom(LinkConfiguration* source);
+    void loadSettings(QSettings& settings, const QString& root);
+    void saveSettings(QSettings& settings, const QString& root);
+    void updateSettings();
+
+private:
+    QMutex _confMutex;
+    QMap<QString, int>::iterator _it;
+    QMap<QString, int> _hosts;  ///< ("host", port)
+    quint16 _localPort;
+};
 
 class UDPLink : public LinkInterface
 {
     Q_OBJECT
-    //Q_INTERFACES(UDPLinkInterface:LinkInterface)
-
+    friend class UDPConfiguration;
 public:
-    UDPLink(QHostAddress host = QHostAddress::Any, quint16 port = 14550);
-    //UDPLink(QHostAddress host = "239.255.76.67", quint16 port = 7667);
+    UDPLink(UDPConfiguration* config);
     ~UDPLink();
 
     void requestReset() { }
-
     bool isConnected() const;
-    int getPort() const {
-        return port;
-    }
-
-    /**
-     * @brief The human readable port name
-     */
     QString getName() const;
-    int getBaudRate() const;
-    int getBaudRateType() const;
-    int getFlowType() const;
-    int getParityType() const;
-    int getDataBitsType() const;
-    int getStopBitsType() const;
-    QList<QHostAddress> getHosts() const {
-        return hosts;
-    }
 
     // Extensive statistics for scientific purposes
     qint64 getConnectionSpeed() const;
@@ -76,25 +157,23 @@ public:
     qint64 getCurrentOutDataRate() const;
 
     void run();
-
     int getId() const;
-    
+
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);
     bool disconnect(void);
 
 public slots:
-    void setAddress(QHostAddress host);
-    void setPort(int port);
-    /** @brief Add a new host to broadcast messages to */
-    void addHost(const QString& host);
-    /** @brief Remove a host from broadcasting messages to */
-    void removeHost(const QString& host);
-    //    void readPendingDatagrams();
+
+    /*! @brief Add a new host to broadcast messages to */
+    void addHost    (const QString& host);
+    /*! @brief Remove a host from broadcasting messages to */
+    void removeHost (const QString& host);
 
     void readBytes();
-    /**
+
+    /*!
      * @brief Write a number of bytes to the interface.
      *
      * @param data Pointer to the data byte array
@@ -103,25 +182,19 @@ public slots:
     void writeBytes(const char* data, qint64 length);
 
 protected:
-    QString name;
-    QHostAddress host;
-    quint16 port;
-    int id;
-    QUdpSocket* socket;
-    bool connectState;
-    QList<QHostAddress> hosts;
-    QList<quint16> ports;
 
-    QMutex dataMutex;
-
-    void setName(QString name);
+    QUdpSocket*         _socket;
+    UDPConfiguration*   _config;
+    bool                _connectState;
+    int                 _id;
 
 private:
     // From LinkInterface
     virtual bool _connect(void);
     virtual bool _disconnect(void);
 
-	bool hardwareConnect(void);
+    bool _hardwareConnect();
+    void _restartConnection();
 
 signals:
     //Signals are defined by LinkInterface

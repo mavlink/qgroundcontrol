@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>234</width>
-    <height>354</height>
+    <width>325</width>
+    <height>347</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <item>
       <widget class="QLabel" name="portlabel">
        <property name="text">
-        <string>Serial Port</string>
+        <string>Serial Port:</string>
        </property>
       </widget>
      </item>
@@ -60,7 +60,7 @@
      <item>
       <widget class="QLabel" name="portlabel_2">
        <property name="text">
-        <string>Baud Rate</string>
+        <string>Baud Rate:</string>
        </property>
       </widget>
      </item>
@@ -231,12 +231,21 @@
         <string>Advanced</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
+        <property name="leftMargin">
+         <number>20</number>
+        </property>
+        <property name="topMargin">
+         <number>12</number>
+        </property>
+        <property name="rightMargin">
+         <number>20</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QLabel" name="portlabel_3">
             <property name="text">
-             <string>Flow Control</string>
+             <string>Flow Control:</string>
             </property>
            </widget>
           </item>
@@ -263,7 +272,7 @@
           <item>
            <widget class="QLabel" name="portlabel_4">
             <property name="text">
-             <string>Parity</string>
+             <string>Parity:</string>
             </property>
            </widget>
           </item>
@@ -329,7 +338,7 @@
           <item>
            <widget class="QLabel" name="portlabel_5">
             <property name="text">
-             <string>Data bits</string>
+             <string>Data Bits:</string>
             </property>
            </widget>
           </item>
@@ -347,6 +356,12 @@
               <height>0</height>
              </size>
             </property>
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Number of data bits per symbol. This is almost always 8.</string>
             </property>
@@ -356,6 +371,9 @@
             <property name="whatsThis">
              <string>Number of data bits per symbol. This is almost always 8.</string>
             </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
             <property name="minimum">
              <number>5</number>
             </property>
@@ -363,7 +381,7 @@
              <number>8</number>
             </property>
             <property name="value">
-             <number>5</number>
+             <number>8</number>
             </property>
            </widget>
           </item>
@@ -374,7 +392,7 @@
           <item>
            <widget class="QLabel" name="portlabel_6">
             <property name="text">
-             <string>Stop bits</string>
+             <string>Stop Bits:</string>
             </property>
            </widget>
           </item>
@@ -385,6 +403,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
             </property>
             <property name="toolTip">
              <string>Number of stop bits per symbol. This is almost always 2.</string>
@@ -398,8 +422,14 @@
             <property name="frame">
              <bool>true</bool>
             </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
             <property name="readOnly">
              <bool>false</bool>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::UpDownArrows</enum>
             </property>
             <property name="minimum">
              <number>1</number>
@@ -416,19 +446,6 @@
         </item>
        </layout>
       </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>
