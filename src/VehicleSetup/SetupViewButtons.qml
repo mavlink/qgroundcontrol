@@ -46,7 +46,7 @@ Rectangle {
             SetupButton {
                 id: summaryButton; objectName: "summaryButton"
                 width: parent.width
-                text: "VEHICLE SUMMARY"
+                text: "SUMMARY"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
                 onClicked: topLevel.summaryButtonClicked()
