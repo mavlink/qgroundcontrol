@@ -21,31 +21,22 @@
  
  ======================================================================*/
 
+#ifndef QmlTestWidget_h
+#define QmlTestWidget_h
+
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "FactSystem.h"
-#include "UASManager.h"
-#include "QGCApplication.h"
-#include "VehicleComponent.h"
+#include "QGCQmlWidgetHolder.h"
 
-#include <QtQml>
+/// This is used to create widgets which are implemented in QML.
 
-IMPLEMENT_QGC_SINGLETON(FactSystem, FactSystem)
-
-const char* FactSystem::_factSystemQmlUri = "QGroundControl.FactSystem";
-
-FactSystem::FactSystem(QObject* parent) :
-    QGCSingleton(parent)
+class QmlTestWidget : public QGCQmlWidgetHolder
 {
-    qmlRegisterType<Fact>(_factSystemQmlUri, 1, 0, "Fact");
-    qmlRegisterType<FactValidator>(_factSystemQmlUri, 1, 0, "FactValidator");
-    
-    // FIXME: Where should these go?
-    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference VehicleComponent");
-}
+    Q_OBJECT
 
-FactSystem::~FactSystem()
-{
+public:
+    QmlTestWidget(void);
+};
 
-}
+#endif
