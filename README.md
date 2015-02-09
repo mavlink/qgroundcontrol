@@ -36,8 +36,10 @@ Fork the QGC Repo
 ### Initialize submodules
 After cloning or forking you will need to initialize and update the submodules using these commands in you qgroundcontrol source directory:
 
+```
 git submodule init
 git submodule update
+```
 
 Each time you pull new source to your repository you should re-run "git submodule update" to get the latest submodules as well.
 
