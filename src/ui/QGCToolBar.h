@@ -113,30 +113,26 @@ protected:
     QAction* firstAction;
     QToolButton *advancedButton;
     QButtonGroup *group;
-    
+
 private slots:
     void _linkConnected(LinkInterface* link);
     void _linkDisconnected(LinkInterface* link);
     void _disconnectFromMenu(bool checked);
     void _connectButtonClicked(bool checked);
     void _linkComboActivated(int index);
-    
+    void _updateConfigurations();
+
 private:
     void _updateConnectButton(void);
-    void _updatePortList(void);
-    
+
     LinkManager*    _linkMgr;
-    
+
     QComboBox*  _linkCombo;
     QAction*    _linkComboAction;
-    bool        _linkSelectedOnce;
-    QTimer      _portListTimer;
-    
-    QComboBox*  _baudCombo;
-    QAction*    _baudComboAction;
-    
+
     QPushButton*    _connectButton;
     bool            _linksConnected;
+    bool            _linkSelected;      // User selected a link. Stop autoselecting it.
 };
 
 #endif // QGCTOOLBAR_H

@@ -26,13 +26,11 @@ This file is part of the QGROUNDCONTROL project
 #include <QSpacerItem>
 #include <QSerialPortInfo>
 
-#include "SerialLink.h"
-#include "UDPLink.h"
+#include "SettingsDialog.h"
 #include "QGCToolBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
 #include "QGCApplication.h"
-#include "CommConfigurationWindow.h"
 
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
@@ -49,16 +47,14 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     _linkMgr(LinkManager::instance()),
     _linkCombo(NULL),
     _linkComboAction(NULL),
-    _linkSelectedOnce(false),
-    _baudCombo(NULL),
-    _baudComboAction(NULL),
-    _linksConnected(false)
+    _linksConnected(false),
+    _linkSelected(false)
 {
     setObjectName("QGCToolBar");
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-
-    connect(LinkManager::instance(), &LinkManager::linkConnected, this, &QGCToolBar::_linkConnected);
-    connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &QGCToolBar::_linkDisconnected);
+    connect(LinkManager::instance(), &LinkManager::linkConnected,            this, &QGCToolBar::_linkConnected);
+    connect(LinkManager::instance(), &LinkManager::linkDisconnected,         this, &QGCToolBar::_linkDisconnected);
+    connect(LinkManager::instance(), &LinkManager::linkConfigurationChanged, this, &QGCToolBar::_updateConfigurations);
 }
 
 void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
@@ -161,31 +157,14 @@ void QGCToolBar::createUI()
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     addWidget(spacer);
 
+    // Links to connect to
     _linkCombo = new QComboBox(this);
-    _linkCombo->addItem("UDP");
     connect(_linkCombo, SIGNAL(activated(int)), SLOT(_linkComboActivated(int)));
-    
     _linkCombo->setToolTip(tr("Choose the link to use"));
     _linkCombo->setEnabled(true);
-    _linkCombo->setMinimumWidth(100);
-    
+    _linkCombo->setMinimumWidth(160);
     _linkComboAction = addWidget(_linkCombo);
-
-    _baudCombo = new QComboBox(this);
-    _baudCombo->setToolTip(tr("Choose what baud rate to use"));
-    _baudCombo->setEnabled(true);
-    _baudCombo->setMinimumWidth(40);
-    _baudCombo->addItem("9600", 9600);
-    _baudCombo->addItem("14400", 14400);
-    _baudCombo->addItem("19200", 19200);
-    _baudCombo->addItem("38400", 38400);
-    _baudCombo->addItem("57600", 57600);
-    _baudCombo->addItem("115200", 115200);
-    _baudCombo->addItem("230400", 230400);
-    _baudCombo->addItem("460800", 460800);
-    _baudCombo->addItem("921600", 921600);
-    _baudCombo->setCurrentIndex(_baudCombo->findData(57600));
-    _baudComboAction = addWidget(_baudCombo);
+    _updateConfigurations();
 
     _connectButton = new QPushButton(tr("Connect"), this);
     _connectButton->setObjectName("connectButton");
@@ -202,9 +181,6 @@ void QGCToolBar::createUI()
     // Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-
-    connect(&_portListTimer, &QTimer::timeout, this, &QGCToolBar::_updatePortList);
-    _portListTimer.start(500);
 
     toolBarMessageAction->setVisible(false);
     toolBarBatteryBarAction->setVisible(false);
@@ -422,7 +398,7 @@ void QGCToolBar::updateView()
 
     }
     if (toolBarBatteryVoltageLabel->isVisible()) {
-	toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
+    toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
     }
 
 
@@ -601,26 +577,6 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
     lastSystemMessageTimeMs = QGC::groundTimeMilliseconds();
 }
 
-void QGCToolBar::_updatePortList(void)
-{
-    if (!_linkCombo->isVisible()) {
-        return;
-    }
-
-    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
-    
-    foreach (QSerialPortInfo portInfo, portList) {
-        if (_linkCombo->findText(portInfo.portName()) == -1) {
-            _linkCombo->addItem(portInfo.portName());
-            if (!_linkSelectedOnce && portInfo.vendorIdentifier() == 9900) {
-                // Pre-Select 3DR connection
-                _linkSelectedOnce = true;
-                _linkCombo->setCurrentIndex(_linkCombo->findText(portInfo.portName()));
-            }
-        }
-    }
-}
-
 void QGCToolBar::_linkConnected(LinkInterface* link)
 {
     Q_UNUSED(link);
@@ -636,9 +592,7 @@ void QGCToolBar::_linkDisconnected(LinkInterface* link)
 void QGCToolBar::_updateConnectButton(void)
 {
     QMenu* menu = new QMenu(this);
-    
     // If there are multiple connected links add/update the connect button menu
-    
     int connectedCount = 0;
     QList<LinkInterface*> links = _linkMgr->getLinks();
     foreach(LinkInterface* link, links) {
@@ -649,27 +603,21 @@ void QGCToolBar::_updateConnectButton(void)
             connect(action, &QAction::triggered, this, &QGCToolBar::_disconnectFromMenu);
         }
     }
-    
     // Remove old menu
     QMenu* oldMenu = _connectButton->menu();
     _connectButton->setMenu(NULL);
     if (oldMenu) {
         oldMenu->deleteLater();
     }
-    
     // Add new menu if needed
     if (connectedCount > 1) {
         _connectButton->setMenu(menu);
     } else {
         delete menu;
     }
-    
     _linksConnected = connectedCount != 0;
-    
     _connectButton->setText(_linksConnected ? tr("Disconnect") : tr("Connect"));
-
     _linkComboAction->setVisible(!_linksConnected);
-    _baudComboAction->setVisible(!_linksConnected);
     toolBarMessageAction->setVisible(_linksConnected);
     toolBarWpAction->setVisible(_linksConnected);
 }
@@ -677,12 +625,9 @@ void QGCToolBar::_updateConnectButton(void)
 void QGCToolBar::_connectButtonClicked(bool checked)
 {
     Q_UNUSED(checked);
-    
     if (_linksConnected) {
         // Disconnect
-        
         // Should be just one connected link, disconnect it
-        
         int connectedCount = 0;
         LinkInterface* connectedLink = NULL;
         QList<LinkInterface*> links = _linkMgr->getLinks();
@@ -694,27 +639,31 @@ void QGCToolBar::_connectButtonClicked(bool checked)
         }
         Q_ASSERT(connectedCount == 1);
         Q_ASSERT(connectedLink);
-        
+        // TODO The link is "disconnected" but not deleted. On subsequent connections,
+        // new links are created. Why's that?
         _linkMgr->disconnectLink(connectedLink);
     } else {
+        // We don't want the combo box updating under our feet
+        _linkMgr->suspendConfigurationUpdates(true);
         // Connect
-        
-        QString linkName = _linkCombo->currentText();
-        
-        if (linkName == "UDP") {
-            UDPLink* link = new UDPLink;
-            Q_CHECK_PTR(link);
-            
-            _linkMgr->addLink(link);
-            CommConfigurationWindow* commDialog = new CommConfigurationWindow(link, this);
-            commDialog->exec();
-        } else {
-            // Must be a serial port
-            SerialLink* link = new SerialLink(linkName, _baudCombo->currentText().toInt());
-            Q_CHECK_PTR(link);
-            
-            _linkMgr->addLink(link);
-            _linkMgr->connectLink(link);
+        int valid = _linkCombo->currentData().toInt();
+        // Is this a valid option?
+        if(valid == 1) {
+            // Get the configuration name
+            QString confName = _linkCombo->currentText();
+            // Create a link for it
+            LinkInterface* link = _linkMgr->createLink(confName);
+            if(link) {
+                // Connect it
+                _linkMgr->connectLink(link);
+                // Save last used connection
+                MainWindow::instance()->saveLastUsedConnection(confName);
+            }
+            _linkMgr->suspendConfigurationUpdates(false);
+        // Else, it must be Manage Links
+        } else if(valid == 0) {
+            _linkMgr->suspendConfigurationUpdates(false);
+            MainWindow::instance()->manageLinks();
         }
     }
 }
@@ -722,13 +671,10 @@ void QGCToolBar::_connectButtonClicked(bool checked)
 void QGCToolBar::_disconnectFromMenu(bool checked)
 {
     Q_UNUSED(checked);
-    
     QAction* action = qobject_cast<QAction*>(sender());
     Q_ASSERT(action);
-    
     LinkInterface* link = (LinkInterface*)(action->data().value<void *>());
     Q_ASSERT(link);
-    
     _linkMgr->disconnectLink(link);
 }
 
@@ -743,7 +689,36 @@ void QGCToolBar::clearStatusString()
 
 void QGCToolBar::_linkComboActivated(int index)
 {
-    Q_UNUSED(index);
-    
-    _linkSelectedOnce = true;
+    int type = _linkCombo->itemData(index).toInt();
+    // Check if we should "Manage Connections"
+    if(type == 0) {
+        MainWindow::instance()->manageLinks();
+    } else {
+        _linkSelected = true;
+    }
+}
+
+void QGCToolBar::_updateConfigurations()
+{
+    bool resetSelected = false;
+    QString selected = _linkCombo->currentText();
+    _linkCombo->clear();
+    _linkCombo->addItem("Manage Links", 0);
+    QList<LinkConfiguration*> configs = LinkManager::instance()->getLinkConfigurationList();
+    foreach(LinkConfiguration* conf, configs) {
+        if(conf) {
+            _linkCombo->addItem(conf->name(), 1);
+            if(!_linkSelected && conf->isPreferred()) {
+                selected = conf->name();
+                resetSelected = true;
+            }
+        }
+    }
+    int index = _linkCombo->findText(selected);
+    if(index >= 0) {
+        _linkCombo->setCurrentIndex(index);
+    }
+    if(resetSelected) {
+        _linkSelected = false;
+    }
 }

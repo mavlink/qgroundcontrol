@@ -170,12 +170,8 @@
    </property>
   </action>
   <action name="actionAdd_Link">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/actions/list-add.svg</normaloff>:/files/images/actions/list-add.svg</iconset>
-   </property>
    <property name="text">
-    <string>Add Link</string>
+    <string>Manage Links</string>
    </property>
   </action>
   <action name="actionSimulate">

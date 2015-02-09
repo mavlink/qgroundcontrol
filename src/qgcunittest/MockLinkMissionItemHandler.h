@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 #ifndef MOCKLINKMISSIONITEMHANDLER_H
@@ -32,6 +32,7 @@
 #include "MAVLinkSimulationLink.h"
 #include "QGCMAVLink.h"
 
+/* Alreedy defined in MAVLinkSimulationLink.h above!
 enum PX_WAYPOINTPLANNER_STATES {
     PX_WPP_IDLE = 0,
     PX_WPP_SENDLIST,
@@ -40,14 +41,15 @@ enum PX_WAYPOINTPLANNER_STATES {
     PX_WPP_GETLIST_GETWPS,
     PX_WPP_GETLIST_GOTALL
 };
+*/
 
 class MockLinkMissionItemHandler : public QObject
 {
     Q_OBJECT
-    
+
 public:
     MockLinkMissionItemHandler(uint16_t systemId, QObject* parent = NULL);
-    
+
     /// @brief Called to handle mission item related messages. All messages should be passed to this method.
     ///         It will handle the appropriate set.
     void handleMessage(const mavlink_message_t& msg);
@@ -98,10 +100,10 @@ protected:
     float distanceToPoint(uint16_t seq, float x, float y);
     void mavlink_handler(const mavlink_message_t* msg);
 #endif
-    
+
 private:
     uint16_t _vehicleSystemId;  ///< System id of this vehicle
-    
+
     QList<mavlink_mission_item_t>   _missionItems;  ///< Current set of mission itemss
 
 };

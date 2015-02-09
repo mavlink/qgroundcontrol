@@ -39,6 +39,7 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 #include <QMetaType>
 
 class LinkManager;
+class LinkConfiguration;
 
 /**
 * The link interface defines the interface for all links used to communicate
@@ -48,10 +49,10 @@ class LinkManager;
 class LinkInterface : public QThread
 {
     Q_OBJECT
-    
+
     // Only LinkManager is allowed to _connect, _disconnect or delete a link
     friend class LinkManager;
-    
+
 public:
     LinkInterface() :
         QThread(0),
@@ -59,26 +60,32 @@ public:
         _deletedByLinkManager(false)
     {
         // Initialize everything for the data rate calculation buffers.
-        inDataIndex = 0;
+        inDataIndex  = 0;
         outDataIndex = 0;
 
-        // Initialize our data rate buffers manually, cause C++<03 is dumb.
-        for (int i = 0; i < dataRateBufferSize; ++i)
-        {
-            inDataWriteAmounts[i] = 0;
-            inDataWriteTimes[i] = 0;
-            outDataWriteAmounts[i] = 0;
-            outDataWriteTimes[i] = 0;
-        }
+        // Initialize our data rate buffers.
+        memset(inDataWriteAmounts, 0, sizeof(inDataWriteAmounts));
+        memset(inDataWriteTimes,   0, sizeof(inDataWriteTimes));
+        memset(outDataWriteAmounts,0, sizeof(outDataWriteAmounts));
+        memset(outDataWriteTimes,  0, sizeof(outDataWriteTimes));
 
         qRegisterMetaType<LinkInterface*>("LinkInterface*");
     }
 
+    /**
+     * @brief Destructor
+     * LinkManager take ownership of Links once they are added to it. Once added to LinkManager
+     * use LinkManager::deleteLink to remove if necessary.
+     **/
     virtual ~LinkInterface() {
-        // LinkManager take ownership of Links once they are added to it. Once added to LinkManager
-        // user LinkManager::deleteLink to remove if necessary/
         Q_ASSERT(!_ownedByLinkManager || _deletedByLinkManager);
     }
+
+    /**
+     * @brief Get link configuration (if used)
+     * @return A pointer to the instance of LinkConfiguration if supported. NULL otherwise.
+     **/
+    virtual LinkConfiguration* getLinkConfiguration() { return NULL; }
 
     /* Connection management */
 
@@ -142,7 +149,7 @@ public:
     {
         return getCurrentDataRate(outDataIndex, outDataWriteTimes, outDataWriteAmounts);
     }
-    
+
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);
@@ -323,14 +330,14 @@ private:
      * @return True if connection could be established, false otherwise
      **/
     virtual bool _connect(void) = 0;
-    
+
     /**
      * @brief Disconnect this interface logically
      *
      * @return True if connection could be terminated, false otherwise
      **/
     virtual bool _disconnect(void) = 0;
-    
+
     bool _ownedByLinkManager;   ///< true: This link has been added to LinkManager, false: Link not added to LinkManager
     bool _deletedByLinkManager; ///< true: Link being deleted from LinkManager, false: error, Links should only be deleted from LinkManager
 };
