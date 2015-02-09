@@ -105,8 +105,6 @@ public:
     void loadSettings();
     void writeSettings();
 
-    void checkIfCDC();
-
     void run();
     void run2();
 
@@ -161,7 +159,6 @@ protected:
     QMutex m_dataMutex;       // Mutex for reading data from m_port
     QMutex m_writeMutex;      // Mutex for accessing the m_transmitBuffer.
     QString type;
-    bool m_is_cdc;
     
 private slots:
     void _rerouteDisconnected(void);
