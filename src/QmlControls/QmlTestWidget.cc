@@ -24,28 +24,12 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "FactSystem.h"
-#include "UASManager.h"
-#include "QGCApplication.h"
-#include "VehicleComponent.h"
+#include "QmlTestWidget.h"
 
-#include <QtQml>
-
-IMPLEMENT_QGC_SINGLETON(FactSystem, FactSystem)
-
-const char* FactSystem::_factSystemQmlUri = "QGroundControl.FactSystem";
-
-FactSystem::FactSystem(QObject* parent) :
-    QGCSingleton(parent)
+QmlTestWidget::QmlTestWidget(void)
 {
-    qmlRegisterType<Fact>(_factSystemQmlUri, 1, 0, "Fact");
-    qmlRegisterType<FactValidator>(_factSystemQmlUri, 1, 0, "FactValidator");
-    
-    // FIXME: Where should these go?
-    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference VehicleComponent");
-}
-
-FactSystem::~FactSystem()
-{
-
+    setAttribute(Qt::WA_DeleteOnClose);
+    resize(500, 500);
+    setVisible(true);
+    setSource(QUrl::fromUserInput("qrc:qml/QmlTest.qml"));
 }

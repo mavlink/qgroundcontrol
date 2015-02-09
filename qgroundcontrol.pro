@@ -208,8 +208,6 @@ ReleaseBuild {
     }
 }
 
-QML_IMPORT_PATH = $$BASEDIR/qml
-
 # qextserialport should not be used by general QGroundControl code. Use QSerialPort instead. This is only
 # here to support special case Firmware Upgrade code.
 include(libs/qextserialport/src/qextserialport.pri)
@@ -681,7 +679,8 @@ HEADERS += \
     src/qgcunittest/MavlinkLogTest.h \
     src/FactSystem/FactSystemTestBase.h \
     src/FactSystem/FactSystemTestPX4.h \
-    src/FactSystem/FactSystemTestGeneric.h
+    src/FactSystem/FactSystemTestGeneric.h \
+    src/QmlControls/QmlTestWidget.h \
 
 SOURCES += \
     src/qgcunittest/UnitTest.cc \
@@ -705,7 +704,9 @@ SOURCES += \
     src/qgcunittest/MavlinkLogTest.cc \
     src/FactSystem/FactSystemTestBase.cc \
     src/FactSystem/FactSystemTestPX4.cc \
-    src/FactSystem/FactSystemTestGeneric.cc
+    src/FactSystem/FactSystemTestGeneric.cc \
+    src/QmlControls/QmlTestWidget.cc \
+
 }
 
 #

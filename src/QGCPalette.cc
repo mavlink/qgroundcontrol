@@ -49,13 +49,13 @@ QColor QGCPalette::_button[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
 };
 
 QColor QGCPalette::_buttonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0, 0, 0), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) },
-    { QColor(0, 0, 0), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) },
+    { QColor(0x2c, 0x2c, 0x2c), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) },
+    { QColor(0x2c, 0x2c, 0x2c), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) },
 };
 
 QColor QGCPalette::_text[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0, 0, 0), QColor(0, 0, 0), QColor(0, 0, 0) },
-    { QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) }
+    { QColor(0x58, 0x58, 0x58), QColor(0, 0, 0), QColor(0, 0, 0) },
+    { QColor(0x58, 0x58, 0x58), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) }
 };
 
 QColor QGCPalette::_window[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
@@ -64,8 +64,13 @@ QColor QGCPalette::_window[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
 };
 
 QColor QGCPalette::_windowText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0, 0, 0), QColor(0, 0, 0), QColor(0, 0, 0) },
-    { QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) }
+    { QColor(0x58, 0x58, 0x58), QColor(0, 0, 0), QColor(0, 0, 0) },
+    { QColor(0x58, 0x58, 0x58), QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0xFF, 0xFF) }
+};
+
+QColor QGCPalette::_buttonHighlight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0x58, 0x58, 0x58), QColor(0xee, 0xe3, 0x33), QColor(0xee, 0xe3, 0x33) },
+    { QColor(0x58, 0x58, 0x58), QColor(0xee, 0xe3, 0x33), QColor(0xee, 0xe3, 0x33) },
 };
 
 QGCPalette::QGCPalette(QObject* parent) :
