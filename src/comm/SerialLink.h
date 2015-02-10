@@ -123,11 +123,6 @@ signals: //[TODO] Refactor to Linkinterface
 public slots:
     bool setPortName(QString portName);
     bool setBaudRate(int rate);
-    bool setDataBits(int dataBits);
-    bool setStopBits(int stopBits);
-
-    // Set string rate
-    bool setBaudRateString(const QString& rate);
 
     // Set ENUM values
     bool setBaudRateType(int rateIndex);

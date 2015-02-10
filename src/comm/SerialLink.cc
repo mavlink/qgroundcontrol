@@ -770,17 +770,8 @@ bool SerialLink::setBaudRateType(int rateIndex)
     return result;
 }
 
-bool SerialLink::setBaudRateString(const QString& rate)
-{
-    bool ok;
-    int intrate = rate.toInt(&ok);
-    if (!ok) return false;
-    return setBaudRate(intrate);
-}
-
 bool SerialLink::setBaudRate(int rate)
 {
-
     bool accepted = false;
     if (rate != m_baud) {
         m_baud = rate;
@@ -835,37 +826,6 @@ bool SerialLink::setParityType(int parity)
                 }
             emit updateLink(this);
         }
-    }
-    return accepted;
-}
-
-
-bool SerialLink::setDataBits(int dataBits)
-{
-
-    qDebug("SET DATA BITS");
-    bool accepted = false;
-    if (dataBits != m_dataBits) {
-        m_dataBits = static_cast<QSerialPort::DataBits>(dataBits);
-        accepted = true;
-        if (m_port && !m_is_cdc)
-            accepted = m_port->setDataBits(static_cast<QSerialPort::DataBits>(dataBits));
-        emit updateLink(this);
-    }
-    return accepted;
-}
-
-bool SerialLink::setStopBits(int stopBits)
-{
-
-    // Note 3 is OneAndAHalf stopbits.
-    bool accepted = false;
-    if (stopBits != m_stopBits) {
-        m_stopBits = static_cast<QSerialPort::StopBits>(stopBits);
-        accepted = true;
-        if (m_port && !m_is_cdc)
-            accepted = m_port->setStopBits(static_cast<QSerialPort::StopBits>(stopBits));
-        emit updateLink(this);
     }
     return accepted;
 }
