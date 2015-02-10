@@ -7,7 +7,7 @@ import QGroundControl.Palette 1.0
 
 Button {
     checkable: true
-    height: 80
+    height: 60
 
     text: "Button"
     property bool setupComplete: true
@@ -22,7 +22,7 @@ Button {
 
         background: Rectangle {
             id: innerRect
-            readonly property real titleHeight: 30
+            readonly property real titleHeight: 20
 
             border.color: control.checked ? "#eee333" : "#676767"
             radius: 10
@@ -45,7 +45,7 @@ Button {
                 Rectangle {
                     id: setupIndicator
 
-                    readonly property real indicatorRadius: 6
+                    readonly property real indicatorRadius: 4
 
                     x: parent.width - (indicatorRadius * 2) - 5
                     y: (parent.height - (indicatorRadius * 2)) / 2
