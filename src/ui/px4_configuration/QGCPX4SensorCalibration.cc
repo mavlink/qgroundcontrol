@@ -142,10 +142,10 @@ void QGCPX4SensorCalibration::parameterChanged(int uas, int component, QString p
     }
 
     // Check mag calibration naively
-    if (parameterName.contains("SENS_MAG_XOFF")) {
-        float offset = value.toFloat();
-        if (offset < 0.000001f && offset > -0.000001f) {
-            // Must be zero, not good
+    if (parameterName.contains("CAL_MAG0_ID")) {
+        float id = value.toInt();
+        if (id == 0) {
+            // no sensor selected
             setMagCalibrated(false);
         } else {
             setMagCalibrated(true);
@@ -153,10 +153,10 @@ void QGCPX4SensorCalibration::parameterChanged(int uas, int component, QString p
     }
 
     // Check gyro calibration naively
-    if (parameterName.contains("SENS_GYRO_XOFF")) {
-        float offset = value.toFloat();
-        if (offset < 0.000001f && offset > -0.000001f) {
-            // Must be zero, not good
+    if (parameterName.contains("CAL_GYRO0_ID")) {
+        float id = value.toInt();
+        if (id == 0) {
+            // no sensor selected
             setGyroCalibrated(false);
         } else {
             setGyroCalibrated(true);
@@ -164,10 +164,10 @@ void QGCPX4SensorCalibration::parameterChanged(int uas, int component, QString p
     }
 
     // Check accel calibration naively
-    if (parameterName.contains("SENS_ACC_XOFF")) {
-        float offset = value.toFloat();
-        if (offset < 0.000001f && offset > -0.000001f) {
-            // Must be zero, not good
+    if (parameterName.contains("CAL_ACC0_ID")) {
+        float id = value.toFloat();
+        if (id == 0) {
+            // no sensor selected
             setAccelCalibrated(false);
         } else {
             setAccelCalibrated(true);
