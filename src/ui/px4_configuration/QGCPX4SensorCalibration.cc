@@ -142,7 +142,7 @@ void QGCPX4SensorCalibration::parameterChanged(int uas, int component, QString p
     }
 
     // Check mag calibration naively
-    if (parameterName.contains("SENS_MAG_XOFF")) {
+    if (parameterName.contains("SENS_MAG_XOFF") || parameterName.contains("CAL_MAG0_ID")) {
         float offset = value.toFloat();
         if (offset < 0.000001f && offset > -0.000001f) {
             // Must be zero, not good
@@ -153,7 +153,7 @@ void QGCPX4SensorCalibration::parameterChanged(int uas, int component, QString p
     }
 
     // Check gyro calibration naively
-    if (parameterName.contains("SENS_GYRO_XOFF")) {
+    if (parameterName.contains("SENS_GYRO_XOFF") || parameterName.contains("CAL_GYRO0_ID")) {
         float offset = value.toFloat();
         if (offset < 0.000001f && offset > -0.000001f) {
             // Must be zero, not good
@@ -164,7 +164,7 @@ void QGCPX4SensorCalibration::parameterChanged(int uas, int component, QString p
     }
 
     // Check accel calibration naively
-    if (parameterName.contains("SENS_ACC_XOFF")) {
+    if (parameterName.contains("SENS_ACC_XOFF") || parameterName.contains("CAL_ACC0_ID")) {
         float offset = value.toFloat();
         if (offset < 0.000001f && offset > -0.000001f) {
             // Must be zero, not good
@@ -354,17 +354,24 @@ void QGCPX4SensorCalibration::setActiveUAS(UASInterface* uas)
     // If the parameters are ready, we aren't going to get paramterChanged signals. So fake them in order to make the UI work.
     if (uas->getParamManager()->parametersReady()) {
         QVariant value;
-        static const char* rgParams[] = { "SENS_BOARD_ROT", "SENS_EXT_MAG_ROT", "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", "SENS_DPRES_OFF" };
+        static const char* rgParamsV1[] = { "SENS_BOARD_ROT", "SENS_EXT_MAG_ROT", "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", "SENS_DPRES_OFF" };
+        static const char* rgParamsV2[] = { "SENS_BOARD_ROT", "SENS_EXT_MAG_ROT", "CAL_MAG0_XOFF", "CAL_GYRO0_XOFF", "CAL_ACC0_XOFF", "SENS_DPRES_OFF" };
         
         QGCUASParamManagerInterface* paramMgr = uas->getParamManager();
         
-        for (size_t i=0; i<sizeof(rgParams)/sizeof(rgParams[0]); i++) {
+        // Temp hack for parameter mapping
+        bool paramsV1 = paramMgr->getComponentForParam("SENS_MAG_XOFF").count();
+        static const char** prgParamList = paramsV1 ? rgParamsV1 : rgParamsV2;
+        
+        for (size_t i=0; i<sizeof(rgParamsV1)/sizeof(rgParamsV1[0]); i++) {
             QVariant value;
             
-            QList<int> compIds = paramMgr->getComponentForParam(rgParams[i]);
+            QList<int> compIds = paramMgr->getComponentForParam(prgParamList[i]);
             Q_ASSERT(compIds.count() == 1);
-            paramMgr->getParameterValue(compIds[0], rgParams[i], value);
-            parameterChanged(uas->getUASID(), compIds[0], rgParams[i], value);
+            bool found = paramMgr->getParameterValue(compIds[0], prgParamList[i], value);
+            Q_ASSERT(found);
+            Q_UNUSED(found);
+            parameterChanged(uas->getUASID(), compIds[0], prgParamList[i], value);
         }
     }
 }
