@@ -431,48 +431,28 @@ void LinechartWidget::refresh()
     setUpdatesEnabled(true);
 }
 
-QString LinechartWidget::getLogSaveFilename()
-{
-    QString fileName = QGCFileDialog::getSaveFileName(this,
-        tr("Save Log File"),
-        QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        tr("Log file (*.log)"),
-        "log");
-    return fileName;
-}
-
 void LinechartWidget::startLogging()
 {
-    // Store reference to file
-    bool abort = false;
-
     // Check if any curve is enabled
     if (!activePlot->anyCurveVisible()) {
-        QGCMessageBox::critical(tr("No curves selected for logging."), tr("Please check all curves you want to log. Currently no data would be logged, aborting the logging."));
+        QGCMessageBox::critical(
+            tr("No curves selected for logging."),
+            tr("Please check all curves you want to log. Currently no data would be logged. Aborting the logging."));
         return;
     }
 
     // Let user select the log file name
     // QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    QString fileName = getLogSaveFilename();
-
-    while (!(fileName.endsWith(".log")) && !abort && fileName != "") {
-        QMessageBox::StandardButton button = QGCMessageBox::critical(tr("Unsuitable file extension for logfile"),
-                                                                     tr("Please choose .log as file extension. Click OK to change the file extension, cancel to not start logging."),
-                                                                     QMessageBox::Ok | QMessageBox::Cancel,
-                                                                     QMessageBox::Ok);
-        if (button != QMessageBox::Ok) {
-            abort = true;
-            break;
-        }
-        fileName = getLogSaveFilename();
-    }
+    QString fileName = QGCFileDialog::getSaveFileName(this,
+        tr("Save Log File"),
+        QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        tr("Log Files (*.log)"),
+        "log"); // Default type
 
     qDebug() << "SAVE FILE " << fileName;
 
-    // Check if the user did not abort the file save dialog
-    if (!abort && fileName != "") {
+    if (!fileName.isEmpty()) {
         logFile = new QFile(fileName);
         if (logFile->open(QIODevice::Truncate | QIODevice::WriteOnly | QIODevice::Text)) {
             logging = true;
@@ -497,10 +477,11 @@ void LinechartWidget::stopLogging()
         compressor = new LogCompressor(logFile->fileName(), logFile->fileName());
         connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
 
-        QMessageBox::StandardButton button = QGCMessageBox::question(tr("Starting Log Compression"),
-                                                                     tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"),
-                                                                     QMessageBox::Yes | QMessageBox::No,
-                                                                     QMessageBox::No);
+        QMessageBox::StandardButton button = QGCMessageBox::question(
+            tr("Starting Log Compression"),
+            tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
         bool fill;
         if (button == QMessageBox::Yes)
         {

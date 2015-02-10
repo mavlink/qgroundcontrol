@@ -773,17 +773,19 @@ void MainWindow::_createNewCustomWidget(void)
 
 void MainWindow::_loadCustomWidgetFromFile(void)
 {
-    QString widgetFileExtension(".qgw");
-    QString fileName = QGCFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
-    if (fileName != "") {
+    QString fileName = QGCFileDialog::getOpenFileName(
+        this, tr("Load Widget File"),
+        QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        tr("QGroundControl Widgets (*.qgw);;All Files (*)"));
+    if (!fileName.isEmpty()) {
         QGCToolWidget* tool = new QGCToolWidget("", "", this);
         if (tool->loadSettings(fileName, true)) {
             QString objectName = tool->objectName() + "DOCK";
-            
             _createDockWidget(tool->getTitle(), objectName, Qt::LeftDockWidgetArea, tool);
             _mapName2DockWidget[objectName]->widget()->setVisible(true);
         }
     }
+    // TODO Add error dialog if widget could not be loaded
 }
 
 void MainWindow::loadSettings()
@@ -849,7 +851,6 @@ void MainWindow::startVideoCapture()
     // TODO: What is this? What kind of "Video" is saved to bmp?
     QString format("bmp");
     QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
-
     QString screenFileName = QGCFileDialog::getSaveFileName(
         this, tr("Save Video Capture"),
         initialPath,
