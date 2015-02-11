@@ -55,6 +55,7 @@ public:
 private:
     const QString   _name;
     QVariantList    _summaryItems;
+    bool            _paramsV1;
 };
 
 #endif
