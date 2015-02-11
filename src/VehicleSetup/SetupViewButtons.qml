@@ -24,6 +24,8 @@ Rectangle {
         id: disconnectedButtons
 
         Column {
+            anchors.fill: parent
+
             spacing: 10
 
             SetupButton {
@@ -41,6 +43,8 @@ Rectangle {
         id: connectedButtons
 
         Column {
+            anchors.fill: parent
+
             spacing: 10
 
             SetupButton {
