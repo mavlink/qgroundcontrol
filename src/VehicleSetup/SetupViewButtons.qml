@@ -13,11 +13,6 @@ Rectangle {
     QGCPalette { id: palette; colorGroup: QGCPalette.Active }
     color: palette.window
 
-    signal firmwareButtonClicked;
-    signal summaryButtonClicked;
-    signal parametersButtonClicked;
-    signal setupButtonClicked(variant component);
-
     ExclusiveGroup { id: setupButtonGroup }
 
     Component {
@@ -34,7 +29,7 @@ Rectangle {
                 text: "FIRMWARE"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                onClicked: topLevel.firmwareButtonClicked()
+                onClicked: controller.firmwareButtonClicked()
             }
         }
     }
@@ -53,7 +48,7 @@ Rectangle {
                 text: "SUMMARY"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                onClicked: topLevel.summaryButtonClicked()
+                onClicked: controller.summaryButtonClicked()
             }
 
             SetupButton {
@@ -62,7 +57,7 @@ Rectangle {
                 text: "FIRMWARE"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                onClicked: topLevel.firmwareButtonClicked()
+                onClicked: controller.firmwareButtonClicked()
             }
 
             Repeater {
@@ -73,7 +68,7 @@ Rectangle {
                     text: modelData.name.toUpperCase()
                     setupComplete: modelData.setupComplete
                     exclusiveGroup: setupButtonGroup
-                    onClicked: topLevel.setupButtonClicked(modelData)
+                    onClicked: controller.setupButtonClicked(modelData)
                 }
             }
 
@@ -82,7 +77,7 @@ Rectangle {
                 text: "PARAMETERS"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                onClicked: topLevel.parametersButtonClicked()
+                onClicked: controller.parametersButtonClicked()
             }
         }
     }
