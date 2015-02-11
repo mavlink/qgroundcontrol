@@ -70,7 +70,7 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 ##### Install Qt5.3+ from PPA
 Note: Please be aware that the time of writing, Qt5.3 is unavailable in the official repositories Ubuntu 14.04/Mint 17.*. If it has become available since, please follow the instructions for installing Qt5.3 on Ubuntu.
 * Add this PPA to your sources.list: `ppa:beineri/opt-qt532-trusty`
-* Run the following in your terminal: `sudo apt-get update && sudo apt-get install qt53tools qt53base qt53declarative qt53serialport qt53svg qt53webkit`
+* Run the following in your terminal: `sudo apt-get update && sudo apt-get install qt53tools qt53base qt53declarative qt53serialport qt53svg qt53webkit qt53quickcontrols qt53graphicaleffects`
 * Next, set the environment variables by executing in the terminal: `source /opt/qt53/bin/qt53-env.sh` or copy and paste the contents to your `~/.profile` file to set them on login.
 * Verify that the variables have been set: `echo $PATH && echo $QTDIR`. The output should read `/opt/qt53/bin:...` and `/opt/qt53`.
 
