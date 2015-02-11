@@ -67,12 +67,12 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 * For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel`
 * For Arch Linux: `pacman -Sy qtcreator qt5-base qt5-declarative qt5-serialport qt5-svg qt5-webkit`
 
-##### Install Qt5.3+ from PPA
-Note: Please be aware that the time of writing, Qt5.3 is unavailable in the official repositories Ubuntu 14.04/Mint 17.*. If it has become available since, please follow the instructions for installing Qt5.3 on Ubuntu.
-* Add this PPA to your sources.list: `ppa:beineri/opt-qt532-trusty`
-* Run the following in your terminal: `sudo apt-get update && sudo apt-get install qt53tools qt53base qt53declarative qt53serialport qt53svg qt53webkit`
-* Next, set the environment variables by executing in the terminal: `source /opt/qt53/bin/qt53-env.sh` or copy and paste the contents to your `~/.profile` file to set them on login.
-* Verify that the variables have been set: `echo $PATH && echo $QTDIR`. The output should read `/opt/qt53/bin:...` and `/opt/qt53`.
+##### Install Qt5.4 from PPA
+Note: Please be aware that the time of writing, Qt5.5 is unavailable in the official repositories Ubuntu 14.04/Mint 17.*. If it has become available since, please follow the instructions for installing Qt5.4 on Ubuntu.
+* Add this PPA to your sources.list: `ppa:beineri/opt-qt54-trusty`
+* Run the following in your terminal: `sudo apt-get update && sudo apt-get install qt54tools qt54base qt54declarative qt54serialport qt54svg qt54webkit qt54quickcontrols qt54graphicaleffects`
+* Next, set the environment variables by executing in the terminal: `source /opt/qt54/bin/qt54-env.sh` or copy and paste the contents to your `~/.profile` file to set them on login.
+* Verify that the variables have been set: `echo $PATH && echo $QTDIR`. The output should read `/opt/qt54/bin:...` and `/opt/qt54`.
 
 #### [Optional] Install additional libraries
 * For text-to-speech (espeak)
