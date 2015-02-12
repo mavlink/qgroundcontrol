@@ -22,23 +22,20 @@
  ======================================================================*/
 
 /// @file
-///     @brief Simple MainWindow unit test
-///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "MainWindowTest.h"
-#include "QGCToolBar.h"
+#include "SetupViewTest.h"
 #include "MockLink.h"
 #include "QGCMessageBox.h"
 
-UT_REGISTER_TEST(MainWindowTest)
+UT_REGISTER_TEST(SetupViewTest)
 
-MainWindowTest::MainWindowTest(void)
+SetupViewTest::SetupViewTest(void)
 {
     
 }
 
-void MainWindowTest::init(void)
+void SetupViewTest::init(void)
 {
     UnitTest::init();
 
@@ -46,7 +43,7 @@ void MainWindowTest::init(void)
     Q_CHECK_PTR(_mainWindow);
 }
 
-void MainWindowTest::cleanup(void)
+void SetupViewTest::cleanup(void)
 {
     _mainWindow->close();
     delete _mainWindow;
@@ -54,47 +51,47 @@ void MainWindowTest::cleanup(void)
     UnitTest::cleanup();
 }
 
-void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
+void SetupViewTest::_clickThrough_test(void)
 {
     LinkManager* linkMgr = LinkManager::instance();
     Q_CHECK_PTR(linkMgr);
     
     MockLink* link = new MockLink();
     Q_CHECK_PTR(link);
-    link->setAutopilotType(autopilot);
+    link->setAutopilotType(MAV_AUTOPILOT_PX4);
     LinkManager::instance()->addLink(link);
     linkMgr->connectLink(link);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
     
-    // Click through all top level toolbar buttons
+    // Find the Setup button and click it
+    
     QGCToolBar* toolbar = _mainWindow->findChild<QGCToolBar*>();
     Q_ASSERT(toolbar);
     
     QList<QToolButton*> buttons = toolbar->findChildren<QToolButton*>();
+    QToolButton* setupButton = NULL;
     foreach(QToolButton* button, buttons) {
-        if (!button->menu()) {
-            QTest::mouseClick(button, Qt::LeftButton);
-            QTest::qWait(1000);
+        if (button->text() == "Setup") {
+            setupButton = button;
+            break;
         }
     }
     
-    // On MainWindow close we should get a message box telling the user to disconnect first. Cancel should do nothing.
-    setExpectedMessageBox(QGCMessageBox::Cancel);
-    _mainWindow->close();
-    QTest::qWait(1000); // Need to allow signals to move between threads    
-    checkExpectedMessageBox();
+    Q_ASSERT(setupButton);
+    QTest::mouseClick(setupButton, Qt::LeftButton);
+    QTest::qWait(1000);
 
-    // We are going to disconnect the link which is going to pop a save file dialog
+    // Click through all the setup buttons
+    // FIXME: NYI
+    
+    // On MainWindow close we should get a message box telling the user to disconnect first. Disconnect will then pop
+    // the log file save dialog.
+    
+    setExpectedMessageBox(QGCMessageBox::Yes);
     setExpectedFileDialog(getSaveFileName, QStringList());
-    linkMgr->disconnectLink(link);
+    
+    _mainWindow->close();
     QTest::qWait(1000); // Need to allow signals to move between threads
+    checkExpectedMessageBox();
     checkExpectedFileDialog();
-}
-
-void MainWindowTest::_connectWindowClosePX4_test(void) {
-    _connectWindowClose_test(MAV_AUTOPILOT_PX4);
-}
-
-void MainWindowTest::_connectWindowCloseGeneric_test(void) {
-    _connectWindowClose_test(MAV_AUTOPILOT_ARDUPILOTMEGA);
 }

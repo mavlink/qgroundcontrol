@@ -381,7 +381,7 @@
 1	50	RTL_RETURN_ALT	                      100	9
 1	50	SDLOG_EXT	-1	6
 1	50	SDLOG_RATE	-1	6
-1	50	SENS_ACC_XOFF	                        0	9
+1	50	SENS_ACC_XOFF	                        1	9
 1	50	SENS_ACC_XSCALE	                        1	9
 1	50	SENS_ACC_YOFF	                        0	9
 1	50	SENS_ACC_YSCALE	                        1	9
@@ -396,13 +396,13 @@
 1	50	SENS_DPRES_OFF	                        0	9
 1	50	SENS_EXT_MAG	0	6
 1	50	SENS_EXT_MAG_ROT	0	6
-1	50	SENS_GYRO_XOFF	                        0	9
+1	50	SENS_GYRO_XOFF	                        1	9
 1	50	SENS_GYRO_XSCALE	                        1	9
 1	50	SENS_GYRO_YOFF	                        0	9
 1	50	SENS_GYRO_YSCALE	                        1	9
 1	50	SENS_GYRO_ZOFF	                        0	9
 1	50	SENS_GYRO_ZSCALE	                        1	9
-1	50	SENS_MAG_XOFF	                        0	9
+1	50	SENS_MAG_XOFF	                        1	9
 1	50	SENS_MAG_XSCALE	                        1	9
 1	50	SENS_MAG_YOFF	                        0	9
 1	50	SENS_MAG_YSCALE	                        1	9
