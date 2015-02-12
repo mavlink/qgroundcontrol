@@ -329,7 +329,7 @@ void SerialLink::run()
         }
         QGC::SLEEP::msleep(SerialLink::poll_interval);
     } // end of forever
-    
+
     if (m_port) {
         qDebug() << "Closing Port #"<< __LINE__ << m_port->portName();
         m_port->close();
@@ -408,7 +408,7 @@ bool SerialLink::_disconnect(void)
  * @return True if connection has been established, false if connection couldn't be established.
  **/
 bool SerialLink::_connect(void)
-{   
+{
     qDebug() << "CONNECT CALLED";
     if (isRunning())
         _disconnect();
@@ -463,12 +463,11 @@ bool SerialLink::hardwareConnect(QString &type)
     }
 
     m_port = new QSerialPort(m_portName);
-    m_port->moveToThread(this);
-
     if (!m_port) {
         emit communicationUpdate(getName(),"Error opening port: " + m_portName);
         return false; // couldn't create serial port.
     }
+    m_port->moveToThread(this);
 
     // We need to catch this signal and then emit disconnected. You can't connect
     // signal to signal otherwise disonnected will have the wrong QObject::Sender
@@ -866,6 +865,6 @@ void SerialLink::_rerouteDisconnected(void)
 void SerialLink::_emitLinkError(const QString& errorMsg)
 {
     QString msg("Error on link %1. %2");
-    
+
     emit communicationError(tr("Link Error"), msg.arg(getName()).arg(errorMsg));
 }
