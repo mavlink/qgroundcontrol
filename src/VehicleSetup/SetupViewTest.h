@@ -22,32 +22,29 @@
  ======================================================================*/
 
 /// @file
-///     @brief Simple MainWindow unit test
-///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef MAINWINDOWTEST_H
-#define MAINWINDOWTEST_H
+#ifndef SetupViewTest_H
+#define SetupViewTest_H
 
 #include "UnitTest.h"
 #include "MainWindow.h"
 
-class MainWindowTest : public UnitTest
+/// Click through test for Setup View buttons
+class SetupViewTest : public UnitTest
 {
     Q_OBJECT
     
 public:
-    MainWindowTest(void);
+    SetupViewTest(void);
     
 private slots:
     void init(void);
     void cleanup(void);
     
-    void _connectWindowClosePX4_test(void);
-    void _connectWindowCloseGeneric_test(void);
+    void _clickThrough_test(void);
     
 private:
-    void _connectWindowClose_test(MAV_AUTOPILOT autopilot);
     MainWindow* _mainWindow;
 };
 
