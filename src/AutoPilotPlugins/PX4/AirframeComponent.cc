@@ -30,6 +30,9 @@
 /// @brief Parameters which signal a change in setupComplete state
 static const char* triggerParams[] = { "SYS_AUTOSTART", NULL };
 
+#if 0
+// Broken by latest mavlink module changes. Not used yet. Comment out for now.
+// Discussing mavlink fix.
 struct mavType {
     int         type;
     const char* description;
@@ -66,11 +69,15 @@ static const struct mavType mavTypeInfo[] = {
     { MAV_TYPE_GIMBAL,              "Gimbal" },
 };
 static size_t cMavTypes = sizeof(mavTypeInfo) / sizeof(mavTypeInfo[0]);
+#endif
 
 AirframeComponent::AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
     _name(tr("Airframe"))
 {
+#if 0
+    // Broken by latest mavlink module changes. Not used yet. Comment out for now.
+    // Discussing mavlink fix.
     Q_UNUSED(mavTypeInfo);  // Keeping this around for later use
     
     // Validate that our mavTypeInfo array hasn't gotten out of sync
@@ -112,6 +119,7 @@ AirframeComponent::AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopil
     for (size_t i=0; i<cMavTypes; i++) {
         Q_ASSERT(mavTypeInfo[i].type == mavTypes[i]);
     }
+#endif
 }
 
 QString AirframeComponent::name(void) const
