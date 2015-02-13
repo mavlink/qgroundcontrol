@@ -340,7 +340,6 @@ FORMS += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
     src/ui/px4_configuration/PX4RCCalibration.ui \
-    src/ui/px4_configuration/PX4FirmwareUpgrade.ui \
     src/ui/QGCUASFileView.ui \
     src/QGCQmlWidgetHolder.ui \
     src/ui/QGCMapRCToParamDialog.ui \
@@ -477,9 +476,6 @@ HEADERS += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
     src/ui/px4_configuration/PX4RCCalibration.h \
     src/ui/px4_configuration/RCValueWidget.h \
-    src/ui/px4_configuration/PX4Bootloader.h \
-    src/ui/px4_configuration/PX4FirmwareUpgradeThread.h \
-    src/ui/px4_configuration/PX4FirmwareUpgrade.h \
     src/uas/UASManagerInterface.h \
     src/uas/QGCUASParamManagerInterface.h \
     src/uas/QGCUASFileManager.h \
@@ -622,9 +618,6 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/px4_configuration/PX4RCCalibration.cc \
     src/ui/px4_configuration/RCValueWidget.cc \
-    src/ui/px4_configuration/PX4Bootloader.cc \
-    src/ui/px4_configuration/PX4FirmwareUpgradeThread.cc \
-    src/ui/px4_configuration/PX4FirmwareUpgrade.cc \
     src/uas/QGCUASFileManager.cc \
     src/ui/QGCUASFileView.cc \
     src/CmdLineOptParser.cc \
@@ -714,6 +707,10 @@ SOURCES += \
 #
 # AutoPilot Plugin Support
 #
+
+INCLUDEPATH += \
+    src/VehicleSetup
+
 FORMS += \
     src/VehicleSetup/ParameterEditor.ui \
     src/ui/QGCPX4VehicleConfig.ui \
@@ -724,6 +721,9 @@ HEADERS+= \
     src/VehicleSetup/SetupView.h \
     src/VehicleSetup/ParameterEditor.h \
     src/VehicleSetup/VehicleComponent.h \
+    src/VehicleSetup/FirmwareUpgradeController.h \
+    src/VehicleSetup/PX4Bootloader.h \
+    src/VehicleSetup/PX4FirmwareUpgradeThread.h \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
@@ -742,6 +742,9 @@ SOURCES += \
     src/VehicleSetup/SetupView.cc \
     src/VehicleSetup/ParameterEditor.cc \
     src/VehicleSetup/VehicleComponent.cc \
+    src/VehicleSetup/FirmwareUpgradeController.cc \
+    src/VehicleSetup/PX4Bootloader.cc \
+    src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/Generic/GenericParameterFacts.cc \

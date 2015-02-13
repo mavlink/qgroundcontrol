@@ -30,11 +30,11 @@
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
-#include "PX4FirmwareUpgrade.h"
 #include "ParameterEditor.h"
 #include "QGCQmlWidgetHolder.h"
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
+#include "FirmwareUpgradeController.h"
 
 #include <QQmlError>
 #include <QQmlContext>
@@ -54,12 +54,12 @@ SetupView::SetupView(QWidget* parent) :
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
     
-    //setResizeMode(SizeRootObjectToView);
-    
     _ui->buttonHolder->setAutoPilot(NULL);
     _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtons.qml"));
     
     _ui->buttonHolder->rootContext()->setContextProperty("controller", this);
+    
+    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.FirmwareUpgradeController", 1, 0, "FirmwareUpgradeController");
     
     _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
@@ -120,16 +120,11 @@ void SetupView::firmwareButtonClicked(void)
         return;
     }
 
-#if 1
-    PX4FirmwareUpgrade* setup = new PX4FirmwareUpgrade(this);
-#else
-    // NYI
     QGCQmlWidgetHolder* setup = new QGCQmlWidgetHolder;
     Q_CHECK_PTR(setup);
     
-    //setup->setAutoPilot(_autoPilotPlugin);
     setup->setSource(QUrl::fromUserInput("qrc:/qml/FirmwareUpgrade.qml"));
-#endif
+
     _changeSetupWidget(setup);
 }
 
