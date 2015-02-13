@@ -41,7 +41,6 @@ public:
     enum {
         TypeSerial,     ///< Serial Link
         TypeUdp,        ///< UDP Link
-        TypeMock,       ///< Mock Link for Unitesting
         // TODO Below is not yet implemented
 #if 0
         TypeTcp,        ///< TCP Link
@@ -49,6 +48,9 @@ public:
         TypeForwarding, ///< Forwarding Link
         TypeXbee,       ///< XBee Proprietary Link
         TypeOpal,       ///< Opal-RT Link
+#endif
+#ifdef UNITTEST_BUILD
+        TypeMock,       ///< Mock Link for Unitesting
 #endif
         TypeLast        // Last type value (type >= TypeLast == invalid)
     };
