@@ -34,8 +34,9 @@
 #include <QList>
 #include <QMutex>
 
+#include <Eigen/Eigen>
+
 #include "UASInterface.h"
-#include "../../libs/eigen/Eigen/Eigen"
 #include "QGCGeo.h"
 #include "QGCSingleton.h"
 
