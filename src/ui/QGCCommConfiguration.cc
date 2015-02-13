@@ -96,12 +96,14 @@ void QGCCommConfiguration::_loadTypeConfigWidget(int type)
             _ui->typeCombo->setCurrentIndex(_ui->typeCombo->findData(LinkConfiguration::TypeUdp));
         }
         break;
+#ifdef UNITTEST_BUILD
         case LinkConfiguration::TypeMock: {
             _ui->linkScrollArea->setWidget(NULL);
             _ui->linkGroupBox->setTitle(tr("Mock Link"));
             _ui->typeCombo->setCurrentIndex(_ui->typeCombo->findData(LinkConfiguration::TypeMock));
         }
         break;
+#endif
         // Cannot be the case, but in case it gets here, we cannot continue.
         default:
             reject();

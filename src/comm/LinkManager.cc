@@ -79,9 +79,11 @@ LinkInterface* LinkManager::createLink(LinkConfiguration* config)
         case LinkConfiguration::TypeUdp:
             pLink = new UDPLink(dynamic_cast<UDPConfiguration*>(config));
             break;
+#ifdef UNITTEST_BUILD
         case LinkConfiguration::TypeMock:
             pLink = new MockLink(dynamic_cast<MockConfiguration*>(config));
             break;
+#endif
     }
     if(pLink) {
         addLink(pLink);
@@ -373,10 +375,12 @@ void LinkManager::loadLinkConfigurationList()
                                     pLink = (LinkConfiguration*)new UDPConfiguration(name);
                                     pLink->setPreferred(preferred);
                                     break;
+#ifdef UNITTEST_BUILD
                                 case LinkConfiguration::TypeMock:
                                     pLink = (LinkConfiguration*)new MockConfiguration(name);
                                     pLink->setPreferred(false);
                                     break;
+#endif
                             }
                             if(pLink) {
                                 // Have the instance load its own values

@@ -142,10 +142,12 @@ void QGCLinkConfiguration::on_addLinkButton_clicked()
                         config->setName(
                             QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
                         break;
+#ifdef UNITTEST_BUILD
                     case LinkConfiguration::TypeMock:
                         config->setName(
                             QString("Mock Link"));
                         break;
+#endif
                 }
             }
             _viewModel->beginChange();

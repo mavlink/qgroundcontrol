@@ -37,7 +37,10 @@ This file is part of the PIXHAWK project
 // Links
 #include "SerialLink.h"
 #include "UDPLink.h"
+
+#ifdef UNITTEST_BUILD
 #include "MockLink.h"
+#endif
 
 #include "ProtocolInterface.h"
 #include "QGCSingleton.h"
