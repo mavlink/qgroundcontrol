@@ -32,10 +32,13 @@ This file is part of the QGROUNDCONTROL project
 #define _UASMANAGER_H_
 
 #include "UASManagerInterface.h"
+#include "UASInterface.h"
+
 #include <QList>
 #include <QMutex>
-#include <UASInterface.h>
-#include "../../libs/eigen/Eigen/Eigen"
+
+#include <Eigen/Eigen>
+
 #include "QGCGeo.h"
 #include "QGCSingleton.h"
 
