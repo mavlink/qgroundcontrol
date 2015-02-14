@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QDebug>
 #include <QMutexLocker>
+#include <QNetworkProxy>
 #include <iostream>
 
 #include "UDPLink.h"
@@ -222,6 +223,7 @@ bool UDPLink::_hardwareConnect()
 {
     QHostAddress host = QHostAddress::Any;
     _socket = new QUdpSocket();
+    _socket->setProxy(QNetworkProxy::NoProxy);
     _connectState = _socket->bind(host, _config->localPort());
     QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
     if (_connectState) {
