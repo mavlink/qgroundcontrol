@@ -123,7 +123,7 @@ private slots:
     void _updateConfigurations();
 
 private:
-    void _updateConnectButton(void);
+    void _updateConnectButton(LinkInterface* disconnectedLink = NULL);
 
     LinkManager*    _linkMgr;
 

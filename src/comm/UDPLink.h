@@ -164,6 +164,8 @@ public:
     bool connect(void);
     bool disconnect(void);
 
+    LinkConfiguration* getLinkConfiguration() { return _config; }
+
 public slots:
 
     /*! @brief Add a new host to broadcast messages to */

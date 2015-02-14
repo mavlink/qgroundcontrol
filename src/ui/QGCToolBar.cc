@@ -585,18 +585,17 @@ void QGCToolBar::_linkConnected(LinkInterface* link)
 
 void QGCToolBar::_linkDisconnected(LinkInterface* link)
 {
-    Q_UNUSED(link);
-    _updateConnectButton();
+    _updateConnectButton(link);
 }
 
-void QGCToolBar::_updateConnectButton(void)
+void QGCToolBar::_updateConnectButton(LinkInterface *disconnectedLink)
 {
     QMenu* menu = new QMenu(this);
     // If there are multiple connected links add/update the connect button menu
     int connectedCount = 0;
     QList<LinkInterface*> links = _linkMgr->getLinks();
     foreach(LinkInterface* link, links) {
-        if (link->isConnected()) {
+        if (disconnectedLink != link && link->isConnected()) {
             connectedCount++;
             QAction* action = menu->addAction(link->getName());
             action->setData(QVariant::fromValue((void*)link));
