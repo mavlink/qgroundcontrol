@@ -174,9 +174,13 @@ void PX4FirmwareUpgradeThreadWorker::timeout(void)
 
 void PX4FirmwareUpgradeThreadWorker::sendBootloaderReboot(void)
 {
-    _bootloader->sendBootloaderReboot(_bootloaderPort);
-    _bootloaderPort->deleteLater();
-    _bootloaderPort = NULL;
+    if (_bootloaderPort) {
+        if (_bootloaderPort->isOpen()) {
+            _bootloader->sendBootloaderReboot(_bootloaderPort);
+        }
+        _bootloaderPort->deleteLater();
+        _bootloaderPort = NULL;
+    }
 }
 
 void PX4FirmwareUpgradeThreadWorker::program(const QString firmwareFilename)
