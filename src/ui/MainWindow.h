@@ -91,13 +91,13 @@ public:
     /// @brief Returns the MainWindow singleton. Will not create the MainWindow if it has not already
     ///         been created.
     static MainWindow* instance(void);
-    
+
     /// @brief Deletes the MainWindow singleton
     void deleteInstance(void);
-    
+
     /// @brief Creates the MainWindow singleton. Should only be called once by QGCApplication.
     static MainWindow* _create(QSplashScreen* splashScreen);
-    
+
     /// @brief Called to indicate that splash screen is no longer being displayed.
     void splashScreenFinished(void) { _splashScreen = NULL; }
 
@@ -117,14 +117,19 @@ public:
     }
 
     QList<QAction*> listLinkMenuActions();
-    
+
     void hideSplashScreen(void);
+
+    /// @brief Saves the last used connection
+    void saveLastUsedConnection(const QString connection);
+
+    /// @brief Restore (and connects) the last used connection (if any)
+    void restoreLastUsedConnection();
+
 
 public slots:
     /** @brief Show the application settings */
     void showSettings();
-    /** @brief Add a communication link */
-    LinkInterface* addLink();
     bool configLink(LinkInterface *link);
     /** @brief Simulate a link */
     void simulateLink(bool simulate);
@@ -158,6 +163,8 @@ public slots:
     void loadGoogleEarthView();
     /** @brief Load local 3D view */
     void loadLocal3DView();
+    /** @brief Manage Links */
+    void manageLinks();
 
     /** @brief Show the online help for users */
     void showHelp();
@@ -178,7 +185,7 @@ public slots:
     void configureWindowName();
 
     void commsWidgetDestroyed(QObject *obj);
-    
+
 protected slots:
     /**
      * @brief Unchecks the normalActionItem.
@@ -243,7 +250,7 @@ protected:
     QPointer<QWidget> q3DWidget;
 #endif
 #ifdef QGC_GOOGLE_EARTH_ENABLED
-	QPointer<QGCGoogleEarthView> earthWidget;
+    QPointer<QGCGoogleEarthView> earthWidget;
 #endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
@@ -288,9 +295,8 @@ protected:
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
     QTimer windowNameUpdateTimer;
-    
+
 private slots:
-    void _addLinkMenu(LinkInterface* link);
     void _showDockWidgetAction(bool show);
     void _loadCustomWidgetFromFile(void);
     void _createNewCustomWidget(void);
@@ -301,9 +307,9 @@ private slots:
 private:
     /// Constructor is private since all creation should be through MainWindow::_create
     MainWindow(QSplashScreen* splashScreen);
-    
+
     void _openUrl(const QString& url, const QString& errorMessage);
-    
+
     // Center widgets
     QPointer<QWidget> _plannerView;
     QPointer<QWidget> _pilotView;
@@ -313,10 +319,10 @@ private:
     QPointer<QWidget> _terminalView;
     QPointer<QWidget> _googleEarthView;
     QPointer<QWidget> _local3DView;
-    
+
     VIEW_SECTIONS   _currentView;       ///< Currently displayed view
     QWidget*        _currentViewWidget; ///< Currently displayed view widget
-    
+
     // Dock widget names
     static const char* _uasControlDockWidgetName;
     static const char* _uasListDockWidgetName;
@@ -333,11 +339,11 @@ private:
     static const char* _hudDockWidgetName;
     static const char* _uasInfoViewDockWidgetName;
     static const char* _debugConsoleDockWidgetName;
-    
+
     QMap<QString, QDockWidget*>     _mapName2DockWidget;
     QMap<int, QDockWidget*>         _mapUasId2HilDockWidget;
     QMap<QDockWidget*, QAction*>    _mapDockWidget2Action;
-    
+
     void _buildPlannerView(void);
     void _buildPilotView(void);
     void _buildSetupView(void);
@@ -346,10 +352,10 @@ private:
     void _buildTerminalView(void);
     void _buildGoogleEarthView(void);
     void _buildLocal3DView(void);
-    
+
     void _storeCurrentViewState(void);
     void _loadCurrentViewState(void);
-    
+
     void _createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget);
     void _createInnerDockWidget(const QString& widgetName);
     void _buildCustomWidgets(void);
@@ -358,18 +364,18 @@ private:
     void _hideAllDockWidgets(void);
     void _showDockWidget(const QString &name, bool show);
     void _showHILConfigurationWidgets(void);
-    
+
     QList<QGCToolWidget*> _customWidgets;
-    
+
     QVBoxLayout* _centralLayout;
-    
+
     QList<QObject*> commsWidgetList;
     MenuActionHelper *menuActionHelper;
     Ui::MainWindow ui;
 
     QString getWindowStateKey();
     QString getWindowGeometryKey();
-    
+
     QSplashScreen* _splashScreen;   ///< Splash screen, NULL is splash screen not currently being shown
 
     friend class MenuActionHelper; //For VIEW_SECTIONS

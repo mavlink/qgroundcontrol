@@ -42,9 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
-#include "UDPLink.h"
 #include "MAVLinkProtocol.h"
-#include "CommConfigurationWindow.h"
 #include "QGCWaypointListMulti.h"
 #include "MainWindow.h"
 #include "JoystickWidget.h"
@@ -81,6 +79,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LogCompressor.h"
 
+/// The key under which the Main Window settings are saved
+const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
+
 const char* MainWindow::_uasControlDockWidgetName = "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET";
 const char* MainWindow::_uasListDockWidgetName = "UNMANNED_SYSTEM_LIST_DOCKWIDGET";
 const char* MainWindow::_waypointsDockWidgetName = "WAYPOINT_LIST_DOCKWIDGET";
@@ -102,9 +103,9 @@ static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
 MainWindow* MainWindow::_create(QSplashScreen* splashScreen)
 {
     Q_ASSERT(_instance == NULL);
-    
+
     new MainWindow(splashScreen);
-    
+
     // _instance is set in constructor
     Q_ASSERT(_instance);
 
@@ -135,13 +136,13 @@ MainWindow::MainWindow(QSplashScreen* splashScreen) :
 {
     Q_ASSERT(_instance == NULL);
     _instance = this;
-    
+
     if (splashScreen) {
         connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
     }
-    
+
     loadSettings();
-    
+
     // Select the proper view. Default to the flight view or load the last one used if it's supported.
     VIEW_SECTIONS currentViewCandidate = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", _currentView).toInt();
     switch (currentViewCandidate) {
@@ -159,12 +160,12 @@ MainWindow::MainWindow(QSplashScreen* splashScreen) :
 #endif
             _currentView = currentViewCandidate;
             break;
-            
+
         default:
             // Leave _currentView to the default
             break;
     }
-    
+
     // Put it back, which will set it to a valid value
     settings.setValue("CURRENT_VIEW", _currentView);
 
@@ -172,7 +173,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen) :
 
     // Setup user interface
     ui.setupUi(this);
-    
+
     // Setup central widget with a layout to hold the views
     _centralLayout = new QVBoxLayout();
     centralWidget()->setLayout(_centralLayout);
@@ -232,16 +233,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen) :
     // Create actions
     connectCommonActions();
 
-    // Populate link menu
-    emit initStatusChanged(tr("Populating link menu"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
-    foreach(LinkInterface* link, links)
-    {
-        _addLinkMenu(link);
-    }
-
-    connect(LinkManager::instance(), &LinkManager::newLink, this, &MainWindow::_addLinkMenu);
-    
     // Connect user interface devices
     emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     joystick = new JoystickInput();
@@ -263,14 +254,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen) :
     // Connect link
     if (autoReconnect)
     {
-        LinkManager* linkMgr = LinkManager::instance();
-        Q_ASSERT(linkMgr);
-        
-        SerialLink* link = new SerialLink();
-        
-        // Add to registry
-        linkMgr->addLink(link);
-        linkMgr->connectLink(link);
+        restoreLastUsedConnection();
     }
 
     // Set low power mode
@@ -348,10 +332,10 @@ MainWindow::MainWindow(QSplashScreen* splashScreen) :
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
     emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    
-	if (!qgcApp()->runningUnitTests()) {
-		show();
-	}
+
+    if (!qgcApp()->runningUnitTests()) {
+        show();
+    }
 }
 
 MainWindow::~MainWindow()
@@ -374,7 +358,7 @@ MainWindow::~MainWindow()
     {
         commsWidgetList[i]->deleteLater();
     }
-    
+
     _instance = NULL;
 }
 
@@ -401,7 +385,7 @@ QString MainWindow::getWindowGeometryKey()
 void MainWindow::_buildCustomWidgets(void)
 {
     Q_ASSERT(_customWidgets.count() == 0);
-    
+
     // Create custom widgets
     _customWidgets = QGCToolWidget::createWidgetsFromSettings(this);
 
@@ -409,11 +393,11 @@ void MainWindow::_buildCustomWidgets(void)
     {
         ui.menuTools->addSeparator();
     }
-    
+
     foreach(QGCToolWidget* tool, _customWidgets) {
         // Check if this widget already has a parent, do not create it in this case
         QDockWidget* dock = dynamic_cast<QDockWidget*>(tool->parentWidget());
-        
+
         if (!dock) {
             _createDockWidget(tool->getTitle(), tool->objectName(), Qt::BottomDockWidgetArea, tool);
         }
@@ -423,32 +407,32 @@ void MainWindow::_buildCustomWidgets(void)
 void MainWindow::_createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget)
 {
     Q_ASSERT(!_mapName2DockWidget.contains(name));
-    
+
     QGCDockWidget* dockWidget = new QGCDockWidget(title, this);
     Q_CHECK_PTR(dockWidget);
     dockWidget->setObjectName(name);
     dockWidget->setVisible (false);
-    
+
     if (innerWidget) {
         // Put inner widget inside QDockWidget
         innerWidget->setParent(dockWidget);
         dockWidget->setWidget(innerWidget);
         innerWidget->setVisible(true);
     }
-    
+
     // Add to menu
-    
+
     QAction* action = new QAction(title, NULL);
     action->setCheckable(true);
     action->setData(name);
-    
+
     connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
-    
+
     ui.menuTools->addAction(action);
-    
+
     _mapName2DockWidget[name] = dockWidget;
     _mapDockWidget2Action[dockWidget] = action;
-    
+
     addDockWidget(area, dockWidget);
 }
 
@@ -466,13 +450,13 @@ void MainWindow::_buildCommonWidgets(void)
     // In order for Qt to save and restore state of widgets all widgets must be created ahead of time. We only create the QDockWidget
     // holders. We do not create the actual inner widget until it is needed. This saves memory and cpu from running widgets that are
     // never shown.
-    
+
     struct DockWidgetInfo {
         const char* name;
         const char* title;
         Qt::DockWidgetArea area;
     };
-    
+
     static const struct DockWidgetInfo rgDockWidgetInfo[] = {
         { _uasControlDockWidgetName,        "Control",                  Qt::LeftDockWidgetArea },
         { _uasListDockWidgetName,           "Unmanned Systems",         Qt::RightDockWidgetArea },
@@ -491,10 +475,10 @@ void MainWindow::_buildCommonWidgets(void)
         { _debugConsoleDockWidgetName,      "Communications Console",   Qt::LeftDockWidgetArea }
     };
     static const size_t cDockWidgetInfo = sizeof(rgDockWidgetInfo) / sizeof(rgDockWidgetInfo[0]);
-    
+
     for (size_t i=0; i<cDockWidgetInfo; i++) {
         const struct DockWidgetInfo* pDockInfo = &rgDockWidgetInfo[i];
-        
+
         _createDockWidget(pDockInfo->title, pDockInfo->name, pDockInfo->area, NULL /* no inner widget yet */);
     }
 
@@ -576,7 +560,7 @@ void MainWindow::_showDockWidget(const QString& name, bool show)
         qWarning() << "Attempt to show unknown dock widget" << name;
         return;
     }
-    
+
     // Create the inner widget if we need to
     if (!_mapName2DockWidget[name]->widget()) {
         _createInnerDockWidget(name);
@@ -585,9 +569,9 @@ void MainWindow::_showDockWidget(const QString& name, bool show)
     Q_ASSERT(_mapName2DockWidget.contains(name));
     QDockWidget* dockWidget = _mapName2DockWidget[name];
     Q_ASSERT(dockWidget);
-    
+
     dockWidget->setVisible(show);
-    
+
     Q_ASSERT(_mapDockWidget2Action.contains(dockWidget));
     _mapDockWidget2Action[dockWidget]->setChecked(show);
 }
@@ -597,9 +581,9 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
 {
     Q_ASSERT(_mapName2DockWidget.contains(widgetName)); // QDockWidget should already exist
     Q_ASSERT(!_mapName2DockWidget[widgetName]->widget());     // Inner widget should not
-    
+
     QWidget* widget = NULL;
-    
+
     if (widgetName == _uasControlDockWidgetName) {
         widget = new UASControlWidget(this);
     } else if (widgetName == _uasListDockWidgetName) {
@@ -625,14 +609,14 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         acceptList.append("-3.3,ATTITUDE.yaw,deg,+3.3,s");
         HDDisplay *hddisplay = new HDDisplay(acceptList,"Flight Display",this);
         hddisplay->addSource(mavlinkDecoder);
-        
+
         widget = hddisplay;
     } else if (widgetName == _hdd2DockWidgetName) {
         QStringList acceptList;
         acceptList.append("0,RAW_PRESSURE.pres_abs,hPa,65500");
         HDDisplay *hddisplay = new HDDisplay(acceptList,"Actuator Status",this);
         hddisplay->addSource(mavlinkDecoder);
-        
+
         widget = hddisplay;
     } else if (widgetName == _pfdDockWidgetName) {
         widget = new PrimaryFlightDisplay(this);
@@ -645,11 +629,11 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
     } else {
         qWarning() << "Attempt to create unknown Inner Dock Widget" << widgetName;
     }
-    
+
     if (widget) {
         QDockWidget* dockWidget = _mapName2DockWidget[widgetName];
         Q_CHECK_PTR(dockWidget);
-        
+
         widget->setParent(dockWidget);
         dockWidget->setWidget(widget);
     }
@@ -658,35 +642,35 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
 void MainWindow::_showHILConfigurationWidgets(void)
 {
     UASInterface* uas = UASManager::instance()->getActiveUAS();
-    
+
     if (!uas) {
         return;
     }
-    
+
     UAS* mav = dynamic_cast<UAS*>(uas);
     Q_ASSERT(mav);
-    
+
     int uasId = mav->getUASID();
 
     if (!_mapUasId2HilDockWidget.contains(uasId)) {
-        
+
         // Create QDockWidget
         QGCDockWidget* dockWidget = new QGCDockWidget(tr("HIL Config %1").arg(uasId), this);
         Q_CHECK_PTR(dockWidget);
         dockWidget->setObjectName(tr("HIL_CONFIG_%1").arg(uasId));
         dockWidget->setVisible (false);
-        
+
         // Create inner widget and set it
         QWidget* widget = new QGCHilConfiguration(mav, dockWidget);
-        
+
         widget->setParent(dockWidget);
         dockWidget->setWidget(widget);
-        
+
         _mapUasId2HilDockWidget[uasId] = dockWidget;
-        
+
         addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
     }
-    
+
     if (_currentView == VIEW_SIMULATION) {
         // HIL dock widgets only show up on simulation view
         foreach (QDockWidget* dockWidget, _mapUasId2HilDockWidget) {
@@ -708,7 +692,7 @@ void MainWindow::normalActionItemCallback()
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Disallow window close if there are active connections
-    
+
     bool foundConnections = false;
     foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
         if (link->isConnected()) {
@@ -716,7 +700,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
             break;
         }
     }
-    
+
     if (foundConnections) {
         QGCMessageBox::StandardButton button = QGCMessageBox::warning(tr("QGroundControl close"),
                                                                       tr("There are still active connections to vehicles. Do you want to disconnect these before closing?"),
@@ -767,7 +751,7 @@ void MainWindow::_createNewCustomWidget(void)
     QGCToolWidget* tool = new QGCToolWidget(objectName, title);
     tool->resize(100, 100);
     _createDockWidget(title, objectName, Qt::BottomDockWidgetArea, tool);
-    
+
     _mapName2DockWidget[objectName]->setVisible(true);
 }
 
@@ -781,6 +765,7 @@ void MainWindow::_loadCustomWidgetFromFile(void)
         QGCToolWidget* tool = new QGCToolWidget("", "", this);
         if (tool->loadSettings(fileName, true)) {
             QString objectName = tool->objectName() + "DOCK";
+
             _createDockWidget(tool->getTitle(), objectName, Qt::LeftDockWidgetArea, tool);
             _mapName2DockWidget[objectName]->widget()->setVisible(true);
         }
@@ -790,11 +775,11 @@ void MainWindow::_loadCustomWidgetFromFile(void)
 
 void MainWindow::loadSettings()
 {
+    // Why the screaming?
     QSettings settings;
-
-    settings.beginGroup("QGC_MAINWINDOW");
+    settings.beginGroup(MAIN_SETTINGS_GROUP);
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
-    lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
+    lowPowerMode  = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
     settings.endGroup();
 }
 
@@ -802,7 +787,7 @@ void MainWindow::storeSettings()
 {
     QSettings settings;
 
-    settings.beginGroup("QGC_MAINWINDOW");
+    settings.beginGroup(MAIN_SETTINGS_GROUP);
     settings.setValue("AUTO_RECONNECT", autoReconnect);
     settings.setValue("LOW_POWER_MODE", lowPowerMode);
     settings.endGroup();
@@ -961,7 +946,7 @@ void MainWindow::connectCommonActions()
     ui.actionShutdownMAV->setEnabled(false);
 
     // Connect actions from ui
-    connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(addLink()));
+    connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(manageLinks()));
 
     // Connect internal actions
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
@@ -1037,33 +1022,6 @@ void MainWindow::showSettings()
     settings.exec();
 }
 
-// FIXME: Where is this called from
-LinkInterface* MainWindow::addLink()
-{
-    SerialLink* link = new SerialLink();
-    // TODO This should be only done in the dialog itself
-
-    LinkManager::instance()->addLink(link);
-
-    // Go fishing for this link's configuration window
-    QList<QAction*> actions = ui.menuNetwork->actions();
-
-    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
-
-    foreach (QAction* act, actions)
-    {
-        if (act->data().toInt() == linkID)
-        {
-            act->trigger();
-            break;
-        }
-    }
-
-    return link;
-}
-
-
 bool MainWindow::configLink(LinkInterface *link)
 {
     // Go searching for this link's configuration window
@@ -1084,32 +1042,6 @@ bool MainWindow::configLink(LinkInterface *link)
     }
 
     return found;
-}
-
-void MainWindow::_addLinkMenu(LinkInterface *link)
-{
-    // Go fishing for this link's configuration window
-    QList<QAction*> actions = ui.menuNetwork->actions();
-
-    bool alreadyAdded = false;
-
-    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
-
-    foreach (QAction* act, actions) {
-        if (act->data().toInt() == linkID) {
-            alreadyAdded = true;
-            break;
-        }
-    }
-
-    if (!alreadyAdded) {
-        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, this);
-        commsWidgetList.append(commWidget);
-        connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
-        QAction* action = commWidget->getAction();
-        ui.menuNetwork->addAction(action);
-    }
 }
 
 void MainWindow::simulateLink(bool simulate) {
@@ -1258,7 +1190,7 @@ void MainWindow::_storeCurrentViewState(void)
 {
     // HIL dock widgets are dynamic and are not part of the saved state
     _hideAllHilDockWidgets();
-    
+
     // Save list of visible widgets
 
     bool firstWidget = true;
@@ -1272,7 +1204,7 @@ void MainWindow::_storeCurrentViewState(void)
             firstWidget = false;
         }
     }
-    
+
     settings.setValue(getWindowStateKey() + "WIDGETS", widgetNames);
     settings.setValue(getWindowStateKey(), saveState());
     settings.setValue(getWindowGeometryKey(), saveGeometry());
@@ -1283,53 +1215,53 @@ void MainWindow::_loadCurrentViewState(void)
 {
     QWidget* centerView = NULL;
     QString defaultWidgets;
-    
+
     switch (_currentView) {
         case VIEW_SETUP:
             _buildSetupView();
             centerView = _setupView;
             break;
-            
+
         case VIEW_ENGINEER:
             _buildEngineeringView();
             centerView = _engineeringView;
             defaultWidgets = "MAVLINK_INSPECTOR_DOCKWIDGET,PARAMETER_INTERFACE_DOCKWIDGET,FILE_VIEW_DOCKWIDGET,HEAD_UP_DISPLAY_DOCKWIDGET";
             break;
-            
+
         case VIEW_FLIGHT:
             _buildPilotView();
             centerView = _pilotView;
             defaultWidgets = "COMMUNICATION_CONSOLE_DOCKWIDGET,UAS_INFO_INFOVIEW_DOCKWIDGET";
             break;
-            
+
         case VIEW_MISSION:
             _buildPlannerView();
             centerView = _plannerView;
             defaultWidgets = "UNMANNED_SYSTEM_LIST_DOCKWIDGET,WAYPOINT_LIST_DOCKWIDGET";
             break;
-            
+
         case VIEW_SIMULATION:
             _buildSimView();
             centerView = _simView;
             defaultWidgets = "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET,WAYPOINT_LIST_DOCKWIDGET,PARAMETER_INTERFACE_DOCKWIDGET,PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET";
             break;
-            
+
         case VIEW_TERMINAL:
             _buildTerminalView();
             centerView = _terminalView;
             break;
-            
+
         case VIEW_GOOGLEEARTH:
             _buildGoogleEarthView();
             centerView = _googleEarthView;
             break;
-            
+
         case VIEW_LOCAL3D:
             _buildLocal3DView();
             centerView = _local3DView;
             break;
     }
-    
+
     // Remove old view
     if (_currentViewWidget) {
         _currentViewWidget->setVisible(false);
@@ -1338,14 +1270,14 @@ void MainWindow::_loadCurrentViewState(void)
         Q_ASSERT(child);
         delete child;
     }
-    
+
     // Add the new one
     Q_ASSERT(centerView);
     Q_ASSERT(_centralLayout->count() == 0);
     _currentViewWidget = centerView;
     _centralLayout->addWidget(_currentViewWidget);
     _currentViewWidget->setVisible(true);
-    
+
     // Hide all widgets from previous view
     _hideAllDockWidgets();
 
@@ -1362,7 +1294,7 @@ void MainWindow::_loadCurrentViewState(void)
     if (settings.contains(getWindowStateKey())) {
         restoreState(settings.value(getWindowStateKey()).toByteArray());
     }
-    
+
     // HIL dock widget are dynamic and don't take part in the saved window state, so this
     // need to happen after we restore state
     _showHILConfigurationWidgets();
@@ -1380,7 +1312,7 @@ void MainWindow::_hideAllDockWidgets(void)
     foreach(QDockWidget* dockWidget, _mapName2DockWidget) {
         dockWidget->setVisible(false);
     }
-    
+
     _hideAllHilDockWidgets();
 }
 
@@ -1388,7 +1320,7 @@ void MainWindow::_showDockWidgetAction(bool show)
 {
     QAction* action = dynamic_cast<QAction*>(QObject::sender());
     Q_ASSERT(action);
-    
+
     _showDockWidget(action->data().toString(), show);
 }
 
@@ -1396,7 +1328,7 @@ void MainWindow::_showDockWidgetAction(bool show)
 void MainWindow::handleMisconfiguration(UASInterface* uas)
 {
     static QTime lastTime;
-    
+
     // We have to debounce this signal
     if (!lastTime.isValid()) {
         lastTime.start();
@@ -1406,7 +1338,7 @@ void MainWindow::handleMisconfiguration(UASInterface* uas)
             return;
         }
     }
-    
+
     // Ask user if he wants to handle this now
     QMessageBox::StandardButton button = QGCMessageBox::question(tr("Missing or Invalid Onboard Configuration"),
                                                                     tr("The onboard system configuration is missing or incomplete. Do you want to resolve this now?"),
@@ -1522,6 +1454,42 @@ void MainWindow::hideSplashScreen(void)
     }
 }
 
+void MainWindow::manageLinks()
+{
+    SettingsDialog settings(joystick, this, SettingsDialog::ShowCommLinks);
+    settings.exec();
+}
+
+/// @brief Saves the last used connection
+void MainWindow::saveLastUsedConnection(const QString connection)
+{
+    QSettings settings;
+    QString key(MAIN_SETTINGS_GROUP);
+    key += "/LAST_CONNECTION";
+    settings.setValue(key, connection);
+}
+
+/// @brief Restore (and connects) the last used connection (if any)
+void MainWindow::restoreLastUsedConnection()
+{
+    // TODO This should check and see of the port/whatever is present
+    // first. That is, if the last connection was to a PX4 on some serial
+    // port, it should check and see if the port is present before making
+    // the connection.
+    QSettings settings;
+    QString key(MAIN_SETTINGS_GROUP);
+    key += "/LAST_CONNECTION";
+    QString connection;
+    if(settings.contains(key)) {
+        connection = settings.value(connection).toString();
+        // Create a link for it
+        LinkInterface* link = LinkManager::instance()->createLink(connection);
+        if(link) {
+            // Connect it
+            LinkManager::instance()->connectLink(link);
+        }
+    }
+}
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
 bool MainWindow::x11Event(XEvent *event)

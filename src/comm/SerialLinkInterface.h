@@ -37,12 +37,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QVector>
 #include <LinkInterface.h>
 
+/*
 class SerialLinkInterface : public LinkInterface
 {
     Q_OBJECT
 
 public:
-    virtual QList<QString> getCurrentPorts() = 0;
     virtual QString getPortName() const = 0;
     virtual int getBaudRate() const = 0;
     virtual int getDataBits() const = 0;
@@ -66,7 +66,7 @@ public slots:
     virtual void writeSettings() = 0;
 
 };
-
+*/
 
 /* Declare C++ interface as Qt interface */
 //Q_DECLARE_INTERFACE(SerialLinkInterface, "org.openground.comm.links.SerialLinkInterface/1.0")
