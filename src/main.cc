@@ -34,8 +34,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 #include "MainWindow.h"
 #include "configuration.h"
-#include "SerialLink.h"
-#include "TCPLink.h"
 #ifdef QT_DEBUG
 #include "UnitTest.h"
 #include "CmdLineOptParser.h"
@@ -67,7 +65,7 @@ void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString
 int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 {
     Q_UNUSED(reportType);
-    
+
     std::cerr << message << std::endl;  // Output message to stderr
     *returnValue = 0;                   // Don't break into debugger
     return true;                        // We handled this fully ourselves
@@ -103,23 +101,23 @@ int main(int argc, char *argv[])
     // anyway to silence the debug output.
     qRegisterMetaType<QSerialPort::SerialPortError>();
     qRegisterMetaType<QAbstractSocket::SocketError>();
-    
+
     bool runUnitTests = false;          // Run unit tests
-    
+
 #ifdef QT_DEBUG
     // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
     // which need to be handled before a QApplication object is started.
-    
+
     bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
-    
+
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--unittest",             &runUnitTests,          QString() },
         { "--no-windows-assert-ui", &quietWindowsAsserts,   QString() },
         // Add additional command line option flags here
     };
-    
+
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
-    
+
     if (quietWindowsAsserts) {
 #ifdef Q_OS_WIN
         _CrtSetReportHook(WindowsCrtReportHook);
@@ -135,27 +133,27 @@ int main(int argc, char *argv[])
     }
 #endif
 #endif // QT_DEBUG
-    
+
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
-    
+
     // There appears to be a threading issue in qRegisterMetaType which can cause it to throw a qWarning
     // about duplicate type converters. This is caused by a race condition in the Qt code. Still working
     // with them on tracking down the bug. For now we register the type which is giving us problems here
     // while we only have the main thread. That should prevent it from hitting the race condition later
     // on in the code.
     qRegisterMetaType<QList<QPair<QByteArray,QByteArray> > >();
-    
+
     app->_initCommon();
-    
+
     int exitCode;
-    
+
 #ifdef QT_DEBUG
     if (runUnitTests) {
         if (!app->_initForUnitTests()) {
             return -1;
         }
-        
+
         // Run the test
         int failures = UnitTest::run(rgCmdLineOptions[0].optionArg);
         if (failures == 0) {
@@ -172,10 +170,10 @@ int main(int argc, char *argv[])
         }
         exitCode = app->exec();
     }
-    
+
     delete app;
-    
+
     qDebug() << "After app delete";
-    
+
     return exitCode;
 }
