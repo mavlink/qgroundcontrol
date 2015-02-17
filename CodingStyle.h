@@ -31,8 +31,8 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef CodingStyle_h
-#define CodingStyle_h
+#ifndef CODINGSTYLE_H
+#define CODINGSTYLE_H
 
 #include <QObject>
 #include <QMap>
