@@ -4,41 +4,41 @@
 
 QGCMapToolBar::QGCMapToolBar(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::QGCMapToolBar),
-    map(NULL),
-    optionsMenu(this),
-    trailPlotMenu(this),
-    updateTimesMenu(this),
-    mapTypesMenu(this),
-    trailSettingsGroup(new QActionGroup(this)),
-    updateTimesGroup(new QActionGroup(this)),
-    mapTypesGroup(new QActionGroup(this)),
-    statusMaxLen(15)
+    _ui(new Ui::QGCMapToolBar),
+    _map(NULL),
+    _optionsMenu(new QMenu(this)),
+    _trailPlotMenu(new QMenu(this)),
+    _updateTimesMenu(new QMenu(this)),
+    _mapTypesMenu(new QMenu(this)),
+    _trailSettingsGroup(new QActionGroup(this)),
+    _updateTimesGroup(new QActionGroup(this)),
+    _mapTypesGroup(new QActionGroup(this)),
+    _statusMaxLen(15)
 {
-    ui->setupUi(this);
+    _ui->setupUi(this);
 }
 
 void QGCMapToolBar::setMap(QGCMapWidget* map)
 {
-    this->map = map;
+    _map = map;
 
-    if (map)
+    if (_map)
     {
-        connect(ui->goToButton, SIGNAL(clicked()), map, SLOT(showGoToDialog()));
-        connect(ui->goHomeButton, SIGNAL(clicked()), map, SLOT(goHome()));
-        connect(ui->lastPosButton, SIGNAL(clicked()), map, SLOT(loadSettings()));
-        connect(ui->clearTrailsButton, SIGNAL(clicked()), map, SLOT(deleteTrails()));
-        connect(ui->lockCheckBox, SIGNAL(clicked(bool)), map, SLOT(setZoomBlocked(bool)));
-        connect(map, SIGNAL(OnTileLoadStart()), this, SLOT(tileLoadStart()));
-        connect(map, SIGNAL(OnTileLoadComplete()), this, SLOT(tileLoadEnd()));
-        connect(map, SIGNAL(OnTilesStillToLoad(int)), this, SLOT(tileLoadProgress(int)));
-        connect(ui->ripMapButton, SIGNAL(clicked()), map, SLOT(cacheVisibleRegion()));
+        connect(_ui->goToButton, SIGNAL(clicked()), _map, SLOT(showGoToDialog()));
+        connect(_ui->goHomeButton, SIGNAL(clicked()), _map, SLOT(goHome()));
+        connect(_ui->lastPosButton, SIGNAL(clicked()), _map, SLOT(loadSettings()));
+        connect(_ui->clearTrailsButton, SIGNAL(clicked()), _map, SLOT(deleteTrails()));
+        connect(_ui->lockCheckBox, SIGNAL(clicked(bool)), _map, SLOT(setZoomBlocked(bool)));
+        connect(_map, SIGNAL(OnTileLoadStart()), this, SLOT(tileLoadStart()));
+        connect(_map, SIGNAL(OnTileLoadComplete()), this, SLOT(tileLoadEnd()));
+        connect(_map, SIGNAL(OnTilesStillToLoad(int)), this, SLOT(tileLoadProgress(int)));
+        connect(_ui->ripMapButton, SIGNAL(clicked()), _map, SLOT(cacheVisibleRegion()));
 
-        ui->followCheckBox->setChecked(map->getFollowUAVEnabled());
-        connect(ui->followCheckBox, SIGNAL(clicked(bool)), map, SLOT(setFollowUAVEnabled(bool)));
+        _ui->followCheckBox->setChecked(_map->getFollowUAVEnabled());
+        connect(_ui->followCheckBox, SIGNAL(clicked(bool)), _map, SLOT(setFollowUAVEnabled(bool)));
 
         // Edit mode handling
-        ui->editButton->hide();
+        _ui->editButton->hide();
 
         const int uavTrailTimeList[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};                      // seconds
         const int uavTrailTimeCount = 10;
@@ -47,58 +47,58 @@ void QGCMapToolBar::setMap(QGCMapWidget* map)
         const int uavTrailDistanceCount = 9;
 
         // Set exclusive items
-        trailSettingsGroup->setExclusive(true);
-        updateTimesGroup->setExclusive(true);
-        mapTypesGroup->setExclusive(true);
+        _trailSettingsGroup->setExclusive(true);
+        _updateTimesGroup->setExclusive(true);
+        _mapTypesGroup->setExclusive(true);
 
         // Build up menu
-        trailPlotMenu.setTitle(tr("&Add trail dot every.."));
-        updateTimesMenu.setTitle(tr("&Limit map view update rate to.."));
-        mapTypesMenu.setTitle(tr("&Map type"));
+        _trailPlotMenu->setTitle(tr("&Add trail dot every.."));
+        _updateTimesMenu->setTitle(tr("&Limit map view update rate to.."));
+        _mapTypesMenu->setTitle(tr("&Map type"));
 
 
         //setup the mapTypesMenu
         QAction* action;
-        action =  mapTypesMenu.addAction(tr("Bing Hybrid"),this,SLOT(setMapType()));
+        action =  _mapTypesMenu->addAction(tr("Bing Hybrid"),this,SLOT(setMapType()));
         action->setData(MapType::BingHybrid);
         action->setCheckable(true);
 #ifdef MAP_DEFAULT_TYPE_BING
         action->setChecked(true);
 #endif
-        mapTypesGroup->addAction(action);
+        _mapTypesGroup->addAction(action);
 
-        action =  mapTypesMenu.addAction(tr("Google Hybrid"),this,SLOT(setMapType()));
+        action =  _mapTypesMenu->addAction(tr("Google Hybrid"),this,SLOT(setMapType()));
         action->setData(MapType::GoogleHybrid);
         action->setCheckable(true);
 #ifdef MAP_DEFAULT_TYPE_GOOGLE
         action->setChecked(true);
 #endif
-        mapTypesGroup->addAction(action);
+        _mapTypesGroup->addAction(action);
 
-        action =  mapTypesMenu.addAction(tr("OpenStreetMap"),this,SLOT(setMapType()));
+        action =  _mapTypesMenu->addAction(tr("OpenStreetMap"),this,SLOT(setMapType()));
         action->setData(MapType::OpenStreetMap);
         action->setCheckable(true);
 #ifdef MAP_DEFAULT_TYPE_OSM
         action->setChecked(true);
 #endif
-        mapTypesGroup->addAction(action);
+        _mapTypesGroup->addAction(action);
 
-        optionsMenu.addMenu(&mapTypesMenu);
+        _optionsMenu->addMenu(_mapTypesMenu);
 
 
         // FIXME MARK CURRENT VALUES IN MENU
-        QAction *defaultTrailAction = trailPlotMenu.addAction(tr("No trail"), this, SLOT(setUAVTrailTime()));
+        QAction *defaultTrailAction = _trailPlotMenu->addAction(tr("No trail"), this, SLOT(setUAVTrailTime()));
         defaultTrailAction->setData(-1);
         defaultTrailAction->setCheckable(true);
-        trailSettingsGroup->addAction(defaultTrailAction);
+        _trailSettingsGroup->addAction(defaultTrailAction);
 
         for (int i = 0; i < uavTrailTimeCount; ++i)
         {
-            action = trailPlotMenu.addAction(tr("%1 second%2").arg(uavTrailTimeList[i]).arg((uavTrailTimeList[i] > 1) ? "s" : ""), this, SLOT(setUAVTrailTime()));
+            action = _trailPlotMenu->addAction(tr("%1 second%2").arg(uavTrailTimeList[i]).arg((uavTrailTimeList[i] > 1) ? "s" : ""), this, SLOT(setUAVTrailTime()));
             action->setData(uavTrailTimeList[i]);
             action->setCheckable(true);
-            trailSettingsGroup->addAction(action);
-            if (static_cast<mapcontrol::UAVTrailType::Types>(map->getTrailType()) == mapcontrol::UAVTrailType::ByTimeElapsed && map->getTrailInterval() == uavTrailTimeList[i])
+            _trailSettingsGroup->addAction(action);
+            if (static_cast<mapcontrol::UAVTrailType::Types>(map->getTrailType()) == mapcontrol::UAVTrailType::ByTimeElapsed && _map->getTrailInterval() == uavTrailTimeList[i])
             {
                 // This is the current active time, set the action checked
                 action->setChecked(true);
@@ -106,11 +106,11 @@ void QGCMapToolBar::setMap(QGCMapWidget* map)
         }
         for (int i = 0; i < uavTrailDistanceCount; ++i)
         {
-            action = trailPlotMenu.addAction(tr("%1 meter%2").arg(uavTrailDistanceList[i]).arg((uavTrailDistanceList[i] > 1) ? "s" : ""), this, SLOT(setUAVTrailDistance()));
+            action = _trailPlotMenu->addAction(tr("%1 meter%2").arg(uavTrailDistanceList[i]).arg((uavTrailDistanceList[i] > 1) ? "s" : ""), this, SLOT(setUAVTrailDistance()));
             action->setData(uavTrailDistanceList[i]);
             action->setCheckable(true);
-            trailSettingsGroup->addAction(action);
-            if (static_cast<mapcontrol::UAVTrailType::Types>(map->getTrailType()) == mapcontrol::UAVTrailType::ByDistance && map->getTrailInterval() == uavTrailDistanceList[i])
+            _trailSettingsGroup->addAction(action);
+            if (static_cast<mapcontrol::UAVTrailType::Types>(_map->getTrailType()) == mapcontrol::UAVTrailType::ByDistance && _map->getTrailInterval() == uavTrailDistanceList[i])
             {
                 // This is the current active time, set the action checked
                 action->setChecked(true);
@@ -118,43 +118,43 @@ void QGCMapToolBar::setMap(QGCMapWidget* map)
         }
 
         // Set no trail checked if no action is checked yet
-        if (!trailSettingsGroup->checkedAction())
+        if (!_trailSettingsGroup->checkedAction())
         {
             defaultTrailAction->setChecked(true);
         }
 
-        optionsMenu.addMenu(&trailPlotMenu);
+        _optionsMenu->addMenu(_trailPlotMenu);
 
         // Add update times menu
         for (int i = 100; i < 5000; i+=400)
         {
             float time = i/1000.0f; // Convert from ms to seconds
-            QAction* action = updateTimesMenu.addAction(tr("%1 seconds").arg(time), this, SLOT(setUpdateInterval()));
+            QAction* action = _updateTimesMenu->addAction(tr("%1 seconds").arg(time), this, SLOT(setUpdateInterval()));
             action->setData(time);
             action->setCheckable(true);
-            if (time == map->getUpdateRateLimit())
+            if (time == _map->getUpdateRateLimit())
             {
                 action->blockSignals(true);
                 action->setChecked(true);
                 action->blockSignals(false);
             }
-            updateTimesGroup->addAction(action);
+            _updateTimesGroup->addAction(action);
         }
 
         // If the current time is not part of the menu defaults
         // still add it as new option
-        if (!updateTimesGroup->checkedAction())
+        if (!_updateTimesGroup->checkedAction())
         {
-            float time = map->getUpdateRateLimit();
-            QAction* action = updateTimesMenu.addAction(tr("uptate every %1 seconds").arg(time), this, SLOT(setUpdateInterval()));
+            float time = _map->getUpdateRateLimit();
+            QAction* action = _updateTimesMenu->addAction(tr("uptate every %1 seconds").arg(time), this, SLOT(setUpdateInterval()));
             action->setData(time);
             action->setCheckable(true);
             action->setChecked(true);
-            updateTimesGroup->addAction(action);
+            _updateTimesGroup->addAction(action);
         }
-        optionsMenu.addMenu(&updateTimesMenu);
+        _optionsMenu->addMenu(_updateTimesMenu);
 
-        ui->optionsButton->setMenu(&optionsMenu);
+        _ui->optionsButton->setMenu(_optionsMenu);
     }
 }
 
@@ -169,7 +169,7 @@ void QGCMapToolBar::setUAVTrailTime()
         int trailTime = action->data().toInt(&ok);
         if (ok)
         {
-            (map->setTrailModeTimed(trailTime));
+            (_map->setTrailModeTimed(trailTime));
             setStatusLabelText(tr("Trail mode: Every %1 second%2").arg(trailTime).arg((trailTime > 1) ? "s" : ""));
         }
     }
@@ -177,7 +177,7 @@ void QGCMapToolBar::setUAVTrailTime()
 
 void QGCMapToolBar::setStatusLabelText(const QString &text)
 {
-    ui->posLabel->setText(text.leftJustified(statusMaxLen, QChar('.'), true));
+    _ui->posLabel->setText(text.leftJustified(_statusMaxLen, QChar('.'), true));
 }
 
 void QGCMapToolBar::setUAVTrailDistance()
@@ -191,7 +191,7 @@ void QGCMapToolBar::setUAVTrailDistance()
         int trailDistance = action->data().toInt(&ok);
         if (ok)
         {
-            map->setTrailModeDistance(trailDistance);
+            _map->setTrailModeDistance(trailDistance);
             setStatusLabelText(tr("Trail mode: Every %1 meter%2").arg(trailDistance).arg((trailDistance == 1) ? "s" : ""));
         }
     }
@@ -208,7 +208,7 @@ void QGCMapToolBar::setUpdateInterval()
         float time = action->data().toFloat(&ok);
         if (ok)
         {
-            map->setUpdateRateLimit(time);
+            _map->setUpdateRateLimit(time);
             setStatusLabelText(tr("Limit: %1 second%2").arg(time).arg((time != 1.0f) ? "s" : ""));
         }
     }
@@ -225,7 +225,7 @@ void QGCMapToolBar::setMapType()
         int mapType = action->data().toInt(&ok);
         if (ok)
         {
-            map->SetMapType((MapType::Types)mapType);
+            _map->SetMapType((MapType::Types)mapType);
             setStatusLabelText(tr("Map: %1").arg(mapType));
         }
     }
@@ -255,14 +255,4 @@ void QGCMapToolBar::tileLoadProgress(int progress)
     {
         tileLoadEnd();
     }
-}
-
-
-QGCMapToolBar::~QGCMapToolBar()
-{
-    delete ui;
-    delete trailSettingsGroup;
-    delete updateTimesGroup;
-    delete mapTypesGroup;
-    // FIXME Delete all actions
 }
