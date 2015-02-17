@@ -29,8 +29,8 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 1) {
-    error("Unsupported Qt version, 5.2+ is required")
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 3) {
+    error("Unsupported Qt version, 5.4+ is required")
 }
 
 linux {
