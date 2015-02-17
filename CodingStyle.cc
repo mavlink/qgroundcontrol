@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -37,9 +37,13 @@
 #include <QFile>
 #include <QDebug>
 
+#include <math.h>
+
 // Note how the Qt headers and the QGroundControl headers above are kept seperate
 
 Q_LOGGING_CATEGORY(CodingStyleLog, "CodingStyleLog")
+
+const int CodingStyle::_privateStaticVariable = 0;
 
 CodingStyle::CodingStyle(QObject* parent) :
     QObject(parent),
@@ -85,12 +89,24 @@ void CodingStyle::_privateMethod2(void)
             typedValue.setValue(value.toUInt());
             break;
             
-        case FactMetaData::valueTypeFloat:
+        case FactMetaData::valueTypeFloat: {
+            int localScopedVar = 1;
             typedValue.setValue(value.toFloat());
+        }
             break;
             
         case FactMetaData::valueTypeDouble:
             typedValue.setValue(value.toDouble());
             break;
     }
+}
+
+void CodingStyle::_methodWithManyArguments(QWidget*         parent,
+                                           const QString&   caption,
+                                           const QString&   dir,
+                                           Options          options1,
+                                           Options          options2,
+                                           Options          options3)
+{
+    // Implementataion here...
 }
