@@ -50,10 +50,10 @@ UASMessageHandler::UASMessageHandler(QObject *parent)
 
 UASMessageHandler::~UASMessageHandler()
 {
-    _clearMessages();
+    clearMessages();
 }
 
-void UASMessageHandler::_clearMessages()
+void UASMessageHandler::clearMessages()
 {
     _mutex.lock();
     while(_messages.count()) {
@@ -70,14 +70,14 @@ void UASMessageHandler::setActiveUAS(UASInterface* uas)
     {
         disconnect(_activeUAS, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(handleTextMessage(int,int,int,QString)));
         _activeUAS = NULL;
-        _clearMessages();
+        clearMessages();
         emit textMessageReceived(NULL);
     }
     // And now if there's an autopilot to follow, set up the UI.
     if (uas)
     {
         // Connect to the new UAS.
-        _clearMessages();
+        clearMessages();
         _activeUAS = uas;
         connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(handleTextMessage(int,int,int,QString)));
     }

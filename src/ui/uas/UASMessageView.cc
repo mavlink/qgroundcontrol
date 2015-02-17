@@ -63,16 +63,22 @@ UASMessageViewWidget::UASMessageViewWidget(QWidget *parent)
     // widget has its context menu policy set to its actions list. So any actions we add
     // to this widget's action list will be automatically displayed.
     // We only have the clear action right now.
-    QAction* clearAction = new QAction(tr("Clear Text"), this);
-    connect(clearAction, SIGNAL(triggered()), ui()->plainTextEdit, SLOT(clear()));
+    QAction* clearAction = new QAction(tr("Clear Messages"), this);
+    connect(clearAction, &QAction::triggered, this, &UASMessageViewWidget::clearMessages);
     ui()->plainTextEdit->addAction(clearAction);
     // Connect message handler
-    connect(UASMessageHandler::instance(), SIGNAL(textMessageReceived(UASMessage*)), this, SLOT(handleTextMessage(UASMessage*)));
+    connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageReceived, this, &UASMessageViewWidget::handleTextMessage);
 }
 
 UASMessageViewWidget::~UASMessageViewWidget()
 {
 
+}
+
+void UASMessageViewWidget::clearMessages()
+{
+    ui()->plainTextEdit->clear();
+    UASMessageHandler::instance()->clearMessages();
 }
 
 void UASMessageViewWidget::handleTextMessage(UASMessage *message)
@@ -112,9 +118,6 @@ UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent, QGCToolBar *tool
     setAttribute(Qt::WA_TranslucentBackground);
     setStyleSheet("background-color: rgba(0%,0%,0%,80%); border: 2px;");
     QPlainTextEdit *msgWidget = ui()->plainTextEdit;
-    QAction* clearAction = new QAction(tr("Clear Text"), this);
-    connect(clearAction, SIGNAL(triggered()), msgWidget, SLOT(clear()));
-    msgWidget->addAction(clearAction);
     // Init Messages
     UASMessageHandler::instance()->lockAccess();
     msgWidget->setUpdatesEnabled(false);
@@ -125,7 +128,7 @@ UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent, QGCToolBar *tool
     QScrollBar *scroller = msgWidget->verticalScrollBar();
     scroller->setValue(scroller->maximum());
     msgWidget->setUpdatesEnabled(true);
-    connect(UASMessageHandler::instance(), SIGNAL(textMessageReceived(UASMessage*)), this, SLOT(handleTextMessage(UASMessage*)));
+    connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageReceived, this, &UASMessageViewRollDown::handleTextMessage);
     UASMessageHandler::instance()->unlockAccess();
 }
 
