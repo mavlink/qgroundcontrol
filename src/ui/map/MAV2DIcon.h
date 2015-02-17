@@ -4,7 +4,7 @@
 #include <QGraphicsItem>
 
 #include "UASInterface.h"
-#include "../../libs/opmapcontrol/opmapcontrol.h"
+#include "opmapcontrol.h"
 
 class MAV2DIcon : public mapcontrol::UAVItem
 {

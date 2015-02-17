@@ -3,7 +3,7 @@
 
 #include <QMap>
 #include <QTimer>
-#include "../../../libs/opmapcontrol/opmapcontrol.h"
+#include "opmapcontrol.h"
 
 // Choose one default map type
 //#define MAP_DEFAULT_TYPE_BING
