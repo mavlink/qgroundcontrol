@@ -239,20 +239,26 @@
     <qresource prefix="/qml">
 
         <file alias="test.qml">src/test.qml</file>
+        <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
 
-        <file alias="QGroundControl/FactControls/qmldir">qml/QGroundControl/FactControls/qmldir</file>
-        <file alias="QGroundControl/FactControls/FactLabel.qml">qml/QGroundControl/FactControls/FactLabel.qml</file>
-        <file alias="QGroundControl/FactControls/FactTextField.qml">qml/QGroundControl/FactControls/FactTextField.qml</file>
-        <file alias="QGroundControl/FactControls/FactCheckBox.qml">qml/QGroundControl/FactControls/FactCheckBox.qml</file>
+        <file alias="QGroundControl/FactControls/qmldir">src/FactSystem/FactControls/qmldir</file>
+        <file alias="QGroundControl/FactControls/FactLabel.qml">src/FactSystem/FactControls/FactLabel.qml</file>
+        <file alias="QGroundControl/FactControls/FactTextField.qml">src/FactSystem/FactControls/FactTextField.qml</file>
+        <file alias="QGroundControl/FactControls/FactCheckBox.qml">src/FactSystem/FactControls/FactCheckBox.qml</file>
 
-        <file alias="QGroundControl/Controls/qmldir">qml/QGroundControl/Controls/qmldir</file>
-        <file alias="QGroundControl/Controls/SetupButton.qml">qml/QGroundControl/Controls/SetupButton.qml</file>
+        <file alias="QGroundControl/Controls/qmldir">src/QmlControls/qmldir</file>
+        <file alias="QGroundControl/Controls/SetupButton.qml">src/QmlControls/SetupButton.qml</file>
+        <file alias="QGroundControl/Controls/QGCButton.qml">src/QmlControls/QGCButton.qml</file>
+        <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
+        <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
+        <file alias="QGroundControl/Controls/QGCLabel.qml">src/QmlControls/QGCLabel.qml</file>
 
         <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
         <file alias="px4fmu_2.x.png">files/images/px4/boards/px4fmu_2.x.png</file>
 
         <file alias="SetupViewButtons.qml">src/VehicleSetup/SetupViewButtons.qml</file>
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
+        <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
 
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
 

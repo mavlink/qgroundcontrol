@@ -23,6 +23,7 @@
 
 #include "QGCFileDialog.h"
 #include "QGCApplication.h"
+#include <QRegularExpression>
 #include "MainWindow.h"
 #ifdef QT_DEBUG
 #include "UnitTest.h"
@@ -90,6 +91,7 @@ QString QGCFileDialog::getSaveFileName(
     const QString& dir,
     const QString& filter,
     const QString& defaultSuffix,
+    bool strict,
     Options options)
 {
     _validate(options);
@@ -100,26 +102,102 @@ QString QGCFileDialog::getSaveFileName(
     } else
 #endif
     {
+        QString defaultSuffixCopy(defaultSuffix);
         QFileDialog dlg(parent, caption, dir, filter);
         dlg.setAcceptMode(QFileDialog::AcceptSave);
         if (options) {
             dlg.setOptions(options);
         }
-        if (!defaultSuffix.isEmpty()) {
-            QString suffixCopy(defaultSuffix);
+        if (!defaultSuffixCopy.isEmpty()) {
             //-- Make sure dot is not present
-            if (suffixCopy.startsWith(".")) {
-                suffixCopy.remove(0,1);
+            if (defaultSuffixCopy.startsWith(".")) {
+                defaultSuffixCopy.remove(0,1);
             }
-            dlg.setDefaultSuffix(suffixCopy);
+            dlg.setDefaultSuffix(defaultSuffixCopy);
         }
-        if (dlg.exec()) {
-            if (dlg.selectedFiles().count()) {
-                return dlg.selectedFiles().first();
+        while (true) {
+            if (dlg.exec()) {
+                if (dlg.selectedFiles().count()) {
+                    QString result = dlg.selectedFiles().first();
+                    //-- If we don't care about the extension, just return it
+                    if (!strict) {
+                        return result;
+                    } else {
+                        //-- We must enforce the file extension
+                        QFileInfo fi(result);
+                        QString userSuffix(fi.suffix());
+                        if (_validateExtension(filter, userSuffix)) {
+                            return result;
+                        }
+                        //-- Do we have a default extension?
+                        if (defaultSuffixCopy.isEmpty()) {
+                            //-- We don't, so get the first one in the filter
+                            defaultSuffixCopy = _getFirstExtensionInFilter(filter);
+                        }
+                        //-- If this is set to strict, we have to have a default extension
+                        Q_ASSERT(defaultSuffixCopy.isEmpty() == false);
+                        //-- Forcefully append our desired extension
+                        result += ".";
+                        result += defaultSuffixCopy;
+                        //-- Check and see if this new file already exists
+                        fi.setFile(result);
+                        if (fi.exists()) {
+                            //-- Ask user what to do
+                            QMessageBox msgBox(
+                                QMessageBox::Warning,
+                                tr("File Exists"),
+                                tr("%1 already exists.\nDo you want to replace it?").arg(fi.fileName()),
+                                QMessageBox::Cancel,
+                                parent);
+                            msgBox.addButton(QMessageBox::Retry);
+                            QPushButton *overwriteButton = msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
+                            msgBox.setDefaultButton(QMessageBox::Retry);
+                            msgBox.setWindowModality(Qt::ApplicationModal);
+                            if (msgBox.exec() == QMessageBox::Retry) {
+                                continue;
+                            } else if (msgBox.clickedButton() == overwriteButton) {
+                                return result;
+                            }
+                        } else {
+                            return result;
+                        }
+                    }
+                }
             }
+            break;
         }
         return QString("");
     }
+}
+
+/// @brief Make sure filename is using one of the valid extensions defined in the filter
+bool QGCFileDialog::_validateExtension(const QString& filter, const QString& extension) {
+    QRegularExpression re("(\\*\\.\\w+)");
+    QRegularExpressionMatchIterator i = re.globalMatch(filter);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        if (match.hasMatch()) {
+            //-- Compare "foo" with "*.foo"
+            if(extension == match.captured(0).mid(2)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/// @brief Returns first extension found in filter
+QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
+    QRegularExpression re("(\\*\\.\\w+)");
+    QRegularExpressionMatchIterator i = re.globalMatch(filter);
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        if (match.hasMatch()) {
+            //-- Return "foo" from "*.foo"
+            return match.captured(0).mid(2);
+        }
+    }
+    return QString("");
 }
 
 /// @brief Validates and updates the parameters for the file dialog calls

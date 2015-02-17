@@ -135,7 +135,6 @@ void QGCDataPlot2D::savePlot()
     if (fileName.isEmpty())
         return;
 
-    // TODO This will change once we add "strict" file types in file selection dialogs
     while(!(fileName.endsWith(".svg") || fileName.endsWith(".pdf"))) {
         QMessageBox::StandardButton button = QGCMessageBox::warning(
             tr("Unsuitable file extension for Plot document type."),
@@ -268,16 +267,16 @@ void QGCDataPlot2D::selectFile()
     // Open a file dialog prompting the user for the file to load.
     // Note the special case for the Pixhawk.
     if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW")) {
-        fileName = QGCFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.imu *.raw)");
+        fileName = QGCFileDialog::getOpenFileName(this, tr("Load Log File"), QString(), "Log Files (*.imu *.raw)");
     }
     else
     {
-        fileName = QGCFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
+        fileName = QGCFileDialog::getOpenFileName(this, tr("Load Log File"), QString(), "Log Files (*.csv);;All Files (*)");
     }
 
-    // Check if the user hit cancel, which results in a Null string.
+    // Check if the user hit cancel, which results in an empty string.
     // If this is the case, we just stop.
-    if (fileName.isNull())
+    if (fileName.isEmpty())
     {
         return;
     }
@@ -286,9 +285,11 @@ void QGCDataPlot2D::selectFile()
     QFileInfo fileInfo(fileName);
     if (!fileInfo.isReadable())
     {
-        QGCMessageBox::critical(tr("Could not open file"),
-                                tr("The file is owned by user %1. Is the file currently used by another program?").arg(fileInfo.owner()));
-        ui->filenameLabel->setText(tr("Could not open %1").arg(fileInfo.baseName()+"."+fileInfo.completeSuffix()));
+        // TODO This needs some TLC. File used by another program sounds like a Windows only issue.
+        QGCMessageBox::critical(
+            tr("Could not open file"),
+            tr("The file is owned by user %1. Is the file currently used by another program?").arg(fileInfo.owner()));
+        ui->filenameLabel->setText(tr("Could not open %1").arg(fileInfo.fileName()));
     }
     else
     {
@@ -696,11 +697,13 @@ void QGCDataPlot2D::saveCsvLog()
 {
     QString fileName = QGCFileDialog::getSaveFileName(
         this, "Save CSV Log File", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-        "CSV file (*.csv);;Text file (*.txt)",
-        "csv");
+        "CSV Files (*.csv)",
+        "csv",
+        true);
 
-    if (fileName.isEmpty())
+    if (fileName.isEmpty()) {
         return; //User cancelled
+    }
 
     bool success = logFile->copy(fileName);
 

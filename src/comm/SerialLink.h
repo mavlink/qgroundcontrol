@@ -32,17 +32,64 @@ This file is part of the QGROUNDCONTROL project
 #ifndef SERIALLINK_H
 #define SERIALLINK_H
 
+class LinkInterface;
+class SerialConfiguration;
+class SerialLink;
+
 #include <QObject>
 #include <QThread>
 #include <QMutex>
 #include <QString>
-#include "QGCConfig.h"
-#include "SerialLinkInterface.h"
-
-// We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
 #include <QSerialPort>
 #include <QMetaType>
+
+// We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
 Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
+
+#include "QGCConfig.h"
+#include "LinkManager.h"
+
+class SerialConfiguration : public LinkConfiguration
+{
+public:
+
+    SerialConfiguration(const QString& name);
+    SerialConfiguration(SerialConfiguration* copy);
+
+    int  baud()         { return _baud; }
+    int  dataBits()     { return _dataBits; }
+    int  flowControl()  { return _flowControl; }    ///< QSerialPort Enums
+    int  stopBits()     { return _stopBits; }
+    int  parity()       { return _parity; }         ///< QSerialPort Enums
+
+    const QString portName() { return _portName; }
+
+    void setBaud        (int baud);
+    void setDataBits    (int databits);
+    void setFlowControl (int flowControl);          ///< QSerialPort Enums
+    void setStopBits    (int stopBits);
+    void setParity      (int parity);               ///< QSerialPort Enums
+    void setPortName    (const QString& portName);
+
+    /// From LinkConfiguration
+    int  type() { return LinkConfiguration::TypeSerial; }
+    void copyFrom(LinkConfiguration* source);
+    void loadSettings(QSettings& settings, const QString& root);
+    void saveSettings(QSettings& settings, const QString& root);
+    void updateSettings();
+
+    /*! @brief Get a list of the currently available ports */
+    static QList<QString> getCurrentPorts();
+
+private:
+    int _baud;
+    int _dataBits;
+    int _flowControl;
+    int _stopBits;
+    int _parity;
+    QString _portName;
+};
+
 
 /**
  * @brief The SerialLink class provides cross-platform access to serial links.
@@ -52,89 +99,36 @@ Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
  * safe.
  *
  */
-class SerialLink : public SerialLinkInterface
+class SerialLink : public LinkInterface
 {
     Q_OBJECT
-    //Q_INTERFACES(SerialLinkInterface:LinkInterface)
-
-
+    friend class SerialConfiguration;
 public:
-    SerialLink(QString portname = "",
-               int baudrate=57600,
-               bool flow=false,
-               bool parity=false,
-               int dataBits=8,
-               int stopBits=1);
+
+    SerialLink(SerialConfiguration* config);
     ~SerialLink();
 
-    static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in QGCConfig.h
+    // LinkInterface
 
-    /** @brief Get a list of the currently available ports */
-    QList<QString> getCurrentPorts();
-
-    /** @brief Check if the current port is a bootloader */
-    bool isBootloader();
-
-    void requestReset();
-
-    bool isConnected() const;
-
-    /**
-     * @brief The port handle
-     */
-    QString getPortName() const;
-    /**
-     * @brief The human readable port name
-     */
+    LinkConfiguration* getLinkConfiguration();
+    int     getId() const;
     QString getName() const;
-    int getBaudRate() const;
-    int getDataBits() const;
-    int getStopBits() const;
-
-    // ENUM values
-    int getBaudRateType() const;
-    int getFlowType() const;
-    int getParityType() const;
-    int getDataBitsType() const;
-    int getStopBitsType() const;
-
-    qint64 getConnectionSpeed() const;
-    qint64 getCurrentInDataRate() const;
-    qint64 getCurrentOutDataRate() const;
-
-    void loadSettings();
-    void writeSettings();
-
-    void checkIfCDC();
-
-    void run();
-    void run2();
-
-    int getId() const;
-    
+    void    requestReset();
+    bool    isConnected() const;
+    qint64  getConnectionSpeed() const;
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
-    bool connect(void);
-    bool disconnect(void);
+    bool    connect(void);
+    bool    disconnect(void);
+
+    void run();
+
+    static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in QGCConfig.h
 
 signals: //[TODO] Refactor to Linkinterface
     void updateLink(LinkInterface*);
 
 public slots:
-    bool setPortName(QString portName);
-    bool setBaudRate(int rate);
-    bool setDataBits(int dataBits);
-    bool setStopBits(int stopBits);
-
-    // Set string rate
-    bool setBaudRateString(const QString& rate);
-
-    // Set ENUM values
-    bool setBaudRateType(int rateIndex);
-    bool setFlowType(int flow);
-    bool setParityType(int parity);
-    bool setDataBitsType(int dataBits);
-    bool setStopBitsType(int stopBits);
 
     void readBytes();
     /**
@@ -148,37 +142,34 @@ public slots:
     void linkError(QSerialPort::SerialPortError error);
 
 protected:
-    quint64 m_bytesRead;
-    QSerialPort* m_port;
-    int m_baud;
-    int m_dataBits;
-    int m_flowControl;
-    int m_stopBits;
-    int m_parity;
-    QString m_portName;
-    int m_timeout;
-    int m_id;
-    QMutex m_dataMutex;       // Mutex for reading data from m_port
-    QMutex m_writeMutex;      // Mutex for accessing the m_transmitBuffer.
-    QString type;
-    bool m_is_cdc;
-    
+    QSerialPort* _port;
+    quint64 _bytesRead;
+    int     _timeout;
+    int     _id;
+    QMutex  _dataMutex;       // Mutex for reading data from _port
+    QMutex  _writeMutex;      // Mutex for accessing the _transmitBuffer.
+    QString _type;
+
 private slots:
     void _rerouteDisconnected(void);
 
 private:
     // From LinkInterface
-    virtual bool _connect(void);
-    virtual bool _disconnect(void);
-    
+    bool _connect(void);
+    bool _disconnect(void);
+
+    // Internal methods
     void _emitLinkError(const QString& errorMsg);
+    bool _hardwareConnect(QString &_type);
+    bool _isBootloader();
+    void _resetConfiguration();
 
-    volatile bool m_stopp;
-    volatile bool m_reqReset;
-    QMutex m_stoppMutex; // Mutex for accessing m_stopp
-    QByteArray m_transmitBuffer; // An internal buffer for receiving data from member functions and actually transmitting them via the serial port.
-
-    bool hardwareConnect(QString &type);
+    // Local data
+    volatile bool        _stopp;
+    volatile bool        _reqReset;
+    QMutex               _stoppMutex;      // Mutex for accessing _stopp
+    QByteArray           _transmitBuffer;  // An internal buffer for receiving data from member functions and actually transmitting them via the serial port.
+    SerialConfiguration* _config;
 
 signals:
     void aboutToCloseFlag();

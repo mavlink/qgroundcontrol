@@ -2,6 +2,9 @@ import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QGroundControl.FactSystem 1.0
+import QtGraphicalEffects 1.0
+
+import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 
 Rectangle {
@@ -10,17 +13,14 @@ Rectangle {
     QGCPalette { id: palette; colorGroup: QGCPalette.Active }
     color: palette.window
 
-    signal firmwareButtonClicked;
-    signal summaryButtonClicked;
-    signal parametersButtonClicked;
-    signal setupButtonClicked(variant component);
-
     ExclusiveGroup { id: setupButtonGroup }
 
     Component {
         id: disconnectedButtons
 
         Column {
+            anchors.fill: parent
+
             spacing: 10
 
             SetupButton {
@@ -29,7 +29,7 @@ Rectangle {
                 text: "FIRMWARE"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                onClicked: topLevel.firmwareButtonClicked()
+                onClicked: controller.firmwareButtonClicked()
             }
         }
     }
@@ -38,15 +38,17 @@ Rectangle {
         id: connectedButtons
 
         Column {
+            anchors.fill: parent
+
             spacing: 10
 
             SetupButton {
                 id: summaryButton; objectName: "summaryButton"
                 width: parent.width
-                text: "VEHICLE SUMMARY"
+                text: "SUMMARY"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                onClicked: topLevel.summaryButtonClicked()
+                onClicked: controller.summaryButtonClicked()
             }
 
             SetupButton {
@@ -55,7 +57,7 @@ Rectangle {
                 text: "FIRMWARE"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                onClicked: topLevel.firmwareButtonClicked()
+                onClicked: controller.firmwareButtonClicked()
             }
 
             Repeater {
@@ -66,7 +68,7 @@ Rectangle {
                     text: modelData.name.toUpperCase()
                     setupComplete: modelData.setupComplete
                     exclusiveGroup: setupButtonGroup
-                    onClicked: topLevel.setupButtonClicked(modelData)
+                    onClicked: controller.setupButtonClicked(modelData)
                 }
             }
 
@@ -75,7 +77,7 @@ Rectangle {
                 text: "PARAMETERS"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                onClicked: topLevel.parametersButtonClicked()
+                onClicked: controller.parametersButtonClicked()
             }
         }
     }
