@@ -37,15 +37,15 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCSingleton.h"
 
 class UASInterface;
-class QGCMessageHandler;
+class UASMessageHandler;
 
 /*!
- * @class QGCUasMessage
+ * @class UASMessage
  * @brief Message element
  */
-class QGCUasMessage
+class UASMessage
 {
-    friend class QGCMessageHandler;
+    friend class UASMessageHandler;
 public:
     /**
      * @brief Get message source component ID
@@ -64,7 +64,7 @@ public:
      */
     QString getFormatedText()   { return _formatedText; }
 private:
-    QGCUasMessage(int componentid, int severity, QString text);
+    UASMessage(int componentid, int severity, QString text);
     void _setFormatedText(const QString formatedText) { _formatedText = formatedText; }
     int _compId;
     int _severity;
@@ -72,13 +72,13 @@ private:
     QString _formatedText;
 };
 
-class QGCMessageHandler : public QGCSingleton
+class UASMessageHandler : public QGCSingleton
 {
     Q_OBJECT
-    DECLARE_QGC_SINGLETON(QGCMessageHandler, QGCMessageHandler)
+    DECLARE_QGC_SINGLETON(UASMessageHandler, UASMessageHandler)
 public:
-    explicit QGCMessageHandler(QObject *parent = 0);
-    ~QGCMessageHandler();
+    explicit UASMessageHandler(QObject *parent = 0);
+    ~UASMessageHandler();
     /**
      * @brief Locks access to the message list
      */
@@ -90,7 +90,7 @@ public:
     /**
      * @brief Access to the message list
      */
-    const QVector<QGCUasMessage*>& messages() { return _messages; }
+    const QVector<UASMessage*>& messages() { return _messages; }
 public slots:
     /**
      * @brief Set currently active UAS
@@ -110,12 +110,12 @@ signals:
      * @brief Sent out when new message arrives
      * @param message A pointer to the message. NULL if resetting (new UAS assigned)
      */
-    void textMessageReceived(QGCUasMessage* message);
+    void textMessageReceived(UASMessage* message);
 private:
     void _clearMessages();
     // Stores the UAS that we're currently receiving messages from.
     UASInterface* _activeUAS;
-    QVector<QGCUasMessage*> _messages;
+    QVector<UASMessage*> _messages;
     QMutex _mutex;
 };
 

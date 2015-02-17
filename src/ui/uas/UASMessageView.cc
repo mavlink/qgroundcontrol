@@ -25,33 +25,33 @@ This file is part of the QGROUNDCONTROL project
 #include <QScrollBar>
 
 #include "QGCToolBar.h"
-#include "QGCMessageView.h"
+#include "UASMessageView.h"
 #include "QGCUnconnectedInfoWidget.h"
-#include "QGCMessageHandler.h"
-#include "ui_QGCMessageView.h"
+#include "UASMessageHandler.h"
+#include "ui_UASMessageView.h"
 
 /*-------------------------------------------------------------------------------------
-  QGCMessageView
+  UASMessageView
 -------------------------------------------------------------------------------------*/
 
-QGCMessageView::QGCMessageView(QWidget *parent) :
+UASMessageView::UASMessageView(QWidget *parent) :
     QWidget(parent),
-    _ui(new Ui::QGCMessageView)
+    _ui(new Ui::UASMessageView)
 {
     _ui->setupUi(this);
 }
 
-QGCMessageView::~QGCMessageView()
+UASMessageView::~UASMessageView()
 {
     delete _ui;
 }
 
 /*-------------------------------------------------------------------------------------
-  QGCMessageViewWidget
+  UASMessageViewWidget
 -------------------------------------------------------------------------------------*/
 
-QGCMessageViewWidget::QGCMessageViewWidget(QWidget *parent)
-    : QGCMessageView(parent)
+UASMessageViewWidget::UASMessageViewWidget(QWidget *parent)
+    : UASMessageView(parent)
     , _unconnectedWidget(NULL)
 {
     setStyleSheet("QPlainTextEdit { border: 0px }");
@@ -67,15 +67,15 @@ QGCMessageViewWidget::QGCMessageViewWidget(QWidget *parent)
     connect(clearAction, SIGNAL(triggered()), ui()->plainTextEdit, SLOT(clear()));
     ui()->plainTextEdit->addAction(clearAction);
     // Connect message handler
-    connect(QGCMessageHandler::instance(), SIGNAL(textMessageReceived(QGCUasMessage*)), this, SLOT(handleTextMessage(QGCUasMessage*)));
+    connect(UASMessageHandler::instance(), SIGNAL(textMessageReceived(UASMessage*)), this, SLOT(handleTextMessage(UASMessage*)));
 }
 
-QGCMessageViewWidget::~QGCMessageViewWidget()
+UASMessageViewWidget::~UASMessageViewWidget()
 {
 
 }
 
-void QGCMessageViewWidget::handleTextMessage(QGCUasMessage *message)
+void UASMessageViewWidget::handleTextMessage(UASMessage *message)
 {
     // Reset
     if(!message) {
@@ -102,41 +102,42 @@ void QGCMessageViewWidget::handleTextMessage(QGCUasMessage *message)
 }
 
 /*-------------------------------------------------------------------------------------
-  QGCMessageViewRollDown
+  UASMessageViewRollDown
 -------------------------------------------------------------------------------------*/
 
-QGCMessageViewRollDown::QGCMessageViewRollDown(QWidget *parent, QGCToolBar *toolBar)
-    : QGCMessageView(parent)
+UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent, QGCToolBar *toolBar)
+    : UASMessageView(parent)
 {
     _toolBar = toolBar;
-    setStyleSheet("QPlainTextEdit { border: 1px }");
+    setAttribute(Qt::WA_TranslucentBackground);
+    setStyleSheet("background-color: rgba(0%,0%,0%,80%); border: 2px;");
     QPlainTextEdit *msgWidget = ui()->plainTextEdit;
     QAction* clearAction = new QAction(tr("Clear Text"), this);
     connect(clearAction, SIGNAL(triggered()), msgWidget, SLOT(clear()));
     msgWidget->addAction(clearAction);
     // Init Messages
-    QGCMessageHandler::instance()->lockAccess();
+    UASMessageHandler::instance()->lockAccess();
     msgWidget->setUpdatesEnabled(false);
-    QVector<QGCUasMessage*> messages = QGCMessageHandler::instance()->messages();
+    QVector<UASMessage*> messages = UASMessageHandler::instance()->messages();
     for(int i = 0; i < messages.count(); i++) {
         msgWidget->appendHtml(messages.at(i)->getFormatedText());
     }
     QScrollBar *scroller = msgWidget->verticalScrollBar();
     scroller->setValue(scroller->maximum());
     msgWidget->setUpdatesEnabled(true);
-    connect(QGCMessageHandler::instance(), SIGNAL(textMessageReceived(QGCUasMessage*)), this, SLOT(handleTextMessage(QGCUasMessage*)));
-    QGCMessageHandler::instance()->unlockAccess();
+    connect(UASMessageHandler::instance(), SIGNAL(textMessageReceived(UASMessage*)), this, SLOT(handleTextMessage(UASMessage*)));
+    UASMessageHandler::instance()->unlockAccess();
 }
 
-QGCMessageViewRollDown::~QGCMessageViewRollDown()
+UASMessageViewRollDown::~UASMessageViewRollDown()
 {
 
 }
 
-void QGCMessageViewRollDown::handleTextMessage(QGCUasMessage *message)
+void UASMessageViewRollDown::handleTextMessage(UASMessage *message)
 {
     // Reset
-    if(message) {
+    if(!message) {
         ui()->plainTextEdit->clear();
     } else {
         QPlainTextEdit *msgWidget = ui()->plainTextEdit;
@@ -150,7 +151,7 @@ void QGCMessageViewRollDown::handleTextMessage(QGCUasMessage *message)
     }
 }
 
-void QGCMessageViewRollDown::leaveEvent(QEvent * event)
+void UASMessageViewRollDown::leaveEvent(QEvent * event)
 {
     Q_UNUSED(event);
     _toolBar->leaveMessageView();

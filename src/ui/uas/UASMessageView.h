@@ -30,48 +30,48 @@ This file is part of the QGROUNDCONTROL project
 #include <QAction>
 #include "QGCUnconnectedInfoWidget.h"
 
-class QGCUasMessage;
+class UASMessage;
 class QGCToolBar;
 
 namespace Ui {
-class QGCMessageView;
+class UASMessageView;
 }
 
 // Message View base class
-class QGCMessageView : public QWidget
+class UASMessageView : public QWidget
 {
     Q_OBJECT
     
 public:
-    explicit QGCMessageView(QWidget *parent = 0);
-    virtual ~QGCMessageView();
-    Ui::QGCMessageView* ui() { return _ui; }
+    explicit UASMessageView(QWidget *parent = 0);
+    virtual ~UASMessageView();
+    Ui::UASMessageView* ui() { return _ui; }
 private:
-    Ui::QGCMessageView* _ui;
+    Ui::UASMessageView* _ui;
 };
 
 // Message View Widget (used in the Info View tabbed Widget)
-class QGCMessageViewWidget : public QGCMessageView
+class UASMessageViewWidget : public UASMessageView
 {
     Q_OBJECT
 public:
-    explicit QGCMessageViewWidget(QWidget *parent = 0);
-    ~QGCMessageViewWidget();
+    explicit UASMessageViewWidget(QWidget *parent = 0);
+    ~UASMessageViewWidget();
 public slots:
-    void handleTextMessage(QGCUasMessage* message);
+    void handleTextMessage(UASMessage* message);
 private:
     QGCUnconnectedInfoWidget* _unconnectedWidget;
 };
 
 // Roll down Message View
-class QGCMessageViewRollDown : public QGCMessageView
+class UASMessageViewRollDown : public UASMessageView
 {
     Q_OBJECT
 public:
-    explicit QGCMessageViewRollDown(QWidget *parent, QGCToolBar* toolBar);
-    ~QGCMessageViewRollDown();
+    explicit UASMessageViewRollDown(QWidget *parent, QGCToolBar* toolBar);
+    ~UASMessageViewRollDown();
 public slots:
-    void handleTextMessage(QGCUasMessage* message);
+    void handleTextMessage(UASMessage* message);
 protected:
     void leaveEvent(QEvent* event);
 private:
