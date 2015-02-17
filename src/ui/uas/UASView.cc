@@ -229,49 +229,6 @@ void UASView::mouseDoubleClickEvent (QMouseEvent * event)
 {
     Q_UNUSED(event);
     UASManager::instance()->setActiveUAS(uas);
-    // qDebug() << __FILE__ << __LINE__ << "DOUBLECLICKED";
-}
-
-void UASView::enterEvent(QEvent* event)
-{
-    if (event->type() == QEvent::MouseMove)
-    {
-        emit uasInFocus(uas);
-        if (uas != UASManager::instance()->getActiveUAS())
-        {
-            grabMouse(QCursor(Qt::PointingHandCursor));
-        }
-    }
-
-    if (event->type() == QEvent::MouseButtonDblClick)
-    {
-        // qDebug() << __FILE__ << __LINE__ << "UAS CLICKED!";
-    }
-}
-
-void UASView::leaveEvent(QEvent* event)
-{
-    if (event->type() == QEvent::MouseMove)
-    {
-        emit uasOutFocus(uas);
-        releaseMouse();
-    }
-}
-
-void UASView::showEvent(QShowEvent* event)
-{
-    // React only to internal (pre-display)
-    // events
-    Q_UNUSED(event);
-    refreshTimer->start(updateInterval*10);
-}
-
-void UASView::hideEvent(QHideEvent* event)
-{
-    // React only to internal (pre-display)
-    // events
-    Q_UNUSED(event);
-   // refreshTimer->stop();
 }
 
 void UASView::receiveHeartbeat(UASInterface* uas)
@@ -477,6 +434,10 @@ void UASView::updateLoad(UASInterface* uas, double load)
     }
 }
 
+/**
+ * Right-clicking on the view provides a custom menu for interacting
+ * with the UAS.
+ */
 void UASView::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
@@ -709,11 +670,9 @@ void UASView::changeEvent(QEvent *e)
     }
 }
 
-/**
- * Implement paintEvent() so that stylesheets work for our custom widget.
- */
-void UASView::paintEvent(QPaintEvent *)
+void UASView::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event);
     QStyleOption opt;
     opt.init(this);
     QPainter p(this);
