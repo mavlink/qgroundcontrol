@@ -18,7 +18,7 @@ public:
 private:
     MAVLinkDecoder *m_decoder;
     Ui::QGCTabbedInfoView ui;
-    QGCMessageView *messageView;
+    QGCMessageViewWidget *messageView;
     UASQuickView *quickView;
     UASRawStatusView *rawView;
 };

@@ -494,7 +494,8 @@ HEADERS += \
     src/ui/QGCLinkConfiguration.h \
     src/comm/LinkConfiguration.h \
     src/ui/QGCCommConfiguration.h \
-    src/ui/QGCUDPLinkConfiguration.h
+    src/ui/QGCUDPLinkConfiguration.h \
+    src/uas/QGCMessageHandler.h
 
 SOURCES += \
     src/main.cc \
@@ -635,7 +636,8 @@ SOURCES += \
     src/ui/QGCLinkConfiguration.cc \
     src/comm/LinkConfiguration.cc \
     src/ui/QGCCommConfiguration.cc \
-    src/ui/QGCUDPLinkConfiguration.cc
+    src/ui/QGCUDPLinkConfiguration.cc \
+    src/uas/QGCMessageHandler.cc
 
 #
 # Unit Test specific configuration goes here
