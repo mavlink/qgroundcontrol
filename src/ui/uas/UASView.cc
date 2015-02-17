@@ -403,6 +403,7 @@ void UASView::updateThrust(UASInterface* uas, double thrust)
     if (this->uas == uas)
     {
         this->thrust = thrust;
+        m_ui->thrustBar->setValue(thrust * 100);
     }
 }
 
@@ -534,8 +535,6 @@ void UASView::refresh()
 
         // Battery
         m_ui->batteryBar->setValue(static_cast<int>(this->chargeLevel));
-        //m_ui->loadBar->setValue(static_cast<int>(this->load));
-        m_ui->thrustBar->setValue(this->thrust);
 
         // Position
         // If global position is known, prefer it over local coordinates
@@ -586,9 +585,6 @@ void UASView::refresh()
         // Speed
         QString speed("%1 m/s");
         m_ui->speedLabel->setText(speed.arg(totalSpeed, 4, 'f', 1, '0'));
-
-        // Thrust
-        m_ui->thrustBar->setValue(thrust * 100);
 
         // Time Elapsed
         //QDateTime time = MG::TIME::msecToQDateTime(uas->getUptime());
