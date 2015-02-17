@@ -483,15 +483,28 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 
 void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
 {
-    QString saveFilename = QGCFileDialog::getSaveFileName(
-        MainWindow::instance(),
-        tr("Save Flight Data Log"),
-        qgcApp()->mavlinkLogFilesLocation(),
-        tr("Flight Data Log Files (*.mavlink)"),
-        "mavlink");
-    if (!saveFilename.isEmpty()) {
-        QFile::copy(tempLogfile, saveFilename);
-    }
+    bool saveError;
+    do{
+        saveError = false;
+        QString saveFilename = QGCFileDialog::getSaveFileName(
+            MainWindow::instance(),
+            tr("Save Flight Data Log"),
+            qgcApp()->mavlinkLogFilesLocation(),
+            tr("Flight Data Log Files (*.mavlink)"),
+            "mavlink");
+    
+        if (!saveFilename.isEmpty()) {
+            // if file exsits already, try to remove it first to overwrite it
+            if(QFile::exists(saveFilename) && !QFile::remove(saveFilename)){
+                saveError = true;
+                QMessageBox::warning (MainWindow::instance(), "File Error","Could not overwrite existing file");
+                QFile::copy(tempLogfile, saveFilename);
+            } else if(!QFile::copy(tempLogfile, saveFilename)) {
+                saveError = true;
+                QMessageBox::warning (MainWindow::instance(), "File Error","Could not create file");
+            }
+        }
+    } while(saveError); // if the file could not be overwritten, ask for new file
     QFile::remove(tempLogfile);
 }
 
