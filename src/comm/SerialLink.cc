@@ -14,9 +14,12 @@
 #include <QMutexLocker>
 #include <QSerialPort>
 #include <QSerialPortInfo>
+
 #include "SerialLink.h"
 #include "QGC.h"
-#include <MG.h>
+#include "MG.h"
+
+Q_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
 SerialLink::SerialLink(SerialConfiguration* config)
 {
@@ -33,9 +36,9 @@ SerialLink::SerialLink(SerialConfiguration* config)
     // Set unique ID and add link to the list of links
     _id = getNextLinkId();
 
-    qDebug() << "Create SerialLink " << config->portName() << config->baud() << config->flowControl()
+    qCDebug(SerialLinkLog) << "Create SerialLink " << config->portName() << config->baud() << config->flowControl()
              << config->parity() << config->dataBits() << config->stopBits();
-    qDebug() << "portName: " << config->portName();
+    qCDebug(SerialLinkLog) << "portName: " << config->portName();
 }
 
 void SerialLink::requestReset()
@@ -65,16 +68,14 @@ bool SerialLink::_isBootloader()
     }
     foreach (const QSerialPortInfo &info, portList)
     {
-        // XXX debug statements will be removed once we have 100% stable link reports
-//        qDebug() << "PortName    : " << info.portName()
-//                 << "Description : " << info.description();
-//        qDebug() << "Manufacturer: " << info.manufacturer();
-       if (info.portName().trimmed() == _config->portName() &&
-          (info.description().toLower().contains("bootloader") ||
-           info.description().toLower().contains("px4 bl") ||
-           info.description().toLower().contains("px4 fmu v1.6"))) {
-//         qDebug() << "BOOTLOADER FOUND";
-           return true;
+        qCDebug(SerialLinkLog) << "PortName    : " << info.portName() << "Description : " << info.description();
+        qCDebug(SerialLinkLog) << "Manufacturer: " << info.manufacturer();
+        if (info.portName().trimmed() == _config->portName() &&
+                (info.description().toLower().contains("bootloader") ||
+                 info.description().toLower().contains("px4 bl") ||
+                 info.description().toLower().contains("px4 fmu v1.6"))) {
+            qCDebug(SerialLinkLog) << "BOOTLOADER FOUND";
+            return true;
        }
     }
     // Not found
@@ -114,30 +115,6 @@ void SerialLink::run()
             }
         }
 
-        // TODO This needs a bit of TLC still...
-        // If there are too many errors on this link, disconnect.
-        if (isConnected() && (linkErrorCount > 150)) {
-            qDebug() << "linkErrorCount too high: re-connecting!";
-            linkErrorCount = 0;
-            emit communicationUpdate(getName(), tr("Link timeout, not receiving any data, attempting reconnect"));
-            if (_port) {
-                _port->close();
-                delete _port;
-                _port = NULL;
-            }
-            QGC::SLEEP::msleep(500);
-            unsigned tries = 0;
-            const unsigned tries_max = 15;
-            while (!_hardwareConnect(_type) && tries < tries_max) {
-                tries++;
-                QGC::SLEEP::msleep(500);
-            }
-            // Give up
-            if (tries == tries_max) {
-                break;
-            }
-        }
-
         // Write all our buffered data out the serial port.
         if (_transmitBuffer.count() > 0) {
             _writeMutex.lock();
@@ -146,7 +123,7 @@ void SerialLink::run()
             txSuccess |= _port->waitForBytesWritten(10);
             if (!txSuccess || (numWritten != _transmitBuffer.count())) {
                 linkErrorCount++;
-                qDebug() << "TX Error! written:" << txSuccess << "wrote" << numWritten << ", asked for " << _transmitBuffer.count() << "bytes";
+                qCDebug(SerialLinkLog) << "TX Error! written:" << txSuccess << "wrote" << numWritten << ", asked for " << _transmitBuffer.count() << "bytes";
             }
             else {
 
@@ -213,7 +190,7 @@ void SerialLink::run()
     } // end of forever
 
     if (_port) {
-        qDebug() << "Closing Port #" << __LINE__ << _port->portName();
+        qCDebug(SerialLinkLog) << "Closing Port #" << __LINE__ << _port->portName();
         _port->close();
         delete _port;
         _port = NULL;
@@ -276,7 +253,7 @@ bool SerialLink::_disconnect(void)
         return true;
     }
     _transmitBuffer.clear(); //clear the output buffer to avoid sending garbage at next connect
-    qDebug() << "Already disconnected";
+    qCDebug(SerialLinkLog) << "Already disconnected";
     return true;
 }
 
@@ -287,7 +264,7 @@ bool SerialLink::_disconnect(void)
  **/
 bool SerialLink::_connect(void)
 {
-    qDebug() << "CONNECT CALLED";
+    qCDebug(SerialLinkLog) << "CONNECT CALLED";
     if (isRunning())
         _disconnect();
     {
@@ -309,17 +286,18 @@ bool SerialLink::_connect(void)
 bool SerialLink::_hardwareConnect(QString &type)
 {
     if (_port) {
-        qDebug() << "SerialLink:" << QString::number((long)this, 16) << "closing port";
+        qCDebug(SerialLinkLog) << "SerialLink:" << QString::number((long)this, 16) << "closing port";
         _port->close();
         QGC::SLEEP::usleep(50000);
         delete _port;
         _port = NULL;
     }
 
-    qDebug() << "SerialLink: hardwareConnect to " << _config->portName();
+    qCDebug(SerialLinkLog) << "SerialLink: hardwareConnect to " << _config->portName();
 
+    // If we are in the Pixhawk bootloader code wait for it to timeout
     if (_isBootloader()) {
-        qDebug() << "Not connecting to a bootloader, waiting for 2nd chance";
+        qCDebug(SerialLinkLog) << "Not connecting to a bootloader, waiting for 2nd chance";
         const unsigned retry_limit = 12;
         unsigned retries;
         for (retries = 0; retries < retry_limit; retries++) {
@@ -353,11 +331,11 @@ bool SerialLink::_hardwareConnect(QString &type)
 
     // TODO This needs a bit of TLC still...
 
-    // After the bootloader times out, it still can take a second or so for the USB driver to come up and make
+    // After the bootloader times out, it still can take a second or so for the Pixhawk USB driver to come up and make
     // the port available for open. So we retry a few times to wait for it.
     for (int openRetries = 0; openRetries < 4; openRetries++) {
         if (!_port->open(QIODevice::ReadWrite)) {
-            qDebug() << "Port open failed, retrying";
+            qCDebug(SerialLinkLog) << "Port open failed, retrying";
             QGC::SLEEP::msleep(500);
         } else {
             break;
@@ -369,7 +347,7 @@ bool SerialLink::_hardwareConnect(QString &type)
         return false; // couldn't open serial port
     }
 
-    qDebug() << "Configuring port";
+    qCDebug(SerialLinkLog) << "Configuring port";
     _port->setBaudRate     (_config->baud());
     _port->setDataBits     (static_cast<QSerialPort::DataBits>     (_config->dataBits()));
     _port->setFlowControl  (static_cast<QSerialPort::FlowControl>  (_config->flowControl()));
@@ -379,7 +357,7 @@ bool SerialLink::_hardwareConnect(QString &type)
     emit communicationUpdate(getName(), "Opened port!");
     emit connected();
 
-    qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "type:" << type << "with settings" << _config->portName()
+    qCDebug(SerialLinkLog) << "CONNECTING LINK: " << __FILE__ << __LINE__ << "type:" << type << "with settings" << _config->portName()
              << _config->baud() << _config->dataBits() << _config->parity() << _config->stopBits();
 
     return true; // successful connection
@@ -392,7 +370,7 @@ void SerialLink::linkError(QSerialPort::SerialPortError error)
         // when you are done. The reason for this is that this signal is very noisy. For example if you try to
         // connect to a PixHawk before it is ready to accept the connection it will output a continuous stream
         // of errors until the Pixhawk responds.
-        //qDebug() << "SerialLink::linkError" << error;
+        //qCDebug(SerialLinkLog) << "SerialLink::linkError" << error;
     }
 }
 
@@ -403,17 +381,13 @@ void SerialLink::linkError(QSerialPort::SerialPortError error)
  **/
 bool SerialLink::isConnected() const
 {
+    bool isConnected = false;
 
     if (_port) {
-        bool isConnected = _port->isOpen();
-//        qDebug() << "SerialLink #" << __LINE__ << ":"<<  m_port->portName()
-//                 << " isConnected =" << QString::number(isConnected);
-        return isConnected;
-    } else {
-//        qDebug() << "SerialLink #" << __LINE__ << ":" <<  m_portName
-//                 << " isConnected = NULL";
-        return false;
+        isConnected = _port->isOpen();
     }
+    
+    return isConnected;
 }
 
 int SerialLink::getId() const
@@ -484,7 +458,7 @@ void SerialLink::_resetConfiguration()
         somethingChanged |= _port->setParity      (static_cast<QSerialPort::Parity>      (_config->parity()));
     }
     if(somethingChanged) {
-        qDebug() << "Reconfiguring port";
+        qCDebug(SerialLinkLog) << "Reconfiguring port";
         emit updateLink(this);
     }
 }
