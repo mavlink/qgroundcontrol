@@ -47,7 +47,7 @@ Rectangle {
                 }
                 FactTextField {
                     id: telemetryLossField
-                    fact: autopilot.parameters["NAV_DLL_N"];
+                    fact: autopilot.parameters["COM_DL_LOSS_T"];
                     showUnits: true
                 }
             }
