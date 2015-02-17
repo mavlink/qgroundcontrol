@@ -40,7 +40,7 @@
 #include <osg/ShapeDrawable>
 #include <osgText/Text>
 
-#include "../MainWindow.h"
+#include "MainWindow.h"
 #include "PixhawkCheetahNode.h"
 #include "TerrainParamDialog.h"
 #include "UASManager.h"
