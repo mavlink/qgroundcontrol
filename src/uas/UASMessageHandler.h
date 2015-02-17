@@ -91,6 +91,10 @@ public:
      * @brief Access to the message list
      */
     const QVector<UASMessage*>& messages() { return _messages; }
+    /**
+     * @brief Clear messages
+     */
+    void clearMessages();
 public slots:
     /**
      * @brief Set currently active UAS
@@ -112,7 +116,6 @@ signals:
      */
     void textMessageReceived(UASMessage* message);
 private:
-    void _clearMessages();
     // Stores the UAS that we're currently receiving messages from.
     UASInterface* _activeUAS;
     QVector<UASMessage*> _messages;

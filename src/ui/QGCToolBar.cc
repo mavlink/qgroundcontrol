@@ -434,7 +434,11 @@ void QGCToolBar::updateView()
         if (QGC::groundTimeMilliseconds() - lastSystemMessageTimeMs < 15000) {
             toolBarMessageLabel->setText(QString("%1").arg(lastSystemMessage));
         } else {
-            toolBarMessageLabel->setText(tr("Messages"));
+            if(UASMessageHandler::instance()->messages().count()) {
+                toolBarMessageLabel->setText(tr("Messages"));
+            } else {
+                toolBarMessageLabel->setText(tr("No Messages"));
+            }
         }
     }
 

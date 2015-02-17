@@ -59,6 +59,7 @@ public:
     ~UASMessageViewWidget();
 public slots:
     void handleTextMessage(UASMessage* message);
+    void clearMessages();
 private:
     QGCUnconnectedInfoWidget* _unconnectedWidget;
 };
