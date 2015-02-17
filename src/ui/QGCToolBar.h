@@ -37,7 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialLink.h"
 #include "LinkManager.h"
 
-class QGCMessageViewRollDown;
+class UASMessageViewRollDown;
 
 class QGCToolBar : public QToolBar
 {
@@ -138,7 +138,7 @@ private:
     QComboBox*  _linkCombo;
     QAction*    _linkComboAction;
 
-    QGCMessageViewRollDown* _rollDownMessages;
+    UASMessageViewRollDown* _rollDownMessages;
 
     QPushButton*    _connectButton;
     bool            _linksConnected;

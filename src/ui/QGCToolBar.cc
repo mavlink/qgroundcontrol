@@ -31,8 +31,8 @@ This file is part of the QGROUNDCONTROL project
 #include "UASManager.h"
 #include "MainWindow.h"
 #include "QGCApplication.h"
-#include "QGCMessageView.h"
-
+#include "UASMessageView.h"
+#include "UASMessageHandler.h"
 
 // Label class that sends mouse hover events
 class QCGHoverLabel : public QLabel
@@ -739,13 +739,14 @@ void QGCToolBar::_updateConfigurations()
  */
 void QGCToolBar::enterMessageLabel()
 {
-    if(!_rollDownMessages)
+    // If not already there and messages are actually present
+    if(!_rollDownMessages && UASMessageHandler::instance()->messages().count())
     {
         QPoint p = toolBarMessageLabel->mapToGlobal(QPoint(0,0));
-        _rollDownMessages = new QGCMessageViewRollDown(MainWindow::instance(),this);
+        _rollDownMessages = new UASMessageViewRollDown(MainWindow::instance(),this);
         _rollDownMessages->setAttribute(Qt::WA_DeleteOnClose);
         _rollDownMessages->move(mapFromGlobal(p));
-        _rollDownMessages->setMinimumSize(400,300);
+        _rollDownMessages->setMinimumSize(360,200);
         _rollDownMessages->show();
     }
 }

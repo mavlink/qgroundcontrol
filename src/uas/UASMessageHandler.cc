@@ -28,19 +28,19 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include "QGCApplication.h"
-#include "QGCMessageHandler.h"
+#include "UASMessageHandler.h"
 #include "UASManager.h"
 
-QGCUasMessage::QGCUasMessage(int componentid, int severity, QString text)
+UASMessage::UASMessage(int componentid, int severity, QString text)
 {
     _compId   = componentid;
     _severity = severity;
     _text     = text;
 }
 
-IMPLEMENT_QGC_SINGLETON(QGCMessageHandler, QGCMessageHandler)
+IMPLEMENT_QGC_SINGLETON(UASMessageHandler, UASMessageHandler)
 
-QGCMessageHandler::QGCMessageHandler(QObject *parent)
+UASMessageHandler::UASMessageHandler(QObject *parent)
     : QGCSingleton(parent)
     , _activeUAS(NULL)
 {
@@ -48,12 +48,12 @@ QGCMessageHandler::QGCMessageHandler(QObject *parent)
     emit textMessageReceived(NULL);
 }
 
-QGCMessageHandler::~QGCMessageHandler()
+UASMessageHandler::~UASMessageHandler()
 {
     _clearMessages();
 }
 
-void QGCMessageHandler::_clearMessages()
+void UASMessageHandler::_clearMessages()
 {
     _mutex.lock();
     while(_messages.count()) {
@@ -63,7 +63,7 @@ void QGCMessageHandler::_clearMessages()
     _mutex.unlock();
 }
 
-void QGCMessageHandler::setActiveUAS(UASInterface* uas)
+void UASMessageHandler::setActiveUAS(UASInterface* uas)
 {
     // If we were already attached to an autopilot, disconnect it.
     if (_activeUAS && _activeUAS != uas)
@@ -83,7 +83,7 @@ void QGCMessageHandler::setActiveUAS(UASInterface* uas)
     }
 }
 
-void QGCMessageHandler::handleTextMessage(int uasid, int compId, int severity, QString text)
+void UASMessageHandler::handleTextMessage(int uasid, int compId, int severity, QString text)
 {
     Q_UNUSED(uasid);
 
@@ -147,7 +147,7 @@ void QGCMessageHandler::handleTextMessage(int uasid, int compId, int severity, Q
 
     // Finally preppend the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
-    QGCUasMessage* message = new QGCUasMessage(compId, severity, text);
+    UASMessage* message = new UASMessage(compId, severity, text);
     message->_setFormatedText(QString("<p style=\"color:#CCCCCC\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
     _mutex.lock();
     _messages.append(message);
