@@ -34,12 +34,10 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QObject>
 #include <QWidget>
-#include <QAction>
 #include <QTimer>
 #include <QShowEvent>
 #include <QHideEvent>
-#include <LinkInterface.h>
-#include <SerialLinkInterface.h>
+#include "SerialLink.h"
 #include "ui_SerialSettings.h"
 
 class SerialConfigurationWindow : public QWidget
@@ -47,19 +45,19 @@ class SerialConfigurationWindow : public QWidget
     Q_OBJECT
 
 public:
-    SerialConfigurationWindow(LinkInterface* link, QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
+    SerialConfigurationWindow(SerialConfiguration* config, QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
     ~SerialConfigurationWindow();
 
-    QAction* getAction();
-
 public slots:
-    void configureCommunication();
     void enableFlowControl(bool flow);
     void setParityNone(bool accept);
     void setParityOdd(bool accept);
     void setParityEven(bool accept);
     void setPortName(QString port);
-    void setLinkName(QString name);
+    void setBaudRate(int index);
+    void setDataBits(int bits);
+    void setStopBits(int bits);
+
     /**
      * @brief setupPortList Populates the dropdown with the list of available serial ports.
      * This function is called at 1s intervals to check that the serial port still exists and to see if
@@ -75,10 +73,10 @@ protected:
 
 private:
 
-    Ui::serialSettings ui;
-    SerialLinkInterface* link;
-    QAction* action;
-    QTimer* portCheckTimer;
+    bool                  _userConfigured;
+    Ui::serialSettings    _ui;
+    SerialConfiguration*  _config;
+    QTimer*               _portCheckTimer;
 
 };
 

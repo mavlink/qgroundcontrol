@@ -262,11 +262,12 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
         return;
     }
     
-    QString logFile = QGCFileDialog::getOpenFileName(this,
-                                                    tr("Specify MAVLink log file name to replay"),
-                                                    qgcApp()->mavlinkLogFilesLocation(),
-                                                    tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log)"));
-    
+    QString logFile = QGCFileDialog::getOpenFileName(
+        this,
+        tr("Load MAVLink Log File"),
+        qgcApp()->mavlinkLogFilesLocation(),
+        tr("MAVLink Log Files (*.mavlink);;All Files (*)"));
+
     if (!logFile.isEmpty()) {
         loadLogFile(logFile);
     }

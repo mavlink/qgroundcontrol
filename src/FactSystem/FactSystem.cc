@@ -28,7 +28,6 @@
 #include "UASManager.h"
 #include "QGCApplication.h"
 #include "VehicleComponent.h"
-#include "QGCPalette.h"
 
 #include <QtQml>
 
@@ -44,7 +43,6 @@ FactSystem::FactSystem(QObject* parent) :
     
     // FIXME: Where should these go?
     qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference VehicleComponent");
-    qmlRegisterType<QGCPalette>(_factSystemQmlUri, 1, 0, "QGCPalette");
 }
 
 FactSystem::~FactSystem()

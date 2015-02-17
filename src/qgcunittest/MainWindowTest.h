@@ -43,7 +43,6 @@ private slots:
     void init(void);
     void cleanup(void);
     
-    void _clickThrough_test(void);
     void _connectWindowClosePX4_test(void);
     void _connectWindowCloseGeneric_test(void);
     

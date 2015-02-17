@@ -83,6 +83,8 @@ protected:
     void updateIcons();
     
 private:
+    void _requestAllSensorParameters(void);
+    
     Ui::QGCPX4SensorCalibration *ui;
 
 };

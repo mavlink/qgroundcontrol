@@ -123,7 +123,6 @@ protected:
     QToolButton* createButton(QWidget* parent);
     void createCurveItem(QString curve);
     void createLayout();
-    QString getLogSaveFilename();
     /** @brief Get the name for a curve key */
     QString getCurveName(const QString& key, bool shortEnabled);
 

@@ -30,11 +30,11 @@
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
-#include "PX4FirmwareUpgrade.h"
 #include "ParameterEditor.h"
 #include "QGCQmlWidgetHolder.h"
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
+#include "FirmwareUpgradeController.h"
 
 #include <QQmlError>
 #include <QQmlContext>
@@ -54,25 +54,12 @@ SetupView::SetupView(QWidget* parent) :
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
     
-    //setResizeMode(SizeRootObjectToView);
-    
     _ui->buttonHolder->setAutoPilot(NULL);
     _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtons.qml"));
     
-    QObject* rootObject = (QObject*)_ui->buttonHolder->rootObject();
-    Q_ASSERT(rootObject);
+    _ui->buttonHolder->rootContext()->setContextProperty("controller", this);
     
-    fSucceeded = connect(rootObject, SIGNAL(setupButtonClicked(QVariant)), this, SLOT(_setupButtonClicked(QVariant)));
-    Q_ASSERT(fSucceeded);
-    
-    fSucceeded = connect(rootObject, SIGNAL(firmwareButtonClicked()), this, SLOT(_firmwareButtonClicked()));
-    Q_ASSERT(fSucceeded);
-    
-    fSucceeded = connect(rootObject, SIGNAL(parametersButtonClicked()), this, SLOT(_parametersButtonClicked()));
-    Q_ASSERT(fSucceeded);
-    
-    fSucceeded = connect(rootObject, SIGNAL(summaryButtonClicked()), this, SLOT(_summaryButtonClicked()));
-    Q_ASSERT(fSucceeded);
+    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.FirmwareUpgradeController", 1, 0, "FirmwareUpgradeController");
     
     _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
@@ -91,7 +78,7 @@ void SetupView::_setActiveUAS(UASInterface* uas)
 
     _autoPilotPlugin = NULL;
     _ui->buttonHolder->setAutoPilot(NULL);
-    _firmwareButtonClicked();
+    firmwareButtonClicked();
     QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("firmwareButton");
     Q_ASSERT(button);
     button->setProperty("checked", true);
@@ -111,7 +98,7 @@ void SetupView::_setActiveUAS(UASInterface* uas)
 void SetupView::_pluginReady(void)
 {
     _ui->buttonHolder->setAutoPilot(_autoPilotPlugin);
-    _summaryButtonClicked();
+    summaryButtonClicked();
     QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("summaryButton");
     Q_ASSERT(button);
     button->setProperty("checked", true);
@@ -126,24 +113,28 @@ void SetupView::_changeSetupWidget(QWidget* newWidget)
     _ui->setupWidgetLayout->addWidget(newWidget);
 }
 
-void SetupView::_firmwareButtonClicked(void)
+void SetupView::firmwareButtonClicked(void)
 {
     if (_uasCurrent && _uasCurrent->isArmed()) {
         QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
         return;
     }
+
+    QGCQmlWidgetHolder* setup = new QGCQmlWidgetHolder;
+    Q_CHECK_PTR(setup);
     
-    PX4FirmwareUpgrade* setup = new PX4FirmwareUpgrade(this);
+    setup->setSource(QUrl::fromUserInput("qrc:/qml/FirmwareUpgrade.qml"));
+
     _changeSetupWidget(setup);
 }
 
-void SetupView::_parametersButtonClicked(void)
+void SetupView::parametersButtonClicked(void)
 {
     ParameterEditor* setup = new ParameterEditor(_uasCurrent, QStringList(), this);
     _changeSetupWidget(setup);
 }
 
-void SetupView::_summaryButtonClicked(void)
+void SetupView::summaryButtonClicked(void)
 {
     Q_ASSERT(_autoPilotPlugin);
     
@@ -156,7 +147,7 @@ void SetupView::_summaryButtonClicked(void)
     _changeSetupWidget(summary);
 }
 
-void SetupView::_setupButtonClicked(const QVariant& component)
+void SetupView::setupButtonClicked(const QVariant& component)
 {
     if (_uasCurrent->isArmed()) {
         QGCMessageBox::warning("Setup", "Setup cannot be performed while vehicle is armed.");

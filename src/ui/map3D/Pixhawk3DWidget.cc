@@ -587,11 +587,12 @@ Pixhawk3DWidget::setBirdEyeView(void)
 void
 Pixhawk3DWidget::loadTerrainModel(void)
 {
-    QString filename = QGCFileDialog::getOpenFileName(this, "Load Terrain Model",
-                                                    QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
-                                                    tr("Collada (*.dae)"));
+    QString filename = QGCFileDialog::getOpenFileName(
+        this, "Load Terrain Model",
+        QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+        tr("Collada Files (*.dae)"));
 
-    if (filename.isNull())
+    if (filename.isEmpty())
     {
         return;
     }

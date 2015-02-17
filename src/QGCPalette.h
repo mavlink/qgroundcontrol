@@ -50,6 +50,9 @@ class QGCPalette : public QObject
     Q_PROPERTY(QColor text READ text NOTIFY paletteChanged)
     Q_PROPERTY(QColor window READ window NOTIFY paletteChanged)
     Q_PROPERTY(QColor windowText READ windowText NOTIFY paletteChanged)
+    
+    /// The buttonHighlight color identifies the button background color when hovered or selected.
+    Q_PROPERTY(QColor buttonHighlight READ buttonHighlight NOTIFY paletteChanged)
 
 public:
     enum ColorGroup {
@@ -76,6 +79,7 @@ public:
     QColor text(void) const { return _text[_theme][_colorGroup]; }
     QColor window(void) const { return _window[_theme][_colorGroup]; }
     QColor windowText(void) const { return _windowText[_theme][_colorGroup]; }
+    QColor buttonHighlight(void) const { return _buttonHighlight[_theme][_colorGroup]; }
     
     static Theme globalTheme(void) { return _theme; }
     static void setGlobalTheme(Theme newTheme);
@@ -97,6 +101,7 @@ private:
     static QColor _text[_cThemes][_cColorGroups];
     static QColor _window[_cThemes][_cColorGroups];
     static QColor _windowText[_cThemes][_cColorGroups];
+    static QColor _buttonHighlight[_cThemes][_cColorGroups];
     
     void _themeChanged(void);
     

@@ -28,159 +28,136 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#include <QDebug>
-
-#include <SerialConfigurationWindow.h>
-#include <SerialLinkInterface.h>
 #include <QDir>
 #include <QSettings>
 #include <QFileInfoList>
+#include <QDebug>
 
-SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidget *parent, Qt::WindowFlags flags) : QWidget(parent, flags),
-    userConfigured(false)
+#include <SerialConfigurationWindow.h>
+#include <SerialLink.h>
+
+#ifndef USE_ANCIENT_RATES
+#define USE_ANCIENT_RATES 0
+#endif
+
+SerialConfigurationWindow::SerialConfigurationWindow(SerialConfiguration *config, QWidget *parent, Qt::WindowFlags flags)
+    : QWidget(parent, flags)
+    , _userConfigured(false)
 {
-    SerialLinkInterface* serialLink = dynamic_cast<SerialLinkInterface*>(link);
+    _ui.setupUi(this);
+    Q_ASSERT(config != NULL);
+    _config = config;
 
-    if(serialLink != 0)
-    {
-        serialLink->loadSettings();
-        this->link = serialLink;
+    // Scan for serial ports. Let the user know if none were found for debugging purposes
+    if (!setupPortList()) {
+        qDebug() << "No serial ports found.";
+    }
 
-        // Setup the user interface according to link type
-        ui.setupUi(this);
+    // Set up baud rates
+    _ui.baudRate->clear();
 
-        // Create action to open this menu
-        // Create configuration action for this link
-        // Connect the current UAS
-        action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", this);
-        setLinkName(link->getName());
+    // Keep track of all desired baud rates by OS. These are iterated through
+    // later and added to _ui.baudRate.
+    QList<int> supportedBaudRates;
 
-        // Scan for serial ports. Let the user know if none were found for debugging purposes
-        if (!setupPortList()) {
-            qDebug() << "No serial ports found.";
-        }
-
-        // Set up baud rates
-        ui.baudRate->clear();
-		
-		// Keep track of all desired baud rates by OS. These are iterated through
-		// later and added to ui.baudRate.
-		QList<int> supportedBaudRates;
-
-		// Baud rates supported only by POSIX systems
+#if USE_ANCIENT_RATES
+    // Baud rates supported only by POSIX systems
 #if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-		supportedBaudRates << 50;
-		supportedBaudRates << 75;
-		supportedBaudRates << 134;
-		supportedBaudRates << 150;
-		supportedBaudRates << 200;
-		supportedBaudRates << 1800;
+    supportedBaudRates << 50;
+    supportedBaudRates << 75;
+    supportedBaudRates << 134;
+    supportedBaudRates << 150;
+    supportedBaudRates << 200;
+    supportedBaudRates << 1800;
 #endif
+#endif //USE_ANCIENT_RATES
 
-		// Baud rates supported only by Windows
+    // Baud rates supported only by Windows
 #if defined(Q_OS_WIN)
-		supportedBaudRates << 14400;
-		supportedBaudRates << 56000;
-		supportedBaudRates << 128000;
-		supportedBaudRates << 256000;
+    supportedBaudRates << 14400;
+    supportedBaudRates << 56000;
+    supportedBaudRates << 128000;
+    supportedBaudRates << 256000;
 #endif
 
-		// Baud rates supported by everyone
-		supportedBaudRates << 110;
-		supportedBaudRates << 300;
-		supportedBaudRates << 600;
-		supportedBaudRates << 1200;
-		supportedBaudRates << 2400;
-		supportedBaudRates << 4800;
-		supportedBaudRates << 9600;
-		supportedBaudRates << 19200;
-		supportedBaudRates << 38400;
-		supportedBaudRates << 57600;
-		supportedBaudRates << 115200;
-        supportedBaudRates << 230400;
-        supportedBaudRates << 460800;
+    // Baud rates supported by everyone
+#if USE_ANCIENT_RATES
+    supportedBaudRates << 110;
+    supportedBaudRates << 300;
+    supportedBaudRates << 600;
+    supportedBaudRates << 1200;
+#endif //USE_ANCIENT_RATES
+    supportedBaudRates << 2400;
+    supportedBaudRates << 4800;
+    supportedBaudRates << 9600;
+    supportedBaudRates << 19200;
+    supportedBaudRates << 38400;
+    supportedBaudRates << 57600;
+    supportedBaudRates << 115200;
+    supportedBaudRates << 230400;
+    supportedBaudRates << 460800;
 
 #if defined(Q_OS_LINUX)
-        // Baud rates supported only by Linux
-        supportedBaudRates << 500000;
-        supportedBaudRates << 576000;
+    // Baud rates supported only by Linux
+    supportedBaudRates << 500000;
+    supportedBaudRates << 576000;
 #endif
 
-        supportedBaudRates << 921600;
-		
-		// Now actually add all of our supported baud rates to the UI.
-		qSort(supportedBaudRates.begin(), supportedBaudRates.end());
-		for (int i = 0; i < supportedBaudRates.size(); ++i) {
-			ui.baudRate->addItem(QString::number(supportedBaudRates.at(i)), supportedBaudRates.at(i));
-		}
+    supportedBaudRates << 921600;
 
-        // Load current link config
-        ui.portName->setCurrentIndex(ui.baudRate->findText(QString("%1").arg(this->link->getPortName())));
-
-        connect(action, SIGNAL(triggered()), this, SLOT(configureCommunication()));
-
-        // Make sure that a change in the link name will be reflected in the UI
-        connect(link, SIGNAL(nameChanged(QString)), this, SLOT(setLinkName(QString)));
-
-        // Connect the individual user interface inputs
-        connect(ui.portName, SIGNAL(editTextChanged(QString)), this, SLOT(setPortName(QString)));
-        connect(ui.portName, SIGNAL(currentIndexChanged(QString)), this, SLOT(setPortName(QString)));
-        connect(ui.baudRate, SIGNAL(activated(QString)), this->link, SLOT(setBaudRateString(QString)));
-        connect(ui.flowControlCheckBox, SIGNAL(toggled(bool)), this, SLOT(enableFlowControl(bool)));
-        connect(ui.parNone, SIGNAL(toggled(bool)), this, SLOT(setParityNone(bool)));
-        connect(ui.parOdd, SIGNAL(toggled(bool)), this, SLOT(setParityOdd(bool)));
-        connect(ui.parEven, SIGNAL(toggled(bool)), this, SLOT(setParityEven(bool)));
-        connect(ui.dataBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setDataBits(int)));
-        connect(ui.stopBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setStopBits(int)));
-        connect(ui.advCheckBox, SIGNAL(clicked(bool)), ui.advGroupBox, SLOT(setVisible(bool)));
-        ui.advCheckBox->setCheckable(true);
-        ui.advCheckBox->setChecked(false);
-        ui.advGroupBox->setVisible(false);
-
-        switch(this->link->getParityType()) {
-        case 0:
-            ui.parNone->setChecked(true);
-            break;
-        case 1:
-            ui.parOdd->setChecked(true);
-            break;
-        case 2:
-            ui.parEven->setChecked(true);
-            break;
-        default:
-            // Enforce default: no parity in link
-            setParityNone(true);
-            ui.parNone->setChecked(true);
-            break;
-        }
-
-        switch(this->link->getFlowType()) {
-        case 0:
-            ui.flowControlCheckBox->setChecked(false);
-            break;
-        case 1:
-            ui.flowControlCheckBox->setChecked(true);
-            break;
-        default:
-            ui.flowControlCheckBox->setChecked(false);
-            enableFlowControl(false);
-        }
-
-        ui.baudRate->setCurrentIndex(ui.baudRate->findText(QString("%1").arg(this->link->getBaudRate())));
-
-        ui.dataBitsSpinBox->setValue(this->link->getDataBits());
-        ui.stopBitsSpinBox->setValue(this->link->getStopBits());
-        portCheckTimer = new QTimer(this);
-        portCheckTimer->setInterval(1000);
-        connect(portCheckTimer, SIGNAL(timeout()), this, SLOT(setupPortList()));
-
-        // Display the widget
-        this->window()->setWindowTitle(tr("Serial Communication Settings"));
+    // Now actually add all of our supported baud rates to the ui.
+    qSort(supportedBaudRates.begin(), supportedBaudRates.end());
+    for (int i = 0; i < supportedBaudRates.size(); ++i) {
+        _ui.baudRate->addItem(QString::number(supportedBaudRates.at(i)), supportedBaudRates.at(i));
     }
-    else
-    {
-        qDebug() << "Link is NOT a serial link, can't open configuration window";
+
+    // Connect the individual user interface inputs
+    connect(_ui.portName,           SIGNAL(editTextChanged(QString)), this,      SLOT(setPortName(QString)));
+    connect(_ui.portName,           SIGNAL(currentIndexChanged(QString)), this,  SLOT(setPortName(QString)));
+    connect(_ui.baudRate,           SIGNAL(activated(int)), this,                SLOT(setBaudRate(int)));
+    connect(_ui.flowControlCheckBox,SIGNAL(toggled(bool)), this,                 SLOT(enableFlowControl(bool)));
+    connect(_ui.parNone,            SIGNAL(toggled(bool)), this,                 SLOT(setParityNone(bool)));
+    connect(_ui.parOdd,             SIGNAL(toggled(bool)), this,                 SLOT(setParityOdd(bool)));
+    connect(_ui.parEven,            SIGNAL(toggled(bool)), this,                 SLOT(setParityEven(bool)));
+    connect(_ui.dataBitsSpinBox,    SIGNAL(valueChanged(int)), this,             SLOT(setDataBits(int)));
+    connect(_ui.stopBitsSpinBox,    SIGNAL(valueChanged(int)), this,             SLOT(setStopBits(int)));
+    connect(_ui.advCheckBox,        SIGNAL(clicked(bool)), _ui.advGroupBox,      SLOT(setVisible(bool)));
+
+    _ui.advCheckBox->setCheckable(true);
+    _ui.advCheckBox->setChecked(false);
+    _ui.advGroupBox->setVisible(false);
+
+    switch(_config->parity()) {
+    case QSerialPort::NoParity:
+        _ui.parNone->setChecked(true);
+        break;
+    case QSerialPort::OddParity:
+        _ui.parOdd->setChecked(true);
+        break;
+    case QSerialPort::EvenParity:
+        _ui.parEven->setChecked(true);
+        break;
+    default:
+        // Enforce default: no parity in link
+        setParityNone(true);
+        _ui.parNone->setChecked(true);
+        break;
     }
+
+    int idx = 0;
+    _ui.flowControlCheckBox->setChecked(_config->flowControl() == QSerialPort::HardwareControl);
+    idx = _ui.baudRate->findText(QString("%1").arg(_config->baud()));
+    if(idx < 0) idx = _ui.baudRate->findText("57600");
+    if(idx < 0) idx = 0;
+    _ui.baudRate->setCurrentIndex(idx);
+    _ui.dataBitsSpinBox->setValue(_config->dataBits());
+    _ui.stopBitsSpinBox->setValue(_config->stopBits());
+    _portCheckTimer = new QTimer(this);
+    _portCheckTimer->setInterval(1000);
+    connect(_portCheckTimer, SIGNAL(timeout()), this, SLOT(setupPortList()));
+
+    // Display the widget
+    setWindowTitle(tr("Serial Communication Settings"));
 }
 
 SerialConfigurationWindow::~SerialConfigurationWindow()
@@ -191,84 +168,57 @@ SerialConfigurationWindow::~SerialConfigurationWindow()
 void SerialConfigurationWindow::showEvent(QShowEvent* event)
 {
     Q_UNUSED(event);
-    portCheckTimer->start();
+    _portCheckTimer->start();
 }
 
 void SerialConfigurationWindow::hideEvent(QHideEvent* event)
 {
     Q_UNUSED(event);
-    portCheckTimer->stop();
-}
-
-QAction* SerialConfigurationWindow::getAction()
-{
-    return action;
-}
-
-void SerialConfigurationWindow::configureCommunication()
-{
-    QString selected = ui.portName->currentText();
-    setupPortList();
-    ui.portName->setEditText(selected);
-    this->show();
+    _portCheckTimer->stop();
 }
 
 bool SerialConfigurationWindow::setupPortList()
 {
-    if (!link) return false;
-
     // Get the ports available on this system
-    QList<QString> ports = link->getCurrentPorts();
-
-    QString storedName = this->link->getPortName();
+    QList<QString> ports = SerialConfiguration::getCurrentPorts();
+    QString storedName = _config->portName();
     bool storedFound = false;
-
     // Add the ports in reverse order, because we prepend them to the list
     for (int i = ports.count() - 1; i >= 0; --i)
     {
         // Prepend newly found port to the list
-        if (ui.portName->findText(ports[i]) == -1)
+        if (_ui.portName->findText(ports[i]) < 0)
         {
-            ui.portName->insertItem(0, ports[i]);
-            if (!userConfigured) ui.portName->setEditText(ports[i]);
+            _ui.portName->insertItem(0, ports[i]);
+            if (!_userConfigured) _ui.portName->setEditText(ports[i]);
         }
-
         // Check if the stored link name is still present
         if (ports[i].contains(storedName) || storedName.contains(ports[i]))
             storedFound = true;
     }
-
     if (storedFound)
-        ui.portName->setEditText(storedName);
-
+        _ui.portName->setEditText(storedName);
     return (ports.count() > 0);
 }
 
 void SerialConfigurationWindow::enableFlowControl(bool flow)
 {
-    if(flow)
-    {
-        link->setFlowType(1);
-    }
-    else
-    {
-        link->setFlowType(0);
-    }
+    _config->setFlowControl(flow ? QSerialPort::HardwareControl : QSerialPort::NoFlowControl);
 }
 
 void SerialConfigurationWindow::setParityNone(bool accept)
 {
-    if (accept) link->setParityType(0);
+    if (accept) _config->setParity(QSerialPort::NoParity);
 }
 
 void SerialConfigurationWindow::setParityOdd(bool accept)
 {
-    if (accept) link->setParityType(1); // [TODO] This needs to be Fixed [BB]
+    if (accept) _config->setParity(QSerialPort::OddParity);
 }
 
 void SerialConfigurationWindow::setParityEven(bool accept)
 {
-    if (accept) link->setParityType(2);
+    if (accept) _config->setParity(QSerialPort::EvenParity);
 }
 
 void SerialConfigurationWindow::setPortName(QString port)
@@ -276,20 +226,25 @@ void SerialConfigurationWindow::setPortName(QString port)
 #ifdef Q_OS_WIN
     port = port.split("-").first();
 #endif
-    port = port.remove(" ");
-
-    if (this->link->getPortName() != port) {
-        link->setPortName(port);
+    port = port.trimmed();
+    if (_config->portName() != port) {
+        _config->setPortName(port);
     }
     userConfigured = true;
 }
 
-void SerialConfigurationWindow::setLinkName(QString name)
+void SerialConfigurationWindow::setBaudRate(int index)
 {
-    Q_UNUSED(name);
-    // FIXME
-    action->setText(tr("Configure ") + link->getName());
-    action->setStatusTip(tr("Configure ") + link->getName());
-    setWindowTitle(tr("Configuration of ") + link->getName());
+    int baud = _ui.baudRate->itemData(index).toInt();
+    _config->setBaud(baud);
 }
 
+void SerialConfigurationWindow::setDataBits(int bits)
+{
+    _config->setDataBits(bits);
+}
+
+void SerialConfigurationWindow::setStopBits(int bits)
+{
+    _config->setStopBits(bits);
+}

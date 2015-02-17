@@ -47,13 +47,14 @@ public:
     explicit SetupView(QWidget* parent = 0);
     ~SetupView();
     
+    Q_INVOKABLE void firmwareButtonClicked(void);
+    Q_INVOKABLE void parametersButtonClicked(void);
+    Q_INVOKABLE void summaryButtonClicked(void);
+    Q_INVOKABLE void setupButtonClicked(const QVariant& component);
+    
 private slots:
     void _setActiveUAS(UASInterface* uas);
     void _pluginReady(void);
-    void _firmwareButtonClicked(void);
-    void _parametersButtonClicked(void);
-    void _summaryButtonClicked(void);
-    void _setupButtonClicked(const QVariant& component);
 
 private:
     void _changeSetupWidget(QWidget* newWidget);
