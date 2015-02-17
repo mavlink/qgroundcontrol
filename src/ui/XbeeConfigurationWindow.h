@@ -12,7 +12,7 @@
 #include <QLayout>
 #include <LinkInterface.h>
 #include"XbeeLinkInterface.h"
-#include "../comm/HexSpinBox.h"
+#include "HexSpinBox.h"
 
 
 class XbeeConfigurationWindow : public QWidget
