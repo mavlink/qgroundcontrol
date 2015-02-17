@@ -134,26 +134,23 @@ protected:
     bool lowPowerModeEnabled; ///< Low power mode reduces update rates
     unsigned int generalUpdateCount; ///< Skip counter for updates
     double filterTime; ///< Filter time estimate of battery
-
-
-    void mouseDoubleClickEvent (QMouseEvent * event);
-    /** @brief Mouse enters the widget */
-    void enterEvent(QEvent* event);
-    /** @brief Mouse leaves the widget */
-    void leaveEvent(QEvent* event);
-    /** @brief Start widget updating */
-    void showEvent(QShowEvent* event);
-    /** @brief Stop widget updating */
-    void hideEvent(QHideEvent* event);
-    void contextMenuEvent(QContextMenuEvent* event);
+    /**
+     * If a user double-clicks on this view, set the active UAS to this one.
+     */
+    void mouseDoubleClickEvent(QMouseEvent *event);
+    /**
+     * Right-clicking on the view provides a custom menu for interacting
+     * with the UAS.
+     */
+    void contextMenuEvent(QContextMenuEvent *event);
 
 private:
     Ui::UASView *m_ui;
-    virtual void paintEvent(QPaintEvent *);
 
-signals:
-    void uasInFocus(UASInterface* uas);
-    void uasOutFocus(UASInterface* uas);
+    /**
+     * Implement paintEvent() so that stylesheets work for our custom widget.
+     */
+    virtual void paintEvent(QPaintEvent *event);
 };
 
 #endif // UASVIEW_H
