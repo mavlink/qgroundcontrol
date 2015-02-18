@@ -3,7 +3,7 @@
 QGCTabbedInfoView::QGCTabbedInfoView(QWidget *parent) : QWidget(parent)
 {
     ui.setupUi(this);
-    messageView = new QGCMessageView(this);
+    messageView = new UASMessageViewWidget(this);
     //actionsWidget = new UASActionsWidget(this);
     quickView = new UASQuickView(this);
     //rawView = new UASRawStatusView(this);
