@@ -48,9 +48,10 @@ QString SafetyComponent::description(void) const
     return tr("The Safety Component is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
 }
 
-QString SafetyComponent::icon(void) const
+QString SafetyComponent::iconResource(void) const
 {
-    return ":/files/images/px4/menu/remote.png";
+    // FIXME: Need real icon
+    return "setupButtonImage.png";
 }
 
 bool SafetyComponent::requiresSetup(void) const

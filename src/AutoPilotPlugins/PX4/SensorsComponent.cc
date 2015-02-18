@@ -55,9 +55,9 @@ QString SensorsComponent::description(void) const
               "Prior to flight you must calibrate the Magnetometer, Gyroscope and Accelerometer.");
 }
 
-QString SensorsComponent::icon(void) const
+QString SensorsComponent::iconResource(void) const
 {
-    return ":/files/images/px4/menu/sensors.png";
+    return "SensorsComponentIcon.png";
 }
 
 bool SensorsComponent::requiresSetup(void) const

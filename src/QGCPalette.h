@@ -54,6 +54,14 @@ class QGCPalette : public QObject
     /// The buttonHighlight color identifies the button background color when hovered or selected.
     Q_PROPERTY(QColor buttonHighlight READ buttonHighlight NOTIFY paletteChanged)
 
+    /// The windowShade color should be a color somewhere between window and button. It is used to shade window
+    /// areas.
+    Q_PROPERTY(QColor windowShade READ windowShade NOTIFY paletteChanged)
+    
+    /// The windowShadeDark color should be a color somewhere between window and windowShade. It is used to shade window
+    /// darker areas.
+    Q_PROPERTY(QColor windowShadeDark READ windowShadeDark NOTIFY paletteChanged)
+    
 public:
     enum ColorGroup {
         Disabled = 0,
@@ -78,6 +86,8 @@ public:
     QColor buttonText(void) const { return _buttonText[_theme][_colorGroup]; }
     QColor text(void) const { return _text[_theme][_colorGroup]; }
     QColor window(void) const { return _window[_theme][_colorGroup]; }
+    QColor windowShade(void) const { return _windowShade[_theme][_colorGroup]; }
+    QColor windowShadeDark(void) const { return _windowShadeDark[_theme][_colorGroup]; }
     QColor windowText(void) const { return _windowText[_theme][_colorGroup]; }
     QColor buttonHighlight(void) const { return _buttonHighlight[_theme][_colorGroup]; }
     
@@ -100,6 +110,8 @@ private:
     static QColor _buttonText[_cThemes][_cColorGroups];
     static QColor _text[_cThemes][_cColorGroups];
     static QColor _window[_cThemes][_cColorGroups];
+    static QColor _windowShade[_cThemes][_cColorGroups];
+    static QColor _windowShadeDark[_cThemes][_cColorGroups];
     static QColor _windowText[_cThemes][_cColorGroups];
     static QColor _buttonHighlight[_cThemes][_cColorGroups];
     

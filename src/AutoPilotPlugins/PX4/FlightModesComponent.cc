@@ -63,9 +63,9 @@ QString FlightModesComponent::description(void) const
               "At a minimum the Main Mode Switch must be assigned prior to flight.");
 }
 
-QString FlightModesComponent::icon(void) const
+QString FlightModesComponent::iconResource(void) const
 {
-    return ":/files/images/px4/menu/toggle_switch.png";
+    return "FlightModesComponentIcon.png";
 }
 
 bool FlightModesComponent::requiresSetup(void) const

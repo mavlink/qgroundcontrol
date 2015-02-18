@@ -21,12 +21,11 @@ Rectangle {
         Column {
             anchors.fill: parent
 
-            spacing: 10
-
             SetupButton {
                 id: firmwareButton; objectName: "firmwareButton"
                 width: parent.width
                 text: "FIRMWARE"
+                imageResource: "FirmwareUpgradeIcon.png"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
                 onClicked: controller.firmwareButtonClicked()
@@ -40,12 +39,11 @@ Rectangle {
         Column {
             anchors.fill: parent
 
-            spacing: 10
-
             SetupButton {
                 id: summaryButton; objectName: "summaryButton"
                 width: parent.width
                 text: "SUMMARY"
+                imageResource: "VehicleSummaryIcon.png"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
                 onClicked: controller.summaryButtonClicked()
@@ -55,6 +53,7 @@ Rectangle {
                 id: firmwareButton; objectName: "firmwareButton"
                 width: parent.width
                 text: "FIRMWARE"
+                imageResource: "FirmwareUpgradeIcon.png"
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
                 onClicked: controller.firmwareButtonClicked()
@@ -66,6 +65,7 @@ Rectangle {
                 SetupButton {
                     width: parent.width
                     text: modelData.name.toUpperCase()
+                    imageResource: modelData.iconResource
                     setupComplete: modelData.setupComplete
                     exclusiveGroup: setupButtonGroup
                     onClicked: controller.setupButtonClicked(modelData)

@@ -269,6 +269,12 @@
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
 
         <file alias="QGroundControl/Controls/setupButtonImage.png">files/Setup/cogwheels.png</file>
+        <file alias="QGroundControl/Controls/SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/SensorsComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/RadioComponentIcon.png">src/AutoPilotPlugins/PX4/RadioComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/FlightModesComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/AirframeComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
+        <file alias="QGroundControl/Controls/VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
 
     </qresource>
 
