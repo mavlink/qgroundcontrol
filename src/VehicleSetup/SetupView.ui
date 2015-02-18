@@ -39,42 +39,6 @@
      </property>
     </widget>
    </item>
-   <item>
-    <widget class="QWidget" name="setupWidget">
-        <property name="geometry">
-            <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>400</width>
-                <height>300</height>
-            </rect>
-        </property>
-        <property name="windowTitle">
-            <string>Form</string>
-        </property>
-        <property name="autoFillBackground">
-            <bool>true</bool>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-            <item>
-                <layout class="QVBoxLayout" name="setupWidgetLayout"/>
-            </item>
-            <item>
-                <spacer name="verticalSpacer">
-                    <property name="orientation">
-                        <enum>Qt::Vertical</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                        <size>
-                            <width>20</width>
-                            <height>40</height>
-                        </size>
-                    </property>
-                </spacer>
-            </item>
-        </layout>
-    </widget>
-   </item>
   </layout>
  </widget>
  <customwidgets>
