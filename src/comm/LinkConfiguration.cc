@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkConfiguration.h"
 #include "SerialLink.h"
 #include "UDPLink.h"
+#include "TCPLink.h"
 
 #ifdef UNITTEST_BUILD
 #include "MockLink.h"
@@ -84,6 +85,9 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
         case LinkConfiguration::TypeUdp:
             config = new UDPConfiguration(name);
             break;
+        case LinkConfiguration::TypeTcp:
+            config = new TCPConfiguration(name);
+            break;
 #ifdef UNITTEST_BUILD
         case LinkConfiguration::TypeMock:
             config = new MockConfiguration(name);
@@ -106,6 +110,9 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
             break;
         case TypeUdp:
             dupe = new UDPConfiguration(dynamic_cast<UDPConfiguration*>(source));
+            break;
+        case TypeTcp:
+            dupe = new TCPConfiguration(dynamic_cast<TCPConfiguration*>(source));
             break;
 #ifdef UNITTEST_BUILD
         case TypeMock:

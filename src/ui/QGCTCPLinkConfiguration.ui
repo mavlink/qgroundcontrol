@@ -27,10 +27,13 @@
    <item row="0" column="1">
     <widget class="QSpinBox" name="portSpinBox">
      <property name="minimum">
-      <number>3000</number>
+      <number>1024</number>
      </property>
      <property name="maximum">
-      <number>100000</number>
+      <number>65535</number>
+     </property>
+     <property name="value">
+      <number>3000</number>
      </property>
     </widget>
    </item>
@@ -42,7 +45,14 @@
     </widget>
    </item>
    <item row="1" column="1">
-    <widget class="QLineEdit" name="hostAddressLineEdit"/>
+    <widget class="QLineEdit" name="hostAddressLineEdit">
+     <property name="minimumSize">
+      <size>
+       <width>200</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

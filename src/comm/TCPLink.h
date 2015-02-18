@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -36,6 +36,7 @@
 #include <QHostAddress>
 #include <LinkInterface.h>
 #include "QGCConfig.h"
+#include "LinkManager.h"
 
 // Even though QAbstractSocket::SocketError is used in a signal by Qt, Qt doesn't declare it as a meta type.
 // This in turn causes debug output to be kicked out about not being able to queue the signal. We declare it
@@ -47,20 +48,79 @@
 
 class TCPLinkUnitTest;
 
+#define QGC_TCP_PORT 5760
+
+class TCPConfiguration : public LinkConfiguration
+{
+public:
+
+    /*!
+     * @brief Regular constructor
+     *
+     * @param[in] name Configuration (user friendly) name
+     */
+    TCPConfiguration(const QString& name);
+
+    /*!
+     * @brief Copy contructor
+     *
+     * When manipulating data, you create a copy of the configuration, edit it
+     * and then transfer its content to the original (using copyFrom() below). Use this
+     * contructor to create an editable copy.
+     *
+     * @param[in] source Original configuration
+     */
+    TCPConfiguration(TCPConfiguration* source);
+
+    /*!
+     * @brief The TCP port
+     *
+     * @return Port number
+     */
+    quint16 port   () { return _port; }
+
+    /*!
+     * @brief Set the TCP port
+     *
+     * @param[in] port Port number
+     */
+    void setPort   (quint16 port);
+
+    /*!
+     * @brief The host address
+     *
+     * @return Host address
+     */
+    const QHostAddress& address   () { return _address; }
+
+    /*!
+     * @brief Set the host address
+     *
+     * @param[in] address Host address
+     */
+    void setAddress (const QHostAddress& address);
+
+    /// From LinkConfiguration
+    int  type() { return LinkConfiguration::TypeTcp; }
+    void copyFrom(LinkConfiguration* source);
+    void loadSettings(QSettings& settings, const QString& root);
+    void saveSettings(QSettings& settings, const QString& root);
+    void updateSettings();
+
+private:
+    QHostAddress _address;
+    quint16 _port;
+};
+
 class TCPLink : public LinkInterface
 {
     Q_OBJECT
-    
     friend class TCPLinkUnitTest;
-    
+    friend class TCPConfiguration;
 public:
-    TCPLink(QHostAddress hostAddress = QHostAddress::LocalHost, quint16 socketPort = 5760);
+    TCPLink(TCPConfiguration* config);
     ~TCPLink();
     
-    void setHostAddress(QHostAddress hostAddress);
-    
-    QHostAddress getHostAddress(void) const { return _hostAddress; }
-    quint16 getPort(void) const { return _port; }
     QTcpSocket* getSocket(void) { return _socket; }
     
     void signalBytesWritten(void);
@@ -82,12 +142,9 @@ public:
     bool disconnect(void);
     
 public slots:
-    void setHostAddress(const QString& hostAddress);
-    void setPort(int port);
     
     // From LinkInterface
-    virtual void writeBytes(const char* data, qint64 length);
-    
+    void writeBytes(const char* data, qint64 length);
     void waitForBytesWritten(int msecs);
     void waitForReadyRead(int msecs);
 
@@ -103,21 +160,20 @@ protected:
     
 private:
     // From LinkInterface
-    virtual bool _connect(void);
-    virtual bool _disconnect(void);
+    bool _connect(void);
+    bool _disconnect(void);
 
-    void _resetName(void);
-	bool _hardwareConnect(void);
+    bool _hardwareConnect();
+    void _restartConnection();
+
 #ifdef TCPLINK_READWRITE_DEBUG
     void _writeDebugBytes(const char *data, qint16 size);
 #endif
 
-    QString         _name;
-    QHostAddress    _hostAddress;
-    quint16         _port;
-    int             _linkId;
-    QTcpSocket*     _socket;
-    bool            _socketIsConnected;
+    int               _linkId;
+    TCPConfiguration* _config;
+    QTcpSocket*       _socket;
+    bool              _socketIsConnected;
     
     quint64 _bitsSentTotal;
     quint64 _bitsSentCurrent;

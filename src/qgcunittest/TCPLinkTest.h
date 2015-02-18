@@ -75,9 +75,8 @@ private:
         deleteLinkSignalMask =          1 << deleteLinkSignalIndex,
     };
     
+    TCPConfiguration*   _config;
     TCPLink*            _link;
-    QHostAddress        _hostAddress;
-    quint16             _port;
     MultiSignalSpy*     _multiSpy;
     static const size_t _cSignals = maxSignalIndex;
     const char*         _rgSignals[_cSignals];
