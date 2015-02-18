@@ -117,8 +117,8 @@ QT += network \
     serialport \
     sql \
     printsupport \
-    quick \
-    quickwidgets
+    qml \
+    quick
 
 contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
     QT += multimedia
