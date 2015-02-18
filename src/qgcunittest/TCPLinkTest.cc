@@ -33,13 +33,14 @@
 // time to debug.
 //UT_REGISTER_TEST(TCPLinkUnitTest)
 
-TCPLinkUnitTest::TCPLinkUnitTest(void) :
-    _link(NULL),
-    _hostAddress(QHostAddress::LocalHost),
-    _port(5760),
-    _multiSpy(NULL)
+TCPLinkUnitTest::TCPLinkUnitTest(void)
+    : _config(NULL)
+    , _link(NULL)
+    , _multiSpy(NULL)
 {
-
+    _config = new TCPConfiguration("MockTCP");
+    _config->setAddress(QHostAddress::LocalHost);
+    _config->setPort(5760);
 }
 
 // Called before every test
@@ -50,13 +51,12 @@ void TCPLinkUnitTest::init(void)
     Q_ASSERT(_link == NULL);
     Q_ASSERT(_multiSpy == NULL);
 
-    _link = new TCPLink(_hostAddress, _port);
+    _link = new TCPLink(_config);
     Q_ASSERT(_link != NULL);
 
     _rgSignals[bytesReceivedSignalIndex] = SIGNAL(bytesReceived(LinkInterface*, QByteArray));
     _rgSignals[connectedSignalIndex] = SIGNAL(connected(void));
     _rgSignals[disconnectedSignalIndex] = SIGNAL(disconnected(void));
-    _rgSignals[nameChangedSignalIndex] = SIGNAL(nameChanged(QString));
     _rgSignals[communicationErrorSignalIndex] = SIGNAL(communicationError(const QString&, const QString&));
     _rgSignals[communicationUpdateSignalIndex] = SIGNAL(communicationUpdate(const QString&, const QString&));
     _rgSignals[deleteLinkSignalIndex] = SIGNAL(deleteLink(LinkInterface* const));
@@ -70,50 +70,39 @@ void TCPLinkUnitTest::cleanup(void)
 {
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_link);
+    Q_ASSERT(_config);
 
     delete _multiSpy;
     delete _link;
+    delete _config;
 
     _multiSpy = NULL;
-    _link = NULL;
-    
+    _link     = NULL;
+    _config   = NULL;
     UnitTest::cleanup();
 }
 
 void TCPLinkUnitTest::_properties_test(void)
 {
+    Q_ASSERT(_config);
     Q_ASSERT(_link);
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
-    // Make sure we get the right values back
-    QHostAddress    hostAddressOut;
-    quint16         portOut;
-    
-    hostAddressOut = _link->getHostAddress();
-    QCOMPARE(_hostAddress, hostAddressOut);
-
-    portOut = _link->getPort();
-    QCOMPARE(_port, portOut);
+    // Test no longer valid
 }
 
 void TCPLinkUnitTest::_nameChangedSignal_test(void)
 {
+    // Test no longer valid
+    Q_ASSERT(_config);
     Q_ASSERT(_link);
     Q_ASSERT(_multiSpy);
-    Q_ASSERT(_multiSpy->checkNoSignals() == true);
-    
-    _link->setHostAddress(QHostAddress("127.1.1.1"));
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(nameChangedSignalMask), true);
-    _multiSpy->clearSignalByIndex(nameChangedSignalIndex);
-    
-    _link->setPort(42);
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(nameChangedSignalMask), true);
-    _multiSpy->clearSignalByIndex(nameChangedSignalIndex);    
 }
 
 void TCPLinkUnitTest::_connectFail_test(void)
 {
+    Q_ASSERT(_config);
     Q_ASSERT(_link);
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
@@ -150,7 +139,7 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
 
     // Start the server side
-    TCPLoopBackServer* server = new TCPLoopBackServer(_hostAddress, _port);
+    TCPLoopBackServer* server = new TCPLoopBackServer(_config->address(), _config->port());
     Q_CHECK_PTR(server);
     
     // Connect to the server

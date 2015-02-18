@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -286,7 +286,7 @@ UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration
 void UDPConfiguration::copyFrom(LinkConfiguration *source)
 {
     _confMutex.lock();
-    LinkConfiguration::copyFrom(dynamic_cast<LinkConfiguration*>(this));
+    LinkConfiguration::copyFrom(source);
     UDPConfiguration* usource = dynamic_cast<UDPConfiguration*>(source);
     Q_ASSERT(usource != NULL);
     _localPort = usource->localPort();

@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -124,6 +124,38 @@ void QGCLinkConfiguration::on_editLinkButton_clicked()
     _editLink(index.row());
 }
 
+void QGCLinkConfiguration::_fixUnnamed(LinkConfiguration* config)
+{
+    Q_ASSERT(config != NULL);
+    //-- Check for "Unnamed"
+    if (config->name() == tr("Unnamed")) {
+        switch(config->type()) {
+            case LinkConfiguration::TypeSerial:
+                config->setName(
+                    QString("Serial Device on %1").arg(dynamic_cast<SerialConfiguration*>(config)->portName()));
+                break;
+            case LinkConfiguration::TypeUdp:
+                config->setName(
+                    QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
+                break;
+            case LinkConfiguration::TypeTcp: {
+                    TCPConfiguration* tconfig = dynamic_cast<TCPConfiguration*>(config);
+                    if(tconfig) {
+                        config->setName(
+                            QString("TCP Link %1:%2").arg(tconfig->address().toString()).arg((int)tconfig->port()));
+                    }
+                }
+                break;
+#ifdef UNITTEST_BUILD
+            case LinkConfiguration::TypeMock:
+                config->setName(
+                    QString("Mock Link"));
+                break;
+#endif
+        }
+    }
+}
+
 void QGCLinkConfiguration::on_addLinkButton_clicked()
 {
     QGCCommConfiguration* commDialog = new QGCCommConfiguration(this);
@@ -131,25 +163,7 @@ void QGCLinkConfiguration::on_addLinkButton_clicked()
         // Save changes (if any)
         LinkConfiguration* config = commDialog->getConfig();
         if(config) {
-            //-- Check for "Unnamed"
-            if (config->name() == tr("Unnamed")) {
-                switch(config->type()) {
-                    case LinkConfiguration::TypeSerial:
-                        config->setName(
-                            QString("Serial Device on %1").arg(dynamic_cast<SerialConfiguration*>(config)->portName()));
-                        break;
-                    case LinkConfiguration::TypeUdp:
-                        config->setName(
-                            QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
-                        break;
-#ifdef UNITTEST_BUILD
-                    case LinkConfiguration::TypeMock:
-                        config->setName(
-                            QString("Mock Link"));
-                        break;
-#endif
-                }
-            }
+            _fixUnnamed(config);
             _viewModel->beginChange();
             LinkManager::instance()->addLinkConfiguration(commDialog->getConfig());
             LinkManager::instance()->saveLinkConfigurationList();
@@ -172,6 +186,7 @@ void QGCLinkConfiguration::_editLink(int row)
         if(commDialog->exec() == QDialog::Accepted) {
             // Save changes (if any)
             if(commDialog->getConfig()) {
+                _fixUnnamed(tmpConfig);
                 _viewModel->beginChange();
                 config->copyFrom(tmpConfig);
                 // Save it
