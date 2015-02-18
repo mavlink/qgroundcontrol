@@ -53,7 +53,7 @@ WindowsBuild {
 MacBuild {
 	# Copy non-standard libraries and frameworks into app package
     QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/libs/lib/mac64/lib $$DESTDIR/$${TARGET}.app/Contents/libs
-    QMAKE_POST_LINK += && $$QMAKE_COPY_DIR -L $$BASEDIR/libs/lib/Frameworks $$DESTDIR/$${TARGET}.app/Contents/Frameworks
+    QMAKE_POST_LINK += && $$QMAKE_COPY_DIR -L $$BASEDIR/libs/lib/Frameworks $$DESTDIR/$${TARGET}.app/Contents
 
 	# Fix library paths inside executable
 
