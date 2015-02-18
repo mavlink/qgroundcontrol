@@ -110,7 +110,7 @@ void SetupView::_changeSetupWidget(QWidget* newWidget)
         delete _currentSetupWidget;
     }
     _currentSetupWidget = newWidget;
-    _ui->setupWidgetLayout->addWidget(newWidget);
+    _ui->horizontalLayout->addWidget(newWidget);
 }
 
 void SetupView::firmwareButtonClicked(void)
