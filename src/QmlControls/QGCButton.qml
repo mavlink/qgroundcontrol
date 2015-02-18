@@ -11,7 +11,7 @@ Button {
             background: Rectangle {
                 implicitWidth: 100
                 implicitHeight: 25
-                color: control.hovered ? control.__qgcPal.buttonHighlight : control.__qgcPal.button
+                color: control.pressed ? control.__qgcPal.buttonHighlight : control.__qgcPal.button
             }
 
             label: Text {
