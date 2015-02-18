@@ -12,11 +12,12 @@ Button {
     text: "Button"
     property bool setupComplete: true
     property bool setupIndicator: true
+    property string imageResource: "setupButtonImage.png"
 
     style: ButtonStyle {
         id: buttonStyle
 
-        property var __qgcpal: QGCPalette {
+        property var __qgcPal: QGCPalette {
             colorGroup: control.enabled ? QGCPalette.Active : QGCPalette.Disabled
         }
 
@@ -24,10 +25,7 @@ Button {
             id: innerRect
             readonly property real titleHeight: 20
 
-            border.color: control.checked ? "#eee333" : "#676767"
-            radius: 10
-
-            color: control.checked ? "#eee333" : "#343434"
+            color: control.pressed ? __qgcPal.buttonHighlight : (control.checked ? __qgcPal.buttonHighlight : __qgcPal.button)
 
             Text {
                 id: titleBar
@@ -40,7 +38,7 @@ Button {
 
                 text: control.text
                 font.pixelSize: 12
-                color: control.checked ? "black" : "white"
+                color: __qgcPal.buttonText
 
                 Rectangle {
                     id: setupIndicator
@@ -53,7 +51,7 @@ Button {
                     height: indicatorRadius * 2
 
                     radius: indicatorRadius
-                    color: control.setupIndicator ? (control.setupComplete ? "green" : "red") : innerRect.color
+                    color: control.setupIndicator ? (control.setupComplete ? "#00d932" : "red") : innerRect.color
                 }
             }
 
@@ -63,12 +61,11 @@ Button {
 
                 y: parent.titleHeight
 
-                color: __qgcpal.window
-                border.color: control.checked ? "#eee333" : "#676767"
+                color: __qgcPal.windowShade
 
                 Image {
                     id: buttonImage
-                    source: "setupButtonImage.png"
+                    source: control.imageResource
                     sourceSize: Qt.size(parent.width - 20, parent.height - 20)
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -79,7 +76,7 @@ Button {
                 ColorOverlay {
                     anchors.fill: buttonImage
                     source: buttonImage
-                    color: control.checked ? "#eee333" : "#58585a"
+                    color: control.pressed ? __qgcPal.buttonHighlight : (control.checked ? __qgcPal.buttonHighlight : __qgcPal.button)
                 }
             }
         }

@@ -95,9 +95,10 @@ Rectangle {
             width: parent.width
             height: 300
             readOnly: true
+            frameVisible: false
             style: TextAreaStyle {
                 textColor: qgcPal.windowText
-                backgroundColor: qgcPal.window
+                backgroundColor: qgcPal.windowShade
             }
         }
     }
