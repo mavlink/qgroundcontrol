@@ -50,7 +50,7 @@ public:
     void setAutoPilot(AutoPilotPlugin* autoPilot);
 
     /// Sets the QML into the control
-    void setSource(const QUrl& qmlUrl);
+    bool setSource(const QUrl& qmlUrl);
 
 private:
     Ui::QGCQmlWidgetHolder _ui;
