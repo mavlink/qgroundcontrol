@@ -133,9 +133,9 @@ QString AirframeComponent::description(void) const
               "This will in turn set up the various tuning values for flight paramters.");
 }
 
-QString AirframeComponent::icon(void) const
+QString AirframeComponent::iconResource(void) const
 {
-    return ":/files/images/px4/menu/plane.png";
+    return "AirframeComponentIcon.png";
 }
 
 bool AirframeComponent::requiresSetup(void) const

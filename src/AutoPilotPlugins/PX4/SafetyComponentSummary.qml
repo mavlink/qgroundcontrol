@@ -1,8 +1,9 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
+
 import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
+import QGroundControl.Controls 1.0
 
 Column {
     anchors.fill: parent
@@ -11,8 +12,8 @@ Column {
     Row {
         width: parent.width
 
-        Text { id: rtlMinAlt; text: "RTL min alt:" }
-        Text {
+        QGCLabel { id: rtlMinAlt; text: "RTL min alt:" }
+        QGCLabel {
             horizontalAlignment: Text.AlignRight;
             width: parent.width - rtlMinAlt.contentWidth;
             text: autopilot.parameters["RTL_RETURN_ALT"].valueString
@@ -22,8 +23,8 @@ Column {
     Row {
         width: parent.width
 
-        Text { id: rtlHomeAlt; text: "RTL home alt:" }
-        Text {
+        QGCLabel { id: rtlHomeAlt; text: "RTL home alt:" }
+        QGCLabel {
             horizontalAlignment: Text.AlignRight;
             width: parent.width - rtlHomeAlt.contentWidth;
             text: autopilot.parameters["RTL_DESCEND_ALT"].valueString
@@ -33,8 +34,8 @@ Column {
     Row {
         width: parent.width
 
-        Text { id: rtlLoiter; text: "RTL loiter delay:" }
-        Text {
+        QGCLabel { id: rtlLoiter; text: "RTL loiter delay:" }
+        QGCLabel {
             horizontalAlignment: Text.AlignRight;
             width: parent.width - rtlLoiter.contentWidth;
             text: autopilot.parameters["RTL_LAND_DELAY"].value < 0 ? "Disabled" : autopilot.parameters["RTL_LAND_DELAY"].valueString
@@ -44,19 +45,19 @@ Column {
     Row {
         width: parent.width
 
-        Text { id: commLoss; text: "Telemetry loss RTL:" }
-        Text {
+        QGCLabel { id: commLoss; text: "Telemetry loss RTL:" }
+        QGCLabel {
             horizontalAlignment: Text.AlignRight;
             width: parent.width - commLoss.contentWidth;
-            text: autopilot.parameters["COM_DL_LOSS_EN"].value != 1 ? "Disabled" : autopilot.parameters["NAV_DLL_N"].valueString
+            text: autopilot.parameters["COM_DL_LOSS_EN"].value != 1 ? "Disabled" : autopilot.parameters["COM_DL_LOSS_T"].valueString
         }
     }
 
     Row {
         width: parent.width
 
-        Text { id: rcLoss; text: "RC loss RTL (seconds):" }
-        Text {
+        QGCLabel { id: rcLoss; text: "RC loss RTL (seconds):" }
+        QGCLabel {
             horizontalAlignment: Text.AlignRight;
             width: parent.width - rcLoss.contentWidth;
             text: autopilot.parameters["COM_RC_LOSS_T"].valueString

@@ -49,9 +49,9 @@ QString RadioComponent::description(void) const
               "Prior to flight you must also calibrate the extents for all of your channels.");
 }
 
-QString RadioComponent::icon(void) const
+QString RadioComponent::iconResource(void) const
 {
-    return ":/files/images/px4/menu/remote.png";
+    return "RadioComponentIcon.png";
 }
 
 bool RadioComponent::requiresSetup(void) const

@@ -212,6 +212,46 @@ Rectangle {
 
             Loader {
                 sourceComponent: rowHeader
+                property var text: "windowShade"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
+                property var color: palette.windowShade
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
+                property var color: palette.windowShade
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
+                property var color: palette.windowShade
+                sourceComponent: colorSquare
+            }
+
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "windowShadeDark"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
+                property var color: palette.windowShadeDark
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
+                property var color: palette.windowShadeDark
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
+                property var color: palette.windowShadeDark
+                sourceComponent: colorSquare
+            }
+
+            Loader {
+                sourceComponent: rowHeader
                 property var text: "windowText"
             }
             Loader {
