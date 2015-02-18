@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -41,9 +41,9 @@ public:
     enum {
         TypeSerial,     ///< Serial Link
         TypeUdp,        ///< UDP Link
+        TypeTcp,        ///< TCP Link
         // TODO Below is not yet implemented
 #if 0
-        TypeTcp,        ///< TCP Link
         TypeSimulation, ///< Simulation Link
         TypeForwarding, ///< Forwarding Link
         TypeXbee,       ///< XBee Proprietary Link

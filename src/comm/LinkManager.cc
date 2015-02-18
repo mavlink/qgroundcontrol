@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -78,6 +78,9 @@ LinkInterface* LinkManager::createLink(LinkConfiguration* config)
             break;
         case LinkConfiguration::TypeUdp:
             pLink = new UDPLink(dynamic_cast<UDPConfiguration*>(config));
+            break;
+        case LinkConfiguration::TypeTcp:
+            pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
             break;
 #ifdef UNITTEST_BUILD
         case LinkConfiguration::TypeMock:
@@ -373,6 +376,10 @@ void LinkManager::loadLinkConfigurationList()
                                     break;
                                 case LinkConfiguration::TypeUdp:
                                     pLink = (LinkConfiguration*)new UDPConfiguration(name);
+                                    pLink->setPreferred(preferred);
+                                    break;
+                                case LinkConfiguration::TypeTcp:
+                                    pLink = (LinkConfiguration*)new TCPConfiguration(name);
                                     pLink->setPreferred(preferred);
                                     break;
 #ifdef UNITTEST_BUILD
