@@ -42,12 +42,15 @@ class SerialLink;
 #include <QString>
 #include <QSerialPort>
 #include <QMetaType>
+#include <QLoggingCategory>
 
 // We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
 Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
 
 #include "QGCConfig.h"
 #include "LinkManager.h"
+
+Q_DECLARE_LOGGING_CATEGORY(SerialLinkLog)
 
 class SerialConfiguration : public LinkConfiguration
 {
