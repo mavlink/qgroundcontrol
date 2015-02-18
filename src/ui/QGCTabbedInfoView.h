@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "ui_QGCTabbedInfoView.h"
 #include "MAVLinkDecoder.h"
-#include "QGCMessageView.h"
+#include "UASMessageView.h"
 #include "UASQuickView.h"
 #include "UASRawStatusView.h"
 class QGCTabbedInfoView : public QWidget
@@ -18,7 +18,7 @@ public:
 private:
     MAVLinkDecoder *m_decoder;
     Ui::QGCTabbedInfoView ui;
-    QGCMessageView *messageView;
+    UASMessageViewWidget *messageView;
     UASQuickView *quickView;
     UASRawStatusView *rawView;
 };

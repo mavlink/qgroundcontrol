@@ -31,6 +31,26 @@ This file is part of the QGROUNDCONTROL project
 #include "UASManager.h"
 #include "MainWindow.h"
 #include "QGCApplication.h"
+#include "UASMessageView.h"
+#include "UASMessageHandler.h"
+
+// Label class that sends mouse hover events
+class QCGHoverLabel : public QLabel
+{
+public:
+    QCGHoverLabel(QGCToolBar* toolBar) : QLabel(toolBar)
+    {
+        _toolBar = toolBar;
+    }
+protected:
+    void enterEvent(QEvent* event)
+    {
+        Q_UNUSED(event);
+        _toolBar->enterMessageLabel();
+    }
+private:
+    QGCToolBar* _toolBar;
+};
 
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
@@ -47,6 +67,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     _linkMgr(LinkManager::instance()),
     _linkCombo(NULL),
     _linkComboAction(NULL),
+    _rollDownMessages(NULL),
     _linksConnected(false),
     _linkSelected(false)
 {
@@ -148,7 +169,7 @@ void QGCToolBar::createUI()
     toolBarWpLabel->setAlignment(Qt::AlignCenter);
     toolBarWpAction = addWidget(toolBarWpLabel);
 
-    toolBarMessageLabel = new QLabel(this);
+    toolBarMessageLabel = new QCGHoverLabel(this);
     toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     toolBarMessageLabel->setObjectName("toolBarMessageLabel");
     toolBarMessageAction = addWidget(toolBarMessageLabel);
@@ -413,7 +434,11 @@ void QGCToolBar::updateView()
         if (QGC::groundTimeMilliseconds() - lastSystemMessageTimeMs < 15000) {
             toolBarMessageLabel->setText(QString("%1").arg(lastSystemMessage));
         } else {
-            toolBarMessageLabel->clear();
+            if(UASMessageHandler::instance()->messages().count()) {
+                toolBarMessageLabel->setText(tr("Messages"));
+            } else {
+                toolBarMessageLabel->setText(tr("No Messages"));
+            }
         }
     }
 
@@ -677,15 +702,6 @@ void QGCToolBar::_disconnectFromMenu(bool checked)
     _linkMgr->disconnectLink(link);
 }
 
-void QGCToolBar::clearStatusString()
-{
-    if (toolBarMessageLabel->text().length() > 0)
-    {
-        lastSystemMessage = "";
-        changed = true;
-    }
-}
-
 void QGCToolBar::_linkComboActivated(int index)
 {
     int type = _linkCombo->itemData(index).toInt();
@@ -720,4 +736,29 @@ void QGCToolBar::_updateConfigurations()
     if(resetSelected) {
         _linkSelected = false;
     }
+}
+
+/**
+ * @brief Mouse entered Message label area
+ */
+void QGCToolBar::enterMessageLabel()
+{
+    // If not already there and messages are actually present
+    if(!_rollDownMessages && UASMessageHandler::instance()->messages().count())
+    {
+        QPoint p = toolBarMessageLabel->mapToGlobal(QPoint(0,0));
+        _rollDownMessages = new UASMessageViewRollDown(MainWindow::instance(),this);
+        _rollDownMessages->setAttribute(Qt::WA_DeleteOnClose);
+        _rollDownMessages->move(mapFromGlobal(p));
+        _rollDownMessages->setMinimumSize(360,200);
+        _rollDownMessages->show();
+    }
+}
+
+/**
+ * @brief Mouse left message drop down list area (and closed it)
+ */
+void QGCToolBar::leaveMessageView()
+{
+    _rollDownMessages = NULL;
 }

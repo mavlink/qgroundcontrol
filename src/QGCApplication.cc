@@ -54,6 +54,7 @@
 #include "QGCSingleton.h"
 #include "LinkManager.h"
 #include "UASManager.h"
+#include "UASMessageHandler.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
 #include "QGCFileDialog.h"
@@ -426,6 +427,11 @@ void QGCApplication::_createSingletons(void)
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
 
+    // Need UASManager
+    UASMessageHandler* messageHandler = UASMessageHandler::_createSingleton();
+    Q_UNUSED(messageHandler);
+    Q_ASSERT(messageHandler);
+
     // Needs UASManager
     FactSystem* factSystem = FactSystem::_createSingleton();
     Q_UNUSED(factSystem);
@@ -460,6 +466,7 @@ void QGCApplication::_destroySingletons(void)
 
     MAVLinkProtocol::_deleteSingleton();
     FactSystem::_deleteSingleton();
+    UASMessageHandler::_deleteSingleton();
     AutoPilotPluginManager::_deleteSingleton();
     UASManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
