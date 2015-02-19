@@ -490,15 +490,29 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 
 void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
 {
-    QString saveFilename = QGCFileDialog::getSaveFileName(
-        MainWindow::instance(),
-        tr("Save Flight Data Log"),
-        qgcApp()->mavlinkLogFilesLocation(),
-        tr("Flight Data Log Files (*.mavlink)"),
-        "mavlink");
-    if (!saveFilename.isEmpty()) {
-        QFile::copy(tempLogfile, saveFilename);
-    }
+    bool saveError;
+    do{
+        saveError = false;
+        QString saveFilename = QGCFileDialog::getSaveFileName(
+            MainWindow::instance(),
+            tr("Save Flight Data Log"),
+            qgcApp()->mavlinkLogFilesLocation(),
+            tr("Flight Data Log Files (*.mavlink)"),
+            "mavlink");
+    
+        if (!saveFilename.isEmpty()) {
+            // if file exsits already, try to remove it first to overwrite it
+            if(QFile::exists(saveFilename) && !QFile::remove(saveFilename)){
+                // if the file cannot be removed, prompt user and ask new path
+                saveError = true;
+                QGCMessageBox::warning("File Error","Could not overwrite existing file.\nPlease provide a different file name to save to.");
+            } else if(!QFile::copy(tempLogfile, saveFilename)) {
+                // if file could not be copied, prompt user and ask new path
+                saveError = true;
+                QGCMessageBox::warning("File Error","Could not create file.\nPlease provide a different file name to save to.");
+            }
+        }
+    } while(saveError); // if the file could not be overwritten, ask for new file
     QFile::remove(tempLogfile);
 }
 
