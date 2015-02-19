@@ -498,11 +498,11 @@ void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
             if(QFile::exists(saveFilename) && !QFile::remove(saveFilename)){
                 // if the file cannot be removed, prompt user and ask new path
                 saveError = true;
-                QGCApplication::criticalMessageBoxOnMainThread("File Error","Could not overwrite existing file.\nPlease provide a different file name to save to.");
+                QGCMessageBox::warning("File Error","Could not overwrite existing file.\nPlease provide a different file name to save to.");
             } else if(!QFile::copy(tempLogfile, saveFilename)) {
                 // if file could not be copied, prompt user and ask new path
                 saveError = true;
-                QGCApplication::criticalMessageBoxOnMainThread("File Error","Could not create file.\nPlease provide a different file name to save to.");
+                QGCMessageBox::warning("File Error","Could not create file.\nPlease provide a different file name to save to.");
             }
         }
     } while(saveError); // if the file could not be overwritten, ask for new file
