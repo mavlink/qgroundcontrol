@@ -5,13 +5,20 @@ import QtQuick.Controls.Styles 1.2
 import QGroundControl.Palette 1.0
 
 Button {
-    property var __qgcPal: QGCPalette { colorGroup: enabled ? QGCPalette.Active : QGCPalette.Disabled }
+    // primary: true - this is the primary button for this group of buttons
+    property bool primary: false
+
+    property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
+
+    property bool __showHighlight: pressed | hovered | checked
 
     style: ButtonStyle {
             background: Rectangle {
                 implicitWidth: 100
                 implicitHeight: 25
-                color: control.pressed ? control.__qgcPal.buttonHighlight : control.__qgcPal.button
+                color: __showHighlight ?
+                    control.__qgcPal.buttonHighlight :
+                    (primary ? control.__qgcPal.primaryButton : control.__qgcPal.button)
             }
 
             label: Text {
@@ -22,7 +29,9 @@ Button {
                 horizontalAlignment: TextEdit.AlignHCenter
 
                 text: control.text
-                color: control.__qgcPal.buttonText
+                color: __showHighlight ?
+                    control.__qgcPal.buttonHighlightText :
+                    (primary ? control.__qgcPal.primaryButtonText : control.__qgcPal.buttonText)
             }
         }
 }

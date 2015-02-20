@@ -5,7 +5,7 @@ import QtQuick.Controls.Styles 1.2
 import QGroundControl.Palette 1.0
 
 CheckBox {
-    property var __qgcPal: QGCPalette { colorGroup: enabled ? QGCPalette.Active : QGCPalette.Disabled }
+    property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     style: CheckBoxStyle {
         label: Item {
@@ -28,7 +28,7 @@ CheckBox {
                 id: text
                 text: control.text
                 anchors.centerIn: parent
-                color: control.__qgcPal.windowText
+                color: control.__qgcPal.text
             }
         }
     }

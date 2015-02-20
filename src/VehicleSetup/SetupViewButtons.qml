@@ -10,7 +10,7 @@ import QGroundControl.Controls 1.0
 Rectangle {
     id: topLevel
 
-    QGCPalette { id: palette; colorGroup: QGCPalette.Active }
+    QGCPalette { id: palette; colorGroupEnabled: true }
     color: palette.window
 
     ExclusiveGroup { id: setupButtonGroup }
@@ -21,7 +21,7 @@ Rectangle {
         Column {
             anchors.fill: parent
 
-            SetupButton {
+            SubMenuButton {
                 id: firmwareButton; objectName: "firmwareButton"
                 width: parent.width
                 text: "FIRMWARE"
@@ -39,7 +39,7 @@ Rectangle {
         Column {
             anchors.fill: parent
 
-            SetupButton {
+            SubMenuButton {
                 id: summaryButton; objectName: "summaryButton"
                 width: parent.width
                 text: "SUMMARY"
@@ -49,7 +49,7 @@ Rectangle {
                 onClicked: controller.summaryButtonClicked()
             }
 
-            SetupButton {
+            SubMenuButton {
                 id: firmwareButton; objectName: "firmwareButton"
                 width: parent.width
                 text: "FIRMWARE"
@@ -62,7 +62,7 @@ Rectangle {
             Repeater {
                 model: autopilot.components
 
-                SetupButton {
+                SubMenuButton {
                     width: parent.width
                     text: modelData.name.toUpperCase()
                     imageResource: modelData.iconResource
@@ -72,7 +72,7 @@ Rectangle {
                 }
             }
 
-            SetupButton {
+            SubMenuButton {
                 width: parent.width
                 text: "PARAMETERS"
                 setupIndicator: false

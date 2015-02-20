@@ -7,7 +7,7 @@ import QGroundControl.FactControls 1.0
 import QGroundControl.Palette 1.0
 
 Rectangle {
-    QGCPalette { id: palette; colorGroup: QGCPalette.Active }
+    QGCPalette { id: palette; colorGroupEnabled: true }
 
     width: 600
     height: 600
@@ -21,12 +21,12 @@ Rectangle {
         //-- Return Home Triggers
         Column {
             spacing: 18
-            Label { text: "Triggers For Return Home"; color: palette.windowText; font.pointSize: 20 }
+            Label { text: "Triggers For Return Home"; color: palette.text; font.pointSize: 20 }
             Row {
                 Label {
                     width: leftColWidth
                     text: "RC Transmitter Signal Loss - Return Home After"
-                    color: palette.windowText
+                    color: palette.text
                     anchors.baseline: rcLossField.baseline
                 }
                 FactTextField {
@@ -56,12 +56,12 @@ Rectangle {
         //-- Return Home Options
         Column {
             spacing: 18
-            Label { text: "Return Home Options"; color: palette.windowText; font.pointSize: 20 }
+            Label { text: "Return Home Options"; color: palette.text; font.pointSize: 20 }
             Row {
                 Label {
                     width: leftColWidth
                     text: "Climb to minimum altitude of "
-                    color: palette.windowText
+                    color: palette.text
                     anchors.baseline: climbField.baseline
                 }
                 FactTextField {
@@ -82,7 +82,7 @@ Rectangle {
                     }
                     style: CheckBoxStyle {
                         label: Text {
-                            color: palette.windowText
+                            color: palette.text
                             text: control.text
                         }
                     }
@@ -102,7 +102,7 @@ Rectangle {
                 Label {
                     width: leftColWidth;
                     text: "When Home is reached, loiter at an altitude of ";
-                    color: palette.windowText;
+                    color: palette.text;
                     anchors.baseline: descendField.baseline
                     visible: homeLoiterCheckbox.checked == true
                 }
@@ -120,7 +120,7 @@ Rectangle {
             font.pointSize: 14
             text: "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
             visible: autopilot.parameters["NAV_RCL_OBC"].value != 0
-            color: palette.windowText
+            color: palette.text
             wrapMode: Text.Wrap
         }
         Text {
@@ -128,7 +128,7 @@ Rectangle {
             font.pointSize: 14
             text: "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
             visible: autopilot.parameters["NAV_DLL_OBC"].value != 0
-            color: palette.windowText
+            color: palette.text
             wrapMode: Text.Wrap
         }
     }

@@ -4,17 +4,18 @@ import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
+import QGroundControl.FactControls 1.0
 
 Rectangle {
 
-    property var palette: QGCPalette { colorGroup: QGCPalette.Active }
+    property var palette: QGCPalette { colorGroupEnabled: true }
     color: palette.window
 
-    Column {
-        spacing: 10
+    Row {
+        spacing: 30
 
         Grid {
-            columns: 4
+            columns: 3
             spacing: 5
 
             Component {
@@ -33,11 +34,11 @@ Rectangle {
                 id: rowHeader
 
                 Text {
-                    width: 120
+                    width: 180
                     height: 20
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignVCenter
-                    color: palette.windowText
+                    color: palette.text
                     text: parent.text
                 }
             }
@@ -51,235 +52,215 @@ Rectangle {
             Text {
                 width: 80
                 height: 20
-                color: palette.windowText
+                color: palette.text
                 horizontalAlignment: Text.AlignHCenter
                 text: "Disabled"
             }
             Text {
                 width: 80
                 height: 20
-                color: palette.windowText
+                color: palette.text
                 horizontalAlignment: Text.AlignHCenter
-                text: "Active"
-            }
-            Text {
-                width: 80
-                height: 20
-                color: palette.windowText
-                horizontalAlignment: Text.AlignHCenter
-                text: "Inactive"
+                text: "Enabled"
             }
 
-            Loader {
-                sourceComponent: rowHeader
-                property var text: "alternateBase"
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
-                property var color: palette.alternateBase
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.alternateBase
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
-                property var color: palette.alternateBase
-                sourceComponent: colorSquare
-            }
-
-            Loader {
-                sourceComponent: rowHeader
-                property var text: "base"
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
-                property var color: palette.base
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.base
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
-                property var color: palette.base
-                sourceComponent: colorSquare
-            }
-
-            Loader {
-                sourceComponent: rowHeader
-                property var text: "button"
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
-                property var color: palette.button
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.button
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
-                property var color: palette.button
-                sourceComponent: colorSquare
-            }
-
-            Loader {
-                sourceComponent: rowHeader
-                property var text: "buttonHighlight"
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
-                property var color: palette.buttonHighlight
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.buttonHighlight
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
-                property var color: palette.buttonHighlight
-                sourceComponent: colorSquare
-            }
-
-            Loader {
-                sourceComponent: rowHeader
-                property var text: "buttonText"
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
-                property var color: palette.buttonText
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.buttonText
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
-                property var color: palette.buttonText
-                sourceComponent: colorSquare
-            }
-
-            Loader {
-                sourceComponent: rowHeader
-                property var text: "text"
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
-                property var color: palette.text
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.text
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
-                property var color: palette.text
-                sourceComponent: colorSquare
-            }
-
+            // window
             Loader {
                 sourceComponent: rowHeader
                 property var text: "window"
             }
             Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
+                property var palette: QGCPalette { colorGroupEnabled: false }
                 property var color: palette.window
                 sourceComponent: colorSquare
             }
             Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.window
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
+                property var palette: QGCPalette { colorGroupEnabled: true }
                 property var color: palette.window
                 sourceComponent: colorSquare
             }
 
+            // windowShade
             Loader {
                 sourceComponent: rowHeader
                 property var text: "windowShade"
             }
             Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
+                property var palette: QGCPalette { colorGroupEnabled: false }
                 property var color: palette.windowShade
                 sourceComponent: colorSquare
             }
             Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.windowShade
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
+                property var palette: QGCPalette { colorGroupEnabled: true }
                 property var color: palette.windowShade
                 sourceComponent: colorSquare
             }
 
+            // windowShadeDark
             Loader {
                 sourceComponent: rowHeader
                 property var text: "windowShadeDark"
             }
             Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
+                property var palette: QGCPalette { colorGroupEnabled: false }
                 property var color: palette.windowShadeDark
                 sourceComponent: colorSquare
             }
             Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.windowShadeDark
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
+                property var palette: QGCPalette { colorGroupEnabled: true }
                 property var color: palette.windowShadeDark
                 sourceComponent: colorSquare
             }
 
+            // text
             Loader {
                 sourceComponent: rowHeader
-                property var text: "windowText"
+                property var text: "text"
             }
             Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Disabled }
-                property var color: palette.windowText
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.text
                 sourceComponent: colorSquare
             }
             Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Active }
-                property var color: palette.windowText
-                sourceComponent: colorSquare
-            }
-            Loader {
-                property var palette: QGCPalette { colorGroup: QGCPalette.Inactive }
-                property var color: palette.windowText
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.text
                 sourceComponent: colorSquare
             }
 
-        }
+            // button
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "button"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.button
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.button
+                sourceComponent: colorSquare
+            }
 
-        Item {
-            width: parent.width
-            height: 30
+            // buttonText
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "buttonText"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.buttonText
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.buttonText
+                sourceComponent: colorSquare
+            }
+
+            // buttonHighlight
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "buttonHighlight"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.buttonHighlight
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.buttonHighlight
+                sourceComponent: colorSquare
+            }
+
+            // buttonHighlightText
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "buttonHighlightText"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.buttonHighlightText
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.buttonHighlightText
+                sourceComponent: colorSquare
+            }
+
+            // primaryButton
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "primaryButton"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.primaryButton
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.primaryButton
+                sourceComponent: colorSquare
+            }
+
+            // primaryButtonText
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "primaryButtonText"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.primaryButtonText
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.primaryButtonText
+                sourceComponent: colorSquare
+            }
+
+            // textField
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "textField"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.textField
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.textField
+                sourceComponent: colorSquare
+            }
+
+            // textFieldText
+            Loader {
+                sourceComponent: rowHeader
+                property var text: "textFieldText"
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: false }
+                property var color: palette.textFieldText
+                sourceComponent: colorSquare
+            }
+            Loader {
+                property var palette: QGCPalette { colorGroupEnabled: true }
+                property var color: palette.textFieldText
+                sourceComponent: colorSquare
+            }
+
         }
 
         Grid {
             columns: 3
-            spacing: 5
+            spacing: 10
 
             Component {
                 id: ctlRowHeader
@@ -289,7 +270,7 @@ Rectangle {
                     height: 20
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignVCenter
-                    color: palette.windowText
+                    color: palette.text
                     text: parent.text
                 }
             }
@@ -303,18 +284,19 @@ Rectangle {
             Text {
                 width: 100
                 height: 20
-                color: palette.windowText
+                color: palette.text
                 horizontalAlignment: Text.AlignHCenter
                 text: "Enabled"
             }
             Text {
                 width: 100
                 height: 20
-                color: palette.windowText
+                color: palette.text
                 horizontalAlignment: Text.AlignHCenter
                 text: "Disabled"
             }
 
+            // QGCLabel
             Loader {
                 sourceComponent: ctlRowHeader
                 property var text: "QGCLabel"
@@ -331,6 +313,7 @@ Rectangle {
                 enabled: false
             }
 
+            // QGCButton
             Loader {
                 sourceComponent: ctlRowHeader
                 property var text: "QGCButton"
@@ -347,6 +330,26 @@ Rectangle {
                 enabled: false
             }
 
+            // QGCButton - primary
+            Loader {
+                sourceComponent: ctlRowHeader
+                property var text: "QGCButton(primary)"
+            }
+            QGCButton {
+                width: 100
+                height: 20
+                primary: true
+                text: "Button"
+            }
+            QGCButton {
+                width: 100
+                height: 20
+                text: "Button"
+                primary: true
+                enabled: false
+            }
+
+            // QGCRadioButton
             Loader {
                 sourceComponent: ctlRowHeader
                 property var text: "QGCRadioButton"
@@ -363,6 +366,7 @@ Rectangle {
                 enabled: false
             }
 
+            // QGCCheckBox
             Loader {
                 sourceComponent: ctlRowHeader
                 property var text: "QGCCheckBox"
@@ -379,6 +383,88 @@ Rectangle {
                 enabled: false
             }
 
+            // QGCTextField
+            Loader {
+                sourceComponent: ctlRowHeader
+                property var text: "QGCTextField"
+            }
+            QGCTextField {
+                width: 100
+                height: 20
+                text: "QGCTextField"
+            }
+            QGCTextField {
+                width: 100
+                height: 20
+                text: "QGCTextField"
+                enabled: false
+            }
+
+            // FactLabel
+            Loader {
+                sourceComponent: ctlRowHeader
+                property var text: "FactLabel"
+            }
+            FactLabel {
+                width: 100
+                height: 20
+            }
+            FactLabel {
+                width: 100
+                height: 20
+                enabled: false
+            }
+
+            // FactCheckBox
+            Loader {
+                sourceComponent: ctlRowHeader
+                property var text: "FactCheckBox"
+            }
+            FactCheckBox {
+                width: 100
+                height: 20
+                text: "Fact CheckBox"
+            }
+            FactCheckBox {
+                width: 100
+                height: 20
+                text: "Fact CheckBox"
+                enabled: false
+            }
+
+            // FactTextField
+            Loader {
+                sourceComponent: ctlRowHeader
+                property var text: "FactTextField"
+            }
+            FactTextField {
+                width: 100
+                height: 20
+                text: "FactTextField"
+            }
+            FactTextField {
+                width: 100
+                height: 20
+                text: "FactTextField"
+                enabled: false
+            }
+
+            // SubMenuButton
+            Loader {
+                sourceComponent: ctlRowHeader
+                property var text: "SubMenuButton"
+            }
+            SubMenuButton {
+                width: 100
+                height: 100
+                text: "SUB MENU"
+            }
+            SubMenuButton {
+                width: 100
+                height: 100
+                text: "SUB MENU"
+                enabled: false
+            }
         }
     }
 }

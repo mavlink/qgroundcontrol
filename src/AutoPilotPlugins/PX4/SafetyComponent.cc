@@ -51,7 +51,7 @@ QString SafetyComponent::description(void) const
 QString SafetyComponent::iconResource(void) const
 {
     // FIXME: Need real icon
-    return "setupButtonImage.png";
+    return "subMenuButtonImage.png";
 }
 
 bool SafetyComponent::requiresSetup(void) const
