@@ -17,7 +17,6 @@ class QGCMapToolBar : public QWidget
 
 public:
     explicit QGCMapToolBar(QWidget *parent = 0);
-    ~QGCMapToolBar();
 
     void setMap(QGCMapWidget* map);
 
@@ -32,20 +31,19 @@ public slots:
     void setStatusLabelText(const QString &text);
 
 private:
-    Ui::QGCMapToolBar *ui;
+    Ui::QGCMapToolBar* _ui;
 
-protected:
-    QGCMapWidget* map;
-    QMenu optionsMenu;
-    QMenu trailPlotMenu;
-    QMenu updateTimesMenu;
-    QMenu mapTypesMenu;
+    QGCMapWidget* _map;
+    QMenu* _optionsMenu;
+    QMenu* _trailPlotMenu;
+    QMenu* _updateTimesMenu;
+    QMenu* _mapTypesMenu;
 
-    QActionGroup* trailSettingsGroup;
-    QActionGroup* updateTimesGroup;
-    QActionGroup* mapTypesGroup;
+    QActionGroup* _trailSettingsGroup;
+    QActionGroup* _updateTimesGroup;
+    QActionGroup* _mapTypesGroup;
 
-    unsigned statusMaxLen;
+    unsigned _statusMaxLen;
 };
 
 #endif // QGCMAPTOOLBAR_H

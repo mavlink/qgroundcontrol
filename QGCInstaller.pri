@@ -19,10 +19,16 @@
 
 installer {
     MacBuild {
-        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt $${DESTDIR}/qgroundcontrol.app
-        QMAKE_POST_LINK += && hdiutil create -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/qgroundcontrol.dmg
+        # We copy qgroundcontrol.app to the current directory so we can run macdeployqt without a path to the
+        # qgroundcontrol.app file. If you specify a path to the .app file the symbolic links to plugins will not
+        # be created correctly.
+        QMAKE_POST_LINK += && rm -rf qgroundcontrol.app
+        QMAKE_POST_LINK += && cp -r $${DESTDIR}/qgroundcontrol.app .
+        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt qgroundcontrol.app -verbose=2 -qmldir=src -dmg
+        QMAKE_POST_LINK += && rm -rf qgroundcontrol.app
+        QMAKE_POST_LINK += && mv qgroundcontrol.dmg release
     }
-    
+
     WindowsBuild {
 		QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(del /F "$$DESTDIR_WIN\\$${TARGET}.exp")
 		QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(del /F "$$DESTDIR_WIN\\$${TARGET}.ilk")

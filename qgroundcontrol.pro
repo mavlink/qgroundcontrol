@@ -29,8 +29,8 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 1) {
-    error("Unsupported Qt version, 5.2+ is required")
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 3) {
+    error("Unsupported Qt version, 5.4+ is required")
 }
 
 linux {
@@ -117,6 +117,7 @@ QT += network \
     serialport \
     sql \
     printsupport \
+    qml \
     quick \
     quickwidgets
 
@@ -184,7 +185,8 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += /W3 \
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot
         /wd4005 \   # silence warnings about macro redefinition
-        /wd4290     # ignore exception specifications
+        /wd4290 \   # ignore exception specifications
+        /Zc:strictStrings-  # work around win 8.1 sdk sapi.h problem
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += /WX
     }
