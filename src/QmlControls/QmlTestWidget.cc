@@ -29,7 +29,7 @@
 QmlTestWidget::QmlTestWidget(void)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    resize(500, 500);
+    resize(900, 500);
     setVisible(true);
     setSource(QUrl::fromUserInput("qrc:qml/QmlTest.qml"));
 }

@@ -2,21 +2,19 @@ import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
-import QGroundControl.FactSystem 1.0
 import QGroundControl.Palette 1.0
 
 TextField {
-    property Fact fact: Fact { value: 0 }
     property bool showUnits: false
+    property string unitsLabel: ""
 
-    property var __qgcpal: QGCPalette { colorGroup: QGCPalette.Active }
+    property var __qgcPal: QGCPalette { colorGroupEnabled: true }
 
-    text: fact.valueString
-    textColor: __qgcpal.text
+    textColor: __qgcPal.textFieldText
 
     Label {
         id: unitsLabelWidthGenerator
-        text: parent.fact.units
+        text: unitsLabel
         width: contentWidth + ((parent.__contentHeight/3)*2)
         visible: false
     }
@@ -35,7 +33,7 @@ TextField {
                 anchors.fill: parent
 
                 border.color: control.activeFocus ? "#47b" : "#999"
-                color: __qgcpal.base
+                color: __qgcPal.textField
             }
 
             Text {
@@ -50,7 +48,7 @@ TextField {
                 x: parent.width - width
                 width: unitsLabelWidthGenerator.width
 
-                text: control.fact.units
+                text: control.unitsLabel
                 color: control.textColor
                 visible: control.showUnits
             }
@@ -58,6 +56,4 @@ TextField {
 
         padding.right: control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight/3
     }
-
-    onEditingFinished: fact.value = text
 }

@@ -66,36 +66,52 @@ QString Fact::valueString(void) const
 
 QVariant Fact::defaultValue(void)
 {
+    Q_ASSERT(_metaData);
     return _metaData->defaultValue;
 }
 
 FactMetaData::ValueType_t Fact::type(void)
 {
+    Q_ASSERT(_metaData);
     return _metaData->type;
 }
 
 QString Fact::shortDescription(void)
 {
-    return _metaData->shortDescription;
+    if (_metaData) {
+        return _metaData->shortDescription;
+    } else {
+        return QString();
+    }
 }
 
 QString Fact::longDescription(void)
 {
-    return _metaData->longDescription;
+    if (_metaData) {
+        return _metaData->longDescription;
+    } else {
+        return QString();
+    }
 }
 
 QString Fact::units(void)
 {
-    return _metaData->units;
+    if (_metaData) {
+        return _metaData->units;
+    } else {
+        return QString();
+    }
 }
 
 QVariant Fact::min(void)
 {
+    Q_ASSERT(_metaData);
     return _metaData->min;
 }
 
 QVariant Fact::max(void)
 {
+    Q_ASSERT(_metaData);
     return _metaData->max;
 }
 

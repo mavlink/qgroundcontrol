@@ -1,6 +1,7 @@
 Module QGroundControl.Controls
-SetupButton 1.0 SetupButton.qml
+SubMenuButton 1.0 SubMenuButton.qml
 QGCLabel 1.0 QGCLabel.qml
 QGCButton 1.0 QGCButton.qml
 QGCRadioButton 1.0 QGCRadioButton.qml
 QGCCheckBox 1.0 QGCCheckBox.qml
+QGCTextField 1.0 QGCTextField.qml
