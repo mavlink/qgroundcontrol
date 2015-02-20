@@ -118,7 +118,8 @@ QT += network \
     sql \
     printsupport \
     qml \
-    quick
+    quick \
+    quickwidgets
 
 contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
     QT += multimedia
