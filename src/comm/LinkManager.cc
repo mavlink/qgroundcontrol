@@ -193,18 +193,35 @@ bool LinkManager::disconnectLink(LinkInterface* link)
 {
     Q_ASSERT(link);
     if (link->_disconnect()) {
-        // TODO There is no point in disconnecting it if will stay around.
-        // This should be turned into a delete link instead. Deleting a link
-        // is not yet possible as LinkManager is broken.
-        // Disconnect this link from its configuration
         LinkConfiguration* config = link->getLinkConfiguration();
         if(config) {
             config->setLink(NULL);
         }
+        // Link is now done and over with. We can't yet delete it because it
+        // takes a while for the MAVLink protocol to take notice of it. We
+        // flag it for delayed deletion for final clean up.
+        link->_flaggedForDeletion = true;
+        QTimer::singleShot(1000, this, &LinkManager::_delayedDeleteLink);
         return true;
     } else {
         return false;
     }
+}
+
+void LinkManager::_delayedDeleteLink()
+{
+    _linkListMutex.lock();
+    foreach (LinkInterface* link, _links)
+    {
+        Q_ASSERT(link);
+        if (link->_flaggedForDeletion) {
+            qDebug() << "Link deleted: " << link->getName();
+            _linkListMutex.unlock();
+            deleteLink(link);
+            return;
+        }
+    }
+    _linkListMutex.unlock();
 }
 
 void LinkManager::deleteLink(LinkInterface* link)
