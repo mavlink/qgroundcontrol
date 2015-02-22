@@ -247,11 +247,12 @@
         <file alias="QGroundControl/FactControls/FactCheckBox.qml">src/FactSystem/FactControls/FactCheckBox.qml</file>
 
         <file alias="QGroundControl/Controls/qmldir">src/QmlControls/qmldir</file>
-        <file alias="QGroundControl/Controls/SetupButton.qml">src/QmlControls/SetupButton.qml</file>
+        <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
         <file alias="QGroundControl/Controls/QGCButton.qml">src/QmlControls/QGCButton.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
         <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
         <file alias="QGroundControl/Controls/QGCLabel.qml">src/QmlControls/QGCLabel.qml</file>
+        <file alias="QGroundControl/Controls/QGCTextField.qml">src/QmlControls/QGCTextField.qml</file>
 
         <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
         <file alias="px4fmu_2.x.png">files/images/px4/boards/px4fmu_2.x.png</file>
@@ -268,7 +269,7 @@
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
 
-        <file alias="QGroundControl/Controls/setupButtonImage.png">files/Setup/cogwheels.png</file>
+        <file alias="QGroundControl/Controls/subMenuButtonImage.png">files/Setup/cogwheels.png</file>
         <file alias="QGroundControl/Controls/SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/SensorsComponentIcon.png</file>
         <file alias="QGroundControl/Controls/RadioComponentIcon.png">src/AutoPilotPlugins/PX4/RadioComponentIcon.png</file>
         <file alias="QGroundControl/Controls/FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/FlightModesComponentIcon.png</file>

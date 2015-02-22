@@ -11,7 +11,7 @@ Rectangle {
     width: 600
     height: 600
 
-    property var qgcPal: QGCPalette { colorGroup: QGCPalette.Active }
+    property var qgcPal: QGCPalette { colorGroupEnabled: true }
     property FirmwareUpgradeController controller: FirmwareUpgradeController {
         upgradeButton: upgradeButton
         statusLog: statusTextArea
@@ -25,7 +25,7 @@ Rectangle {
 
         Text {
             text: "FIRMWARE UPDATE"
-            color: qgcPal.windowText
+            color: qgcPal.text
             font.pointSize: 20
         }
 
@@ -97,7 +97,7 @@ Rectangle {
             readOnly: true
             frameVisible: false
             style: TextAreaStyle {
-                textColor: qgcPal.windowText
+                textColor: qgcPal.text
                 backgroundColor: qgcPal.windowShade
             }
         }
