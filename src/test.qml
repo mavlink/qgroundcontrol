@@ -7,10 +7,10 @@ import QGroundControl.Palette 1.0
 
 
 Rectangle {
-    QGCPalette { id: palette; colorGroup: enabled ? QGCPalette.Active : QGCPalette.Disabled }
+    QGCPalette { id: palette; colorGroupEnabled: enabled }
 
     width: 100
     height: 100
     color: "#e43f3f"
-    // palette.windowText
+    // palette.text
 }

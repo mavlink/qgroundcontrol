@@ -4,13 +4,9 @@ import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.FactSystem 1.0
 import QGroundControl.Palette 1.0
+import QGroundControl.Controls 1.0
 
-Label {
+QGCLabel {
     property Fact fact: Fact { value: "FactLabel" }
-
-    property var __qgcpal: QGCPalette { colorGroup: QGCPalette.Active }
-
-    color: __qgcpal.windowText
-
     text: fact.valueString
 }

@@ -9,7 +9,7 @@ Rectangle {
     width: 600
     height: 400
 
-    property var qgcPal: QGCPalette { id: palette; colorGroup: QGCPalette.Active }
+    property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
 
     id: topLevel
     objectName: "topLevel"
