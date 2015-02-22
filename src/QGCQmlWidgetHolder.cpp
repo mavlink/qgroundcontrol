@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "QGCQmlWidgetHolder.h"
-#include "QGCMessageBox.h"
 
 QGCQmlWidgetHolder::QGCQmlWidgetHolder(QWidget *parent) :
     QWidget(parent)
@@ -46,17 +45,5 @@ void QGCQmlWidgetHolder::setAutoPilot(AutoPilotPlugin* autoPilot)
 
 bool QGCQmlWidgetHolder::setSource(const QUrl& qmlUrl)
 {
-    _ui.qmlWidget->setSource(qmlUrl);
-    if (_ui.qmlWidget->status() != QQuickWidget::Ready) {
-        QString errorList;
-        
-        foreach (QQmlError error, _ui.qmlWidget->errors()) {
-            errorList += error.toString();
-            errorList += "\n";
-        }
-        QGCMessageBox::warning(tr("Qml Error"), tr("Source not ready: %1\nErrors:\n%2").arg(_ui.qmlWidget->status()).arg(errorList));
-        return false;
-    }
-    
-    return true;
+    return _ui.qmlWidget->setSource(qmlUrl);
 }

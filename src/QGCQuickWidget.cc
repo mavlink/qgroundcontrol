@@ -23,6 +23,7 @@
 
 #include "QGCQuickWidget.h"
 #include "AutoPilotPluginManager.h"
+#include "QGCMessageBox.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -42,4 +43,21 @@ QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
 void QGCQuickWidget::setAutoPilot(AutoPilotPlugin* autoPilot)
 {
     rootContext()->setContextProperty("autopilot", autoPilot);
+}
+
+bool QGCQuickWidget::setSource(const QUrl& qmlUrl)
+{
+    QQuickWidget::setSource(qmlUrl);
+    if (status() != Ready) {
+        QString errorList;
+        
+        foreach (QQmlError error, errors()) {
+            errorList += error.toString();
+            errorList += "\n";
+        }
+        QGCMessageBox::warning(tr("Qml Error"), tr("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
+        return false;
+    }
+    
+    return true;
 }
