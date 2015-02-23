@@ -141,6 +141,7 @@ signals:
 private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
+    void _delayedDeleteLink();
 
 private:
     /// All access to LinkManager is through LinkManager::instance
