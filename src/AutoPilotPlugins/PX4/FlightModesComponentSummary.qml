@@ -27,7 +27,7 @@ Column {
         QGCLabel {
             horizontalAlignment: Text.AlignRight
             width: parent.width - posctl.contentWidth
-            text: autopilot.parameters["RC_MAP_POSCTL_SW"].value == 0 ? "Not mapped" : autopilot.parameters["RC_MAP_POSCTL_SW"].value
+            text: autopilot.parameters["RC_MAP_POSCTL_SW"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_POSCTL_SW"].value
         }
     }
 
@@ -38,7 +38,7 @@ Column {
         QGCLabel {
             horizontalAlignment: Text.AlignRight
             width: parent.width - loiter.contentWidth
-            text: autopilot.parameters["RC_MAP_LOITER_SW"].value == 0 ? "Not mapped" : autopilot.parameters["RC_MAP_LOITER_SW"].value
+            text: autopilot.parameters["RC_MAP_LOITER_SW"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_LOITER_SW"].value
         }
     }
 
@@ -49,7 +49,7 @@ Column {
         QGCLabel {
             horizontalAlignment: Text.AlignRight
             width: parent.width - rtl.contentWidth
-            text: autopilot.parameters["RC_MAP_RETURN_SW"].value == 0 ? "Not mapped" : autopilot.parameters["RC_MAP_RETURN_SW"].value
+            text: autopilot.parameters["RC_MAP_RETURN_SW"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_RETURN_SW"].value
         }
     }
 }

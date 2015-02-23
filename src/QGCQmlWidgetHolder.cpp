@@ -40,11 +40,25 @@ QGCQmlWidgetHolder::~QGCQmlWidgetHolder()
 
 void QGCQmlWidgetHolder::setAutoPilot(AutoPilotPlugin* autoPilot)
 {
-    _ui.qmlWidget->rootContext()->setContextProperty("autopilot", autoPilot);
+    setContextPropertyObject("autopilot", autoPilot);
 }
 
-void QGCQmlWidgetHolder::setSource(const QUrl& qmlUrl)
+void QGCQmlWidgetHolder::setContextProperty(const QString& property, QObject* value)
 {
-    _ui.qmlWidget->setSource(qmlUrl);
-    _ui.qmlWidget->setMinimumSize(_ui.qmlWidget->rootObject()->width(), _ui.qmlWidget->rootObject()->height());
+    _ui.qmlWidget->rootContext()->setContextProperty(property, value);
+}
+
+bool QGCQmlWidgetHolder::setSource(const QUrl& qmlUrl)
+{
+    return _ui.qmlWidget->setSource(qmlUrl);
+}
+
+void QGCQmlWidgetHolder::setContextPropertyObject(const QString& name, QObject* object)
+{
+    _ui.qmlWidget->rootContext()->setContextProperty(name, object);
+}
+
+QQmlContext* QGCQmlWidgetHolder::getRootContext()
+{
+    return _ui.qmlWidget->rootContext();
 }

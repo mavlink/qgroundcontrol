@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="4.5322223in"
+   height="8.6111116in"
+   viewBox="0 0 407.9 775.00005"
+   id="svg4264"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="battery_20.svg">
+  <title
+     id="title4294">Battery</title>
+  <defs
+     id="defs4266" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4103225"
+     inkscape:cx="203.95"
+     inkscape:cy="387.50002"
+     inkscape:document-units="in"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="in"
+     fit-margin-top="0.02"
+     fit-margin-left="0.02"
+     fit-margin-right="0.02"
+     fit-margin-bottom="0.02"
+     showborder="true"
+     inkscape:window-width="2003"
+     inkscape:window-height="1259"
+     inkscape:window-x="2776"
+     inkscape:window-y="65"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata4269">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Battery</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Gus Grubba</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title></dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-nc/3.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-nc/3.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:prohibits
+           rdf:resource="http://creativecommons.org/ns#CommercialUse" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-67.779181,-221.20249)">
+    <path
+       style="fill:#e6e7e8;stroke:#e6e7e8;stroke-width:6"
+       id="rect4970"
+       inkscape:connector-curvature="0"
+       d="m 85.679178,947.30249 0,-627.5 c 0,-18.5 16.400002,-33.5 36.600002,-33.5 l 299,0 c 20.2,0 36.6,15 36.6,33.5 l 0,627.5 c 0,18.5 -16.4,33.5 -36.6,33.5 l -299,0 c -20.3,0 -36.600002,-15 -36.600002,-33.5 z" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:none"
+       id="rect4360"
+       d="m 69.579181,959.5025 0,-651.90001 c 0,-19.2 17.799997,-34.9 39.699999,-34.9 l 324.9,0 c 22,0 39.7,15.7 39.7,34.9 l 0,651.90001 c 0,19.2 -17.8,34.9 -39.7,34.9 l -324.8,0 c -22.000002,-0.10001 -39.799999,-15.7 -39.799999,-34.9 z" />
+    <path
+       style="fill:#aa0000"
+       id="path4679"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       d="m 111.37918,952.5025 0,-112.6 317.2,0 0,112.6 -317.2,0 z" />
+    <g
+       transform="translate(-127.22081,216.20249)"
+       id="g4222">
+      <path
+         style="fill:#e6e7e8;stroke:#e6e7e8;stroke-width:6;stroke-miterlimit:10"
+         inkscape:connector-curvature="0"
+         stroke-miterlimit="10"
+         d="m 500.8,64.9 c 0,2.8 -2.1,4.9 -4.9,4.9 l -193.8,0 c -2.8,0 -4.9,-2.1 -4.9,-4.9 l 0,-50.2 c 0,-2.8 2.1,-4.9 4.9,-4.9 l 193.8,0 c 2.8,0 4.9,2.1 4.9,4.9 l 0,50.2 0,0 z"
+         id="path4224" />
+    </g>
+  </g>
+</svg>

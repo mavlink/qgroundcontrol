@@ -65,6 +65,8 @@ void SetupViewTest::_clickThrough_test(void)
     
     // Find the Setup button and click it
     
+    // Tool Bar is now a QQuickWidget and cannot be manipulated like below
+#if 0
     QGCToolBar* toolbar = _mainWindow->findChild<QGCToolBar*>();
     Q_ASSERT(toolbar);
     
@@ -80,7 +82,7 @@ void SetupViewTest::_clickThrough_test(void)
     Q_ASSERT(setupButton);
     QTest::mouseClick(setupButton, Qt::LeftButton);
     QTest::qWait(1000);
-
+#endif
     // Click through all the setup buttons
     // FIXME: NYI
     

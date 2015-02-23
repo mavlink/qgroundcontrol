@@ -1,16 +1,16 @@
-import QtQuick 2.2
+import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
-import QGroundControl.FactSystem 1.0
 import QtGraphicalEffects 1.0
 
+import QGroundControl.FactSystem 1.0
 import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 
 Rectangle {
     id: topLevel
 
-    QGCPalette { id: palette; colorGroup: QGCPalette.Active }
+    QGCPalette { id: palette; colorGroupEnabled: true }
     color: palette.window
 
     ExclusiveGroup { id: setupButtonGroup }
@@ -21,7 +21,7 @@ Rectangle {
         Column {
             anchors.fill: parent
 
-            SetupButton {
+            SubMenuButton {
                 id: firmwareButton; objectName: "firmwareButton"
                 width: parent.width
                 text: "FIRMWARE"
@@ -29,6 +29,15 @@ Rectangle {
                 setupIndicator: false
                 exclusiveGroup: setupButtonGroup
                 onClicked: controller.firmwareButtonClicked()
+            }
+
+            Item { width: parent.width; height: 10 }    // spacer
+
+            QGCLabel {
+                width: parent.width
+                text: "You must be connected to your board to use all available setup options."
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignHCenter
             }
         }
     }
@@ -39,7 +48,7 @@ Rectangle {
         Column {
             anchors.fill: parent
 
-            SetupButton {
+            SubMenuButton {
                 id: summaryButton; objectName: "summaryButton"
                 width: parent.width
                 text: "SUMMARY"
@@ -49,7 +58,7 @@ Rectangle {
                 onClicked: controller.summaryButtonClicked()
             }
 
-            SetupButton {
+            SubMenuButton {
                 id: firmwareButton; objectName: "firmwareButton"
                 width: parent.width
                 text: "FIRMWARE"
@@ -62,7 +71,7 @@ Rectangle {
             Repeater {
                 model: autopilot.components
 
-                SetupButton {
+                SubMenuButton {
                     width: parent.width
                     text: modelData.name.toUpperCase()
                     imageResource: modelData.iconResource
@@ -72,7 +81,7 @@ Rectangle {
                 }
             }
 
-            SetupButton {
+            SubMenuButton {
                 width: parent.width
                 text: "PARAMETERS"
                 setupIndicator: false

@@ -29,8 +29,8 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 1) {
-    error("Unsupported Qt version, 5.2+ is required")
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 3) {
+    error("Unsupported Qt version, 5.4+ is required")
 }
 
 linux {
@@ -117,6 +117,7 @@ QT += network \
     serialport \
     sql \
     printsupport \
+    qml \
     quick \
     quickwidgets
 
@@ -184,7 +185,8 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += /W3 \
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot
         /wd4005 \   # silence warnings about macro redefinition
-        /wd4290     # ignore exception specifications
+        /wd4290 \   # ignore exception specifications
+        /Zc:strictStrings-  # work around win 8.1 sdk sapi.h problem
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += /WX
     }
@@ -266,6 +268,7 @@ INCLUDEPATH += \
     src/ui/configuration \
     src/ui/px4_configuration \
     src/ui/main \
+    src/ui/toolbar \
     src/VehicleSetup \
     src/AutoPilotPlugins
 
@@ -335,8 +338,6 @@ FORMS += \
     src/ui/configuration/terminalconsole.ui \
     src/ui/configuration/SerialSettingsDialog.ui \
     src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
-    src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
-    src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
     src/ui/px4_configuration/PX4RCCalibration.ui \
     src/ui/QGCUASFileView.ui \
     src/QGCQmlWidgetHolder.ui \
@@ -470,8 +471,6 @@ HEADERS += \
     src/ui/QGCPendingParamWidget.h \
     src/ui/px4_configuration/QGCPX4AirframeConfig.h \
     src/ui/QGCBaseParamWidget.h \
-    src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
-    src/ui/px4_configuration/QGCPX4SensorCalibration.h \
     src/ui/px4_configuration/PX4RCCalibration.h \
     src/ui/px4_configuration/RCValueWidget.h \
     src/uas/UASManagerInterface.h \
@@ -495,7 +494,8 @@ HEADERS += \
     src/comm/LinkConfiguration.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCUDPLinkConfiguration.h \
-    src/uas/UASMessageHandler.h
+    src/uas/UASMessageHandler.h \
+    src/ui/toolbar/MainToolBar.h
 
 SOURCES += \
     src/main.cc \
@@ -615,8 +615,6 @@ SOURCES += \
     src/ui/QGCPendingParamWidget.cc \
     src/ui/px4_configuration/QGCPX4AirframeConfig.cc \
     src/ui/QGCBaseParamWidget.cc \
-    src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
-    src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/px4_configuration/PX4RCCalibration.cc \
     src/ui/px4_configuration/RCValueWidget.cc \
     src/uas/QGCUASFileManager.cc \
@@ -637,7 +635,8 @@ SOURCES += \
     src/comm/LinkConfiguration.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
-    src/uas/UASMessageHandler.cc
+    src/uas/UASMessageHandler.cc \
+    src/ui/toolbar/MainToolBar.cc
 
 #
 # Unit Test specific configuration goes here
@@ -741,6 +740,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/FlightModeConfig.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
+    src/AutoPilotPlugins/PX4/SensorsComponentController.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
     src/AutoPilotPlugins/PX4/PX4ParameterFacts.h \
 
@@ -752,6 +752,7 @@ SOURCES += \
     src/VehicleSetup/PX4Bootloader.cc \
     src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
+    src/AutoPilotPlugins/AutoPilotPlugin.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/Generic/GenericParameterFacts.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
@@ -761,6 +762,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/FlightModeConfig.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
+    src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/PX4ParameterFacts.cc \
 

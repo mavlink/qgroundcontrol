@@ -12,20 +12,22 @@ Button {
     text: "Button"
     property bool setupComplete: true
     property bool setupIndicator: true
-    property string imageResource: "setupButtonImage.png"
+    property string imageResource: "subMenuButtonImage.png"
 
     style: ButtonStyle {
         id: buttonStyle
 
         property var __qgcPal: QGCPalette {
-            colorGroup: control.enabled ? QGCPalette.Active : QGCPalette.Disabled
+            colorGroupEnabled: control.enabled
         }
+
+        property bool __showHighlight: control.pressed | control.checked
 
         background: Rectangle {
             id: innerRect
             readonly property real titleHeight: 20
 
-            color: control.pressed ? __qgcPal.buttonHighlight : (control.checked ? __qgcPal.buttonHighlight : __qgcPal.button)
+            color: __showHighlight ? __qgcPal.buttonHighlight : __qgcPal.button
 
             Text {
                 id: titleBar
@@ -38,7 +40,7 @@ Button {
 
                 text: control.text
                 font.pixelSize: 12
-                color: __qgcPal.buttonText
+                color: __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
 
                 Rectangle {
                     id: setupIndicator
@@ -63,20 +65,15 @@ Button {
 
                 color: __qgcPal.windowShade
 
-                Image {
-                    id: buttonImage
+                QGCColoredImage {
                     source: control.imageResource
-                    sourceSize: Qt.size(parent.width - 20, parent.height - 20)
+                    fillMode: Image.PreserveAspectFit
+                    width: parent.width - 20
+                    height: parent.height - 20
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     smooth: true
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: buttonImage
-                    source: buttonImage
-                    color: control.pressed ? __qgcPal.buttonHighlight : (control.checked ? __qgcPal.buttonHighlight : __qgcPal.button)
+                    color: __showHighlight ? __qgcPal.buttonHighlight : __qgcPal.button
                 }
             }
         }

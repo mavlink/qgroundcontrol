@@ -24,7 +24,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMenu>
 #include <QScrollBar>
 
-#include "QGCToolBar.h"
+#include "MainToolBar.h"
 #include "UASMessageView.h"
 #include "QGCUnconnectedInfoWidget.h"
 #include "UASMessageHandler.h"
@@ -111,7 +111,7 @@ void UASMessageViewWidget::handleTextMessage(UASMessage *message)
   UASMessageViewRollDown
 -------------------------------------------------------------------------------------*/
 
-UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent, QGCToolBar *toolBar)
+UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent, MainToolBar *toolBar)
     : UASMessageView(parent)
 {
     _toolBar = toolBar;

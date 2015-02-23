@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCUnconnectedInfoWidget.h"
 
 class UASMessage;
-class QGCToolBar;
+class MainToolBar;
 
 namespace Ui {
 class UASMessageView;
@@ -69,14 +69,14 @@ class UASMessageViewRollDown : public UASMessageView
 {
     Q_OBJECT
 public:
-    explicit UASMessageViewRollDown(QWidget *parent, QGCToolBar* toolBar);
+    explicit UASMessageViewRollDown(QWidget *parent, MainToolBar* toolBar);
     ~UASMessageViewRollDown();
 public slots:
     void handleTextMessage(UASMessage* message);
 protected:
     void leaveEvent(QEvent* event);
 private:
-    QGCToolBar* _toolBar;
+    MainToolBar* _toolBar;
 };
 
 #endif // QGCMESSAGEVIEW_H

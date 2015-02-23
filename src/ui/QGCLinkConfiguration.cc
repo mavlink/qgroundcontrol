@@ -58,64 +58,71 @@ QGCLinkConfiguration::~QGCLinkConfiguration()
 void QGCLinkConfiguration::on_delLinkButton_clicked()
 {
     QModelIndex index = _ui->linkView->currentIndex();
-    LinkConfiguration* config = _viewModel->getConfiguration(index.row());
-    if(config) {
-        // Ask user if they are sure
-        QMessageBox::StandardButton button = QGCMessageBox::question(
-            tr("Delete Link Configuration"),
-            tr("Are you sure you want to delete %1?\nDeleting a configuration will also disconnect it if connected.").arg(config->name()),
-            QMessageBox::Yes | QMessageBox::Cancel,
-            QMessageBox::Cancel);
-        if (button == QMessageBox::Yes) {
-            // Get link attached to this configuration (if any)
-            LinkInterface* iface = config->getLink();
-            if(iface) {
-                // Disconnect it (if connected)
-                LinkManager::instance()->disconnectLink(iface);
+    if(index.row() >= 0) {
+        LinkConfiguration* config = _viewModel->getConfiguration(index.row());
+        if(config) {
+            // Ask user if they are sure
+            QMessageBox::StandardButton button = QGCMessageBox::question(
+                tr("Delete Link Configuration"),
+                tr("Are you sure you want to delete %1?\nDeleting a configuration will also disconnect it if connected.").arg(config->name()),
+                QMessageBox::Yes | QMessageBox::Cancel,
+                QMessageBox::Cancel);
+            if (button == QMessageBox::Yes) {
+                // Get link attached to this configuration (if any)
+                LinkInterface* iface = config->getLink();
+                if(iface) {
+                    // Disconnect it (if connected)
+                    LinkManager::instance()->disconnectLink(iface);
+                }
+                _viewModel->beginChange();
+                // Remove configuration
+                LinkManager::instance()->removeLinkConfiguration(config);
+                // Save list
+                LinkManager::instance()->saveLinkConfigurationList();
+                _viewModel->endChange();
             }
-            _viewModel->beginChange();
-            // Remove configuration
-            LinkManager::instance()->removeLinkConfiguration(config);
-            // Save list
-            LinkManager::instance()->saveLinkConfigurationList();
-            _viewModel->endChange();
         }
     }
+    _updateButtons();
 }
 
-void QGCLinkConfiguration::on_linkView_clicked(const QModelIndex &index)
+void QGCLinkConfiguration::on_linkView_clicked(const QModelIndex&)
 {
-    LinkConfiguration* config = _viewModel->getConfiguration(index.row());
-    bool enabled = (config && !config->getLink());
-    _ui->connectLinkButton->setEnabled(enabled);
-    _ui->delLinkButton->setEnabled(config != NULL);
-    _ui->editLinkButton->setEnabled(config != NULL);
+    _updateButtons();
 }
 
 void QGCLinkConfiguration::on_connectLinkButton_clicked()
 {
     QModelIndex index = _ui->linkView->currentIndex();
-    LinkConfiguration* config = _viewModel->getConfiguration(index.row());
-    if(config) {
-        // Only connect if not already connected
-        if(!config->getLink()) {
-            LinkInterface* link = LinkManager::instance()->createLink(config);
+    if(index.row() >= 0) {
+        LinkConfiguration* config = _viewModel->getConfiguration(index.row());
+        if(config) {
+            LinkInterface* link = config->getLink();
             if(link) {
-                // Connect it
-                LinkManager::instance()->connectLink(link);
-                // Now go hunting for the parent so we can shut this down
-                QWidget* pQw = parentWidget();
-                while(pQw) {
-                    SettingsDialog* pDlg = dynamic_cast<SettingsDialog*>(pQw);
-                    if(pDlg) {
-                        pDlg->accept();
-                        break;
+                // Disconnect Link
+                if (link->isConnected()) {
+                    LinkManager::instance()->disconnectLink(link);
+                }
+            } else {
+                LinkInterface* link = LinkManager::instance()->createLink(config);
+                if(link) {
+                    // Connect it
+                    LinkManager::instance()->connectLink(link);
+                    // Now go hunting for the parent so we can shut this down
+                    QWidget* pQw = parentWidget();
+                    while(pQw) {
+                        SettingsDialog* pDlg = dynamic_cast<SettingsDialog*>(pQw);
+                        if(pDlg) {
+                            pDlg->accept();
+                            break;
+                        }
+                        pQw = pQw->parentWidget();
                     }
-                    pQw = pQw->parentWidget();
                 }
             }
         }
     }
+    _updateButtons();
 }
 
 void QGCLinkConfiguration::on_editLinkButton_clicked()
@@ -170,6 +177,7 @@ void QGCLinkConfiguration::on_addLinkButton_clicked()
             _viewModel->endChange();
         }
     }
+    _updateButtons();
 }
 
 void QGCLinkConfiguration::on_linkView_doubleClicked(const QModelIndex &index)
@@ -179,27 +187,51 @@ void QGCLinkConfiguration::on_linkView_doubleClicked(const QModelIndex &index)
 
 void QGCLinkConfiguration::_editLink(int row)
 {
-    LinkConfiguration* config = _viewModel->getConfiguration(row);
-    if(config) {
-        LinkConfiguration* tmpConfig = LinkConfiguration::duplicateSettings(config);
-        QGCCommConfiguration* commDialog = new QGCCommConfiguration(this, tmpConfig);
-        if(commDialog->exec() == QDialog::Accepted) {
-            // Save changes (if any)
-            if(commDialog->getConfig()) {
-                _fixUnnamed(tmpConfig);
-                _viewModel->beginChange();
-                config->copyFrom(tmpConfig);
-                // Save it
-                LinkManager::instance()->saveLinkConfigurationList();
-                _viewModel->endChange();
-                // Tell link about changes (if any)
-                config->updateSettings();
+    if(row >= 0) {
+        LinkConfiguration* config = _viewModel->getConfiguration(row);
+        if(config) {
+            LinkConfiguration* tmpConfig = LinkConfiguration::duplicateSettings(config);
+            QGCCommConfiguration* commDialog = new QGCCommConfiguration(this, tmpConfig);
+            if(commDialog->exec() == QDialog::Accepted) {
+                // Save changes (if any)
+                if(commDialog->getConfig()) {
+                    _fixUnnamed(tmpConfig);
+                    _viewModel->beginChange();
+                    config->copyFrom(tmpConfig);
+                    // Save it
+                    LinkManager::instance()->saveLinkConfigurationList();
+                    _viewModel->endChange();
+                    // Tell link about changes (if any)
+                    config->updateSettings();
+                }
+            }
+            // Discard temporary duplicate
+            if(commDialog->getConfig())
+                delete commDialog->getConfig();
+        }
+    }
+    _updateButtons();
+}
+
+void QGCLinkConfiguration::_updateButtons()
+{
+    LinkConfiguration* config = NULL;
+    QModelIndex index = _ui->linkView->currentIndex();
+    bool enabled = (index.row() >= 0);
+    if(enabled) {
+        config = _viewModel->getConfiguration(index.row());
+        if(config) {
+            LinkInterface* link = config->getLink();
+            if(link) {
+                _ui->connectLinkButton->setText("Disconnect");
+            } else {
+                _ui->connectLinkButton->setText("Connect");
             }
         }
-        // Discard temporary duplicate
-        if(commDialog->getConfig())
-            delete commDialog->getConfig();
     }
+    _ui->connectLinkButton->setEnabled(enabled);
+    _ui->delLinkButton->setEnabled(config != NULL);
+    _ui->editLinkButton->setEnabled(config != NULL);
 }
 
 LinkViewModel::LinkViewModel(QObject *parent) : QAbstractListModel(parent)

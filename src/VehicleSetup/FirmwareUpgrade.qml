@@ -1,4 +1,4 @@
-import QtQuick 2.2
+import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
@@ -11,9 +11,10 @@ Rectangle {
     width: 600
     height: 600
 
-    property var qgcPal: QGCPalette { colorGroup: QGCPalette.Active }
+    property var qgcPal: QGCPalette { colorGroupEnabled: true }
     property FirmwareUpgradeController controller: FirmwareUpgradeController {
         upgradeButton: upgradeButton
+        progressBar: progressBar
         statusLog: statusTextArea
         firmwareType: FirmwareUpgradeController.StableFirmware
     }
@@ -23,9 +24,8 @@ Rectangle {
     Column {
         anchors.fill:parent
 
-        Text {
+        QGCLabel {
             text: "FIRMWARE UPDATE"
-            color: qgcPal.windowText
             font.pointSize: 20
         }
 
@@ -35,52 +35,44 @@ Rectangle {
             width: 10
         }
 
-        ExclusiveGroup { id: firmwareGroup }
+        Row {
+            spacing: 10
 
-        QGCRadioButton {
-            id: stableFirwareRadio
-            exclusiveGroup: firmwareGroup
-            text: qsTr("Standard Version (stable)")
-            checked: true
-            enabled: upgradeButton.enabled
-            onClicked: {
-                if (checked)
-                    controller.firmwareType = FirmwareUpgradeController.StableFirmware
+            ListModel {
+                id: firmwareItems
+                ListElement {
+                    text: qsTr("Standard Version (stable)");
+                    firmwareType: FirmwareUpgradeController.StableFirmware
+                }
+                ListElement {
+                    text: qsTr("Beta Testing (beta)");
+                    firmwareType: FirmwareUpgradeController.BetaFirmware
+                }
+                ListElement {
+                    text: qsTr("Developer Build (master)");
+                    firmwareType: FirmwareUpgradeController.DeveloperFirmware
+                }
+                ListElement {
+                    text: qsTr("Custom firmware file...");
+                    firmwareType: FirmwareUpgradeController.CustomFirmware
+                }
             }
-        }
-        QGCRadioButton {
-            id: betaFirwareRadio
-            exclusiveGroup: firmwareGroup
-            text: qsTr("Beta Testing (beta)")
-            enabled: upgradeButton.enabled
-            onClicked: { if (checked) controller.firmwareType = FirmwareUpgradeController.BetaFirmware }
-        }
-        QGCRadioButton {
-            id: devloperFirwareRadio
-            exclusiveGroup: firmwareGroup
-            text: qsTr("Developer Build (master)")
-            enabled: upgradeButton.enabled
-            onClicked: { if (checked) controller.firmwareType = FirmwareUpgradeController.DeveloperFirmware }
-        }
-        QGCRadioButton {
-            id: customFirwareRadio
-            exclusiveGroup: firmwareGroup
-            text: qsTr("Custom firmware file...")
-            enabled: upgradeButton.enabled
-            onClicked: { if (checked) controller.firmwareType = FirmwareUpgradeController.CustomFirmware }
-        }
 
-        Item {
-            // Just used as a spacer
-            height: 20
-            width: 10
-        }
+            QGCComboBox {
+                id: firmwareCombo
+                width: 200
+                height: upgradeButton.height
+                model: firmwareItems
+            }
 
-        QGCButton {
-            id: upgradeButton
-            text: "UPGRADE"
-            onClicked: {
-                controller.doFirmwareUpgrade();
+            QGCButton {
+                id: upgradeButton
+                text: "UPGRADE"
+                primary: true
+                onClicked: {
+                    controller.firmwareType = firmwareItems.get(firmwareCombo.currentIndex).firmwareType
+                    controller.doFirmwareUpgrade();
+                }
             }
         }
 
@@ -88,6 +80,11 @@ Rectangle {
             // Just used as a spacer
             height: 20
             width: 10
+        }
+
+        ProgressBar {
+            id: progressBar
+            width: parent.width
         }
 
         TextArea {
@@ -96,8 +93,9 @@ Rectangle {
             height: 300
             readOnly: true
             frameVisible: false
+            text: qsTr("Please disconnect all connections and unplug board from USB before selecting Upgrade.")
             style: TextAreaStyle {
-                textColor: qgcPal.windowText
+                textColor: qgcPal.text
                 backgroundColor: qgcPal.windowShade
             }
         }

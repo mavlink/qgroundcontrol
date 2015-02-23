@@ -56,11 +56,33 @@ Column {
     Row {
         width: parent.width
 
-        QGCLabel { id: mode; text: "Mode switch:" }
+        QGCLabel { id: flaps; text: "Flaps:" }
         QGCLabel {
             horizontalAlignment: Text.AlignRight
-            width: parent.width - mode.contentWidth
-            text: autopilot.parameters["RC_MAP_MODE_SW"].value == 0 ? "Setup required" : autopilot.parameters["RC_MAP_MODE_SW"].value
+            width: parent.width - flaps.contentWidth
+            text: autopilot.parameters["RC_MAP_FLAPS"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_FLAPS"].value
+        }
+    }
+
+    Row {
+        width: parent.width
+
+        QGCLabel { id: aux1; text: "Aux1:" }
+        QGCLabel {
+            horizontalAlignment: Text.AlignRight
+            width: parent.width - aux1.contentWidth
+            text: autopilot.parameters["RC_MAP_AUX1"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_AUX1"].value
+        }
+    }
+
+    Row {
+        width: parent.width
+
+        QGCLabel { id: aux2; text: "Aux2:" }
+        QGCLabel {
+            horizontalAlignment: Text.AlignRight
+            width: parent.width - aux2.contentWidth
+            text: autopilot.parameters["RC_MAP_AUX2"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_AUX2"].value
         }
     }
 }

@@ -66,6 +66,8 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     linkMgr->connectLink(link);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
     
+    // Tool Bar is now a QQuickWidget and cannot be manipulated like below
+#if 0
     // Click through all top level toolbar buttons
     QGCToolBar* toolbar = _mainWindow->findChild<QGCToolBar*>();
     Q_ASSERT(toolbar);
@@ -77,7 +79,8 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
             QTest::qWait(1000);
         }
     }
-    
+#endif
+
     // On MainWindow close we should get a message box telling the user to disconnect first. Cancel should do nothing.
     setExpectedMessageBox(QGCMessageBox::Cancel);
     _mainWindow->close();

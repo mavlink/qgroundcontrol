@@ -267,7 +267,7 @@ qint64 UDPLink::getCurrentOutDataRate() const
 
 UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name)
 {
-    _localPort = QGC_UDP_PORT;
+    _localPort = QGC_UDP_LOCAL_PORT;
 }
 
 UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration(source)
@@ -404,7 +404,7 @@ void UDPConfiguration::loadSettings(QSettings& settings, const QString& root)
     _confMutex.lock();
     settings.beginGroup(root);
     _hosts.clear();
-    _localPort = (quint16)settings.value("port", QGC_UDP_PORT).toUInt();
+    _localPort = (quint16)settings.value("port", QGC_UDP_LOCAL_PORT).toUInt();
     int hostCount = settings.value("hostCount", 0).toInt();
     for(int i = 0; i < hostCount; i++) {
         QString hkey = QString("host%1").arg(i);

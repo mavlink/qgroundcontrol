@@ -28,9 +28,6 @@
 #include "FlightModeConfig.h"
 #include "PX4AutoPilotPlugin.h"
 
-/// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
-
 struct SwitchListItem {
     const char* param;
     const char* name;
@@ -76,7 +73,7 @@ bool FlightModesComponent::requiresSetup(void) const
 bool FlightModesComponent::setupComplete(void) const
 {
     QVariant value;
-    if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParams[0], value)) {
+    if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "RC_MAP_MODE_SW", value)) {
         return value.toInt() != 0;
     } else {
         Q_ASSERT(false);
@@ -96,9 +93,9 @@ QString FlightModesComponent::setupStateDescription(void) const
     return QString(stateDescription);
 }
 
-const char** FlightModesComponent::setupCompleteChangedTriggerList(void) const
+QStringList FlightModesComponent::setupCompleteChangedTriggerList(void) const
 {
-    return triggerParams;
+    return QStringList("RC_MAP_MODE_SW");
 }
 
 QStringList FlightModesComponent::paramFilterList(void) const

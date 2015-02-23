@@ -189,13 +189,6 @@ const PX4RCCalibration::stateMachineEntry* PX4RCCalibration::_getStateMachineEnt
     static const char* msgPitchDown = "Move the Pitch stick all the way down and hold it there...";
     static const char* msgPitchUp = "Move the Pitch stick all the way up and hold it there...";
     static const char* msgPitchCenter = "Allow the Pitch stick to move back to center...";
-    static const char* msgModeSwitch = "Next we will assign the channel for the Mode Switch. Move the switch or dial up and down to select the channel.";
-    static const char* msgPosCtlSwitch = "Next we will assign the channel for the PosCtl Switch. Move the switch or dial up and down to select the channel.\n\n"
-                                            "You can click Skip if you don't want to assign this switch.";
-    static const char* msgLoiterSwitch = "Next we will assign the channel for the Loiter Switch. Move the switch or dial up and down to select the channel.\n\n"
-                                            "You can click Skip if you don't want to assign this switch.";
-    static const char* msgReturnSwitch = "Next we will assign the channel for the Return Switch. Move the switch or dial up and down to select the channel.\n\n"
-                                            "You can click Skip if you don't want to assign this switch.";
     static const char* msgAux1Switch = "Move the switch or dial you want to use for Aux1.\n\n"
                                             "You can click Skip if you don't want to assign.";
     static const char* msgAux2Switch = "Move the switch or dial you want to use for Aux2.\n\n"
@@ -223,10 +216,6 @@ const PX4RCCalibration::stateMachineEntry* PX4RCCalibration::_getStateMachineEnt
         { rcCalFunctionMax,                 msgSwitchMinMax,    _imageSwitchMinMax, &PX4RCCalibration::_inputSwitchMinMax,      &PX4RCCalibration::_nextStep,           NULL },
         { rcCalFunctionFlaps,               msgFlapsDetect,     _imageThrottleDown, &PX4RCCalibration::_inputFlapsDetect,       &PX4RCCalibration::_saveFlapsDown,      &PX4RCCalibration::_skipFlaps },
         { rcCalFunctionFlaps,               msgFlapsUp,         _imageThrottleDown, &PX4RCCalibration::_inputFlapsUp,           NULL,                                   NULL },
-        { rcCalFunctionModeSwitch,          msgModeSwitch,      _imageThrottleDown, &PX4RCCalibration::_inputSwitchDetect,      NULL,                                   NULL },
-        { rcCalFunctionPosCtlSwitch,        msgPosCtlSwitch,    _imageThrottleDown, &PX4RCCalibration::_inputSwitchDetect,      NULL,                                   &PX4RCCalibration::_nextStep },
-        { rcCalFunctionLoiterSwitch,        msgLoiterSwitch,    _imageThrottleDown, &PX4RCCalibration::_inputSwitchDetect,      NULL,                                   &PX4RCCalibration::_nextStep },
-        { rcCalFunctionReturnSwitch,        msgReturnSwitch,    _imageThrottleDown, &PX4RCCalibration::_inputSwitchDetect,      NULL,                                   &PX4RCCalibration::_nextStep },
         { rcCalFunctionAux1,                msgAux1Switch,      _imageThrottleDown, &PX4RCCalibration::_inputSwitchDetect,      NULL,                                   &PX4RCCalibration::_nextStep },
         { rcCalFunctionAux2,                msgAux2Switch,      _imageThrottleDown, &PX4RCCalibration::_inputSwitchDetect,      NULL,                                   &PX4RCCalibration::_nextStep },
         { rcCalFunctionMax,                 msgComplete,        _imageThrottleDown, NULL,                                       &PX4RCCalibration::_writeCalibration,   NULL },
@@ -700,6 +689,38 @@ void PX4RCCalibration::_resetInternalCalibrationValues(void)
     
     _showMinMaxOnRadioWidgets(false);
     _showTrimOnRadioWidgets(false);
+    
+    // Reserve the existing Flight Mode switch settings channels so we don't re-use them
+    
+    static const rcCalFunctions rgFlightModeFunctions[] = {
+        rcCalFunctionModeSwitch,
+        rcCalFunctionPosCtlSwitch,
+        rcCalFunctionLoiterSwitch,
+        rcCalFunctionReturnSwitch };
+    static const size_t crgFlightModeFunctions = sizeof(rgFlightModeFunctions) / sizeof(rgFlightModeFunctions[0]);
+
+    int componentId = _paramMgr->getDefaultComponentId();
+    for (size_t i=0; i < crgFlightModeFunctions; i++) {
+        QVariant value;
+        enum rcCalFunctions curFunction = rgFlightModeFunctions[i];
+        
+        bool paramFound = _paramMgr->getParameterValue(componentId, _rgFunctionInfo[curFunction].parameterName, value);
+        Q_ASSERT(paramFound);
+        Q_UNUSED(paramFound);
+        
+        bool ok;
+        int channel = value.toInt(&ok);
+        Q_ASSERT(ok);
+        Q_UNUSED(ok);
+        
+        // Parameter: 1-based channel, 0=not mapped
+        // _rgFunctionChannelMapping: 0-based channel, _chanMax=not mapped
+        
+        _rgFunctionChannelMapping[curFunction] = (channel == 0) ? _chanMax : channel;
+        if (channel != 0) {
+            _rgChannelInfo[channel - 1].function = curFunction;
+        }
+    }
 }
 
 /// @brief Sets internal calibration values from the stored parameters

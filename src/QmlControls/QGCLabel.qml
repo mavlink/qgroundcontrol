@@ -5,8 +5,8 @@ import QtQuick.Controls.Styles 1.2
 import QGroundControl.Palette 1.0
 
 Text {
-    property var __palette: QGCPalette { colorGroup: enabled ? QGCPalette.Active : QGCPalette.Disabled }
+    property var __palette: QGCPalette { colorGroupEnabled: enabled }
     property bool enabled: true
 
-    color: __palette.windowText
+    color: __palette.text
 }

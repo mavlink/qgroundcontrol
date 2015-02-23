@@ -25,23 +25,17 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SensorsComponent.h"
-#include "QGCPX4SensorCalibration.h"
 #include "PX4AutoPilotPlugin.h"
+#include "QGCQmlWidgetHolder.h"
+#include "SensorsComponentController.h"
 
 // These two list must be kept in sync
-
-/// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParamsV1[] = {  "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", "SENS_DPRES_OFF", NULL };
-static const char* triggerParamsV2[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", "SENS_DPRES_OFF", NULL };
 
 SensorsComponent::SensorsComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
     _name(tr("Sensors"))
 {
-    // Determine what set of parameters are available. This is a temporary hack for now. Will need real parameter
-    // mapping in the future.
-    QVariant value;
-    _paramsV1 = _paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "SENS_MAG_XOFF", value);
+
 }
 
 QString SensorsComponent::name(void) const
@@ -67,13 +61,10 @@ bool SensorsComponent::requiresSetup(void) const
 
 bool SensorsComponent::setupComplete(void) const
 {
-    const char** prgTriggers = setupCompleteChangedTriggerList();
-    Q_ASSERT(prgTriggers);
-    
-    while (*prgTriggers != NULL) {
+    foreach(QString triggerParam, setupCompleteChangedTriggerList()) {
         QVariant value;
         
-        if (!_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), *prgTriggers, value)) {
+        if (!_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParam, value)) {
             Q_ASSERT(false);
             return false;
         }
@@ -81,8 +72,6 @@ bool SensorsComponent::setupComplete(void) const
         if (value.toFloat() == 0.0f) {
             return false;
         }
-        
-        prgTriggers++;
     }
 
     return true;
@@ -100,32 +89,54 @@ QString SensorsComponent::setupStateDescription(void) const
     return QString(stateDescription);
 }
 
-const char** SensorsComponent::setupCompleteChangedTriggerList(void) const
+QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
 {
-    return _paramsV1 ? triggerParamsV1 : triggerParamsV2;
+    QStringList triggers;
+    
+    triggers << "CAL_MAG0_ID" << "CAL_GYRO0_ID" << "CAL_ACC0_ID";
+    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING) {
+        triggers << "SENS_DPRES_OFF";
+    }
+    
+    return triggers;
 }
 
 QStringList SensorsComponent::paramFilterList(void) const
 {
     QStringList list;
     
-    if (_paramsV1) {
-        list << "SENS_*";
-    } else {
-        list << "CAL_*";
-    }
+    list << "SENS_*" << "CAL_*";
     
     return list;
 }
 
 QWidget* SensorsComponent::setupWidget(void) const
 {
-    return new QGCPX4SensorCalibration;
+    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
+    Q_CHECK_PTR(holder);
+    
+    holder->setAutoPilot(_autopilot);
+    
+    SensorsComponentController* controller = new SensorsComponentController(_autopilot, holder);
+    holder->setContextPropertyObject("controller", controller);
+    
+    holder->setSource(QUrl::fromUserInput("qrc:/qml/SensorsComponent.qml"));
+    
+    return holder;
 }
 
 QUrl SensorsComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/SensorsComponentSummary.qml");
+    QString summaryQml;
+    
+    qDebug() << _uas->getSystemType();
+    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING) {
+        summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
+    } else {
+        summaryQml = "qrc:/qml/SensorsComponentSummary.qml";
+    }
+    
+    return QUrl::fromUserInput(summaryQml);
 }
 
 QString SensorsComponent::prerequisiteSetup(void) const

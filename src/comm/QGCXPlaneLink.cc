@@ -553,8 +553,12 @@ void QGCXPlaneLink::readBytes()
     quint16 senderPort;
 
     unsigned int s = socket->pendingDatagramSize();
-    if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
+    if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size: " << s << std::endl;
     socket->readDatagram(data, maxLength, &sender, &senderPort);
+    if (s > maxLength) {
+    	std::string headStr = std::string(data, data+5);
+    	std::cerr << __FILE__ << __LINE__ << " UDP datagram header: " << headStr << std::endl;
+    }
 
     // Calculate the number of data segments a 36 bytes
     // XPlane always has 5 bytes header: 'DATA@'

@@ -29,9 +29,6 @@
 #include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 
-/// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParams[] = { NULL };
-
 SafetyComponent::SafetyComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
     _name(tr("Safety"))
@@ -50,8 +47,7 @@ QString SafetyComponent::description(void) const
 
 QString SafetyComponent::iconResource(void) const
 {
-    // FIXME: Need real icon
-    return "setupButtonImage.png";
+    return "SafetyComponentIcon.png";
 }
 
 bool SafetyComponent::requiresSetup(void) const
@@ -77,9 +73,9 @@ QString SafetyComponent::setupStateDescription(void) const
     return QString(stateDescription);
 }
 
-const char** SafetyComponent::setupCompleteChangedTriggerList(void) const
+QStringList SafetyComponent::setupCompleteChangedTriggerList(void) const
 {
-    return triggerParams;
+    return QStringList();
 }
 
 QStringList SafetyComponent::paramFilterList(void) const
