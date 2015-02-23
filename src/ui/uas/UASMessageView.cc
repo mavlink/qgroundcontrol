@@ -24,7 +24,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMenu>
 #include <QScrollBar>
 
-#include "QGCToolBar.h"
+#include "MainToolBar.h"
 #include "UASMessageView.h"
 #include "QGCUnconnectedInfoWidget.h"
 #include "UASMessageHandler.h"
@@ -111,10 +111,9 @@ void UASMessageViewWidget::handleTextMessage(UASMessage *message)
   UASMessageViewRollDown
 -------------------------------------------------------------------------------------*/
 
-UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent, QGCToolBar *toolBar)
+UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent)
     : UASMessageView(parent)
 {
-    _toolBar = toolBar;
     setAttribute(Qt::WA_TranslucentBackground);
     setStyleSheet("background-color: rgba(0%,0%,0%,80%); border: 2px;");
     QPlainTextEdit *msgWidget = ui()->plainTextEdit;
@@ -154,9 +153,8 @@ void UASMessageViewRollDown::handleTextMessage(UASMessage *message)
     }
 }
 
-void UASMessageViewRollDown::leaveEvent(QEvent * event)
+void UASMessageViewRollDown::leaveEvent(QEvent*)
 {
-    Q_UNUSED(event);
-    _toolBar->leaveMessageView();
+    emit closeWindow();
     close();
 }

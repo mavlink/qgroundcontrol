@@ -15,11 +15,20 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QGCQuickWidget" name="qmlWidget" native="true"/>
+    <widget class="QGCQuickWidget" name="qmlWidget">
+     <property name="acceptDrops">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QQuickWidget</class>
+   <extends>QWidget</extends>
+   <header>QQuickWidget</header>
+  </customwidget>
   <customwidget>
    <class>QGCQuickWidget</class>
    <extends>QQuickWidget</extends>
