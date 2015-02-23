@@ -54,6 +54,15 @@
         <file>files/images/actions/system-shutdown.svg</file>
         <file>files/images/actions/system-log-out.svg</file>
         <file>files/images/actions/system-lock-screen.svg</file>
+        <file>files/images/status/gps.svg</file>
+        <file>files/images/status/battery_0.svg</file>
+        <file>files/images/status/battery_20.svg</file>
+        <file>files/images/status/battery_40.svg</file>
+        <file>files/images/status/battery_60.svg</file>
+        <file>files/images/status/battery_80.svg</file>
+        <file>files/images/status/battery_100.svg</file>
+        <file>files/images/status/message_megaphone.png</file>
+        <file>files/images/status/message_triangle.png</file>
         <file>files/images/status/weather-storm.svg</file>
         <file>files/images/status/weather-snow.svg</file>
         <file>files/images/status/weather-showers.svg</file>
@@ -235,9 +244,7 @@
     <qresource prefix="/QLoggingCategory">
         <file alias="qtlogging.ini">files/QLoggingCategory/qtlogging.ini</file>
     </qresource>
-
     <qresource prefix="/qml">
-
         <file alias="test.qml">src/test.qml</file>
         <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
 
@@ -298,8 +305,8 @@
         <file alias="QGroundControl/Controls/FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="QGroundControl/Controls/VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
 
+		<file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
     </qresource>
-
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>
