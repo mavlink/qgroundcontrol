@@ -57,7 +57,8 @@ public:
     LinkInterface() :
         QThread(0),
         _ownedByLinkManager(false),
-        _deletedByLinkManager(false)
+        _deletedByLinkManager(false),
+        _flaggedForDeletion(false)
     {
         // Initialize everything for the data rate calculation buffers.
         inDataIndex  = 0;
@@ -340,6 +341,7 @@ private:
 
     bool _ownedByLinkManager;   ///< true: This link has been added to LinkManager, false: Link not added to LinkManager
     bool _deletedByLinkManager; ///< true: Link being deleted from LinkManager, false: error, Links should only be deleted from LinkManager
+    bool _flaggedForDeletion;   ///< true: Garbage colletion ready
 };
 
 #endif // _LINKINTERFACE_H_
