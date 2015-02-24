@@ -37,6 +37,8 @@ Rectangle {
         }
 
 /*
+FIXME: Leaving this in here for now for possible text usage in ui that does better job of describing firmware version
+
                _ui->statusLog->setText(tr("WARNING: BETA FIRMWARE\n"
 -                                           "This firmware version is ONLY intended for beta testers. "
 -                                           "Although it has received FLIGHT TESTING, it represents actively changed code. Do NOT use for normal operation.\n\n"
@@ -51,6 +53,7 @@ Rectangle {
 -                                           "list actively when using it.\n\n"
 -                                           SELECT_FIRMWARE_LICENSE));
 */
+
         ExclusiveGroup { id: firmwareGroup }
 
         QGCRadioButton {
