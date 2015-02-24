@@ -68,6 +68,9 @@ public:
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
     
+    /// Progress bar for you know what
+    Q_PROPERTY(QQuickItem* progressBar READ progressBar WRITE setProgressBar)
+    
     /// Begins the firware upgrade process
     Q_INVOKABLE void doFirmwareUpgrade(void);
 
@@ -76,6 +79,9 @@ public:
     
     QQuickItem* upgradeButton(void) { return _upgradeButton; }
     void setUpgradeButton(QQuickItem* upgradeButton) { _upgradeButton = upgradeButton; }
+    
+    QQuickItem* progressBar(void) { return _progressBar; }
+    void setProgressBar(QQuickItem* progressBar) { _progressBar = progressBar; }
     
     QQuickItem* statusLog(void) { return _statusLog; }
     void setStatusLog(QQuickItem* statusLog) { _statusLog = statusLog; }
@@ -141,6 +147,7 @@ private:
     FirmwareType_t  _firmwareType;      ///< Firmware type to load
     QQuickItem*     _upgradeButton;     ///< Upgrade button in ui
     QQuickItem*     _statusLog;         ///< Status log TextArea Qml control
+    QQuickItem*     _progressBar;
     
     bool _searchingForBoard;    ///< true: searching for board, false: search for bootloader
 };
