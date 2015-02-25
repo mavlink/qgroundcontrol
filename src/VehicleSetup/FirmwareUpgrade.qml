@@ -14,6 +14,7 @@ Rectangle {
     property var qgcPal: QGCPalette { colorGroupEnabled: true }
     property FirmwareUpgradeController controller: FirmwareUpgradeController {
         upgradeButton: upgradeButton
+        progressBar: progressBar
         statusLog: statusTextArea
         firmwareType: FirmwareUpgradeController.StableFirmware
     }
@@ -34,6 +35,24 @@ Rectangle {
             height: 20
             width: 10
         }
+
+/*
+FIXME: Leaving this in here for now for possible text usage in ui that does better job of describing firmware version
+
+               _ui->statusLog->setText(tr("WARNING: BETA FIRMWARE\n"
+-                                           "This firmware version is ONLY intended for beta testers. "
+-                                           "Although it has received FLIGHT TESTING, it represents actively changed code. Do NOT use for normal operation.\n\n"
+-                                           SELECT_FIRMWARE_LICENSE));
+-                break;
+-                
+-            case 2:
+-                _ui->statusLog->setText(tr("WARNING: CONTINUOUS BUILD FIRMWARE\n"
+-                                           "This firmware has NOT BEEN FLIGHT TESTED. "
+-                                           "It is only intended for DEVELOPERS. Run bench tests without props first. "
+-                                           "Do NOT fly this without addional safety precautions. Follow the mailing "
+-                                           "list actively when using it.\n\n"
+-                                           SELECT_FIRMWARE_LICENSE));
+*/
 
         ExclusiveGroup { id: firmwareGroup }
 
@@ -88,6 +107,11 @@ Rectangle {
             // Just used as a spacer
             height: 20
             width: 10
+        }
+
+        ProgressBar {
+            id: progressBar
+            width: parent.width
         }
 
         TextArea {
