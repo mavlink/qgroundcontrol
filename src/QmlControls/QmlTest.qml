@@ -498,6 +498,23 @@ Rectangle {
                     enabled: false
                 }
 
+                // QGCComboBox
+                Loader {
+                    sourceComponent: ctlRowHeader
+                    property var text: "QGCComboBox"
+                }
+                QGCComboBox {
+                    width: 100
+                    height: 20
+                    model: [ "Item 1", "Item 2", "Item 3" ]
+                }
+                QGCComboBox {
+                    width: 100
+                    height: 20
+                    model: [ "Item 1", "Item 2", "Item 3" ]
+                    enabled: false
+                }
+
                 // SubMenuButton
                 Loader {
                     sourceComponent: ctlRowHeader

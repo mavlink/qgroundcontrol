@@ -253,6 +253,8 @@
         <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
         <file alias="QGroundControl/Controls/QGCLabel.qml">src/QmlControls/QGCLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCTextField.qml">src/QmlControls/QGCTextField.qml</file>
+        <file alias="QGroundControl/Controls/QGCComboBox.qml">src/QmlControls/QGCComboBox.qml</file>
+
         <file alias="QGroundControl/Controls/arrow-down.png">src/QmlControls/arrow-down.png</file>
 
         <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
