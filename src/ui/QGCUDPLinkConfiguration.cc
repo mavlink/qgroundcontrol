@@ -108,7 +108,7 @@ void QGCUDPLinkConfiguration::on_addHost_clicked()
     QString hostName = QInputDialog::getText(
         this, tr("Add a host target to MAVLink"),
         tr("Host (hostname:port):                                                     "),
-        QLineEdit::Normal, QString("localhost:%1").arg(QGC_UDP_PORT), &ok);
+        QLineEdit::Normal, QString("localhost:%1").arg(QGC_UDP_TARGET_PORT), &ok);
     if (ok && !hostName.isEmpty()) {
         _config->addHost(hostName);
         _reloadList();
