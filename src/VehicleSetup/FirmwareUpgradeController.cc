@@ -50,15 +50,6 @@ FirmwareUpgradeController::FirmwareUpgradeController(void) :
     _threadController = new PX4FirmwareUpgradeThreadController(this);
     Q_CHECK_PTR(_threadController);
 
-    /*
-     // FIXME: NYI
-    // Connect standard ui elements
-    connect(_ui->tryAgain, &QPushButton::clicked, this, &FirmwareUpgradeController::_tryAgainButton);
-    connect(_ui->cancel, &QPushButton::clicked, this, &FirmwareUpgradeController::_cancelButton);
-    connect(_ui->next, &QPushButton::clicked, this, &FirmwareUpgradeController::_nextButton);
-    connect(_ui->firmwareCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(_firmwareSelected(int)));
-     */
-    
     connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBoard, this, &FirmwareUpgradeController::_foundBoard);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBootloader, this, &FirmwareUpgradeController::_foundBootloader);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::bootloaderSyncFailed, this, &FirmwareUpgradeController::_bootloaderSyncFailed);
@@ -309,9 +300,7 @@ void FirmwareUpgradeController::_downloadProgress(qint64 curr, qint64 total)
 {
     // Take care of cases where 0 / 0 is emitted as error return value
     if (total > 0) {
-        // FIXME: NYI
-        Q_UNUSED(curr);
-        //_ui->progressBar->setValue((curr*100) / total);
+        _progressBar->setProperty("value", (float)curr / (float)total);
     }
 }
 
@@ -569,10 +558,10 @@ void FirmwareUpgradeController::_error(const int command, const QString errorStr
 /// @brief Updates the progress bar from long running bootloader commands
 void FirmwareUpgradeController::_updateProgress(int curr, int total)
 {
-    // FIXME: NYI
-    Q_UNUSED(curr);
-    Q_UNUSED(total);
-//    _ui->progressBar->setValue((curr*100) / total);
+    // Take care of cases where 0 / 0 is emitted as error return value
+    if (total > 0) {
+        _progressBar->setProperty("value", (float)curr / (float)total);
+    }
 }
 
 /// @brief Resets the state machine back to the beginning
@@ -586,8 +575,7 @@ void FirmwareUpgradeController::_restart(void)
 void FirmwareUpgradeController::_eraseProgressTick(void)
 {
     _eraseTickCount++;
-    // FIXME: NYI
-//    _ui->progressBar->setValue((_eraseTickCount*_eraseTickMsec*100) / _eraseTotalMsec);
+    _progressBar->setProperty("value", (float)(_eraseTickCount*_eraseTickMsec) / (float)_eraseTotalMsec);
 }
 
 void FirmwareUpgradeController::doFirmwareUpgrade(void)
