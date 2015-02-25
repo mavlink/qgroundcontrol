@@ -5,3 +5,4 @@ QGCButton 1.0 QGCButton.qml
 QGCRadioButton 1.0 QGCRadioButton.qml
 QGCCheckBox 1.0 QGCCheckBox.qml
 QGCTextField 1.0 QGCTextField.qml
+QGCComboBox 1.0 QGCComboBox.qml
