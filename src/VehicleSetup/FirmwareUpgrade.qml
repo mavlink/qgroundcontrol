@@ -36,70 +36,44 @@ Rectangle {
             width: 10
         }
 
-/*
-FIXME: Leaving this in here for now for possible text usage in ui that does better job of describing firmware version
+        Row {
+            spacing: 10
 
-               _ui->statusLog->setText(tr("WARNING: BETA FIRMWARE\n"
--                                           "This firmware version is ONLY intended for beta testers. "
--                                           "Although it has received FLIGHT TESTING, it represents actively changed code. Do NOT use for normal operation.\n\n"
--                                           SELECT_FIRMWARE_LICENSE));
--                break;
--                
--            case 2:
--                _ui->statusLog->setText(tr("WARNING: CONTINUOUS BUILD FIRMWARE\n"
--                                           "This firmware has NOT BEEN FLIGHT TESTED. "
--                                           "It is only intended for DEVELOPERS. Run bench tests without props first. "
--                                           "Do NOT fly this without addional safety precautions. Follow the mailing "
--                                           "list actively when using it.\n\n"
--                                           SELECT_FIRMWARE_LICENSE));
-*/
-
-        ExclusiveGroup { id: firmwareGroup }
-
-        QGCRadioButton {
-            id: stableFirwareRadio
-            exclusiveGroup: firmwareGroup
-            text: qsTr("Standard Version (stable)")
-            checked: true
-            enabled: upgradeButton.enabled
-            onClicked: {
-                if (checked)
-                    controller.firmwareType = FirmwareUpgradeController.StableFirmware
+            ListModel {
+                id: firmwareItems
+                ListElement {
+                    text: qsTr("Standard Version (stable)");
+                    firmwareType: FirmwareUpgradeController.StableFirmware
+                }
+                ListElement {
+                    text: qsTr("Beta Testing (beta)");
+                    firmwareType: FirmwareUpgradeController.BetaFirmware
+                }
+                ListElement {
+                    text: qsTr("Developer Build (master)");
+                    firmwareType: FirmwareUpgradeController.DeveloperFirmware
+                }
+                ListElement {
+                    text: qsTr("Custom firmware file...");
+                    firmwareType: FirmwareUpgradeController.CustomFirmware
+                }
             }
-        }
-        QGCRadioButton {
-            id: betaFirwareRadio
-            exclusiveGroup: firmwareGroup
-            text: qsTr("Beta Testing (beta)")
-            enabled: upgradeButton.enabled
-            onClicked: { if (checked) controller.firmwareType = FirmwareUpgradeController.BetaFirmware }
-        }
-        QGCRadioButton {
-            id: devloperFirwareRadio
-            exclusiveGroup: firmwareGroup
-            text: qsTr("Developer Build (master)")
-            enabled: upgradeButton.enabled
-            onClicked: { if (checked) controller.firmwareType = FirmwareUpgradeController.DeveloperFirmware }
-        }
-        QGCRadioButton {
-            id: customFirwareRadio
-            exclusiveGroup: firmwareGroup
-            text: qsTr("Custom firmware file...")
-            enabled: upgradeButton.enabled
-            onClicked: { if (checked) controller.firmwareType = FirmwareUpgradeController.CustomFirmware }
-        }
 
-        Item {
-            // Just used as a spacer
-            height: 20
-            width: 10
-        }
+            QGCComboBox {
+                id: firmwareCombo
+                width: 200
+                height: upgradeButton.height
+                model: firmwareItems
+            }
 
-        QGCButton {
-            id: upgradeButton
-            text: "UPGRADE"
-            onClicked: {
-                controller.doFirmwareUpgrade();
+            QGCButton {
+                id: upgradeButton
+                text: "UPGRADE"
+                primary: true
+                onClicked: {
+                    controller.firmwareType = firmwareItems.get(firmwareCombo.currentIndex).firmwareType
+                    controller.doFirmwareUpgrade();
+                }
             }
         }
 

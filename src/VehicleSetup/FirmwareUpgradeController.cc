@@ -580,6 +580,27 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
 
 void FirmwareUpgradeController::doFirmwareUpgrade(void)
 {
+    QString warningMsg;
+    
+    if (_firmwareType == BetaFirmware) {
+        warningMsg = tr("WARNING: BETA FIRMWARE\n"
+                        "This firmware version is ONLY intended for beta testers. "
+                        "Although it has received FLIGHT TESTING, it represents actively changed code. Do NOT use for normal operation.\n\n"
+                        "Are you sure you want to continue?");
+    } else if (_firmwareType == DeveloperFirmware) {
+        warningMsg = tr("WARNING: CONTINUOUS BUILD FIRMWARE\n"
+                        "This firmware has NOT BEEN FLIGHT TESTED. "
+                        "It is only intended for DEVELOPERS. Run bench tests without props first. "
+                        "Do NOT fly this without addional safety precautions. Follow the mailing "
+                        "list actively when using it.\n\n"
+                        "Are you sure you want to continue?");
+    }
+    if (!warningMsg.isEmpty()) {
+        if (QGCMessageBox::warning(tr("Firmware Upgrade"), warningMsg, QGCMessageBox::Yes | QGCMessageBox::No, QGCMessageBox::No) == QGCMessageBox::No) {
+            return;
+        }
+    }
+
     Q_ASSERT(_upgradeButton);
     _upgradeButton->setEnabled(false);
     
