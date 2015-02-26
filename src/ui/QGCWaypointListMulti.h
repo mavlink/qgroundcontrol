@@ -20,18 +20,20 @@ public:
     explicit QGCWaypointListMulti(QWidget *parent = 0);
     ~QGCWaypointListMulti();
 
-public slots:
-    void systemDeleted(QObject* uas);
-    void systemCreated(UASInterface* uas);
-    void systemSetActive(UASInterface* uas);
-
 protected:
-    quint16 offline_uas_id;
-    void changeEvent(QEvent *e);
-    QMap<int, WaypointList*> lists;
+    // Override from Widget
+    virtual void changeEvent(QEvent *e);
+    
+private slots:
+    void _systemDeleted(QObject* uas);
+    void _systemCreated(UASInterface* uas);
+    void _systemSetActive(UASInterface* uas);
 
 private:
-    Ui::QGCWaypointListMulti *ui;
+    
+    static void*                _offlineUAS;
+    QMap<void*, WaypointList*>  _lists;
+    Ui::QGCWaypointListMulti*   _ui;
 };
 
 #endif // QGCWAYPOINTLISTMULTI_H

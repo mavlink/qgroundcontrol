@@ -483,10 +483,14 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
     menu.addAction(selectAction);
     menu.addSeparator();
     menu.addAction(renameAction);
+/*
+    FIXME: The code below is incorrect. removeAction should only be available when link is
+            disconnected. fSee Issue #1275
     if (timeout)
     {
         menu.addAction(removeAction);
     }
+*/
     menu.addAction(hilAction);
     menu.addAction(selectAirframeAction);
     menu.addAction(setBatterySpecsAction);
