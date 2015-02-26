@@ -65,19 +65,14 @@ Button {
 
                 color: __qgcPal.windowShade
 
-                Image {
-                    id: buttonImage
+                QGCColoredImage {
                     source: control.imageResource
-                    sourceSize: Qt.size(parent.width - 20, parent.height - 20)
+                    fillMode: Image.PreserveAspectFit
+                    width: parent.width - 20
+                    height: parent.height - 20
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     smooth: true
-                    visible: false
-                }
-
-                ColorOverlay {
-                    anchors.fill: buttonImage
-                    source: buttonImage
                     color: __showHighlight ? __qgcPal.buttonHighlight : __qgcPal.button
                 }
             }
