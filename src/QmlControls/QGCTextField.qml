@@ -8,7 +8,7 @@ TextField {
     property bool showUnits: false
     property string unitsLabel: ""
 
-    property var __qgcPal: QGCPalette { colorGroupEnabled: true }
+    property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     textColor: __qgcPal.textFieldText
 
