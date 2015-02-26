@@ -6,7 +6,7 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.Controls 1.0
 
 /*
-    IMPORTANT NOTE: Any changes made here must also be made to SensorsComponentSummaryFixedWing.qml
+    IMPORTANT NOTE: Any changes made here must also be made to SensorsComponentSummary.qml
 */
 
 Column {
@@ -46,6 +46,17 @@ Column {
             width: parent.width - accel.contentWidth;
             property bool setupRequiredValue: autopilot.parameters["SENS_ACC_XOFF"] ? autopilot.parameters["SENS_ACC_XOFF"].value : autopilot.parameters["CAL_ACC0_ID"].value
             text: setupRequiredValue  == 0 ? "Setup required" : "Ready"
+        }
+    }
+
+    Row {
+        width: parent.width
+
+        QGCLabel { id: airspeed; text: "Airspeed:" }
+        QGCLabel {
+            horizontalAlignment: Text.AlignRight;
+            width: parent.width - airspeed.contentWidth;
+            text: autopilot.parameters["SENS_DPRES_OFF"].value == 0.0 ? "Setup required" : "Ready"
         }
     }
 }

@@ -31,8 +31,10 @@
 // These two list must be kept in sync
 
 /// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParamsV1[] = {  "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", "SENS_DPRES_OFF", NULL };
-static const char* triggerParamsV2[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", "SENS_DPRES_OFF", NULL };
+static const char* triggerParamsV1[] = {  "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", NULL };
+static const char* triggerParamsV2[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", NULL };
+static const char* triggerParamsV1FixedWing[] = {  "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", "SENS_DPRES_OFF", NULL };
+static const char* triggerParamsV2FixedWing[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", "SENS_DPRES_OFF", NULL };
 
 SensorsComponent::SensorsComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
@@ -102,7 +104,11 @@ QString SensorsComponent::setupStateDescription(void) const
 
 const char** SensorsComponent::setupCompleteChangedTriggerList(void) const
 {
-    return _paramsV1 ? triggerParamsV1 : triggerParamsV2;
+    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING) {
+        return _paramsV1 ? triggerParamsV1FixedWing : triggerParamsV2FixedWing;
+    } else {
+        return _paramsV1 ? triggerParamsV1 : triggerParamsV2;
+    }
 }
 
 QStringList SensorsComponent::paramFilterList(void) const
@@ -125,7 +131,16 @@ QWidget* SensorsComponent::setupWidget(void) const
 
 QUrl SensorsComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/SensorsComponentSummary.qml");
+    QString summaryQml;
+    
+    qDebug() << _uas->getSystemType();
+    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING) {
+        summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
+    } else {
+        summaryQml = "qrc:/qml/SensorsComponentSummary.qml";
+    }
+    
+    return QUrl::fromUserInput(summaryQml);
 }
 
 QString SensorsComponent::prerequisiteSetup(void) const

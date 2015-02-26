@@ -268,6 +268,7 @@
 
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
         <file alias="SensorsComponentSummary.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
+        <file alias="SensorsComponentSummaryFixedWing.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml</file>
         <file alias="RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/RadioComponentSummary.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
