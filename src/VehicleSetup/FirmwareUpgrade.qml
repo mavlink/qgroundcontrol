@@ -24,9 +24,8 @@ Rectangle {
     Column {
         anchors.fill:parent
 
-        Text {
+        QGCLabel {
             text: "FIRMWARE UPDATE"
-            color: qgcPal.text
             font.pointSize: 20
         }
 
