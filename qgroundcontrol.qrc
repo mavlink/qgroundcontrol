@@ -254,6 +254,7 @@
         <file alias="QGroundControl/Controls/QGCLabel.qml">src/QmlControls/QGCLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCTextField.qml">src/QmlControls/QGCTextField.qml</file>
         <file alias="QGroundControl/Controls/QGCComboBox.qml">src/QmlControls/QGCComboBox.qml</file>
+        <file alias="QGroundControl/Controls/QGCColoredImage.qml">src/QmlControls/QGCColoredImage.qml</file>
 
         <file alias="QGroundControl/Controls/arrow-down.png">src/QmlControls/arrow-down.png</file>
 
@@ -273,11 +274,17 @@
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
 
+        <file alias="SafetyComponentTree.png">src/AutoPilotPlugins/PX4/SafetyComponentTree.png</file>
+        <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/SafetyComponentHome.png</file>
+        <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/SafetyComponentArrowDown.png</file>
+        <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/SafetyComponentPlane.png</file>
+
         <file alias="QGroundControl/Controls/subMenuButtonImage.png">files/Setup/cogwheels.png</file>
         <file alias="QGroundControl/Controls/SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/SensorsComponentIcon.png</file>
         <file alias="QGroundControl/Controls/RadioComponentIcon.png">src/AutoPilotPlugins/PX4/RadioComponentIcon.png</file>
         <file alias="QGroundControl/Controls/FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/FlightModesComponentIcon.png</file>
         <file alias="QGroundControl/Controls/AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/AirframeComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/SafetyComponentIcon.png">src/AutoPilotPlugins/PX4/SafetyComponentIcon.png</file>
         <file alias="QGroundControl/Controls/FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="QGroundControl/Controls/VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
 
