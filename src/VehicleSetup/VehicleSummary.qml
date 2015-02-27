@@ -4,6 +4,7 @@ import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.FactSystem 1.0
 import QGroundControl.Palette 1.0
+import QGroundControl.Controls 1.0
 
 Rectangle {
     width: 600
@@ -16,74 +17,80 @@ Rectangle {
 
     color: qgcPal.window
 
-    Flow {
+    Column {
         anchors.fill: parent
-        spacing: 10
 
-        Repeater {
-            model: autopilot.components
+        QGCLabel {
+            text: "VEHICLE SUMMARY"
+            font.pointSize: 20
+        }
 
-            Button {
-                width: 250
-                height: 200
+        Item {
+            // Just used as a spacer
+            height: 20
+            width: 10
+        }
 
-                property var summaryQmlSource: modelData.summaryQmlSource
-                text: modelData.name
-                property bool setupComplete: modelData.setupComplete
+        Flow {
+            width: parent.width
+            spacing: 10
 
-                style: ButtonStyle {
-                    id: buttonStyle
-                    background: Rectangle {
-                        id: innerRect
-                        readonly property real titleHeight: 30
+            Repeater {
+                model: autopilot.components
 
+                // Outer summary item rectangle
+                Rectangle {
+                    readonly property real titleHeight: 30
+
+                    width:  250
+                    height: 200
+                    color:  qgcPal.windowShade
+
+                    // Title bar
+                    Rectangle {
+
+                        width: parent.width
+                        height: titleHeight
                         color: qgcPal.windowShadeDark
 
+                        // Title text
                         Text {
-                            id: titleBar
+                            anchors.fill:   parent
 
-                            width: parent.width
-                            height: parent.titleHeight
-
-                            verticalAlignment: TextEdit.AlignVCenter
-                            horizontalAlignment: TextEdit.AlignHCenter
-
-                            text: control.text.toUpperCase()
-                            color: qgcPal.buttonText
+                            color:          qgcPal.buttonText
                             font.pixelSize: 12
+                            text:           modelData.name.toUpperCase()
 
-                            Rectangle {
-                                id: setupIndicator
-
-                                property bool setupComplete: true
-                                readonly property real indicatorRadius: 6
-
-                                x: parent.width - (indicatorRadius * 2) - 5
-                                y: (parent.height - (indicatorRadius * 2)) / 2
-                                width: indicatorRadius * 2
-                                height: indicatorRadius * 2
-
-                                radius: indicatorRadius
-                                color: control.setupComplete ? "#00d932" : "red"
-                            }
-                        }
-
-                        Rectangle {
-                            width: parent.width
-                            height: parent.height - parent.titleHeight
-
-                            y: parent.titleHeight
-
-                            color: qgcPal.windowShade
-
-                            Loader {
-                                anchors.fill: parent
-                                source: summaryQmlSource
-                            }
+                            verticalAlignment:      TextEdit.AlignVCenter
+                            horizontalAlignment:    TextEdit.AlignHCenter
                         }
                     }
 
-                label: Item {}
+                    // Setup indicator
+                    Rectangle {
+                        readonly property real indicatorRadius: 6
+                        readonly property real indicatorRightInset: 5
+
+                        x:      parent.width - (indicatorRadius * 2) - indicatorRightInset
+                        y:      (parent.titleHeight - (indicatorRadius * 2)) / 2
+                        width:  indicatorRadius * 2
+                        height: indicatorRadius * 2
+                        radius: indicatorRadius
+                        color:  modelData.setupComplete ? "#00d932" : "red"
+                    }
+
+                    // Summary Qml
+                    Rectangle {
+                        y:      parent.titleHeight
+                        width:  parent.width
+                        height: parent.height - parent.titleHeight
+                        color:  qgcPal.windowShade
+
+                        Loader {
+                            anchors.fill: parent
+                            source: modelData.summaryQmlSource
+                        }
+                    }
                 }
             }
         }
