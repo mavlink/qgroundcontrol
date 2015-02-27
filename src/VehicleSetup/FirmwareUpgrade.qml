@@ -93,6 +93,7 @@ Rectangle {
             height: 300
             readOnly: true
             frameVisible: false
+            text: qsTr("Please disconnect all connections and unplug board from USB before selecting Upgrade.")
             style: TextAreaStyle {
                 textColor: qgcPal.text
                 backgroundColor: qgcPal.windowShade

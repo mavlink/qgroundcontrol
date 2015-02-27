@@ -84,7 +84,8 @@ void FirmwareUpgradeController::_foundBoard(bool firstTry, const QString portNam
 {
     if (firstTry) {
         // Board is still plugged
-        _appendStatusLog(tr("You must unplug your board before beginning the Firmware Upgrade process."));
+        _appendStatusLog(tr("Please unplug your board before beginning the Firmware Upgrade process."));
+        _appendStatusLog(tr("Click Upgrade again once the board is unplugged."));
         _cancel();
     } else {
         _portName = portName;
