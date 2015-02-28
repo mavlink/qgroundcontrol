@@ -2414,6 +2414,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
 
     parameters.value(compId)->insert(paramName, paramValue);
     emit parameterChanged(uasId, compId, paramName, paramValue);
+    emit parameterUpdate(uasId, compId, paramName, rawValue.param_type, paramValue);
     emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, paramValue);
 }
 
