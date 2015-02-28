@@ -30,6 +30,15 @@ Rectangle {
                 exclusiveGroup: setupButtonGroup
                 onClicked: controller.firmwareButtonClicked()
             }
+
+            Item { width: parent.width; height: 10 }    // spacer
+
+            QGCLabel {
+                width: parent.width
+                text: "You must be connected to your board to use all available setup options."
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignHCenter
+            }
         }
     }
 
