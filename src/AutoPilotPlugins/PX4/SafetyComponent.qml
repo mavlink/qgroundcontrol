@@ -69,6 +69,7 @@ Rectangle {
                 Row {
                     spacing: 10
                     FactCheckBox {
+                        id: telemetryTimeoutCheckbox
                         fact: autopilot.parameters["COM_DL_LOSS_EN"]
                         checkedValue: 1
                         uncheckedValue: 0
@@ -81,6 +82,7 @@ Rectangle {
                         id: telemetryLossField
                         fact: autopilot.parameters["COM_DL_LOSS_T"];
                         showUnits: true
+                        enabled: telemetryTimeoutCheckbox.checked
                     }
                 }
 
