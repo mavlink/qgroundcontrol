@@ -51,9 +51,8 @@ FactLoader::FactLoader(UASInterface* uas, QObject* parent) :
     // We need to know when the param mgr is done sending the initial set of paramters
     connect(_paramMgr, SIGNAL(parameterListUpToDate()), this, SLOT(_paramMgrParameterListUpToDate()));
     
-    // We track parameters changes to keep Facts up to date. UASInterface::parameterChanged has multiple overrides so we need to
-    // use SIGNAL/SLOT style connect
-    connect(uas, SIGNAL(parameterChanged(int, int, QString, QVariant)), this, SLOT(_parameterChanged(int, int, QString, QVariant)));
+    // We track parameters changes to keep Facts up to date.
+    connect(uas, &UASInterface::parameterUpdate, this, &FactLoader::_parameterUpdate);
 }
 
 FactLoader::~FactLoader()
@@ -65,10 +64,8 @@ FactLoader::~FactLoader()
     _mapFact2ParameterName.clear();
 }
 
-/// Connected to QGCUASParmManager::parameterChanged
-///
-/// When a new parameter is seen it is added to the system. If the parameter is already known it is updated.
-void FactLoader::_parameterChanged(int uas, int component, QString parameterName, QVariant value)
+/// Called whenever a parameter is updated or first seen.
+void FactLoader::_parameterUpdate(int uas, int component, QString parameterName, int mavType, QVariant value)
 {
     // Is this for our uas?
     if (uas != _uasId) {
@@ -86,7 +83,39 @@ void FactLoader::_parameterChanged(int uas, int component, QString parameterName
     if (!_mapParameterName2Variant.contains(parameterName)) {
         qCDebug(FactLoaderLog) << "Adding new fact" << parameterName;
         
-        Fact* fact = new Fact(parameterName, this);
+        FactMetaData::ValueType_t factType;
+        switch (mavType) {
+            case MAV_PARAM_TYPE_UINT8:
+                factType = FactMetaData::valueTypeUint8;
+                break;
+            case MAV_PARAM_TYPE_INT8:
+                factType = FactMetaData::valueTypeUint8;
+                break;
+            case MAV_PARAM_TYPE_UINT16:
+                factType = FactMetaData::valueTypeUint16;
+                break;
+            case MAV_PARAM_TYPE_INT16:
+                factType = FactMetaData::valueTypeInt16;
+                break;
+            case MAV_PARAM_TYPE_UINT32:
+                factType = FactMetaData::valueTypeUint32;
+                break;
+            case MAV_PARAM_TYPE_INT32:
+                factType = FactMetaData::valueTypeInt32;
+                break;
+            case MAV_PARAM_TYPE_REAL32:
+                factType = FactMetaData::valueTypeFloat;
+                break;
+            case MAV_PARAM_TYPE_REAL64:
+                factType = FactMetaData::valueTypeDouble;
+                break;
+            default:
+                factType = FactMetaData::valueTypeInt32;
+                qCritical() << "Unsupported fact type" << mavType;
+                break;
+        }
+        
+        Fact* fact = new Fact(parameterName, factType, this);
         setMetaData = true;
         
         _mapParameterName2Variant[parameterName] = QVariant::fromValue(fact);
@@ -169,39 +198,6 @@ void FactLoader::_paramMgrParameterListUpToDate(void)
 
 void FactLoader::_addMetaDataToFact(Fact* fact)
 {
-    // Create generic meta data based on value variant type
-    
-    FactMetaData::ValueType_t factType = FactMetaData::valueTypeInt32;  // init to in32 to silence compiler warning
-    
-    switch ((QMetaType::Type)fact->value().type()) {
-        case QMetaType::Int:
-            factType = FactMetaData::valueTypeInt32;
-            break;
-            
-        case QMetaType::UInt:
-            factType = FactMetaData::valueTypeUint32;
-            break;
-            
-        case QMetaType::Double:
-            factType = FactMetaData::valueTypeDouble;
-            
-        case QMetaType::Short:
-            factType = FactMetaData::valueTypeInt16;
-            break;
-            
-        case QMetaType::UShort:
-            factType = FactMetaData::valueTypeUint16;
-            break;
-            
-        case QMetaType::Float:
-            factType = FactMetaData::valueTypeFloat;
-            break;
-            
-        default:
-            qWarning() << fact->name() << "Invalid variant type" << fact->value().type();
-            break;
-    }
-    
     FactMetaData* metaData = new FactMetaData(this);
-    metaData->initFromTypeOnly(factType);
+    metaData->initFromTypeOnly(fact->type());
 }
