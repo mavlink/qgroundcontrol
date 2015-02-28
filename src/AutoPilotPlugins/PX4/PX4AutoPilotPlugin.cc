@@ -26,6 +26,8 @@
 #include "UASManager.h"
 #include "QGCUASParamManagerInterface.h"
 #include "PX4ParameterFacts.h"
+#include "SensorsComponentController.h"
+#include "QGCMessageBox.h"
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
@@ -61,21 +63,21 @@ union px4_custom_mode {
 };
 
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
-    AutoPilotPlugin(parent),
-    _uas(uas),
+    AutoPilotPlugin(uas, parent),
     _parameterFacts(NULL),
     _airframeComponent(NULL),
     _radioComponent(NULL),
     _flightModesComponent(NULL),
     _sensorsComponent(NULL),
-    _safetyComponent(NULL)
+    _safetyComponent(NULL),
+    _incorrectParameterVersion(false)
 {
     Q_ASSERT(uas);
     
     _parameterFacts = new PX4ParameterFacts(uas, this);
     Q_CHECK_PTR(_parameterFacts);
     
-    connect(_parameterFacts, &PX4ParameterFacts::factsReady, this, &PX4AutoPilotPlugin::pluginReady);
+    connect(_parameterFacts, &PX4ParameterFacts::factsReady, this, &PX4AutoPilotPlugin::_checkForIncorrectParameterVersion);
     
     PX4ParameterFacts::loadParameterFactMetaData();
 }
@@ -191,7 +193,7 @@ bool PX4AutoPilotPlugin::pluginIsReady(void) const
 
 const QVariantList& PX4AutoPilotPlugin::components(void)
 {
-    if (_components.count() == 0) {
+    if (_components.count() == 0 && !_incorrectParameterVersion) {
         Q_ASSERT(_uas);
         
         _airframeComponent = new AirframeComponent(_uas, this);
@@ -226,4 +228,14 @@ const QVariantMap& PX4AutoPilotPlugin::parameters(void)
 QUrl PX4AutoPilotPlugin::setupBackgroundImage(void)
 {
     return QUrl::fromUserInput("qrc:/qml/px4fmu_2.x.png");
+}
+
+void PX4AutoPilotPlugin::_checkForIncorrectParameterVersion(void)
+{
+    if (parameters().contains("SENS_GYRO_XOFF")) {
+        _incorrectParameterVersion = true;
+        QGCMessageBox::warning(tr("Setup"), tr("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
+                                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup."));
+    }
+    emit pluginReady();
 }
