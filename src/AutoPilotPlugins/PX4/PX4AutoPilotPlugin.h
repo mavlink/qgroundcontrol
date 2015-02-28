@@ -65,8 +65,10 @@ public:
     SensorsComponent* sensorsComponent(void) { return _sensorsComponent; }
     SafetyComponent* safetyComponent(void) { return _safetyComponent; }
     
+private slots:
+    void _checkForIncorrectParameterVersion(void);
+    
 private:
-    UASInterface*           _uas;
     PX4ParameterFacts*      _parameterFacts;
     QVariantList            _components;
     AirframeComponent*      _airframeComponent;
@@ -74,6 +76,7 @@ private:
     FlightModesComponent*   _flightModesComponent;
     SensorsComponent*       _sensorsComponent;
     SafetyComponent*        _safetyComponent;
+    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
 };
 
 #endif

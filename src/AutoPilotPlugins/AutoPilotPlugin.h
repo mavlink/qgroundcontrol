@@ -48,10 +48,21 @@ class AutoPilotPlugin : public QObject
     Q_OBJECT
 
 public:
+    AutoPilotPlugin(UASInterface* uas, QObject* parent);
+    
     Q_PROPERTY(QVariantMap parameters READ parameters CONSTANT)
     Q_PROPERTY(QVariantList components READ components CONSTANT)
     Q_PROPERTY(QUrl setupBackgroundImage READ setupBackgroundImage CONSTANT)
     
+    /// Re-request the full set of parameters from the autopilot
+    Q_INVOKABLE void refreshAllParameters(void);
+    
+    /// Request a refresh on the specific parameter
+    Q_INVOKABLE void refreshParameter(const QString& param);
+    
+    // Request a refresh on all parameters that begin with the specified prefix
+    Q_INVOKABLE void refreshParametersPrefix(const QString& paramPrefix);
+
     // Property accessors
     virtual const QVariantList& components(void) = 0;
     virtual const QVariantMap& parameters(void) = 0;    
@@ -63,6 +74,8 @@ public:
     /// FIXME: Kind of hacky
     static void clearStaticData(void);
     
+    UASInterface* uas(void) { return _uas; }
+    
 signals:
     /// Signalled when plugin is ready for use
     void pluginReady(void);
@@ -71,6 +84,7 @@ protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
     AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
     
+    UASInterface* _uas;
 };
 
 #endif

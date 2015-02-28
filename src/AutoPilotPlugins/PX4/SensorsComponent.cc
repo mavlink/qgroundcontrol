@@ -25,25 +25,21 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SensorsComponent.h"
-#include "QGCPX4SensorCalibration.h"
 #include "PX4AutoPilotPlugin.h"
+#include "QGCQmlWidgetHolder.h"
+#include "SensorsComponentController.h"
 
 // These two list must be kept in sync
 
 /// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParamsV1[] = {  "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", NULL };
-static const char* triggerParamsV2[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", NULL };
-static const char* triggerParamsV1FixedWing[] = {  "SENS_MAG_XOFF", "SENS_GYRO_XOFF", "SENS_ACC_XOFF", "SENS_DPRES_OFF", NULL };
-static const char* triggerParamsV2FixedWing[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", "SENS_DPRES_OFF", NULL };
+static const char* triggerParams[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", NULL };
+static const char* triggerParamsFixedWing[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", "SENS_DPRES_OFF", NULL };
 
 SensorsComponent::SensorsComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
     _name(tr("Sensors"))
 {
-    // Determine what set of parameters are available. This is a temporary hack for now. Will need real parameter
-    // mapping in the future.
-    QVariant value;
-    _paramsV1 = _paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "SENS_MAG_XOFF", value);
+
 }
 
 QString SensorsComponent::name(void) const
@@ -104,29 +100,31 @@ QString SensorsComponent::setupStateDescription(void) const
 
 const char** SensorsComponent::setupCompleteChangedTriggerList(void) const
 {
-    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING) {
-        return _paramsV1 ? triggerParamsV1FixedWing : triggerParamsV2FixedWing;
-    } else {
-        return _paramsV1 ? triggerParamsV1 : triggerParamsV2;
-    }
+    return _uas->getSystemType() == MAV_TYPE_FIXED_WING ? triggerParamsFixedWing : triggerParams;
 }
 
 QStringList SensorsComponent::paramFilterList(void) const
 {
     QStringList list;
     
-    if (_paramsV1) {
-        list << "SENS_*";
-    } else {
-        list << "CAL_*";
-    }
+    list << "SENS_*" << "CAL_*";
     
     return list;
 }
 
 QWidget* SensorsComponent::setupWidget(void) const
 {
-    return new QGCPX4SensorCalibration;
+    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
+    Q_CHECK_PTR(holder);
+    
+    holder->setAutoPilot(_autopilot);
+    
+    SensorsComponentController* controller = new SensorsComponentController(_autopilot, holder);
+    holder->setContextPropertyObject("controller", controller);
+    
+    holder->setSource(QUrl::fromUserInput("qrc:/qml/SensorsComponent.qml"));
+    
+    return holder;
 }
 
 QUrl SensorsComponent::summaryQmlSource(void) const
