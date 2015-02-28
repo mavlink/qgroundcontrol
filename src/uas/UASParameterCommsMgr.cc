@@ -285,6 +285,7 @@ void UASParameterCommsMgr::requestParameterUpdate(int compId, const QString& par
 {
     if (mav) {
         mav->requestParameter(compId, paramName);
+        qCDebug(UASParameterCommsMgrLog) << "Requested update for" << compId << paramName;
         //TODO track these read requests with a paramName but no param ID  : use index in getOnboardParamsForComponent?
         //ensure we keep track of every single read request
     }
