@@ -28,12 +28,13 @@
 
 #include <QtQml>
 
-Fact::Fact(QString name, QObject* parent) :
+Fact::Fact(QString name, FactMetaData::ValueType_t type, QObject* parent) :
     QObject(parent),
     _name(name),
+    _type(type),
     _metaData(NULL)
 {
-    _value = "";
+    _value = 0;
 }
 
 void Fact::setValue(const QVariant& value)
@@ -72,8 +73,7 @@ QVariant Fact::defaultValue(void)
 
 FactMetaData::ValueType_t Fact::type(void)
 {
-    Q_ASSERT(_metaData);
-    return _metaData->type;
+    return _type;
 }
 
 QString Fact::shortDescription(void)

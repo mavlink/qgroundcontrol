@@ -37,6 +37,4 @@ FactMetaData::FactMetaData(QObject* parent) :
 void FactMetaData::initFromTypeOnly(ValueType_t initType)
 {
     type = initType;
-    
-    // FIXME: NYI
 }
