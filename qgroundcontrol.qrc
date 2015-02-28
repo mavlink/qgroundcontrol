@@ -245,9 +245,11 @@
         <file alias="QGroundControl/FactControls/FactLabel.qml">src/FactSystem/FactControls/FactLabel.qml</file>
         <file alias="QGroundControl/FactControls/FactTextField.qml">src/FactSystem/FactControls/FactTextField.qml</file>
         <file alias="QGroundControl/FactControls/FactCheckBox.qml">src/FactSystem/FactControls/FactCheckBox.qml</file>
+        <file alias="QGroundControl/FactControls/FactComboBox.qml">src/FactSystem/FactControls/FactComboBox.qml</file>
 
         <file alias="QGroundControl/Controls/qmldir">src/QmlControls/qmldir</file>
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
+        <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/QGCButton.qml">src/QmlControls/QGCButton.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
         <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
@@ -266,6 +268,7 @@
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
 
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
+        <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
 
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
         <file alias="SensorsComponentSummary.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
