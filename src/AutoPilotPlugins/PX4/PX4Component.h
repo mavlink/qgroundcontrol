@@ -26,6 +26,8 @@
 
 #include "VehicleComponent.h"
 
+#include <QStringList>
+
 /// @file
 ///     @brief This class is used as an abstract base class for all PX4 VehicleComponent objects.
 ///     @author Don Gagne <don@thegagnes.com>
@@ -37,9 +39,9 @@ class PX4Component : public VehicleComponent
 public:
     PX4Component(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
-    /// @brief Returns an array of parameter names for which a change should cause the setupCompleteChanged
-    ///         signal to be emitted. Last element is signalled by NULL. Must be implemented by upper level class.
-    virtual const char** setupCompleteChangedTriggerList(void) const = 0;
+    /// @brief Returns an list of parameter names for which a change should cause the setupCompleteChanged
+    ///         signal to be emitted. Last element is signalled by NULL.
+    virtual QStringList setupCompleteChangedTriggerList(void) const = 0;
     
 private slots:
     /// @brief Connected to QGCUASParamManagerInterface::parameterUpdated signal in order to signal
