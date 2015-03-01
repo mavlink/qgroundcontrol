@@ -31,10 +31,6 @@
 
 // These two list must be kept in sync
 
-/// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParams[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", NULL };
-static const char* triggerParamsFixedWing[] = {  "CAL_MAG0_ID", "CAL_GYRO0_ID", "CAL_ACC0_ID", "SENS_DPRES_OFF", NULL };
-
 SensorsComponent::SensorsComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
     _name(tr("Sensors"))
@@ -65,13 +61,10 @@ bool SensorsComponent::requiresSetup(void) const
 
 bool SensorsComponent::setupComplete(void) const
 {
-    const char** prgTriggers = setupCompleteChangedTriggerList();
-    Q_ASSERT(prgTriggers);
-    
-    while (*prgTriggers != NULL) {
+    foreach(QString triggerParam, setupCompleteChangedTriggerList()) {
         QVariant value;
         
-        if (!_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), *prgTriggers, value)) {
+        if (!_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParam, value)) {
             Q_ASSERT(false);
             return false;
         }
@@ -79,8 +72,6 @@ bool SensorsComponent::setupComplete(void) const
         if (value.toFloat() == 0.0f) {
             return false;
         }
-        
-        prgTriggers++;
     }
 
     return true;
@@ -98,9 +89,16 @@ QString SensorsComponent::setupStateDescription(void) const
     return QString(stateDescription);
 }
 
-const char** SensorsComponent::setupCompleteChangedTriggerList(void) const
+QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
 {
-    return _uas->getSystemType() == MAV_TYPE_FIXED_WING ? triggerParamsFixedWing : triggerParams;
+    QStringList triggers;
+    
+    triggers << "CAL_MAG0_ID" << "CAL_GYRO0_ID" << "CAL_ACC0_ID";
+    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING) {
+        triggers << "SENS_DPRES_OFF";
+    }
+    
+    return triggers;
 }
 
 QStringList SensorsComponent::paramFilterList(void) const
