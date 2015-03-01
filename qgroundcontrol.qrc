@@ -250,6 +250,7 @@
         <file alias="QGroundControl/Controls/qmldir">src/QmlControls/qmldir</file>
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
+        <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/Controls/QGCButton.qml">src/QmlControls/QGCButton.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
         <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
@@ -277,17 +278,23 @@
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
 
-        <file alias="SafetyComponentTree.png">src/AutoPilotPlugins/PX4/SafetyComponentTree.png</file>
-        <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/SafetyComponentHome.png</file>
-        <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/SafetyComponentArrowDown.png</file>
-        <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/SafetyComponentPlane.png</file>
+        <file alias="SafetyComponentTree.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.png</file>
+        <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentHome.png</file>
+        <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentArrowDown.png</file>
+        <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentPlane.png</file>
+        <file alias="VehicleDown.png">src/AutoPilotPlugins/PX4/Images/VehicleDown.png</file>
+        <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
+        <file alias="VehicleLeft.png">src/AutoPilotPlugins/PX4/Images/VehicleLeft.png</file>
+        <file alias="VehicleRight.png">src/AutoPilotPlugins/PX4/Images/VehicleRight.png</file>
+        <file alias="VehicleNoseDown.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDown.png</file>
+        <file alias="VehicleTailDown.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
 
         <file alias="QGroundControl/Controls/subMenuButtonImage.png">files/Setup/cogwheels.png</file>
-        <file alias="QGroundControl/Controls/SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/SensorsComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/RadioComponentIcon.png">src/AutoPilotPlugins/PX4/RadioComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/FlightModesComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/AirframeComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/SafetyComponentIcon.png">src/AutoPilotPlugins/PX4/SafetyComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SensorsComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/RadioComponentIcon.png">src/AutoPilotPlugins/PX4/Images/RadioComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/Images/AirframeComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/SafetyComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentIcon.png</file>
         <file alias="QGroundControl/Controls/FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="QGroundControl/Controls/VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
 

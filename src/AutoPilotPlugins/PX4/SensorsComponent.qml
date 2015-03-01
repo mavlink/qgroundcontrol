@@ -53,7 +53,10 @@ Rectangle {
     }
     Loader {
         sourceComponent: loadSignal
-        onLoaded: controller.statusLog = statusTextArea
+        onLoaded: {
+            controller.statusLog = statusTextArea
+            controller.progressBar = progressBar
+        }
     }
 
     Column {
@@ -66,23 +69,167 @@ Rectangle {
 
         Item { height: 20; width: 10 } // spacer
 
+        Row {
+            readonly property int buttonWidth: 120
+
+            spacing: 20
+
+            QGCLabel { text: "Calibrate:"; anchors.baseline: firstButton.baseline }
+
+            IndicatorButton {
+                id:             firstButton
+                width:          parent.buttonWidth
+                text:           "Compass"
+                indicatorGreen: autopilot.parameters["CAL_MAG0_ID"].value != 0
+                onClicked: controller.calibrateCompass()
+            }
+
+            IndicatorButton {
+                width:          parent.buttonWidth
+                text:           "Gyroscope"
+                indicatorGreen: autopilot.parameters["CAL_GYRO0_ID"].value != 0
+                onClicked: controller.calibrateGyro()
+            }
+
+            IndicatorButton {
+                width:          parent.buttonWidth
+                text:           "Acceleromter"
+                indicatorGreen: autopilot.parameters["CAL_ACC0_ID"].value != 0
+                onClicked: controller.calibrateAccel()
+            }
+
+            IndicatorButton {
+                width:          parent.buttonWidth
+                text:           "Airspeed"
+                visible:        controller.fixedWing
+                indicatorGreen: autopilot.parameters["SENS_DPRES_OFF"].value != 0
+                onClicked: controller.calibrateAirspeed()
+            }
+        }
+
+        Item { height: 20; width: 10 } // spacer
+
+        ProgressBar {
+            id: progressBar
+            width: parent.width - rotationColumnWidth
+        }
+
+        Item { height: 10; width: 10 } // spacer
+
         Item {
             readonly property int calibrationAreaHeight: 300
+            property int calDisplayAreaWidth: parent.width - rotationColumnWidth
 
             width:  parent.width
-            height: calibrationAreaHeight
+            height: parent.height - x
 
             TextArea {
                 id:             statusTextArea
-                width:          parent.width - rotationColumnWidth
+                width:          parent.calDisplayAreaWidth
                 height:         parent.height
                 readOnly:       true
                 frameVisible:   false
-                text:           qsTr("Sensor config is a work in progress which currently supports textual instructions only. Updated visuals coming soon.")
+                text:           "Sensor config is a work in progress. Not all visuals for all calibration types fully implemented.\n\n" +
+                                "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration is is best " +
+                                "to be connected to you vehicle via radio instead of USB since the USB cable will likely get in the way.\n\n" +
+                                "For Gyroscope calibration you will need to place your vehicle right side up on solid surface and leave it still.\n\n" +
+                                "For Accelerometer calibration you will need to place your vehicle on all six sides and hold it there for a few seconds.\n\n" +
+                                "For Airspeed calibration you will need to keep your airspeed sensor out of any wind.\n\n"
 
                 style: TextAreaStyle {
                     textColor: qgcPal.text
                     backgroundColor: qgcPal.windowShade
+                }
+            }
+
+            Rectangle {
+                id:         gyroCalArea
+                width:      parent.calDisplayAreaWidth
+                height:     parent.height
+                visible:    controller.showGyroCalArea
+                color:      qgcPal.windowShade
+
+                Column {
+                    width: parent.width
+
+                    QGCLabel {
+                        text: "Place your vehicle upright on a solid surface and hold it still."
+                    }
+
+                    VehicleRotationCal {
+                        width:          200
+                        height:         200
+                        calValid:       true
+                        calInProgress:  controller.gyroCalInProgress
+                        imageSource:    "qrc:///qml/VehicleDown.png"
+                    }
+
+                }
+            }
+
+            Rectangle {
+                id:         accelCalArea
+                width:      parent.calDisplayAreaWidth
+                height:     parent.height
+                visible:    controller.showAccelCalArea
+                color:      qgcPal.windowShade
+
+                QGCLabel {
+                    id:         calAreaLabel
+                    width:      parent.width
+                    wrapMode:   Text.WordWrap
+
+                    text: "Place your vehicle into each of the positions below and hold still. Once that position is completed you can move to another."
+                }
+
+                Flow {
+                    y:          calAreaLabel.height
+                    width:      parent.width
+                    height:     parent.height - calAreaLabel.implicitHeight
+                    spacing:    5
+
+                    VehicleRotationCal {
+                        width:          200
+                        height:         200
+                        calValid:       controller.accelCalDownSideDone
+                        calInProgress:  controller.accelCalDownSideInProgress
+                        imageSource:    "qrc:///qml/VehicleDown.png"
+                    }
+                    VehicleRotationCal {
+                        width:          200
+                        height:         200
+                        calValid:       controller.accelCalUpsideDownSideDone
+                        calInProgress:  controller.accelCalUpsideDownSideInProgress
+                        imageSource:    "qrc:///qml/VehicleUpsideDown.png"
+                    }
+                    VehicleRotationCal {
+                        width:          200
+                        height:         200
+                        calValid:       controller.accelCalNoseDownSideDone
+                        calInProgress:  controller.accelCalNoseDownSideInProgress
+                        imageSource:    "qrc:///qml/VehicleNoseDown.png"
+                    }
+                    VehicleRotationCal {
+                        width:          200
+                        height:         200
+                        calValid:       controller.accelCalTailDownSideDone
+                        calInProgress:  controller.accelCalTailDownSideInProgress
+                        imageSource:    "qrc:///qml/VehicleTailDown.png"
+                    }
+                    VehicleRotationCal {
+                        width:          200
+                        height:         200
+                        calValid:       controller.accelCalLeftSideDone
+                        calInProgress:  controller.accelCalLeftSideInProgress
+                        imageSource:    "qrc:///qml/VehicleLeft.png"
+                    }
+                    VehicleRotationCal {
+                        width:          200
+                        height:         200
+                        calValid:       controller.accelCalRightSideDone
+                        calInProgress:  controller.accelCalRightSideInProgress
+                        imageSource:    "qrc:///qml/VehicleRight.png"
+                    }
                 }
             }
 
@@ -156,46 +303,6 @@ Rectangle {
                 }
                 Loader { sourceComponent: parent.showCompass2 ? compass2ComponentLabel : null }
                 Loader { sourceComponent: parent.showCompass2 ? compass2ComponentCombo : null }
-            }
-        }
-
-        Item { height: 20; width: 10 } // spacer
-
-        Row {
-            readonly property int buttonWidth: 120
-
-            spacing: 20
-
-            QGCLabel { text: "Calibrate:"; anchors.baseline: firstButton.baseline }
-
-            IndicatorButton {
-                id:             firstButton
-                width:          parent.buttonWidth
-                text:           "Compass"
-                indicatorGreen: autopilot.parameters["CAL_MAG0_ID"].value != 0
-                onClicked: controller.calibrateCompass()
-            }
-
-            IndicatorButton {
-                width:          parent.buttonWidth
-                text:           "Gyroscope"
-                indicatorGreen: autopilot.parameters["CAL_GYRO0_ID"].value != 0
-                onClicked: controller.calibrateGyro()
-            }
-
-            IndicatorButton {
-                width:          parent.buttonWidth
-                text:           "Acceleromter"
-                indicatorGreen: autopilot.parameters["CAL_ACC0_ID"].value != 0
-                onClicked: controller.calibrateAccel()
-            }
-
-            IndicatorButton {
-                width:          parent.buttonWidth
-                text:           "Airspeed"
-                visible:        controller.fixedWing
-                indicatorGreen: autopilot.parameters["SENS_DPRES_OFF"].value != 0
-                onClicked: controller.calibrateAirspeed()
             }
         }
     }
