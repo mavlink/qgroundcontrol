@@ -19,15 +19,12 @@
 
 installer {
     MacBuild {
-        # We copy qgroundcontrol.app to the current directory so we can run macdeployqt without a path to the
-        # qgroundcontrol.app file. If you specify a path to the .app file the symbolic links to plugins will not
-        # be created correctly.
-        QMAKE_POST_LINK += && rm -rf qgroundcontrol.app
-        QMAKE_POST_LINK += && cp -r $${DESTDIR}/qgroundcontrol.app .
+        # We cd to release directory so we can run macdeployqt without a path to the
+        # qgroundcontrol.app file. If you specify a path to the .app file the symbolic
+        # links to plugins will not be created correctly.
+        QMAKE_POST_LINK += && cd release
         QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt qgroundcontrol.app -verbose=2 -qmldir=src -dmg
-        QMAKE_POST_LINK += && rm -rf qgroundcontrol.app
-        QMAKE_POST_LINK += && cp qgroundcontrol.dmg release
-        QMAKE_POST_LINK += && rm -rf qgroundcontrol.dmg
+        QMAKE_POST_LINK += && cd ..
     }
 
     WindowsBuild {
