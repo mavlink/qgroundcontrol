@@ -39,15 +39,12 @@ void PX4Component::_parameterUpdated(int compId, QString paramName, QVariant val
     Q_UNUSED(value);
     
     if (compId == _paramMgr->getDefaultComponentId()) {
-        const char** prgTriggers = setupCompleteChangedTriggerList();
-        Q_ASSERT(prgTriggers);
-        
-        while (*prgTriggers != NULL) {
-            if (paramName == *prgTriggers) {
+        QStringList triggerList = setupCompleteChangedTriggerList();
+        foreach(QString triggerParam, triggerList) {
+            if (paramName == triggerParam) {
                 emit setupCompleteChanged(setupComplete());
                 return;
             }
-            prgTriggers++;
         }
     }
 }
