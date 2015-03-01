@@ -68,7 +68,7 @@ const int PX4RCCalibrationTest::_testCenterValue = PX4RCCalibrationTest::_testMi
 
 /// @brief Maps from function index to channel index. -1 signals no mapping. Channel indices are offset 1 from function index
 /// to catch bugs where function index is incorrectly used as channel index.
-const int PX4RCCalibrationTest::_rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax]= { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+const int PX4RCCalibrationTest::_rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax]= { 1, 2, 3, 4, -1, -1, -1, -1, 9, 10, 11 };
 
 const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChannelSettings[PX4RCCalibrationTest::_availableChannels] = {
 	// Function										Min                 Max                 #  Reversed
@@ -76,15 +76,20 @@ const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChan
 	// Channel 0 : Not mapped to function, Simulate invalid Min/Max
 	{ PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,	_testCenterValue,   0, false },
 	
-    // Channels 1-11 are mapped to all available modes
+    // Channels 1-4: Mapped to attitude control function
     { PX4RCCalibration::rcCalFunctionRoll,			_testMinValue,      _testMaxValue,      0, true },
     { PX4RCCalibration::rcCalFunctionPitch,			_testMinValue,      _testMaxValue,      0, false },
     { PX4RCCalibration::rcCalFunctionYaw,			_testMinValue,      _testMaxValue,      0, true },
     { PX4RCCalibration::rcCalFunctionThrottle,		_testMinValue,      _testMaxValue,      0,  false },
-    { PX4RCCalibration::rcCalFunctionModeSwitch,	_testMinValue,      _testMaxValue,      0, false },
-    { PX4RCCalibration::rcCalFunctionPosCtlSwitch,	_testMinValue,      _testMaxValue,      0, false },
-    { PX4RCCalibration::rcCalFunctionLoiterSwitch,	_testMinValue,      _testMaxValue,      0, false },
-    { PX4RCCalibration::rcCalFunctionReturnSwitch,	_testMinValue,      _testMaxValue,      0, false },
+    
+    // Channels 5-8: Not mapped to function, Simulate invalid Min/Max, since available channel Min/Max is still shown.
+    // These are here to skip over the flight mode functions
+    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    
+    // Channels 9-11: Remainder of non-flight mode switches
     { PX4RCCalibration::rcCalFunctionFlaps,			_testMinValue,      _testMaxValue,      0, false },
     { PX4RCCalibration::rcCalFunctionAux1,			_testMinValue,      _testMaxValue,      0, false },
     { PX4RCCalibration::rcCalFunctionAux2,			_testMinValue,      _testMaxValue,      0, false },
@@ -105,18 +110,22 @@ const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChan
 const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChannelSettingsValidate[PX4RCCalibration::_chanMax] = {
     // Function										Min Value									Max Value									Trim Value										Reversed
 	
-	// Channel 0 is not mapped and should be defaulted
+    // Channels 0: not mapped and should be set to defaults
 	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
 	
-	// Channels 1-11 are mapped to all available modes
+    // Channels 1-4: Mapped to attitude control function
 	{ PX4RCCalibration::rcCalFunctionRoll,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
     { PX4RCCalibration::rcCalFunctionPitch,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
     { PX4RCCalibration::rcCalFunctionYaw,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
     { PX4RCCalibration::rcCalFunctionThrottle,		_testMinValue,                              _testMaxValue,                              _testMinValue,                                  false },
-    { PX4RCCalibration::rcCalFunctionModeSwitch,	_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
-    { PX4RCCalibration::rcCalFunctionPosCtlSwitch,	_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
-    { PX4RCCalibration::rcCalFunctionLoiterSwitch,	_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
-    { PX4RCCalibration::rcCalFunctionReturnSwitch,	_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    
+    // Channels 5-8: not mapped and should be set to defaults
+    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+    
+    // Channels 9-11: Remainder of non-flight mode switches
     { PX4RCCalibration::rcCalFunctionFlaps,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
     { PX4RCCalibration::rcCalFunctionAux1,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
     { PX4RCCalibration::rcCalFunctionAux2,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
@@ -126,8 +135,8 @@ const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChan
 	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
 	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
 	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
 };
 
 PX4RCCalibrationTest::PX4RCCalibrationTest(void) :
@@ -415,10 +424,6 @@ void PX4RCCalibrationTest::_fullCalibration_test(void)
     _switchMinMaxStep();
     _flapsDetectStep();
     _stickMoveAutoStep("Flaps", PX4RCCalibration::rcCalFunctionFlaps, moveToMin, false /* not identify step */);
-    _switchSelectAutoStep("Mode", PX4RCCalibration::rcCalFunctionModeSwitch);
-    _switchSelectAutoStep("PostCtl", PX4RCCalibration::rcCalFunctionPosCtlSwitch);
-    _switchSelectAutoStep("Loiter", PX4RCCalibration::rcCalFunctionLoiterSwitch);
-    _switchSelectAutoStep("Return", PX4RCCalibration::rcCalFunctionReturnSwitch);
     _switchSelectAutoStep("Aux1", PX4RCCalibration::rcCalFunctionAux1);
     _switchSelectAutoStep("Aux2", PX4RCCalibration::rcCalFunctionAux2);
 
