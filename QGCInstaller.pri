@@ -26,7 +26,8 @@ installer {
         QMAKE_POST_LINK += && cp -r $${DESTDIR}/qgroundcontrol.app .
         QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt qgroundcontrol.app -verbose=2 -qmldir=src -dmg
         QMAKE_POST_LINK += && rm -rf qgroundcontrol.app
-        QMAKE_POST_LINK += && mv qgroundcontrol.dmg release
+        QMAKE_POST_LINK += && cp qgroundcontrol.dmg release
+        QMAKE_POST_LINK += && rm -rf qgroundcontrol.dmg
     }
 
     WindowsBuild {
