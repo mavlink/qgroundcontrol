@@ -29,7 +29,7 @@
 #include "PX4AutoPilotPlugin.h"
 
 /// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParams[] = { "RC_MAP_MODE_SW", NULL };
+static const char* triggerParams[] = { "RC_MAP_ROLL", "RC_MAP_PITCH", "RC_MAP_YAW", "RC_MAP_THROTTLE", NULL };
 
 RadioComponent::RadioComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(uas, autopilot, parent),
@@ -61,13 +61,19 @@ bool RadioComponent::requiresSetup(void) const
 
 bool RadioComponent::setupComplete(void) const
 {
-    QVariant value;
-    if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParams[0], value)) {
-        return value.toInt() != 0;
-    } else {
-        Q_ASSERT(false);
-        return false;
+    for (size_t i=0; triggerParams[i] != NULL; i++) {
+        QVariant value;
+        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParams[0], value)) {
+            if (value.toInt() == 0) {
+                return false;
+            }
+        } else {
+            Q_ASSERT(false);
+            return false;
+        }
     }
+    
+    return true;
 }
 
 QString RadioComponent::setupStateDescription(void) const
