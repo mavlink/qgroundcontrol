@@ -38,7 +38,7 @@ public:
     AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from PX4Component
-    virtual const char** setupCompleteChangedTriggerList(void) const;
+    virtual QStringList setupCompleteChangedTriggerList(void) const;
 
     // Virtuals from VehicleComponent
     virtual QString name(void) const;

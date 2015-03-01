@@ -27,9 +27,6 @@
 #include "AirframeComponent.h"
 #include "QGCPX4AirframeConfig.h"
 
-/// @brief Parameters which signal a change in setupComplete state
-static const char* triggerParams[] = { "SYS_AUTOSTART", NULL };
-
 #if 0
 // Broken by latest mavlink module changes. Not used yet. Comment out for now.
 // Discussing mavlink fix.
@@ -146,7 +143,7 @@ bool AirframeComponent::requiresSetup(void) const
 bool AirframeComponent::setupComplete(void) const
 {
     QVariant value;
-    if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParams[0], value)) {
+    if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "SYS_AUTOSTART", value)) {
         return value.toInt() != 0;
     } else {
         Q_ASSERT(false);
@@ -166,9 +163,9 @@ QString AirframeComponent::setupStateDescription(void) const
     return QString(stateDescription);
 }
 
-const char** AirframeComponent::setupCompleteChangedTriggerList(void) const
+QStringList AirframeComponent::setupCompleteChangedTriggerList(void) const
 {
-    return triggerParams;
+    return QStringList("SYS_AUTOSTART");
 }
 
 QStringList AirframeComponent::paramFilterList(void) const
