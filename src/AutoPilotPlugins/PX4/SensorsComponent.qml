@@ -93,7 +93,7 @@ Rectangle {
 
             IndicatorButton {
                 width:          parent.buttonWidth
-                text:           "Acceleromter"
+                text:           "Accelerometer"
                 indicatorGreen: autopilot.parameters["CAL_ACC0_ID"].value != 0
                 onClicked: controller.calibrateAccel()
             }
