@@ -232,6 +232,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         _progressBar->setProperty("value", 1);
         _updateAndEmitGyroCalInProgress(false);
         _refreshParams();
+    } else if (text == "mag calibration: done" || text == "dpress calibration: done") {
+        _progressBar->setProperty("value", 1);
+        _refreshParams();
     } else if (text.endsWith(" calibration: failed")) {
         QGCMessageBox::warning("Calibration", "Calibration failed. Calibration log will be displayed.");
         _hideAllCalAreas();
