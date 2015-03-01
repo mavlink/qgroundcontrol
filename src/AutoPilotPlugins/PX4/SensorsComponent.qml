@@ -41,8 +41,6 @@ Rectangle {
         "ROTATION_ROLL_270_YAW_270"
     ]
 
-    width: 600
-    height: 600
     color: qgcPal.window
 
     // We use this bogus loader just so we can get an onLoaded signal to hook to in order to
@@ -121,7 +119,7 @@ Rectangle {
             property int calDisplayAreaWidth: parent.width - rotationColumnWidth
 
             width:  parent.width
-            height: parent.height - x
+            height: parent.height - y
 
             TextArea {
                 id:             statusTextArea
