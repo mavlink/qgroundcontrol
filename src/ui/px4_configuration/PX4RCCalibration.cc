@@ -706,6 +706,7 @@ void PX4RCCalibration::_resetInternalCalibrationValues(void)
         
         bool paramFound = _paramMgr->getParameterValue(componentId, _rgFunctionInfo[curFunction].parameterName, value);
         Q_ASSERT(paramFound);
+        Q_UNUSED(paramFound);
         
         bool ok;
         int channel = value.toInt(&ok);
