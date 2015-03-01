@@ -232,6 +232,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         _progressBar->setProperty("value", 1);
         _updateAndEmitGyroCalInProgress(false);
         _refreshParams();
+    } else if (text == "mag calibration: done" || text == "dpress calibration: done") {
+        _progressBar->setProperty("value", 1);
+        _refreshParams();
     } else if (text.endsWith(" calibration: failed")) {
         QGCMessageBox::warning("Calibration", "Calibration failed. Calibration log will be displayed.");
         _hideAllCalAreas();
@@ -239,41 +242,6 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         _updateAndEmitGyroCalInProgress(false);
         _refreshParams();
     }
-    
-#if 0
-    if (text.startsWith("Hold still, starting to measure ")) {
-        QString axis = text.section(" ", -2, -2);
-        setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
-    }
-    
-    if (text.startsWith("pending: ")) {
-        QString axis = text.section(" ", 1, 1);
-        setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
-    }
-    
-    if (text == "rotate in a figure 8 around all axis" /* support for old typo */
-        || text == "rotate in a figure 8 around all axes" /* current version */) {
-        setInstructionImage(":/files/images/px4/calibration/mag_calibration_figure8.png");
-    }
-    
-    if (text.endsWith(" calibration: done") || text.endsWith(" calibration: failed")) {
-        // XXX use a confirmation image or something
-        setInstructionImage(":/files/images/px4/calibration/accel_down.png");
-        if (text.endsWith(" calibration: done")) {
-            ui->progressBar->setValue(100);
-        } else {
-            ui->progressBar->setValue(0);
-        }
-        
-        if (activeUAS) {
-            _requestAllSensorParameters();
-        }
-    }
-    
-    if (text.endsWith(" calibration: started")) {
-        setInstructionImage(":/files/images/px4/calibration/accel_down.png");
-    }
-#endif    
 }
 
 void SensorsComponentController::_refreshParams(void)
