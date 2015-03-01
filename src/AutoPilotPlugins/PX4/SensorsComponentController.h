@@ -43,8 +43,27 @@ public:
     
     Q_PROPERTY(bool fixedWing READ fixedWing CONSTANT)
     
-    /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
+    Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)
+    
+    Q_PROPERTY(bool showGyroCalArea MEMBER _showGyroCalArea NOTIFY showGyroCalAreaChanged)
+    Q_PROPERTY(bool showAccelCalArea MEMBER _showAccelCalArea NOTIFY showAccelCalAreaChanged)
+    
+    Q_PROPERTY(bool gyroCalInProgress MEMBER _gyroCalInProgress NOTIFY gyroCalInProgressChanged)
+    
+    Q_PROPERTY(bool accelCalDownSideDone MEMBER _accelCalDownSideDone NOTIFY accelCalSidesDoneChanged)
+    Q_PROPERTY(bool accelCalUpsideDownSideDone MEMBER _accelCalUpsideDownSideDone NOTIFY accelCalSidesDoneChanged)
+    Q_PROPERTY(bool accelCalLeftSideDone MEMBER _accelCalLeftSideDone NOTIFY accelCalSidesDoneChanged)
+    Q_PROPERTY(bool accelCalRightSideDone MEMBER _accelCalRightSideDone NOTIFY accelCalSidesDoneChanged)
+    Q_PROPERTY(bool accelCalNoseDownSideDone MEMBER _accelCalNoseDownSideDone NOTIFY accelCalSidesDoneChanged)
+    Q_PROPERTY(bool accelCalTailDownSideDone MEMBER _accelCalTailDownSideDone NOTIFY accelCalSidesDoneChanged)
+    
+    Q_PROPERTY(bool accelCalDownSideInProgress MEMBER _accelCalDownSideInProgress NOTIFY accelCalSidesInProgressChanged)
+    Q_PROPERTY(bool accelCalUpsideDownSideInProgress MEMBER _accelCalUpsideDownSideInProgress NOTIFY accelCalSidesInProgressChanged)
+    Q_PROPERTY(bool accelCalLeftSideInProgress MEMBER _accelCalLeftSideInProgress NOTIFY accelCalSidesInProgressChanged)
+    Q_PROPERTY(bool accelCalRightSideInProgress MEMBER _accelCalRightSideInProgress NOTIFY accelCalSidesInProgressChanged)
+    Q_PROPERTY(bool accelCalNoseDownSideInProgress MEMBER _accelCalNoseDownSideInProgress NOTIFY accelCalSidesInProgressChanged)
+    Q_PROPERTY(bool accelCalTailDownSideInProgress MEMBER _accelCalTailDownSideInProgress NOTIFY accelCalSidesInProgressChanged)
     
     Q_INVOKABLE void calibrateCompass(void);
     Q_INVOKABLE void calibrateGyro(void);
@@ -54,7 +73,11 @@ public:
     bool fixedWing(void);
     
 signals:
-    void bogusNotify(void);
+    void showGyroCalAreaChanged(void);
+    void showAccelCalAreaChanged(void);
+    void gyroCalInProgressChanged(void);
+    void accelCalSidesDoneChanged(void);
+    void accelCalSidesInProgressChanged(void);
     
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
@@ -63,8 +86,35 @@ private:
     void _beginTextLogging(void);
     void _appendStatusLog(const QString& text);
     void _refreshParams(void);
+    void _hideAllCalAreas(void);
+    
+    void _updateAndEmitGyroCalInProgress(bool inProgress);
+    
+    void _updateAndEmitShowGyroCalArea(bool show);
+    void _updateAndEmitShowAccelCalArea(bool show);
 
-    QQuickItem*         _statusLog;         ///< Status log TextArea Qml control
+    QQuickItem*         _statusLog;
+    QQuickItem*         _progressBar;
+    
+    bool _showGyroCalArea;
+    bool _showAccelCalArea;
+    
+    bool _gyroCalInProgress;
+    
+    bool _accelCalDownSideDone;
+    bool _accelCalUpsideDownSideDone;
+    bool _accelCalLeftSideDone;
+    bool _accelCalRightSideDone;
+    bool _accelCalNoseDownSideDone;
+    bool _accelCalTailDownSideDone;
+    
+    bool _accelCalDownSideInProgress;
+    bool _accelCalUpsideDownSideInProgress;
+    bool _accelCalLeftSideInProgress;
+    bool _accelCalRightSideInProgress;
+    bool _accelCalNoseDownSideInProgress;
+    bool _accelCalTailDownSideInProgress;
+    
     AutoPilotPlugin*    _autopilot;
 };
 
