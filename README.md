@@ -66,7 +66,8 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 * For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel`
 * For Arch Linux: `pacman -Sy qtcreator qt5-base qt5-declarative qt5-serialport qt5-svg qt5-webkit`
 * For Ubuntu: Please be aware that the time of writing, Qt5.4 is unavailable in the official repositories Ubuntu 14.04/Mint 17.*.
-    * Add this PPA to your sources.list: `ppa:beineri/opt-qt54-trusty`
+    * Add this PPA to your sources.list: `ppa:beineri/opt-qt541-trusty`
+        * If you get a 404 error from "apt-get update" below, open System Settings:Software & Updates:Other Software and edit the entry for opt-qt541-trusty to reference Distribution: trusty.
     * Run the following in your terminal: `sudo apt-get update && sudo apt-get install qt54tools qt54base qt54declarative qt54serialport qt54svg qt54webkit qt54quickcontrols qt54xmlpatterns qt54x11extras qt54websockets qt54sensors qt54script qt54quick1 qt54qbs qt54multimedia qt54location qt54imageformats qt54graphicaleffects qt54creator qt54connectivity`
     * Next, set the environment variables by executing in the terminal: `source /opt/qt54/bin/qt54-env.sh` or copy and paste the contents to your `~/.profile` file to set them on login.
     * Verify that the variables have been set: `echo $PATH && echo $QTDIR`. The output should read `/opt/qt54/bin:...` and `/opt/qt54`.
