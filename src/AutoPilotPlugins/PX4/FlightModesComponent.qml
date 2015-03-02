@@ -43,6 +43,7 @@ Rectangle {
             Drag.active:    mouseArea.drag.active
             Drag.hotSpot.x: width / 2
             Drag.hotSpot.y: height / 2
+            Drag.keys:      [ "unassigned"]
 
 /*
             states: [
@@ -108,6 +109,7 @@ Rectangle {
             Drag.active:    mouseArea.drag.active
             Drag.hotSpot.x: width / 2
             Drag.hotSpot.y: height / 2
+            Drag.keys:      [ "assigned" ]
 
             QGCLabel {
                 id:         label
@@ -289,6 +291,8 @@ Rectangle {
                         id:     dropArea
                         width:  parent.width
                         height: parent.height
+
+                        keys: [ "unassigned", "assigned" ]
                     }
                 }
             }
