@@ -43,11 +43,6 @@ void QGCQmlWidgetHolder::setAutoPilot(AutoPilotPlugin* autoPilot)
     setContextPropertyObject("autopilot", autoPilot);
 }
 
-void QGCQmlWidgetHolder::setContextProperty(const QString& property, QObject* value)
-{
-    _ui.qmlWidget->rootContext()->setContextProperty(property, value);
-}
-
 bool QGCQmlWidgetHolder::setSource(const QUrl& qmlUrl)
 {
     return _ui.qmlWidget->setSource(qmlUrl);
@@ -56,9 +51,4 @@ bool QGCQmlWidgetHolder::setSource(const QUrl& qmlUrl)
 void QGCQmlWidgetHolder::setContextPropertyObject(const QString& name, QObject* object)
 {
     _ui.qmlWidget->rootContext()->setContextProperty(name, object);
-}
-
-QQmlContext* QGCQmlWidgetHolder::getRootContext()
-{
-    return _ui.qmlWidget->rootContext();
 }
