@@ -45,7 +45,6 @@ Rectangle {
             Drag.hotSpot.y: height / 2
             Drag.keys:      [ "unassigned"]
 
-/*
             states: [
                 State {
                     when: dropArea.containsDrag
@@ -55,7 +54,6 @@ Rectangle {
                     }
                 }
             ]
-*/
 
             QGCLabel {
                 text: tileLabel
@@ -79,16 +77,17 @@ Rectangle {
                 }
             }
 
-/*
             DropArea {
                 // This will cause to tile to go back to unassigned if dropped here
-                //readonly property int channel: 0
+                readonly property int channel: 0
+                property bool dropAllowed: true
 
                 id:     dropArea
                 width:  parent.width
                 height: parent.height
+
+                keys: [ "assigned" ]
             }
-*/
         }
     }
 
