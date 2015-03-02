@@ -27,6 +27,113 @@ Rectangle {
 
     color: qgcPal.window
 
+    // This component is used to create draggable tiles for unassigned mode switches. It also
+    // creates the drop area for dragging an assigned mode switch tile back to an unassigned state.
+    Component {
+        id: unassignedModeTileComponent
+
+        Rectangle {
+            property bool dragEnabled: autopilot.parameters[tileParam].value == 0
+
+            id:     outerRect
+            width:  100
+            height: 20
+            color:  qgcPal.windowShade
+
+            Drag.active:    mouseArea.drag.active
+            Drag.hotSpot.x: width / 2
+            Drag.hotSpot.y: height / 2
+
+/*
+            states: [
+                State {
+                    when: dropArea.containsDrag
+                    PropertyChanges {
+                        target: outerRect
+                        color: "red"
+                    }
+                }
+            ]
+*/
+
+            QGCLabel {
+                text: tileLabel
+                enabled: dragEnabled
+            }
+
+            MouseArea {
+                id:             mouseArea
+                width:          parent.width
+                height:         parent.height
+                drag.target:    dragEnabled ? parent : null
+
+                onReleased: {
+                    // Move tile back to original position
+                    parent.x = 0; parent.y = 0;
+
+                    // If dropped over a channel target remap switch
+                    if (parent.Drag.target && parent.Drag.target.dropAllowed) {
+                        autopilot.parameters[tileParam].value = parent.Drag.target.channel
+                    }
+                }
+            }
+
+/*
+            DropArea {
+                // This will cause to tile to go back to unassigned if dropped here
+                //readonly property int channel: 0
+
+                id:     dropArea
+                width:  parent.width
+                height: parent.height
+            }
+*/
+        }
+    }
+
+    // This component is used to create draggable tiles for currently assigned mode switches. The following
+    // properties must be set in the Loader:
+    //  tileLabel - label for tile
+    //  tileVisible - visibility for tile
+    //  tileDragEnabled - true: this tile can be dragged
+    Component {
+        id: assignedModeTileComponent
+
+        Rectangle {
+            width:      label.implicitWidth
+            height:     label.implicitHeight
+            color:      qgcPal.windowShade
+            visible:    tileVisible
+
+            Drag.active:    mouseArea.drag.active
+            Drag.hotSpot.x: width / 2
+            Drag.hotSpot.y: height / 2
+
+            QGCLabel {
+                id:         label
+                text:       tileLabel
+                enabled:    tileDragEnabled
+            }
+
+            MouseArea {
+                id:             mouseArea
+                width:          parent.width
+                height:         parent.height
+                drag.target:    tileDragEnabled ? parent : null
+
+                onReleased: {
+                    // Move tile back to original position
+                    parent.x = 0; parent.y = 0;
+
+                    // If dropped over a channel target remap switch
+                    if (parent.Drag.target && parent.Drag.target.dropAllowed) {
+                        autopilot.parameters[tileParam].value = parent.Drag.target.channel
+                    }
+                }
+            }
+        }
+    }
+
     Column {
         anchors.fill: parent
 
@@ -47,7 +154,7 @@ Rectangle {
             Repeater {
                 model: 18
 
-                DropArea {
+                Rectangle {
                     property int channel:           modelData + 1
                     property bool throttleMapped:   channel == throttleChannel
                     property bool yawMapped:        channel == yawChannel
@@ -56,126 +163,138 @@ Rectangle {
                     property bool flapsMapped:      channel == flapsChannel
                     property bool aux1Mapped:       channel == aux1Channel
                     property bool aux2Mapped:       channel == aux2Channel
-                    property alias dropProxy:       dropTarget
 
-                    // Drops are not allowed on channels which are mapped to non-flight mode switches
-                    property bool dropAllowed: !(throttleMapped || yawMapped || pitchMapped || rollMapped || flapsMapped || aux1Mapped || aux2Mapped)
 
-                    id:     dropTarget
+                    id:     channelTarget
                     width:  100
                     height: channelCol.implicitHeight
 
-                    Rectangle {
-                        id: channelTarget
+                    color:  qgcPal.windowShade
 
-
-                        width:  parent.width
-                        height: parent.height
-                        color:  qgcPal.windowShade
-
-                        states: [
-                            State {
-                                when: dropTarget.containsDrag && dropAllowed
-                                PropertyChanges {
-                                    target: channelTarget
-                                    color: "red"
-                                }
-                            }
-                        ]
-
-                        Column {
-                            id: channelCol
-
-                            QGCLabel {
-                                text: "Channel " + (modelData + 1)
-                            }
-                            QGCLabel {
-                                text: "Throttle"
-                                visible: throttleMapped
-                            }
-                            QGCLabel {
-                                text: "Rudder"
-                                visible: yawMapped
-                            }
-                            QGCLabel {
-                                text: "Pitch"
-                                visible: pitchMapped
-                            }
-                            QGCLabel {
-                                text: "Roll"
-                                visible: rollMapped
-                            }
-                            QGCLabel {
-                                text: "Flaps Switch"
-                                visible: flapsMapped
-                            }
-                            QGCLabel {
-                                text: "Aux1 Switch"
-                                visible: aux1Mapped
-                            }
-                            QGCLabel {
-                                text: "Aux2 Switch"
-                                visible: aux2Mapped
-                            }
-                            QGCLabel {
-                                text: "Mode Switch"
-                                visible: channel == modeChannel
-                            }
-                            QGCLabel {
-                                text: "PosCtl Switch"
-                                visible: channel == posCtlChannel
-                            }
-                            QGCLabel {
-                                text: "Return Switch"
-                                visible: channel == returnChannel
-                            }
-                            QGCLabel {
-                                text: "Loiter Switch"
-                                visible: channel == loiterChannel
+                    states: [
+                        State {
+                            when: dropArea.containsDrag && dropArea.dropAllowed
+                            PropertyChanges {
+                                target: channelTarget
+                                color: "red"
                             }
                         }
+                    ]
+
+                    Column {
+                        id: channelCol
+
+                        QGCLabel {
+                            text: "Channel " + (modelData + 1)
+                        }
+                        Loader {
+                            property string tileLabel:      "Throttle"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  false
+
+                            visible:            throttleMapped
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Yaw"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  false
+
+                            visible:            yawMapped
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Pitch"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  false
+
+                            visible:            pitchMapped
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Roll"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  false
+
+                            visible:            rollMapped
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Flaps Switch"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  false
+
+                            visible:            flapsMapped
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Aux1 Switch"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  false
+
+                            visible:            aux1Mapped
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Aux2 Switch"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  false
+
+                            visible:            aux2Mapped
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Mode Switch"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  true
+                            property string tileParam:      "RC_MAP_MODE_SW"
+
+                            visible:            channel == modeChannel
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "PosCtl Switch"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  true
+                            property string tileParam:      "RC_MAP_POSCTL_SW"
+
+                            visible:            channel == posCtlChannel
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Return Switch"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  true
+                            property string tileParam:      "RC_MAP_RETURN_SW"
+
+                            visible:            channel == returnChannel
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "Loiter Switch"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  true
+                            property string tileParam:      "RC_MAP_LOITER_SW"
+
+                            visible:            channel == loiterChannel
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                    }
+
+                    DropArea {
+                        // Drops are not allowed on channels which are mapped to non-flight mode switches
+                        property bool dropAllowed: !(throttleMapped || yawMapped || pitchMapped || rollMapped || flapsMapped || aux1Mapped || aux2Mapped)
+                        property int channel: parent.channel
+
+                        id:     dropArea
+                        width:  parent.width
+                        height: parent.height
                     }
                 }
             }
         }
 
         Item { height: 20; width: 10 } // spacer
-
-        Component {
-            id: modeTileComponent
-
-            MouseArea {
-                width:          100
-                height:         20
-                visible:        autopilot.parameters[tileParam].value == 0
-                drag.target:    switchTile
-
-                onReleased: {
-                    // Move tile back to original position
-                    switchTile.x = 0; switchTile.y = 0;
-
-                    // If dropped over a channel target remap switch
-                    if (switchTile.Drag.target && switchTile.Drag.target.dropAllowed) {
-                        autopilot.parameters[tileParam].value = switchTile.Drag.target.channel
-                    }
-                }
-
-                Rectangle {
-                    id:     switchTile
-                    width:  parent.width
-                    height: parent.height
-                    color:  qgcPal.windowShade
-
-                    Drag.active:    parent.drag.active
-                    Drag.hotSpot.x: width / 2
-                    Drag.hotSpot.y: height / 2
-
-                    QGCLabel {
-                        text: tileLabel
-                    }
-                }
-            }
-        }
 
         QGCLabel {
             text: "Unassigned switches"
@@ -187,22 +306,22 @@ Rectangle {
             Loader {
                 property string tileLabel: "Mode Switch"
                 property string tileParam: "RC_MAP_MODE_SW"
-                sourceComponent: modeTileComponent
+                sourceComponent: unassignedModeTileComponent
             }
             Loader {
                 property string tileLabel: "Return Switch"
                 property string tileParam: "RC_MAP_RETURN_SW"
-                sourceComponent: modeTileComponent
+                sourceComponent: unassignedModeTileComponent
             }
             Loader {
                 property string tileLabel: "Loiter Switch"
                 property string tileParam: "RC_MAP_LOITER_SW"
-                sourceComponent: modeTileComponent
+                sourceComponent: unassignedModeTileComponent
             }
             Loader {
                 property string tileLabel: "PosCtl Switch"
                 property string tileParam: "RC_MAP_POSCTL_SW"
-                sourceComponent: modeTileComponent
+                sourceComponent: unassignedModeTileComponent
             }
         }
 
