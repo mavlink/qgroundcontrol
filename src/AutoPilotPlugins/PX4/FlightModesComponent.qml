@@ -22,10 +22,38 @@ Rectangle {
     property int returnChannel: autopilot.parameters["RC_MAP_RETURN_SW"].value
     property int loiterChannel: autopilot.parameters["RC_MAP_LOITER_SW"].value
 
+    readonly property int tileWidth: 150
+    readonly property int tileHeight: 30
+
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
     FlightModesComponentController { id: controller }
 
     color: qgcPal.window
+
+    Component {
+        id: dragHandle
+
+        Item {
+            id:     outerItem
+            width:  parent.width
+            height: parent.height
+
+            Column {
+                x: 4
+                y: 4
+                spacing: 3
+
+                Repeater {
+                    model: (outerItem.height - 8) / 4
+                    Rectangle {
+                        color: qgcPal.text
+                        width: 15
+                        height: 1
+                    }
+                }
+            }
+        }
+    }
 
     // This component is used to create draggable tiles for unassigned mode switches. It also
     // creates the drop area for dragging an assigned mode switch tile back to an unassigned state.
@@ -36,9 +64,11 @@ Rectangle {
             property bool dragEnabled: autopilot.parameters[tileParam].value == 0
 
             id:     outerRect
-            width:  100
-            height: 20
+            width:  tileWidth
+            height: tileHeight
             color:  qgcPal.windowShade
+            border.width: dragEnabled ? 1 : 0
+            border.color: qgcPal.text
 
             Drag.active:    mouseArea.drag.active
             Drag.hotSpot.x: width / 2
@@ -55,9 +85,20 @@ Rectangle {
                 }
             ]
 
+            Loader {
+                width: parent.width
+                height: parent.height
+                visible: dragEnabled
+                sourceComponent: dragHandle
+            }
+
             QGCLabel {
-                text: tileLabel
-                enabled: dragEnabled
+                width:                  parent.width
+                height:                 parent.height
+                text:                   tileLabel
+                enabled:                dragEnabled
+                horizontalAlignment:    Text.AlignHCenter
+                verticalAlignment:      Text.AlignVCenter
             }
 
             MouseArea {
@@ -100,20 +141,32 @@ Rectangle {
         id: assignedModeTileComponent
 
         Rectangle {
-            width:      label.implicitWidth
-            height:     label.implicitHeight
-            color:      qgcPal.windowShade
-            visible:    tileVisible
+            width:          tileWidth
+            height:         tileHeight
+            color:          qgcPal.windowShade
+            border.width:   tileDragEnabled ? 1 : 0
+            border.color:   qgcPal.text
+            visible:        tileVisible
 
             Drag.active:    mouseArea.drag.active
             Drag.hotSpot.x: width / 2
             Drag.hotSpot.y: height / 2
             Drag.keys:      [ "assigned" ]
 
+            Loader {
+                width: parent.width
+                height: parent.height
+                visible: tileDragEnabled
+                sourceComponent: dragHandle
+            }
+
             QGCLabel {
-                id:         label
-                text:       tileLabel
-                enabled:    tileDragEnabled
+                width:                  parent.width
+                height:                 parent.height
+                enabled:                tileDragEnabled
+                horizontalAlignment:    Text.AlignHCenter
+                verticalAlignment:      Text.AlignVCenter
+                text:                   tileLabel
             }
 
             MouseArea {
@@ -175,9 +228,16 @@ Rectangle {
                     property bool aux1Mapped:       channel == aux1Channel
                     property bool aux2Mapped:       channel == aux2Channel
 
+                    property bool modeMapped:       channel == modeChannel
+                    property bool posCtlMapped:     channel == posCtlChannel
+                    property bool returnMapped:     channel == returnChannel
+                    property bool loiterMapped:     channel == loiterChannel
+
+                    property bool nonFlightModeMapping: throttleMapped | yawMapped | pitchMapped | rollMapped | flapsMapped | aux1Mapped | aux2Mapped
+                    property bool unassignedMapping: !(nonFlightModeMapping | modeMapped | posCtlMapped | returnMapped | loiterMapped)
 
                     id:     channelTarget
-                    width:  100
+                    width:  tileWidth
                     height: channelCol.implicitHeight
 
                     color:  qgcPal.windowShade
@@ -193,10 +253,19 @@ Rectangle {
                     ]
 
                     Column {
-                        id: channelCol
+                        id:         channelCol
+                        spacing:    3
 
                         QGCLabel {
                             text: "Channel " + (modelData + 1)
+                        }
+                        Loader {
+                            property string tileLabel:      "Unassigned"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  false
+
+                            visible:            unassignedMapping
+                            sourceComponent:    assignedModeTileComponent
                         }
                         Loader {
                             property string tileLabel:      "Throttle"
@@ -260,7 +329,7 @@ Rectangle {
                             property bool tileDragEnabled:  true
                             property string tileParam:      "RC_MAP_MODE_SW"
 
-                            visible:            channel == modeChannel
+                            visible:            modeMapped
                             sourceComponent:    assignedModeTileComponent
                         }
                         Loader {
@@ -269,7 +338,7 @@ Rectangle {
                             property bool tileDragEnabled:  true
                             property string tileParam:      "RC_MAP_POSCTL_SW"
 
-                            visible:            channel == posCtlChannel
+                            visible:            posCtlMapped
                             sourceComponent:    assignedModeTileComponent
                         }
                         Loader {
@@ -278,7 +347,7 @@ Rectangle {
                             property bool tileDragEnabled:  true
                             property string tileParam:      "RC_MAP_RETURN_SW"
 
-                            visible:            channel == returnChannel
+                            visible:            returnMapped
                             sourceComponent:    assignedModeTileComponent
                         }
                         Loader {
@@ -287,14 +356,14 @@ Rectangle {
                             property bool tileDragEnabled:  true
                             property string tileParam:      "RC_MAP_LOITER_SW"
 
-                            visible:            channel == loiterChannel
+                            visible:            loiterMapped
                             sourceComponent:    assignedModeTileComponent
                         }
                     }
 
                     DropArea {
                         // Drops are not allowed on channels which are mapped to non-flight mode switches
-                        property bool dropAllowed: !(throttleMapped || yawMapped || pitchMapped || rollMapped || flapsMapped || aux1Mapped || aux2Mapped)
+                        property bool dropAllowed: !nonFlightModeMapping
                         property int channel: parent.channel
 
                         id:     dropArea
