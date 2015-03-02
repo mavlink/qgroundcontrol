@@ -146,7 +146,17 @@ Rectangle {
         Item { height: 20; width: 10 } // spacer
 
         QGCLabel {
-            text: "Channel assignments"
+            width: parent.width
+            text: "Flight Mode switches can be assigned to any channel which is not currently being used for attitude control. All channels are displayed below. " +
+                "You can drag switches from the Unassigned Switches section below to a channel and drop it there. You can also drag switches assigned to a channel " +
+                "to another channel or back to the Unassigned Switches section. This Switch Display section will show you the results of your Flight Mode setup."
+            wrapMode: Text.WordWrap
+        }
+
+        Item { height: 20; width: 10 } // spacer
+
+        QGCLabel {
+            text: "Channel Assignments"
         }
         Flow {
             width: parent.width
@@ -300,7 +310,7 @@ Rectangle {
         Item { height: 20; width: 10 } // spacer
 
         QGCLabel {
-            text: "Unassigned switches"
+            text: "Unassigned Switches"
         }
         Flow {
             width: parent.width
@@ -331,7 +341,7 @@ Rectangle {
         Item { height: 20; width: 10 } // spacer
 
         QGCLabel {
-            text: "Switch settings"
+            text: "Switch Display"
         }
         Flow {
             width: parent.width
