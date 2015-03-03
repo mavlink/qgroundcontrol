@@ -374,10 +374,9 @@ Pixhawk3DWidget::attitudeChanged(UASInterface* uas,
     }
 
     // update system attitude
-    osg::Quat q(roll, osg::Vec3d(0.0f, 1.0f, 0.0f),
-               pitch, osg::Vec3d(1.0f, 0.0f, 0.0f),
-                -yaw, osg::Vec3d(0.0f, 0.0f, 1.0f)
-                );
+    osg::Quat q(-yaw, osg::Vec3d(0.0f, 0.0f, 1.0f),
+                pitch, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                roll, osg::Vec3d(0.0f, 1.0f, 0.0f));
     m3DWidget->systemGroup(systemId)->attitude()->setAttitude(q);
 }
 
