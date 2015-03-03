@@ -34,6 +34,8 @@
 
 Q_LOGGING_CATEGORY(UASLog, "UASLog")
 
+#define UAS_DEFAULT_BATTERY_WARNLEVEL 20
+
 /**
 * Gets the settings from the previous UAS (name, airframe, autopilot, battery specs)
 * by calling readSettings. This means the new UAS will have the same settings
@@ -70,20 +72,14 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     thrustSum(0),
     thrustMax(10),
 
-    // batteryType not initialized
-    // cells not initialized
-    // fullVoltage not initialized
-    // emptyVoltage not initialized
     startVoltage(-1.0f),
     tickVoltage(10.5f),
     lastTickVoltageValue(13.0f),
     tickLowpassVoltage(12.0f),
-    warnVoltage(9.5f),
-    warnLevelPercent(20.0f),
+    warnLevelPercent(UAS_DEFAULT_BATTERY_WARNLEVEL),
     currentVoltage(12.6f),
     lpVoltage(12.0f),
     currentCurrent(0.4f),
-    batteryRemainingEstimateEnabled(false),
     chargeLevel(-1),
     timeRemaining(0),
     lowBattAlarm(false),
@@ -230,7 +226,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     actions.append(newAction);
 
     color = UASInterface::getNextColor();
-    setBatterySpecs(QString(""));
     connect(&statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout.start(500);
@@ -294,7 +289,7 @@ void UAS::deleteSettings()
     this->name = "";
     this->airframe = QGC_AIRFRAME_GENERIC;
     this->autopilot = -1;
-    setBatterySpecs(QString("9V,9.5V,12.6V"));
+    warnLevelPercent = UAS_DEFAULT_BATTERY_WARNLEVEL;
 }
 
 /**
@@ -629,10 +624,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if (startVoltage == -1.0f && currentVoltage > 0.1f) startVoltage = currentVoltage;
             timeRemaining = calculateTimeRemaining();
-            if (!batteryRemainingEstimateEnabled && chargeLevel != -1)
-            {
-                chargeLevel = state.battery_remaining;
-            }
+            chargeLevel = state.battery_remaining;
 
             emit batteryChanged(this, lpVoltage, currentCurrent, getChargeLevel(), timeRemaining);
             emit valueChanged(uasId, name.arg("battery_remaining"), "%", getChargeLevel(), time);
@@ -647,7 +639,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             // LOW BATTERY ALARM
-            if (lpVoltage < warnVoltage && (currentVoltage - 0.2f) < warnVoltage && (currentVoltage > 3.3))
+            if (chargeLevel >= 0 && (getChargeLevel() < warnLevelPercent))
             {
                 // An audio alarm. Does not generate any signals.
                 startLowBattAlarm();
@@ -3319,80 +3311,23 @@ QMap<int, QString> UAS::getComponents()
 }
 
 /**
-* Set the battery type and the  number of cells.
-* @param type of the battery
-* @param cells Number of cells.
-*/
-void UAS::setBattery(BatteryType type, int cells)
-{
-    this->batteryType = type;
-    this->cells = cells;
-    switch (batteryType)
-    {
-    case NICD:
-        break;
-    case NIMH:
-        break;
-    case LIION:
-        break;
-    case LIPOLY:
-        fullVoltage = this->cells * lipoFull;
-        emptyVoltage = this->cells * lipoEmpty;
-        break;
-    case LIFE:
-        break;
-    case AGZN:
-        break;
-    }
-}
-
-/**
 * Set the battery specificaitons: empty voltage, warning voltage, and full voltage.
 * @param specifications of the battery
 */
 void UAS::setBatterySpecs(const QString& specs)
 {
-    if (specs.length() == 0 || specs.contains("%"))
+    batteryRemainingEstimateEnabled = false;
+    bool ok;
+    QString percent = specs;
+    percent = percent.remove("%");
+    float temp = percent.toFloat(&ok);
+    if (ok)
     {
-        batteryRemainingEstimateEnabled = false;
-        bool ok;
-        QString percent = specs;
-        percent = percent.remove("%");
-        float temp = percent.toFloat(&ok);
-        if (ok)
-        {
-            warnLevelPercent = temp;
-        }
-        else
-        {
-            emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
-        }
+        warnLevelPercent = temp;
     }
     else
     {
-        batteryRemainingEstimateEnabled = true;
-        QString stringList = specs;
-        stringList = stringList.remove("V");
-        stringList = stringList.remove("v");
-        QStringList parts = stringList.split(",");
-        if (parts.length() == 3)
-        {
-            float temp;
-            bool ok;
-            // Get the empty voltage
-            temp = parts.at(0).toFloat(&ok);
-            if (ok) emptyVoltage = temp;
-            // Get the warning voltage
-            temp = parts.at(1).toFloat(&ok);
-            if (ok) warnVoltage = temp;
-            // Get the full voltage
-            temp = parts.at(2).toFloat(&ok);
-            if (ok) fullVoltage = temp;
-        }
-        else
-        {
-            emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
-        }
+        emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
     }
 }
 
@@ -3401,14 +3336,7 @@ void UAS::setBatterySpecs(const QString& specs)
 */
 QString UAS::getBatterySpecs()
 {
-    if (batteryRemainingEstimateEnabled)
-    {
-        return QString("%1V,%2V,%3V").arg(emptyVoltage).arg(warnVoltage).arg(fullVoltage);
-    }
-    else
-    {
-        return QString("%1%").arg(warnLevelPercent);
-    }
+    return QString("%1%").arg(warnLevelPercent);
 }
 
 /**
@@ -3416,15 +3344,8 @@ QString UAS::getBatterySpecs()
 */
 int UAS::calculateTimeRemaining()
 {
-    quint64 dt = QGC::groundTimeMilliseconds() - startTime;
-    double seconds = dt / 1000.0f;
-    double voltDifference = startVoltage - currentVoltage;
-    if (voltDifference <= 0) voltDifference = 0.00000000001f;
-    double dischargePerSecond = voltDifference / seconds;
-    int remaining = static_cast<int>((currentVoltage - emptyVoltage) / dischargePerSecond);
-    // Can never be below 0
-    if (remaining < 0) remaining = 0;
-    return remaining;
+    // XXX needs fixing
+    return 0;
 }
 
 /**
@@ -3432,21 +3353,6 @@ int UAS::calculateTimeRemaining()
  */
 float UAS::getChargeLevel()
 {
-    if (batteryRemainingEstimateEnabled)
-    {
-        if (lpVoltage < emptyVoltage)
-        {
-            chargeLevel = 0.0f;
-        }
-        else if (lpVoltage > fullVoltage)
-        {
-            chargeLevel = 100.0f;
-        }
-        else
-        {
-            chargeLevel = 100.0f * ((lpVoltage - emptyVoltage)/(fullVoltage - emptyVoltage));
-        }
-    }
     return chargeLevel;
 }
 

@@ -372,15 +372,10 @@ protected: //COMMENTS FOR TEST UNIT
 
     // dongfang: This looks like a candidate for being moved off to a separate class.
     /// BATTERY / ENERGY
-    BatteryType batteryType;    ///< The battery type
-    int cells;                  ///< Number of cells
-    float fullVoltage;          ///< Voltage of the fully charged battery (100%)
-    float emptyVoltage;         ///< Voltage of the empty battery (0%)
     float startVoltage;         ///< Voltage at system start
     float tickVoltage;          ///< Voltage where 0.1 V ticks are told
     float lastTickVoltageValue; ///< The last voltage where a tick was announced
     float tickLowpassVoltage;   ///< Lowpass-filtered voltage for the tick announcement
-    float warnVoltage;          ///< Voltage where QGC will start to warn about low battery
     float warnLevelPercent;     ///< Warning level, in percent
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
