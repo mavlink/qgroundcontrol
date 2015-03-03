@@ -22,8 +22,13 @@ Rectangle {
     property int returnChannel: autopilot.parameters["RC_MAP_RETURN_SW"].value
     property int loiterChannel: autopilot.parameters["RC_MAP_LOITER_SW"].value
 
+    property bool inRedistribution: false
+
     readonly property int tileWidth: 150
     readonly property int tileHeight: 30
+
+    readonly property int progressBarHeight: 200
+
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
     FlightModesComponentController { id: controller }
@@ -66,7 +71,7 @@ Rectangle {
             id:     outerRect
             width:  tileWidth
             height: tileHeight
-            color:  qgcPal.windowShade
+            color:  qgcPal.windowShadeDark
             border.width: dragEnabled ? 1 : 0
             border.color: qgcPal.text
 
@@ -143,7 +148,7 @@ Rectangle {
         Rectangle {
             width:          tileWidth
             height:         tileHeight
-            color:          qgcPal.windowShade
+            color:          qgcPal.windowShadeDark
             border.width:   tileDragEnabled ? 1 : 0
             border.color:   qgcPal.text
             visible:        tileVisible
@@ -188,6 +193,104 @@ Rectangle {
         }
     }
 
+    onModeChannelChanged: if (!inRedistribution) redistributeThresholds()
+    onReturnChannelChanged: if (!inRedistribution) redistributeThresholds()
+    onLoiterChannelChanged: if (!inRedistribution) redistributeThresholds()
+    onPosCtlChannelChanged: if (!inRedistribution) redistributeThresholds()
+
+    function redistributeThresholds() {
+        if (modeChannel != 0) {
+            var positions = 3  // Manual/Assist/Auto always exist
+
+            var returnOnModeSwitch = modeChannel == returnChannel
+            var loiterOnModeSwitch = modeChannel == loiterChannel
+            var posCtlOnModeSwitch = modeChannel == posCtlChannel
+
+            positions += returnOnModeSwitch ? 1 : 0
+            positions += loiterOnModeSwitch ? 1 : 0
+            positions += posCtlOnModeSwitch ? 1 : 0
+
+            var increment = 1.0 / positions
+            var currentThreshold = 0.0
+
+            // Make sure we don't re-enter
+            inRedistribution = true
+
+            currentThreshold += increment
+            autopilot.parameters["RC_ASSIST_TH"].value = currentThreshold
+            if (posCtlOnModeSwitch) {
+                currentThreshold += increment
+                autopilot.parameters["RC_POSCTL_TH"].value = currentThreshold
+            }
+            currentThreshold += increment
+            autopilot.parameters["RC_AUTO_TH"].value = currentThreshold
+            if (loiterOnModeSwitch) {
+                currentThreshold += increment
+                autopilot.parameters["RC_LOITER_TH"].value = currentThreshold
+            }
+            if (returnOnModeSwitch) {
+                currentThreshold += increment
+                autopilot.parameters["RC_RETURN_TH"].value = currentThreshold
+            }
+
+            inRedistribution = false
+        }
+
+        if (returnChannel != 0 && returnChannel != modeChannel) {
+            var positions = 2  // On/off always exist
+
+            var loiterOnReturnSwitch = returnChannel == loiterChannel
+
+            positions += loiterOnReturnSwitch ? 1 : 0
+
+            var increment = 1.0 / positions
+            var currentThreshold = 0.0
+
+            // Make sure we don't re-enter
+            inRedistribution = true
+
+            if (loiterOnReturnSwitch) {
+                currentThreshold += increment
+                autopilot.parameters["RC_LOITER_TH"].value = currentThreshold
+            }
+            currentThreshold += increment
+            autopilot.parameters["RC_RETURN_TH"].value = currentThreshold
+
+            inRedistribution = false
+        }
+
+        if (loiterChannel != 0 && loiterChannel != modeChannel && loiterChannel != returnChannel) {
+            var positions = 2  // On/off always exist
+
+            var increment = 1.0 / positions
+            var currentThreshold = 0.0
+
+            // Make sure we don't re-enter
+            inRedistribution = true
+
+            currentThreshold += increment
+            autopilot.parameters["RC_LOITER_TH"].value = currentThreshold
+
+            inRedistribution = false
+        }
+
+        if (posCtlChannel != 0 & posCtlChannel != modeChannel) {
+            var positions = 2  // On/off always exist
+
+            var increment = 1.0 / positions
+            var currentThreshold = 0.0
+
+            // Make sure we don't re-enter
+            inRedistribution = true
+
+            currentThreshold += increment
+            autopilot.parameters["RC_POSCTL_TH"].value = currentThreshold
+
+            inRedistribution = false
+        }
+
+    }
+
     Column {
         anchors.fill: parent
 
@@ -201,8 +304,8 @@ Rectangle {
         QGCLabel {
             width: parent.width
             text: "Flight Mode switches can be assigned to any channel which is not currently being used for attitude control. All channels are displayed below. " +
-                "You can drag switches from the Unassigned Switches section below to a channel and drop it there. You can also drag switches assigned to a channel " +
-                "to another channel or back to the Unassigned Switches section. This Switch Display section will show you the results of your Flight Mode setup."
+                "You can drag Flight Modes from the Flight Modes section below to a channel and drop it there. You can also drag switches assigned to a channel " +
+                "to another channel or back to the Unassigned Switches section. The Switch Display section at the very bottom will show you the results of your Flight Mode setup."
             wrapMode: Text.WordWrap
         }
 
@@ -240,13 +343,13 @@ Rectangle {
                     width:  tileWidth
                     height: channelCol.implicitHeight
 
-                    color:  qgcPal.windowShade
+                    color:  qgcPal.windowShadeDark
 
                     states: [
                         State {
                             when: dropArea.containsDrag && dropArea.dropAllowed
                             PropertyChanges {
-                                target: channelTarget
+                                target: channelHeader
                                 color: "red"
                             }
                         }
@@ -256,11 +359,20 @@ Rectangle {
                         id:         channelCol
                         spacing:    3
 
-                        QGCLabel {
-                            text: "Channel " + (modelData + 1)
+                        Rectangle {
+                            id: channelHeader
+                            width:  tileWidth
+                            height: tileHeight
+                            color:  qgcPal.windowShade
+
+                            QGCLabel {
+                                verticalAlignment:      Text.AlignVCenter
+                                horizontalAlignment:    Text.AlignHCenter
+                                text:                   "Channel " + (modelData + 1) + (nonFlightModeMapping ? ": Unavailable" : "")
+                            }
                         }
                         Loader {
-                            property string tileLabel:      "Unassigned"
+                            property string tileLabel:      "Available"
                             property bool tileVisible:      visible
                             property bool tileDragEnabled:  false
 
@@ -324,7 +436,7 @@ Rectangle {
                             sourceComponent:    assignedModeTileComponent
                         }
                         Loader {
-                            property string tileLabel:      "Mode Switch"
+                            property string tileLabel:      "Main Mode"
                             property bool tileVisible:      visible
                             property bool tileDragEnabled:  true
                             property string tileParam:      "RC_MAP_MODE_SW"
@@ -333,16 +445,7 @@ Rectangle {
                             sourceComponent:    assignedModeTileComponent
                         }
                         Loader {
-                            property string tileLabel:      "PosCtl Switch"
-                            property bool tileVisible:      visible
-                            property bool tileDragEnabled:  true
-                            property string tileParam:      "RC_MAP_POSCTL_SW"
-
-                            visible:            posCtlMapped
-                            sourceComponent:    assignedModeTileComponent
-                        }
-                        Loader {
-                            property string tileLabel:      "Return Switch"
+                            property string tileLabel:      "Return"
                             property bool tileVisible:      visible
                             property bool tileDragEnabled:  true
                             property string tileParam:      "RC_MAP_RETURN_SW"
@@ -351,12 +454,21 @@ Rectangle {
                             sourceComponent:    assignedModeTileComponent
                         }
                         Loader {
-                            property string tileLabel:      "Loiter Switch"
+                            property string tileLabel:      "Loiter"
                             property bool tileVisible:      visible
                             property bool tileDragEnabled:  true
                             property string tileParam:      "RC_MAP_LOITER_SW"
 
                             visible:            loiterMapped
+                            sourceComponent:    assignedModeTileComponent
+                        }
+                        Loader {
+                            property string tileLabel:      "PosCtl"
+                            property bool tileVisible:      visible
+                            property bool tileDragEnabled:  true
+                            property string tileParam:      "RC_MAP_POSCTL_SW"
+
+                            visible:            posCtlMapped
                             sourceComponent:    assignedModeTileComponent
                         }
                     }
@@ -379,29 +491,29 @@ Rectangle {
         Item { height: 20; width: 10 } // spacer
 
         QGCLabel {
-            text: "Unassigned Switches"
+            text: "Flight Modes"
         }
         Flow {
             width: parent.width
             spacing: 5
 
             Loader {
-                property string tileLabel: "Mode Switch"
+                property string tileLabel: "Main Mode"
                 property string tileParam: "RC_MAP_MODE_SW"
                 sourceComponent: unassignedModeTileComponent
             }
             Loader {
-                property string tileLabel: "Return Switch"
+                property string tileLabel: "Return"
                 property string tileParam: "RC_MAP_RETURN_SW"
                 sourceComponent: unassignedModeTileComponent
             }
             Loader {
-                property string tileLabel: "Loiter Switch"
+                property string tileLabel: "Loiter"
                 property string tileParam: "RC_MAP_LOITER_SW"
                 sourceComponent: unassignedModeTileComponent
             }
             Loader {
-                property string tileLabel: "PosCtl Switch"
+                property string tileLabel: "PosCtl"
                 property string tileParam: "RC_MAP_POSCTL_SW"
                 sourceComponent: unassignedModeTileComponent
             }
@@ -412,104 +524,219 @@ Rectangle {
         QGCLabel {
             text: "Switch Display"
         }
-        Flow {
-            width: parent.width
-            spacing: 20
+        Row {
+            property bool modeSwitchVisible: modeChannel != 0
+            property bool returnSwitchVisible: returnChannel != 0 && returnChannel != modeChannel
+            property bool loiterSwitchVisible: loiterChannel != 0 && loiterChannel != modeChannel && loiterChannel != returnChannel
+            property bool posCtlSwitchVisible: posCtlChannel != 0 && posCtlChannel != modeChannel
+
+            width:      parent.width
+            spacing:    20
 
             Column {
-                visible: modeChannel != 0
+                visible: parent.modeSwitchVisible
 
                 QGCLabel { text: "Mode Switch" }
-                QGCLabel {
-                    text: "  Auto"
-                    visible: modeChannel != returnChannel && modeChannel != loiterChannel
+
+                Row {
+                    Item {
+                        height: progressBarHeight
+                        width:  150
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_AUTO_TH"].value)) - (implicitHeight / 2)
+                            visible:                modeChannel != returnChannel && modeChannel != loiterChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_RETURN_TH"].value)) - (implicitHeight / 2)
+                            visible:                modeChannel == returnChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Return"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_LOITER_TH"].value)) - (implicitHeight / 2)
+                            visible:                modeChannel == loiterChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Loiter"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_AUTO_TH"].value)) - (implicitHeight / 2)
+                            visible:                modeChannel == loiterChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Mission"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_AUTO_TH"].value)) - (implicitHeight / 2)
+                            visible:                modeChannel == returnChannel && modeChannel != loiterChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Loiter/Mission"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_ASSIST_TH"].value)) - (implicitHeight / 2)
+                            visible:                modeChannel != posCtlChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Assist"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_POSCTL_TH"].value)) - (implicitHeight / 2)
+                            visible:                modeChannel == posCtlChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Assist: PosCtl"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_ASSIST_TH"].value)) - (implicitHeight / 2)
+                            visible:                modeChannel == posCtlChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Assist: AltCtl"
+                        }
+
+                        QGCLabel {
+                            width:              parent.width
+                            y:                  parent.height - (implicitHeight / 2)
+                            text:               "Manual"
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
+
+                    ProgressBar {
+                        height:         progressBarHeight
+                        orientation:    Qt.Vertical
+                        value:          1
+                    }
                 }
-                QGCLabel {
-                    text: "  Auto: Return";
-                    visible: modeChannel == returnChannel
-                }
-                QGCLabel {
-                    text: "  Auto: Loiter";
-                    visible: modeChannel == loiterChannel
-                }
-                QGCLabel {
-                    text: "  Auto: Mission";
-                    visible: modeChannel == loiterChannel
-                }
-                QGCLabel {
-                    text: "  Auto: Loiter/Mission";
-                    visible: modeChannel == returnChannel && modeChannel != loiterChannel
-                }
-                QGCLabel {
-                    text: "  Assist"
-                    visible: modeChannel != posCtlChannel
-                }
-                QGCLabel {
-                    text: "  Assist: PosCtl";
-                    visible: modeChannel == posCtlChannel
-                }
-                QGCLabel {
-                    text: "  Assist: AltCtl";
-                    visible: modeChannel == posCtlChannel
-                }
-                QGCLabel { text: "  Manual" }
             }
 
             Column {
-                visible: returnChannel != 0 && returnChannel != modeChannel
+                visible: parent.returnSwitchVisible
 
                 QGCLabel { text: "Return Switch" }
-                QGCLabel {
-                    text: "  Auto: Return";
-                }
-                QGCLabel {
-                    text: "  Auto: Loiter";
-                    visible: returnChannel == loiterChannel
-                }
-                QGCLabel {
-                    text: "  Auto: Mission";
-                    visible: returnChannel == loiterChannel
-                }
-                QGCLabel {
-                    text: "  Auto: Loiter/Mission";
-                    visible: returnChannel != loiterChannel
-                }
-                QGCLabel {
-                    text: "  Assist: PosCtl";
-                    visible: returnChannel == posCtlChannel
-                }
-                QGCLabel {
-                    text: "  Assist: AltCtl";
-                    visible: returnChannel == posCtlChannel
+
+                Row {
+                    Item {
+                        height: progressBarHeight
+                        width:  150
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_RETURN_TH"].value)) - (implicitHeight / 2)
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Return"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_LOITER_TH"].value)) - (implicitHeight / 2)
+                            visible:                returnChannel == loiterChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Loiter"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      parent.height - (implicitHeight / 2)
+                            visible:                returnChannel == loiterChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Mission"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      parent.height - (implicitHeight / 2)
+                            visible:                returnChannel != loiterChannel
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Return Off"
+                        }
+                    }
+
+                    ProgressBar {
+                        height:         progressBarHeight
+                        orientation:    Qt.Vertical
+                        value:          1
+                    }
                 }
             }
 
             Column {
-                visible: loiterChannel != 0 && loiterChannel != modeChannel && loiterChannel != returnChannel
+                visible: parent.loiterSwitchVisible
 
                 QGCLabel { text: "Loiter Switch" }
-                QGCLabel {
-                    text: "  Auto: Loiter";
-                }
-                QGCLabel {
-                    text: "  Auto: Mission";
-                }
-                QGCLabel {
-                    text: "  Assist: PosCtl";
-                    visible: loiterChannel == posCtlChannel
-                }
-                QGCLabel {
-                    text: "  Assist: AltCtl";
-                    visible: loiterChannel == posCtlChannel
+
+                Row {
+                    Item {
+                        height: progressBarHeight
+                        width:  150
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_LOITER_TH"].value)) - (implicitHeight / 2)
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Loiter"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      parent.height - (implicitHeight / 2)
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Auto: Mission"
+                        }
+                    }
+
+                    ProgressBar {
+                        height:         progressBarHeight
+                        orientation:    Qt.Vertical
+                        value:          1
+                    }
                 }
             }
 
             Column {
-                visible: posCtlChannel != 0 && posCtlChannel != modeChannel && posCtlChannel != loiterChannel && posCtlChannel != returnChannel
+                visible: parent.posCtlSwitchVisible
 
                 QGCLabel { text: "PosCtl Switch" }
-                QGCLabel { text: "  Assist: PosCtl" }
-                QGCLabel { text: "  Assist: AltCtl" }
+
+                Row {
+                    Item {
+                        height: progressBarHeight
+                        width:  150
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      (parent.height * (1.0 - autopilot.parameters["RC_POSCTL_TH"].value)) - (implicitHeight / 2)
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Assist: PosCtl"
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            y:                      parent.height - (implicitHeight / 2)
+                            horizontalAlignment:    Text.AlignRight
+                            text:                   "Assist: AltCtl"
+                        }
+                    }
+
+                    ProgressBar {
+                        height:         progressBarHeight
+                        orientation:    Qt.Vertical
+                        value:          1
+                    }
+                }
             }
         }
     }
