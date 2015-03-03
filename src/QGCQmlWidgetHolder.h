@@ -55,6 +55,9 @@ public:
     
     void setContextPropertyObject(const QString& name, QObject* object);
 
+    /// Get Root Context
+    QQmlContext* getRootContext();
+
 private:
     Ui::QGCQmlWidgetHolder _ui;
 };

@@ -60,6 +60,7 @@ private slots:
 private:
     void _editLink(int row);
     void _fixUnnamed(LinkConfiguration* config);
+    void _updateButtons();
 
     Ui::QGCLinkConfiguration* _ui;
     LinkViewModel*            _viewModel;
