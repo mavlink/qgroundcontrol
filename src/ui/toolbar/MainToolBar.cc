@@ -67,10 +67,10 @@ MainToolBar::MainToolBar()
     QScreen *srn = QGuiApplication::screens().at(0); // TODO: Find current monitor as opposed to picking first one
     _dotsPerInch = (qreal)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
 
-    setContextProperty("mainToolBar", this);
+    setContextPropertyObject("mainToolBar", this);
     setSource(QUrl::fromUserInput("qrc:/qml/MainToolBar.qml"));
     setVisible(true);
-    // Configure the toolbar for the current default UAS (which is none as we just booted)
+    // Configure the toolbar for the current default UAS (which should be none as we just booted)
     _setActiveUAS(UASManager::instance()->getActiveUAS());
     emit configListChanged();
     emit heartbeatTimeoutChanged(_currentHeartbeatTimeout);
