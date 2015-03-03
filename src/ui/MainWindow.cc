@@ -143,7 +143,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     loadSettings();
     emit initStatusChanged(tr("Setting up user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     _ui.setupUi(this);
-    setMinimumWidth(1024);
+    setMinimumWidth(910);
     configureWindowName();
 
     // Setup central widget with a layout to hold the views

@@ -69,8 +69,10 @@ class UASMessageViewRollDown : public UASMessageView
 {
     Q_OBJECT
 public:
-    explicit UASMessageViewRollDown(QWidget *parent, MainToolBar* toolBar);
+    explicit UASMessageViewRollDown(QWidget *parent);
     ~UASMessageViewRollDown();
+signals:
+    void closeWindow();
 public slots:
     void handleTextMessage(UASMessage* message);
 protected:

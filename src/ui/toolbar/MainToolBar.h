@@ -106,7 +106,6 @@ public:
     double        dotsPerInch            () { return _dotsPerInch; }
 
     void          setCurrentView         (int currentView);
-    void          leaveMessageView       ();
 
 signals:
     void connectionCountChanged         (int count);
@@ -143,6 +142,7 @@ private slots:
     void _updateCurrentWaypoint         (quint16 id);
     void _updateWaypointDistance        (double distance);
     void _setSatelliteCount             (double val, QString name);
+    void _leaveMessageView              ();
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
@@ -170,7 +170,7 @@ private:
     int             _satelliteCount;
     QStringList     _connectedList;
     qreal           _dotsPerInch;
-    // TODO Convert this to a signal
+
     UASMessageViewRollDown* _rollDownMessages;
 };
 

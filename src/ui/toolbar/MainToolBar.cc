@@ -55,9 +55,9 @@ MainToolBar::MainToolBar()
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("MainToolBar");
-    setMinimumHeight(64);
-    setMaximumHeight(64);
-    setMinimumWidth(1024);
+    setMinimumHeight(40);
+    setMaximumHeight(40);
+    setMinimumWidth(910);
     // Get rid of layout default margins
     QLayout* pl = layout();
     if(pl) {
@@ -181,10 +181,11 @@ void MainToolBar::onEnterMessageArea(int x, int y)
         y = height() / 3;
         // Put dialog on top of the message alert icon
         QPoint p = mapToGlobal(QPoint(x,y));
-        _rollDownMessages = new UASMessageViewRollDown(MainWindow::instance(),this);
+        _rollDownMessages = new UASMessageViewRollDown(MainWindow::instance());
         _rollDownMessages->setAttribute(Qt::WA_DeleteOnClose);
         _rollDownMessages->move(mapFromGlobal(p));
         _rollDownMessages->setMinimumSize(dialogWidth,200);
+        connect(_rollDownMessages, &UASMessageViewRollDown::closeWindow, this, &MainToolBar::_leaveMessageView);
         _rollDownMessages->show();
     }
 }
@@ -198,7 +199,7 @@ QString MainToolBar::getMavIconColor()
         return QString("black");
 }
 
-void MainToolBar::leaveMessageView()
+void MainToolBar::_leaveMessageView()
 {
     // Mouse has left the message window area (and it has closed itself)
     _rollDownMessages = NULL;

@@ -111,10 +111,9 @@ void UASMessageViewWidget::handleTextMessage(UASMessage *message)
   UASMessageViewRollDown
 -------------------------------------------------------------------------------------*/
 
-UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent, MainToolBar *toolBar)
+UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent)
     : UASMessageView(parent)
 {
-    _toolBar = toolBar;
     setAttribute(Qt::WA_TranslucentBackground);
     setStyleSheet("background-color: rgba(0%,0%,0%,80%); border: 2px;");
     QPlainTextEdit *msgWidget = ui()->plainTextEdit;
@@ -157,6 +156,6 @@ void UASMessageViewRollDown::handleTextMessage(UASMessage *message)
 void UASMessageViewRollDown::leaveEvent(QEvent * event)
 {
     Q_UNUSED(event);
-    _toolBar->leaveMessageView();
+    emit closeWindow();
     close();
 }

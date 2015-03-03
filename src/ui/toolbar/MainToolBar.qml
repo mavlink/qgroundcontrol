@@ -102,7 +102,7 @@ Rectangle {
 
         QGCButton {
             id: setupButton
-            width: 100
+            width: 90
             height: cellHeight
             exclusiveGroup: mainActionGroup
             text: qsTr("1. Setup")
@@ -115,7 +115,7 @@ Rectangle {
 
         QGCButton {
             id: planButton
-            width: 100
+            width: 90
             height: cellHeight
             exclusiveGroup: mainActionGroup
             text: qsTr("2. Plan")
@@ -128,7 +128,7 @@ Rectangle {
 
         QGCButton {
             id: flyButton
-            width: 100
+            width: 90
             height: cellHeight
             exclusiveGroup: mainActionGroup
             text: qsTr("3. Fly")
@@ -141,7 +141,7 @@ Rectangle {
 
         QGCButton {
             id: analyzeButton
-            width: 100
+            width: 90
             height: cellHeight
             exclusiveGroup: mainActionGroup
             text: qsTr("4. Analyze")
@@ -153,7 +153,7 @@ Rectangle {
         }
 
         Rectangle {
-            width: 8
+            width: 4
             height: cellHeight
             color: "#00000000"
             border.color: "#00000000"
@@ -162,7 +162,7 @@ Rectangle {
 
         Rectangle {
             id: messages
-            width: 70
+            width: (mainToolBar.messageCount > 99) ? 60 : 50
             height: cellHeight
             visible: (mainToolBar.connectionCount > 0) && (mainToolBar.messageType !== MainToolBar.MessageNone)
             anchors.verticalCenter: parent.verticalCenter
@@ -170,6 +170,7 @@ Rectangle {
             radius: cellRadius
             border.color: "#00000000"
             border.width: 0
+            property bool showTriangle: false
 
             Image {
                 id: messageIcon
@@ -200,19 +201,47 @@ Rectangle {
                 }
             }
 
+            Image {
+                id: dropDown
+                source: "QGroundControl/Controls/arrow-down.png"
+                visible: (messages.showTriangle)
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.bottomMargin: 3
+                anchors.rightMargin: 3
+            }
+
+            Timer {
+                id: mouseOffTimer
+                interval: 2000;
+                running: false;
+                repeat: false
+                onTriggered: {
+                    messages.showTriangle = false;
+                }
+            }
+
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onEntered: {
+                    messages.showTriangle = true;
+                    mouseOffTimer.start();
+                }
+                onExited: {
+                    messages.showTriangle = false;
+                }
+                onClicked: {
                     var p = mapToItem(toolBarHolder, mouseX, mouseY);
                     mainToolBar.onEnterMessageArea(p.x, p.y);
                 }
             }
+
         }
 
         Rectangle {
             id: mavIcon
-            width: cellHeight + 10
+            width: cellHeight
             height: cellHeight
             visible: showMavStatus()
             anchors.verticalCenter: parent.verticalCenter
@@ -266,7 +295,7 @@ Rectangle {
 
         Rectangle {
             id: battery
-            width: 90
+            width: 80
             height: cellHeight
             visible: showMavStatus()
             anchors.verticalCenter: parent.verticalCenter
@@ -281,7 +310,7 @@ Rectangle {
                 fillMode: Image.PreserveAspectFit
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
-                anchors.leftMargin: 10
+                anchors.leftMargin: 6
                 mipmap: true
                 smooth: true
             }
@@ -293,7 +322,7 @@ Rectangle {
                 font.weight: Font.DemiBold
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
-                anchors.rightMargin: 10
+                anchors.rightMargin: 8
                 horizontalAlignment: Text.AlignRight
                 color: colorWhite
             }
@@ -303,12 +332,13 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: cellSpacerSize
             visible: showMavStatus()
-            width: 100
+            height: cellHeight * 0.75
+            width: 80
 
             Rectangle {
                 id: armedStatus
                 width: parent.width
-                height: toolBarHolder.height / 6
+                height: parent.height / 2
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "#00000000"
                 border.color: "#00000000"
@@ -320,6 +350,7 @@ Rectangle {
                     font.pointSize: 12 * dpiFactor
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
                     color: (mainToolBar.systemArmed) ? colorRed : colorGreen
                 }
             }
@@ -327,7 +358,7 @@ Rectangle {
             Rectangle {
                 id: stateStatus
                 width: parent.width
-                height: toolBarHolder.height / 6
+                height: parent.height / 2
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "#00000000"
                 border.color: "#00000000"
@@ -339,27 +370,30 @@ Rectangle {
                     font.pointSize: 12 * dpiFactor
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: (mainToolBar.currentState == "STANDBY") ? colorGreen : colorRed
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: (mainToolBar.currentState === "STANDBY") ? colorGreen : colorRed
                 }
             }
 
-            Rectangle {
-                id: modeStatus
-                width: parent.width
-                height: toolBarHolder.height / 6
-                anchors.horizontalCenter: parent.horizontalCenter
-                color: "#00000000"
-                border.color: "#00000000"
-                border.width: 0
+        }
 
-                Text {
-                    id: modeStatusText
-                    text: mainToolBar.currentMode
-                    font.pointSize: 12 * dpiFactor
-                    font.weight: Font.DemiBold
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: qgcPal.text
-                }
+        Rectangle {
+            id: modeStatus
+            width: 90
+            height: cellHeight
+            visible: showMavStatus()
+            color: "#00000000"
+            border.color: "#00000000"
+            border.width: 0
+
+            Text {
+                id: modeStatusText
+                text: mainToolBar.currentMode
+                font.pointSize: 12 * dpiFactor
+                font.weight: Font.DemiBold
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                color: qgcPal.text
             }
         }
 
@@ -415,7 +449,7 @@ Rectangle {
 
         QGCButton {
             id: connectButton
-            width: 100
+            width: 90
             height: cellHeight
             visible: (mainToolBar.connectionCount === 0 || mainToolBar.connectionCount === 1)
             text: (mainToolBar.configList.length > 0) ? (mainToolBar.connectionCount === 0) ? qsTr("Connect") : qsTr("Disconnect") : qsTr("Add Link")
@@ -442,7 +476,7 @@ Rectangle {
 
         QGCButton {
             id: multidisconnectButton
-            width: 100
+            width: 90
             height: cellHeight
             text: qsTr("Disconnect")
             visible: (mainToolBar.connectionCount > 1)
