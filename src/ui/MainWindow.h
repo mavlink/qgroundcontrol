@@ -368,7 +368,7 @@ private:
     QList<QObject*>         _commsWidgetList;
     QWidget*                _currentViewWidget;     ///< Currently displayed view widget
     QSplashScreen*          _splashScreen;          ///< Splash screen, NULL is splash screen not currently being shown
-    VIEW_SECTIONS           _currentView;       ///< Currently displayed view
+    VIEW_SECTIONS           _currentView;           ///< Currently displayed view
     Ui::MainWindow          _ui;
     QString                 _screenFileName;
 

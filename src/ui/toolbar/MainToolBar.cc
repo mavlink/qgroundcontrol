@@ -50,8 +50,8 @@ MainToolBar::MainToolBar()
     , _currentMessageCount(0)
     , _currentMessageType(MessageNone)
     , _satelliteCount(-1)
-    , _rollDownMessages(0)
     , _dotsPerInch(72.0)
+    , _rollDownMessages(0)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("MainToolBar");
@@ -179,7 +179,7 @@ void MainToolBar::onEnterMessageArea(int x, int y)
         x = x - (dialogWidth >> 1);
         if(x < 0) x = 0;
         y = height() / 3;
-        // Put dialog at the top and in the middle of main window
+        // Put dialog on top of the message alert icon
         QPoint p = mapToGlobal(QPoint(x,y));
         _rollDownMessages = new UASMessageViewRollDown(MainWindow::instance(),this);
         _rollDownMessages->setAttribute(Qt::WA_DeleteOnClose);
@@ -191,7 +191,7 @@ void MainToolBar::onEnterMessageArea(int x, int y)
 
 QString MainToolBar::getMavIconColor()
 {
-    // TODO: Not using because not only the colors are ghastly, it doesn't respect dark/light pallet
+    // TODO: Not using because not only the colors are ghastly, it doesn't respect dark/light palette
     if(_mav)
         return _mav->getColor().name();
     else
@@ -236,7 +236,7 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
     if (_mav == active) {
         return;
     }
-    // If switching UASes, disconnect the existing one.
+    // If switching the UAS, disconnect the existing one.
     if (_mav)
     {
         disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageReceived,  this, &MainToolBar::_handleTextMessage);

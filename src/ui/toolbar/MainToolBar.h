@@ -169,8 +169,9 @@ private:
     MessageType_t   _currentMessageType;
     int             _satelliteCount;
     QStringList     _connectedList;
-    UASMessageViewRollDown* _rollDownMessages;
     qreal           _dotsPerInch;
+    // TODO Convert this to a signal
+    UASMessageViewRollDown* _rollDownMessages;
 };
 
 #endif // MAINTOOLBAR_H

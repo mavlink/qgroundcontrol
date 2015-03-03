@@ -290,7 +290,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
         // starts. I looked everywhere and I could not find a solution. What I did notice was
         // that if any other window gets focus, the menu comes up when you come back to QGC.
         // That is, if you were to click on another window and then back to QGC, the menus
-        // would appear. This hack below creates a 0x0 dialog and immediatelly closes it.
+        // would appear. This hack below creates a 0x0 dialog and immediately closes it.
         // That works around the issue and it will do until I find the root of the problem.
         QDialog qd(this);
         qd.show();
@@ -789,7 +789,7 @@ void MainWindow::configureWindowName()
     setWindowTitle(windowname);
 }
 
-// TODO: This is no used
+// TODO: This is not used
 void MainWindow::startVideoCapture()
 {
     // TODO: What is this? What kind of "Video" is saved to bmp?
@@ -806,14 +806,14 @@ void MainWindow::startVideoCapture()
     videoTimer = new QTimer(this);
 }
 
-// TODO: This is no used
+// TODO: This is not used
 void MainWindow::stopVideoCapture()
 {
     videoTimer->stop();
     // TODO Convert raw images to PNG
 }
 
-// TODO: This is no used
+// TODO: This is not used
 void MainWindow::saveScreen()
 {
     QPixmap window = QPixmap::grabWindow(this->winId());
