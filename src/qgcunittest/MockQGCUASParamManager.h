@@ -77,7 +77,7 @@ public:
     
 public:
     // Unimplemented QGCUASParamManagerInterface overrides
-    virtual QList<int> getComponentForParam(const QString& parameter) const { Q_ASSERT(false); Q_UNUSED(parameter); return _bogusQListInt; }
+    virtual QList<int> getComponentForParam(const QString& parameter) const;
     virtual void setParamDescriptions(const QMap<QString,QString>& paramDescs) { Q_ASSERT(false); Q_UNUSED(paramDescs); }
     virtual int countPendingParams() { Q_ASSERT(false); return 0; }
     virtual UASParameterDataModel* dataModel() { Q_ASSERT(false); return NULL; }
