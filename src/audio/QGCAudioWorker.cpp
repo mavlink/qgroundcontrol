@@ -141,7 +141,7 @@ void QGCAudioWorker::say(QString inText, int severity)
 
 #else
         // Make sure there isn't an unused variable warning when speech output is disabled
-        Q_UNUSED(text);
+        Q_UNUSED(inText);
 #endif
     }
 }
