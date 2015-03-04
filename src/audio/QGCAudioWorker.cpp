@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QCoreApplication>
 #include <QFile>
+#include <QRegularExpression>
 
 #include "QGC.h"
 #include "QGCAudioWorker.h"
@@ -89,7 +90,7 @@ QGCAudioWorker::~QGCAudioWorker()
 #endif
 }
 
-void QGCAudioWorker::say(QString text, int severity)
+void QGCAudioWorker::say(QString inText, int severity)
 {
 	static bool threadInit = false;
 	if (!threadInit) {
@@ -99,6 +100,7 @@ void QGCAudioWorker::say(QString text, int severity)
 
     if (!muted)
     {
+        QString text = _fixMillisecondString(inText);
         // Prepend high priority text with alert beep
         if (severity < GAudioOutput::AUDIO_SEVERITY_CRITICAL) {
             beep();
@@ -139,7 +141,7 @@ void QGCAudioWorker::say(QString text, int severity)
 
 #else
         // Make sure there isn't an unused variable warning when speech output is disabled
-        Q_UNUSED(text);
+        Q_UNUSED(inText);
 #endif
     }
 }
@@ -169,4 +171,41 @@ void QGCAudioWorker::beep()
 bool QGCAudioWorker::isMuted()
 {
     return this->muted;
+}
+
+bool QGCAudioWorker::_getMillisecondString(const QString& string, QString& match, int& number) {
+    QRegularExpression re("([0-9]*ms)");
+    QRegularExpressionMatchIterator i = re.globalMatch(string);
+    while (i.hasNext()) {
+        QRegularExpressionMatch qmatch = i.next();
+        if (qmatch.hasMatch()) {
+            match = qmatch.captured(0);
+            number = qmatch.captured(0).replace("ms", "").toInt();
+            return true;
+        }
+    }
+    return false;
+}
+
+QString QGCAudioWorker::_fixMillisecondString(const QString& string) {
+    QString match;
+    QString newNumber;
+    QString result = string;
+    int number;
+    if(_getMillisecondString(string, match, number) && number > 1000) {
+        if(number < 60000) {
+            int seconds = number / 1000;
+            newNumber = QString("%1 second%2").arg(seconds).arg(seconds > 1 ? "s" : "");
+        } else {
+            int minutes = number / 60000;
+            int seconds = (number - (minutes * 60000)) / 1000;
+            if (!seconds) {
+                newNumber = QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
+            } else {
+                newNumber = QString("%1 minute%2 and %3 second%4").arg(minutes).arg(minutes > 1 ? "s" : "").arg(seconds).arg(seconds > 1 ? "s" : "");
+            }
+        }
+        result.replace(match, newNumber);
+    }
+    return result;
 }
