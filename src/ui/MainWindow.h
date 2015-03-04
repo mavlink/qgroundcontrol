@@ -116,8 +116,6 @@ public:
         return lowPowerMode;
     }
 
-    QList<QAction*> listLinkMenuActions();
-
     void hideSplashScreen(void);
 
     /// @brief Saves the last used connection
@@ -130,7 +128,6 @@ public:
 public slots:
     /** @brief Show the application settings */
     void showSettings();
-    bool configLink(LinkInterface *link);
     /** @brief Simulate a link */
     void simulateLink(bool simulate);
     /** @brief Set the currently controlled UAS */
@@ -238,8 +235,6 @@ protected:
     void loadSettings();
     void storeSettings();
 
-
-    LinkInterface* udpLink;
 
     QSettings settings;
     QActionGroup* centerStackActionGroup;
