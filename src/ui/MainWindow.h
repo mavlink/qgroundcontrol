@@ -219,6 +219,8 @@ public:
 
 protected:
 
+    bool event(QEvent *);
+
     typedef enum _VIEW_SECTIONS
     {
         VIEW_ENGINEER,         // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
