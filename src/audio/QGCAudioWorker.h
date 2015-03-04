@@ -50,6 +50,9 @@ protected:
     bool emergency;   ///< Emergency status flag
     QTimer *emergencyTimer;
     bool muted;
+private:
+    QString _fixMillisecondString(const QString& string);
+    bool _getMillisecondString(const QString& string, QString& match, int& number);
 };
 
 #endif // QGCAUDIOWORKER_H
