@@ -1022,28 +1022,6 @@ void MainWindow::showSettings()
     settings.exec();
 }
 
-bool MainWindow::configLink(LinkInterface *link)
-{
-    // Go searching for this link's configuration window
-    QList<QAction*> actions = ui.menuNetwork->actions();
-
-    bool found(false);
-
-    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
-
-    foreach (QAction* action, actions)
-    {
-        if (action->data().toInt() == linkID)
-        {
-            found = true;
-            action->trigger(); // Show the Link Config Dialog
-        }
-    }
-
-    return found;
-}
-
 void MainWindow::simulateLink(bool simulate) {
     if (simulate) {
         if (!simulationLink) {
@@ -1438,11 +1416,6 @@ void MainWindow::loadSimulationView()
         ui.actionSimulationView->setChecked(true);
         _loadCurrentViewState();
     }
-}
-
-QList<QAction*> MainWindow::listLinkMenuActions()
-{
-    return ui.menuNetwork->actions();
 }
 
 /// @brief Hides the spash screen if it is currently being shown
