@@ -95,6 +95,18 @@ public:
      * @brief Clear messages
      */
     void clearMessages();
+    /**
+     * @brief Get error message count (Resets count once read)
+     */
+    int getErrorCount();
+    /**
+     * @brief Get warning message count (Resets count once read)
+     */
+    int getWarningCount();
+    /**
+     * @brief Get normal message count (Resets count once read)
+     */
+    int getNormalCount();
 public slots:
     /**
      * @brief Set currently active UAS
@@ -120,6 +132,9 @@ private:
     UASInterface* _activeUAS;
     QVector<UASMessage*> _messages;
     QMutex _mutex;
+    int _errorCount;
+    int _warningCount;
+    int _normalCount;
 };
 
 #endif // QGCMESSAGEHANDLER_H

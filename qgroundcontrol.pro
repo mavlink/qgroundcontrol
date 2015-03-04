@@ -268,6 +268,7 @@ INCLUDEPATH += \
     src/ui/configuration \
     src/ui/px4_configuration \
     src/ui/main \
+    src/ui/toolbar \
     src/VehicleSetup \
     src/AutoPilotPlugins
 
@@ -493,7 +494,8 @@ HEADERS += \
     src/comm/LinkConfiguration.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCUDPLinkConfiguration.h \
-    src/uas/UASMessageHandler.h
+    src/uas/UASMessageHandler.h \
+    src/ui/toolbar/MainToolBar.h
 
 SOURCES += \
     src/main.cc \
@@ -633,7 +635,8 @@ SOURCES += \
     src/comm/LinkConfiguration.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
-    src/uas/UASMessageHandler.cc
+    src/uas/UASMessageHandler.cc \
+    src/ui/toolbar/MainToolBar.cc
 
 #
 # Unit Test specific configuration goes here

@@ -743,6 +743,7 @@ void QGCToolBar::_updateConfigurations()
  */
 void QGCToolBar::enterMessageLabel()
 {
+    /*
     // If not already there and messages are actually present
     if(!_rollDownMessages && UASMessageHandler::instance()->messages().count())
     {
@@ -753,6 +754,7 @@ void QGCToolBar::enterMessageLabel()
         _rollDownMessages->setMinimumSize(360,200);
         _rollDownMessages->show();
     }
+    */
 }
 
 /**

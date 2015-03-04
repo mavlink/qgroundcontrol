@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 18.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1"
+	 id="svg4264" sodipodi:docname="battery_0.svg" inkscape:version="0.91 r13725" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:svg="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="-142 87 326.3 620"
+	 enable-background="new -142 87 326.3 620" xml:space="preserve">
+<title  id="title4294">Battery</title>
+<sodipodi:namedview  inkscape:window-maximized="0" inkscape:window-y="65" inkscape:window-x="2776" inkscape:window-height="1259" inkscape:window-width="2003" fit-margin-bottom="0.02" fit-margin-right="0.02" inkscape:current-layer="layer1" inkscape:pageshadow="2" inkscape:document-units="in" inkscape:pageopacity="0.0" units="in" borderopacity="1.0" bordercolor="#666666" pagecolor="#ffffff" showgrid="false" inkscape:cy="387.50002" inkscape:zoom="1.4103225" inkscape:cx="115.31779" id="base" fit-margin-top="0.02" fit-margin-left="0.02" showborder="true">
+	</sodipodi:namedview>
+<path id="rect4970" inkscape:connector-curvature="0" fill="#E6E7E8" stroke="#E6E7E8" stroke-width="6" d="M-127.7,667.9v-502
+	c0-14.8,13.1-26.8,29.3-26.8h239.2c16.2,0,29.3,12,29.3,26.8v502c0,14.8-13.1,26.8-29.3,26.8H-98.4
+	C-114.6,694.7-127.7,682.7-127.7,667.9z"/>
+<path id="rect4360" inkscape:connector-curvature="0" fill="none" d="M-140.6,677.6V156.1c0-15.4,14.2-27.9,31.8-27.9h259.9
+	c17.6,0,31.8,12.6,31.8,27.9v521.5c0,15.4-14.2,27.9-31.8,27.9h-259.8C-126.3,705.5-140.6,693-140.6,677.6z"/>
+<g id="g4222" transform="translate(-127.22081,216.20249)">
+	
+		<path id="path4224" inkscape:connector-curvature="0" fill="#E6E7E8" stroke="#E6E7E8" stroke-width="6" stroke-miterlimit="10" d="
+		M231.3-81.3c0,2.2-1.7,3.9-3.9,3.9h-155c-2.2,0-3.9-1.7-3.9-3.9v-40.2c0-2.2,1.7-3.9,3.9-3.9h155c2.2,0,3.9,1.7,3.9,3.9L231.3-81.3
+		L231.3-81.3L231.3-81.3z"/>
+</g>
+<text transform="matrix(0.757 0 0 1 -80.0776 552.9648)" font-family="'Helvetica'" font-size="406.7761">X</text>
+</svg>
