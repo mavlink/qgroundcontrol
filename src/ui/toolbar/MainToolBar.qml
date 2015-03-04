@@ -40,8 +40,8 @@ Rectangle {
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
     property int cellSpacerSize: 4
-    property int cellHeight: 30
-    property int cellRadius: 3
+    property int cellHeight:     30
+    property int cellRadius:     3
     property double dpiFactor: (72.0 / mainToolBar.dotsPerInch);
 
     property var colorBlue:       "#1a6eaa"
@@ -117,324 +117,343 @@ Rectangle {
     }
 
     Row {
-        id: row1
-        height: cellHeight
-        anchors.left: parent.left
-        spacing:      cellSpacerSize
+        id:                     row1
+        height:                 cellHeight
+        anchors.left:           parent.left
+        spacing:                4
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 10
+        anchors.leftMargin:     10
 
-        ExclusiveGroup { id: mainActionGroup }
-
-        QGCButton {
-            id: setupButton
-            width: 90
-            height: cellHeight
-            exclusiveGroup: mainActionGroup
-            text: qsTr("1. Setup")
+        Row {
+            id:                     row11
+            height:                 cellHeight
+            spacing:                -12
             anchors.verticalCenter: parent.verticalCenter
-            checked: (mainToolBar.currentView === MainToolBar.ViewSetup)
-            onClicked: {
-                mainToolBar.onSetupView();
+
+            Connections {
+                target: mainToolBar
+                onRepaintRequestedChanged: {
+                    setupButton.repaintChevron = true;
+                    planButton.repaintChevron = true;
+                    flyButton.repaintChevron = true;
+                    analyzeButton.repaintChevron = true;
+                }
             }
-        }
 
-        QGCButton {
-            id: planButton
-            width: 90
-            height: cellHeight
-            exclusiveGroup: mainActionGroup
-            text: qsTr("2. Plan")
-            anchors.verticalCenter: parent.verticalCenter
-            checked: (mainToolBar.currentView === MainToolBar.ViewPlan)
-            onClicked: {
-                mainToolBar.onPlanView();
-            }
-        }
+            ExclusiveGroup { id: mainActionGroup }
 
-        QGCButton {
-            id: flyButton
-            width: 90
-            height: cellHeight
-            exclusiveGroup: mainActionGroup
-            text: qsTr("3. Fly")
-            anchors.verticalCenter: parent.verticalCenter
-            checked: (mainToolBar.currentView === MainToolBar.ViewFly)
-            onClicked: {
-                mainToolBar.onFlyView();
-            }
-        }
-
-        QGCButton {
-            id: analyzeButton
-            width: 90
-            height: cellHeight
-            exclusiveGroup: mainActionGroup
-            text: qsTr("4. Analyze")
-            anchors.verticalCenter: parent.verticalCenter
-            checked: (mainToolBar.currentView === MainToolBar.ViewAnalyze)
-            onClicked: {
-                mainToolBar.onAnalyzeView();
-            }
-        }
-
-        Rectangle {
-            width: 4
-            height: cellHeight
-            color: "#00000000"
-            border.color: "#00000000"
-            border.width: 0
-        }
-
-        Rectangle {
-            id: messages
-            width: (mainToolBar.newMessageCount > 99) ? 70 : 60
-            height: cellHeight
-            visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
-            anchors.verticalCenter: parent.verticalCenter
-            color:  getMessageColor()
-            radius: cellRadius
-            border.color: "#00000000"
-            border.width: 0
-            property bool showTriangle: false
-
-            Image {
-                id: messageIcon
-                source: getMessageIcon();
-                height: 16
-                fillMode: Image.PreserveAspectFit
+            QGCToolBarButton {
+                id: setupButton
+                width: 100
+                height: cellHeight
+                exclusiveGroup: mainActionGroup
+                text: qsTr("1. Setup")
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 10
+                checked: (mainToolBar.currentView === MainToolBar.ViewSetup)
+                onClicked: {
+                    mainToolBar.onSetupView();
+                }
+                z: 1000
             }
+
+            QGCToolBarButton {
+                id: planButton
+                width: 100
+                height: cellHeight
+                exclusiveGroup: mainActionGroup
+                text: qsTr("2. Plan")
+                anchors.verticalCenter: parent.verticalCenter
+                checked: (mainToolBar.currentView === MainToolBar.ViewPlan)
+                onClicked: {
+                    mainToolBar.onPlanView();
+                }
+                z: 900
+            }
+
+            QGCToolBarButton {
+                id: flyButton
+                width: 100
+                height: cellHeight
+                exclusiveGroup: mainActionGroup
+                text: qsTr("3. Fly")
+                anchors.verticalCenter: parent.verticalCenter
+                checked: (mainToolBar.currentView === MainToolBar.ViewFly)
+                onClicked: {
+                    mainToolBar.onFlyView();
+                }
+                z: 800
+            }
+
+            QGCToolBarButton {
+                id: analyzeButton
+                width: 100
+                height: cellHeight
+                exclusiveGroup: mainActionGroup
+                text: qsTr("4. Analyze")
+                anchors.verticalCenter: parent.verticalCenter
+                checked: (mainToolBar.currentView === MainToolBar.ViewAnalyze)
+                onClicked: {
+                    mainToolBar.onAnalyzeView();
+                }
+                z: 700
+            }
+
+        }
+
+        Row {
+            id:                     row12
+            height:                 cellHeight
+            spacing:                cellSpacerSize
+            anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
-                id: messageTextRect
+                id: messages
+                width: (mainToolBar.messageCount > 99) ? 70 : 60
+                height: cellHeight
+                visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                width: messages.width - messageIcon.width
-                Text {
-                    id: messageText
-                    text: (mainToolBar.newMessageCount > 0) ? mainToolBar.newMessageCount : ''
-                    font.pointSize: 14 * dpiFactor
-                    font.weight: Font.DemiBold
+                color:  getMessageColor()
+                radius: cellRadius
+                border.color: "#00000000"
+                border.width: 0
+                property bool showTriangle: false
+
+                Image {
+                    id: messageIcon
+                    source: getMessageIcon();
+                    height: 16
+                    fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    color: colorWhite
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
                 }
-            }
 
-            Image {
-                id: dropDown
-                source: "QGroundControl/Controls/arrow-down.png"
-                visible: (messages.showTriangle) && (mainToolBar.messageCount > 0)
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.bottomMargin: 3
-                anchors.rightMargin: 3
-            }
-
-            Timer {
-                id: mouseOffTimer
-                interval: 2000;
-                running: false;
-                repeat: false
-                onTriggered: {
-                    messages.showTriangle = false;
+                Rectangle {
+                    id: messageTextRect
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    width: messages.width - messageIcon.width
+                    Text {
+                        id: messageText
+                        text: (mainToolBar.messageCount > 0) ? mainToolBar.messageCount : ''
+                        font.pointSize: 14 * dpiFactor
+                        font.weight: Font.DemiBold
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        horizontalAlignment: Text.AlignHCenter
+                        color: colorWhite
+                    }
                 }
-            }
 
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                onEntered: {
-                    messages.showTriangle = true;
-                    mouseOffTimer.start();
+                Image {
+                    id: dropDown
+                    source: "QGroundControl/Controls/arrow-down.png"
+                    visible: (messages.showTriangle) && (mainToolBar.messageCount > 0)
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.bottomMargin: 3
+                    anchors.rightMargin: 3
                 }
-                onClicked: {
-                    if(mainToolBar.messageCount > 0) {
+
+                Timer {
+                    id: mouseOffTimer
+                    interval: 2000;
+                    running: false;
+                    repeat: false
+                    onTriggered: {
+                        messages.showTriangle = false;
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: {
+                        messages.showTriangle = true;
+                        mouseOffTimer.start();
+                    }
+                    onClicked: {
                         var p = mapToItem(toolBarHolder, mouseX, mouseY);
                         mainToolBar.onEnterMessageArea(p.x, p.y);
                     }
                 }
+
             }
-
-        }
-
-        Rectangle {
-            id: mavIcon
-            width: cellHeight
-            height: cellHeight
-            visible: showMavStatus() &&  (mainToolBar.showMav)
-            anchors.verticalCenter: parent.verticalCenter
-            color: colorBlue
-            radius: cellRadius
-            border.color: "#00000000"
-            border.width: 0
-            Image {
-                source: mainToolBar.systemPixmap
-                height: cellHeight * 0.75
-                fillMode: Image.PreserveAspectFit
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-        }
-
-        Rectangle {
-            id: satelitte
-            width: 60
-            height: cellHeight
-            visible: showMavStatus()  && (mainToolBar.showGPS)
-            anchors.verticalCenter: parent.verticalCenter
-            color:  getSatelliteColor();
-            radius: cellRadius
-            border.color: "#00000000"
-            border.width: 0
-
-            Image {
-                source: "qrc:/files/images/status/gps.svg";
-                height: 24
-                fillMode: Image.PreserveAspectFit
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                mipmap: true
-                smooth: true
-            }
-
-            Text {
-                id: satelitteText
-                text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
-                font.pointSize: 14 * dpiFactor
-                font.weight: Font.DemiBold
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: 10
-                horizontalAlignment: Text.AlignRight
-                color: colorWhite
-            }
-        }
-
-        Rectangle {
-            id: battery
-            width: 80
-            height: cellHeight
-            visible: showMavStatus() && (mainToolBar.showBattery)
-            anchors.verticalCenter: parent.verticalCenter
-            color:  (mainToolBar.batteryPercent > 40.0 || mainToolBar.batteryPercent < 0.01) ? colorGreen : colorRed
-            radius: cellRadius
-            border.color: "#00000000"
-            border.width: 0
-
-            Image {
-                source: getBatteryIcon();
-                height: 20
-                fillMode: Image.PreserveAspectFit
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 6
-                mipmap: true
-                smooth: true
-            }
-
-            Text {
-                id: batteryText
-                text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
-                font.pointSize: 14 * dpiFactor
-                font.weight: Font.DemiBold
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: 8
-                horizontalAlignment: Text.AlignRight
-                color: colorWhite
-            }
-        }
-
-        Column {
-            visible: showMavStatus()
-            height:  cellHeight * 0.85
-            width:   80
-            anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
-                id: armedStatus
-                width: parent.width
-                height: parent.height / 2
-                anchors.horizontalCenter: parent.horizontalCenter
+                id: mavIcon
+                width: cellHeight
+                height: cellHeight
+                visible: showMavStatus() &&  (mainToolBar.showMav)
+                anchors.verticalCenter: parent.verticalCenter
+                color: colorBlue
+                radius: cellRadius
+                border.color: "#00000000"
+                border.width: 0
+                Image {
+                    source: mainToolBar.systemPixmap
+                    height: cellHeight * 0.75
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Rectangle {
+                id: satelitte
+                width: 60
+                height: cellHeight
+                visible: showMavStatus() && (mainToolBar.showGPS)
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getSatelliteColor();
+                radius: cellRadius
+                border.color: "#00000000"
+                border.width: 0
+
+                Image {
+                    source: "qrc:/files/images/status/gps.svg";
+                    height: 24
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    mipmap: true
+                    smooth: true
+                }
+
+                Text {
+                    id: satelitteText
+                    text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
+                    font.pointSize: 14 * dpiFactor
+                    font.weight: Font.DemiBold
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: 10
+                    horizontalAlignment: Text.AlignRight
+                    color: colorWhite
+                }
+            }
+
+            Rectangle {
+                id: battery
+                width: 80
+                height: cellHeight
+                visible: showMavStatus() && (mainToolBar.showBattery)
+                anchors.verticalCenter: parent.verticalCenter
+                color:  (mainToolBar.batteryPercent > 40.0 || mainToolBar.batteryPercent < 0.01) ? colorBlue : colorRed
+                radius: cellRadius
+                border.color: "#00000000"
+                border.width: 0
+
+                Image {
+                    source: getBatteryIcon();
+                    height: 20
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 6
+                    mipmap: true
+                    smooth: true
+                }
+
+                Text {
+                    id: batteryText
+                    text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
+                    font.pointSize: 14 * dpiFactor
+                    font.weight: Font.DemiBold
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    horizontalAlignment: Text.AlignRight
+                    color: colorWhite
+                }
+            }
+
+            Column {
+                visible: showMavStatus()
+                height:  cellHeight * 0.85
+                width:   80
+                anchors.verticalCenter: parent.verticalCenter
+
+                Rectangle {
+                    id: armedStatus
+                    width: parent.width
+                    height: parent.height / 2
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    color: "#00000000"
+                    border.color: "#00000000"
+                    border.width: 0
+
+                    Text {
+                        id: armedStatusText
+                        text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
+                        font.pointSize: 12 * dpiFactor
+                        font.weight: Font.DemiBold
+                        anchors.centerIn: parent
+                        color: (mainToolBar.systemArmed) ? colorRed : colorGreen
+                    }
+                }
+
+                Rectangle {
+                    id: stateStatus
+                    width: parent.width
+                    height: parent.height / 2
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    color: "#00000000"
+                    border.color: "#00000000"
+                    border.width: 0
+
+                    Text {
+                        id: stateStatusText
+                        text: mainToolBar.currentState
+                        font.pointSize: 12 * dpiFactor
+                        font.weight: Font.DemiBold
+                        anchors.centerIn: parent
+                        color: (mainToolBar.currentState === "STANDBY") ? colorGreen : colorRed
+                    }
+                }
+
+            }
+
+            Rectangle {
+                id: modeStatus
+                width: 90
+                height: cellHeight
+                visible: showMavStatus()
                 color: "#00000000"
                 border.color: "#00000000"
                 border.width: 0
 
                 Text {
-                    id: armedStatusText
-                    text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
+                    id: modeStatusText
+                    text: mainToolBar.currentMode
                     font.pointSize: 12 * dpiFactor
                     font.weight: Font.DemiBold
-                    anchors.centerIn: parent
-                    color: (mainToolBar.systemArmed) ? colorRed : colorGreenText
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: qgcPal.text
                 }
             }
 
             Rectangle {
-                id: stateStatus
-                width: parent.width
-                height: parent.height / 2
-                anchors.horizontalCenter: parent.horizontalCenter
+                id: connectionStatus
+                width: 160
+                height: cellHeight
+                visible: (mainToolBar.connectionCount > 0 && mainToolBar.mavPresent && mainToolBar.heartbeatTimeout != 0)
+                anchors.verticalCenter: parent.verticalCenter
                 color: "#00000000"
                 border.color: "#00000000"
                 border.width: 0
 
                 Text {
-                    id: stateStatusText
-                    text: mainToolBar.currentState
-                    font.pointSize: 12 * dpiFactor
+                    id: connectionStatusText
+                    text: qsTr("CONNECTION LOST")
+                    font.pointSize: 14 * dpiFactor
                     font.weight: Font.DemiBold
-                    anchors.centerIn: parent
-                    color: (mainToolBar.currentState === "STANDBY") ? colorGreenText : colorRed
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    color: colorRed
                 }
-            }
-
-        }
-
-        Rectangle {
-            id: modeStatus
-            width: 90
-            height: cellHeight
-            visible: showMavStatus()
-            color: "#00000000"
-            border.color: "#00000000"
-            border.width: 0
-
-            Text {
-                id: modeStatusText
-                text: mainToolBar.currentMode
-                font.pointSize: 12 * dpiFactor
-                font.weight: Font.DemiBold
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
-                color: qgcPal.text
-            }
-        }
-
-        Rectangle {
-            id: connectionStatus
-            width: 160
-            height: cellHeight
-            visible: (mainToolBar.connectionCount > 0 && mainToolBar.mavPresent && mainToolBar.heartbeatTimeout != 0)
-            anchors.verticalCenter: parent.verticalCenter
-            color: "#00000000"
-            border.color: "#00000000"
-            border.width: 0
-
-            Text {
-                id: connectionStatusText
-                text: qsTr("CONNECTION LOST")
-                font.pointSize: 14 * dpiFactor
-                font.weight: Font.DemiBold
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-                color: colorRed
             }
         }
     }
