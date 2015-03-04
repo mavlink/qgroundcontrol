@@ -102,3 +102,14 @@ void MockQGCUASParamManager::_loadParams(void)
         _mapParams[paramName] = paramValue;
     }
 }
+
+QList<int> MockQGCUASParamManager::getComponentForParam(const QString& parameter) const
+{
+    if (_mapParams.contains(parameter)) {
+        QList<int> list;
+        list << 50;
+        return list;
+    } else {
+        return QList<int>();
+    }
+}

@@ -924,6 +924,11 @@ void PX4RCCalibration::_writeCalibration(void)
         paramMgr->setPendingParam(0, _rgFunctionInfo[i].parameterName, paramChannel);
     }
     
+    // If the RC_CHAN_COUNT parameter is available write the channel count
+    if (paramMgr->getComponentForParam("RC_CHAN_CNT").count() != 0) {
+        paramMgr->setPendingParam(0, "RC_CHAN_CNT", _chanCount);
+    }
+
     //let the param mgr manage sending all the pending RC_foo updates and persisting after
     paramMgr->sendPendingParameters(true, true);
     
