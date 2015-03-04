@@ -49,6 +49,7 @@ UASMessageHandler::UASMessageHandler(QObject *parent)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     emit textMessageReceived(NULL);
+    emit textMessageCountChanged(0);
 }
 
 UASMessageHandler::~UASMessageHandler()
@@ -67,6 +68,7 @@ void UASMessageHandler::clearMessages()
     _warningCount = 0;
     _normalCount  = 0;
     _mutex.unlock();
+    emit textMessageCountChanged(0);
 }
 
 void UASMessageHandler::setActiveUAS(UASInterface* uas)
@@ -160,8 +162,10 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     UASMessage* message = new UASMessage(compId, severity, text);
     message->_setFormatedText(QString("<p style=\"color:#CCCCCC\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
     _messages.append(message);
+    int count = _messages.count();
     _mutex.unlock();
     emit textMessageReceived(message);
+    emit textMessageCountChanged(count);
 }
 
 int UASMessageHandler::getErrorCount() {
