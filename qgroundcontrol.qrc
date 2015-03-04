@@ -277,6 +277,7 @@
 
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
+        <file alias="FlightModesComponent.qml">src/AutoPilotPlugins/PX4/FlightModesComponent.qml</file>
 
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
         <file alias="SensorsComponentSummary.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>

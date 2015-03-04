@@ -203,6 +203,7 @@ void MockLink::_loadParams(void)
                 paramValue = QVariant((unsigned char)valStr.toUInt());
                 break;
             default:
+                qDebug() << line << paramType;
                 Q_ASSERT(false);
                 break;
         }
@@ -487,6 +488,7 @@ void MockLink::_handleParamSet(const mavlink_message_t& msg)
 
     // Param may not be null terminated if exactly fits
     char paramId[MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN + 1];
+    paramId[MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN] = 0;
     strncpy(paramId, request.param_id, MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN);
 
     Q_ASSERT(_mapParamName2Value.contains(paramId));
