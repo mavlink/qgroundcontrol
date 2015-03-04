@@ -1314,11 +1314,6 @@ void MainWindow::loadSimulationView()
     }
 }
 
-QList<QAction*> MainWindow::listLinkMenuActions()
-{
-    return _ui.menuNetwork->actions();
-}
-
 /// @brief Hides the spash screen if it is currently being shown
 void MainWindow::hideSplashScreen(void)
 {

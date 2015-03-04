@@ -118,8 +118,6 @@ public:
         return _lowPowerMode;
     }
 
-    QList<QAction*> listLinkMenuActions();
-
     void hideSplashScreen(void);
 
     /// @brief Saves the last used connection
@@ -239,8 +237,6 @@ protected:
     void loadSettings();
     void storeSettings();
 
-
-    LinkInterface* udpLink;
 
     QSettings settings;
 
