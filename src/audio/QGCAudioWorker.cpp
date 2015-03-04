@@ -174,7 +174,7 @@ bool QGCAudioWorker::isMuted()
 }
 
 bool QGCAudioWorker::_getMillisecondString(const QString& string, QString& match, int& number) {
-    QRegularExpression re("([0-9]*ms)");
+    static QRegularExpression re("([0-9]+ms)");
     QRegularExpressionMatchIterator i = re.globalMatch(string);
     while (i.hasNext()) {
         QRegularExpressionMatch qmatch = i.next();
