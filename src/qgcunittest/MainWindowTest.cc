@@ -31,10 +31,11 @@
 #include "MockLink.h"
 #include "QGCMessageBox.h"
 
-// TODO: This needs to be changed to accomodate the new QML based tool bar
-// UT_REGISTER_TEST(MainWindowTest)
+UT_REGISTER_TEST(MainWindowTest)
 
-MainWindowTest::MainWindowTest(void)
+MainWindowTest::MainWindowTest(void) :
+    _mainWindow(NULL),
+    _mainToolBar(NULL)
 {
     
 }
@@ -45,6 +46,9 @@ void MainWindowTest::init(void)
 
     _mainWindow = MainWindow::_create(NULL);
     Q_CHECK_PTR(_mainWindow);
+    
+    _mainToolBar = _mainWindow->getMainToolBar();
+    Q_ASSERT(_mainToolBar);
 }
 
 void MainWindowTest::cleanup(void)
@@ -67,21 +71,17 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     linkMgr->connectLink(link);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
     
-    // Tool Bar is now a QQuickWidget and cannot be manipulated like below
-#if 0
-    // Click through all top level toolbar buttons
-    QGCToolBar* toolbar = _mainWindow->findChild<QGCToolBar*>();
-    Q_ASSERT(toolbar);
+    // Cycle through all the top level views
     
-    QList<QToolButton*> buttons = toolbar->findChildren<QToolButton*>();
-    foreach(QToolButton* button, buttons) {
-        if (!button->menu()) {
-            QTest::mouseClick(button, Qt::LeftButton);
-            QTest::qWait(1000);
-        }
-    }
-#endif
-
+    _mainToolBar->onSetupView();
+    QTest::qWait(1000);
+    _mainToolBar->onPlanView();
+    QTest::qWait(1000);
+    _mainToolBar->onFlyView();
+    QTest::qWait(1000);
+    _mainToolBar->onAnalyzeView();
+    QTest::qWait(1000);
+    
     // On MainWindow close we should get a message box telling the user to disconnect first. Cancel should do nothing.
     setExpectedMessageBox(QGCMessageBox::Cancel);
     _mainWindow->close();
