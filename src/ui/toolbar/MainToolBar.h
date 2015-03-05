@@ -42,7 +42,7 @@ class MainToolBar : public QGCQmlWidgetHolder
     Q_ENUMS(ViewType_t)
     Q_ENUMS(MessageType_t)
 public:
-    MainToolBar();
+    MainToolBar(QWidget* parent = NULL);
     ~MainToolBar();
 
     typedef enum {

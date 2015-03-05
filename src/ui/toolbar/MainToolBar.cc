@@ -35,8 +35,9 @@ This file is part of the QGROUNDCONTROL project
 #include "UASMessageHandler.h"
 #include "UASMessageView.h"
 
-MainToolBar::MainToolBar()
-    : _mav(NULL)
+MainToolBar::MainToolBar(QWidget* parent)
+    : QGCQmlWidgetHolder(parent)
+    , _mav(NULL)
     , _toolBar(NULL)
     , _currentView(ViewNone)
     , _batteryVoltage(0.0)
