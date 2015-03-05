@@ -31,7 +31,9 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-UT_REGISTER_TEST(FlightModeConfigTest)
+// Turned off due to signletonn shutdown sequencing problem. Also since FlightMode config is
+// being re-written this test will need to be re-written as well.
+//UT_REGISTER_TEST(FlightModeConfigTest)
 
 FlightModeConfigTest::FlightModeConfigTest(void) :
     _mockUASManager(NULL),
