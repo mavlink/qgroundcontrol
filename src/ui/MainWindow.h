@@ -125,6 +125,11 @@ public:
 
     /// @brief Restore (and connects) the last used connection (if any)
     void restoreLastUsedConnection();
+    
+#ifdef UNITTEST_BUILD
+    // Returns a pointer to the MainToolBar so that unit tests can change views.
+    MainToolBar* getMainToolBar(void) { return _mainToolBar; }
+#endif
 
 
 public slots:
