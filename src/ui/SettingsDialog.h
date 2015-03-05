@@ -56,6 +56,11 @@ private slots:
     void _selectSavedFilesDirectory(void);
     void _validateBeforeClose(void);
 
+    void on_showGPS_clicked(bool checked);
+    void on_showBattery_clicked(bool checked);
+    void on_showMessages_clicked(bool checked);
+    void on_showMav_clicked(bool checked);
+
 private:
     MainWindow*         _mainWindow;
     Ui::SettingsDialog* _ui;

@@ -37,6 +37,7 @@
 #include "QGCApplication.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
+#include "MainToolBar.h"
 
 SettingsDialog::SettingsDialog(JoystickInput *joystick, QWidget *parent, int showTab, Qt::WindowFlags flags) :
 QDialog(parent, flags),
@@ -63,6 +64,14 @@ _ui(new Ui::SettingsDialog)
 
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 
+    // Tool Bar Preferences
+    QSettings settings;
+    settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
+    _ui->showBattery->setChecked(settings.value( TOOL_BAR_SHOW_BATTERY,  true).toBool());
+    _ui->showGPS->setChecked(settings.value(     TOOL_BAR_SHOW_GPS,      true).toBool());
+    _ui->showMav->setChecked(settings.value(     TOOL_BAR_SHOW_MAV,      true).toBool());
+    _ui->showMessages->setChecked(settings.value(TOOL_BAR_SHOW_MESSAGES, true).toBool());
+    settings.endGroup();
     // Audio preferences
     _ui->audioMuteCheckBox->setChecked(GAudioOutput::instance()->isMuted());
     connect(_ui->audioMuteCheckBox, SIGNAL(toggled(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
@@ -115,10 +124,11 @@ void SettingsDialog::styleChanged(int index)
 void SettingsDialog::_deleteSettingsToggled(bool checked)
 {
     if (checked){
-        QGCMessageBox::StandardButton answer = QGCMessageBox::question(tr("Delete Settings"),
-                                                                       tr("All saved settings will be deleted the next time you start QGroundControl. Is this really what you want?"),
-                                                                       QMessageBox::Yes | QMessageBox::No,
-                                                                       QMessageBox::No);
+        QGCMessageBox::StandardButton answer =
+            QGCMessageBox::question(tr("Delete Settings"),
+                tr("All saved settings will be deleted the next time you start QGroundControl. Is this really what you want?"),
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No);
         if (answer == QMessageBox::Yes) {
             qgcApp()->deleteAllSettingsNextBoot();
         } else {
@@ -133,21 +143,17 @@ void SettingsDialog::_deleteSettingsToggled(bool checked)
 void SettingsDialog::_validateBeforeClose(void)
 {
     QGCApplication* app = qgcApp();
-
     // Validate the saved file location
-
     QString saveLocation = _ui->savedFilesLocation->text();
     if (!app->validatePossibleSavedFilesLocation(saveLocation)) {
-        QGCMessageBox::warning(tr("Bad save location"),
-                               tr("The location to save files to is invalid, or cannot be written to. Please provide a valid directory."));
+        QGCMessageBox::warning(
+            tr("Invalid Save Location"),
+            tr("The location to save files is invalid, or cannot be written to. Please provide a valid directory."));
         return;
     }
-
     // Locations is valid, save
     app->setSavedFilesLocation(saveLocation);
-
     qgcApp()->setPromptFlightDataSave(_ui->promptFlightDataSave->checkState() == Qt::Checked);
-
     // Close dialog
     accept();
 }
@@ -155,10 +161,36 @@ void SettingsDialog::_validateBeforeClose(void)
 /// @brief Displays a directory picker dialog to allow the user to select a saved file location
 void SettingsDialog::_selectSavedFilesDirectory(void)
 {
-    QString newLocation = QGCFileDialog::getExistingDirectory(this,
-                                                            tr("Select the directory where you want to save files to."),
-                                                            _ui->savedFilesLocation->text());
+    QString newLocation = QGCFileDialog::getExistingDirectory(
+        this,
+        tr("Select the directory where you want to save files to."),
+        _ui->savedFilesLocation->text());
     if (!newLocation.isEmpty()) {
         _ui->savedFilesLocation->setText(newLocation);
     }
+
+    // TODO:
+    // Once a directory is selected, we need to display the various subdirectories used underneath:
+    // * Flight data logs
+    // * Parameters
+}
+
+void SettingsDialog::on_showGPS_clicked(bool checked)
+{
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_GPS, checked);
+}
+
+void SettingsDialog::on_showBattery_clicked(bool checked)
+{
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_BATTERY, checked);
+}
+
+void SettingsDialog::on_showMessages_clicked(bool checked)
+{
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MESSAGES, checked);
+}
+
+void SettingsDialog::on_showMav_clicked(bool checked)
+{
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MAV, checked);
 }

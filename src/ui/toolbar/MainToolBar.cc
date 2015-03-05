@@ -57,6 +57,10 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _satelliteCount(-1)
     , _dotsPerInch(96.0)    // Default to Windows as it's more likely not to report below
     , _satelliteLock(0)
+    , _showGPS(true)
+    , _showMav(true)
+    , _showMessages(true)
+    , _showBattery(true)
     , _rollDownMessages(0)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
@@ -76,7 +80,16 @@ MainToolBar::MainToolBar(QWidget* parent)
     } else {
         qWarning() << "System not reporting logical DPI, which is used to compute the appropriate font size. The default being used is 96dpi. If the text within buttons and UI elements are too big or too small, that's the reason.";
     }
-    // Give the QML code a way to reach us
+
+    // Tool Bar Preferences
+    QSettings settings;
+    settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
+    _showBattery  = settings.value(TOOL_BAR_SHOW_BATTERY,  true).toBool();
+    _showGPS      = settings.value(TOOL_BAR_SHOW_GPS,      true).toBool();
+    _showMav      = settings.value(TOOL_BAR_SHOW_MAV,      true).toBool();
+    _showMessages = settings.value(TOOL_BAR_SHOW_MESSAGES, true).toBool();
+    settings.endGroup();
+
     setContextPropertyObject("mainToolBar", this);
     setSource(QUrl::fromUserInput("qrc:/qml/MainToolBar.qml"));
     setVisible(true);
@@ -95,6 +108,32 @@ MainToolBar::MainToolBar(QWidget* parent)
 MainToolBar::~MainToolBar()
 {
 
+}
+
+void MainToolBar::_setToolBarState(const QString& key, bool value)
+{
+    QSettings settings;
+    settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
+    settings.setValue(key, value);
+    settings.endGroup();
+    if(key == TOOL_BAR_SHOW_GPS) {
+        _showGPS = value;
+        emit showGPSChanged(value);
+    } else if(key == TOOL_BAR_SHOW_MAV) {
+        _showMav = value;
+        emit showMavChanged(value);
+    }else if(key == TOOL_BAR_SHOW_BATTERY) {
+        _showBattery = value;
+        emit showBatteryChanged(value);
+    } else if(key == TOOL_BAR_SHOW_MESSAGES) {
+        _showMessages = value;
+        emit showMessagesChanged(value);
+    }
+}
+
+void MainToolBar::viewStateChanged(const QString &key, bool value)
+{
+    _setToolBarState(key, value);
 }
 
 void MainToolBar::onSetupView()
