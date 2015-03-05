@@ -469,7 +469,7 @@ Rectangle {
 
         QGCButton {
             id: connectButton
-            width: 90
+            width: 100
             height: cellHeight
             visible: (mainToolBar.connectionCount === 0 || mainToolBar.connectionCount === 1)
             text: (mainToolBar.configList.length > 0) ? (mainToolBar.connectionCount === 0) ? qsTr("Connect") : qsTr("Disconnect") : qsTr("Add Link")
@@ -496,7 +496,7 @@ Rectangle {
 
         QGCButton {
             id: multidisconnectButton
-            width: 90
+            width: 100
             height: cellHeight
             text: qsTr("Disconnect")
             visible: (mainToolBar.connectionCount > 1)
