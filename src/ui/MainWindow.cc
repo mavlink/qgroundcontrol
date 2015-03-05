@@ -171,9 +171,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     QDockWidget* widget = new QDockWidget(this);
     widget->setObjectName("ToolBarDockWidget");
     qmlRegisterType<MainToolBar>("QGroundControl.MainToolBar", 1, 0, "MainToolBar");
-    _mainToolBar = new MainToolBar();
-    _mainToolBar->setParent(widget);
-    _mainToolBar->setVisible(true);
+    _mainToolBar = new MainToolBar(widget);
     widget->setWidget(_mainToolBar);
     widget->setFeatures(QDockWidget::NoDockWidgetFeatures);
     widget->setTitleBarWidget(new QWidget(this)); // Disables the title bar
