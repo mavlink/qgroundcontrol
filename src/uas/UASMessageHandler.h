@@ -127,6 +127,11 @@ signals:
      * @param message A pointer to the message. NULL if resetting (new UAS assigned)
      */
     void textMessageReceived(UASMessage* message);
+    /**
+     * @brief Sent out when the message count changes
+     * @param count The new message count
+     */
+    void textMessageCountChanged(int count);
 private:
     // Stores the UAS that we're currently receiving messages from.
     UASInterface* _activeUAS;

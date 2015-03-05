@@ -78,6 +78,7 @@ public:
     Q_PROPERTY(unsigned int  heartbeatTimeout   READ heartbeatTimeout   NOTIFY heartbeatTimeoutChanged)
     Q_PROPERTY(QString       currentMode        READ currentMode        NOTIFY currentModeChanged)
     Q_PROPERTY(MessageType_t messageType        READ messageType        NOTIFY messageTypeChanged)
+    Q_PROPERTY(int           newMessageCount    READ newMessageCount    NOTIFY newMessageCountChanged)
     Q_PROPERTY(int           messageCount       READ messageCount       NOTIFY messageCountChanged)
     Q_PROPERTY(QString       currentConfig      READ currentConfig      NOTIFY currentConfigChanged)
     Q_PROPERTY(QString       systemPixmap       READ systemPixmap       NOTIFY systemPixmapChanged)
@@ -86,6 +87,7 @@ public:
     Q_PROPERTY(bool          mavPresent         READ mavPresent         NOTIFY mavPresentChanged)
     Q_PROPERTY(QString       currentState       READ currentState       NOTIFY currentStateChanged)
     Q_PROPERTY(double        dotsPerInch        READ dotsPerInch        NOTIFY dotsPerInchChanged)
+    Q_PROPERTY(int           satelliteLock      READ satelliteLock      NOTIFY satelliteLockChanged)
 
     int           connectionCount        () { return _connectionCount; }
     double        batteryVoltage         () { return _batteryVoltage; }
@@ -96,7 +98,8 @@ public:
     unsigned int  heartbeatTimeout       () { return _currentHeartbeatTimeout; }
     QString       currentMode            () { return _currentMode; }
     MessageType_t messageType            () { return _currentMessageType; }
-    int           messageCount           () { return _currentMessageCount; }
+    int           newMessageCount        () { return _currentMessageCount; }
+    int           messageCount           () { return _messageCount; }
     QString       currentConfig          () { return _currentConfig; }
     QString       systemPixmap           () { return _systemPixmap; }
     int           satelliteCount         () { return _satelliteCount; }
@@ -104,6 +107,7 @@ public:
     bool          mavPresent             () { return _mav != NULL; }
     QString       currentState           () { return _currentState; }
     double        dotsPerInch            () { return _dotsPerInch; }
+    int           satelliteLock          () { return _satelliteLock; }
 
     void          setCurrentView         (int currentView);
 
@@ -117,6 +121,7 @@ signals:
     void heartbeatTimeoutChanged        (unsigned int hbTimeout);
     void currentModeChanged             ();
     void messageTypeChanged             (MessageType_t type);
+    void newMessageCountChanged         (int count);
     void messageCountChanged            (int count);
     void currentConfigChanged           (QString config);
     void systemPixmapChanged            (QPixmap pix);
@@ -125,6 +130,7 @@ signals:
     void mavPresentChanged              (bool present);
     void currentStateChanged            (QString state);
     void dotsPerInchChanged             ();
+    void satelliteLockChanged           (int lock);
 
 private slots:
     void _setActiveUAS                  (UASInterface* active);
@@ -138,11 +144,13 @@ private slots:
     void _updateName                    (const QString& name);
     void _setSystemType                 (UASInterface* uas, unsigned int systemType);
     void _heartbeatTimeout              (bool timeout, unsigned int ms);
-    void _handleTextMessage             (UASMessage* message);
+    void _handleTextMessage             (int newCount);
     void _updateCurrentWaypoint         (quint16 id);
     void _updateWaypointDistance        (double distance);
     void _setSatelliteCount             (double val, QString name);
     void _leaveMessageView              ();
+    void _setSatLoc                     (UASInterface* uas, int fix);
+
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
@@ -166,6 +174,7 @@ private:
     double          _waypointDistance;
     quint16         _currentWaypoint;
     int             _currentMessageCount;
+    int             _messageCount;
     int             _currentErrorCount;
     int             _currentWarningCount;
     int             _currentNormalCount;
@@ -173,6 +182,7 @@ private:
     int             _satelliteCount;
     QStringList     _connectedList;
     qreal           _dotsPerInch;
+    int             _satelliteLock;
 
     UASMessageViewRollDown* _rollDownMessages;
 };

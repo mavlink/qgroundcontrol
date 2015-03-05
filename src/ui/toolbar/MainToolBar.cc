@@ -48,12 +48,14 @@ MainToolBar::MainToolBar()
     , _waypointDistance(0.0)
     , _currentWaypoint(0)
     , _currentMessageCount(0)
+    , _messageCount(0)
     , _currentErrorCount(0)
     , _currentWarningCount(0)
     , _currentNormalCount(0)
     , _currentMessageType(MessageNone)
     , _satelliteCount(-1)
-    , _dotsPerInch(72.0)
+    , _dotsPerInch(96.0)    // Default to Windows as it's more likely not to report below
+    , _satelliteLock(0)
     , _rollDownMessages(0)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
@@ -68,8 +70,12 @@ MainToolBar::MainToolBar()
     }
     // Get screen DPI to manage font sizes on different platforms
     QScreen *srn = QGuiApplication::screens().at(0); // TODO: Find current monitor as opposed to picking first one
-    _dotsPerInch = (qreal)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
-
+    if(srn && srn->logicalDotsPerInch() > 50.0) {
+        _dotsPerInch = (qreal)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
+    } else {
+        qWarning() << "System not reporting logical DPI, which is used to compute the appropriate font size. The default being used is 96dpi. If the text within buttons and UI elements are too big or too small, that's the reason.";
+    }
+    // Give the QML code a way to reach us
     setContextPropertyObject("mainToolBar", this);
     setSource(QUrl::fromUserInput("qrc:/qml/MainToolBar.qml"));
     setVisible(true);
@@ -187,7 +193,7 @@ void MainToolBar::onEnterMessageArea(int x, int y)
         _currentMessageCount = 0;
         _currentMessageType = MessageNone;
         if(count != _currentMessageCount) {
-            emit messageCountChanged(0);
+            emit newMessageCountChanged(0);
         }
         if(type != _currentMessageType) {
             emit messageTypeChanged(MessageNone);
@@ -258,14 +264,15 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
     // If switching the UAS, disconnect the existing one.
     if (_mav)
     {
-        disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageReceived,  this, &MainToolBar::_handleTextMessage);
-        disconnect(_mav, &UASInterface::heartbeatTimeout,                                   this, &MainToolBar::_heartbeatTimeout);
-        disconnect(_mav, &UASInterface::batteryChanged,                                     this, &MainToolBar::_updateBatteryRemaining);
-        disconnect(_mav, &UASInterface::modeChanged,                                        this, &MainToolBar::_updateMode);
-        disconnect(_mav, &UASInterface::nameChanged,                                        this, &MainToolBar::_updateName);
-        disconnect(_mav, &UASInterface::systemTypeSet,                                      this, &MainToolBar::_setSystemType);
-        disconnect(_mav, SIGNAL(statusChanged(UASInterface*,QString,QString)),              this, SLOT(_updateState(UASInterface*,QString,QString)));
-        disconnect(_mav, SIGNAL(armingChanged(bool)),                                       this, SLOT(_updateArmingState(bool)));
+        disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &MainToolBar::_handleTextMessage);
+        disconnect(_mav, &UASInterface::heartbeatTimeout,                                       this, &MainToolBar::_heartbeatTimeout);
+        disconnect(_mav, &UASInterface::batteryChanged,                                         this, &MainToolBar::_updateBatteryRemaining);
+        disconnect(_mav, &UASInterface::modeChanged,                                            this, &MainToolBar::_updateMode);
+        disconnect(_mav, &UASInterface::nameChanged,                                            this, &MainToolBar::_updateName);
+        disconnect(_mav, &UASInterface::systemTypeSet,                                          this, &MainToolBar::_setSystemType);
+        disconnect(_mav, &UASInterface::localizationChanged,                                    this, &MainToolBar::_setSatLoc);
+        disconnect(_mav, SIGNAL(statusChanged(UASInterface*,QString,QString)),                  this, SLOT(_updateState(UASInterface*,QString,QString)));
+        disconnect(_mav, SIGNAL(armingChanged(bool)),                                           this, SLOT(_updateArmingState(bool)));
         if (_mav->getWaypointManager())
         {
             disconnect(_mav->getWaypointManager(), &UASWaypointManager::currentWaypointChanged,  this, &MainToolBar::_updateCurrentWaypoint);
@@ -282,12 +289,13 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
     {
         _setSystemType(_mav, _mav->getSystemType());
         _updateArmingState(_mav->isArmed());
-        connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageReceived,     this, &MainToolBar::_handleTextMessage);
+        connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged, this, &MainToolBar::_handleTextMessage);
         connect(_mav, &UASInterface::heartbeatTimeout,                                      this, &MainToolBar::_heartbeatTimeout);
         connect(_mav, &UASInterface::batteryChanged,                                        this, &MainToolBar::_updateBatteryRemaining);
         connect(_mav, &UASInterface::modeChanged,                                           this, &MainToolBar::_updateMode);
         connect(_mav, &UASInterface::nameChanged,                                           this, &MainToolBar::_updateName);
         connect(_mav, &UASInterface::systemTypeSet,                                         this, &MainToolBar::_setSystemType);
+        connect(_mav, &UASInterface::localizationChanged,                                   this, &MainToolBar::_setSatLoc);
         connect(_mav, SIGNAL(statusChanged(UASInterface*,QString,QString)),                 this, SLOT(_updateState(UASInterface*, QString,QString)));
         connect(_mav, SIGNAL(armingChanged(bool)),                                          this, SLOT(_updateArmingState(bool)));
         if (_mav->getWaypointManager())
@@ -315,6 +323,7 @@ void MainToolBar::_updateArmingState(bool armed)
 
 void MainToolBar::_updateBatteryRemaining(UASInterface*, double voltage, double, double percent, int)
 {
+
     if(percent < 0.0) {
         percent = 0.0;
     }
@@ -510,11 +519,25 @@ void MainToolBar::_heartbeatTimeout(bool timeout, unsigned int ms)
     }
 }
 
-void MainToolBar::_handleTextMessage(UASMessage*)
+void MainToolBar::_handleTextMessage(int newCount)
 {
+    // Reset?
+    if(!newCount) {
+        _currentMessageCount = 0;
+        _currentNormalCount  = 0;
+        _currentWarningCount = 0;
+        _currentErrorCount   = 0;
+        _messageCount        = 0;
+        _currentMessageType  = MessageNone;
+        emit newMessageCountChanged(0);
+        emit messageTypeChanged(MessageNone);
+        emit messageCountChanged(0);
+        return;
+    }
+
     UASMessageHandler* pMh = UASMessageHandler::instance();
     Q_ASSERT(pMh);
-    MessageType_t type = _currentMessageType;
+    MessageType_t type = newCount ? _currentMessageType : MessageNone;
     int errorCount     = _currentErrorCount;
     int warnCount      = _currentWarningCount;
     int normalCount    = _currentNormalCount;
@@ -542,13 +565,18 @@ void MainToolBar::_handleTextMessage(UASMessage*)
     int count = _currentErrorCount + _currentWarningCount + _currentNormalCount;
     if(count != _currentMessageCount) {
         _currentMessageCount = count;
-        // Display current total message count
-        emit messageCountChanged(count);
+        // Display current total new messages count
+        emit newMessageCountChanged(count);
     }
     if(type != _currentMessageType) {
         _currentMessageType = type;
         // Update message level
         emit messageTypeChanged(type);
+    }
+    // Update message count (all messages)
+    if(newCount != _messageCount) {
+        _messageCount = newCount;
+        emit messageCountChanged(_messageCount);
     }
 }
 
@@ -570,10 +598,20 @@ void MainToolBar::_updateCurrentWaypoint(quint16 id)
 
 void MainToolBar::_setSatelliteCount(double val, QString)
 {
-    if(val < 0.0)  val = 0.0;
-    if(val > 99.0) val = 99.0;
+    // I'm assuming that a negative value or over 99 means there is no GPS
+    if(val < 0.0)  val = -1.0;
+    if(val > 99.0) val = -1.0;
     if(_satelliteCount != (int)val) {
         _satelliteCount = (int)val;
         emit satelliteCountChanged(_satelliteCount);
+    }
+}
+
+void MainToolBar::_setSatLoc(UASInterface*, int fix)
+{
+    // fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D lock, 3: 3D lock
+    if(_satelliteLock != fix) {
+        _satelliteLock = fix;
+        emit satelliteLockChanged(_satelliteLock);
     }
 }
