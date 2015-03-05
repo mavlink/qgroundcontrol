@@ -29,6 +29,7 @@
 
 #include "UnitTest.h"
 #include "MainWindow.h"
+#include "MainToolBar.h"
 
 /// Click through test for Setup View buttons
 class SetupViewTest : public UnitTest
@@ -45,7 +46,8 @@ private slots:
     void _clickThrough_test(void);
     
 private:
-    MainWindow* _mainWindow;
+    MainWindow*     _mainWindow;
+    MainToolBar*    _mainToolBar;
 };
 
 #endif
