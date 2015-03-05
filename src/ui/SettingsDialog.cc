@@ -177,20 +177,20 @@ void SettingsDialog::_selectSavedFilesDirectory(void)
 
 void SettingsDialog::on_showGPS_clicked(bool checked)
 {
-    _mainWindow->getToolBar()->viewStateChanged(TOOL_BAR_SHOW_GPS, checked);
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_GPS, checked);
 }
 
 void SettingsDialog::on_showBattery_clicked(bool checked)
 {
-    _mainWindow->getToolBar()->viewStateChanged(TOOL_BAR_SHOW_BATTERY, checked);
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_BATTERY, checked);
 }
 
 void SettingsDialog::on_showMessages_clicked(bool checked)
 {
-    _mainWindow->getToolBar()->viewStateChanged(TOOL_BAR_SHOW_MESSAGES, checked);
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MESSAGES, checked);
 }
 
 void SettingsDialog::on_showMav_clicked(bool checked)
 {
-    _mainWindow->getToolBar()->viewStateChanged(TOOL_BAR_SHOW_MAV, checked);
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MAV, checked);
 }
