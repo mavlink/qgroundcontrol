@@ -32,6 +32,12 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QGCQmlWidgetHolder.h"
 
+#define TOOL_BAR_SETTINGS_GROUP "TOOLBAR_SETTINGS_GROUP"
+#define TOOL_BAR_SHOW_BATTERY   "ShowBattery"
+#define TOOL_BAR_SHOW_GPS       "ShowGPS"
+#define TOOL_BAR_SHOW_MAV       "ShowMav"
+#define TOOL_BAR_SHOW_MESSAGES  "ShowMessages"
+
 class UASInterface;
 class UASMessage;
 class UASMessageViewRollDown;
@@ -88,6 +94,10 @@ public:
     Q_PROPERTY(QString       currentState       READ currentState       NOTIFY currentStateChanged)
     Q_PROPERTY(double        dotsPerInch        READ dotsPerInch        NOTIFY dotsPerInchChanged)
     Q_PROPERTY(int           satelliteLock      READ satelliteLock      NOTIFY satelliteLockChanged)
+    Q_PROPERTY(bool          showGPS            READ showGPS            NOTIFY showGPSChanged)
+    Q_PROPERTY(bool          showMav            READ showMav            NOTIFY showMavChanged)
+    Q_PROPERTY(bool          showMessages       READ showMessages       NOTIFY showMessagesChanged)
+    Q_PROPERTY(bool          showBattery        READ showBattery        NOTIFY showBatteryChanged)
 
     int           connectionCount        () { return _connectionCount; }
     double        batteryVoltage         () { return _batteryVoltage; }
@@ -108,8 +118,13 @@ public:
     QString       currentState           () { return _currentState; }
     double        dotsPerInch            () { return _dotsPerInch; }
     int           satelliteLock          () { return _satelliteLock; }
+    bool          showGPS                () { return _showGPS; }
+    bool          showMav                () { return _showMav; }
+    bool          showMessages           () { return _showMessages; }
+    bool          showBattery            () { return _showBattery; }
 
     void          setCurrentView         (int currentView);
+    void          viewStateChanged       (const QString& key, bool value);
 
 signals:
     void connectionCountChanged         (int count);
@@ -131,6 +146,10 @@ signals:
     void currentStateChanged            (QString state);
     void dotsPerInchChanged             ();
     void satelliteLockChanged           (int lock);
+    void showGPSChanged                 (bool value);
+    void showMavChanged                 (bool value);
+    void showMessagesChanged            (bool value);
+    void showBatteryChanged             (bool value);
 
 private slots:
     void _setActiveUAS                  (UASInterface* active);
@@ -154,6 +173,7 @@ private slots:
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
+    void _setToolBarState               (const QString& key, bool value);
 
 private:
     UASInterface*   _mav;
@@ -183,6 +203,10 @@ private:
     QStringList     _connectedList;
     qreal           _dotsPerInch;
     int             _satelliteLock;
+    bool            _showGPS;
+    bool            _showMav;
+    bool            _showMessages;
+    bool            _showBattery;
 
     UASMessageViewRollDown* _rollDownMessages;
 };
