@@ -44,11 +44,12 @@ Rectangle {
     property int cellRadius: 3
     property double dpiFactor: (72.0 / mainToolBar.dotsPerInch);
 
-    property var colorBlue:   "#1a6eaa"
-    property var colorGreen:  "#00d930"
-    property var colorRed:    "#a81a1b"
-    property var colorOrange: "#a76f26"
-    property var colorWhite:  "#f0f0f0"
+    property var colorBlue:       "#1a6eaa"
+    property var colorGreen:      "#079527"
+    property var colorGreenText:  "#00d930"
+    property var colorRed:        "#a81a1b"
+    property var colorOrange:     "#a76f26"
+    property var colorWhite:      "#f0f0f0"
 
     id: toolBarHolder
     color: qgcPal.windowShade
@@ -86,6 +87,29 @@ Rectangle {
             return "qrc:/files/images/status/battery_80.svg";
         else
             return "qrc:/files/images/status/battery_100.svg";
+    }
+
+    function getBatteryColor() {
+        if (mainToolBar.batteryPercent > 40.0)
+            return colorGreen;
+        if(mainToolBar.batteryPercent > 0.01)
+            return colorRed;
+        // This means there is no battery level data
+        return colorBlue;
+    }
+
+    function getSatelliteColor() {
+        // No GPS data
+        if (mainToolBar.satelliteCount < 0)
+            return qgcPal.button
+        // No Lock
+        if(mainToolBar.satelliteLock < 2)
+            return colorRed;
+        // 2D Lock
+        if(mainToolBar.satelliteLock === 2)
+            return colorBlue;
+        // Lock is 3D or more
+        return colorGreen;
     }
 
     function showMavStatus() {
@@ -164,7 +188,7 @@ Rectangle {
 
         Rectangle {
             id: messages
-            width: (mainToolBar.messageCount > 99) ? 70 : 60
+            width: (mainToolBar.newMessageCount > 99) ? 70 : 60
             height: cellHeight
             visible: (mainToolBar.connectionCount > 0)
             anchors.verticalCenter: parent.verticalCenter
@@ -191,7 +215,7 @@ Rectangle {
                 width: messages.width - messageIcon.width
                 Text {
                     id: messageText
-                    text: (mainToolBar.messageCount > 0) ? mainToolBar.messageCount : ''
+                    text: (mainToolBar.newMessageCount > 0) ? mainToolBar.newMessageCount : ''
                     font.pointSize: 14 * dpiFactor
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
@@ -204,7 +228,7 @@ Rectangle {
             Image {
                 id: dropDown
                 source: "QGroundControl/Controls/arrow-down.png"
-                visible: (messages.showTriangle)
+                visible: (messages.showTriangle) && (mainToolBar.messageCount > 0)
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 anchors.bottomMargin: 3
@@ -228,12 +252,11 @@ Rectangle {
                     messages.showTriangle = true;
                     mouseOffTimer.start();
                 }
-                onExited: {
-                    messages.showTriangle = false;
-                }
                 onClicked: {
-                    var p = mapToItem(toolBarHolder, mouseX, mouseY);
-                    mainToolBar.onEnterMessageArea(p.x, p.y);
+                    if(mainToolBar.messageCount > 0) {
+                        var p = mapToItem(toolBarHolder, mouseX, mouseY);
+                        mainToolBar.onEnterMessageArea(p.x, p.y);
+                    }
                 }
             }
 
@@ -262,9 +285,9 @@ Rectangle {
             id: satelitte
             width: 60
             height: cellHeight
-            visible: showMavStatus()
+            visible: showMavStatus();
             anchors.verticalCenter: parent.verticalCenter
-            color:  (mainToolBar.satelliteCount < 3) ? colorRed : colorBlue
+            color:  getSatelliteColor();
             radius: cellRadius
             border.color: "#00000000"
             border.width: 0
@@ -282,7 +305,7 @@ Rectangle {
 
             Text {
                 id: satelitteText
-                text: mainToolBar.satelliteCount
+                text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
                 font.pointSize: 14 * dpiFactor
                 font.weight: Font.DemiBold
                 anchors.verticalCenter: parent.verticalCenter
@@ -299,7 +322,7 @@ Rectangle {
             height: cellHeight
             visible: showMavStatus()
             anchors.verticalCenter: parent.verticalCenter
-            color:  (mainToolBar.batteryPercent > 40.0 || mainToolBar.batteryPercent < 0.01) ? colorBlue : colorRed
+            color:  (mainToolBar.batteryPercent > 40.0 || mainToolBar.batteryPercent < 0.01) ? colorGreen : colorRed
             radius: cellRadius
             border.color: "#00000000"
             border.width: 0
@@ -317,7 +340,7 @@ Rectangle {
 
             Text {
                 id: batteryText
-                text: mainToolBar.batteryVoltage.toFixed(2) + ' V';
+                text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
                 font.pointSize: 14 * dpiFactor
                 font.weight: Font.DemiBold
                 anchors.verticalCenter: parent.verticalCenter
@@ -329,11 +352,10 @@ Rectangle {
         }
 
         Column {
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: cellSpacerSize
             visible: showMavStatus()
-            height: cellHeight * 0.75
-            width: 80
+            height:  cellHeight * 0.85
+            width:   80
+            anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
                 id: armedStatus
@@ -349,9 +371,8 @@ Rectangle {
                     text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
                     font.pointSize: 12 * dpiFactor
                     font.weight: Font.DemiBold
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: (mainToolBar.systemArmed) ? colorRed : colorGreen
+                    anchors.centerIn: parent
+                    color: (mainToolBar.systemArmed) ? colorRed : colorGreenText
                 }
             }
 
@@ -369,9 +390,8 @@ Rectangle {
                     text: mainToolBar.currentState
                     font.pointSize: 12 * dpiFactor
                     font.weight: Font.DemiBold
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: (mainToolBar.currentState === "STANDBY") ? colorGreen : colorRed
+                    anchors.centerIn: parent
+                    color: (mainToolBar.currentState === "STANDBY") ? colorGreenText : colorRed
                 }
             }
 
