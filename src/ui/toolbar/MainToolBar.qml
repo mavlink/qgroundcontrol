@@ -190,7 +190,7 @@ Rectangle {
             id: messages
             width: (mainToolBar.newMessageCount > 99) ? 70 : 60
             height: cellHeight
-            visible: (mainToolBar.connectionCount > 0)
+            visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
             anchors.verticalCenter: parent.verticalCenter
             color:  getMessageColor()
             radius: cellRadius
@@ -266,7 +266,7 @@ Rectangle {
             id: mavIcon
             width: cellHeight
             height: cellHeight
-            visible: showMavStatus()
+            visible: showMavStatus() &&  (mainToolBar.showMav)
             anchors.verticalCenter: parent.verticalCenter
             color: colorBlue
             radius: cellRadius
@@ -285,7 +285,7 @@ Rectangle {
             id: satelitte
             width: 60
             height: cellHeight
-            visible: showMavStatus();
+            visible: showMavStatus()  && (mainToolBar.showGPS)
             anchors.verticalCenter: parent.verticalCenter
             color:  getSatelliteColor();
             radius: cellRadius
@@ -320,7 +320,7 @@ Rectangle {
             id: battery
             width: 80
             height: cellHeight
-            visible: showMavStatus()
+            visible: showMavStatus() && (mainToolBar.showBattery)
             anchors.verticalCenter: parent.verticalCenter
             color:  (mainToolBar.batteryPercent > 40.0 || mainToolBar.batteryPercent < 0.01) ? colorGreen : colorRed
             radius: cellRadius

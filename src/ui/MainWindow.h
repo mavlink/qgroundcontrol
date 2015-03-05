@@ -131,6 +131,7 @@ public:
     MainToolBar* getMainToolBar(void) { return _mainToolBar; }
 #endif
 
+    MainToolBar* getToolBar() { return _mainToolBar; }
 
 public slots:
     /** @brief Show the application settings */
