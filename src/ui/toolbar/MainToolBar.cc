@@ -73,7 +73,7 @@ MainToolBar::MainToolBar()
     if(srn && srn->logicalDotsPerInch() > 50.0) {
         _dotsPerInch = (qreal)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
     } else {
-        qWarning() << "System not reporting logical DPI.";
+        qWarning() << "System not reporting logical DPI, which is used to compute the appropriate font size. The default being used is 96dpi. If the text within buttons and UI elements are too big or too small, that's the reason.";
     }
     // Give the QML code a way to reach us
     setContextPropertyObject("mainToolBar", this);
