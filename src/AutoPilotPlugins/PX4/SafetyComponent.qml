@@ -61,7 +61,7 @@ Rectangle {
                     QGCLabel { text: "Return Home after"; anchors.baseline: rcLossField.baseline }
                     FactTextField {
                         id: rcLossField
-                        fact: autopilot.parameters["COM_RC_LOSS_T"]
+                        fact: Fact { name: "COM_RC_LOSS_T" }
                         showUnits: true
                     }
                 }
@@ -70,7 +70,7 @@ Rectangle {
                     spacing: 10
                     FactCheckBox {
                         id: telemetryTimeoutCheckbox
-                        fact: autopilot.parameters["COM_DL_LOSS_EN"]
+                        fact: Fact { name: "COM_DL_LOSS_EN" }
                         checkedValue: 1
                         uncheckedValue: 0
                         text: "Telemetry Signal Timeout"
@@ -80,7 +80,7 @@ Rectangle {
                     QGCLabel { text: "Return Home after"; anchors.baseline: telemetryLossField.baseline }
                     FactTextField {
                         id: telemetryLossField
-                        fact: autopilot.parameters["COM_DL_LOSS_T"];
+                        fact: Fact { name: "COM_DL_LOSS_T" }
                         showUnits: true
                         enabled: telemetryTimeoutCheckbox.checked
                     }
@@ -125,7 +125,7 @@ Rectangle {
                         QGCLabel { text: "Climb to altitude of" }
                         FactTextField {
                             id: climbField
-                            fact: autopilot.parameters["RTL_RETURN_ALT"]
+                            fact: Fact { name: "RTL_RETURN_ALT" }
                             showUnits: true
                         }
                     }
@@ -137,7 +137,8 @@ Rectangle {
 
                         QGCCheckBox {
                             id: homeLoiterCheckbox
-                            property Fact fact: autopilot.parameters["RTL_LAND_DELAY"]
+                            property Fact fact: Fact { name: "RTL_LAND_DELAY" }
+
                             checked: fact.value > 0
                             text: "Loiter at Home altitude for"
                             onClicked: {
@@ -145,7 +146,7 @@ Rectangle {
                             }
                         }
                         FactTextField {
-                            fact: autopilot.parameters["RTL_LAND_DELAY"];
+                            fact: Fact { name: "RTL_LAND_DELAY" }
                             showUnits: true
                             enabled: homeLoiterCheckbox.checked == true
                         }
@@ -251,7 +252,7 @@ Rectangle {
                         }
                         FactTextField {
                             id: descendField;
-                            fact: autopilot.parameters["RTL_DESCEND_ALT"];
+                            fact: Fact { name: "RTL_DESCEND_ALT" }
                             enabled: homeLoiterCheckbox.checked == true
                             showUnits: true
                         }
@@ -263,17 +264,19 @@ Rectangle {
         }
 
         QGCLabel {
+            property Fact fact: Fact { name: "NAV_RCL_OBC" }
             width: parent.width
             font.pointSize: 14
             text: "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
-            visible: autopilot.parameters["NAV_RCL_OBC"].value != 0
+            visible: fact.value != 0
             wrapMode: Text.Wrap
         }
         QGCLabel {
+            property Fact fact: Fact { name: "NAV_DLL_OBC" }
             width: parent.width
             font.pointSize: 14
             text: "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
-            visible: autopilot.parameters["NAV_DLL_OBC"].value != 0
+            visible: fact.value != 0
             wrapMode: Text.Wrap
         }
     }

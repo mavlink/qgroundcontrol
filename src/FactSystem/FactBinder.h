@@ -24,28 +24,46 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "FactSystem.h"
-#include "UASManager.h"
-#include "QGCApplication.h"
-#include "VehicleComponent.h"
-#include "FactBinder.h"
+#ifndef FACTBINDER_H
+#define FACTBINDER_H
 
-#include <QtQml>
+#include "Fact.h"
+#include "AutoPilotPlugin.h"
 
-IMPLEMENT_QGC_SINGLETON(FactSystem, FactSystem)
+#include <QObject>
+#include <QString>
 
-const char* FactSystem::_factSystemQmlUri = "QGroundControl.FactSystem";
-
-FactSystem::FactSystem(QObject* parent) :
-    QGCSingleton(parent)
+/// This object is used to instantiate a connection to a Fact from within Qml.
+class FactBinder : public QObject
 {
-    qmlRegisterType<FactBinder>(_factSystemQmlUri, 1, 0, "Fact");
+    Q_OBJECT
     
-    // FIXME: Where should these go?
-    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference VehicleComponent");
-}
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+    Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
+    Q_PROPERTY(QVariant valueString READ valueString NOTIFY valueChanged)
+    Q_PROPERTY(QString units READ units CONSTANT)
+    
+public:
+    FactBinder(void);
+    
+    QString name(void) const;
+    void setName(const QString& name);
+    
+    QVariant value(void) const;
+    void setValue(const QVariant& value);
+    
+    QString valueString(void) const;
+    
+    /// Read accesor for units property
+    QString units(void) const;
+    
+signals:
+    void nameChanged(void);
+    void valueChanged(void);
+    
+private:
+    AutoPilotPlugin*    _autopilotPlugin;
+    Fact*               _fact;
+};
 
-FactSystem::~FactSystem()
-{
-
-}
+#endif
