@@ -59,6 +59,7 @@
 #include "QGCTemporaryFile.h"
 #include "QGCFileDialog.h"
 #include "QGCPalette.h"
+#include "MousePosition.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -249,8 +250,9 @@ void QGCApplication::_initCommon(void)
     //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
     // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
     
-    // Register our Qml palette before anyone tries to use it
+    // Register our Qml objects
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
+    qmlRegisterType<MousePosition>("QGroundControl.MousePosition", 1, 0, "MousePosition");
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
