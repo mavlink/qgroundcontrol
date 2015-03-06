@@ -18,9 +18,10 @@ Column {
 
         QGCLabel { id: compass; text: "Compass:" }
         QGCLabel {
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - compass.contentWidth;
-            text: autopilot.parameters["CAL_MAG0_ID"].value  == 0 ? "Setup required" : "Ready"
+            property Fact fact:     Fact { name: "CAL_MAG0_ID" }
+            horizontalAlignment:    Text.AlignRight;
+            width:                  parent.width - compass.contentWidth;
+            text:                   fact.value  == 0 ? "Setup required" : "Ready"
         }
     }
 
@@ -29,9 +30,10 @@ Column {
 
         QGCLabel { id: gyro; text: "Gyro:" }
         QGCLabel {
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - gyro.contentWidth;
-            text: autopilot.parameters["CAL_GYRO0_ID"].value  == 0 ? "Setup required" : "Ready"
+            property Fact fact:     Fact { name: "CAL_GYRO0_ID" }
+            horizontalAlignment:    Text.AlignRight;
+            width:                  parent.width - compass.contentWidth;
+            text:                   fact.value  == 0 ? "Setup required" : "Ready"
         }
     }
 
@@ -40,9 +42,10 @@ Column {
 
         QGCLabel { id: accel; text: "Accelerometer:" }
         QGCLabel {
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - accel.contentWidth;
-            text: autopilot.parameters["CAL_ACC0_ID"].value  == 0 ? "Setup required" : "Ready"
+            property Fact fact:     Fact { name: "CAL_ACC0_ID" }
+            horizontalAlignment:    Text.AlignRight;
+            width:                  parent.width - compass.contentWidth;
+            text:                   fact.value  == 0 ? "Setup required" : "Ready"
         }
     }
 
@@ -51,9 +54,10 @@ Column {
 
         QGCLabel { id: airspeed; text: "Airspeed:" }
         QGCLabel {
+            property Fact fact:     Fact { name: "SENS_DPRES_OFF" }
             horizontalAlignment: Text.AlignRight;
             width: parent.width - airspeed.contentWidth;
-            text: autopilot.parameters["SENS_DPRES_OFF"].value == 0.0 ? "Setup required" : "Ready"
+            text: fact.value == 0.0 ? "Setup required" : "Ready"
         }
     }
 }

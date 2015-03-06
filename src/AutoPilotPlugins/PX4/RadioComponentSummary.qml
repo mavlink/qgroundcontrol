@@ -9,80 +9,75 @@ Column {
     anchors.fill: parent
     anchors.margins: 8
 
-    Row {
-        width: parent.width
+    Component {
+        id: component
 
-        QGCLabel { id: roll; text: "Roll:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - roll.contentWidth
-            text: autopilot.parameters["RC_MAP_ROLL"].value == 0 ? "Setup required" : autopilot.parameters["RC_MAP_ROLL"].value
+        Row {
+            width: parent.width
+
+            QGCLabel { id: label; text: labelText }
+            QGCLabel {
+                Fact { id: fact; name: factName }
+                horizontalAlignment: Text.AlignRight
+                width: parent.width - label.contentWidth
+                text: fact.value == 0 ? zeroText : fact.value
+            }
         }
     }
 
-    Row {
+    Loader {
+        property string labelText: "Roll:"
+        property string zeroText: "Setup required"
+        property string factName: "RC_MAP_ROLL"
         width: parent.width
-
-        QGCLabel { id: pitch; text: "Pitch:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - pitch.contentWidth
-            text: autopilot.parameters["RC_MAP_PITCH"].value == 0 ? "Setup required" : autopilot.parameters["RC_MAP_PITCH"].value
-        }
+        sourceComponent: component
     }
 
-    Row {
+    Loader {
+        property string labelText: "Pitch:"
+        property string zeroText: "Setup required"
+        property string factName: "RC_MAP_PITCH"
         width: parent.width
-
-        QGCLabel { id: yaw; text: "Yaw:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - yaw.contentWidth
-            text: autopilot.parameters["RC_MAP_YAW"].value == 0 ? "Setup required" : autopilot.parameters["RC_MAP_YAW"].value
-        }
+        sourceComponent: component
     }
 
-    Row {
+    Loader {
+        property string labelText: "Yaw:"
+        property string zeroText: "Setup required"
+        property string factName: "RC_MAP_YAW"
         width: parent.width
-
-        QGCLabel { id: throttle; text: "Throttle:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - throttle.contentWidth
-            text: autopilot.parameters["RC_MAP_THROTTLE"].value == 0 ? "Setup required" : autopilot.parameters["RC_MAP_THROTTLE"].value
-        }
+        sourceComponent: component
     }
 
-    Row {
+    Loader {
+        property string labelText: "Throttle:"
+        property string zeroText: "Setup required"
+        property string factName: "RC_MAP_THROTTLE"
         width: parent.width
-
-        QGCLabel { id: flaps; text: "Flaps:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - flaps.contentWidth
-            text: autopilot.parameters["RC_MAP_FLAPS"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_FLAPS"].value
-        }
+        sourceComponent: component
     }
 
-    Row {
+    Loader {
+        property string labelText: "Flaps:"
+        property string zeroText: "Disabled"
+        property string factName: "RC_MAP_FLAPS"
         width: parent.width
-
-        QGCLabel { id: aux1; text: "Aux1:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - aux1.contentWidth
-            text: autopilot.parameters["RC_MAP_AUX1"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_AUX1"].value
-        }
+        sourceComponent: component
     }
 
-    Row {
+    Loader {
+        property string labelText: "Aux1:"
+        property string zeroText: "Disabled"
+        property string factName: "RC_MAP_AUX1"
         width: parent.width
+        sourceComponent: component
+    }
 
-        QGCLabel { id: aux2; text: "Aux2:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - aux2.contentWidth
-            text: autopilot.parameters["RC_MAP_AUX2"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_AUX2"].value
-        }
+    Loader {
+        property string labelText: "Aux2:"
+        property string zeroText: "Disabled"
+        property string factName: "RC_MAP_AUX2"
+        width: parent.width
+        sourceComponent: component
     }
 }

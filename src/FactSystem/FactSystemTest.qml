@@ -5,11 +5,12 @@ import QGroundControl.FactSystem 1.0
 Item {
     TextInput {
         objectName: "testControl"
-        text: autopilot.parameters["RC_MAP_THROTTLE"].value
+        Fact { id: fact; name: "RC_MAP_THROTTLE" }
+        text: fact.value
         font.family: "Helvetica"
         font.pointSize: 24
         color: "red"
         focus: true
-        onAccepted: { autopilot.parameters["RC_MAP_THROTTLE"].value = text; }
+        onAccepted: { fact.value = text; }
     }
 }

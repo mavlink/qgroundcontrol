@@ -4,7 +4,6 @@ import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
-import QGroundControl.FactControls 1.0
 
 Rectangle {
 
@@ -446,55 +445,6 @@ Rectangle {
                     width: 100
                     height: 20
                     text: "QGCTextField"
-                    enabled: false
-                }
-
-                // FactLabel
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "FactLabel"
-                }
-                FactLabel {
-                    width: 100
-                    height: 20
-                }
-                FactLabel {
-                    width: 100
-                    height: 20
-                    enabled: false
-                }
-
-                // FactCheckBox
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "FactCheckBox"
-                }
-                FactCheckBox {
-                    width: 100
-                    height: 20
-                    text: "Fact CheckBox"
-                }
-                FactCheckBox {
-                    width: 100
-                    height: 20
-                    text: "Fact CheckBox"
-                    enabled: false
-                }
-
-                // FactTextField
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "FactTextField"
-                }
-                FactTextField {
-                    width: 100
-                    height: 20
-                    text: "FactTextField"
-                }
-                FactTextField {
-                    width: 100
-                    height: 20
-                    text: "FactTextField"
                     enabled: false
                 }
 
