@@ -50,7 +50,6 @@ class AutoPilotPlugin : public QObject
 public:
     AutoPilotPlugin(UASInterface* uas, QObject* parent);
     
-    Q_PROPERTY(QVariantMap parameters READ parameters CONSTANT)
     Q_PROPERTY(QVariantList components READ components CONSTANT)
     Q_PROPERTY(QUrl setupBackgroundImage READ setupBackgroundImage CONSTANT)
     
@@ -62,6 +61,10 @@ public:
     
     // Request a refresh on all parameters that begin with the specified prefix
     Q_INVOKABLE void refreshParametersPrefix(const QString& paramPrefix);
+    
+    Q_INVOKABLE bool factExists(const QString& param);
+    
+    Fact* getFact(const QString& name);
 
     // Property accessors
     virtual const QVariantList& components(void) = 0;

@@ -75,33 +75,41 @@ Rectangle {
             QGCLabel { text: "Calibrate:"; anchors.baseline: firstButton.baseline }
 
             IndicatorButton {
+                property Fact fact: Fact { name: "CAL_MAG0_ID" }
+
                 id:             firstButton
                 width:          parent.buttonWidth
                 text:           "Compass"
-                indicatorGreen: autopilot.parameters["CAL_MAG0_ID"].value != 0
+                indicatorGreen: fact.value != 0
                 onClicked: controller.calibrateCompass()
             }
 
             IndicatorButton {
+                property Fact fact: Fact { name: "CAL_GYRO0_ID" }
+
                 width:          parent.buttonWidth
                 text:           "Gyroscope"
-                indicatorGreen: autopilot.parameters["CAL_GYRO0_ID"].value != 0
+                indicatorGreen: fact.value != 0
                 onClicked: controller.calibrateGyro()
             }
 
             IndicatorButton {
+                property Fact fact: Fact { name: "CAL_ACC0_ID" }
+
                 width:          parent.buttonWidth
                 text:           "Accelerometer"
-                indicatorGreen: autopilot.parameters["CAL_ACC0_ID"].value != 0
+                indicatorGreen: fact.value != 0
                 onClicked: controller.calibrateAccel()
             }
 
             IndicatorButton {
+                property Fact fact: Fact { name: "SENS_DPRES_OFF" }
+
                 width:          parent.buttonWidth
                 text:           "Airspeed"
                 visible:        controller.fixedWing
-                indicatorGreen: autopilot.parameters["SENS_DPRES_OFF"].value != 0
-                onClicked: controller.calibrateAirspeed()
+                indicatorGreen: fact.value != 0
+                onClicked:      controller.calibrateAirspeed()
             }
         }
 
@@ -232,11 +240,15 @@ Rectangle {
             }
 
             Column {
+                property Fact cal_mag0_rot: Fact { name: "CAL_MAG0_ROT" }
+                property Fact cal_mag1_rot: Fact { name: "CAL_MAG1_ROT" }
+                property Fact cal_mag2_rot: Fact { name: "CAL_MAG2_ROT" }
+
                 // Compass rotation parameter < 0 indicates either internal compass, or no compass. So in
                 // both those cases we do not show a rotation combo.
-                property bool showCompass0: autopilot.parameters["CAL_MAG0_ROT"].value >= 0
-                property bool showCompass1: autopilot.parameters["CAL_MAG1_ROT"].value >= 0
-                property bool showCompass2: autopilot.parameters["CAL_MAG2_ROT"].value >= 0
+                property bool showCompass0: cal_mag0_rot.value >= 0
+                property bool showCompass1: cal_mag1_rot.value >= 0
+                property bool showCompass2: cal_mag2_rot.value >= 0
 
                 x: parent.width - rotationColumnWidth
 
@@ -245,7 +257,7 @@ Rectangle {
                 FactComboBox {
                     width:  rotationColumnWidth;
                     model:  rotations
-                    fact:   autopilot.parameters["SENS_BOARD_ROT"]
+                    fact:   Fact { name: "SENS_BOARD_ROT" }
                 }
 
                 // Compass 0 rotation
@@ -260,7 +272,7 @@ Rectangle {
                     FactComboBox {
                         width:  rotationColumnWidth
                         model:  rotations
-                        fact:   autopilot.parameters["CAL_MAG0_ROT"]
+                        fact:   Fact { name: "CAL_MAG0_ROT" }
                     }
                 }
                 Loader { sourceComponent: parent.showCompass0 ? compass0ComponentLabel : null }
@@ -278,7 +290,7 @@ Rectangle {
                     FactComboBox {
                         width:  rotationColumnWidth
                         model:  rotations
-                        fact:   autopilot.parameters["CAL_MAG1_ROT"]
+                        fact:   Fact { name: "CAL_MAG1_ROT" }
                     }
                 }
                 Loader { sourceComponent: parent.showCompass1 ? compass1ComponentLabel : null }
@@ -296,7 +308,7 @@ Rectangle {
                     FactComboBox {
                         width:  rotationColumnWidth
                         model:  rotations
-                        fact:   autopilot.parameters["CAL_MAG2_ROT"]
+                        fact:   Fact { name: "CAL_MAG2_ROT" }
                     }
                 }
                 Loader { sourceComponent: parent.showCompass2 ? compass2ComponentLabel : null }

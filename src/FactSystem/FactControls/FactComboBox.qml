@@ -7,7 +7,7 @@ import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 
 QGCComboBox {
-    property Fact fact: Fact { value: 0 }
+    property Fact fact: Fact { }
     currentIndex: fact.value
     onActivated: fact.value = index
 }

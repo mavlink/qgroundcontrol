@@ -62,3 +62,13 @@ void AutoPilotPlugin::refreshParametersPrefix(const QString& paramPrefix)
         }
     }
 }
+
+bool AutoPilotPlugin::factExists(const QString& param)
+{
+    return parameters().contains(param);
+}
+
+Fact* AutoPilotPlugin::getFact(const QString& name)
+{
+    return parameters()[name].value<Fact*>();
+}
