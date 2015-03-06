@@ -185,23 +185,23 @@ void FirmwareUpgradeController::_getFirmwareFile(void)
 {
     static const char* rgPX4FMUV1Firmware[3] =
     {
-        "http://px4.oznet.ch/stable/px4fmu-v1_default.px4",
-        "http://px4.oznet.ch/beta/px4fmu-v1_default.px4",
-        "http://px4.oznet.ch/continuous/px4fmu-v1_default.px4"
+        "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v1_default.px4",
+        "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v1_default.px4",
+        "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v1_default.px4"
     };
     
     static const char* rgPX4FMUV2Firmware[3] =
     {
-        "http://px4.oznet.ch/stable/px4fmu-v2_default.px4",
-        "http://px4.oznet.ch/beta/px4fmu-v2_default.px4",
-        "http://px4.oznet.ch/continuous/px4fmu-v2_default.px4"
+        "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v2_default.px4",
+        "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4",
+        "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4"
     };
     
     static const char* rgPX4FlowFirmware[3] =
     {
-        "http://px4.oznet.ch/stable/px4flow.px4",
-        "http://px4.oznet.ch/beta/px4flow.px4",
-        "http://px4.oznet.ch/continuous/px4flow.px4"
+        "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4",
+        "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4",
+        "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4"
     };
     
     Q_ASSERT(sizeof(rgPX4FMUV1Firmware) == sizeof(rgPX4FMUV2Firmware) && sizeof(rgPX4FMUV1Firmware) == sizeof(rgPX4FlowFirmware));
