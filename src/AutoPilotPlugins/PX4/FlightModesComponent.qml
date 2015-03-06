@@ -559,7 +559,7 @@ Item {
                         text: "Flight Modes"
                     }
                     QGCLabel {
-                        text: "(Mode Switch by be assigned to channel before flight is allowed)"
+                        text: "(Mode Switch must be assigned to channel before flight is allowed)"
                         visible: rc_map_mode_sw.value == 0
                     }
                 }
