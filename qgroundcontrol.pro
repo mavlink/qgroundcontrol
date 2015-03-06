@@ -270,7 +270,8 @@ INCLUDEPATH += \
     src/ui/main \
     src/ui/toolbar \
     src/VehicleSetup \
-    src/AutoPilotPlugins
+    src/AutoPilotPlugins \
+    src/QmlControls
 
 FORMS += \
     src/ui/MainWindow.ui \
@@ -495,7 +496,8 @@ HEADERS += \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/uas/UASMessageHandler.h \
-    src/ui/toolbar/MainToolBar.h
+    src/ui/toolbar/MainToolBar.h \
+    src/QmlControls/MousePosition.h
 
 SOURCES += \
     src/main.cc \
@@ -636,7 +638,8 @@ SOURCES += \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/uas/UASMessageHandler.cc \
-    src/ui/toolbar/MainToolBar.cc
+    src/ui/toolbar/MainToolBar.cc \
+    src/QmlControls/MousePosition.cc
 
 #
 # Unit Test specific configuration goes here
