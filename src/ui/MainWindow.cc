@@ -1373,3 +1373,21 @@ void MainWindow::_showQmlTestWidget(void)
 }
 #endif
 
+// There is a bug in Qt where a Canvas element inside a QQuickWidget does not
+// receive update requests. We hook into this event and notify the tool bar
+// to update its canvas elements. If other QQuickWidgets start using Canvas
+// and this bug is not fixed, this should be turned into a signal emited by
+// MainWindow and the various QQuickWidgets that need it should connect to it.
+bool MainWindow::event(QEvent* e)
+{
+    bool result = true;
+    switch (e->type()) {
+        case QEvent::Paint:
+            result = QMainWindow::event(e);
+            _mainToolBar->updateCanvas();
+            return result;
+        default:
+            break;
+    }
+    return QMainWindow::event(e);
+}
