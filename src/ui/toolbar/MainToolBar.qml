@@ -144,10 +144,10 @@ Rectangle {
 
             QGCToolBarButton {
                 id: setupButton
-                width: 100
+                width: 90
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("1. Setup")
+                text: qsTr("Setup")
                 anchors.verticalCenter: parent.verticalCenter
                 checked: (mainToolBar.currentView === MainToolBar.ViewSetup)
                 onClicked: {
@@ -158,10 +158,10 @@ Rectangle {
 
             QGCToolBarButton {
                 id: planButton
-                width: 100
+                width: 90
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("2. Plan")
+                text: qsTr("Plan")
                 anchors.verticalCenter: parent.verticalCenter
                 checked: (mainToolBar.currentView === MainToolBar.ViewPlan)
                 onClicked: {
@@ -172,10 +172,10 @@ Rectangle {
 
             QGCToolBarButton {
                 id: flyButton
-                width: 100
+                width: 90
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("3. Fly")
+                text: qsTr("Fly")
                 anchors.verticalCenter: parent.verticalCenter
                 checked: (mainToolBar.currentView === MainToolBar.ViewFly)
                 onClicked: {
@@ -186,10 +186,10 @@ Rectangle {
 
             QGCToolBarButton {
                 id: analyzeButton
-                width: 100
+                width: 90
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("4. Analyze")
+                text: qsTr("Analyze")
                 anchors.verticalCenter: parent.verticalCenter
                 checked: (mainToolBar.currentView === MainToolBar.ViewAnalyze)
                 onClicked: {
@@ -470,7 +470,6 @@ Rectangle {
         QGCComboBox {
             id: configList
             width: 200
-            height: cellHeight
             visible: (mainToolBar.connectionCount === 0 && mainToolBar.configList.length > 0)
             anchors.verticalCenter: parent.verticalCenter
             model: mainToolBar.configList
@@ -489,7 +488,6 @@ Rectangle {
         QGCButton {
             id: connectButton
             width: 100
-            height: cellHeight
             visible: (mainToolBar.connectionCount === 0 || mainToolBar.connectionCount === 1)
             text: (mainToolBar.configList.length > 0) ? (mainToolBar.connectionCount === 0) ? qsTr("Connect") : qsTr("Disconnect") : qsTr("Add Link")
             anchors.verticalCenter: parent.verticalCenter
@@ -516,7 +514,6 @@ Rectangle {
         QGCButton {
             id: multidisconnectButton
             width: 100
-            height: cellHeight
             text: qsTr("Disconnect")
             visible: (mainToolBar.connectionCount > 1)
             anchors.verticalCenter: parent.verticalCenter
