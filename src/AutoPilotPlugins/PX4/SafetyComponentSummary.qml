@@ -3,6 +3,7 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.FactSystem 1.0
+import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
 
 Column {
@@ -13,10 +14,10 @@ Column {
         width: parent.width
 
         QGCLabel { id: rtlMinAlt; text: "RTL min alt:" }
-        QGCLabel {
+        FactLabel {
+            fact: Fact { name: "RTL_RETURN_ALT" }
             horizontalAlignment: Text.AlignRight;
             width: parent.width - rtlMinAlt.contentWidth;
-            text: autopilot.parameters["RTL_RETURN_ALT"].valueString
         }
     }
 
@@ -24,10 +25,10 @@ Column {
         width: parent.width
 
         QGCLabel { id: rtlHomeAlt; text: "RTL home alt:" }
-        QGCLabel {
+        FactLabel {
+            fact: Fact { name: "RTL_DESCEND_ALT" }
             horizontalAlignment: Text.AlignRight;
             width: parent.width - rtlHomeAlt.contentWidth;
-            text: autopilot.parameters["RTL_DESCEND_ALT"].valueString
         }
     }
 
@@ -36,9 +37,10 @@ Column {
 
         QGCLabel { id: rtlLoiter; text: "RTL loiter delay:" }
         QGCLabel {
+            property Fact fact: Fact { name: "RTL_LAND_DELAY" }
             horizontalAlignment: Text.AlignRight;
             width: parent.width - rtlLoiter.contentWidth;
-            text: autopilot.parameters["RTL_LAND_DELAY"].value < 0 ? "Disabled" : autopilot.parameters["RTL_LAND_DELAY"].valueString
+            text: fact.value < 0 ? "Disabled" : fact.valueString
         }
     }
 
@@ -47,9 +49,10 @@ Column {
 
         QGCLabel { id: commLoss; text: "Telemetry loss RTL:" }
         QGCLabel {
+            property Fact fact: Fact { name: "COM_DL_LOSS_EN" }
             horizontalAlignment: Text.AlignRight;
             width: parent.width - commLoss.contentWidth;
-            text: autopilot.parameters["COM_DL_LOSS_EN"].value != 1 ? "Disabled" : autopilot.parameters["COM_DL_LOSS_T"].valueString
+            text: fact.value != 1 ? "Disabled" : fact.valueString
         }
     }
 
@@ -57,10 +60,10 @@ Column {
         width: parent.width
 
         QGCLabel { id: rcLoss; text: "RC loss RTL (seconds):" }
-        QGCLabel {
+        FactLabel {
+            fact: Fact { name: "COM_RC_LOSS_T" }
             horizontalAlignment: Text.AlignRight;
             width: parent.width - rcLoss.contentWidth;
-            text: autopilot.parameters["COM_RC_LOSS_T"].valueString
         }
     }
 }

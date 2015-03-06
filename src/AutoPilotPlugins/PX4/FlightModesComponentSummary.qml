@@ -9,47 +9,51 @@ Column {
     anchors.fill: parent
     anchors.margins: 8
 
-    Row {
-        width: parent.width
+    Component {
+        id: component
 
-        QGCLabel { id: mode; text: "Mode switch:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - mode.contentWidth
-            text: autopilot.parameters["RC_MAP_MODE_SW"].value == 0 ? "Setup required" : autopilot.parameters["RC_MAP_MODE_SW"].value
+        Row {
+            width: parent.width
+
+            QGCLabel { id: label; text: labelText }
+            QGCLabel {
+                property Fact fact: Fact { name: factName }
+                horizontalAlignment: Text.AlignRight
+                width: parent.width - label.contentWidth
+                text: fact.value == 0 ? zeroText : fact.value
+            }
         }
     }
 
-    Row {
+    Loader {
+        property string labelText: "Mode switch:"
+        property string zeroText: "Setup required"
+        property string factName: "RC_MAP_MODE_SW"
         width: parent.width
-
-        QGCLabel { id: posctl; text: "Position Ctl switch:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - posctl.contentWidth
-            text: autopilot.parameters["RC_MAP_POSCTL_SW"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_POSCTL_SW"].value
-        }
+        sourceComponent: component
     }
 
-    Row {
+    Loader {
+        property string labelText: "Position Ctl switch:"
+        property string zeroText: "Disabled"
+        property string factName: "RC_MAP_POSCTL_SW"
         width: parent.width
-
-        QGCLabel { id: loiter; text: "Loiter switch:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - loiter.contentWidth
-            text: autopilot.parameters["RC_MAP_LOITER_SW"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_LOITER_SW"].value
-        }
+        sourceComponent: component
     }
 
-    Row {
+    Loader {
+        property string labelText: "Position Ctl switch:"
+        property string zeroText: "Disabled"
+        property string factName: "RC_MAP_LOITER_SW"
         width: parent.width
+        sourceComponent: component
+    }
 
-        QGCLabel { id: rtl; text: "Return switch:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight
-            width: parent.width - rtl.contentWidth
-            text: autopilot.parameters["RC_MAP_RETURN_SW"].value == 0 ? "Disabled" : autopilot.parameters["RC_MAP_RETURN_SW"].value
-        }
+    Loader {
+        property string labelText: "Return switch:"
+        property string zeroText: "Disabled"
+        property string factName: "RC_MAP_RETURN_SW"
+        width: parent.width
+        sourceComponent: component
     }
 }

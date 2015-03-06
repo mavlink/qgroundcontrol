@@ -13,36 +13,40 @@ Column {
     anchors.fill: parent
     anchors.margins: 8
 
-    Row {
-        width: parent.width
+    Component {
+        id: component
 
-        QGCLabel { id: compass; text: "Compass:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - compass.contentWidth;
-            text: autopilot.parameters["CAL_MAG0_ID"].value  == 0 ? "Setup required" : "Ready"
+        Row {
+            width: parent.width
+
+            QGCLabel { id: label; text: labelText }
+            QGCLabel {
+                property Fact fact:     Fact { name: factName }
+                horizontalAlignment:    Text.AlignRight;
+                width:                  parent.width - label.contentWidth;
+                text:                   fact.value  == 0 ? "Setup required" : "Ready"
+            }
         }
     }
 
-    Row {
+    Loader {
+        property string labelText: "Compass:"
+        property string factName: "CAL_MAG0_ID"
         width: parent.width
-
-        QGCLabel { id: gyro; text: "Gyro:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - gyro.contentWidth;
-            text: autopilot.parameters["CAL_GYRO0_ID"].value  == 0 ? "Setup required" : "Ready"
-        }
+        sourceComponent: component
     }
 
-    Row {
+    Loader {
+        property string labelText: "Gyro:"
+        property string factName: "CAL_GYRO0_ID"
         width: parent.width
+        sourceComponent: component
+    }
 
-        QGCLabel { id: accel; text: "Accelerometer:" }
-        QGCLabel {
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - accel.contentWidth;
-            text: autopilot.parameters["CAL_ACC0_ID"].value  == 0 ? "Setup required" : "Ready"
-        }
+    Loader {
+        property string labelText: "Accelerometer:"
+        property string factName: "CAL_ACC0_ID"
+        width: parent.width
+        sourceComponent: component
     }
 }
