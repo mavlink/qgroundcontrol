@@ -655,3 +655,8 @@ void MainToolBar::_setSatLoc(UASInterface*, int fix)
         emit satelliteLockChanged(_satelliteLock);
     }
 }
+
+void MainToolBar::updateCanvas()
+{
+    emit repaintRequestedChanged();
+}
