@@ -1,0 +1,28 @@
+language: cpp
+compiler: clang
+
+cache:
+  apt: true
+
+before_install:
+  - sudo add-apt-repository --yes ppa:beineri/opt-qt541
+  - sudo apt-get update -qq
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+install:
+  - sudo apt-get install qt54tools qt54base qt54declarative qt54serialport qt54svg qt54webkit qt54quickcontrols qt54xmlpatterns qt54x11extras qt54websockets qt54sensors qt54script qt54quick1 qt54qbs qt54multimedia qt54location qt54imageformats qt54graphicaleffects qt54creator qt54connectivity espeak libespeak-dev libopenscenegraph-dev
+
+before_script: /opt/qt54/bin/qmake qgroundcontrol.pro
+script:
+  - make
+  - ./debug/qgroundcontrol --unittest
+
+deploy:
+  provider: releases
+  api-key:
+    secure: ""
+  file: "release/qgroundcontrol.exe"
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
