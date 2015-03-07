@@ -46,10 +46,14 @@ Rectangle {
 
     property var colorBlue:       "#1a6eaa"
     property var colorGreen:      "#079527"
-    property var colorGreenText:  "#00d930"
     property var colorRed:        "#a81a1b"
     property var colorOrange:     "#a76f26"
     property var colorWhite:      "#f0f0f0"
+
+    property var colorOrangeText: (qgcPal.globalTheme === QGCPalette.Light) ? "#b75711" : "#ea8225"
+    property var colorRedText:    (qgcPal.globalTheme === QGCPalette.Light) ? "#ee1112" : "#ef2526"
+    property var colorGreenText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#046b1b" : "#00d930"
+    property var colorWhiteText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#343333" : "#f0f0f0"
 
     id: toolBarHolder
     color: qgcPal.windowShade
@@ -390,7 +394,7 @@ Rectangle {
                         font.pointSize: 12 * dpiFactor
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
-                        color: (mainToolBar.systemArmed) ? colorRed : colorGreen
+                        color: (mainToolBar.systemArmed) ? colorOrangeText : colorGreenText
                     }
                 }
 
@@ -409,7 +413,7 @@ Rectangle {
                         font.pointSize: 12 * dpiFactor
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
-                        color: (mainToolBar.currentState === "STANDBY") ? colorGreen : colorRed
+                        color: (mainToolBar.currentState === "STANDBY") ? colorGreenText : colorRedText
                     }
                 }
 
@@ -431,7 +435,7 @@ Rectangle {
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
-                    color: qgcPal.text
+                    color: colorWhiteText
                 }
             }
 
@@ -452,7 +456,7 @@ Rectangle {
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: colorRed
+                    color: colorRedText
                 }
             }
         }
