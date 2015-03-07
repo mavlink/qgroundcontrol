@@ -267,6 +267,7 @@
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
+
         <file alias="QGroundControl/Controls/arrow-down.png">src/QmlControls/arrow-down.png</file>
 
         <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
@@ -278,6 +279,7 @@
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
         <file alias="FlightModesComponent.qml">src/AutoPilotPlugins/PX4/FlightModesComponent.qml</file>
+
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
         <file alias="SensorsComponentSummary.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
         <file alias="SensorsComponentSummaryFixedWing.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml</file>
