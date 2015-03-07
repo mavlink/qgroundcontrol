@@ -9,10 +9,10 @@ import QGroundControl.MousePosition 1.0
 Button {
     // primary: true - this is the primary button for this group of buttons
     property bool primary: false
-    property bool showHighlight: (pressed | hovered | checked) && !__forceHoverOff
 
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
+    property bool __showHighLight: (pressed | hovered | checked) && !__forceHoverOff
 
     // This fixes the issue with button hover where if a Button is near the edge oa QQuickWidget you can
     // move the mouse fast enough such that the MouseArea does not trigger an onExited. This is turn
@@ -70,7 +70,7 @@ Button {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: showHighlight ?
+                    color: __showHighLight ?
                         control.__qgcPal.buttonHighlight :
                         (primary ? control.__qgcPal.primaryButton : control.__qgcPal.button)
                 }
@@ -107,7 +107,7 @@ Button {
                         renderType: Text.NativeRendering
                         anchors.verticalCenter: parent.verticalCenter
                         text: control.text
-                        color: showHighlight ?
+                        color: __showHighLight ?
                             control.__qgcPal.buttonHighlightText :
                             (primary ? control.__qgcPal.primaryButtonText : control.__qgcPal.buttonText)
                     }
