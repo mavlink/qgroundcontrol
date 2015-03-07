@@ -4,6 +4,7 @@ import QtQuick.Controls.Styles 1.2
 import QtQuick.Controls.Private 1.0
 
 import QGroundControl.Palette 1.0
+import QGroundControl.MousePosition 1.0
 
 Button {
     // primary: true - this is the primary button for this group of buttons
@@ -11,32 +12,48 @@ Button {
 
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
-    property bool __showHighlight: pressed | hovered | checked
+    property bool __showHighlight: (pressed | hovered | checked) && !__forceHoverOff
+
+    // This fixes the issue with button hover where if a Button is near the edge oa QQuickWidget you can
+    // move the mouse fast enough such that the MouseArea does not trigger an onExited. This is turn
+    // cause the hover property to not be cleared correctly.
+
+    property bool __forceHoverOff: false
+
+    property int __lastGlobalMouseX: 0
+    property int __lastGlobalMouseY: 0
+
+    property MousePosition __globalMousePosition: MousePosition { }
+
+    Connections {
+        target: __behavior
+        onMouseXChanged: {
+            __lastGlobalMouseX = __globalMousePosition.mouseX
+            __lastGlobalMouseY = __globalMousePosition.mouseY
+        }
+        onMouseYChanged: {
+            __lastGlobalMouseX = __globalMousePosition.mouseX
+            __lastGlobalMouseY = __globalMousePosition.mouseY
+        }
+        onEntered: { __forceHoverOff; false; hoverTimer.start() }
+        onExited: { __forceHoverOff; false; hoverTimer.stop() }
+    }
+
+    Timer {
+        id:         hoverTimer
+        interval:   250
+        repeat:     true
+
+        onTriggered: {
+            if (__lastGlobalMouseX != __globalMousePosition.mouseX || __lastGlobalMouseY != __globalMousePosition.mouseY) {
+                __forceHoverOff = true
+            } else {
+                __forceHoverOff = false
+            }
+        }
+    }
 
     style: ButtonStyle {
-/*
-            background: Rectangle {
-                implicitWidth: 100
-                implicitHeight: 25
-                color: __showHighlight ?
-                    control.__qgcPal.buttonHighlight :
-                    (primary ? control.__qgcPal.primaryButton : control.__qgcPal.button)
-            }
-
-            label: Text {
-                width: parent.width
-                height: parent.height
-
-                verticalAlignment: TextEdit.AlignVCenter
-                horizontalAlignment: TextEdit.AlignHCenter
-
-                text: control.text
-                color: __showHighlight ?
-                    control.__qgcPal.buttonHighlightText :
-                    (primary ? control.__qgcPal.primaryButtonText : control.__qgcPal.buttonText)
-            }
-*/
-
             /*! The padding between the background and the label components. */
             padding {
                 top: 4
