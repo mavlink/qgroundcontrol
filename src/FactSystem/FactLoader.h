@@ -65,7 +65,7 @@ protected:
     
 private slots:
     void _parameterUpdate(int uas, int component, QString parameterName, int mavType, QVariant value);
-    void _valueUpdated(QVariant value);
+    void _valueUpdated(const QVariant& value);
     void _paramMgrParameterListUpToDate(void);
     
 private:

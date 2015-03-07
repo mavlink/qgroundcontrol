@@ -57,11 +57,7 @@ FactLoader::FactLoader(UASInterface* uas, QObject* parent) :
 
 FactLoader::~FactLoader()
 {
-    foreach(Fact* fact, _mapFact2ParameterName.keys()) {
-        delete fact;
-    }
-    _mapParameterName2Variant.clear();
-    _mapFact2ParameterName.clear();
+
 }
 
 /// Called whenever a parameter is updated or first seen.
@@ -141,7 +137,7 @@ void FactLoader::_parameterUpdate(int uas, int component, QString parameterName,
 /// Connected to Fact::valueUpdated
 ///
 /// Sets the new value into the Parameter Manager. Parameter is persisted after send.
-void FactLoader::_valueUpdated(QVariant value)
+void FactLoader::_valueUpdated(const QVariant& value)
 {
     Fact* fact = qobject_cast<Fact*>(sender());
     Q_ASSERT(fact);
