@@ -10,7 +10,7 @@ QGCButton {
     id: button
     property bool repaintChevron: false
     property var  __qgcPal: QGCPalette { colorGroupEnabled: enabled }
-    property bool showHighlight: __showHighLight
+    property bool showHighlight: __showHighlight
     style: ButtonStyle {
         background: Item {
             anchors.margins: 3
