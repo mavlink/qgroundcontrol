@@ -20,22 +20,20 @@ Button {
 
     property bool __forceHoverOff: false
 
-    property int __lastMouseX:  __behavior.mouseX
-    property int __lastMouseY:  __behavior.mouseY
-    property int __lastCursorX: 0
-    property int __lastCursorY: 0
+    property int __lastGlobalMouseX: 0
+    property int __lastGlobalMouseY: 0
 
-    property MousePosition __mousePosition: MousePosition { }
+    property MousePosition __globalMousePosition: MousePosition { }
 
     Connections {
         target: __behavior
         onMouseXChanged: {
-            __lastCursorX = __mousePosition.mouseX
-            __lastCursorY = __mousePosition.mouseY
+            __lastGlobalMouseX = __globalMousePosition.mouseX
+            __lastGlobalMouseY = __globalMousePosition.mouseY
         }
         onMouseYChanged: {
-            __lastCursorX = __mousePosition.mouseX
-            __lastCursorY = __mousePosition.mouseY
+            __lastGlobalMouseX = __globalMousePosition.mouseX
+            __lastGlobalMouseY = __globalMousePosition.mouseY
         }
         onEntered: { __forceHoverOff; false; hoverTimer.start() }
         onExited: { __forceHoverOff; false; hoverTimer.stop() }
@@ -47,7 +45,7 @@ Button {
         repeat:     true
 
         onTriggered: {
-            if (__lastCursorX != __mousePosition.mouseX || __lastCursorY != __mousePosition.mouseY) {
+            if (__lastGlobalMouseX != __globalMousePosition.mouseX || __lastGlobalMouseY != __globalMousePosition.mouseY) {
                 __forceHoverOff = true
             } else {
                 __forceHoverOff = false
