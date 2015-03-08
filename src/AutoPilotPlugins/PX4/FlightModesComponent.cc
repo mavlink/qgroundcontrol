@@ -25,8 +25,8 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FlightModesComponent.h"
-#include "FlightModeConfig.h"
 #include "PX4AutoPilotPlugin.h"
+#include "QGCQmlWidgetHolder.h"
 
 struct SwitchListItem {
     const char* param;
@@ -111,7 +111,14 @@ QStringList FlightModesComponent::paramFilterList(void) const
 
 QWidget* FlightModesComponent::setupWidget(void) const
 {
-    return new FlightModeConfig();
+    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
+    Q_CHECK_PTR(holder);
+    
+    holder->setAutoPilot(_autopilot);
+    
+    holder->setSource(QUrl::fromUserInput("qrc:/qml/FlightModesComponent.qml"));
+    
+    return holder;
 }
 
 QUrl FlightModesComponent::summaryQmlSource(void) const

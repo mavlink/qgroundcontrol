@@ -676,7 +676,6 @@ HEADERS += \
     src/qgcunittest/PX4RCCalibrationTest.h \
     src/qgcunittest/LinkManagerTest.h \
     src/qgcunittest/MainWindowTest.h \
-    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.h \
     src/qgcunittest/MavlinkLogTest.h \
     src/FactSystem/FactSystemTestBase.h \
     src/FactSystem/FactSystemTestPX4.h \
@@ -702,7 +701,6 @@ SOURCES += \
     src/qgcunittest/PX4RCCalibrationTest.cc \
     src/qgcunittest/LinkManagerTest.cc \
     src/qgcunittest/MainWindowTest.cc \
-    src/AutoPilotPlugins/PX4/Tests/FlightModeConfigTest.cc \
     src/qgcunittest/MavlinkLogTest.cc \
     src/FactSystem/FactSystemTestBase.cc \
     src/FactSystem/FactSystemTestPX4.cc \
@@ -722,7 +720,6 @@ INCLUDEPATH += \
 FORMS += \
     src/VehicleSetup/ParameterEditor.ui \
     src/ui/QGCPX4VehicleConfig.ui \
-    src/AutoPilotPlugins/PX4/FlightModeConfig.ui \
     src/VehicleSetup/SetupView.ui \
 
 HEADERS+= \
@@ -740,7 +737,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/PX4Component.h \
     src/AutoPilotPlugins/PX4/RadioComponent.h \
     src/AutoPilotPlugins/PX4/FlightModesComponent.h \
-    src/AutoPilotPlugins/PX4/FlightModeConfig.h \
+    src/AutoPilotPlugins/PX4/FlightModesComponentController.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
@@ -762,7 +759,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
     src/AutoPilotPlugins/PX4/RadioComponent.cc \
     src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
-    src/AutoPilotPlugins/PX4/FlightModeConfig.cc \
+    src/AutoPilotPlugins/PX4/FlightModesComponentController.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \

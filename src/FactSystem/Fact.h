@@ -108,7 +108,7 @@ signals:
     /// Signalled when property has been changed by a call to the property write accessor
     ///
     /// This signal is meant for use by Fact container implementations.
-    void _containerValueChanged(QVariant& value);
+    void _containerValueChanged(const QVariant& value);
     
 private:
     QString                     _name;
