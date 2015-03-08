@@ -70,6 +70,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     _flightModesComponent(NULL),
     _sensorsComponent(NULL),
     _safetyComponent(NULL),
+    _powerComponent(NULL),
     _incorrectParameterVersion(false)
 {
     Q_ASSERT(uas);
@@ -213,6 +214,10 @@ const QVariantList& PX4AutoPilotPlugin::components(void)
         _sensorsComponent = new SensorsComponent(_uas, this);
         Q_CHECK_PTR(_sensorsComponent);
         _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
+
+        _powerComponent = new PowerComponent(_uas, this);
+        Q_CHECK_PTR(_powerComponent);
+        _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
 
         _safetyComponent = new SafetyComponent(_uas, this);
         Q_CHECK_PTR(_safetyComponent);
