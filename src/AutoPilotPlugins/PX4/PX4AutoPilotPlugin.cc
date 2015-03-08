@@ -26,7 +26,7 @@
 #include "UASManager.h"
 #include "QGCUASParamManagerInterface.h"
 #include "PX4ParameterFacts.h"
-#include "SensorsComponentController.h"
+#include "FlightModesComponentController.h"
 #include "QGCMessageBox.h"
 
 /// @file
@@ -73,6 +73,8 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     _incorrectParameterVersion(false)
 {
     Q_ASSERT(uas);
+    
+    qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
     
     _parameterFacts = new PX4ParameterFacts(uas, this);
     Q_CHECK_PTR(_parameterFacts);
