@@ -27,6 +27,7 @@
 #include "FactBinder.h"
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
+#include <QDebug>
 
 FactBinder::FactBinder(void) :
     _autopilotPlugin(NULL),
@@ -60,13 +61,13 @@ void FactBinder::setName(const QString& name)
         if (_autopilotPlugin->factExists(name)) {
             _fact = _autopilotPlugin->getFact(name);
             connect(_fact, &Fact::valueChanged, this, &FactBinder::valueChanged);
+
+            emit valueChanged();
+            emit nameChanged();
         } else {
-            Q_ASSERT(false);
+            qDebug() << "FAILED BINDING PARAM" << name << ": PARAM DOES NOT EXIST ON SYSTEM!";
         }
     }
-    
-    emit valueChanged();
-    emit nameChanged();
 }
 
 QVariant FactBinder::value(void) const
@@ -83,7 +84,7 @@ void FactBinder::setValue(const QVariant& value)
     if (_fact) {
         _fact->setValue(value);
     } else {
-        Q_ASSERT(false);
+        qDebug() << "FAILED SETTING PARAM VALUE" << value.toString() << ": PARAM DOES NOT EXIST ON SYSTEM!";
     }
 }
 
