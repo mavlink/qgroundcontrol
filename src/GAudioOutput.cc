@@ -54,8 +54,8 @@ GAudioOutput::GAudioOutput(QObject *parent) :
     muted |= qgcApp()->runningUnitTests();
     
     worker->moveToThread(thread);
-    connect(this, SIGNAL(textToSpeak(QString,int)), worker, SLOT(say(QString,int)));
-    connect(this, SIGNAL(beepOnce()), worker, SLOT(beep()));
+    connect(this, &GAudioOutput::textToSpeak, worker, &QGCAudioWorker::say);
+    connect(this, &GAudioOutput::beepOnce, worker, &QGCAudioWorker::beep);
     thread->start();
 }
 
