@@ -281,7 +281,7 @@
         <file alias="RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/RadioComponentSummary.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
-        <file alias="SafetyComponentTree.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.png</file>
+        <file alias="SafetyComponentTree.svg">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.svg</file>
         <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentHome.png</file>
         <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentArrowDown.png</file>
         <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentPlane.png</file>

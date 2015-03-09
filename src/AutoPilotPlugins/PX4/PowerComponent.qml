@@ -33,6 +33,7 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
+import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     QGCPalette { id: palette; colorGroupEnabled: true }
@@ -42,6 +43,7 @@ Rectangle {
     color:  palette.window
 
     property int firstColumnWidth: 220
+    property ScreenTools __screenTools: ScreenTools { }
 
     Column {
         anchors.fill: parent
@@ -49,7 +51,7 @@ Rectangle {
 
         QGCLabel {
             text: "POWER CONFIG"
-            font.pointSize: 20
+            font.pointSize: 20 * __screenTools.dpiFactor;
         }
 
         Item { height: 1; width: 10 }
@@ -57,7 +59,7 @@ Rectangle {
         QGCLabel {
             text: "Battery"
             color: palette.text
-            font.pointSize: 20
+            font.pointSize: 20 * __screenTools.dpiFactor;
         }
 
         Rectangle {

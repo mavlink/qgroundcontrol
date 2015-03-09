@@ -55,7 +55,6 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _currentNormalCount(0)
     , _currentMessageType(MessageNone)
     , _satelliteCount(-1)
-    , _dotsPerInch(96.0)    // Default to Windows as it's more likely not to report below
     , _satelliteLock(0)
     , _showGPS(true)
     , _showMav(true)
@@ -72,13 +71,6 @@ MainToolBar::MainToolBar(QWidget* parent)
     QLayout* pl = layout();
     if(pl) {
         pl->setContentsMargins(0,0,0,0);
-    }
-    // Get screen DPI to manage font sizes on different platforms
-    QScreen *srn = QGuiApplication::screens().at(0); // TODO: Find current monitor as opposed to picking first one
-    if(srn && srn->logicalDotsPerInch() > 50.0) {
-        _dotsPerInch = (qreal)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
-    } else {
-        qWarning() << "System not reporting logical DPI, which is used to compute the appropriate font size. The default being used is 96dpi. If the text within buttons and UI elements are too big or too small, that's the reason.";
     }
 
     // Tool Bar Preferences
