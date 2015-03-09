@@ -39,7 +39,27 @@ Fact::Fact(QString name, FactMetaData::ValueType_t type, QObject* parent) :
 
 void Fact::setValue(const QVariant& value)
 {
-    _value = value;
+    switch (type()) {
+        case FactMetaData::valueTypeInt8:
+        case FactMetaData::valueTypeInt16:
+        case FactMetaData::valueTypeInt32:
+            _value.setValue(QVariant(value.toInt()));
+            break;
+
+        case FactMetaData::valueTypeUint8:
+        case FactMetaData::valueTypeUint16:
+        case FactMetaData::valueTypeUint32:
+            _value.setValue(value.toUInt());
+            break;
+
+        case FactMetaData::valueTypeFloat:
+            _value.setValue(value.toFloat());
+            break;
+
+        case FactMetaData::valueTypeDouble:
+            _value.setValue(value.toDouble());
+            break;
+    }
     emit valueChanged(_value);
     emit _containerValueChanged(_value);
 }
