@@ -24,6 +24,7 @@
             <short_desc>Number of cells</short_desc>
             <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
             <default>3</default>
+            <unit>S</unit>
         </parameter>
         <parameter name="BAT_CAPACITY" type="FLOAT">
             <short_desc>Battery capacity</short_desc>

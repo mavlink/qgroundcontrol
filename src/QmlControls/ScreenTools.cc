@@ -39,5 +39,10 @@ ScreenTools::ScreenTools()
     } else {
         qWarning() << "System not reporting logical DPI, which is used to compute the appropriate font size. The default being used is 96dpi. If the text within buttons and UI elements are too big or too small, that's the reason.";
     }
+    connect(MainWindow::instance(), &MainWindow::repaintCanvas, this, &ScreenTools::_updateCanvas);
 }
 
+void ScreenTools::_updateCanvas()
+{
+    emit repaintRequestedChanged();
+}

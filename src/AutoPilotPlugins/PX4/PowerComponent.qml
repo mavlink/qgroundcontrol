@@ -38,13 +38,14 @@ import QGroundControl.ScreenTools 1.0
 Rectangle {
     QGCPalette { id: palette; colorGroupEnabled: true }
 
+    id: powerSettings
     width:  600
     height: 600
     color:  palette.window
 
     property int firstColumnWidth: 220
     property int textEditWidth:    60
-    property ScreenTools __screenTools: ScreenTools { }
+    property ScreenTools screenTools: ScreenTools { }
 
     property Fact battNumCells: Fact { name: "BAT_N_CELLS" }
     property Fact battHighVolt: Fact { name: "BAT_V_CHARGED" }
@@ -97,13 +98,13 @@ Rectangle {
 
         QGCLabel {
             text: "POWER CONFIG"
-            font.pointSize: 20 * __screenTools.dpiFactor;
+            font.pointSize: 20 * screenTools.dpiFactor;
         }
 
         QGCLabel {
             text: "Battery"
             color: palette.text
-            font.pointSize: 20 * __screenTools.dpiFactor;
+            font.pointSize: 20 * screenTools.dpiFactor;
         }
 
         Rectangle {
@@ -124,7 +125,7 @@ Rectangle {
                         spacing: 10
                         Row {
                             spacing: 10
-                            QGCLabel { text: "Number of Cells"; width: firstColumnWidth; anchors.baseline: cellsField.baseline}
+                            QGCLabel { text: "Number of Cells (in Series)"; width: firstColumnWidth; anchors.baseline: cellsField.baseline}
                             FactTextField {
                                 id: cellsField
                                 width: textEditWidth
@@ -171,6 +172,12 @@ Rectangle {
                         height: voltageCol.height
                         width: 40
                         antialiasing: true
+                        Connections {
+                            target: screenTools
+                            onRepaintRequestedChanged: {
+                                arrows.requestPaint();
+                            }
+                        }
                         onPaint: {
                             var y0 = voltageCol.mapFromItem(battHigh, 0, battHigh.height / 2).y;
                             var y1 = voltageCol.mapFromItem(battLow,  0, battLow.height  / 2).y;
@@ -201,12 +208,12 @@ Rectangle {
                                 text: "Battery Max:"
                                 color: palette.text
                                 width: 80
-                                font.pointSize: 12 * __screenTools.dpiFactor;
+                                font.pointSize: 12 * screenTools.dpiFactor;
                             }
                             QGCLabel {
                                 text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
                                 color: palette.text
-                                font.pointSize: 12 * __screenTools.dpiFactor;
+                                font.pointSize: 12 * screenTools.dpiFactor;
                             }
                         }
                         Row {
@@ -215,12 +222,12 @@ Rectangle {
                                 text: "Battery Min:"
                                 color: palette.text
                                 width: 80
-                                font.pointSize: 12 * __screenTools.dpiFactor;
+                                font.pointSize: 12 * screenTools.dpiFactor;
                             }
                             QGCLabel {
                                 text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
                                 color: palette.text
-                                font.pointSize: 12 * __screenTools.dpiFactor;
+                                font.pointSize: 12 * screenTools.dpiFactor;
                             }
                         }
                     }
@@ -238,7 +245,7 @@ Rectangle {
                 QGCLabel {
                     text: "Propeller Function"
                     color: palette.text
-                    font.pointSize: 20 * __screenTools.dpiFactor;
+                    font.pointSize: 20 * screenTools.dpiFactor;
                 }
                 Rectangle {
                     width: parent.width
@@ -252,7 +259,7 @@ Rectangle {
                 QGCLabel {
                     text: "Magnetometer Distortion"
                     color: palette.text
-                    font.pointSize: 20 * __screenTools.dpiFactor;
+                    font.pointSize: 20 * screenTools.dpiFactor;
                 }
                 Rectangle {
                     width: parent.width

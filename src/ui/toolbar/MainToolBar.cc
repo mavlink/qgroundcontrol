@@ -30,8 +30,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QQmlContext>
 #include <QQmlEngine>
 
-#include "MainWindow.h"
 #include "MainToolBar.h"
+#include "MainWindow.h"
 #include "UASMessageHandler.h"
 #include "UASMessageView.h"
 
@@ -130,25 +130,25 @@ void MainToolBar::viewStateChanged(const QString &key, bool value)
 
 void MainToolBar::onSetupView()
 {
-    setCurrentView(ViewSetup);
+    setCurrentView(MainWindow::VIEW_SETUP);
     MainWindow::instance()->loadSetupView();
 }
 
 void MainToolBar::onPlanView()
 {
-    setCurrentView(ViewPlan);
+    setCurrentView(MainWindow::VIEW_MISSION);
     MainWindow::instance()->loadOperatorView();
 }
 
 void MainToolBar::onFlyView()
 {
-    setCurrentView(ViewFly);
+    setCurrentView(MainWindow::VIEW_FLIGHT);
     MainWindow::instance()->loadPilotView();
 }
 
 void MainToolBar::onAnalyzeView()
 {
-    setCurrentView(ViewAnalyze);
+    setCurrentView(MainWindow::VIEW_ENGINEER);
     MainWindow::instance()->loadEngineerView();
 }
 
@@ -646,9 +646,4 @@ void MainToolBar::_setSatLoc(UASInterface*, int fix)
         _satelliteLock = fix;
         emit satelliteLockChanged(_satelliteLock);
     }
-}
-
-void MainToolBar::updateCanvas()
-{
-    emit repaintRequestedChanged();
 }

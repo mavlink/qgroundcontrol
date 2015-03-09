@@ -37,16 +37,23 @@ class ScreenTools : public QObject
 public:
     ScreenTools();
 
-    Q_PROPERTY(double screenDPI READ screenDPI CONSTANT)
-    Q_PROPERTY(double dpiFactor READ dpiFactor CONSTANT)
-    Q_PROPERTY(int mouseX READ mouseX)
-    Q_PROPERTY(int mouseY READ mouseY)
+    Q_PROPERTY(double   screenDPI           READ screenDPI CONSTANT)
+    Q_PROPERTY(double   dpiFactor           READ dpiFactor CONSTANT)
+    Q_PROPERTY(int      mouseX              READ mouseX)
+    Q_PROPERTY(int      mouseY              READ mouseY)
+    Q_PROPERTY(bool     repaintRequested    READ repaintRequested   NOTIFY repaintRequestedChanged)
 
-    double screenDPI(void) { return _dotsPerInch; }
-    double dpiFactor(void) { return _dpiFactor; }
+    double  screenDPI           () { return _dotsPerInch; }
+    double  dpiFactor           () { return _dpiFactor; }
+    int     mouseX              () { return QCursor::pos().x(); }
+    int     mouseY              () { return QCursor::pos().y(); }
+    bool    repaintRequested    () { return true; }
 
-    int mouseX(void) { return QCursor::pos().x(); }
-    int mouseY(void) { return QCursor::pos().y(); }
+signals:
+    void repaintRequestedChanged();
+
+private slots:
+    void _updateCanvas();
 
 private:
     double _dotsPerInch;
