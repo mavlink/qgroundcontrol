@@ -97,7 +97,6 @@ public:
     Q_PROPERTY(bool          showMav            READ showMav            NOTIFY showMavChanged)
     Q_PROPERTY(bool          showMessages       READ showMessages       NOTIFY showMessagesChanged)
     Q_PROPERTY(bool          showBattery        READ showBattery        NOTIFY showBatteryChanged)
-    Q_PROPERTY(bool          repaintRequested   READ repaintRequested   NOTIFY repaintRequestedChanged)
 
     int           connectionCount        () { return _connectionCount; }
     double        batteryVoltage         () { return _batteryVoltage; }
@@ -121,11 +120,9 @@ public:
     bool          showMav                () { return _showMav; }
     bool          showMessages           () { return _showMessages; }
     bool          showBattery            () { return _showBattery; }
-    bool          repaintRequested       () { return true; }
 
     void          setCurrentView         (int currentView);
     void          viewStateChanged       (const QString& key, bool value);
-    void          updateCanvas           ();
 
 signals:
     void connectionCountChanged         (int count);
@@ -150,7 +147,6 @@ signals:
     void showMavChanged                 (bool value);
     void showMessagesChanged            (bool value);
     void showBatteryChanged             (bool value);
-    void repaintRequestedChanged        ();
 
 private slots:
     void _setActiveUAS                  (UASInterface* active);

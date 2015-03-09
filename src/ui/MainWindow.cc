@@ -947,7 +947,7 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionSimulate, SIGNAL(triggered(bool)), this, SLOT(simulateLink(bool)));
 
     // Update Tool Bar
-    _mainToolBar->setCurrentView((MainToolBar::ViewType_t)_currentView);
+    _mainToolBar->setCurrentView(_currentView);
 }
 
 void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
@@ -1173,6 +1173,10 @@ void MainWindow::_loadCurrentViewState(void)
     // HIL dock widget are dynamic and don't take part in the saved window state, so this
     // need to happen after we restore state
     _showHILConfigurationWidgets();
+
+    // There is a bug in Qt where a Canvas element inside a QQuickWidget does not
+    // receive update requests. Here we emit a signal for them to get repainted.
+    emit repaintCanvas();
 }
 
 void MainWindow::_hideAllHilDockWidgets(void)
@@ -1372,22 +1376,3 @@ void MainWindow::_showQmlTestWidget(void)
     new QmlTestWidget();
 }
 #endif
-
-// There is a bug in Qt where a Canvas element inside a QQuickWidget does not
-// receive update requests. We hook into this event and notify the tool bar
-// to update its canvas elements. If other QQuickWidgets start using Canvas
-// and this bug is not fixed, this should be turned into a signal emited by
-// MainWindow and the various QQuickWidgets that need it should connect to it.
-bool MainWindow::event(QEvent* e)
-{
-    bool result = true;
-    switch (e->type()) {
-        case QEvent::Paint:
-            result = QMainWindow::event(e);
-            _mainToolBar->updateCanvas();
-            return result;
-        default:
-            break;
-    }
-    return QMainWindow::event(e);
-}

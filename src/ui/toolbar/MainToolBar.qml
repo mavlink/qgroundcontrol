@@ -40,7 +40,8 @@ import QGroundControl.ScreenTools 1.0
 Rectangle {
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
-    property ScreenTools __screenTools: ScreenTools { }
+    property ScreenTools screenTools: ScreenTools { }
+
     property int cellSpacerSize: 4
     property int cellHeight:     30
     property int cellRadius:     3
@@ -134,13 +135,12 @@ Rectangle {
             height:                 cellHeight
             spacing:                -12
             anchors.verticalCenter: parent.verticalCenter
-
             Connections {
-                target: mainToolBar
+                target: screenTools
                 onRepaintRequestedChanged: {
-                    setupButton.repaintChevron = true;
-                    planButton.repaintChevron = true;
-                    flyButton.repaintChevron = true;
+                    setupButton.repaintChevron   = true;
+                    planButton.repaintChevron    = true;
+                    flyButton.repaintChevron     = true;
                     analyzeButton.repaintChevron = true;
                 }
             }
@@ -241,7 +241,7 @@ Rectangle {
                     Text {
                         id: messageText
                         text: (mainToolBar.messageCount > 0) ? mainToolBar.messageCount : ''
-                        font.pointSize: 14 * __screenTools.dpiFactor
+                        font.pointSize: 14 * screenTools.dpiFactor
                         font.weight: Font.DemiBold
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -329,7 +329,7 @@ Rectangle {
                 Text {
                     id: satelitteText
                     text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
-                    font.pointSize: 14 * __screenTools.dpiFactor
+                    font.pointSize: 14 * screenTools.dpiFactor
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -364,7 +364,7 @@ Rectangle {
                 Text {
                     id: batteryText
                     text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
-                    font.pointSize: 14 * __screenTools.dpiFactor
+                    font.pointSize: 14 * screenTools.dpiFactor
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -392,7 +392,7 @@ Rectangle {
                     Text {
                         id: armedStatusText
                         text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
-                        font.pointSize: 12 * __screenTools.dpiFactor
+                        font.pointSize: 12 * screenTools.dpiFactor
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (mainToolBar.systemArmed) ? colorOrangeText : colorGreenText
@@ -411,7 +411,7 @@ Rectangle {
                     Text {
                         id: stateStatusText
                         text: mainToolBar.currentState
-                        font.pointSize: 12 * __screenTools.dpiFactor
+                        font.pointSize: 12 * screenTools.dpiFactor
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (mainToolBar.currentState === "STANDBY") ? colorGreenText : colorRedText
@@ -432,7 +432,7 @@ Rectangle {
                 Text {
                     id: modeStatusText
                     text: mainToolBar.currentMode
-                    font.pointSize: 12 * __screenTools.dpiFactor
+                    font.pointSize: 12 * screenTools.dpiFactor
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -453,7 +453,7 @@ Rectangle {
                 Text {
                     id: connectionStatusText
                     text: qsTr("CONNECTION LOST")
-                    font.pointSize: 14 * __screenTools.dpiFactor
+                    font.pointSize: 14 * screenTools.dpiFactor
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter

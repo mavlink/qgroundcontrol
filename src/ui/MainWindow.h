@@ -205,6 +205,8 @@ signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
     /** Emitted when any value changes from any source */
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
+    /** Emitted when any the Canvas elements within QML wudgets need updating */
+    void repaintCanvas();
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
@@ -218,8 +220,6 @@ public:
     }
 
 protected:
-
-    bool event(QEvent *);
 
     typedef enum _VIEW_SECTIONS
     {
