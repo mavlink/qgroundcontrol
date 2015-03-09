@@ -92,7 +92,6 @@ public:
     Q_PROPERTY(QStringList   connectedList      READ connectedList      NOTIFY connectedListChanged)
     Q_PROPERTY(bool          mavPresent         READ mavPresent         NOTIFY mavPresentChanged)
     Q_PROPERTY(QString       currentState       READ currentState       NOTIFY currentStateChanged)
-    Q_PROPERTY(double        dotsPerInch        READ dotsPerInch        NOTIFY dotsPerInchChanged)
     Q_PROPERTY(int           satelliteLock      READ satelliteLock      NOTIFY satelliteLockChanged)
     Q_PROPERTY(bool          showGPS            READ showGPS            NOTIFY showGPSChanged)
     Q_PROPERTY(bool          showMav            READ showMav            NOTIFY showMavChanged)
@@ -117,7 +116,6 @@ public:
     QStringList   connectedList          () { return _connectedList; }
     bool          mavPresent             () { return _mav != NULL; }
     QString       currentState           () { return _currentState; }
-    double        dotsPerInch            () { return _dotsPerInch; }
     int           satelliteLock          () { return _satelliteLock; }
     bool          showGPS                () { return _showGPS; }
     bool          showMav                () { return _showMav; }
@@ -147,7 +145,6 @@ signals:
     void connectedListChanged           (QStringList connectedList);
     void mavPresentChanged              (bool present);
     void currentStateChanged            (QString state);
-    void dotsPerInchChanged             ();
     void satelliteLockChanged           (int lock);
     void showGPSChanged                 (bool value);
     void showMavChanged                 (bool value);
@@ -205,7 +202,6 @@ private:
     MessageType_t   _currentMessageType;
     int             _satelliteCount;
     QStringList     _connectedList;
-    qreal           _dotsPerInch;
     int             _satelliteLock;
     bool            _showGPS;
     bool            _showMav;

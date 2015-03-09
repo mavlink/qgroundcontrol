@@ -201,7 +201,7 @@ Rectangle {
                             y: parent.height - height - 20
                             width: 80
                             height: parent.height / 2
-                            source: "/qml/SafetyComponentTree.png"
+                            source: "/qml/SafetyComponentTree.svg"
                             fillMode: Image.Stretch
                             smooth: true
                             color: palette.windowShadeDark
@@ -212,8 +212,8 @@ Rectangle {
                             y: parent.height - height
                             width: 100
                             height: parent.height * .75
-                            source: "/qml/SafetyComponentTree.png"
-                            fillMode: Image.Stretch
+                            source: "/qml/SafetyComponentTree.svg"
+                            fillMode: Image.PreserveAspectFit
                             smooth: true
                             color: palette.button
                         }
