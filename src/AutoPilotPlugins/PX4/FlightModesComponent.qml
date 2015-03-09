@@ -43,7 +43,6 @@ Item {
             Fact { id: rc_loiter_th;        name: "RC_LOITER_TH" }
             Fact { id: rc_return_th;        name: "RC_RETURN_TH" }
 
-            Fact { id: rc_chan_cnt;         name: "RC_CHAN_CNT" }
             Fact { id: rc_th_user;          name: "RC_TH_USER" }
 
             property int throttleChannel:   rc_map_throttle.value
