@@ -145,6 +145,7 @@ private:
     static const int _boardIDPX4FMUV1 = 5;  ///< Board ID for PX4 V1 board
     static const int _boardIDPX4FMUV2 = 9;  ///< Board ID for PX4 V2 board
     static const int _boardIDPX4Flow = 6;   ///< Board ID for PX4 Floaw board
+    static const int _boardIDuNode  = 29;   ///< Board ID for uNode board
     
     uint32_t    _boardID;           ///< board id for currently connected board
     uint32_t    _boardFlashSize;    ///< flash size for currently connected board
