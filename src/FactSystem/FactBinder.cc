@@ -65,7 +65,8 @@ void FactBinder::setName(const QString& name)
             emit valueChanged();
             emit nameChanged();
         } else {
-            qDebug() << "FAILED BINDING PARAM" << name << ": PARAM DOES NOT EXIST ON SYSTEM!";
+            qWarning() << "FAILED BINDING PARAM" << name << ": PARAM DOES NOT EXIST ON SYSTEM!";
+            Q_ASSERT(false);
         }
     }
 }
@@ -84,7 +85,8 @@ void FactBinder::setValue(const QVariant& value)
     if (_fact) {
         _fact->setValue(value);
     } else {
-        qDebug() << "FAILED SETTING PARAM VALUE" << value.toString() << ": PARAM DOES NOT EXIST ON SYSTEM!";
+        qWarning() << "FAILED SETTING PARAM VALUE" << _fact->name() << ": PARAM DOES NOT EXIST ON SYSTEM!";
+        Q_ASSERT(false);
     }
 }
 
