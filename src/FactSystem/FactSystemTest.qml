@@ -33,7 +33,7 @@ Item {
         Fact { id: fact; name: "RC_MAP_THROTTLE" }
         text: fact.value
         font.family: "Helvetica"
-        font.pointSize: 24 * screenTools.dpiFactor;
+        font.pointSize: screenTools.dpiAdjustedPointSize(24);
         color: "red"
         focus: true
         onAccepted: { fact.value = text; }

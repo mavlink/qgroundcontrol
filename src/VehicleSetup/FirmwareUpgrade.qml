@@ -51,7 +51,7 @@ Rectangle {
 
         QGCLabel {
             text: "FIRMWARE UPDATE"
-            font.pointSize: 20 * screenTools.dpiFactor;
+            font.pointSize: screenTools.dpiAdjustedPointSize(20);
         }
 
         Item {
