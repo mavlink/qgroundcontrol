@@ -42,6 +42,11 @@ ScreenTools::ScreenTools()
     connect(MainWindow::instance(), &MainWindow::repaintCanvas, this, &ScreenTools::_updateCanvas);
 }
 
+qreal ScreenTools::dpiAdjustedPointSize(qreal pointSize)
+{
+    return pointSize * _dpiFactor;
+}
+
 void ScreenTools::_updateCanvas()
 {
     emit repaintRequestedChanged();

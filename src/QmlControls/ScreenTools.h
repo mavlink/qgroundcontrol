@@ -110,6 +110,12 @@ public:
      */
     Q_PROPERTY(bool     repaintRequested    READ repaintRequested   NOTIFY repaintRequestedChanged)
 
+    //! Utility for adjusting font point size.
+    /*!
+      @sa dpiFactor
+     */
+    Q_INVOKABLE qreal   dpiAdjustedPointSize(qreal pointSize);
+
     double  screenDPI           () { return _dotsPerInch; }
     double  dpiFactor           () { return _dpiFactor; }
     int     mouseX              () { return QCursor::pos().x(); }
