@@ -59,7 +59,7 @@
 #include "QGCTemporaryFile.h"
 #include "QGCFileDialog.h"
 #include "QGCPalette.h"
-#include "MousePosition.h"
+#include "ScreenTools.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -252,7 +252,7 @@ void QGCApplication::_initCommon(void)
     
     // Register our Qml objects
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
-    qmlRegisterType<MousePosition>("QGroundControl.MousePosition", 1, 0, "MousePosition");
+    qmlRegisterType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools");
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)

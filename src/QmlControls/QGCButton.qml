@@ -4,7 +4,7 @@ import QtQuick.Controls.Styles 1.2
 import QtQuick.Controls.Private 1.0
 
 import QGroundControl.Palette 1.0
-import QGroundControl.MousePosition 1.0
+import QGroundControl.ScreenTools 1.0
 
 Button {
     // primary: true - this is the primary button for this group of buttons
@@ -23,17 +23,17 @@ Button {
     property int __lastGlobalMouseX: 0
     property int __lastGlobalMouseY: 0
 
-    property MousePosition __globalMousePosition: MousePosition { }
+    property ScreenTools __screenTools: ScreenTools { }
 
     Connections {
         target: __behavior
         onMouseXChanged: {
-            __lastGlobalMouseX = __globalMousePosition.mouseX
-            __lastGlobalMouseY = __globalMousePosition.mouseY
+            __lastGlobalMouseX = __screenTools.mouseX
+            __lastGlobalMouseY = __screenTools.mouseY
         }
         onMouseYChanged: {
-            __lastGlobalMouseX = __globalMousePosition.mouseX
-            __lastGlobalMouseY = __globalMousePosition.mouseY
+            __lastGlobalMouseX = __screenTools.mouseX
+            __lastGlobalMouseY = __screenTools.mouseY
         }
         onEntered: { __forceHoverOff; false; hoverTimer.start() }
         onExited: { __forceHoverOff; false; hoverTimer.stop() }
@@ -45,7 +45,7 @@ Button {
         repeat:     true
 
         onTriggered: {
-            if (__lastGlobalMouseX != __globalMousePosition.mouseX || __lastGlobalMouseY != __globalMousePosition.mouseY) {
+            if (__lastGlobalMouseX != __screenTools.mouseX || __lastGlobalMouseY != __screenTools.mouseY) {
                 __forceHoverOff = true
             } else {
                 __forceHoverOff = false

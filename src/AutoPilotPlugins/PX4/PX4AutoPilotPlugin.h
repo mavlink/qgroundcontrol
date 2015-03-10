@@ -33,6 +33,7 @@
 #include "FlightModesComponent.h"
 #include "SensorsComponent.h"
 #include "SafetyComponent.h"
+#include "PowerComponent.h"
 
 #include <QImage>
 
@@ -64,7 +65,8 @@ public:
     FlightModesComponent* flightModesComponent(void) { return _flightModesComponent; }
     SensorsComponent* sensorsComponent(void) { return _sensorsComponent; }
     SafetyComponent* safetyComponent(void) { return _safetyComponent; }
-    
+    PowerComponent* powerComponent(void) { return _powerComponent; }
+
 private slots:
     void _checkForIncorrectParameterVersion(void);
     
@@ -76,6 +78,7 @@ private:
     FlightModesComponent*   _flightModesComponent;
     SensorsComponent*       _sensorsComponent;
     SafetyComponent*        _safetyComponent;
+    PowerComponent*         _powerComponent;
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
 };
 

@@ -5,22 +5,26 @@
             <short_desc>Empty cell voltage</short_desc>
             <long_desc>Defines the voltage where a single cell of the battery is considered empty.</long_desc>
             <default>3.4</default>
+            <unit>V</unit>
         </parameter>
         <parameter name="BAT_V_CHARGED" type="FLOAT">
             <short_desc>Full cell voltage</short_desc>
             <long_desc>Defines the voltage where a single cell of the battery is considered full.</long_desc>
             <default>4.2</default>
+            <unit>V</unit>
         </parameter>
         <parameter name="BAT_V_LOAD_DROP" type="FLOAT">
             <short_desc>Voltage drop per cell on 100% load</short_desc>
             <long_desc>This implicitely defines the internal resistance
                 to maximum current ratio and assumes linearity.</long_desc>
             <default>0.07</default>
+            <unit>V</unit>
         </parameter>
         <parameter name="BAT_N_CELLS" type="INT32">
             <short_desc>Number of cells</short_desc>
             <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
             <default>3</default>
+            <unit>S</unit>
         </parameter>
         <parameter name="BAT_CAPACITY" type="FLOAT">
             <short_desc>Battery capacity</short_desc>
