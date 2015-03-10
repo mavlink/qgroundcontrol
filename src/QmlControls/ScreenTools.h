@@ -85,7 +85,7 @@ public:
       There is a bug as of Qt 5.4 where a Canvas element defined within a QQuickWidget does not receive
       repaint events. QGC's main window will emit these signals when a \c Canvas element needs to be
       repainted.
-      If you use a \c Canvas element inside some QML widget, you can use this cod to handle repaint:
+      If you use a \c Canvas element inside some QML widget, you can use this code to handle repaint:
       @code
       import QGroundControl.ScreenTools 1.0
       ...
