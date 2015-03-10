@@ -1346,9 +1346,8 @@ void MainWindow::restoreLastUsedConnection()
     QSettings settings;
     QString key(MAIN_SETTINGS_GROUP);
     key += "/LAST_CONNECTION";
-    QString connection;
     if(settings.contains(key)) {
-        connection = settings.value(connection).toString();
+        QString connection = settings.value(key).toString();
         // Create a link for it
         LinkInterface* link = LinkManager::instance()->createLink(connection);
         if(link) {
