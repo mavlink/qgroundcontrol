@@ -617,7 +617,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     /* warn only every 12 seconds */
                     && (QGC::groundTimeUsecs() - lastVoltageWarning) > 12000000)
             {
-                GAudioOutput::instance()->say(QString("voltage warning: %1 volts").arg(lpVoltage, 0, 'f', 1, QChar(' ')));
+                GAudioOutput::instance()->say(QString("Voltage warning for system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
                 lastVoltageWarning = QGC::groundTimeUsecs();
                 lastTickVoltageValue = tickLowpassVoltage;
             }
