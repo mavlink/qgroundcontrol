@@ -32,7 +32,7 @@ ScreenTools::ScreenTools()
     , _dpiFactor( 72.0 / 96.0)
 {
     // Get screen DPI to manage font sizes on different platforms
-    QScreen *srn = QGuiApplication::screens().at(0); // TODO: Find current monitor as opposed to picking first one
+    QScreen *srn = QGuiApplication::primaryScreen();
     if(srn && srn->logicalDotsPerInch() > 50.0) {
         _dotsPerInch = (double)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
         _dpiFactor = 72.0 / _dotsPerInch;
