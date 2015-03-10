@@ -497,7 +497,7 @@ HEADERS += \
     src/ui/QGCUDPLinkConfiguration.h \
     src/uas/UASMessageHandler.h \
     src/ui/toolbar/MainToolBar.h \
-    src/QmlControls/MousePosition.h
+    src/QmlControls/ScreenTools.h
 
 SOURCES += \
     src/main.cc \
@@ -639,7 +639,7 @@ SOURCES += \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/uas/UASMessageHandler.cc \
     src/ui/toolbar/MainToolBar.cc \
-    src/QmlControls/MousePosition.cc
+    src/QmlControls/ScreenTools.cc
 
 #
 # Unit Test specific configuration goes here
@@ -742,6 +742,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
+    src/AutoPilotPlugins/PX4/PowerComponent.h \
     src/AutoPilotPlugins/PX4/PX4ParameterFacts.h \
 
 SOURCES += \
@@ -764,6 +765,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
+    src/AutoPilotPlugins/PX4/PowerComponent.cc \
     src/AutoPilotPlugins/PX4/PX4ParameterFacts.cc \
 
 # Fact System code
