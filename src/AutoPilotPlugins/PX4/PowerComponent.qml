@@ -234,7 +234,8 @@ Rectangle {
                 }
             }
         }
-
+        /*
+         * This is disabled for now
         Row {
             width: parent.width
             spacing: 30
@@ -269,6 +270,7 @@ Rectangle {
 
             }
         }
+        */
         //-- Advanced Settings
         QGCCheckBox {
             id: showAdvanced
