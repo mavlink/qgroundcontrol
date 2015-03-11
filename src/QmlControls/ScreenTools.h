@@ -30,6 +30,19 @@
 #include <QObject>
 #include <QCursor>
 
+/*!
+    @brief Screen helper tools for QML widgets
+    To use its functions, you need to import the module with the following line:
+    @code
+    import QGroundControl.ScreenTools 1.0
+    @endcode
+    @remark As for the screen density functions, QtQuick provides the \c Screen type (defined in QtQuick.Window)
+    but as of Qt 5.4 (QtQuick.Window 2.2), this only works if the main window is QtQuick. As QGC is primarily
+    a Qt application and only some of its UI elements are QLM widgets, this does not work. Hence, these function
+    defined here.
+    @sa <a href="http://doc.qt.io/qt-5/qml-qtquick-window-screen.html">Screen QML Type</a>
+*/
+
 /// This Qml control is used to return screen parameters
 class ScreenTools : public QObject
 {
@@ -37,11 +50,71 @@ class ScreenTools : public QObject
 public:
     ScreenTools();
 
+    //! Returns the screen density in Dots Per Inch
     Q_PROPERTY(double   screenDPI           READ screenDPI CONSTANT)
+    //! Returns a factor used to calculate the font point size to use
+    /*!
+      When defining fonts in point size, as in:
+      @code
+      Text {
+        text: "Foo Bar"
+        font.pointSize: 14
+      }
+      @endcode
+      The size is device dependent. If you define this based on a screen set to 72dpi (Mac OS), once
+      this is displayed on a different screen with a different pixel density, such as 96dpi (Windows),
+      the text will be displayed in the wrong size.
+      Use \c dpiFactor to accomodate for these differences. All font point sizes are given in 72dpi
+      and \c dpiFactor returns a factor to use for adjusting it to the current target screen.
+      @code
+      import QGroundControl.ScreenTools 1.0
+      property ScreenTools screenTools: ScreenTools { }
+      Text {
+        text: "Foo Bar"
+        font.pointSize: 14 * screenTools.dpiFactor
+      }
+      @endcode
+     */
     Q_PROPERTY(double   dpiFactor           READ dpiFactor CONSTANT)
+    //! Returns the global mouse X position
     Q_PROPERTY(int      mouseX              READ mouseX)
+    //! Returns the global mouse Y position
     Q_PROPERTY(int      mouseY              READ mouseY)
+    //! Used to trigger a \c Canvas element repaint.
+    /*!
+      There is a bug as of Qt 5.4 where a Canvas element defined within a QQuickWidget does not receive
+      repaint events. QGC's main window will emit these signals when a \c Canvas element needs to be
+      repainted.
+      If you use a \c Canvas element inside some QML widget, you can use this code to handle repaint:
+      @code
+      import QGroundControl.ScreenTools 1.0
+      ...
+      property ScreenTools screenTools: ScreenTools { }
+      ...
+        Canvas {
+            id: myCanvas
+            height: 40
+            width:  40
+            Connections {
+                target: screenTools
+                onRepaintRequestedChanged: {
+                    myCanvas.requestPaint();
+                }
+            }
+            onPaint: {
+                var context = getContext("2d");
+                ...
+            }
+        }
+      @endcode
+     */
     Q_PROPERTY(bool     repaintRequested    READ repaintRequested   NOTIFY repaintRequestedChanged)
+
+    //! Utility for adjusting font point size.
+    /*!
+      @sa dpiFactor
+     */
+    Q_INVOKABLE qreal   dpiAdjustedPointSize(qreal pointSize);
 
     double  screenDPI           () { return _dotsPerInch; }
     double  dpiFactor           () { return _dpiFactor; }
