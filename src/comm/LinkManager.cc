@@ -465,7 +465,7 @@ void LinkManager::_updateConfigurationList(void)
 #endif
         // Is this a PX4?
         if (portInfo.vendorIdentifier() == 9900) {
-            SerialConfiguration* pSerial = _findSerialConfiguration(portInfo.portName());
+            SerialConfiguration* pSerial = _findSerialConfiguration(portInfo.systemLocation());
             if (pSerial) {
                 //-- If this port is configured make sure it has the preferred flag set
                 if(!pSerial->isPreferred()) {
@@ -477,7 +477,7 @@ void LinkManager::_updateConfigurationList(void)
                 pSerial = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
                 pSerial->setPreferred(true);
                 pSerial->setBaud(115200);
-                pSerial->setPortName(portInfo.portName());
+                pSerial->setPortName(portInfo.systemLocation());
                 addLinkConfiguration(pSerial);
                 saveList = true;
             }
