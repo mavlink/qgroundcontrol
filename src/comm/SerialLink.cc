@@ -588,7 +588,7 @@ QList<QString> SerialConfiguration::getCurrentPorts()
     QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
     foreach (const QSerialPortInfo &info, portList)
     {
-        ports.append(info.portName());
+        ports.append(info.systemLocation());
     }
     return ports;
 }
