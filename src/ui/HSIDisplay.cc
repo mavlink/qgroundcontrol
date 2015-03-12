@@ -94,6 +94,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     uiZSetCoordinate(0.0f),
     uiYawSet(0.0f),
     metricWidth(4.0),
+    crosstrackError(std::numeric_limits<double>::quiet_NaN()),
     xCenterPos(0),
     yCenterPos(0),
     positionLock(false),
@@ -412,9 +413,13 @@ void HSIDisplay::renderOverlay()
     paintText(tr("%1 m/s").arg(speed, 5, 'f', 2, '0'), valueColor, 2.2f, 12, topMargin+2, &painter);
 
     // Draw crosstrack error to top right
-    float crossTrackError = 0;
     paintText(tr("XTRACK"), labelColor, 2.2f, 54, topMargin+2, &painter);
-    paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), valueColor, 2.2f, 67, topMargin+2, &painter);
+    if (!isnan(crosstrackError)) {
+        paintText(tr("%1 m").arg(crosstrackError, 5, 'f', 2, '0'), valueColor, 2.2f, 67, topMargin+2, &painter);
+    } else {
+        paintText(tr("-- m"), valueColor, 2.2f, 67, topMargin+2, &painter);
+    }
+
 
     // Draw position to bottom left
     if (localAvailable > 0)
@@ -945,6 +950,8 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(laserStatusChanged(bool,bool,bool)), this, SLOT(updateLaserStatus(bool,bool,bool)));
         disconnect(this->uas, SIGNAL(groundTruthSensorStatusChanged(bool,bool,bool)), this, SLOT(updateGroundTruthSensorStatus(bool,bool,bool)));
         disconnect(this->uas, SIGNAL(actuatorStatusChanged(bool,bool,bool)), this, SLOT(updateActuatorStatus(bool,bool,bool)));
+        disconnect(this->uas, &UASInterface::navigationControllerErrorsChanged,
+                   this, &HSIDisplay::UpdateNavErrors);
     }
 
     if (uas)
@@ -1003,6 +1010,8 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
                 this, SLOT(updateGroundTruthSensorStatus(bool,bool,bool)));
         connect(uas, SIGNAL(actuatorStatusChanged(bool,bool,bool)),
                 this, SLOT(updateActuatorStatus(bool,bool,bool)));
+        connect(uas, &UASInterface::navigationControllerErrorsChanged,
+                this, &HSIDisplay::UpdateNavErrors);
         statusClearTimer.start(3000);
     }
     else
@@ -1157,6 +1166,15 @@ void HSIDisplay::updateLocalPosition(UASInterface*, double x, double y, double z
     this->y = y;
     this->z = z;
     localAvailable = usec;
+}
+
+void HSIDisplay::UpdateNavErrors(UASInterface *uas, double altitudeError, double airspeedError, double crosstrackError)
+{
+    Q_UNUSED(altitudeError);
+    Q_UNUSED(airspeedError);
+    if (this->uas == uas) {
+        this->crosstrackError = crosstrackError;
+    }
 }
 
 void HSIDisplay::updateGlobalPosition(UASInterface*, double lat, double lon, double altAMSL, double altWGS84, quint64 usec)
