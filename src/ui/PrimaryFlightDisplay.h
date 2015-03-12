@@ -21,6 +21,7 @@ public slots:
     void updateSpeed(UASInterface* uas, double _groundSpeed, double _airSpeed, quint64 timestamp);
     void updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeWGS84, double _altitudeRelative, double _climbRate, quint64 timestamp);
     void updateNavigationControllerErrors(UASInterface* uas, double altitudeError, double speedError, double xtrackError);
+    void UpdateNavigationControllerData(UASInterface *uas, float navRoll, float navPitch, float navBearing, float targetBearing, float targetDistance);
 
     /** @brief Set the currently monitored UAS */
     void forgetUAS(UASInterface* uas);
