@@ -199,6 +199,94 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
     }
 }
 
+
+/// @brief Respond to the Ack associated with the create command.
+void QGCUASFileManager::_createAckResponse(Request* createAck)
+{
+    _currentOperation = kCOWrite;
+    _activeSession = createAck->hdr.session;
+
+    // File length comes back in data. Compare with
+    Q_ASSERT(createAck->hdr.size == sizeof(uint32_t));
+
+    // Start the sequence of read commands
+
+    _writeOffset = 0;                // Start writing at beginning of file
+    _writeSize = 0;
+
+    _writeFileDatablock();
+}
+
+/// @brief Respond to the Ack associated with the write command.
+void QGCUASFileManager::_writeAckResponse(Request* writeAck)
+{
+    if (writeAck->hdr.session != _activeSession) {
+        _currentOperation = kCOIdle;
+        _writeFileAccumulator.clear();
+        _emitErrorMessage(tr("Write: Incorrect session returned"));
+        return;
+    }
+
+    if (writeAck->hdr.offset != _writeOffset) {
+        _currentOperation = kCOIdle;
+        _writeFileAccumulator.clear();
+        _emitErrorMessage(tr("Write: Offset returned (%1) differs from offset requested (%2)").arg(writeAck->hdr.offset).arg(_writeOffset));
+        return;
+    }
+
+    if (writeAck->hdr.size != _writeSize) {
+        _currentOperation = kCOIdle;
+        _writeFileAccumulator.clear();
+        _emitErrorMessage(tr("Write: Offset returned (%1) differs from offset requested (%2)").arg(writeAck->hdr.offset).arg(_writeOffset));
+        return;
+    }
+
+    if(writeAck->hdr.size !=_writeFileSize){
+        _currentOperation = kCOIdle;
+        _writeFileAccumulator.clear();
+        _emitErrorMessage(tr("Write: Size returned (%1) differs from size requested (%2)").arg(writeAck->hdr.size).arg(_writeSize));
+        return;
+    }
+
+    _writeFileDatablock();
+}
+
+
+/// @brief Send next write file data block.
+void QGCUASFileManager::_writeFileDatablock(void)
+{
+    /// @brief Maximum data size in RequestHeader::data
+//	static const uint8_t	kMaxDataLength = MAVLINK_MSG_FILE_TRANSFER_PROTOCOL_FIELD_PAYLOAD_LEN - sizeof(RequestHeader);
+//    static const uint8_t	kMaxDataLength = Request.data;
+
+    if(_writeOffset + _writeSize >= _writeFileSize){
+        _currentOperation = kCOIdle;
+        _writeFileAccumulator.clear();
+        emit uploadFileComplete();
+    }
+
+    Request request;
+    request.hdr.session = _activeSession;
+    request.hdr.opcode = kCmdWriteFile;
+    request.hdr.offset = _writeOffset;
+    _writeOffset += _writeSize;
+
+    if(_writeOffset + sizeof(request.data) < _writeFileSize )
+        _writeSize = sizeof(request.data);
+    else
+        _writeSize = _writeFileSize - _writeOffset - 1;
+
+    request.hdr.size = _writeSize;
+
+    // memcpy this?   _writeFileAccumulator.mid(_writeOffset, _writeSize), _writeSize);
+    for(uint32_t index=_writeOffset; index < _writeOffset+_writeSize; index++)
+        request.data[index] = _writeFileAccumulator.at(index);
+
+
+    _sendRequest(&request);
+}
+
+
 void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     Q_UNUSED(link);
@@ -257,6 +345,14 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
 
             case kCORead:
                 _readAckResponse(request);
+                break;
+
+            case kCOCreate:
+                _createAckResponse(request);
+                break;
+
+            case kCOWrite:
+                _writeAckResponse(request);
                 break;
 
             default:
@@ -365,6 +461,47 @@ void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDi
     _sendRequest(&request);
 }
 
+/// @brief Uploads the specified file.
+///     @param toPath File in UAS to upload to, fully qualified path
+///     @param uploadFile Local file to upload from
+void QGCUASFileManager::uploadPath(const QString& toPath, const QFileInfo& uploadFile)
+{
+    if (toPath.isEmpty()) {
+        return;
+    }
+
+    if(not uploadFile.isReadable()){
+        _emitErrorMessage(tr("File (%1) is not readable for upload").arg(uploadFile.path()));
+    }
+
+    QFile file(uploadFile.absoluteFilePath());
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Truncate)) {
+            _emitErrorMessage(tr("Unable to open local file for upload (%1)").arg(uploadFile.absoluteFilePath()));
+            return;
+        }
+
+    _writeFileAccumulator = file.readAll();
+
+    qint64 bytesRead = file.write((const char *)_readFileAccumulator, _readFileAccumulator.length());
+    if (bytesRead <= 0) {
+        file.close();
+        _emitErrorMessage(tr("Unable to read data from local file (%1)").arg(uploadFile.absoluteFilePath()));
+        return;
+    }
+
+    _currentOperation = kCOCreate;
+
+    Request request;
+    request.hdr.session = 0;
+    request.hdr.opcode = kCmdCreateFile;
+    request.hdr.offset = 0;
+    request.hdr.size = bytesRead;
+    _fillRequestWithString(&request, toPath);
+    _sendRequest(&request);
+}
+
+
+
 QString QGCUASFileManager::errorString(uint8_t errorCode)
 {
     switch(errorCode) {
@@ -437,6 +574,12 @@ void QGCUASFileManager::_ackTimeout(void)
 
     switch (_currentOperation) {
         case kCORead:
+            _currentOperation = kCOAck;
+            _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
+            _sendTerminateCommand();
+            break;
+        case kCOCreate:
+        case kCOWrite:
             _currentOperation = kCOAck;
             _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
             _sendTerminateCommand();
