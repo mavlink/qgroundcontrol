@@ -475,16 +475,16 @@ void QGCUASFileManager::uploadPath(const QString& toPath, const QFileInfo& uploa
     }
 
     QFile file(uploadFile.absoluteFilePath());
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Truncate)) {
+    if (!file.open(QIODevice::ReadOnly)) {
             _emitErrorMessage(tr("Unable to open local file for upload (%1)").arg(uploadFile.absoluteFilePath()));
             return;
         }
 
     _writeFileAccumulator = file.readAll();
 
-    qint64 bytesRead = file.write((const char *)_readFileAccumulator, _readFileAccumulator.length());
-    if (bytesRead <= 0) {
-        file.close();
+    file.close();
+
+    if (_writeFileAccumulator.size() == 0) {
         _emitErrorMessage(tr("Unable to read data from local file (%1)").arg(uploadFile.absoluteFilePath()));
         return;
     }
@@ -495,7 +495,7 @@ void QGCUASFileManager::uploadPath(const QString& toPath, const QFileInfo& uploa
     request.hdr.session = 0;
     request.hdr.opcode = kCmdCreateFile;
     request.hdr.offset = 0;
-    request.hdr.size = bytesRead;
+    request.hdr.size = 0;
     _fillRequestWithString(&request, toPath);
     _sendRequest(&request);
 }

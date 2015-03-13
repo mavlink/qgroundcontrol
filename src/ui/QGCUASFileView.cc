@@ -100,19 +100,25 @@ void QGCUASFileView::_uploadFile(void)
 
     _ui.statusText->clear();
 
-    // And now download to this location
-    QString path;
+    // get and check directory from list view
     QTreeWidgetItem* item = _ui.treeWidget->currentItem();
     if (item && item->type() != _typeDir) {
         return;
     }
 
-    QString targetDir = item->text(0);
+    // Find complete path for upload directory
+    QString path;
+    do {
+        QString name = item->text(0).split("\t")[0];    // Strip off file sizes
+        path.prepend("/" + name);
+        item = item->parent();
+    } while (item);
+    qDebug() << "Upload: " << path;
 
     QString uploadFromHere = QGCFileDialog::getOpenFileName(this, tr("Upload File"),
                                                                QDir::homePath());
 
-    _manager->uploadPath(targetDir, uploadFromHere);
+    _manager->uploadPath(path, uploadFromHere);
 }
 
 
