@@ -7,10 +7,11 @@
 #include "UASInterface.h"
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
+#include "QGCLoggingCategory.h"
 
 #define RC_CAL_CHAN_MAX 8
 
-Q_LOGGING_CATEGORY(UASParameterCommsMgrLog, "UASParameterCommsMgrLog")
+QGC_LOGGING_CATEGORY(UASParameterCommsMgrLog, "UASParameterCommsMgrLog")
 
 UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent) :
     QObject(parent),
