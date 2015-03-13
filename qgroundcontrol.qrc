@@ -241,9 +241,6 @@
         <file alias="MockLink.param">src/qgcunittest/MockLink.param</file>
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
-    <qresource prefix="/QLoggingCategory">
-        <file alias="qtlogging.ini">files/QLoggingCategory/qtlogging.ini</file>
-    </qresource>
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>
         <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>

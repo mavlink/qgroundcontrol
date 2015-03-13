@@ -26,11 +26,12 @@
 
 #include "FactLoader.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 #include <QFile>
 #include <QDebug>
 
-Q_LOGGING_CATEGORY(FactLoaderLog, "FactLoaderLog")
+QGC_LOGGING_CATEGORY(FactLoaderLog, "FactLoaderLog")
 
 FactLoader::FactLoader(UASInterface* uas, QObject* parent) :
     QObject(parent),

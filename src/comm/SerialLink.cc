@@ -18,8 +18,9 @@
 #include "SerialLink.h"
 #include "QGC.h"
 #include "MG.h"
+#include "QGCLoggingCategory.h"
 
-Q_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
+QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
 SerialLink::SerialLink(SerialConfiguration* config)
 {

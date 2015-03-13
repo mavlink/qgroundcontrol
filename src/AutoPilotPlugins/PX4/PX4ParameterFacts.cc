@@ -26,11 +26,12 @@
 
 #include "PX4ParameterFacts.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 #include <QFile>
 #include <QDebug>
 
-Q_LOGGING_CATEGORY(PX4ParameterFactsMetaDataLog, "PX4ParameterFactsMetaDataLog")
+QGC_LOGGING_CATEGORY(PX4ParameterFactsMetaDataLog, "PX4ParameterFactsMetaDataLog")
 
 bool PX4ParameterFacts::_parameterMetaDataLoaded = false;
 QMap<QString, FactMetaData*> PX4ParameterFacts::_mapParameterName2FactMetaData;
