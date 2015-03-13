@@ -921,7 +921,7 @@ void PrimaryFlightDisplay::drawAltimeter(
         effectiveHalfHeight -= secondaryAltitudeBoxHeight;
     }
 
-    float markerHalfHeight = mediumTextSize*0.8;
+    float markerHalfHeight = mediumTextSize;
     float leftEdge = instrumentEdgePen.widthF()*2;
     float rightEdge = w-leftEdge;
     float tickmarkLeft = leftEdge;
@@ -956,7 +956,8 @@ void PrimaryFlightDisplay::drawAltimeter(
 
     QPainterPath markerPath(QPoint(markerTip, 0));
     markerPath.lineTo(markerTip+markerHalfHeight, markerHalfHeight);
-    markerPath.lineTo(rightEdge, markerHalfHeight);
+	markerPath.lineTo(markerTip+markerHalfHeight, 2*markerHalfHeight);
+    markerPath.lineTo(rightEdge, 2*markerHalfHeight);
     markerPath.lineTo(rightEdge, -markerHalfHeight);
     markerPath.lineTo(markerTip+markerHalfHeight, -markerHalfHeight);
     markerPath.closeSubpath();
@@ -979,10 +980,9 @@ void PrimaryFlightDisplay::drawAltimeter(
     if (isnan(primaryAltitude))
         s_alt.sprintf("---");
     else
-        s_alt.sprintf("%3.0f", primaryAltitude);
+        s_alt.sprintf("h:%3.0f", primaryAltitude);
 
-    float xCenter = (markerTip+rightEdge)/2;
-    drawTextCenter(painter, s_alt, mediumTextSize, xCenter, 0);
+    drawTextRightCenter(painter, s_alt, mediumTextSize, rightEdge - 4 * lineWidth, 0);
 
     // draw simple in-tape VVI.
     if (!isnan(climbRate)) {
@@ -992,7 +992,7 @@ void PrimaryFlightDisplay::drawAltimeter(
 
         float vvSign = vvPixHeight>0 ? 1 : -1; // reverse y sign
 
-        QPointF vvArrowBegin(rightEdge - w*ALTIMETER_VVI_WIDTH/2, markerHalfHeight*vvSign);
+		QPointF vvArrowBegin(rightEdge - w*ALTIMETER_VVI_WIDTH / 2, (vvSign ? 2*markerHalfHeight:markerHalfHeight));
         QPointF vvArrowEnd(rightEdge - w*ALTIMETER_VVI_WIDTH/2, vvPixHeight);
         painter.drawLine(vvArrowBegin, vvArrowEnd);
 
@@ -1007,6 +1007,10 @@ void PrimaryFlightDisplay::drawAltimeter(
 
         vvArrowHead = QPointF(xcenter-vvArowHeadSize, vvPixHeight - vvSign * vvArowHeadSize);
         painter.drawLine(vvArrowHead, vvArrowEnd);
+
+		QString s_climb;
+		s_climb.sprintf("vZ:%2.1f", climbRate);
+		drawTextRightCenter(painter, s_climb, smallTextSize, rightEdge - 4*lineWidth, +mediumTextSize*1.2);
     }
 
     // print secondary altitude
@@ -1043,8 +1047,10 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     float markerTip = (tickmarkLeftMajor+tickmarkRight*2)/3;
 
     // Select between air and ground speed:
-    float speed = (isAirplane() && !isnan(airSpeed)) ? airSpeed : groundSpeed;
-    float centerScaleSpeed = isnan(speed) ? 0 : speed;
+	bool bSpeedIsAirspeed = (isAirplane() && !isnan(airSpeed));
+	float primarySpeed = bSpeedIsAirspeed ? airSpeed : groundSpeed;
+	float secondarySpeed = !bSpeedIsAirspeed ? airSpeed : groundSpeed;
+	float centerScaleSpeed = isnan(primarySpeed) ? 0 : primarySpeed;
 
     float start = centerScaleSpeed - AIRSPEED_LINEAR_SPAN/2;
     float end = centerScaleSpeed + AIRSPEED_LINEAR_SPAN/2;
@@ -1072,10 +1078,11 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     }
 
     QPainterPath markerPath(QPoint(markerTip, 0));
-    markerPath.lineTo(markerTip-markerHalfHeight, markerHalfHeight);
-    markerPath.lineTo(leftEdge, markerHalfHeight);
-    markerPath.lineTo(leftEdge, -markerHalfHeight);
-    markerPath.lineTo(markerTip-markerHalfHeight, -markerHalfHeight);
+	markerPath.lineTo(markerTip - markerHalfHeight, markerHalfHeight);
+	markerPath.lineTo(markerTip - markerHalfHeight, 2*markerHalfHeight);
+	markerPath.lineTo(leftEdge, 2*markerHalfHeight);
+	markerPath.lineTo(leftEdge, -markerHalfHeight);
+	markerPath.lineTo(markerTip - markerHalfHeight, -markerHalfHeight);
     markerPath.closeSubpath();
 
     painter.resetTransform();
@@ -1089,15 +1096,24 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     painter.drawPath(markerPath);
     painter.setBrush(Qt::NoBrush);
 
-    pen.setColor(Qt::white);
+    // Draw primary speed
+	pen.setColor(Qt::white);
     painter.setPen(pen);
     QString s_alt;
-    if (isnan(speed))
+    if (isnan(primarySpeed))
         s_alt.sprintf("---");
     else
-        s_alt.sprintf("%3.1f", speed);
-    float xCenter = (markerTip+leftEdge)/2;
-    drawTextCenter(painter, s_alt, mediumTextSize, xCenter, 0);
+        s_alt.sprintf("%s:%3.1f", (bSpeedIsAirspeed ? "AS":"GS"), primarySpeed);
+    drawTextLeftCenter(painter, s_alt, mediumTextSize, 4*lineWidth, 0);
+
+	// Draw secondary speed
+	pen.setColor(Qt::white);
+	painter.setPen(pen);
+	if (isnan(secondarySpeed))
+		s_alt.sprintf("---");
+	else
+		s_alt.sprintf("%s:%3.1f", (!bSpeedIsAirspeed ? "AS" : "GS"), secondarySpeed);
+	drawTextLeftCenter(painter, s_alt, smallTextSize, 4*lineWidth, +mediumTextSize*1.2);
 }
 
 static const int TOP = (1<<0);
