@@ -80,7 +80,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     _parameterFacts = new PX4ParameterFacts(uas, this);
     Q_CHECK_PTR(_parameterFacts);
     
-    connect(_parameterFacts, &PX4ParameterFacts::factsReady, this, &PX4AutoPilotPlugin::_checkForIncorrectParameterVersion);
+    connect(_parameterFacts, &PX4ParameterFacts::factsReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
     
     PX4ParameterFacts::loadParameterFactMetaData();
 }
@@ -237,12 +237,29 @@ QUrl PX4AutoPilotPlugin::setupBackgroundImage(void)
     return QUrl::fromUserInput("qrc:/qml/px4fmu_2.x.png");
 }
 
-void PX4AutoPilotPlugin::_checkForIncorrectParameterVersion(void)
+/// This will perform various checks prior to signalling that the plug in ready
+void PX4AutoPilotPlugin::_pluginReadyPreChecks(void)
 {
+    // Check for older parameter version set
+    // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
+    // should be used instead.
     if (parameters().contains("SENS_GYRO_XOFF")) {
         _incorrectParameterVersion = true;
         QGCMessageBox::warning(tr("Setup"), tr("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
                                                "Please perform a Firmware Upgrade if you wish to use Vehicle Setup."));
+    } else {
+        // Check for missing setup complete
+        foreach(const QVariant componentVariant, components()) {
+            VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(componentVariant));
+            Q_ASSERT(component);
+            
+            if (!component->setupComplete()) {
+                QGCMessageBox::warning(tr("Setup"), tr("One or more vehicle components require setup prior to flight. "
+                                                       "Please correct these by going to the Setup view."));
+                break;
+            }
+        }
     }
+    
     emit pluginReady();
 }

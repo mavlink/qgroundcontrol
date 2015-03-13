@@ -68,7 +68,7 @@ public:
     PowerComponent* powerComponent(void) { return _powerComponent; }
 
 private slots:
-    void _checkForIncorrectParameterVersion(void);
+    void _pluginReadyPreChecks(void);
     
 private:
     PX4ParameterFacts*      _parameterFacts;
