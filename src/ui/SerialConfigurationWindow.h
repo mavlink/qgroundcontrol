@@ -53,7 +53,7 @@ public slots:
     void setParityNone(bool accept);
     void setParityOdd(bool accept);
     void setParityEven(bool accept);
-    void setPortName(QString port);
+    void setPortName(int index);
     void setBaudRate(int index);
     void setDataBits(int bits);
     void setStopBits(int bits);
@@ -72,8 +72,6 @@ protected:
     bool userConfigured; ///< Switch to detect if current values are user-selected and shouldn't be overriden
 
 private:
-
-    bool                  _userConfigured;
     Ui::serialSettings    _ui;
     SerialConfiguration*  _config;
     QTimer*               _portCheckTimer;
