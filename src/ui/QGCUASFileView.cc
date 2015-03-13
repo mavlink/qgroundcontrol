@@ -33,7 +33,8 @@ QGCUASFileView::QGCUASFileView(QWidget *parent, QGCUASFileManager *manager) :
     QWidget(parent),
     _manager(manager),
     _listInProgress(false),
-    _downloadInProgress(false)
+    _downloadInProgress(false),
+    _uploadInProgress(false)
 {
     _ui.setupUi(this);
     
@@ -47,6 +48,8 @@ QGCUASFileView::QGCUASFileView(QWidget *parent, QGCUASFileManager *manager) :
     success = connect(_ui.listFilesButton, SIGNAL(clicked()), this, SLOT(_refreshTree()));
     Q_ASSERT(success);
     success = connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(_downloadFile()));
+    Q_ASSERT(success);
+    success = connect(_ui.uploadButton, SIGNAL(clicked()), this, SLOT(_uploadFile()));
     Q_ASSERT(success);
     success = connect(_ui.treeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)), this, SLOT(_currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)));
     Q_ASSERT(success);
@@ -89,6 +92,29 @@ void QGCUASFileView::_downloadFile(void)
         _manager->downloadPath(path, QDir(downloadToHere));
     }
 }
+
+/// @brief uploads a file into the currently selected directory the tree view
+void QGCUASFileView::_uploadFile(void)
+{
+    Q_ASSERT(!_uploadInProgress);
+
+    _ui.statusText->clear();
+
+    // And now download to this location
+    QString path;
+    QTreeWidgetItem* item = _ui.treeWidget->currentItem();
+    if (item && item->type() != _typeDir) {
+        return;
+    }
+
+    QString targetDir = item->text(0);
+
+    QString uploadFromHere = QGCFileDialog::getOpenFileName(this, tr("Upload File"),
+                                                               QDir::homePath());
+
+    _manager->uploadPath(targetDir, uploadFromHere);
+}
+
 
 /// @brief Called when length of file being downloaded is known.
 void QGCUASFileView::_downloadLength(unsigned int length)
@@ -267,6 +293,7 @@ void QGCUASFileView::_currentItemChanged(QTreeWidgetItem* current, QTreeWidgetIt
     Q_UNUSED(previous);
     // FIXME: Should not enable when downloading
     _ui.downloadButton->setEnabled(current ? (current->type() == _typeFile) : false);
+    _ui.uploadButton->setEnabled(current ? (current->type() == _typeDir) : false);
 }
 
 void QGCUASFileView::_requestDirectoryList(const QString& dir)
