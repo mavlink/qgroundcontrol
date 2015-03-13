@@ -32,16 +32,19 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>The serial port to which the system is connected. All ports listed here should work.</string>
+        <string>The serial port to which the system is connected.</string>
        </property>
        <property name="statusTip">
-        <string>The serial port to which the system is connected. All ports listed here should work.</string>
+        <string>The serial port to which the system is connected.</string>
        </property>
        <property name="whatsThis">
-        <string>The serial port to which the system is connected. All ports listed here should work.</string>
+        <string>The serial port to which the system is connected.</string>
        </property>
        <property name="editable">
-        <bool>true</bool>
+        <bool>false</bool>
+       </property>
+       <property name="maxCount">
+        <number>100</number>
        </property>
        <property name="sizeAdjustPolicy">
         <enum>QComboBox::AdjustToContents</enum>
