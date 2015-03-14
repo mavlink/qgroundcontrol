@@ -1253,11 +1253,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             QString text = QString(b);
             int severity = mavlink_msg_statustext_get_severity(&message);
 
-            // Now if the status message starts with "#audio:", or it's at least a
-            // severity level of NOTICE or higher, output it as an audio message.
-            if (text.startsWith("#audio:") || severity <= MAV_SEVERITY_NOTICE)
+	    // If the message is NOTIFY or higher severity, or starts with a '#',
+	    // then read it aloud.
+            if (text.startsWith("#") || severity <= MAV_SEVERITY_NOTICE)
             {
-                text.remove("#audio:");
+                text.remove("#");
                 emit textMessageReceived(uasId, message.compid, severity, text);
                 GAudioOutput::instance()->say(text.toLower(), severity);
             }
