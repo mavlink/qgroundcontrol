@@ -81,9 +81,6 @@ public:
     void saveSettings(QSettings& settings, const QString& root);
     void updateSettings();
 
-    /*! @brief Get a list of the currently available ports */
-    static QList<QString> getCurrentPorts();
-
 private:
     int _baud;
     int _dataBits;

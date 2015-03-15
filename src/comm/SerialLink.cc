@@ -62,7 +62,7 @@ SerialLink::~SerialLink()
 
 bool SerialLink::_isBootloader()
 {
-    QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
+    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
     if( portList.count() == 0){
         return false;
     }
@@ -580,15 +580,4 @@ void SerialConfiguration::loadSettings(QSettings& settings, const QString& root)
     if(settings.contains("parity"))      _parity       = settings.value("parity").toInt();
     if(settings.contains("portName"))    _portName     = settings.value("portName").toString();
     settings.endGroup();
-}
-
-QList<QString> SerialConfiguration::getCurrentPorts()
-{
-    QList<QString> ports;
-    QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
-    foreach (const QSerialPortInfo &info, portList)
-    {
-        ports.append(info.systemLocation());
-    }
-    return ports;
 }
