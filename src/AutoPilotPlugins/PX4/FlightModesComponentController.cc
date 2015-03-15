@@ -69,7 +69,11 @@ void FlightModesComponentController::_validateConfiguration(void)
 {
     _validConfiguration = true;
     
-    _channelCount = _autoPilotPlugin->factExists("RC_CHAN_CNT") ? _autoPilotPlugin->getFact("RC_CHAN_CNT")->value().toInt() : 18;
+    _channelCount = _autoPilotPlugin->factExists("RC_CHAN_CNT") ? _autoPilotPlugin->getFact("RC_CHAN_CNT")->value().toInt() : _chanMax;
+    if (_channelCount <= 0 || _channelCount > _chanMax) {
+        // Parameter exists, but has not yet been set or is invalid. Use default
+        _channelCount = _chanMax;
+    }
     
     // Make sure switches are valid and within channel range
     
