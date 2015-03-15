@@ -479,7 +479,6 @@ HEADERS += \
     src/uas/QGCUASFileManager.h \
     src/ui/QGCUASFileView.h \
     src/CmdLineOptParser.h \
-    src/uas/QGXPX4UAS.h \
     src/QGCFileDialog.h \
     src/QGCMessageBox.h \
     src/QGCComboBox.h \
@@ -623,7 +622,6 @@ SOURCES += \
     src/uas/QGCUASFileManager.cc \
     src/ui/QGCUASFileView.cc \
     src/CmdLineOptParser.cc \
-    src/uas/QGXPX4UAS.cc \
     src/QGCFileDialog.cc \
     src/QGCComboBox.cc \
     src/QGCTemporaryFile.cc \

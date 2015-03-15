@@ -34,8 +34,11 @@
 
 #include "UASInterface.h"
 #include "RCValueWidget.h"
+#include "QGCLoggingCategory.h"
 
 #include "ui_PX4RCCalibration.h"
+
+Q_DECLARE_LOGGING_CATEGORY(PX4RCCalibrationLog)
 
 class PX4RCCalibrationTest;
 

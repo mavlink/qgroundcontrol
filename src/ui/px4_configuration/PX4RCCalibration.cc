@@ -31,6 +31,8 @@
 #include "UASManager.h"
 #include "QGCMessageBox.h"
 
+QGC_LOGGING_CATEGORY(PX4RCCalibrationLog, "PX4RCCalibrationLog")
+
 const int PX4RCCalibration::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
 const int PX4RCCalibration::_rcCalPWMCenterPoint = ((PX4RCCalibration::_rcCalPWMValidMaxValue - PX4RCCalibration::_rcCalPWMValidMinValue) / 2.0f) + PX4RCCalibration::_rcCalPWMValidMinValue;
 // FIXME: Double check these mins againt 150% throws
@@ -262,7 +264,7 @@ void PX4RCCalibration::_remoteControlChannelRawChanged(int chan, float fval)
     // We always update raw values
     _rcRawValue[chan] = fval;
     
-    //qDebug() << "Raw value" << chan << fval;
+    qCDebug(PX4RCCalibrationLog) << "Raw value" << chan << fval;
     
     if (_currentStep == -1) {
         // Track the receiver channel count by keeping track of how many channels we see
@@ -330,7 +332,7 @@ void PX4RCCalibration::_saveAllTrims(void)
     // trims reset to correct values.
     
     for (int i=0; i<_chanCount; i++) {
-        //qDebug() << "_saveAllTrims trim" << _rcRawValue[i];
+        qCDebug(PX4RCCalibrationLog) << "_saveAllTrims trim" << _rcRawValue[i];
         _rgChannelInfo[i].rcTrim = _rcRawValue[i];
     }
     _nextStep();
@@ -355,7 +357,7 @@ bool PX4RCCalibration::_stickSettleComplete(int value)
     if (abs(_stickDetectValue - value) > _rcCalSettleDelta) {
         // Stick is moving too much to consider stopped
         
-        //qDebug() << "_stickSettleComplete still moving, _stickDetectValue:value" << _stickDetectValue << value;
+        qCDebug(PX4RCCalibrationLog) << "_stickSettleComplete still moving, _stickDetectValue:value" << _stickDetectValue << value;
 
         _stickDetectValue = value;
         _stickDetectSettleStarted = false;
@@ -372,7 +374,7 @@ bool PX4RCCalibration::_stickSettleComplete(int value)
         } else {
             // Start waiting for the stick to stay settled for _stickDetectSettleWaitMSecs msecs
             
-            //qDebug() << "_stickSettleComplete starting settle timer, _stickDetectValue:value" << _stickDetectValue << value;
+            qCDebug(PX4RCCalibrationLog) << "_stickSettleComplete starting settle timer, _stickDetectValue:value" << _stickDetectValue << value;
             
             _stickDetectSettleStarted = true;
             _stickDetectSettleElapsed.start();
@@ -384,7 +386,7 @@ bool PX4RCCalibration::_stickSettleComplete(int value)
 
 void PX4RCCalibration::_inputStickDetect(enum rcCalFunctions function, int channel, int value)
 {
-    //qDebug() << "_inputStickDetect function:channel:value" << function << channel << value;
+    qCDebug(PX4RCCalibrationLog) << "_inputStickDetect function:channel:value" << _rgFunctionInfo[function].parameterName << channel << value;
     
     // If this channel is already used in a mapping we can't use it again
     if (_rgChannelInfo[channel].function != rcCalFunctionMax) {
@@ -397,7 +399,7 @@ void PX4RCCalibration::_inputStickDetect(enum rcCalFunctions function, int chann
         if (abs(_rcValueSave[channel] - value) > _rcCalMoveDelta) {
             // Stick has moved far enough to consider it as being selected for the function
             
-            //qDebug() << "_inputStickDetect starting settle wait, function:channel:value" << function << channel << value;
+            qCDebug(PX4RCCalibrationLog) << "_inputStickDetect starting settle wait, function:channel:value" << function << channel << value;
             
             // Setup up to detect stick being pegged to min or max value
             _stickDetectChannel = channel;
@@ -408,7 +410,7 @@ void PX4RCCalibration::_inputStickDetect(enum rcCalFunctions function, int chann
         if (_stickSettleComplete(value)) {
             ChannelInfo* info = &_rgChannelInfo[channel];
             
-            //qDebug() << "_inputStickDetect settle complete, function:channel:value" << function << channel << value;
+            qCDebug(PX4RCCalibrationLog) << "_inputStickDetect settle complete, function:channel:value" << function << channel << value;
             
             // Stick detection is complete. Stick should be at max position.
             // Map the channel to the function
@@ -515,7 +517,7 @@ void PX4RCCalibration::_inputSwitchMinMax(enum rcCalFunctions function, int chan
         if (value < _rcCalPWMCenterPoint) {
             int minValue = qMin(_rgChannelInfo[channel].rcMin, value);
             
-            //qDebug() << "_inputSwitchMinMax setting min channel:min" << channel << minValue;
+            qCDebug(PX4RCCalibrationLog) << "_inputSwitchMinMax setting min channel:min" << channel << minValue;
             
             _rgChannelInfo[channel].rcMin = minValue;
             _rgRCValueMonitorWidget[channel]->setMin(minValue);
@@ -523,7 +525,7 @@ void PX4RCCalibration::_inputSwitchMinMax(enum rcCalFunctions function, int chan
         } else {
             int maxValue = qMax(_rgChannelInfo[channel].rcMax, value);
             
-            //qDebug() << "_inputSwitchMinMax setting max channel:max" << channel << maxValue;
+            qCDebug(PX4RCCalibrationLog) << "_inputSwitchMinMax setting max channel:max" << channel << maxValue;
             
             _rgChannelInfo[channel].rcMax = maxValue;
             _rgRCValueMonitorWidget[channel]->setMax(maxValue);
@@ -651,7 +653,7 @@ void PX4RCCalibration::_switchDetect(enum rcCalFunctions function, int channel, 
         _rgFunctionChannelMapping[function] = channel;
         info->function = function;
         
-        //qDebug() << "Function:" << function << "mapped to:" << channel;
+        qCDebug(PX4RCCalibrationLog) << "Function:" << function << "mapped to:" << channel;
         
         if (moveToNextStep) {
             _nextStep();
@@ -682,7 +684,7 @@ void PX4RCCalibration::_resetInternalCalibrationValues(void)
         info->rcTrim = PX4RCCalibration::_rcCalPWMCenterPoint;
     }
     
-    // Initialize function mapping to function channel not set
+    // Initialize attitude function mapping to function channel not set
     for (size_t i=0; i<rcCalFunctionMax; i++) {
         _rgFunctionChannelMapping[i] = _chanMax;
     }
@@ -709,16 +711,17 @@ void PX4RCCalibration::_resetInternalCalibrationValues(void)
         Q_UNUSED(paramFound);
         
         bool ok;
-        int channel = value.toInt(&ok);
+        int switchChannel = value.toInt(&ok);
         Q_ASSERT(ok);
         Q_UNUSED(ok);
         
         // Parameter: 1-based channel, 0=not mapped
         // _rgFunctionChannelMapping: 0-based channel, _chanMax=not mapped
         
-        _rgFunctionChannelMapping[curFunction] = (channel == 0) ? _chanMax : channel;
-        if (channel != 0) {
-            _rgChannelInfo[channel - 1].function = curFunction;
+        if (switchChannel != 0) {
+            qCDebug(PX4RCCalibrationLog) << "Reserving 0-based switch channel" << switchChannel - 1;
+            _rgFunctionChannelMapping[curFunction] = switchChannel - 1;
+            _rgChannelInfo[switchChannel - 1].function = curFunction;
         }
     }
 }
@@ -848,7 +851,7 @@ void PX4RCCalibration::_validateCalibration(void)
             // Validate Min/Max values. Although the channel appears as available we still may
             // not have good min/max/trim values for it. Set to defaults if needed.
             if (info->rcMin > _rcCalPWMValidMinValue || info->rcMax < _rcCalPWMValidMaxValue) {
-                //qDebug() << "_validateCalibration resetting channel" << chan;
+                qCDebug(PX4RCCalibrationLog) << "_validateCalibration resetting channel" << chan;
                 info->rcMin = _rcCalPWMDefaultMinValue;
                 info->rcMax = _rcCalPWMDefaultMaxValue;
                 info->rcTrim = info->rcMin + ((info->rcMax - info->rcMin) / 2);
@@ -874,7 +877,7 @@ void PX4RCCalibration::_validateCalibration(void)
             }
         } else {
             // Unavailable channels are set to defaults
-            //qDebug() << "_validateCalibration resetting unavailable channel" << chan;
+            qCDebug(PX4RCCalibrationLog) << "_validateCalibration resetting unavailable channel" << chan;
             info->rcMin = _rcCalPWMDefaultMinValue;
             info->rcMax = _rcCalPWMDefaultMaxValue;
             info->rcTrim = info->rcMin + ((info->rcMax - info->rcMin) / 2);
@@ -943,7 +946,7 @@ void PX4RCCalibration::_updateView()
         
         valueWidget->setVisible(true);
         _rgRCValueMonitorLabel[chan]->setVisible(true);
-        //qDebug() << "Visible" << valueWidget->objectName() << chan;
+        //qCDebug(PX4RCCalibrationLog) << "Visible" << valueWidget->objectName() << chan;
         
         struct ChannelInfo* info = &_rgChannelInfo[chan];
         valueWidget->setValueAndMinMax(_rcRawValue[chan], info->rcMin, info->rcMax);
@@ -970,7 +973,7 @@ void PX4RCCalibration::_updateView()
     for (int chan=_chanCount; chan<_chanMax; chan++) {
         _rgRCValueMonitorWidget[chan]->setVisible(false);
         _rgRCValueMonitorLabel[chan]->setVisible(false);
-        //qDebug() << "Off" << _rgRCValueMonitorWidget[chan]->objectName() << chan;
+        qCDebug(PX4RCCalibrationLog) << "Hiding channel" << _rgRCValueMonitorWidget[chan]->objectName() << chan;
     }
 }
 
@@ -1016,7 +1019,7 @@ void PX4RCCalibration::_stopCalibration(void)
 /// @brief Saves the current channel values, so that we can detect when the use moves an input.
 void PX4RCCalibration::_rcCalSaveCurrentValues(void)
 {
-	//qDebug() << "_rcCalSaveCurrentValues";
+	qCDebug(PX4RCCalibrationLog) << "_rcCalSaveCurrentValues";
     for (unsigned i = 0; i < _chanMax; i++) {
         _rcValueSave[i] = _rcRawValue[i];
     }
@@ -1136,7 +1139,7 @@ void PX4RCCalibration::_setHelpImage(const char* imageFile)
     }
     file += imageFile;
     
-    //qDebug() << "_setHelpImage" << file;
+    qCDebug(PX4RCCalibrationLog) << "_setHelpImage" << file;
     
     _ui->radioIcon->setPixmap(QPixmap(file));
 }
