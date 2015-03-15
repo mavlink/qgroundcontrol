@@ -23,11 +23,12 @@
 
 #include "MockQGCUASParamManager.h"
 #include "mavlink.h"
+#include "QGCLoggingCategory.h"
 
 #include <QTest>
 #include <QDebug>
 
-Q_LOGGING_CATEGORY(MockQGCUASParamManagerLog, "MockQGCUASParamManagerLog")
+QGC_LOGGING_CATEGORY(MockQGCUASParamManagerLog, "MockQGCUASParamManagerLog")
 
 MockQGCUASParamManager::MockQGCUASParamManager(void)
 {

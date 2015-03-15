@@ -22,6 +22,7 @@
  ======================================================================*/
 
 #include "MockLink.h"
+#include "QGCLoggingCategory.h"
 
 #include <QTimer>
 #include <QDebug>
@@ -29,7 +30,7 @@
 
 #include <string.h>
 
-Q_LOGGING_CATEGORY(MockLinkLog, "MockLinkLog")
+QGC_LOGGING_CATEGORY(MockLinkLog, "MockLinkLog")
 
 /// @file
 ///     @brief Mock implementation of a Link.
