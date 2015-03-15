@@ -51,6 +51,7 @@ SensorsComponentController::SensorsComponentController(AutoPilotPlugin* autopilo
     _accelCalRightSideInProgress(false),
     _accelCalNoseDownSideInProgress(false),
     _accelCalTailDownSideInProgress(false),
+    _textLoggingStarted(false),
     _autopilot(autopilot)
 {
     Q_ASSERT(autopilot);
@@ -69,9 +70,37 @@ void SensorsComponentController::_appendStatusLog(const QString& text)
                               Q_ARG(QVariant, varText));
 }
 
-void SensorsComponentController::calibrateGyro(void)
+void SensorsComponentController::_startCalibration(void)
 {
     _beginTextLogging();
+    _hideAllCalAreas();
+    
+    _compassButton->setEnabled(false);
+    _gyroButton->setEnabled(false);
+    _accelButton->setEnabled(false);
+    _airspeedButton->setEnabled(false);
+}
+
+void SensorsComponentController::_stopCalibration(bool failed)
+{
+    _compassButton->setEnabled(true);
+    _gyroButton->setEnabled(true);
+    _accelButton->setEnabled(true);
+    _airspeedButton->setEnabled(true);
+    
+    _progressBar->setProperty("value", failed ? 0 : 1);
+    _updateAndEmitGyroCalInProgress(false);
+    _refreshParams();
+    
+    if (failed) {
+        QGCMessageBox::warning("Calibration", "Calibration failed. Calibration log will be displayed.");
+        _hideAllCalAreas();
+    }
+}
+
+void SensorsComponentController::calibrateGyro(void)
+{
+    _startCalibration();
     
     UASInterface* uas = _autopilot->uas();
     Q_ASSERT(uas);
@@ -80,8 +109,7 @@ void SensorsComponentController::calibrateGyro(void)
 
 void SensorsComponentController::calibrateCompass(void)
 {
-    _hideAllCalAreas();
-    _beginTextLogging();
+    _startCalibration();
 
     UASInterface* uas = _autopilot->uas();
     Q_ASSERT(uas);
@@ -90,7 +118,7 @@ void SensorsComponentController::calibrateCompass(void)
 
 void SensorsComponentController::calibrateAccel(void)
 {
-    _beginTextLogging();
+    _startCalibration();
 
     UASInterface* uas = _autopilot->uas();
     Q_ASSERT(uas);
@@ -99,8 +127,7 @@ void SensorsComponentController::calibrateAccel(void)
 
 void SensorsComponentController::calibrateAirspeed(void)
 {
-    _hideAllCalAreas();
-    _beginTextLogging();
+    _startCalibration();
 
     UASInterface* uas = _autopilot->uas();
     Q_ASSERT(uas);
@@ -109,9 +136,12 @@ void SensorsComponentController::calibrateAirspeed(void)
 
 void SensorsComponentController::_beginTextLogging(void)
 {
-    UASInterface* uas = _autopilot->uas();
-    Q_ASSERT(uas);
-    connect(uas, &UASInterface::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage);
+    if (!_textLoggingStarted) {
+        _textLoggingStarted = true;
+        UASInterface* uas = _autopilot->uas();
+        Q_ASSERT(uas);
+        connect(uas, &UASInterface::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage);
+    }
 }
 
 void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
@@ -129,7 +159,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     }
     
     QStringList ignorePrefixList;
-    ignorePrefixList << "[cmd]" << "[mavlink pm]" << "[ekf check]" << "[pm]" << "[inav]";
+    ignorePrefixList << "[cmd]" << "[mavlink pm]" << "[ekf check]" << "[pm]" << "[inav]" << "IN AIR MODE" << "LANDED MODE";
     foreach (QString ignorePrefix, ignorePrefixList) {
         if (text.startsWith(ignorePrefix)) {
             return;
@@ -150,11 +180,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     _appendStatusLog(text);
 
     if (text == "gyro calibration: started") {
-        _hideAllCalAreas();
         _updateAndEmitShowGyroCalArea(true);
         _updateAndEmitGyroCalInProgress(true);
     } else if (text == "accel calibration: started") {
-        _hideAllCalAreas();
         _accelCalDownSideDone = false;
         _accelCalUpsideDownSideDone = false;
         _accelCalLeftSideDone = false;
@@ -227,34 +255,27 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         _accelCalTailDownSideInProgress = false;
         emit accelCalSidesDoneChanged();
         emit accelCalSidesInProgressChanged();
-        _refreshParams();
+        _stopCalibration(false /* success */);
     } else if (text == "gyro calibration: done") {
-        _progressBar->setProperty("value", 1);
-        _updateAndEmitGyroCalInProgress(false);
-        _refreshParams();
+        _stopCalibration(false /* success */);
     } else if (text == "mag calibration: done" || text == "dpress calibration: done") {
-        _progressBar->setProperty("value", 1);
-        _refreshParams();
+        _stopCalibration(false /* success */);
     } else if (text.endsWith(" calibration: failed")) {
-        QGCMessageBox::warning("Calibration", "Calibration failed. Calibration log will be displayed.");
-        _hideAllCalAreas();
-        _progressBar->setProperty("value", 0);
-        _updateAndEmitGyroCalInProgress(false);
-        _refreshParams();
+        _stopCalibration(true /* failed */);
     }
 }
 
 void SensorsComponentController::_refreshParams(void)
 {
-#if 0
-    // FIXME: Not sure if firmware issue yet
-    _autopilot->refreshParametersPrefix("CAL_");
-    _autopilot->refreshParametersPrefix("SENS_");
-#else
-    // Sending too many parameter requests like above doesn't seem to work. So for now,
-    // ask for everything back
-    _autopilot->refreshAllParameters();
-#endif
+    _autopilot->refreshParameter("CAL_MAG0_ID");
+    _autopilot->refreshParameter("CAL_GYRO0_ID");
+    _autopilot->refreshParameter("CAL_ACC0_ID");
+    _autopilot->refreshParameter("SENS_DPRES_OFF");
+    
+    _autopilot->refreshParameter("CAL_MAG0_ROT");
+    _autopilot->refreshParameter("CAL_MAG1_ROT");
+    _autopilot->refreshParameter("CAL_MAG2_ROT");
+    _autopilot->refreshParameter("SENS_BOARD_ROT");
 }
 
 bool SensorsComponentController::fixedWing(void)
