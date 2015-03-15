@@ -31,6 +31,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 UT_REGISTER_TEST(PX4RCCalibrationTest)
+QGC_LOGGING_CATEGORY(PX4RCCalibrationTestLog, "PX4RCCalibrationTestLog")
 
 // This will check for the wizard buttons being enabled of disabled according to the mask you pass in.
 // We use a macro instead of a method so that we get better line number reporting on failure.
@@ -39,7 +40,7 @@ UT_REGISTER_TEST(PX4RCCalibrationTest)
     if (_nextButton->isEnabled() != !!((mask) & nextButtonMask) || \
         _skipButton->isEnabled() != !!((mask) & skipButtonMask) || \
         _cancelButton->isEnabled() != !!((mask) & cancelButtonMask) ) { \
-        qDebug() << _statusLabel->text(); \
+        qCDebug(PX4RCCalibrationTestLog) << _statusLabel->text(); \
     } \
     QCOMPARE(_nextButton->isEnabled(), !!((mask) & nextButtonMask)); \
     QCOMPARE(_skipButton->isEnabled(), !!((mask) & skipButtonMask)); \
@@ -65,10 +66,6 @@ const int PX4RCCalibrationTest::_stickSettleWait = PX4RCCalibration::_stickDetec
 const int PX4RCCalibrationTest::_testMinValue = PX4RCCalibration::_rcCalPWMDefaultMinValue + 10;
 const int PX4RCCalibrationTest::_testMaxValue = PX4RCCalibration::_rcCalPWMDefaultMaxValue - 10;
 const int PX4RCCalibrationTest::_testCenterValue = PX4RCCalibrationTest::_testMinValue + ((PX4RCCalibrationTest::_testMaxValue - PX4RCCalibrationTest::_testMinValue) / 2);
-
-/// @brief Maps from function index to channel index. -1 signals no mapping. Channel indices are offset 1 from function index
-/// to catch bugs where function index is incorrectly used as channel index.
-const int PX4RCCalibrationTest::_rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax]= { 1, 2, 3, 4, -1, -1, -1, -1, 9, 10, 11 };
 
 const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChannelSettings[PX4RCCalibrationTest::_availableChannels] = {
 	// Function										Min                 Max                 #  Reversed
@@ -143,19 +140,6 @@ PX4RCCalibrationTest::PX4RCCalibrationTest(void) :
     _mockUASManager(NULL),
     _calWidget(NULL)
 {
-}
-
-/// @brief Called one time before any test cases are run.
-void PX4RCCalibrationTest::initTestCase(void)
-{
-	// Validate that our function to channel mapping is still correct.
-	for (int function=0; function<PX4RCCalibration::rcCalFunctionMax; function++) {
-		int chanIndex = _rgFunctionChannelMap[function];
-		if (chanIndex != -1) {
-			Q_ASSERT(_rgChannelSettings[chanIndex].function == function);
-			Q_ASSERT(_rgChannelSettingsValidate[chanIndex].function == function);
-		}
-	}
 }
 
 void PX4RCCalibrationTest::init(void)
@@ -252,7 +236,7 @@ void PX4RCCalibrationTest::_minRCChannels_test(void)
         // Only available channels should have visible widget. A ui update cycle needs to have passed so we wait a little.
         QTest::qWait(PX4RCCalibration::_updateInterval * 2);
         for (int chanWidget=0; chanWidget<PX4RCCalibration::_chanMax; chanWidget++) {
-            //qDebug() << _rgValueWidget[chanWidget]->objectName() << chanWidget << chan;
+            qCDebug(PX4RCCalibrationTestLog) << _rgValueWidget[chanWidget]->objectName() << chanWidget << chan;
             QCOMPARE(_rgValueWidget[chanWidget]->isVisible(), !!(chanWidget <= chan));
         }
 #endif
@@ -272,7 +256,7 @@ void PX4RCCalibrationTest::_beginCalibration(void)
 
 void PX4RCCalibrationTest::_stickMoveWaitForSettle(int channel, int value)
 {
-    //qDebug() << "_stickMoveWaitForSettle channel:value" << channel << value;
+    qCDebug(PX4RCCalibrationTestLog) << "_stickMoveWaitForSettle channel:value" << channel << value;
 
     // Move the stick, this will initialized the settle checker
     _mockUAS->emitRemoteControlChannelRawChanged(channel, value);
@@ -290,7 +274,7 @@ void PX4RCCalibrationTest::_stickMoveWaitForSettle(int channel, int value)
 void PX4RCCalibrationTest::_stickMoveAutoStep(const char* functionStr, enum PX4RCCalibration::rcCalFunctions function, enum PX4RCCalibrationTest::MoveToDirection direction, bool identifyStep)
 {
     Q_UNUSED(functionStr);
-    //qDebug() << "_stickMoveAutoStep function:direction:reversed:identifyStep" << functionStr << function << direction << identifyStep;
+    qCDebug(PX4RCCalibrationTestLog) << "_stickMoveAutoStep function:direction:reversed:identifyStep" << functionStr << function << direction << identifyStep;
     
     CHK_BUTTONS(cancelButtonMask);
     
@@ -345,7 +329,6 @@ void PX4RCCalibrationTest::_switchMinMaxStep(void)
     
     // Send min/max values switch channels
     for (int chan=0; chan<_availableChannels; chan++) {
-        //qDebug() << chan << _rgChannelSettingsPreValidate[chan].rcMin << _rgChannelSettingsPreValidate[chan].rcMax;
         _mockUAS->emitRemoteControlChannelRawChanged(chan, _rgChannelSettings[chan].rcMin);
         _mockUAS->emitRemoteControlChannelRawChanged(chan, _rgChannelSettings[chan].rcMax);
     }
@@ -361,7 +344,7 @@ void PX4RCCalibrationTest::_flapsDetectStep(void)
 {
     int channel = _rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionFlaps];
     
-    //qDebug() << "_flapsDetectStep channel" << channel;
+    qCDebug(PX4RCCalibrationTestLog) << "_flapsDetectStep channel" << channel;
     
     // Test code can't handle reversed flaps channel
     Q_ASSERT(!_rgChannelSettings[channel].reversed);
@@ -387,7 +370,7 @@ void PX4RCCalibrationTest::_flapsDetectStep(void)
 void PX4RCCalibrationTest::_switchSelectAutoStep(const char* functionStr, PX4RCCalibration::rcCalFunctions function)
 {
     Q_UNUSED(functionStr);
-    //qDebug() << "_switchSelectAutoStep" << functionStr << "function:" << function;
+    ////qCDebug(PX4RCCalibrationTestLog)() << "_switchSelectAutoStep" << functionStr << "function:" << function;
     
     int buttonMask = cancelButtonMask;
     if (function != PX4RCCalibration::rcCalFunctionModeSwitch) {
@@ -408,6 +391,50 @@ void PX4RCCalibrationTest::_switchSelectAutoStep(const char* functionStr, PX4RCC
 
 void PX4RCCalibrationTest::_fullCalibration_test(void)
 {
+    // IMPORTANT NOTE: We used channels 1-5 for attitude mapping in the test below.
+    // MockLink.param file cannot have flight mode switches mapped to those channels.
+    // If it does it will cause errors since the stick will not be detetected where
+
+    MockQGCUASParamManager* paramMgr = _mockUAS->getMockQGCUASParamManager();
+    MockQGCUASParamManager::ParamMap_t mapParamsSet = paramMgr->getMockSetParameters();
+
+    /// _rgFunctionChannelMap maps from function index to channel index. For channels which are not part of
+    /// rc cal set the mapping the the previous mapping.
+    
+    for (int function=0; function<PX4RCCalibration::rcCalFunctionMax; function++) {
+        bool found = false;
+        
+        // If we are mapping this function during cal set it into _rgFunctionChannelMap
+        for (int channel=0; channel<PX4RCCalibrationTest::_availableChannels; channel++) {
+            if (_rgChannelSettings[channel].function == function) {
+                
+                // First make sure this function isn't being use for a switch
+                
+                QStringList switchList;
+                switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW";
+                
+                foreach (QString switchParam, switchList) {
+                    Q_ASSERT(mapParamsSet[switchParam].toInt() != channel + 1);
+                }
+                
+                _rgFunctionChannelMap[function] = channel;
+                found = true;
+                
+                break;
+            }
+        }
+        
+        // If we aren't mapping this function during calibration, set it to the previous setting
+        if (!found) {
+            _rgFunctionChannelMap[function] = mapParamsSet[PX4RCCalibration::_rgFunctionInfo[function].parameterName].toInt();
+            qCDebug(PX4RCCalibrationTestLog) << "Assigning switch" << function << mapParamsSet[PX4RCCalibration::_rgFunctionInfo[function].parameterName].toInt();
+            if (_rgFunctionChannelMap[function] == 0) {
+                _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
+            } else {
+                _rgFunctionChannelMap[function]--;   // parameter is 1-based, _rgFunctionChannelMap is not
+            }
+        }
+    }
     
     _channelHomePosition();
     QTest::mouseClick(_nextButton, Qt::LeftButton);    
@@ -466,6 +493,7 @@ void PX4RCCalibrationTest::_validateParameters(void)
             expectedParameterValue = chanIndex + 1; // 1-based parameter value
         }
         
+        qCDebug(PX4RCCalibrationTestLog) << "Validate" << chanFunction << mapParamsSet[PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName].toInt();
         QCOMPARE(mapParamsSet.contains(PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName), true);
         QCOMPARE(mapParamsSet[PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName].toInt(), expectedParameterValue);
     }
@@ -496,8 +524,8 @@ void PX4RCCalibrationTest::_validateParameters(void)
         QCOMPARE(convertOk, true);
         bool rcReversedActual = (rcReversedFloat == -1.0f);
         
-        //qDebug() << "_validateParemeters expected channel:min:max:trim:rev" << chan << rcMinExpected << rcMaxExpected << rcTrimExpected << rcReversedExpected;
-        //qDebug() << "_validateParemeters actual channel:min:max:trim:rev" << chan << rcMinActual << rcMaxActual << rcTrimActual << rcReversedActual;
+        qCDebug(PX4RCCalibrationTestLog) << "_validateParemeters expected channel:min:max:trim:rev" << chan << rcMinExpected << rcMaxExpected << rcTrimExpected << rcReversedExpected;
+        qCDebug(PX4RCCalibrationTestLog) << "_validateParemeters actual channel:min:max:trim:rev" << chan << rcMinActual << rcMaxActual << rcTrimActual << rcReversedActual;
 
         QCOMPARE(rcMinExpected, rcMinActual);
         QCOMPARE(rcMaxExpected, rcMaxActual);
@@ -515,7 +543,7 @@ void PX4RCCalibrationTest::_validateParameters(void)
         } else {
             expectedValue = _rgFunctionChannelMap[chanFunction] + 1; // 1-based
         }
-        // qDebug() << chanFunction << expectedValue << mapParamsSet[PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName].toInt();
+        // qCDebug(PX4RCCalibrationTestLog) << chanFunction << expectedValue << mapParamsSet[PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName].toInt();
         QCOMPARE(mapParamsSet[PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName].toInt(), expectedValue);
     }
 }
