@@ -497,7 +497,8 @@ HEADERS += \
     src/ui/QGCUDPLinkConfiguration.h \
     src/uas/UASMessageHandler.h \
     src/ui/toolbar/MainToolBar.h \
-    src/QmlControls/ScreenTools.h
+    src/QmlControls/ScreenTools.h \
+    src/QGCLoggingCategory.h
 
 SOURCES += \
     src/main.cc \
@@ -639,7 +640,8 @@ SOURCES += \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/uas/UASMessageHandler.cc \
     src/ui/toolbar/MainToolBar.cc \
-    src/QmlControls/ScreenTools.cc
+    src/QmlControls/ScreenTools.cc \
+    src/QGCLoggingCategory.cc
 
 #
 # Unit Test specific configuration goes here

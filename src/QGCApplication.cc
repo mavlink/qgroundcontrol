@@ -60,6 +60,7 @@
 #include "QGCFileDialog.h"
 #include "QGCPalette.h"
 #include "ScreenTools.h"
+#include "QGCLoggingCategory.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -128,8 +129,16 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     if (loggingDirectoryOk) {
         qDebug () << iniFileLocation;
         if (!iniFileLocation.exists(qtLoggingFile)) {
-            if (!QFile::copy(":QLoggingCategory/qtlogging.ini", iniFileLocation.filePath(qtLoggingFile))) {
-                qDebug() << "Unable to copy" << QString(qtLoggingFile) << "to" << iniFileLocation;
+            QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
+            if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                QTextStream out(&loggingFile);
+                out << "[Rules]\n";
+                out << "*Log=false\n";
+                foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
+                    out << category << "=false\n";
+                }
+            } else {
+                qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
             }
         }
     }

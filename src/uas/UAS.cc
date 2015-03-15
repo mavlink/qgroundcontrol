@@ -31,8 +31,9 @@
 #include <Eigen/Geometry>
 #include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
+#include "QGCLoggingCategory.h"
 
-Q_LOGGING_CATEGORY(UASLog, "UASLog")
+QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 
 #define UAS_DEFAULT_BATTERY_WARNLEVEL 20
 
