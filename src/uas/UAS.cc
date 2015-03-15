@@ -1248,14 +1248,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             QByteArray b;
             b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
             mavlink_msg_statustext_get_text(&message, b.data());
+ 
             // Ensure NUL-termination
             b[b.length()-1] = '\0';
             QString text = QString(b);
             int severity = mavlink_msg_statustext_get_severity(&message);
 
-            if (text.startsWith("#") || severity <= MAV_SEVERITY_WARNING)
+	    // If the message is NOTIFY or higher severity, or starts with a '#',
+	    // then read it aloud.
+            if (text.startsWith("#") || severity <= MAV_SEVERITY_NOTICE)
             {
-                text.remove("#audio:");
+                text.remove("#");
                 emit textMessageReceived(uasId, message.compid, severity, text);
                 GAudioOutput::instance()->say(text.toLower(), severity);
             }
