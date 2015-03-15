@@ -142,6 +142,7 @@ void QGCLinkConfiguration::_fixUnnamed(LinkConfiguration* config)
 #ifdef Q_OS_WIN32
                 tname.replace("\\\\.\\", "");
 #else
+                tname.replace("/dev/cu.", "");
                 tname.replace("/dev/", "");
 #endif
                 config->setName(QString("Serial Device on %1").arg(tname));
