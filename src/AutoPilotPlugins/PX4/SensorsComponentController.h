@@ -46,6 +46,11 @@ public:
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
     Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)
     
+    Q_PROPERTY(QQuickItem* compassButton MEMBER _compassButton)
+    Q_PROPERTY(QQuickItem* gyroButton MEMBER _gyroButton)
+    Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
+    Q_PROPERTY(QQuickItem* airspeedButton MEMBER _airspeedButton)
+    
     Q_PROPERTY(bool showGyroCalArea MEMBER _showGyroCalArea NOTIFY showGyroCalAreaChanged)
     Q_PROPERTY(bool showAccelCalArea MEMBER _showAccelCalArea NOTIFY showAccelCalAreaChanged)
     
@@ -83,6 +88,8 @@ private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
     
 private:
+    void _startCalibration(void);
+    void _stopCalibration(bool failed);
     void _beginTextLogging(void);
     void _appendStatusLog(const QString& text);
     void _refreshParams(void);
@@ -93,8 +100,12 @@ private:
     void _updateAndEmitShowGyroCalArea(bool show);
     void _updateAndEmitShowAccelCalArea(bool show);
 
-    QQuickItem*         _statusLog;
-    QQuickItem*         _progressBar;
+    QQuickItem* _statusLog;
+    QQuickItem* _progressBar;
+    QQuickItem* _compassButton;
+    QQuickItem* _gyroButton;
+    QQuickItem* _accelButton;
+    QQuickItem* _airspeedButton;
     
     bool _showGyroCalArea;
     bool _showAccelCalArea;
@@ -114,6 +125,8 @@ private:
     bool _accelCalRightSideInProgress;
     bool _accelCalNoseDownSideInProgress;
     bool _accelCalTailDownSideInProgress;
+    
+    bool _textLoggingStarted;
     
     AutoPilotPlugin*    _autopilot;
 };
