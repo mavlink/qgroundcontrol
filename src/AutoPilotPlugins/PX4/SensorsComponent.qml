@@ -79,6 +79,14 @@ Rectangle {
         onLoaded: {
             controller.statusLog = statusTextArea
             controller.progressBar = progressBar
+            controller.compassButton = compassButton
+            controller.gyroButton = gyroButton
+            controller.accelButton = accelButton
+            controller.airspeedButton = airspeedButton
+            controller.compass0RotationCombo = compass0RotationCombo
+            controller.compass1RotationCombo = compass1RotationCombo
+            controller.compass2RotationCombo = compass2RotationCombo
+            controller.boardRotationCombo = boardRotationCombo
         }
     }
 
@@ -97,12 +105,12 @@ Rectangle {
 
             spacing: 20
 
-            QGCLabel { text: "Calibrate:"; anchors.baseline: firstButton.baseline }
+            QGCLabel { text: "Calibrate:"; anchors.baseline: compassButton.baseline }
 
             IndicatorButton {
                 property Fact fact: Fact { name: "CAL_MAG0_ID" }
 
-                id:             firstButton
+                id:             compassButton
                 width:          parent.buttonWidth
                 text:           "Compass"
                 indicatorGreen: fact.value != 0
@@ -112,6 +120,7 @@ Rectangle {
             IndicatorButton {
                 property Fact fact: Fact { name: "CAL_GYRO0_ID" }
 
+                id:             gyroButton
                 width:          parent.buttonWidth
                 text:           "Gyroscope"
                 indicatorGreen: fact.value != 0
@@ -121,6 +130,7 @@ Rectangle {
             IndicatorButton {
                 property Fact fact: Fact { name: "CAL_ACC0_ID" }
 
+                id:             accelButton
                 width:          parent.buttonWidth
                 text:           "Accelerometer"
                 indicatorGreen: fact.value != 0
@@ -130,6 +140,7 @@ Rectangle {
             IndicatorButton {
                 property Fact fact: Fact { name: "SENS_DPRES_OFF" }
 
+                id:             airspeedButton
                 width:          parent.buttonWidth
                 text:           "Airspeed"
                 visible:        controller.fixedWing
@@ -280,6 +291,7 @@ Rectangle {
                 QGCLabel { text: "Autpilot Orientation" }
 
                 FactComboBox {
+                    id:     boardRotationCombo
                     width:  rotationColumnWidth;
                     model:  rotations
                     fact:   Fact { name: "SENS_BOARD_ROT" }
@@ -295,6 +307,7 @@ Rectangle {
                     id: compass0ComponentCombo
 
                     FactComboBox {
+                        id:     compass0RotationCombo
                         width:  rotationColumnWidth
                         model:  rotations
                         fact:   Fact { name: "CAL_MAG0_ROT" }
@@ -313,6 +326,7 @@ Rectangle {
                     id: compass1ComponentCombo
 
                     FactComboBox {
+                        id:     compass1RotationCombo
                         width:  rotationColumnWidth
                         model:  rotations
                         fact:   Fact { name: "CAL_MAG1_ROT" }
@@ -331,6 +345,7 @@ Rectangle {
                     id: compass2ComponentCombo
 
                     FactComboBox {
+                        id:     compass1RotationCombo
                         width:  rotationColumnWidth
                         model:  rotations
                         fact:   Fact { name: "CAL_MAG2_ROT" }
