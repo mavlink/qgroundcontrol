@@ -999,15 +999,15 @@ void PrimaryFlightDisplay::drawAltimeter(
 		QString s_climb;
 		s_climb.sprintf("vZ:%2.1f", climbRate);
 		drawTextRightCenter(painter, s_climb, smallTextSize, rightEdge - 4 * lineWidth, 1.5*mediumTextSize + markerOffset);
-		
+
 		// Draw climb rate indicator as an arrow
 		float vvPixHeight = -climbRate/ALTIMETER_VVI_SPAN * effectiveHalfHeight;
-        if (abs (vvPixHeight) < markerHalfHeight)
+		if (vvPixHeight > -markerHalfHeight && vvPixHeight < 2 * markerHalfHeight + markerOffset)
             return; // hidden behind marker.
 
         float vvSign = vvPixHeight>0 ? 1 : -1; // reverse y sign
 
-		QPointF vvArrowBegin(rightEdge - w*ALTIMETER_VVI_WIDTH / 2, (vvSign ? 2*markerHalfHeight+markerOffset : markerHalfHeight));
+		QPointF vvArrowBegin(rightEdge - w*ALTIMETER_VVI_WIDTH / 2, (vvSign>0 ? 2*markerHalfHeight+markerOffset : -markerHalfHeight));
         QPointF vvArrowEnd(rightEdge - w*ALTIMETER_VVI_WIDTH/2, vvPixHeight);
         painter.drawLine(vvArrowBegin, vvArrowEnd);
 
