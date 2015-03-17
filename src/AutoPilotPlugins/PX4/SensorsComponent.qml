@@ -83,10 +83,6 @@ Rectangle {
             controller.gyroButton = gyroButton
             controller.accelButton = accelButton
             controller.airspeedButton = airspeedButton
-            controller.compass0RotationCombo = compass0RotationCombo
-            controller.compass1RotationCombo = compass1RotationCombo
-            controller.compass2RotationCombo = compass2RotationCombo
-            controller.boardRotationCombo = boardRotationCombo
         }
     }
 
