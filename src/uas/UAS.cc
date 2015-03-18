@@ -1344,6 +1344,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             setDistToWaypoint(p.wp_dist);
             setBearingToWaypoint(p.nav_bearing);
             emit navigationControllerErrorsChanged(this, p.alt_error, p.aspd_error, p.xtrack_error);
+            emit NavigationControllerDataChanged(this, p.nav_roll, p.nav_pitch, p.nav_bearing, p.target_bearing, p.wp_dist);
         }
             break;
         // Messages to ignore
