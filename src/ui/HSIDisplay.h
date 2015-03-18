@@ -62,6 +62,7 @@ public slots:
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
     void updateGlobalPosition(UASInterface*, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
     void updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time);
+    void UpdateNavErrors(UASInterface *uas, double altitudeError, double airspeedError, double crosstrackError);
     void updatePositionLock(UASInterface* uas, bool lock);
     void updateAttitudeControllerEnabled(bool enabled);
     void updatePositionXYControllerEnabled(bool enabled);
@@ -340,6 +341,9 @@ protected:
     float uiZSetCoordinate;    ///< Z Setpoint coordinate wanted by the UI
     float uiYawSet;            ///< Yaw Setpoint wanted by the UI
     double metricWidth;        ///< Width the instrument represents in meters (the width of the ground shown by the widget)
+
+    // Navigation parameters
+    double crosstrackError;   ///< The crosstrack error (m) reported by the UAS
 
     //
     float xCenterPos;         ///< X center of instrument in virtual coordinates

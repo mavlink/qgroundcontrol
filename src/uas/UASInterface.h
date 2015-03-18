@@ -544,6 +544,7 @@ signals:
     void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
 
     void navigationControllerErrorsChanged(UASInterface*, double altitudeError, double speedError, double xtrackError);
+    void NavigationControllerDataChanged(UASInterface *uas, float navRoll, float navPitch, float navBearing, float targetBearing, float targetDist);
 
     void imageStarted(int imgid, int width, int height, int depth, int channels);
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);

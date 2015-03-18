@@ -121,7 +121,7 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(QWidget *parent) :
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     climbRate(std::numeric_limits<double>::quiet_NaN()),
 
-    navigationCrosstrackError(0),
+    navigationCrosstrackError(std::numeric_limits<double>::quiet_NaN()),
     navigationTargetBearing(std::numeric_limits<double>::quiet_NaN()),
 
     layout(COMPASS_INTEGRATED),
@@ -221,6 +221,7 @@ void PrimaryFlightDisplay::forgetUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(speedChanged(UASInterface*, double, double, quint64)), this, SLOT(updateSpeed(UASInterface*, double, double, quint64)));
         disconnect(this->uas, SIGNAL(altitudeChanged(UASInterface*, double, double, double, double, quint64)), this, SLOT(updateAltitude(UASInterface*, double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(navigationControllerErrorsChanged(UASInterface*, double, double, double)), this, SLOT(updateNavigationControllerErrors(UASInterface*, double, double, double)));
+        disconnect(this->uas, &UASInterface::NavigationControllerDataChanged, this, &PrimaryFlightDisplay::UpdateNavigationControllerData);
     }
 }
 
@@ -244,6 +245,7 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(speedChanged(UASInterface*, double, double, quint64)), this, SLOT(updateSpeed(UASInterface*, double, double, quint64)));
         connect(uas, SIGNAL(altitudeChanged(UASInterface*, double, double, double, double, quint64)), this, SLOT(updateAltitude(UASInterface*, double, double, double, double, quint64)));
         connect(uas, SIGNAL(navigationControllerErrorsChanged(UASInterface*, double, double, double)), this, SLOT(updateNavigationControllerErrors(UASInterface*, double, double, double)));
+        connect(uas, &UASInterface::NavigationControllerDataChanged, this, &PrimaryFlightDisplay::UpdateNavigationControllerData);
 
         // Set new UAS
         this->uas = uas;
@@ -344,6 +346,16 @@ void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, double _altitudeAMS
     altitudeWGS84 = _altitudeWGS84;
     altitudeRelative = _altitudeRelative;
     climbRate = _climbRate;
+}
+
+void PrimaryFlightDisplay::UpdateNavigationControllerData(UASInterface *uas, float navRoll, float navPitch, float navBearing, float targetBearing, float targetDistance) {
+    Q_UNUSED(navRoll);
+    Q_UNUSED(navPitch);
+    Q_UNUSED(navBearing);
+    Q_UNUSED(targetDistance);
+    if (this->uas == uas) {
+        this->navigationTargetBearing = targetBearing;
+    }
 }
 
 void PrimaryFlightDisplay::updateNavigationControllerErrors(UASInterface* uas, double altitudeError, double speedError, double xtrackError) {
@@ -862,7 +874,8 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area, flo
     drawTextCenter(painter, s_digitalCompass, largeTextSize, 0, -radius*0.38-digitalCompassUpshift);
 
     // The CDI
-    if (shouldDisplayNavigationData() && !isnan(navigationTargetBearing) && !isinf(navigationCrosstrackError)) {
+    // We only display this navigation data if both the target bearing and crosstrack error are valid
+    if (shouldDisplayNavigationData() && !isnan(navigationTargetBearing) && !isnan(navigationCrosstrackError)) {
         painter.resetTransform();
         painter.translate(area.center());
         // TODO : Sign might be wrong?
