@@ -30,6 +30,7 @@
             <short_desc>Battery capacity</short_desc>
             <long_desc>Defines the capacity of the attached battery.</long_desc>
             <default>-1.0</default>
+            <unit>mA</unit>
         </parameter>
         <parameter name="BAT_V_SCALE_IO" type="INT32">
             <short_desc>Scaling factor for battery voltage sensor on PX4IO</short_desc>
