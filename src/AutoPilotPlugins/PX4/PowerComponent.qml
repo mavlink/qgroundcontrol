@@ -273,7 +273,7 @@ Rectangle {
         }
         Rectangle {
             width: parent.width
-            height: 80
+            height: 40
             color: palette.windowShade
             visible: showAdvanced.checked
             Column {
@@ -288,16 +288,6 @@ Rectangle {
                         id: battDropField
                         width: textEditWidth
                         fact: Fact { name: "BAT_V_LOAD_DROP" }
-                        showUnits: true
-                    }
-                }
-                Row {
-                    spacing: 10
-                    QGCLabel { text: "Battery Capacity"; width: firstColumnWidth; anchors.baseline: battCapacityField.baseline}
-                    FactTextField {
-                        id: battCapacityField
-                        width: textEditWidth
-                        fact: Fact { name: "BAT_CAPACITY" }
                         showUnits: true
                     }
                 }
