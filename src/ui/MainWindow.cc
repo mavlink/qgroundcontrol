@@ -572,7 +572,9 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
     } else if (widgetName == _hudDockWidgetName) {
         widget = new HUD(320,240,this);
     } else if (widgetName == _uasInfoViewDockWidgetName) {
-        widget = new QGCTabbedInfoView(this);
+        QGCTabbedInfoView* pInfoView = new QGCTabbedInfoView(this);
+        pInfoView->addSource(mavlinkDecoder);
+        widget = pInfoView;
     } else if (widgetName == _debugConsoleDockWidgetName) {
         widget = new DebugConsole(this);
     } else {
