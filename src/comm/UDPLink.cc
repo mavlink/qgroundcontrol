@@ -311,8 +311,8 @@ void UDPConfiguration::addHost(const QString& host)
             QHostAddress address;
             for (int i = 0; i < hostAddresses.size(); i++)
             {
-                // Exclude loopback IPv4 and all IPv6 addresses
-                if (!hostAddresses.at(i).toString().contains(":") && !!hostAddresses.at(i).toString().startsWith("127"))
+                // Exclude all IPv6 addresses
+                if (!hostAddresses.at(i).toString().contains(":"))
                 {
                     address = hostAddresses.at(i);
                 }
