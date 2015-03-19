@@ -37,7 +37,6 @@
 #include "pureimagecache.h"
 #include "cache.h"
 
-
 namespace core {
     class TileCacheQueue:public QThread
     {
@@ -47,13 +46,12 @@ namespace core {
         ~TileCacheQueue();
         void EnqueueCacheTask(CacheItemQueue *task);
 
-    protected:
-        QQueue<CacheItemQueue*> tileCacheQueue;
     private:
         void run();
-        QMutex mutex;
-        QMutex waitmutex;
-        QWaitCondition waitc;
+        QMutex _mutex;
+        QMutex _waitmutex;
+        QWaitCondition _waitc;
+        QQueue<CacheItemQueue*> _tileCacheQueue;
     };
 }
 #endif // TILECACHEQUEUE_H

@@ -28,45 +28,39 @@
 
 
 //#define DEBUG_TILECACHEQUEUE
- 
+
+#ifndef DEBUG_TILECACHEQUEUE
+#undef qDebug
+#define qDebug QT_NO_QDEBUG_MACRO
+#endif
+
 namespace core {
 TileCacheQueue::TileCacheQueue()
 {
 
 }
+
 TileCacheQueue::~TileCacheQueue()
 {
-   // QThread::wait(10000);
+    quit();
+    _waitc.wakeAll();
+    wait();
+    this->deleteLater();
 }
 
 void TileCacheQueue::EnqueueCacheTask(CacheItemQueue *task)
 {
-#ifdef DEBUG_TILECACHEQUEUE
     qDebug()<<"DB Do I EnqueueCacheTask"<<task->GetPosition().X()<<","<<task->GetPosition().Y();
-#endif //DEBUG_TILECACHEQUEUE
-    if(!tileCacheQueue.contains(task))
-    {
-#ifdef DEBUG_TILECACHEQUEUE
+    if(!_tileCacheQueue.contains(task)) {
         qDebug()<<"EnqueueCacheTask"<<task->GetPosition().X()<<","<<task->GetPosition().Y();
-#endif //DEBUG_TILECACHEQUEUE
-        mutex.lock();
-        tileCacheQueue.enqueue(task);
-        mutex.unlock();
-        if(this->isRunning())
-        {
-#ifdef DEBUG_TILECACHEQUEUE
+        _mutex.lock();
+        _tileCacheQueue.enqueue(task);
+        _mutex.unlock();
+        if(this->isRunning()) {
             qDebug()<<"Wake Thread";
-#endif //DEBUG_TILECACHEQUEUE
-            //this->start(QThread::NormalPriority);
-            //waitmutex.lock();
-            waitc.wakeAll();
-            //waitmutex.unlock();
-        }
-        else
-        {
-#ifdef DEBUG_TILECACHEQUEUE
+            _waitc.wakeAll();
+        } else {
             qDebug()<<"Start Thread";
-#endif //DEBUG_TILECACHEQUEUE
             this->start(QThread::NormalPriority);
         }
     }
@@ -74,59 +68,35 @@ void TileCacheQueue::EnqueueCacheTask(CacheItemQueue *task)
 }
 void TileCacheQueue::run()
 {
-#ifdef DEBUG_TILECACHEQUEUE
     qDebug()<<"Cache Engine Start";
-#endif //DEBUG_TILECACHEQUEUE
-    while(true)
-    {
-        CacheItemQueue *task;
-#ifdef DEBUG_TILECACHEQUEUE
-        qDebug()<<"Cache";
-#endif //DEBUG_TILECACHEQUEUE
-        if(tileCacheQueue.count()>0)
-        {
-            mutex.lock();
-            task=tileCacheQueue.dequeue();
-            mutex.unlock();
-#ifdef DEBUG_TILECACHEQUEUE
-            qDebug()<<"Cache engine Put:"<<task->GetPosition().X()<<","<<task->GetPosition().Y();
-#endif //DEBUG_TILECACHEQUEUE
-            Cache::Instance()->ImageCache.PutImageToCache(task->GetImg(),task->GetMapType(),task->GetPosition(),task->GetZoom());
+    while(true) {
+        CacheItemQueue *task = NULL;
+        qDebug() << "Cache";
+        if(_tileCacheQueue.count() > 0) {
+            _mutex.lock();
+            task = _tileCacheQueue.dequeue();
+            _mutex.unlock();
+            Q_ASSERT(task);
+            qDebug() << "Cache engine Put:" << task->GetPosition().X() << "," << task->GetPosition().Y();
+            Cache* cache = Cache::Instance();
+            if(cache) {
+                cache->ImageCache.PutImageToCache(task->GetImg(), task->GetMapType(), task->GetPosition(), task->GetZoom());
+            }
             usleep(44);
             delete task;
-        }
-
-        else
-        {
-            #ifdef DEBUG_TILECACHEQUEUE
-            qDebug()<<"Cache engine BEGIN WAIT";
-            #endif //DEBUG_TILECACHEQUEUE
-            waitmutex.lock();
-            int tout=4000;
-            if(!waitc.wait(&waitmutex,tout))
-            {
-                waitmutex.unlock();
-#ifdef DEBUG_TILECACHEQUEUE
-                qDebug()<<"Cache Engine TimeOut";
-#endif //DEBUG_TILECACHEQUEUE
-                mutex.lock();
-                if(tileCacheQueue.count()==0)
-                {
-                    mutex.unlock();
-                    break;
-                }
-                mutex.unlock();
+        } else {
+            qDebug() << "Cache engine BEGIN WAIT";
+            _waitmutex.lock();
+            _waitc.wait(&_waitmutex);
+            qDebug() << "Cache engine WOKE UP";
+            if(!this->isRunning()) {
+                _waitmutex.unlock();
+                break;
             }
-            #ifdef DEBUG_TILECACHEQUEUE
-            qDebug()<<"Cache Engine DID NOT TimeOut";
-            #endif //DEBUG_TILECACHEQUEUE
-            waitmutex.unlock();
+            _waitmutex.unlock();
         }
     }
-#ifdef DEBUG_TILECACHEQUEUE
-    qDebug()<<"Cache Engine Stopped";
-#endif //DEBUG_TILECACHEQUEUE
+    qDebug() << "Cache Engine Stopped";
 }
-
 
 }
