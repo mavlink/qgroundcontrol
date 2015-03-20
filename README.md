@@ -72,6 +72,8 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
     * Next, set the environment variables by executing in the terminal: `source /opt/qt54/bin/qt54-env.sh` or copy and paste the contents to your `~/.profile` file to set them on login.
     * Verify that the variables have been set: `echo $PATH && echo $QTDIR`. The output should read `/opt/qt54/bin:...` and `/opt/qt54`.
 
+If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.20' not found. You need to either update to the latest gcc, or install the latest libstdc++.6 using: sudo apt-get install libstdc++6.
+
 #### [Optional] Install additional libraries
 * For text-to-speech (espeak)
 	* For Ubuntu: `sudo apt-get install espeak libespeak-dev`
