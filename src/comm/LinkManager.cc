@@ -212,6 +212,7 @@ void LinkManager::_deleteLink(LinkInterface* link)
             break;
         }
     }
+    Q_UNUSED(found);
     Q_ASSERT(found);
 
     _linkListMutex.unlock();

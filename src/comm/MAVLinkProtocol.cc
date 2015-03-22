@@ -204,6 +204,7 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
                 break;
             }
         }
+        Q_UNUSED(found);
         Q_ASSERT(found);
         
         if (_connectedLinks.count() == 0) {
