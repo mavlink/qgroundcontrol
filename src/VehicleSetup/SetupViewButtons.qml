@@ -35,7 +35,7 @@ Rectangle {
 
             QGCLabel {
                 width: parent.width
-                text: "You must be connected to your board to use all available setup options."
+                text: "Full setup options are only available when connected to vehicle and full parameter list has completed downloading."
                 wrapMode: Text.WordWrap
                 horizontalAlignment: Text.AlignHCenter
             }

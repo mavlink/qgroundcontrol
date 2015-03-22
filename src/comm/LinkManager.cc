@@ -52,6 +52,7 @@ LinkManager::LinkManager(QObject* parent)
     , _configUpdateSuspended(false)
     , _configurationsLoaded(false)
     , _connectionsSuspended(false)
+    , _nullSharedLink(NULL)
 {
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateConfigurationList);
     _portListTimer.start(1000);
@@ -68,7 +69,7 @@ LinkManager::~LinkManager()
     Q_ASSERT_X(_links.count() == 0, "LinkManager", "LinkManager::_shutdown should have been called previously");
 }
 
-LinkInterface* LinkManager::createLink(LinkConfiguration* config)
+LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
 {
     Q_ASSERT(config);
     LinkInterface* pLink = NULL;
@@ -89,33 +90,31 @@ LinkInterface* LinkManager::createLink(LinkConfiguration* config)
 #endif
     }
     if(pLink) {
-        addLink(pLink);
+        _addLink(pLink);
+        connectLink(pLink);
     }
     return pLink;
 }
 
-LinkInterface* LinkManager::createLink(const QString& name)
+LinkInterface* LinkManager::createConnectedLink(const QString& name)
 {
     Q_ASSERT(name.isEmpty() == false);
     for(int i = 0; i < _linkConfigurations.count(); i++) {
         LinkConfiguration* conf = _linkConfigurations.at(i);
         if(conf && conf->name() == name)
-            return createLink(conf);
+            return createConnectedLink(conf);
     }
     return NULL;
 }
 
-void LinkManager::addLink(LinkInterface* link)
+void LinkManager::_addLink(LinkInterface* link)
 {
     Q_ASSERT(link);
 
-    // Take ownership for delete
-    link->_ownedByLinkManager = true;
-
     _linkListMutex.lock();
 
-    if (!_links.contains(link)) {
-        _links.append(link);
+    if (!containsLink(link)) {
+        _links.append(QSharedPointer<LinkInterface>(link));
         _linkListMutex.unlock();
         emit newLink(link);
     } else {
@@ -145,14 +144,12 @@ bool LinkManager::connectAll()
 
     bool allConnected = true;
 
-    _linkListMutex.lock();
-    foreach (LinkInterface* link, _links) {
-        Q_ASSERT(link);
-        if (!link->_connect()) {
+    foreach (SharedLinkInterface sharedLink, _links) {
+        Q_ASSERT(sharedLink.data());
+        if (!sharedLink.data()->_connect()) {
             allConnected = false;
         }
     }
-    _linkListMutex.unlock();
 
     return allConnected;
 }
@@ -161,15 +158,12 @@ bool LinkManager::disconnectAll()
 {
     bool allDisconnected = true;
 
-    _linkListMutex.lock();
-    foreach (LinkInterface* link, _links)
-    {
-        Q_ASSERT(link);
-        if (!link->_disconnect()) {
+    foreach (SharedLinkInterface sharedLink, _links) {
+        Q_ASSERT(sharedLink.data());
+        if (!sharedLink.data()->_disconnect()) {
             allDisconnected = false;
         }
     }
-    _linkListMutex.unlock();
 
     return allDisconnected;
 }
@@ -197,51 +191,33 @@ bool LinkManager::disconnectLink(LinkInterface* link)
         if(config) {
             config->setLink(NULL);
         }
-        // Link is now done and over with. We can't yet delete it because it
-        // takes a while for the MAVLink protocol to take notice of it. We
-        // flag it for delayed deletion for final clean up.
-        link->_flaggedForDeletion = true;
-        QTimer::singleShot(1000, this, &LinkManager::_delayedDeleteLink);
+        _deleteLink(link);
         return true;
     } else {
         return false;
     }
 }
 
-void LinkManager::_delayedDeleteLink()
-{
-    _linkListMutex.lock();
-    foreach (LinkInterface* link, _links)
-    {
-        Q_ASSERT(link);
-        if (link->_flaggedForDeletion) {
-            qDebug() << "Link deleted: " << link->getName();
-            _linkListMutex.unlock();
-            deleteLink(link);
-            return;
-        }
-    }
-    _linkListMutex.unlock();
-}
-
-void LinkManager::deleteLink(LinkInterface* link)
+void LinkManager::_deleteLink(LinkInterface* link)
 {
     Q_ASSERT(link);
 
     _linkListMutex.lock();
 
-    Q_ASSERT(_links.contains(link));
-    _links.removeOne(link);
-    Q_ASSERT(!_links.contains(link));
+    bool found = false;
+    for (int i=0; i<_links.count(); i++) {
+        if (_links[i].data() == link) {
+            _links.removeAt(i);
+            found = true;
+            break;
+        }
+    }
+    Q_ASSERT(found);
 
     _linkListMutex.unlock();
 
     // Emit removal of link
     emit linkDeleted(link);
-
-    Q_ASSERT(link->_ownedByLinkManager);
-    link->_deletedByLinkManager = true;   // Signal that this is a valid delete
-    delete link;
 }
 
 /**
@@ -249,29 +225,13 @@ void LinkManager::deleteLink(LinkInterface* link)
  */
 const QList<LinkInterface*> LinkManager::getLinks()
 {
-    _linkListMutex.lock();
-    QList<LinkInterface*> ret(_links);
-    _linkListMutex.unlock();
-    return ret;
-}
-
-const QList<SerialLink *> LinkManager::getSerialLinks()
-{
-    _linkListMutex.lock();
-    QList<SerialLink*> s;
-
-    foreach (LinkInterface* link, _links)
-    {
-        Q_ASSERT(link);
-
-        SerialLink* serialLink = qobject_cast<SerialLink*>(link);
-
-        if (serialLink)
-            s.append(serialLink);
+    QList<LinkInterface*> list;
+    
+    foreach (SharedLinkInterface sharedLink, _links) {
+        list << sharedLink.data();
     }
-    _linkListMutex.unlock();
-
-    return s;
+    
+    return list;
 }
 
 /// @brief If all new connections should be suspended a message is displayed to the user and true
@@ -296,10 +256,8 @@ void LinkManager::setConnectionsSuspended(QString reason)
 
 void LinkManager::_shutdown(void)
 {
-    QList<LinkInterface*> links = _links;
-    foreach(LinkInterface* link, links) {
-        disconnectLink(link);
-        deleteLink(link);
+    while (_links.count() != 0) {
+        disconnectLink(_links[0].data());
     }
 }
 
@@ -489,3 +447,43 @@ void LinkManager::_updateConfigurationList(void)
     }
 }
 
+bool LinkManager::containsLink(LinkInterface* link)
+{
+    bool found = false;
+    
+    foreach (SharedLinkInterface sharedLink, _links) {
+        if (sharedLink.data() == link) {
+            found = true;
+            break;
+        }
+    }
+    
+    return found;
+}
+
+bool LinkManager::anyConnectedLinks(void)
+{
+    bool found = false;
+    
+    foreach (SharedLinkInterface sharedLink, _links) {
+        if (sharedLink.data()->isConnected()) {
+            found = true;
+            break;
+        }
+    }
+    
+    return found;
+}
+
+SharedLinkInterface& LinkManager::sharedPointerForLink(LinkInterface* link)
+{
+    for (int i=0; i<_links.count(); i++) {
+        if (_links[i].data() == link) {
+            return _links[i];
+        }
+    }
+    
+    // This should never happen
+    Q_ASSERT(false);
+    return _nullSharedLink;
+}

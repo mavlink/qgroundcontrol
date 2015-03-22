@@ -642,15 +642,7 @@ void MainWindow::normalActionItemCallback()
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Disallow window close if there are active connections
-    bool foundConnections = false;
-    foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
-        if (link->isConnected()) {
-            foundConnections = true;
-            break;
-        }
-    }
-
-    if (foundConnections) {
+    if (LinkManager::instance()->anyConnectedLinks()) {
         QGCMessageBox::StandardButton button =
             QGCMessageBox::warning(
                 tr("QGroundControl close"),
@@ -658,9 +650,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
                 QMessageBox::Yes | QMessageBox::Cancel,
                 QMessageBox::Cancel);
         if (button == QMessageBox::Yes) {
-            foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
-                LinkManager::instance()->disconnectLink(link);
-            }
+            LinkManager::instance()->disconnectAll();
         } else {
             event->ignore();
             return;
@@ -669,11 +659,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     // This will process any remaining flight log save dialogs
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+    
     // Should not be any active connections
-    foreach(LinkInterface* link, LinkManager::instance()->getLinks()) {
-        Q_UNUSED(link);
-        Q_ASSERT(!link->isConnected());
-    }
+    Q_ASSERT(!LinkManager::instance()->anyConnectedLinks());
+    
     _storeCurrentViewState();
     storeSettings();
     UASManager::instance()->storeSettings();
@@ -1355,11 +1344,7 @@ void MainWindow::restoreLastUsedConnection()
     if(settings.contains(key)) {
         QString connection = settings.value(key).toString();
         // Create a link for it
-        LinkInterface* link = LinkManager::instance()->createLink(connection);
-        if(link) {
-            // Connect it
-            LinkManager::instance()->connectLink(link);
-        }
+        LinkManager::instance()->createConnectedLink(connection);
     }
 }
 

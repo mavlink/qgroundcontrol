@@ -115,12 +115,12 @@ private:
 class TCPLink : public LinkInterface
 {
     Q_OBJECT
+    
     friend class TCPLinkUnitTest;
     friend class TCPConfiguration;
-public:
-    TCPLink(TCPConfiguration* config);
-    ~TCPLink();
+    friend class LinkManager;
     
+public:
     QTcpSocket* getSocket(void) { return _socket; }
     
     void signalBytesWritten(void);
@@ -159,9 +159,13 @@ protected:
     virtual void run(void);
     
 private:
+    // Links are only created/destroyed by LinkManager so constructor/destructor is not public
+    TCPLink(TCPConfiguration* config);
+    ~TCPLink();
+    
     // From LinkInterface
-    bool _connect(void);
-    bool _disconnect(void);
+    virtual bool _connect(void);
+    virtual bool _disconnect(void);
 
     bool _hardwareConnect();
     void _restartConnection();
