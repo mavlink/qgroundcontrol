@@ -102,12 +102,11 @@ private:
 class SerialLink : public LinkInterface
 {
     Q_OBJECT
+    
     friend class SerialConfiguration;
+    friend class LinkManager;
+    
 public:
-
-    SerialLink(SerialConfiguration* config);
-    ~SerialLink();
-
     // LinkInterface
 
     LinkConfiguration* getLinkConfiguration();
@@ -154,9 +153,13 @@ private slots:
     void _rerouteDisconnected(void);
 
 private:
+    // Links are only created/destroyed by LinkManager so constructor/destructor is not public
+    SerialLink(SerialConfiguration* config);
+    ~SerialLink();
+    
     // From LinkInterface
-    bool _connect(void);
-    bool _disconnect(void);
+    virtual bool _connect(void);
+    virtual bool _disconnect(void);
 
     // Internal methods
     void _emitLinkError(const QString& errorMsg);

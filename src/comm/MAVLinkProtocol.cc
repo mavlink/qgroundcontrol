@@ -175,8 +175,12 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
     Q_ASSERT(link);
     
     if (connected) {
-        Q_ASSERT(!_connectedLinks.contains(link));
-        _connectedLinks.append(link);
+        foreach (SharedLinkInterface sharedLink, _connectedLinks) {
+            Q_ASSERT(sharedLink.data() != link);
+        }
+        
+        // Use the same shared pointer as LinkManager
+        _connectedLinks.append(LinkManager::instance()->sharedPointerForLink(link));
         
         if (_connectedLinks.count() == 1) {
             // This is the first link, we need to start logging
@@ -192,8 +196,16 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
         link->writeBytes(cmd, strlen(cmd));
         link->writeBytes(init, 4);
     } else {
-        Q_ASSERT(_connectedLinks.contains(link));
-        _connectedLinks.removeOne(link);
+        bool found = false;
+        for (int i=0; i<_connectedLinks.count(); i++) {
+            if (_connectedLinks[i].data() == link) {
+                found = true;
+                _connectedLinks.removeAt(i);
+                break;
+            }
+        }
+        Q_UNUSED(found);
+        Q_ASSERT(found);
         
         if (_connectedLinks.count() == 0) {
             // Last link is gone, close out logging

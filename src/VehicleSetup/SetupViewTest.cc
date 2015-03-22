@@ -64,7 +64,7 @@ void SetupViewTest::_clickThrough_test(void)
     MockLink* link = new MockLink();
     Q_CHECK_PTR(link);
     link->setAutopilotType(MAV_AUTOPILOT_PX4);
-    LinkManager::instance()->addLink(link);
+    LinkManager::instance()->_addLink(link);
     linkMgr->connectLink(link);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
     
