@@ -341,7 +341,11 @@ protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
     QMap<int, QString> components;///< IDs and names of all detected onboard components
-    QList<LinkInterface*> links;  ///< List of links this UAS can be reached by
+    
+    /// List of all links associated with this UAS. We keep SharedLinkInterface objects which are QSharedPointer's in order to
+    /// maintain reference counts across threads. This way Link deletion works correctly.
+    QList<SharedLinkInterface> _links;
+    
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     CommStatus commStatus;        ///< Communication status
@@ -812,9 +816,6 @@ public slots:
     /** @brief Send a message over all links this UAS can be reached with (!= all links) */
     void sendMessage(mavlink_message_t message);
 
-    /** @brief Temporary Hack for sending packets to patch Antenna. Send a message over all serial links except for this UAS's */
-    void forwardMessage(mavlink_message_t message);
-
     /** @brief Set this UAS as the system currently in focus, e.g. in the main display widgets */
     void setSelected();
 
@@ -951,6 +952,9 @@ protected slots:
     void writeSettings();
     /** @brief Read settings from disk */
     void readSettings();
+    
+private:
+    bool _containsLink(LinkInterface* link);
 };
 
 

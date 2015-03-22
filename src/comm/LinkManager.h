@@ -103,21 +103,18 @@ public:
     /// Sets the flag to allow new connections to be made
     void setConnectionsAllowed(void) { _connectionsSuspended = false; }
 
-    /// Creates (and adds) a link  based on the given configuration instance. LinkManager takes ownership of this object. To delete
-    /// it, call LinkManager::deleteLink.
-    LinkInterface* createLink(LinkConfiguration* config);
+    /// Creates, connects (and adds) a link  based on the given configuration instance.
+    LinkInterface* createConnectedLink(LinkConfiguration* config);
 
-    /// Creates (and adds) a link  based on the given configuration name. LinkManager takes ownership of this object. To delete
-    /// it, call LinkManager::deleteLink.
-    LinkInterface* createLink(const QString& name);
+    /// Creates, connects (and adds) a link  based on the given configuration name.
+    LinkInterface* createConnectedLink(const QString& name);
 
-    /// Adds the link to the LinkManager. LinkManager takes ownership of this object. To delete
-    /// it, call LinkManager::deleteLink.
-    void addLink(LinkInterface* link);
-
-    /// Deletes the specified link. Will disconnect if connected.
-    // TODO Will also crash if called. MAVLink protocol is not handling the disconnect properly.
-    void deleteLink(LinkInterface* link);
+    /// Returns true if the link manager is holding this link
+    bool containsLink(LinkInterface* link);
+    
+    /// Returns the QSharedPointer for this link. You must use SharedLinkInterface if you are going to
+    /// keep references to a link in a thread other than the main ui thread.
+    SharedLinkInterface& sharedPointerForLink(LinkInterface* link);
 
     /// Re-connects all existing links
     bool connectAll();
@@ -130,6 +127,14 @@ public:
 
     /// Disconnect the specified link
     bool disconnectLink(LinkInterface* link);
+    
+    /// Returns true if there are any connected links
+    bool anyConnectedLinks(void);
+    
+    // The following APIs are public but should not be called in normal use. The are mainly exposed
+    // here for unit test code.
+    void _deleteLink(LinkInterface* link);
+    void _addLink(LinkInterface* link);
 
 signals:
     void newLink(LinkInterface* link);
@@ -141,13 +146,12 @@ signals:
 private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
-    void _delayedDeleteLink();
 
 private:
     /// All access to LinkManager is through LinkManager::instance
     LinkManager(QObject* parent = NULL);
     ~LinkManager();
-
+    
     virtual void _shutdown(void);
 
     bool _connectionsSuspendedMsg(void);
@@ -155,7 +159,12 @@ private:
     SerialConfiguration* _findSerialConfiguration(const QString& portName);
 
     QList<LinkConfiguration*>   _linkConfigurations;    ///< List of configured links
-    QList<LinkInterface*>       _links;                 ///< List of available links
+    
+    /// List of available links kept as QSharedPointers. We use QSharedPointer since
+    /// there are other objects that maintain copies of these links in other threads.
+    /// The reference counting allows for orderly deletion.
+    QList<SharedLinkInterface>  _links;
+    
     QMutex                      _linkListMutex;         ///< Mutex for thread safe access to _links list
 
     bool    _configUpdateSuspended;                     ///< true: stop updating configuration list
@@ -163,6 +172,8 @@ private:
     bool    _connectionsSuspended;                      ///< true: all new connections should not be allowed
     QString _connectionsSuspendedReason;                ///< User visible reason for suspension
     QTimer  _portListTimer;
+    
+    SharedLinkInterface _nullSharedLink;
 };
 
 #endif

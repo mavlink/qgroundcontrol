@@ -118,7 +118,7 @@ void UASListWidget::updateStatus()
         LinkInterface* link = i.key();
 
         // Paranoid sanity check
-        if (!LinkManager::instance()->getLinks().contains(link))
+        if (!LinkManager::instance()->containsLink(link))
             continue;
 
         if (!link)

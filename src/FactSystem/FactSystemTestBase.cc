@@ -48,7 +48,7 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     
     MockLink* link = new MockLink();
     link->setAutopilotType(autopilot);
-    _linkMgr->addLink(link);
+    _linkMgr->_addLink(link);
     _linkMgr->connectLink(link);
     
     // Wait for the uas to work it's way through the various threads

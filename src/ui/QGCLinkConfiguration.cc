@@ -104,10 +104,8 @@ void QGCLinkConfiguration::on_connectLinkButton_clicked()
                     LinkManager::instance()->disconnectLink(link);
                 }
             } else {
-                LinkInterface* link = LinkManager::instance()->createLink(config);
+                LinkInterface* link = LinkManager::instance()->createConnectedLink(config);
                 if(link) {
-                    // Connect it
-                    LinkManager::instance()->connectLink(link);
                     // Now go hunting for the parent so we can shut this down
                     QWidget* pQw = parentWidget();
                     while(pQw) {
