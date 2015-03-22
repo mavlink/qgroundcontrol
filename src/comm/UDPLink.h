@@ -143,11 +143,11 @@ private:
 class UDPLink : public LinkInterface
 {
     Q_OBJECT
+    
     friend class UDPConfiguration;
+    friend class LinkManager;
+    
 public:
-    UDPLink(UDPConfiguration* config);
-    ~UDPLink();
-
     void requestReset() { }
     bool isConnected() const;
     QString getName() const;
@@ -192,6 +192,10 @@ protected:
     int                 _id;
 
 private:
+    // Links are only created/destroyed by LinkManager so constructor/destructor is not public
+    UDPLink(UDPConfiguration* config);
+    ~UDPLink();
+    
     // From LinkInterface
     virtual bool _connect(void);
     virtual bool _disconnect(void);

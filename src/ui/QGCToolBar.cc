@@ -676,10 +676,8 @@ void QGCToolBar::_connectButtonClicked(bool checked)
             // Get the configuration name
             QString confName = _linkCombo->currentText();
             // Create a link for it
-            LinkInterface* link = _linkMgr->createLink(confName);
+            LinkInterface* link = _linkMgr->createConnectedLink(confName);
             if(link) {
-                // Connect it
-                _linkMgr->connectLink(link);
                 // Save last used connection
                 MainWindow::instance()->saveLastUsedConnection(confName);
             }

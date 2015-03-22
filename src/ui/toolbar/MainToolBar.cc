@@ -163,10 +163,8 @@ void MainToolBar::onConnect(QString conf)
             // We don't want the combo box updating under our feet
             LinkManager::instance()->suspendConfigurationUpdates(true);
             // Create a link
-            LinkInterface* link = LinkManager::instance()->createLink(_currentConfig);
+            LinkInterface* link = LinkManager::instance()->createConnectedLink(_currentConfig);
             if(link) {
-                // Connect it
-                LinkManager::instance()->connectLink(link);
                 // Save last used connection
                 MainWindow::instance()->saveLastUsedConnection(_currentConfig);
             }

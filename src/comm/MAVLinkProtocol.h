@@ -285,7 +285,10 @@ private:
     void _startLogging(void);
     void _stopLogging(void);
     
-    QList<LinkInterface*> _connectedLinks;  ///< List of all links connected to protocol
+    /// List of all links connected to protocol. We keep SharedLinkInterface objects
+    /// which are QSharedPointer's in order to maintain reference counts across threads.
+    /// This way Link deletion works correctly.
+    QList<SharedLinkInterface> _connectedLinks;
     
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay

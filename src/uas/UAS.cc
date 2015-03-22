@@ -380,8 +380,7 @@ bool UAS::getSelected() const
 
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
-    if (!links.contains(link))
-    {
+    if (!_containsLink(link)) {
         addLink(link);
         //        qDebug() << __FILE__ << __LINE__ << "ADDED LINK!" << link->getName();
     }
@@ -873,8 +872,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             positionLock = true;
             isGlobalPositionKnown = true;
-            //TODO fix this hack for forwarding of global position for patch antenna tracking
-            //forwardMessage(message);
         }
             break;
         case MAVLINK_MSG_ID_GPS_RAW_INT:
@@ -1725,45 +1722,17 @@ void UAS::sendMessage(mavlink_message_t message)
         return;
     }
 
-    if (links.count() < 1) {
+    if (_links.count() < 1) {
         qDebug() << "NO LINK AVAILABLE TO SEND!";
     }
 
     // Emit message on all links that are currently connected
-    foreach (LinkInterface* link, links) {
+    foreach (SharedLinkInterface sharedLink, _links) {
+        LinkInterface* link = sharedLink.data();
+        Q_ASSERT(link);
+        
         if (link->isConnected()) {
             sendMessage(link, message);
-        }
-    }
-}
-
-/**
-* Forward a message to all links that are currently connected.
-* @param message that is to be forwarded
-*/
-void UAS::forwardMessage(mavlink_message_t message)
-{
-    // Emit message on all links that are currently connected
-    QList<LinkInterface*>link_list = LinkManager::instance()->getLinks();
-
-    foreach(LinkInterface* link, link_list)
-    {
-        if (link)
-        {
-            SerialLink* serial = dynamic_cast<SerialLink*>(link);
-            if(serial != 0)
-            {
-                for(int i=0; i<links.size(); i++)
-                {
-                    if(serial != links.at(i))
-                    {
-                        if (link->isConnected()) {
-                            qDebug()<<"Antenna tracking: Forwarding Over link: "<<serial->getName()<<" "<<serial;
-                            sendMessage(serial, message);
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -3274,9 +3243,9 @@ const QString& UAS::getShortMode() const
 */
 void UAS::addLink(LinkInterface* link)
 {
-    if (!links.contains(link))
+    if (!_containsLink(link))
     {
-        links.append(link);
+        _links.append(LinkManager::instance()->sharedPointerForLink(link));
         qCDebug(UASLog) << "addLink:" << QString("%1").arg((ulong)link, 0, 16);
         connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
     }
@@ -3285,16 +3254,16 @@ void UAS::addLink(LinkInterface* link)
 void UAS::removeLink(QObject* object)
 {
     qCDebug(UASLog) << "removeLink:" << QString("%1").arg((ulong)object, 0, 16);
-    qCDebug(UASLog) << "link count:" << links.count();
+    qCDebug(UASLog) << "link count:" << _links.count();
 
-    // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
-    // been destroyed.
+    LinkInterface* link = dynamic_cast<LinkInterface*>(object);
 
-    LinkInterface* link = (LinkInterface*)object;
-
-    int index = links.indexOf(link);
-    Q_ASSERT(index != -1);
-    links.removeAt(index);
+    for (int i=0; i<_links.count(); i++) {
+        if (_links[i].data() == link) {
+            _links.removeAt(i);
+            break;
+        }
+    }
 }
 
 /**
@@ -3302,7 +3271,13 @@ void UAS::removeLink(QObject* object)
 */
 QList<LinkInterface*> UAS::getLinks()
 {
-    return links;
+    QList<LinkInterface*> list;
+    
+    foreach (SharedLinkInterface sharedLink, _links) {
+        list << sharedLink.data();
+    }
+    
+    return list;
 }
 
 /**
@@ -3428,4 +3403,15 @@ void UAS::unsetRCToParameterMap()
                                       0.0f);
         sendMessage(message);
     }
+}
+
+bool UAS::_containsLink(LinkInterface* link)
+{
+    foreach (SharedLinkInterface sharedLink, _links) {
+        if (sharedLink.data() == link) {
+            return true;
+        }
+    }
+
+    return false;
 }

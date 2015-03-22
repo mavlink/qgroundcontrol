@@ -106,7 +106,7 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     srand(QTime::currentTime().msec());
     maxTimeNoise = 0;
     this->id = getNextLinkId();
-    LinkManager::instance()->addLink(this);
+    LinkManager::instance()->_addLink(this);
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
