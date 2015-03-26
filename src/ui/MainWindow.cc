@@ -437,7 +437,10 @@ void MainWindow::_buildCommonWidgets(void)
 void MainWindow::_buildPlannerView(void)
 {
     if (!_plannerView) {
-        _plannerView = new QGCMapTool(this);
+        QGCQuickWidget* widget = new QGCQuickWidget(this);
+        widget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+        widget->setSource(QUrl::fromUserInput("qrc:/qml/Map.qml"));
+        _plannerView = widget;
         _plannerView->setVisible(false);
     }
 }
