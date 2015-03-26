@@ -304,6 +304,7 @@
         <file alias="PowerComponentBattery_05cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg</file>
         <file alias="PowerComponentBattery_06cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg</file>
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
+        <file alias="Map.qml">src/QMLMap/Map.qml</file>
     </qresource>
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
