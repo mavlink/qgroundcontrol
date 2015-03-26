@@ -189,11 +189,6 @@ void PX4AutoPilotPlugin::clearStaticData(void)
     PX4ParameterFacts::clearStaticData();
 }
 
-bool PX4AutoPilotPlugin::pluginIsReady(void) const
-{
-    return _parameterFacts->factsAreReady();
-}
-
 const QVariantList& PX4AutoPilotPlugin::components(void)
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
@@ -261,5 +256,6 @@ void PX4AutoPilotPlugin::_pluginReadyPreChecks(void)
         }
     }
     
-    emit pluginReady();
+    _pluginReady = true;
+    emit pluginReadyChanged(_pluginReady);
 }
