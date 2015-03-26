@@ -50,6 +50,8 @@ class AutoPilotPlugin : public QObject
 public:
     AutoPilotPlugin(UASInterface* uas, QObject* parent);
     
+    Q_PROPERTY(bool pluginReady READ pluginReady NOTIFY pluginReadyChanged)
+    
     Q_PROPERTY(QVariantList components READ components CONSTANT)
     Q_PROPERTY(QUrl setupBackgroundImage READ setupBackgroundImage CONSTANT)
     
@@ -71,23 +73,23 @@ public:
     virtual const QVariantMap& parameters(void) = 0;    
     virtual QUrl setupBackgroundImage(void) = 0;
     
-    /// Returns true if the plugin is ready for use
-    virtual bool pluginIsReady(void) const = 0;
-    
     /// FIXME: Kind of hacky
     static void clearStaticData(void);
     
     UASInterface* uas(void) { return _uas; }
     
+    bool pluginReady(void) { return _pluginReady; }
+    
 signals:
     /// Signalled when plugin is ready for use
-    void pluginReady(void);
+    void pluginReadyChanged(bool pluginReady);
     
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
     AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
     
-    UASInterface* _uas;
+    UASInterface*   _uas;
+    bool            _pluginReady;
 };
 
 #endif

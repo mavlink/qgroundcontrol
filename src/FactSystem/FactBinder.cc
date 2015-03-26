@@ -38,7 +38,7 @@ FactBinder::FactBinder(void) :
     
     _autopilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas);
     Q_ASSERT(_autopilotPlugin);
-    Q_ASSERT(_autopilotPlugin->pluginIsReady());
+    Q_ASSERT(_autopilotPlugin->pluginReady());
 }
 
 QString FactBinder::name(void) const
