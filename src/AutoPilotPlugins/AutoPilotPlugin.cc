@@ -28,7 +28,8 @@
 
 AutoPilotPlugin::AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     QObject(parent),
-    _uas(uas)
+    _uas(uas),
+    _pluginReady(false)
 {
     Q_ASSERT(_uas);
 }

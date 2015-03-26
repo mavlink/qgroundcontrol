@@ -264,7 +264,8 @@
         <file alias="QGroundControl/Controls/arrow-down.png">src/QmlControls/arrow-down.png</file>
         <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
         <file alias="px4fmu_2.x.png">files/images/px4/boards/px4fmu_2.x.png</file>
-        <file alias="SetupViewButtons.qml">src/VehicleSetup/SetupViewButtons.qml</file>
+        <file alias="SetupViewButtonsConnected.qml">src/VehicleSetup/SetupViewButtonsConnected.qml</file>
+        <file alias="SetupViewButtonsDisconnected.qml">src/VehicleSetup/SetupViewButtonsDisconnected.qml</file>
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>

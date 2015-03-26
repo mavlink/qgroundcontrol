@@ -71,12 +71,6 @@ void UASUnitTest::getUpTime_test()
     delete uas2;
 }
 
-void UASUnitTest::getCommunicationStatus_test()
-{
-    // Verify that upon construction the Comm status is disconnected
-    QCOMPARE(_uas->getCommunicationStatus(), static_cast<int>(UASInterface::COMM_DISCONNECTED));
-}
-
 void UASUnitTest::filterVoltage_test()
 {
     float verificar=_uas->filterVoltage(0.4f);

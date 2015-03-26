@@ -181,7 +181,7 @@ void DebugConsole::addLink(LinkInterface* link)
 
     // Register for name changes
     connect(link, SIGNAL(nameChanged(QString)), this, SLOT(updateLinkName(QString)), Qt::UniqueConnection);
-    connect(LinkManager::instance(), &LinkManager::linkDeleted, this, &DebugConsole::removeLink, Qt::UniqueConnection);
+    connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &DebugConsole::removeLink, Qt::UniqueConnection);
 }
 
 void DebugConsole::removeLink(LinkInterface* const linkInterface)
