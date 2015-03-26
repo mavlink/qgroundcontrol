@@ -108,8 +108,6 @@ public:
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
-    /** @brief Get the status flag for the communication **/
-    virtual int getCommunicationStatus() const = 0;
 
     virtual double getLocalX() const = 0;
     virtual double getLocalY() const = 0;
@@ -145,21 +143,6 @@ public:
     virtual void sendMessage(LinkInterface* link, mavlink_message_t message) = 0;
     /** @brief Send a message over all links this UAS can be reached with (!= all links) */
     virtual void sendMessage(mavlink_message_t message) = 0;
-
-    /* COMMUNICATION FLAGS */
-
-    enum CommStatus {
-        /** Unit is disconnected, no failure state reached so far **/
-        COMM_DISCONNECTED = 0,
-        /** The communication is established **/
-        COMM_CONNECTING = 1,
-        /** The communication link is up **/
-        COMM_CONNECTED = 2,
-        /** The connection is closed **/
-        COMM_DISCONNECTING = 3,
-        COMM_FAIL = 4,
-        COMM_TIMEDOUT = 5///< Communication link failed
-    };
 
     enum Airframe {
         QGC_AIRFRAME_GENERIC = 0,
@@ -471,8 +454,6 @@ signals:
     void armingChanged(int sysId, QString armingState);
     /** @brief A command has been issued **/
     void commandSent(int command);
-    /** @brief The connection status has changed **/
-    void connectionChanged(CommStatus connectionFlag);
     /** @brief The robot is connecting **/
     void connecting();
     /** @brief The robot is connected **/

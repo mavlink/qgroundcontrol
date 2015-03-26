@@ -87,8 +87,6 @@ public:
 
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
-    /** @brief Get the status flag for the communication */
-    int getCommunicationStatus() const;
     /** @brief Add one measurement and get low-passed voltage */
     float filterVoltage(float value) const;
     /** @brief Get the links associated with this robot */
@@ -348,7 +346,6 @@ protected: //COMMENTS FOR TEST UNIT
     
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
-    CommStatus commStatus;        ///< Communication status
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
     quint64 lastHeartbeat;        ///< Time of the last heartbeat message
@@ -800,8 +797,6 @@ public slots:
 
     /** @brief Add a link associated with this robot */
     void addLink(LinkInterface* link);
-    /** @brief Remove a link associated with this robot */
-    void removeLink(QObject* object);
 
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(LinkInterface* link, mavlink_message_t message);
@@ -952,6 +947,9 @@ protected slots:
     void writeSettings();
     /** @brief Read settings from disk */
     void readSettings();
+    
+private slots:
+    void _linkDisconnected(LinkInterface* link);
     
 private:
     bool _containsLink(LinkInterface* link);
