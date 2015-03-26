@@ -27,7 +27,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "MainWindowTest.h"
-#include "QGCToolBar.h"
 #include "MockLink.h"
 #include "QGCMessageBox.h"
 
