@@ -267,6 +267,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
 
 void SensorsComponentController::_refreshParams(void)
 {
+    // Pull specified params first so red/green indicators update quickly
     _autopilot->refreshParameter("CAL_MAG0_ID");
     _autopilot->refreshParameter("CAL_GYRO0_ID");
     _autopilot->refreshParameter("CAL_ACC0_ID");
@@ -276,6 +277,9 @@ void SensorsComponentController::_refreshParams(void)
     _autopilot->refreshParameter("CAL_MAG1_ROT");
     _autopilot->refreshParameter("CAL_MAG2_ROT");
     _autopilot->refreshParameter("SENS_BOARD_ROT");
+    
+    // Pull full set in order to get all cal values back
+    _autopilot->refreshAllParameters();
 }
 
 bool SensorsComponentController::fixedWing(void)
