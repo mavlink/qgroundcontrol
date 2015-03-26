@@ -52,6 +52,17 @@ Rectangle {
 
         Item {
             // Just used as a spacer
+            height: 15
+            width: 10
+        }
+
+        QGCLabel {
+            width: parent.width
+            text: "If any of the setup indicators below are shown as red YOU SHOULD NOT FLY until you complete the setup of those components."
+        }
+
+        Item {
+            // Just used as a spacer
             height: 20
             width: 10
         }
