@@ -92,6 +92,9 @@ If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/lib
 ### Build on Windows
 Supported builds for Windows are 32 bit only built using Visual Studio 2013 or higher.
 
+#### Install Windows USB driver to connect to Pixhawk/PX4Flow/3DR Radio
+Install from here: http://www.pixhawk.org/firmware/downloads
+
 #### Install Visual Studio Express 2013
 Only compilation using Visual Studio 2013 is supported. Download and install Visual Studio Express Edition (free) from here: <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop>. Make sure you install the Windows Desktop version.
 
