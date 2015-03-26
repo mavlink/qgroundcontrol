@@ -83,7 +83,6 @@ public:
     virtual const QString& getShortMode() const { Q_ASSERT(false); return _bogusString; };
     virtual QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const { Q_UNUSED(base_mode); Q_UNUSED(custom_mode); Q_ASSERT(false); return _bogusStaticString; };
     virtual quint64 getUptime() const { Q_ASSERT(false); return 0; };
-    virtual int getCommunicationStatus() const { Q_ASSERT(false); return 0; };
     virtual double getLocalX() const { Q_ASSERT(false); return std::numeric_limits<double>::quiet_NaN(); };
     virtual double getLocalY() const { Q_ASSERT(false); return std::numeric_limits<double>::quiet_NaN(); };
     virtual double getLocalZ() const { Q_ASSERT(false); return std::numeric_limits<double>::quiet_NaN(); };
