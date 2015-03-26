@@ -50,7 +50,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     uasId(id),
     unknownPackets(),
     mavlink(protocol),
-    commStatus(COMM_DISCONNECTED),
     receiveDropRate(0),
     sendDropRate(0),
 
@@ -1911,11 +1910,6 @@ quint64 UAS::getUptime() const
     }
 }
 
-int UAS::getCommunicationStatus() const
-{
-    return commStatus;
-}
-
 void UAS::writeParametersToStorage()
 {
     mavlink_message_t msg;
@@ -3247,22 +3241,25 @@ void UAS::addLink(LinkInterface* link)
     {
         _links.append(LinkManager::instance()->sharedPointerForLink(link));
         qCDebug(UASLog) << "addLink:" << QString("%1").arg((ulong)link, 0, 16);
-        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
+        connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &UAS::_linkDisconnected);
     }
 }
 
-void UAS::removeLink(QObject* object)
+void UAS::_linkDisconnected(LinkInterface* link)
 {
-    qCDebug(UASLog) << "removeLink:" << QString("%1").arg((ulong)object, 0, 16);
+    qCDebug(UASLog) << "_linkDisconnected:" << link->getName();
     qCDebug(UASLog) << "link count:" << _links.count();
-
-    LinkInterface* link = dynamic_cast<LinkInterface*>(object);
 
     for (int i=0; i<_links.count(); i++) {
         if (_links[i].data() == link) {
             _links.removeAt(i);
             break;
         }
+    }
+    
+    if (_links.count() == 0) {
+        // Remove the UAS when all links to it close
+        UASManager::instance()->removeUAS(this);
     }
 }
 
