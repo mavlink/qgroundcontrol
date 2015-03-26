@@ -54,12 +54,11 @@ SetupView::SetupView(QWidget* parent) :
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
     
-    _ui->buttonHolder->setAutoPilot(NULL);
-    _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtons.qml"));
+    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.FirmwareUpgradeController", 1, 0, "FirmwareUpgradeController");
     
     _ui->buttonHolder->rootContext()->setContextProperty("controller", this);
-    
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.FirmwareUpgradeController", 1, 0, "FirmwareUpgradeController");
+    _ui->buttonHolder->setAutoPilot(NULL);
+    _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtonsDisconnected.qml"));
     
     _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
@@ -73,35 +72,37 @@ void SetupView::_setActiveUAS(UASInterface* uas)
 {
     if (_uasCurrent) {
         Q_ASSERT(_autoPilotPlugin);
-        disconnect(_autoPilotPlugin, &AutoPilotPlugin::pluginReady, this, &SetupView::_pluginReady);
+        disconnect(_autoPilotPlugin, &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
     }
 
-    _autoPilotPlugin = NULL;
-    _ui->buttonHolder->setAutoPilot(NULL);
-    firmwareButtonClicked();
-    QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("firmwareButton");
-    Q_ASSERT(button);
-    button->setProperty("checked", true);
+    _pluginReadyChanged(false);
     
     _uasCurrent = uas;
     
     if (_uasCurrent) {
         _autoPilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent);
-        
-        connect(_autoPilotPlugin, &AutoPilotPlugin::pluginReady, this, &SetupView::_pluginReady);
-        if (_autoPilotPlugin->pluginIsReady()) {
-            _pluginReady();
-        }
+        _pluginReadyChanged(_autoPilotPlugin->pluginReady());
+        connect(_autoPilotPlugin, &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
     }
 }
 
-void SetupView::_pluginReady(void)
+void SetupView::_pluginReadyChanged(bool pluginReady)
 {
-    _ui->buttonHolder->setAutoPilot(_autoPilotPlugin);
-    summaryButtonClicked();
-    QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("summaryButton");
-    Q_ASSERT(button);
-    button->setProperty("checked", true);
+    if (pluginReady) {
+        _ui->buttonHolder->setAutoPilot(_autoPilotPlugin);
+        _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtonsConnected.qml"));
+        summaryButtonClicked();
+        QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("summaryButton");
+        Q_ASSERT(button);
+        button->setProperty("checked", true);
+    } else {
+        _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtonsDisconnected.qml"));
+        _ui->buttonHolder->setAutoPilot(NULL);
+        firmwareButtonClicked();
+        QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("firmwareButton");
+        Q_ASSERT(button);
+        button->setProperty("checked", true);
+    }
 }
 
 void SetupView::_changeSetupWidget(QWidget* newWidget)

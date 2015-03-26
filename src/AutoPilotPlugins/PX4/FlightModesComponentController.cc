@@ -44,7 +44,7 @@ FlightModesComponentController::FlightModesComponentController(QObject* parent) 
     
     _autoPilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
     Q_ASSERT(_autoPilotPlugin);
-    Q_ASSERT(_autoPilotPlugin->pluginIsReady());
+    Q_ASSERT(_autoPilotPlugin->pluginReady());
 
     _initRcValues();
     _validateConfiguration();

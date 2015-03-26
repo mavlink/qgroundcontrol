@@ -50,7 +50,6 @@ public:
     ~PX4AutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin
-    virtual bool pluginIsReady(void) const;
     virtual const QVariantList& components(void);
     virtual const QVariantMap& parameters(void);
     virtual QUrl setupBackgroundImage(void);
