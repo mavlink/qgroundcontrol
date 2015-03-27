@@ -294,6 +294,7 @@ private slots:
     void _showDockWidgetAction(bool show);
     void _loadCustomWidgetFromFile(void);
     void _createNewCustomWidget(void);
+    void _linkStateChange(LinkInterface*);
 #ifdef UNITTEST_BUILD
     void _showQmlTestWidget(void);
 #endif
