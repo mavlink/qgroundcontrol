@@ -49,6 +49,7 @@ public:
     // Implemented UASInterface overrides
     virtual int getSystemType(void) { return _systemType; }
     virtual int getUASID(void) const { return _systemId; }
+    virtual bool isAirplane() { return false; }
     virtual QGCUASParamManagerInterface* getParamManager() { return &_paramManager; };
 
     // sendMessage is only supported if a mavlink plugin is installed.
