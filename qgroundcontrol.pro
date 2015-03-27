@@ -264,6 +264,7 @@ INCLUDEPATH += \
     src/ui/px4_configuration \
     src/ui/main \
     src/ui/toolbar \
+    src/ui/flightdisplay \
     src/VehicleSetup \
     src/AutoPilotPlugins \
     src/QmlControls
@@ -490,7 +491,8 @@ HEADERS += \
     src/uas/UASMessageHandler.h \
     src/ui/toolbar/MainToolBar.h \
     src/QmlControls/ScreenTools.h \
-    src/QGCLoggingCategory.h
+    src/QGCLoggingCategory.h \
+    src/ui/flightdisplay/QGCFlightDisplay.h
 
 SOURCES += \
     src/main.cc \
@@ -631,7 +633,8 @@ SOURCES += \
     src/uas/UASMessageHandler.cc \
     src/ui/toolbar/MainToolBar.cc \
     src/QmlControls/ScreenTools.cc \
-    src/QGCLoggingCategory.cc
+    src/QGCLoggingCategory.cc \
+    src/ui/flightdisplay/QGCFlightDisplay.cc
 
 #
 # Unit Test specific configuration goes here

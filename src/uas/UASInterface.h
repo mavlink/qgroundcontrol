@@ -213,6 +213,8 @@ public:
 
     /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
     virtual int getSystemType() = 0;
+    /** @brief Is it an airplane (or like one)?,..)*/
+    virtual bool isAirplane() = 0;
     /** @brief Indicates whether this system is capable of controlling a reverse velocity.
      * Used for, among other things, altering joystick input to either -1:1 or 0:1 range.
      */
