@@ -496,7 +496,8 @@ HEADERS += \
     src/uas/UASMessageHandler.h \
     src/ui/toolbar/MainToolBar.h \
     src/QmlControls/ScreenTools.h \
-    src/QGCLoggingCategory.h
+    src/QGCLoggingCategory.h \
+    src/MavParamHelper.h
 
 SOURCES += \
     src/main.cc \
@@ -637,7 +638,8 @@ SOURCES += \
     src/uas/UASMessageHandler.cc \
     src/ui/toolbar/MainToolBar.cc \
     src/QmlControls/ScreenTools.cc \
-    src/QGCLoggingCategory.cc
+    src/QGCLoggingCategory.cc \
+    src/MavParamHelper.cc
 
 #
 # Unit Test specific configuration goes here
