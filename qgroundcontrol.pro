@@ -717,7 +717,6 @@ INCLUDEPATH += \
 
 FORMS += \
     src/VehicleSetup/ParameterEditor.ui \
-    src/ui/QGCPX4VehicleConfig.ui \
     src/VehicleSetup/SetupView.ui \
 
 HEADERS+= \
