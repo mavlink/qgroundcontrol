@@ -31,6 +31,7 @@
 
 #include "Fact.h"
 #include "UASInterface.h"
+#include "QGCMAVLink.h"
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -64,7 +65,7 @@ protected:
     virtual void _addMetaDataToFact(Fact* fact);
     
 private slots:
-    void _parameterUpdate(int uas, int component, QString parameterName, int mavType, QVariant value);
+    void _parameterUpdate(int uas, int component, QString parameterName, mavlink_param_union_t& paramUnion);
     void _valueUpdated(const QVariant& value);
     void _paramMgrParameterListUpToDate(void);
     

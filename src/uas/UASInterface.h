@@ -507,7 +507,7 @@ signals:
     void autoModeChanged(bool autoMode);
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
     void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, QVariant value);
-    void parameterUpdate(int uas, int component, QString parameterName, int type, QVariant value);
+    void parameterUpdate(int uas, int component, QString parameterName, mavlink_param_union_t& paramUnion);
     void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
     void letterDetected(int uasId, QString letter, float confidence, bool detected);
     /**

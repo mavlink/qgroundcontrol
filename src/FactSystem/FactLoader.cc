@@ -27,6 +27,7 @@
 #include "FactLoader.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "MavParamHelper.h"
 
 #include <QFile>
 #include <QDebug>
@@ -62,7 +63,7 @@ FactLoader::~FactLoader()
 }
 
 /// Called whenever a parameter is updated or first seen.
-void FactLoader::_parameterUpdate(int uas, int component, QString parameterName, int mavType, QVariant value)
+void FactLoader::_parameterUpdate(int uas, int component, QString parameterName, mavlink_param_union_t& paramUnion)
 {
     // Is this for our uas?
     if (uas != _uasId) {
@@ -72,7 +73,7 @@ void FactLoader::_parameterUpdate(int uas, int component, QString parameterName,
     if (_lastSeenComponent == -1) {
         _lastSeenComponent = component;
     } else {
-        // Code cannot handle parameters coming form different components yets
+        // Code cannot handle parameters coming form different components yet
         Q_ASSERT(component == _lastSeenComponent);
     }
     
@@ -81,7 +82,7 @@ void FactLoader::_parameterUpdate(int uas, int component, QString parameterName,
         qCDebug(FactLoaderLog) << "Adding new fact" << parameterName;
         
         FactMetaData::ValueType_t factType;
-        switch (mavType) {
+        switch (paramUnion.type) {
             case MAV_PARAM_TYPE_UINT8:
                 factType = FactMetaData::valueTypeUint8;
                 break;
@@ -108,7 +109,7 @@ void FactLoader::_parameterUpdate(int uas, int component, QString parameterName,
                 break;
             default:
                 factType = FactMetaData::valueTypeInt32;
-                qCritical() << "Unsupported fact type" << mavType;
+                qCritical() << "Unsupported fact type" << paramUnion.type;
                 break;
         }
         
@@ -124,11 +125,12 @@ void FactLoader::_parameterUpdate(int uas, int component, QString parameterName,
     
     Q_ASSERT(_mapParameterName2Variant.contains(parameterName));
     
-    qCDebug(FactLoaderLog) << "Updating fact value" << parameterName << value;
+    QVariant paramVar = MavParamUnionToVariant(paramUnion);
+    qCDebug(FactLoaderLog) << "Updating fact value" << parameterName << paramVar;
     
     Fact* fact = _mapParameterName2Variant[parameterName].value<Fact*>();
     Q_ASSERT(fact);
-    fact->_containerSetValue(value);
+    fact->_containerSetValue(paramVar);
     
     if (setMetaData) {
         _addMetaDataToFact(fact);

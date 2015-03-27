@@ -1021,11 +1021,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // Construct a string stopping at the first NUL (0) character, else copy the whole
             // byte array (max MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN, so safe)
             QString parameterName(bytes);
-            mavlink_param_union_t paramVal;
-            paramVal.param_float = rawValue.param_value;
-            paramVal.type = rawValue.param_type;
 
-            processParamValueMsg(message, parameterName,rawValue,paramVal);
+            processParamValueMsg(message, parameterName,rawValue);
          }
             break;
         case MAVLINK_MSG_ID_COMMAND_ACK:
@@ -2303,7 +2300,7 @@ void UAS::setParameter(const int compId, const QString& paramId, const QVariant&
 
 
 //TODO update this to use the parameter manager / param data model instead
-void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName, const mavlink_param_value_t& rawValue,  mavlink_param_union_t& paramUnion)
+void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName, const mavlink_param_value_t& rawValue)
 {
     int compId = msg.compid;
 
@@ -2318,6 +2315,11 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
     }
 
     QVariant paramValue;
+    
+    // Setup param union from raw value
+    mavlink_param_union_t paramUnion;
+    paramUnion.param_float = rawValue.param_value;
+    paramUnion.type = rawValue.param_type;
 
     // Insert with correct type
     // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
@@ -2378,7 +2380,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
 
     parameters.value(compId)->insert(paramName, paramValue);
     emit parameterChanged(uasId, compId, paramName, paramValue);
-    emit parameterUpdate(uasId, compId, paramName, rawValue.param_type, paramValue);
+    emit parameterUpdate(uasId, compId, paramName, paramUnion);
     emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, paramValue);
 }
 

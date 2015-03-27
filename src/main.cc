@@ -37,6 +37,8 @@ This file is part of the QGROUNDCONTROL project
 #ifdef QT_DEBUG
 #include "UnitTest.h"
 #include "CmdLineOptParser.h"
+#include "QGCMAVLink.h"
+
 #ifdef Q_OS_WIN
 #include <crtdbg.h>
 #endif
@@ -47,6 +49,7 @@ This file is part of the QGROUNDCONTROL project
 #undef main
 #endif
 
+Q_DECLARE_METATYPE(mavlink_param_union_t)
 
 #ifdef Q_OS_WIN
 
@@ -94,6 +97,9 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_WIN
     qInstallMessageHandler(msgHandler);
 #endif
+    
+    // Register our type that we want to use in signals
+    qRegisterMetaType<mavlink_param_union_t>();
 
     // The following calls to qRegisterMetaType are done to silence debug output which warns
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
