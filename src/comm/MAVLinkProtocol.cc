@@ -236,7 +236,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     static bool checkedUserNonMavlink = false;
     static bool warnedUserNonMavlink = false;
 
-    // FIXME: Add check for if link->getId() >= MAVLINK_COMM_NUM_BUFFERS
     for (int position = 0; position < b.size(); position++) {
         unsigned int decodeState = mavlink_parse_char(mavlinkChannel, (uint8_t)(b[position]), &message, &status);
 
