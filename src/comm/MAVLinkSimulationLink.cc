@@ -105,7 +105,6 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     // Initialize the pseudo-random number generator
     srand(QTime::currentTime().msec());
     maxTimeNoise = 0;
-    this->id = getNextLinkId();
     LinkManager::instance()->_addLink(this);
 }
 
@@ -595,7 +594,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
     // Output all bytes as hex digits
     for (int i=0; i<size; i++)
     {
-        if (mavlink_parse_char(this->id, data[i], &msg, &comm))
+        if (mavlink_parse_char(getMavlinkChannel(), data[i], &msg, &comm))
         {
             // MESSAGE RECEIVED!
 //            qDebug() << "SIMULATION LINK RECEIVED MESSAGE!";
@@ -837,11 +836,6 @@ bool MAVLinkSimulationLink::_connect(void)
 bool MAVLinkSimulationLink::isConnected() const
 {
     return _isConnected;
-}
-
-int MAVLinkSimulationLink::getId() const
-{
-    return id;
 }
 
 QString MAVLinkSimulationLink::getName() const

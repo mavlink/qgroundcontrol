@@ -52,6 +52,7 @@ LinkManager::LinkManager(QObject* parent)
     , _configUpdateSuspended(false)
     , _configurationsLoaded(false)
     , _connectionsSuspended(false)
+    , _mavlinkChannelsUsedBitMask(0)
     , _nullSharedLink(NULL)
 {
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateConfigurationList);
@@ -114,6 +115,15 @@ void LinkManager::_addLink(LinkInterface* link)
     _linkListMutex.lock();
 
     if (!containsLink(link)) {
+        // Find a mavlink channel to use for this link
+        for (int i=0; i<32; i++) {
+            if (!(_mavlinkChannelsUsedBitMask && 1 << i)) {
+                link->_setMavlinkChannel(i);
+                _mavlinkChannelsUsedBitMask |= i << i;
+                break;
+            }
+        }
+        
         _links.append(QSharedPointer<LinkInterface>(link));
         _linkListMutex.unlock();
         emit newLink(link);
@@ -203,6 +213,9 @@ void LinkManager::_deleteLink(LinkInterface* link)
     Q_ASSERT(link);
 
     _linkListMutex.lock();
+    
+    // Free up the mavlink channel associated with this link
+    _mavlinkChannelsUsedBitMask &= ~(1 << link->getMavlinkChannel());
 
     bool found = false;
     for (int i=0; i<_links.count(); i++) {

@@ -110,7 +110,6 @@ public:
     // LinkInterface
 
     LinkConfiguration* getLinkConfiguration();
-    int     getId() const;
     QString getName() const;
     void    requestReset();
     bool    isConnected() const;
@@ -144,7 +143,6 @@ protected:
     QSerialPort* _port;
     quint64 _bytesRead;
     int     _timeout;
-    int     _id;
     QMutex  _dataMutex;       // Mutex for reading data from _port
     QMutex  _writeMutex;      // Mutex for accessing the _transmitBuffer.
     QString _type;

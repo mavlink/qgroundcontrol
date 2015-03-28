@@ -173,6 +173,8 @@ private:
     QString _connectionsSuspendedReason;                ///< User visible reason for suspension
     QTimer  _portListTimer;
     
+    uint32_t _mavlinkChannelsUsedBitMask;
+    
     SharedLinkInterface _nullSharedLink;
 };
 

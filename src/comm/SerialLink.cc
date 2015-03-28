@@ -34,8 +34,6 @@ SerialLink::SerialLink(SerialConfiguration* config)
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
-    // Set unique ID and add link to the list of links
-    _id = getNextLinkId();
 
     qCDebug(SerialLinkLog) << "Create SerialLink " << config->portName() << config->baud() << config->flowControl()
              << config->parity() << config->dataBits() << config->stopBits();
@@ -389,11 +387,6 @@ bool SerialLink::isConnected() const
     }
     
     return isConnected;
-}
-
-int SerialLink::getId() const
-{
-    return _id;
 }
 
 QString SerialLink::getName() const
