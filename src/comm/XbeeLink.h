@@ -35,8 +35,8 @@ public slots: // virtual functions from XbeeLinkInterface
 	bool setRemoteAddressHigh(quint32 high);
 	bool setRemoteAddressLow(quint32 low);
 
-public: // virtual functions from LinkInterface
-    int getId() const;
+public:
+    // virtual functions from LinkInterface
     QString getName() const;
     bool isConnected() const;
 
@@ -56,7 +56,6 @@ public:
 
 protected:
 	xbee_con *m_xbeeCon;
-	int m_id;
 	char *m_portName;
 	unsigned int m_portNameLength;
 	int m_baudRate;

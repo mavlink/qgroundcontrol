@@ -172,9 +172,9 @@ void DebugConsole::uasCreated(UASInterface* uas)
 void DebugConsole::addLink(LinkInterface* link)
 {
     // Add link to link list
-    links.insert(link->getId(), link);
+    links.insert(link->getMavlinkChannel(), link);
 
-    m_ui->linkComboBox->insertItem(link->getId(), link->getName());
+    m_ui->linkComboBox->insertItem(link->getMavlinkChannel(), link->getName());
     // Set new item as current
     m_ui->linkComboBox->setCurrentIndex(qMax(0, links.size() - 1));
     linkSelected(m_ui->linkComboBox->currentIndex());

@@ -67,7 +67,6 @@ union px4_custom_mode {
 };
 
 MockLink::MockLink(MockConfiguration* config) :
-    _linkId(getNextLinkId()),
     _name("MockLink"),
     _connected(false),
     _vehicleSystemId(128),     // FIXME: Pull from eventual parameter manager
@@ -287,7 +286,7 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
 
     for (qint64 i=0; i<cBytes; i++)
     {
-        if (!mavlink_parse_char(_linkId, bytes[i], &msg, &comm)) {
+        if (!mavlink_parse_char(getMavlinkChannel(), bytes[i], &msg, &comm)) {
             continue;
         }
 

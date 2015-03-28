@@ -126,7 +126,6 @@ public:
     void signalBytesWritten(void);
 
     // LinkInterface methods
-    virtual int     getId(void) const;
     virtual QString getName(void) const;
     virtual bool    isConnected(void) const;
     virtual void    requestReset(void) {};
@@ -174,7 +173,6 @@ private:
     void _writeDebugBytes(const char *data, qint16 size);
 #endif
 
-    int               _linkId;
     TCPConfiguration* _config;
     QTcpSocket*       _socket;
     bool              _socketIsConnected;
