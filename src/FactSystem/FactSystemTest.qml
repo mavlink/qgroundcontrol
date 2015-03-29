@@ -26,14 +26,19 @@ import QtQuick.Controls 1.2
 import QGroundControl.FactSystem 1.0
 
 Item {
+    // Use default component id
     TextInput {
         objectName: "testControl"
-        Fact { id: fact; name: "RC_MAP_THROTTLE" }
-        text: fact.value
-        font.family: "Helvetica"
-        font.pointSize: 24;
-        color: "red"
-        focus: true
-        onAccepted: { fact.value = text; }
+        Fact { id: fact1; name: "RC_MAP_THROTTLE" }
+        text: fact1.value
+        onAccepted: { fact1.value = text; }
+    }
+
+    // Use specific component id
+    TextInput {
+        objectName: "testControl"
+        Fact { id: fact2; name: "COMPONENT_51"; componentId: 51 }
+        text: fact2.value
+        onAccepted: { fact2.value = text; }
     }
 }

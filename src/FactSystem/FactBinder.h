@@ -38,6 +38,7 @@ class FactBinder : public QObject
 {
     Q_OBJECT
     
+    Q_PROPERTY(int componentId MEMBER _componentId NOTIFY componentIdChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
     Q_PROPERTY(QVariant valueString READ valueString NOTIFY valueChanged)
@@ -45,6 +46,9 @@ class FactBinder : public QObject
     
 public:
     FactBinder(void);
+    
+    int componentId(void) const;
+    void setComponentId(int componentId);
     
     QString name(void) const;
     void setName(const QString& name);
@@ -58,12 +62,14 @@ public:
     QString units(void) const;
     
 signals:
+    void componentIdChanged(void);
     void nameChanged(void);
     void valueChanged(void);
     
 private:
     AutoPilotPlugin*    _autopilotPlugin;
     Fact*               _fact;
+    int                 _componentId;
 };
 
 #endif

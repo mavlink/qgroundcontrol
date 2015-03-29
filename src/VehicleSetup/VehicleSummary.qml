@@ -72,7 +72,7 @@ Rectangle {
             spacing: 10
 
             Repeater {
-                model: autopilot.components
+                model: autopilot.vehicleComponents
 
                 // Outer summary item rectangle
                 Rectangle {
