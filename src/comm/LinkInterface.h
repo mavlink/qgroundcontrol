@@ -39,6 +39,8 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 #include <QMetaType>
 #include <QSharedPointer>
 
+#include "QGCMAVLink.h"
+
 class LinkManager;
 class LinkConfiguration;
 
