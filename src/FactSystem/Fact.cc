@@ -28,9 +28,10 @@
 
 #include <QtQml>
 
-Fact::Fact(QString name, FactMetaData::ValueType_t type, QObject* parent) :
+Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent) :
     QObject(parent),
     _name(name),
+    _componentId(componentId),
     _type(type),
     _metaData(NULL)
 {
@@ -73,6 +74,11 @@ void Fact::_containerSetValue(const QVariant& value)
 QString Fact::name(void) const
 {
     return _name;
+}
+
+int Fact::componentId(void) const
+{
+    return _componentId;
 }
 
 QVariant Fact::value(void) const

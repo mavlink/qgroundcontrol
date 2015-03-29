@@ -34,42 +34,22 @@ AutoPilotPlugin::AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     Q_ASSERT(_uas);
 }
 
-void AutoPilotPlugin::refreshAllParameters(void)
+bool AutoPilotPlugin::factExists(FactSystem::Provider_t provider, int componentId, const QString& name)
 {
-    Q_ASSERT(_uas);
-    QGCUASParamManagerInterface* paramMgr = _uas->getParamManager();
-    Q_ASSERT(paramMgr);
-    paramMgr->requestParameterList();
-}
-
-void AutoPilotPlugin::refreshParameter(const QString& param)
-{
-    Q_ASSERT(_uas);
-    QGCUASParamManagerInterface* paramMgr = _uas->getParamManager();
-    Q_ASSERT(paramMgr);
-    
-    QList<int> compIdList = paramMgr->getComponentForParam(param);
-    Q_ASSERT(compIdList.count() > 0);
-    paramMgr->requestParameterUpdate(compIdList[0], param);
-}
-
-void AutoPilotPlugin::refreshParametersPrefix(const QString& paramPrefix)
-{
-    foreach(QVariant varFact, parameters()) {
-        Fact* fact = qvariant_cast<Fact*>(varFact);
-        Q_ASSERT(fact);
-        if (fact->name().startsWith(paramPrefix)) {
-            refreshParameter(fact->name());
-        }
+    switch (provider) {
+        case FactSystem::ParameterProvider:
+            return getParameterLoader()->factExists(componentId, name);
+            
+        // Other providers will go here once they come online
     }
 }
 
-bool AutoPilotPlugin::factExists(const QString& param)
+Fact* AutoPilotPlugin::getFact(FactSystem::Provider_t provider, int componentId, const QString& name)
 {
-    return parameters().contains(param);
-}
-
-Fact* AutoPilotPlugin::getFact(const QString& name)
-{
-    return parameters()[name].value<Fact*>();
+    switch (provider) {
+        case FactSystem::ParameterProvider:
+            return getParameterLoader()->getFact(componentId, name);
+            
+        // Other providers will go here once they come online
+    }
 }
