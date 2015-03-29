@@ -57,5 +57,5 @@ Fact* AutoPilotPlugin::getFact(FactSystem::Provider_t provider, int componentId,
     }
     
     Q_ASSERT(false);
-    return false;
+    return NULL;
 }
