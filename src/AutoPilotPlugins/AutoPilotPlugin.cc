@@ -42,6 +42,9 @@ bool AutoPilotPlugin::factExists(FactSystem::Provider_t provider, int componentI
             
         // Other providers will go here once they come online
     }
+    
+    Q_ASSERT(false);
+    return false;
 }
 
 Fact* AutoPilotPlugin::getFact(FactSystem::Provider_t provider, int componentId, const QString& name)
@@ -52,4 +55,7 @@ Fact* AutoPilotPlugin::getFact(FactSystem::Provider_t provider, int componentId,
             
         // Other providers will go here once they come online
     }
+    
+    Q_ASSERT(false);
+    return false;
 }
