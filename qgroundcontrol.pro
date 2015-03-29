@@ -776,7 +776,7 @@ HEADERS += \
     src/FactSystem/FactBinder.h \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactValidator.h \
-    src/FactSystem/FactLoader.h \
+    src/FactSystem/ParameterLoader.h \
 
 SOURCES += \
     src/FactSystem/FactSystem.cc \
@@ -784,4 +784,4 @@ SOURCES += \
     src/FactSystem/FactBinder.cc \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactValidator.cc \
-    src/FactSystem/FactLoader.cc \
+    src/FactSystem/ParameterLoader.cc \
