@@ -8,7 +8,6 @@
 
 XbeeLink::XbeeLink(QString portName, int baudRate) : 
 	m_xbeeCon(NULL),
-    m_id(-1),
     m_portName(NULL),
     m_portNameLength(0),
     m_baudRate(baudRate),
@@ -19,13 +18,6 @@ XbeeLink::XbeeLink(QString portName, int baudRate) :
 
 	/* setup the xbee */
 	this->setPortName(portName);
-	
-	//this->connect();
-	// Set unique ID and add link to the list of links
-	this->m_id = getNextLinkId();
-	// set the Name
-	this->m_name = tr("xbee link") + QString::number(this->m_id);
-	emit nameChanged(this->m_name);
 }
 
 XbeeLink::~XbeeLink()
