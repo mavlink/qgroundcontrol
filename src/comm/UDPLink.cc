@@ -51,8 +51,6 @@ UDPLink::UDPLink(UDPConfiguration* config)
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
 
-    // Set unique ID and add link to the list of links
-    _id = getNextLinkId();
     qDebug() << "UDP Created " << _config->name();
 }
 
@@ -238,11 +236,6 @@ bool UDPLink::_hardwareConnect()
 bool UDPLink::isConnected() const
 {
     return _connectState;
-}
-
-int UDPLink::getId() const
-{
-    return _id;
 }
 
 qint64 UDPLink::getConnectionSpeed() const

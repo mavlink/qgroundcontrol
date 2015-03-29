@@ -61,7 +61,6 @@ public:
     qint64 getCurrentOutDataRate() const;
 
     QString getName() const;
-    int getId() const;
     int getBaudRate() const;
     int getBaudRateType() const;
     int getFlowType() const;
@@ -114,7 +113,6 @@ protected:
     int readyBytes;
     QQueue<uint8_t> readyBuffer;
 
-    int id;
     QString name;
     qint64 timeOffset;
     mavlink_sys_status_t status;

@@ -576,7 +576,7 @@ quint64 QGCMAVLinkLogPlayer::findNextMavlinkMessage(mavlink_message_t *msg)
     char nextByte;
     mavlink_status_t comm;
     while (logFile.getChar(&nextByte)) { // Loop over every byte
-        bool messageFound = mavlink_parse_char(logLink->getId(), nextByte, msg, &comm);
+        bool messageFound = mavlink_parse_char(logLink->getMavlinkChannel(), nextByte, msg, &comm);
 
         // If we've found a message, jump back to the start of the message, grab the timestamp,
         // and go back to the end of this file.

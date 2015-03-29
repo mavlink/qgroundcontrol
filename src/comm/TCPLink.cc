@@ -46,7 +46,6 @@ TCPLink::TCPLink(TCPConfiguration *config)
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
-    _linkId = getNextLinkId();
     qDebug() << "TCP Created " << _config->name();
 }
 
@@ -198,11 +197,6 @@ void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
 bool TCPLink::isConnected() const
 {
     return _socketIsConnected;
-}
-
-int TCPLink::getId() const
-{
-    return _linkId;
 }
 
 QString TCPLink::getName() const
