@@ -21,14 +21,15 @@
  
  ======================================================================*/
 
-#ifndef PX4ParameterFacts_h
-#define PX4ParameterFacts_h
+#ifndef PX4PARAMETERFACTS_H
+#define PX4PARAMETERFACTS_H
 
 #include <QObject>
 #include <QMap>
 #include <QXmlStreamReader>
 #include <QLoggingCategory>
 
+#include "ParameterLoader.h"
 #include "FactSystem.h"
 #include "UASInterface.h"
 
@@ -39,13 +40,16 @@ Q_DECLARE_LOGGING_CATEGORY(PX4ParameterFactsMetaDataLog)
 
 /// Collection of Parameter Facts for PX4 AutoPilot
 
-class PX4ParameterFacts : public FactLoader
+class PX4ParameterFacts : public ParameterLoader
 {
     Q_OBJECT
     
 public:
     /// @param uas Uas which this set of facts is associated with
     PX4ParameterFacts(UASInterface* uas, QObject* parent = NULL);
+
+    /// Override from ParameterLoader
+    virtual QString getDefaultComponentIdParam(void) const { return QString("SYS_AUTOSTART"); }
     
     static void loadParameterFactMetaData(void);
     static void deleteParameterFactMetaData(void);

@@ -80,7 +80,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     _parameterFacts = new PX4ParameterFacts(uas, this);
     Q_CHECK_PTR(_parameterFacts);
     
-    connect(_parameterFacts, &PX4ParameterFacts::factsReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
+    connect(_parameterFacts, &PX4ParameterFacts::parametersReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
     
     PX4ParameterFacts::loadParameterFactMetaData();
 }
@@ -189,7 +189,7 @@ void PX4AutoPilotPlugin::clearStaticData(void)
     PX4ParameterFacts::clearStaticData();
 }
 
-const QVariantList& PX4AutoPilotPlugin::components(void)
+const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         Q_ASSERT(_uas);
@@ -222,29 +222,19 @@ const QVariantList& PX4AutoPilotPlugin::components(void)
     return _components;
 }
 
-const QVariantMap& PX4AutoPilotPlugin::parameters(void)
-{
-    return _parameterFacts->factMap();
-}
-
-QUrl PX4AutoPilotPlugin::setupBackgroundImage(void)
-{
-    return QUrl::fromUserInput("qrc:/qml/px4fmu_2.x.png");
-}
-
 /// This will perform various checks prior to signalling that the plug in ready
 void PX4AutoPilotPlugin::_pluginReadyPreChecks(void)
 {
     // Check for older parameter version set
     // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
     // should be used instead.
-    if (parameters().contains("SENS_GYRO_XOFF")) {
+    if (parameterExists("SENS_GYRO_XOFF")) {
         _incorrectParameterVersion = true;
         QGCMessageBox::warning(tr("Setup"), tr("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
                                                "Please perform a Firmware Upgrade if you wish to use Vehicle Setup."));
     } else {
         // Check for missing setup complete
-        foreach(const QVariant componentVariant, components()) {
+        foreach(const QVariant componentVariant, vehicleComponents()) {
             VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(componentVariant));
             Q_ASSERT(component);
             
