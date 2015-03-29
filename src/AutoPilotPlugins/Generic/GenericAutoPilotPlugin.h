@@ -41,16 +41,15 @@ public:
     GenericAutoPilotPlugin(UASInterface* uas, QObject* parent = NULL);
     
     // Overrides from AutoPilotPlugin
-    virtual QUrl setupBackgroundImage(void);
-    virtual const QVariantList& components(void);
-    virtual const QVariantMap& parameters(void);
+    virtual const QVariantList& vehicleComponents(void);
+    virtual ParameterLoader* getParameterLoader(void) { return _parameterFacts; }
 
     static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
     static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
     static void clearStaticData(void);
     
 private slots:
-    void _factsReady(void);
+    void _parametersReady(void);
     
 private:
     GenericParameterFacts*  _parameterFacts;
