@@ -158,7 +158,6 @@ public:
     qint64 getCurrentOutDataRate() const;
 
     void run();
-    int getId() const;
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
@@ -189,7 +188,6 @@ protected:
     QUdpSocket*         _socket;
     UDPConfiguration*   _config;
     bool                _connectState;
-    int                 _id;
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public

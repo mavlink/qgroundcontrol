@@ -121,21 +121,21 @@ public:
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
      */
     qint32 getReceivedPacketCount(const LinkInterface *link) const {
-        return totalReceiveCounter[link->getId()];
+        return totalReceiveCounter[link->getMavlinkChannel()];
     }
     /**
      * Retrieve a total of all parsing errors for the specified link.
      * @returns -1 if this is not available for this protocol, # of errors otherwise.
      */
     qint32 getParsingErrorCount(const LinkInterface *link) const {
-        return totalErrorCounter[link->getId()];
+        return totalErrorCounter[link->getMavlinkChannel()];
     }
     /**
      * Retrieve a total of all dropped packets for the specified link.
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
      */
     qint32 getDroppedPacketCount(const LinkInterface *link) const {
-        return totalLossCounter[link->getId()];
+        return totalLossCounter[link->getMavlinkChannel()];
     }
     /**
      * Reset the counters for all metadata for this link.
