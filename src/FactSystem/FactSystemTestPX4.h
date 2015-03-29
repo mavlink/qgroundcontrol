@@ -43,7 +43,8 @@ private slots:
     void init(void);
     void cleanup(void) { _cleanup(); }
     
-    void parameter_test(void) { _parameter_test(); }
+    void parameter_default_component_id_test(void) { _parameter_default_component_id_test(); }
+    void parameter_specific_component_id_test(void) { _parameter_specific_component_id_test(); }
     void qml_test(void) { _qml_test(); }
     void paramMgrSignal_test(void) { _paramMgrSignal_test(); }
     void qmlUpdate_test(void) { _qmlUpdate_test(); }

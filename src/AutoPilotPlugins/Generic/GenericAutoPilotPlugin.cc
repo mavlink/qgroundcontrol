@@ -34,7 +34,7 @@ GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* paren
     _parameterFacts = new GenericParameterFacts(uas, this);
     Q_CHECK_PTR(_parameterFacts);
     
-    connect(_parameterFacts, &GenericParameterFacts::factsReady, this, &GenericAutoPilotPlugin::_factsReady);
+    connect(_parameterFacts, &GenericParameterFacts::parametersReady, this, &GenericAutoPilotPlugin::_parametersReady);
 }
 
 QList<AutoPilotPluginManager::FullMode_t> GenericAutoPilotPlugin::getModes(void)
@@ -87,24 +87,14 @@ void GenericAutoPilotPlugin::clearStaticData(void)
     // No Static data yet
 }
 
-const QVariantList& GenericAutoPilotPlugin::components(void)
+const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
 {
     static QVariantList emptyList;
     
     return emptyList;
 }
 
-const QVariantMap& GenericAutoPilotPlugin::parameters(void)
-{
-    return _parameterFacts->factMap();
-}
-
-QUrl GenericAutoPilotPlugin::setupBackgroundImage(void)
-{
-    return QUrl::fromUserInput("qrc:/qml/px4fmu_2.x.png");
-}
-
-void GenericAutoPilotPlugin::_factsReady(void)
+void GenericAutoPilotPlugin::_parametersReady(void)
 {
     _pluginReady = true;
     emit pluginReadyChanged(_pluginReady);

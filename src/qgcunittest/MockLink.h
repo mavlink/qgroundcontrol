@@ -117,8 +117,8 @@ private:
     void _handleMissionRequestList(const mavlink_message_t& msg);
     void _handleMissionRequest(const mavlink_message_t& msg);
     void _handleMissionItem(const mavlink_message_t& msg);
-    float _floatUnionForParam(const QString& paramName);
-    void _setParamFloatUnionIntoMap(const QString& paramName, float paramFloat);
+    float _floatUnionForParam(int componentId, const QString& paramName);
+    void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
 
     MockLinkMissionItemHandler* _missionItemHandler;
 
@@ -131,8 +131,8 @@ private:
     bool    _inNSH;
     bool    _mavlinkStarted;
 
-    QMap<QString, QVariant>         _mapParamName2Value;
-    QMap<QString, MAV_PARAM_TYPE>   _mapParamName2MavParamType;
+    QMap<int, QMap<QString, QVariant> > _mapParamName2Value;
+    QMap<QString, MAV_PARAM_TYPE>       _mapParamName2MavParamType;
 
     typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
     MissionList_t   _missionItems;

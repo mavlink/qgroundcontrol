@@ -69,7 +69,9 @@ void FlightModesComponentController::_validateConfiguration(void)
 {
     _validConfiguration = true;
     
-    _channelCount = _autoPilotPlugin->factExists("RC_CHAN_CNT") ? _autoPilotPlugin->getFact("RC_CHAN_CNT")->value().toInt() : _chanMax;
+    _channelCount = _autoPilotPlugin->parameterExists("RC_CHAN_CNT") ?
+                        _autoPilotPlugin->getParameterFact("RC_CHAN_CNT")->value().toInt() :
+                        _chanMax;
     if (_channelCount <= 0 || _channelCount > _chanMax) {
         // Parameter exists, but has not yet been set or is invalid. Use default
         _channelCount = _chanMax;
@@ -84,7 +86,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     switchNames << "Mode Switch" << "Return Switch" << "Loiter Switch" << "PosCtl Switch";
     
     for(int i=0; i<switchParams.count(); i++) {
-        int map = _autoPilotPlugin->getFact(switchParams[i])->value().toInt();
+        int map = _autoPilotPlugin->getParameterFact(switchParams[i])->value().toInt();
         switchMappings << map;
         
         if (map < 0 || map > _channelCount) {
@@ -101,7 +103,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     attitudeNames << "Throttle" << "Yaw" << "Pitch" << "Roll" << "Flaps" << "Aux1" << "Aux2";
 
     for (int i=0; i<attitudeParams.count(); i++) {
-        int map = _autoPilotPlugin->getFact(attitudeParams[i])->value().toInt();
+        int map = _autoPilotPlugin->getParameterFact(attitudeParams[i])->value().toInt();
 
         for (int j=0; j<switchParams.count(); j++) {
             if (map != 0 && map == switchMappings[j]) {
@@ -126,10 +128,10 @@ void FlightModesComponentController::setSendLiveRCSwitchRanges(bool start)
             
             QVariant value;
             
-            _rgRCMin[i] = _autoPilotPlugin->getFact(rcMinParam)->value().toInt();
-            _rgRCMax[i] = _autoPilotPlugin->getFact(rcMaxParam)->value().toInt();
+            _rgRCMin[i] = _autoPilotPlugin->getParameterFact(rcMinParam)->value().toInt();
+            _rgRCMax[i] = _autoPilotPlugin->getParameterFact(rcMaxParam)->value().toInt();
             
-            float floatReversed = _autoPilotPlugin->getFact(rcRevParam)->value().toFloat();
+            float floatReversed = _autoPilotPlugin->getParameterFact(rcRevParam)->value().toFloat();
             _rgRCReversed[i] = floatReversed == -1.0f;
         }
         
@@ -170,7 +172,7 @@ double FlightModesComponentController::_switchLiveRange(const QString& param)
 {
     QVariant value;
     
-    int channel = _autoPilotPlugin->getFact(param)->value().toInt();
+    int channel = _autoPilotPlugin->getParameterFact(param)->value().toInt();
     if (channel == 0) {
         return 1.0;
     } else {

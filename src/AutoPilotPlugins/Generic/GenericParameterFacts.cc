@@ -25,13 +25,11 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "GenericParameterFacts.h"
-#include "QGCApplication.h"
 
-#include <QFile>
 #include <QDebug>
 
 GenericParameterFacts::GenericParameterFacts(UASInterface* uas, QObject* parent) :
-    FactLoader(uas, parent)
+    ParameterLoader(uas, parent)
 {
     Q_ASSERT(uas);
 }

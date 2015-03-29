@@ -85,21 +85,45 @@ void FactSystemTestBase::_cleanup(void)
 }
 
 /// Basic test of parameter values in Fact System
-void FactSystemTestBase::_parameter_test(void)
+void FactSystemTestBase::_parameter_default_component_id_test(void)
 {
-    // Get the parameter facts from the AutoPilot
+    // Compare the value in the Parameter Manager with the value from the FactSystem.
     
-    const QVariantMap& parameterFacts = _plugin->parameters();
+    QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, FactSystem::defaultComponentId, "RC_MAP_THROTTLE"));
+    Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, FactSystem::defaultComponentId, "RC_MAP_THROTTLE");
+    QVERIFY(fact != NULL);
+    QVariant factValue = fact->value();
+    QCOMPARE(factValue.isValid(), true);
+    QVariant paramValue;
+    Q_ASSERT(_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "RC_MAP_THROTTLE", paramValue));
     
-    // Compare the value in the Parameter Manager with the value from the FactSystem
+    QCOMPARE(factValue.toInt(), paramValue.toInt());
+}
+
+void FactSystemTestBase::_parameter_specific_component_id_test(void)
+{
+    // Compare the value in the Parameter Manager with the value from the FactSystem.
     
-    Fact* fact = parameterFacts["RC_MAP_THROTTLE"].value<Fact*>();
+    QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 50, "RC_MAP_THROTTLE"));
+    Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, 50, "RC_MAP_THROTTLE");
     QVERIFY(fact != NULL);
     QVariant factValue = fact->value();
     QCOMPARE(factValue.isValid(), true);
     
+    
     QVariant paramValue;
-    Q_ASSERT(_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "RC_MAP_THROTTLE", paramValue));
+    Q_ASSERT(_paramMgr->getParameterValue(50, "RC_MAP_THROTTLE", paramValue));
+    
+    QCOMPARE(factValue.toInt(), paramValue.toInt());
+    
+    // Test another component id
+    QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 51, "COMPONENT_51"));
+    fact = _plugin->getFact(FactSystem::ParameterProvider, 51, "COMPONENT_51");
+    QVERIFY(fact != NULL);
+    factValue = fact->value();
+    QCOMPARE(factValue.isValid(), true);
+    
+    Q_ASSERT(_paramMgr->getParameterValue(51, "COMPONENT_51", paramValue));
     
     QCOMPARE(factValue.toInt(), paramValue.toInt());
 }
@@ -129,9 +153,7 @@ void FactSystemTestBase::_paramMgrSignal_test(void)
 {
     // Get the parameter Fact from the AutoPilot
     
-    const QVariantMap& parameterFacts = _plugin->parameters();
-    
-    Fact* fact = parameterFacts["RC_MAP_THROTTLE"].value<Fact*>();
+    Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, -1, "RC_MAP_THROTTLE");
     QVERIFY(fact != NULL);
     
     // Setting a new value into the parameter should trigger a valueChanged signal on the Fact

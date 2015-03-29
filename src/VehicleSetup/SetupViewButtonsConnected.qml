@@ -39,7 +39,7 @@ Rectangle {
         }
 
         Repeater {
-            model: autopilot ? autopilot.components : 0
+            model: autopilot ? autopilot.vehicleComponents : 0
 
             SubMenuButton {
                 width: parent.width
