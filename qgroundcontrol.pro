@@ -125,11 +125,6 @@ contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
     QT += multimedia
 }
 
-!contains(DEFINES, DISABLE_GOOGLE_EARTH) {
-    QT += webkit webkitwidgets
-}
-
-
 #  testlib is needed even in release flavor for QSignalSpy support
 QT += testlib
 
@@ -291,7 +286,6 @@ FORMS += \
     src/ui/QGCSensorSettingsWidget.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QMap3D.ui \
-    src/ui/map3D/QGCGoogleEarthView.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/designer/QGCToolWidget.ui \
     src/ui/designer/QGCParamSlider.ui \
