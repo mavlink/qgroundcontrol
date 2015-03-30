@@ -189,6 +189,19 @@ void DebugConsole::addLink(LinkInterface* link)
 
 void DebugConsole::removeLink(LinkInterface* const link)
 {
+    // Now if this was the current link, clean up some stuff.
+    if (link == currLink)
+    {
+        disconnect(currLink, &LinkInterface::bytesReceived, this, &DebugConsole::receiveBytes);
+        disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
+        disconnect(currLink, &LinkInterface::communicationUpdate, this, &DebugConsole::linkStatusUpdate);
+        
+        // Like disable the update time for the UI.
+        snapShotTimer.stop();
+        
+        currLink = NULL;
+    }
+    
     bool found = false;
     int linkIndex;
     for (linkIndex=0; linkIndex<_links.count(); linkIndex++) {
@@ -203,14 +216,6 @@ void DebugConsole::removeLink(LinkInterface* const link)
     
     m_ui->linkComboBox->removeItem(linkIndex);
     
-    // Now if this was the current link, clean up some stuff.
-    if (link == currLink)
-    {
-        // Like disable the update time for the UI.
-        snapShotTimer.stop();
-
-        currLink = NULL;
-    }
 }
 void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
 {
@@ -222,15 +227,6 @@ void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
 
 void DebugConsole::linkSelected(int linkIndex)
 {
-    // Disconnect
-    if (currLink)
-    {
-        disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
-        disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
-        disconnect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
-        snapShotTimer.stop();
-    }
-
     // Clear data
     m_ui->receiveText->clear();
 
