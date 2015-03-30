@@ -97,7 +97,6 @@
      <addaction name="actionLoadCustomWidgetFile"/>
      <addaction name="separator"/>
     </widget>
-    <addaction name="actionGoogleEarthView"/>
     <addaction name="actionLocal3DView"/>
     <addaction name="actionTerminalView"/>
     <addaction name="actionSimulationView"/>
@@ -326,14 +325,6 @@
    </property>
    <property name="text">
     <string>Terminal</string>
-   </property>
-  </action>
-  <action name="actionGoogleEarthView">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Google Earth</string>
    </property>
   </action>
   <action name="actionLocal3DView">
