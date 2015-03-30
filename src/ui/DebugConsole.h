@@ -116,7 +116,6 @@ protected:
     /** @brief Cycle through the command history */
     void cycleCommandHistory(bool up);
 
-    QList<LinkInterface*> links;
     LinkInterface* currLink;
 
     bool holdOn;              ///< Hold current view, ignore new data
@@ -150,6 +149,11 @@ private slots:
 private:
     /** @brief Set connection state of the current link */
     void _setConnectionState(bool);
+    
+    /// List of all links we are keeping track of. We keep SharedLinkInterface objects
+    /// which are QSharedPointer's in order to maintain reference counts. Otherwise signals
+    /// can get out of order and the link may be deleted before we clean up our side.
+    QList<SharedLinkInterface> _links;
 
     Ui::DebugConsole *m_ui;
 };
