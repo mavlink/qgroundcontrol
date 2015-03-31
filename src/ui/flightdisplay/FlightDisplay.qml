@@ -95,7 +95,7 @@ Rectangle {
         id: contextMenu
 
         MenuItem {
-            text: "Roll/Pitch Indicators"
+            text: "Main Attitude Indicators"
             checkable: true
             checked: attitudeWidget.visible
             onTriggered:
@@ -106,7 +106,7 @@ Rectangle {
         }
 
         MenuItem {
-            text: "Display Roll/Pitch Background"
+            text: "Display Attitude Background"
             checkable: true
             checked: attitudeWidget.displayBackground
             onTriggered:
@@ -218,9 +218,9 @@ Rectangle {
         }
 
         MenuItem {
-            text: "Map Follows Heading"
+            text: "Map Always Points North"
             checkable: true
-            checked: !mapBackground.alwaysNorth
+            checked: mapBackground.alwaysNorth
             onTriggered:
             {
                 mapBackground.alwaysNorth = !mapBackground.alwaysNorth;
