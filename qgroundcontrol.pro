@@ -332,7 +332,6 @@ FORMS += \
     src/ui/JoystickAxis.ui \
     src/ui/configuration/terminalconsole.ui \
     src/ui/configuration/SerialSettingsDialog.ui \
-    src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
     src/ui/px4_configuration/PX4RCCalibration.ui \
     src/ui/QGCUASFileView.ui \
     src/QGCQmlWidgetHolder.ui \
@@ -463,7 +462,6 @@ HEADERS += \
     src/uas/UASParameterDataModel.h \
     src/uas/UASParameterCommsMgr.h \
     src/ui/QGCPendingParamWidget.h \
-    src/ui/px4_configuration/QGCPX4AirframeConfig.h \
     src/ui/QGCBaseParamWidget.h \
     src/ui/px4_configuration/PX4RCCalibration.h \
     src/ui/px4_configuration/RCValueWidget.h \
@@ -607,7 +605,6 @@ SOURCES += \
     src/uas/UASParameterDataModel.cc \
     src/uas/UASParameterCommsMgr.cc \
     src/ui/QGCPendingParamWidget.cc \
-    src/ui/px4_configuration/QGCPX4AirframeConfig.cc \
     src/ui/QGCBaseParamWidget.cc \
     src/ui/px4_configuration/PX4RCCalibration.cc \
     src/ui/px4_configuration/RCValueWidget.cc \
@@ -730,6 +727,8 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/FlightModesComponent.h \
     src/AutoPilotPlugins/PX4/FlightModesComponentController.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
+    src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
+    src/AutoPilotPlugins/PX4/AirframeComponentController.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
@@ -753,6 +752,8 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
     src/AutoPilotPlugins/PX4/FlightModesComponentController.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
+    src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
+    src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
