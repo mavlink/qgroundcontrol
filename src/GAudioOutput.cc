@@ -62,7 +62,12 @@ GAudioOutput::GAudioOutput(QObject *parent) :
 GAudioOutput::~GAudioOutput()
 {
     thread->quit();
-    thread->wait();
+    
+    // On Linux eSpeak can seem to get hung up where the thread won't quick. So in that case we
+    // terminate it.
+    if (!thread->wait(2000)) {
+        thread->terminate();
+    }
 
     delete worker;
     delete thread;
