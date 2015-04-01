@@ -238,7 +238,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     width: messages.width - messageIcon.width
-                    Text {
+                    QGCLabel {
                         id: messageText
                         text: (mainToolBar.messageCount > 0) ? mainToolBar.messageCount : ''
                         font.pointSize: screenTools.dpiAdjustedPointSize(14);
@@ -326,7 +326,7 @@ Rectangle {
                     smooth: true
                 }
 
-                Text {
+                QGCLabel {
                     id: satelitteText
                     text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
                     font.pointSize: screenTools.dpiAdjustedPointSize(14);
@@ -361,7 +361,7 @@ Rectangle {
                     smooth: true
                 }
 
-                Text {
+                QGCLabel {
                     id: batteryText
                     text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
                     font.pointSize: screenTools.dpiAdjustedPointSize(14);
@@ -389,7 +389,7 @@ Rectangle {
                     border.color: "#00000000"
                     border.width: 0
 
-                    Text {
+                    QGCLabel {
                         id: armedStatusText
                         text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
                         font.pointSize: screenTools.dpiAdjustedPointSize(12);
@@ -408,7 +408,7 @@ Rectangle {
                     border.color: "#00000000"
                     border.width: 0
 
-                    Text {
+                    QGCLabel {
                         id: stateStatusText
                         text: mainToolBar.currentState
                         font.pointSize: screenTools.dpiAdjustedPointSize(12);
@@ -429,7 +429,7 @@ Rectangle {
                 border.color: "#00000000"
                 border.width: 0
 
-                Text {
+                QGCLabel {
                     id: modeStatusText
                     text: mainToolBar.currentMode
                     font.pointSize: screenTools.dpiAdjustedPointSize(12);
@@ -450,7 +450,7 @@ Rectangle {
                 border.color: "#00000000"
                 border.width: 0
 
-                Text {
+                QGCLabel {
                     id: connectionStatusText
                     text: qsTr("CONNECTION LOST")
                     font.pointSize: screenTools.dpiAdjustedPointSize(14);

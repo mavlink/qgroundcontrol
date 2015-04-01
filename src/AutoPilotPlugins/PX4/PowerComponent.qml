@@ -197,12 +197,10 @@ Rectangle {
                                 text: "Battery Max:"
                                 color: palette.text
                                 width: 80
-                                font.pointSize: screenTools.dpiAdjustedPointSize(12);
                             }
                             QGCLabel {
                                 text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
                                 color: palette.text
-                                font.pointSize: screenTools.dpiAdjustedPointSize(12);
                             }
                         }
                         Row {
@@ -211,12 +209,10 @@ Rectangle {
                                 text: "Battery Min:"
                                 color: palette.text
                                 width: 80
-                                font.pointSize: screenTools.dpiAdjustedPointSize(12);
                             }
                             QGCLabel {
                                 text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
                                 color: palette.text
-                                font.pointSize: screenTools.dpiAdjustedPointSize(12);
                             }
                         }
                     }

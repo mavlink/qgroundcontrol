@@ -116,6 +116,9 @@ public:
      */
     Q_INVOKABLE qreal   dpiAdjustedPointSize(qreal pointSize);
 
+    /// Static version of dpiAdjustedPointSize of use in C++ code
+    static qreal dpiAdjustedPointSize_s(qreal pointSize);
+    
     double  screenDPI           () { return _dotsPerInch; }
     double  dpiFactor           () { return _dpiFactor; }
     int     mouseX              () { return QCursor::pos().x(); }
@@ -129,9 +132,11 @@ private slots:
     void _updateCanvas();
 
 private:
-    double _dotsPerInch;
-    double _dpiFactor;
-
+    static void _setDpiFactor(void);
+    
+    static bool _dpiFactorSet;
+    static double _dotsPerInch;
+    static double _dpiFactor;
 };
 
 #endif
