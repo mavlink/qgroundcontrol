@@ -82,6 +82,8 @@ class QGCPalette : public QObject
     
     // Text color for TextFields
     Q_PROPERTY(QColor textFieldText READ textFieldText NOTIFY paletteChanged)
+    
+    Q_PROPERTY(int defaultFontPointSize MEMBER _defaultFontPointSize CONSTANT)
         
 public:
     enum ColorGroup {
@@ -148,6 +150,8 @@ private:
     
     static QColor _textField[_cThemes][_cColorGroups];
     static QColor _textFieldText[_cThemes][_cColorGroups];
+    
+    static const int _defaultFontPointSize = 12;
     
     void _themeChanged(void);
     

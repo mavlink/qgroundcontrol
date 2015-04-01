@@ -49,6 +49,8 @@ TextField {
                 width: unitsLabelWidthGenerator.width
 
                 text: control.unitsLabel
+                font.pointSize: __qgcPal.defaultFontPointSize
+
                 color: control.textColor
                 visible: control.showUnits
             }
