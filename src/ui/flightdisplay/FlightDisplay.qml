@@ -42,10 +42,10 @@ Rectangle {
 
     Component.onCompleted:
     {
-        mapBackground.visible               = flightDisplay.loadSetting("enableMapBackground", false);
-        mapBackground.alwaysNorth           = flightDisplay.loadSetting("mapAlwaysNorth", false);
+        //mapBackground.visible               = flightDisplay.loadSetting("enableMapBackground", false);
+        //mapBackground.alwaysNorth           = flightDisplay.loadSetting("mapAlwaysNorth", false);
         attitudeWidget.visible              = flightDisplay.loadSetting("enableattitudeWidget", true);
-        attitudeWidget.displayBackground    = flightDisplay.loadSetting("displayRollPitchBackground", true);
+        //attitudeWidget.displayBackground    = flightDisplay.loadSetting("displayRollPitchBackground", true);
         pitchWidget.visible                 = flightDisplay.loadSetting("enablepitchWidget", true);
         altitudeWidget.visible              = flightDisplay.loadSetting("enablealtitudeWidget", true);
         speedWidget.visible                 = flightDisplay.loadSetting("enablespeedWidget", true);
@@ -54,18 +54,19 @@ Rectangle {
         currentSpeed.showGroundSpeed        = flightDisplay.loadSetting("showGroundSpeed", true);
         currentAltitude.showClimbRate       = flightDisplay.loadSetting("showCurrentClimbRate", true);
         currentAltitude.showAltitude        = flightDisplay.loadSetting("showCurrentAltitude", true);
-        mapTypeMenu.update();
+        //mapTypeMenu.update();
     }
 
     Rectangle {
         id: windowBackground
         anchors.fill: parent
         anchors.centerIn: parent
-        visible: !attitudeWidget.visible && !mapBackground.visible
+        visible: !attitudeWidget.visible //&& !mapBackground.visible
         color:   Qt.hsla(0.25, 0.5, 0.45)
         z:       0
     }
 
+    /*
     Menu {
         id: mapTypeMenu
         function setCurrentMap(map) {
@@ -90,6 +91,7 @@ Rectangle {
                 setCurrentMap(mapBackground.mapItem.activeMapType.name);
         }
     }
+    */
 
     Menu {
         id: contextMenu
@@ -105,6 +107,7 @@ Rectangle {
             }
         }
 
+        /*
         MenuItem {
             text: "Display Attitude Background"
             checkable: true
@@ -115,6 +118,7 @@ Rectangle {
                 flightDisplay.saveSetting("displayRollPitchBackground", attitudeWidget.displayBackground);
             }
         }
+        */
 
         MenuItem {
             text: "Pitch Indicator"
@@ -204,6 +208,7 @@ Rectangle {
             }
         }
 
+        /*
         MenuSeparator {}
 
         MenuItem {
@@ -236,6 +241,7 @@ Rectangle {
                 mapTypeMenu.popup();
             }
         }
+        */
 
         MenuSeparator {}
 
@@ -263,15 +269,16 @@ Rectangle {
                 flightDisplay.saveSetting("showGroundSpeed", currentSpeed.showGroundSpeed);
                 compassIndicator.visible = true;
                 flightDisplay.saveSetting("enableCompassIndicator", compassIndicator.visible);
-                mapBackground.visible = false;
-                flightDisplay.saveSetting("enableMapBackground", mapBackground.visible);
-                mapBackground.alwaysNorth = false;
-                flightDisplay.saveSetting("mapAlwaysNorth", mapBackground.alwaysNorth);
+                //mapBackground.visible = false;
+                //flightDisplay.saveSetting("enableMapBackground", mapBackground.visible);
+                //mapBackground.alwaysNorth = false;
+                //flightDisplay.saveSetting("mapAlwaysNorth", mapBackground.alwaysNorth);
             }
         }
 
     }
 
+    /*
     QGCMapBackground {
         id: mapBackground
         anchors.centerIn: parent
@@ -281,13 +288,14 @@ Rectangle {
         longitude: flightDisplay.longitude
         z: 5
     }
+    */
 
     QGCAttitudeWidget {
         id: attitudeWidget
         anchors.centerIn: parent
         rollAngle:  roll
         pitchAngle: pitch
-        backgroundOpacity: mapBackground.visible ? 0.25 : 1.0
+        backgroundOpacity: 1.0 // mapBackground.visible ? 0.25 : 1.0
         z:          10
     }
 
