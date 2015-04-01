@@ -94,7 +94,7 @@ Rectangle {
                             anchors.fill:   parent
 
                             color:          qgcPal.buttonText
-                            font.pixelSize: 12
+                            font.pointSize: qgcPal.defaultFontPointSize
                             text:           modelData.name.toUpperCase()
 
                             verticalAlignment:      TextEdit.AlignVCenter

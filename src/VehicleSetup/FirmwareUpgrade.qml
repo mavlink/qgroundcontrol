@@ -114,11 +114,15 @@ Rectangle {
 
         TextArea {
             id: statusTextArea
-            width: parent.width
-            height: 300
-            readOnly: true
-            frameVisible: false
-            text: qsTr("Please disconnect all connections and unplug board from USB before selecting Upgrade.")
+
+            width:			parent.width
+            height:			300
+            readOnly:		true
+            frameVisible:	false
+			font.pointSize: qgcPal.defaultFontPointSize
+            
+			text: qsTr("Please disconnect all connections and unplug board from USB before selecting Upgrade.")
+
             style: TextAreaStyle {
                 textColor: qgcPal.text
                 backgroundColor: qgcPal.windowShade
