@@ -305,6 +305,21 @@
         <file alias="PowerComponentBattery_05cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg</file>
         <file alias="PowerComponentBattery_06cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg</file>
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
+        <file alias="FlightDisplay.qml">src/ui/flightdisplay/FlightDisplay.qml</file>
+        <file alias="QGroundControl/HUDControls/qmldir">src/ui/flightdisplay/components/qmldir</file>
+        <file alias="QGroundControl/HUDControls/QGCAltitudeWidget.qml">src/ui/flightdisplay/components/QGCAltitudeWidget.qml</file>
+        <file alias="QGroundControl/HUDControls/QGCAttitudeWidget.qml">src/ui/flightdisplay/components/QGCAttitudeWidget.qml</file>
+        <file alias="QGroundControl/HUDControls/QGCCompass.qml">src/ui/flightdisplay/components/QGCCompass.qml</file>
+        <file alias="QGroundControl/HUDControls/QGCCurrentAltitude.qml">src/ui/flightdisplay/components/QGCCurrentAltitude.qml</file>
+        <file alias="QGroundControl/HUDControls/QGCCurrentSpeed.qml">src/ui/flightdisplay/components/QGCCurrentSpeed.qml</file>
+        <file alias="QGroundControl/HUDControls/QGCMapBackground.qml">src/ui/flightdisplay/components/QGCMapBackground.qml</file>
+        <file alias="QGroundControl/HUDControls/QGCPitchWidget.qml">src/ui/flightdisplay/components/QGCPitchWidget.qml</file>
+        <file alias="QGroundControl/HUDControls/QGCSpeedWidget.qml">src/ui/flightdisplay/components/QGCSpeedWidget.qml</file>
+        <file alias="compass.svg">src/ui/flightdisplay/components/compass.svg</file>
+        <file alias="compassNeedle.svg">src/ui/flightdisplay/components/compassNeedle.svg</file>
+        <file alias="crossHair.svg">src/ui/flightdisplay/components/crossHair.svg</file>
+        <file alias="rollDial.svg">src/ui/flightdisplay/components/rollDial.svg</file>
+        <file alias="rollPointer.svg">src/ui/flightdisplay/components/rollPointer.svg</file>
     </qresource>
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>

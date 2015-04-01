@@ -508,7 +508,8 @@ public:
     }
 
 
-    int getSystemType();
+    int  getSystemType();
+    bool isAirplane();
 
     /**
      * @brief Returns true for systems that can reverse. If the system has no control over position, it returns false as
