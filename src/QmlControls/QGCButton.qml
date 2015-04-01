@@ -103,10 +103,13 @@ Button {
                     }
 
                     Text {
-                        id: text
-                        renderType: Text.NativeRendering
+                        id:             text
+                        renderType:     Text.NativeRendering
+                        text:           control.text
+                        font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
+
                         anchors.verticalCenter: parent.verticalCenter
-                        text: control.text
+
                         color: __showHighlight ?
                             control.__qgcPal.buttonHighlightText :
                             (primary ? control.__qgcPal.primaryButtonText : control.__qgcPal.buttonText)

@@ -25,9 +25,12 @@ CheckBox {
                 opacity: 0.6
             }
             Text {
-                id: text
-                text: control.text
+                id:             text
+                text:           control.text
+                font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
+
                 anchors.centerIn: parent
+
                 color: control.__qgcPal.text
             }
         }
