@@ -25,7 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "AirframeComponent.h"
-#include "QGCPX4AirframeConfig.h"
+#include "QGCQmlWidgetHolder.h"
 
 #if 0
 // Broken by latest mavlink module changes. Not used yet. Comment out for now.
@@ -179,7 +179,14 @@ QStringList AirframeComponent::paramFilterList(void) const
 
 QWidget* AirframeComponent::setupWidget(void) const
 {
-    return new QGCPX4AirframeConfig;
+    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
+    Q_CHECK_PTR(holder);
+    
+    holder->setAutoPilot(_autopilot);
+    
+    holder->setSource(QUrl::fromUserInput("qrc:/qml/AirframeComponent.qml"));
+    
+    return holder;
 }
 
 QUrl AirframeComponent::summaryQmlSource(void) const

@@ -169,9 +169,12 @@ bool LinkManager::disconnectAll()
 {
     bool allDisconnected = true;
 
-    foreach (SharedLinkInterface sharedLink, _links) {
+    // Make a copy so the list is modified out from under us
+    QList<SharedLinkInterface> links = _links;
+
+    foreach (SharedLinkInterface sharedLink, links) {
         Q_ASSERT(sharedLink.data());
-        if (!sharedLink.data()->_disconnect()) {
+        if (!disconnectLink(sharedLink.data())) {
             allDisconnected = false;
         }
     }
