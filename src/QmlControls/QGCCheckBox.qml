@@ -27,7 +27,7 @@ CheckBox {
             Text {
                 id:             text
                 text:           control.text
-                font.pointSize: __qgcPal.defaultFontPointSize
+                font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
 
                 anchors.centerIn: parent
 

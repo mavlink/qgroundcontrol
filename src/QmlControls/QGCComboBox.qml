@@ -11,7 +11,7 @@ ComboBox {
     property bool __showHighlight: pressed | hovered
 
     style: ComboBoxStyle {
-		font.pointSize: __qgcPal.defaultFontPointSize
+		font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
         textColor: __showHighlight ?
                     control.__qgcPal.buttonHighlightText :
                     control.__qgcPal.buttonText

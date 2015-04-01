@@ -106,7 +106,7 @@ Button {
                         id:             text
                         renderType:     Text.NativeRendering
                         text:           control.text
-                        font.pointSize: __qgcPal.defaultFontPointSize
+                        font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
 
                         anchors.verticalCenter: parent.verticalCenter
 

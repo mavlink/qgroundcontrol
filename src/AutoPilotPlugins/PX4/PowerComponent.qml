@@ -98,13 +98,13 @@ Rectangle {
 
         QGCLabel {
             text: "POWER CONFIG"
-            font.pointSize: 20;
+            dpiAdjustPointSize: 20;
         }
 
         QGCLabel {
             text: "Battery"
             color: palette.text
-            font.pointSize: 20;
+            dpiAdjustPointSize: 20;
         }
 
         Rectangle {
@@ -197,12 +197,10 @@ Rectangle {
                                 text: "Battery Max:"
                                 color: palette.text
                                 width: 80
-                                font.pointSize: 12;
                             }
                             QGCLabel {
                                 text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
                                 color: palette.text
-                                font.pointSize: 12;
                             }
                         }
                         Row {
@@ -211,12 +209,10 @@ Rectangle {
                                 text: "Battery Min:"
                                 color: palette.text
                                 width: 80
-                                font.pointSize: 12;
                             }
                             QGCLabel {
                                 text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
                                 color: palette.text
-                                font.pointSize: 12;
                             }
                         }
                     }
@@ -235,7 +231,7 @@ Rectangle {
                 QGCLabel {
                     text: "Propeller Function"
                     color: palette.text
-                    font.pointSize: 20;
+                    dpiAdjustPointSize: 20;
                 }
                 Rectangle {
                     width: parent.width
@@ -249,7 +245,7 @@ Rectangle {
                 QGCLabel {
                     text: "Magnetometer Distortion"
                     color: palette.text
-                    font.pointSize: 20;
+                    dpiAdjustPointSize: 20;
                 }
                 Rectangle {
                     width: parent.width
@@ -268,7 +264,7 @@ Rectangle {
         QGCLabel {
             text: "Advanced Power Settings"
             color: palette.text
-            font.pointSize: 20;
+            dpiAdjustPointSize: 20;
             visible: showAdvanced.checked
         }
         Rectangle {

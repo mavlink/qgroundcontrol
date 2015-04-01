@@ -47,7 +47,7 @@ Rectangle {
 
         QGCLabel {
             text: "VEHICLE SUMMARY"
-            font.pointSize: 20;
+            dpiAdjustPointSize: 20;
         }
 
         Item {
@@ -90,11 +90,10 @@ Rectangle {
                         color: qgcPal.windowShadeDark
 
                         // Title text
-                        Text {
+                        QGCLabel {
                             anchors.fill:   parent
 
                             color:          qgcPal.buttonText
-                            font.pointSize: qgcPal.defaultFontPointSize
                             text:           modelData.name.toUpperCase()
 
                             verticalAlignment:      TextEdit.AlignVCenter

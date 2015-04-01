@@ -39,7 +39,7 @@ Button {
                 horizontalAlignment: TextEdit.AlignHCenter
 
                 text: control.text
-                font.pointSize: __qgcPal.defaultFontPointSize
+                font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
                 color: __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
 
                 Rectangle {

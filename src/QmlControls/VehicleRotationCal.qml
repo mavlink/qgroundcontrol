@@ -63,23 +63,23 @@ Rectangle {
             smooth: true
         }
 
-        Label {
+        QGCLabel {
             width:                  parent.width
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pointSize:         25;
+            dpiAdjustPointSize:     25;
             font.bold:              true
             color:                  "black"
 
             text: parent.calText
         }
-        Label {
+        QGCLabel {
             width:                  parent.width
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pointSize:         25;
+            dpiAdjustPointSize:     25;
             color:                  calInProgress ? "yellow" : "white"
 
             text: parent.calText

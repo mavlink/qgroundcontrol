@@ -238,10 +238,10 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     width: messages.width - messageIcon.width
-                    Text {
+                    QGCLabel {
                         id: messageText
                         text: (mainToolBar.messageCount > 0) ? mainToolBar.messageCount : ''
-                        font.pointSize: 14;
+                        dpiAdjustPointSize: 14;
                         font.weight: Font.DemiBold
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -326,10 +326,10 @@ Rectangle {
                     smooth: true
                 }
 
-                Text {
+                QGCLabel {
                     id: satelitteText
                     text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
-                    font.pointSize: 14;
+                    dpiAdjustPointSize: 14;
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -361,10 +361,10 @@ Rectangle {
                     smooth: true
                 }
 
-                Text {
+                QGCLabel {
                     id: batteryText
                     text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
-                    font.pointSize: 14;
+                    dpiAdjustPointSize: 14;
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -389,10 +389,10 @@ Rectangle {
                     border.color: "#00000000"
                     border.width: 0
 
-                    Text {
+                    QGCLabel {
                         id: armedStatusText
                         text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
-                        font.pointSize: 12;
+                        dpiAdjustPointSize: 12;
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (mainToolBar.systemArmed) ? colorOrangeText : colorGreenText
@@ -408,10 +408,10 @@ Rectangle {
                     border.color: "#00000000"
                     border.width: 0
 
-                    Text {
+                    QGCLabel {
                         id: stateStatusText
                         text: mainToolBar.currentState
-                        font.pointSize: 12;
+                        dpiAdjustPointSize: 12;
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (mainToolBar.currentState === "STANDBY") ? colorGreenText : colorRedText
@@ -429,10 +429,10 @@ Rectangle {
                 border.color: "#00000000"
                 border.width: 0
 
-                Text {
+                QGCLabel {
                     id: modeStatusText
                     text: mainToolBar.currentMode
-                    font.pointSize: 12;
+                    dpiAdjustPointSize: 12;
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -450,10 +450,10 @@ Rectangle {
                 border.color: "#00000000"
                 border.width: 0
 
-                Text {
+                QGCLabel {
                     id: connectionStatusText
                     text: qsTr("CONNECTION LOST")
-                    font.pointSize: 14;
+                    dpiAdjustPointSize: 14;
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter

@@ -36,7 +36,6 @@ double ScreenTools::_dpiFactor = 72.0 / 96.0;
 
 ScreenTools::ScreenTools()
 {
-    _setDpiFactor();
     connect(MainWindow::instance(), &MainWindow::repaintCanvas, this, &ScreenTools::_updateCanvas);
 }
 

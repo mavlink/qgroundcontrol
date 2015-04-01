@@ -83,8 +83,10 @@ class QGCPalette : public QObject
     // Text color for TextFields
     Q_PROPERTY(QColor textFieldText READ textFieldText NOTIFY paletteChanged)
     
-    Q_PROPERTY(int defaultFontPointSize MEMBER _defaultFontPointSize CONSTANT)
-        
+    Q_PROPERTY(qreal defaultFontPointSize MEMBER _defaultFontPointSize CONSTANT)
+    
+    Q_PROPERTY(qreal dpiAdjustedDefaultFontPointSize READ dpiAdjustedDefaultFontPointSize CONSTANT)
+    
 public:
     enum ColorGroup {
         Disabled = 0,
@@ -122,6 +124,8 @@ public:
     static Theme globalTheme(void) { return _theme; }
     static void setGlobalTheme(Theme newTheme);
     
+    qreal dpiAdjustedDefaultFontPointSize(void);
+    
 signals:
     void paletteChanged(void);
     
@@ -151,11 +155,7 @@ private:
     static QColor _textField[_cThemes][_cColorGroups];
     static QColor _textFieldText[_cThemes][_cColorGroups];
     
-#ifdef Q_OS_MAC
-    static const int _defaultFontPointSize = 12;
-#else
-    static const int _defaultFontPointSize = 10;
-#endif
+    static const qreal _defaultFontPointSize;
     
     void _themeChanged(void);
     

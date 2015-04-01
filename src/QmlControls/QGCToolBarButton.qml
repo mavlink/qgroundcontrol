@@ -53,7 +53,7 @@ QGCButton {
         }
         label: Label {
             text: button.text
-            font.pointSize: __qgcPal.defaultFontPointSize
+            font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             color: showHighlight ? __qgcPal.buttonHighlightText : (button.checked ? __qgcPal.primaryButtonText : __qgcPal.buttonText)
