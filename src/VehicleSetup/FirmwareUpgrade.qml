@@ -51,7 +51,7 @@ Rectangle {
 
         QGCLabel {
             text: "FIRMWARE UPDATE"
-            dpiAdjustPointSize: 20;
+            font.pointSize: screenTools.dpiAdjustedPointSize(20);
         }
 
         Item {
@@ -119,7 +119,7 @@ Rectangle {
             height:			300
             readOnly:		true
             frameVisible:	false
-			font.pointSize: qgcPal.dpiAdjusteDefaultFontPointSize
+			font.pointSize: qgcPal.dpiAdjustedDefaultFontPointSize
             
 			text: qsTr("Please disconnect all connections and unplug board from USB before selecting Upgrade.")
 

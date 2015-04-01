@@ -98,13 +98,13 @@ Rectangle {
 
         QGCLabel {
             text: "POWER CONFIG"
-            dpiAdjustPointSize: 20;
+            font.pointSize: screenTools.dpiAdjustedPointSize(20);
         }
 
         QGCLabel {
             text: "Battery"
             color: palette.text
-            dpiAdjustPointSize: 20;
+            font.pointSize: screenTools.dpiAdjustedPointSize(20);
         }
 
         Rectangle {
@@ -231,7 +231,7 @@ Rectangle {
                 QGCLabel {
                     text: "Propeller Function"
                     color: palette.text
-                    dpiAdjustPointSize: 20;
+                    font.pointSize: screenTools.dpiAdjustedPointSize(20);
                 }
                 Rectangle {
                     width: parent.width
@@ -245,7 +245,7 @@ Rectangle {
                 QGCLabel {
                     text: "Magnetometer Distortion"
                     color: palette.text
-                    dpiAdjustPointSize: 20;
+                    font.pointSize: screenTools.dpiAdjustedPointSize(20);
                 }
                 Rectangle {
                     width: parent.width
@@ -264,7 +264,7 @@ Rectangle {
         QGCLabel {
             text: "Advanced Power Settings"
             color: palette.text
-            dpiAdjustPointSize: 20;
+            font.pointSize: screenTools.dpiAdjustedPointSize(20);
             visible: showAdvanced.checked
         }
         Rectangle {

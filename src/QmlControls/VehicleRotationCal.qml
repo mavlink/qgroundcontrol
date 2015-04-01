@@ -30,7 +30,7 @@ import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
-    property ScreenTools screenTools: ScreenTools { }
+    property ScreenTools __screenTools: ScreenTools { }
 
     // Indicates whether calibration is valid for this control
     property bool calValid: false
@@ -68,7 +68,7 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            dpiAdjustPointSize:     25;
+            font.pointSize:         __screenTools.dpiAdjustedPointSize(25);
             font.bold:              true
             color:                  "black"
 
@@ -79,7 +79,7 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            dpiAdjustPointSize:     25;
+            font.pointSize:         __screenTools.dpiAdjustedPointSize(25);
             color:                  calInProgress ? "yellow" : "white"
 
             text: parent.calText
