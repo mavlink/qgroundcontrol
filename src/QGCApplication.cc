@@ -81,6 +81,9 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
 
 const char* QGCApplication::_darkStyleFile = ":files/styles/style-dark.css";
 const char* QGCApplication::_lightStyleFile = ":files/styles/style-light.css";
+#ifdef Q_OS_MAC
+const char* QGCApplication::_macStyleFile = ":files/styles/style-mac.css";
+#endif
 
 /**
  * @brief Constructor for the main application.
@@ -567,6 +570,21 @@ void QGCApplication::_loadCurrentStyle(void)
         }
     }
 
+#ifdef Q_OS_MAC
+    // We use this to override the default font point size on the mac to make it larger
+    if (success) {
+        qDebug() << "LOADING Mac";
+        // Load the mac stylesheet.
+        QFile styleSheet(_macStyleFile);
+        if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            styles += styleSheet.readAll();
+        } else {
+            qDebug() << "Unable to load mac sheet:";
+            // If this fails, we don't signal error. Fonts will be smaller bu things will work
+        }
+    }
+#endif
+    
     if (!styles.isEmpty()) {
         setStyleSheet(styles);
     }

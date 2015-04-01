@@ -151,7 +151,11 @@ private:
     static QColor _textField[_cThemes][_cColorGroups];
     static QColor _textFieldText[_cThemes][_cColorGroups];
     
+#ifdef Q_OS_MAC
     static const int _defaultFontPointSize = 12;
+#else
+    static const int _defaultFontPointSize = 10;
+#endif
     
     void _themeChanged(void);
     

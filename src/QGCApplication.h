@@ -151,6 +151,9 @@ private:
     
     static const char*  _darkStyleFile;
     static const char*  _lightStyleFile;
+#ifdef Q_OS_MAC
+    static const char*  _macStyleFile;
+#endif
     bool                _styleIsDark;      ///< true: dark style, false: light style
     
     /// Unit Test have access to creating and destroying singletons

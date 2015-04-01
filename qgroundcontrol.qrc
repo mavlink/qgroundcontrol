@@ -108,6 +108,7 @@
         <file>files/images/mapproviders/googleearth.svg</file>
         <file>files/images/contrib/slugs.png</file>
         <file>files/styles/style-light.css</file>
+        <file>files/styles/style-mac.css</file>
         <file>files/images/patterns/lenna.jpg</file>
         <file>files/images/rc_stick.svg</file>
         <file>files/images/actions/qgroundcontrol-connect.svg</file>
