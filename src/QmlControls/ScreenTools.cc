@@ -27,24 +27,44 @@
 #include "ScreenTools.h"
 #include "MainWindow.h"
 
+#include <QFont>
+#include <QFontMetrics>
+
+bool ScreenTools::_dpiFactorSet = false;
+double ScreenTools::_dotsPerInch = 96.0;
+double ScreenTools::_dpiFactor = 72.0 / 96.0;
+
 ScreenTools::ScreenTools()
-    : _dotsPerInch(96.0)
-    , _dpiFactor( 72.0 / 96.0)
 {
-    // Get screen DPI to manage font sizes on different platforms
-    QScreen *srn = QGuiApplication::primaryScreen();
-    if(srn && srn->logicalDotsPerInch() > 50.0) {
-        _dotsPerInch = (double)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
-        _dpiFactor = 72.0 / _dotsPerInch;
-    } else {
-        qWarning() << "System not reporting logical DPI, which is used to compute the appropriate font size. The default being used is 96dpi. If the text within buttons and UI elements are too big or too small, that's the reason.";
-    }
+    _setDpiFactor();
     connect(MainWindow::instance(), &MainWindow::repaintCanvas, this, &ScreenTools::_updateCanvas);
 }
 
 qreal ScreenTools::dpiAdjustedPointSize(qreal pointSize)
 {
+    return dpiAdjustedPointSize_s(pointSize);
+}
+
+qreal ScreenTools::dpiAdjustedPointSize_s(qreal pointSize)
+{
+    _setDpiFactor();
     return pointSize * _dpiFactor;
+}
+
+void ScreenTools::_setDpiFactor(void)
+{
+    if (!_dpiFactorSet) {
+        _dpiFactorSet = true;
+        
+        // Get screen DPI to manage font sizes on different platforms
+        QScreen *srn = QGuiApplication::primaryScreen();
+        if(srn && srn->logicalDotsPerInch() > 50.0) {
+            _dotsPerInch = (double)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
+            _dpiFactor = 72.0 / _dotsPerInch;
+        } else {
+            qWarning() << "System not reporting logical DPI, which is used to compute the appropriate font size. The default being used is 96dpi. If the text within buttons and UI elements are too big or too small, that's the reason.";
+        }
+    }
 }
 
 void ScreenTools::_updateCanvas()

@@ -81,9 +81,6 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
 
 const char* QGCApplication::_darkStyleFile = ":files/styles/style-dark.css";
 const char* QGCApplication::_lightStyleFile = ":files/styles/style-light.css";
-#ifdef Q_OS_MAC
-const char* QGCApplication::_macStyleFile = ":files/styles/style-mac.css";
-#endif
 
 /**
  * @brief Constructor for the main application.
@@ -569,24 +566,33 @@ void QGCApplication::_loadCurrentStyle(void)
             success = false;
         }
     }
-
-#ifdef Q_OS_MAC
-    // We use this to override the default font point size on the mac to make it larger
+    
+    // Now that we have the styles loaded we need to dpi adjust the font point sizes
+    
+    QString dpiAdjustedStyles;
     if (success) {
-        qDebug() << "LOADING Mac";
-        // Load the mac stylesheet.
-        QFile styleSheet(_macStyleFile);
-        if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            styles += styleSheet.readAll();
-        } else {
-            qDebug() << "Unable to load mac sheet:";
-            // If this fails, we don't signal error. Fonts will be smaller bu things will work
+        QTextStream styleStream(&styles, QIODevice::ReadOnly);
+        QRegularExpression regex("font-size:.+(\\d\\d)pt;");
+        
+        while (!styleStream.atEnd()) {
+            QString adjustedLine;
+            QString line = styleStream.readLine();
+            
+            QRegularExpressionMatch match = regex.match(line);
+            if (match.hasMatch()) {
+                qDebug() << "found:" << line << match.captured(1);
+                adjustedLine = QString("font-size: %1pt;").arg(ScreenTools::dpiAdjustedPointSize_s(match.captured(1).toDouble()));
+                qDebug() << "adjusted:" << adjustedLine;
+            } else {
+                adjustedLine = line;
+            }
+            
+            dpiAdjustedStyles += adjustedLine;
         }
     }
-#endif
-    
-    if (!styles.isEmpty()) {
-        setStyleSheet(styles);
+
+    if (!dpiAdjustedStyles.isEmpty()) {
+        setStyleSheet(dpiAdjustedStyles);
     }
 
     if (!success) {
