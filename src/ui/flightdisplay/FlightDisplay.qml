@@ -311,7 +311,7 @@ Rectangle {
     QGCAltitudeWidget {
         id: altitudeWidget
         anchors.right: parent.right
-        width:     40
+        width:     60
         altitude:  flightDisplay.altitudeWGS84
         z:         30
     }
@@ -319,7 +319,7 @@ Rectangle {
     QGCSpeedWidget {
         id: speedWidget
         anchors.left: parent.left
-        width:  40
+        width:  60
         speed:  flightDisplay.groundSpeed
         z:      40
     }
