@@ -67,26 +67,29 @@ Rectangle {
     height: parent.height * 0.75 > 280 ? 280 : parent.height * 0.75
     clip:   true
     smooth: true
+    radius: 5
     border.color: Qt.rgba(1,1,1,0.25)
     gradient: Gradient {
-        GradientStop { position: 0.0; color: Qt.rgba(0,0,0,0.35) }
-        GradientStop { position: 0.5; color: Qt.rgba(0,0,0,0.15) }
-        GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.35) }
+        GradientStop { position: 0.0; color: Qt.rgba(0,0,0,0.65) }
+        GradientStop { position: 0.5; color: Qt.rgba(0,0,0,0.25) }
+        GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.65) }
     }
     Column{
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter:   parent.verticalCenter
+        width: parent.width
+        anchors.verticalCenter: parent.verticalCenter
         spacing: _reticleSpacing
         Repeater {
             model: _speedArray
             Rectangle {
-                width:  root.width
+                property int _alt: modelData
+                width:  (_alt % 10 === 0) ? 15 : 30
+                anchors.left: parent.left
                 height: _reticleHeight
-                color:  Qt.rgba(1,1,1,0.1)
+                color:  Qt.rgba(1,1,1,0.35)
                 Text {
-                    property real _alt: modelData
                     visible: (_alt % 10 === 0)
                     anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.horizontalCenterOffset: 25
                     anchors.verticalCenter:   parent.verticalCenter
                     antialiasing: true
                     font.weight: _alt < 0 ? Font.Light : Font.DemiBold

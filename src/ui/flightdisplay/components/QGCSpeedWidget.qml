@@ -41,26 +41,29 @@ Rectangle {
     height: parent.height * 0.75 > 280 ? 280 : parent.height * 0.75
     clip:   true
     smooth: true
+    radius: 5
     border.color: Qt.rgba(1,1,1,0.25)
     gradient: Gradient {
-        GradientStop { position: 0.0; color: Qt.rgba(0,0,0,0.35) }
-        GradientStop { position: 0.5; color: Qt.rgba(0,0,0,0.15) }
-        GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.35) }
+        GradientStop { position: 0.0; color: Qt.rgba(0,0,0,0.65) }
+        GradientStop { position: 0.5; color: Qt.rgba(0,0,0,0.25) }
+        GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.65) }
     }
     Column{
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter:   parent.verticalCenter
+        width: parent.width
+        anchors.verticalCenter: parent.verticalCenter
         spacing: _reticleSpacing
         Repeater {
             model: 40
             Rectangle {
-                width:  root.width
+                property int _speed: -(index - 20)
+                width:  (_speed % 5 === 0) ? 15 : 30
+                anchors.right: parent.right
                 height: _reticleHeight
-                color:  Qt.rgba(1,1,1,0.1)
+                color:  Qt.rgba(1,1,1,0.35)
                 Text {
-                    property real _speed: -(index - 20)
                     visible: (_speed % 5 === 0)
                     anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.horizontalCenterOffset: -25
                     anchors.verticalCenter:   parent.verticalCenter
                     antialiasing: true
                     font.weight: _speed < 0 ? Font.Light : Font.DemiBold
