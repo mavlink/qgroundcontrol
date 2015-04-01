@@ -382,7 +382,7 @@ Item {
 
                 QGCLabel {
                     text: "FLIGHT MODES CONFIG"
-                    font.pointSize: screenTools.dpiAdjustedPointSize(20);
+                    font.pointSize: 20;
                 }
 
                 Item { height: 20; width: 10 } // spacer
@@ -873,7 +873,7 @@ Item {
 
                 QGCLabel {
                     text: "FLIGHT MODES CONFIG"
-                    font.pointSize: screenTools.dpiAdjustedPointSize(20);
+                    font.pointSize: 20;
                 }
 
                 QGCLabel {

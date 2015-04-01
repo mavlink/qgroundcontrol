@@ -47,7 +47,7 @@ Rectangle {
 
         QGCLabel {
             text: "VEHICLE SUMMARY"
-            font.pointSize: screenTools.dpiAdjustedPointSize(20);
+            font.pointSize: 20;
         }
 
         Item {

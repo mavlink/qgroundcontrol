@@ -241,7 +241,7 @@ Rectangle {
                     Text {
                         id: messageText
                         text: (mainToolBar.messageCount > 0) ? mainToolBar.messageCount : ''
-                        font.pointSize: screenTools.dpiAdjustedPointSize(14);
+                        font.pointSize: 14;
                         font.weight: Font.DemiBold
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -329,7 +329,7 @@ Rectangle {
                 Text {
                     id: satelitteText
                     text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
-                    font.pointSize: screenTools.dpiAdjustedPointSize(14);
+                    font.pointSize: 14;
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -364,7 +364,7 @@ Rectangle {
                 Text {
                     id: batteryText
                     text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
-                    font.pointSize: screenTools.dpiAdjustedPointSize(14);
+                    font.pointSize: 14;
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -392,7 +392,7 @@ Rectangle {
                     Text {
                         id: armedStatusText
                         text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
-                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                        font.pointSize: 12;
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (mainToolBar.systemArmed) ? colorOrangeText : colorGreenText
@@ -411,7 +411,7 @@ Rectangle {
                     Text {
                         id: stateStatusText
                         text: mainToolBar.currentState
-                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                        font.pointSize: 12;
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (mainToolBar.currentState === "STANDBY") ? colorGreenText : colorRedText
@@ -432,7 +432,7 @@ Rectangle {
                 Text {
                     id: modeStatusText
                     text: mainToolBar.currentMode
-                    font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                    font.pointSize: 12;
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -453,7 +453,7 @@ Rectangle {
                 Text {
                     id: connectionStatusText
                     text: qsTr("CONNECTION LOST")
-                    font.pointSize: screenTools.dpiAdjustedPointSize(14);
+                    font.pointSize: 14;
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
