@@ -2673,6 +2673,21 @@ int UAS::getSystemType()
     return this->type;
 }
 
+/** @brief Is it an airplane (or like one)?,..)*/
+bool UAS::isAirplane()
+{
+    switch(this->type) {
+        case MAV_TYPE_GENERIC:
+        case MAV_TYPE_FIXED_WING:
+        case MAV_TYPE_AIRSHIP:
+        case MAV_TYPE_FLAPPING_WING:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
 /**
 * Halt the uas.
 */

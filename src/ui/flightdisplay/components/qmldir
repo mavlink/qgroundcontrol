@@ -1,0 +1,10 @@
+Module QGroundControl.HUDControls
+
+QGCAltitudeWidget     1.0 QGCAltitudeWidget.qml
+QGCAttitudeWidget     1.0 QGCAttitudeWidget.qml
+QGCCompass            1.0 QGCCompass.qml
+QGCCurrentAltitude    1.0 QGCCurrentAltitude.qml
+QGCCurrentSpeed       1.0 QGCCurrentSpeed.qml
+QGCMapBackground      1.0 QGCMapBackground.qml
+QGCPitchWidget        1.0 QGCPitchWidget.qml
+QGCSpeedWidget        1.0 QGCSpeedWidget.qml
