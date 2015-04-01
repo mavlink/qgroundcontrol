@@ -81,8 +81,8 @@ AirframeComponentController::AirframeComponentController(QObject* parent) :
     }
     
     // FIXME: Should be a user error
+    Q_UNUSED(autostartFound);
     Q_ASSERT(autostartFound);
-    
 }
 
 AirframeComponentController::~AirframeComponentController()
