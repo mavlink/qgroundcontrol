@@ -159,6 +159,9 @@ private:
     
     static const char*  _darkStyleFile;
     static const char*  _lightStyleFile;
+#ifdef Q_OS_MAC
+    static const char*  _macStyleFile;
+#endif
     bool                _styleIsDark;      ///< true: dark style, false: light style
     
     LinkConfiguration* _reconnectLinkConfig;    ///< Configuration to reconnect for reconnectAfterWai

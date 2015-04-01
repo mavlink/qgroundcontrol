@@ -5,8 +5,10 @@ import QtQuick.Controls.Styles 1.2
 import QGroundControl.Palette 1.0
 
 Text {
-    property var __palette: QGCPalette { colorGroupEnabled: enabled }
+    QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
+
     property bool enabled: true
 
-    color: __palette.text
+    font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
+    color:          __qgcPal.text
 }

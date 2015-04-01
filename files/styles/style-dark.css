@@ -7,7 +7,7 @@
 * {
     background-color: #222;
     color: #FFF;
-    font-size: 11px;
+    font-size: 12pt;
 }
 
 QWidget#viewModeWidget {
@@ -105,138 +105,6 @@ QGCMAVLinkLogPlayer QLabel:disabled {
     color: #AAA;
 }
 
-QGCToolBar {
-    border-top-color: #969696;
-    border-bottom-color: #484848;
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4B4B4B, stop: 0.3 #404040, stop: 0.34 #383838, stop:1 #181818);
-    padding: 0;
-    margin: 0;
-}
-
-QGCToolBar QLabel {
-    font-size: 12pt;
-    font-weight: bold;
-    margin: 4px 2px;
-    padding: 0 2px;
-    border-radius: 4px;
-}
-
-QGCToolBar QLabel#toolBarBatteryBar {
-    color: #0F0;
-}
-
-QGCToolBar QLabel#toolBarTimeoutLabel {
-    color: #FFFFFF;
-    background-color: #FF0037;
-    font-size: 15pt;
-}
-
-QGCToolBar QLabel#toolBarSafetyLabel {
-    /* color is for this label defined within the code */
-    font-size: 15pt;
-}
-
-QGCToolBar QLabel#toolBarModeLabel {
-    color: #ACEBFE;
-    font-size: 15pt;
-}
-
-QGCToolBar QLabel#toolBarStateLabel {
-    color: #FEC654;
-    font-size: 15pt;
-}
-
-QGCToolBar QLabel#toolBarBatteryVoltageLabel {
-    color: #0F0;
-    font-size: 15pt;
-}
-
-QGCToolBar QLabel#toolBarWpLabel {
-    color: #ACEBFE;
-    font-size: 15pt;
-}
-
-QGCToolBar QLabel#toolBarMessageLabel {
-    color: #ACEBFE;
-}
-
-QGCToolBar QProgressBar {
-    margin: 4px 2px;
-}
-
-QGCToolBar QToolButton {
-    margin: 0;
-    padding: 0 2px;
-    border: none;
-    border-top: 1px solid #333;
-    border-bottom: 1px solid #333;
-    border-radius: 0;
-    height: 24px;
-    min-width: 30px;
-    margin-bottom: 4px;
-    text-align: left;
-    font-weight: bold;
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #AAA, stop: 1 #BBB);
-    color: #000;
-}
-
-QGCToolBar QToolButton:checked, QGCToolBar QToolButton:pressed, QGCToolBar QToolButton:checked:hover {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555, stop: 1 #777);
-    color: #FFF;
-}
-
-QGCToolBar QToolButton:hover {
-    color: #FFF;
-}
-
-QGCToolBar QToolButton#advancedButton {
-    margin-left: 0;
-    margin-right: 13px;
-    padding-right: 10px;
-    border-radius: 0;
-    border-bottom-right-radius: 6px;
-    border-top-right-radius: 6px;
-    border-left: none;
-}
-
-QGCToolBar QToolButton#firstAction {
-    margin-left: 2px;
-    border-bottom-left-radius: 6px;
-    border-top-left-radius: 6px;
-    border-right: none;
-}
-
-QGCToolBar .QWidget {
-    margin: 0;
-    background-color: transparent;
-}
-
-QGCPX4SensorCalibration QLabel#magLabel {
-    font-size: 15pt;
-    font-weight: bold;
-    border-radius: 4px;
-    min-height: 25px;
-}
-
-QGCPX4SensorCalibration QLabel#gyroLabel {
-    font-size: 15pt;
-    font-weight: bold;
-    border-radius: 4px;
-    min-height: 25px;
-}
-
-QGCPX4SensorCalibration QLabel#accelLabel {
-    font-size: 15pt;
-    font-weight: bold;
-    border-radius: 4px;
-    min-height: 25px;
-}
-
-QGCPX4VehicleConfig QLabel#rcLabel {
-    color: #FEC654;
-    font-size: 18pt;
-}
-
 QGCToolWidgetItem {
     border: 1px solid #666;
     border-radius: 3px;
@@ -284,17 +152,9 @@ QLabel#noUas {
     font-size: 30pt;
 }
 
-QMessageBox QLabel {
-    font-size: 14pt;
-}
-
 QMessageBox {
     min-width: 400px;
     min-height: 300px;
-}
-
-QLabel#calibrationExplanationLabel {
-    font-size: 20pt;
 }
 
 QLabel#tabTitleLabel {
