@@ -31,7 +31,7 @@ import QtQuick 2.4
 
 Item {
     id:    root
-    width:  parent.width  * 0.25 > 150 ? parent.width  * 0.25 : 150
+    width:  120
     height: width
     property real heading : 0
     Image {
@@ -60,8 +60,8 @@ Item {
         anchors.centerIn: compass
         width:  40
         height: 25
-        border.color: Qt.rgba(1,1,1,0.25)
-        color: Qt.rgba(1,1,1,0.1)
+        border.color: Qt.rgba(1,1,1,0.15)
+        color: Qt.rgba(0,0,0,0.25)
         Text {
             text: heading.toFixed(0)
             font.weight: Font.DemiBold

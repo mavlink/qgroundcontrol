@@ -101,7 +101,9 @@
         <file alias="compassNeedle.svg">src/ui/flightdisplay/components/compassNeedle.svg</file>
         <file alias="crossHair.svg">src/ui/flightdisplay/components/crossHair.svg</file>
         <file alias="rollDial.svg">src/ui/flightdisplay/components/rollDial.svg</file>
+        <file alias="rollDialWhite.svg">src/ui/flightdisplay/components/rollDialWhite.svg</file>
         <file alias="rollPointer.svg">src/ui/flightdisplay/components/rollPointer.svg</file>
+        <file alias="rollPointerWhite.svg">src/ui/flightdisplay/components/rollPointerWhite.svg</file>
     </qresource>
 
     <qresource prefix="/AutoPilotPlugins/PX4">
