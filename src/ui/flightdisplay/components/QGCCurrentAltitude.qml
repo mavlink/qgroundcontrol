@@ -45,14 +45,14 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 4
         Text {
-            text: 'h: ' + altitude.toFixed(1)
+            text: 'h: ' + altitude.toFixed(0)
             font.weight: Font.DemiBold
             color: "white"
             anchors.right: parent.right
             visible: showAltitude
         }
         Text {
-            text: 'vZ: ' + vertZ.toFixed(1)
+            text: 'vZ: ' + vertZ.toFixed(0)
             color: "white"
             font.weight: showAltitude ? Font.Normal : Font.DemiBold
             anchors.right: parent.right

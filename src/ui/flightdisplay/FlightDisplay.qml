@@ -57,14 +57,16 @@ Rectangle {
         //mapTypeMenu.update();
     }
 
+    /*
     Rectangle {
         id: windowBackground
         anchors.fill: parent
         anchors.centerIn: parent
-        visible: !attitudeWidget.visible //&& !mapBackground.visible
+        visible: !attitudeWidget.visible && !mapBackground.visible
         color:   Qt.hsla(0.25, 0.5, 0.45)
         z:       0
     }
+    */
 
     /*
     Menu {
@@ -292,20 +294,31 @@ Rectangle {
 
     QGCAttitudeWidget {
         id: attitudeWidget
-        anchors.centerIn: parent
-        rollAngle:  roll
-        pitchAngle: pitch
-        backgroundOpacity: 1.0 // mapBackground.visible ? 0.25 : 1.0
-        z:          10
+        anchors.centerIn:   parent
+        rollAngle:          roll
+        pitchAngle:         pitch
+        useWhite:           true // !mapBackground.visible
+        backgroundOpacity:  1.0  // mapBackground.visible ? 0.25 : 1.0
+        z:                  10
     }
 
     QGCPitchWidget {
         id: pitchWidget
         anchors.verticalCenter: parent.verticalCenter
-        opacity:    0.5
         pitchAngle: pitch
         rollAngle:  roll
-        z:          20
+        color:      Qt.rgba(0,0,0,0) // mapBackground.visible ? Qt.rgba(0,0,0,0.5) : Qt.rgba(0,0,0,0)
+        opacity:    0.75             // mapBackground.visible ? 1 : 0.75
+        z:          25               // mapBackground.visible ? 20 : 25
+    }
+
+    Image {
+        anchors.centerIn: parent
+        source:   "/qml/crossHair.svg"
+        mipmap:   true
+        width:    260
+        fillMode: Image.PreserveAspectFit
+        z:        20 // mapBackground.visible ? 25 : 20
     }
 
     QGCAltitudeWidget {
@@ -327,30 +340,30 @@ Rectangle {
     QGCCurrentSpeed {
         id: currentSpeed
         anchors.left:       parent.left
-        width:              80
+        width:              75
         airspeed:           flightDisplay.airSpeed
         groundspeed:        flightDisplay.groundSpeed
         showAirSpeed:       true
         showGroundSpeed:    true
-        visible:            currentSpeed.showGroundSpeed || currentSpeed.showAirSpeed
+        visible:            (currentSpeed.showGroundSpeed || currentSpeed.showAirSpeed)
         z:                  50
     }
 
     QGCCurrentAltitude {
         id: currentAltitude
-        anchors.right:  parent.right
-        width:          80
-        altitude:       flightDisplay.altitudeWGS84
-        vertZ:          flightDisplay.climbRate
-        showAltitude:   true
-        showClimbRate:  true
-        visible:        (currentAltitude.showAltitude || currentAltitude.showClimbRate)
-        z:              60
+        anchors.right:      parent.right
+        width:              75
+        altitude:           flightDisplay.altitudeWGS84
+        vertZ:              flightDisplay.climbRate
+        showAltitude:       true
+        showClimbRate:      true
+        visible:            (currentAltitude.showAltitude || currentAltitude.showClimbRate)
+        z:                  60
     }
 
     QGCCompass {
         id: compassIndicator
-        y: root.height * 0.65
+        y: root.height * 0.7
         anchors.horizontalCenter: parent.horizontalCenter
         heading: isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
         z:       70

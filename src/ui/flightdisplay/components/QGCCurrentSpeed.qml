@@ -45,14 +45,14 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 4
         Text {
-            text: 'GS: ' + groundspeed.toFixed(1)
+            text: 'GS: ' + groundspeed.toFixed(0)
             font.weight: Font.DemiBold
             color: "white"
             anchors.right: parent.right
             visible: showGroundSpeed
         }
         Text {
-            text: 'AS: ' + airspeed.toFixed(1)
+            text: 'AS: ' + airspeed.toFixed(0)
             color: "white"
             anchors.right: parent.right
             font.weight: showAirSpeed ? Font.Normal : Font.DemiBold

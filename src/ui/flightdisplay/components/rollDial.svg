@@ -3,36 +3,30 @@
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 288 159.854" enable-background="new 0 0 288 159.854" xml:space="preserve">
 <g id="Layer_1">
-	<text transform="matrix(1 0 0 1 136.0895 12.201)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2222">00</text>
-	
-		<text transform="matrix(0.9659 -0.2588 0.2588 0.9659 98.1424 19.2784)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2218">15</text>
-	<text transform="matrix(0.866 -0.5 0.5 0.866 63.3229 35.9389)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2219">30</text>
-	
-		<text transform="matrix(0.7071 -0.7071 0.7071 0.7071 33.9995 61.0398)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2221">45</text>
-	<text transform="matrix(0.5 -0.866 0.866 0.5 12.1723 92.8793)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2219">60</text>
-	
-		<text transform="matrix(0.9659 0.2588 -0.2588 0.9659 174.5744 15.1842)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2218">15</text>
-	
-		<text transform="matrix(0.866 0.5 -0.5 0.866 210.9767 28.0287)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2219">30</text>
-	
-		<text transform="matrix(0.7071 0.7071 -0.7071 0.7071 242.8152 49.8557)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2221">45</text>
-	
-		<text transform="matrix(0.5 0.866 -0.866 0.5 267.9185 79.1788)" fill="#E0E0E0" font-family="'Arial-BoldMT'" font-size="14.2219">60</text>
+	<text transform="matrix(1 0 0 1 136.0895 12.201)" font-family="'Arial-BoldMT'" font-size="14.2222">00</text>
+	<text transform="matrix(0.9659 -0.2588 0.2588 0.9659 98.1424 19.2784)" font-family="'Arial-BoldMT'" font-size="14.2218">15</text>
+	<text transform="matrix(0.866 -0.5 0.5 0.866 63.3229 35.9389)" font-family="'Arial-BoldMT'" font-size="14.2219">30</text>
+	<text transform="matrix(0.7071 -0.7071 0.7071 0.7071 33.9995 61.0398)" font-family="'Arial-BoldMT'" font-size="14.2221">45</text>
+	<text transform="matrix(0.5 -0.866 0.866 0.5 12.1723 92.8793)" font-family="'Arial-BoldMT'" font-size="14.2219">60</text>
+	<text transform="matrix(0.9659 0.2588 -0.2588 0.9659 174.5744 15.1842)" font-family="'Arial-BoldMT'" font-size="14.2218">15</text>
+	<text transform="matrix(0.866 0.5 -0.5 0.866 210.9767 28.0287)" font-family="'Arial-BoldMT'" font-size="14.2219">30</text>
+	<text transform="matrix(0.7071 0.7071 -0.7071 0.7071 242.8152 49.8557)" font-family="'Arial-BoldMT'" font-size="14.2221">45</text>
+	<text transform="matrix(0.5 0.866 -0.866 0.5 267.9185 79.1788)" font-family="'Arial-BoldMT'" font-size="14.2219">60</text>
 </g>
 <g id="Layer_3">
 	<rect id="rect5769" y="153.455" fill="none" width="288" height="6.4"/>
 </g>
 <g id="Layer_2">
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="144.1" y1="23.855" x2="144.1" y2="16.355"/>
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="108.9" y1="28.455" x2="107" y2="21.255"/>
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="76.1" y1="41.955" x2="72.4" y2="35.455"/>
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="47.9" y1="63.555" x2="42.7" y2="58.355"/>
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="26.3" y1="91.755" x2="19.8" y2="88.055"/>
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="179.3" y1="28.455" x2="181.2" y2="21.255"/>
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="212.1" y1="42.155" x2="215.8" y2="35.655"/>
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="240.3" y1="63.755" x2="245.5" y2="58.555"/>
-	<line fill="none" stroke="#E0E0E0" stroke-width="4" x1="261.9" y1="91.955" x2="268.4" y2="88.255"/>
-	<path fill="none" stroke="#E0E0E0" stroke-width="2" stroke-linecap="round" stroke-linejoin="bevel" d="M262.4,92.955
+	<line fill="none" stroke="#000000" stroke-width="4" x1="144.1" y1="23.855" x2="144.1" y2="16.355"/>
+	<line fill="none" stroke="#000000" stroke-width="4" x1="108.9" y1="28.455" x2="107" y2="21.255"/>
+	<line fill="none" stroke="#000000" stroke-width="4" x1="76.1" y1="41.955" x2="72.4" y2="35.455"/>
+	<line fill="none" stroke="#000000" stroke-width="4" x1="47.9" y1="63.555" x2="42.7" y2="58.355"/>
+	<line fill="none" stroke="#000000" stroke-width="4" x1="26.3" y1="91.755" x2="19.8" y2="88.055"/>
+	<line fill="none" stroke="#000000" stroke-width="4" x1="179.3" y1="28.455" x2="181.2" y2="21.255"/>
+	<line fill="none" stroke="#000000" stroke-width="4" x1="212.1" y1="42.155" x2="215.8" y2="35.655"/>
+	<line fill="none" stroke="#000000" stroke-width="4" x1="240.3" y1="63.755" x2="245.5" y2="58.555"/>
+	<line fill="none" stroke="#000000" stroke-width="4" x1="261.9" y1="91.955" x2="268.4" y2="88.255"/>
+	<path fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="bevel" d="M262.4,92.955
 		c-11.6-20.6-28.6-37.9-48.9-50s-44.1-19.1-69.5-19.1s-49.2,6.9-69.4,19s-37.2,29.3-48.9,50"/>
 </g>
 </svg>
