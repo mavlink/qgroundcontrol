@@ -34,8 +34,8 @@ import QtQuick 2.4
 Rectangle {
     id: root
     property real altitude:         50
-    property real _reticleSpacing:  29
-    property real _reticleHeight:   1
+    property real _reticleSpacing:  16
+    property real _reticleHeight:   2
     property real _reticleSlot:     _reticleSpacing + _reticleHeight
     property var  _speedArray:      []
     property int  _currentCenter:   0
@@ -75,26 +75,26 @@ Rectangle {
         GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.65) }
     }
     Column{
+        id: col
         width: parent.width
         anchors.verticalCenter: parent.verticalCenter
         spacing: _reticleSpacing
         Repeater {
             model: _speedArray
+            anchors.left: parent.left
             Rectangle {
                 property int _alt: modelData
-                width:  (_alt % 10 === 0) ? 15 : 30
-                anchors.left: parent.left
+                width:  (_alt % 10 === 0) ? 10 : 15
                 height: _reticleHeight
                 color:  Qt.rgba(1,1,1,0.35)
                 Text {
                     visible: (_alt % 10 === 0)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.horizontalCenterOffset: 25
+                    x: 20
                     anchors.verticalCenter:   parent.verticalCenter
                     antialiasing: true
-                    font.weight: _alt < 0 ? Font.Light : Font.DemiBold
-                    text:  _alt < 0 ? -_alt : _alt
-                    color: _alt < 0 ? "#ef2526" : "white"
+                    font.weight: Font.DemiBold
+                    text:  _alt
+                    color: _alt < 0 ? "#f8983a" : "white"
                     style: Text.Outline
                     styleColor: Qt.rgba(0,0,0,0.25)
                 }

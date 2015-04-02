@@ -28,16 +28,19 @@ This file is part of the QGROUNDCONTROL project
  */
 
 import QtQuick 2.4
+import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     id: root
+    property ScreenTools screenTools: ScreenTools { }
     property real speed:           0
-    property real _reticleSpacing: 14
-    property real _reticleHeight:  1
+    property real _reticleSpacing: 10
+    property real _reticleHeight:  2
     property real _reticleSlot:    _reticleSpacing + _reticleHeight
 
     anchors.verticalCenter: parent.verticalCenter
 
+    z:10
     height: parent.height * 0.75 > 280 ? 280 : parent.height * 0.75
     clip:   true
     smooth: true
@@ -49,6 +52,7 @@ Rectangle {
         GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.65) }
     }
     Column{
+        id: col
         width: parent.width
         anchors.verticalCenter: parent.verticalCenter
         spacing: _reticleSpacing
@@ -56,19 +60,19 @@ Rectangle {
             model: 40
             Rectangle {
                 property int _speed: -(index - 20)
-                width:  (_speed % 5 === 0) ? 15 : 30
+                width:  (_speed % 5 === 0) ? 10 : 15
                 anchors.right: parent.right
                 height: _reticleHeight
                 color:  Qt.rgba(1,1,1,0.35)
                 Text {
                     visible: (_speed % 5 === 0)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.horizontalCenterOffset: -25
+                    anchors.horizontalCenterOffset: -30
                     anchors.verticalCenter:   parent.verticalCenter
                     antialiasing: true
-                    font.weight: _speed < 0 ? Font.Light : Font.DemiBold
-                    text: _speed < 0 ? -_speed : _speed
-                    color: _speed < 0 ? "#ef2526" : "white"
+                    font.weight: Font.DemiBold
+                    text:  _speed
+                    color: _speed < 0 ? "#f8983a" : "white"
                     style: Text.Outline
                     styleColor: Qt.rgba(0,0,0,0.25)
                 }

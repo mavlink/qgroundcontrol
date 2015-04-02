@@ -33,26 +33,27 @@ Rectangle {
     property real pitchAngle:      0
     property real rollAngle:       0
     property real _reticleHeight:  1
-    property real _reticleSpacing: 20
+    property real _reticleSpacing: 17
     property real _reticleSlot:    _reticleSpacing + _reticleHeight
-    height: 130
-    width:  parent.width
+    height: 110
+    width:  120
+    radius: 8
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.verticalCenter:   parent.verticalCenter
     clip: true
-    color: Qt.rgba(0,0,0,0)
     Item {
         height: parent.height
         width:  parent.width
         Column{
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter:   parent.verticalCenter
             spacing: _reticleSpacing
             Repeater {
                 model: 36
                 Rectangle {
+                    property int _pitch: -(modelData * 5 - 90)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: ((modelData * 5 - 90) % 10) === 0 ? 50 : 30
+                    width: (_pitch % 10) === 0 ? 50 : 30
                     height: _reticleHeight
                     color: "white"
                     antialiasing: true
@@ -63,9 +64,9 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         smooth: true
                         font.weight: Font.DemiBold
-                        text: -(modelData * 5 - 90)
+                        text: _pitch
                         color: "white"
-                        visible: ((modelData * 5 - 90) % 10) === 0
+                        visible: (_pitch != 0) && ((_pitch % 10) === 0)
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -73,9 +74,9 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         smooth: true
                         font.weight: Font.DemiBold
-                        text: -(modelData * 5 - 90)
+                        text: _pitch
                         color: "white"
-                        visible: ((modelData * 5 - 90) % 10) === 0
+                        visible: (_pitch != 0) && ((_pitch % 10) === 0)
                     }
                 }
             }

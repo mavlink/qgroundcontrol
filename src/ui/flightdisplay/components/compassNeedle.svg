@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 18.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 288 158.4" enable-background="new 0 0 288 158.4" xml:space="preserve">
-<g id="Layer_2">
-	<polygon opacity="0.5" fill="#FFFFFF" points="272.25,9 144,149.4 15.75,9 	"/>
-</g>
-<g id="Layer_1">
-	<polygon opacity="0.75" fill="none" stroke="#000000" stroke-width="12" stroke-linejoin="round" stroke-miterlimit="10" points="
-		279,7.2 144,151.2 9,7.2 	"/>
-</g>
+<polygon points="279,7.2 144,151.2 9,7.2 "/>
 </svg>

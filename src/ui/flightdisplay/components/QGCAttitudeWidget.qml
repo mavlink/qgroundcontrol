@@ -35,6 +35,7 @@ Item {
     property real pitchAngle: 0
     property real backgroundOpacity: 1
     property bool displayBackground: true
+    property bool useWhite: true
 
     anchors.fill: parent
 
@@ -94,9 +95,9 @@ Item {
     Image {
         id: rollDial
         anchors { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
-        source: "/qml/rollDial.svg"
+        source: useWhite ? "/qml/rollDialWhite.svg" : "/qml/rollDial.svg"
         mipmap: true
-        width:  250
+        width:  260
         fillMode: Image.PreserveAspectFit
         transform: Rotation {
             origin.x: rollDial.width  / 2
@@ -108,17 +109,9 @@ Item {
     Image {
         id: pointer
         anchors { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
-        source: "/qml/rollPointer.svg"
+        source: useWhite ? "/qml/rollPointerWhite.svg" : "/qml/rollPointer.svg"
         smooth:   true
         width: rollDial.width
-        fillMode: Image.PreserveAspectFit
-    }
-
-    Image {
-        anchors.centerIn: parent
-        source:   "/qml/crossHair.svg"
-        mipmap:   true
-        width:    rollDial.width
         fillMode: Image.PreserveAspectFit
     }
 
