@@ -1,0 +1,35 @@
+AC3Db
+MATERIAL "DefaultWhite" rgb 1 1 1  amb 1 1 1  emis 0 0 0  spec 0.5 0.5 0.5  shi 64  trans 0
+MATERIAL "glass" rgb 0.1 0.1 0.1 amb 0.5 0.5 0.5 emis 0 0 0 spec 1 1 1 shi 32 trans 0.601077
+OBJECT world
+kids 1
+OBJECT poly
+name "noshadow.screenglass"
+data 8
+Cube.008
+crease 30.000000
+numvert 8
+1.28824 1.725076 -0.02227
+1.28824 1.725076 0.022271
+1.185811 1.414937 0.022271
+1.185811 1.414937 -0.02227
+1.28824 1.725076 -0.620687
+1.28824 1.725076 0.620687
+1.185811 1.414937 0.620687
+1.185811 1.414936 -0.620687
+numsurf 2
+SURF 0x20
+mat 1
+refs 4
+1 0 0
+2 0 0
+6 0 0
+5 0 0
+SURF 0x20
+mat 1
+refs 4
+0 0 0
+4 0 0
+7 0 0
+3 0 0
+kids 0

@@ -75,24 +75,24 @@ Rectangle {
 
     function getMessageIcon() {
         if(mainToolBar.messageType === MainToolBar.MessageNormal || mainToolBar.messageType === MainToolBar.MessageNone)
-            return "qrc:/files/images/status/message_megaphone.png";
+            return "qrc:/res/Megaphone";
         else
-            return "qrc:/files/images/status/message_triangle.png";
+            return "qrc:/res/Yield";
     }
 
     function getBatteryIcon() {
         if(mainToolBar.batteryPercent < 20.0)
-            return "qrc:/files/images/status/battery_0.svg";
+            return "qrc:/res/Battery_0";
         else if(mainToolBar.batteryPercent < 40.0)
-            return "qrc:/files/images/status/battery_20.svg";
+            return "qrc:/res/Battery_20";
         else if(mainToolBar.batteryPercent < 60.0)
-            return "qrc:/files/images/status/battery_40.svg";
+            return "qrc:/res/Battery_40";
         else if(mainToolBar.batteryPercent < 80.0)
-            return "qrc:/files/images/status/battery_60.svg";
+            return "qrc:/res/Battery_60";
         else if(mainToolBar.batteryPercent < 90.0)
-            return "qrc:/files/images/status/battery_80.svg";
+            return "qrc:/res/Battery_80";
         else
-            return "qrc:/files/images/status/battery_100.svg";
+            return "qrc:/res/Battery_100";
     }
 
     function getBatteryColor() {
@@ -316,7 +316,7 @@ Rectangle {
                 border.width: 0
 
                 Image {
-                    source: "qrc:/files/images/status/gps.svg";
+                    source: "qrc:/res/Gps";
                     height: 24
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter

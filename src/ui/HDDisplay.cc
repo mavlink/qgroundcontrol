@@ -117,7 +117,7 @@ HDDisplay::HDDisplay(const QStringList &plotList, QString title, QWidget *parent
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintGL()));
 
     fontDatabase = QFontDatabase();
-    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
+    const QString fontFileName = ":/res/fonts/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
     const QString fontFamilyName = "Bitstream Vera Sans";
     if(!QFile::exists(fontFileName)) qDebug() << "ERROR! font file: " << fontFileName << " DOES NOT EXIST!";
 

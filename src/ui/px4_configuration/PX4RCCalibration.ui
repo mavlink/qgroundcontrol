@@ -618,7 +618,7 @@ background-color: rgb(80, 80, 80);s</string>
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap>:/files/images/px4/calibration/radioCenter.png</pixmap>
+        <pixmap>:/res/calibration/radioCenter.png</pixmap>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

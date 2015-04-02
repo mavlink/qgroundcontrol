@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<PropertyList>
+	
+	<!--back-->
+	<!--right -->
+	<!--up -->
+		
+
+    <path>fuel.ac</path>
+ <animation>
+  <type>rotate</type>
+  <object-name>needle</object-name>
+  <property>consumables/fuel/total-fuel-norm</property>
+  <factor>-90</factor>
+  <center>
+   <x-m>0.0</x-m>
+   <y-m>0.0</y-m>
+   <z-m>-0.015</z-m>
+  </center>
+  <axis>
+   <x>1.0</x>
+   <y>0.0</y>
+   <z>0.0</z>
+  </axis>
+ </animation>
+
+
+</PropertyList>
