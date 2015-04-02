@@ -473,64 +473,64 @@ void MainToolBar::_updateName(const QString& name)
  */
 void MainToolBar::_setSystemType(UASInterface*, unsigned int systemType)
 {
-    _systemPixmap = "qrc:/files/images/mavs/";
+    _systemPixmap = "qrc:/res/mavs/";
     switch (systemType) {
         case MAV_TYPE_GENERIC:
-            _systemPixmap += "generic.svg";
+            _systemPixmap += "Generic";
             break;
         case MAV_TYPE_FIXED_WING:
-            _systemPixmap += "fixed-wing.svg";
+            _systemPixmap += "FixedWing";
             break;
         case MAV_TYPE_QUADROTOR:
-            _systemPixmap += "quadrotor.svg";
+            _systemPixmap += "QuadRotor";
             break;
         case MAV_TYPE_COAXIAL:
-            _systemPixmap += "coaxial.svg";
+            _systemPixmap += "Coaxial";
             break;
         case MAV_TYPE_HELICOPTER:
-            _systemPixmap += "helicopter.svg";
+            _systemPixmap += "Helicopter";
             break;
         case MAV_TYPE_ANTENNA_TRACKER:
-            _systemPixmap += "antenna-tracker.svg";
+            _systemPixmap += "AntennaTracker";
             break;
         case MAV_TYPE_GCS:
-            _systemPixmap += "groundstation.svg";
+            _systemPixmap += "Groundstation";
             break;
         case MAV_TYPE_AIRSHIP:
-            _systemPixmap += "airship.svg";
+            _systemPixmap += "Airship";
             break;
         case MAV_TYPE_FREE_BALLOON:
-            _systemPixmap += "free-balloon.svg";
+            _systemPixmap += "FreeBalloon";
             break;
         case MAV_TYPE_ROCKET:
-            _systemPixmap += "rocket.svg";
+            _systemPixmap += "Rocket";
             break;
         case MAV_TYPE_GROUND_ROVER:
-            _systemPixmap += "ground-rover.svg";
+            _systemPixmap += "GroundRover";
             break;
         case MAV_TYPE_SURFACE_BOAT:
-            _systemPixmap += "surface-boat.svg";
+            _systemPixmap += "SurfaceBoat";
             break;
         case MAV_TYPE_SUBMARINE:
-            _systemPixmap += "submarine.svg";
+            _systemPixmap += "Submarine";
             break;
         case MAV_TYPE_HEXAROTOR:
-            _systemPixmap += "hexarotor.svg";
+            _systemPixmap += "HexaRotor";
             break;
         case MAV_TYPE_OCTOROTOR:
-            _systemPixmap += "octorotor.svg";
+            _systemPixmap += "OctoRotor";
             break;
         case MAV_TYPE_TRICOPTER:
-            _systemPixmap += "tricopter.svg";
+            _systemPixmap += "TriCopter";
             break;
         case MAV_TYPE_FLAPPING_WING:
-            _systemPixmap += "flapping-wing.svg";
+            _systemPixmap += "FlappingWing";
             break;
         case MAV_TYPE_KITE:
-            _systemPixmap += "kite.svg";
+            _systemPixmap += "Kite";
             break;
         default:
-            _systemPixmap += "unknown.svg";
+            _systemPixmap += "Unknown";
             break;
     }
     emit systemPixmapChanged(_systemPixmap);

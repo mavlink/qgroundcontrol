@@ -45,7 +45,7 @@ QGCAudioWorker::QGCAudioWorker(QObject *parent) :
 void QGCAudioWorker::init()
 {
 #ifdef QGC_NOTIFY_TUNES_ENABLED
-    sound = new QSound(":/files/audio/alert.wav");
+    sound = new QSound(":/res/Alert");
 #endif
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
@@ -163,7 +163,7 @@ void QGCAudioWorker::beep()
     if (!muted)
     {
 #ifdef QGC_NOTIFY_TUNES_ENABLED
-        sound->play(":/files/audio/alert.wav");
+        sound->play(":/res/Alert");
 #endif
     }
 }

@@ -60,7 +60,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/actions/qgroundcontrol-connect.svg</normaloff>:/files/images/actions/qgroundcontrol-connect.svg</iconset>
+       <normaloff>:/res/QGroundControlConnect</normaloff>:/res/QGroundControlConnect</iconset>
      </property>
      <property name="iconSize">
       <size>

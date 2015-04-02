@@ -347,13 +347,6 @@ void UAS::updateState()
     {
         positionLock = false;
     }
-    else
-    {
-        if (((base_mode & MAV_MODE_FLAG_DECODE_POSITION_AUTO) || (base_mode & MAV_MODE_FLAG_DECODE_POSITION_GUIDED)) && positionLock)
-        {
-            GAudioOutput::instance()->notifyNegative();
-        }
-    }
 }
 
 /**
@@ -565,7 +558,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             else if (modechanged || statechanged)
             {
-                GAudioOutput::instance()->stopEmergency();
                 GAudioOutput::instance()->say(audiostring.toLower());
             }
         }
@@ -816,11 +808,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit localPositionChanged(this, localX, localY, localZ, time);
                 emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
 
-                // Set internal state
-                if (!positionLock) {
-                    // If position was not locked before, notify positive
-                    GAudioOutput::instance()->notifyPositive();
-                }
                 positionLock = true;
                 isLocalPositionKnown = true;
             }
@@ -863,12 +850,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             setGroundSpeed(qSqrt(speedX*speedX+speedY*speedY));
             emit speedChanged(this, groundSpeed, airSpeed, time);
 
-            // Set internal state
-            if (!positionLock)
-            {
-                // If position was not locked before, notify positive
-                GAudioOutput::instance()->notifyPositive();
-            }
             positionLock = true;
             isGlobalPositionKnown = true;
         }
@@ -3351,7 +3332,6 @@ void UAS::startLowBattAlarm()
     if (!lowBattAlarm)
     {
         GAudioOutput::instance()->alert(tr("System %1 has low battery").arg(getUASID()));
-        QTimer::singleShot(3000, GAudioOutput::instance(), SLOT(startEmergency()));
         lowBattAlarm = true;
     }
 }
@@ -3360,7 +3340,6 @@ void UAS::stopLowBattAlarm()
 {
     if (lowBattAlarm)
     {
-        GAudioOutput::instance()->stopEmergency();
         lowBattAlarm = false;
     }
 }

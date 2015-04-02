@@ -266,22 +266,22 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
         switch (systemType)
         {
         case MAV_TYPE_GENERIC:
-            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/generic.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Generic"));
             break;
         case MAV_TYPE_FIXED_WING:
-            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/fixed-wing.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/FixedWing"));
             break;
         case MAV_TYPE_QUADROTOR:
-            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/quadrotor.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/QuadRotor"));
             break;
         case MAV_TYPE_COAXIAL:
-            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/coaxial.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Coaxial"));
             break;
         case MAV_TYPE_HELICOPTER:
-            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/helicopter.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Helicopter"));
             break;
         case MAV_TYPE_ANTENNA_TRACKER:
-            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/unknown.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Unknown"));
             break;
         case MAV_TYPE_GCS: {
                 // A groundstation is a special system type, update widget
@@ -299,44 +299,44 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
                 m_ui->landButton->hide();
                 m_ui->shutdownButton->hide();
                 m_ui->abortButton->hide();
-                m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/groundstation.svg"));
+                m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Groundstation"));
             }
             break;
         case MAV_TYPE_AIRSHIP:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/airship.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Airship"));
             break;
         case MAV_TYPE_FREE_BALLOON:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/free-balloon.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/FreeBalloon"));
             break;
         case MAV_TYPE_ROCKET:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/rocket.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Rocket"));
             break;
         case MAV_TYPE_GROUND_ROVER:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/ground-rover.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/GroundRover"));
             break;
         case MAV_TYPE_SURFACE_BOAT:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/surface-boat.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/SurfaceBoat"));
             break;
         case MAV_TYPE_SUBMARINE:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/submarine.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Submarine"));
             break;
         case MAV_TYPE_HEXAROTOR:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/hexarotor.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/HexaRotor"));
             break;
         case MAV_TYPE_OCTOROTOR:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/octorotor.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/OctoRotor"));
             break;
         case MAV_TYPE_TRICOPTER:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/tricopter.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/TriCopter"));
             break;
         case MAV_TYPE_FLAPPING_WING:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/flapping-wing.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/FlappingWing"));
             break;
         case MAV_TYPE_KITE:
-            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/kite.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/res/mavs/Kite"));
             break;
         default:
-            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/unknown.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap("://res/mavs/Unknown"));
             break;
         }
     }

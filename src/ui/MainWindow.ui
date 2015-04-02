@@ -125,8 +125,8 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/control/launch.svg</normaloff>
-     <normalon>:/files/images/control/launch.svg</normalon>:/files/images/control/launch.svg</iconset>
+     <normaloff>:/res/Launch</normaloff>
+     <normalon>:/res/Launch</normalon>:/res/Launch</iconset>
    </property>
    <property name="text">
     <string>Liftoff</string>
@@ -135,7 +135,7 @@
   <action name="actionLand">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/control/land.svg</normaloff>:/files/images/control/land.svg</iconset>
+     <normaloff>:/res/Land</normaloff>:/res/Land</iconset>
    </property>
    <property name="text">
     <string>Land</string>
@@ -144,7 +144,7 @@
   <action name="actionEmergency_Land">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/actions/process-stop.svg</normaloff>:/files/images/actions/process-stop.svg</iconset>
+     <normaloff>:/res/Kill</normaloff>:/res/Kill</iconset>
    </property>
    <property name="text">
     <string>Emergency Land</string>
@@ -156,7 +156,7 @@
   <action name="actionEmergency_Kill">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/actions/process-stop.svg</normaloff>:/files/images/actions/process-stop.svg</iconset>
+     <normaloff>:/res/Kill</normaloff>:/res/Kill</iconset>
    </property>
    <property name="text">
     <string>Kill UAS</string>
@@ -236,7 +236,7 @@
   <action name="actionShutdownMAV">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/actions/system-log-out.svg</normaloff>:/files/images/actions/system-log-out.svg</iconset>
+     <normaloff>:/res/Shutdown</normaloff>:/res/Shutdown</iconset>
    </property>
    <property name="text">
     <string>Shutdown MAV</string>

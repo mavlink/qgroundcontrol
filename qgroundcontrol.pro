@@ -141,7 +141,7 @@ MacBuild {
     CONFIG -= x86
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
     QMAKE_MAC_SDK = macosx10.9
-    ICON = $$BASEDIR/files/images/icons/macx.icns
+    ICON = $$BASEDIR/resources/icons/macx.icns
     QT += quickwidgets
 }
 
@@ -283,7 +283,6 @@ FORMS += \
     src/ui/DebugConsole.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
-    src/ui/AudioOutputWidget.ui \
     src/ui/QGCSensorSettingsWidget.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QMap3D.ui \
@@ -380,7 +379,6 @@ HEADERS += \
     src/ui/DebugConsole.h \
     src/ui/HDDisplay.h \
     src/ui/MAVLinkSettingsWidget.h \
-    src/ui/AudioOutputWidget.h \
     src/GAudioOutput.h \
     src/LogCompressor.h \
     src/ui/QGCParamWidget.h \
@@ -527,7 +525,6 @@ SOURCES += \
     src/ui/DebugConsole.cc \
     src/ui/HDDisplay.cc \
     src/ui/MAVLinkSettingsWidget.cc \
-    src/ui/AudioOutputWidget.cc \
     src/GAudioOutput.cc \
     src/LogCompressor.cc \
     src/ui/QGCParamWidget.cc \

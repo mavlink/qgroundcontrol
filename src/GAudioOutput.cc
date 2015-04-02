@@ -103,69 +103,6 @@ bool GAudioOutput::alert(QString text)
     return true;
 }
 
-void GAudioOutput::notifyPositive()
-{
-    if (!muted)
-    {
-        // Use QFile to transform path for all OS
-        // FIXME: Get working with Qt5's QtMultimedia module
-        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/double_notify.wav"));
-        //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-        //m_media->play();
-    }
-}
-
-void GAudioOutput::notifyNegative()
-{
-    if (!muted)
-    {
-        // Use QFile to transform path for all OS
-        // FIXME: Get working with Qt5's QtMultimedia module
-        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/flat_notify.wav"));
-        //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-        //m_media->play();
-    }
-}
-
-/**
- * The emergency sound will be played continously during the emergency.
- * call stopEmergency() to disable it again. No speech synthesis or other
- * audio output is available during the emergency.
- *
- * @return true if the emergency could be started, false else
- */
-bool GAudioOutput::startEmergency()
-{
-//    if (!emergency)
-//    {
-//        emergency = true;
-
-//        // Beep immediately and then start timer
-
-//        emergencyTimer->start(1500);
-//        QTimer::singleShot(5000, this, SLOT(stopEmergency()));
-//    }
-
-    return true;
-}
-
-/**
- * Stops the continous emergency sound. Use startEmergency() to start
- * the emergency sound.
- *
- * @return true if the emergency could be stopped, false else
- */
-bool GAudioOutput::stopEmergency()
-{
-//    if (emergency)
-//    {
-//        emergency = false;
-//        emergencyTimer->stop();
-//    }
-
-    return true;
-}
-
 void GAudioOutput::beep()
 {
     if (!muted) {
