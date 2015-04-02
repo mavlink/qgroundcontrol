@@ -393,8 +393,8 @@
       <widget class="QPushButton" name="stopStartButton">
        <property name="icon">
         <iconset resource="../../../qgroundcontrol.qrc">
-         <normaloff>:/files/images/actions/media-playback-stop.svg</normaloff>
-         <normalon>:/files/images/actions/media-playback-start.svg</normalon>:/files/images/actions/media-playback-stop.svg</iconset>
+         <normaloff>:/res/Stop</normaloff>
+         <normalon>:/res/Start</normalon>:/res/Stop</iconset>
        </property>
        <property name="iconSize">
         <size>

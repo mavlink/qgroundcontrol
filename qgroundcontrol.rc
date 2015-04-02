@@ -1,4 +1,4 @@
-IDI_ICON1               ICON    DISCARDABLE     "files/images/icons/qgroundcontrol.ico"
+IDI_ICON1               ICON    DISCARDABLE     "resources/icons/qgroundcontrol.ico"
 
 1 VERSIONINFO
 FILEVERSION    	2,0,0,227

@@ -71,7 +71,7 @@ QGCVideoApp::QGCVideoApp(int &argc, char* argv[]) : QApplication(argc, argv)
 
     // Set application font
     QFontDatabase fontDatabase = QFontDatabase();
-    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
+    const QString fontFileName = ":/res/fonts/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
     const QString fontFamilyName = "Bitstream Vera Sans";
     if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
     fontDatabase.addApplicationFont(fontFileName);

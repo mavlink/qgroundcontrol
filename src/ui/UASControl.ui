@@ -111,10 +111,6 @@
        <property name="text">
         <string>Start</string>
        </property>
-       <property name="icon">
-        <iconset resource="../../qgroundcontrol.qrc">
-         <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
-       </property>
       </widget>
      </item>
      <item>
@@ -134,10 +130,6 @@
        <property name="text">
         <string>Land</string>
        </property>
-       <property name="icon">
-        <iconset resource="../../qgroundcontrol.qrc">
-         <normaloff>:/files/images/control/land.svg</normaloff>:/files/images/control/land.svg</iconset>
-       </property>
       </widget>
      </item>
      <item>
@@ -156,10 +148,6 @@
        </property>
        <property name="text">
         <string>Halt</string>
-       </property>
-       <property name="icon">
-        <iconset resource="../../qgroundcontrol.qrc">
-         <normaloff>:/files/images/actions/system-log-out.svg</normaloff>:/files/images/actions/system-log-out.svg</iconset>
        </property>
       </widget>
      </item>
@@ -197,10 +185,6 @@
      </property>
      <property name="text">
       <string>Set</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
      </property>
     </widget>
    </item>
@@ -273,8 +257,6 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../../qgroundcontrol.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
