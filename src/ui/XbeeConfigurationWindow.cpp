@@ -204,8 +204,6 @@ XbeeConfigurationWindow::XbeeConfigurationWindow(LinkInterface* link, QWidget *p
 	{
 		this->link = xbeeLink;
 
-		action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", link);
-
 		baudLabel = new QLabel;
 		baudLabel->setText(tr("Baut Rate"));
 		baudBox = new QComboBox;
@@ -400,11 +398,6 @@ void XbeeConfigurationWindow::hideEvent(QHideEvent* event)
 {
     Q_UNUSED(event);
     portCheckTimer->stop();
-}
-
-QAction* XbeeConfigurationWindow::getAction()
-{
-    return action;
 }
 
 void XbeeConfigurationWindow::configureCommunication()

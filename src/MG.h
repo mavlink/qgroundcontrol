@@ -341,64 +341,6 @@ public:
     }
 
 };
-
-class DIR
-{
-
-public:
-    /**
-     * @brief Get the current support file directory.
-     *
-     * The support files are files like icons or fonts and are typically found in the
-     * same directory as the main executable.
-     *
-     * @return The absolute path of the directory
-     **/
-    static QString getSupportFilesDirectory() {
-
-        // Checks if the software is executed in the development environment
-        QString path = QDir::current().absolutePath();
-        QDir currentDir = QDir::current();
-
-        if (QDir::current().dirName().toLower() == "debug") {
-            // Debug folder of development environment
-            path.append("/..");
-        } else if (QDir::current().dirName().toLower() == "release") {
-            // Release folder of development environment
-            path.append("/..");
-        } else if (QDir::current().dirName().toLower() == "bin") {
-            // Release folder of development environment
-            path.append("/..");
-        } else if (QDir::current().dirName().toLower() == "macos") {
-            // Mac application bundle in development environment
-            path.append("/../../../../..");
-        }
-
-        // Check if we are still in a development folder
-        if(currentDir.cdUp()) {
-            if(currentDir.dirName().toLower() == "build") {
-                path.append("/..");
-            }
-        }
-        //TODO The Mac application bundle in distribution is not yet included here
-        //qDebug() << "MG::supportfilesdirectory" << path;
-        return path;
-    }
-
-    /**
-     * @brief Get the current icon directory.
-     *
-     * The icon directory is typically a subdirectory of the main directory,
-     * but depends on the platform. For example in OS X it is part of the bundle.
-     *
-     * @return The absolute path of the icon directory
-     **/
-    static QString getIconDirectory() {
-        return MG::DIR::getSupportFilesDirectory() + "/files/images/";
-    }
-
-};
-
 }
 
 #endif // _MG_H_
