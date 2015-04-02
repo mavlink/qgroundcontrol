@@ -90,11 +90,10 @@ Rectangle {
                         color: qgcPal.windowShadeDark
 
                         // Title text
-                        Text {
+                        QGCLabel {
                             anchors.fill:   parent
 
                             color:          qgcPal.buttonText
-                            font.pixelSize: 12
                             text:           modelData.name.toUpperCase()
 
                             verticalAlignment:      TextEdit.AlignVCenter

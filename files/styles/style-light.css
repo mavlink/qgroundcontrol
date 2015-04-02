@@ -88,61 +88,6 @@ QGCMAVLinkLogPlayer QLabel:disabled {
     color: #666;
 }
 
-QGCToolBar {
-    border-top-color: #969696;
-    border-bottom-color: #484848;
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #DDD, stop: 1 #999);
-}
-
-QGCToolBar QLabel#toolBarBatteryBar {
-    color: #008000;
-}
-
-QGCToolBar QLabel#toolBarTimeoutLabel {
-    color: #FFFFFF;
-    background-color: #FF0037;
-}
-
-QGCToolBar QLabel#toolBarModeLabel {
-    color: #475E66;
-}
-
-QGCToolBar QLabel#toolBarStateLabel {
-    color: #80632A;
-}
-
-QGCToolBar QLabel#toolBarBatteryVoltageLabel {
-    color: #008000;
-}
-
-QGCToolBar QLabel#toolBarWpLabel {
-    color: #475E66;
-}
-
-QGCToolBar QLabel#toolBarMessageLabel {
-    color: #475E66;
-}
-
-QGCToolBar QToolButton {
-    border-top: #DDD;
-    border-bottom: #DDD;
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333, stop: 1 #444);
-    color: #FFF;
-}
-
-QGCToolBar QToolButton:checked, QGCToolBar QToolButton:pressed, QGCToolBar QToolButton:checked:hover {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #999);
-    color: #FFF;
-}
-
-QGCToolBar QToolButton:hover {
-    color: #000;
-}
-
-QGCToolBar .QWidget {
-    background-color: transparent;
-}
-
 QGCToolWidgetItem {
     border-color: #666;
 }
