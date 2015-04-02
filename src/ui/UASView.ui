@@ -63,7 +63,7 @@
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap resource="../../qgroundcontrol.qrc">:/files/images/mavs/unknown.svg</pixmap>
+          <pixmap resource="../../qgroundcontrol.qrc">:/res/mavs/Unknown</pixmap>
          </property>
         </widget>
        </item>
@@ -176,7 +176,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
+           <normaloff>:/res/Launch</normaloff>:/res/Launch</iconset>
          </property>
         </widget>
        </item>
@@ -211,7 +211,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/media-playback-stop.svg</normaloff>:/files/images/actions/media-playback-stop.svg</iconset>
+           <normaloff>:/res/Stop</normaloff>:/res/Stop</iconset>
          </property>
         </widget>
        </item>
@@ -240,7 +240,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/media-playback-pause.svg</normaloff>:/files/images/actions/media-playback-pause.svg</iconset>
+           <normaloff>:/res/Pause</normaloff>:/res/Pause</iconset>
          </property>
         </widget>
        </item>
@@ -269,7 +269,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/media-playback-start.svg</normaloff>:/files/images/actions/media-playback-start.svg</iconset>
+           <normaloff>:/res/Play</normaloff>:/res/Play</iconset>
          </property>
         </widget>
        </item>
@@ -298,7 +298,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/control/land.svg</normaloff>:/files/images/control/land.svg</iconset>
+           <normaloff>:/res/Land</normaloff>:/res/Land</iconset>
          </property>
         </widget>
        </item>
@@ -327,7 +327,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/process-stop.svg</normaloff>:/files/images/actions/process-stop.svg</iconset>
+           <normaloff>:/res/Kill</normaloff>:/res/Kill</iconset>
          </property>
         </widget>
        </item>
@@ -350,7 +350,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/system-log-out.svg</normaloff>:/files/images/actions/system-log-out.svg</iconset>
+           <normaloff>:/res/Shutdown</normaloff>:/res/Shutdown</iconset>
          </property>
         </widget>
        </item>

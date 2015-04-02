@@ -106,8 +106,6 @@ private:
     void _cancel(void);
     void _getFirmwareFile(void);
     
-    void _setBoardIcon(int boardID);
-    
     void _downloadFirmware(void);
     
     void _erase(void);

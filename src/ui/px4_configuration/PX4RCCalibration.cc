@@ -47,7 +47,7 @@ const int PX4RCCalibration::_rcCalMinDelta = 100;             ///< Amount of del
 
 const int PX4RCCalibration::_stickDetectSettleMSecs = 500;
 
-const char*  PX4RCCalibration::_imageFilePrefix = ":files/images/px4/calibration/";
+const char*  PX4RCCalibration::_imageFilePrefix = ":/res/calibration/";
 const char*  PX4RCCalibration::_imageFileMode1Dir = "mode1/";
 const char*  PX4RCCalibration::_imageFileMode2Dir = "mode2/";
 const char*  PX4RCCalibration::_imageCenter = "radioCenter.png";

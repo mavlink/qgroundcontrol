@@ -146,40 +146,6 @@ void FirmwareUpgradeController::_findTimeout(void)
     _cancel();
 }
 
-/// @brief Sets the board image into the icon label according to the board id.
-void FirmwareUpgradeController::_setBoardIcon(int boardID)
-{
-    QString imageFile;
-    
-    switch (boardID) {
-        case _boardIDPX4FMUV1:
-            imageFile = ":/files/images/px4/boards/px4fmu_1.x.png";
-            break;
-            
-        case _boardIDPX4Flow:
-            imageFile = ":/files/images/px4/boards/px4flow_1.x.png";
-            break;
-            
-        case _boardIDPX4FMUV2:
-            imageFile = ":/files/images/px4/boards/px4fmu_2.x.png";
-            break;
-    }
-    
-    if (!imageFile.isEmpty()) {
-        bool success = _boardIcon.load(imageFile);
-        Q_ASSERT(success);
-        Q_UNUSED(success);
-        /*
-         // FIXME: NYI
-
-        int w = _ui->icon->width();
-        int h = _ui->icon->height();
-        
-        _ui->icon->setPixmap(_boardIcon.scaled(w, h, Qt::KeepAspectRatio));
-         */
-    }
-}
-
 /// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
 void FirmwareUpgradeController::_getFirmwareFile(void)
 {

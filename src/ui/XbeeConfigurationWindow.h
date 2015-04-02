@@ -23,8 +23,6 @@ public:
 	XbeeConfigurationWindow(LinkInterface* link, QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
 	~XbeeConfigurationWindow();
 
-	QAction* getAction();
-
 public slots:
 	void configureCommunication();
 	void setPortName(QString port);
@@ -49,7 +47,6 @@ private:
 	QHBoxLayout *xbeeLayout;
 	QVBoxLayout *tmpLayout;
 	XbeeLinkInterface* link;
-    QAction* action;
     QTimer* portCheckTimer;
 	HexSpinBox* highAddr;
 	HexSpinBox* lowAddr;
