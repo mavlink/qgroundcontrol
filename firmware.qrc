@@ -1,0 +1,41 @@
+<RCC>
+    <qresource prefix="/">
+        <file>files/images/firmware/apmcopter.png</file>
+        <file>files/images/firmware/apmplane.png</file>
+        <file>files/images/firmware/apmrover.png</file>
+        <file>files/images/firmware/FW icons 2013+logos.ai</file>
+        <file>files/images/firmware/heli.png</file>
+        <file>files/images/firmware/heli_off.png</file>
+        <file>files/images/firmware/heli_on.png</file>
+        <file>files/images/firmware/hexa_off.png</file>
+        <file>files/images/firmware/hexa_on.png</file>
+        <file>files/images/firmware/hexaplus.png</file>
+        <file>files/images/firmware/hexax.png</file>
+        <file>files/images/firmware/hexay.png</file>
+        <file>files/images/firmware/octaplus.png</file>
+        <file>files/images/firmware/octax.png</file>
+        <file>files/images/firmware/octo_off.png</file>
+        <file>files/images/firmware/octo_on.png</file>
+        <file>files/images/firmware/octx.png</file>
+        <file>files/images/firmware/plane.png</file>
+        <file>files/images/firmware/plane_off.png</file>
+        <file>files/images/firmware/plane_on.png</file>
+        <file>files/images/firmware/quad_off.png</file>
+        <file>files/images/firmware/quad_on.png</file>
+        <file>files/images/firmware/quad_T_off.png</file>
+        <file>files/images/firmware/quad_T_on.png</file>
+        <file>files/images/firmware/quadplus.png</file>
+        <file>files/images/firmware/quadx.png</file>
+        <file>files/images/firmware/quady.png</file>
+        <file>files/images/firmware/rover.png</file>
+        <file>files/images/firmware/rover_off.png</file>
+        <file>files/images/firmware/rover_on.png</file>
+        <file>files/images/firmware/Tir_off.png</file>
+        <file>files/images/firmware/Tir_on.png</file>
+        <file>files/images/firmware/triy.png</file>
+        <file>files/images/firmware/X8.png</file>
+        <file>files/images/firmware/X8_on.png</file>
+        <file>files/images/firmware/Y6_off.png</file>
+        <file>files/images/firmware/Y6_on.png</file>
+    </qresource>
+</RCC>

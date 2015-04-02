@@ -231,7 +231,12 @@ include(QGCInstaller.pri)
 # Main QGroundControl portion of project file
 #
 
-RESOURCES += qgroundcontrol.qrc
+RESOURCES += qgroundcontrol.qrc \
+    actions.qrc \
+    firmware.qrc \
+    mavs.qrc \
+    px4.qrc \
+    status.qrc
 
 TRANSLATIONS += \
     es-MX.ts \

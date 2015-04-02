@@ -1,0 +1,26 @@
+<RCC>
+    <qresource prefix="/">
+        <file>files/images/mavs/helicopter.svg</file>
+        <file>files/images/mavs/unknown.svg</file>
+        <file>files/images/mavs/fixed-wing.svg</file>
+        <file>files/images/mavs/groundstation.svg</file>
+        <file>files/images/mavs/generic.svg</file>
+        <file>files/images/mavs/quadrotor.svg</file>
+        <file>files/images/mavs/coaxial.svg</file>
+        <file>files/images/mavs/airship.svg</file>
+        <file>files/images/mavs/antenna-tracker.svg</file>
+        <file>files/images/mavs/flapping-wing.svg</file>
+        <file>files/images/mavs/free-balloon.svg</file>
+        <file>files/images/mavs/ground-rover.svg</file>
+        <file>files/images/mavs/hexarotor.svg</file>
+        <file>files/images/mavs/kite.svg</file>
+        <file>files/images/mavs/octorotor.svg</file>
+        <file>files/images/mavs/rocket.svg</file>
+        <file>files/images/mavs/submarine.svg</file>
+        <file>files/images/mavs/surface-boat.svg</file>
+        <file>files/images/mavs/tricopter.svg</file>
+        <file>files/images/mavs/frames_plus.png</file>
+        <file>files/images/mavs/frames_x.png</file>
+        <file>files/images/mavs/frames-05.png</file>
+    </qresource>
+</RCC>

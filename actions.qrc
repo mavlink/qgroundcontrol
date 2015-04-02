@@ -1,0 +1,29 @@
+<RCC>
+    <qresource prefix="/">
+        <file>files/images/actions/media-record.svg</file>
+        <file>files/images/actions/media-playback-stop.svg</file>
+        <file>files/images/actions/media-playback-start.svg</file>
+        <file>files/images/actions/media-playback-pause.svg</file>
+        <file>files/images/actions/list-remove.svg</file>
+        <file>files/images/actions/list-add.svg</file>
+        <file>files/images/actions/go-up.svg</file>
+        <file>files/images/actions/go-top.svg</file>
+        <file>files/images/actions/go-previous.svg</file>
+        <file>files/images/actions/go-next.svg</file>
+        <file>files/images/actions/go-last.svg</file>
+        <file>files/images/actions/go-jump.svg</file>
+        <file>files/images/actions/go-home.svg</file>
+        <file>files/images/actions/go-first.svg</file>
+        <file>files/images/actions/go-down.svg</file>
+        <file>files/images/actions/go-bottom.svg</file>
+        <file>files/images/actions/process-stop.svg</file>
+        <file>files/images/actions/system-shutdown.svg</file>
+        <file>files/images/actions/system-log-out.svg</file>
+        <file>files/images/actions/system-lock-screen.svg</file>
+        <file>files/images/actions/qgroundcontrol-generic.svg</file>
+        <file>files/images/actions/qgroundcontrol-px4.svg</file>
+        <file>files/images/actions/qgroundcontrol-apm.svg</file>
+        <file>files/images/actions/qgroundcontrol-ardrone.svg</file>
+        <file>files/images/actions/qgroundcontrol-wifi.svg</file>
+    </qresource>
+</RCC>
