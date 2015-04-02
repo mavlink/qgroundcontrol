@@ -2,18 +2,15 @@
 <!-- Generator: Adobe Illustrator 18.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 288 288 129.6" enable-background="new 0 288 288 129.6" xml:space="preserve">
-<g id="svg5772" sodipodi:docname="rollPointer.svg" inkscape:version="0.48.2 r9819" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+<g id="svg5772" inkscape:version="0.48.2 r9819" sodipodi:docname="rollPointer.svg" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
 	
-		<sodipodi:namedview  inkscape:window-x="0" inkscape:window-width="1920" inkscape:window-height="1152" inkscape:pageopacity="0.0" inkscape:document-units="px" inkscape:pageshadow="2" inkscape:current-layer="layer5" inkscape:window-y="22" inkscape:window-maximized="1" inkscape:showpageshadow="false" inkscape:guide-bbox="true" id="base" showguides="true" inkscape:zoom="3" borderopacity="1.0" inkscape:cy="66.806039" bordercolor="#666666" pagecolor="#ffffff" showgrid="true" inkscape:cx="74.271777">
-		<inkscape:grid  type="xygrid" snapvisiblegridlinesonly="true" id="grid5780" empspacing="5" visible="true" enabled="true">
+		<sodipodi:namedview  id="base" inkscape:current-layer="layer5" inkscape:showpageshadow="false" inkscape:document-units="px" inkscape:window-width="1920" inkscape:window-y="22" inkscape:window-maximized="1" inkscape:guide-bbox="true" inkscape:window-height="1152" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:window-x="0" pagecolor="#ffffff" inkscape:zoom="3" inkscape:cx="74.271777" inkscape:cy="66.806039" bordercolor="#666666" showgrid="true" showguides="true" borderopacity="1.0">
+		<inkscape:grid  type="xygrid" id="grid5780" snapvisiblegridlinesonly="true" empspacing="5" enabled="true" visible="true">
 			</inkscape:grid>
 	</sodipodi:namedview>
 	<rect id="rect5782" y="405.5" fill="none" width="288" height="12.1"/>
-	<path id="path6692" inkscape:connector-curvature="0" fill="#9F0022" d="M137.9,312.4C144,288,144,288,144,288l6.1,24.4l0,0H137.9z
-		"/>
 </g>
 <g id="Layer_2">
-	<path id="path6692_1_" inkscape:connector-curvature="0" opacity="0.5" fill="none" stroke="#FFFFFF" d="M137.7,312.8
-		c6.3-25.2,6.3-25.2,6.3-25.2l6.3,25.2l0,0H137.7z"/>
+	<path id="path6692_1_" inkscape:connector-curvature="0" d="M135,313.2c9-25.2,9-25.2,9-25.2l9,25.2l0,0H135z"/>
 </g>
 </svg>

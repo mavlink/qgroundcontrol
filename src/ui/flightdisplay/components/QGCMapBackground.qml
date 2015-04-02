@@ -62,17 +62,19 @@ Rectangle {
 
     Plugin {
         id:   mapPlugin
-        name: "osm"
+        name: "google"
     }
 
     Map {
         id: map
+        property real lon: (longitude > -180.1 && longitude < 180.1) ? longitude : 0
+        property real lat: (latitude  > -180.1 && latitude  < 180.1) ? latitude : 0
         plugin:     mapPlugin
         width:      1
         height:     1
         zoomLevel:  zoomLevel
         anchors.centerIn: parent
-        center:     map.visible ? QtPositioning.coordinate(latitude, longitude) : QtPositioning.coordinate(0,0)
+        center:     map.visible ? QtPositioning.coordinate(lat, lon) : QtPositioning.coordinate(0,0)
         transform: Rotation {
             origin.x: map.width  / 2
             origin.y: map.height / 2
