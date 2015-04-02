@@ -566,9 +566,33 @@ void QGCApplication::_loadCurrentStyle(void)
             success = false;
         }
     }
+    
+    // Now that we have the styles loaded we need to dpi adjust the font point sizes
+    
+    QString dpiAdjustedStyles;
+    if (success) {
+        QTextStream styleStream(&styles, QIODevice::ReadOnly);
+        QRegularExpression regex("font-size:.+(\\d\\d)pt;");
+        
+        while (!styleStream.atEnd()) {
+            QString adjustedLine;
+            QString line = styleStream.readLine();
+            
+            QRegularExpressionMatch match = regex.match(line);
+            if (match.hasMatch()) {
+                //qDebug() << "found:" << line << match.captured(1);
+                adjustedLine = QString("font-size: %1pt;").arg(ScreenTools::dpiAdjustedPointSize_s(match.captured(1).toDouble()));
+                //qDebug() << "adjusted:" << adjustedLine;
+            } else {
+                adjustedLine = line;
+            }
+            
+            dpiAdjustedStyles += adjustedLine;
+        }
+    }
 
-    if (!styles.isEmpty()) {
-        setStyleSheet(styles);
+    if (!dpiAdjustedStyles.isEmpty()) {
+        setStyleSheet(dpiAdjustedStyles);
     }
 
     if (!success) {
