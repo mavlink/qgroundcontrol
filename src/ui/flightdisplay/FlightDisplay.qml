@@ -237,7 +237,6 @@ Rectangle {
                 if (mapBackground.mapItem.supportedMapTypes.length > 0)
                     map = mapBackground.mapItem.activeMapType.name;
                 map = flightDisplay.loadSetting("currentMapType", map);
-                console.log('Set map type: ', map)
                 if(map != '')
                     setCurrentMap(map);
             }

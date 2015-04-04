@@ -97,9 +97,10 @@ QGeoTiledMappingManagerEngineGoogle::QGeoTiledMappingManagerEngineGoogle(const Q
     {
         qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
         cacheDir.clear();
-    } else {
-        qDebug() << "Mapping cache directory:" << cacheDir;
     }
+    //else {
+    //    qDebug() << "Mapping cache directory:" << cacheDir;
+    //}
 
     QGeoTileCache *tileCache = createTileCacheWithDir(cacheDir);
 
@@ -114,7 +115,7 @@ QGeoTiledMappingManagerEngineGoogle::QGeoTiledMappingManagerEngineGoogle(const Q
         // QGC Default
         cacheLimit = 1024 * 1024 * 1024;
     tileCache->setMaxDiskUsage(cacheLimit);
-    qDebug() << "Disk caching limit:" << cacheLimit;
+    //qDebug() << "Disk caching limit:" << cacheLimit;
 
     cacheLimit = 0;
     if (parameters.contains(QStringLiteral("mapping.cache.memory.size"))) {
@@ -127,7 +128,7 @@ QGeoTiledMappingManagerEngineGoogle::QGeoTiledMappingManagerEngineGoogle(const Q
         // QGC Default
         cacheLimit = 10 * 1024 * 1024;
     tileCache->setMaxMemoryUsage(cacheLimit);
-    qDebug() << "Memory caching limit:" << cacheLimit;
+    //qDebug() << "Memory caching limit:" << cacheLimit;
 
     cacheLimit = 0;
     if (parameters.contains(QStringLiteral("mapping.cache.texture.size"))) {
