@@ -1,0 +1,4 @@
+  ?package(qgroundcontrol):needs="x11" \
+      section="Applications/Electronics" \
+      title="QGroundControl" \
+      command="/usr/bin/qgroundcontrol"

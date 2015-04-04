@@ -1,0 +1,2 @@
+version=3
+https://github.com/mavlink/qgroundcontrol/tags .*/archive/[a-z](\d\S*)\.tar\.gz
