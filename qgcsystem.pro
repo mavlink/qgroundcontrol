@@ -19,6 +19,8 @@
 
 message(Qt version $$[QT_VERSION])
 
+TARGET = QGroundControl
+
 # Load additional config flags from user_config.pri
 exists(user_config.pri):infile(user_config.pri, CONFIG) {
     CONFIG += $$fromfile(user_config.pri, CONFIG)
