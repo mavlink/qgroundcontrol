@@ -272,16 +272,6 @@ Rectangle {
             }
 
             Column {
-                property Fact cal_mag0_rot: Fact { name: "CAL_MAG0_ROT" }
-                property Fact cal_mag1_rot: Fact { name: "CAL_MAG1_ROT" }
-                property Fact cal_mag2_rot: Fact { name: "CAL_MAG2_ROT" }
-
-                // Compass rotation parameter < 0 indicates either internal compass, or no compass. So in
-                // both those cases we do not show a rotation combo.
-                property bool showCompass0: cal_mag0_rot.value >= 0
-                property bool showCompass1: cal_mag1_rot.value >= 0
-                property bool showCompass2: cal_mag2_rot.value >= 0
-
                 x: parent.width - rotationColumnWidth
 
                 QGCLabel { text: "Autpilot Orientation" }
@@ -309,8 +299,8 @@ Rectangle {
                         fact:   Fact { name: "CAL_MAG0_ROT" }
                     }
                 }
-                Loader { sourceComponent: parent.showCompass0 ? compass0ComponentLabel : null }
-                Loader { sourceComponent: parent.showCompass0 ? compass0ComponentCombo : null }
+                Loader { sourceComponent: controller.showCompass0 ? compass0ComponentLabel : null }
+                Loader { sourceComponent: controller.showCompass0 ? compass0ComponentCombo : null }
 
                 // Compass 1 rotation
                 Component {
@@ -328,8 +318,8 @@ Rectangle {
                         fact:   Fact { name: "CAL_MAG1_ROT" }
                     }
                 }
-                Loader { sourceComponent: parent.showCompass1 ? compass1ComponentLabel : null }
-                Loader { sourceComponent: parent.showCompass1 ? compass1ComponentCombo : null }
+                Loader { sourceComponent: controller.showCompass1 ? compass1ComponentLabel : null }
+                Loader { sourceComponent: controller.showCompass1 ? compass1ComponentCombo : null }
 
                 // Compass 2 rotation
                 Component {
@@ -347,8 +337,8 @@ Rectangle {
                         fact:   Fact { name: "CAL_MAG2_ROT" }
                     }
                 }
-                Loader { sourceComponent: parent.showCompass2 ? compass2ComponentLabel : null }
-                Loader { sourceComponent: parent.showCompass2 ? compass2ComponentCombo : null }
+                Loader { sourceComponent: controller.showCompass2 ? compass2ComponentLabel : null }
+                Loader { sourceComponent: controller.showCompass2 ? compass2ComponentCombo : null }
             }
         }
     }
