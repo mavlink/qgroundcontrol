@@ -86,7 +86,7 @@ QGCFlightDisplay::~QGCFlightDisplay()
     _refreshTimer->stop();
 }
 
-void QGCFlightDisplay::saveSetting(const QString& name, bool value)
+void QGCFlightDisplay::saveSetting(const QString &name, const QString& value)
 {
     QSettings settings;
     QString key(kMainFlightDisplayGroup);
@@ -94,12 +94,12 @@ void QGCFlightDisplay::saveSetting(const QString& name, bool value)
     settings.setValue(key, value);
 }
 
-bool QGCFlightDisplay::loadSetting(const QString& name, bool defaultValue)
+QString QGCFlightDisplay::loadSetting(const QString &name, const QString& defaultValue)
 {
     QSettings settings;
     QString key(kMainFlightDisplayGroup);
     key += "/" + name;
-    return settings.value(key, defaultValue).toBool();
+    return settings.value(key, defaultValue).toString();
 }
 
 void QGCFlightDisplay::_forgetUAS(UASInterface* uas)

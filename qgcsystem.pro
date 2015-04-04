@@ -51,6 +51,7 @@ linux {
     macx-clang | macx-llvm {
         message("Mac build")
         CONFIG += MacBuild
+        QMAKE_CXXFLAGS += -fvisibility=hidden
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
@@ -86,22 +87,56 @@ win32:debug_and_release {
 
 # Setup our build directories
 
-BASEDIR = $${IN_PWD}
+BASEDIR      = $${IN_PWD}
+
 DebugBuild {
-    DESTDIR = $${OUT_PWD}/debug
+    DESTDIR  = $${OUT_PWD}/debug
     BUILDDIR = $${OUT_PWD}/build-debug
 }
+
 ReleaseBuild {
-    DESTDIR = $${OUT_PWD}/release
+    DESTDIR  = $${OUT_PWD}/release
     BUILDDIR = $${OUT_PWD}/build-release
 }
+
 OBJECTS_DIR = $${BUILDDIR}/obj
-MOC_DIR = $${BUILDDIR}/moc
-UI_DIR = $${BUILDDIR}/ui
-RCC_DIR = $${BUILDDIR}/rcc
-LANGUAGE = C++
+MOC_DIR     = $${BUILDDIR}/moc
+UI_DIR      = $${BUILDDIR}/ui
+RCC_DIR     = $${BUILDDIR}/rcc
+LANGUAGE    = C++
 
 message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
+
+# Google Maps QtLocation
+
+GOOGLEDIR   = $${OUT_PWD}/libs/QtLocationGoogle/plugins/geoservices
+
+LinuxBuild {
+    LIBS += -L$$GOOGLEDIR -lqtgeoservices_google
+    PRE_TARGETDEPS += $$GOOGLEDIR/libqtgeoservices_google.a
+}
+
+WindowsBuild {
+    DebugBuild {
+        LIBS += -L$$GOOGLEDIR -lqtgeoservices_googled
+        PRE_TARGETDEPS += $$GOOGLEDIR/qtgeoservices_googled.lib
+    }
+    ReleaseBuild {
+        LIBS += -L$$GOOGLEDIR -lqtgeoservices_google
+        PRE_TARGETDEPS += $$GOOGLEDIR/qtgeoservices_google.lib
+    }
+}
+
+MacBuild {
+    DebugBuild {
+        LIBS += -L$$GOOGLEDIR -lqtgeoservices_google_debug
+        PRE_TARGETDEPS += $$GOOGLEDIR/libqtgeoservices_google_debug.a
+    }
+    ReleaseBuild {
+        LIBS   += -L$$GOOGLEDIR -lqtgeoservices_google
+        PRE_TARGETDEPS += $$GOOGLEDIR/libqtgeoservices_google.a
+    }
+}
 
 # Qt configuration
 CONFIG += qt \

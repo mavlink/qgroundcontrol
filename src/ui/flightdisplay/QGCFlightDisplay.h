@@ -54,8 +54,8 @@ public:
     Q_PROPERTY(float latitude           READ latitude           NOTIFY latitudeChanged)
     Q_PROPERTY(float longitude          READ longitude          NOTIFY longitudeChanged)
 
-    Q_INVOKABLE void    saveSetting (const QString &key, bool value);
-    Q_INVOKABLE bool    loadSetting (const QString &key, bool defaultValue);
+    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
+    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
 
     float   roll                () { return _roll; }
     float   pitch               () { return _pitch; }

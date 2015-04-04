@@ -101,6 +101,14 @@ int main(int argc, char *argv[])
     // anyway to silence the debug output.
     qRegisterMetaType<QSerialPort::SerialPortError>();
     qRegisterMetaType<QAbstractSocket::SocketError>();
+    // We statically link to the google QtLocation plugin
+
+#ifdef Q_OS_WIN
+    // In Windows, the compiler doesn't see the use of the class created by Q_IMPORT_PLUGIN
+#pragma warning( disable : 4930 4101 )
+#endif
+
+    Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryGoogle)
 
     bool runUnitTests = false;          // Run unit tests
 
