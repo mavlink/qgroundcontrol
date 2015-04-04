@@ -38,6 +38,9 @@ SensorsComponentController::SensorsComponentController(AutoPilotPlugin* autopilo
     _progressBar(NULL),
     _showGyroCalArea(false),
     _showAccelCalArea(false),
+    _showCompass0(false),
+    _showCompass1(false),
+    _showCompass2(false),
     _gyroCalInProgress(false),
     _accelCalDownSideDone(false),
     _accelCalUpsideDownSideDone(false),
@@ -54,7 +57,16 @@ SensorsComponentController::SensorsComponentController(AutoPilotPlugin* autopilo
     _textLoggingStarted(false),
     _autopilot(autopilot)
 {
-    Q_ASSERT(autopilot);
+    Q_ASSERT(_autopilot);
+    Q_ASSERT(_autopilot->pluginReady());
+    
+    // Mag rotation parameters are optional
+    _showCompass0 = _autopilot->parameterExists("CAL_MAG0_ROT") &&
+                        _autopilot->getParameterFact("CAL_MAG0_ROT")->value().toInt() >= 0;
+    _showCompass1 = _autopilot->parameterExists("CAL_MAG1_ROT") &&
+                        _autopilot->getParameterFact("CAL_MAG1_ROT")->value().toInt() >= 0;
+    _showCompass2 = _autopilot->parameterExists("CAL_MAG2_ROT") &&
+                        _autopilot->getParameterFact("CAL_MAG2_ROT")->value().toInt() >= 0;
 }
 
 /// Appends the specified text to the status log area in the ui
@@ -273,10 +285,18 @@ void SensorsComponentController::_refreshParams(void)
     _autopilot->refreshParameter(FactSystem::defaultComponentId, "CAL_ACC0_ID");
     _autopilot->refreshParameter(FactSystem::defaultComponentId, "SENS_DPRES_OFF");
     
-    _autopilot->refreshParameter(FactSystem::defaultComponentId, "CAL_MAG0_ROT");
-    _autopilot->refreshParameter(FactSystem::defaultComponentId, "CAL_MAG1_ROT");
-    _autopilot->refreshParameter(FactSystem::defaultComponentId, "CAL_MAG2_ROT");
     _autopilot->refreshParameter(FactSystem::defaultComponentId, "SENS_BOARD_ROT");
+    
+    // Mag rotation parameters are optional
+    if (_autopilot->parameterExists("CAL_MAG0_ROT")) {
+        _autopilot->refreshParameter(FactSystem::defaultComponentId, "CAL_MAG0_ROT");
+    }
+    if (_autopilot->parameterExists("CAL_MAG1_ROT")) {
+        _autopilot->refreshParameter(FactSystem::defaultComponentId, "CAL_MAG1_ROT");
+    }
+    if (_autopilot->parameterExists("CAL_MAG2_ROT")) {
+        _autopilot->refreshParameter(FactSystem::defaultComponentId, "CAL_MAG2_ROT");
+    }
     
     // Pull full set in order to get all cal values back
     _autopilot->refreshAllParameters();

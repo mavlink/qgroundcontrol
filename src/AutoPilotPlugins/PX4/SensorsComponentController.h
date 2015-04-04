@@ -51,6 +51,10 @@ public:
     Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
     Q_PROPERTY(QQuickItem* airspeedButton MEMBER _airspeedButton)
     
+    Q_PROPERTY(bool showCompass0 MEMBER _showCompass0 CONSTANT)
+    Q_PROPERTY(bool showCompass1 MEMBER _showCompass1 CONSTANT)
+    Q_PROPERTY(bool showCompass2 MEMBER _showCompass2 CONSTANT)
+    
     Q_PROPERTY(bool showGyroCalArea MEMBER _showGyroCalArea NOTIFY showGyroCalAreaChanged)
     Q_PROPERTY(bool showAccelCalArea MEMBER _showAccelCalArea NOTIFY showAccelCalAreaChanged)
     
@@ -109,6 +113,10 @@ private:
     
     bool _showGyroCalArea;
     bool _showAccelCalArea;
+    
+    bool _showCompass0;
+    bool _showCompass1;
+    bool _showCompass2;
     
     bool _gyroCalInProgress;
     
