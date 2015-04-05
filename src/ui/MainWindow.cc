@@ -721,7 +721,7 @@ void MainWindow::loadSettings()
     settings.beginGroup(MAIN_SETTINGS_GROUP);
     _autoReconnect = settings.value("AUTO_RECONNECT", _autoReconnect).toBool();
     _lowPowerMode  = settings.value("LOW_POWER_MODE", _lowPowerMode).toBool();
-    _showStatusBar = settings.value("SHOW_STATUSBAR", _lowPowerMode).toBool();
+    _showStatusBar = settings.value("SHOW_STATUSBAR", _showStatusBar).toBool();
     settings.endGroup();
     // Select the proper view. Default to the flight view or load the last one used if it's supported.
     VIEW_SECTIONS currentViewCandidate = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", _currentView).toInt();
