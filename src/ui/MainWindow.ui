@@ -75,7 +75,7 @@
    </widget>
    <widget class="QMenu" name="menuPerspectives">
     <property name="title">
-     <string>Perspectives</string>
+     <string>View</string>
     </property>
     <addaction name="actionSetup"/>
     <addaction name="actionMissionView"/>
@@ -84,6 +84,8 @@
     <addaction name="separator"/>
     <addaction name="actionFullscreen"/>
     <addaction name="actionNormal"/>
+    <addaction name="separator"/>
+    <addaction name="actionStatusBar"/>
    </widget>
    <widget class="QMenu" name="menuAdvanced">
     <property name="title">
@@ -333,6 +335,14 @@
    </property>
    <property name="text">
     <string>Local 3D View</string>
+   </property>
+  </action>
+  <action name="actionStatusBar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Status Bar</string>
    </property>
   </action>
  </widget>
