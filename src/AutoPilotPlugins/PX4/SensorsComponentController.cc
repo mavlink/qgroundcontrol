@@ -37,23 +37,25 @@ SensorsComponentController::SensorsComponentController(AutoPilotPlugin* autopilo
     _statusLog(NULL),
     _progressBar(NULL),
     _showGyroCalArea(false),
-    _showAccelCalArea(false),
+    _showOrientationCalArea(false),
     _showCompass0(false),
     _showCompass1(false),
     _showCompass2(false),
     _gyroCalInProgress(false),
-    _accelCalDownSideDone(false),
-    _accelCalUpsideDownSideDone(false),
-    _accelCalLeftSideDone(false),
-    _accelCalRightSideDone(false),
-    _accelCalNoseDownSideDone(false),
-    _accelCalTailDownSideDone(false),
-    _accelCalDownSideInProgress(false),
-    _accelCalUpsideDownSideInProgress(false),
-    _accelCalLeftSideInProgress(false),
-    _accelCalRightSideInProgress(false),
-    _accelCalNoseDownSideInProgress(false),
-    _accelCalTailDownSideInProgress(false),
+    _magCalInProgress(false),
+    _accelCalInProgress(false),
+    _orientationCalDownSideDone(false),
+    _orientationCalUpsideDownSideDone(false),
+    _orientationCalLeftSideDone(false),
+    _orientationCalRightSideDone(false),
+    _orientationCalNoseDownSideDone(false),
+    _orientationCalTailDownSideDone(false),
+    _orientationCalDownSideInProgress(false),
+    _orientationCalUpsideDownSideInProgress(false),
+    _orientationCalLeftSideInProgress(false),
+    _orientationCalRightSideInProgress(false),
+    _orientationCalNoseDownSideInProgress(false),
+    _orientationCalTailDownSideInProgress(false),
     _textLoggingStarted(false),
     _autopilot(autopilot)
 {
@@ -95,6 +97,9 @@ void SensorsComponentController::_startCalibration(void)
 
 void SensorsComponentController::_stopCalibration(bool failed)
 {
+    _magCalInProgress = false;
+    _accelCalInProgress = false;
+    
     _compassButton->setEnabled(true);
     _gyroButton->setEnabled(true);
     _accelButton->setEnabled(true);
@@ -160,6 +165,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
 {
     QString startingSidePrefix("Hold still, starting to measure ");
     QString sideDoneSuffix(" side done, rotate to a different side");
+    QString orientationDetectedSuffix(" orientation detected");
     
     Q_UNUSED(compId);
     Q_UNUSED(severity);
@@ -194,83 +200,107 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     if (text == "gyro calibration: started") {
         _updateAndEmitShowGyroCalArea(true);
         _updateAndEmitGyroCalInProgress(true);
-    } else if (text == "accel calibration: started") {
-        _accelCalDownSideDone = false;
-        _accelCalUpsideDownSideDone = false;
-        _accelCalLeftSideDone = false;
-        _accelCalRightSideDone = false;
-        _accelCalTailDownSideDone = false;
-        _accelCalNoseDownSideDone = false;
-        _accelCalDownSideInProgress = false;
-        _accelCalUpsideDownSideInProgress = false;
-        _accelCalLeftSideInProgress = false;
-        _accelCalRightSideInProgress = false;
-        _accelCalNoseDownSideInProgress = false;
-        _accelCalTailDownSideInProgress = false;
-        emit accelCalSidesDoneChanged();
-        emit accelCalSidesInProgressChanged();
-        _updateAndEmitShowAccelCalArea(true);
+    } else if (text == "accel calibration: started" || text == "mag calibration: started") {
+        if (text == "accel calibration: started") {
+            _accelCalInProgress = true;
+            _updateAndEmitCalInProgressText("Hold Still");
+        } else {
+            _updateAndEmitCalInProgressText("Rotate");
+            _magCalInProgress = true;
+        }
+        _orientationCalDownSideDone = false;
+        _orientationCalUpsideDownSideDone = false;
+        _orientationCalLeftSideDone = false;
+        _orientationCalRightSideDone = false;
+        _orientationCalTailDownSideDone = false;
+        _orientationCalNoseDownSideDone = false;
+        _orientationCalDownSideInProgress = false;
+        _orientationCalUpsideDownSideInProgress = false;
+        _orientationCalLeftSideInProgress = false;
+        _orientationCalRightSideInProgress = false;
+        _orientationCalNoseDownSideInProgress = false;
+        _orientationCalTailDownSideInProgress = false;
+        emit orientationCalSidesDoneChanged();
+        emit orientationCalSidesInProgressChanged();
+        _updateAndEmitShowOrientationCalArea(true);
     } else if (text.startsWith(startingSidePrefix)) {
         QString side = text.right(text.length() - startingSidePrefix.length()).section(" ", 0, 0);
         qDebug() << "Side started" << side;
         if (side == "down") {
-            _accelCalDownSideInProgress = true;
+            _orientationCalDownSideInProgress = true;
         } else if (side == "up") {
-            _accelCalUpsideDownSideInProgress = true;
+            _orientationCalUpsideDownSideInProgress = true;
         } else if (side == "left") {
-            _accelCalLeftSideInProgress = true;
+            _orientationCalLeftSideInProgress = true;
         } else if (side == "right") {
-            _accelCalRightSideInProgress = true;
+            _orientationCalRightSideInProgress = true;
         } else if (side == "front") {
-            _accelCalNoseDownSideInProgress = true;
+            _orientationCalNoseDownSideInProgress = true;
         } else if (side == "back") {
-            _accelCalTailDownSideInProgress = true;
+            _orientationCalTailDownSideInProgress = true;
         }
-        emit accelCalSidesInProgressChanged();
+        emit orientationCalSidesInProgressChanged();
+    } else if (text.endsWith(orientationDetectedSuffix)) {
+        QString side = text.section(" ", 0, 0);
+        qDebug() << "Side started" << side;
+        if (side == "down") {
+            _orientationCalDownSideInProgress = true;
+        } else if (side == "up") {
+            _orientationCalUpsideDownSideInProgress = true;
+        } else if (side == "left") {
+            _orientationCalLeftSideInProgress = true;
+        } else if (side == "right") {
+            _orientationCalRightSideInProgress = true;
+        } else if (side == "front") {
+            _orientationCalNoseDownSideInProgress = true;
+        } else if (side == "back") {
+            _orientationCalTailDownSideInProgress = true;
+        }
+        emit orientationCalSidesInProgressChanged();
     } else if (text.endsWith(sideDoneSuffix)) {
         QString side = text.section(" ", 0, 0);
         qDebug() << "Side finished" << side;
         if (side == "down") {
-            _accelCalDownSideInProgress = false;
-            _accelCalDownSideDone = true;
+            _orientationCalDownSideInProgress = false;
+            _orientationCalDownSideDone = true;
         } else if (side == "up") {
-            _accelCalUpsideDownSideInProgress = false;
-            _accelCalUpsideDownSideDone = true;
+            _orientationCalUpsideDownSideInProgress = false;
+            _orientationCalUpsideDownSideDone = true;
         } else if (side == "left") {
-            _accelCalLeftSideInProgress = false;
-            _accelCalLeftSideDone = true;
+            _orientationCalLeftSideInProgress = false;
+            _orientationCalLeftSideDone = true;
         } else if (side == "right") {
-            _accelCalRightSideInProgress = false;
-            _accelCalRightSideDone = true;
+            _orientationCalRightSideInProgress = false;
+            _orientationCalRightSideDone = true;
         } else if (side == "front") {
-            _accelCalNoseDownSideInProgress = false;
-            _accelCalNoseDownSideDone = true;
+            _orientationCalNoseDownSideInProgress = false;
+            _orientationCalNoseDownSideDone = true;
         } else if (side == "back") {
-            _accelCalTailDownSideInProgress = false;
-            _accelCalTailDownSideDone = true;
+            _orientationCalTailDownSideInProgress = false;
+            _orientationCalTailDownSideDone = true;
         }
-        emit accelCalSidesInProgressChanged();
-        emit accelCalSidesDoneChanged();
-    } else if (text == "accel calibration: done") {
+        emit orientationCalSidesInProgressChanged();
+        emit orientationCalSidesDoneChanged();
+    } else if (text == "accel calibration: done" || text == "mag calibration: done") {
         _progressBar->setProperty("value", 1);
-        _accelCalDownSideDone = true;
-        _accelCalUpsideDownSideDone = true;
-        _accelCalLeftSideDone = true;
-        _accelCalRightSideDone = true;
-        _accelCalTailDownSideDone = true;
-        _accelCalNoseDownSideDone = true;
-        _accelCalDownSideInProgress = false;
-        _accelCalUpsideDownSideInProgress = false;
-        _accelCalLeftSideInProgress = false;
-        _accelCalRightSideInProgress = false;
-        _accelCalNoseDownSideInProgress = false;
-        _accelCalTailDownSideInProgress = false;
-        emit accelCalSidesDoneChanged();
-        emit accelCalSidesInProgressChanged();
+        _orientationCalDownSideDone = true;
+        _orientationCalUpsideDownSideDone = true;
+        _orientationCalLeftSideDone = true;
+        _orientationCalRightSideDone = true;
+        _orientationCalTailDownSideDone = true;
+        _orientationCalNoseDownSideDone = true;
+        _orientationCalDownSideInProgress = false;
+        _orientationCalUpsideDownSideInProgress = false;
+        _orientationCalLeftSideInProgress = false;
+        _orientationCalRightSideInProgress = false;
+        _orientationCalNoseDownSideInProgress = false;
+        _orientationCalTailDownSideInProgress = false;
+        emit orientationCalSidesDoneChanged();
+        emit orientationCalSidesInProgressChanged();
         _stopCalibration(false /* success */);
     } else if (text == "gyro calibration: done") {
         _stopCalibration(false /* success */);
-    } else if (text == "mag calibration: done" || text == "dpress calibration: done") {
+    } else if (text == "dpress calibration: done") {
         _stopCalibration(false /* success */);
     } else if (text.endsWith(" calibration: failed")) {
         _stopCalibration(true /* failed */);
@@ -321,14 +351,20 @@ void SensorsComponentController::_updateAndEmitShowGyroCalArea(bool show)
     emit showGyroCalAreaChanged();
 }
 
-void SensorsComponentController::_updateAndEmitShowAccelCalArea(bool show)
+void SensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)
 {
-    _showAccelCalArea = show;
-    emit showAccelCalAreaChanged();
+    _showOrientationCalArea = show;
+    emit showOrientationCalAreaChanged();
 }
 
 void SensorsComponentController::_hideAllCalAreas(void)
 {
     _updateAndEmitShowGyroCalArea(false);
-    _updateAndEmitShowAccelCalArea(false);
+    _updateAndEmitShowOrientationCalArea(false);
+}
+
+void SensorsComponentController::_updateAndEmitCalInProgressText(const QString& text)
+{
+    _calInProgressText = text;
+    emit calInProgressTextChanged(text);
 }

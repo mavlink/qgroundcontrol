@@ -56,23 +56,25 @@ public:
     Q_PROPERTY(bool showCompass2 MEMBER _showCompass2 CONSTANT)
     
     Q_PROPERTY(bool showGyroCalArea MEMBER _showGyroCalArea NOTIFY showGyroCalAreaChanged)
-    Q_PROPERTY(bool showAccelCalArea MEMBER _showAccelCalArea NOTIFY showAccelCalAreaChanged)
+    Q_PROPERTY(bool showOrientationCalArea MEMBER _showOrientationCalArea NOTIFY showOrientationCalAreaChanged)
     
     Q_PROPERTY(bool gyroCalInProgress MEMBER _gyroCalInProgress NOTIFY gyroCalInProgressChanged)
     
-    Q_PROPERTY(bool accelCalDownSideDone MEMBER _accelCalDownSideDone NOTIFY accelCalSidesDoneChanged)
-    Q_PROPERTY(bool accelCalUpsideDownSideDone MEMBER _accelCalUpsideDownSideDone NOTIFY accelCalSidesDoneChanged)
-    Q_PROPERTY(bool accelCalLeftSideDone MEMBER _accelCalLeftSideDone NOTIFY accelCalSidesDoneChanged)
-    Q_PROPERTY(bool accelCalRightSideDone MEMBER _accelCalRightSideDone NOTIFY accelCalSidesDoneChanged)
-    Q_PROPERTY(bool accelCalNoseDownSideDone MEMBER _accelCalNoseDownSideDone NOTIFY accelCalSidesDoneChanged)
-    Q_PROPERTY(bool accelCalTailDownSideDone MEMBER _accelCalTailDownSideDone NOTIFY accelCalSidesDoneChanged)
+    Q_PROPERTY(QString calInProgressText MEMBER _calInProgressText NOTIFY calInProgressTextChanged)
     
-    Q_PROPERTY(bool accelCalDownSideInProgress MEMBER _accelCalDownSideInProgress NOTIFY accelCalSidesInProgressChanged)
-    Q_PROPERTY(bool accelCalUpsideDownSideInProgress MEMBER _accelCalUpsideDownSideInProgress NOTIFY accelCalSidesInProgressChanged)
-    Q_PROPERTY(bool accelCalLeftSideInProgress MEMBER _accelCalLeftSideInProgress NOTIFY accelCalSidesInProgressChanged)
-    Q_PROPERTY(bool accelCalRightSideInProgress MEMBER _accelCalRightSideInProgress NOTIFY accelCalSidesInProgressChanged)
-    Q_PROPERTY(bool accelCalNoseDownSideInProgress MEMBER _accelCalNoseDownSideInProgress NOTIFY accelCalSidesInProgressChanged)
-    Q_PROPERTY(bool accelCalTailDownSideInProgress MEMBER _accelCalTailDownSideInProgress NOTIFY accelCalSidesInProgressChanged)
+    Q_PROPERTY(bool orientationCalDownSideDone MEMBER _orientationCalDownSideDone NOTIFY orientationCalSidesDoneChanged)
+    Q_PROPERTY(bool orientationCalUpsideDownSideDone MEMBER _orientationCalUpsideDownSideDone NOTIFY orientationCalSidesDoneChanged)
+    Q_PROPERTY(bool orientationCalLeftSideDone MEMBER _orientationCalLeftSideDone NOTIFY orientationCalSidesDoneChanged)
+    Q_PROPERTY(bool orientationCalRightSideDone MEMBER _orientationCalRightSideDone NOTIFY orientationCalSidesDoneChanged)
+    Q_PROPERTY(bool orientationCalNoseDownSideDone MEMBER _orientationCalNoseDownSideDone NOTIFY orientationCalSidesDoneChanged)
+    Q_PROPERTY(bool orientationCalTailDownSideDone MEMBER _orientationCalTailDownSideDone NOTIFY orientationCalSidesDoneChanged)
+    
+    Q_PROPERTY(bool orientationCalDownSideInProgress MEMBER _orientationCalDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
+    Q_PROPERTY(bool orientationCalUpsideDownSideInProgress MEMBER _orientationCalUpsideDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
+    Q_PROPERTY(bool orientationCalLeftSideInProgress MEMBER _orientationCalLeftSideInProgress NOTIFY orientationCalSidesInProgressChanged)
+    Q_PROPERTY(bool orientationCalRightSideInProgress MEMBER _orientationCalRightSideInProgress NOTIFY orientationCalSidesInProgressChanged)
+    Q_PROPERTY(bool orientationCalNoseDownSideInProgress MEMBER _orientationCalNoseDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
+    Q_PROPERTY(bool orientationCalTailDownSideInProgress MEMBER _orientationCalTailDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
     
     Q_INVOKABLE void calibrateCompass(void);
     Q_INVOKABLE void calibrateGyro(void);
@@ -83,10 +85,11 @@ public:
     
 signals:
     void showGyroCalAreaChanged(void);
-    void showAccelCalAreaChanged(void);
+    void showOrientationCalAreaChanged(void);
     void gyroCalInProgressChanged(void);
-    void accelCalSidesDoneChanged(void);
-    void accelCalSidesInProgressChanged(void);
+    void orientationCalSidesDoneChanged(void);
+    void orientationCalSidesInProgressChanged(void);
+    void calInProgressTextChanged(const QString& newText);
     
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
@@ -101,8 +104,10 @@ private:
     
     void _updateAndEmitGyroCalInProgress(bool inProgress);
     
+    void _updateAndEmitCalInProgressText(const QString& text);
+    
     void _updateAndEmitShowGyroCalArea(bool show);
-    void _updateAndEmitShowAccelCalArea(bool show);
+    void _updateAndEmitShowOrientationCalArea(bool show);
 
     QQuickItem* _statusLog;
     QQuickItem* _progressBar;
@@ -112,27 +117,31 @@ private:
     QQuickItem* _airspeedButton;
     
     bool _showGyroCalArea;
-    bool _showAccelCalArea;
+    bool _showOrientationCalArea;
     
     bool _showCompass0;
     bool _showCompass1;
     bool _showCompass2;
     
     bool _gyroCalInProgress;
+    bool _magCalInProgress;
+    bool _accelCalInProgress;
     
-    bool _accelCalDownSideDone;
-    bool _accelCalUpsideDownSideDone;
-    bool _accelCalLeftSideDone;
-    bool _accelCalRightSideDone;
-    bool _accelCalNoseDownSideDone;
-    bool _accelCalTailDownSideDone;
+    QString _calInProgressText;
     
-    bool _accelCalDownSideInProgress;
-    bool _accelCalUpsideDownSideInProgress;
-    bool _accelCalLeftSideInProgress;
-    bool _accelCalRightSideInProgress;
-    bool _accelCalNoseDownSideInProgress;
-    bool _accelCalTailDownSideInProgress;
+    bool _orientationCalDownSideDone;
+    bool _orientationCalUpsideDownSideDone;
+    bool _orientationCalLeftSideDone;
+    bool _orientationCalRightSideDone;
+    bool _orientationCalNoseDownSideDone;
+    bool _orientationCalTailDownSideDone;
+    
+    bool _orientationCalDownSideInProgress;
+    bool _orientationCalUpsideDownSideInProgress;
+    bool _orientationCalLeftSideInProgress;
+    bool _orientationCalRightSideInProgress;
+    bool _orientationCalNoseDownSideInProgress;
+    bool _orientationCalTailDownSideInProgress;
     
     bool _textLoggingStarted;
     

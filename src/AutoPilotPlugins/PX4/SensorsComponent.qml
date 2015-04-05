@@ -195,8 +195,6 @@ Rectangle {
                     }
 
                     VehicleRotationCal {
-                        width:          200
-                        height:         200
                         calValid:       true
                         calInProgress:  controller.gyroCalInProgress
                         imageSource:    "qrc:///qml/VehicleDown.png"
@@ -206,10 +204,10 @@ Rectangle {
             }
 
             Rectangle {
-                id:         accelCalArea
+                id:         orientationCalArea
                 width:      parent.calDisplayAreaWidth
                 height:     parent.height
-                visible:    controller.showAccelCalArea
+                visible:    controller.showOrientationCalArea
                 color:      qgcPal.windowShade
 
                 QGCLabel {
@@ -227,46 +225,40 @@ Rectangle {
                     spacing:    5
 
                     VehicleRotationCal {
-                        width:          200
-                        height:         200
-                        calValid:       controller.accelCalDownSideDone
-                        calInProgress:  controller.accelCalDownSideInProgress
-                        imageSource:    "qrc:///qml/VehicleDown.png"
+                        calValid:           controller.orientationCalDownSideDone
+                        calInProgress:      controller.orientationCalDownSideInProgress
+                        calInProgressText:  controller.calInProgressText
+                        imageSource:        "qrc:///qml/VehicleDown.png"
                     }
                     VehicleRotationCal {
-                        width:          200
-                        height:         200
-                        calValid:       controller.accelCalUpsideDownSideDone
-                        calInProgress:  controller.accelCalUpsideDownSideInProgress
-                        imageSource:    "qrc:///qml/VehicleUpsideDown.png"
+                        calValid:           controller.orientationCalUpsideDownSideDone
+                        calInProgress:      controller.orientationCalUpsideDownSideInProgress
+                        calInProgressText:  controller.calInProgressText
+                        imageSource:        "qrc:///qml/VehicleUpsideDown.png"
                     }
                     VehicleRotationCal {
-                        width:          200
-                        height:         200
-                        calValid:       controller.accelCalNoseDownSideDone
-                        calInProgress:  controller.accelCalNoseDownSideInProgress
-                        imageSource:    "qrc:///qml/VehicleNoseDown.png"
+                        calValid:           controller.orientationCalNoseDownSideDone
+                        calInProgress:      controller.orientationCalNoseDownSideInProgress
+                        calInProgressText:  controller.calInProgressText
+                        imageSource:        "qrc:///qml/VehicleNoseDown.png"
                     }
                     VehicleRotationCal {
-                        width:          200
-                        height:         200
-                        calValid:       controller.accelCalTailDownSideDone
-                        calInProgress:  controller.accelCalTailDownSideInProgress
-                        imageSource:    "qrc:///qml/VehicleTailDown.png"
+                        calValid:           controller.orientationCalTailDownSideDone
+                        calInProgress:      controller.orientationCalTailDownSideInProgress
+                        calInProgressText:  controller.calInProgressText
+                        imageSource:        "qrc:///qml/VehicleTailDown.png"
                     }
                     VehicleRotationCal {
-                        width:          200
-                        height:         200
-                        calValid:       controller.accelCalLeftSideDone
-                        calInProgress:  controller.accelCalLeftSideInProgress
-                        imageSource:    "qrc:///qml/VehicleLeft.png"
+                        calValid:           controller.orientationCalLeftSideDone
+                        calInProgress:      controller.orientationCalLeftSideInProgress
+                        calInProgressText:  controller.calInProgressText
+                        imageSource:        "qrc:///qml/VehicleLeft.png"
                     }
                     VehicleRotationCal {
-                        width:          200
-                        height:         200
-                        calValid:       controller.accelCalRightSideDone
-                        calInProgress:  controller.accelCalRightSideInProgress
-                        imageSource:    "qrc:///qml/VehicleRight.png"
+                        calValid:           controller.orientationCalRightSideDone
+                        calInProgress:      controller.orientationCalRightSideInProgress
+                        calInProgressText:  controller.calInProgressText
+                        imageSource:        "qrc:///qml/VehicleRight.png"
                     }
                 }
             }
