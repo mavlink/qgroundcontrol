@@ -109,34 +109,34 @@ LANGUAGE    = C++
 
 message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
 
-# Google Maps QtLocation
+# QGC QtLocation
 
-GOOGLEDIR   = $${OUT_PWD}/libs/QtLocationGoogle/plugins/geoservices
+QGCMAPDIR   = $${OUT_PWD}/libs/QtLocationQGC/plugins/geoservices
 
 LinuxBuild {
-    LIBS += -L$$GOOGLEDIR -lqtgeoservices_google
-    PRE_TARGETDEPS += $$GOOGLEDIR/libqtgeoservices_google.a
+    LIBS += -L$$QGCMAPDIR -lqtgeoservices_qgc
+    PRE_TARGETDEPS += $$QGCMAPDIR/libqtgeoservices_qgc.a
 }
 
 WindowsBuild {
     DebugBuild {
-        LIBS += -L$$GOOGLEDIR -lqtgeoservices_googled
-        PRE_TARGETDEPS += $$GOOGLEDIR/qtgeoservices_googled.lib
+        LIBS += -L$$QGCMAPDIR -lqtgeoservices_qgcd
+        PRE_TARGETDEPS += $$QGCMAPDIR/qtgeoservices_qgcd.lib
     }
     ReleaseBuild {
-        LIBS += -L$$GOOGLEDIR -lqtgeoservices_google
-        PRE_TARGETDEPS += $$GOOGLEDIR/qtgeoservices_google.lib
+        LIBS += -L$$QGCMAPDIR -lqtgeoservices_qgc
+        PRE_TARGETDEPS += $$QGCMAPDIR/qtgeoservices_qgc.lib
     }
 }
 
 MacBuild {
     DebugBuild {
-        LIBS += -L$$GOOGLEDIR -lqtgeoservices_google_debug
-        PRE_TARGETDEPS += $$GOOGLEDIR/libqtgeoservices_google_debug.a
+        LIBS += -L$$QGCMAPDIR -lqtgeoservices_qgc_debug
+        PRE_TARGETDEPS += $$QGCMAPDIR/libqtgeoservices_qgc_debug.a
     }
     ReleaseBuild {
-        LIBS   += -L$$GOOGLEDIR -lqtgeoservices_google
-        PRE_TARGETDEPS += $$GOOGLEDIR/libqtgeoservices_google.a
+        LIBS   += -L$$QGCMAPDIR -lqtgeoservices_qgc
+        PRE_TARGETDEPS += $$QGCMAPDIR/libqtgeoservices_qgc.a
     }
 }
 

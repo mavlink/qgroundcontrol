@@ -38,71 +38,33 @@
 ** $QT_END_LICENSE$
 **
 ** 2015.4.4
-** Adapted for google maps with the intent of use for QGroundControl
+** Adapted for use with QGroundControl
 **
 ** Gus Grubba <mavlink@grubba.com>
 **
 ****************************************************************************/
 
-#include "qgeotilefetchergoogle.h"
-#include "qgeomapreplygoogle.h"
+#ifndef QGEOSERVICEPROVIDER_GOOGLE_H
+#define QGEOSERVICEPROVIDER_GOOGLE_H
 
-#include <QtCore/QLocale>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkRequest>
-#include <QtLocation/private/qgeotilespec_p.h>
+#include <QtCore/QObject>
+#include <QtLocation/QGeoServiceProviderFactory>
 
 QT_BEGIN_NAMESPACE
 
-QGeoTileFetcherGoogle::QGeoTileFetcherGoogle(QGeoTiledMappingManagerEngine *parent)
-    : QGeoTileFetcher(parent)
-    , m_networkManager(new QNetworkAccessManager(this))
-    , m_userAgent("Qt Application")
+class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderFactory
 {
-}
+    Q_OBJECT
+    Q_INTERFACES(QGeoServiceProviderFactory)
+    Q_PLUGIN_METADATA(IID "org.qt-project.qt.geoservice.serviceproviderfactory/5.0" FILE "qgc_maps_plugin.json")
 
-void QGeoTileFetcherGoogle::setUserAgent(const QByteArray &userAgent)
-{
-    m_userAgent = userAgent;
-}
-
-QGeoTiledMapReply *QGeoTileFetcherGoogle::getTileImage(const QGeoTileSpec &spec)
-{
-    QNetworkRequest request;
-    request.setRawHeader("User-Agent", m_userAgent);
-
-    QString url;
-    if (spec.mapId() == 1) {
-        url = QStringLiteral("http://mt1.google.com/vt/lyrs=m");
-    } else if (spec.mapId() == 2) {
-        url = QStringLiteral("http://mt1.google.com/vt/lyrs=s");
-    } else if (spec.mapId() == 3) {
-        url = QStringLiteral("http://mt1.google.com/vt/lyrs=p");
-    } else if (spec.mapId() == 4) {
-        url = QStringLiteral(" http://mt1.google.com/vt/lyrs=h");
-    } else {
-        qWarning("Unknown map id %d\n", spec.mapId());
-        url = QStringLiteral("http://mt1.google.com/vt/lyrs=m");
-    }
-
-    url += QStringLiteral("&x=%1&y=%2&z=%3")
-        .arg(spec.x())
-        .arg(spec.y())
-        .arg(spec.zoom());
-
-    QStringList langs = QLocale::system().uiLanguages();
-    if (langs.length() > 0) {
-        url += QStringLiteral("&hl=%1").arg(langs[0]);
-    }
-    
-    url += QStringLiteral("&scale=2");
-    QUrl qurl(url);
-
-    request.setUrl(qurl);
-    QNetworkReply *reply = m_networkManager->get(request);
-    reply->setParent(0);
-
-    return new QGeoMapReplyGoogle(reply, spec);
-}
+public:
+    QGeoCodingManagerEngine*    createGeocodingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QGeoMappingManagerEngine*   createMappingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QGeoRoutingManagerEngine*   createRoutingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QPlaceManagerEngine*        createPlaceManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+};
 
 QT_END_NAMESPACE
+
+#endif // QGEOSERVICEPROVIDER_GOOGLE_H

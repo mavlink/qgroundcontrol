@@ -19,8 +19,8 @@
 
 TEMPLATE =  subdirs
 CONFIG  +=  ordered
-SUBDIRS  =  libs/QtLocationGoogle
+SUBDIRS  =  libs/QtLocationQGC
 SUBDIRS +=  ./qgcsystem.pro
 
-qgcsystem.depends = QtLocationGoogle
+qgcsystem.depends = QtLocationQGC
 

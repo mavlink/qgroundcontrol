@@ -38,45 +38,41 @@
 ** $QT_END_LICENSE$
 **
 ** 2015.4.4
-** Adapted for google maps with the intent of use for QGroundControl
+** Adapted for use with QGroundControl
 **
 ** Gus Grubba <mavlink@grubba.com>
 **
 ****************************************************************************/
 
-#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
+#ifndef QGEOTILEFETCHERGOOGLE_H
+#define QGEOTILEFETCHERGOOGLE_H
 
-#include "qdebug.h"
-#include "qgeoserviceproviderplugingoogle.h"
-#include "qgeotiledmappingmanagerenginegoogle.h"
-#include "qgeocodingmanagerenginegoogle.h"
+#include <QtLocation/private/qgeotilefetcher_p.h>
+#include <QtLocation/private/qgeotilecache_p.h>
+#include "OpenPilotMaps.h"
 
 QT_BEGIN_NAMESPACE
 
-QGeoCodingManagerEngine *QGeoServiceProviderFactoryGoogle::createGeocodingManagerEngine(
-    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
-{
-    return new QGeoCodingManagerEngineGoogle(parameters, error, errorString);
-}
+class QGeoTiledMappingManagerEngine;
+class QNetworkAccessManager;
 
-QGeoMappingManagerEngine *QGeoServiceProviderFactoryGoogle::createMappingManagerEngine(
-    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
-    return new QGeoTiledMappingManagerEngineGoogle(parameters, error, errorString);
-}
+    Q_OBJECT
 
-QGeoRoutingManagerEngine *QGeoServiceProviderFactoryGoogle::createRoutingManagerEngine(
-    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
-{
-    // Not implemented for QGC
-    return NULL;
-}
+public:
+    explicit QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent = 0);
 
-QPlaceManagerEngine *QGeoServiceProviderFactoryGoogle::createPlaceManagerEngine(
-    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
-{
-    // Not implemented for QGC
-    return NULL;
-}
+    void setUserAgent(const QByteArray &userAgent);
+
+private:
+    QGeoTiledMapReply* getTileImage(const QGeoTileSpec &spec);
+    QNetworkAccessManager*  m_networkManager;
+    QByteArray              m_userAgent;
+    OpenPilot::UrlFactory   m_UrlFactory;
+    QString                 m_Language;
+};
 
 QT_END_NAMESPACE
+
+#endif // QGEOTILEFETCHERGOOGLE_H

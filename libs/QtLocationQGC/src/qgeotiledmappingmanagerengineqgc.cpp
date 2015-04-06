@@ -38,7 +38,7 @@
 ** $QT_END_LICENSE$
 **
 ** 2015.4.4
-** Adapted for google maps with the intent of use for QGroundControl
+** Adapted for use with QGroundControl
 **
 ** Gus Grubba <mavlink@grubba.com>
 **
@@ -50,12 +50,13 @@
 #include <QDir>
 #include <QStandardPaths>
 
-#include "qgeotiledmappingmanagerenginegoogle.h"
-#include "qgeotilefetchergoogle.h"
+#include "qgeotiledmappingmanagerengineqgc.h"
+#include "qgeotilefetcherqgc.h"
+#include "OpenPilotMaps.h"
 
 QT_BEGIN_NAMESPACE
 
-QGeoTiledMappingManagerEngineGoogle::QGeoTiledMappingManagerEngineGoogle(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
+QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
 :   QGeoTiledMappingManagerEngine()
 {
     QGeoCameraCapabilities cameraCaps;
@@ -66,19 +67,24 @@ QGeoTiledMappingManagerEngineGoogle::QGeoTiledMappingManagerEngineGoogle(const Q
     setTileSize(QSize(256, 256));
 
     QList<QGeoMapType> mapTypes;
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         tr("Street Map"),   tr("Google street map"),    false, false, 1);
-    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   tr("Satellite Map"),tr("Google satellite map"), false, false, 2);
-    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,        tr("Terrain Map"),  tr("Google terrain map"),   false, false, 3);
-    // mapTypes << QGeoMapType(QGeoMapType::HybridMap,      tr("Hybrid Map"),   tr("Google hybrid map"),    false, false, 4);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         tr("Google Street Map"),   tr("Google street map"),    false, false, OpenPilot::GoogleMap);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   tr("Google Satellite Map"),tr("Google satellite map"), false, false, OpenPilot::GoogleSatellite);
+    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,        tr("Google Terrain Map"),  tr("Google terrain map"),   false, false, OpenPilot::GoogleTerrain);
+    // TODO:
+    // Proper hybrid maps requires collecting two separate bimaps and overlaying them.
+    //mapTypes << QGeoMapType(QGeoMapType::HybridMap,       tr("Google Hybrid Map"),   tr("Google hybrid map"),    false, false, OpenPilot::GoogleHybrid);
+    // Bing
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         tr("Bing Street Map"),     tr("Bing street map"),      false, false, OpenPilot::BingMap);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   tr("Bing Satellite Map"),  tr("Bing satellite map"),   false, false, OpenPilot::BingSatellite);
     setSupportedMapTypes(mapTypes);
 
-    QGeoTileFetcherGoogle *tileFetcher = new QGeoTileFetcherGoogle(this);
+    QGeoTileFetcherQGC *tileFetcher = new QGeoTileFetcherQGC(this);
     if (parameters.contains(QStringLiteral("useragent"))) {
         const QByteArray ua = parameters.value(QStringLiteral("useragent")).toString().toLatin1();
         tileFetcher->setUserAgent(ua);
     } else
         // QGC Default
-        tileFetcher->setUserAgent("qgroundcontrol.org");
+        tileFetcher->setUserAgent("Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.1.7) Gecko/20091221 Firefox/3.5.7");
 
     setTileFetcher(tileFetcher);
 
@@ -146,11 +152,11 @@ QGeoTiledMappingManagerEngineGoogle::QGeoTiledMappingManagerEngineGoogle(const Q
     errorString->clear();
 }
 
-QGeoTiledMappingManagerEngineGoogle::~QGeoTiledMappingManagerEngineGoogle()
+QGeoTiledMappingManagerEngineQGC::~QGeoTiledMappingManagerEngineQGC()
 {
 }
 
-QGeoMapData *QGeoTiledMappingManagerEngineGoogle::createMapData()
+QGeoMapData *QGeoTiledMappingManagerEngineQGC::createMapData()
 {
     return new QGeoTiledMapData(this, 0);
 }
