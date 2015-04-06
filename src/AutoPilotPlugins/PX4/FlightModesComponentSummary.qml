@@ -6,54 +6,31 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.Controls 1.0
 
 Column {
-    anchors.fill: parent
-    anchors.margins: 8
+    Fact { id: modeSwFact;      name: "RC_MAP_MODE_SW" }
+    Fact { id: posCtlSwFact;    name: "RC_MAP_POSCTL_SW" }
+    Fact { id: loiterSwFact;    name: "RC_MAP_LOITER_SW" }
+    Fact { id: returnSwFact;    name: "RC_MAP_RETURN_SW" }
 
-    Component {
-        id: component
+    anchors.fill:       parent
+    anchors.margins:    8
 
-        Row {
-            width: parent.width
-
-            QGCLabel { id: label; text: labelText }
-            QGCLabel {
-                property Fact fact: Fact { name: factName }
-                horizontalAlignment: Text.AlignRight
-                width: parent.width - label.contentWidth
-                text: fact.value == 0 ? zeroText : fact.value
-            }
-        }
+    VehicleSummaryRow {
+        labelText: "Mode switch:"
+        valueText: modeSwFact.value == 0 ? "Setup required" : modeSwFact.valueString
     }
 
-    Loader {
-        property string labelText: "Mode switch:"
-        property string zeroText: "Setup required"
-        property string factName: "RC_MAP_MODE_SW"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Position Ctl switch:"
+        valueText: posCtlSwFact.value == 0 ? "Disabled" : fact.valueString
     }
 
-    Loader {
-        property string labelText: "Position Ctl switch:"
-        property string zeroText: "Disabled"
-        property string factName: "RC_MAP_POSCTL_SW"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Position Ctl switch:"
+        valueText: loiterSwFact.value == 0 ? "Disabled" : fact.valueString
     }
 
-    Loader {
-        property string labelText: "Position Ctl switch:"
-        property string zeroText: "Disabled"
-        property string factName: "RC_MAP_LOITER_SW"
-        width: parent.width
-        sourceComponent: component
-    }
-
-    Loader {
-        property string labelText: "Return switch:"
-        property string zeroText: "Disabled"
-        property string factName: "RC_MAP_RETURN_SW"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Return switch:"
+        valueText: returnSwFact.value == 0 ? "Disabled" : fact.valueString
     }
 }
