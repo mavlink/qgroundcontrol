@@ -12,4 +12,5 @@ QGCToolBarButton 1.0 QGCToolBarButton.qml
 SubMenuButton 1.0 SubMenuButton.qml
 IndicatorButton 1.0 IndicatorButton.qml
 VehicleRotationCal 1.0 VehicleRotationCal.qml
+VehicleSummaryRow 1.0 VehicleSummaryRow.qml
 

@@ -7,63 +7,37 @@ import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
 
 Column {
-    anchors.fill: parent
-    anchors.margins: 8
+    Fact { id: returnAltFact;   name: "RTL_RETURN_ALT" }
+    Fact { id: descendAltFact;  name: "RTL_DESCEND_ALT" }
+    Fact { id: landDelayFact;   name: "RTL_LAND_DELAY" }
+    Fact { id: commDLLossFact;  name: "COM_DL_LOSS_EN" }
+    Fact { id: commRCLossFact;  name: "COM_RC_LOSS_T" }
 
-    Row {
-        width: parent.width
+    anchors.fill:       parent
+    anchors.margins:    8
 
-        QGCLabel { id: rtlMinAlt; text: "RTL min alt:" }
-        FactLabel {
-            fact: Fact { name: "RTL_RETURN_ALT" }
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - rtlMinAlt.contentWidth;
-        }
+    VehicleSummaryRow {
+        labelText: "RTL min alt:"
+        valueText: returnAltFact.valueString
     }
 
-    Row {
-        width: parent.width
-
-        QGCLabel { id: rtlHomeAlt; text: "RTL home alt:" }
-        FactLabel {
-            fact: Fact { name: "RTL_DESCEND_ALT" }
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - rtlHomeAlt.contentWidth;
-        }
+    VehicleSummaryRow {
+        labelText: "RTL home alt:"
+        valueText: descendAltFact.valueString
     }
 
-    Row {
-        width: parent.width
-
-        QGCLabel { id: rtlLoiter; text: "RTL loiter delay:" }
-        QGCLabel {
-            property Fact fact: Fact { name: "RTL_LAND_DELAY" }
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - rtlLoiter.contentWidth;
-            text: fact.value < 0 ? "Disabled" : fact.valueString
-        }
+    VehicleSummaryRow {
+        labelText: "RTL loiter delay:"
+        valueText: landDelayFact.value < 0 ? "Disabled" : landDelayFact.valueString
     }
 
-    Row {
-        width: parent.width
-
-        QGCLabel { id: commLoss; text: "Telemetry loss RTL:" }
-        QGCLabel {
-            property Fact fact: Fact { name: "COM_DL_LOSS_EN" }
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - commLoss.contentWidth;
-            text: fact.value != 1 ? "Disabled" : fact.valueString
-        }
+    VehicleSummaryRow {
+        labelText: "Telemetry loss RTL:"
+        valueText: commDLLossFact.value != -1 ? "Disabled" : commDLLossFact.valueString
     }
 
-    Row {
-        width: parent.width
-
-        QGCLabel { id: rcLoss; text: "RC loss RTL (seconds):" }
-        FactLabel {
-            fact: Fact { name: "COM_RC_LOSS_T" }
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - rcLoss.contentWidth;
-        }
+    VehicleSummaryRow {
+        labelText: "RC loss RTL (seconds):"
+        valueText: commRCLossFact.valueString
     }
 }
