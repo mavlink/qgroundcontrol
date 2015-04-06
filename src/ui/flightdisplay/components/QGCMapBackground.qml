@@ -62,7 +62,7 @@ Rectangle {
 
     Plugin {
         id:   mapPlugin
-        name: "google"
+        name: "QGroundControl"
     }
 
     Map {

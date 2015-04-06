@@ -1,7 +1,7 @@
 {
-    "Keys": ["google-maps"],
-    "Provider": "google",
-    "Version": 100,
+    "Keys": ["qgc-maps"],
+    "Provider": "QGroundControl",
+    "Version": 101,
     "Experimental": false,
     "Features": [
         "OnlineMappingFeature",

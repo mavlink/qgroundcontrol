@@ -38,7 +38,7 @@
 ** $QT_END_LICENSE$
 **
 ** 2015.4.4
-** Adapted for google maps with the intent of use for QGroundControl
+** Adapted for use with QGroundControl
 **
 ** Gus Grubba <mavlink@grubba.com>
 **
@@ -53,7 +53,7 @@
 #include <QtPositioning/QGeoRectangle>
 #include <unordered_map>
 
-#include "qgeocodereplygoogle.h"
+#include "qgeocodereplyqgc.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -156,7 +156,7 @@ QSet<int> JasonMonger::json2QGeoCodeTypeGoogle(const QJsonArray &types) {
 
 JasonMonger kMonger;
 
-QGeoCodeReplyGoogle::QGeoCodeReplyGoogle(QNetworkReply *reply, QObject *parent)
+QGeoCodeReplyQGC::QGeoCodeReplyQGC(QNetworkReply *reply, QObject *parent)
 :   QGeoCodeReply(parent), m_reply(reply)
 {
     connect(m_reply, SIGNAL(finished()), this, SLOT(networkReplyFinished()));
@@ -167,13 +167,13 @@ QGeoCodeReplyGoogle::QGeoCodeReplyGoogle(QNetworkReply *reply, QObject *parent)
     setOffset(0);
 }
 
-QGeoCodeReplyGoogle::~QGeoCodeReplyGoogle()
+QGeoCodeReplyQGC::~QGeoCodeReplyQGC()
 {
     if (m_reply)
         m_reply->deleteLater();
 }
 
-void QGeoCodeReplyGoogle::abort()
+void QGeoCodeReplyQGC::abort()
 {
     if (!m_reply)
         return;
@@ -184,7 +184,7 @@ void QGeoCodeReplyGoogle::abort()
     m_reply = 0;
 }
 
-void QGeoCodeReplyGoogle::networkReplyFinished()
+void QGeoCodeReplyQGC::networkReplyFinished()
 {
     if (!m_reply)
         return;
@@ -288,7 +288,7 @@ void QGeoCodeReplyGoogle::networkReplyFinished()
     m_reply = 0;
 }
 
-void QGeoCodeReplyGoogle::networkReplyError(QNetworkReply::NetworkError error)
+void QGeoCodeReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
 {
     Q_UNUSED(error)
     if (!m_reply)

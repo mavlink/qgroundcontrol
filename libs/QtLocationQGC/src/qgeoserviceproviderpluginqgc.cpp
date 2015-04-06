@@ -38,44 +38,45 @@
 ** $QT_END_LICENSE$
 **
 ** 2015.4.4
-** Adapted for google maps with the intent of use for QGroundControl
+** Adapted for use with QGroundControl
 **
 ** Gus Grubba <mavlink@grubba.com>
 **
 ****************************************************************************/
 
-#ifndef QGEOCODINGMANAGERENGINEGOOGLE_H
-#define QGEOCODINGMANAGERENGINEGOOGLE_H
+#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
-#include <QtLocation/QGeoServiceProvider>
-#include <QtLocation/QGeoCodingManagerEngine>
-#include <QtLocation/QGeoCodeReply>
+#include "qdebug.h"
+#include "qgeoserviceproviderpluginqgc.h"
+#include "qgeotiledmappingmanagerengineqgc.h"
+#include "qgeocodingmanagerengineqgc.h"
 
 QT_BEGIN_NAMESPACE
 
-class QNetworkAccessManager;
-
-class QGeoCodingManagerEngineGoogle : public QGeoCodingManagerEngine
+QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
+    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
-    Q_OBJECT
+    return new QGeoCodingManagerEngineQGC(parameters, error, errorString);
+}
 
-public:
-    QGeoCodingManagerEngineGoogle(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
-    ~QGeoCodingManagerEngineGoogle();
+QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
+    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+{
+    return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString);
+}
 
-    QGeoCodeReply* geocode          (const QGeoAddress &address, const QGeoShape &bounds) Q_DECL_OVERRIDE;
-    QGeoCodeReply* geocode          (const QString &address, int limit, int offset, const QGeoShape &bounds) Q_DECL_OVERRIDE;
-    QGeoCodeReply* reverseGeocode   (const QGeoCoordinate &coordinate, const QGeoShape &bounds) Q_DECL_OVERRIDE;
+QGeoRoutingManagerEngine *QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
+    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
+{
+    // Not implemented for QGC
+    return NULL;
+}
 
-private Q_SLOTS:
-    void replyFinished  ();
-    void replyError     (QGeoCodeReply::Error errorCode, const QString &errorString);
-
-private:
-    QNetworkAccessManager *m_networkManager;
-    QByteArray m_userAgent;
-};
+QPlaceManagerEngine *QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
+    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
+{
+    // Not implemented for QGC
+    return NULL;
+}
 
 QT_END_NAMESPACE
-
-#endif // QGEOCODINGMANAGERENGINEGOOGLE_H

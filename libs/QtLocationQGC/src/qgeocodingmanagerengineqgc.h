@@ -38,38 +38,44 @@
 ** $QT_END_LICENSE$
 **
 ** 2015.4.4
-** Adapted for google maps with the intent of use for QGroundControl
+** Adapted for use with QGroundControl
 **
 ** Gus Grubba <mavlink@grubba.com>
 **
 ****************************************************************************/
 
-#ifndef QGEOCODEREPLYGOOGLE_H
-#define QGEOCODEREPLYGOOGLE_H
+#ifndef QGEOCODINGMANAGERENGINEGOOGLE_H
+#define QGEOCODINGMANAGERENGINEGOOGLE_H
 
-#include <QtNetwork/QNetworkReply>
+#include <QtLocation/QGeoServiceProvider>
+#include <QtLocation/QGeoCodingManagerEngine>
 #include <QtLocation/QGeoCodeReply>
 
 QT_BEGIN_NAMESPACE
 
-class QGeoCodeReplyGoogle : public QGeoCodeReply
+class QNetworkAccessManager;
+
+class QGeoCodingManagerEngineQGC : public QGeoCodingManagerEngine
 {
     Q_OBJECT
 
 public:
-    explicit QGeoCodeReplyGoogle(QNetworkReply *reply, QObject *parent = 0);
-    ~QGeoCodeReplyGoogle();
+    QGeoCodingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
+    ~QGeoCodingManagerEngineQGC();
 
-    void abort();
+    QGeoCodeReply* geocode          (const QGeoAddress &address, const QGeoShape &bounds) Q_DECL_OVERRIDE;
+    QGeoCodeReply* geocode          (const QString &address, int limit, int offset, const QGeoShape &bounds) Q_DECL_OVERRIDE;
+    QGeoCodeReply* reverseGeocode   (const QGeoCoordinate &coordinate, const QGeoShape &bounds) Q_DECL_OVERRIDE;
 
 private Q_SLOTS:
-    void networkReplyFinished();
-    void networkReplyError(QNetworkReply::NetworkError error);
+    void replyFinished  ();
+    void replyError     (QGeoCodeReply::Error errorCode, const QString &errorString);
 
 private:
-    QNetworkReply *m_reply;
+    QNetworkAccessManager *m_networkManager;
+    QByteArray m_userAgent;
 };
 
 QT_END_NAMESPACE
 
-#endif // QGEOCODEREPLYGOOGLE_H
+#endif // QGEOCODINGMANAGERENGINEGOOGLE_H

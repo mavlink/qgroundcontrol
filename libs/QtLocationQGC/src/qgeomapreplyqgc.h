@@ -38,80 +38,41 @@
 ** $QT_END_LICENSE$
 **
 ** 2015.4.4
-** Adapted for google maps with the intent of use for QGroundControl
+** Adapted for use with QGroundControl
 **
 ** Gus Grubba <mavlink@grubba.com>
 **
 ****************************************************************************/
 
-#include <QtLocation/private/qgeotilespec_p.h>
+#ifndef QGEOMAPREPLYGOOGLE_H
+#define QGEOMAPREPLYGOOGLE_H
 
-#include "qgeomapreplygoogle.h"
+#include <QtNetwork/QNetworkReply>
+#include <QtLocation/private/qgeotiledmapreply_p.h>
 
-QGeoMapReplyGoogle::QGeoMapReplyGoogle(QNetworkReply *reply, const QGeoTileSpec &spec, QObject *parent)
-    : QGeoTiledMapReply(spec, parent)
-    , m_reply(reply)
+QT_BEGIN_NAMESPACE
+
+class QGeoMapReplyQGC : public QGeoTiledMapReply
 {
-    connect(m_reply, SIGNAL(finished()),                         this, SLOT(networkReplyFinished()));
-    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
-    connect(m_reply, SIGNAL(destroyed()),                        this, SLOT(replyDestroyed()));
-}
+    Q_OBJECT
 
-QGeoMapReplyGoogle::~QGeoMapReplyGoogle()
-{
-    if (m_reply) {
-        m_reply->deleteLater();
-        m_reply = 0;
-    }
-}
+public:
+    explicit QGeoMapReplyQGC(QNetworkReply *reply, const QGeoTileSpec &spec, QObject *parent = 0);
+    ~QGeoMapReplyQGC();
 
-void QGeoMapReplyGoogle::abort()
-{
-    if (!m_reply)
-        return;
-    m_reply->abort();
-}
+    void abort();
 
-QNetworkReply *QGeoMapReplyGoogle::networkReply() const
-{
-    return m_reply;
-}
+    QNetworkReply *networkReply() const;
 
-void QGeoMapReplyGoogle::replyDestroyed()
-{
-    m_reply = 0;
-}
+private Q_SLOTS:
+    void replyDestroyed         ();
+    void networkReplyFinished   ();
+    void networkReplyError      (QNetworkReply::NetworkError error);
 
-void QGeoMapReplyGoogle::networkReplyFinished()
-{
-    if (!m_reply)
-        return;
+private:
+    QNetworkReply*  m_reply;
+};
 
-    if (m_reply->error() != QNetworkReply::NoError)
-        return;
+QT_END_NAMESPACE
 
-    QByteArray a = m_reply->readAll();
-    setMapImageData(a);
-
-    if(tileSpec().mapId() > 0 && tileSpec().mapId() < 5)
-        setMapImageFormat("png");
-    else
-        qWarning("Unknown map id %d", tileSpec().mapId());
-
-    setFinished(true);
-    m_reply->deleteLater();
-    m_reply = 0;
-}
-
-void QGeoMapReplyGoogle::networkReplyError(QNetworkReply::NetworkError error)
-{
-    if (!m_reply)
-        return;
-
-    if (error != QNetworkReply::OperationCanceledError)
-        setError(QGeoTiledMapReply::CommunicationError, m_reply->errorString());
-
-    setFinished(true);
-    m_reply->deleteLater();
-    m_reply = 0;
-}
+#endif // QGEOMAPREPLYGOOGLE_H

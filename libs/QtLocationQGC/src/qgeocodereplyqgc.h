@@ -38,29 +38,38 @@
 ** $QT_END_LICENSE$
 **
 ** 2015.4.4
-** Adapted for google maps with the intent of use for QGroundControl
+** Adapted for use with QGroundControl
 **
 ** Gus Grubba <mavlink@grubba.com>
 **
 ****************************************************************************/
 
-#ifndef QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
-#define QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
+#ifndef QGEOCODEREPLYGOOGLE_H
+#define QGEOCODEREPLYGOOGLE_H
 
-#include <QtLocation/QGeoServiceProvider>
-#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
+#include <QtNetwork/QNetworkReply>
+#include <QtLocation/QGeoCodeReply>
 
 QT_BEGIN_NAMESPACE
 
-class QGeoTiledMappingManagerEngineGoogle : public QGeoTiledMappingManagerEngine
+class QGeoCodeReplyQGC : public QGeoCodeReply
 {
     Q_OBJECT
+
 public:
-    QGeoTiledMappingManagerEngineGoogle(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
-    ~QGeoTiledMappingManagerEngineGoogle();
-    QGeoMapData *createMapData();
+    explicit QGeoCodeReplyQGC(QNetworkReply *reply, QObject *parent = 0);
+    ~QGeoCodeReplyQGC();
+
+    void abort();
+
+private Q_SLOTS:
+    void networkReplyFinished();
+    void networkReplyError(QNetworkReply::NetworkError error);
+
+private:
+    QNetworkReply *m_reply;
 };
 
 QT_END_NAMESPACE
 
-#endif // QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
+#endif // QGEOCODEREPLYGOOGLE_H
