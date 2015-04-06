@@ -69,7 +69,7 @@ QGeoTiledMappingManagerEngineGoogle::QGeoTiledMappingManagerEngineGoogle(const Q
     mapTypes << QGeoMapType(QGeoMapType::StreetMap,         tr("Street Map"),   tr("Google street map"),    false, false, 1);
     mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   tr("Satellite Map"),tr("Google satellite map"), false, false, 2);
     mapTypes << QGeoMapType(QGeoMapType::TerrainMap,        tr("Terrain Map"),  tr("Google terrain map"),   false, false, 3);
-    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         tr("Hybrid Map"),   tr("Google hybrid map"),    false, false, 4);
+    // mapTypes << QGeoMapType(QGeoMapType::HybridMap,      tr("Hybrid Map"),   tr("Google hybrid map"),    false, false, 4);
     setSupportedMapTypes(mapTypes);
 
     QGeoTileFetcherGoogle *tileFetcher = new QGeoTileFetcherGoogle(this);
