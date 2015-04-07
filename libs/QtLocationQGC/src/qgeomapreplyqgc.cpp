@@ -91,25 +91,36 @@ void QGeoMapReplyQGC::networkReplyFinished()
     if (m_reply->error() != QNetworkReply::NoError)
         return;
 
-    // qDebug() << "Map OK: " << m_reply->url().toString();
     QByteArray a = m_reply->readAll();
     setMapImageData(a);
 
-    switch ((OpenPilot::MapType)tileSpec().mapId()) {
-        case OpenPilot::GoogleMap:
-        case OpenPilot::GoogleSatellite:
-        case OpenPilot::GoogleLabels:
-        case OpenPilot::GoogleTerrain:
-        case OpenPilot::GoogleHybrid:
-        case OpenPilot::BingMap:
+    if(a.size() > 2)
+    {
+        if((char)a[0] == (char)0xff && (char)a[1] == (char)0xd8)
+            setMapImageFormat("jpg");
+        else if((char)a[0] == (char)0x89 && (char)a[1] == (char)0x50)
             setMapImageFormat("png");
-            break;
-        case OpenPilot::BingSatellite:
-            setMapImageFormat("jpeg");
-            break;
-        default:
-            qWarning("Unknown map id %d", tileSpec().mapId());
-            break;
+        else
+        {
+            switch ((OpenPilot::MapType)tileSpec().mapId()) {
+                case OpenPilot::GoogleMap:
+                case OpenPilot::GoogleLabels:
+                case OpenPilot::GoogleTerrain:
+                case OpenPilot::GoogleHybrid:
+                case OpenPilot::BingMap:
+                case OpenPilot::OpenStreetMap:
+                    setMapImageFormat("png");
+                    break;
+                case OpenPilot::GoogleSatellite:
+                case OpenPilot::BingSatellite:
+                case OpenPilot::BingHybrid:
+                    setMapImageFormat("jpg");
+                    break;
+                default:
+                    qWarning("Unknown map id %d", tileSpec().mapId());
+                    break;
+            }
+        }
     }
 
     setFinished(true);
@@ -121,8 +132,6 @@ void QGeoMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
 {
     if (!m_reply)
         return;
-
-    // qDebug() << "Map error: " << m_reply->url().toString();
 
     if (error != QNetworkReply::OperationCanceledError)
         setError(QGeoTiledMapReply::CommunicationError, m_reply->errorString());

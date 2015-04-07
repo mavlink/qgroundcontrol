@@ -75,8 +75,6 @@ QGeoTiledMapReply *QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
     QNetworkRequest request;
     QString url = m_UrlFactory.makeImageUrl((OpenPilot::MapType)spec.mapId(), QPoint(spec.x(), spec.y()), spec.zoom(), m_Language);
 
-    // qDebug() << "Request x" << spec.x() << "y" << spec.y() << "URL:" << url;
-
     request.setUrl(QUrl(url));
     request.setRawHeader("User-Agent", m_userAgent);
     request.setRawHeader("Accept", "*/*");
