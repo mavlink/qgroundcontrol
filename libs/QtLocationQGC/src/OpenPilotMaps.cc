@@ -93,7 +93,7 @@ ProviderStrings::ProviderStrings()
 
 UrlFactory::UrlFactory()
     : _isCorrectedGoogleVersions(false)
-    , _correctGoogleVersions(false)
+    , _correctGoogleVersions(true)
     , _timeout(5 * 1000)
 {
     Proxy.setType(QNetworkProxy::NoProxy);
@@ -177,9 +177,9 @@ void UrlFactory::_tryCorrectGoogleVersions()
         reg = QRegExp("\"*https://khms0.google.com/kh/v=(\\d*)", Qt::CaseInsensitive);
         if (reg.indexIn(html) != -1) {
             QStringList gc = reg.capturedTexts();
-            VersionGoogleSatellite = gc[1];
+            VersionGoogleSatellite = "s@" + gc[1];
             VersionGoogleSatelliteKorea = VersionGoogleSatellite;
-            VersionGoogleSatelliteChina = "s@" + VersionGoogleSatellite;
+            VersionGoogleSatelliteChina = VersionGoogleSatellite;
         }
         reg = QRegExp("\"*https://mts0.google.com/vt/lyrs=t@(\\d*),r@(\\d*)", Qt::CaseInsensitive);
         if (reg.indexIn(html) != -1) {

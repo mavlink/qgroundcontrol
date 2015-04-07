@@ -214,6 +214,7 @@ Rectangle {
         Menu {
             id: mapTypeMenu
             title: "Map Type..."
+            ExclusiveGroup { id: currentMapType }
             function setCurrentMap(map) {
                 for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
                     if (map === mapBackground.mapItem.supportedMapTypes[i].name) {
@@ -223,20 +224,24 @@ Rectangle {
                     }
                 }
             }
-            function addMap(map) {
+            function addMap(map, checked) {
                 var mItem = mapTypeMenu.addItem(map);
+                mItem.checkable = true
+                mItem.checked   = checked
+                mItem.exclusiveGroup = currentMapType
                 var menuSlot = function() {setCurrentMap(map);};
                 mItem.triggered.connect(menuSlot);
             }
             function update() {
                 clear()
-                for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
-                    addMap(mapBackground.mapItem.supportedMapTypes[i].name);
-                }
                 var map = ''
                 if (mapBackground.mapItem.supportedMapTypes.length > 0)
                     map = mapBackground.mapItem.activeMapType.name;
                 map = flightDisplay.loadSetting("currentMapType", map);
+                for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
+                    var name = mapBackground.mapItem.supportedMapTypes[i].name;
+                    addMap(name, map === name);
+                }
                 if(map != '')
                     setCurrentMap(map);
             }

@@ -76,6 +76,8 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     // Bing
     mapTypes << QGeoMapType(QGeoMapType::StreetMap,         tr("Bing Street Map"),     tr("Bing street map"),      false, false, OpenPilot::BingMap);
     mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   tr("Bing Satellite Map"),  tr("Bing satellite map"),   false, false, OpenPilot::BingSatellite);
+    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         tr("Bing Hybrid Map"),     tr("Bing hybrid map"),      false, false, OpenPilot::BingHybrid);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         tr("Open Street Map"),     tr("Open Street map"),      false, false, OpenPilot::OpenStreetMap);
     setSupportedMapTypes(mapTypes);
 
     QGeoTileFetcherQGC *tileFetcher = new QGeoTileFetcherQGC(this);
