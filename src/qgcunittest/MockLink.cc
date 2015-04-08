@@ -454,7 +454,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
     Q_ASSERT(request.target_component == MAV_COMP_ID_ALL);
 
     foreach (int componentId, _mapParamName2Value.keys()) {
-        uint16_t paramIndex = 0;
+        uint16_t paramIndex = 1;
         int cParameters = _mapParamName2Value[componentId].count();
         
         foreach(QString paramName, _mapParamName2Value[componentId].keys()) {
