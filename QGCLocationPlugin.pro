@@ -1,7 +1,7 @@
 include(QGCCommon.pri)
 
 TEMPLATE     = lib
-TARGET       = $$qtLibraryTarget(QGeoServiceProviderFactoryQGC)
+TARGET       = QGeoServiceProviderFactoryQGC
 CONFIG      += plugin static
 QT          += location-private positioning-private network
 PLUGIN_TYPE  = geoservices
