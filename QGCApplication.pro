@@ -17,7 +17,7 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-message(Qt version $$[QT_VERSION])
+include(QGCCommon.pri)
 
 TARGET = qgroundcontrol
 
@@ -27,120 +27,27 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
     message($$sprintf("Using user-supplied additional config: '%1' specified in user_config.pri", $$fromfile(user_config.pri, CONFIG)))
 }
 
-# Setup our supported build types. We do this once here and then use the defined config scopes
-# to allow us to easily modify suported build types in one place instead of duplicated throughout
-# the project file.
-
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 3) {
-    error("Unsupported Qt version, 5.4+ is required")
+LinuxBuild {
+    CONFIG += link_pkgconfig
 }
-
-linux {
-    linux-g++ | linux-g++-64 {
-        message("Linux build")
-        CONFIG += LinuxBuild link_pkgconfig
-    } else {
-        error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
-    }
-} else : win32 {
-    win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
-        message("Windows build")
-        CONFIG += WindowsBuild
-    } else {
-        error("Unsupported Windows toolchain, only Visual Studio 2010, 2012, and 2013 are supported")
-    }
-} else : macx {
-    macx-clang | macx-llvm {
-        message("Mac build")
-        CONFIG += MacBuild
-        QMAKE_CXXFLAGS += -fvisibility=hidden
-    } else {
-        error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
-    }
-} else {
-    error("Unsupported build platform, only Linux, Windows, and Mac are supported")
-}
-
-# Installer configuration
-
-installer {
-    CONFIG -= debug
-    CONFIG -= debug_and_release
-    CONFIG += release
-    message(Build Installer)
-}
-
-# Setup our supported build flavors
-
-CONFIG(debug, debug|release) {
-    message(Debug flavor)
-    CONFIG += DebugBuild
-} else:CONFIG(release, debug|release) {
-    message(Release flavor)
-    CONFIG += ReleaseBuild
-} else {
-    error(Unsupported build flavor)
-}
-
-# Need to special case Windows debug_and_release since VS Project creation in this case does strange things [QTBUG-40351]
-win32:debug_and_release {
-    CONFIG += WindowsDebugAndRelease
-}
-
-# Setup our build directories
-
-BASEDIR      = $${IN_PWD}
-
-DebugBuild {
-    DESTDIR  = $${OUT_PWD}/debug
-    BUILDDIR = $${OUT_PWD}/build-debug
-}
-
-ReleaseBuild {
-    DESTDIR  = $${OUT_PWD}/release
-    BUILDDIR = $${OUT_PWD}/build-release
-}
-
-OBJECTS_DIR = $${BUILDDIR}/obj
-MOC_DIR     = $${BUILDDIR}/moc
-UI_DIR      = $${BUILDDIR}/ui
-RCC_DIR     = $${BUILDDIR}/rcc
-LANGUAGE    = C++
 
 message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
 
-# QGC QtLocation
+# QGC QtLocation plugin
 
-QGCMAPDIR   = $${OUT_PWD}/libs/QtLocationQGC/plugins/geoservices
+LIBS += -L$${LOCATION_PLUGIN_DESTDIR}
+LIBS += -l$${LOCATION_PLUGIN_NAME}
 
-LinuxBuild {
-    LIBS += -L$$QGCMAPDIR -lqtgeoservices_qgc
-    PRE_TARGETDEPS += $$QGCMAPDIR/libqtgeoservices_qgc.a
+LinuxBuild|MacBuild {
+    PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}.a
 }
 
 WindowsBuild {
-    DebugBuild {
-        LIBS += -L$$QGCMAPDIR -lqtgeoservices_qgcd
-        PRE_TARGETDEPS += $$QGCMAPDIR/qtgeoservices_qgcd.lib
-    }
-    ReleaseBuild {
-        LIBS += -L$$QGCMAPDIR -lqtgeoservices_qgc
-        PRE_TARGETDEPS += $$QGCMAPDIR/qtgeoservices_qgc.lib
-    }
-}
-
-MacBuild {
-    DebugBuild {
-        LIBS += -L$$QGCMAPDIR -lqtgeoservices_qgc_debug
-        PRE_TARGETDEPS += $$QGCMAPDIR/libqtgeoservices_qgc_debug.a
-    }
-    ReleaseBuild {
-        LIBS   += -L$$QGCMAPDIR -lqtgeoservices_qgc
-        PRE_TARGETDEPS += $$QGCMAPDIR/libqtgeoservices_qgc.a
-    }
+    PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/$${LOCATION_PLUGIN_NAME}.lib
 }
 
 # Qt configuration
+
 CONFIG += qt \
     thread
 
@@ -156,7 +63,9 @@ QT += network \
     printsupport \
     qml \
     quick \
-    quickwidgets
+    quickwidgets \
+    location \
+    positioning
 
 contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
     QT += multimedia
@@ -165,63 +74,22 @@ contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
 #  testlib is needed even in release flavor for QSignalSpy support
 QT += testlib
 
-# Turn off serial port warnings
-DEFINES += _TTY_NOWARN_
-
 #
 # OS Specific settings
 #
 
 MacBuild {
     QMAKE_INFO_PLIST = Custom-Info.plist
-    CONFIG += x86_64
-    CONFIG -= x86
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-    QMAKE_MAC_SDK = macosx10.9
     ICON = $$BASEDIR/resources/icons/macx.icns
     QT += quickwidgets
 }
 
 LinuxBuild {
-	DEFINES += __STDC_LIMIT_MACROS
     CONFIG += qesp_linux_udev
 }
 
 WindowsBuild {
-	DEFINES += __STDC_LIMIT_MACROS
-
-	# Specify multi-process compilation within Visual Studio.
-	# (drastically improves compilation times for multi-core computers)
-	QMAKE_CXXFLAGS_DEBUG += -MP
-	QMAKE_CXXFLAGS_RELEASE += -MP
-
 	RC_FILE = $$BASEDIR/qgroundcontrol.rc
-}
-
-#
-# By default warnings as errors are turned off. Even so, in order for a pull request
-# to be accepted you must compile cleanly with warnings as errors turned on the default
-# set of OS builds. See http://www.qgroundcontrol.org/dev/contribute for more details.
-# You can use the WarningsAsErrorsOn CONFIG switch to turn warnings as errors on for your
-# own builds.
-#
-
-MacBuild | LinuxBuild {
-	QMAKE_CXXFLAGS_WARN_ON += -Wall
-    WarningsAsErrorsOn {
-        QMAKE_CXXFLAGS_WARN_ON += -Werror
-    }
-}
-
-WindowsBuild {
-	QMAKE_CXXFLAGS_WARN_ON += /W3 \
-        /wd4996 \   # silence warnings about deprecated strcpy and whatnot
-        /wd4005 \   # silence warnings about macro redefinition
-        /wd4290 \   # ignore exception specifications
-        /Zc:strictStrings-  # work around win 8.1 sdk sapi.h problem
-    WarningsAsErrorsOn {
-        QMAKE_CXXFLAGS_WARN_ON += /WX
-    }
 }
 
 #
@@ -230,16 +98,6 @@ WindowsBuild {
 
 DebugBuild {
     CONFIG += console
-}
-
-ReleaseBuild {
-    DEFINES += QT_NO_DEBUG
-
-	WindowsBuild {
-		# Use link time code generation for better optimization (I believe this is supported in MSVC Express, but not 100% sure)
-		QMAKE_LFLAGS_LTCG = /LTCG
-		QMAKE_CFLAGS_LTCG = -GL
-    }
 }
 
 # qextserialport should not be used by general QGroundControl code. Use QSerialPort instead. This is only
@@ -269,10 +127,6 @@ include(QGCInstaller.pri)
 #
 
 RESOURCES += qgroundcontrol.qrc
-
-TRANSLATIONS += \
-    es-MX.ts \
-    en-US.ts
 
 DEPENDPATH += \
     . \
@@ -677,8 +531,6 @@ SOURCES += \
 #
 
 DebugBuild|WindowsDebugAndRelease {
-
-DEFINES += UNITTEST_BUILD
 
 INCLUDEPATH += \
 	src/qgcunittest

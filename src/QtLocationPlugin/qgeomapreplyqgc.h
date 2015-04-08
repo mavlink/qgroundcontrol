@@ -50,8 +50,6 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
 
-QT_BEGIN_NAMESPACE
-
 class QGeoMapReplyQGC : public QGeoTiledMapReply
 {
     Q_OBJECT
@@ -72,7 +70,5 @@ private Q_SLOTS:
 private:
     QNetworkReply*  m_reply;
 };
-
-QT_END_NAMESPACE
 
 #endif // QGEOMAPREPLYGOOGLE_H

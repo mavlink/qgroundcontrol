@@ -44,23 +44,24 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
-#define QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
+#ifndef QGEOSERVICEPROVIDER_GOOGLE_H
+#define QGEOSERVICEPROVIDER_GOOGLE_H
 
-#include <QtLocation/QGeoServiceProvider>
-#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
+#include <QtCore/QObject>
+#include <QtLocation/QGeoServiceProviderFactory>
+#include <QtPlugin>
 
-QT_BEGIN_NAMESPACE
-
-class QGeoTiledMappingManagerEngineQGC : public QGeoTiledMappingManagerEngine
+class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderFactory
 {
     Q_OBJECT
+    Q_INTERFACES(QGeoServiceProviderFactory)
+    Q_PLUGIN_METADATA(IID "org.qt-project.qt.geoservice.serviceproviderfactory/5.0" FILE "qgc_maps_plugin.json")
+
 public:
-    QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
-    ~QGeoTiledMappingManagerEngineQGC();
-    QGeoMapData *createMapData();
+    QGeoCodingManagerEngine*    createGeocodingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QGeoMappingManagerEngine*   createMappingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QGeoRoutingManagerEngine*   createRoutingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    QPlaceManagerEngine*        createPlaceManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
 };
 
-QT_END_NAMESPACE
-
-#endif // QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
+#endif // QGEOSERVICEPROVIDER_GOOGLE_H
