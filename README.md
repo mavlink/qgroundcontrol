@@ -50,7 +50,7 @@ QGroundControl builds are supported for OSX, Linux and Windows. See the individu
 Supported builds are 64 bit, built using the clang compiler.
 
 #### Install QT
-- - -
+
 1. Download Qt 5.4 from: <http://download.qt-project.org/official_releases/qt/5.4/5.4.0/qt-opensource-mac-x64-clang-5.4.0.dmg>
 2. Double click the package installer and follow instructions.
 
@@ -107,9 +107,9 @@ Download Qt 5.4 from here: <http://download.qt-project.org/official_releases/qt/
 2. Change directory to your 'qgroundcontrol' source folder.
 3. Run `qmake -r -tp vc qgroundcontrol.pro`.  This will create a 'qgroundcontrol.sln' *Solution* file which is capable of building both debug and release configurations.
 4. Now open the generated 'qgroundcontrol.sln' file in Visual Studio.
-5. Compile and edit in Visual Studio. If you need to add new files to the qgroundcontrol project, add them to qgcsystem.pro and re-run qmake from step 3.
+5. Compile and edit in Visual Studio. If you need to add new files to the qgroundcontrol project, add them to QGCApplication.pro and re-run qmake from step 3.
 
-Note that the *Solution* contains two projets. The main QGroundControl project and the QGC QtLocation Services plugin. From within Visual Studio, before running or debugging, make sure you have *qgroundcontrol* as the current project (right-click and select *Set as Current Project*)
+Note that the *Solution* contains two projets. The main QGroundControl project and the QGC Geoservice Provider Factory plugin. From within Visual Studio, before running or debugging, make sure you have *qgroundcontrol* as the current project (right-click and select *Set as Current Project*)
 
 #### Alternate (Qt Creator IDE) Build Type (Any OS)
 All steps below assume you already have a running software development enviroment (i.e. gcc/g++ on Ubuntu, Xcode on Mac OSX along with the command line tools, Visual Studio on Windows, etc.) along with the various external dependencies described elsewhere in this document.
