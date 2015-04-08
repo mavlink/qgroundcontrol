@@ -39,6 +39,8 @@ void QGCUASParamManager::connectToModelAndComms()
             this, SIGNAL(parameterStatusMsgUpdated(QString,int)));
 
     connect(&paramCommsMgr, SIGNAL(parameterListUpToDate()), this, SLOT(_parameterListUpToDate()));
+    
+    connect(&paramCommsMgr, SIGNAL(parameterListProgress(float)), this, SIGNAL(parameterListProgress(float)));
 
     // Pass along data model updates
     connect(&paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),

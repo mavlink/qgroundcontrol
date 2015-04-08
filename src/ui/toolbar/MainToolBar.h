@@ -75,51 +75,31 @@ public:
     Q_INVOKABLE void    onEnterMessageArea(int x, int y);
     Q_INVOKABLE QString getMavIconColor();
 
-    Q_PROPERTY(int           connectionCount    READ connectionCount    NOTIFY connectionCountChanged)
-    Q_PROPERTY(double        batteryVoltage     READ batteryVoltage     NOTIFY batteryVoltageChanged)
-    Q_PROPERTY(double        batteryPercent     READ batteryPercent     NOTIFY batteryPercentChanged)
-    Q_PROPERTY(ViewType_t    currentView        READ currentView        NOTIFY currentViewChanged)
-    Q_PROPERTY(QStringList   configList         READ configList         NOTIFY configListChanged)
-    Q_PROPERTY(bool          systemArmed        READ systemArmed        NOTIFY systemArmedChanged)
-    Q_PROPERTY(unsigned int  heartbeatTimeout   READ heartbeatTimeout   NOTIFY heartbeatTimeoutChanged)
-    Q_PROPERTY(QString       currentMode        READ currentMode        NOTIFY currentModeChanged)
-    Q_PROPERTY(MessageType_t messageType        READ messageType        NOTIFY messageTypeChanged)
-    Q_PROPERTY(int           newMessageCount    READ newMessageCount    NOTIFY newMessageCountChanged)
-    Q_PROPERTY(int           messageCount       READ messageCount       NOTIFY messageCountChanged)
-    Q_PROPERTY(QString       currentConfig      READ currentConfig      NOTIFY currentConfigChanged)
-    Q_PROPERTY(QString       systemPixmap       READ systemPixmap       NOTIFY systemPixmapChanged)
-    Q_PROPERTY(int           satelliteCount     READ satelliteCount     NOTIFY satelliteCountChanged)
-    Q_PROPERTY(QStringList   connectedList      READ connectedList      NOTIFY connectedListChanged)
-    Q_PROPERTY(bool          mavPresent         READ mavPresent         NOTIFY mavPresentChanged)
-    Q_PROPERTY(QString       currentState       READ currentState       NOTIFY currentStateChanged)
-    Q_PROPERTY(int           satelliteLock      READ satelliteLock      NOTIFY satelliteLockChanged)
-    Q_PROPERTY(bool          showGPS            READ showGPS            NOTIFY showGPSChanged)
-    Q_PROPERTY(bool          showMav            READ showMav            NOTIFY showMavChanged)
-    Q_PROPERTY(bool          showMessages       READ showMessages       NOTIFY showMessagesChanged)
-    Q_PROPERTY(bool          showBattery        READ showBattery        NOTIFY showBatteryChanged)
+    Q_PROPERTY(int           connectionCount    MEMBER _connectionCount         NOTIFY connectionCountChanged)
+    Q_PROPERTY(double        batteryVoltage     MEMBER _batteryVoltage          NOTIFY batteryVoltageChanged)
+    Q_PROPERTY(double        batteryPercent     MEMBER _batteryPercent          NOTIFY batteryPercentChanged)
+    Q_PROPERTY(ViewType_t    currentView        MEMBER _currentView             NOTIFY currentViewChanged)
+    Q_PROPERTY(QStringList   configList         MEMBER _linkConfigurations      NOTIFY configListChanged)
+    Q_PROPERTY(bool          systemArmed        MEMBER _systemArmed             NOTIFY systemArmedChanged)
+    Q_PROPERTY(unsigned int  heartbeatTimeout   MEMBER _currentHeartbeatTimeout NOTIFY heartbeatTimeoutChanged)
+    Q_PROPERTY(QString       currentMode        MEMBER _currentMode             NOTIFY currentModeChanged)
+    Q_PROPERTY(MessageType_t messageType        MEMBER _currentMessageType      NOTIFY messageTypeChanged)
+    Q_PROPERTY(int           newMessageCount    MEMBER _currentMessageCount     NOTIFY newMessageCountChanged)
+    Q_PROPERTY(int           messageCount       MEMBER _messageCount            NOTIFY messageCountChanged)
+    Q_PROPERTY(QString       currentConfig      MEMBER _currentConfig           NOTIFY currentConfigChanged)
+    Q_PROPERTY(QString       systemPixmap       MEMBER _systemPixmap            NOTIFY systemPixmapChanged)
+    Q_PROPERTY(int           satelliteCount     MEMBER _satelliteCount          NOTIFY satelliteCountChanged)
+    Q_PROPERTY(QStringList   connectedList      MEMBER _connectedList           NOTIFY connectedListChanged)
+    Q_PROPERTY(bool          mavPresent         READ mavPresent                 NOTIFY mavPresentChanged)
+    Q_PROPERTY(QString       currentState       MEMBER _currentState            NOTIFY currentStateChanged)
+    Q_PROPERTY(int           satelliteLock      MEMBER _satelliteLock           NOTIFY satelliteLockChanged)
+    Q_PROPERTY(bool          showGPS            MEMBER _showGPS                 NOTIFY showGPSChanged)
+    Q_PROPERTY(bool          showMav            MEMBER _showMav                 NOTIFY showMavChanged)
+    Q_PROPERTY(bool          showMessages       MEMBER _showMessages            NOTIFY showMessagesChanged)
+    Q_PROPERTY(bool          showBattery        MEMBER _showBattery             NOTIFY showBatteryChanged)
+    Q_PROPERTY(float         progressBarValue   MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
 
-    int           connectionCount        () { return _connectionCount; }
-    double        batteryVoltage         () { return _batteryVoltage; }
-    double        batteryPercent         () { return _batteryPercent; }
-    ViewType_t    currentView            () { return _currentView; }
-    QStringList   configList             () { return _linkConfigurations; }
-    bool          systemArmed            () { return _systemArmed; }
-    unsigned int  heartbeatTimeout       () { return _currentHeartbeatTimeout; }
-    QString       currentMode            () { return _currentMode; }
-    MessageType_t messageType            () { return _currentMessageType; }
-    int           newMessageCount        () { return _currentMessageCount; }
-    int           messageCount           () { return _messageCount; }
-    QString       currentConfig          () { return _currentConfig; }
-    QString       systemPixmap           () { return _systemPixmap; }
-    int           satelliteCount         () { return _satelliteCount; }
-    QStringList   connectedList          () { return _connectedList; }
     bool          mavPresent             () { return _mav != NULL; }
-    QString       currentState           () { return _currentState; }
-    int           satelliteLock          () { return _satelliteLock; }
-    bool          showGPS                () { return _showGPS; }
-    bool          showMav                () { return _showMav; }
-    bool          showMessages           () { return _showMessages; }
-    bool          showBattery            () { return _showBattery; }
 
     void          setCurrentView         (int currentView);
     void          viewStateChanged       (const QString& key, bool value);
@@ -147,6 +127,7 @@ signals:
     void showMavChanged                 (bool value);
     void showMessagesChanged            (bool value);
     void showBatteryChanged             (bool value);
+    void progressBarValueChanged        (float value);
 
 private slots:
     void _setActiveUAS                  (UASInterface* active);
@@ -166,7 +147,7 @@ private slots:
     void _setSatelliteCount             (double val, QString name);
     void _leaveMessageView              ();
     void _setSatLoc                     (UASInterface* uas, int fix);
-
+    void _setProgressBarValue           (float value);
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
@@ -203,6 +184,7 @@ private:
     bool            _showMav;
     bool            _showMessages;
     bool            _showBattery;
+    float           _progressBarValue;
 
     UASMessageViewRollDown* _rollDownMessages;
 };

@@ -78,6 +78,7 @@ signals:
     void parameterStatusMsgUpdated(QString msg, int level);
     /** @brief We have received a complete list of all parameters onboard the MAV */
     void parameterListUpToDate();
+    void parameterListProgress(float percentComplete);
 
     /** @brief We've received an update of a parameter's value */
     void parameterUpdated(int compId, QString paramName, QVariant value);

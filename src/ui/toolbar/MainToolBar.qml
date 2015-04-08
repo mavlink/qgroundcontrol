@@ -526,5 +526,15 @@ Rectangle {
         }
 
     }
+
+    // Progress bar
+    Rectangle {
+        readonly property int progressBarHeight: 3
+
+        y:      parent.height  - progressBarHeight
+        height: progressBarHeight
+        width:  parent.width * mainToolBar.progressBarValue
+        color:  qgcPal.text
+    }
 }
 

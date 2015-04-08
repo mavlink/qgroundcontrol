@@ -52,6 +52,7 @@ public slots:
 signals:
     void parameterStatusMsgUpdated(QString msg, int level);
     void parameterListUpToDate();
+    void parameterListProgress(float percentComplete);
     void parameterUpdated(int compId, QString paramName, QVariant value);
     void pendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending);
 };
