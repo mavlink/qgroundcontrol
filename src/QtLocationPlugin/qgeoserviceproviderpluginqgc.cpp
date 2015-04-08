@@ -44,32 +44,35 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOCODEREPLYGOOGLE_H
-#define QGEOCODEREPLYGOOGLE_H
+#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
-#include <QtNetwork/QNetworkReply>
-#include <QtLocation/QGeoCodeReply>
+#include "qdebug.h"
+#include "qgeoserviceproviderpluginqgc.h"
+#include "qgeotiledmappingmanagerengineqgc.h"
+#include "qgeocodingmanagerengineqgc.h"
 
-QT_BEGIN_NAMESPACE
-
-class QGeoCodeReplyQGC : public QGeoCodeReply
+QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
+    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
-    Q_OBJECT
+    return new QGeoCodingManagerEngineQGC(parameters, error, errorString);
+}
 
-public:
-    explicit QGeoCodeReplyQGC(QNetworkReply *reply, QObject *parent = 0);
-    ~QGeoCodeReplyQGC();
+QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
+    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+{
+    return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString);
+}
 
-    void abort();
+QGeoRoutingManagerEngine *QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
+    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
+{
+    // Not implemented for QGC
+    return NULL;
+}
 
-private Q_SLOTS:
-    void networkReplyFinished();
-    void networkReplyError(QNetworkReply::NetworkError error);
-
-private:
-    QNetworkReply *m_reply;
-};
-
-QT_END_NAMESPACE
-
-#endif // QGEOCODEREPLYGOOGLE_H
+QPlaceManagerEngine *QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
+    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
+{
+    // Not implemented for QGC
+    return NULL;
+}

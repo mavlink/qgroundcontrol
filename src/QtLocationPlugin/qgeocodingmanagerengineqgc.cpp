@@ -58,8 +58,6 @@
 #include "qgeocodingmanagerengineqgc.h"
 #include "qgeocodereplyqgc.h"
 
-QT_BEGIN_NAMESPACE
-
 static QString addressToQuery(const QGeoAddress &address)
 {
     return address.street()     + QStringLiteral(", ") +
@@ -177,5 +175,3 @@ void QGeoCodingManagerEngineQGC::replyError(QGeoCodeReply::Error errorCode, cons
     if (reply)
         emit error(reply, errorCode, errorString);
 }
-
-QT_END_NAMESPACE
