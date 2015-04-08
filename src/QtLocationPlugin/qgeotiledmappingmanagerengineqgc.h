@@ -44,39 +44,19 @@
 **
 ****************************************************************************/
 
+#ifndef QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
+#define QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
+
+#include <QtLocation/QGeoServiceProvider>
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
-#include "qdebug.h"
-#include "qgeoserviceproviderpluginqgc.h"
-#include "qgeotiledmappingmanagerengineqgc.h"
-#include "qgeocodingmanagerengineqgc.h"
-
-QT_BEGIN_NAMESPACE
-
-QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
-    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+class QGeoTiledMappingManagerEngineQGC : public QGeoTiledMappingManagerEngine
 {
-    return new QGeoCodingManagerEngineQGC(parameters, error, errorString);
-}
+    Q_OBJECT
+public:
+    QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
+    ~QGeoTiledMappingManagerEngineQGC();
+    QGeoMapData *createMapData();
+};
 
-QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
-    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
-{
-    return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString);
-}
-
-QGeoRoutingManagerEngine *QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
-    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
-{
-    // Not implemented for QGC
-    return NULL;
-}
-
-QPlaceManagerEngine *QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
-    const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
-{
-    // Not implemented for QGC
-    return NULL;
-}
-
-QT_END_NAMESPACE
+#endif // QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
