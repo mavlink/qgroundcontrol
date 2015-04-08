@@ -32,9 +32,10 @@ This file is part of the QGROUNDCONTROL project
 #define OPENPILOTTOOLS_H
 
 #include <QString>
-#include <Qpoint>
+#include <QPoint>
 #include <QByteArray>
 #include <QNetworkProxy>
+#include <QMutex>
 
 namespace OpenPilot {
 
