@@ -36,32 +36,14 @@ message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
 # QGC QtLocation plugin
 
 LIBS += -L$${LOCATION_PLUGIN_DESTDIR}
+LIBS += -l$${LOCATION_PLUGIN_NAME}
 
-LinuxBuild {
-    LIBS += -l$${LOCATION_PLUGIN_NAME}
+LinuxBuild|MacBuild {
     PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}.a
 }
 
 WindowsBuild {
-    DebugBuild {
-        LIBS += -l$${LOCATION_PLUGIN_NAME}d
-        PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/$${LOCATION_PLUGIN_NAME}d.lib
-    }
-    ReleaseBuild {
-        LIBS += -l$${LOCATION_PLUGIN_NAME}
-        PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/$${LOCATION_PLUGIN_NAME}.lib
-    }
-}
-
-MacBuild {
-    DebugBuild {
-        LIBS += -l$${LOCATION_PLUGIN_NAME}_debug
-        PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}_debug.a
-    }
-    ReleaseBuild {
-        LIBS += -l$${LOCATION_PLUGIN_NAME}
-        PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}.a
-    }
+    PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/$${LOCATION_PLUGIN_NAME}.lib
 }
 
 # Qt configuration
