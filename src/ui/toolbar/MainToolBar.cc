@@ -60,6 +60,7 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _showMav(true)
     , _showMessages(true)
     , _showBattery(true)
+    , _progressBarValue(0.0f)
     , _rollDownMessages(0)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
@@ -312,6 +313,9 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
         if(pUas) {
             disconnect(pUas, &UAS::satelliteCountChanged, this, &MainToolBar::_setSatelliteCount);
         }
+        QGCUASParamManagerInterface* paramMgr = _mav->getParamManager();
+        Q_ASSERT(paramMgr);
+        disconnect(paramMgr, SIGNAL(parameterListProgress(float)),              this, SLOT(_setProgressBarValue(float)));
     }
     // Connect new system
     _mav = active;
@@ -338,6 +342,9 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
             _setSatelliteCount(pUas->getSatelliteCount(), QString(""));
             connect(pUas, &UAS::satelliteCountChanged, this, &MainToolBar::_setSatelliteCount);
         }
+        QGCUASParamManagerInterface* paramMgr = _mav->getParamManager();
+        Q_ASSERT(paramMgr);
+        connect(paramMgr, SIGNAL(parameterListProgress(float)),              this, SLOT(_setProgressBarValue(float)));
     }
     // Let toolbar know about it
     emit mavPresentChanged(_mav != NULL);
@@ -644,4 +651,10 @@ void MainToolBar::_setSatLoc(UASInterface*, int fix)
         _satelliteLock = fix;
         emit satelliteLockChanged(_satelliteLock);
     }
+}
+
+void MainToolBar::_setProgressBarValue(float value)
+{
+    _progressBarValue = value;
+    emit progressBarValueChanged(value);
 }
