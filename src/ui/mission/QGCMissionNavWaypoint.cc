@@ -41,6 +41,7 @@ void QGCMissionNavWaypoint::updateFrame(MAV_FRAME frame)
     {
     case MAV_FRAME_LOCAL_ENU:
     case MAV_FRAME_LOCAL_NED:
+    case MAV_FRAME_LOCAL_OFFSET_NED:
         this->ui->posNSpinBox->show();
         this->ui->posESpinBox->show();
         this->ui->posDSpinBox->show();
