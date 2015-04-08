@@ -450,11 +450,9 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
         
         int progDiv = paramCount / 100;
         if ((paramId % progDiv) == 0) {
-            qDebug() << paramId << paramCount;
             emit parameterListProgress((float)paramId / (float)paramCount);
         }
         if (paramId == paramCount) {
-            qDebug() << "List complete";
             emit parameterListProgress(0.0f);
         }
     }
