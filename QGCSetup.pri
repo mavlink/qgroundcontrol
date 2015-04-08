@@ -165,6 +165,7 @@ WindowsBuild {
         $$DLL_DIR\\icu*.dll \
         $$DLL_DIR\\Qt5Core$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Gui$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Location$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Multimedia$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5MultimediaWidgets$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Network$${DLL_QT_DEBUGCHAR}.dll \
@@ -176,7 +177,6 @@ WindowsBuild {
         $$DLL_DIR\\Qt5QuickWidgets$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Sensors$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5SerialPort$${DLL_QT_DEBUGCHAR}.dll \
-        $$DLL_DIR\\Qt5OpenGL$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Sql$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Svg$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Test$${DLL_QT_DEBUGCHAR}.dll \
