@@ -54,8 +54,6 @@
 #include "qgeotilefetcherqgc.h"
 #include "OpenPilotMaps.h"
 
-QT_BEGIN_NAMESPACE
-
 QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
 :   QGeoTiledMappingManagerEngine()
 {
@@ -162,5 +160,3 @@ QGeoMapData *QGeoTiledMappingManagerEngineQGC::createMapData()
 {
     return new QGeoTiledMapData(this, 0);
 }
-
-QT_END_NAMESPACE

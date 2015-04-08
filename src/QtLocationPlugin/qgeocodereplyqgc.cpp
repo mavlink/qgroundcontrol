@@ -51,11 +51,8 @@
 #include <QtPositioning/QGeoAddress>
 #include <QtPositioning/QGeoLocation>
 #include <QtPositioning/QGeoRectangle>
-#include <unordered_map>
 
 #include "qgeocodereplyqgc.h"
-
-QT_BEGIN_NAMESPACE
 
 enum QGeoCodeTypeGoogle {
     GeoCodeTypeUnknown,
@@ -297,5 +294,3 @@ void QGeoCodeReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
     m_reply->deleteLater();
     m_reply = 0;
 }
-
-QT_END_NAMESPACE

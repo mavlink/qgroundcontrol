@@ -44,27 +44,31 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOSERVICEPROVIDER_GOOGLE_H
-#define QGEOSERVICEPROVIDER_GOOGLE_H
+#ifndef QGEOTILEFETCHERGOOGLE_H
+#define QGEOTILEFETCHERGOOGLE_H
 
-#include <QtCore/QObject>
-#include <QtLocation/QGeoServiceProviderFactory>
+#include <QtLocation/private/qgeotilefetcher_p.h>
+#include <QtLocation/private/qgeotilecache_p.h>
+#include "OpenPilotMaps.h"
 
-QT_BEGIN_NAMESPACE
+class QGeoTiledMappingManagerEngine;
+class QNetworkAccessManager;
 
-class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderFactory
+class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
     Q_OBJECT
-    Q_INTERFACES(QGeoServiceProviderFactory)
-    Q_PLUGIN_METADATA(IID "org.qt-project.qt.geoservice.serviceproviderfactory/5.0" FILE "qgc_maps_plugin.json")
 
 public:
-    QGeoCodingManagerEngine*    createGeocodingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
-    QGeoMappingManagerEngine*   createMappingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
-    QGeoRoutingManagerEngine*   createRoutingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
-    QPlaceManagerEngine*        createPlaceManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const;
+    explicit QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent = 0);
+
+    void setUserAgent(const QByteArray &userAgent);
+
+private:
+    QGeoTiledMapReply* getTileImage(const QGeoTileSpec &spec);
+    QNetworkAccessManager*  m_networkManager;
+    QByteArray              m_userAgent;
+    OpenPilot::UrlFactory   m_UrlFactory;
+    QString                 m_Language;
 };
 
-QT_END_NAMESPACE
-
-#endif // QGEOSERVICEPROVIDER_GOOGLE_H
+#endif // QGEOTILEFETCHERGOOGLE_H

@@ -52,8 +52,6 @@
 #include "qgeotilefetcherqgc.h"
 #include "qgeomapreplyqgc.h"
 
-QT_BEGIN_NAMESPACE
-
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)
     : QGeoTileFetcher(parent)
     , m_networkManager(new QNetworkAccessManager(this))
@@ -146,5 +144,3 @@ QGeoTiledMapReply *QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
     return new QGeoMapReplyQGC(reply, spec);
 
 }
-
-QT_END_NAMESPACE
