@@ -63,6 +63,8 @@ signals:
 
     /** @brief We have received a complete list of all parameters onboard the MAV */
     void parameterListUpToDate();
+    
+    void parameterListProgress(float percentComplete);
 
     void parameterUpdateRequested(int component, const QString& parameter);
     void parameterUpdateRequestedById(int componentId, int paramId);
