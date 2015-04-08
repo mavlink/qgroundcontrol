@@ -92,14 +92,15 @@ ReleaseBuild {
     BUILDDIR = $${OUT_PWD}/build-release
 }
 
-LOCATION_PLUGIN_DESTDIR = $${BUILDDIR}/QGCLocationPlugin
-LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
-
 OBJECTS_DIR = $${BUILDDIR}/obj
 MOC_DIR     = $${BUILDDIR}/moc
 UI_DIR      = $${BUILDDIR}/ui
 RCC_DIR     = $${BUILDDIR}/rcc
 LANGUAGE    = C++
+
+# We place the created plugin lib into the objects dir so that make clean will clean it as well
+LOCATION_PLUGIN_DESTDIR = $${OBJECTS_DIR}
+LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
 
 message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
 
