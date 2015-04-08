@@ -10,54 +10,32 @@ import QGroundControl.Controls 1.0
 */
 
 Column {
-    anchors.fill: parent
-    anchors.margins: 8
+    Fact { id: mag0IdFact;      name: "CAL_MAG0_ID" }
+    Fact { id: gyro0IdFact;     name: "CAL_GYRO0_ID" }
+    Fact { id: accel0IdFact;    name: "CAL_ACC0_ID" }
+    Fact { id: dPressOffFact;   name: "SENS_DPRES_OFF" }
 
-    Row {
-        width: parent.width
+    anchors.fill:       parent
+    anchors.margins:    8
 
-        QGCLabel { id: compass; text: "Compass:" }
-        QGCLabel {
-            property Fact fact:     Fact { name: "CAL_MAG0_ID" }
-            horizontalAlignment:    Text.AlignRight;
-            width:                  parent.width - compass.contentWidth;
-            text:                   fact.value  == 0 ? "Setup required" : "Ready"
+    VehicleSummaryRow {
+        labelText: "Compass:"
+        valueText: mag0IdFact.value  == 0 ? "Setup required" : "Ready"
         }
     }
 
     Row {
-        width: parent.width
-
-        QGCLabel { id: gyro; text: "Gyro:" }
-        QGCLabel {
-            property Fact fact:     Fact { name: "CAL_GYRO0_ID" }
-            horizontalAlignment:    Text.AlignRight;
-            width:                  parent.width - compass.contentWidth;
-            text:                   fact.value  == 0 ? "Setup required" : "Ready"
-        }
+        labelText: "Gyro:"
+        valueText: gyro0IdFact.value  == 0 ? "Setup required" : "Ready"
     }
 
     Row {
-        width: parent.width
-
-        QGCLabel { id: accel; text: "Accelerometer:" }
-        QGCLabel {
-            property Fact fact:     Fact { name: "CAL_ACC0_ID" }
-            horizontalAlignment:    Text.AlignRight;
-            width:                  parent.width - compass.contentWidth;
-            text:                   fact.value  == 0 ? "Setup required" : "Ready"
-        }
+        labelText: "Accelerometer:"
+        valueText: accel0IdFact.value  == 0 ? "Setup required" : "Ready"
     }
 
     Row {
-        width: parent.width
-
-        QGCLabel { id: airspeed; text: "Airspeed:" }
-        QGCLabel {
-            property Fact fact:     Fact { name: "SENS_DPRES_OFF" }
-            horizontalAlignment: Text.AlignRight;
-            width: parent.width - airspeed.contentWidth;
-            text: fact.value == 0.0 ? "Setup required" : "Ready"
-        }
+        labelText: "Airspeed:"
+        valueText: dPressOffFact.value  == 0 ? "Setup required" : "Ready"
     }
 }
