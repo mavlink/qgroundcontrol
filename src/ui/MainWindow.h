@@ -124,6 +124,8 @@ public:
     
     /// @brief Gets a pointer to the Main Tool Bar
     MainToolBar* getMainToolBar(void) { return _mainToolBar; }
+    
+    QWidget* getCurrentViewWidget(void) { return _currentViewWidget; }
 
 public slots:
     /** @brief Show the application settings */
