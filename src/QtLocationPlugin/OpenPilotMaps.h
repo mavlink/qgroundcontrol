@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QPoint>
 #include <QByteArray>
 #include <QNetworkProxy>
+#include <QNetworkReply>
 #include <QMutex>
 
 namespace OpenPilot {
@@ -88,10 +89,11 @@ enum MapType
         YandexMapRu             = 5000
 };
 
-class ProviderStrings {
+class ProviderStrings : public QObject {
+    Q_OBJECT
 public:
     ProviderStrings();
-    static const QString levelsForSigPacSpainMap[];
+    static const QString kLevelsForSigPacSpainMap[];
     QString GoogleMapsAPIKey;
     // Google version strings
     QString VersionGoogleMap;
@@ -127,16 +129,19 @@ public:
     QString BingMapsClientToken;
 };
 
-class UrlFactory : public QObject, public ProviderStrings {
+class UrlFactory : public ProviderStrings {
     Q_OBJECT
 public:
-    QByteArray      UserAgent;
-    QNetworkProxy   Proxy;
 
-    UrlFactory();
+    UrlFactory(QNetworkAccessManager* network);
     ~UrlFactory();
 
     QString makeImageUrl                (const MapType &type, const QPoint &pos, const int &zoom, const QString &language);
+
+private slots:
+    void    _networkReplyError          (QNetworkReply::NetworkError error);
+    void    _googleVersionCompleted     ();
+    void    _replyDestroyed             ();
 
 private:
     void    _getSecGoogleWords          (const QPoint &pos, QString &sec1, QString &sec2);
@@ -144,12 +149,12 @@ private:
     void    _tryCorrectGoogleVersions   ();
     QString _tileXYToQuadKey            (const int &tileX, const int &tileY, const int &levelOfDetail) const;
 
-    bool    _isCorrectedGoogleVersions;
-    bool    _correctGoogleVersions;
-    int     _timeout;
-
-    QMutex  mutex;
-    static  const double EarthRadiusKm;
+    int                     _timeout;
+    bool                    _googleVersionRetrieved;
+    QNetworkAccessManager*  _network;
+    QNetworkReply*          _googleReply;
+    QMutex                  _googleVersionMutex;
+    QByteArray              _userAgent;
 };
 
 }
