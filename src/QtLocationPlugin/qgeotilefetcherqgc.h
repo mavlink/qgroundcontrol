@@ -60,6 +60,7 @@ class QGeoTileFetcherQGC : public QGeoTileFetcher
 
 public:
     explicit QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent = 0);
+    ~QGeoTileFetcherQGC();
 
     void setUserAgent(const QByteArray &userAgent);
 
@@ -67,7 +68,7 @@ private:
     QGeoTiledMapReply* getTileImage(const QGeoTileSpec &spec);
     QNetworkAccessManager*  m_networkManager;
     QByteArray              m_userAgent;
-    OpenPilot::UrlFactory   m_UrlFactory;
+    OpenPilot::UrlFactory*  m_UrlFactory;
     QString                 m_Language;
 };
 

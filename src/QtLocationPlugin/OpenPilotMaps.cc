@@ -37,7 +37,7 @@ This file is part of the QGROUNDCONTROL project
 
 namespace OpenPilot {
 
-const QString ProviderStrings::levelsForSigPacSpainMap[] =
+const QString ProviderStrings::kLevelsForSigPacSpainMap[] =
     { "0",         "1",         "2",         "3",       "4",
       "MTNSIGPAC",
       "MTN2000",   "MTN2000",   "MTN2000",   "MTN2000", "MTN2000",
@@ -45,15 +45,13 @@ const QString ProviderStrings::levelsForSigPacSpainMap[] =
       "MTN25",     "MTN25",
       "ORTOFOTOS", "ORTOFOTOS", "ORTOFOTOS", "ORTOFOTOS" };
 
-const double UrlFactory::EarthRadiusKm = 6378.137; // WGS-84
-
 ProviderStrings::ProviderStrings()
 {
     // Google version strings
-    VersionGoogleMap            = "m@113";
-    VersionGoogleSatellite      = "s";
-    VersionGoogleLabels         = "h@221000000";
-    VersionGoogleTerrain        = "t@132,r@249000000";
+    VersionGoogleMap            = "m@296306248";
+    VersionGoogleSatellite      = "s@168";
+    VersionGoogleLabels         = "h@296000000";
+    VersionGoogleTerrain        = "t@132,r@296000000";
     SecGoogleWord               = "Galileo";
 
     // Google (China) version strings
@@ -91,18 +89,18 @@ ProviderStrings::ProviderStrings()
     BingMapsClientToken = "";
 }
 
-UrlFactory::UrlFactory()
-    : _isCorrectedGoogleVersions(false)
-    , _correctGoogleVersions(true)
-    , _timeout(5 * 1000)
+UrlFactory::UrlFactory(QNetworkAccessManager *network)
+    : _timeout(5 * 1000)
+    , _googleVersionRetrieved(false)
+    , _network(network)
+    , _googleReply(NULL)
 {
-    Proxy.setType(QNetworkProxy::NoProxy);
-    UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.1.7) Gecko/20091221 Firefox/3.5.7";
 }
 
 UrlFactory::~UrlFactory()
 {
-
+    if(_googleReply)
+        _googleReply->deleteLater();
 }
 
 QString UrlFactory::_tileXYToQuadKey(const int& tileX, const int& tileY, const int& levelOfDetail) const
@@ -128,68 +126,83 @@ int UrlFactory::_getServerNum(const QPoint &pos, const int &max) const
     return (pos.x() + 2 * pos.y()) % max;
 }
 
-void UrlFactory::_tryCorrectGoogleVersions()
+void UrlFactory::_networkReplyError(QNetworkReply::NetworkError error)
 {
-    static bool _kVersionRetrieved = false;
-    if (_kVersionRetrieved) {
+    qWarning() << "Could not connect to google maps. Error:" << error;
+    if(_googleReply)
+    {
+        _googleReply->deleteLater();
+        _googleReply = NULL;
+    }
+}
+
+void UrlFactory::_replyDestroyed()
+{
+    _googleReply = NULL;
+}
+
+void UrlFactory::_googleVersionCompleted()
+{
+    if (!_googleReply || (_googleReply->error() != QNetworkReply::NoError)) {
+        qDebug() << "Error collecting Google maps version info";
         return;
     }
-    QMutexLocker locker(&mutex);
-    if (_correctGoogleVersions && !_isCorrectedGoogleVersions) {
-        QNetworkReply* reply;
+    QString html = QString(_googleReply->readAll());
+    QRegExp reg("\"*https://mts0.google.com/vt/lyrs=m@(\\d*)", Qt::CaseInsensitive);
+    if (reg.indexIn(html) != -1) {
+        QStringList gc = reg.capturedTexts();
+        VersionGoogleMap = QString("m@%1").arg(gc[1]);
+        VersionGoogleMapChina = VersionGoogleMap;
+        VersionGoogleMapKorea = VersionGoogleMap;
+    }
+    reg = QRegExp("\"*https://mts0.google.com/vt/lyrs=h@(\\d*)", Qt::CaseInsensitive);
+    if (reg.indexIn(html) != -1) {
+        QStringList gc = reg.capturedTexts();
+        VersionGoogleLabels = QString("h@%1").arg(gc[1]);
+        VersionGoogleLabelsChina = VersionGoogleLabels;
+        VersionGoogleLabelsKorea = VersionGoogleLabels;
+    }
+    reg = QRegExp("\"*https://khms0.google.com/kh/v=(\\d*)", Qt::CaseInsensitive);
+    if (reg.indexIn(html) != -1) {
+        QStringList gc = reg.capturedTexts();
+        VersionGoogleSatellite = "s@" + gc[1];
+        VersionGoogleSatelliteKorea = VersionGoogleSatellite;
+        VersionGoogleSatelliteChina = VersionGoogleSatellite;
+    }
+    reg = QRegExp("\"*https://mts0.google.com/vt/lyrs=t@(\\d*),r@(\\d*)", Qt::CaseInsensitive);
+    if (reg.indexIn(html) != -1) {
+        QStringList gc = reg.capturedTexts();
+        VersionGoogleTerrain = QString("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
+        VersionGoogleTerrainChina = VersionGoogleTerrain;
+        VersionGoogleTerrainChina = VersionGoogleTerrain;
+    }
+    _googleReply->deleteLater();
+    _googleReply = NULL;
+}
+
+void UrlFactory::_tryCorrectGoogleVersions()
+{
+    QMutexLocker locker(&_googleVersionMutex);
+    if (_googleVersionRetrieved) {
+        return;
+    }
+    _googleVersionRetrieved = true;
+    if(_network)
+    {
         QNetworkRequest qheader;
-        QNetworkAccessManager network;
-        QEventLoop q;
-        QTimer tT;
-        tT.setSingleShot(true);
-        connect(&network, SIGNAL(finished(QNetworkReply *)), &q, SLOT(quit()));
-        connect(&tT, SIGNAL(timeout()), &q, SLOT(quit()));
-        network.setProxy(Proxy);
-        _isCorrectedGoogleVersions = true;
+        QNetworkProxy proxy = _network->proxy();
+        QNetworkProxy tProxy;
+        tProxy.setType(QNetworkProxy::NoProxy);
+        _network->setProxy(tProxy);
         QString url = "https://maps.google.com/maps?output=classic";
         qheader.setUrl(QUrl(url));
-        qheader.setRawHeader("User-Agent", UserAgent);
-        reply = network.get(qheader);
-        tT.start(_timeout);
-        q.exec();
-        if (!tT.isActive()) {
-            return;
-        }
-        tT.stop();
-        if ((reply->error() != QNetworkReply::NoError)) {
-            return;
-        }
-        QString html = QString(reply->readAll());
-        QRegExp reg("\"*https://mts0.google.com/vt/lyrs=m@(\\d*)", Qt::CaseInsensitive);
-        if (reg.indexIn(html) != -1) {
-            QStringList gc = reg.capturedTexts();
-            VersionGoogleMap = QString("m@%1").arg(gc[1]);
-            VersionGoogleMapChina = VersionGoogleMap;
-            VersionGoogleMapKorea = VersionGoogleMap;
-        }
-        reg = QRegExp("\"*https://mts0.google.com/vt/lyrs=h@(\\d*)", Qt::CaseInsensitive);
-        if (reg.indexIn(html) != -1) {
-            QStringList gc = reg.capturedTexts();
-            VersionGoogleLabels = QString("h@%1").arg(gc[1]);
-            VersionGoogleLabelsChina = VersionGoogleLabels;
-            VersionGoogleLabelsKorea = VersionGoogleLabels;
-        }
-        reg = QRegExp("\"*https://khms0.google.com/kh/v=(\\d*)", Qt::CaseInsensitive);
-        if (reg.indexIn(html) != -1) {
-            QStringList gc = reg.capturedTexts();
-            VersionGoogleSatellite = "s@" + gc[1];
-            VersionGoogleSatelliteKorea = VersionGoogleSatellite;
-            VersionGoogleSatelliteChina = VersionGoogleSatellite;
-        }
-        reg = QRegExp("\"*https://mts0.google.com/vt/lyrs=t@(\\d*),r@(\\d*)", Qt::CaseInsensitive);
-        if (reg.indexIn(html) != -1) {
-            QStringList gc = reg.capturedTexts();
-            VersionGoogleTerrain = QString("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
-            VersionGoogleTerrainChina = VersionGoogleTerrain;
-            VersionGoogleTerrainChina = VersionGoogleTerrain;
-        }
-        reply->deleteLater();
-        _kVersionRetrieved = true;
+        QByteArray userAgent = "Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.1.7) Gecko/20091221 Firefox/3.5.7";
+        qheader.setRawHeader("User-Agent", userAgent);
+        _googleReply = _network->get(qheader);
+        connect(_googleReply, SIGNAL(finished()), this, SLOT(_googleVersionCompleted()));
+        connect(_googleReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(_networkReplyError(QNetworkReply::NetworkError)));
+        connect(_googleReply, SIGNAL(destroyed()), this, SLOT(_replyDestroyed()));
+        _network->setProxy(proxy);
     }
 }
 
@@ -459,7 +472,7 @@ QString UrlFactory::makeImageUrl(const MapType &type, const QPoint& pos, const i
     break;
     case SigPacSpainMap:
     {
-        return QString("http://sigpac.mapa.es/kmlserver/raster/%1@3785/%2.%3.%4.img").arg(levelsForSigPacSpainMap[zoom]).arg(zoom).arg(pos.x()).arg((2 << (zoom - 1)) - pos.y() - 1);
+        return QString("http://sigpac.mapa.es/kmlserver/raster/%1@3785/%2.%3.%4.img").arg(kLevelsForSigPacSpainMap[zoom]).arg(zoom).arg(pos.x()).arg((2 << (zoom - 1)) - pos.y() - 1);
     }
     break;
     case YandexMapRu:
