@@ -21,7 +21,6 @@ Column {
     VehicleSummaryRow {
         labelText: "Compass:"
         valueText: mag0IdFact.value  == 0 ? "Setup required" : "Ready"
-        }
     }
 
     Row {
