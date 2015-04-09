@@ -75,7 +75,6 @@ signals:
 protected:
     UASInterface*                   _uas;
     AutoPilotPlugin*                _autopilot;
-    QGCUASParamManagerInterface*    _paramMgr;
 };
 
 #endif

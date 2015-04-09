@@ -58,15 +58,9 @@ bool PowerComponent::requiresSetup(void) const
 bool PowerComponent::setupComplete(void) const
 {
     QVariant cvalue, evalue, nvalue;
-    if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "BAT_V_CHARGED", cvalue)) {
-        if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "BAT_V_EMPTY", evalue)) {
-            if (_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "BAT_N_CELLS", nvalue)) {
-                return (cvalue.toFloat() > 0.1f) && (evalue.toFloat() > 0.1f) && (nvalue.toInt() > 0);
-            }
-        }
-    }
-    Q_ASSERT(false);
-    return false;
+    return _autopilot->getParameterFact("BAT_V_CHARGED")->value().toFloat() != 0.0f &&
+        _autopilot->getParameterFact("BAT_V_EMPTY")->value().toFloat() != 0.0f &&
+        _autopilot->getParameterFact("BAT_N_CELLS")->value().toInt() != 0;
 }
 
 QString PowerComponent::setupStateDescription(void) const

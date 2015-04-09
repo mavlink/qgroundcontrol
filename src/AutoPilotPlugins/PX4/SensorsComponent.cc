@@ -62,14 +62,7 @@ bool SensorsComponent::requiresSetup(void) const
 bool SensorsComponent::setupComplete(void) const
 {
     foreach(QString triggerParam, setupCompleteChangedTriggerList()) {
-        QVariant value;
-        
-        if (!_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), triggerParam, value)) {
-            Q_ASSERT(false);
-            return false;
-        }
-        
-        if (value.toFloat() == 0.0f) {
+        if (_autopilot->getParameterFact(triggerParam)->value().toFloat() == 0.0f) {
             return false;
         }
     }
