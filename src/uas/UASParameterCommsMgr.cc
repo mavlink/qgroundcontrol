@@ -448,10 +448,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             }
         }
         
-        int progDiv = paramCount / 100;
-        if ((paramId % progDiv) == 0) {
-            emit parameterListProgress((float)paramId / (float)paramCount);
-        }
+        emit parameterListProgress((float)paramId / (float)paramCount);
         if (paramId == paramCount) {
             emit parameterListProgress(0.0f);
         }
