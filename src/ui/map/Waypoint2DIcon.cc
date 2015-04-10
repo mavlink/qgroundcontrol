@@ -307,7 +307,7 @@ void Waypoint2DIcon::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         penDash.setWidth(1);
         //penDash.setStyle(Qt::DotLine);
         // A negative radius indicates counter-clockwise rotation, but we still want to draw it positive
-        const int loiter = map->metersToPixels(fabsf(waypoint->getLoiterOrbit()), Coord());
+        const int loiter = map->metersToPixels(fabs(waypoint->getLoiterOrbit()), Coord());
         if (loiter > picture.width()/2)
         {
             painter->setPen(penBlack);
