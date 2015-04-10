@@ -784,41 +784,6 @@ void MainWindow::configureWindowName()
     setWindowTitle(windowname);
 }
 
-// TODO: This is not used
-void MainWindow::startVideoCapture()
-{
-    // TODO: What is this? What kind of "Video" is saved to bmp?
-    QString format("bmp");
-    QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
-    _screenFileName = QGCFileDialog::getSaveFileName(
-        this, tr("Save Video Capture"),
-        initialPath,
-        tr("%1 Files (*.%2);;All Files (*)")
-        .arg(format.toUpper())
-        .arg(format),
-        format);
-    delete videoTimer;
-    videoTimer = new QTimer(this);
-}
-
-// TODO: This is not used
-void MainWindow::stopVideoCapture()
-{
-    videoTimer->stop();
-    // TODO Convert raw images to PNG
-}
-
-// TODO: This is not used
-void MainWindow::saveScreen()
-{
-    QPixmap window = QPixmap::grabWindow(this->winId());
-    QString format = "bmp";
-    if (!_screenFileName.isEmpty())
-    {
-        window.save(_screenFileName, format.toLatin1());
-    }
-}
-
 void MainWindow::enableAutoReconnect(bool enabled)
 {
     _autoReconnect = enabled;
