@@ -56,11 +56,19 @@ QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)
     : QGeoTileFetcher(parent)
     , m_networkManager(new QNetworkAccessManager(this))
     , m_userAgent("Qt Application")
+    , m_UrlFactory(NULL)
 {
     QStringList langs = QLocale::system().uiLanguages();
     if (langs.length() > 0) {
         m_Language = langs[0];
     }
+    m_UrlFactory = new OpenPilot::UrlFactory(m_networkManager);
+}
+
+QGeoTileFetcherQGC::~QGeoTileFetcherQGC()
+{
+    if(m_UrlFactory)
+        delete m_UrlFactory;
 }
 
 void QGeoTileFetcherQGC::setUserAgent(const QByteArray &userAgent)
@@ -71,7 +79,7 @@ void QGeoTileFetcherQGC::setUserAgent(const QByteArray &userAgent)
 QGeoTiledMapReply *QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
 {
     QNetworkRequest request;
-    QString url = m_UrlFactory.makeImageUrl((OpenPilot::MapType)spec.mapId(), QPoint(spec.x(), spec.y()), spec.zoom(), m_Language);
+    QString url = m_UrlFactory->makeImageUrl((OpenPilot::MapType)spec.mapId(), QPoint(spec.x(), spec.y()), spec.zoom(), m_Language);
 
     request.setUrl(QUrl(url));
     request.setRawHeader("User-Agent", m_userAgent);
