@@ -376,11 +376,12 @@ contains (DEFINES, DISABLE_SPEECH) {
 }
 # Mac support is built into OS 10.6+.
 else:MacBuild {
-	message("Including support for speech output")
-	DEFINES += QGC_SPEECH_ENABLED
+    message("Including support for speech output")
+    DEFINES += QGC_SPEECH_ENABLED
 }
 # Windows supports speech through native API.
 else:WindowsBuild {
-	message("Including support for speech output")
-	DEFINES += QGC_SPEECH_ENABLED
+    message("Including support for speech output")
+    DEFINES += QGC_SPEECH_ENABLED
+    LIBS    += -lOle32
 }
