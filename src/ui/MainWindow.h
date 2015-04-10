@@ -141,9 +141,6 @@ public slots:
     void UASDeleted(UASInterface* uas);
     /** @brief Update system specs of a UAS */
     void UASSpecsChanged(int uas);
-    void startVideoCapture();
-    void stopVideoCapture();
-    void saveScreen();
 
     void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
