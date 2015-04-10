@@ -151,13 +151,13 @@ MacBuild {
 }
 
 WindowsBuild {
-	BASEDIR_WIN = $$replace(BASEDIR, "/", "\\")
-	DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
-	D_DIR = $$[QT_INSTALL_LIBEXECS]
-	DLL_DIR = $$replace(D_DIR, "/", "\\")
+    BASEDIR_WIN = $$replace(BASEDIR, "/", "\\")
+    DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
+    D_DIR = $$[QT_INSTALL_LIBEXECS]
+    DLL_DIR = $$replace(D_DIR, "/", "\\")
 
-	# Copy dependencies
-	DebugBuild: DLL_QT_DEBUGCHAR = "d"
+    # Copy dependencies
+    DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
         $$BASEDIR\\libs\\lib\\sdl\\win32\\SDL.dll \
@@ -188,12 +188,12 @@ WindowsBuild {
 		QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
     }
 
-	# Copy platform plugins
-	P_DIR = $$[QT_INSTALL_PLUGINS]
-	PLUGINS_DIR_WIN = $$replace(P_DIR, "/", "\\")
-	QMAKE_POST_LINK += $$escape_expand(\\n) mkdir release\\platforms
-	QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$PLUGINS_DIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\" \"$$DESTDIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\"
-	QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\imageformats\" \"$$DESTDIR_WIN\\imageformats\"
+    # Copy platform plugins
+    P_DIR = $$[QT_INSTALL_PLUGINS]
+    PLUGINS_DIR_WIN = $$replace(P_DIR, "/", "\\")
+    QMAKE_POST_LINK += $$escape_expand(\\n) mkdir "$$DESTDIR_WIN\\platforms"
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY     \"$$PLUGINS_DIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\" \"$$DESTDIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\"
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\imageformats\" \"$$DESTDIR_WIN\\imageformats\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\sqldrivers\" \"$$DESTDIR_WIN\\sqldrivers\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\bearer\" \"$$DESTDIR_WIN\\bearer\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\iconengines\" \"$$DESTDIR_WIN\\iconengines\"
