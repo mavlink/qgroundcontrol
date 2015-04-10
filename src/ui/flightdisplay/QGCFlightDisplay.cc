@@ -145,7 +145,7 @@ void QGCFlightDisplay::_updateAttitude(UASInterface*, double roll, double pitch,
     } else {
         bool update = false;
         float rolldeg = roll * (180.0 / M_PI);
-        if (fabsf(roll - rolldeg) > 2.5f) {
+        if (fabs(roll - rolldeg) > 2.5) {
             update = true;
         }
         _roll = rolldeg;
@@ -160,7 +160,7 @@ void QGCFlightDisplay::_updateAttitude(UASInterface*, double roll, double pitch,
     } else {
         bool update = false;
         float pitchdeg = pitch * (180.0 / M_PI);
-        if (fabsf(pitch - pitchdeg) > 2.5f) {
+        if (fabs(pitch - pitchdeg) > 2.5) {
             update = true;
         }
         _pitch = pitchdeg;
@@ -176,7 +176,7 @@ void QGCFlightDisplay::_updateAttitude(UASInterface*, double roll, double pitch,
         bool update = false;
         yaw = yaw * (180.0 / M_PI);
         if (yaw < 0) yaw += 360;
-        if (fabsf(_heading - yaw) > 10.0f) {
+        if (fabs(_heading - yaw) > 10.0) {
             update = true;
         }
         _heading = yaw;
@@ -199,11 +199,11 @@ void QGCFlightDisplay::_updateSpeed(UASInterface*, double groundSpeed, double ai
     double oldairSpeed    = _airSpeed;
     _groundSpeed = groundSpeed;
     _airSpeed    = airSpeed;
-    if (fabsf(oldgroundSpeed - groundSpeed) > 0.5f) {
+    if (fabs(oldgroundSpeed - groundSpeed) > 0.5) {
         if(_refreshTimer->isActive()) emit groundSpeedChanged();
         _valuesChanged = true;
     }
-    if (fabsf(oldairSpeed - airSpeed) > 1.0f) {
+    if (fabs(oldairSpeed - airSpeed) > 1.0) {
         if(_refreshTimer->isActive()) emit airSpeedChanged();
         _valuesChanged = true;
     }
@@ -221,19 +221,19 @@ void QGCFlightDisplay::_updateAltitude(UASInterface*, double altitudeAMSL, doubl
     if(_climbRate > -0.01 && _climbRate < 0.01) {
         _climbRate = 0.0;
     }
-    if (fabsf(oldaltitudeAMSL - altitudeAMSL) > 0.5f) {
+    if (fabs(oldaltitudeAMSL - altitudeAMSL) > 0.5) {
         if(_refreshTimer->isActive()) emit altitudeAMSLChanged();
         _valuesChanged = true;
     }
-    if (fabsf(oldaltitudeWGS84 - altitudeWGS84) > 0.5f) {
+    if (fabs(oldaltitudeWGS84 - altitudeWGS84) > 0.5) {
         if(_refreshTimer->isActive()) emit altitudeWGS84Changed();
         _valuesChanged = true;
     }
-    if (fabsf(oldaltitudeRelative - altitudeRelative) > 0.5f) {
+    if (fabs(oldaltitudeRelative - altitudeRelative) > 0.5) {
         if(_refreshTimer->isActive()) emit altitudeRelativeChanged();
         _valuesChanged = true;
     }
-    if (fabsf(oldclimbRate - climbRate) > 0.5f) {
+    if (fabs(oldclimbRate - climbRate) > 0.5) {
         if(_refreshTimer->isActive()) emit climbRateChanged();
         _valuesChanged = true;
     }
