@@ -264,7 +264,7 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
 
             float rolldeg = roll * (180.0 / M_PI);
 
-            if (fabsf(roll - rolldeg) > 2.5f) {
+            if (fabsf((float)roll - rolldeg) > 2.5f) {
                 _valuesChanged = true;
             }
 
@@ -277,7 +277,7 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
 
             float pitchdeg = pitch * (180.0 / M_PI);
 
-            if (fabsf(pitch - pitchdeg) > 2.5f) {
+            if (fabsf((float)pitch - pitchdeg) > 2.5f) {
                 _valuesChanged = true;
             }
 
@@ -291,7 +291,7 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
             yaw = yaw * (180.0 / M_PI);
             if (yaw<0) yaw+=360;
 
-            if (fabsf(heading - yaw) > 10.0f) {
+            if (fabs(heading - yaw) > 10.0) {
                 _valuesChanged = true;
             }
 
@@ -311,11 +311,11 @@ void PrimaryFlightDisplay::updateSpeed(UASInterface* uas, double _groundSpeed, d
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
 
-    if (fabsf(groundSpeed - _groundSpeed) > 0.5f) {
+    if (fabs(groundSpeed - _groundSpeed) > 0.5) {
         _valuesChanged = true;
     }
 
-    if (fabsf(airSpeed - _airSpeed) > 1.0f) {
+    if (fabs(airSpeed - _airSpeed) > 1.0) {
         _valuesChanged = true;
     }
 
@@ -327,19 +327,19 @@ void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, double _altitudeAMS
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
 
-    if (fabsf(altitudeAMSL - _altitudeAMSL) > 0.5f) {
+    if (fabs(altitudeAMSL - _altitudeAMSL) > 0.5) {
         _valuesChanged = true;
     }
 
-    if (fabsf(altitudeWGS84 - _altitudeWGS84) > 0.5f) {
+    if (fabs(altitudeWGS84 - _altitudeWGS84) > 0.5) {
         _valuesChanged = true;
     }
 
-    if (fabsf(altitudeRelative - _altitudeRelative) > 0.5f) {
+    if (fabs(altitudeRelative - _altitudeRelative) > 0.5) {
         _valuesChanged = true;
     }
 
-    if (fabsf(climbRate - _climbRate) > 0.5f) {
+    if (fabs(climbRate - _climbRate) > 0.5) {
         _valuesChanged = true;
     }
 
@@ -657,7 +657,7 @@ void PrimaryFlightDisplay::drawPitchScale(
             // f(p) = (90-p) * 1/(90-PITCH_SCALE_WIDTHREDUCTION_FROM)
             // or PITCH_SCALE_WIDTHREDUCTION + f(pitch) - f(pitch) * PITCH_SCALE_WIDTHREDUCTION
             // or PITCH_SCALE_WIDTHREDUCTION (1-f(pitch)) + f(pitch)
-            int fromVertical = abs(pitch>=0 ? 90-pitch : -90-pitch);
+            int fromVertical = fabs(pitch>=0 ? 90-pitch : -90-pitch);
             float temp = fromVertical * 1/(90.0f-PITCH_SCALE_WIDTHREDUCTION_FROM);
             linewidth *= (PITCH_SCALE_WIDTHREDUCTION * (1-temp) + temp);
         }
@@ -882,7 +882,7 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area, flo
         // TODO : Sign might be wrong?
         // TODO : The case where error exceeds max. Truncate to max. and make that visible somehow.
         bool errorBeyondRadius = false;
-        if (abs(navigationCrosstrackError) > CROSSTRACK_MAX) {
+        if (fabs(navigationCrosstrackError) > CROSSTRACK_MAX) {
             errorBeyondRadius = true;
             navigationCrosstrackError = navigationCrosstrackError>0 ? CROSSTRACK_MAX : -CROSSTRACK_MAX;
         }
@@ -1026,7 +1026,7 @@ void PrimaryFlightDisplay::drawAltimeter(
         painter.drawLine(vvArrowBegin, vvArrowEnd);
 
         // Yeah this is a repetition of above code but we are going to trash it all anyway, so no fix.
-        float vvArowHeadSize = abs(vvPixHeight - markerHalfHeight*vvSign);
+        float vvArowHeadSize = fabs(vvPixHeight - markerHalfHeight*vvSign);
         if (vvArowHeadSize > w*ALTIMETER_VVI_WIDTH/3) vvArowHeadSize = w*ALTIMETER_VVI_WIDTH/3;
 
         float xcenter = rightEdge-w*ALTIMETER_VVI_WIDTH/2;
