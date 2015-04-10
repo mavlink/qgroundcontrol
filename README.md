@@ -50,7 +50,7 @@ QGroundControl builds are supported for OSX, Linux and Windows. See the individu
 Supported builds are 64 bit, built using the clang compiler.
 
 #### Install QT
-- - -
+
 1. Download Qt 5.4 from: <http://download.qt-project.org/official_releases/qt/5.4/5.4.0/qt-opensource-mac-x64-clang-5.4.0.dmg>
 2. Double click the package installer and follow instructions.
 
@@ -107,9 +107,9 @@ Download Qt 5.4 from here: <http://download.qt-project.org/official_releases/qt/
 2. Change directory to your 'qgroundcontrol' source folder.
 3. Run `qmake -r -tp vc qgroundcontrol.pro`.  This will create a 'qgroundcontrol.sln' *Solution* file which is capable of building both debug and release configurations.
 4. Now open the generated 'qgroundcontrol.sln' file in Visual Studio.
-5. Compile and edit in Visual Studio. If you need to add new files to the qgroundcontrol project, add them to qgcsystem.pro and re-run qmake from step 3.
+5. Compile and edit in Visual Studio. If you need to add new files to the qgroundcontrol project, add them to QGCApplication.pro and re-run qmake from step 3.
 
-Note that the *Solution* contains two projets. The main QGroundControl project and the QGC QtLocation Services plugin. From within Visual Studio, before running or debugging, make sure you have *qgroundcontrol* as the current project (right-click and select *Set as Current Project*)
+Note that the *Solution* contains two projets. The main QGroundControl project and the QGC Geoservice Provider Factory plugin. From within Visual Studio, before running or debugging, make sure you have *qgroundcontrol* as the current project (right-click and select *Set as Current Project*)
 
 #### Alternate (Qt Creator IDE) Build Type (Any OS)
 All steps below assume you already have a running software development enviroment (i.e. gcc/g++ on Ubuntu, Xcode on Mac OSX along with the command line tools, Visual Studio on Windows, etc.) along with the various external dependencies described elsewhere in this document.
@@ -117,7 +117,7 @@ All steps below assume you already have a running software development enviromen
     * On Ubuntu, you have to set the file to executable:`chmod +x ~/Downloads/qt-opensource-linux-x64-1.6.0-8-online.run\`
 * Run the installer and follow the installation steps.
     * Select the directory you want to install Qt, which is handy if you don't want to install system wide or don't have root access.
-    * Select the components you want to install. *Tools* will be selected by default. You also want to install the Qt 5.4 module along with the targets you are interested in (i.e. 32-Bit for Windows, etc.). On Ubuntu, *Android armv7* will be selected by default as well. You may or may not want to install that, depending on your desire to target that platform. Same idea for OS X. It will have *iOS* Kits selected as well.
+    * Select the components you want to install. *Tools* will be selected by default. You also want to install the Qt 5.4 module along with the targets you are interested in (i.e. 32-Bit OpenGL for Windows, etc.). On Ubuntu, *Android armv7* will be selected by default as well. You may or may not want to install that, depending on your desire to target that platform. Same idea for OS X. It will have *iOS* Kits selected as well.
     * Accept the license and the installer will download all the necessary modules and install where you told it to install.
 * Go to the Qt Creator directory:
 	* `~/local/Qt/Tools/QtCreator/bin` for Ubuntu (if that's where you installed it)
@@ -126,7 +126,8 @@ All steps below assume you already have a running software development enviromen
 * Launch Qt Creator and open the `qgroundcontrol.pro` project.
 
 When you open a project in Qt Creator for the first time, it will ask what targets (*Kits*) you want to target. The options will depend on what modules you downloaded above. For instance, on Mac OS X you would select *Desktop Qt 5.4.1 clang 64bit*.
-It's also a good idea to go into *Projects/Build Steps* (side tool bar) and select Make's *Details*. For *Make Arguments*, add `-jx` (`/J x` on Windows) where `x` is at least the numbers of cores you have. That is, if you are running on a Mac Pro with 24 cores, you would use `-j24`. That will run 24 concurrent compiler instances at a time and run the build a whole lot faster. Your mileage may vary depending on your disk IO throughput.
+It's also a good idea to go into *Projects/Build Steps* (side tool bar) and select Make's *Details*. For *Make Arguments*, add `-jx` (`/J x` on Windows) where `x` is at least the numbers of cores you have. That is, if you are running on a Mac Pro with 24 cores, you would use `-j24`. That will run 24 concurrent compiler instances at a time and run the build a whole lot faster. Your mileage may vary depending on your disk IO throughput. Note that for Windows, this method will build QGC x many times faster than when using Visual Studio as described above. Visual Studio allocates one process per *Project*. As QGroundControl is one very large project, it will still compile one file at a time within that one process. When you build from within Qt Creator (and give the ```/J x``` option to make), it will use x number of concurrent compiler processes.
+
 Qt Creator is a full-blown development IDE. You can even debug right from within it and it provides the full Qt API documentation. Just place the mouse cursor over a Qt class/element and hit the F1 key.
 
 ### Additional build notes for all supported OS
