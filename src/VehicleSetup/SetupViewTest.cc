@@ -27,6 +27,9 @@
 #include "SetupViewTest.h"
 #include "MockLink.h"
 #include "QGCMessageBox.h"
+#include "SetupView.h"
+#include "UASManager.h"
+#include "AutoPilotPluginManager.h"
 
 UT_REGISTER_TEST(SetupViewTest)
 
@@ -72,9 +75,31 @@ void SetupViewTest::_clickThrough_test(void)
     _mainToolBar->onSetupView();
     QTest::qWait(1000);
     
-    // Click through all the setup buttons
-    // FIXME: NYI
+    MainWindow* mainWindow = MainWindow::instance();
+    Q_ASSERT(mainWindow);
+    QWidget* setupViewWidget = mainWindow->getCurrentViewWidget();
+    Q_ASSERT(setupViewWidget);
+    SetupView* setupView = qobject_cast<SetupView*>(setupViewWidget);
+    Q_ASSERT(setupView);
+
+    // Click through fixed buttons
+    setupView->firmwareButtonClicked();
+    QTest::qWait(1000);
+    setupView->parametersButtonClicked();
+    QTest::qWait(1000);
+    setupView->summaryButtonClicked();
+    QTest::qWait(1000);
     
+    // Click through component buttons
+    UASInterface* uas = UASManager::instance()->getActiveUAS();
+    Q_ASSERT(uas);
+    AutoPilotPlugin* autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas);
+    Q_ASSERT(autopilot);
+    const QVariantList& components = autopilot->vehicleComponents();
+    foreach(QVariant varComponent, components) {
+        setupView->setupButtonClicked(varComponent);
+    }
+
     // On MainWindow close we should get a message box telling the user to disconnect first. Disconnect will then pop
     // the log file save dialog.
     

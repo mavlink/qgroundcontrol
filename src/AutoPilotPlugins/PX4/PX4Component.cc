@@ -29,6 +29,12 @@
 PX4Component::PX4Component(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(uas, autopilot, parent)
 {
+    Q_ASSERT(uas);
+    Q_ASSERT(autopilot);
+    
+    _paramMgr = _uas->getParamManager();
+    Q_ASSERT(_paramMgr);
+
     bool fSuccess = connect(_paramMgr, SIGNAL(parameterUpdated(int, QString, QVariant)), this, SLOT(_parameterUpdated(int, QString, QVariant)));
     Q_ASSERT(fSuccess);
     Q_UNUSED(fSuccess);

@@ -34,9 +34,6 @@ VehicleComponent::VehicleComponent(UASInterface* uas, AutoPilotPlugin* autopilot
 {
     Q_ASSERT(uas);
     Q_ASSERT(autopilot);
-    
-    _paramMgr = _uas->getParamManager();
-    Q_ASSERT(_paramMgr);
 }
 
 VehicleComponent::~VehicleComponent()

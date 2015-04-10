@@ -47,6 +47,9 @@ private slots:
     /// @brief Connected to QGCUASParamManagerInterface::parameterUpdated signal in order to signal
     ///         setupCompleteChanged at appropriate times.
     void _parameterUpdated(int compId, QString paramName, QVariant value);
+    
+private:
+    QGCUASParamManagerInterface*    _paramMgr;
 };
 
 #endif
