@@ -58,8 +58,9 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 :   QGeoTiledMappingManagerEngine()
 {
     QGeoCameraCapabilities cameraCaps;
-    cameraCaps.setMinimumZoomLevel(0.0);
-    cameraCaps.setMaximumZoomLevel(22.0);
+    cameraCaps.setMinimumZoomLevel(2.0);
+    cameraCaps.setMaximumZoomLevel(20.0);
+    cameraCaps.setSupportsBearing(true);
     setCameraCapabilities(cameraCaps);
 
     setTileSize(QSize(256, 256));
