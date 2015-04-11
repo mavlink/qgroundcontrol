@@ -6,47 +6,29 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.Controls 1.0
 
 /*
-    IMPORTANT NOTE: Any changes made here must also be made to SensorsComponentSummaryFixedWing.qml
+    IMPORTANT NOTE: Any changes made here must also be made to SensorsComponentSummary.qml
 */
 
 Column {
-    anchors.fill: parent
-    anchors.margins: 8
+    Fact { id: mag0IdFact;      name: "CAL_MAG0_ID" }
+    Fact { id: gyro0IdFact;     name: "CAL_GYRO0_ID" }
+    Fact { id: accel0IdFact;    name: "CAL_ACC0_ID" }
 
-    Component {
-        id: component
+    anchors.fill:       parent
+    anchors.margins:    8
 
-        Row {
-            width: parent.width
-
-            QGCLabel { id: label; text: labelText }
-            QGCLabel {
-                property Fact fact:     Fact { name: factName }
-                horizontalAlignment:    Text.AlignRight;
-                width:                  parent.width - label.contentWidth;
-                text:                   fact.value  == 0 ? "Setup required" : "Ready"
-            }
-        }
+    VehicleSummaryRow {
+        labelText: "Compass:"
+        valueText: mag0IdFact.value  == 0 ? "Setup required" : "Ready"
     }
 
-    Loader {
-        property string labelText: "Compass:"
-        property string factName: "CAL_MAG0_ID"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Gyro:"
+        valueText: gyro0IdFact.value  == 0 ? "Setup required" : "Ready"
     }
 
-    Loader {
-        property string labelText: "Gyro:"
-        property string factName: "CAL_GYRO0_ID"
-        width: parent.width
-        sourceComponent: component
-    }
-
-    Loader {
-        property string labelText: "Accelerometer:"
-        property string factName: "CAL_ACC0_ID"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Accelerometer:"
+        valueText: accel0IdFact.value  == 0 ? "Setup required" : "Ready"
     }
 }
