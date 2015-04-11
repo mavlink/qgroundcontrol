@@ -200,6 +200,7 @@ Rectangle {
             }
         }
 
+        /*
         MenuItem {
             text: "Map Always Points North"
             checkable: true
@@ -210,6 +211,7 @@ Rectangle {
                 flightDisplay.saveSetting("mapAlwaysPointsNorth", setBool(mapBackground.alwaysNorth));
             }
         }
+        */
 
         Menu {
             id: mapTypeMenu
