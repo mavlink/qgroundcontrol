@@ -8,3 +8,4 @@ QGCCurrentSpeed       1.0 QGCCurrentSpeed.qml
 QGCMapBackground      1.0 QGCMapBackground.qml
 QGCPitchWidget        1.0 QGCPitchWidget.qml
 QGCSpeedWidget        1.0 QGCSpeedWidget.qml
+QGCSlider             1.0 QGCSlider.qml

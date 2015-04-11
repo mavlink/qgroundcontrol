@@ -31,11 +31,13 @@ import QtQuick 2.4
 import QtPositioning 5.3
 import QtLocation 5.3
 
+import QGroundControl.HUDControls 1.0
+
 Rectangle {
     id: root
     property real latitude:     37.803784
     property real longitude :   -122.462276
-    property real zoomLevel:    12
+    property real zoomLevel:    (map.maximumZoomLevel - map.minimumZoomLevel) / 2
     property real heading:      0
     property bool alwaysNorth:  true
     property alias mapItem:     map
@@ -46,7 +48,7 @@ Rectangle {
 
     function adjustSize() {
         if(root.visible) {
-            if(alwaysNorth) {
+            if(true /*alwaysNorth*/) {
                 map.width  = root.width;
                 map.height = root.height;
             } else {
@@ -60,6 +62,25 @@ Rectangle {
         }
     }
 
+    function formatDistance(meters)
+    {
+        var dist = Math.round(meters)
+        if (dist > 1000 ){
+            if (dist > 100000){
+                dist = Math.round(dist / 1000)
+            }
+            else{
+                dist = Math.round(dist / 100)
+                dist = dist / 10
+            }
+            dist = dist + " km"
+        }
+        else{
+            dist = dist + " m"
+        }
+        return dist
+    }
+
     Plugin {
         id:   mapPlugin
         name: "QGroundControl"
@@ -67,26 +88,153 @@ Rectangle {
 
     Map {
         id: map
-        property real lon: (longitude > -180.1 && longitude < 180.1) ? longitude : 0
-        property real lat: (latitude  > -180.1 && latitude  < 180.1) ? latitude : 0
+        property real lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
+        property real lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
+        property variant scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
         plugin:     mapPlugin
         width:      1
         height:     1
-        zoomLevel:  zoomLevel
+        zoomLevel:  root.zoomLevel
         anchors.centerIn: parent
         center:     map.visible ? QtPositioning.coordinate(lat, lon) : QtPositioning.coordinate(0,0)
+        /*
         transform: Rotation {
             origin.x: map.width  / 2
             origin.y: map.height / 2
             angle: map.visible ? (alwaysNorth ? 0 : -heading) : 0
         }
+        */
         gesture.flickDeceleration: 3000
         gesture.enabled: true
+
+        onWidthChanged: {
+            scaleTimer.restart()
+        }
+
+        onHeightChanged: {
+            scaleTimer.restart()
+        }
+
+        onZoomLevelChanged:{
+            scaleTimer.restart()
+        }
+
+        function calculateScale() {
+            var coord1, coord2, dist, text, f
+            f = 0
+            coord1 = map.toCoordinate(Qt.point(0,scale.y))
+            coord2 = map.toCoordinate(Qt.point(0+scaleImage.sourceSize.width,scale.y))
+            dist = Math.round(coord1.distanceTo(coord2))
+            if (dist === 0) {
+                // not visible
+            } else {
+                for (var i = 0; i < scaleLengths.length-1; i++) {
+                    if (dist < (scaleLengths[i] + scaleLengths[i+1]) / 2 ) {
+                        f = scaleLengths[i] / dist
+                        dist = scaleLengths[i]
+                        break;
+                    }
+                }
+                if (f === 0) {
+                    f = dist / scaleLengths[i]
+                    dist = scaleLengths[i]
+                }
+            }
+            text = formatDistance(dist)
+            scaleImage.width = (scaleImage.sourceSize.width * f) - 2 * scaleImageLeft.sourceSize.width
+            scaleText.text = text
+        }
     }
 
-    onVisibleChanged:       adjustSize();
-    onWidthChanged:         adjustSize();
-    onHeightChanged:        adjustSize();
-    onAlwaysNorthChanged:   adjustSize();
+    QGCSlider {
+        id: zoomSlider;
+        minimum: map.minimumZoomLevel;
+        maximum: map.maximumZoomLevel;
+        opacity: 1
+        visible: parent.visible
+        z: map.z + 3
+        anchors {
+            bottom: parent.bottom;
+            bottomMargin: 15; rightMargin: 20; leftMargin: 20
+            left: parent.left
+        }
+        width: parent.width - anchors.rightMargin - anchors.leftMargin
+        value: map.zoomLevel
+        Binding {
+            target: zoomSlider; property: "value"; value: map.zoomLevel
+        }
+        onValueChanged: {
+            map.zoomLevel = value
+        }
+    }
 
+    Item {
+        id: scale
+        parent: zoomSlider.parent
+        visible: scaleText.text != "0 m"
+        z: map.z + 2
+        opacity: 1
+        anchors {
+            bottom: zoomSlider.top;
+            bottomMargin: 8;
+            left: zoomSlider.left
+        }
+        Image {
+            id: scaleImageLeft
+            source: "/qml/scale_end.png"
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+        }
+        Image {
+            id: scaleImage
+            source: "/qml/scale.png"
+            anchors.bottom: parent.bottom
+            anchors.left: scaleImageLeft.right
+        }
+        Image {
+            id: scaleImageRight
+            source: "/qml/scale_end.png"
+            anchors.bottom: parent.bottom
+            anchors.left: scaleImage.right
+        }
+        Text {
+            id: scaleText
+            color: "white"
+            font.weight: Font.DemiBold
+            horizontalAlignment: Text.AlignHCenter
+            anchors.bottom: parent.bottom
+            anchors.left:   parent.left
+            anchors.bottomMargin: 8
+            text: "0 m"
+        }
+        Component.onCompleted: {
+            map.calculateScale();
+        }
+    }
+
+    Timer {
+        id: scaleTimer
+        interval: 100
+        running:  false
+        repeat:   false
+        onTriggered: {
+            map.calculateScale()
+        }
+    }
+
+    onVisibleChanged: {
+        adjustSize();
+    }
+
+    onAlwaysNorthChanged: {
+        adjustSize();
+    }
+
+    onWidthChanged: {
+        adjustSize();
+    }
+
+    onHeightChanged: {
+        adjustSize();
+    }
 }

@@ -99,6 +99,7 @@
         <file alias="QGroundControl/HUDControls/QGCMapBackground.qml">src/ui/flightdisplay/components/QGCMapBackground.qml</file>
         <file alias="QGroundControl/HUDControls/QGCPitchWidget.qml">src/ui/flightdisplay/components/QGCPitchWidget.qml</file>
         <file alias="QGroundControl/HUDControls/QGCSpeedWidget.qml">src/ui/flightdisplay/components/QGCSpeedWidget.qml</file>
+        <file alias="QGroundControl/HUDControls/QGCSlider.qml">src/ui/flightdisplay/components/QGCSlider.qml</file>
         <file alias="compass.svg">src/ui/flightdisplay/components/compass.svg</file>
         <file alias="compassNeedle.svg">src/ui/flightdisplay/components/compassNeedle.svg</file>
         <file alias="crossHair.svg">src/ui/flightdisplay/components/crossHair.svg</file>
@@ -106,6 +107,8 @@
         <file alias="rollDialWhite.svg">src/ui/flightdisplay/components/rollDialWhite.svg</file>
         <file alias="rollPointer.svg">src/ui/flightdisplay/components/rollPointer.svg</file>
         <file alias="rollPointerWhite.svg">src/ui/flightdisplay/components/rollPointerWhite.svg</file>
+        <file alias="scale.png">src/ui/flightdisplay/components/scale.png</file>
+        <file alias="scale_end.png">src/ui/flightdisplay/components/scale_end.png</file>
     </qresource>
 
     <qresource prefix="/AutoPilotPlugins/PX4">
