@@ -86,10 +86,16 @@ void QGeoMapReplyQGC::replyDestroyed()
 void QGeoMapReplyQGC::networkReplyFinished()
 {
     if (!m_reply)
+    {
+        qWarning() << "NULL Map request reply";
         return;
+    }
 
     if (m_reply->error() != QNetworkReply::NoError)
+    {
+        qWarning() << "Map request reply error:" << m_reply->error();
         return;
+    }
 
     QByteArray a = m_reply->readAll();
     setMapImageData(a);
@@ -131,10 +137,16 @@ void QGeoMapReplyQGC::networkReplyFinished()
 void QGeoMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
 {
     if (!m_reply)
+    {
+        qWarning() << "NULL Map request error";
         return;
+    }
 
     if (error != QNetworkReply::OperationCanceledError)
+    {
         setError(QGeoTiledMapReply::CommunicationError, m_reply->errorString());
+        qWarning() << "Map request reply error:" << m_reply->errorString();
+    }
 
     setFinished(true);
     m_reply->deleteLater();
