@@ -23,17 +23,17 @@ Column {
         valueText: mag0IdFact.value  == 0 ? "Setup required" : "Ready"
     }
 
-    Row {
+    VehicleSummaryRow {
         labelText: "Gyro:"
         valueText: gyro0IdFact.value  == 0 ? "Setup required" : "Ready"
     }
 
-    Row {
+    VehicleSummaryRow {
         labelText: "Accelerometer:"
         valueText: accel0IdFact.value  == 0 ? "Setup required" : "Ready"
     }
 
-    Row {
+    VehicleSummaryRow {
         labelText: "Airspeed:"
         valueText: dPressOffFact.value  == 0 ? "Setup required" : "Ready"
     }
