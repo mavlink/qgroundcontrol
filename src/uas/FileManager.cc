@@ -215,8 +215,6 @@ void FileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
         return;
     }
 	
-	qCDebug(FileManagerLog) << "receiveMessage";
-	
     mavlink_file_transfer_protocol_t data;
     mavlink_msg_file_transfer_protocol_decode(&message, &data);
 	
@@ -230,6 +228,8 @@ void FileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
     
     _clearAckTimeout();
     
+	qCDebug(FileManagerLog) << "receiveMessage" << request->hdr.opcode;
+	
     uint16_t incomingSeqNumber = request->hdr.seqNumber;
     
     // Make sure we have a good sequence number
@@ -495,7 +495,7 @@ void FileManager::_emitListEntry(const QString& entry)
 /// @brief Sends the specified Request out to the UAS.
 void FileManager::_sendRequest(Request* request)
 {
-	qCDebug(FileManagerLog) << "_sendRequest";
+	qCDebug(FileManagerLog) << "_sendRequest opcode:" << request->hdr.opcode;
 
     mavlink_message_t message;
 

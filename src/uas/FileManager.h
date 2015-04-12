@@ -45,7 +45,8 @@ public:
     
     /// Timeout in msecs to wait for an Ack time come back. This is public so we can write unit tests which wait long enough
     /// for the FileManager to timeout.
-    static const int ackTimerTimeoutMsecs = 1000;
+	// FIXME: timeout hack
+    static const int ackTimerTimeoutMsecs = 30000;
 
 	/// Downloads the specified file.
 	///     @param from File to download from UAS, fully qualified path
