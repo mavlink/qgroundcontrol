@@ -270,7 +270,6 @@ void QGCUASFileView::_currentItemChanged(QTreeWidgetItem* current, QTreeWidgetIt
 
 void QGCUASFileView::_requestDirectoryList(const QString& dir)
 {
-    qDebug() << "List:" << dir;
     _manager->listDirectory(dir);
 }
 
