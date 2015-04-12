@@ -104,7 +104,7 @@ public:
     virtual bool systemCanReverse() const { Q_ASSERT(false); return false; };
     virtual QString getSystemTypeName() { Q_ASSERT(false); return _bogusString; };
     virtual int getAutopilotType() { return MAV_AUTOPILOT_PX4; };
-    virtual QGCUASFileManager* getFileManager() {Q_ASSERT(false); return NULL; }
+    virtual FileManager* getFileManager() {Q_ASSERT(false); return NULL; }
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
     virtual void sendMessage(LinkInterface* link, mavlink_message_t message){ Q_UNUSED(link); Q_UNUSED(message); Q_ASSERT(false); }

@@ -22,14 +22,14 @@
  ======================================================================*/
 
 #include "QGCUASFileView.h"
-#include "uas/QGCUASFileManager.h"
+#include "uas/FileManager.h"
 #include "QGCFileDialog.h"
 
 #include <QFileDialog>
 #include <QDir>
 #include <QDebug>
 
-QGCUASFileView::QGCUASFileView(QWidget *parent, QGCUASFileManager *manager) :
+QGCUASFileView::QGCUASFileView(QWidget *parent, FileManager *manager) :
     QWidget(parent),
     _manager(manager),
     _listInProgress(false),
@@ -80,13 +80,12 @@ void QGCUASFileView::_downloadFile(void)
             path.prepend("/" + name);
             item = item->parent();
         } while (item);
-        qDebug() << "Download: " << path;
         
         _ui.downloadButton->setEnabled(false);
         _downloadInProgress = true;
         _connectDownloadSignals();
         
-        _manager->downloadPath(path, QDir(downloadToHere));
+        _manager->streamPath(path, QDir(downloadToHere));
     }
 }
 
@@ -130,7 +129,7 @@ void QGCUASFileView::_downloadProgress(unsigned int bytesReceived)
     }
 }
 
-/// @brief Called when the download associated with the QGCUASFileManager::downloadPath command completes.
+/// @brief Called when the download associated with the FileManager::downloadPath command completes.
 void QGCUASFileView::_downloadComplete(void)
 {
     Q_ASSERT(_downloadInProgress);
@@ -275,7 +274,7 @@ void QGCUASFileView::_requestDirectoryList(const QString& dir)
     _manager->listDirectory(dir);
 }
 
-/// @brief Connects to the signals associated with the QGCUASFileManager::downloadPath method. We only leave these signals connected
+/// @brief Connects to the signals associated with the FileManager::downloadPath method. We only leave these signals connected
 /// while a download because there may be multiple UAS, which in turn means multiple QGCUASFileView instances. We only want the signals
 /// connected to the active FileView which is doing the current download.
 void QGCUASFileView::_connectDownloadSignals(void)
@@ -301,7 +300,7 @@ void QGCUASFileView::_disconnectDownloadSignals(void)
     disconnect(_manager, SIGNAL(errorMessage(const QString&)), this, SLOT(_downloadErrorMessage(const QString&)));
 }
 
-/// @brief Connects to the signals associated with the QGCUASFileManager::listDirectory method. We only leave these signals connected
+/// @brief Connects to the signals associated with the FileManager::listDirectory method. We only leave these signals connected
 /// while a download because there may be multiple UAS, which in turn means multiple QGCUASFileView instances. We only want the signals
 /// connected to the active FileView which is doing the current download.
 void QGCUASFileView::_connectListSignals(void)
