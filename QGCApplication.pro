@@ -156,6 +156,7 @@ INCLUDEPATH += \
     src/ui/main \
     src/ui/toolbar \
     src/ui/flightdisplay \
+    src/ui/mapdisplay \
     src/VehicleSetup \
     src/AutoPilotPlugins \
     src/QmlControls
@@ -379,7 +380,8 @@ HEADERS += \
     src/ui/toolbar/MainToolBar.h \
     src/QmlControls/ScreenTools.h \
     src/QGCLoggingCategory.h \
-    src/ui/flightdisplay/QGCFlightDisplay.h
+    src/ui/flightdisplay/QGCFlightDisplay.h \
+    src/ui/mapdisplay/QGCMapDisplay.h
 
 SOURCES += \
     src/main.cc \
@@ -519,7 +521,8 @@ SOURCES += \
     src/ui/toolbar/MainToolBar.cc \
     src/QmlControls/ScreenTools.cc \
     src/QGCLoggingCategory.cc \
-    src/ui/flightdisplay/QGCFlightDisplay.cc
+    src/ui/flightdisplay/QGCFlightDisplay.cc \
+    src/ui/mapdisplay/QGCMapDisplay.cc
 
 #
 # Unit Test specific configuration goes here

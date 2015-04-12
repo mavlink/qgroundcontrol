@@ -73,7 +73,6 @@ MainToolBar::MainToolBar(QWidget* parent)
     if(pl) {
         pl->setContentsMargins(0,0,0,0);
     }
-
     // Tool Bar Preferences
     QSettings settings;
     settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
@@ -137,20 +136,20 @@ void MainToolBar::onSetupView()
 
 void MainToolBar::onPlanView()
 {
-    setCurrentView(MainWindow::VIEW_MISSION);
-    MainWindow::instance()->loadOperatorView();
+    setCurrentView(MainWindow::VIEW_PLAN);
+    MainWindow::instance()->loadPlanView();
 }
 
 void MainToolBar::onFlyView()
 {
     setCurrentView(MainWindow::VIEW_FLIGHT);
-    MainWindow::instance()->loadPilotView();
+    MainWindow::instance()->loadFlightView();
 }
 
 void MainToolBar::onAnalyzeView()
 {
-    setCurrentView(MainWindow::VIEW_ENGINEER);
-    MainWindow::instance()->loadEngineerView();
+    setCurrentView(MainWindow::VIEW_ANALYZE);
+    MainWindow::instance()->loadAnalyzeView();
 }
 
 void MainToolBar::onConnect(QString conf)
@@ -264,10 +263,10 @@ void MainToolBar::setCurrentView(int currentView)
 {
     ViewType_t view = ViewNone;
     switch((MainWindow::VIEW_SECTIONS)currentView) {
-        case MainWindow::VIEW_ENGINEER:
+        case MainWindow::VIEW_ANALYZE:
             view = ViewAnalyze;
             break;
-        case MainWindow::VIEW_MISSION:
+        case MainWindow::VIEW_PLAN:
             view = ViewPlan;
             break;
            case MainWindow::VIEW_FLIGHT:

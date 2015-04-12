@@ -31,18 +31,17 @@ import QtQuick 2.4
 import QtPositioning 5.3
 import QtLocation 5.3
 
-import QGroundControl.HUDControls 1.0
+import QGroundControl.FlightControls 1.0
 
 Rectangle {
     id: root
     property real latitude:     37.803784
     property real longitude :   -122.462276
-    property real zoomLevel:    (map.maximumZoomLevel - map.minimumZoomLevel) / 2
+    property real zoomLevel:    15
     property real heading:      0
     property bool alwaysNorth:  true
     property alias mapItem:     map
 
-    anchors.fill: parent
     color: Qt.rgba(0,0,0,0)
     clip: true
 
