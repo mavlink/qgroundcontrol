@@ -1,0 +1,7 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: qgroundcontrol
+Source: https://github.com/mavlink/qgroundcontrol
+
+Files: *
+Copyright: QGroundControl Developers https://github.com/mavlink/qgroundcontrol/graphs/contributors
+License: GPL-3+
