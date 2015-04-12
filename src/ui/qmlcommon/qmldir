@@ -1,4 +1,4 @@
-Module QGroundControl.HUDControls
+Module QGroundControl.FlightControls
 
 QGCAltitudeWidget     1.0 QGCAltitudeWidget.qml
 QGCAttitudeWidget     1.0 QGCAttitudeWidget.qml
@@ -9,3 +9,5 @@ QGCMapBackground      1.0 QGCMapBackground.qml
 QGCPitchWidget        1.0 QGCPitchWidget.qml
 QGCSpeedWidget        1.0 QGCSpeedWidget.qml
 QGCSlider             1.0 QGCSlider.qml
+QGCWaypointEditor     1.0 QGCWaypointEditor.qml
+QGCMapToolButton      1.0 QGCMapToolButton.qml

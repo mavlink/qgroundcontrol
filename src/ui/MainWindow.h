@@ -146,13 +146,15 @@ public slots:
     /** @brief Load configuration views */
     void loadSetupView();
     /** @brief Load view for pilot */
-    void loadPilotView();
+    void loadFlightView();
     /** @brief Load view for simulation */
     void loadSimulationView();
     /** @brief Load view for engineer */
-    void loadEngineerView();
-    /** @brief Load view for operator */
-    void loadOperatorView();
+    void loadAnalyzeView();
+    /** @brief Load New (QtQuick) Map View (Mission) */
+    void loadPlanView();
+    /** @brief Load Old (Qt Widget) Map View (Mission) */
+    void loadOldPlanView();
     /** @brief Load Terminal Console views */
     void loadTerminalView();
     /** @brief Load local 3D view */
@@ -220,13 +222,14 @@ protected:
 
     typedef enum _VIEW_SECTIONS
     {
-        VIEW_ENGINEER,         // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
-        VIEW_MISSION,          // Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
+        VIEW_ANALYZE,         // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
+        VIEW_PLAN,          // New (QtQuick) Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
         VIEW_FLIGHT,           // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
         VIEW_SIMULATION,       // HIL Simulation view. Useful overview of the entire system when doing hardware-in-the-loop simulations.
         VIEW_SETUP,            // Setup view. Used for initializing the system for operation. Includes UI for calibration, firmware updating/checking, and parameter modifcation.
         VIEW_TERMINAL,         // Terminal interface. Used for communicating with the remote system, usually in a special configuration input mode.
         VIEW_LOCAL3D,          // A local 3D view. Provides a local 3D view that makes visualizing 3D attitude/orientation/pose easy while in operation.
+        VIEW_EXPERIMENTAL_PLAN,      // Original (Qt Widget) Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
     } VIEW_SECTIONS;
 
     /** @brief Catch window resize events */
@@ -300,10 +303,11 @@ private:
     void _openUrl(const QString& url, const QString& errorMessage);
 
     // Center widgets
-    QPointer<QWidget> _plannerView;
-    QPointer<QWidget> _pilotView;
+    QPointer<QWidget> _planView;
+    QPointer<QWidget> _experimentalPlanView;
+    QPointer<QWidget> _flightView;
     QPointer<QWidget> _setupView;
-    QPointer<QWidget> _engineeringView;
+    QPointer<QWidget> _analyzeView;
     QPointer<QWidget> _simView;
     QPointer<QWidget> _terminalView;
     QPointer<QWidget> _local3DView;
@@ -329,10 +333,11 @@ private:
     QMap<int, QDockWidget*>         _mapUasId2HilDockWidget;
     QMap<QDockWidget*, QAction*>    _mapDockWidget2Action;
 
-    void _buildPlannerView(void);
-    void _buildPilotView(void);
+    void _buildPlanView(void);
+    void _buildExperimentalPlanView(void);
+    void _buildFlightView(void);
     void _buildSetupView(void);
-    void _buildEngineeringView(void);
+    void _buildAnalyzeView(void);
     void _buildSimView(void);
     void _buildTerminalView(void);
     void _buildLocal3DView(void);

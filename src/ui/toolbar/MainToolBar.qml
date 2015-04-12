@@ -57,8 +57,8 @@ Rectangle {
     property var colorGreenText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#046b1b" : "#00d930"
     property var colorWhiteText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#343333" : "#f0f0f0"
 
-    id: toolBarHolder
-    color: qgcPal.windowShade
+    id:     toolBarHolder
+    color:  qgcPal.windowShade
 
     function getMessageColor() {
         if(mainToolBar.messageType === MainToolBar.MessageNone)
