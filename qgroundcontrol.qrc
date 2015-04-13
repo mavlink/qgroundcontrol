@@ -166,7 +166,7 @@
         <file alias="FlappingWing">resources/mavs/flapping-wing.svg</file>
         <file alias="FreeBallon">resources/mavs/free-balloon.svg</file>
         <file alias="GroundRover">resources/mavs/ground-rover.svg</file>
-        <file alias="HexaRoto">resources/mavs/hexarotor.svg</file>
+        <file alias="HexaRotor">resources/mavs/hexarotor.svg</file>
         <file alias="Kite">resources/mavs/kite.svg</file>
         <file alias="OctoRotor">resources/mavs/octorotor.svg</file>
         <file alias="Rocket">resources/mavs/rocket.svg</file>
