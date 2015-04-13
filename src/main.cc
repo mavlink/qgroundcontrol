@@ -151,6 +151,12 @@ int main(int argc, char *argv[])
     // while we only have the main thread. That should prevent it from hitting the race condition later
     // on in the code.
     qRegisterMetaType<QList<QPair<QByteArray,QByteArray> > >();
+	
+	// The Qt SSL code has a qWarning that triggers on OSX even though e don't use SSL. This is caused by the
+	// fact that the last OSX version of OpenSSL is older than the one that Qt wants. We need to turn this
+	// warning off so we can run unit tests with QT_FATAL_WARNINGS set. In order for the call below to work
+	// the Qt version on OSX must be >=5.4.1.
+	QLoggingCategory::setFilterRules("qt.network.ssl.warning=false");
 
     app->_initCommon();
 
