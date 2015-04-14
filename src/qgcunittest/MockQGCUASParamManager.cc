@@ -58,7 +58,7 @@ void MockQGCUASParamManager::setParameter(int component, QString parameterName, 
 
 void MockQGCUASParamManager::_loadParams(void)
 {
-    QFile paramFile(":/unittest/MockLink.param");
+    QFile paramFile(":/unittest/MockLink.params");
     
     bool success = paramFile.open(QFile::ReadOnly);
     Q_UNUSED(success);

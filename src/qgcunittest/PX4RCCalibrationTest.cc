@@ -392,7 +392,7 @@ void PX4RCCalibrationTest::_switchSelectAutoStep(const char* functionStr, PX4RCC
 void PX4RCCalibrationTest::_fullCalibration_test(void)
 {
     // IMPORTANT NOTE: We used channels 1-5 for attitude mapping in the test below.
-    // MockLink.param file cannot have flight mode switches mapped to those channels.
+    // MockLink.params file cannot have flight mode switches mapped to those channels.
     // If it does it will cause errors since the stick will not be detetected where
 
     MockQGCUASParamManager* paramMgr = _mockUAS->getMockQGCUASParamManager();
