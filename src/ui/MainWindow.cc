@@ -51,6 +51,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "SettingsDialog.h"
 #include "QGCMapTool.h"
+#include "QGCMapDisplay.h"
 #include "MAVLinkDecoder.h"
 #include "QGCMAVLinkMessageSender.h"
 #include "QGCRGBDView.h"
@@ -151,6 +152,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
 
     // Setup central widget with a layout to hold the views
     _centralLayout = new QVBoxLayout();
+    _centralLayout->setContentsMargins(0,0,0,0);
     centralWidget()->setLayout(_centralLayout);
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
@@ -263,18 +265,18 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
 #ifdef Q_OS_MACX
     _ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
-    _ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
-    _ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
-    _ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
+    _ui.actionPlan->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
+    _ui.actionFlight->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
+    _ui.actionAnalyze->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
     _ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
     _ui.actionTerminalView->setShortcut(QApplication::translate("MainWindow", "Meta+6", 0));
     _ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+7", 0));
     _ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
     _ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
-    _ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
-    _ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
-    _ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
+    _ui.actionPlan->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
+    _ui.actionFlight->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
+    _ui.actionAnalyze->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
     _ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
     _ui.actionTerminalView->setShortcut(QApplication::translate("MainWindow", "Ctrl+6", 0));
     _ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+7", 0));
@@ -441,20 +443,28 @@ void MainWindow::_buildCommonWidgets(void)
     _buildCustomWidgets();
 }
 
-void MainWindow::_buildPlannerView(void)
+void MainWindow::_buildPlanView(void)
 {
-    if (!_plannerView) {
-        _plannerView = new QGCMapTool(this);
-        _plannerView->setVisible(false);
+    if (!_planView) {
+        _planView = new QGCMapTool(this);
+        _planView->setVisible(false);
     }
 }
 
-void MainWindow::_buildPilotView(void)
+void MainWindow::_buildExperimentalPlanView(void)
 {
-    if (!_pilotView) {
+    if (!_experimentalPlanView) {
+        _experimentalPlanView = new QGCMapDisplay(this);
+        _experimentalPlanView->setVisible(false);
+    }
+}
+
+void MainWindow::_buildFlightView(void)
+{
+    if (!_flightView) {
         //_pilotView = new PrimaryFlightDisplay(this);
-        _pilotView = new QGCFlightDisplay(this);
-        _pilotView->setVisible(false);
+        _flightView = new QGCFlightDisplay(this);
+        _flightView->setVisible(false);
     }
 }
 
@@ -466,11 +476,11 @@ void MainWindow::_buildSetupView(void)
     }
 }
 
-void MainWindow::_buildEngineeringView(void)
+void MainWindow::_buildAnalyzeView(void)
 {
-    if (!_engineeringView) {
-        _engineeringView = new QGCDataPlot2D(this);
-        _engineeringView->setVisible(false);
+    if (!_analyzeView) {
+        _analyzeView = new QGCDataPlot2D(this);
+        _analyzeView->setVisible(false);
     }
 }
 
@@ -726,8 +736,9 @@ void MainWindow::loadSettings()
     // Select the proper view. Default to the flight view or load the last one used if it's supported.
     VIEW_SECTIONS currentViewCandidate = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", _currentView).toInt();
     switch (currentViewCandidate) {
-        case VIEW_ENGINEER:
-        case VIEW_MISSION:
+        case VIEW_ANALYZE:
+        case VIEW_PLAN:
+        case VIEW_EXPERIMENTAL_PLAN:
         case VIEW_FLIGHT:
         case VIEW_SIMULATION:
         case VIEW_SETUP:
@@ -797,13 +808,14 @@ void MainWindow::connectCommonActions()
 {
     // Bind together the perspective actions
     QActionGroup* perspectives = new QActionGroup(_ui.menuPerspectives);
-    perspectives->addAction(_ui.actionEngineersView);
-    perspectives->addAction(_ui.actionFlightView);
+    perspectives->addAction(_ui.actionAnalyze);
+    perspectives->addAction(_ui.actionFlight);
     perspectives->addAction(_ui.actionSimulationView);
-    perspectives->addAction(_ui.actionMissionView);
+    perspectives->addAction(_ui.actionPlan);
     perspectives->addAction(_ui.actionSetup);
     perspectives->addAction(_ui.actionTerminalView);
     perspectives->addAction(_ui.actionLocal3DView);
+    perspectives->addAction(_ui.actionExperimentalPlanView);
     perspectives->setExclusive(true);
 
     /* Hide the actions that are not relevant */
@@ -812,25 +824,30 @@ void MainWindow::connectCommonActions()
 #endif
 
     // Mark the right one as selected
-    if (_currentView == VIEW_ENGINEER)
+    if (_currentView == VIEW_ANALYZE)
     {
-        _ui.actionEngineersView->setChecked(true);
-        _ui.actionEngineersView->activate(QAction::Trigger);
+        _ui.actionAnalyze->setChecked(true);
+        _ui.actionAnalyze->activate(QAction::Trigger);
     }
     if (_currentView == VIEW_FLIGHT)
     {
-        _ui.actionFlightView->setChecked(true);
-        _ui.actionFlightView->activate(QAction::Trigger);
+        _ui.actionFlight->setChecked(true);
+        _ui.actionFlight->activate(QAction::Trigger);
     }
     if (_currentView == VIEW_SIMULATION)
     {
         _ui.actionSimulationView->setChecked(true);
         _ui.actionSimulationView->activate(QAction::Trigger);
     }
-    if (_currentView == VIEW_MISSION)
+    if (_currentView == VIEW_PLAN)
     {
-        _ui.actionMissionView->setChecked(true);
-        _ui.actionMissionView->activate(QAction::Trigger);
+        _ui.actionPlan->setChecked(true);
+        _ui.actionPlan->activate(QAction::Trigger);
+    }
+    if (_currentView == VIEW_EXPERIMENTAL_PLAN)
+    {
+        _ui.actionExperimentalPlanView->setChecked(true);
+        _ui.actionExperimentalPlanView->activate(QAction::Trigger);
     }
     if (_currentView == VIEW_SETUP)
     {
@@ -870,10 +887,11 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionShutdownMAV, SIGNAL(triggered()), UASManager::instance(), SLOT(shutdownActiveUAS()));
 
     // Views actions
-    connect(_ui.actionFlightView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
+    connect(_ui.actionFlight, SIGNAL(triggered()), this, SLOT(loadFlightView()));
     connect(_ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
-    connect(_ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
-    connect(_ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
+    connect(_ui.actionAnalyze, SIGNAL(triggered()), this, SLOT(loadAnalyzeView()));
+    connect(_ui.actionPlan, SIGNAL(triggered()), this, SLOT(loadPlanView()));
+    connect(_ui.actionExperimentalPlanView, SIGNAL(triggered()), this, SLOT(loadOldPlanView()));
     connect(_ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
     connect(_ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
 
@@ -998,9 +1016,9 @@ void MainWindow::UASCreated(UASInterface* uas)
     }
 
     linechartWidget->addSource(mavlinkDecoder);
-    if (_engineeringView != linechartWidget)
+    if (_analyzeView != linechartWidget)
     {
-        _engineeringView = linechartWidget;
+        _analyzeView = linechartWidget;
     }
 
     // Reload view state in case new widgets were added
@@ -1047,22 +1065,29 @@ void MainWindow::_loadCurrentViewState(void)
             centerView = _setupView;
             break;
 
-        case VIEW_ENGINEER:
-            _buildEngineeringView();
-            centerView = _engineeringView;
+        case VIEW_ANALYZE:
+            _buildAnalyzeView();
+            centerView = _analyzeView;
             defaultWidgets = "MAVLINK_INSPECTOR_DOCKWIDGET,PARAMETER_INTERFACE_DOCKWIDGET,FILE_VIEW_DOCKWIDGET,HEAD_UP_DISPLAY_DOCKWIDGET";
             break;
 
         case VIEW_FLIGHT:
-            _buildPilotView();
-            centerView = _pilotView;
-            defaultWidgets = "COMMUNICATION_CONSOLE_DOCKWIDGET,UAS_INFO_INFOVIEW_DOCKWIDGET";
+            _buildFlightView();
+            centerView = _flightView;
+            //defaultWidgets = "COMMUNICATION_CONSOLE_DOCKWIDGET,UAS_INFO_INFOVIEW_DOCKWIDGET";
+            defaultWidgets.clear();
             break;
 
-        case VIEW_MISSION:
-            _buildPlannerView();
-            centerView = _plannerView;
+        case VIEW_PLAN:
+            _buildPlanView();
+            centerView = _planView;
             defaultWidgets = "UNMANNED_SYSTEM_LIST_DOCKWIDGET,WAYPOINT_LIST_DOCKWIDGET";
+            break;
+
+        case VIEW_EXPERIMENTAL_PLAN:
+            _buildExperimentalPlanView();
+            centerView = _experimentalPlanView;
+            defaultWidgets.clear();
             break;
 
         case VIEW_SIMULATION:
@@ -1096,6 +1121,7 @@ void MainWindow::_loadCurrentViewState(void)
     Q_ASSERT(_centralLayout->count() == 0);
     _currentViewWidget = centerView;
     _centralLayout->addWidget(_currentViewWidget);
+    _centralLayout->setContentsMargins(0, 0, 0, 0);
     _currentViewWidget->setVisible(true);
 
     // Hide all widgets from previous view
@@ -1174,27 +1200,39 @@ void MainWindow::handleMisconfiguration(UASInterface* uas)
     }
 }
 
-void MainWindow::loadEngineerView()
+void MainWindow::loadAnalyzeView()
 {
-    if (_currentView != VIEW_ENGINEER)
+    if (_currentView != VIEW_ANALYZE)
     {
         _storeCurrentViewState();
-        _currentView = VIEW_ENGINEER;
-        _ui.actionEngineersView->setChecked(true);
+        _currentView = VIEW_ANALYZE;
+        _ui.actionAnalyze->setChecked(true);
         _loadCurrentViewState();
     }
 }
 
-void MainWindow::loadOperatorView()
+void MainWindow::loadPlanView()
 {
-    if (_currentView != VIEW_MISSION)
+    if (_currentView != VIEW_PLAN)
     {
         _storeCurrentViewState();
-        _currentView = VIEW_MISSION;
-        _ui.actionMissionView->setChecked(true);
+        _currentView = VIEW_PLAN;
+        _ui.actionPlan->setChecked(true);
         _loadCurrentViewState();
     }
 }
+
+void MainWindow::loadOldPlanView()
+{
+    if (_currentView != VIEW_EXPERIMENTAL_PLAN)
+    {
+        _storeCurrentViewState();
+        _currentView = VIEW_EXPERIMENTAL_PLAN;
+        _ui.actionExperimentalPlanView->setChecked(true);
+        _loadCurrentViewState();
+    }
+}
+
 void MainWindow::loadSetupView()
 {
     if (_currentView != VIEW_SETUP)
@@ -1228,13 +1266,13 @@ void MainWindow::loadLocal3DView()
     }
 }
 
-void MainWindow::loadPilotView()
+void MainWindow::loadFlightView()
 {
     if (_currentView != VIEW_FLIGHT)
     {
         _storeCurrentViewState();
         _currentView = VIEW_FLIGHT;
-        _ui.actionFlightView->setChecked(true);
+        _ui.actionFlight->setChecked(true);
         _loadCurrentViewState();
     }
 }

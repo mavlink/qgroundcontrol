@@ -23,20 +23,21 @@ Item {
     property alias status: image.status
     property alias verticalAlignment: image.verticalAlignment
 
-    width: image.width
+    width:  image.width
     height: image.height
 
     Image {
-        id: image
-        smooth: true
-        mipmap: true
-        visible: false
-        anchors.fill: parent
+        id:             image
+        smooth:         true
+        mipmap:         true
+        antialiasing:   true
+        visible:        false
+        anchors.fill:   parent
     }
 
     ColorOverlay {
-        anchors.fill: image
-        source: image
-        color: parent.color
+        anchors.fill:   image
+        source:         image
+        color:          parent.color
     }
 }
