@@ -53,7 +53,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
 #include "DebugConsole.h"
-#include "ParameterInterface.h"
+#include "ParameterEditorWidget.h"
 #include "HDDisplay.h"
 #include "HSIDisplay.h"
 #include "opmapcontrol.h"
@@ -132,15 +132,9 @@ public slots:
     void showSettings();
     /** @brief Simulate a link */
     void simulateLink(bool simulate);
-    /** @brief Set the currently controlled UAS */
-    void setActiveUAS(UASInterface* uas);
 
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
-    /** Delete an UAS */
-    void UASDeleted(UASInterface* uas);
-    /** @brief Update system specs of a UAS */
-    void UASSpecsChanged(int uas);
 
     void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
