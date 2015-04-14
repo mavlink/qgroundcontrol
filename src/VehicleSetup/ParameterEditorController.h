@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -21,31 +21,42 @@
  
  ======================================================================*/
 
-#ifndef PARAMETEREDITOR_H
-#define PARAMETEREDITOR_H
-
-#include <QWidget>
-
-#include "UASInterface.h"
-
 /// @file
-///     @brief This is the Parameter Editor widget which is used in the Parameters tab of Vehicle Setup.
 ///     @author Don Gagne <don@thegagnes.com>
 
-namespace Ui {
-    class ParameterEditor;
-}
+#ifndef PARAMETEREDITORCONTROLLER_H
+#define PARAMETEREDITORCONTROLLER_H
 
-class ParameterEditor : public QWidget
+#include <QObject>
+#include <QList>
+
+#include "AutoPilotPlugin.h"
+#include "UASInterface.h"
+
+class ParameterEditorController : public QObject
 {
     Q_OBJECT
-
+    
 public:
-    explicit ParameterEditor(UASInterface* uas, const QStringList& filterList, QWidget* parent = 0);
-    ~ParameterEditor();
+    ParameterEditorController(void);
 
+    Q_PROPERTY(QStringList componentIds MEMBER _componentIds CONSTANT)
+	
+	Q_INVOKABLE QStringList getGroupsForComponent(int componentId);
+	Q_INVOKABLE QStringList getFactsForGroup(int componentId, QString group);
+	
+	Q_INVOKABLE void clearRCToParam(void);
+	Q_INVOKABLE void saveToFile(void);
+	Q_INVOKABLE void loadFromFile(void);
+	Q_INVOKABLE void refresh(void);
+	Q_INVOKABLE void setRCToParam(const QString& paramName);
+	
+	QList<QObject*> model(void);
+	
 private:
-    Ui::ParameterEditor*    _ui;
+	UASInterface*		_uas;
+	AutoPilotPlugin*	_autopilot;
+	QStringList			_componentIds;
 };
 
 #endif

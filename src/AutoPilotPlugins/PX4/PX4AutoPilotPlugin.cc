@@ -90,7 +90,6 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
 PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
 {
     delete _parameterFacts;
-    PX4ParameterFacts::deleteParameterFactMetaData();
 }
 
 QList<AutoPilotPluginManager::FullMode_t> PX4AutoPilotPlugin::getModes(void)
