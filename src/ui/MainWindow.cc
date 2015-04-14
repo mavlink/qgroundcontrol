@@ -274,9 +274,9 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     _ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
     _ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
-    _ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
+    _ui.actionPlan->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
     _ui.actionFlight->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
-    _ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
+    _ui.actionAnalyze->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
     _ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
     _ui.actionTerminalView->setShortcut(QApplication::translate("MainWindow", "Ctrl+6", 0));
     _ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+7", 0));
