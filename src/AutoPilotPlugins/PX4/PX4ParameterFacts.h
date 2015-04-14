@@ -52,7 +52,6 @@ public:
     virtual QString getDefaultComponentIdParam(void) const { return QString("SYS_AUTOSTART"); }
     
     static void loadParameterFactMetaData(void);
-    static void deleteParameterFactMetaData(void);
     static void clearStaticData(void);
     
 private:

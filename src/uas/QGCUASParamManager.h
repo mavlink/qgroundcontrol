@@ -65,10 +65,6 @@ public:
     virtual bool parametersReady(void) { return _parametersReady; }
 
 protected:
-
-    /** @brief Load parameter meta information from appropriate CSV file */
-    virtual void loadParamMetaInfoCSV();
-
     void connectToModelAndComms();
 
 

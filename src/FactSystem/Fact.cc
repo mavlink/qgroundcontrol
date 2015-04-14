@@ -107,7 +107,7 @@ QString Fact::shortDescription(void)
     if (_metaData) {
         return _metaData->shortDescription;
     } else {
-        return QString();
+        return QString("");
     }
 }
 
@@ -116,7 +116,7 @@ QString Fact::longDescription(void)
     if (_metaData) {
         return _metaData->longDescription;
     } else {
-        return QString();
+        return QString("");
     }
 }
 
@@ -125,7 +125,7 @@ QString Fact::units(void)
     if (_metaData) {
         return _metaData->units;
     } else {
-        return QString();
+        return QString("");
     }
 }
 
@@ -139,6 +139,15 @@ QVariant Fact::max(void)
 {
     Q_ASSERT(_metaData);
     return _metaData->max;
+}
+
+QString Fact::group(void)
+{
+    if (_metaData) {
+        return _metaData->group;
+    } else {
+        return "Default Group";
+    }
 }
 
 void Fact::setMetaData(FactMetaData* metaData)

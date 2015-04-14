@@ -37,7 +37,7 @@ Item {
     // Use specific component id
     TextInput {
         objectName: "testControl"
-        Fact { id: fact2; name: "COMPONENT_51"; componentId: 51 }
+		Fact { id: fact2; name: "COMPONENT_51:51" }
         text: fact2.value
         onAccepted: { fact2.value = text; }
     }

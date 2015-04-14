@@ -42,14 +42,6 @@ PX4ParameterFacts::PX4ParameterFacts(UASInterface* uas, QObject* parent) :
     Q_ASSERT(uas);
 }
 
-void PX4ParameterFacts::deleteParameterFactMetaData(void)
-{
-    foreach (QString param, _mapParameterName2FactMetaData.keys()) {
-        delete _mapParameterName2FactMetaData[param];
-    }
-    _mapParameterName2FactMetaData.clear();
-}
-
 /// Parse the Parameter element of parameter xml meta data
 ///     @param[in] xml stream reader
 ///     @param[in] group fact group associated with this Param element
@@ -68,6 +60,8 @@ FactMetaData* PX4ParameterFacts::_parseParameter(QXmlStreamReader& xml, const QS
     
     FactMetaData* metaData = new FactMetaData();
     Q_CHECK_PTR(metaData);
+    
+    metaData->group = group;
     
     // Convert type from string to FactMetaData::ValueType_t
     
