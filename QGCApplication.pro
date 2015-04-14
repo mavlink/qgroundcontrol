@@ -596,14 +596,13 @@ INCLUDEPATH += \
     src/VehicleSetup
 
 FORMS += \
-    src/VehicleSetup/ParameterEditor.ui \
     src/VehicleSetup/SetupView.ui \
 
 HEADERS+= \
     src/VehicleSetup/SetupView.h \
-    src/VehicleSetup/ParameterEditor.h \
     src/VehicleSetup/VehicleComponent.h \
     src/VehicleSetup/FirmwareUpgradeController.h \
+    src/VehicleSetup/ParameterEditorController.h \
     src/VehicleSetup/PX4Bootloader.h \
     src/VehicleSetup/PX4FirmwareUpgradeThread.h \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \
@@ -626,9 +625,9 @@ HEADERS+= \
 
 SOURCES += \
     src/VehicleSetup/SetupView.cc \
-    src/VehicleSetup/ParameterEditor.cc \
     src/VehicleSetup/VehicleComponent.cc \
     src/VehicleSetup/FirmwareUpgradeController.cc \
+    src/VehicleSetup/ParameterEditorController.cc \
     src/VehicleSetup/PX4Bootloader.cc \
     src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \

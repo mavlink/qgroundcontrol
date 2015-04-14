@@ -30,11 +30,11 @@
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
-#include "ParameterEditor.h"
 #include "QGCQmlWidgetHolder.h"
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
 #include "FirmwareUpgradeController.h"
+#include "ParameterEditorController.h"
 
 #include <QQmlError>
 #include <QQmlContext>
@@ -54,8 +54,9 @@ SetupView::SetupView(QWidget* parent) :
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
     
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.FirmwareUpgradeController", 1, 0, "FirmwareUpgradeController");
-    
+    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+	
     _ui->buttonHolder->rootContext()->setContextProperty("controller", this);
     _ui->buttonHolder->setAutoPilot(NULL);
     _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtonsDisconnected.qml"));
@@ -131,8 +132,14 @@ void SetupView::firmwareButtonClicked(void)
 
 void SetupView::parametersButtonClicked(void)
 {
-    ParameterEditor* setup = new ParameterEditor(_uasCurrent, QStringList(), this);
-    _changeSetupWidget(setup);
+	QGCQmlWidgetHolder* setup = new QGCQmlWidgetHolder;
+	Q_CHECK_PTR(setup);
+
+	Q_ASSERT(_autoPilotPlugin);
+	setup->setAutoPilot(_autoPilotPlugin);
+	setup->setSource(QUrl::fromUserInput("qrc:/qml/ParameterEditor.qml"));
+	
+	_changeSetupWidget(setup);
 }
 
 void SetupView::summaryButtonClicked(void)
