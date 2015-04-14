@@ -394,6 +394,7 @@ void UASParameterCommsMgr::updateSilenceTimer()
     else {
         //all parameters have been received, broadcast to UI
         qCDebug(UASParameterCommsMgrLog) << "emitting parameterListUpToDate";
+		emit parameterListProgress(0.0f);
         emit parameterListUpToDate();
         resetAfterListReceive();
         emit _stopSilenceTimer(); // Stop timer on our thread;
