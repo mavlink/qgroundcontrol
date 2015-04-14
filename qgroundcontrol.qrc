@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/unittest">
-        <file alias="MockLink.param">src/qgcunittest/MockLink.param</file>
+        <file alias="MockLink.params">src/qgcunittest/MockLink.params</file>
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
 
@@ -35,6 +35,7 @@
 
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
+        <file alias="ParameterEditor.qml">src/VehicleSetup/ParameterEditor.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="PowerComponent.qml">src/AutoPilotPlugins/PX4/PowerComponent.qml</file>
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
