@@ -25,7 +25,6 @@
 #define SETUPVIEW_H
 
 #include "UASInterface.h"
-#include "ParameterEditor.h"
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
 
