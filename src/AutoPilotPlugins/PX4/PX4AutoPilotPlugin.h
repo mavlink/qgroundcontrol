@@ -51,7 +51,6 @@ public:
 
     // Overrides from AutoPilotPlugin
     virtual const QVariantList& vehicleComponents(void);
-    virtual ParameterLoader* getParameterLoader(void) { return _parameterFacts; }
 
     static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
     static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
@@ -69,6 +68,9 @@ private slots:
     void _pluginReadyPreChecks(void);
     
 private:
+	// Overrides from AutoPilotPlugin
+	virtual ParameterLoader* _getParameterLoader(void) { return _parameterFacts; }
+	
     PX4ParameterFacts*      _parameterFacts;
     QVariantList            _components;
     AirframeComponent*      _airframeComponent;

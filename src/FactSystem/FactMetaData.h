@@ -57,7 +57,7 @@ public:
     /// Initialize the meta data given only the type.
     void initFromTypeOnly(ValueType_t initType);
 
-    // FIXME: This needs to switch over to Q_PROPERTY mechanism
+    QString     group;
     ValueType_t type;
     QVariant    defaultValue;
     QString     shortDescription;

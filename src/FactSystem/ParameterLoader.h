@@ -60,15 +60,21 @@ public:
     /// Request a refresh on all parameters that begin with the specified prefix
     void refreshParametersPrefix(int componentId, const QString& namePrefix);
     
-    /// Returns true if the specifed fact exists
-    bool factExists(int             componentId,    ///< fact component, -1=default component
-                    const QString&  name);          ///< fact name
+    /// Returns true if the specifed parameter exists
+    bool parameterExists(int			componentId,    ///< fact component, -1=default component
+						 const QString& name);          ///< fact name
+	
+	/// Returns all parameter names
+	/// FIXME: component id missing
+	QStringList parameterNames(void);
     
     /// Returns the specified Fact.
-    /// WARNING: Will assert if fact does not exists. If that possibily exists, check for existince first with
-    /// factExists.
+    /// WARNING: Will assert if parameter does not exists. If that possibily exists, check for existince first with
+    /// parameterExists.
     Fact* getFact(int               componentId,    ///< fact component, -1=default component
                   const QString&    name);          ///< fact name
+    
+    const QMap<int, QMap<QString, QStringList> >& getGroupMap(void);
     
     /// Return the parameter for which the default component id is derived from. Return an empty
     /// string is this is not available.
@@ -92,11 +98,8 @@ private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
     int _actualComponentId(int componentId);
     void _determineDefaultComponentId(void);
+    void _setupGroupMap(void);
 
-    /// First mapping is by component id
-    /// Second mapping is parameter name, to Fact
-    QMap<int, QMap<Fact*, QString> > _mapFact2ParameterName;
-    
     int _uasId;             ///< Id for uas which this set of Facts are associated with
     
     QGCUASParamManagerInterface* _paramMgr;
@@ -104,6 +107,10 @@ private:
     /// First mapping id\s by component id
     /// Second mapping is parameter name, to Fact* in QVariant
     QMap<int, QVariantMap> _mapParameterName2Variant;
+    
+    /// First mapping is by component id
+    /// Second mapping is group name, to Fact
+    QMap<int, QMap<QString, QStringList> > _mapGroup2ParameterName;
     
     bool _parametersReady;   ///< All params received from param mgr
     int _defaultComponentId;

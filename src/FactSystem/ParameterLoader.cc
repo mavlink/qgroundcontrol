@@ -80,9 +80,6 @@ void ParameterLoader::_parameterUpdate(int uas, int componentId, QString paramet
     }
     
     if (!_mapParameterName2Variant.contains(componentId) || !_mapParameterName2Variant[componentId].contains(parameterName)) {
-        // These should not get our of sync
-        Q_ASSERT(_mapParameterName2Variant.contains(componentId) == _mapFact2ParameterName.contains(componentId));
-        
         qCDebug(ParameterLoaderLog) << "Adding new fact (component:" << componentId << "name:" << parameterName << ")";
         
         FactMetaData::ValueType_t factType;
@@ -121,7 +118,6 @@ void ParameterLoader::_parameterUpdate(int uas, int componentId, QString paramet
         setMetaData = true;
         
         _mapParameterName2Variant[componentId][parameterName] = QVariant::fromValue(fact);
-        _mapFact2ParameterName[componentId][fact] = parameterName;
         
         // We need to know when the fact changes from QML so that we can send the new value to the parameter manager
         connect(fact, &Fact::_containerValueChanged, this, &ParameterLoader::_valueUpdated);
@@ -151,8 +147,6 @@ void ParameterLoader::_valueUpdated(const QVariant& value)
     int componentId = fact->componentId();
     
     Q_ASSERT(_paramMgr);
-    Q_ASSERT(_mapFact2ParameterName.contains(componentId));
-    Q_ASSERT(_mapFact2ParameterName[componentId].contains(fact));
     
     QVariant typedValue;
     switch (fact->type()) {
@@ -196,6 +190,7 @@ void ParameterLoader::_paramMgrParameterListUpToDate(void)
         qgcApp()->processEvents();
         
         _determineDefaultComponentId();
+        _setupGroupMap();
         
         // We should have all parameters now so we can signal ready
         emit parametersReady();
@@ -254,7 +249,6 @@ void ParameterLoader::refreshParametersPrefix(int componentId, const QString& na
     Q_ASSERT(_paramMgr);
     
     componentId = _actualComponentId(componentId);
-    Q_ASSERT(_mapFact2ParameterName.contains(componentId));
     foreach(QString name, _mapParameterName2Variant[componentId].keys()) {
         if (name.startsWith(namePrefix)) {
             refreshParameter(componentId, name);
@@ -262,7 +256,7 @@ void ParameterLoader::refreshParametersPrefix(int componentId, const QString& na
     }
 }
 
-bool ParameterLoader::factExists(int componentId, const QString&  name)
+bool ParameterLoader::parameterExists(int componentId, const QString&  name)
 {
     componentId = _actualComponentId(componentId);
     if (_mapParameterName2Variant.contains(componentId)) {
@@ -279,4 +273,30 @@ Fact* ParameterLoader::getFact(int componentId, const QString& name)
     Fact* fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
     Q_ASSERT(fact);
     return fact;
+}
+
+QStringList ParameterLoader::parameterNames(void)
+{
+	QStringList names;
+	
+	foreach(QString paramName, _mapParameterName2Variant[_defaultComponentId].keys()) {
+		names << paramName;
+	}
+	
+	return names;
+}
+
+void ParameterLoader::_setupGroupMap(void)
+{
+    foreach (int componentId, _mapParameterName2Variant.keys()) {
+        foreach (QString name, _mapParameterName2Variant[componentId].keys()) {
+            Fact* fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
+            _mapGroup2ParameterName[componentId][fact->group()] += name;
+        }
+    }
+}
+
+const QMap<int, QMap<QString, QStringList> >& ParameterLoader::getGroupMap(void)
+{
+    return _mapGroup2ParameterName;
 }

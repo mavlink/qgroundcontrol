@@ -54,6 +54,7 @@ class Fact : public QObject
     Q_PROPERTY(QString units READ units CONSTANT)
     Q_PROPERTY(QVariant min READ min CONSTANT)
     Q_PROPERTY(QVariant max READ max CONSTANT)
+    Q_PROPERTY(QString group READ group CONSTANT)
     
     Q_ENUMS(FactMetaData::ValueType_t)
     
@@ -63,41 +64,19 @@ public:
     
     // Property system methods
     
-    /// Read accessor for name property
     QString name(void) const;
-    
-    /// Read accessor for componentId property
     int componentId(void) const;
-    
-    /// Read accessor for value property
     QVariant value(void) const;
-    
-    /// Read accessor for valueString property
     QString valueString(void) const;
-    
-    /// Write accessor for value property
     void setValue(const QVariant& value);
-    
-    /// Read accesor for defaultValue property
     QVariant defaultValue(void);
-    
-    /// Read accesor for type property
     FactMetaData::ValueType_t type(void);
-    
-    /// Read accesor for shortDescription property
     QString shortDescription(void);
-    
-    /// Read accesor for longDescription property
     QString longDescription(void);
-    
-    /// Read accesor for units property
     QString units(void);
-    
-    /// Read accesor for min property
     QVariant min(void);
-
-    /// Read accesor for max property
-    QVariant max(void);
+    QVariant max(void);    
+    QString group(void);
     
     /// Sets the meta data associated with the Fact.
     void setMetaData(FactMetaData* metaData);
