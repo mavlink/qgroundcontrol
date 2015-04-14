@@ -26,7 +26,8 @@
 #include "AutoPilotPluginManager.h"
 
 ViewWidgetController::ViewWidgetController(void) :
-	_autopilot(NULL)
+	_autopilot(NULL),
+	_uas(NULL)
 {
 	_uasManager = UASManager::instance();
 	Q_ASSERT(_uasManager);
