@@ -51,6 +51,11 @@ QString FactBinder::name(void) const
     }
 }
 
+int FactBinder::componentId(void) const
+{
+	return _componentId;
+}
+
 void FactBinder::setName(const QString& name)
 {
     if (_fact) {
@@ -59,13 +64,25 @@ void FactBinder::setName(const QString& name)
     }
     
     if (!name.isEmpty()) {
-        if (_autopilotPlugin->factExists(FactSystem::ParameterProvider, _componentId, name)) {
-            _fact = _autopilotPlugin->getFact(FactSystem::ParameterProvider, _componentId, name);
+		QString parsedName = name;
+		
+		// Component id + name combination?
+		if (name.contains(":")) {
+			QStringList parts = name.split(":");
+			if (parts.count() == 2) {
+				parsedName = parts[0];
+				_componentId = parts[1].toInt();
+			}
+		}
+		
+        if (_autopilotPlugin->factExists(FactSystem::ParameterProvider, _componentId, parsedName)) {
+            _fact = _autopilotPlugin->getFact(FactSystem::ParameterProvider, _componentId, parsedName);
             connect(_fact, &Fact::valueChanged, this, &FactBinder::valueChanged);
 
             emit valueChanged();
             emit nameChanged();
-        } else {
+			emit metaDataChanged();
+		} else {
             qWarning() << "FAILED BINDING PARAM" << name << ": PARAM DOES NOT EXIST ON SYSTEM!";
             Q_ASSERT(false);
         }
@@ -104,6 +121,69 @@ QString FactBinder::units(void) const
 {
     if (_fact) {
         return _fact->units();
+    } else {
+        return QString();
+    }
+}
+
+QVariant FactBinder::defaultValue(void)
+{
+    if (_fact) {
+        return _fact->defaultValue();
+    } else {
+		return QVariant(0);
+    }
+}
+
+FactMetaData::ValueType_t FactBinder::type(void)
+{
+    if (_fact) {
+        return _fact->type();
+    } else {
+		return FactMetaData::valueTypeUint32;
+    }
+}
+
+QString FactBinder::shortDescription(void)
+{
+    if (_fact) {
+        return _fact->shortDescription();
+    } else {
+        return QString();
+    }
+}
+
+QString FactBinder::longDescription(void)
+{
+    if (_fact) {
+        return _fact->longDescription();
+    } else {
+        return QString();
+    }
+}
+
+QVariant FactBinder::min(void)
+{
+    if (_fact) {
+        return _fact->min();
+    } else {
+		return QVariant(0);
+    }
+}
+
+QVariant FactBinder::max(void)
+{
+    if (_fact) {
+        return _fact->max();
+    } else {
+		return QVariant(0);
+    }
+}
+
+QString FactBinder::group(void)
+{
+    if (_fact) {
+        return _fact->group();
     } else {
         return QString();
     }
