@@ -78,9 +78,9 @@
      <string>View</string>
     </property>
     <addaction name="actionSetup"/>
-    <addaction name="actionMissionView"/>
-    <addaction name="actionFlightView"/>
-    <addaction name="actionEngineersView"/>
+    <addaction name="actionPlan"/>
+    <addaction name="actionFlight"/>
+    <addaction name="actionAnalyze"/>
     <addaction name="separator"/>
     <addaction name="actionFullscreen"/>
     <addaction name="actionNormal"/>
@@ -99,6 +99,7 @@
      <addaction name="actionLoadCustomWidgetFile"/>
      <addaction name="separator"/>
     </widget>
+    <addaction name="actionExperimentalPlanView"/>
     <addaction name="actionLocal3DView"/>
     <addaction name="actionTerminalView"/>
     <addaction name="actionSimulationView"/>
@@ -198,7 +199,7 @@
     <string>Developer Credits</string>
    </property>
   </action>
-  <action name="actionMissionView">
+  <action name="actionPlan">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -206,7 +207,7 @@
     <string>Plan</string>
    </property>
   </action>
-  <action name="actionEngineersView">
+  <action name="actionAnalyze">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -214,7 +215,7 @@
     <string>Analyze</string>
    </property>
   </action>
-  <action name="actionFlightView">
+  <action name="actionFlight">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -343,6 +344,11 @@
    </property>
    <property name="text">
     <string>Status Bar</string>
+   </property>
+  </action>
+  <action name="actionExperimentalPlanView">
+   <property name="text">
+    <string>Experimental Plan View</string>
    </property>
   </action>
  </widget>

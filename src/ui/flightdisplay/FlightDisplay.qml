@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Main Tool Bar
+ *   @brief QGC Main Flight Display
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
@@ -31,7 +31,7 @@ import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
-import QGroundControl.HUDControls 1.0
+import QGroundControl.FlightControls 1.0
 
 Rectangle {
     id: root
@@ -285,17 +285,17 @@ Rectangle {
     }
 
     QGCMapBackground {
-        id: mapBackground
-        anchors.centerIn: parent
-        visible:   false
-        heading:   isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
-        latitude:  flightDisplay.latitude
-        longitude: flightDisplay.longitude
-        z: 5
+        id:             mapBackground
+        anchors.fill:   parent
+        visible:        false
+        heading:        isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
+        latitude:       flightDisplay.latitude
+        longitude:      flightDisplay.longitude
+        z:              5
     }
 
     QGCAttitudeWidget {
-        id: attitudeWidget
+        id:                 attitudeWidget
         anchors.centerIn:   parent
         rollAngle:          roll
         pitchAngle:         pitch
@@ -305,7 +305,7 @@ Rectangle {
     }
 
     QGCPitchWidget {
-        id: pitchWidget
+        id:         pitchWidget
         anchors.verticalCenter: parent.verticalCenter
         pitchAngle: pitch
         rollAngle:  roll
