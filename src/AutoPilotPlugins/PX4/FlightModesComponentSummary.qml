@@ -21,16 +21,16 @@ Column {
 
     VehicleSummaryRow {
         labelText: "Position Ctl switch:"
-        valueText: posCtlSwFact.value == 0 ? "Disabled" : fact.valueString
+        valueText: posCtlSwFact.value == 0 ? "Disabled" : posCtlSwFact.valueString
     }
 
     VehicleSummaryRow {
-        labelText: "Position Ctl switch:"
-        valueText: loiterSwFact.value == 0 ? "Disabled" : fact.valueString
+        labelText: "Loiter switch:"
+        valueText: loiterSwFact.value == 0 ? "Disabled" : loiterSwFact.valueString
     }
 
     VehicleSummaryRow {
         labelText: "Return switch:"
-        valueText: returnSwFact.value == 0 ? "Disabled" : fact.valueString
+        valueText: returnSwFact.value == 0 ? "Disabled" : returnSwFact.valueString
     }
 }
