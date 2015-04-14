@@ -40,7 +40,7 @@ FactSystem::FactSystem(QObject* parent) :
     QGCSingleton(parent)
 {
     qmlRegisterType<FactBinder>(_factSystemQmlUri, 1, 0, "Fact");
-    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference VehicleComponent");
+    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference, cannot create");
 }
 
 FactSystem::~FactSystem()
