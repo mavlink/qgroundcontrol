@@ -55,7 +55,6 @@ SetupView::SetupView(QWidget* parent) :
     Q_ASSERT(fSucceeded);
     
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
-	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
 	
     _ui->buttonHolder->rootContext()->setContextProperty("controller", this);
     _ui->buttonHolder->setAutoPilot(NULL);
@@ -137,7 +136,7 @@ void SetupView::parametersButtonClicked(void)
 
 	Q_ASSERT(_autoPilotPlugin);
 	setup->setAutoPilot(_autoPilotPlugin);
-	setup->setSource(QUrl::fromUserInput("qrc:/qml/ParameterEditor.qml"));
+	setup->setSource(QUrl::fromUserInput("qrc:/qml/SetupParameterEditor.qml"));
 	
 	_changeSetupWidget(setup);
 }
