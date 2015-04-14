@@ -25,15 +25,23 @@
 
 #include <QCloseEvent>
 
-QGCDockWidget::QGCDockWidget(const QString& title, QWidget *parent, Qt::WindowFlags flags) :
-    QDockWidget(title, parent, flags)
+QGCDockWidget::QGCDockWidget(const QString& title, QAction* action, QWidget *parent, Qt::WindowFlags flags) :
+    QDockWidget(title, parent, flags),
+	_action(action)
 {
-    
+	QDockWidget::DockWidgetFeatures features = QDockWidget::DockWidgetMovable;
+	
+	if (action) {
+		features |= QDockWidget::DockWidgetClosable;
+	}
+	setFeatures(features);
 }
 
 // Instead of destroying the widget just hide it
 void QGCDockWidget::closeEvent(QCloseEvent* event)
 {
+	Q_ASSERT(_action);
+	
     event->ignore();
-    setVisible(false);
+	_action->trigger();
 }
