@@ -67,8 +67,8 @@ QGCFlightDisplay::QGCFlightDisplay(QWidget *parent)
     if(pl) {
         pl->setContentsMargins(0,0,0,0);
     }
-    setMinimumWidth(270);
-    setMinimumHeight(300);
+    setMinimumWidth(380);
+    setMinimumHeight(360);
     setContextPropertyObject("flightDisplay", this);
     setSource(QUrl::fromUserInput("qrc:/qml/FlightDisplay.qml"));
     setVisible(true);
@@ -114,6 +114,7 @@ void QGCFlightDisplay::_forgetUAS(UASInterface* uas)
         disconnect(_mav, &UASInterface::NavigationControllerDataChanged, this, &QGCFlightDisplay::_updateNavigationControllerData);
     }
     _mav = NULL;
+    emit mavPresentChanged();
 }
 
 void QGCFlightDisplay::_setActiveUAS(UASInterface* uas)
@@ -136,6 +137,7 @@ void QGCFlightDisplay::_setActiveUAS(UASInterface* uas)
         // Set new UAS
         _mav = uas;
     }
+    emit mavPresentChanged();
 }
 
 void QGCFlightDisplay::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)

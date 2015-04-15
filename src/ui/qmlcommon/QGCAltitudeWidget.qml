@@ -63,9 +63,7 @@ Rectangle {
     }
 
     anchors.verticalCenter: parent.verticalCenter
-
-    height: parent.height * 0.75 > 280 ? 280 : parent.height * 0.75
-    clip:   true
+    height: parent.height * 0.65 > 280 ? 280 : parent.height * 0.65
     smooth: true
     radius: 5
     border.color: Qt.rgba(1,1,1,0.25)
@@ -74,34 +72,42 @@ Rectangle {
         GradientStop { position: 0.5; color: Qt.rgba(0,0,0,0.25) }
         GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.65) }
     }
-    Column{
-        id: col
-        width: parent.width
+    Rectangle {
+        id:     clipRect
+        height: parent.height - 5
+        width:  parent.width
+        clip:   true
+        color:  Qt.rgba(0,0,0,0);
         anchors.verticalCenter: parent.verticalCenter
-        spacing: _reticleSpacing
-        Repeater {
-            model: _speedArray
-            anchors.left: parent.left
-            Rectangle {
-                property int _alt: modelData
-                width:  (_alt % 10 === 0) ? 10 : 15
-                height: _reticleHeight
-                color:  Qt.rgba(1,1,1,0.35)
-                Text {
-                    visible: (_alt % 10 === 0)
-                    x: 20
-                    anchors.verticalCenter:   parent.verticalCenter
-                    antialiasing: true
-                    font.weight: Font.DemiBold
-                    text:  _alt
-                    color: _alt < 0 ? "#f8983a" : "white"
-                    style: Text.Outline
-                    styleColor: Qt.rgba(0,0,0,0.25)
+        Column{
+            id: col
+            width: parent.width
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: _reticleSpacing
+            Repeater {
+                model: _speedArray
+                anchors.left: parent.left
+                Rectangle {
+                    property int _alt: modelData
+                    width:  (_alt % 10 === 0) ? 10 : 15
+                    height: _reticleHeight
+                    color:  Qt.rgba(1,1,1,0.35)
+                    Text {
+                        visible: (_alt % 10 === 0)
+                        x: 20
+                        anchors.verticalCenter:   parent.verticalCenter
+                        antialiasing: true
+                        font.weight: Font.DemiBold
+                        text:  _alt
+                        color: _alt < 0 ? "#f8983a" : "white"
+                        style: Text.Outline
+                        styleColor: Qt.rgba(0,0,0,0.25)
+                    }
                 }
             }
-        }
-        transform: Translate {
-            y: ((altitude - _currentCenter) * _reticleSlot / 5) - (_reticleSlot / 2)
+            transform: Translate {
+                y: ((altitude - _currentCenter) * _reticleSlot / 5) - (_reticleSlot / 2)
+            }
         }
     }
 }

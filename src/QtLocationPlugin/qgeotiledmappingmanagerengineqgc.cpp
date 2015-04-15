@@ -59,7 +59,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 {
     QGeoCameraCapabilities cameraCaps;
     cameraCaps.setMinimumZoomLevel(2.0);
-    cameraCaps.setMaximumZoomLevel(20.0);
+    cameraCaps.setMaximumZoomLevel(MAX_MAP_ZOOM);
     cameraCaps.setSupportsBearing(true);
     setCameraCapabilities(cameraCaps);
 
