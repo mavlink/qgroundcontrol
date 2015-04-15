@@ -344,55 +344,51 @@ void FirmwareUpgradeController::_downloadFinished(void)
             return;
         }
         
+        // Decompress the parameter xml and save to file
+        QByteArray decompressedBytes;
+        bool success = _decompressJsonValue(px4Json,               // JSON object
+                                            bytes,                 // Raw bytes of JSON document
+                                            "parameter_xml_size",  // key which holds byte size
+                                            "parameter_xml",       // key which holds compress bytes
+                                            decompressedBytes);    // Returned decompressed bytes
+        if (success) {
+            QSettings settings;
+            QDir parameterDir = QFileInfo(settings.fileName()).dir();
+            QString parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
+			qDebug() << parameterFilename;
+            QFile parameterFile(parameterFilename);
+            if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                qint64 bytesWritten = parameterFile.write(decompressedBytes);
+                if (bytesWritten != decompressedBytes.count()) {
+                    _appendStatusLog(tr("Write failed for parameter meta data file, error: %1").arg(parameterFile.errorString()));
+                    parameterFile.close();
+                    QFile::remove(parameterFilename);
+                } else {
+                    parameterFile.close();
+                }
+            } else {
+                _appendStatusLog(tr("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename).arg(parameterFile.errorString()));
+            }
+            
+        }
+        
+        // FIXME: Save NYI
+        
+        // Decompress the image and save to file
         _imageSize = px4Json.value(QString("image_size")).toInt();
-        if (_imageSize == 0) {
-            _appendStatusLog(tr("Image size of 0 in .px4 file %1").arg(downloadFilename));
+		success = _decompressJsonValue(px4Json,               // JSON object
+                                       bytes,                 // Raw bytes of JSON document
+                                       "image_size",          // key which holds byte size
+                                       "image",               // key which holds compress bytes
+                                       decompressedBytes);    // Returned decompressed bytes
+        if (!success) {
             _cancel();
             return;
         }
-        qDebug() << "Image size from px4:" << _imageSize;
-        
-        // Convert image from base-64 and decompress
-        
-        // XXX Qt's JSON string handling is terribly broken, strings
-        // with some length (18K / 25K) are just weirdly cut.
-        // The code below works around this by manually 'parsing'
-        // for the image string. Since its compressed / checksummed
-        // this should be fine.
-        
-        QStringList list = QString(bytes).split("\"image\": \"");
-        list = list.last().split("\"");
-        
-        // Convert String to QByteArray and unzip it
-        QByteArray raw;
 
-        // Store image size
-        raw.append((unsigned char)((_imageSize >> 24) & 0xFF));
-        raw.append((unsigned char)((_imageSize >> 16) & 0xFF));
-        raw.append((unsigned char)((_imageSize >> 8) & 0xFF));
-        raw.append((unsigned char)((_imageSize >> 0) & 0xFF));
-        
-        QByteArray raw64 = list.first().toUtf8();
-        
-        raw.append(QByteArray::fromBase64(raw64));
-        QByteArray uncompressed = qUncompress(raw);
-        
-        QByteArray b = uncompressed;
-
-        if (b.count() == 0) {
-            _appendStatusLog(tr("Firmware file has 0 length image"));
-            _cancel();
-            return;
-        }
-        if (b.count() != (int)_imageSize) {
-            _appendStatusLog(tr("Image size for decompressed image does not match stored image size: Expected(%1) Actual(%2)").arg(_imageSize).arg(b.count()));
-            _cancel();
-            return;
-        }
-        
         // Pad image to 4-byte boundary
-        while ((b.count() % 4) != 0) {
-            b.append(static_cast<char>(static_cast<unsigned char>(0xFF)));
+        while ((decompressedBytes.count() % 4) != 0) {
+            decompressedBytes.append(static_cast<char>(static_cast<unsigned char>(0xFF)));
         }
         
         // Store decompressed image file in same location as original download file
@@ -406,8 +402,8 @@ void FirmwareUpgradeController::_downloadFinished(void)
             return;
         }
         
-        qint64 bytesWritten = decompressFile.write(b);
-        if (bytesWritten != b.count()) {
+        qint64 bytesWritten = decompressFile.write(decompressedBytes);
+        if (bytesWritten != decompressedBytes.count()) {
             _appendStatusLog(tr("Write failed for decompressed image file, error: %1").arg(decompressFile.errorString()));
             _cancel();
             return;
@@ -457,6 +453,65 @@ void FirmwareUpgradeController::_downloadFinished(void)
     }
 
     _erase();
+}
+
+/// Decompress a set of bytes stored in a Json document.
+bool FirmwareUpgradeController::_decompressJsonValue(const QJsonObject&	jsonObject,			///< JSON object
+													 const QByteArray&	jsonDocBytes,		///< Raw bytes of JSON document
+													 const QString&		sizeKey,			///< key which holds byte size
+													 const QString&		bytesKey,			///< key which holds compress bytes
+													 QByteArray&		decompressedBytes)	///< Returned decompressed bytes
+{
+    // Validate decompressed size key
+    if (!jsonObject.contains(sizeKey)) {
+        _appendStatusLog(QString("Firmware file missing %1 key").arg(sizeKey));
+        return false;
+    }
+    int decompressedSize = jsonObject.value(QString(sizeKey)).toInt();
+    if (decompressedSize == 0) {
+        _appendStatusLog(QString("Firmware file has invalid decompressed size for %1").arg(sizeKey));
+        return false;
+    }
+    
+	// XXX Qt's JSON string handling is terribly broken, strings
+	// with some length (18K / 25K) are just weirdly cut.
+	// The code below works around this by manually 'parsing'
+	// for the image string. Since its compressed / checksummed
+	// this should be fine.
+	
+	QStringList parts = QString(jsonDocBytes).split(QString("\"%1\": \"").arg(bytesKey));
+    if (parts.count() == 1) {
+        _appendStatusLog(QString("Could not find compressed bytes for %1 in Firmware file").arg(bytesKey));
+        return false;
+    }
+	parts = parts.last().split("\"");
+    if (parts.count() == 1) {
+        _appendStatusLog(QString("Incorrectly formed compressed bytes section for %1 in Firmware file").arg(bytesKey));
+        return false;
+    }
+	
+    // Store decompressed size as first four bytes. This is required by qUncompress routine.
+	QByteArray raw;
+	raw.append((unsigned char)((decompressedSize >> 24) & 0xFF));
+	raw.append((unsigned char)((decompressedSize >> 16) & 0xFF));
+	raw.append((unsigned char)((decompressedSize >> 8) & 0xFF));
+	raw.append((unsigned char)((decompressedSize >> 0) & 0xFF));
+	
+	QByteArray raw64 = parts.first().toUtf8();
+	raw.append(QByteArray::fromBase64(raw64));
+	decompressedBytes = qUncompress(raw);
+    
+    if (decompressedBytes.count() == 0) {
+        _appendStatusLog(QString("Firmware file has 0 length %1").arg(bytesKey));
+        return false;
+    }
+    if (decompressedBytes.count() != decompressedSize) {
+        _appendStatusLog(QString("Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)").arg(decompressedSize).arg(decompressedBytes.count()));
+        return false;
+    }
+    
+    _appendStatusLog(QString("Succesfully decompressed %1").arg(bytesKey));
+    return true;
 }
 
 /// @brief Called when an error occurs during download
