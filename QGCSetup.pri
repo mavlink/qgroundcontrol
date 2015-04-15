@@ -199,6 +199,7 @@ WindowsBuild {
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\iconengines\" \"$$DESTDIR_WIN\\iconengines\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\printsupport\" \"$$DESTDIR_WIN\\printsupport\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\qmltooling\" \"$$DESTDIR_WIN\\qmltooling\"
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\geoservices\" \"$$DESTDIR_WIN\\geoservices\"
 
     # Copy Qml libraries
     Q_DIR = $$[QT_INSTALL_QML]
@@ -206,6 +207,8 @@ WindowsBuild {
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$QML_DIR_WIN\\QtGraphicalEffects\" \"$$DESTDIR_WIN\\QtGraphicalEffects\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$QML_DIR_WIN\\QtQuick\" \"$$DESTDIR_WIN\\QtQuick\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$QML_DIR_WIN\\QtQuick.2\" \"$$DESTDIR_WIN\\QtQuick.2\"
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$QML_DIR_WIN\\QtLocation\" \"$$DESTDIR_WIN\\QtLocation\"
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$QML_DIR_WIN\\QtPositioning\" \"$$DESTDIR_WIN\\QtPositioning\"
 
         ReleaseBuild {
 		# Copy Visual Studio DLLs
