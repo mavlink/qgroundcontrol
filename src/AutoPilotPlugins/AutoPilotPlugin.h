@@ -51,8 +51,9 @@ class AutoPilotPlugin : public QObject
 public:
     AutoPilotPlugin(UASInterface* uas, QObject* parent);
     
-    Q_PROPERTY(bool pluginReady READ pluginReady NOTIFY pluginReadyChanged)
-    
+	/// true: plugin is ready for use, plugin should no longer be used
+	Q_PROPERTY(bool pluginReady READ pluginReady NOTIFY pluginReadyChanged)
+	
     /// List of VehicleComponent objects
     Q_PROPERTY(QVariantList vehicleComponents READ vehicleComponents CONSTANT)
     
@@ -100,17 +101,15 @@ public:
     // Must be implemented by derived class
     virtual const QVariantList& vehicleComponents(void) = 0;
     
-    /// FIXME: Kind of hacky
     static void clearStaticData(void);
-    
+	
+	bool pluginReady(void) { return _pluginReady; }
     UASInterface* uas(void) { return _uas; }
-    
-    bool pluginReady(void) { return _pluginReady; }
     
 signals:
     /// Signalled when plugin is ready for use
     void pluginReadyChanged(bool pluginReady);
-    
+	
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
     AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
@@ -120,6 +119,9 @@ protected:
 	
     UASInterface*   _uas;
     bool            _pluginReady;
+	
+private slots:
+	void _uasDisconnected(void);
 };
 
 #endif

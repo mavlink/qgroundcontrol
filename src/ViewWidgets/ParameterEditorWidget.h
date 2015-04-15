@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -21,51 +21,20 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/**
- * @file
- *   @brief Definition of class ParameterInterface
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
+/// @file
+///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef PARAMETERINTERFACE_H
-#define PARAMETERINTERFACE_H
+#ifndef PARAMETEREDITORWIDGET_H
+#define PARAMETEREDITORWIDGET_H
 
-#include <QWidget>
+#include "QGCQmlWidgetHolder.h"
 
-#include "ui_ParameterInterface.h"
-#include "UASInterface.h"
-#include "QGCParamWidget.h"
-
-namespace Ui
-{
-class ParameterInterface;
-}
-
-/**
- * @brief Container class for onboard parameter widgets
- *
- * @see QGCParamWidget
- */
-class ParameterInterface : public QWidget
+class ParameterEditorWidget : public QGCQmlWidgetHolder
 {
     Q_OBJECT
+	
 public:
-    explicit ParameterInterface(QWidget *parent = 0);
-    virtual ~ParameterInterface();
-
-public slots:
-    void addUAS(UASInterface* uas);
-    void selectUAS(int index);
-
-protected:
-    virtual void changeEvent(QEvent *e);
-    QMap<int, QGCParamWidget*>* paramWidgets;
-    int curr;
-
-private:
-    Ui::parameterWidget *m_ui;
+    ParameterEditorWidget(QWidget *parent = 0);
 };
 
-#endif // PARAMETERINTERFACE_H
+#endif

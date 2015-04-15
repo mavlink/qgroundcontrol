@@ -338,12 +338,7 @@ void MainWindow::resizeEvent(QResizeEvent * event)
 
 QString MainWindow::_getWindowStateKey()
 {
-    if (UASManager::instance()->getActiveUAS())
-    {
-        return QString::number(_currentView)+"_windowstate_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
-    }
-    else
-        return QString::number(_currentView)+"_windowstate_";
+	return QString::number(_currentView)+"_windowstate_";
 }
 
 QString MainWindow::_getWindowGeometryKey()
@@ -372,22 +367,26 @@ void MainWindow::_buildCustomWidgets(void)
 void MainWindow::_createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget)
 {
     Q_ASSERT(!_mapName2DockWidget.contains(name));
-    QGCDockWidget* dockWidget = new QGCDockWidget(title, this);
-    Q_CHECK_PTR(dockWidget);
-    dockWidget->setObjectName(name);
-    dockWidget->setVisible (false);
-    if (innerWidget) {
-        // Put inner widget inside QDockWidget
-        innerWidget->setParent(dockWidget);
-        dockWidget->setWidget(innerWidget);
-        innerWidget->setVisible(true);
-    }
+	
     // Add to menu
     QAction* action = new QAction(title, NULL);
     action->setCheckable(true);
     action->setData(name);
     connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
     _ui.menuTools->addAction(action);
+	
+	// Create widget
+	QGCDockWidget* dockWidget = new QGCDockWidget(title, action, this);
+	Q_CHECK_PTR(dockWidget);
+	dockWidget->setObjectName(name);
+	dockWidget->setVisible (false);
+	if (innerWidget) {
+		// Put inner widget inside QDockWidget
+		innerWidget->setParent(dockWidget);
+		dockWidget->setWidget(innerWidget);
+		innerWidget->setVisible(true);
+	}
+	
     _mapName2DockWidget[name] = dockWidget;
     _mapDockWidget2Action[dockWidget] = action;
     addDockWidget(area, dockWidget);
@@ -421,7 +420,7 @@ void MainWindow::_buildCommonWidgets(void)
         { _uasListDockWidgetName,           "Unmanned Systems",         Qt::RightDockWidgetArea },
         { _waypointsDockWidgetName,         "Mission Plan",             Qt::BottomDockWidgetArea },
         { _mavlinkDockWidgetName,           "MAVLink Inspector",        Qt::RightDockWidgetArea },
-        { _parametersDockWidgetName,        "Onboard Parameters",       Qt::RightDockWidgetArea },
+        { _parametersDockWidgetName,        "Parameter Editor",			Qt::RightDockWidgetArea },
         { _filesDockWidgetName,             "Onboard Files",            Qt::RightDockWidgetArea },
         { _uasStatusDetailsDockWidgetName,  "Status Details",           Qt::RightDockWidgetArea },
         { _mapViewDockWidgetName,           "Map view",                 Qt::RightDockWidgetArea },
@@ -431,7 +430,7 @@ void MainWindow::_buildCommonWidgets(void)
         { _pfdDockWidgetName,               "Primary Flight Display",   Qt::RightDockWidgetArea },
         { _hudDockWidgetName,               "Video Downlink",           Qt::RightDockWidgetArea },
         { _uasInfoViewDockWidgetName,       "Info View",                Qt::LeftDockWidgetArea },
-        { _debugConsoleDockWidgetName,      "Communications Console",   Qt::LeftDockWidgetArea }
+        { _debugConsoleDockWidgetName,      "Communications Console",   Qt::LeftDockWidgetArea },
     };
     static const size_t cDockWidgetInfo = sizeof(rgDockWidgetInfo) / sizeof(rgDockWidgetInfo[0]);
 
@@ -550,7 +549,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
     } else if (widgetName == _mavlinkDockWidgetName) {
         widget = new QGCMAVLinkInspector(MAVLinkProtocol::instance(),this);
     } else if (widgetName == _parametersDockWidgetName) {
-        widget = new ParameterInterface(this);
+        widget = new ParameterEditorWidget(this);
     } else if (widgetName == _filesDockWidgetName) {
         widget = new QGCUASFileViewMulti(this);
     } else if (widgetName == _uasStatusDetailsDockWidgetName) {
@@ -614,7 +613,7 @@ void MainWindow::_showHILConfigurationWidgets(void)
     if (!_mapUasId2HilDockWidget.contains(uasId)) {
 
         // Create QDockWidget
-        QGCDockWidget* dockWidget = new QGCDockWidget(tr("HIL Config %1").arg(uasId), this);
+        QGCDockWidget* dockWidget = new QGCDockWidget(tr("HIL Config %1").arg(uasId), NULL, this);
         Q_CHECK_PTR(dockWidget);
         dockWidget->setObjectName(tr("HIL_CONFIG_%1").arg(uasId));
         dockWidget->setVisible (false);
@@ -765,12 +764,11 @@ void MainWindow::storeSettings()
     settings.setValue("SHOW_STATUSBAR", _showStatusBar);
     settings.endGroup();
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
+	
     // Save the last current view in any case
     settings.setValue("CURRENT_VIEW", _currentView);
-    // Save the current window state, but only if a system is connected (else no real number of widgets would be present))
-    if (UASManager::instance()->getUASList().length() > 0) settings.setValue(_getWindowStateKey(), saveState());
-    // Save the current UAS view if a UAS is connected
-    if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", _currentView);
+    settings.setValue(_getWindowStateKey(), saveState());
+	
     // And save any custom weidgets
     QGCToolWidget::storeWidgetsToSettings(settings);
 }
@@ -877,7 +875,6 @@ void MainWindow::connectCommonActions()
 
     // Connect internal actions
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     // Unmanned System controls
     connect(_ui.actionLiftoff, SIGNAL(triggered()), UASManager::instance(), SLOT(launchActiveUAS()));
@@ -978,21 +975,6 @@ void MainWindow::commsWidgetDestroyed(QObject *obj)
     }
 }
 
-void MainWindow::setActiveUAS(UASInterface* uas)
-{
-    Q_UNUSED(uas);
-    if (settings.contains(_getWindowStateKey()))
-    {
-        restoreState(settings.value(_getWindowStateKey()).toByteArray());
-    }
-}
-
-void MainWindow::UASSpecsChanged(int uas)
-{
-    Q_UNUSED(uas);
-    // TODO: Update UAS properties if its specs change
-}
-
 void MainWindow::UASCreated(UASInterface* uas)
 {
     // The UAS actions are not enabled without connection to system
@@ -1002,7 +984,6 @@ void MainWindow::UASCreated(UASInterface* uas)
     _ui.actionEmergency_Land->setEnabled(true);
     _ui.actionShutdownMAV->setEnabled(true);
 
-    connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
     connect(uas, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
     connect(uas, SIGNAL(misconfigurationDetected(UASInterface*)), this, SLOT(handleMisconfiguration(UASInterface*)));
 
@@ -1020,15 +1001,6 @@ void MainWindow::UASCreated(UASInterface* uas)
     {
         _analyzeView = linechartWidget;
     }
-
-    // Reload view state in case new widgets were added
-    _loadCurrentViewState();
-}
-
-void MainWindow::UASDeleted(UASInterface* uas)
-{
-    Q_UNUSED(uas);
-    // TODO: Update the UI when a UAS is deleted
 }
 
 /// Stores the state of the toolbar, status bar and widgets associated with the current view

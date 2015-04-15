@@ -21,6 +21,9 @@
 
  ======================================================================*/
 
+/// @file
+///     @author Don Gagne <don@thegagnes.com>
+
 import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
@@ -33,34 +36,27 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 
 Rectangle {
-	QGCPalette { id: qgcPal; colorGroupEnabled: true }
-	ScreenTools { id: screenTools }
-	ParameterEditorController { id: controller }
-	QGCLabel { id: charWidth; text: "X"; visible: false }
+	/// true: show full information, false: for use in smaller widgets
+	property bool fullMode: true
 
-	readonly property real leftMargin: 10
-	readonly property real rightMargin: 20
-	readonly property int maxParamChars: 16
+	QGCPalette { id: __qgcPal; colorGroupEnabled: true }
+	ScreenTools { id: __screenTools }
+	ParameterEditorController { id: __controller }
+	QGCLabel { id: __charWidth; text: "X"; visible: false }
 
-    color: qgcPal.window
+	readonly property real __leftMargin: 10
+	readonly property real __rightMargin: 20
+	readonly property int __maxParamChars: 16
+
+    color: __qgcPal.window
 
     // We use an ExclusiveGroup to maintain the visibility of a single editing control at a time
     ExclusiveGroup {
-        id: exclusiveEditorGroup
+        id: __exclusiveEditorGroup
     }
 
     Column {
         anchors.fill:parent
-
-        QGCLabel {
-            text: "PARAMETER EDITOR"
-            font.pointSize: screenTools.dpiAdjustedPointSize(20)
-        }
-
-        Item {
-            height: 20
-            width:	5
-        }
 
         Row {
             spacing:            10
@@ -68,26 +64,23 @@ Rectangle {
             width:              parent.width
 
             QGCButton {
-                text: "Clear RC to Param"
-                onClicked: controller.clearRCToParam()
+                text:		"Clear RC to Param"
+                onClicked:	__controller.clearRCToParam()
             }
             QGCButton {
-                text: "Save to file"
-                onClicked: controller.saveToFile()
+                text:		"Save to file"
+				visible:	fullMode
+                onClicked:	__controller.saveToFile()
             }
             QGCButton {
-                text: "Load from file"
-                onClicked: controller.loadFromFile()
+                text:		"Load from file"
+				visible:	fullMode
+                onClicked:	__controller.loadFromFile()
             }
             QGCButton {
-                id: firstButton
-                text: "Refresh"
-                onClicked: controller.refresh()
-            }
-            QGCLabel {
-                width:      firstButton.x - parent.spacing
-                wrapMode:   Text.WordWrap
-                text:       "Click a parameter value to modify. Right-click to set an RC to Param mapping. Use caution when modifying parameters here since the values are not checked for validity."
+                id:			firstButton
+                text:		"Refresh"
+                onClicked:	__controller.refresh()
             }
         }
 
@@ -104,7 +97,7 @@ Rectangle {
 
             Column {
                 Repeater {
-                    model: controller.componentIds
+                    model: __controller.componentIds
 
                     Column {
 						id: componentColumn
@@ -113,7 +106,7 @@ Rectangle {
 
 						QGCLabel {
 							text: "Component #: " + componentId.toString()
-							font.pointSize: screenTools.dpiAdjustedPointSize(qgcPal.defaultFontPointSize + 4);
+							font.pointSize: __screenTools.dpiAdjustedPointSize(__qgcPal.defaultFontPointSize + 4);
 						}
 
                         Item {
@@ -122,51 +115,51 @@ Rectangle {
                         }
 
                         Repeater {
-                            model: controller.getGroupsForComponent(componentColumn.componentId)
+                            model: __controller.getGroupsForComponent(componentColumn.componentId)
 
                             Column {
                                 Rectangle {
                                     id: groupRect
-                                    color:	qgcPal.windowShade
+                                    color:	__qgcPal.windowShade
                                     height: groupBlock.height
-                                    width:	scrollView.viewport.width - rightMargin
+                                    width:	scrollView.viewport.width - __rightMargin
 
                                     Column {
                                         id: groupBlock
 
                                         Rectangle {
-                                            color:	qgcPal.windowShadeDark
+                                            color:	__qgcPal.windowShadeDark
                                             height: groupLabel.height
                                             width:	groupRect.width
 
                                             QGCLabel {
                                                 id:					groupLabel
                                                 height:				contentHeight + 5
-                                                x:					leftMargin
+                                                x:					__leftMargin
                                                 text:				modelData
                                                 verticalAlignment:	Text.AlignVCenter
-                                                font.pointSize:		screenTools.dpiAdjustedPointSize(qgcPal.defaultFontPointSize + 2);
+                                                font.pointSize:		__screenTools.dpiAdjustedPointSize(__qgcPal.defaultFontPointSize + 2);
                                             }
                                         }
 
                                         Repeater {
-                                            model: controller.getFactsForGroup(componentColumn.componentId, modelData)
+                                            model: __controller.getFactsForGroup(componentColumn.componentId, modelData)
 
                                             Row {
                                                 spacing:	10
-                                                x:			leftMargin
+                                                x:			__leftMargin
 
 												Fact { id: modelFact; name: modelData + ":" + componentColumn.componentId }
 
                                                 QGCLabel {
                                                     text:	modelFact.name
-                                                    width:	charWidth.contentWidth * (maxParamChars + 2)
+                                                    width:	__charWidth.contentWidth * (__maxParamChars + 2)
                                                 }
 
                                                 QGCLabel {
 
                                                     text:   modelFact.valueString + " " + modelFact.units
-                                                    width:  charWidth.contentWidth * 20
+                                                    width:  __charWidth.contentWidth * 20
                                                     height: contentHeight
 
                                                     MouseArea {
@@ -178,7 +171,7 @@ Rectangle {
 																editor.checked = true
 																editor.focus = true
 															} else if (mouse.button == Qt.RightButton) {
-																controller.setRCToParam(modelData)
+																__controller.setRCToParam(modelData)
 															}
                                                         }
                                                     }
@@ -195,7 +188,7 @@ Rectangle {
 
                                                         // We use an ExclusiveGroup to manage visibility
                                                         property bool checked: false
-                                                        property ExclusiveGroup exclusiveGroup: exclusiveEditorGroup
+                                                        property ExclusiveGroup exclusiveGroup: __exclusiveEditorGroup
                                                         onExclusiveGroupChanged: {
                                                             if (exclusiveGroup)
                                                                 exclusiveGroup.bindCheckable(editor)
@@ -205,6 +198,7 @@ Rectangle {
 
                                                 QGCLabel {
                                                     text: modelFact.shortDescription
+													visible: fullMode
                                                 }
                                             } // Row - Fact value
                                         } // Repeater - Facts
