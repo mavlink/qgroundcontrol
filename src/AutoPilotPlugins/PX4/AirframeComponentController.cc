@@ -93,12 +93,20 @@ AirframeComponentController::~AirframeComponentController()
 void AirframeComponentController::changeAutostart(void)
 {
     LinkManager* linkManager = LinkManager::instance();
-    
-    if (linkManager->getLinks().count() > 1) {
-        QGCMessageBox::warning("Airframe Config", "You cannot change airframe configuration while connected to multiple vehicles.");
-        return;
+	
+	// This shouldn't theoretically be needed since a disconnected link should be deleted. But
+	// for some reason multiple links are coming up.
+	int connectedLinkCount = 0;
+	foreach (LinkInterface* link, linkManager->getLinks()) {
+		if (link->isConnected()) {
+			connectedLinkCount++;
+		}
     }
-    
+	if (connectedLinkCount > 1) {
+		QGCMessageBox::warning("Airframe Config", "You cannot change airframe configuration while connected to multiple vehicles.");
+		return;
+	}
+	
     _autoPilotPlugin->getParameterFact("SYS_AUTOSTART")->setValue(_autostartId);
     _autoPilotPlugin->getParameterFact("SYS_AUTOCONFIG")->setValue(1);
     
