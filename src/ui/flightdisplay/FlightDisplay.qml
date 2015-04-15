@@ -40,9 +40,9 @@ Rectangle {
     property real roll:    isNaN(flightDisplay.roll)    ? 0 : flightDisplay.roll
     property real pitch:   isNaN(flightDisplay.pitch)   ? 0 : flightDisplay.pitch
 
-    property bool showPitchIndicator:     true
-    property bool showAttitudeIndicator: true
-    property bool showCompass:            true
+    property bool showPitchIndicator:       true
+    property bool showAttitudeIndicator:    true
+    property bool showCompass:              true
 
     function getBool(value) {
         return value === '0' ? false : true;
@@ -79,8 +79,8 @@ Rectangle {
     {
         mapBackground.visible               = getBool(flightDisplay.loadSetting("showMapBackground",        "0"));
         mapBackground.alwaysNorth           = getBool(flightDisplay.loadSetting("mapAlwaysPointsNorth",     "0"));
-        showAttitudeIndicator               = getBool(flightDisplay.loadSetting("showAttitudeIndicator",   "1"));
-        showPitchIndicator                  = getBool(flightDisplay.loadSetting("showPitchWidget",          "1"));
+        showAttitudeIndicator               = getBool(flightDisplay.loadSetting("showAttitudeIndicator",    "1"));
+        showPitchIndicator                  = getBool(flightDisplay.loadSetting("showPitchIndicator",       "1"));
         showCompass                         = getBool(flightDisplay.loadSetting("showCompass",              "1"));
         altitudeWidget.visible              = getBool(flightDisplay.loadSetting("showAltitudeWidget",       "1"));
         speedWidget.visible                 = getBool(flightDisplay.loadSetting("showSpeedWidget",          "1"));
@@ -161,11 +161,32 @@ Rectangle {
             text: "Pitch Indicator"
             checkable:  true
             checked:    showPitchIndicator
-            enabled:    !mapBackground.visible
             onTriggered:
             {
-                pitchWidget.visible = !pitchWidget.visible;
-                flightDisplay.saveSetting("showPitchWidget", setBool(pitchWidget.visible));
+                showPitchIndicator = !showPitchIndicator;
+                flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
+            }
+        }
+
+        MenuItem {
+            text: "Attitude Indicator"
+            checkable:  true
+            checked:    showAttitudeIndicator
+            onTriggered:
+            {
+                showAttitudeIndicator = !showAttitudeIndicator;
+                flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
+            }
+        }
+
+        MenuItem {
+            text: "Compass"
+            checkable: true
+            checked: showCompass
+            onTriggered:
+            {
+                showCompass = !showCompass;
+                flightDisplay.saveSetting("showCompass", setBool(showCompass));
             }
         }
 
@@ -235,28 +256,6 @@ Rectangle {
             }
         }
 
-        MenuItem {
-            text: "Compass"
-            checkable: true
-            checked: showCompass
-            onTriggered:
-            {
-                showCompass = !showCompass;
-                flightDisplay.saveSetting("showCompass", setBool(showCompass));
-            }
-        }
-
-        MenuItem {
-            text: "Attitude Indicator"
-            checkable: true
-            checked: showAttitudeIndicator
-            onTriggered:
-            {
-                showAttitudeIndicator = !showAttitudeIndicator;
-                flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
-            }
-        }
-
         MenuSeparator {}
 
         MenuItem {
@@ -264,7 +263,7 @@ Rectangle {
             onTriggered:
             {
                 showPitchIndicator = true;
-                flightDisplay.saveSetting("showPitchWidget", setBool(showPitchIndicator));
+                flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
                 showAttitudeIndicator = true;
                 flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
                 showCompass = true;
@@ -305,7 +304,8 @@ Rectangle {
         anchors.centerIn:   parent
         rollAngle:          roll
         pitchAngle:         pitch
-        visible:            !mapBackground.visible && showAttitudeIndicator
+        showAttitude:       showAttitudeIndicator
+        visible:            !mapBackground.visible
         z:                  10
     }
 
@@ -388,6 +388,7 @@ Rectangle {
         size:               160
         rollAngle:          roll
         pitchAngle:         pitch
+        showPitch:          showPitchIndicator
         visible:            mapBackground.visible && showAttitudeIndicator
         z:                  80
     }

@@ -31,8 +31,9 @@ import QtQuick 2.4
 
 Item {
     id: root
-    property real rollAngle : 0
-    property real pitchAngle: 0
+    property real rollAngle :   0
+    property real pitchAngle:   0
+    property bool showAttitude: true
 
     anchors.fill: parent
 
@@ -43,6 +44,7 @@ Item {
 
     Image {
         id: rollDial
+        visible: root.showAttitude
         anchors { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
         source: "/qml/rollDialWhite.svg"
         mipmap: true
@@ -57,6 +59,7 @@ Item {
 
     Image {
         id: pointer
+        visible: root.showAttitude
         anchors { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
         source:             "/qml/rollPointerWhite.svg"
         mipmap:             true
@@ -66,6 +69,7 @@ Item {
 
     Image {
         id:                 crossHair
+        visible:            root.showAttitude
         anchors.centerIn:   parent
         source:             "/qml/crossHair.svg"
         mipmap:             true

@@ -34,6 +34,7 @@ Item {
     property real rollAngle :   0
     property real pitchAngle:   0
     property real size:         100
+    property bool showPitch:    true
 
     width:  size
     height: size
@@ -75,6 +76,7 @@ Item {
     //-- Pitch
     QGCPitchWidget {
         id:                 pitchWidget
+        visible:            root.showPitch
         size:               parent.width * 0.65
         anchors.verticalCenter: parent.verticalCenter
         pitchAngle:         root.pitchAngle
