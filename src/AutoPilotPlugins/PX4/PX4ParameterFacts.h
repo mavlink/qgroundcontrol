@@ -59,7 +59,6 @@ private:
     virtual void _addMetaDataToFact(Fact* fact);
 
     // Class methods
-    static FactMetaData* _parseParameter(QXmlStreamReader& xml, const QString& group);
     static void _initMetaData(FactMetaData* metaData);
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
 
