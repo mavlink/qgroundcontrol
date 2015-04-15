@@ -61,6 +61,8 @@
 #include "QGCPalette.h"
 #include "ScreenTools.h"
 #include "QGCLoggingCategory.h"
+#include "ViewWidgetController.h"
+#include "ParameterEditorController.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -262,6 +264,8 @@ void QGCApplication::_initCommon(void)
     // Register our Qml objects
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
     qmlRegisterType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools");
+	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
+	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)

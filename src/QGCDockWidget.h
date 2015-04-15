@@ -25,6 +25,7 @@
 #define QGCDockWidget_h
 
 #include <QDockWidget>
+#include <QAction>
 
 /// @file
 ///     @brief Subclass of QDockWidget so we can intercept the closeEvent.
@@ -35,9 +36,12 @@ class QGCDockWidget : public QDockWidget {
     Q_OBJECT
     
 public:
-    QGCDockWidget(const QString& title, QWidget *parent = 0, Qt::WindowFlags flags = 0);
+    QGCDockWidget(const QString& title, QAction* action, QWidget *parent = 0, Qt::WindowFlags flags = 0);
 
     void closeEvent(QCloseEvent* event);
+	
+private:
+	QAction* _action;
 };
 
 

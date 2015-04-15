@@ -33,6 +33,14 @@ AutoPilotPlugin::AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     _pluginReady(false)
 {
     Q_ASSERT(_uas);
+	
+	connect(_uas, &UASInterface::disconnected, this, &AutoPilotPlugin::_uasDisconnected);
+}
+
+void AutoPilotPlugin::_uasDisconnected(void)
+{
+	_pluginReady = false;
+	emit pluginReadyChanged(_pluginReady);
 }
 
 void AutoPilotPlugin::refreshAllParameters(void)
