@@ -29,6 +29,8 @@
 #include "QGCLoggingCategory.h"
 
 #include <QFile>
+#include <QFileInfo>
+#include <QDir>
 #include <QDebug>
 
 QGC_LOGGING_CATEGORY(PX4ParameterFactsMetaDataLog, "PX4ParameterFactsMetaDataLog")
@@ -40,63 +42,6 @@ PX4ParameterFacts::PX4ParameterFacts(UASInterface* uas, QObject* parent) :
     ParameterLoader(uas, parent)
 {
     Q_ASSERT(uas);
-}
-
-/// Parse the Parameter element of parameter xml meta data
-///     @param[in] xml stream reader
-///     @param[in] group fact group associated with this Param element
-/// @return Returns the meta data object for this parameter
-FactMetaData* PX4ParameterFacts::_parseParameter(QXmlStreamReader& xml, const QString& group)
-{
-    Q_UNUSED(group);
-    
-    QString name = xml.attributes().value("name").toString();
-    QString type = xml.attributes().value("type").toString();
-    
-    qCDebug(PX4ParameterFactsMetaDataLog) << "Parsed parameter: " << name << type;
-
-    Q_ASSERT(!name.isEmpty());
-    Q_ASSERT(!type.isEmpty());
-    
-    FactMetaData* metaData = new FactMetaData();
-    Q_CHECK_PTR(metaData);
-    
-    metaData->group = group;
-    
-    // Convert type from string to FactMetaData::ValueType_t
-    
-    struct String2Type {
-        const char*                 strType;
-        FactMetaData::ValueType_t   type;
-    };
-    
-    static const struct String2Type rgString2Type[] = {
-        { "FLOAT",  FactMetaData::valueTypeFloat },
-        { "INT32",  FactMetaData::valueTypeInt32 },
-    };
-    static const size_t crgString2Type = sizeof(rgString2Type) / sizeof(rgString2Type[0]);
-    
-    bool found = false;
-    for (size_t i=0; i<crgString2Type; i++) {
-        const struct String2Type* info = &rgString2Type[i];
-        
-        if (type == info->strType) {
-            found = true;
-            metaData->type = info->type;
-            break;
-        }
-    }
-    Q_UNUSED(found);
-    Q_ASSERT(found);
-    
-    _initMetaData(metaData);
-    
-    // FIXME: Change to change the parameter build scheme in Firmware to get rid of ifdef dup problem
-    if (!_mapParameterName2FactMetaData.contains(name)) {
-        _mapParameterName2FactMetaData[name] = metaData;
-    }
-    
-    return metaData;
 }
 
 /// This will fill in missing meta data such as range info
@@ -163,6 +108,7 @@ QVariant PX4ParameterFacts::_stringToTypedVariant(const QString& string, FactMet
         case FactMetaData::valueTypeInt32:
             convertOk = var.convert(QVariant::Int);
             if (!failOk) {
+				qDebug() << string;
                 Q_ASSERT(convertOk);
             }
             break;
@@ -170,6 +116,7 @@ QVariant PX4ParameterFacts::_stringToTypedVariant(const QString& string, FactMet
         case FactMetaData::valueTypeDouble:
             convertOk = var.convert(QVariant::Double);
             if (!failOk) {
+				qDebug() << string;
                 Q_ASSERT(convertOk);
             }
             break;
@@ -191,9 +138,16 @@ void PX4ParameterFacts::loadParameterFactMetaData(void)
     qCDebug(PX4ParameterFactsMetaDataLog) << "Loading PX4 parameter fact meta data";
 
     Q_ASSERT(_mapParameterName2FactMetaData.count() == 0);
-    
-    QFile xmlFile(":/AutoPilotPlugins/PX4/ParameterFactMetaData.xml");
-    
+
+	// First look for meta data that comes from a firmware download. Fall back to resource if not there.
+	QSettings settings;
+	QDir parameterDir = QFileInfo(settings.fileName()).dir();
+	QString parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
+	if (!QFile(parameterFilename).exists()) {
+		parameterFilename = ":/AutoPilotPlugins/PX4/ParameterFactMetaData.xml";
+	}
+	
+    QFile xmlFile(parameterFilename);
     Q_ASSERT(xmlFile.exists());
     
     bool success = xmlFile.open(QIODevice::ReadOnly);
@@ -215,7 +169,49 @@ void PX4ParameterFacts::loadParameterFactMetaData(void)
                 factGroup = xml.attributes().value("name").toString();
                 qCDebug(PX4ParameterFactsMetaDataLog) << "Found group: " << factGroup;
             } else if (elementName == "parameter") {
-                metaData = _parseParameter(xml, factGroup);
+				metaData = new FactMetaData();
+				Q_CHECK_PTR(metaData);
+				metaData->group = factGroup;
+			} else if (elementName == "code") {
+				Q_ASSERT(metaData);
+				QString name = xml.readElementText();
+				qCDebug(PX4ParameterFactsMetaDataLog) << "Found parameter: " << name;
+				// FIXME: Change the parameter build scheme in Firmware to get rid of ifdef dup problem
+				if (!_mapParameterName2FactMetaData.contains(name)) {
+					_mapParameterName2FactMetaData[name] = metaData;
+				}
+			} else if (elementName == "type") {
+				Q_ASSERT(metaData);
+				QString type = xml.readElementText();
+				
+				// Convert type from string to FactMetaData::ValueType_t
+				
+				struct String2Type {
+					const char*                 strType;
+					FactMetaData::ValueType_t   type;
+				};
+				
+				static const struct String2Type rgString2Type[] = {
+					{ "FLOAT",  FactMetaData::valueTypeFloat },
+					{ "INT32",  FactMetaData::valueTypeInt32 },
+				};
+				static const size_t crgString2Type = sizeof(rgString2Type) / sizeof(rgString2Type[0]);
+				
+				bool found = false;
+				for (size_t i=0; i<crgString2Type; i++) {
+					const struct String2Type* info = &rgString2Type[i];
+					
+					if (type == info->strType) {
+						found = true;
+						metaData->type = info->type;
+						break;
+					}
+				}
+				Q_UNUSED(found);
+				Q_ASSERT(found);
+				
+				qCDebug(PX4ParameterFactsMetaDataLog) << "Type:" << type << metaData->type;
+				_initMetaData(metaData);
             } else if (elementName == "short_desc") {
                 Q_ASSERT(metaData);
                 QString text = xml.readElementText();
