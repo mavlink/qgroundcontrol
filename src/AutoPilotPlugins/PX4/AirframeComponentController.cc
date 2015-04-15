@@ -92,17 +92,7 @@ AirframeComponentController::~AirframeComponentController()
 
 void AirframeComponentController::changeAutostart(void)
 {
-    LinkManager* linkManager = LinkManager::instance();
-	
-	// This shouldn't theoretically be needed since a disconnected link should be deleted. But
-	// for some reason multiple links are coming up.
-	int connectedLinkCount = 0;
-	foreach (LinkInterface* link, linkManager->getLinks()) {
-		if (link->isConnected()) {
-			connectedLinkCount++;
-		}
-    }
-	if (connectedLinkCount > 1) {
+	if (UASManager::instance()->getUASList().count() > 1) {
 		QGCMessageBox::warning("Airframe Config", "You cannot change airframe configuration while connected to multiple vehicles.");
 		return;
 	}
