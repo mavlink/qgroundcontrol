@@ -31,8 +31,6 @@ import QtQuick 2.4
 
 Item {
     id:    root
-    width:  120
-    height: width
     property real heading : 0
     Image {
         id: compass

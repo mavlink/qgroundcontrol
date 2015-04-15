@@ -37,9 +37,10 @@ Rectangle {
     id: root
     property real latitude:     37.803784
     property real longitude :   -122.462276
-    property real zoomLevel:    15
+    property real zoomLevel:    18
     property real heading:      0
     property bool alwaysNorth:  true
+    property bool interactive:  true
     property alias mapItem:     map
 
     color: Qt.rgba(0,0,0,0)
@@ -95,8 +96,11 @@ Rectangle {
         height:     1
         zoomLevel:  root.zoomLevel
         anchors.centerIn: parent
-        center:     map.visible ? QtPositioning.coordinate(lat, lon) : QtPositioning.coordinate(0,0)
+        center:     QtPositioning.coordinate(lat, lon)
         /*
+        // There is a bug currently in Qt where it fails to render a map taller than 6 tiles high. Until
+        // that's fixed, we can't rotate the map as it would require a larger map, which can easely grow
+        // larger than 6 tiles high.
         transform: Rotation {
             origin.x: map.width  / 2
             origin.y: map.height / 2
@@ -104,7 +108,7 @@ Rectangle {
         }
         */
         gesture.flickDeceleration: 3000
-        gesture.enabled: true
+        gesture.enabled: root.interactive
 
         onWidthChanged: {
             scaleTimer.restart()
@@ -116,6 +120,10 @@ Rectangle {
 
         onZoomLevelChanged:{
             scaleTimer.restart()
+        }
+
+        Component.onCompleted: {
+            map.zoomLevel = 18
         }
 
         function calculateScale() {

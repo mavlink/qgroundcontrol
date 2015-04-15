@@ -37,12 +37,9 @@ Rectangle {
     property real _reticleSpacing: 10
     property real _reticleHeight:  2
     property real _reticleSlot:    _reticleSpacing + _reticleHeight
-
     anchors.verticalCenter: parent.verticalCenter
-
     z:10
-    height: parent.height * 0.75 > 280 ? 280 : parent.height * 0.75
-    clip:   true
+    height: parent.height * 0.65 > 280 ? 280 : parent.height * 0.65
     smooth: true
     radius: 5
     border.color: Qt.rgba(1,1,1,0.25)
@@ -51,35 +48,43 @@ Rectangle {
         GradientStop { position: 0.5; color: Qt.rgba(0,0,0,0.25) }
         GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.65) }
     }
-    Column{
-        id: col
-        width: parent.width
+    Rectangle {
+        id:     clipRect
+        height: parent.height - 5
+        width:  parent.width
+        clip:   true
+        color:  Qt.rgba(0,0,0,0);
         anchors.verticalCenter: parent.verticalCenter
-        spacing: _reticleSpacing
-        Repeater {
-            model: 40
-            Rectangle {
-                property int _speed: -(index - 20)
-                width:  (_speed % 5 === 0) ? 10 : 15
-                anchors.right: parent.right
-                height: _reticleHeight
-                color:  Qt.rgba(1,1,1,0.35)
-                Text {
-                    visible: (_speed % 5 === 0)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.horizontalCenterOffset: -30
-                    anchors.verticalCenter:   parent.verticalCenter
-                    antialiasing: true
-                    font.weight: Font.DemiBold
-                    text:  _speed
-                    color: _speed < 0 ? "#f8983a" : "white"
-                    style: Text.Outline
-                    styleColor: Qt.rgba(0,0,0,0.25)
+        Column{
+            id: col
+            width: parent.width
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: _reticleSpacing
+            Repeater {
+                model: 40
+                Rectangle {
+                    property int _speed: -(index - 20)
+                    width:  (_speed % 5 === 0) ? 10 : 15
+                    anchors.right: parent.right
+                    height: _reticleHeight
+                    color:  Qt.rgba(1,1,1,0.35)
+                    Text {
+                        visible: (_speed % 5 === 0)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.horizontalCenterOffset: -30
+                        anchors.verticalCenter:   parent.verticalCenter
+                        antialiasing: true
+                        font.weight: Font.DemiBold
+                        text:  _speed
+                        color: _speed < 0 ? "#f8983a" : "white"
+                        style: Text.Outline
+                        styleColor: Qt.rgba(0,0,0,0.25)
+                    }
                 }
             }
-        }
-        transform: Translate {
-            y: (speed * _reticleSlot) - (_reticleSlot / 2)
+            transform: Translate {
+                y: (speed * _reticleSlot) - (_reticleSlot / 2)
+            }
         }
     }
 }
