@@ -179,13 +179,14 @@ Rectangle {
     Item {
         id: scale
         parent: zoomSlider.parent
-        visible: scaleText.text != "0 m"
+        visible: scaleText.text !== "0 m"
         z: map.z + 2
         opacity: 1
         anchors {
             bottom: zoomSlider.top;
             bottomMargin: 8;
             left: zoomSlider.left
+            leftMargin: 4
         }
         Image {
             id: scaleImageLeft
@@ -212,7 +213,7 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
             anchors.bottom: parent.bottom
             anchors.left:   parent.left
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: 10
             text: "0 m"
         }
         Component.onCompleted: {

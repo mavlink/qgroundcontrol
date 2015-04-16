@@ -43,74 +43,71 @@ import QGroundControl.Controls 1.0
 
 Item {
     id: slider;
-    height: 10
+    height: 12
     property real value // value is read/write.
     property real minimum: 0
     property real maximum: 1
     property int length: width - handle.width
 
     Rectangle {
-        anchors.fill: parent
-        border.width: 1;
-        border.color: "lightgrey"
-        radius: 8
-        color: "white"
-        opacity: 1
+        anchors.fill:   parent
+        radius:         6
+        color:          Qt.rgba(0,0,0,0.65);
     }
 
     Rectangle {
-        anchors.left: parent.left
+        anchors.left:       parent.left
         anchors.leftMargin: 4
-        anchors.top: parent.top
-        anchors.topMargin: (parent.height - height)/2
-        height: 3
-        width: handle.x - x
-        color: "#1c94fc"
+        radius:             4
+        height:             4
+        width:              handle.x - x
+        color:              "#69bb17"
+        anchors.verticalCenter: parent.verticalCenter
     }
 
-
     Rectangle {
-        id: labelRect
-        width: label.width
-        height: label.height + 4
-        radius: 4
-        smooth: true
-        color: "white"
-        border.color: "lightgrey"
-        anchors.bottom: handle.top
+        id:                 labelRect
+        width:              label.width
+        height:             label.height + 4
+        radius:             4
+        smooth:             true
+        color:              Qt.rgba(1,1,1,0.75);
+        border.color:       Qt.rgba(0,0,0,0.45);
+        anchors.bottom:     handle.top
         anchors.bottomMargin: 4
-        x: Math.max(Math.min(handle.x + (handle.width - width )/2, slider.width - width),0)
         visible: mouseRegion.pressed
+        x: Math.max(Math.min(handle.x + (handle.width - width ) / 2, slider.width - width), 0)
         QGCLabel{
-            id: label
-            color: "darkgrey"
-            text: slider.value.toFixed(2)
-            width: font.pointSize * 3.5
-            anchors.horizontalCenter: labelRect.horizontalCenter
-            horizontalAlignment: Text.AlignHCenter
-            anchors.baseline: parent.bottom
-            anchors.baselineOffset: -6
-            font.pixelSize: 14
+            id:     label
+            color:  "black"
+            text:   slider.value.toFixed(2)
+            width:  font.pointSize * 3.5
+            anchors.horizontalCenter:   labelRect.horizontalCenter
+            horizontalAlignment:        Text.AlignHCenter
+            anchors.verticalCenter:     labelRect.verticalCenter
+            //anchors.baseline:           parent.bottom
+            //anchors.baselineOffset:     -6
         }
     }
 
     Rectangle {
-        id: handle;
-        smooth: true
-        width: 26;
-        y: (slider.height - height)/2;
-        x: (slider.value - slider.minimum) * slider.length / (slider.maximum - slider.minimum)
+        id:         handle;
+        smooth:     true
+        width:      26;
+        y:          (slider.height - height) / 2;
+        x:          (slider.value - slider.minimum) * slider.length / (slider.maximum - slider.minimum)
 
-        height: width; radius: width/2
-        gradient: normalGradient
+        height:     width
+        radius:     width / 2
+        gradient:   normalGradient
         border.width: 2
         border.color: "white"
 
         Gradient {
             id: normalGradient
-            GradientStop { position: 0.0; color: "#b0b0b0" }
+            GradientStop { position: 0.0;  color: "#b0b0b0" }
             GradientStop { position: 0.66; color: "#909090" }
-            GradientStop { position: 1.0; color: "#545454" }
+            GradientStop { position: 1.0;  color: "#545454" }
         }
 
         MouseArea {
