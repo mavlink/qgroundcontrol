@@ -31,6 +31,7 @@ import QtQuick 2.4
 import QtPositioning 5.3
 import QtLocation 5.3
 
+import QGroundControl.Controls 1.0
 import QGroundControl.FlightControls 1.0
 
 Rectangle {
@@ -204,7 +205,7 @@ Rectangle {
             anchors.bottom: parent.bottom
             anchors.left: scaleImage.right
         }
-        Text {
+        QGCLabel {
             id: scaleText
             color: "white"
             font.weight: Font.DemiBold

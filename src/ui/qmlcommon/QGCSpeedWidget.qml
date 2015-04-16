@@ -29,6 +29,7 @@ This file is part of the QGROUNDCONTROL project
 
 import QtQuick 2.4
 import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls 1.0
 
 Rectangle {
     id: root
@@ -68,7 +69,7 @@ Rectangle {
                     anchors.right: parent.right
                     height: _reticleHeight
                     color:  Qt.rgba(1,1,1,0.35)
-                    Text {
+                    QGCLabel {
                         visible: (_speed % 5 === 0)
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.horizontalCenterOffset: -30

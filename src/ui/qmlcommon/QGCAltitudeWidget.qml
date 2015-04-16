@@ -27,9 +27,8 @@ This file is part of the QGROUNDCONTROL project
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-// TODO: This is temporary until I find a better way to display a large range of numbers
-
 import QtQuick 2.4
+import QGroundControl.Controls 1.0
 
 Rectangle {
     id: root
@@ -92,7 +91,7 @@ Rectangle {
                     width:  (_alt % 10 === 0) ? 10 : 15
                     height: _reticleHeight
                     color:  Qt.rgba(1,1,1,0.35)
-                    Text {
+                    QGCLabel {
                         visible: (_alt % 10 === 0)
                         x: 20
                         anchors.verticalCenter:   parent.verticalCenter
