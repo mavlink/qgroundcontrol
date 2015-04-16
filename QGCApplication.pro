@@ -351,7 +351,7 @@ HEADERS += \
     src/ui/px4_configuration/RCValueWidget.h \
     src/uas/UASManagerInterface.h \
     src/uas/QGCUASParamManagerInterface.h \
-    src/uas/QGCUASFileManager.h \
+    src/uas/FileManager.h \
     src/ui/QGCUASFileView.h \
     src/CmdLineOptParser.h \
     src/QGCFileDialog.h \
@@ -489,7 +489,7 @@ SOURCES += \
     src/uas/UASParameterCommsMgr.cc \
     src/ui/px4_configuration/PX4RCCalibration.cc \
     src/ui/px4_configuration/RCValueWidget.cc \
-    src/uas/QGCUASFileManager.cc \
+    src/uas/FileManager.cc \
     src/ui/QGCUASFileView.cc \
     src/CmdLineOptParser.cc \
     src/QGCFileDialog.cc \
@@ -543,7 +543,7 @@ HEADERS += \
 	src/qgcunittest/FlightGearTest.h \
 	src/qgcunittest/TCPLinkTest.h \
 	src/qgcunittest/TCPLoopBackServer.h \
-	src/qgcunittest/QGCUASFileManagerTest.h \
+	src/qgcunittest/FileManagerTest.h \
     src/qgcunittest/PX4RCCalibrationTest.h \
     src/qgcunittest/LinkManagerTest.h \
     src/qgcunittest/MainWindowTest.h \
@@ -568,7 +568,7 @@ SOURCES += \
 	src/qgcunittest/FlightGearTest.cc \
 	src/qgcunittest/TCPLinkTest.cc \
 	src/qgcunittest/TCPLoopBackServer.cc \
-	src/qgcunittest/QGCUASFileManagerTest.cc \
+	src/qgcunittest/FileManagerTest.cc \
     src/qgcunittest/PX4RCCalibrationTest.cc \
     src/qgcunittest/LinkManagerTest.cc \
     src/qgcunittest/MainWindowTest.cc \

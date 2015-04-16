@@ -21,29 +21,47 @@
  
  ======================================================================*/
 
-#ifndef QGCUASFILEMANAGER_H
-#define QGCUASFILEMANAGER_H
+#ifndef FILEMANAGER_H
+#define FILEMANAGER_H
 
 #include <QObject>
 #include <QDir>
 
 #include "UASInterface.h"
+#include "QGCLoggingCategory.h"
 
-class QGCUASFileManager : public QObject
+Q_DECLARE_LOGGING_CATEGORY(FileManagerLog)
+
+class FileManager : public QObject
 {
     Q_OBJECT
 public:
-    QGCUASFileManager(QObject* parent, UASInterface* uas, uint8_t unitTestSystemIdQGC = 0);
+    FileManager(QObject* parent, UASInterface* uas, uint8_t unitTestSystemIdQGC = 0);
     
     /// These methods are only used for testing purposes.
     bool _sendCmdTestAck(void) { return _sendOpcodeOnlyCmd(kCmdNone, kCOAck); };
     bool _sendCmdTestNoAck(void) { return _sendOpcodeOnlyCmd(kCmdTestNoAck, kCOAck); };
     bool _sendCmdReset(void) { return _sendOpcodeOnlyCmd(kCmdResetSessions, kCOAck); };
     
-    /// @brief Timeout in msecs to wait for an Ack time come back. This is public so we can write unit tests which wait long enough
+    /// Timeout in msecs to wait for an Ack time come back. This is public so we can write unit tests which wait long enough
     /// for the FileManager to timeout.
-    static const int ackTimerTimeoutMsecs = 1000;
+	// FIXME: timeout hack
+    static const int ackTimerTimeoutMsecs = 30000;
 
+	/// Downloads the specified file.
+	///     @param from File to download from UAS, fully qualified path
+	///     @param downloadDir Local directory to download file to
+	void downloadPath(const QString& from, const QDir& downloadDir);
+	
+	/// Stream downloads the specified file.
+	///     @param from File to download from UAS, fully qualified path
+	///     @param downloadDir Local directory to download file to
+	void streamPath(const QString& from, const QDir& downloadDir);
+	
+	/// Lists the specified directory. Emits listEntry signal for each entry, followed by listComplete signal.
+	///		@param dirPath Fully qualified path to list
+	void listDirectory(const QString& dirPath);
+	
 signals:
     /// @brief Signalled whenever an error occurs during the listDirectory or downloadPath methods.
     void errorMessage(const QString& msg);
@@ -70,11 +88,11 @@ signals:
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
-    void listDirectory(const QString& dirPath);
-    void downloadPath(const QString& from, const QDir& downloadDir);
+	
+private slots:
+	void _ackTimeout(void);
 
-protected:
-    
+private:
     /// @brief This is the fixed length portion of the protocol data. Trying to pack structures across differing compilers is
     /// questionable, so we pad the structure ourselves to 32 bit alignment which should get us what we want.
     struct RequestHeader
@@ -97,7 +115,7 @@ protected:
             // The entire Request must fit into the payload member of the mavlink_file_transfer_protocol_t structure. We use as many leftover bytes
             // after we use up space for the RequestHeader for the data portion of the Request.
             uint8_t data[sizeof(((mavlink_file_transfer_protocol_t*)0)->payload) - sizeof(RequestHeader)];
-
+			
             // File length returned by Open command
             uint32_t openFileLength;
         };
@@ -105,17 +123,22 @@ protected:
 
     enum Opcode
 	{
-		kCmdNone,               ///< ignored, always acked
+		kCmdNone,				///< ignored, always acked
 		kCmdTerminateSession,	///< Terminates open Read session
-		kCmdResetSessions,      ///< Terminates all open Read sessions
-		kCmdListDirectory,      ///< List files in <path> from <offset>
-		kCmdOpenFile,           ///< Opens file at <path> for reading, returns <session>
-		kCmdReadFile,           ///< Reads <size> bytes from <offset> in <session>
-		kCmdCreateFile,         ///< Creates file at <path> for writing, returns <session>
-		kCmdWriteFile,          ///< Appends <size> bytes to file in <session>
-		kCmdRemoveFile,         ///< Remove file at <path>
+		kCmdResetSessions,		///< Terminates all open Read sessions
+		kCmdListDirectory,		///< List files in <path> from <offset>
+		kCmdOpenFileRO,			///< Opens file at <path> for reading, returns <session>
+		kCmdReadFile,			///< Reads <size> bytes from <offset> in <session>
+		kCmdCreateFile,			///< Creates file at <path> for writing, returns <session>
+		kCmdWriteFile,			///< Writes <size> bytes to <offset> in <session>
+		kCmdRemoveFile,			///< Remove file at <path>
 		kCmdCreateDirectory,	///< Creates directory at <path>
 		kCmdRemoveDirectory,	///< Removes Directory at <path>, must be empty
+		kCmdOpenFileWO,			///< Opens file at <path> for writing, returns <session>
+		kCmdTruncateFile,		///< Truncate file at <path> to <offset> length
+		kCmdRename,				///< Rename <path1> to <path2>
+		kCmdCalcFileCRC32,		///< Calculate CRC32 for file at <path>
+		kCmdStreamFile,			///< Stream download session file
 		
 		kRspAck = 128,          ///< Ack response
 		kRspNak,                ///< Nak response
@@ -139,18 +162,15 @@ protected:
 
     enum OperationState
         {
-            kCOIdle,    // not doing anything
-            kCOAck,     // waiting for an Ack
-            kCOList,    // waiting for List response
-            kCOOpen,    // waiting for Open response
-            kCORead,    // waiting for Read response
+            kCOIdle,		// not doing anything
+            kCOAck,			// waiting for an Ack
+            kCOList,		// waiting for List response
+            kCOOpenRead,    // waiting for Open response followed by Read download
+			kCOOpenStream,  // waiting for Open response, followed by Stream download
+            kCORead,		// waiting for Read response
+			kCOStream,		// waiting for Stream response
         };
     
-    
-protected slots:
-    void _ackTimeout(void);
-    
-protected:
     bool _sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpState);
     void _setupAckTimeout(void);
     void _clearAckTimeout(void);
@@ -159,11 +179,12 @@ protected:
     void _sendRequest(Request* request);
     void _fillRequestWithString(Request* request, const QString& str);
     void _openAckResponse(Request* openAck);
-    void _readAckResponse(Request* readAck);
+    void _downloadAckResponse(Request* readAck, bool readFile);
     void _listAckResponse(Request* listAck);
     void _sendListCommand(void);
     void _sendTerminateCommand(void);
-    void _closeReadSession(bool success);
+    void _closeDownloadSession(bool success);
+	void _downloadWorker(const QString& from, const QDir& downloadDir, bool readFile);
     
     static QString errorString(uint8_t errorCode);
 
@@ -178,7 +199,7 @@ protected:
     QString     _listPath;      ///< path for the current List operation
     
     uint8_t     _activeSession;             ///< currently active session, 0 for none
-    uint32_t    _readOffset;                ///< current read offset
+    uint32_t    _downloadOffset;            ///< current download offset
     QByteArray  _readFileAccumulator;       ///< Holds file being downloaded
     QDir        _readFileDownloadDir;       ///< Directory to download file to
     QString     _readFileDownloadFilename;  ///< Filename (no path) for download file
@@ -191,4 +212,4 @@ protected:
     friend class MockMavlinkFileServer;
 };
 
-#endif // QGCUASFILEMANAGER_H
+#endif // FileManager_H
