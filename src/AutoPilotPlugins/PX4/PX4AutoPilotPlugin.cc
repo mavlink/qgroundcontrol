@@ -231,22 +231,10 @@ void PX4AutoPilotPlugin::_pluginReadyPreChecks(void)
     // should be used instead.
     if (parameterExists("SENS_GYRO_XOFF")) {
         _incorrectParameterVersion = true;
-        QGCMessageBox::warning(tr("Setup"), tr("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
-                                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup."));
-    } else {
-        // Check for missing setup complete
-        foreach(const QVariant componentVariant, vehicleComponents()) {
-            VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(componentVariant));
-            Q_ASSERT(component);
-            
-            if (!component->setupComplete()) {
-                QGCMessageBox::warning(tr("Setup"), tr("One or more vehicle components require setup prior to flight. "
-                                                       "Please correct these by going to the Setup view."));
-                break;
-            }
-        }
-    }
-    
+        QGCMessageBox::warning("Setup", "This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
+										"Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
+	}
+	
     _pluginReady = true;
     emit pluginReadyChanged(_pluginReady);
 }
