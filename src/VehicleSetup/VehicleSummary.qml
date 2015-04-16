@@ -57,8 +57,15 @@ Rectangle {
         }
 
         QGCLabel {
-            width: parent.width
-            text: "If any of the setup indicators below are shown as red YOU SHOULD NOT FLY until you complete the setup of those components."
+            width:			parent.width
+			wrapMode:		Text.WordWrap
+			color:			autopilot.setupComplete ? qgcPal.text : "red"
+			font.pointSize: autopilot.setupComplete ? qgcPal.dpiAdjustedDefaultFontPointSize : screenTools.dpiAdjustedPointSize(20)
+			text: autopilot.setupComplete ?
+						"Below you will find a summary of the settings for your vehicle. To the left are the setup buttons for deatiled settings for each component." :
+						"WARNING: One or more of your vehicle's components require setup prior to flight. It will be shown with a red circular indicator below. " +
+							"Find the matching setup button to the left and click it to get to the setup screen you need to complete. " +
+							"Once all indicators go green you will be ready to fly."
         }
 
         Item {
