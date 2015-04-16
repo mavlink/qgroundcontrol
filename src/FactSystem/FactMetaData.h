@@ -73,10 +73,9 @@ public:
 	void setUnits(const QString& units)                         { _units = units; }
     void setMin(const QVariant& max);
     void setMax(const QVariant& max);
-	
-    /// Initialize the meta data given only the type.
-    void initFromTypeOnly(ValueType_t initType);
 
+    /// Used to clear a default value which it is found to possibly be invalid
+    void clearDefaultValue(void);
 
 private:
     QVariant _minForType(void);
