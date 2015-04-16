@@ -472,32 +472,50 @@ Rectangle {
         anchors.leftMargin:  10
         anchors.rightMargin: 10
 
-        QGCComboBox {
-            id: configList
-            width: 200
-            visible: (mainToolBar.connectionCount === 0 && mainToolBar.configList.length > 0)
-            anchors.verticalCenter: parent.verticalCenter
-            model: mainToolBar.configList
-            onCurrentIndexChanged: {
-                mainToolBar.onLinkConfigurationChanged(mainToolBar.configList[currentIndex]);
-            }
+        Menu {
+            id: connectMenu
             Component.onCompleted: {
-                mainToolBar.currentConfigChanged.connect(configList.onCurrentConfigChanged)
+                mainToolBar.configListChanged.connect(connectMenu.updateConnectionList);
+                connectMenu.updateConnectionList();
             }
-            function onCurrentConfigChanged(config) {
-                var index = configList.find(config);
-                configList.currentIndex = index;
+            function addMenuEntry(name) {
+                var label = "Add Connection"
+                if(name !== "")
+                    label = name;
+                var mItem = connectMenu.addItem(label);
+                var menuSlot = function() {mainToolBar.onConnect(name)};
+                mItem.triggered.connect(menuSlot);
+            }
+            function updateConnectionList() {
+                connectMenu.clear();
+                for(var i = 0; i < mainToolBar.configList.length; i++) {
+                    connectMenu.addMenuEntry(mainToolBar.configList[i]);
+                }
+                if(mainToolBar.configList.length > 0) {
+                    connectMenu.addSeparator();
+                }
+                // Add "Add Connection" to the list
+                connectMenu.addMenuEntry("");
             }
         }
 
         QGCButton {
-            id: connectButton
-            width: 100
-            visible: (mainToolBar.connectionCount === 0 || mainToolBar.connectionCount === 1)
-            text: (mainToolBar.configList.length > 0) ? (mainToolBar.connectionCount === 0) ? qsTr("Connect") : qsTr("Disconnect") : qsTr("Add Link")
+            id:         connectButton
+            width:      100
+            visible:    mainToolBar.connectionCount === 0
+            text:       qsTr("Connect")
+            menu:       connectMenu
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        QGCButton {
+            id:         disconnectButton
+            width:      100
+            visible:    mainToolBar.connectionCount === 1
+            text:       qsTr("Disconnect")
             anchors.verticalCenter: parent.verticalCenter
             onClicked: {
-                mainToolBar.onConnect("");
+                mainToolBar.onDisconnect("");
             }
         }
 
@@ -506,23 +524,26 @@ Rectangle {
             Component.onCompleted: {
                 mainToolBar.connectedListChanged.connect(disconnectMenu.onConnectedListChanged)
             }
+            function addMenuEntry(name) {
+                var mItem = disconnectMenu.addItem(name);
+                var menuSlot = function() {mainToolBar.onDisconnect(name)};
+                mItem.triggered.connect(menuSlot);
+            }
             function onConnectedListChanged(conList) {
                 disconnectMenu.clear();
                 for(var i = 0; i < conList.length; i++) {
-                    var mItem = disconnectMenu.addItem(conList[i]);
-                    var menuSlot = function() {mainToolBar.onConnect(mItem.text)};
-                    mItem.triggered.connect(menuSlot);
+                    disconnectMenu.addMenuEntry(conList[i]);
                 }
             }
         }
 
         QGCButton {
-            id: multidisconnectButton
-            width: 100
-            text: qsTr("Disconnect")
-            visible: (mainToolBar.connectionCount > 1)
+            id:         multidisconnectButton
+            width:      100
+            text:       "Disconnect"
+            visible:    mainToolBar.connectionCount > 1
+            menu:       disconnectMenu
             anchors.verticalCenter: parent.verticalCenter
-            menu: disconnectMenu
         }
 
     }
