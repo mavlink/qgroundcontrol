@@ -71,7 +71,7 @@ public:
     Q_INVOKABLE void    onFlyView();
     Q_INVOKABLE void    onAnalyzeView();
     Q_INVOKABLE void    onConnect(QString conf);
-    Q_INVOKABLE void    onLinkConfigurationChanged(const QString& config);
+    Q_INVOKABLE void    onDisconnect(QString conf);
     Q_INVOKABLE void    onEnterMessageArea(int x, int y);
     Q_INVOKABLE QString getMavIconColor();
 
@@ -86,7 +86,6 @@ public:
     Q_PROPERTY(MessageType_t messageType        MEMBER _currentMessageType      NOTIFY messageTypeChanged)
     Q_PROPERTY(int           newMessageCount    MEMBER _currentMessageCount     NOTIFY newMessageCountChanged)
     Q_PROPERTY(int           messageCount       MEMBER _messageCount            NOTIFY messageCountChanged)
-    Q_PROPERTY(QString       currentConfig      MEMBER _currentConfig           NOTIFY currentConfigChanged)
     Q_PROPERTY(QString       systemPixmap       MEMBER _systemPixmap            NOTIFY systemPixmapChanged)
     Q_PROPERTY(int           satelliteCount     MEMBER _satelliteCount          NOTIFY satelliteCountChanged)
     Q_PROPERTY(QStringList   connectedList      MEMBER _connectedList           NOTIFY connectedListChanged)
@@ -160,8 +159,6 @@ private:
     double          _batteryVoltage;
     double          _batteryPercent;
     QStringList     _linkConfigurations;
-    QString         _currentConfig;
-    bool            _linkSelected;
     int             _connectionCount;
     bool            _systemArmed;
     QString         _currentState;

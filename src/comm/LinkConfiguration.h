@@ -97,6 +97,18 @@ public:
     */
     void setPreferred(bool preferred = true) { _preferred = preferred; }
 
+    /*!
+     *
+     * Is this a dynamic configuration? (non persistent)
+     * @return True if this is an automatically added configuration.
+     */
+    bool isDynamic() { return _dynamic; }
+
+    /*!
+     * Set if this is this a dynamic configuration. (decided at runtime)
+    */
+    void setDynamic(bool dynamic = true) { _dynamic = dynamic; }
+
     /// Virtual Methods
 
     /*!
@@ -171,6 +183,7 @@ protected:
 private:
     QString _name;
     bool    _preferred;  ///< Determined internally if this is a preferred connection. It comes up first in the drop down box.
+    bool    _dynamic;    ///< A connection added automatically and not persistent (unless it's edited).
 };
 
 #endif // LINKCONFIGURATION_H
