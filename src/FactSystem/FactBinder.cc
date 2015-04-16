@@ -188,3 +188,21 @@ QString FactBinder::group(void)
         return QString();
     }
 }
+
+bool FactBinder::defaultValueAvailable(void)
+{
+    if (_fact) {
+        return _fact->defaultValueAvailable();
+    } else {
+        return false;
+    }
+}
+
+bool FactBinder::valueEqualsDefault(void)
+{
+    if (_fact) {
+        return _fact->valueEqualsDefault();
+    } else {
+        return false;
+    }
+}

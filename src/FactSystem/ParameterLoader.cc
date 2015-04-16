@@ -199,8 +199,8 @@ void ParameterLoader::_paramMgrParameterListUpToDate(void)
 
 void ParameterLoader::_addMetaDataToFact(Fact* fact)
 {
-    FactMetaData* metaData = new FactMetaData(this);
-    metaData->initFromTypeOnly(fact->type());
+    FactMetaData* metaData = new FactMetaData(fact->type(), this);
+    fact->setMetaData(metaData);
 }
 
 void ParameterLoader::refreshAllParameters(void)

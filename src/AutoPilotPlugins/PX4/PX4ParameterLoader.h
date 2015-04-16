@@ -21,8 +21,8 @@
  
  ======================================================================*/
 
-#ifndef PX4PARAMETERFACTS_H
-#define PX4PARAMETERFACTS_H
+#ifndef PX4PARAMETERLOADER_H
+#define PX4PARAMETERLOADER_H
 
 #include <QObject>
 #include <QMap>
@@ -36,17 +36,17 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-Q_DECLARE_LOGGING_CATEGORY(PX4ParameterFactsMetaDataLog)
+Q_DECLARE_LOGGING_CATEGORY(PX4ParameterLoaderLog)
 
 /// Collection of Parameter Facts for PX4 AutoPilot
 
-class PX4ParameterFacts : public ParameterLoader
+class PX4ParameterLoader : public ParameterLoader
 {
     Q_OBJECT
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    PX4ParameterFacts(UASInterface* uas, QObject* parent = NULL);
+    PX4ParameterLoader(UASInterface* uas, QObject* parent = NULL);
 
     /// Override from ParameterLoader
     virtual QString getDefaultComponentIdParam(void) const { return QString("SYS_AUTOSTART"); }
@@ -55,12 +55,20 @@ public:
     static void clearStaticData(void);
     
 private:
-    // Overrides from FactLoader
+    enum {
+        XmlStateNone,
+        XmlStateFoundParameters,
+        XmlStateFoundVersion,
+        XmlStateFoundGroup,
+        XmlStateFoundParameter,
+        XmlStateDone
+    };
+    
+    // Overrides from ParameterLoader
     virtual void _addMetaDataToFact(Fact* fact);
 
     // Class methods
-    static void _initMetaData(FactMetaData* metaData);
-    static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
+    static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
 
     static bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
     static QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData
