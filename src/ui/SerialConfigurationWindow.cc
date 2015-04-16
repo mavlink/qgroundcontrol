@@ -215,21 +215,35 @@ bool SerialConfigurationWindow::setupPortList()
 void SerialConfigurationWindow::enableFlowControl(bool flow)
 {
     _config->setFlowControl(flow ? QSerialPort::HardwareControl : QSerialPort::NoFlowControl);
+    //-- If this was dynamic, it's now edited and persistent
+    _config->setDynamic(false);
 }
 
 void SerialConfigurationWindow::setParityNone(bool accept)
 {
-    if (accept) _config->setParity(QSerialPort::NoParity);
+    if (accept) {
+        _config->setParity(QSerialPort::NoParity);
+        //-- If this was dynamic, it's now edited and persistent
+        _config->setDynamic(false);
+    }
 }
 
 void SerialConfigurationWindow::setParityOdd(bool accept)
 {
-    if (accept) _config->setParity(QSerialPort::OddParity);
+    if (accept) {
+        _config->setParity(QSerialPort::OddParity);
+        //-- If this was dynamic, it's now edited and persistent
+        _config->setDynamic(false);
+    }
 }
 
 void SerialConfigurationWindow::setParityEven(bool accept)
 {
-    if (accept) _config->setParity(QSerialPort::EvenParity);
+    if (accept) {
+        _config->setParity(QSerialPort::EvenParity);
+        //-- If this was dynamic, it's now edited and persistent
+        _config->setDynamic(false);
+    }
 }
 
 void SerialConfigurationWindow::setPortName(int index)
@@ -238,6 +252,8 @@ void SerialConfigurationWindow::setPortName(int index)
     QString pname = _ui.portName->itemData(index).toString();
     if (_config->portName() != pname) {
         _config->setPortName(pname);
+        //-- If this was dynamic, it's now edited and persistent
+        _config->setDynamic(false);
     }
 }
 
@@ -245,14 +261,20 @@ void SerialConfigurationWindow::setBaudRate(int index)
 {
     int baud = _ui.baudRate->itemData(index).toInt();
     _config->setBaud(baud);
+    //-- If this was dynamic, it's now edited and persistent
+    _config->setDynamic(false);
 }
 
 void SerialConfigurationWindow::setDataBits(int bits)
 {
     _config->setDataBits(bits);
+    //-- If this was dynamic, it's now edited and persistent
+    _config->setDynamic(false);
 }
 
 void SerialConfigurationWindow::setStopBits(int bits)
 {
     _config->setStopBits(bits);
+    //-- If this was dynamic, it's now edited and persistent
+    _config->setDynamic(false);
 }

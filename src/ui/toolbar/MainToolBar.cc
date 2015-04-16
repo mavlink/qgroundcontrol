@@ -42,7 +42,6 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _currentView(ViewNone)
     , _batteryVoltage(0.0)
     , _batteryPercent(0.0)
-    , _linkSelected(false)
     , _connectionCount(0)
     , _systemArmed(false)
     , _currentHeartbeatTimeout(0)
@@ -152,60 +151,51 @@ void MainToolBar::onAnalyzeView()
     MainWindow::instance()->loadAnalyzeView();
 }
 
-void MainToolBar::onConnect(QString conf)
+void MainToolBar::onDisconnect(QString conf)
 {
-    // If no connection, the role is "Connect"
-    if(_connectionCount == 0) {
-        // Connect Link
-        if(_currentConfig.isEmpty()) {
-            MainWindow::instance()->manageLinks();
-        } else {
-            // We don't want the combo box updating under our feet
-            LinkManager::instance()->suspendConfigurationUpdates(true);
-            // Create a link
-            LinkInterface* link = LinkManager::instance()->createConnectedLink(_currentConfig);
-            if(link) {
-                // Save last used connection
-                MainWindow::instance()->saveLastUsedConnection(_currentConfig);
+    if(conf.isEmpty()) {
+        // Disconnect Only Connected Link
+        int connectedCount = 0;
+        LinkInterface* connectedLink = NULL;
+        QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+        foreach(LinkInterface* link, links) {
+            if (link->isConnected()) {
+                connectedCount++;
+                connectedLink = link;
             }
-            LinkManager::instance()->suspendConfigurationUpdates(false);
         }
+        Q_ASSERT(connectedCount   == 1);
+        Q_ASSERT(_connectionCount == 1);
+        Q_ASSERT(connectedLink);
+        LinkManager::instance()->disconnectLink(connectedLink);
     } else {
-        if(conf.isEmpty()) {
-            // Disconnect Only Connected Link
-            int connectedCount = 0;
-            LinkInterface* connectedLink = NULL;
-            QList<LinkInterface*> links = LinkManager::instance()->getLinks();
-            foreach(LinkInterface* link, links) {
-                if (link->isConnected()) {
-                    connectedCount++;
-                    connectedLink = link;
-                }
-            }
-            Q_ASSERT(connectedCount   == 1);
-            Q_ASSERT(_connectionCount == 1);
-            Q_ASSERT(connectedLink);
-            LinkManager::instance()->disconnectLink(connectedLink);
-        } else {
-            // Disconnect Named Connected Link
-            QList<LinkInterface*> links = LinkManager::instance()->getLinks();
-            foreach(LinkInterface* link, links) {
-                if (link->isConnected()) {
-                    if(link->getLinkConfiguration() && link->getLinkConfiguration()->name() == conf) {
-                        LinkManager::instance()->disconnectLink(link);
-                    }
+        // Disconnect Named Connected Link
+        QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+        foreach(LinkInterface* link, links) {
+            if (link->isConnected()) {
+                if(link->getLinkConfiguration() && link->getLinkConfiguration()->name() == conf) {
+                    LinkManager::instance()->disconnectLink(link);
                 }
             }
         }
     }
 }
 
-void MainToolBar::onLinkConfigurationChanged(const QString& config)
+void MainToolBar::onConnect(QString conf)
 {
-    // User selected a link configuration from the combobox
-    if(_currentConfig != config) {
-        _currentConfig = config;
-        _linkSelected = true;
+    // Connect Link
+    if(conf.isEmpty()) {
+        MainWindow::instance()->manageLinks();
+    } else {
+        // We don't want the list updating under our feet
+        LinkManager::instance()->suspendConfigurationUpdates(true);
+        // Create a link
+        LinkInterface* link = LinkManager::instance()->createConnectedLink(conf);
+        if(link) {
+            // Save last used connection
+            MainWindow::instance()->saveLastUsedConnection(conf);
+        }
+        LinkManager::instance()->suspendConfigurationUpdates(false);
     }
 }
 
@@ -378,16 +368,14 @@ void MainToolBar::_updateBatteryRemaining(UASInterface*, double voltage, double,
 
 void MainToolBar::_updateConfigurations()
 {
-    bool resetSelected = false;
-    QString selected = _currentConfig;
     QStringList tmpList;
     QList<LinkConfiguration*> configs = LinkManager::instance()->getLinkConfigurationList();
     foreach(LinkConfiguration* conf, configs) {
         if(conf) {
-            tmpList << conf->name();
-            if((!_linkSelected && conf->isPreferred()) || selected.isEmpty()) {
-                selected = conf->name();
-                resetSelected = true;
+            if(conf->isPreferred()) {
+                tmpList.insert(0,conf->name());
+            } else {
+                tmpList << conf->name();
             }
         }
     }
@@ -395,15 +383,6 @@ void MainToolBar::_updateConfigurations()
     if(tmpList != _linkConfigurations) {
         _linkConfigurations = tmpList;
         emit configListChanged();
-    }
-    // Selection change?
-    if((selected != _currentConfig && _linkConfigurations.contains(selected)) ||
-       (selected.isEmpty())) {
-        _currentConfig = selected;
-        emit currentConfigChanged(_currentConfig);
-    }
-    if(resetSelected) {
-        _linkSelected = false;
     }
 }
 
