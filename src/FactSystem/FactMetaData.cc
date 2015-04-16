@@ -30,6 +30,8 @@
 
 #include <QDebug>
 
+#include <limits>
+
 FactMetaData::FactMetaData(ValueType_t type, QObject* parent) :
     QObject(parent),
     _group("Default Group"),
@@ -102,6 +104,9 @@ QVariant FactMetaData::_minForType(void)
         case valueTypeDouble:
             return QVariant(-std::numeric_limits<double>::max());
     }
+    
+    // Make windows compiler happy, even switch is full cased
+    return QVariant();
 }
 
 QVariant FactMetaData::_maxForType(void)
@@ -124,4 +129,7 @@ QVariant FactMetaData::_maxForType(void)
         case valueTypeDouble:
             return QVariant(std::numeric_limits<double>::max());
     }
+    
+    // Make windows compiler happy, even switch is full cased
+    return QVariant();
 }
