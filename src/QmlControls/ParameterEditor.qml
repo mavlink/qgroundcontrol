@@ -25,7 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 import QtQuick 2.3
-import QtQuick.Controls 1.2
+import QtQuick.Controls 1.3
 import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.Controls 1.0
@@ -161,6 +161,23 @@ Rectangle {
                                                     text:   modelFact.valueString + " " + modelFact.units
                                                     width:  __charWidth.contentWidth * 20
                                                     height: contentHeight
+													color:	modelFact.valueEqualsDefault ? __qgcPal.text : "orange"
+
+                                                    Menu {
+                                                        id:         rightClickMenu
+                                                        visible:    false
+
+                                                        MenuItem {
+                                                            id:             resetToDefaultMenuItem
+                                                            text:           "Reset to default"
+                                                            enabled:        modelFact.defaultValueAvailable
+                                                            onTriggered:    modelFact.value = modelFact.defaultValue
+                                                        }
+                                                        MenuItem {
+                                                            text:           "Set RC to Param"
+                                                            onTriggered: 	__controller.setRCToParam(modelData)
+                                                        }
+                                                    }
 
                                                     MouseArea {
                                                         anchors.fill:		parent
@@ -171,7 +188,7 @@ Rectangle {
 																editor.checked = true
 																editor.focus = true
 															} else if (mouse.button == Qt.RightButton) {
-																__controller.setRCToParam(modelData)
+                                                                rightClickMenu.popup()
 															}
                                                         }
                                                     }
