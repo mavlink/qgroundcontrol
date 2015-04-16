@@ -38,7 +38,8 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.0
+import QtQuick 2.1
+import QGroundControl.Controls 1.0
 
 Item {
     id: slider;
@@ -80,7 +81,7 @@ Item {
         anchors.bottomMargin: 4
         x: Math.max(Math.min(handle.x + (handle.width - width )/2, slider.width - width),0)
         visible: mouseRegion.pressed
-        Text{
+        QGCLabel{
             id: label
             color: "darkgrey"
             text: slider.value.toFixed(2)

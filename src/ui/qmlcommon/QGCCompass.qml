@@ -28,6 +28,7 @@ This file is part of the QGROUNDCONTROL project
  */
 
 import QtQuick 2.4
+import QGroundControl.Controls 1.0
 
 Item {
     id:    root
@@ -60,7 +61,7 @@ Item {
         height: 25
         border.color: Qt.rgba(1,1,1,0.15)
         color: Qt.rgba(0,0,0,0.25)
-        Text {
+        QGCLabel {
             text: heading.toFixed(0)
             font.weight: Font.DemiBold
             color: "white"

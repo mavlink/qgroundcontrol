@@ -29,6 +29,7 @@ This file is part of the QGROUNDCONTROL project
 
 import QtQuick 2.1
 import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls 1.0
 
 Rectangle {
     property ScreenTools screenTools: ScreenTools { }
@@ -64,7 +65,7 @@ Rectangle {
                     color: "white"
                     antialiasing: true
                     smooth: true
-                    Text {
+                    QGCLabel {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.horizontalCenterOffset: -(_longDash * 0.8)
                         anchors.verticalCenter: parent.verticalCenter
@@ -75,7 +76,7 @@ Rectangle {
                         color: "white"
                         visible: (_pitch != 0) && ((_pitch % 10) === 0)
                     }
-                    Text {
+                    QGCLabel {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.horizontalCenterOffset: (_longDash * 0.8)
                         anchors.verticalCenter: parent.verticalCenter
