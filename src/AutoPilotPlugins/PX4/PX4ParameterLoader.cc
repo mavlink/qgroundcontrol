@@ -53,7 +53,7 @@ QVariant PX4ParameterLoader::_stringToTypedVariant(const QString& string, FactMe
 {
     QVariant var(string);
 
-    int convertTo;
+    int convertTo = QVariant::Int; // keep compiler warning happy
     switch (type) {
         case FactMetaData::valueTypeUint8:
         case FactMetaData::valueTypeUint16:
