@@ -37,7 +37,7 @@
 /// additional meta data associated with a Fact such as description, min/max ranges and so forth.
 /// The FactValidator object is a QML validator which validates input according to the FactMetaData
 /// settings. Client code can then use this system to expose sets of Facts to QML code. An example
-/// of this is the PX4ParameterFacts onbject which is part of the PX4 AutoPilot plugin. It exposes
+/// of this is the PX4ParameterLoader onbject which is part of the PX4 AutoPilot plugin. It exposes
 /// the firmware parameters to QML such that you can bind QML ui elements directly to parameters.
 
 class FactSystem : public QGCSingleton

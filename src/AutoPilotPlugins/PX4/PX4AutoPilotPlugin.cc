@@ -25,7 +25,7 @@
 #include "AutoPilotPluginManager.h"
 #include "UASManager.h"
 #include "QGCUASParamManagerInterface.h"
-#include "PX4ParameterFacts.h"
+#include "PX4ParameterLoader.h"
 #include "FlightModesComponentController.h"
 #include "AirframeComponentController.h"
 #include "QGCMessageBox.h"
@@ -79,12 +79,12 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
     qmlRegisterType<AirframeComponentController>("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
     
-    _parameterFacts = new PX4ParameterFacts(uas, this);
+    _parameterFacts = new PX4ParameterLoader(uas, this);
     Q_CHECK_PTR(_parameterFacts);
     
-    connect(_parameterFacts, &PX4ParameterFacts::parametersReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
+    connect(_parameterFacts, &PX4ParameterLoader::parametersReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
     
-    PX4ParameterFacts::loadParameterFactMetaData();
+    PX4ParameterLoader::loadParameterFactMetaData();
 }
 
 PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
@@ -187,7 +187,7 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
 
 void PX4AutoPilotPlugin::clearStaticData(void)
 {
-    PX4ParameterFacts::clearStaticData();
+    PX4ParameterLoader::clearStaticData();
 }
 
 const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
