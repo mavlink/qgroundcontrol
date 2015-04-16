@@ -40,6 +40,10 @@ Rectangle {
     property real roll:    isNaN(flightDisplay.roll)    ? 0 : flightDisplay.roll
     property real pitch:   isNaN(flightDisplay.pitch)   ? 0 : flightDisplay.pitch
 
+    property bool showPitchIndicator:       true
+    property bool showAttitudeIndicator:    true
+    property bool showCompass:              true
+
     function getBool(value) {
         return value === '0' ? false : true;
     }
@@ -48,65 +52,141 @@ Rectangle {
         return value ? "1" : "0";
     }
 
+    function adjustSizes() {
+        var dist = 85
+        var wide = 160
+        var minw = 496
+        if(root.width > minw)
+        {
+            attitudeInstrument.size = wide;
+            attitudeInstrument.x    = dist
+            compassInstrument.size  = wide;
+            compassInstrument.x     = root.width - wide - dist
+        } else {
+            var factor = (root.width / minw);
+            var ndist  = dist * factor;
+            var nwide  = wide * factor;
+            if (ndist < 0)
+                ndist = 0;
+            attitudeInstrument.size = nwide;
+            compassInstrument.size  = nwide;
+            attitudeInstrument.x    = ndist;
+            compassInstrument.x     = root.width - nwide - ndist;
+        }
+    }
+
     Component.onCompleted:
     {
         mapBackground.visible               = getBool(flightDisplay.loadSetting("showMapBackground",        "0"));
         mapBackground.alwaysNorth           = getBool(flightDisplay.loadSetting("mapAlwaysPointsNorth",     "0"));
-        attitudeWidget.visible              = getBool(flightDisplay.loadSetting("showAttitudeWidget",       "1"));
-        attitudeWidget.displayBackground    = getBool(flightDisplay.loadSetting("showAttitudeBackground",   "1"));
-        pitchWidget.visible                 = getBool(flightDisplay.loadSetting("showPitchWidget",          "1"));
+        showAttitudeIndicator               = getBool(flightDisplay.loadSetting("showAttitudeIndicator",    "1"));
+        showPitchIndicator                  = getBool(flightDisplay.loadSetting("showPitchIndicator",       "1"));
+        showCompass                         = getBool(flightDisplay.loadSetting("showCompass",              "1"));
         altitudeWidget.visible              = getBool(flightDisplay.loadSetting("showAltitudeWidget",       "1"));
         speedWidget.visible                 = getBool(flightDisplay.loadSetting("showSpeedWidget",          "1"));
-        compassIndicator.visible            = getBool(flightDisplay.loadSetting("showCompassIndicator",     "1"));
         currentSpeed.showAirSpeed           = getBool(flightDisplay.loadSetting("showCurrentAirSpeed",      "1"));
         currentSpeed.showGroundSpeed        = getBool(flightDisplay.loadSetting("showCurrentGroundSpeed",   "1"));
         currentAltitude.showClimbRate       = getBool(flightDisplay.loadSetting("showCurrentClimbRate",     "1"));
         currentAltitude.showAltitude        = getBool(flightDisplay.loadSetting("showCurrentAltitude",      "1"));
         mapTypeMenu.update();
-    }
-
-    Rectangle {
-        id: windowBackground
-        anchors.fill: parent
-        anchors.centerIn: parent
-        visible: !attitudeWidget.visible && !mapBackground.visible
-        color:   Qt.hsla(0.25, 0.5, 0.45)
-        z:       0
+        adjustSizes();
     }
 
     Menu {
         id: contextMenu
 
         MenuItem {
-            text: "Main Attitude Indicators"
+            text: "Map Background"
             checkable: true
-            checked: attitudeWidget.visible
+            checked: mapBackground.visible
             onTriggered:
             {
-                attitudeWidget.visible = !attitudeWidget.visible;
-                flightDisplay.saveSetting("showAttitudeWidget", setBool(attitudeWidget.visible));
+                mapBackground.visible = !mapBackground.visible;
+                flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
             }
         }
 
+        /*
         MenuItem {
-            text: "Display Attitude Background"
+            text: "Map Always Points North"
             checkable: true
-            checked: attitudeWidget.displayBackground
+            checked: mapBackground.alwaysNorth
             onTriggered:
             {
-                attitudeWidget.displayBackground = !attitudeWidget.displayBackground;
-                flightDisplay.saveSetting("showAttitudeBackground", setBool(attitudeWidget.displayBackground));
+                mapBackground.alwaysNorth = !mapBackground.alwaysNorth;
+                flightDisplay.saveSetting("mapAlwaysPointsNorth", setBool(mapBackground.alwaysNorth));
             }
         }
+        */
+
+        Menu {
+            id: mapTypeMenu
+            title: "Map Type..."
+            ExclusiveGroup { id: currentMapType }
+            function setCurrentMap(map) {
+                for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
+                    if (map === mapBackground.mapItem.supportedMapTypes[i].name) {
+                        mapBackground.mapItem.activeMapType = mapBackground.mapItem.supportedMapTypes[i]
+                        flightDisplay.saveSetting("currentMapType", map);
+                        return;
+                    }
+                }
+            }
+            function addMap(map, checked) {
+                var mItem = mapTypeMenu.addItem(map);
+                mItem.checkable = true
+                mItem.checked   = checked
+                mItem.exclusiveGroup = currentMapType
+                var menuSlot = function() {setCurrentMap(map);};
+                mItem.triggered.connect(menuSlot);
+            }
+            function update() {
+                clear()
+                var map = ''
+                if (mapBackground.mapItem.supportedMapTypes.length > 0)
+                    map = mapBackground.mapItem.activeMapType.name;
+                map = flightDisplay.loadSetting("currentMapType", map);
+                for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
+                    var name = mapBackground.mapItem.supportedMapTypes[i].name;
+                    addMap(name, map === name);
+                }
+                if(map != '')
+                    setCurrentMap(map);
+            }
+        }
+
+        MenuSeparator {}
 
         MenuItem {
             text: "Pitch Indicator"
-            checkable: true
-            checked: pitchWidget.visible
+            checkable:  true
+            checked:    showPitchIndicator
             onTriggered:
             {
-                pitchWidget.visible = !pitchWidget.visible;
-                flightDisplay.saveSetting("showPitchWidget", setBool(pitchWidget.visible));
+                showPitchIndicator = !showPitchIndicator;
+                flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
+            }
+        }
+
+        MenuItem {
+            text: "Attitude Indicator"
+            checkable:  true
+            checked:    showAttitudeIndicator
+            onTriggered:
+            {
+                showAttitudeIndicator = !showAttitudeIndicator;
+                flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
+            }
+        }
+
+        MenuItem {
+            text: "Compass"
+            checkable: true
+            checked: showCompass
+            onTriggered:
+            {
+                showCompass = !showCompass;
+                flightDisplay.saveSetting("showCompass", setBool(showCompass));
             }
         }
 
@@ -176,91 +256,18 @@ Rectangle {
             }
         }
 
-        MenuItem {
-            text: "Compass"
-            checkable: true
-            checked: compassIndicator.visible
-            onTriggered:
-            {
-                compassIndicator.visible = !compassIndicator.visible;
-                flightDisplay.saveSetting("showCompassIndicator", setBool(compassIndicator.visible));
-            }
-        }
-
-        MenuSeparator {}
-
-        MenuItem {
-            text: "Map Background"
-            checkable: true
-            checked: mapBackground.visible
-            onTriggered:
-            {
-                mapBackground.visible = !mapBackground.visible;
-                flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
-            }
-        }
-
-        /*
-        MenuItem {
-            text: "Map Always Points North"
-            checkable: true
-            checked: mapBackground.alwaysNorth
-            onTriggered:
-            {
-                mapBackground.alwaysNorth = !mapBackground.alwaysNorth;
-                flightDisplay.saveSetting("mapAlwaysPointsNorth", setBool(mapBackground.alwaysNorth));
-            }
-        }
-        */
-
-        Menu {
-            id: mapTypeMenu
-            title: "Map Type..."
-            ExclusiveGroup { id: currentMapType }
-            function setCurrentMap(map) {
-                for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
-                    if (map === mapBackground.mapItem.supportedMapTypes[i].name) {
-                        mapBackground.mapItem.activeMapType = mapBackground.mapItem.supportedMapTypes[i]
-                        flightDisplay.saveSetting("currentMapType", map);
-                        return;
-                    }
-                }
-            }
-            function addMap(map, checked) {
-                var mItem = mapTypeMenu.addItem(map);
-                mItem.checkable = true
-                mItem.checked   = checked
-                mItem.exclusiveGroup = currentMapType
-                var menuSlot = function() {setCurrentMap(map);};
-                mItem.triggered.connect(menuSlot);
-            }
-            function update() {
-                clear()
-                var map = ''
-                if (mapBackground.mapItem.supportedMapTypes.length > 0)
-                    map = mapBackground.mapItem.activeMapType.name;
-                map = flightDisplay.loadSetting("currentMapType", map);
-                for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
-                    var name = mapBackground.mapItem.supportedMapTypes[i].name;
-                    addMap(name, map === name);
-                }
-                if(map != '')
-                    setCurrentMap(map);
-            }
-        }
-
         MenuSeparator {}
 
         MenuItem {
             text: "Restore Defaults"
             onTriggered:
             {
-                attitudeWidget.visible = true;
-                flightDisplay.saveSetting("showAttitudeWidget", setBool(attitudeWidget.visible));
-                attitudeWidget.displayBackground = true;
-                flightDisplay.saveSetting("showAttitudeBackground", setBool(attitudeWidget.displayBackground));
-                pitchWidget.visible = true;
-                flightDisplay.saveSetting("showPitchWidget", setBool(pitchWidget.visible));
+                showPitchIndicator = true;
+                flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
+                showAttitudeIndicator = true;
+                flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
+                showCompass = true;
+                flightDisplay.saveSetting("showCompass", setBool(showCompass));
                 altitudeWidget.visible = true;
                 flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
                 currentAltitude.showAltitude = true;
@@ -273,8 +280,6 @@ Rectangle {
                 flightDisplay.saveSetting("showCurrentAirSpeed", setBool(currentSpeed.showAirSpeed));
                 currentSpeed.showGroundSpeed = true;
                 flightDisplay.saveSetting("showCurrentGroundSpeed", setBool(currentSpeed.showGroundSpeed));
-                compassIndicator.visible = true;
-                flightDisplay.saveSetting("showCompassIndicator", setBool(compassIndicator.visible));
                 mapBackground.visible = false;
                 flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
                 mapBackground.alwaysNorth = false;
@@ -285,13 +290,13 @@ Rectangle {
     }
 
     QGCMapBackground {
-        id:             mapBackground
-        anchors.fill:   parent
-        visible:        false
-        heading:        isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
-        latitude:       flightDisplay.latitude
-        longitude:      flightDisplay.longitude
-        z:              5
+        id:                 mapBackground
+        anchors.fill:       parent
+        heading:            0 // isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
+        latitude:           mapBackground.visible ? ((flightDisplay.latitude  === 0) ?   37.803784 : flightDisplay.latitude)  :   37.803784
+        longitude:          mapBackground.visible ? ((flightDisplay.longitude === 0) ? -122.462276 : flightDisplay.longitude) : -122.462276
+        interactive:        !flightDisplay.mavPresent
+        z:                  10
     }
 
     QGCAttitudeWidget {
@@ -299,44 +304,36 @@ Rectangle {
         anchors.centerIn:   parent
         rollAngle:          roll
         pitchAngle:         pitch
-        useWhite:           !mapBackground.visible
-        backgroundOpacity:  mapBackground.visible ? 0.25 : 1.0
+        showAttitude:       showAttitudeIndicator
+        visible:            !mapBackground.visible
         z:                  10
     }
 
     QGCPitchWidget {
-        id:         pitchWidget
+        id:                 pitchWidget
+        visible:            showPitchIndicator && !mapBackground.visible
         anchors.verticalCenter: parent.verticalCenter
-        pitchAngle: pitch
-        rollAngle:  roll
-        color:      mapBackground.visible ? Qt.rgba(0,0,0,0.5) : Qt.rgba(0,0,0,0)
-        opacity:    mapBackground.visible ? 1 : 0.75
-        z:          mapBackground.visible ? 20 : 25
-    }
-
-    Image {
-        anchors.centerIn: parent
-        source:   "/qml/crossHair.svg"
-        mipmap:   true
-        width:    260
-        fillMode: Image.PreserveAspectFit
-        z:        mapBackground.visible ? 25 : 20
+        pitchAngle:         pitch
+        rollAngle:          roll
+        color:              Qt.rgba(0,0,0,0)
+        size:               120
+        z:                  30
     }
 
     QGCAltitudeWidget {
-        id: altitudeWidget
-        anchors.right: parent.right
-        width:     60
-        altitude:  flightDisplay.altitudeWGS84
-        z:         30
+        id:                 altitudeWidget
+        anchors.right:      parent.right
+        width:              60
+        altitude:           flightDisplay.altitudeWGS84
+        z:                  30
     }
 
     QGCSpeedWidget {
-        id: speedWidget
-        anchors.left: parent.left
-        width:  60
-        speed:  flightDisplay.groundSpeed
-        z:      40
+        id:                 speedWidget
+        anchors.left:       parent.left
+        width:              60
+        speed:              flightDisplay.groundSpeed
+        z:                  40
     }
 
     QGCCurrentSpeed {
@@ -364,22 +361,69 @@ Rectangle {
     }
 
     QGCCompass {
-        id: compassIndicator
-        y: root.height * 0.7
-        anchors.horizontalCenter: parent.horizontalCenter
-        heading: isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
-        z:       70
+        id:                 compassIndicator
+        y:                  root.height * 0.7
+        x:                  root.width  * 0.5 - 60
+        width:              120
+        height:             120
+        heading:            isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
+        visible:            !mapBackground.visible && showCompass
+        z:                  70
     }
 
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.RightButton
-        onClicked: {
-            if (mouse.button == Qt.RightButton)
-            {
-                contextMenu.popup()
+    QGCCompassInstrument {
+        id:                 compassInstrument
+        y:                  5
+        x:                  85
+        size:               160
+        heading:            isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
+        visible:            mapBackground.visible && showCompass
+        z:                  70
+    }
+
+    QGCAttitudeInstrument {
+        id:                 attitudeInstrument
+        y:                  5
+        x:                  root.width - 160 - 85
+        size:               160
+        rollAngle:          roll
+        pitchAngle:         pitch
+        showPitch:          showPitchIndicator
+        visible:            mapBackground.visible && showAttitudeIndicator
+        z:                  80
+    }
+
+    // Button at upper left corner
+    Item {
+        id:             optionsButton
+        x:              5
+        y:              5
+        width:          30
+        height:         30
+        opacity:        0.85
+        z:              1000
+        Image {
+            id:             buttomImg
+            anchors.fill:   parent
+            source:         "/qml/buttonMore.svg"
+            mipmap:         true
+            smooth:         true
+            antialiasing:   true
+            fillMode:       Image.PreserveAspectFit
+        }
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
+            onClicked: {
+                if (mouse.button == Qt.LeftButton)
+                {
+                    contextMenu.popup()
+                }
             }
         }
-        z: 100
+    }
+
+    onWidthChanged: {
+        adjustSizes();
     }
 }
