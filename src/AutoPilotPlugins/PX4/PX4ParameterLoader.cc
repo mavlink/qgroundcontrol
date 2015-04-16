@@ -145,7 +145,7 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                     qWarning() << "Badly formed XML";
                     return;
                 }
-                if (intVersion <= 1) {
+                if (intVersion <= 2) {
                     // We can't read these old files
                     qDebug() << "Parameter version stamp too old, skipping load" << parameterFilename;
                     return;
@@ -218,18 +218,22 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                 metaData = new FactMetaData(foundType);
                 Q_CHECK_PTR(metaData);
                 metaData->setGroup(factGroup);
-                if (!_mapParameterName2FactMetaData.contains(name)) {
+                if (_mapParameterName2FactMetaData.contains(name)) {
+                    // We can't trust the default value since we have dups
+                    qDebug() << "Duplicate parameter found:" << name;
+                    _mapParameterName2FactMetaData[name]->clearDefaultValue();
+                } else {
                     _mapParameterName2FactMetaData[name] = metaData;
-                }
-                
-                if (xml.attributes().hasAttribute("default")) {
-                    bool convertOk;
-                    QVariant varDefault = _stringToTypedVariant(strDefault, metaData->type(), &convertOk);
-                    if (convertOk) {
-                        metaData->setDefaultValue(varDefault);
-                    } else {
-                        // Non-fatal
-                        qDebug() << "Parameter meta data with bad default value, name:" << name << " type:" << type << " default:" << strDefault;
+                    
+                    if (xml.attributes().hasAttribute("default")) {
+                        bool convertOk;
+                        QVariant varDefault = _stringToTypedVariant(strDefault, metaData->type(), &convertOk);
+                        if (convertOk) {
+                            metaData->setDefaultValue(varDefault);
+                        } else {
+                            // Non-fatal
+                            qDebug() << "Parameter meta data with bad default value, name:" << name << " type:" << type << " default:" << strDefault;
+                        }
                     }
                 }
                 
