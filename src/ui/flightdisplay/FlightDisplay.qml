@@ -52,29 +52,6 @@ Rectangle {
         return value ? "1" : "0";
     }
 
-    function adjustSizes() {
-        var dist = 85
-        var wide = 160
-        var minw = 496
-        if(root.width > minw)
-        {
-            attitudeInstrument.size = wide;
-            attitudeInstrument.x    = dist
-            compassInstrument.size  = wide;
-            compassInstrument.x     = root.width - wide - dist
-        } else {
-            var factor = (root.width / minw);
-            var ndist  = dist * factor;
-            var nwide  = wide * factor;
-            if (ndist < 0)
-                ndist = 0;
-            attitudeInstrument.size = nwide;
-            compassInstrument.size  = nwide;
-            attitudeInstrument.x    = ndist;
-            compassInstrument.x     = root.width - nwide - ndist;
-        }
-    }
-
     Component.onCompleted:
     {
         mapBackground.visible               = getBool(flightDisplay.loadSetting("showMapBackground",        "0"));
@@ -89,7 +66,6 @@ Rectangle {
         currentAltitude.showClimbRate       = getBool(flightDisplay.loadSetting("showCurrentClimbRate",     "1"));
         currentAltitude.showAltitude        = getBool(flightDisplay.loadSetting("showCurrentAltitude",      "1"));
         mapTypeMenu.update();
-        adjustSizes();
     }
 
     Menu {
@@ -299,6 +275,44 @@ Rectangle {
         z:                  10
     }
 
+    QGCCompassInstrument {
+        id:                 compassInstrument
+        y:                  5
+        x:                  85
+        size:               160
+        heading:            isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
+        visible:            mapBackground.visible && showCompass
+        z:                  mapBackground.z + 1
+        onResetRequested: {
+            y               = 5
+            x               = 85
+            size            = 160
+            tForm.xScale    = 1
+            tForm.yScale    = 1
+        }
+    }
+
+    QGCAttitudeInstrument {
+        id:                 attitudeInstrument
+        y:                  5
+        size:               160
+        rollAngle:          roll
+        pitchAngle:         pitch
+        showPitch:          showPitchIndicator
+        visible:            mapBackground.visible && showAttitudeIndicator
+        anchors.right:      root.right
+        anchors.rightMargin: 85
+        z:                  mapBackground.z + 1
+        onResetRequested: {
+            y                   = 5
+            anchors.right       = root.right
+            anchors.rightMargin = 85
+            size                = 160
+            tForm.xScale        = 1
+            tForm.yScale        = 1
+        }
+    }
+
     QGCAttitudeWidget {
         id:                 attitudeWidget
         anchors.centerIn:   parent
@@ -371,28 +385,6 @@ Rectangle {
         z:                  70
     }
 
-    QGCCompassInstrument {
-        id:                 compassInstrument
-        y:                  5
-        x:                  85
-        size:               160
-        heading:            isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
-        visible:            mapBackground.visible && showCompass
-        z:                  70
-    }
-
-    QGCAttitudeInstrument {
-        id:                 attitudeInstrument
-        y:                  5
-        x:                  root.width - 160 - 85
-        size:               160
-        rollAngle:          roll
-        pitchAngle:         pitch
-        showPitch:          showPitchIndicator
-        visible:            mapBackground.visible && showAttitudeIndicator
-        z:                  80
-    }
-
     // Button at upper left corner
     Item {
         id:             optionsButton
@@ -421,9 +413,5 @@ Rectangle {
                 }
             }
         }
-    }
-
-    onWidthChanged: {
-        adjustSizes();
     }
 }

@@ -72,6 +72,7 @@ Item {
         radius:             4
         smooth:             true
         color:              Qt.rgba(1,1,1,0.75);
+        border.width:       1
         border.color:       Qt.rgba(0,0,0,0.45);
         anchors.bottom:     handle.top
         anchors.bottomMargin: 4
@@ -85,8 +86,6 @@ Item {
             anchors.horizontalCenter:   labelRect.horizontalCenter
             horizontalAlignment:        Text.AlignHCenter
             anchors.verticalCenter:     labelRect.verticalCenter
-            //anchors.baseline:           parent.bottom
-            //anchors.baselineOffset:     -6
         }
     }
 
