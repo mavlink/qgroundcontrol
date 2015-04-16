@@ -33,6 +33,7 @@ import QtQuick.Controls.Styles 1.2
 import QtQuick.Layouts 1.1
 
 import QGroundControl.Palette 1.0
+import QGroundControl.Controls 1.0
 import QGroundControl.FlightControls 1.0
 
 Rectangle {

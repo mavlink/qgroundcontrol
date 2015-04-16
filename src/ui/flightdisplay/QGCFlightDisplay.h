@@ -53,6 +53,7 @@ public:
     Q_PROPERTY(bool  repaintRequested   READ repaintRequested   NOTIFY repaintRequestedChanged)
     Q_PROPERTY(float latitude           READ latitude           NOTIFY latitudeChanged)
     Q_PROPERTY(float longitude          READ longitude          NOTIFY longitudeChanged)
+    Q_PROPERTY(bool  mavPresent         READ mavPresent         NOTIFY mavPresentChanged)
 
     Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
     Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
@@ -69,6 +70,7 @@ public:
     float   latitude            () { return _latitude; }
     float   longitude           () { return _longitude; }
     bool    repaintRequested    () { return true; }
+    bool    mavPresent          () { return _mav != NULL; }
 
     /** @brief Start updating widget */
     void showEvent(QShowEvent* event);
@@ -88,6 +90,7 @@ signals:
     void repaintRequestedChanged();
     void latitudeChanged        ();
     void longitudeChanged       ();
+    void mavPresentChanged      ();
 
 private slots:
     /** @brief Attitude from main autopilot / system state */

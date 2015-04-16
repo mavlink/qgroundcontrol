@@ -53,9 +53,17 @@ QGeoMapReplyQGC::QGeoMapReplyQGC(QNetworkReply *reply, const QGeoTileSpec &spec,
     : QGeoTiledMapReply(spec, parent)
     , m_reply(reply)
 {
-    connect(m_reply, SIGNAL(finished()),                         this, SLOT(networkReplyFinished()));
-    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
-    connect(m_reply, SIGNAL(destroyed()),                        this, SLOT(replyDestroyed()));
+    if(!reply)
+    {
+        setError(QGeoTiledMapReply::UnknownError, "Invalid tile request");
+        setFinished(true);
+    }
+    else
+    {
+        connect(m_reply, SIGNAL(finished()),                         this, SLOT(networkReplyFinished()));
+        connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
+        connect(m_reply, SIGNAL(destroyed()),                        this, SLOT(replyDestroyed()));
+    }
 }
 
 QGeoMapReplyQGC::~QGeoMapReplyQGC()

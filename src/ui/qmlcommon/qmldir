@@ -11,3 +11,6 @@ QGCSpeedWidget        1.0 QGCSpeedWidget.qml
 QGCSlider             1.0 QGCSlider.qml
 QGCWaypointEditor     1.0 QGCWaypointEditor.qml
 QGCMapToolButton      1.0 QGCMapToolButton.qml
+QGCAttitudeInstrument 1.0 QGCAttitudeInstrument.qml
+QGCCompassInstrument  1.0 QGCCompassInstrument.qml
+QGCArtificialHorizon  1.0 QGCArtificialHorizon.qml

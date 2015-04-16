@@ -28,6 +28,7 @@ This file is part of the QGROUNDCONTROL project
  */
 
 import QtQuick 2.1
+import QGroundControl.Controls 1.0
 
 Rectangle {
     id: root
@@ -44,14 +45,14 @@ Rectangle {
     Column{
         anchors.centerIn: parent
         spacing: 4
-        Text {
+        QGCLabel {
             text: 'h: ' + altitude.toFixed(0)
             font.weight: Font.DemiBold
             color: "white"
             anchors.right: parent.right
             visible: showAltitude
         }
-        Text {
+        QGCLabel {
             text: 'vZ: ' + vertZ.toFixed(0)
             color: "white"
             font.weight: showAltitude ? Font.Normal : Font.DemiBold

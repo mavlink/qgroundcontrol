@@ -100,7 +100,9 @@
         <file alias="QGroundControl/FlightControls/qmldir">src/ui/qmlcommon/qmldir</file>
         <file alias="QGroundControl/FlightControls/QGCAltitudeWidget.qml">src/ui/qmlcommon/QGCAltitudeWidget.qml</file>
         <file alias="QGroundControl/FlightControls/QGCAttitudeWidget.qml">src/ui/qmlcommon/QGCAttitudeWidget.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCAttitudeInstrument.qml">src/ui/qmlcommon/QGCAttitudeInstrument.qml</file>
         <file alias="QGroundControl/FlightControls/QGCCompass.qml">src/ui/qmlcommon/QGCCompass.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCCompassInstrument.qml">src/ui/qmlcommon/QGCCompassInstrument.qml</file>
         <file alias="QGroundControl/FlightControls/QGCCurrentAltitude.qml">src/ui/qmlcommon/QGCCurrentAltitude.qml</file>
         <file alias="QGroundControl/FlightControls/QGCCurrentSpeed.qml">src/ui/qmlcommon/QGCCurrentSpeed.qml</file>
         <file alias="QGroundControl/FlightControls/QGCMapBackground.qml">src/ui/qmlcommon/QGCMapBackground.qml</file>
@@ -109,19 +111,24 @@
         <file alias="QGroundControl/FlightControls/QGCSlider.qml">src/ui/qmlcommon/QGCSlider.qml</file>
         <file alias="QGroundControl/FlightControls/QGCWaypointEditor.qml">src/ui/qmlcommon/QGCWaypointEditor.qml</file>
         <file alias="QGroundControl/FlightControls/QGCMapToolButton.qml">src/ui/qmlcommon/QGCMapToolButton.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCArtificialHorizon.qml">src/ui/qmlcommon/QGCArtificialHorizon.qml</file>
         <!-- QML Main UI Resources -->
         <file alias="compass.svg">src/ui/qmlcommon/compass.svg</file>
         <file alias="compassNeedle.svg">src/ui/qmlcommon/compassNeedle.svg</file>
         <file alias="crossHair.svg">src/ui/qmlcommon/crossHair.svg</file>
-        <file alias="rollDial.svg">src/ui/qmlcommon/rollDial.svg</file>
         <file alias="rollDialWhite.svg">src/ui/qmlcommon/rollDialWhite.svg</file>
-        <file alias="rollPointer.svg">src/ui/qmlcommon/rollPointer.svg</file>
         <file alias="rollPointerWhite.svg">src/ui/qmlcommon/rollPointerWhite.svg</file>
         <file alias="scale.png">src/ui/qmlcommon/scale.png</file>
         <file alias="scale_end.png">src/ui/qmlcommon/scale_end.png</file>
         <file alias="buttonLeft.svg">src/ui/qmlcommon/buttonLeft.svg</file>
         <file alias="buttonRight.svg">src/ui/qmlcommon/buttonRight.svg</file>
         <file alias="buttonHome.svg">src/ui/qmlcommon/buttonHome.svg</file>
+        <file alias="buttonMore.svg">src/ui/qmlcommon/buttonMore.svg</file>
+        <file alias="attitudeInstrument.svg">src/ui/qmlcommon/attitudeInstrument.svg</file>
+        <file alias="attitudeDial.svg">src/ui/qmlcommon/attitudeDial.svg</file>
+        <file alias="attitudePointer.svg">src/ui/qmlcommon/attitudePointer.svg</file>
+        <file alias="compassInstrumentAirplane.svg">src/ui/qmlcommon/compassInstrumentAirplane.svg</file>
+        <file alias="compassInstrumentDial.svg">src/ui/qmlcommon/compassInstrumentDial.svg</file>
     </qresource>
 
     <qresource prefix="/AutoPilotPlugins/PX4">

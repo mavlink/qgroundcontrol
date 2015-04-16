@@ -38,6 +38,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QNetworkReply>
 #include <QMutex>
 
+#define MAX_MAP_ZOOM (20.0)
+
 namespace OpenPilot {
 
 enum MapType

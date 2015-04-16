@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Main Flight Display
+ *   @brief QGC Attitude Widget
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
@@ -31,88 +31,49 @@ import QtQuick 2.4
 
 Item {
     id: root
-    property real rollAngle : 0
-    property real pitchAngle: 0
-    property real backgroundOpacity: 1
-    property bool displayBackground: true
-    property bool useWhite: true
+    property real rollAngle :   0
+    property real pitchAngle:   0
+    property bool showAttitude: true
 
     anchors.fill: parent
 
-    Item {
-        id: background
-        width:  parent.width  * 4
-        height: parent.height * 4
-        anchors.centerIn: parent
-
-        Rectangle {
-            anchors.fill: parent
-            color: Qt.rgba(0,0,0,0)
-            visible: displayBackground
-
-            Rectangle {
-                id: sky
-                visible: displayBackground
-                anchors.fill: parent
-                smooth: true
-                antialiasing: true
-                gradient: Gradient {
-                    GradientStop { position: 0.25; color: Qt.hsla(0.6, 1.0, 0.25, backgroundOpacity) }
-                    GradientStop { position: 0.5;  color: Qt.hsla(0.6, 0.5, 0.75, backgroundOpacity) }
-                }
-            }
-
-            Rectangle {
-                id: ground
-                visible: displayBackground
-                height: sky.height / 2
-                anchors {
-                    left:   sky.left;
-                    right:  sky.right;
-                    bottom: sky.bottom
-                }
-                smooth: true
-                antialiasing: true
-                gradient: Gradient {
-                    GradientStop { position: 0.0;  color: Qt.hsla(0.25,  0.5, 0.45, backgroundOpacity) }
-                    GradientStop { position: 0.25; color: Qt.hsla(0.25, 0.75, 0.25, backgroundOpacity) }
-                }
-            }
-
-            transform: [
-                Translate {
-                    y:  (root.visible && root.displayBackground) ? pitchAngle * 4 : 0
-                },
-                Rotation {
-                    origin.x: background.width  / 2
-                    origin.y: background.height / 2
-                    angle: (root.visible && root.displayBackground) ? -rollAngle : 0
-                }]
-        }
-
+    QGCArtificialHorizon {
+        rollAngle:          root.rollAngle
+        pitchAngle:         root.pitchAngle
     }
 
     Image {
         id: rollDial
+        visible: root.showAttitude
         anchors { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
-        source: useWhite ? "/qml/rollDialWhite.svg" : "/qml/rollDial.svg"
+        source: "/qml/rollDialWhite.svg"
         mipmap: true
         width:  260
         fillMode: Image.PreserveAspectFit
         transform: Rotation {
             origin.x: rollDial.width  / 2
             origin.y: rollDial.height
-            angle: -rollAngle
+            angle:   -rollAngle
         }
     }
 
     Image {
         id: pointer
+        visible: root.showAttitude
         anchors { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
-        source: useWhite ? "/qml/rollPointerWhite.svg" : "/qml/rollPointer.svg"
-        smooth:   true
-        width: rollDial.width
-        fillMode: Image.PreserveAspectFit
+        source:             "/qml/rollPointerWhite.svg"
+        mipmap:             true
+        width:              rollDial.width
+        fillMode:           Image.PreserveAspectFit
     }
 
+    Image {
+        id:                 crossHair
+        visible:            root.showAttitude
+        anchors.centerIn:   parent
+        source:             "/qml/crossHair.svg"
+        mipmap:             true
+        width:              260
+        fillMode:           Image.PreserveAspectFit
+    }
 }

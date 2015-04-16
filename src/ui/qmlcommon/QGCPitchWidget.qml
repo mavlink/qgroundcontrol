@@ -28,15 +28,22 @@ This file is part of the QGROUNDCONTROL project
  */
 
 import QtQuick 2.1
+import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls 1.0
 
 Rectangle {
-    property real pitchAngle:      0
-    property real rollAngle:       0
-    property real _reticleHeight:  1
-    property real _reticleSpacing: 17
-    property real _reticleSlot:    _reticleSpacing + _reticleHeight
-    height: 110
-    width:  120
+    property ScreenTools screenTools: ScreenTools { }
+    property real pitchAngle:       0
+    property real rollAngle:        0
+    property real size:             120
+    property real _reticleHeight:   1
+    property real _reticleSpacing:  size * 0.15
+    property real _reticleSlot:     _reticleSpacing + _reticleHeight
+    property real _longDash:        size * 0.40
+    property real _shortDash:       size * 0.25
+    property real _fontSize:        screenTools.dpiAdjustedPointSize(size * 11 / 120);
+    height: size * 0.9
+    width:  size
     radius: 8
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.verticalCenter:   parent.verticalCenter
@@ -53,27 +60,29 @@ Rectangle {
                 Rectangle {
                     property int _pitch: -(modelData * 5 - 90)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: (_pitch % 10) === 0 ? 50 : 30
+                    width: (_pitch % 10) === 0 ? _longDash : _shortDash
                     height: _reticleHeight
                     color: "white"
                     antialiasing: true
                     smooth: true
-                    Text {
+                    QGCLabel {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.horizontalCenterOffset: -40
+                        anchors.horizontalCenterOffset: -(_longDash * 0.8)
                         anchors.verticalCenter: parent.verticalCenter
                         smooth: true
                         font.weight: Font.DemiBold
+                        font.pointSize: _fontSize < 1 ? 1 : _fontSize;
                         text: _pitch
                         color: "white"
                         visible: (_pitch != 0) && ((_pitch % 10) === 0)
                     }
-                    Text {
+                    QGCLabel {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.horizontalCenterOffset: 40
+                        anchors.horizontalCenterOffset: (_longDash * 0.8)
                         anchors.verticalCenter: parent.verticalCenter
                         smooth: true
                         font.weight: Font.DemiBold
+                        font.pointSize: _fontSize < 1 ? 1 : _fontSize;
                         text: _pitch
                         color: "white"
                         visible: (_pitch != 0) && ((_pitch % 10) === 0)
@@ -87,7 +96,7 @@ Rectangle {
     }
     transform: [
         Rotation {
-            origin.x: width / 2
+            origin.x: width  / 2
             origin.y: height / 2
             angle:    -rollAngle
             }
