@@ -615,7 +615,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
     src/AutoPilotPlugins/PX4/PowerComponent.h \
-    src/AutoPilotPlugins/PX4/PX4ParameterFacts.h \
+    src/AutoPilotPlugins/PX4/PX4ParameterLoader.h \
 
 SOURCES += \
     src/VehicleSetup/SetupView.cc \
@@ -639,7 +639,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/PowerComponent.cc \
-    src/AutoPilotPlugins/PX4/PX4ParameterFacts.cc \
+    src/AutoPilotPlugins/PX4/PX4ParameterLoader.cc \
 
 # Fact System code
 

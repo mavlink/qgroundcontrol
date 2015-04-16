@@ -27,7 +27,7 @@
 #include "AutoPilotPlugin.h"
 #include "AutoPilotPluginManager.h"
 #include "UASInterface.h"
-#include "PX4ParameterFacts.h"
+#include "PX4ParameterLoader.h"
 #include "AirframeComponent.h"
 #include "RadioComponent.h"
 #include "FlightModesComponent.h"
@@ -71,7 +71,7 @@ private:
 	// Overrides from AutoPilotPlugin
 	virtual ParameterLoader* _getParameterLoader(void) { return _parameterFacts; }
 	
-    PX4ParameterFacts*      _parameterFacts;
+    PX4ParameterLoader*      _parameterFacts;
     QVariantList            _components;
     AirframeComponent*      _airframeComponent;
     RadioComponent*         _radioComponent;
