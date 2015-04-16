@@ -25,8 +25,9 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 import QtQuick 2.3
-import QtQuick.Controls 1.2
+import QtQuick.Controls 1.3
 import QtQuick.Controls.Styles 1.2
+import QtQuick.Dialogs 1.2
 
 import QGroundControl.Controls 1.0
 import QGroundControl.Palette 1.0
@@ -161,6 +162,99 @@ Rectangle {
                                                     text:   modelFact.valueString + " " + modelFact.units
                                                     width:  __charWidth.contentWidth * 20
                                                     height: contentHeight
+													color:	modelFact.valueEqualsDefault ? __qgcPal.text : "orange"
+
+                                                    Menu {
+                                                        id:         rightClickMenu
+                                                        visible:    false
+
+                                                        MenuItem {
+                                                            id:             resetToDefaultMenuItem
+                                                            text:           "Reset to default"
+                                                            enabled:        modelFact.defaultValueAvailable
+                                                            onTriggered:    modelFact.value = modelFact.defaultValue
+                                                        }
+                                                        MenuItem {
+                                                            text:           "Set RC to Param..."
+                                                            onTriggered: 	__controller.setRCToParam(modelData)
+                                                        }
+                                                        MenuItem {
+                                                            text:           "Properties..."
+                                                            onTriggered: 	propertiesDialog.open()
+                                                        }
+                                                    }
+
+                                                    Dialog {
+                                                        id:         propertiesDialog
+                                                        visible:    false
+                                                        title:      "Parameter Properties"
+
+                                                        contentItem: Rectangle {
+                                                            color:          __qgcPal.window
+                                                            implicitWidth:          500
+                                                            implicitHeight:         longDescription.y + longDescription.height + 20
+
+                                                                Grid {
+                                                                id:     grid
+                                                                x:      10
+                                                                y:      10
+                                                                columns: 2
+                                                                spacing: 5
+
+                                                                QGCLabel {
+                                                                    text: "Parameter:"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: modelFact.name
+                                                                }
+                                                                QGCLabel {
+                                                                    text: "Group:"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: modelFact.group
+                                                                }
+                                                                QGCLabel {
+                                                                    text: "Units:"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: modelFact.units ? modelFact.units : "none"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: "Default value:"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: modelFact.defaultValueAvailable ? modelFact.defaultValue : "none"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: "Minimum value:"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: modelFact.min
+                                                                }
+                                                                QGCLabel {
+                                                                    text: "Maximum value:"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: modelFact.max
+                                                                }
+                                                                QGCLabel {
+                                                                    text: "Description:"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: modelFact.shortDescription ? modelFact.shortDescription : "none"
+                                                                }
+                                                                QGCLabel {
+                                                                    text: "Description (long):"
+                                                                }
+                                                                QGCLabel {
+                                                                    id:         longDescription
+                                                                    width:      500 - 20 - x
+                                                                    wrapMode:   Text.WordWrap
+                                                                    text:       modelFact.longDescription ? modelFact.longDescription : "none"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
 
                                                     MouseArea {
                                                         anchors.fill:		parent
@@ -171,7 +265,7 @@ Rectangle {
 																editor.checked = true
 																editor.focus = true
 															} else if (mouse.button == Qt.RightButton) {
-																__controller.setRCToParam(modelData)
+                                                                rightClickMenu.popup()
 															}
                                                         }
                                                     }

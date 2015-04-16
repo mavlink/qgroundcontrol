@@ -56,7 +56,7 @@ Rectangle {
 			id: infoLabel
 			width:      parent.width
 			wrapMode:   Text.WordWrap
-			text:       "Click a parameter value to modify. Right-click to set an RC to Param mapping. Use caution when modifying parameters here since the values are not checked for validity."
+			text:       "Click a parameter value to modify. Right-click for additional options. Values which have been modified from the default are shown in orange. Use caution when modifying parameters here since the values are not checked for validity."
 		}
 
 		ParameterEditor {
