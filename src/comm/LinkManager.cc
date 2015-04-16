@@ -326,7 +326,6 @@ void LinkManager::saveLinkConfigurationList()
     QSettings settings;
     settings.remove(LinkConfiguration::settingsRoot());
     int index = 0;
-    int count = 0;
     foreach (LinkConfiguration* pLink, _linkConfigurations) {
         Q_ASSERT(pLink != NULL);
         if(!pLink->isDynamic())
@@ -338,11 +337,10 @@ void LinkManager::saveLinkConfigurationList()
             settings.setValue(root + "/preferred", pLink->isPreferred());
             // Have the instance save its own values
             pLink->saveSettings(settings, root);
-            count++;
         }
     }
     QString root(LinkConfiguration::settingsRoot());
-    settings.setValue(root + "/count", count);
+    settings.setValue(root + "/count", index);
     emit linkConfigurationChanged();
 }
 
