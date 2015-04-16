@@ -74,9 +74,6 @@ public:
     void setMin(const QVariant& max);
     void setMax(const QVariant& max);
 
-    /// Used to clear a default value which it is found to possibly be invalid
-    void clearDefaultValue(void);
-
 private:
     QVariant _minForType(void);
     QVariant _maxForType(void);

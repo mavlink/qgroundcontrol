@@ -133,9 +133,3 @@ QVariant FactMetaData::_maxForType(void)
     // Make windows compiler happy, even switch is full cased
     return QVariant();
 }
-
-void FactMetaData::clearDefaultValue(void)
-{
-    _defaultValue = 0;
-    _defaultValueAvailable = false;
-}
