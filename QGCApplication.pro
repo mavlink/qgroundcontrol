@@ -338,7 +338,6 @@ HEADERS += \
     src/ui/uas/UASQuickViewGaugeItem.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/UASRawStatusView.h \
-    src/ui/PrimaryFlightDisplay.h \
     src/ui/uas/UASMessageView.h \
     src/ui/JoystickButton.h \
     src/ui/JoystickAxis.h \
@@ -479,7 +478,6 @@ SOURCES += \
     src/ui/uas/UASQuickViewItemSelect.cc \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
-    src/ui/PrimaryFlightDisplay.cc \
     src/ui/JoystickButton.cc \
     src/ui/JoystickAxis.cc \
     src/ui/uas/UASMessageView.cc \
