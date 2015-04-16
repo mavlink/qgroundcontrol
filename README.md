@@ -86,7 +86,7 @@ If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/lib
 
 #### Build QGroundControl
 1. Change directory to you `qgroundcontrol` source directory.
-2. Run `qmake`
+2. Run `qmake -r qgroundcontrol.pro`
 3. Run `make`
 
 ### Build on Windows
