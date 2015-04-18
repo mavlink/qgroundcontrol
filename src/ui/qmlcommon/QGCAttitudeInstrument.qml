@@ -28,8 +28,9 @@ This file is part of the QGROUNDCONTROL project
  */
 
 import QtQuick 2.4
+import QGroundControl.Controls 1.0
 
-Item {
+QGCMovableItem {
     id: root
     property real rollAngle :   0
     property real pitchAngle:   0
