@@ -26,7 +26,9 @@
 #include <QRegularExpression>
 #include "MainWindow.h"
 #ifdef QT_DEBUG
+#ifndef __android__
 #include "UnitTest.h"
+#endif
 #endif
 
 QString QGCFileDialog::getExistingDirectory(
@@ -38,9 +40,11 @@ QString QGCFileDialog::getExistingDirectory(
     _validate(options);
     
 #ifdef QT_DEBUG
+#ifndef __android__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getExistingDirectory(parent, caption, dir, options);
     } else
+#endif
 #endif
     {
         return QFileDialog::getExistingDirectory(parent, caption, dir, options);
@@ -57,9 +61,11 @@ QString QGCFileDialog::getOpenFileName(
     _validate(options);
     
 #ifdef QT_DEBUG
+#ifndef __android__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileName(parent, caption, dir, filter, options);
     } else
+#endif
 #endif
     {
         return QFileDialog::getOpenFileName(parent, caption, dir, filter, NULL, options);
@@ -76,9 +82,11 @@ QStringList QGCFileDialog::getOpenFileNames(
     _validate(options);
     
 #ifdef QT_DEBUG
+#ifndef __android__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileNames(parent, caption, dir, filter, options);
     } else
+#endif
 #endif
     {
         return QFileDialog::getOpenFileNames(parent, caption, dir, filter, NULL, options);
@@ -97,9 +105,11 @@ QString QGCFileDialog::getSaveFileName(
     _validate(options);
 
 #ifdef QT_DEBUG
+#ifndef __android__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getSaveFileName(parent, caption, dir, filter, defaultSuffix, options);
     } else
+#endif
 #endif
     {
         QString defaultSuffixCopy(defaultSuffix);

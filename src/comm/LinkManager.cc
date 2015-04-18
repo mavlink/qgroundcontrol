@@ -32,7 +32,11 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QApplication>
 #include <QDebug>
+#ifdef __android__
+#include "qserialportinfo.h"
+#else
 #include <QSerialPortInfo>
+#endif
 
 #include "LinkManager.h"
 #include "MainWindow.h"
@@ -85,9 +89,11 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
             pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
             break;
 #ifdef UNITTEST_BUILD
+#ifndef __android__
         case LinkConfiguration::TypeMock:
             pLink = new MockLink(dynamic_cast<MockConfiguration*>(config));
             break;
+#endif
 #endif
     }
     if(pLink) {
@@ -379,10 +385,12 @@ void LinkManager::loadLinkConfigurationList()
                                     pLink->setPreferred(preferred);
                                     break;
 #ifdef UNITTEST_BUILD
+#ifndef __android__
                                 case LinkConfiguration::TypeMock:
                                     pLink = (LinkConfiguration*)new MockConfiguration(name);
                                     pLink->setPreferred(false);
                                     break;
+#endif
 #endif
                             }
                             if(pLink) {

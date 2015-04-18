@@ -120,7 +120,11 @@ bool QextSerialPortPrivate::close_sys()
 
 bool QextSerialPortPrivate::flush_sys()
 {
+#ifdef __android__
+    ::ioctl(fd, TCSADRAIN, &currentTermios);
+#else
     ::tcdrain(fd);
+#endif
     return true;
 }
 
