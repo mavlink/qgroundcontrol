@@ -40,7 +40,9 @@ This file is part of the PIXHAWK project
 #include "TCPLink.h"
 
 #ifdef UNITTEST_BUILD
+#ifndef __android__
 #include "MockLink.h"
+#endif
 #endif
 
 #include "ProtocolInterface.h"

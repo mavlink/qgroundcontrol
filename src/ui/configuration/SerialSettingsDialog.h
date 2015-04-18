@@ -37,7 +37,11 @@ This file is part of the APM_PLANNER project
 #define SERIALSETTINGSDIALOG_H
 
 #include <QDialog>
+#ifdef __android__
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 
 namespace Ui {
 class SerialSettingsDialog;

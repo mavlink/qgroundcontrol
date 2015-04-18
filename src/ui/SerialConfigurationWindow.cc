@@ -32,7 +32,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 #include <QFileInfoList>
 #include <QDebug>
+
+#ifdef __android__
+#include "qserialportinfo.h"
+#else
 #include <QSerialPortInfo>
+#endif
 
 #include <SerialConfigurationWindow.h>
 #include <SerialLink.h>

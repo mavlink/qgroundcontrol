@@ -28,6 +28,7 @@
 
 #ifndef UNITTEST_H
 #define UNITTEST_H
+#ifndef __android__
 
 #include <QObject>
 #include <QtTest>
@@ -186,4 +187,5 @@ private:
     QSharedPointer<T> _unitTest;
 };
 
+#endif // Android
 #endif

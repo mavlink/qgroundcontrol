@@ -64,8 +64,13 @@ MainToolBar::MainToolBar(QWidget* parent)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("MainToolBar");
+#ifdef __android__
+    setMinimumHeight(120);
+    setMaximumHeight(120);
+#else
     setMinimumHeight(40);
     setMaximumHeight(40);
+#endif
     setMinimumWidth(MainWindow::instance()->minimumWidth());
     // Get rid of layout default margins
     QLayout* pl = layout();

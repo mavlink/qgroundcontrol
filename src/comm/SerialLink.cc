@@ -12,8 +12,14 @@
 #include <QDebug>
 #include <QSettings>
 #include <QMutexLocker>
+
+#ifdef __android__
+#include "qserialport.h"
+#include "qserialportinfo.h"
+#else
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#endif
 
 #include "SerialLink.h"
 #include "QGC.h"
