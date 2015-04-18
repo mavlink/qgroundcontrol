@@ -31,7 +31,7 @@ import QtQuick 2.4
 import QGroundControl.Controls 1.0
 import QGroundControl.ScreenTools 1.0
 
-Item {
+QGCMovableItem {
     property ScreenTools screenTools: ScreenTools { }
     id:                     root
     property real heading:  0

@@ -160,7 +160,7 @@ Rectangle {
         maximum: map.maximumZoomLevel;
         opacity: 1
         visible: parent.visible
-        z: map.z + 3
+        z: map.z + 20
         anchors {
             bottom: parent.bottom;
             bottomMargin: 15; rightMargin: 20; leftMargin: 20
@@ -180,7 +180,7 @@ Rectangle {
         id: scale
         parent: zoomSlider.parent
         visible: scaleText.text !== "0 m"
-        z: map.z + 2
+        z: map.z + 20
         opacity: 1
         anchors {
             bottom: zoomSlider.top;
