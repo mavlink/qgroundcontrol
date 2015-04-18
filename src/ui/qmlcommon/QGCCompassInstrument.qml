@@ -54,7 +54,7 @@ QGCMovableItem {
         transform: Rotation {
             origin.x:   pointer.width  / 2
             origin.y:   pointer.height / 2
-            angle:      -heading
+            angle:      heading
         }
     }
     Image {
