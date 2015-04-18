@@ -121,7 +121,7 @@ Rectangle {
             frameVisible:	false
 			font.pointSize: qgcPal.dpiAdjustedDefaultFontPointSize
             
-			text: qsTr("Please disconnect all connections and unplug board from USB before selecting Upgrade.")
+			text: qsTr("Please disconnect all vehicles from QGroundControl before selecting Upgrade.")
 
             style: TextAreaStyle {
                 textColor: qgcPal.text
