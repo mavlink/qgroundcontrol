@@ -439,10 +439,6 @@ bool PX4Bootloader::getBoardInfo(QextSerialPort* port, uint32_t& bootloaderVersi
     if (!getBoardInfo(port, INFO_BOARD_ID, _boardID)) {
         goto Error;
     }
-    if (_boardID != _boardIDPX4Flow && _boardID != _boardIDPX4FMUV1 && _boardID != _boardIDPX4FMUV2 && _boardID != _boardIDuNode) {
-        _errorString = tr("Unsupported board: %1").arg(_boardID);
-        goto Error;
-    }
     
     if (!getBoardInfo(port, INFO_FLASH_SIZE, _boardFlashSize)) {
         qWarning() << _errorString;
