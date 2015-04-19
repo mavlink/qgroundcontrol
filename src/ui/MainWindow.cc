@@ -45,7 +45,9 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "QGCWaypointListMulti.h"
 #include "MainWindow.h"
+#ifndef __android__
 #include "JoystickWidget.h"
+#endif
 #include "GAudioOutput.h"
 #include "QGCToolWidget.h"
 #include "QGCMAVLinkLogPlayer.h"
@@ -193,8 +195,9 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     connectCommonActions();
     // Connect user interface devices
     emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+#ifndef __android__
     joystick = new JoystickInput();
-
+#endif
 #ifdef QGC_MOUSE_ENABLED_WIN
     emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     mouseInput = new Mouse3DInput(this);
@@ -315,6 +318,7 @@ MainWindow::~MainWindow()
         delete _simulationLink;
         _simulationLink = NULL;
     }
+#ifndef __android__
     if (joystick)
     {
         joystick->shutdown();
@@ -322,6 +326,7 @@ MainWindow::~MainWindow()
         delete joystick;
         joystick = NULL;
     }
+#endif
     // Delete all UAS objects
     for (int i=0;i<_commsWidgetList.size();i++)
     {
@@ -945,7 +950,11 @@ void MainWindow::showRoadMap()
 
 void MainWindow::showSettings()
 {
+#ifndef __android__
     SettingsDialog settings(joystick, this);
+#else
+    SettingsDialog settings(this);
+#endif
     settings.exec();
 }
 
@@ -1268,7 +1277,11 @@ void MainWindow::hideSplashScreen(void)
 
 void MainWindow::manageLinks()
 {
+#ifndef __android__
     SettingsDialog settings(joystick, this, SettingsDialog::ShowCommLinks);
+#else
+    SettingsDialog settings(this, SettingsDialog::ShowCommLinks);
+#endif
     settings.exec();
 }
 

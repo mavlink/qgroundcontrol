@@ -60,6 +60,9 @@ inline bool isinf(T value)
 #define isinf(x) std::isinf(x)
 #endif
 #endif
+#ifdef __android__
+#define isinf(x) std::isinf(x)
+#endif
 
 namespace QGC
 {

@@ -19,6 +19,10 @@
 
 QMAKE_POST_LINK += echo "Copying files"
 
+AndroidBuild {
+    INSTALLS += $$DESTDIR
+}
+
 #
 # Copy the application resources to the associated place alongside the application
 #
@@ -40,8 +44,10 @@ WindowsBuild {
     BASEDIR_COPY_RESOURCE_LIST = $$replace(BASEDIR,"/","\\")
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\flightgear\" \"$$DESTDIR_COPY_RESOURCE_LIST\\flightgear\"
 } else {
-    # Make sure to keep both side of this if using the same set of directories
-    QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/flightgear $$DESTDIR_COPY_RESOURCE_LIST
+    !AndroidBuild {
+        # Make sure to keep both sides of this if using the same set of directories
+        QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/flightgear $$DESTDIR_COPY_RESOURCE_LIST
+    }
 }
 
 #

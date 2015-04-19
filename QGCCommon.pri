@@ -30,6 +30,10 @@ linux {
     linux-g++ | linux-g++-64 {
         message("Linux build")
         CONFIG += LinuxBuild
+    } else : android-g++ {
+        message("Android build")
+        CONFIG += AndroidBuild
+        warning("Android build is experimental and not fully functional")
     } else {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
@@ -110,6 +114,11 @@ DEFINES += _TTY_NOWARN_
 #
 # OS Specific settings
 #
+
+AndroidBuild {
+    DEFINES += __android__
+    DEFINES += __STDC_LIMIT_MACROS
+}
 
 MacBuild {
     CONFIG += x86_64

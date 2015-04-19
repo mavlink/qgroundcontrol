@@ -3,7 +3,9 @@
 
 #include <QWidget>
 #include <QAction>
+#ifndef __android__
 #include <QtDesigner/QDesignerExportWidget>
+#endif
 
 #include "QGCToolWidgetItem.h"
 

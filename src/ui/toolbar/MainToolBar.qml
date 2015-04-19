@@ -38,13 +38,14 @@ import QGroundControl.MainToolBar 1.0
 import QGroundControl.ScreenTools 1.0
 
 Rectangle {
+    id: toolBarHolder
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
     property ScreenTools screenTools: ScreenTools { }
 
-    property int cellSpacerSize: 4
-    property int cellHeight:     30
-    property int cellRadius:     3
+    property int cellSpacerSize: getProportionalDimmension(4)
+    property int cellHeight:     getProportionalDimmension(30)
+    property int cellRadius:     getProportionalDimmension(3)
 
     property var colorBlue:       "#1a6eaa"
     property var colorGreen:      "#079527"
@@ -57,8 +58,15 @@ Rectangle {
     property var colorGreenText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#046b1b" : "#00d930"
     property var colorWhiteText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#343333" : "#f0f0f0"
 
-    id:     toolBarHolder
     color:  qgcPal.windowShade
+
+    Component.onCompleted: {
+        console.log(cellSpacerSize, cellHeight, cellRadius);
+    }
+
+    function getProportionalDimmension(val) {
+        return toolBarHolder.height * val / 40
+    }
 
     function getMessageColor() {
         if(mainToolBar.messageType === MainToolBar.MessageNone)
@@ -126,14 +134,14 @@ Rectangle {
         id:                     row1
         height:                 cellHeight
         anchors.left:           parent.left
-        spacing:                4
+        spacing:                getProportionalDimmension(4)
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin:     10
+        anchors.leftMargin:     getProportionalDimmension(10)
 
         Row {
             id:                     row11
             height:                 cellHeight
-            spacing:                -12
+            spacing:                -getProportionalDimmension(12)
             anchors.verticalCenter: parent.verticalCenter
             Connections {
                 target: screenTools
@@ -149,7 +157,7 @@ Rectangle {
 
             QGCToolBarButton {
                 id: setupButton
-                width: 90
+                width: getProportionalDimmension(90)
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
                 text: qsTr("Setup")
@@ -163,7 +171,7 @@ Rectangle {
 
             QGCToolBarButton {
                 id: planButton
-                width: 90
+                width: getProportionalDimmension(90)
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
                 text: qsTr("Plan")
@@ -177,7 +185,7 @@ Rectangle {
 
             QGCToolBarButton {
                 id: flyButton
-                width: 90
+                width: getProportionalDimmension(90)
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
                 text: qsTr("Fly")
@@ -191,7 +199,7 @@ Rectangle {
 
             QGCToolBarButton {
                 id: analyzeButton
-                width: 90
+                width: getProportionalDimmension(90)
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
                 text: qsTr("Analyze")
@@ -213,7 +221,7 @@ Rectangle {
 
             Rectangle {
                 id: messages
-                width: (mainToolBar.messageCount > 99) ? 70 : 60
+                width: (mainToolBar.messageCount > 99) ? getProportionalDimmension(70) : getProportionalDimmension(60)
                 height: cellHeight
                 visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
                 anchors.verticalCenter: parent.verticalCenter
@@ -226,11 +234,11 @@ Rectangle {
                 Image {
                     id: messageIcon
                     source: getMessageIcon();
-                    height: 16
+                    height: getProportionalDimmension(16)
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: getProportionalDimmension(10)
                 }
 
                 Rectangle {
@@ -256,8 +264,8 @@ Rectangle {
                     visible: (messages.showTriangle) && (mainToolBar.messageCount > 0)
                     anchors.bottom: parent.bottom
                     anchors.right: parent.right
-                    anchors.bottomMargin: 3
-                    anchors.rightMargin: 3
+                    anchors.bottomMargin: getProportionalDimmension(3)
+                    anchors.rightMargin:  getProportionalDimmension(3)
                 }
 
                 Timer {
@@ -306,7 +314,7 @@ Rectangle {
 
             Rectangle {
                 id: satelitte
-                width: 60
+                width:  getProportionalDimmension(60)
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showGPS)
                 anchors.verticalCenter: parent.verticalCenter
@@ -317,11 +325,11 @@ Rectangle {
 
                 Image {
                     source: "qrc:/res/Gps";
-                    height: 24
+                    height: getProportionalDimmension(24)
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: getProportionalDimmension(10)
                     mipmap: true
                     smooth: true
                 }
@@ -333,7 +341,7 @@ Rectangle {
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: getProportionalDimmension(10)
                     horizontalAlignment: Text.AlignRight
                     color: colorWhite
                 }
@@ -341,7 +349,7 @@ Rectangle {
 
             Rectangle {
                 id: battery
-                width: 80
+                width: getProportionalDimmension(80)
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showBattery)
                 anchors.verticalCenter: parent.verticalCenter
@@ -352,11 +360,11 @@ Rectangle {
 
                 Image {
                     source: getBatteryIcon();
-                    height: 20
+                    height: getProportionalDimmension(20)
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: 6
+                    anchors.leftMargin: getProportionalDimmension(6)
                     mipmap: true
                     smooth: true
                 }
@@ -368,7 +376,7 @@ Rectangle {
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: getProportionalDimmension(8)
                     horizontalAlignment: Text.AlignRight
                     color: colorWhite
                 }
@@ -377,7 +385,7 @@ Rectangle {
             Column {
                 visible: showMavStatus()
                 height:  cellHeight * 0.85
-                width:   80
+                width:   getProportionalDimmension(80)
                 anchors.verticalCenter: parent.verticalCenter
 
                 Rectangle {
@@ -422,7 +430,7 @@ Rectangle {
 
             Rectangle {
                 id: modeStatus
-                width: 90
+                width: getProportionalDimmension(90)
                 height: cellHeight
                 visible: showMavStatus()
                 color: "#00000000"
@@ -442,7 +450,7 @@ Rectangle {
 
             Rectangle {
                 id: connectionStatus
-                width: 160
+                width: getProportionalDimmension(160)
                 height: cellHeight
                 visible: (mainToolBar.connectionCount > 0 && mainToolBar.mavPresent && mainToolBar.heartbeatTimeout != 0)
                 anchors.verticalCenter: parent.verticalCenter
@@ -469,8 +477,8 @@ Rectangle {
         spacing: cellSpacerSize
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin:  10
-        anchors.rightMargin: 10
+        anchors.leftMargin:  getProportionalDimmension(10)
+        anchors.rightMargin: getProportionalDimmension(10)
 
         Menu {
             id: connectMenu
@@ -501,7 +509,7 @@ Rectangle {
 
         QGCButton {
             id:         connectButton
-            width:      100
+            width:      getProportionalDimmension(100)
             visible:    mainToolBar.connectionCount === 0
             text:       qsTr("Connect")
             menu:       connectMenu
@@ -510,7 +518,7 @@ Rectangle {
 
         QGCButton {
             id:         disconnectButton
-            width:      100
+            width:      getProportionalDimmension(100)
             visible:    mainToolBar.connectionCount === 1
             text:       qsTr("Disconnect")
             anchors.verticalCenter: parent.verticalCenter
@@ -539,7 +547,7 @@ Rectangle {
 
         QGCButton {
             id:         multidisconnectButton
-            width:      100
+            width:      getProportionalDimmension(100)
             text:       "Disconnect"
             visible:    mainToolBar.connectionCount > 1
             menu:       disconnectMenu
@@ -550,8 +558,7 @@ Rectangle {
 
     // Progress bar
     Rectangle {
-        readonly property int progressBarHeight: 3
-
+        readonly property int progressBarHeight: getProportionalDimmension(3)
         y:      parent.height  - progressBarHeight
         height: progressBarHeight
         width:  parent.width * mainToolBar.progressBarValue

@@ -35,7 +35,9 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "configuration.h"
 #ifdef QT_DEBUG
+#ifndef __android__
 #include "UnitTest.h"
+#endif
 #include "CmdLineOptParser.h"
 #ifdef Q_OS_WIN
 #include <crtdbg.h>
@@ -156,6 +158,7 @@ int main(int argc, char *argv[])
 
     int exitCode;
 
+#ifndef __android__
 #ifdef QT_DEBUG
     if (runUnitTests) {
         if (!app->_initForUnitTests()) {
@@ -171,6 +174,7 @@ int main(int argc, char *argv[])
         }
         exitCode = -failures;
     } else
+#endif
 #endif
     {
         if (!app->_initForNormalAppBoot()) {
