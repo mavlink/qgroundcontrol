@@ -115,6 +115,11 @@ DEFINES += _TTY_NOWARN_
 # OS Specific settings
 #
 
+AndroidBuild {
+    DEFINES += __android__
+    DEFINES += __STDC_LIMIT_MACROS
+}
+
 MacBuild {
     CONFIG += x86_64
     CONFIG -= x86
