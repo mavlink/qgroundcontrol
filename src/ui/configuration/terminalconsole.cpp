@@ -45,8 +45,13 @@ This file is part of the APM_PLANNER project
 #include <QStatusBar>
 #include <QVBoxLayout>
 #include <QComboBox>
+#ifdef __android__
+#include "qserialport.h"
+#include "qserialportinfo.h"
+#else
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#endif
 
 TerminalConsole::TerminalConsole(QWidget *parent) :
     QWidget(parent),

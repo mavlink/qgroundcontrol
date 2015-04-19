@@ -38,7 +38,7 @@ message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
 LIBS += -L$${LOCATION_PLUGIN_DESTDIR}
 LIBS += -l$${LOCATION_PLUGIN_NAME}
 
-LinuxBuild|MacBuild {
+LinuxBuild|MacBuild|AndoidBuild {
     PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}.a
 }
 
@@ -61,11 +61,14 @@ QT += network \
     qml \
     quick \
     quickwidgets \
-    serialport \
     sql \
     svg \
     widgets \
     xml \
+
+!AndroidBuild {
+    QT += serialport
+}
 
 contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
     QT += multimedia
@@ -173,9 +176,6 @@ FORMS += \
     src/ui/designer/QGCToolWidgetComboBox.ui \
     src/ui/designer/QGCXYPlot.ui \
     src/ui/HDDisplay.ui \
-    src/ui/JoystickAxis.ui \
-    src/ui/JoystickButton.ui \
-    src/ui/JoystickWidget.ui \
     src/ui/Linechart.ui \
     src/ui/MainWindow.ui \
     src/ui/map/QGCMapTool.ui \
@@ -229,6 +229,13 @@ FORMS += \
     src/ui/WaypointList.ui \
     src/ui/WaypointViewOnlyView.ui \
 
+!AndroidBuild {
+FORMS += \
+    src/ui/JoystickButton.ui \
+    src/ui/JoystickAxis.ui \
+    src/ui/JoystickWidget.ui
+}
+
 HEADERS += \
     src/audio/QGCAudioWorker.h \
     src/CmdLineOptParser.h \
@@ -250,7 +257,6 @@ HEADERS += \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
     src/GAudioOutput.h \
-    src/input/JoystickInput.h \
     src/LogCompressor.h \
     src/MG.h \
     src/QGC.h \
@@ -281,7 +287,6 @@ HEADERS += \
     src/uas/UASParameterCommsMgr.h \
     src/uas/UASParameterDataModel.h \
     src/uas/UASWaypointManager.h \
-    src/ui/CameraView.h \
     src/ui/configuration/ApmHighlighter.h \
     src/ui/configuration/console.h \
     src/ui/configuration/SerialSettingsDialog.h \
@@ -300,9 +305,6 @@ HEADERS += \
     src/ui/HDDisplay.h \
     src/ui/HSIDisplay.h \
     src/ui/HUD.h \
-    src/ui/JoystickAxis.h \
-    src/ui/JoystickButton.h \
-    src/ui/JoystickWidget.h \
     src/ui/linechart/ChartPlot.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/linechart/LinechartPlot.h \
@@ -376,6 +378,15 @@ HEADERS += \
     src/ViewWidgets/ViewWidgetController.h \
     src/Waypoint.h \
 
+!AndroidBuild {
+HEADERS += \
+    src/input/JoystickInput.h \
+    src/ui/JoystickAxis.h \
+    src/ui/JoystickButton.h \
+    src/ui/JoystickWidget.h \
+    src/ui/CameraView.h \
+}
+
 SOURCES += \
     src/audio/QGCAudioWorker.cpp \
     src/CmdLineOptParser.cc \
@@ -393,7 +404,6 @@ SOURCES += \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
     src/GAudioOutput.cc \
-    src/input/JoystickInput.cc \
     src/LogCompressor.cc \
     src/main.cc \
     src/QGC.cc \
@@ -418,7 +428,6 @@ SOURCES += \
     src/uas/UASParameterCommsMgr.cc \
     src/uas/UASParameterDataModel.cc \
     src/uas/UASWaypointManager.cc \
-    src/ui/CameraView.cc \
     src/ui/configuration/ApmHighlighter.cc \
     src/ui/configuration/console.cpp \
     src/ui/configuration/SerialSettingsDialog.cc \
@@ -437,9 +446,6 @@ SOURCES += \
     src/ui/HDDisplay.cc \
     src/ui/HSIDisplay.cc \
     src/ui/HUD.cc \
-    src/ui/JoystickAxis.cc \
-    src/ui/JoystickButton.cc \
-    src/ui/JoystickWidget.cc \
     src/ui/linechart/ChartPlot.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/linechart/LinechartPlot.cc \
@@ -513,6 +519,15 @@ SOURCES += \
     src/ViewWidgets/ViewWidgetController.cc \
     src/Waypoint.cc \
 
+!AndroidBuild {
+SOURCES += \
+    src/input/JoystickInput.cc \
+    src/ui/JoystickAxis.cc \
+    src/ui/JoystickButton.cc \
+    src/ui/JoystickWidget.cc \
+    src/ui/CameraView.cc 
+}
+
 #
 # Unit Test specific configuration goes here
 #
@@ -523,6 +538,11 @@ SOURCES += \
 #
 
 DebugBuild|WindowsDebugAndRelease {
+
+HEADERS += src/QmlControls/QmlTestWidget.h
+SOURCES += src/QmlControls/QmlTestWidget.cc
+
+!AndroidBuild {
 
 INCLUDEPATH += \
 	src/qgcunittest
@@ -550,7 +570,6 @@ HEADERS += \
     src/qgcunittest/MockLinkMissionItemHandler.h \
     src/qgcunittest/PX4RCCalibrationTest.h \
     src/qgcunittest/UnitTest.h \
-    src/QmlControls/QmlTestWidget.h \
     src/VehicleSetup/SetupViewTest.h \
 
 SOURCES += \
@@ -575,10 +594,10 @@ SOURCES += \
     src/qgcunittest/MockLinkMissionItemHandler.cc \
     src/qgcunittest/PX4RCCalibrationTest.cc \
     src/qgcunittest/UnitTest.cc \
-    src/QmlControls/QmlTestWidget.cc \
     src/VehicleSetup/SetupViewTest.cc \
 
-}
+} # DebugBuild|WindowsDebugAndRelease
+} # AndroidBuild
 
 #
 # AutoPilot Plugin Support
@@ -658,3 +677,26 @@ SOURCES += \
     src/FactSystem/FactSystem.cc \
     src/FactSystem/FactValidator.cc \
     src/FactSystem/ParameterLoader.cc \
+
+# Android
+
+AndroidBuild {
+    include($$PWD/libs/qtandroidserialport/src/qtandroidserialport.pri)
+    message("Adding Serial Java Classes")
+    QT += androidextras
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+    OTHER_FILES += \
+        $$PWD/android/AndroidManifest.xml \
+        $$PWD/android/res/xml/device_filter.xml \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/FtdiSerialDriver.java \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/ProlificSerialDriver.java \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/UsbId.java \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
+        $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
+        $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbDeviceJNI.java \
+        $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbIoManager.java
+}

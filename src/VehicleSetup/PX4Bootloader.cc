@@ -28,7 +28,11 @@
 #include "PX4Bootloader.h"
 
 #include <QFile>
+#ifdef __android__
+#include "qserialportinfo.h"
+#else
 #include <QSerialPortInfo>
+#endif
 #include <QDebug>
 #include <QTime>
 

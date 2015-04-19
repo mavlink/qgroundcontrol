@@ -33,7 +33,9 @@ This file is part of the QGROUNDCONTROL project
 #include "TCPLink.h"
 
 #ifdef UNITTEST_BUILD
+#ifndef __android__
 #include "MockLink.h"
+#endif
 #endif
 
 #define LINK_SETTING_ROOT "LinkConfigurations"
@@ -92,9 +94,11 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
             config = new TCPConfiguration(name);
             break;
 #ifdef UNITTEST_BUILD
+#ifndef __android__
         case LinkConfiguration::TypeMock:
             config = new MockConfiguration(name);
             break;
+#endif
 #endif
     }
     return config;
@@ -118,9 +122,11 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
             dupe = new TCPConfiguration(dynamic_cast<TCPConfiguration*>(source));
             break;
 #ifdef UNITTEST_BUILD
+#ifndef __android__
         case TypeMock:
             dupe = new MockConfiguration(dynamic_cast<MockConfiguration*>(source));
             break;
+#endif
 #endif
     }
     return dupe;

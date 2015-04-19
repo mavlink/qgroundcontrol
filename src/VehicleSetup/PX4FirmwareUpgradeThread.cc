@@ -29,7 +29,11 @@
 #include "PX4Bootloader.h"
 
 #include <QTimer>
+#ifdef __android__
+#include "qserialportinfo.h"
+#else
 #include <QSerialPortInfo>
+#endif
 #include <QDebug>
 
 PX4FirmwareUpgradeThreadWorker::PX4FirmwareUpgradeThreadWorker(QObject* parent) :
