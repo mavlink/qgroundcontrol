@@ -147,7 +147,7 @@ void QGCFlightDisplay::_updateAttitude(UASInterface*, double roll, double pitch,
     } else {
         bool update = false;
         float rolldeg = roll * (180.0 / M_PI);
-        if (fabs(roll - rolldeg) > 2.5) {
+        if (fabs(roll - rolldeg) > 1.0) {
             update = true;
         }
         _roll = rolldeg;
@@ -162,7 +162,7 @@ void QGCFlightDisplay::_updateAttitude(UASInterface*, double roll, double pitch,
     } else {
         bool update = false;
         float pitchdeg = pitch * (180.0 / M_PI);
-        if (fabs(pitch - pitchdeg) > 2.5) {
+        if (fabs(pitch - pitchdeg) > 1.0) {
             update = true;
         }
         _pitch = pitchdeg;
