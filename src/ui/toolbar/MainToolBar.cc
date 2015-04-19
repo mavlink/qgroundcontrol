@@ -334,6 +334,9 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
         QGCUASParamManagerInterface* paramMgr = _mav->getParamManager();
         Q_ASSERT(paramMgr);
         connect(paramMgr, SIGNAL(parameterListProgress(float)),              this, SLOT(_setProgressBarValue(float)));
+        // Reset connection lost (if any)
+        _currentHeartbeatTimeout = 0;
+        emit heartbeatTimeoutChanged(_currentHeartbeatTimeout);
     }
     // Let toolbar know about it
     emit mavPresentChanged(_mav != NULL);
