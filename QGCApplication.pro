@@ -38,7 +38,7 @@ message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
 LIBS += -L$${LOCATION_PLUGIN_DESTDIR}
 LIBS += -l$${LOCATION_PLUGIN_NAME}
 
-LinuxBuild|MacBuild {
+LinuxBuild|MacBuild|AndoidBuild {
     PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}.a
 }
 
@@ -80,11 +80,6 @@ QT += testlib
 #
 # OS Specific settings
 #
-
-AndroidBuild {
-    DEFINES += __android__
-    DEFINES += __STDC_LIMIT_MACROS
-}
 
 MacBuild {
     QMAKE_INFO_PLIST = Custom-Info.plist
