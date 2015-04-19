@@ -60,10 +60,6 @@ Rectangle {
 
     color:  qgcPal.windowShade
 
-    Component.onCompleted: {
-        console.log(cellSpacerSize, cellHeight, cellRadius);
-    }
-
     function getProportionalDimmension(val) {
         return toolBarHolder.height * val / 40
     }
