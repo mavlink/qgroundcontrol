@@ -361,21 +361,23 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
 
 void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned foo, unsigned, unsigned, unsigned)
 {
-    // If we don't have any connections or more than one, ignore it
+    // We only care if we haveone single connection
     if(_connectionCount == 1) {
         if((unsigned)_telemetryRSSI != rssi) {
             _telemetryRSSI = rssi;
             emit telemetryRSSIChanged(_telemetryRSSI);
         }
     }
-    qDebug() << rssi << foo;
 }
 
 void MainToolBar::_remoteControlRSSIChanged(float rssi)
 {
-    if(_remoteRSSI != rssi) {
-        _remoteRSSI = rssi;
-        emit remoteRSSIChanged(_remoteRSSI);
+    // We only care if we haveone single connection
+    if(_connectionCount == 1) {
+        if(_remoteRSSI != rssi) {
+            _remoteRSSI = rssi;
+            emit remoteRSSIChanged(_remoteRSSI);
+        }
     }
 }
 
@@ -459,13 +461,13 @@ void MainToolBar::_updateConnection(LinkInterface *disconnectedLink)
         emit connectedListChanged(_connectedList);
     }
     // Update telemetry RSSI display
-    if(_connectionCount == 0 && _telemetryRSSI > 0) {
+    if(_connectionCount != 1 && _telemetryRSSI > 0) {
         _telemetryRSSI = 0;
         emit telemetryRSSIChanged(_telemetryRSSI);
     }
-    if(_connectionCount == 0 && _remoteRSSI > 0) {
-        _remoteRSSI = 0;
-        emit remoteRSSIChanged(_remoteRSSI);
+    if(_connectionCount != 1 && _remoteRSSI > 0.0f) {
+        _remoteRSSI = 0.0f;
+        emit qDebug(_remoteRSSI);
     }
 }
 
