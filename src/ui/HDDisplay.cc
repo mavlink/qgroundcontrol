@@ -473,16 +473,17 @@ void HDDisplay::renderOverlay()
  */
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
-    if (!uas)
-        return;
     // Disconnect any previously connected active UAS
     if (this->uas != NULL) {
         removeSource(this->uas);
+        this->uas = NULL;
     }
 
-    // Now connect the new UAS
-	addSource(uas);
-    this->uas = uas;
+    if (uas) {
+        // Now connect the new UAS
+        addSource(uas);
+        this->uas = uas;
+    }
 }
 
 /**
