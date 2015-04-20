@@ -100,7 +100,7 @@ void QGCAudioWorker::say(QString inText, int severity)
 
     if (!muted)
     {
-        QString text = _fixMillisecondString(inText);
+        QString text = _fixTextMessageForAudio(inText);
         // Prepend high priority text with alert beep
         if (severity < GAudioOutput::AUDIO_SEVERITY_CRITICAL) {
             beep();
@@ -187,10 +187,18 @@ bool QGCAudioWorker::_getMillisecondString(const QString& string, QString& match
     return false;
 }
 
-QString QGCAudioWorker::_fixMillisecondString(const QString& string) {
+QString QGCAudioWorker::_fixTextMessageForAudio(const QString& string) {
     QString match;
     QString newNumber;
     QString result = string;
+    //-- Look for modes
+    if(result.contains("POSCTL", Qt::CaseInsensitive)) {
+        result.replace("POSCTL", "Position Control", Qt::CaseInsensitive);
+    } else if(result.contains("ALTCTL", Qt::CaseInsensitive)) {
+        result.replace("ALTCTL", "Altitude Control", Qt::CaseInsensitive);
+    } else if(result.contains("RTL", Qt::CaseInsensitive)) {
+        result.replace("RTL", "Return To Land", Qt::CaseInsensitive);
+    }
     int number;
     if(_getMillisecondString(string, match, number) && number > 1000) {
         if(number < 60000) {

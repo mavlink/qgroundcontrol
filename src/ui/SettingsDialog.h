@@ -65,6 +65,8 @@ private slots:
     void on_showMessages_clicked(bool checked);
     void on_showMav_clicked(bool checked);
 
+    void on_showRSSI_clicked(bool checked);
+
 private:
     MainWindow*         _mainWindow;
     Ui::SettingsDialog* _ui;

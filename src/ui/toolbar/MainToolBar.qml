@@ -126,6 +126,11 @@ Rectangle {
         return colorGreen;
     }
 
+    function getRSSIColor() {
+        // TODO: Figure out RSSI threshold values
+        return colorBlue;
+    }
+
     function showMavStatus() {
          return (mainToolBar.mavPresent && mainToolBar.heartbeatTimeout === 0 && mainToolBar.connectionCount > 0);
     }
@@ -238,7 +243,7 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(10)
+                    anchors.leftMargin: getProportionalDimmension(8)
                 }
 
                 Rectangle {
@@ -314,7 +319,7 @@ Rectangle {
 
             Rectangle {
                 id: satelitte
-                width:  getProportionalDimmension(60)
+                width:  getProportionalDimmension(50)
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showGPS)
                 anchors.verticalCenter: parent.verticalCenter
@@ -329,7 +334,7 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(10)
+                    anchors.leftMargin: getProportionalDimmension(6)
                     mipmap: true
                     smooth: true
                 }
@@ -341,15 +346,124 @@ Rectangle {
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(10)
+                    anchors.rightMargin: getProportionalDimmension(6)
                     horizontalAlignment: Text.AlignRight
                     color: colorWhite
                 }
             }
 
             Rectangle {
+                id: rssi
+                width:  getProportionalDimmension(70)
+                height: cellHeight
+                visible: showMavStatus() && (mainToolBar.showRSSI) && ((mainToolBar.remoteRSSI > 0) || (mainToolBar.telemetryRSSI > 0))
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getRSSIColor();
+                radius: cellRadius
+                border.color: "#00000000"
+                border.width: 0
+
+                Image {
+                    source: "qrc:/res/Antenna";
+                    height: cellHeight * 0.65
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(6)
+                    mipmap: true
+                    smooth: true
+                }
+
+                Column {
+                    id: rssiCombined
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    getProportionalDimmension(6)
+                    visible:                (mainToolBar.remoteRSSI > 0) && (mainToolBar.telemetryRSSI > 0)
+                    Row {
+                        anchors.right: parent.right
+                        QGCLabel {
+                            text: 'R '
+                            font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                        QGCLabel {
+                            text: (mainToolBar.remoteRSSI * 100).toFixed(0)
+                            width: getProportionalDimmension(20)
+                            horizontalAlignment: Text.AlignRight
+                            font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                    }
+                    Row {
+                        anchors.right: parent.right
+                        QGCLabel {
+                            text: 'T '
+                            font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                        QGCLabel {
+                            text: mainToolBar.telemetryRSSI
+                            width: getProportionalDimmension(20)
+                            horizontalAlignment: Text.AlignRight
+                            font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                    }
+                }
+
+                Row {
+                    id: telemetryRSSISingle
+                    anchors.right: parent.right
+                    anchors.rightMargin: getProportionalDimmension(6)
+                    visible: (mainToolBar.remoteRSSI < 0.01) && (mainToolBar.telemetryRSSI > 0)
+                    anchors.verticalCenter: parent.verticalCenter
+                    QGCLabel {
+                        text: 'T '
+                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                        font.weight: Font.DemiBold
+                        color: colorWhite
+                    }
+                    QGCLabel {
+                        text: mainToolBar.telemetryRSSI
+                        width: getProportionalDimmension(20)
+                        horizontalAlignment: Text.AlignRight
+                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                        font.weight: Font.DemiBold
+                        color: colorWhite
+                    }
+                }
+
+                Row {
+                    id: remoteRSSISingle
+                    anchors.right: parent.right
+                    anchors.rightMargin: getProportionalDimmension(6)
+                    visible: (mainToolBar.remoteRSSI > 0) && (mainToolBar.telemetryRSSI === 0)
+                    anchors.verticalCenter: parent.verticalCenter
+                    QGCLabel {
+                        text: 'R '
+                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                        font.weight: Font.DemiBold
+                        color: colorWhite
+                    }
+                    QGCLabel {
+                        text: (mainToolBar.remoteRSSI * 100).toFixed(0)
+                        width: getProportionalDimmension(20)
+                        horizontalAlignment: Text.AlignRight
+                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                        font.weight: Font.DemiBold
+                        color: colorWhite
+                    }
+                }
+            }
+
+            Rectangle {
                 id: battery
-                width: getProportionalDimmension(80)
+                width: getProportionalDimmension(60)
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showBattery)
                 anchors.verticalCenter: parent.verticalCenter
@@ -371,12 +485,12 @@ Rectangle {
 
                 QGCLabel {
                     id: batteryText
-                    text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
-                    font.pointSize: screenTools.dpiAdjustedPointSize(14);
+                    text: mainToolBar.batteryVoltage.toFixed(1) + 'V';
+                    font.pointSize: screenTools.dpiAdjustedPointSize(12);
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(8)
+                    anchors.rightMargin: getProportionalDimmension(6)
                     horizontalAlignment: Text.AlignRight
                     color: colorWhite
                 }
