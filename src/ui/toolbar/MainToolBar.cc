@@ -359,7 +359,7 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
     emit mavPresentChanged(_mav != NULL);
 }
 
-void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned foo, unsigned, unsigned, unsigned)
+void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned, unsigned, unsigned, unsigned)
 {
     // We only care if we haveone single connection
     if(_connectionCount == 1) {
@@ -467,7 +467,7 @@ void MainToolBar::_updateConnection(LinkInterface *disconnectedLink)
     }
     if(_connectionCount != 1 && _remoteRSSI > 0.0f) {
         _remoteRSSI = 0.0f;
-        emit qDebug(_remoteRSSI);
+        emit remoteRSSIChanged(_remoteRSSI);
     }
 }
 
