@@ -56,6 +56,81 @@ Rectangle {
         id: __exclusiveEditorGroup
     }
 
+property Fact __propertiesDialogFact: Fact { }
+
+    Dialog {
+
+        id:         propertiesDialog
+        visible:    false
+        title:      "Parameter Properties"
+
+        contentItem: Rectangle {
+            color:          __qgcPal.window
+            implicitWidth:  500
+            implicitHeight: longDescription.y + longDescription.height + 20
+
+                Grid {
+                id:     grid
+                x:      10
+                y:      10
+                columns: 2
+                spacing: 5
+
+                QGCLabel {
+                    text: "Parameter:"
+                }
+                QGCLabel {
+                    text: __propertiesDialogFact.name
+                }
+                QGCLabel {
+                    text: "Group:"
+                }
+                QGCLabel {
+                    text: __propertiesDialogFact.group
+                }
+                QGCLabel {
+                    text: "Units:"
+                }
+                QGCLabel {
+                    text: __propertiesDialogFact.units ? __propertiesDialogFact.units : "none"
+                }
+                QGCLabel {
+                    text: "Default value:"
+                }
+                QGCLabel {
+                    text: __propertiesDialogFact.defaultValueAvailable ? __propertiesDialogFact.defaultValue : "none"
+                }
+                QGCLabel {
+                    text: "Minimum value:"
+                }
+                QGCLabel {
+                    text: __propertiesDialogFact.min
+                }
+                QGCLabel {
+                    text: "Maximum value:"
+                }
+                QGCLabel {
+                    text: __propertiesDialogFact.max
+                }
+                QGCLabel {
+                    text: "Description:"
+                }
+                QGCLabel {
+                    text: __propertiesDialogFact.shortDescription ? __propertiesDialogFact.shortDescription : "none"
+                }
+                QGCLabel {
+                    text: "Description (long):"
+                }
+                QGCLabel {
+                    id:         longDescription
+                    width:      500 - 20 - x
+                    wrapMode:   Text.WordWrap
+                    text:       __propertiesDialogFact.longDescription ? __propertiesDialogFact.longDescription : "none"
+                }
+            }
+        }
+    }
+
     Column {
         anchors.fill:parent
 
@@ -180,79 +255,7 @@ Rectangle {
                                                         }
                                                         MenuItem {
                                                             text:           "Properties..."
-                                                            onTriggered: 	propertiesDialog.open()
-                                                        }
-                                                    }
-
-                                                    Dialog {
-                                                        id:         propertiesDialog
-                                                        visible:    false
-                                                        title:      "Parameter Properties"
-
-                                                        contentItem: Rectangle {
-                                                            color:          __qgcPal.window
-                                                            implicitWidth:          500
-                                                            implicitHeight:         longDescription.y + longDescription.height + 20
-
-                                                                Grid {
-                                                                id:     grid
-                                                                x:      10
-                                                                y:      10
-                                                                columns: 2
-                                                                spacing: 5
-
-                                                                QGCLabel {
-                                                                    text: "Parameter:"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: modelFact.name
-                                                                }
-                                                                QGCLabel {
-                                                                    text: "Group:"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: modelFact.group
-                                                                }
-                                                                QGCLabel {
-                                                                    text: "Units:"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: modelFact.units ? modelFact.units : "none"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: "Default value:"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: modelFact.defaultValueAvailable ? modelFact.defaultValue : "none"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: "Minimum value:"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: modelFact.min
-                                                                }
-                                                                QGCLabel {
-                                                                    text: "Maximum value:"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: modelFact.max
-                                                                }
-                                                                QGCLabel {
-                                                                    text: "Description:"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: modelFact.shortDescription ? modelFact.shortDescription : "none"
-                                                                }
-                                                                QGCLabel {
-                                                                    text: "Description (long):"
-                                                                }
-                                                                QGCLabel {
-                                                                    id:         longDescription
-                                                                    width:      500 - 20 - x
-                                                                    wrapMode:   Text.WordWrap
-                                                                    text:       modelFact.longDescription ? modelFact.longDescription : "none"
-                                                                }
-                                                            }
+                                                            onTriggered: 	{ __propertiesDialogFact = modelFact; propertiesDialog.open() }
                                                         }
                                                     }
 
