@@ -126,9 +126,12 @@ Rectangle {
         return colorGreen;
     }
 
-    function getRSSIColor() {
-        // TODO: Figure out RSSI threshold values
-        return colorBlue;
+    function getRSSIColor(value) {
+        if(value < 10)
+            return colorRed;
+        if(value < 50)
+            return colorOrange;
+        return colorGreen;
     }
 
     function showMavStatus() {
@@ -231,7 +234,7 @@ Rectangle {
                 visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getMessageColor()
-                radius: cellRadius
+                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
                 property bool showTriangle: false
@@ -305,7 +308,7 @@ Rectangle {
                 visible: showMavStatus() &&  (mainToolBar.showMav)
                 anchors.verticalCenter: parent.verticalCenter
                 color: colorBlue
-                radius: cellRadius
+                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
                 Image {
@@ -324,7 +327,7 @@ Rectangle {
                 visible: showMavStatus() && (mainToolBar.showGPS)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getSatelliteColor();
-                radius: cellRadius
+                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
 
@@ -353,19 +356,18 @@ Rectangle {
             }
 
             Rectangle {
-                id: rssi
-                width:  getProportionalDimmension(70)
+                id: rssiRC
+                width:  getProportionalDimmension(55)
                 height: cellHeight
-                visible: showMavStatus() && (mainToolBar.showRSSI) && ((mainToolBar.remoteRSSI > 0) || (mainToolBar.telemetryRSSI > 0))
+                visible: showMavStatus() && mainToolBar.showRSSI
                 anchors.verticalCenter: parent.verticalCenter
-                color:  getRSSIColor();
-                radius: cellRadius
+                color:  getRSSIColor(mainToolBar.remoteRSSI);
+                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
-
                 Image {
-                    source: "qrc:/res/Antenna";
-                    height: cellHeight * 0.65
+                    source: "qrc:/res/AntennaRC";
+                    width: cellHeight * 0.7
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
@@ -373,26 +375,55 @@ Rectangle {
                     mipmap: true
                     smooth: true
                 }
+                QGCLabel {
+                    text: mainToolBar.remoteRSSI
+                    anchors.right: parent.right
+                    anchors.rightMargin: getProportionalDimmension(6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                    font.weight: Font.DemiBold
+                    color: colorWhite
+                }
+            }
 
+            Rectangle {
+                id: rssiTelemetry
+                width:  getProportionalDimmension(80)
+                height: cellHeight
+                visible: showMavStatus() && (mainToolBar.showRSSI) && ((mainToolBar.telemetryRRSSI > 0) && (mainToolBar.telemetryLRSSI > 0))
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getRSSIColor(Math.min(mainToolBar.telemetryRRSSI,mainToolBar.telemetryLRSSI));
+                //radius: cellRadius
+                border.color: "#00000000"
+                border.width: 0
+                Image {
+                    source: "qrc:/res/AntennaT";
+                    width: cellHeight * 0.7
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(6)
+                    mipmap: true
+                    smooth: true
+                }
                 Column {
-                    id: rssiCombined
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right:          parent.right
                     anchors.rightMargin:    getProportionalDimmension(6)
-                    visible:                (mainToolBar.remoteRSSI > 0) && (mainToolBar.telemetryRSSI > 0)
                     Row {
                         anchors.right: parent.right
                         QGCLabel {
                             text: 'R '
-                            font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                            font.pointSize: screenTools.dpiAdjustedPointSize(11);
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
                         QGCLabel {
-                            text: (mainToolBar.remoteRSSI * 100).toFixed(0)
-                            width: getProportionalDimmension(20)
+                            text: mainToolBar.telemetryRRSSI + 'dB'
+                            width: getProportionalDimmension(30)
                             horizontalAlignment: Text.AlignRight
-                            font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                            font.pointSize: screenTools.dpiAdjustedPointSize(11);
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -400,63 +431,19 @@ Rectangle {
                     Row {
                         anchors.right: parent.right
                         QGCLabel {
-                            text: 'T '
-                            font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                            text: 'L '
+                            font.pointSize: screenTools.dpiAdjustedPointSize(11);
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
                         QGCLabel {
-                            text: mainToolBar.telemetryRSSI
-                            width: getProportionalDimmension(20)
+                            text: mainToolBar.telemetryLRSSI + 'dB'
+                            width: getProportionalDimmension(30)
                             horizontalAlignment: Text.AlignRight
-                            font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                            font.pointSize: screenTools.dpiAdjustedPointSize(11);
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
-                    }
-                }
-
-                Row {
-                    id: telemetryRSSISingle
-                    anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(6)
-                    visible: (mainToolBar.remoteRSSI < 0.01) && (mainToolBar.telemetryRSSI > 0)
-                    anchors.verticalCenter: parent.verticalCenter
-                    QGCLabel {
-                        text: 'T '
-                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
-                        font.weight: Font.DemiBold
-                        color: colorWhite
-                    }
-                    QGCLabel {
-                        text: mainToolBar.telemetryRSSI
-                        width: getProportionalDimmension(20)
-                        horizontalAlignment: Text.AlignRight
-                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
-                        font.weight: Font.DemiBold
-                        color: colorWhite
-                    }
-                }
-
-                Row {
-                    id: remoteRSSISingle
-                    anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(6)
-                    visible: (mainToolBar.remoteRSSI > 0) && (mainToolBar.telemetryRSSI === 0)
-                    anchors.verticalCenter: parent.verticalCenter
-                    QGCLabel {
-                        text: 'R '
-                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
-                        font.weight: Font.DemiBold
-                        color: colorWhite
-                    }
-                    QGCLabel {
-                        text: (mainToolBar.remoteRSSI * 100).toFixed(0)
-                        width: getProportionalDimmension(20)
-                        horizontalAlignment: Text.AlignRight
-                        font.pointSize: screenTools.dpiAdjustedPointSize(12);
-                        font.weight: Font.DemiBold
-                        color: colorWhite
                     }
                 }
             }
@@ -468,7 +455,7 @@ Rectangle {
                 visible: showMavStatus() && (mainToolBar.showBattery)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  (mainToolBar.batteryPercent > 40.0 || mainToolBar.batteryPercent < 0.01) ? colorBlue : colorRed
-                radius: cellRadius
+                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
 

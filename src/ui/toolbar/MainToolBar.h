@@ -99,12 +99,14 @@ public:
     Q_PROPERTY(bool          showBattery        MEMBER _showBattery             NOTIFY showBatteryChanged)
     Q_PROPERTY(bool          showRSSI           MEMBER _showRSSI                NOTIFY showRSSIChanged)
     Q_PROPERTY(float         progressBarValue   MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
-    Q_PROPERTY(float         remoteRSSI         READ remoteRSSI                 NOTIFY remoteRSSIChanged)
-    Q_PROPERTY(int           telemetryRSSI      READ telemetryRSSI              NOTIFY telemetryRSSIChanged)
+    Q_PROPERTY(int           remoteRSSI         READ remoteRSSI                 NOTIFY remoteRSSIChanged)
+    Q_PROPERTY(int           telemetryRRSSI     READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
+    Q_PROPERTY(int           telemetryLRSSI     READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
 
     bool        mavPresent              () { return _mav != NULL; }
-    float       remoteRSSI              () { return _remoteRSSI; }
-    int         telemetryRSSI           () { return _telemetryRSSI; }
+    int         remoteRSSI              () { return _remoteRSSI; }
+    int         telemetryRRSSI          () { return _telemetryRRSSI; }
+    int         telemetryLRSSI          () { return _telemetryLRSSI; }
 
     void        setCurrentView          (int currentView);
     void        viewStateChanged        (const QString& key, bool value);
@@ -134,8 +136,9 @@ signals:
     void showBatteryChanged             (bool value);
     void showRSSIChanged                (bool value);
     void progressBarValueChanged        (float value);
-    void remoteRSSIChanged              (float value);
-    void telemetryRSSIChanged           (int value);
+    void remoteRSSIChanged              (int value);
+    void telemetryRRSSIChanged          (int value);
+    void telemetryLRSSIChanged          (int value);
 
 private slots:
     void _setActiveUAS                  (UASInterface* active);
@@ -194,8 +197,9 @@ private:
     bool            _showRSSI;
     bool            _showBattery;
     float           _progressBarValue;
-    float           _remoteRSSI;
-    int             _telemetryRSSI;
+    int             _remoteRSSI;
+    int             _telemetryRRSSI;
+    int             _telemetryLRSSI;
 
     UASMessageViewRollDown* _rollDownMessages;
 };

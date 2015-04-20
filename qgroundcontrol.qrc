@@ -156,7 +156,8 @@
         <file alias="Kill">resources/Kill.svg</file>
         <file alias="Shutdown">resources/Shutdown.svg</file>
 
-        <file alias="Antenna">resources/antenna.svg</file>
+        <file alias="AntennaT">resources/Antenna_T.svg</file>
+        <file alias="AntennaRC">resources/Antenna_RC.svg</file>
         <file alias="Gps">resources/Gps.svg</file>
         <file alias="Megaphone">resources/Megaphone.png</file>
         <file alias="Yield">resources/Yield.png</file>

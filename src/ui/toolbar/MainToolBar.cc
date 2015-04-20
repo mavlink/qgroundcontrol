@@ -61,8 +61,9 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _showRSSI(true)
     , _showBattery(true)
     , _progressBarValue(0.0f)
-    , _remoteRSSI(0.0f)
-    , _telemetryRSSI(0)
+    , _remoteRSSI(0)
+    , _telemetryRRSSI(0)
+    , _telemetryLRSSI(0)
     , _rollDownMessages(0)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
@@ -359,13 +360,19 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
     emit mavPresentChanged(_mav != NULL);
 }
 
-void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned, unsigned, unsigned, unsigned)
+void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned remrssi, unsigned, unsigned, unsigned)
 {
     // We only care if we haveone single connection
     if(_connectionCount == 1) {
-        if((unsigned)_telemetryRSSI != rssi) {
-            _telemetryRSSI = rssi;
-            emit telemetryRSSIChanged(_telemetryRSSI);
+        if((unsigned)_telemetryLRSSI != rssi) {
+            // According to the Silabs data sheet, the RSSI value is 0.5db per bit
+            _telemetryLRSSI = rssi >> 1;
+            emit telemetryLRSSIChanged(_telemetryLRSSI);
+        }
+        if((unsigned)_telemetryRRSSI != remrssi) {
+            // According to the Silabs data sheet, the RSSI value is 0.5db per bit
+            _telemetryRRSSI = remrssi >> 1;
+            emit telemetryRRSSIChanged(_telemetryRRSSI);
         }
     }
 }
@@ -461,12 +468,16 @@ void MainToolBar::_updateConnection(LinkInterface *disconnectedLink)
         emit connectedListChanged(_connectedList);
     }
     // Update telemetry RSSI display
-    if(_connectionCount != 1 && _telemetryRSSI > 0) {
-        _telemetryRSSI = 0;
-        emit telemetryRSSIChanged(_telemetryRSSI);
+    if(_connectionCount != 1 && _telemetryRRSSI > 0) {
+        _telemetryRRSSI = 0;
+        emit telemetryRRSSIChanged(_telemetryRRSSI);
     }
-    if(_connectionCount != 1 && _remoteRSSI > 0.0f) {
-        _remoteRSSI = 0.0f;
+    if(_connectionCount != 1 && _telemetryLRSSI > 0) {
+        _telemetryLRSSI = 0;
+        emit telemetryLRSSIChanged(_telemetryLRSSI);
+    }
+    if(_connectionCount != 1 && _remoteRSSI > 0) {
+        _remoteRSSI = 0;
         emit remoteRSSIChanged(_remoteRSSI);
     }
 }
