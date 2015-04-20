@@ -254,7 +254,7 @@ signals:
     void paramRewriteTimeoutChanged(int ms);
     /** @brief Emitted if action guard status changed */
     void actionGuardChanged(bool enabled);
-    /** @brief Emitted if actiion request timeout changed */
+    /** @brief Emitted if action request timeout changed */
     void actionRetransmissionTimeoutChanged(int ms);
     /** @brief Update the packet loss from one system */
     void receiveLossChanged(int uasId, float loss);

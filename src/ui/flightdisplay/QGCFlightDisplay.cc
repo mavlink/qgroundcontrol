@@ -303,10 +303,14 @@ void QGCFlightDisplay::_checkUpdate()
         emit longitudeChanged();
     }
     if(_mav) {
-        _latitude  = _mav->getLatitude();
-        _longitude = _mav->getLongitude();
-        if(_latitude)  emit latitudeChanged();
-        if(_longitude) emit longitudeChanged();
+        if(_latitude != _mav->getLatitude()) {
+            _latitude = _mav->getLatitude();
+            emit latitudeChanged();
+        }
+        if(_longitude != _mav->getLongitude()) {
+            _longitude = _mav->getLongitude();
+            emit longitudeChanged();
+        }
     }
 }
 
