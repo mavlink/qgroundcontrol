@@ -45,11 +45,10 @@ Rectangle {
 
     property int cellSpacerSize: getProportionalDimmension(4)
     property int cellHeight:     getProportionalDimmension(30)
-    property int cellRadius:     getProportionalDimmension(3)
 
     property var colorBlue:       "#1a6eaa"
-    property var colorGreen:      "#079527"
-    property var colorRed:        "#a81a1b"
+    property var colorGreen:      "#329147"
+    property var colorRed:        "#942324"
     property var colorOrange:     "#a76f26"
     property var colorWhite:      "#f0f0f0"
 
@@ -59,10 +58,6 @@ Rectangle {
     property var colorWhiteText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#343333" : "#f0f0f0"
 
     color:  qgcPal.windowShade
-
-    Component.onCompleted: {
-        console.log(cellSpacerSize, cellHeight, cellRadius);
-    }
 
     function getProportionalDimmension(val) {
         return toolBarHolder.height * val / 40
@@ -229,12 +224,11 @@ Rectangle {
 
             Rectangle {
                 id: messages
-                width: (mainToolBar.messageCount > 99) ? getProportionalDimmension(70) : getProportionalDimmension(60)
+                width: (mainToolBar.messageCount > 99) ? getProportionalDimmension(65) : getProportionalDimmension(60)
                 height: cellHeight
                 visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getMessageColor()
-                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
                 property bool showTriangle: false
@@ -249,7 +243,7 @@ Rectangle {
                     anchors.leftMargin: getProportionalDimmension(8)
                 }
 
-                Rectangle {
+                Item {
                     id: messageTextRect
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -308,7 +302,6 @@ Rectangle {
                 visible: showMavStatus() &&  (mainToolBar.showMav)
                 anchors.verticalCenter: parent.verticalCenter
                 color: colorBlue
-                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
                 Image {
@@ -327,7 +320,6 @@ Rectangle {
                 visible: showMavStatus() && (mainToolBar.showGPS)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getSatelliteColor();
-                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
 
@@ -344,7 +336,7 @@ Rectangle {
 
                 QGCLabel {
                     id: satelitteText
-                    text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
+                    text: mainToolBar.satelliteCount
                     font.pointSize: screenTools.dpiAdjustedPointSize(14);
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
@@ -362,7 +354,6 @@ Rectangle {
                 visible: showMavStatus() && mainToolBar.showRSSI
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getRSSIColor(mainToolBar.remoteRSSI);
-                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
                 Image {
@@ -394,7 +385,6 @@ Rectangle {
                 visible: showMavStatus() && (mainToolBar.showRSSI) && ((mainToolBar.telemetryRRSSI > 0) && (mainToolBar.telemetryLRSSI > 0))
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getRSSIColor(Math.min(mainToolBar.telemetryRRSSI,mainToolBar.telemetryLRSSI));
-                //radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
                 Image {
@@ -454,8 +444,7 @@ Rectangle {
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showBattery)
                 anchors.verticalCenter: parent.verticalCenter
-                color:  (mainToolBar.batteryPercent > 40.0 || mainToolBar.batteryPercent < 0.01) ? colorBlue : colorRed
-                //radius: cellRadius
+                color:  getBatteryColor();
                 border.color: "#00000000"
                 border.width: 0
 
