@@ -81,6 +81,7 @@ _ui(new Ui::SettingsDialog)
     _ui->showGPS->setChecked(settings.value(     TOOL_BAR_SHOW_GPS,      true).toBool());
     _ui->showMav->setChecked(settings.value(     TOOL_BAR_SHOW_MAV,      true).toBool());
     _ui->showMessages->setChecked(settings.value(TOOL_BAR_SHOW_MESSAGES, true).toBool());
+    _ui->showRSSI->setChecked(settings.value(   TOOL_BAR_SHOW_RSSI,      true).toBool());
     settings.endGroup();
     // Audio preferences
     _ui->audioMuteCheckBox->setChecked(GAudioOutput::instance()->isMuted());
@@ -205,4 +206,9 @@ void SettingsDialog::on_showMessages_clicked(bool checked)
 void SettingsDialog::on_showMav_clicked(bool checked)
 {
     _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MAV, checked);
+}
+
+void SettingsDialog::on_showRSSI_clicked(bool checked)
+{
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_RSSI, checked);
 }

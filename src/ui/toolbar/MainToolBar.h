@@ -37,6 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #define TOOL_BAR_SHOW_GPS       "ShowGPS"
 #define TOOL_BAR_SHOW_MAV       "ShowMav"
 #define TOOL_BAR_SHOW_MESSAGES  "ShowMessages"
+#define TOOL_BAR_SHOW_RSSI       "ShowRSSI"
 
 class UASInterface;
 class UASMessage;
@@ -96,12 +97,19 @@ public:
     Q_PROPERTY(bool          showMav            MEMBER _showMav                 NOTIFY showMavChanged)
     Q_PROPERTY(bool          showMessages       MEMBER _showMessages            NOTIFY showMessagesChanged)
     Q_PROPERTY(bool          showBattery        MEMBER _showBattery             NOTIFY showBatteryChanged)
+    Q_PROPERTY(bool          showRSSI           MEMBER _showRSSI                NOTIFY showRSSIChanged)
     Q_PROPERTY(float         progressBarValue   MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
+    Q_PROPERTY(int           remoteRSSI         READ remoteRSSI                 NOTIFY remoteRSSIChanged)
+    Q_PROPERTY(int           telemetryRRSSI     READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
+    Q_PROPERTY(int           telemetryLRSSI     READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
 
-    bool          mavPresent             () { return _mav != NULL; }
+    bool        mavPresent              () { return _mav != NULL; }
+    int         remoteRSSI              () { return _remoteRSSI; }
+    int         telemetryRRSSI          () { return _telemetryRRSSI; }
+    int         telemetryLRSSI          () { return _telemetryLRSSI; }
 
-    void          setCurrentView         (int currentView);
-    void          viewStateChanged       (const QString& key, bool value);
+    void        setCurrentView          (int currentView);
+    void        viewStateChanged        (const QString& key, bool value);
 
 signals:
     void connectionCountChanged         (int count);
@@ -126,7 +134,11 @@ signals:
     void showMavChanged                 (bool value);
     void showMessagesChanged            (bool value);
     void showBatteryChanged             (bool value);
+    void showRSSIChanged                (bool value);
     void progressBarValueChanged        (float value);
+    void remoteRSSIChanged              (int value);
+    void telemetryRRSSIChanged          (int value);
+    void telemetryLRSSIChanged          (int value);
 
 private slots:
     void _setActiveUAS                  (UASInterface* active);
@@ -147,6 +159,8 @@ private slots:
     void _leaveMessageView              ();
     void _setSatLoc                     (UASInterface* uas, int fix);
     void _setProgressBarValue           (float value);
+    void _remoteControlRSSIChanged      (uint8_t rssi);
+    void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
@@ -180,8 +194,12 @@ private:
     bool            _showGPS;
     bool            _showMav;
     bool            _showMessages;
+    bool            _showRSSI;
     bool            _showBattery;
     float           _progressBarValue;
+    int             _remoteRSSI;
+    int             _telemetryRRSSI;
+    int             _telemetryLRSSI;
 
     UASMessageViewRollDown* _rollDownMessages;
 };

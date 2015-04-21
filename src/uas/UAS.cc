@@ -923,10 +923,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_rc_channels_t channels;
             mavlink_msg_rc_channels_decode(&message, &channels);
 
-            // UINT8_MAX indicates this value is unknown
-            if (channels.rssi != UINT8_MAX) {
-                emit remoteControlRSSIChanged(channels.rssi/100.0f);
-            }
+            emit remoteControlRSSIChanged(channels.rssi);
 
             if (channels.chan1_raw != UINT16_MAX && channels.chancount > 0)
                 emit remoteControlChannelRawChanged(0, channels.chan1_raw);
@@ -967,6 +964,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
         }
             break;
+
+        // TODO: (gg 20150420) PX4 Firmware does not seem to send this message. Don't know what to do about it.
         case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
         {
             mavlink_rc_channels_scaled_t channels;
@@ -974,7 +973,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             const unsigned int portWidth = 8; // XXX magic number
 
-            emit remoteControlRSSIChanged(channels.rssi/255.0f);
+            emit remoteControlRSSIChanged(channels.rssi);
             if (static_cast<uint16_t>(channels.chan1_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 0, channels.chan1_scaled/10000.0f);
             if (static_cast<uint16_t>(channels.chan2_scaled) != UINT16_MAX)

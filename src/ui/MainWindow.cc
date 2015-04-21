@@ -148,7 +148,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     emit initStatusChanged(tr("Setting up user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     _ui.setupUi(this);
     // Make sure tool bar elements all fit before changing minimum width
-    setMinimumWidth(926);
+    setMinimumWidth(1008);
     configureWindowName();
 
     // Setup central widget with a layout to hold the views

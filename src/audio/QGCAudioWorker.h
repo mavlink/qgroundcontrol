@@ -51,7 +51,7 @@ protected:
     QTimer *emergencyTimer;
     bool muted;
 private:
-    QString _fixMillisecondString(const QString& string);
+    QString _fixTextMessageForAudio(const QString& string);
     bool _getMillisecondString(const QString& string, QString& match, int& number);
 };
 
