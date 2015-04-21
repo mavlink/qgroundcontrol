@@ -13,7 +13,7 @@ QGCButton {
     property bool showHighlight: __showHighlight
     style: ButtonStyle {
         background: Item {
-            anchors.margins: 3
+            anchors.margins: height * 0.1 // 3
             Canvas {
                 id: chevron
                 anchors.fill: parent
@@ -34,14 +34,17 @@ QGCButton {
                 onPaint: {
                     var vMiddle = height / 2;
                     var context = getContext("2d");
+                    var w12 = button.height * 0.4 // 12
+                    var w3  = button.height * 0.1 // 3
+                    var w15 = w12 + w3
                     context.reset();
                     context.beginPath();
-                    context.lineWidth = 6;
+                    context.lineWidth = button.height * 0.2; // 6
                     context.beginPath();
                     context.moveTo(0, 0);
-                    context.lineTo(width - 12 - 3, 0);
-                    context.lineTo(width - 3, vMiddle);
-                    context.lineTo(width - 12 - 3, height);
+                    context.lineTo(width - w15, 0);
+                    context.lineTo(width - w3,  vMiddle);
+                    context.lineTo(width - w15, height);
                     context.lineTo(0, height);
                     context.closePath();
                     context.strokeStyle = __qgcPal.windowShade
