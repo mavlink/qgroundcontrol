@@ -351,7 +351,7 @@ Rectangle {
                 id: rssiRC
                 width:  getProportionalDimmension(55)
                 height: cellHeight
-                visible: showMavStatus() && mainToolBar.showRSSI
+                visible: showMavStatus() && mainToolBar.showRSSI && mainToolBar.remoteRSSI <= 100
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getRSSIColor(mainToolBar.remoteRSSI);
                 border.color: "#00000000"

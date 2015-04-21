@@ -377,7 +377,7 @@ void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned
     }
 }
 
-void MainToolBar::_remoteControlRSSIChanged(float rssi)
+void MainToolBar::_remoteControlRSSIChanged(uint8_t rssi)
 {
     // We only care if we haveone single connection
     if(_connectionCount == 1) {

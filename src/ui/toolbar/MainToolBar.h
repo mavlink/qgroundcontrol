@@ -159,7 +159,7 @@ private slots:
     void _leaveMessageView              ();
     void _setSatLoc                     (UASInterface* uas, int fix);
     void _setProgressBarValue           (float value);
-    void _remoteControlRSSIChanged      (float rssi);
+    void _remoteControlRSSIChanged      (uint8_t rssi);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
 
 private:
