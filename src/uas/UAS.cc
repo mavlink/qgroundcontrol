@@ -923,28 +923,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_rc_channels_t channels;
             mavlink_msg_rc_channels_decode(&message, &channels);
 
-            /*
-            * Full RSSI field: 0b 1 111 1111
-            *                     | |   |
-            *                     | |   ^ These four bits encode a total of
-            *                     | |     16 RSSI levels. 15 = full, 0 = no signal
-            *                     | |
-            *                     | ^ These three bits encode a total of 8
-            *                     |   digital RC input types.
-            *                     |   0: PPM, 1: SBUS, 2: Spektrum, 3: ST24
-            *                     |
-            *                     ^ If bit is set, RSSI encodes type + RSSI
-            */
-
-            // TODO: Because the code on the firmware side never sets rssi to 0 on loss of connection
-            // we get a minimum value of 1 (3.5dB). This is what it does to compute it:
-            // msg.rssi |= (rc.rssi <= 100) ? ((rc.rssi / 7) + 1) : 15;
-            // Therefore, I'm eliminating bit 0 as well.
-            int tRssi = (channels.rssi & 0x0E) * 7;
-            if(tRssi > 100) {
-                tRssi = 100;
-            }
-            emit remoteControlRSSIChanged((uint8_t)tRssi);
+            emit remoteControlRSSIChanged(channels.rssi);
 
             if (channels.chan1_raw != UINT16_MAX && channels.chancount > 0)
                 emit remoteControlChannelRawChanged(0, channels.chan1_raw);
@@ -994,7 +973,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             const unsigned int portWidth = 8; // XXX magic number
 
-            // TODO: This makes an assumption the RSSI has been normalized to 0-100
             emit remoteControlRSSIChanged(channels.rssi);
             if (static_cast<uint16_t>(channels.chan1_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 0, channels.chan1_scaled/10000.0f);
