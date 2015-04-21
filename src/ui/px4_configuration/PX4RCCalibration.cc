@@ -936,6 +936,7 @@ void PX4RCCalibration::_writeCalibration(void)
     paramMgr->sendPendingParameters(true, true);
     
     _stopCalibration();
+    _setInternalCalibrationValuesFromParameters();
 }
 
 void PX4RCCalibration::_updateView()
