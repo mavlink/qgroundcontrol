@@ -60,6 +60,7 @@ Item {
             Fact { id: rc_map_mode_sw;      name: "RC_MAP_MODE_SW" }
             Fact { id: rc_map_posctl_sw;    name: "RC_MAP_POSCTL_SW" }
             Fact { id: rc_map_return_sw;    name: "RC_MAP_RETURN_SW" }
+            Fact { id: rc_map_offboard_sw;  name: "RC_MAP_OFFB_SW" }
             Fact { id: rc_map_loiter_sw;    name: "RC_MAP_LOITER_SW" }
 
             Fact { id: rc_assist_th;        name: "RC_ASSIST_TH" }
@@ -67,6 +68,7 @@ Item {
             Fact { id: rc_auto_th;          name: "RC_AUTO_TH" }
             Fact { id: rc_loiter_th;        name: "RC_LOITER_TH" }
             Fact { id: rc_return_th;        name: "RC_RETURN_TH" }
+            Fact { id: rc_offboard_th;      name: "RC_OFFB_TH" }
 
             Fact { id: rc_th_user;          name: "RC_TH_USER" }
 
@@ -81,6 +83,7 @@ Item {
             property int modeChannel:       rc_map_mode_sw.value
             property int posCtlChannel:     rc_map_posctl_sw.value
             property int returnChannel:     rc_map_return_sw.value
+            property int offboardChannel:   rc_map_offboard_sw.value
             property int loiterChannel:     rc_map_loiter_sw.value
 
             property real rcThUserValue: rc_th_user.value
@@ -187,15 +190,19 @@ Item {
 
                             // If dropped over a channel target remap switch
                             if (parent.Drag.target && parent.Drag.target.dropAllowed) {
-                                fact.value = parent.Drag.target.channel
+                                if (!singleSwitchRequired || parent.Drag.target.unassignedChannel) {
+                                    fact.value = parent.Drag.target.channel
+                                }
                             }
                         }
                     }
 
                     DropArea {
                         // This will cause to tile to go back to unassigned if dropped here
-                        readonly property int channel: 0
-                        property bool dropAllowed: true
+                        readonly property int channel:      0
+                        property bool dropAllowed:          true
+                        property bool unassignedChannel:    true
+
 
                         id:     dropArea
                         width:  parent.width
@@ -258,7 +265,9 @@ Item {
 
                             // If dropped over a channel target remap switch
                             if (parent.Drag.target && parent.Drag.target.dropAllowed) {
-                                fact.value = parent.Drag.target.channel
+                                if (!singleSwitchRequired || parent.Drag.target.unassignedChannel) {
+                                    fact.value = parent.Drag.target.channel
+                                }
                             }
                         }
                     }
@@ -267,6 +276,7 @@ Item {
 
             onModeChannelChanged: if (!inRedistribution) redistributeThresholds()
             onReturnChannelChanged: if (!inRedistribution) redistributeThresholds()
+            onOffboardChannelChanged: if (!inRedistribution) redistributeThresholds()
             onLoiterChannelChanged: if (!inRedistribution) redistributeThresholds()
             onPosCtlChannelChanged: if (!inRedistribution) redistributeThresholds()
             onRcThUserValue: if (!inRedistribution) redistributeThresholds()
@@ -280,11 +290,9 @@ Item {
                 if (modeChannel != 0) {
                     var positions = 3  // Manual/Assist/Auto always exist
 
-                    var returnOnModeSwitch = modeChannel == returnChannel
                     var loiterOnModeSwitch = modeChannel == loiterChannel
                     var posCtlOnModeSwitch = modeChannel == posCtlChannel
 
-                    positions += returnOnModeSwitch ? 1 : 0
                     positions += loiterOnModeSwitch ? 1 : 0
                     positions += posCtlOnModeSwitch ? 1 : 0
 
@@ -306,75 +314,49 @@ Item {
                         currentThreshold += increment
                         rc_loiter_th.value = currentThreshold
                     }
-                    if (returnOnModeSwitch) {
-                        currentThreshold += increment
-                        rc_return_th.value = currentThreshold
-                    }
 
                     inRedistribution = false
                 }
 
-                if (returnChannel != 0 && returnChannel != modeChannel) {
-                    var positions = 2  // On/off always exist
-
-                    var loiterOnReturnSwitch = returnChannel == loiterChannel
-
-                    positions += loiterOnReturnSwitch ? 1 : 0
-
-                    var increment = 1.0 / positions
-                    var currentThreshold = 0.0
-
-                    if (positions == 2) {
-                        // If only two positions don't set threshold at midrange. Setting to 0.25
-                        // allows for this channel to work with either two or three position switch
-                        increment = 0.25
-                    }
-
-                    // Make sure we don't re-enter
+                if (returnChannel != 0) {
                     inRedistribution = true
 
-                    if (loiterOnReturnSwitch) {
-                        currentThreshold += increment
-                        rc_loiter_th.value = currentThreshold
-                    }
-                    currentThreshold += increment
-                    rc_return_th.value = currentThreshold
-
-                    inRedistribution = false
-                }
-
-                if (loiterChannel != 0 && loiterChannel != modeChannel && loiterChannel != returnChannel) {
                     // If only two positions don't set threshold at midrange. Setting to 0.25
                     // allows for this channel to work with either two or three position switch
-                    var increment = 0.25
+                    rc_return_th.value = 0.25
 
-                    var currentThreshold = 0.0
+                    inRedistribution = false
+                }
 
-                    // Make sure we don't re-enter
+                if (offboardChannel != 0) {
                     inRedistribution = true
 
-                    currentThreshold += increment
-                    rc_loiter_th.value = currentThreshold
+                    // If only two positions don't set threshold at midrange. Setting to 0.25
+                    // allows for this channel to work with either two or three position switch
+                    rc_offboard_th.value = 0.25
+
+                    inRedistribution = false
+                }
+
+                if (loiterChannel != 0 && loiterChannel != modeChannel) {
+                    inRedistribution = true
+
+                    // If only two positions don't set threshold at midrange. Setting to 0.25
+                    // allows for this channel to work with either two or three position switch
+                    rc_loiter_th.value = 0.25
 
                     inRedistribution = false
                 }
 
                 if (posCtlChannel != 0 & posCtlChannel != modeChannel) {
-                    // If only two positions don't set threshold at midrange. Setting to 0.25
-                    // allows for this channel to work with either two or three position switch
-                    var increment = 0.25
-
-                    var currentThreshold = 0.0
-
-                    // Make sure we don't re-enter
                     inRedistribution = true
 
-                    currentThreshold += increment
-                    rc_posctl_th.value = currentThreshold
+                    // If only two positions don't set threshold at midrange. Setting to 0.25
+                    // allows for this channel to work with either two or three position switch
+                    rc_posctl_th.value = 0.25
 
                     inRedistribution = false
                 }
-
             }
 
             Column {
@@ -389,9 +371,10 @@ Item {
 
                 QGCLabel {
                     width: parent.width
-                    text: "Flight Mode switches can be assigned to any channel which is not currently being used for attitude control. All channels are displayed below. " +
-                        "You can drag Flight Modes from the Flight Modes section below to a channel and drop it there. You can also drag switches assigned to a channel " +
-                        "to another channel or back to the Unassigned Switches section. The Switch Display section at the very bottom will show you the results of your Flight Mode setup."
+                    text: "The Main Mode, Loiter and PostCtl switches can be assigned to any channel which is not currently being used for attitude control. The Return and Offboard switches must be assigned to their seperate channel. " +
+                            "All channels are displayed below. " +
+                            "You can drag Flight Modes from the Flight Modes section below to a channel and drop it there. You can also drag switches assigned to a channel " +
+                            "to another channel or back to the Unassigned Switches section. The Switch Display section at the very bottom will show you the results of your Flight Mode setup."
                     wrapMode: Text.WordWrap
                 }
 
@@ -420,10 +403,12 @@ Item {
                             property bool modeMapped:       channel == modeChannel
                             property bool posCtlMapped:     channel == posCtlChannel
                             property bool returnMapped:     channel == returnChannel
+                            property bool offboardMapped:   channel == offboardChannel
                             property bool loiterMapped:     channel == loiterChannel
 
                             property bool nonFlightModeMapping: throttleMapped | yawMapped | pitchMapped | rollMapped | flapsMapped | aux1Mapped | aux2Mapped
-                            property bool unassignedMapping: !(nonFlightModeMapping | modeMapped | posCtlMapped | returnMapped | loiterMapped)
+                            property bool unassignedMapping: !(nonFlightModeMapping | modeMapped | posCtlMapped | returnMapped | offboardMapped | loiterMapped)
+                            property bool singleSwitchMapping: returnMapped | offboardMapped
 
                             id:     channelTarget
                             width:  tileWidth
@@ -433,7 +418,7 @@ Item {
 
                             states: [
                                 State {
-                                    when: dropArea.containsDrag && dropArea.dropAllowed
+                                    when: dropArea.containsDrag && dropArea.dropAllowed && (!dropArea.drag.source.singleSwitchRequired || dropArea.unassignedChannel)
                                     PropertyChanges {
                                         target: channelHeader
                                         color: "red"
@@ -522,37 +507,51 @@ Item {
                                     sourceComponent:    assignedModeTileComponent
                                 }
                                 Loader {
-                                    property string tileLabel:      "Main Mode"
-                                    property bool tileVisible:      visible
-                                    property bool tileDragEnabled:  true
-                                    property string tileParam:      "RC_MAP_MODE_SW"
+                                    property string tileLabel:          "Main Mode"
+                                    property bool tileVisible:          visible
+                                    property bool tileDragEnabled:      true
+                                    property string tileParam:          "RC_MAP_MODE_SW"
+                                    property bool singleSwitchRequired: false
 
                                     visible:            modeMapped
                                     sourceComponent:    assignedModeTileComponent
                                 }
                                 Loader {
-                                    property string tileLabel:      "Return"
-                                    property bool tileVisible:      visible
-                                    property bool tileDragEnabled:  true
-                                    property string tileParam:      "RC_MAP_RETURN_SW"
+                                    property string tileLabel:          "Return"
+                                    property bool tileVisible:          visible
+                                    property bool tileDragEnabled:      true
+                                    property string tileParam:          "RC_MAP_RETURN_SW"
+                                    property bool singleSwitchRequired: true
 
                                     visible:            returnMapped
                                     sourceComponent:    assignedModeTileComponent
                                 }
                                 Loader {
-                                    property string tileLabel:      "Loiter"
-                                    property bool tileVisible:      visible
-                                    property bool tileDragEnabled:  true
-                                    property string tileParam:      "RC_MAP_LOITER_SW"
+                                    property string tileLabel:          "Offboard"
+                                    property bool tileVisible:          visible
+                                    property bool tileDragEnabled:      true
+                                    property string tileParam:          "RC_MAP_OFFB_SW"
+                                    property bool singleSwitchRequired: true
+
+                                    visible:            offboardMapped
+                                    sourceComponent:    assignedModeTileComponent
+                                }
+                                Loader {
+                                    property string tileLabel:          "Loiter"
+                                    property bool tileVisible:          visible
+                                    property bool tileDragEnabled:      true
+                                    property string tileParam:          "RC_MAP_LOITER_SW"
+                                    property bool singleSwitchRequired: false
 
                                     visible:            loiterMapped
                                     sourceComponent:    assignedModeTileComponent
                                 }
                                 Loader {
-                                    property string tileLabel:      "PosCtl"
-                                    property bool tileVisible:      visible
-                                    property bool tileDragEnabled:  true
-                                    property string tileParam:      "RC_MAP_POSCTL_SW"
+                                    property string tileLabel:          "PosCtl"
+                                    property bool tileVisible:          visible
+                                    property bool tileDragEnabled:      true
+                                    property string tileParam:          "RC_MAP_POSCTL_SW"
+                                    property bool singleSwitchRequired: false
 
                                     visible:            posCtlMapped
                                     sourceComponent:    assignedModeTileComponent
@@ -561,7 +560,8 @@ Item {
 
                             DropArea {
                                 // Drops are not allowed on channels which are mapped to non-flight mode switches
-                                property bool dropAllowed: !nonFlightModeMapping
+                                property bool dropAllowed: !nonFlightModeMapping && !singleSwitchMapping
+                                property bool unassignedChannel: unassignedMapping
                                 property int channel: parent.channel
 
                                 id:     dropArea
@@ -592,24 +592,34 @@ Item {
                     spacing: 5
 
                     Loader {
-                        property string tileLabel:  "Main Mode"
-                        property string tileParam:  "RC_MAP_MODE_SW"
-                        sourceComponent:            unassignedModeTileComponent
+                        property string tileLabel:          "Main Mode"
+                        property string tileParam:          "RC_MAP_MODE_SW"
+                        property bool singleSwitchRequired: false
+                        sourceComponent:                    unassignedModeTileComponent
                     }
                     Loader {
-                        property string tileLabel:  "Return"
-                        property string tileParam:  "RC_MAP_RETURN_SW"
-                        sourceComponent:            unassignedModeTileComponent
+                        property string tileLabel:          "Loiter"
+                        property string tileParam:          "RC_MAP_LOITER_SW"
+                        property bool singleSwitchRequired: false
+                        sourceComponent:                    unassignedModeTileComponent
                     }
                     Loader {
-                        property string tileLabel:  "Loiter"
-                        property string tileParam:  "RC_MAP_LOITER_SW"
-                        sourceComponent:            unassignedModeTileComponent
+                        property string tileLabel:          "PosCtl"
+                        property string tileParam:          "RC_MAP_POSCTL_SW"
+                        property bool singleSwitchRequired: false
+                        sourceComponent:                    unassignedModeTileComponent
                     }
                     Loader {
-                        property string tileLabel:  "PosCtl"
-                        property string tileParam:  "RC_MAP_POSCTL_SW"
-                        sourceComponent:            unassignedModeTileComponent
+                        property string tileLabel:          "Return"
+                        property string tileParam:          "RC_MAP_RETURN_SW"
+                        property bool singleSwitchRequired: true
+                        sourceComponent:                    unassignedModeTileComponent
+                    }
+                    Loader {
+                        property string tileLabel:          "Offboard"
+                        property string tileParam:          "RC_MAP_OFFB_SW"
+                        property bool singleSwitchRequired: true
+                        sourceComponent:                    unassignedModeTileComponent
                     }
                 }
 
@@ -643,9 +653,10 @@ Item {
 
                 Row {
                     property bool modeSwitchVisible: modeChannel != 0
-                    property bool returnSwitchVisible: returnChannel != 0 && returnChannel != modeChannel
                     property bool loiterSwitchVisible: loiterChannel != 0 && loiterChannel != modeChannel && loiterChannel != returnChannel
                     property bool posCtlSwitchVisible: posCtlChannel != 0 && posCtlChannel != modeChannel
+                    property bool returnSwitchVisible: returnChannel != 0
+                    property bool offboardSwitchVisible: offboardChannel != 0
 
                     width:      parent.width
                     spacing:    20
@@ -666,14 +677,6 @@ Item {
                                     visible:                modeChannel != returnChannel && modeChannel != loiterChannel
                                     horizontalAlignment:    Text.AlignRight
                                     text:                   "Auto"
-                                }
-
-                                QGCLabel {
-                                    width:                  parent.width
-                                    y:                      (parent.height * (1.0 - rc_return_th.value)) - (implicitHeight / 2)
-                                    visible:                modeChannel == returnChannel
-                                    horizontalAlignment:    Text.AlignRight
-                                    text:                   "Auto: Return"
                                 }
 
                                 QGCLabel {
@@ -741,56 +744,6 @@ Item {
                     }
 
                     Column {
-                        visible: parent.returnSwitchVisible
-
-                        QGCLabel { text: "Return Switch" }
-
-                        Row {
-                            Item {
-                                height: progressBarHeight
-                                width:  150
-
-                                QGCLabel {
-                                    width:                  parent.width
-                                    y:                      (parent.height * (1.0 - rc_return_th.value)) - (implicitHeight / 2)
-                                    horizontalAlignment:    Text.AlignRight
-                                    text:                   "Auto: Return"
-                                }
-
-                                QGCLabel {
-                                    width:                  parent.width
-                                    y:                      (parent.height * (1.0 - rc_loiter_th.value)) - (implicitHeight / 2)
-                                    visible:                returnChannel == loiterChannel
-                                    horizontalAlignment:    Text.AlignRight
-                                    text:                   "Auto: Loiter"
-                                }
-
-                                QGCLabel {
-                                    width:                  parent.width
-                                    y:                      parent.height - (implicitHeight / 2)
-                                    visible:                returnChannel == loiterChannel
-                                    horizontalAlignment:    Text.AlignRight
-                                    text:                   "Auto: Mission"
-                                }
-
-                                QGCLabel {
-                                    width:                  parent.width
-                                    y:                      parent.height - (implicitHeight / 2)
-                                    visible:                returnChannel != loiterChannel
-                                    horizontalAlignment:    Text.AlignRight
-                                    text:                   "Auto: Return Off"
-                                }
-                            }
-
-                            ProgressBar {
-                                height:         progressBarHeight
-                                orientation:    Qt.Vertical
-                                value:          controller.returnSwitchLiveRange
-                            }
-                        }
-                    }
-
-                    Column {
                         visible: parent.loiterSwitchVisible
 
                         QGCLabel { text: "Loiter Switch" }
@@ -852,6 +805,74 @@ Item {
                                 height:         progressBarHeight
                                 orientation:    Qt.Vertical
                                 value:          controller.posCtlSwitchLiveRange
+                            }
+                        }
+                    }
+
+                    Column {
+                        visible: parent.returnSwitchVisible
+
+                        QGCLabel { text: "Return Switch" }
+
+                        Row {
+                            Item {
+                                height: progressBarHeight
+                                width:  150
+
+                                QGCLabel {
+                                    width:                  parent.width
+                                    y:                      (parent.height * (1.0 - rc_return_th.value)) - (implicitHeight / 2)
+                                    horizontalAlignment:    Text.AlignRight
+                                    text:                   "Return"
+                                }
+
+                                QGCLabel {
+                                    width:                  parent.width
+                                    y:                      parent.height - (implicitHeight / 2)
+                                    visible:                returnChannel != loiterChannel
+                                    horizontalAlignment:    Text.AlignRight
+                                    text:                   "Return Off"
+                                }
+                            }
+
+                            ProgressBar {
+                                height:         progressBarHeight
+                                orientation:    Qt.Vertical
+                                value:          controller.returnSwitchLiveRange
+                            }
+                        }
+                    }
+
+                    Column {
+                        visible: parent.offboardSwitchVisible
+
+                        QGCLabel { text: "Offboard Switch" }
+
+                        Row {
+                            Item {
+                                height: progressBarHeight
+                                width:  150
+
+                                QGCLabel {
+                                    width:                  parent.width
+                                    y:                      (parent.height * (1.0 - rc_return_th.value)) - (implicitHeight / 2)
+                                    horizontalAlignment:    Text.AlignRight
+                                    text:                   "Offboad"
+                                }
+
+                                QGCLabel {
+                                    width:                  parent.width
+                                    y:                      parent.height - (implicitHeight / 2)
+                                    visible:                returnChannel != loiterChannel
+                                    horizontalAlignment:    Text.AlignRight
+                                    text:                   "Offboard Off"
+                                }
+                            }
+
+                            ProgressBar {
+                                height:         progressBarHeight
+                                orientation:    Qt.Vertical
+                                value:          controller.offboardSwitchLiveRange
                             }
                         }
                     }
