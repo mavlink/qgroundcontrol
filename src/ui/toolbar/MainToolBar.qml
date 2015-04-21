@@ -45,11 +45,10 @@ Rectangle {
 
     property int cellSpacerSize: getProportionalDimmension(4)
     property int cellHeight:     getProportionalDimmension(30)
-    property int cellRadius:     getProportionalDimmension(3)
 
     property var colorBlue:       "#1a6eaa"
-    property var colorGreen:      "#079527"
-    property var colorRed:        "#a81a1b"
+    property var colorGreen:      "#329147"
+    property var colorRed:        "#942324"
     property var colorOrange:     "#a76f26"
     property var colorWhite:      "#f0f0f0"
 
@@ -119,6 +118,14 @@ Rectangle {
         if(mainToolBar.satelliteLock === 2)
             return colorBlue;
         // Lock is 3D or more
+        return colorGreen;
+    }
+
+    function getRSSIColor(value) {
+        if(value < 10)
+            return colorRed;
+        if(value < 50)
+            return colorOrange;
         return colorGreen;
     }
 
@@ -217,12 +224,11 @@ Rectangle {
 
             Rectangle {
                 id: messages
-                width: (mainToolBar.messageCount > 99) ? getProportionalDimmension(70) : getProportionalDimmension(60)
+                width: (mainToolBar.messageCount > 99) ? getProportionalDimmension(65) : getProportionalDimmension(60)
                 height: cellHeight
                 visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getMessageColor()
-                radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
                 property bool showTriangle: false
@@ -234,10 +240,10 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(10)
+                    anchors.leftMargin: getProportionalDimmension(8)
                 }
 
-                Rectangle {
+                Item {
                     id: messageTextRect
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -296,7 +302,6 @@ Rectangle {
                 visible: showMavStatus() &&  (mainToolBar.showMav)
                 anchors.verticalCenter: parent.verticalCenter
                 color: colorBlue
-                radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
                 Image {
@@ -310,12 +315,11 @@ Rectangle {
 
             Rectangle {
                 id: satelitte
-                width:  getProportionalDimmension(60)
+                width:  getProportionalDimmension(50)
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showGPS)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getSatelliteColor();
-                radius: cellRadius
                 border.color: "#00000000"
                 border.width: 0
 
@@ -325,32 +329,122 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(10)
+                    anchors.leftMargin: getProportionalDimmension(6)
                     mipmap: true
                     smooth: true
                 }
 
                 QGCLabel {
                     id: satelitteText
-                    text: (mainToolBar.satelliteCount > 0) ? mainToolBar.satelliteCount : ''
+                    text: mainToolBar.satelliteCount
                     font.pointSize: screenTools.dpiAdjustedPointSize(14);
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(10)
+                    anchors.rightMargin: getProportionalDimmension(6)
                     horizontalAlignment: Text.AlignRight
                     color: colorWhite
                 }
             }
 
             Rectangle {
+                id: rssiRC
+                width:  getProportionalDimmension(55)
+                height: cellHeight
+                visible: showMavStatus() && mainToolBar.showRSSI && mainToolBar.remoteRSSI <= 100
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getRSSIColor(mainToolBar.remoteRSSI);
+                border.color: "#00000000"
+                border.width: 0
+                Image {
+                    source: "qrc:/res/AntennaRC";
+                    width: cellHeight * 0.7
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(6)
+                    mipmap: true
+                    smooth: true
+                }
+                QGCLabel {
+                    text: mainToolBar.remoteRSSI
+                    anchors.right: parent.right
+                    anchors.rightMargin: getProportionalDimmension(6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    font.pointSize: screenTools.dpiAdjustedPointSize(12);
+                    font.weight: Font.DemiBold
+                    color: colorWhite
+                }
+            }
+
+            Rectangle {
+                id: rssiTelemetry
+                width:  getProportionalDimmension(80)
+                height: cellHeight
+                visible: showMavStatus() && (mainToolBar.showRSSI) && ((mainToolBar.telemetryRRSSI > 0) && (mainToolBar.telemetryLRSSI > 0))
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getRSSIColor(Math.min(mainToolBar.telemetryRRSSI,mainToolBar.telemetryLRSSI));
+                border.color: "#00000000"
+                border.width: 0
+                Image {
+                    source: "qrc:/res/AntennaT";
+                    width: cellHeight * 0.7
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(6)
+                    mipmap: true
+                    smooth: true
+                }
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    getProportionalDimmension(6)
+                    Row {
+                        anchors.right: parent.right
+                        QGCLabel {
+                            text: 'R '
+                            font.pointSize: screenTools.dpiAdjustedPointSize(11);
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                        QGCLabel {
+                            text: mainToolBar.telemetryRRSSI + 'dB'
+                            width: getProportionalDimmension(30)
+                            horizontalAlignment: Text.AlignRight
+                            font.pointSize: screenTools.dpiAdjustedPointSize(11);
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                    }
+                    Row {
+                        anchors.right: parent.right
+                        QGCLabel {
+                            text: 'L '
+                            font.pointSize: screenTools.dpiAdjustedPointSize(11);
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                        QGCLabel {
+                            text: mainToolBar.telemetryLRSSI + 'dB'
+                            width: getProportionalDimmension(30)
+                            horizontalAlignment: Text.AlignRight
+                            font.pointSize: screenTools.dpiAdjustedPointSize(11);
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
                 id: battery
-                width: getProportionalDimmension(80)
+                width: getProportionalDimmension(60)
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showBattery)
                 anchors.verticalCenter: parent.verticalCenter
-                color:  (mainToolBar.batteryPercent > 40.0 || mainToolBar.batteryPercent < 0.01) ? colorBlue : colorRed
-                radius: cellRadius
+                color:  getBatteryColor();
                 border.color: "#00000000"
                 border.width: 0
 
@@ -367,12 +461,12 @@ Rectangle {
 
                 QGCLabel {
                     id: batteryText
-                    text: mainToolBar.batteryVoltage.toFixed(1) + ' V';
-                    font.pointSize: screenTools.dpiAdjustedPointSize(14);
+                    text: mainToolBar.batteryVoltage.toFixed(1) + 'V';
+                    font.pointSize: screenTools.dpiAdjustedPointSize(12);
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(8)
+                    anchors.rightMargin: getProportionalDimmension(6)
                     horizontalAlignment: Text.AlignRight
                     color: colorWhite
                 }

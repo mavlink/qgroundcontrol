@@ -570,8 +570,8 @@ signals:
     void remoteControlChannelRawChanged(int channelId, float raw);
     /** @brief Value of a remote control channel (scaled)*/
     void remoteControlChannelScaledChanged(int channelId, float normalized);
-    /** @brief Remote control RSSI changed */
-    void remoteControlRSSIChanged(float rssi);
+    /** @brief Remote control RSSI changed  (0% - 100%)*/
+    void remoteControlRSSIChanged(uint8_t rssi);
 
     /**
      * @brief Localization quality changed
