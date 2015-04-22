@@ -36,11 +36,6 @@
     @code
     import QGroundControl.ScreenTools 1.0
     @endcode
-    @remark As for the screen density functions, QtQuick provides the \c Screen type (defined in QtQuick.Window)
-    but as of Qt 5.4 (QtQuick.Window 2.2), this only works if the main window is QtQuick. As QGC is primarily
-    a Qt application and only some of its UI elements are QLM widgets, this does not work. Hence, these function
-    defined here.
-    @sa <a href="http://doc.qt.io/qt-5/qml-qtquick-window-screen.html">Screen QML Type</a>
 */
 
 /// This Qml control is used to return screen parameters
@@ -50,32 +45,6 @@ class ScreenTools : public QObject
 public:
     ScreenTools();
 
-    //! Returns the screen density in Dots Per Inch
-    Q_PROPERTY(double   screenDPI           READ screenDPI CONSTANT)
-    //! Returns a factor used to calculate the font point size to use
-    /*!
-      When defining fonts in point size, as in:
-      @code
-      Text {
-        text: "Foo Bar"
-        font.pointSize: 14
-      }
-      @endcode
-      The size is device dependent. If you define this based on a screen set to 72dpi (Mac OS), once
-      this is displayed on a different screen with a different pixel density, such as 96dpi (Windows),
-      the text will be displayed in the wrong size.
-      Use \c dpiFactor to accomodate for these differences. All font point sizes are given in 72dpi
-      and \c dpiFactor returns a factor to use for adjusting it to the current target screen.
-      @code
-      import QGroundControl.ScreenTools 1.0
-      property ScreenTools screenTools: ScreenTools { }
-      Text {
-        text: "Foo Bar"
-        font.pointSize: 14 * screenTools.dpiFactor
-      }
-      @endcode
-     */
-    Q_PROPERTY(double   dpiFactor           READ dpiFactor CONSTANT)
     //! Returns the global mouse X position
     Q_PROPERTY(int      mouseX              READ mouseX)
     //! Returns the global mouse Y position
@@ -108,35 +77,55 @@ public:
         }
       @endcode
      */
-    Q_PROPERTY(bool     repaintRequested    READ repaintRequested   NOTIFY repaintRequestedChanged)
 
-    //! Utility for adjusting font point size.
-    /*!
-      @sa dpiFactor
-     */
-    Q_INVOKABLE qreal   dpiAdjustedPointSize(qreal pointSize);
+    Q_PROPERTY(bool     repaintRequested     READ repaintRequested     NOTIFY repaintRequestedChanged)
+    //! Returns the font point size factor
+    Q_PROPERTY(double   fontPointFactor      READ fontPointFactor      NOTIFY fontPointFactorChanged)
+    //! Returns the pixel size factor
+    Q_PROPERTY(double   pixelSizeFactor      READ pixelSizeFactor      NOTIFY pixelSizeFactorChanged)
+    //! Returns the system wide default font point size (properly scaled)
+    Q_PROPERTY(double   defaultFontPointSize READ defaultFontPointSize NOTIFY defaultFontPointSizeChanged)
 
-    /// Static version of dpiAdjustedPointSize of use in C++ code
-    static qreal dpiAdjustedPointSize_s(qreal pointSize);
-    
-    double  screenDPI           () { return _dotsPerInch; }
-    double  dpiFactor           () { return _dpiFactor; }
+    //! Utility for adjusting font point size. Not dynamic (no signals)
+    Q_INVOKABLE qreal   adjustFontPointSize(qreal pointSize);
+    //! Utility for adjusting pixel size. Not dynamic (no signals)
+    Q_INVOKABLE qreal   adjustPixelSize(qreal pixelSize);
+
+    //! Utility for increasing pixel size.
+    Q_INVOKABLE void    increasePixelSize();
+    //! Utility for decreasing pixel size.
+    Q_INVOKABLE void    decreasePixelSize();
+    //! Utility for increasing font size.
+    Q_INVOKABLE void    increaseFontSize();
+    //! Utility for decreasing font size.
+    Q_INVOKABLE void    decreaseFontSize();
+
+    /// Static version of adjustFontPointSize of use in C++ code
+    static qreal adjustFontPointSize_s(qreal pointSize);
+    /// Static version of adjustPixelSize of use in C++ code
+    static qreal adjustPixelSize_s(qreal pixelSize);
+
     int     mouseX              () { return QCursor::pos().x(); }
     int     mouseY              () { return QCursor::pos().y(); }
     bool    repaintRequested    () { return true; }
+    double  fontPointFactor     ();
+    double  pixelSizeFactor     ();
+    double  defaultFontPointSize(void);
 
 signals:
     void repaintRequestedChanged();
+    void pixelSizeFactorChanged();
+    void fontPointFactorChanged();
+    void defaultFontPointSizeChanged();
 
 private slots:
     void _updateCanvas();
+    void _updatePixelSize();
+    void _updateFontSize();
 
 private:
-    static void _setDpiFactor(void);
-    
-    static bool _dpiFactorSet;
-    static double _dotsPerInch;
-    static double _dpiFactor;
+    static const double _defaultFontPointSize;
+
 };
 
 #endif

@@ -585,7 +585,7 @@ void QGCApplication::_loadCurrentStyle(void)
             QRegularExpressionMatch match = regex.match(line);
             if (match.hasMatch()) {
                 //qDebug() << "found:" << line << match.captured(1);
-                adjustedLine = QString("font-size: %1pt;").arg(ScreenTools::dpiAdjustedPointSize_s(match.captured(1).toDouble()));
+                adjustedLine = QString("font-size: %1pt;").arg(ScreenTools::adjustFontPointSize_s(match.captured(1).toDouble()));
                 //qDebug() << "adjusted:" << adjustedLine;
             } else {
                 adjustedLine = line;

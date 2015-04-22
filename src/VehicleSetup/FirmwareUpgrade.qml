@@ -51,7 +51,7 @@ Rectangle {
 
         QGCLabel {
             text: "FIRMWARE UPDATE"
-            font.pointSize: screenTools.dpiAdjustedPointSize(20);
+            font.pointSize: screenTools.fontPointFactor * (20);
         }
 
         Item {
@@ -119,7 +119,7 @@ Rectangle {
             height:			300
             readOnly:		true
             frameVisible:	false
-			font.pointSize: qgcPal.dpiAdjustedDefaultFontPointSize
+            font.pointSize: screenTools.defaultFontPointSize
             
 			text: qsTr("Please disconnect all vehicles from QGroundControl before selecting Upgrade.")
 

@@ -3,9 +3,11 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.Palette 1.0
+import QGroundControl.ScreenTools 1.0
 
 RadioButton {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
+    property ScreenTools __screenTools: ScreenTools { }
 
     style: RadioButtonStyle {
         label: Item {
@@ -27,7 +29,8 @@ RadioButton {
             Text {
                 id:             text
                 text:           control.text
-                font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
+                font.pointSize: __screenTools.defaultFontPointSize
+                antialiasing:   true
 
                 anchors.centerIn: parent
 

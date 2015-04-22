@@ -28,14 +28,20 @@ This file is part of the QGROUNDCONTROL project
  */
 
 import QtQuick 2.3
-import QtQuick.Controls 1.2
+import QtQuick.Controls 1.3
 import QtQuick.Controls.Styles 1.2
+import QtQuick.Dialogs 1.2
 
 import QGroundControl.FlightControls 1.0
+import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls 1.0
+import QGroundControl.Palette 1.0
 
-Rectangle {
+Item {
     id: root
-    color: Qt.rgba(0,0,0,0);
+
+    property ScreenTools __screenTools: ScreenTools { }
+    property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     property real roll:    isNaN(flightDisplay.roll)    ? 0 : flightDisplay.roll
     property real pitch:   isNaN(flightDisplay.pitch)   ? 0 : flightDisplay.pitch
@@ -68,6 +74,203 @@ Rectangle {
         mapTypeMenu.update();
     }
 
+    // TODO: This is to replace the context menu but it is not working. Not only the buttons don't show,
+    // the default placement is random and mostly off screen on mobile devices.
+    Dialog {
+        id: optionsDialog
+        modality: Qt.WindowModal
+        title: "Flight Display Options"
+        standardButtons: StandardButton.Close | StandardButton.RestoreDefaults
+        onReset: {
+            showPitchIndicator = true;
+            flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
+            showAttitudeIndicator = true;
+            flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
+            showCompass = true;
+            flightDisplay.saveSetting("showCompass", setBool(showCompass));
+            altitudeWidget.visible = true;
+            flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
+            currentAltitude.showAltitude = true;
+            flightDisplay.saveSetting("showCurrentAltitude", setBool(currentAltitude.showAltitude));
+            currentAltitude.showClimbRate = true;
+            flightDisplay.saveSetting("showCurrentClimbRate", setBool(currentAltitude.showClimbRate));
+            speedWidget.visible = true;
+            flightDisplay.saveSetting("showSpeedWidget", setBool(speedWidget.visible));
+            currentSpeed.showAirSpeed = true;
+            flightDisplay.saveSetting("showCurrentAirSpeed", setBool(currentSpeed.showAirSpeed));
+            currentSpeed.showGroundSpeed = true;
+            flightDisplay.saveSetting("showCurrentGroundSpeed", setBool(currentSpeed.showGroundSpeed));
+            mapBackground.visible = false;
+            flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
+            mapBackground.alwaysNorth = false;
+            flightDisplay.saveSetting("mapAlwaysPointsNorth", setBool(mapBackground.alwaysNorth));
+        }
+        contentItem: Rectangle {
+            color: __qgcPal.window
+            implicitWidth:  __screenTools.pixelSizeFactor * (360)
+            implicitHeight: __screenTools.pixelSizeFactor * (300)
+            Column {
+                id: dialogColumn
+                anchors.centerIn: parent
+                spacing:  __screenTools.adjustPixelSize(10)
+                width: parent.width
+                Grid {
+                    columns: 2
+                    spacing:    __screenTools.pixelSizeFactor * (8)
+                    rowSpacing: __screenTools.pixelSizeFactor * (10)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCCheckBox {
+                        text: "Map Background"
+                        checked: mapBackground.visible
+                        onClicked:
+                        {
+                            mapBackground.visible = !mapBackground.visible;
+                            flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Pitch Indicator"
+                        checked: showPitchIndicator
+                        onClicked:
+                        {
+                            showPitchIndicator = !showPitchIndicator;
+                            flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Attitude Indicator"
+                        checked: showAttitudeIndicator
+                        onClicked:
+                        {
+                            showAttitudeIndicator = !showAttitudeIndicator;
+                            flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Compass"
+                        checked: showCompass
+                        onClicked:
+                        {
+                            showCompass = !showCompass;
+                            flightDisplay.saveSetting("showCompass", setBool(showCompass));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Altitude Indicator"
+                        checked: altitudeWidget.visible
+                        onClicked:
+                        {
+                            altitudeWidget.visible = !altitudeWidget.visible;
+                            flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Current Altitude"
+                        checked: currentAltitude.showAltitude
+                        onClicked:
+                        {
+                            currentAltitude.showAltitude = !currentAltitude.showAltitude;
+                            flightDisplay.saveSetting("showCurrentAltitude", setBool(currentAltitude.showAltitude));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Current Climb Rate"
+                        checked: currentAltitude.showClimbRate
+                        onClicked:
+                        {
+                            currentAltitude.showClimbRate = !currentAltitude.showClimbRate;
+                            flightDisplay.saveSetting("showCurrentClimbRate", setBool(currentAltitude.showClimbRate));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Speed Indicator"
+                        checked: speedWidget.visible
+                        onClicked:
+                        {
+                            speedWidget.visible = !speedWidget.visible;
+                            flightDisplay.saveSetting("showSpeedWidget", setBool(speedWidget.visible));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Current Air Speed"
+                        checked: currentSpeed.showAirSpeed
+                        onClicked:
+                        {
+                            currentSpeed.showAirSpeed = !currentSpeed.showAirSpeed;
+                            flightDisplay.saveSetting("showCurrentAirSpeed", setBool(currentSpeed.showAirSpeed));
+                        }
+                    }
+                    QGCCheckBox {
+                        text: "Current Ground Speed"
+                        checked: currentSpeed.showGroundSpeed
+                        onClicked:
+                        {
+                            currentSpeed.showGroundSpeed = !currentSpeed.showGroundSpeed;
+                            flightDisplay.saveSetting("showCurrentGroundSpeed", setBool(currentSpeed.showGroundSpeed));
+                        }
+                    }
+                }
+                //-- Hack tool to find optimal scale factor
+                Column {
+                    id: fudgeColumn
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing:    __screenTools.adjustPixelSize(4)
+                    width:      parent.width
+                    QGCLabel {
+                        text: "Adjust Pixel Size Factor"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:    __screenTools.adjustPixelSize(4)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Button {
+                            text: 'Inc'
+                            onClicked: {
+                                __screenTools.increasePixelSize()
+                            }
+                        }
+                        Label {
+                            text: __screenTools.pixelSizeFactor.toFixed(2)
+                            color: __qgcPal.text
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Button {
+                            text: 'Dec'
+                            onClicked: {
+                                __screenTools.decreasePixelSize()
+                            }
+                        }
+                    }
+                    QGCLabel {
+                        text: "Adjust Font Size Factor"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:    __screenTools.adjustPixelSize(4)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Button {
+                            text: 'Inc'
+                            onClicked: {
+                                __screenTools.increaseFontSize()
+                            }
+                        }
+                        Label {
+                            text: __screenTools.fontPointFactor.toFixed(2)
+                            color: __qgcPal.text
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Button {
+                            text: 'Dec'
+                            onClicked: {
+                                __screenTools.decreaseFontSize()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Menu {
         id: contextMenu
 
@@ -81,6 +284,16 @@ Rectangle {
                 flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
             }
         }
+
+        /*
+        MenuItem {
+            text: "Options Dialog"
+            onTriggered:
+            {
+                optionsDialog.open()
+            }
+        }
+        */
 
         /*
         MenuItem {
@@ -98,7 +311,7 @@ Rectangle {
         Menu {
             id: mapTypeMenu
             title: "Map Type..."
-            ExclusiveGroup { id: currentMapType }
+            ExclusiveGroup { id: currMapType }
             function setCurrentMap(map) {
                 for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
                     if (map === mapBackground.mapItem.supportedMapTypes[i].name) {
@@ -112,7 +325,7 @@ Rectangle {
                 var mItem = mapTypeMenu.addItem(map);
                 mItem.checkable = true
                 mItem.checked   = checked
-                mItem.exclusiveGroup = currentMapType
+                mItem.exclusiveGroup = currMapType
                 var menuSlot = function() {setCurrentMap(map);};
                 mItem.triggered.connect(menuSlot);
             }
@@ -277,16 +490,16 @@ Rectangle {
 
     QGCCompassInstrument {
         id:                 compassInstrument
-        y:                  5
-        x:                  85
-        size:               160
+        y:                  __screenTools.pixelSizeFactor * (5)
+        x:                  __screenTools.pixelSizeFactor * (85)
+        size:               __screenTools.pixelSizeFactor * (160)
         heading:            isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
         visible:            mapBackground.visible && showCompass
         z:                  mapBackground.z + 1
         onResetRequested: {
-            y               = 5
-            x               = 85
-            size            = 160
+            y               = __screenTools.pixelSizeFactor * (5)
+            x               = __screenTools.pixelSizeFactor * (85)
+            size            = __screenTools.pixelSizeFactor * (160)
             tForm.xScale    = 1
             tForm.yScale    = 1
         }
@@ -294,33 +507,42 @@ Rectangle {
 
     QGCAttitudeInstrument {
         id:                 attitudeInstrument
-        y:                  5
-        size:               160
+        y:                  __screenTools.pixelSizeFactor * (5)
+        size:               __screenTools.pixelSizeFactor * (160)
         rollAngle:          roll
         pitchAngle:         pitch
         showPitch:          showPitchIndicator
         visible:            mapBackground.visible && showAttitudeIndicator
         anchors.right:      root.right
-        anchors.rightMargin: 85
+        anchors.rightMargin: __screenTools.pixelSizeFactor * (85)
         z:                  mapBackground.z + 1
         onResetRequested: {
-            y                   = 5
+            y                   = __screenTools.pixelSizeFactor * (5)
             anchors.right       = root.right
-            anchors.rightMargin = 85
-            size                = 160
+            anchors.rightMargin = __screenTools.pixelSizeFactor * (85)
+            size                = __screenTools.pixelSizeFactor * (160)
             tForm.xScale        = 1
             tForm.yScale        = 1
         }
     }
 
-    QGCAttitudeWidget {
-        id:                 attitudeWidget
-        anchors.centerIn:   parent
+    QGCArtificialHorizon {
+        id:                 artificialHoriz
+        anchors.fill:       parent
         rollAngle:          roll
         pitchAngle:         pitch
-        showAttitude:       showAttitudeIndicator
         visible:            !mapBackground.visible
         z:                  10
+    }
+
+    QGCAttitudeWidget {
+        id:                 attitudeWidget
+        rollAngle:          roll
+        pitchAngle:         pitch
+        visible:            !mapBackground.visible && showAttitudeIndicator
+        width:              __screenTools.pixelSizeFactor * (260)
+        height:             __screenTools.pixelSizeFactor * (260)
+        z:                  20
     }
 
     QGCPitchWidget {
@@ -330,14 +552,15 @@ Rectangle {
         pitchAngle:         pitch
         rollAngle:          roll
         color:              Qt.rgba(0,0,0,0)
-        size:               120
+        size:               __screenTools.pixelSizeFactor * (120)
         z:                  30
     }
 
     QGCAltitudeWidget {
         id:                 altitudeWidget
         anchors.right:      parent.right
-        width:              60
+        width:              __screenTools.pixelSizeFactor * (60)
+        height:             parent.height * 0.65 > __screenTools.pixelSizeFactor * (280) ? __screenTools.pixelSizeFactor * (280) : parent.height * 0.65
         altitude:           flightDisplay.altitudeWGS84
         z:                  30
     }
@@ -345,7 +568,8 @@ Rectangle {
     QGCSpeedWidget {
         id:                 speedWidget
         anchors.left:       parent.left
-        width:              60
+        width:              __screenTools.pixelSizeFactor * (60)
+        height:             parent.height * 0.65 > __screenTools.pixelSizeFactor * (280) ? __screenTools.pixelSizeFactor * (280) : parent.height * 0.65
         speed:              flightDisplay.groundSpeed
         z:                  40
     }
@@ -353,7 +577,7 @@ Rectangle {
     QGCCurrentSpeed {
         id: currentSpeed
         anchors.left:       parent.left
-        width:              75
+        width:              __screenTools.pixelSizeFactor * (75)
         airspeed:           flightDisplay.airSpeed
         groundspeed:        flightDisplay.groundSpeed
         showAirSpeed:       true
@@ -365,7 +589,7 @@ Rectangle {
     QGCCurrentAltitude {
         id: currentAltitude
         anchors.right:      parent.right
-        width:              75
+        width:              __screenTools.pixelSizeFactor * (75)
         altitude:           flightDisplay.altitudeWGS84
         vertZ:              flightDisplay.climbRate
         showAltitude:       true
@@ -377,9 +601,9 @@ Rectangle {
     QGCCompass {
         id:                 compassIndicator
         y:                  root.height * 0.7
-        x:                  root.width  * 0.5 - 60
-        width:              120
-        height:             120
+        x:                  root.width  * 0.5 - __screenTools.pixelSizeFactor * (60)
+        width:              __screenTools.pixelSizeFactor * (120)
+        height:             __screenTools.pixelSizeFactor * (120)
         heading:            isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
         visible:            !mapBackground.visible && showCompass
         z:                  70
@@ -388,10 +612,10 @@ Rectangle {
     // Button at upper left corner
     Item {
         id:             optionsButton
-        x:              5
-        y:              5
-        width:          30
-        height:         30
+        x:              __screenTools.pixelSizeFactor * (5)
+        y:              __screenTools.pixelSizeFactor * (5)
+        width:          __screenTools.pixelSizeFactor * (30)
+        height:         __screenTools.pixelSizeFactor * (30)
         opacity:        0.85
         z:              1000
         Image {
@@ -405,13 +629,19 @@ Rectangle {
         }
         MouseArea {
             anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: {
                 if (mouse.button == Qt.LeftButton)
                 {
-                    contextMenu.popup()
+                    contextMenu.popup();
+                }
+                // Experimental
+                if (mouse.button == Qt.RightButton)
+                {
+                    optionsDialog.open();
                 }
             }
         }
     }
+
 }

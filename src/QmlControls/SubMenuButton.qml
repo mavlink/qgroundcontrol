@@ -4,6 +4,7 @@ import QtQuick.Controls.Styles 1.2
 import QtGraphicalEffects 1.0
 
 import QGroundControl.Palette 1.0
+import QGroundControl.ScreenTools 1.0
 
 Button {
     checkable: true
@@ -13,6 +14,7 @@ Button {
     property bool setupComplete: true
     property bool setupIndicator: true
     property string imageResource: "subMenuButtonImage.png"
+    property ScreenTools __screenTools: ScreenTools { }
 
     style: ButtonStyle {
         id: buttonStyle
@@ -39,7 +41,8 @@ Button {
                 horizontalAlignment: TextEdit.AlignHCenter
 
                 text: control.text
-                font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
+                font.pointSize: __screenTools.defaultFontPointSize
+                antialiasing: true
                 color: __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
 
                 Rectangle {
