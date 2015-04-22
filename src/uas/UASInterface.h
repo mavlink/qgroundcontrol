@@ -353,6 +353,7 @@ public slots:
     virtual QString getBatterySpecs() = 0;
 
     /** @brief Send the full HIL state to the MAV */
+#ifndef __mobile__
     virtual void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                         float pitchspeed, float yawspeed, double lat, double lon, double alt,
                         float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc) = 0;
@@ -367,6 +368,7 @@ public slots:
     /** @brief Send Optical Flow sensor message for HIL, (arguments and units accoding to mavlink documentation*/
     virtual void sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
                             float flow_comp_m_y, quint8 quality, float ground_distance) = 0;
+#endif
 
     /** @brief Send command to map a RC channel to a parameter */
     virtual void sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax) = 0;

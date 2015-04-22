@@ -28,7 +28,7 @@
 
 #ifndef UNITTEST_H
 #define UNITTEST_H
-#ifndef __android__
+#ifndef __mobile__
 
 #include <QObject>
 #include <QtTest>

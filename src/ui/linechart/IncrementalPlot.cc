@@ -56,7 +56,7 @@ void CurveData::append(double *x, double *y, int count)
         d_y.resize(newSize);
     }
 
-    for ( register int i = 0; i < count; i++ ) {
+    for ( int i = 0; i < count; i++ ) {
         d_x[d_count + i] = x[i];
         d_y[d_count + i] = y[i];
     }
