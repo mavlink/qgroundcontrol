@@ -82,6 +82,26 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LogCompressor.h"
 
+// Pixel size, instead of a physical thing is actually a philosophical question when
+// it comes to Qt. Fonts are that and some heavy Kabalistic Voodoo added to the mix.
+// The values below came from actually measuring the elements on the screen on these
+// devices. I have yet to find a constant from Qt so these things can be properly
+// computed at runtime.
+
+#if defined(Q_OS_OSX)
+double MainWindow::_pixelFactor    = 1.0;
+double MainWindow::_fontFactor     = 1.0;
+#elif defined(Q_OS_WIN)
+double MainWindow::_pixelFactor    = 0.86;
+double MainWindow::_fontFactor     = 0.63;
+#elif defined(__android__)
+double MainWindow::_pixelFactor    = 2.0;
+double MainWindow::_fontFactor     = 1.23;
+#elif defined(Q_OS_LINUX)
+double MainWindow::_pixelFactor    = 1.0;
+double MainWindow::_fontFactor     = 0.85;
+#endif
+
 /// The key under which the Main Window settings are saved
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
@@ -226,6 +246,8 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     emit initStatusChanged(tr("Restoring last view state"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     // Restore the window setup
     _loadCurrentViewState();
+#ifndef __android__
+
     // Restore the window position and size
     emit initStatusChanged(tr("Restoring last window size"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     if (settings.contains(_getWindowGeometryKey()))
@@ -265,6 +287,8 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     // And that they will stay checked properly after user input
     connect(_ui.actionFullscreen, &QAction::triggered, this, &MainWindow::fullScreenActionItemCallback);
     connect(_ui.actionNormal,     &QAction::triggered, this, &MainWindow::normalActionItemCallback);
+#endif
+
     connect(_ui.actionStatusBar,  &QAction::triggered, this, &MainWindow::showStatusBarCallback);
 
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
@@ -295,6 +319,9 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     if (!qgcApp()->runningUnitTests()) {
         _ui.actionStatusBar->setChecked(_showStatusBar);
         showStatusBarCallback(_showStatusBar);
+#ifdef __android__
+        menuBar()->hide();
+#endif
         show();
 #ifdef Q_OS_MAC
         // TODO HACK
@@ -733,9 +760,11 @@ void MainWindow::loadSettings()
     // Why the screaming?
     QSettings settings;
     settings.beginGroup(MAIN_SETTINGS_GROUP);
-    _autoReconnect = settings.value("AUTO_RECONNECT", _autoReconnect).toBool();
-    _lowPowerMode  = settings.value("LOW_POWER_MODE", _lowPowerMode).toBool();
-    _showStatusBar = settings.value("SHOW_STATUSBAR", _showStatusBar).toBool();
+    _autoReconnect  = settings.value("AUTO_RECONNECT",      _autoReconnect).toBool();
+    _lowPowerMode   = settings.value("LOW_POWER_MODE",      _lowPowerMode).toBool();
+    _showStatusBar  = settings.value("SHOW_STATUSBAR",      _showStatusBar).toBool();
+    _fontFactor     = settings.value("FONT_SIZE_FACTOR",    _fontFactor).toDouble();
+    _pixelFactor    = settings.value("PIXEL_SIZE_FACTOR",   _pixelFactor).toDouble();
     settings.endGroup();
     // Select the proper view. Default to the flight view or load the last one used if it's supported.
     VIEW_SECTIONS currentViewCandidate = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", _currentView).toInt();
@@ -764,9 +793,11 @@ void MainWindow::storeSettings()
 {
     QSettings settings;
     settings.beginGroup(MAIN_SETTINGS_GROUP);
-    settings.setValue("AUTO_RECONNECT", _autoReconnect);
-    settings.setValue("LOW_POWER_MODE", _lowPowerMode);
-    settings.setValue("SHOW_STATUSBAR", _showStatusBar);
+    settings.setValue("AUTO_RECONNECT",     _autoReconnect);
+    settings.setValue("LOW_POWER_MODE",     _lowPowerMode);
+    settings.setValue("SHOW_STATUSBAR",     _showStatusBar);
+    settings.setValue("FONT_SIZE_FACTOR",   _fontFactor);
+    settings.setValue("PIXEL_SIZE_FACTOR",  _pixelFactor);
     settings.endGroup();
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
 	
@@ -1317,6 +1348,22 @@ void MainWindow::restoreLastUsedConnection()
 void MainWindow::_linkStateChange(LinkInterface*)
 {
     emit repaintCanvas();
+}
+
+void MainWindow::setPixelSizeFactor(double size) {
+    if(size < 0.1) {
+        size = 0.1;
+    }
+    _pixelFactor = size;
+    emit pixelSizeChanged();
+}
+
+void MainWindow::setFontSizeFactor(double size) {
+    if(size < 0.1) {
+        size = 0.1;
+    }
+    _fontFactor = size;
+    emit fontSizeChanged();
 }
 
 #ifdef QGC_MOUSE_ENABLED_LINUX

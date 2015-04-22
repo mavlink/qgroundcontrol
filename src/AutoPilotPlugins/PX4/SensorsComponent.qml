@@ -91,7 +91,7 @@ Rectangle {
 
         QGCLabel {
             text: "SENSORS CONFIG"
-            font.pointSize: screenTools.dpiAdjustedPointSize(20);
+            font.pointSize: screenTools.fontPointFactor * (20);
         }
 
         Item { height: 20; width: 10 } // spacer

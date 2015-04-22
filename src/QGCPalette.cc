@@ -30,8 +30,6 @@
 #include <QApplication>
 #include <QPalette>
 
-const qreal QGCPalette::_defaultFontPointSize = 12;
-
 QList<QGCPalette*>   QGCPalette::_paletteObjects;
 
 QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
@@ -134,7 +132,3 @@ void QGCPalette::_themeChanged(void)
     emit paletteChanged();
 }
 
-qreal QGCPalette::dpiAdjustedDefaultFontPointSize(void)
-{
-    return ScreenTools::dpiAdjustedPointSize_s(_defaultFontPointSize);
-}

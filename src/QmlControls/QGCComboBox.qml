@@ -4,14 +4,15 @@ import QtQuick.Controls.Styles 1.2
 import QtQuick.Controls.Private 1.0
 
 import QGroundControl.Palette 1.0
+import QGroundControl.ScreenTools 1.0
 
 ComboBox {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
-
+    property ScreenTools __screenTools: ScreenTools { }
     property bool __showHighlight: pressed | hovered
 
     style: ComboBoxStyle {
-		font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
+        font.pointSize: __screenTools.defaultFontPointSize
         textColor: __showHighlight ?
                     control.__qgcPal.buttonHighlightText :
                     control.__qgcPal.buttonText

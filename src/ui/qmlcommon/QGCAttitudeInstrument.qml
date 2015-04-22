@@ -32,10 +32,10 @@ import QGroundControl.Controls 1.0
 
 QGCMovableItem {
     id: root
-    property real rollAngle :   0
+    property real rollAngle:    0
     property real pitchAngle:   0
-    property real size:         100
     property bool showPitch:    true
+    property real size
 
     width:  size
     height: size
@@ -51,11 +51,9 @@ QGCMovableItem {
     Image {
         id:         pointer
         source:     "/qml/attitudePointer.svg"
-        width:      root.width
         mipmap:     true
         fillMode:   Image.PreserveAspectFit
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.fill: parent
     }
     //----------------------------------------------------
     //-- Instrument Dial
@@ -63,10 +61,8 @@ QGCMovableItem {
         id:         instrumentDial
         source:     "/qml/attitudeDial.svg"
         mipmap:     true
-        width:      root.width
         fillMode:   Image.PreserveAspectFit
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.fill: parent
         transform: Rotation {
             origin.x: root.width  / 2
             origin.y: root.height / 2
@@ -78,7 +74,7 @@ QGCMovableItem {
     QGCPitchWidget {
         id:                 pitchWidget
         visible:            root.showPitch
-        size:               parent.width * 0.65
+        size:               root.size * 0.65
         anchors.verticalCenter: parent.verticalCenter
         pitchAngle:         root.pitchAngle
         rollAngle:          root.rollAngle
@@ -91,17 +87,16 @@ QGCMovableItem {
         anchors.centerIn:   parent
         source:             "/qml/crossHair.svg"
         mipmap:             true
-        width:              parent.width * 0.75
+        width:              size * 0.75
         fillMode:           Image.PreserveAspectFit
     }
     //----------------------------------------------------
     //-- Instrument Pannel
     Image {
-        id:         pannel
-        width:      parent.width
-        source:     "/qml/attitudeInstrument.svg"
-        mipmap:     true
-        fillMode:   Image.PreserveAspectFit
-        anchors.centerIn: parent
+        id:             pannel
+        source:         "/qml/attitudeInstrument.svg"
+        mipmap:         true
+        fillMode:       Image.PreserveAspectFit
+        anchors.fill:   parent
     }
 }

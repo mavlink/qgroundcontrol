@@ -182,7 +182,7 @@ property Fact __propertiesDialogFact: Fact { }
 
 						QGCLabel {
 							text: "Component #: " + componentId.toString()
-							font.pointSize: __screenTools.dpiAdjustedPointSize(__qgcPal.defaultFontPointSize + 4);
+                            font.pointSize: __screenTools.fontPointFactor * (16);
 						}
 
                         Item {
@@ -214,7 +214,7 @@ property Fact __propertiesDialogFact: Fact { }
                                                 x:					__leftMargin
                                                 text:				modelData
                                                 verticalAlignment:	Text.AlignVCenter
-                                                font.pointSize:		__screenTools.dpiAdjustedPointSize(__qgcPal.defaultFontPointSize + 2);
+                                                font.pointSize:		__screenTools.fontPointFactor * (__qgcPal.defaultFontPointSize + 2);
                                             }
                                         }
 

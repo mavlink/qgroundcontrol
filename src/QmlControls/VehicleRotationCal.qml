@@ -71,7 +71,7 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pointSize:         __screenTools.dpiAdjustedPointSize(25);
+            font.pointSize:         __screenTools.fontPointFactor * (25);
             font.bold:              true
             color:                  "black"
 
@@ -82,7 +82,7 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pointSize:         __screenTools.dpiAdjustedPointSize(25);
+            font.pointSize:         __screenTools.fontPointFactor * (25);
             color:                  calInProgress ? "yellow" : "white"
 
             text: parent.calText
