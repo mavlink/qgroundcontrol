@@ -30,43 +30,82 @@
 #include <QFont>
 #include <QFontMetrics>
 
-bool ScreenTools::_dpiFactorSet = false;
-double ScreenTools::_dotsPerInch = 96.0;
-double ScreenTools::_dpiFactor = 72.0 / 96.0;
+const double ScreenTools::_defaultFontPointSize = 12;
 
 ScreenTools::ScreenTools()
 {
-    connect(MainWindow::instance(), &MainWindow::repaintCanvas, this, &ScreenTools::_updateCanvas);
+    connect(MainWindow::instance(), &MainWindow::repaintCanvas,     this, &ScreenTools::_updateCanvas);
+    connect(MainWindow::instance(), &MainWindow::pixelSizeChanged,  this, &ScreenTools::_updatePixelSize);
+    connect(MainWindow::instance(), &MainWindow::fontSizeChanged,   this, &ScreenTools::_updateFontSize);
 }
 
-qreal ScreenTools::dpiAdjustedPointSize(qreal pointSize)
+qreal ScreenTools::adjustFontPointSize(qreal pointSize)
 {
-    return dpiAdjustedPointSize_s(pointSize);
+    return adjustFontPointSize_s(pointSize);
 }
 
-qreal ScreenTools::dpiAdjustedPointSize_s(qreal pointSize)
+qreal ScreenTools::adjustFontPointSize_s(qreal pointSize)
 {
-    _setDpiFactor();
-    return pointSize * _dpiFactor;
+    return pointSize * MainWindow::fontPointFactor();
 }
 
-void ScreenTools::_setDpiFactor(void)
+qreal ScreenTools::adjustPixelSize(qreal pixelSize)
 {
-    if (!_dpiFactorSet) {
-        _dpiFactorSet = true;
-        
-        // Get screen DPI to manage font sizes on different platforms
-        QScreen *srn = QGuiApplication::primaryScreen();
-        if(srn && srn->logicalDotsPerInch() > 50.0) {
-            _dotsPerInch = (double)srn->logicalDotsPerInch(); // Font point sizes are based on Mac 72dpi
-            _dpiFactor = 72.0 / _dotsPerInch;
-        } else {
-            qWarning() << "System not reporting logical DPI, which is used to compute the appropriate font size. The default being used is 96dpi. If the text within buttons and UI elements are too big or too small, that's the reason.";
-        }
-    }
+    return adjustPixelSize_s(pixelSize);
+}
+
+qreal ScreenTools::adjustPixelSize_s(qreal pixelSize)
+{
+    return pixelSize * MainWindow::pixelSizeFactor();
+}
+
+void ScreenTools::increasePixelSize()
+{
+    MainWindow::instance()->setPixelSizeFactor(MainWindow::pixelSizeFactor() + 0.025);
+}
+
+void ScreenTools::decreasePixelSize()
+{
+    MainWindow::instance()->setPixelSizeFactor(MainWindow::pixelSizeFactor() - 0.025);
+}
+
+void ScreenTools::increaseFontSize()
+{
+    MainWindow::instance()->setFontSizeFactor(MainWindow::fontPointFactor() + 0.025);
+}
+
+void ScreenTools::decreaseFontSize()
+{
+    MainWindow::instance()->setFontSizeFactor(MainWindow::fontPointFactor() - 0.025);
 }
 
 void ScreenTools::_updateCanvas()
 {
     emit repaintRequestedChanged();
+}
+
+void ScreenTools::_updatePixelSize()
+{
+    emit pixelSizeFactorChanged();
+}
+
+void ScreenTools::_updateFontSize()
+{
+    emit fontPointFactorChanged();
+    emit defaultFontPointSizeChanged();
+}
+
+double ScreenTools::fontPointFactor()
+{
+    return MainWindow::fontPointFactor();
+}
+
+double ScreenTools::pixelSizeFactor()
+{
+    return MainWindow::pixelSizeFactor();
+}
+
+double ScreenTools::defaultFontPointSize(void)
+{
+    return _defaultFontPointSize * MainWindow::fontPointFactor();
 }

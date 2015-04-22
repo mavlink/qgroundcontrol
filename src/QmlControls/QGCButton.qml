@@ -104,9 +104,9 @@ Button {
 
                     Text {
                         id:             text
-                        renderType:     Text.NativeRendering
+                        antialiasing:   true
                         text:           control.text
-                        font.pointSize: __qgcPal.dpiAdjustedDefaultFontPointSize
+                        font.pointSize: __screenTools.defaultFontPointSize
 
                         anchors.verticalCenter: parent.verticalCenter
 

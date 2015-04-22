@@ -44,7 +44,7 @@ Rectangle {
 
         QGCLabel {
             text: "PARAMETER EDITOR"
-            font.pointSize: screenTools.dpiAdjustedPointSize(20)
+            font.pointSize: screenTools.fontPointFactor * (20)
         }
 
         Item {

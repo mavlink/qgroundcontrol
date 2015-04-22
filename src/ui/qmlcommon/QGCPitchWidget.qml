@@ -41,10 +41,10 @@ Rectangle {
     property real _reticleSlot:     _reticleSpacing + _reticleHeight
     property real _longDash:        size * 0.40
     property real _shortDash:       size * 0.25
-    property real _fontSize:        screenTools.dpiAdjustedPointSize(size * 11 / 120);
+    property real _fontSize:        __screenTools.fontPointFactor * (11);
     height: size * 0.9
     width:  size
-    radius: 8
+    radius: screenTools.pixelSizeFactor * (8)
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.verticalCenter:   parent.verticalCenter
     clip: true
