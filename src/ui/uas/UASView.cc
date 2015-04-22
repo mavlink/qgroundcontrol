@@ -40,7 +40,10 @@ This file is part of the PIXHAWK project
 #include "UASWaypointManager.h"
 #include "MainWindow.h"
 #include "ui_UASView.h"
+
+#ifndef __mobile__
 #include <QGCHilFlightGearConfiguration.h>
+#endif
 
 UASView::UASView(UASInterface* uas, QWidget *parent) :
     QWidget(parent),

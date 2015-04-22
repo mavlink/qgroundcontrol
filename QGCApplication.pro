@@ -20,6 +20,7 @@
 include(QGCCommon.pri)
 
 TARGET = qgroundcontrol
+TEMPLATE =  app
 
 # Load additional config flags from user_config.pri
 exists(user_config.pri):infile(user_config.pri, CONFIG) {
@@ -31,19 +32,15 @@ LinuxBuild {
     CONFIG += link_pkgconfig
 }
 
-message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
-
 # QGC QtLocation plugin
 
 LIBS += -L$${LOCATION_PLUGIN_DESTDIR}
 LIBS += -l$${LOCATION_PLUGIN_NAME}
 
-LinuxBuild|MacBuild|AndroidBuild {
-    PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}.a
-}
-
 WindowsBuild {
     PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/$${LOCATION_PLUGIN_NAME}.lib
+} else {
+    PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}.a
 }
 
 # Qt configuration
@@ -51,13 +48,13 @@ WindowsBuild {
 CONFIG += qt \
     thread
 
-QT += network \
+QT += \
+    network \
     concurrent \
     gui \
     location \
     opengl \
     positioning \
-    printsupport \
     qml \
     quick \
     quickwidgets \
@@ -66,8 +63,10 @@ QT += network \
     widgets \
     xml \
 
-!AndroidBuild {
-    QT += serialport
+!MobileBuild {
+    QT += \
+    printsupport \
+    serialport \
 }
 
 contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
@@ -83,8 +82,14 @@ QT += testlib
 
 MacBuild {
     QMAKE_INFO_PLIST = Custom-Info.plist
-    ICON = $$BASEDIR/resources/icons/macx.icns
-    QT += quickwidgets
+    ICON = $${BASEDIR}/resources/icons/macx.icns
+    OTHER_FILES += Custom-Info.plist
+}
+
+iOSBuild {
+    QMAKE_INFO_PLIST = $${BASEDIR}/ios/iOS-Info.plist
+    ICON = $${BASEDIR}/resources/icons/macx.icns
+    OTHER_FILES += $${BASEDIR}/iOS-Info.plist
 }
 
 LinuxBuild {
@@ -92,7 +97,7 @@ LinuxBuild {
 }
 
 WindowsBuild {
-	RC_FILE = $$BASEDIR/qgroundcontrol.rc
+    RC_FILE = $${BASEDIR}/qgroundcontrol.rc
 }
 
 #
@@ -100,10 +105,12 @@ WindowsBuild {
 #
 
 DebugBuild {
+!iOSBuild {
     CONFIG += console
 }
+}
 
-!AndroidBuild {
+!MobileBuild {
 # qextserialport should not be used by general QGroundControl code. Use QSerialPort instead. This is only
 # here to support special case Firmware Upgrade code.
 include(libs/qextserialport/src/qextserialport.pri)
@@ -186,10 +193,6 @@ FORMS += \
     src/ui/mission/QGCMissionOther.ui \
     src/ui/QGCCommConfiguration.ui \
     src/ui/QGCDataPlot2D.ui \
-    src/ui/QGCHilConfiguration.ui \
-    src/ui/QGCHilFlightGearConfiguration.ui \
-    src/ui/QGCHilJSBSimConfiguration.ui \
-    src/ui/QGCHilXPlaneConfiguration.ui \
     src/ui/QGCLinkConfiguration.ui \
     src/ui/QGCMapRCToParamDialog.ui \
     src/ui/QGCMAVLinkInspector.ui \
@@ -201,7 +204,6 @@ FORMS += \
     src/ui/QGCUASFileViewMulti.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCWaypointListMulti.ui \
-    src/ui/SerialSettings.ui \
     src/ui/SettingsDialog.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/uas/UASMessageView.ui \
@@ -216,11 +218,20 @@ FORMS += \
     src/ui/WaypointList.ui \
     src/ui/WaypointViewOnlyView.ui \
 
-!AndroidBuild {
+!iOSBuild {
+FORMS += \
+    src/ui/SerialSettings.ui \
+}
+
+!MobileBuild {
 FORMS += \
     src/ui/JoystickButton.ui \
     src/ui/JoystickAxis.ui \
-    src/ui/JoystickWidget.ui
+    src/ui/JoystickWidget.ui \
+    src/ui/QGCHilConfiguration.ui \
+    src/ui/QGCHilFlightGearConfiguration.ui \
+    src/ui/QGCHilJSBSimConfiguration.ui \
+    src/ui/QGCHilXPlaneConfiguration.ui \
 }
 
 HEADERS += \
@@ -234,12 +245,7 @@ HEADERS += \
     src/comm/MockLinkFileServer.h \
     src/comm/MockLinkMissionItemHandler.h \
     src/comm/ProtocolInterface.h \
-    src/comm/QGCFlightGearLink.h \
-    src/comm/QGCHilLink.h \
-    src/comm/QGCJSBSimLink.h \
     src/comm/QGCMAVLink.h \
-    src/comm/QGCXPlaneLink.h \
-    src/comm/SerialLink.h \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
     src/GAudioOutput.h \
@@ -306,10 +312,6 @@ HEADERS += \
     src/ui/mission/QGCMissionOther.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCDataPlot2D.h \
-    src/ui/QGCHilConfiguration.h \
-    src/ui/QGCHilFlightGearConfiguration.h \
-    src/ui/QGCHilJSBSimConfiguration.h \
-    src/ui/QGCHilXPlaneConfiguration.h \
     src/ui/QGCLinkConfiguration.h \
     src/ui/QGCMainWindowAPConfigurator.h \
     src/ui/QGCMapRCToParamDialog.h \
@@ -323,7 +325,6 @@ HEADERS += \
     src/ui/QGCUASFileViewMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/QGCWaypointListMulti.h \
-    src/ui/SerialConfigurationWindow.h \
     src/ui/SettingsDialog.h \
     src/ui/toolbar/MainToolBar.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
@@ -347,13 +348,27 @@ HEADERS += \
     src/ViewWidgets/ViewWidgetController.h \
     src/Waypoint.h \
 
-!AndroidBuild {
+!iOSBuild {
 HEADERS += \
+    src/comm/SerialLink.h \
+    src/ui/SerialConfigurationWindow.h \
+}
+
+!MobileBuild {
+HEADERS += \
+    src/comm/QGCFlightGearLink.h \
+    src/comm/QGCHilLink.h \
+    src/comm/QGCJSBSimLink.h \
+    src/comm/QGCXPlaneLink.h \
     src/input/JoystickInput.h \
+    src/ui/CameraView.h \
     src/ui/JoystickAxis.h \
     src/ui/JoystickButton.h \
     src/ui/JoystickWidget.h \
-    src/ui/CameraView.h \
+    src/ui/QGCHilConfiguration.h \
+    src/ui/QGCHilFlightGearConfiguration.h \
+    src/ui/QGCHilJSBSimConfiguration.h \
+    src/ui/QGCHilXPlaneConfiguration.h \
 }
 
 SOURCES += \
@@ -365,10 +380,6 @@ SOURCES += \
     src/comm/MockLink.cc \
     src/comm/MockLinkFileServer.cc \
     src/comm/MockLinkMissionItemHandler.cc \
-    src/comm/QGCFlightGearLink.cc \
-    src/comm/QGCJSBSimLink.cc \
-    src/comm/QGCXPlaneLink.cc \
-    src/comm/SerialLink.cc \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
     src/GAudioOutput.cc \
@@ -430,10 +441,6 @@ SOURCES += \
     src/ui/mission/QGCMissionOther.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCDataPlot2D.cc \
-    src/ui/QGCHilConfiguration.cc \
-    src/ui/QGCHilFlightGearConfiguration.cc \
-    src/ui/QGCHilJSBSimConfiguration.cc \
-    src/ui/QGCHilXPlaneConfiguration.cc \
     src/ui/QGCLinkConfiguration.cc \
     src/ui/QGCMainWindowAPConfigurator.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
@@ -447,7 +454,6 @@ SOURCES += \
     src/ui/QGCUASFileViewMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/QGCWaypointListMulti.cc \
-    src/ui/SerialConfigurationWindow.cc \
     src/ui/SettingsDialog.cc \
     src/ui/toolbar/MainToolBar.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
@@ -471,13 +477,26 @@ SOURCES += \
     src/ViewWidgets/ViewWidgetController.cc \
     src/Waypoint.cc \
 
-!AndroidBuild {
+!iOSBuild {
 SOURCES += \
+    src/comm/SerialLink.cc \
+    src/ui/SerialConfigurationWindow.cc \
+}
+
+!MobileBuild {
+SOURCES += \
+    src/comm/QGCFlightGearLink.cc \
+    src/comm/QGCJSBSimLink.cc \
+    src/comm/QGCXPlaneLink.cc \
     src/input/JoystickInput.cc \
+    src/ui/CameraView.cc \
     src/ui/JoystickAxis.cc \
     src/ui/JoystickButton.cc \
     src/ui/JoystickWidget.cc \
-    src/ui/CameraView.cc 
+    src/ui/QGCHilConfiguration.cc \
+    src/ui/QGCHilFlightGearConfiguration.cc \
+    src/ui/QGCHilJSBSimConfiguration.cc \
+    src/ui/QGCHilXPlaneConfiguration.cc \
 }
 
 #
@@ -494,7 +513,7 @@ DebugBuild|WindowsDebugAndRelease {
 HEADERS += src/QmlControls/QmlTestWidget.h
 SOURCES += src/QmlControls/QmlTestWidget.cc
 
-!AndroidBuild {
+!MobileBuild {
 
 INCLUDEPATH += \
 	src/qgcunittest
@@ -536,7 +555,7 @@ SOURCES += \
     src/qgcunittest/PX4RCCalibrationTest.cc \
 
 } # DebugBuild|WindowsDebugAndRelease
-} # AndroidBuild
+} # MobileBuild
 
 #
 # AutoPilot Plugin Support
@@ -569,7 +588,7 @@ HEADERS+= \
     src/VehicleSetup/SetupView.h \
     src/VehicleSetup/VehicleComponent.h \
 
-!AndroidBuild {
+!MobileBuild {
 HEADERS += \
     src/VehicleSetup/FirmwareUpgradeController.h \
     src/VehicleSetup/PX4Bootloader.h \
@@ -599,7 +618,7 @@ SOURCES += \
     src/VehicleSetup/SetupView.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
-!AndroidBuild {
+!MobileBuild {
 SOURCES += \
     src/VehicleSetup/FirmwareUpgradeController.cc \
     src/VehicleSetup/PX4Bootloader.cc \

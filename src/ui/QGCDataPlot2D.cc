@@ -29,11 +29,13 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QTemporaryFile>
+#ifndef __mobile__
 #include <QPrintDialog>
+#include <QPrinter>
+#endif
 #include <QProgressDialog>
 #include <QHBoxLayout>
 #include <QSvgGenerator>
-#include <QPrinter>
 #include <QStandardPaths>
 #include <QDebug>
 
@@ -161,6 +163,7 @@ void QGCDataPlot2D::savePlot()
 
 void QGCDataPlot2D::print()
 {
+#ifndef __mobile__
     QPrinter printer(QPrinter::HighResolution);
     //    printer.setOutputFormat(QPrinter::PdfFormat);
     //    //QPrinter printer(QPrinter::HighResolution);
@@ -196,10 +199,14 @@ void QGCDataPlot2D::print()
         plot->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; font-size: 11pt;}");
         //plot->setCanvasBackground(QColor(5, 5, 8));
     }
+#endif
 }
 
 void QGCDataPlot2D::exportPDF(QString fileName)
 {
+#ifdef __mobile__
+    Q_UNUSED(fileName)
+#else
     QPrinter printer;
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setOutputFileName(fileName);
@@ -235,10 +242,14 @@ void QGCDataPlot2D::exportPDF(QString fileName)
     //plot->print(printer);
     plot->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; font-size: 11pt;}");
     //plot->setCanvasBackground(QColor(5, 5, 8));
+#endif
 }
 
 void QGCDataPlot2D::exportSVG(QString fileName)
 {
+#ifdef __mobile__
+    Q_UNUSED(fileName)
+#else
     if ( !fileName.isEmpty() ) {
         plot->setStyleSheet("QWidget { background-color: #FFFFFF; color: #000000; background-clip: border; font-size: 10pt;}");
         //plot->setCanvasBackground(Qt::white);
@@ -257,6 +268,7 @@ void QGCDataPlot2D::exportSVG(QString fileName)
         //plot->print(generator);
         plot->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; font-size: 11pt;}");
     }
+#endif
 }
 
 /**

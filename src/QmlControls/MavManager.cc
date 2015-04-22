@@ -27,6 +27,7 @@ This file is part of the QGROUNDCONTROL project
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
+#include "UAS.h"
 #include "MainWindow.h"
 #include "UASManager.h"
 #include "Waypoint.h"

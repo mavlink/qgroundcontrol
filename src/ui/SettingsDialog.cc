@@ -28,7 +28,7 @@
 #include "MainWindow.h"
 #include "ui_SettingsDialog.h"
 
-#ifndef __android__
+#ifndef __mobile__
 #include "JoystickWidget.h"
 #endif
 #include "LinkManager.h"
@@ -41,7 +41,7 @@
 #include "QGCMessageBox.h"
 #include "MainToolBar.h"
 
-#ifndef __android__
+#ifndef __mobile__
 SettingsDialog::SettingsDialog(JoystickInput *joystick, QWidget *parent, int showTab, Qt::WindowFlags flags) :
 #else
 SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags flags) :
@@ -58,14 +58,14 @@ _ui(new Ui::SettingsDialog)
     move(position.topLeft());
 
     QGCLinkConfiguration*  pLinkConf     = new QGCLinkConfiguration(this);
-#ifndef __android__
+#ifndef __mobile__
     JoystickWidget*        pJoystickConf = new JoystickWidget(joystick, this);
 #endif
     MAVLinkSettingsWidget* pMavsettings  = new MAVLinkSettingsWidget(MAVLinkProtocol::instance(), this);
 
     // Add the link settings pane
     _ui->tabWidget->addTab(pLinkConf,     "Comm Links");
-#ifndef __android__
+#ifndef __mobile__
     // Add the joystick settings pane
     _ui->tabWidget->addTab(pJoystickConf, "Controllers");
 #endif
@@ -113,7 +113,7 @@ _ui(new Ui::SettingsDialog)
         case ShowCommLinks:
             _ui->tabWidget->setCurrentWidget(pLinkConf);
             break;
-#ifndef __android__
+#ifndef __mobile__
         case ShowControllers:
             _ui->tabWidget->setCurrentWidget(pJoystickConf);
             break;

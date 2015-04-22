@@ -44,7 +44,7 @@ WindowsBuild {
     BASEDIR_COPY_RESOURCE_LIST = $$replace(BASEDIR,"/","\\")
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\flightgear\" \"$$DESTDIR_COPY_RESOURCE_LIST\\flightgear\"
 } else {
-    !AndroidBuild {
+    !MobileBuild {
         # Make sure to keep both sides of this if using the same set of directories
         QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/flightgear $$DESTDIR_COPY_RESOURCE_LIST
     }

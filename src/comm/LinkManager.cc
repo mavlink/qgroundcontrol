@@ -32,10 +32,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QApplication>
 #include <QDebug>
+
+#ifndef __ios__
 #ifdef __android__
 #include "qserialportinfo.h"
 #else
 #include <QSerialPortInfo>
+#endif
 #endif
 
 #include "LinkManager.h"
@@ -59,8 +62,10 @@ LinkManager::LinkManager(QObject* parent)
     , _mavlinkChannelsUsedBitMask(0)
     , _nullSharedLink(NULL)
 {
+#ifndef __ios__
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateConfigurationList);
     _portListTimer.start(1000);
+#endif
 }
 
 LinkManager::~LinkManager()
@@ -79,9 +84,11 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
     Q_ASSERT(config);
     LinkInterface* pLink = NULL;
     switch(config->type()) {
+#ifndef __ios__
         case LinkConfiguration::TypeSerial:
             pLink = new SerialLink(dynamic_cast<SerialConfiguration*>(config));
             break;
+#endif
         case LinkConfiguration::TypeUdp:
             pLink = new UDPLink(dynamic_cast<UDPConfiguration*>(config));
             break;
@@ -370,10 +377,12 @@ void LinkManager::loadLinkConfigurationList()
                             }
                             LinkConfiguration* pLink = NULL;
                             switch(type) {
+#ifndef __ios__
                                 case LinkConfiguration::TypeSerial:
                                     pLink = (LinkConfiguration*)new SerialConfiguration(name);
                                     pLink->setPreferred(preferred);
                                     break;
+#endif
                                 case LinkConfiguration::TypeUdp:
                                     pLink = (LinkConfiguration*)new UDPConfiguration(name);
                                     pLink->setPreferred(preferred);
@@ -422,6 +431,7 @@ void LinkManager::loadLinkConfigurationList()
     _configurationsLoaded = true;
 }
 
+#ifndef __ios__
 SerialConfiguration* LinkManager::_findSerialConfiguration(const QString& portName)
 {
     QString searchPort = portName.trimmed();
@@ -436,7 +446,9 @@ SerialConfiguration* LinkManager::_findSerialConfiguration(const QString& portNa
     }
     return NULL;
 }
+#endif
 
+#ifndef __ios__
 void LinkManager::_updateConfigurationList(void)
 {
     if (_configUpdateSuspended || !_configurationsLoaded) {
@@ -526,6 +538,7 @@ void LinkManager::_updateConfigurationList(void)
         saveLinkConfigurationList();
     }
 }
+#endif
 
 bool LinkManager::containsLink(LinkInterface* link)
 {
