@@ -235,15 +235,17 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     else
     {
         // Adjust the size
-        const int screenWidth  = QApplication::desktop()->width();
-        const int screenHeight = QApplication::desktop()->height();
-        if (screenWidth < 1500)
+        QScreen* scr = QApplication::primaryScreen();
+        QSize scrSize = scr->availableSize();
+        if (scrSize.width() <= 1280)
         {
-            resize(screenWidth, screenHeight - 80);
+            resize(scrSize.width(), scrSize.height());
         }
         else
         {
-            resize(screenWidth*0.67f, qMin(screenHeight, (int)(screenWidth*0.67f*0.67f)));
+            int w = scrSize.width()  > 1600 ? 1600 : scrSize.width();
+            int h = scrSize.height() >  800 ?  800 : scrSize.height();
+            resize(w, h);
         }
     }
 
