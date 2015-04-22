@@ -33,18 +33,22 @@ This file is part of the QGROUNDCONTROL project
 #include <QTimer>
 #include <QHostInfo>
 #include <QSplashScreen>
+#ifndef __mobile__
 #include <QGCHilLink.h>
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
+#endif
 #include <QQuickView>
 #include <QDesktopWidget>
 
 #include "QGC.h"
+#ifndef __ios__
 #include "SerialLink.h"
+#endif
 #include "MAVLinkProtocol.h"
 #include "QGCWaypointListMulti.h"
 #include "MainWindow.h"
-#ifndef __android__
+#ifndef __mobile__
 #include "JoystickWidget.h"
 #endif
 #include "GAudioOutput.h"
@@ -86,6 +90,9 @@ This file is part of the QGROUNDCONTROL project
 // computed at runtime.
 
 #if defined(Q_OS_OSX)
+double MainWindow::_pixelFactor    = 1.0;
+double MainWindow::_fontFactor     = 1.0;
+#elif defined(__ios__)
 double MainWindow::_pixelFactor    = 1.0;
 double MainWindow::_fontFactor     = 1.0;
 #elif defined(Q_OS_WIN)
@@ -217,7 +224,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     connectCommonActions();
     // Connect user interface devices
     emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-#ifndef __android__
+#ifndef __mobile__
     joystick = new JoystickInput();
 #endif
 #ifdef QGC_MOUSE_ENABLED_WIN
@@ -248,7 +255,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     emit initStatusChanged(tr("Restoring last view state"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     // Restore the window setup
     _loadCurrentViewState();
-#ifndef __android__
+#ifndef __mobile__
 
     // Restore the window position and size
     emit initStatusChanged(tr("Restoring last window size"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
@@ -317,7 +324,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     if (!qgcApp()->runningUnitTests()) {
         _ui.actionStatusBar->setChecked(_showStatusBar);
         showStatusBarCallback(_showStatusBar);
-#ifdef __android__
+#ifdef __mobile__
         menuBar()->hide();
 #endif
         show();
@@ -341,7 +348,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
 
 MainWindow::~MainWindow()
 {
-#ifndef __android__
+#ifndef __mobile__
     if (joystick)
     {
         joystick->shutdown();
@@ -585,6 +592,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
     }
 }
 
+#ifndef __mobile__
 void MainWindow::_showHILConfigurationWidgets(void)
 {
     UASInterface* uas = UASManager::instance()->getActiveUAS();
@@ -624,6 +632,7 @@ void MainWindow::_showHILConfigurationWidgets(void)
         }
     }
 }
+#endif
 
 void MainWindow::fullScreenActionItemCallback(bool)
 {
@@ -869,7 +878,7 @@ void MainWindow::showRoadMap()
 
 void MainWindow::showSettings()
 {
-#ifndef __android__
+#ifndef __mobile__
     SettingsDialog settings(joystick, this);
 #else
     SettingsDialog settings(this);
@@ -900,7 +909,9 @@ void MainWindow::UASCreated(UASInterface* uas)
     connect(uas, SIGNAL(misconfigurationDetected(UASInterface*)), this, SLOT(handleMisconfiguration(UASInterface*)));
 
     // HIL
+#ifndef __mobile__
     _showHILConfigurationWidgets();
+#endif
 
     if (!linechartWidget)
     {
@@ -1021,7 +1032,9 @@ void MainWindow::_loadCurrentViewState(void)
 
     // HIL dock widget are dynamic and don't take part in the saved window state, so this
     // need to happen after we restore state
+#ifndef __mobile__
     _showHILConfigurationWidgets();
+#endif
 
     // There is a bug in Qt where a Canvas element inside a QQuickWidget does not
     // receive update requests. Here we emit a signal for them to get repainted.
@@ -1155,7 +1168,7 @@ void MainWindow::hideSplashScreen(void)
 
 void MainWindow::manageLinks()
 {
-#ifndef __android__
+#ifndef __mobile__
     SettingsDialog settings(joystick, this, SettingsDialog::ShowCommLinks);
 #else
     SettingsDialog settings(this, SettingsDialog::ShowCommLinks);

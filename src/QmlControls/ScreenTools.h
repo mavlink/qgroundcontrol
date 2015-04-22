@@ -125,6 +125,10 @@ public:
     bool    isAndroid           () { return true;  }
     bool    isiOS               () { return false; }
     bool    isMobile            () { return true;  }
+#elif defined(__ios__)
+    bool    isAndroid           () { return false; }
+    bool    isiOS               () { return true; }
+    bool    isMobile            () { return true; }
 #else
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }

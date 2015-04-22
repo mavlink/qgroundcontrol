@@ -26,7 +26,7 @@
 #include <QRegularExpression>
 #include "MainWindow.h"
 #ifdef QT_DEBUG
-#ifndef __android__
+#ifndef __mobile__
 #include "UnitTest.h"
 #endif
 #endif
@@ -40,7 +40,7 @@ QString QGCFileDialog::getExistingDirectory(
     _validate(options);
     
 #ifdef QT_DEBUG
-#ifndef __android__
+#ifndef __mobile__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getExistingDirectory(parent, caption, dir, options);
     } else
@@ -61,7 +61,7 @@ QString QGCFileDialog::getOpenFileName(
     _validate(options);
     
 #ifdef QT_DEBUG
-#ifndef __android__
+#ifndef __mobile__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileName(parent, caption, dir, filter, options);
     } else
@@ -82,7 +82,7 @@ QStringList QGCFileDialog::getOpenFileNames(
     _validate(options);
     
 #ifdef QT_DEBUG
-#ifndef __android__
+#ifndef __mobile__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileNames(parent, caption, dir, filter, options);
     } else
@@ -105,7 +105,7 @@ QString QGCFileDialog::getSaveFileName(
     _validate(options);
 
 #ifdef QT_DEBUG
-#ifndef __android__
+#ifndef __mobile__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getSaveFileName(parent, caption, dir, filter, defaultSuffix, options);
     } else
@@ -217,7 +217,7 @@ void QGCFileDialog::_validate(Options& options)
     Q_ASSERT(qgcApp());
     
     Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
-#ifdef __android__
+#ifdef __mobile__
     Q_UNUSED(options)
 #else
     // On OSX native dialog can hang so we always use Qt dialogs

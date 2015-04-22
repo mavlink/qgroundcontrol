@@ -29,7 +29,7 @@
 #include "MainWindow.h"
 #include "QGCApplication.h"
 #ifdef QT_DEBUG
-#ifndef __android__
+#ifndef __mobile__
 #include "UnitTest.h"
 #endif
 #endif
@@ -106,7 +106,7 @@ private:
         }
 
 #ifdef QT_DEBUG
-#ifndef __android__
+#ifndef __mobile__
         if (qgcApp()->runningUnitTests()) {
             qDebug() << "QGCMessageBox (unit testing)" << title << text;
             return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);

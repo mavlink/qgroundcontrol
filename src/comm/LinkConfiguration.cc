@@ -28,7 +28,9 @@ This file is part of the QGROUNDCONTROL project
 */
 
 #include "LinkConfiguration.h"
+#ifndef __ios__
 #include "SerialLink.h"
+#endif
 #include "UDPLink.h"
 #include "TCPLink.h"
 
@@ -82,9 +84,11 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
 {
     LinkConfiguration* config = NULL;
     switch(type) {
+#ifndef __ios__
         case LinkConfiguration::TypeSerial:
             config = new SerialConfiguration(name);
             break;
+#endif
         case LinkConfiguration::TypeUdp:
             config = new UDPConfiguration(name);
             break;
@@ -108,9 +112,11 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
 {
     LinkConfiguration* dupe = NULL;
     switch(source->type()) {
+#ifndef __ios__
         case TypeSerial:
             dupe = new SerialConfiguration(dynamic_cast<SerialConfiguration*>(source));
             break;
+#endif
         case TypeUdp:
             dupe = new UDPConfiguration(dynamic_cast<UDPConfiguration*>(source));
             break;

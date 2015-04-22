@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "configuration.h"
 #ifdef QT_DEBUG
-#ifndef __android__
+#ifndef __mobile__
 #include "UnitTest.h"
 #endif
 #include "CmdLineOptParser.h"
@@ -101,7 +101,9 @@ int main(int argc, char *argv[])
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
     // these signals. In general we don't queue these signals, but we do what the warning says
     // anyway to silence the debug output.
+#ifndef __ios__
     qRegisterMetaType<QSerialPort::SerialPortError>();
+#endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
     // We statically link to the google QtLocation plugin
 
@@ -158,7 +160,7 @@ int main(int argc, char *argv[])
 
     int exitCode;
 
-#ifndef __android__
+#ifndef __mobile__
 #ifdef QT_DEBUG
     if (runUnitTests) {
         if (!app->_initForUnitTests()) {
