@@ -29,9 +29,11 @@ This file is part of the QGROUNDCONTROL project
 
 import QtQuick 2.4
 import QGroundControl.Controls 1.0
+import QGroundControl.ScreenTools 1.0
 
 Item {
     id:    root
+    property ScreenTools __screenTools: ScreenTools { }
     property real heading : 0
     Image {
         id: compass
@@ -57,8 +59,8 @@ Item {
     }
     Rectangle {
         anchors.centerIn: compass
-        width:  40
-        height: 25
+        width:  __screenTools.pixelSizeFactor * (40)
+        height: __screenTools.pixelSizeFactor * (25)
         border.color: Qt.rgba(1,1,1,0.15)
         color: Qt.rgba(0,0,0,0.25)
         QGCLabel {

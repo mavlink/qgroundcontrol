@@ -68,13 +68,7 @@ MainToolBar::MainToolBar(QWidget* parent)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("MainToolBar");
-#ifdef __android__
-    setMinimumHeight(120);
-    setMaximumHeight(120);
-#else
-    setMinimumHeight(40);
-    setMaximumHeight(40);
-#endif
+    _updatePixelSize();
     setMinimumWidth(MainWindow::instance()->minimumWidth());
     // Get rid of layout default margins
     QLayout* pl = layout();
@@ -103,6 +97,7 @@ MainToolBar::MainToolBar(QWidget* parent)
     connect(LinkManager::instance(),     &LinkManager::linkConfigurationChanged, this, &MainToolBar::_updateConfigurations);
     connect(LinkManager::instance(),     &LinkManager::linkConnected,            this, &MainToolBar::_linkConnected);
     connect(LinkManager::instance(),     &LinkManager::linkDisconnected,         this, &MainToolBar::_linkDisconnected);
+    connect(MainWindow::instance(),      &MainWindow::pixelSizeChanged,          this, &MainToolBar::_updatePixelSize);
     // RSSI (didn't like standard connection)
     connect(MAVLinkProtocol::instance(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
@@ -697,4 +692,10 @@ void MainToolBar::_setProgressBarValue(float value)
 {
     _progressBarValue = value;
     emit progressBarValueChanged(value);
+}
+
+void MainToolBar::_updatePixelSize()
+{
+    setMinimumHeight(40 * MainWindow::pixelSizeFactor());
+    setMaximumHeight(40 * MainWindow::pixelSizeFactor());
 }

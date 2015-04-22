@@ -33,16 +33,15 @@ import QGroundControl.Controls 1.0
 
 Rectangle {
     id: root
-    property ScreenTools screenTools: ScreenTools { }
+    property ScreenTools __screenTools: ScreenTools { }
     property real speed:           0
-    property real _reticleSpacing: 10
-    property real _reticleHeight:  2
+    property real _reticleSpacing: __screenTools.pixelSizeFactor * (10)
+    property real _reticleHeight:  __screenTools.pixelSizeFactor * (2)
     property real _reticleSlot:    _reticleSpacing + _reticleHeight
     anchors.verticalCenter: parent.verticalCenter
     z:10
-    height: parent.height * 0.65 > 280 ? 280 : parent.height * 0.65
     smooth: true
-    radius: 5
+    radius: __screenTools.pixelSizeFactor * (5)
     border.color: Qt.rgba(1,1,1,0.25)
     gradient: Gradient {
         GradientStop { position: 0.0; color: Qt.rgba(0,0,0,0.65) }
@@ -51,7 +50,7 @@ Rectangle {
     }
     Rectangle {
         id:     clipRect
-        height: parent.height - 5
+        height: parent.height - __screenTools.pixelSizeFactor * (5)
         width:  parent.width
         clip:   true
         color:  Qt.rgba(0,0,0,0);
@@ -65,14 +64,14 @@ Rectangle {
                 model: 40
                 Rectangle {
                     property int _speed: -(index - 20)
-                    width:  (_speed % 5 === 0) ? 10 : 15
+                    width:  (_speed % 5 === 0) ? __screenTools.pixelSizeFactor * (10) : __screenTools.pixelSizeFactor * (15)
                     anchors.right: parent.right
                     height: _reticleHeight
                     color:  Qt.rgba(1,1,1,0.35)
                     QGCLabel {
                         visible: (_speed % 5 === 0)
                         anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.horizontalCenterOffset: -30
+                        anchors.horizontalCenterOffset: __screenTools.pixelSizeFactor * (-30)
                         anchors.verticalCenter:   parent.verticalCenter
                         antialiasing: true
                         font.weight: Font.DemiBold

@@ -40,10 +40,12 @@
 
 import QtQuick 2.1
 import QGroundControl.Controls 1.0
+import QGroundControl.ScreenTools 1.0
 
 Item {
     id: slider;
     height: 12
+    property ScreenTools __screenTools: ScreenTools { }
     property real value // value is read/write.
     property real minimum: 0
     property real maximum: 1
@@ -51,15 +53,15 @@ Item {
 
     Rectangle {
         anchors.fill:   parent
-        radius:         6
+        radius:         __screenTools.pixelSizeFactor * (6)
         color:          Qt.rgba(0,0,0,0.65);
     }
 
     Rectangle {
         anchors.left:       parent.left
-        anchors.leftMargin: 4
-        radius:             4
-        height:             4
+        anchors.leftMargin: __screenTools.pixelSizeFactor * (4)
+        radius:             __screenTools.pixelSizeFactor * (4)
+        height:             __screenTools.pixelSizeFactor * (4)
         width:              handle.x - x
         color:              "#69bb17"
         anchors.verticalCenter: parent.verticalCenter
@@ -68,14 +70,14 @@ Item {
     Rectangle {
         id:                 labelRect
         width:              label.width
-        height:             label.height + 4
-        radius:             4
+        height:             label.height + __screenTools.pixelSizeFactor * (4)
+        radius:             __screenTools.pixelSizeFactor * (4)
         smooth:             true
         color:              Qt.rgba(1,1,1,0.75);
-        border.width:       1
+        border.width:       __screenTools.pixelSizeFactor * (1)
         border.color:       Qt.rgba(0,0,0,0.45);
         anchors.bottom:     handle.top
-        anchors.bottomMargin: 4
+        anchors.bottomMargin: __screenTools.pixelSizeFactor * (4)
         visible: mouseRegion.pressed
         x: Math.max(Math.min(handle.x + (handle.width - width ) / 2, slider.width - width), 0)
         QGCLabel{
@@ -92,7 +94,7 @@ Item {
     Rectangle {
         id:         handle;
         smooth:     true
-        width:      26;
+        width:      __screenTools.pixelSizeFactor * (26);
         y:          (slider.height - height) / 2;
         x:          (slider.value - slider.minimum) * slider.length / (slider.maximum - slider.minimum)
 

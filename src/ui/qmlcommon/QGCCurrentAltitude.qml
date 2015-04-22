@@ -29,22 +29,24 @@ This file is part of the QGROUNDCONTROL project
 
 import QtQuick 2.1
 import QGroundControl.Controls 1.0
+import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     id: root
+    property ScreenTools __screenTools: ScreenTools { }
     property real altitude: 0
     property real vertZ:    0
     property bool showAltitude: true
     property bool showClimbRate: true
     anchors.verticalCenter: parent.verticalCenter
     width:  parent.width
-    height: (showAltitude && showClimbRate) ? 50 : 25
+    height: (showAltitude && showClimbRate) ? __screenTools.pixelSizeFactor * (50) : __screenTools.pixelSizeFactor * (25)
     color: "black"
     border.color: Qt.rgba(1,1,1,0.25)
     opacity: 1.0
     Column{
         anchors.centerIn: parent
-        spacing: 4
+        spacing: __screenTools.pixelSizeFactor * (4)
         QGCLabel {
             text: 'h: ' + altitude.toFixed(0)
             font.weight: Font.DemiBold
