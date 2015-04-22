@@ -246,6 +246,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
             int w = scrSize.width()  > 1600 ? 1600 : scrSize.width();
             int h = scrSize.height() >  800 ?  800 : scrSize.height();
             resize(w, h);
+            move((scrSize.width() - w) / 2, (scrSize.height() - h) / 2);
         }
     }
 
