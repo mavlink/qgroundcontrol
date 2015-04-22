@@ -49,7 +49,9 @@
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "UDPLink.h"
+#ifndef __ios__
 #include "SerialLink.h"
+#endif
 #include "QGCSingleton.h"
 #include "LinkManager.h"
 #include "UASManager.h"
@@ -148,7 +150,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
 #endif
     
-#ifndef __android__
+#ifndef __mobile__
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
     // it to the correct location. This way default debug builds will have logging turned off.
 

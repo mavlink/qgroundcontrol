@@ -32,7 +32,7 @@
 #include "QGCQmlWidgetHolder.h"
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
-#ifndef __android__
+#ifndef __mobile__
 #include "FirmwareUpgradeController.h"
 #endif
 #include "ParameterEditorController.h"
@@ -47,10 +47,21 @@ SetupView::SetupView(QWidget* parent) :
     _initComplete(false),
 	_readyAutopilot(NULL)
 {
+<<<<<<< HEAD
 #ifdef __android__
     _showFirmware = false;
 #else
     _showFirmware = true;
+=======
+    _ui->setupUi(this);
+
+    bool fSucceeded = connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
+    Q_UNUSED(fSucceeded);
+    Q_ASSERT(fSucceeded);
+    
+#ifndef __mobile__
+    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+>>>>>>> First stab at iOS builds
 #endif
     
     connect(UASManager::instance(), &UASManager::activeUASSet, this, &SetupView::_setActiveUAS);
@@ -100,12 +111,28 @@ void SetupView::_pluginReadyChanged(bool pluginReady)
 #ifdef UNITTEST_BUILD
 void SetupView::showFirmware(void)
 {
+<<<<<<< HEAD
 #ifndef __android__
     QVariant returnedValue;
     bool success = QMetaObject::invokeMethod(getRootObject(),
                                              "showFirmwarePanel",
                                              Q_RETURN_ARG(QVariant, returnedValue));
     Q_ASSERT(success);
+=======
+#ifndef __mobile__
+    //FIXME: Hack out for android for now
+    if (_uasCurrent && _uasCurrent->isArmed()) {
+        QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
+        return;
+    }
+
+    QGCQmlWidgetHolder* setup = new QGCQmlWidgetHolder;
+    Q_CHECK_PTR(setup);
+    
+    setup->setSource(QUrl::fromUserInput("qrc:/qml/FirmwareUpgrade.qml"));
+
+    _changeSetupWidget(setup);
+>>>>>>> First stab at iOS builds
 #endif
 }
 

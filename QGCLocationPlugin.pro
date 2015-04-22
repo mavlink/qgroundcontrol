@@ -6,7 +6,7 @@ CONFIG      += plugin static
 QT          += location-private positioning-private network
 PLUGIN_TYPE  = geoservices
 
-DESTDIR  = $${LOCATION_PLUGIN_DESTDIR}
+DESTDIR      = $${LOCATION_PLUGIN_DESTDIR}
 
 INCLUDEPATH += $$QT.location.includes
 
@@ -30,4 +30,3 @@ SOURCES += \
 
 OTHER_FILES += \
     src/QtLocationPlugin/qgc_maps_plugin.json
-
