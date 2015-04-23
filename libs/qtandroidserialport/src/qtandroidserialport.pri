@@ -21,8 +21,6 @@ android {
 
     CONFIG += mobility
 
-    INCLUDEPATH += $$PWD/qt4support/include
-
     HEADERS += $$PUBLIC_HEADERS $$PRIVATE_HEADERS
 
 }
