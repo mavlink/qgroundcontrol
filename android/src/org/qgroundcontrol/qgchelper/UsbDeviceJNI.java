@@ -199,7 +199,7 @@ public class UsbDeviceJNI extends QtActivity
                 tempL = tempL + Integer.toString(deviceL.getVendorId()) + ":";
                 listL[countL] = tempL;
                 countL++;
-                Log.i(TAG, "Found " + tempL);
+                //Log.i(TAG, "Found " + tempL);
             }
         }
 
@@ -260,6 +260,7 @@ public class UsbDeviceJNI extends QtActivity
 
                     if (m_instance.m_UsbReceiver == null)
                     {
+                        Log.i(TAG, "Creating new broadcast receiver");
                         m_instance.m_UsbReceiver= new BroadcastReceiver()
                         {
                             public void onReceive(Context contextA, Intent intentA)
@@ -273,7 +274,6 @@ public class UsbDeviceJNI extends QtActivity
                                     {
                                         if (m_userData.containsKey(deviceL.getDeviceId()))
                                         {
-//                                            UsbDeviceJNI.close(deviceL.getDeviceId());
                                             nativeDeviceHasDisconnected(m_userData.get(deviceL.getDeviceId()));
                                         }
                                     }
@@ -294,6 +294,7 @@ public class UsbDeviceJNI extends QtActivity
                         Log.e(TAG, "UsbIoManager instance is null");
                     m_ioManager.put(idL, managerL);
                     m_Executor.submit(managerL);
+                    Log.i(TAG, "Port open successfull");
                     return idL;
                 }
             }
@@ -312,12 +313,10 @@ public class UsbDeviceJNI extends QtActivity
 
                 m_ioManager.remove(idL);
             }
-
+            Log.e(TAG, "Port open exception");
             return BAD_PORT;
         }
     }
-
-
 
     public static void startIoManager(int idA)
     {
@@ -334,8 +333,6 @@ public class UsbDeviceJNI extends QtActivity
         m_Executor.submit(managerL);
     }
 
-
-
     public static void stopIoManager(int idA)
     {
         if(m_ioManager.get(idA) == null)
@@ -344,9 +341,6 @@ public class UsbDeviceJNI extends QtActivity
         m_ioManager.get(idA).stop();
         m_ioManager.remove(idA);
     }
-
-
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     //
