@@ -585,8 +585,11 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
             Waypoint *t = new Waypoint();
             if(t->load(in))
             {
-                t->setId(waypointsEditable.count());
-                waypointsEditable.insert(waypointsEditable.count(), t);
+              //Use the existing function to add waypoints to the map instead of doing it manually
+              //Indeed, we should connect our waypoints to the map in order to synchronize them
+              //t->setId(waypointsEditable.count());
+              // waypointsEditable.insert(waypointsEditable.count(), t);
+              addWaypointEditable(t, false);
             }
             else
             {
