@@ -863,11 +863,8 @@ public slots:
     /** @brief Add an offset in body frame to the setpoint */
     void setLocalPositionOffset(float x, float y, float z, float yaw);
 
-    void startRadioControlCalibration(int param=1);
-    void endRadioControlCalibration();
-    void startMagnetometerCalibration();
-    void startGyroscopeCalibration();
-    void startPressureCalibration();
+    void startCalibration(StartCalibrationType calType);
+    void stopCalibration(void);
 
     void startDataRecording();
     void stopDataRecording();

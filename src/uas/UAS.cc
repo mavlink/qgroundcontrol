@@ -1439,19 +1439,67 @@ void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
     Q_UNUSED(yaw);
 }
 
-void UAS::startRadioControlCalibration(int param)
+void UAS::startCalibration(UASInterface::StartCalibrationType calType)
 {
+    int gyroCal = 0;
+    int magCal = 0;
+    int airspeedCal = 0;
+    int radioCal = 0;
+    int accelCal = 0;
+    
+    switch (calType) {
+        case StartCalibrationGyro:
+            gyroCal = 1;
+            break;
+        case StartCalibrationMag:
+            magCal = 1;
+            break;
+        case StartCalibrationAirspeed:
+            airspeedCal = 1;
+            break;
+        case StartCalibrationRadio:
+            radioCal = 1;
+            break;
+        case StartCalibrationAccel:
+            accelCal = 1;
+            break;
+    }
+    
     mavlink_message_t msg;
-    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, param, 0, 0, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(),
+                                  mavlink->getComponentId(),
+                                  &msg,
+                                  uasId,
+                                  0,                                // target component
+                                  MAV_CMD_PREFLIGHT_CALIBRATION,    // command id
+                                  0,                                // 0=first transmission of command
+                                  gyroCal,                          // gyro cal
+                                  magCal,                           // mag cal
+                                  0,                                // ground pressure
+                                  radioCal,                         // radio cal
+                                  accelCal,                         // accel cal
+                                  airspeedCal,                      // airspeed cal
+                                  0);                               // unused
     sendMessage(msg);
 }
 
-void UAS::endRadioControlCalibration()
+void UAS::stopCalibration(void)
 {
     mavlink_message_t msg;
-    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 0, 0, 0, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(),
+                                  mavlink->getComponentId(),
+                                  &msg,
+                                  uasId,
+                                  0,                                // target component
+                                  MAV_CMD_PREFLIGHT_CALIBRATION,    // command id
+                                  0,                                // 0=first transmission of command
+                                  0,                                // gyro cal
+                                  0,                                // mag cal
+                                  0,                                // ground pressure
+                                  0,                                // radio cal
+                                  0,                                // accel cal
+                                  0,                                // airspeed cal
+                                  0);                               // unused
     sendMessage(msg);
 }
 
@@ -1466,30 +1514,6 @@ void UAS::stopDataRecording()
 {
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 0, 0, 0, 0);
-    sendMessage(msg);
-}
-
-void UAS::startMagnetometerCalibration()
-{
-    mavlink_message_t msg;
-    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 1, 0, 0, 0, 0, 0);
-    sendMessage(msg);
-}
-
-void UAS::startGyroscopeCalibration()
-{
-    mavlink_message_t msg;
-    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 1, 0, 0, 0, 0, 0, 0);
-    sendMessage(msg);
-}
-
-void UAS::startPressureCalibration()
-{
-    mavlink_message_t msg;
-    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 1, 0, 0, 0, 0);
     sendMessage(msg);
 }
 
