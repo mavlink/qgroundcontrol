@@ -106,7 +106,7 @@ public:
     virtual int getAutopilotType() { return MAV_AUTOPILOT_PX4; };
     virtual QGCUASFileManager* getFileManager() {Q_ASSERT(false); return NULL; }
     virtual void startCalibration(StartCalibrationType calType) { Q_UNUSED(calType); return; };
-    virtual void stopCalibration() { Q_ASSERT(false); return; };
+    virtual void stopCalibration() { return; };
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
     virtual void sendMessage(LinkInterface* link, mavlink_message_t message){ Q_UNUSED(link); Q_UNUSED(message); Q_ASSERT(false); }
