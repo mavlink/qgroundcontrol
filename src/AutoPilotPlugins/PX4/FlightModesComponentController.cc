@@ -153,11 +153,11 @@ void FlightModesComponentController::setSendLiveRCSwitchRanges(bool start)
             _rgRCReversed[i] = floatReversed == -1.0f;
         }
         
-        _uas->startRadioControlCalibration();
+        _uas->startCalibration(UASInterface::StartCalibrationRadio);
         connect(_uas, &UASInterface::remoteControlChannelRawChanged, this, &FlightModesComponentController::_remoteControlChannelRawChanged);
     } else {
         disconnect(_uas, &UASInterface::remoteControlChannelRawChanged, this, &FlightModesComponentController::_remoteControlChannelRawChanged);
-        _uas->endRadioControlCalibration();
+        _uas->stopCalibration();
         _initRcValues();
         emit switchLiveRangeChanged();
     }

@@ -242,6 +242,20 @@ public:
 
     static const unsigned int WAYPOINT_RADIUS_DEFAULT_FIXED_WING = 25;
     static const unsigned int WAYPOINT_RADIUS_DEFAULT_ROTARY_WING = 5;
+    
+    enum StartCalibrationType {
+        StartCalibrationRadio,
+        StartCalibrationGyro,
+        StartCalibrationMag,
+        StartCalibrationAirspeed,
+        StartCalibrationAccel
+    };
+    
+    /// Starts the specified calibration
+    virtual void startCalibration(StartCalibrationType calType) = 0;
+    
+    /// Ends any current calibration
+    virtual void stopCalibration(void) = 0;
 
 public slots:
 
@@ -343,12 +357,6 @@ public slots:
 
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
-
-    virtual void startRadioControlCalibration(int param=1) = 0;
-    virtual void endRadioControlCalibration() = 0;
-    virtual void startMagnetometerCalibration() = 0;
-    virtual void startGyroscopeCalibration() = 0;
-    virtual void startPressureCalibration() = 0;
 
     /** @brief Return if this a rotary wing */
     virtual bool isRotaryWing() = 0;
