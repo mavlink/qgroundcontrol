@@ -24,6 +24,7 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
+import QtQuick.Dialogs 1.2
 
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
@@ -66,6 +67,25 @@ Rectangle {
         "ROTATION_ROLL_270_YAW_270"
     ]
 
+    readonly property string statusTextAreaDefaultText: "Sensor config is a work in progress. Not all visuals for all calibration types fully implemented.\n\n" +
+                                                            "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration is is best " +
+                                                            "to be connected to you vehicle via radio instead of USB since the USB cable will likely get in the way.\n\n" +
+                                                            "For Gyroscope calibration you will need to place your vehicle right side up on solid surface and leave it still.\n\n" +
+                                                            "For Accelerometer calibration you will need to place your vehicle on all six sides and hold it there for a few seconds.\n\n" +
+                                                            "For Airspeed calibration you will need to keep your airspeed sensor out of any wind.\n\n"
+
+    Fact { id: cal_mag0_id; name: "CAL_MAG0_ID" }
+    Fact { id: cal_mag1_id; name: "CAL_MAG1_ID" }
+    Fact { id: cal_mag2_id; name: "CAL_MAG2_ID" }
+    Fact { id: cal_mag0_rot; name: "CAL_MAG0_ROT" }
+    Fact { id: cal_mag1_rot; name: "CAL_MAG1_ROT" }
+    Fact { id: cal_mag2_rot; name: "CAL_MAG2_ROT" }
+
+    // Id > = signals compass available, rot < 0 signals internal compass
+    property bool showCompass0Rot: cal_mag0_id.value > 0 && cal_mag0_rot.value >= 0
+    property bool showCompass1Rot: cal_mag1_id.value > 0 && cal_mag1_rot.value >= 0
+    property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
+
     color: qgcPal.window
 
     // We use this bogus loader just so we can get an onLoaded signal to hook to in order to
@@ -83,6 +103,227 @@ Rectangle {
             controller.gyroButton = gyroButton
             controller.accelButton = accelButton
             controller.airspeedButton = airspeedButton
+            controller.cancelButton = cancelButton
+            controller.orientationCalAreaHelpText = orientationCalAreaHelpText
+        }
+    }
+
+    Connections {
+        target: controller
+
+        onResetStatusTextArea: statusTextArea.text = statusTextAreaDefaultText
+        onSetCompassRotations: showCompassRotationOverlay()
+    }
+
+    Rectangle {
+        id:             overlay
+        anchors.fill:   parent
+        color:          qgcPal.window
+        opacity:        0.75
+        z:              100
+        visible:        false
+    }
+
+    Rectangle {
+        width:                      300
+        height:                     100
+        anchors.verticalCenter:     parent.verticalCenter
+        anchors.horizontalCenter:   parent.horizontalCenter
+        color:                      qgcPal.window
+        border.width:               1
+        border.color:               qgcPal.text
+        visible:                    controller.waitingForCancel
+        z:                          overlay.z + 1
+
+        onVisibleChanged: {
+            overlay.visible = visible
+        }
+
+        QGCLabel {
+            anchors.fill:           parent
+            verticalAlignment:      Text.AlignVCenter
+            horizontalAlignment:    Text.AlignHCenter
+            text:                   "Waiting for Cancel (may take a few seconds)"
+        }
+    }
+
+    Rectangle {
+        property string calibrationType
+
+        id:                         boardRotationOverlay
+        width:                      300
+        height:                     boardRotationOverlayColumn.height + 11
+        anchors.verticalCenter:     parent.verticalCenter
+        anchors.horizontalCenter:   parent.horizontalCenter
+        color:                      qgcPal.window
+        border.width:               1
+        border.color:               qgcPal.text
+        visible:                    false
+        z:                          overlay.z + 1
+
+        Column {
+            id:                 boardRotationOverlayColumn
+            anchors.topMargin:  10
+            anchors.top:        parent.top
+            width:              parent.width
+            spacing:            10
+
+            Column {
+                anchors.leftMargin:     10
+                anchors.rightMargin:    10
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                spacing:                10
+
+                QGCLabel {
+                    width:      parent.width
+                    wrapMode:   Text.WordWrap
+                    text:       "Please check and/or update board rotation before calibrating"
+                }
+
+                FactComboBox {
+                    width:  rotationColumnWidth
+                    model:  rotations
+                    fact:   Fact { name: "SENS_BOARD_ROT" }
+                }
+            }
+
+            QGCButton {
+                x:          1
+                width:      parent.width - 2
+                primary:    true
+                text:       "OK"
+
+                onClicked: {
+                    boardRotationOverlay.visible = false
+                    overlay.visible = false
+
+                    if (boardRotationOverlay.calibrationType == "gyro") {
+                        controller.calibrateGyro()
+                    } else if (boardRotationOverlay.calibrationType == "accel") {
+                        controller.calibrateAccel()
+                    } else if (boardRotationOverlay.calibrationType == "compass") {
+                        controller.calibrateCompass()
+                    }
+                }
+            }
+        }
+    }
+
+    function showBoardRotationOverlay(calibrationType) {
+        boardRotationOverlay.calibrationType = calibrationType
+        boardRotationOverlay.visible = true
+        overlay.visible = true
+    }
+
+    Rectangle {
+        id:                         compassRotationOverlay
+        width:                      300
+        height:                     compassRotationOverlayColumn.height + 11
+        anchors.verticalCenter:     parent.verticalCenter
+        anchors.horizontalCenter:   parent.horizontalCenter
+        color:                      qgcPal.window
+        border.width:               1
+        border.color:               qgcPal.text
+        visible:                    false
+        z:                          overlay.z + 1
+
+        Column {
+            id:                 compassRotationOverlayColumn
+            anchors.topMargin:  10
+            anchors.top:        parent.top
+            width:              parent.width
+            spacing:            10
+
+            Column {
+                anchors.leftMargin:     10
+                anchors.rightMargin:    10
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                spacing:                10
+
+                QGCLabel {
+                    width:      parent.width
+                    wrapMode:   Text.WordWrap
+                    text:       "Please check and/or update compass rotation(s)"
+                }
+
+                // Compass 0 rotation
+                Component {
+                    id: compass0ComponentLabel
+
+                    QGCLabel { text: "Compass Orientation" }
+                }
+                Component {
+                    id: compass0ComponentCombo
+
+                    FactComboBox {
+                        id:     compass0RotationCombo
+                        width:  rotationColumnWidth
+                        model:  rotations
+                        fact:   Fact { name: "CAL_MAG0_ROT" }
+                    }
+                }
+                Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel : null }
+                Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo : null }
+
+                // Compass 1 rotation
+                Component {
+                    id: compass1ComponentLabel
+
+                    QGCLabel { text: "Compass 1 Orientation" }
+                }
+                Component {
+                    id: compass1ComponentCombo
+
+                    FactComboBox {
+                        id:     compass1RotationCombo
+                        width:  rotationColumnWidth
+                        model:  rotations
+                        fact:   Fact { name: "CAL_MAG1_ROT" }
+                    }
+                }
+                Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel : null }
+                Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo : null }
+
+                // Compass 2 rotation
+                Component {
+                    id: compass2ComponentLabel
+
+                    QGCLabel { text: "Compass 2 Orientation" }
+                }
+                Component {
+                    id: compass2ComponentCombo
+
+                    FactComboBox {
+                        id:     compass1RotationCombo
+                        width:  rotationColumnWidth
+                        model:  rotations
+                        fact:   Fact { name: "CAL_MAG2_ROT" }
+                    }
+                }
+                Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel : null }
+                Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo : null }
+            }
+
+            QGCButton {
+                x:          1
+                width:      parent.width - 2
+                primary:    true
+                text:       "OK"
+
+                onClicked: {
+                    compassRotationOverlay.visible = false
+                    overlay.visible = false
+               }
+            }
+        }
+    }
+
+    function showCompassRotationOverlay() {
+        if (showCompass0Rot || showCompass1Rot || showCompass2Rot) {
+            compassRotationOverlay.visible = true
+            overlay.visible = true
         }
     }
 
@@ -110,7 +351,8 @@ Rectangle {
                 width:          parent.buttonWidth
                 text:           "Compass"
                 indicatorGreen: fact.value != 0
-                onClicked: controller.calibrateCompass()
+
+                onClicked: showBoardRotationOverlay("compass")
             }
 
             IndicatorButton {
@@ -120,7 +362,8 @@ Rectangle {
                 width:          parent.buttonWidth
                 text:           "Gyroscope"
                 indicatorGreen: fact.value != 0
-                onClicked: controller.calibrateGyro()
+
+                onClicked: showBoardRotationOverlay("gyro")
             }
 
             IndicatorButton {
@@ -130,7 +373,8 @@ Rectangle {
                 width:          parent.buttonWidth
                 text:           "Accelerometer"
                 indicatorGreen: fact.value != 0
-                onClicked: controller.calibrateAccel()
+
+                onClicked: showBoardRotationOverlay("accel")
             }
 
             IndicatorButton {
@@ -142,6 +386,13 @@ Rectangle {
                 visible:        controller.fixedWing
                 indicatorGreen: fact.value != 0
                 onClicked:      controller.calibrateAirspeed()
+            }
+
+            QGCButton {
+                id:         cancelButton
+                text:       "Cancel"
+                enabled:    false
+                onClicked:  controller.cancelCalibration()
             }
         }
 
@@ -167,39 +418,11 @@ Rectangle {
                 height:         parent.height
                 readOnly:       true
                 frameVisible:   false
-                text:           "Sensor config is a work in progress. Not all visuals for all calibration types fully implemented.\n\n" +
-                                "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration is is best " +
-                                "to be connected to you vehicle via radio instead of USB since the USB cable will likely get in the way.\n\n" +
-                                "For Gyroscope calibration you will need to place your vehicle right side up on solid surface and leave it still.\n\n" +
-                                "For Accelerometer calibration you will need to place your vehicle on all six sides and hold it there for a few seconds.\n\n" +
-                                "For Airspeed calibration you will need to keep your airspeed sensor out of any wind.\n\n"
+                text:           statusTextAreaDefaultText
 
                 style: TextAreaStyle {
                     textColor: qgcPal.text
                     backgroundColor: qgcPal.windowShade
-                }
-            }
-
-            Rectangle {
-                id:         gyroCalArea
-                width:      parent.calDisplayAreaWidth
-                height:     parent.height
-                visible:    controller.showGyroCalArea
-                color:      qgcPal.windowShade
-
-                Column {
-                    width: parent.width
-
-                    QGCLabel {
-                        text: "Place your vehicle upright on a solid surface and hold it still."
-                    }
-
-                    VehicleRotationCal {
-                        calValid:       true
-                        calInProgress:  controller.gyroCalInProgress
-                        imageSource:    "qrc:///qml/VehicleDown.png"
-                    }
-
                 }
             }
 
@@ -211,53 +434,58 @@ Rectangle {
                 color:      qgcPal.windowShade
 
                 QGCLabel {
-                    id:         calAreaLabel
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-
-                    text: "Place your vehicle into each of the positions below and hold still. Once that position is completed you can move to another."
+                    id:             orientationCalAreaHelpText
+                    width:          parent.width
+                    wrapMode:       Text.WordWrap
+                    font.pointSize: screenTools.fontPointFactor * (17);
                 }
 
                 Flow {
-                    y:          calAreaLabel.height
+                    y:          orientationCalAreaHelpText.height
                     width:      parent.width
-                    height:     parent.height - calAreaLabel.implicitHeight
+                    height:     parent.height - orientationCalAreaHelpText.implicitHeight
                     spacing:    5
 
                     VehicleRotationCal {
+                        visible:            controller.orientationCalDownSideVisible
                         calValid:           controller.orientationCalDownSideDone
                         calInProgress:      controller.orientationCalDownSideInProgress
-                        calInProgressText:  controller.calInProgressText
-                        imageSource:        "qrc:///qml/VehicleDown.png"
+                        calInProgressText:  controller.orientationCalDownSideRotate ? "Rotate" : "Hold Still"
+                        imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qml/VehicleDownRotate.png" : "qrc:///qml/VehicleDown.png"
                     }
                     VehicleRotationCal {
+                        visible:            controller.orientationCalUpsideDownSideVisible
                         calValid:           controller.orientationCalUpsideDownSideDone
                         calInProgress:      controller.orientationCalUpsideDownSideInProgress
-                        calInProgressText:  controller.calInProgressText
+                        calInProgressText:  "Hold Still"
                         imageSource:        "qrc:///qml/VehicleUpsideDown.png"
                     }
                     VehicleRotationCal {
+                        visible:            controller.orientationCalNoseDownSideVisible
                         calValid:           controller.orientationCalNoseDownSideDone
                         calInProgress:      controller.orientationCalNoseDownSideInProgress
-                        calInProgressText:  controller.calInProgressText
-                        imageSource:        "qrc:///qml/VehicleNoseDown.png"
+                        calInProgressText:  controller.orientationCalNoseDownSideRotate ? "Rotate" : "Hold Still"
+                        imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qml/VehicleNoseDownRotate.png" : "qrc:///qml/VehicleNoseDown.png"
                     }
                     VehicleRotationCal {
+                        visible:            controller.orientationCalTailDownSideVisible
                         calValid:           controller.orientationCalTailDownSideDone
                         calInProgress:      controller.orientationCalTailDownSideInProgress
-                        calInProgressText:  controller.calInProgressText
+                        calInProgressText:  "Hold Still"
                         imageSource:        "qrc:///qml/VehicleTailDown.png"
                     }
                     VehicleRotationCal {
+                        visible:            controller.orientationCalLeftSideVisible
                         calValid:           controller.orientationCalLeftSideDone
                         calInProgress:      controller.orientationCalLeftSideInProgress
-                        calInProgressText:  controller.calInProgressText
-                        imageSource:        "qrc:///qml/VehicleLeft.png"
+                        calInProgressText:  controller.orientationCalLeftSideRotate ? "Rotate" : "Hold Still"
+                        imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qml/VehicleLeftRotate.png" : "qrc:///qml/VehicleLeft.png"
                     }
                     VehicleRotationCal {
+                        visible:            controller.orientationCalRightSideVisible
                         calValid:           controller.orientationCalRightSideDone
                         calInProgress:      controller.orientationCalRightSideInProgress
-                        calInProgressText:  controller.calInProgressText
+                        calInProgressText:  "Hold Still"
                         imageSource:        "qrc:///qml/VehicleRight.png"
                     }
                 }
@@ -277,12 +505,12 @@ Rectangle {
 
                 // Compass 0 rotation
                 Component {
-                    id: compass0ComponentLabel
+                    id: compass0ComponentLabel2
 
                     QGCLabel { text: "Compass Orientation" }
                 }
                 Component {
-                    id: compass0ComponentCombo
+                    id: compass0ComponentCombo2
 
                     FactComboBox {
                         id:     compass0RotationCombo
@@ -291,17 +519,17 @@ Rectangle {
                         fact:   Fact { name: "CAL_MAG0_ROT" }
                     }
                 }
-                Loader { sourceComponent: controller.showCompass0 ? compass0ComponentLabel : null }
-                Loader { sourceComponent: controller.showCompass0 ? compass0ComponentCombo : null }
+                Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel2 : null }
+                Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo2 : null }
 
                 // Compass 1 rotation
                 Component {
-                    id: compass1ComponentLabel
+                    id: compass1ComponentLabel2
 
                     QGCLabel { text: "Compass 1 Orientation" }
                 }
                 Component {
-                    id: compass1ComponentCombo
+                    id: compass1ComponentCombo2
 
                     FactComboBox {
                         id:     compass1RotationCombo
@@ -310,17 +538,17 @@ Rectangle {
                         fact:   Fact { name: "CAL_MAG1_ROT" }
                     }
                 }
-                Loader { sourceComponent: controller.showCompass1 ? compass1ComponentLabel : null }
-                Loader { sourceComponent: controller.showCompass1 ? compass1ComponentCombo : null }
+                Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel2 : null }
+                Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo2 : null }
 
                 // Compass 2 rotation
                 Component {
-                    id: compass2ComponentLabel
+                    id: compass2ComponentLabel2
 
                     QGCLabel { text: "Compass 2 Orientation" }
                 }
                 Component {
-                    id: compass2ComponentCombo
+                    id: compass2ComponentCombo2
 
                     FactComboBox {
                         id:     compass1RotationCombo
@@ -329,8 +557,8 @@ Rectangle {
                         fact:   Fact { name: "CAL_MAG2_ROT" }
                     }
                 }
-                Loader { sourceComponent: controller.showCompass2 ? compass2ComponentLabel : null }
-                Loader { sourceComponent: controller.showCompass2 ? compass2ComponentCombo : null }
+                Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel2 : null }
+                Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo2 : null }
             }
         }
     }

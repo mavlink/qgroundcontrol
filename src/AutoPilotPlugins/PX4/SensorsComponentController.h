@@ -50,17 +50,10 @@ public:
     Q_PROPERTY(QQuickItem* gyroButton MEMBER _gyroButton)
     Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
     Q_PROPERTY(QQuickItem* airspeedButton MEMBER _airspeedButton)
+    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
+    Q_PROPERTY(QQuickItem* orientationCalAreaHelpText MEMBER _orientationCalAreaHelpText)
     
-    Q_PROPERTY(bool showCompass0 MEMBER _showCompass0 CONSTANT)
-    Q_PROPERTY(bool showCompass1 MEMBER _showCompass1 CONSTANT)
-    Q_PROPERTY(bool showCompass2 MEMBER _showCompass2 CONSTANT)
-    
-    Q_PROPERTY(bool showGyroCalArea MEMBER _showGyroCalArea NOTIFY showGyroCalAreaChanged)
     Q_PROPERTY(bool showOrientationCalArea MEMBER _showOrientationCalArea NOTIFY showOrientationCalAreaChanged)
-    
-    Q_PROPERTY(bool gyroCalInProgress MEMBER _gyroCalInProgress NOTIFY gyroCalInProgressChanged)
-    
-    Q_PROPERTY(QString calInProgressText MEMBER _calInProgressText NOTIFY calInProgressTextChanged)
     
     Q_PROPERTY(bool orientationCalDownSideDone MEMBER _orientationCalDownSideDone NOTIFY orientationCalSidesDoneChanged)
     Q_PROPERTY(bool orientationCalUpsideDownSideDone MEMBER _orientationCalUpsideDownSideDone NOTIFY orientationCalSidesDoneChanged)
@@ -69,6 +62,13 @@ public:
     Q_PROPERTY(bool orientationCalNoseDownSideDone MEMBER _orientationCalNoseDownSideDone NOTIFY orientationCalSidesDoneChanged)
     Q_PROPERTY(bool orientationCalTailDownSideDone MEMBER _orientationCalTailDownSideDone NOTIFY orientationCalSidesDoneChanged)
     
+    Q_PROPERTY(bool orientationCalDownSideVisible MEMBER _orientationCalDownSideVisible NOTIFY orientationCalSidesVisibleChanged)
+    Q_PROPERTY(bool orientationCalUpsideDownSideVisible MEMBER _orientationCalUpsideDownSideVisible NOTIFY orientationCalSidesVisibleChanged)
+    Q_PROPERTY(bool orientationCalLeftSideVisible MEMBER _orientationCalLeftSideVisible NOTIFY orientationCalSidesVisibleChanged)
+    Q_PROPERTY(bool orientationCalRightSideVisible MEMBER _orientationCalRightSideVisible NOTIFY orientationCalSidesVisibleChanged)
+    Q_PROPERTY(bool orientationCalNoseDownSideVisible MEMBER _orientationCalNoseDownSideVisible NOTIFY orientationCalSidesVisibleChanged)
+    Q_PROPERTY(bool orientationCalTailDownSideVisible MEMBER _orientationCalTailDownSideVisible NOTIFY orientationCalSidesVisibleChanged)
+    
     Q_PROPERTY(bool orientationCalDownSideInProgress MEMBER _orientationCalDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
     Q_PROPERTY(bool orientationCalUpsideDownSideInProgress MEMBER _orientationCalUpsideDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
     Q_PROPERTY(bool orientationCalLeftSideInProgress MEMBER _orientationCalLeftSideInProgress NOTIFY orientationCalSidesInProgressChanged)
@@ -76,37 +76,48 @@ public:
     Q_PROPERTY(bool orientationCalNoseDownSideInProgress MEMBER _orientationCalNoseDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
     Q_PROPERTY(bool orientationCalTailDownSideInProgress MEMBER _orientationCalTailDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
     
+    Q_PROPERTY(bool orientationCalDownSideRotate MEMBER _orientationCalDownSideRotate NOTIFY orientationCalSidesRotateChanged)
+    Q_PROPERTY(bool orientationCalLeftSideRotate MEMBER _orientationCalLeftSideRotate NOTIFY orientationCalSidesRotateChanged)
+    Q_PROPERTY(bool orientationCalNoseDownSideRotate MEMBER _orientationCalNoseDownSideRotate NOTIFY orientationCalSidesRotateChanged)
+    
+    Q_PROPERTY(bool waitingForCancel MEMBER _waitingForCancel NOTIFY waitingForCancelChanged)
+    
     Q_INVOKABLE void calibrateCompass(void);
     Q_INVOKABLE void calibrateGyro(void);
     Q_INVOKABLE void calibrateAccel(void);
     Q_INVOKABLE void calibrateAirspeed(void);
+    Q_INVOKABLE void cancelCalibration(void);
     
     bool fixedWing(void);
     
 signals:
     void showGyroCalAreaChanged(void);
     void showOrientationCalAreaChanged(void);
-    void gyroCalInProgressChanged(void);
     void orientationCalSidesDoneChanged(void);
+    void orientationCalSidesVisibleChanged(void);
     void orientationCalSidesInProgressChanged(void);
-    void calInProgressTextChanged(const QString& newText);
+    void orientationCalSidesRotateChanged(void);
+    void resetStatusTextArea(void);
+    void waitingForCancelChanged(void);
+    void setCompassRotations(void);
     
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
     
 private:
-    void _startCalibration(void);
-    void _stopCalibration(bool failed);
-    void _beginTextLogging(void);
+    void _startLogCalibration(void);
+    void _startVisualCalibration(void);
     void _appendStatusLog(const QString& text);
     void _refreshParams(void);
     void _hideAllCalAreas(void);
     
-    void _updateAndEmitGyroCalInProgress(bool inProgress);
+    enum StopCalibrationCode {
+        StopCalibrationSuccess,
+        StopCalibrationFailed,
+        StopCalibrationCancelled
+    };
+    void _stopCalibration(StopCalibrationCode code);
     
-    void _updateAndEmitCalInProgressText(const QString& text);
-    
-    void _updateAndEmitShowGyroCalArea(bool show);
     void _updateAndEmitShowOrientationCalArea(bool show);
 
     QQuickItem* _statusLog;
@@ -115,6 +126,8 @@ private:
     QQuickItem* _gyroButton;
     QQuickItem* _accelButton;
     QQuickItem* _airspeedButton;
+    QQuickItem* _cancelButton;
+    QQuickItem* _orientationCalAreaHelpText;
     
     bool _showGyroCalArea;
     bool _showOrientationCalArea;
@@ -127,14 +140,19 @@ private:
     bool _magCalInProgress;
     bool _accelCalInProgress;
     
-    QString _calInProgressText;
-    
     bool _orientationCalDownSideDone;
     bool _orientationCalUpsideDownSideDone;
     bool _orientationCalLeftSideDone;
     bool _orientationCalRightSideDone;
     bool _orientationCalNoseDownSideDone;
     bool _orientationCalTailDownSideDone;
+    
+    bool _orientationCalDownSideVisible;
+    bool _orientationCalUpsideDownSideVisible;
+    bool _orientationCalLeftSideVisible;
+    bool _orientationCalRightSideVisible;
+    bool _orientationCalNoseDownSideVisible;
+    bool _orientationCalTailDownSideVisible;
     
     bool _orientationCalDownSideInProgress;
     bool _orientationCalUpsideDownSideInProgress;
@@ -143,9 +161,15 @@ private:
     bool _orientationCalNoseDownSideInProgress;
     bool _orientationCalTailDownSideInProgress;
     
-    bool _textLoggingStarted;
+    bool _orientationCalDownSideRotate;
+    bool _orientationCalLeftSideRotate;
+    bool _orientationCalNoseDownSideRotate;
+    
+    bool _unknownFirmwareVersion;
+    bool _waitingForCancel;
     
     AutoPilotPlugin*    _autopilot;
+    UASInterface*       _uas;
 };
 
 #endif
