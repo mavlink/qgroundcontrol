@@ -315,7 +315,7 @@ Rectangle {
 
             Rectangle {
                 id: satelitte
-                width:  getProportionalDimmension(50)
+                width:  getProportionalDimmension(55)
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showGPS)
                 anchors.verticalCenter: parent.verticalCenter
@@ -336,8 +336,8 @@ Rectangle {
 
                 QGCLabel {
                     id: satelitteText
-                    text: mainToolBar.satelliteCount
-                    font.pointSize: __screenTools.fontPointFactor * (14);
+                    text: mainToolBar.satelliteCount >= 0 ? mainToolBar.satelliteCount : 'NA'
+                    font.pointSize: mainToolBar.satelliteCount >= 0 ? __screenTools.fontPointFactor * (14) : __screenTools.fontPointFactor * (10)
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right

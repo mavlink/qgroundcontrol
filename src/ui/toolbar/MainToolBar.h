@@ -88,7 +88,7 @@ public:
     Q_PROPERTY(int           newMessageCount    MEMBER _currentMessageCount     NOTIFY newMessageCountChanged)
     Q_PROPERTY(int           messageCount       MEMBER _messageCount            NOTIFY messageCountChanged)
     Q_PROPERTY(QString       systemPixmap       MEMBER _systemPixmap            NOTIFY systemPixmapChanged)
-    Q_PROPERTY(int           satelliteCount     MEMBER _satelliteCount          NOTIFY satelliteCountChanged)
+    Q_PROPERTY(int           satelliteCount     READ   satelliteCount           NOTIFY satelliteCountChanged)
     Q_PROPERTY(QStringList   connectedList      MEMBER _connectedList           NOTIFY connectedListChanged)
     Q_PROPERTY(bool          mavPresent         READ mavPresent                 NOTIFY mavPresentChanged)
     Q_PROPERTY(QString       currentState       MEMBER _currentState            NOTIFY currentStateChanged)
@@ -104,6 +104,7 @@ public:
     Q_PROPERTY(int           telemetryLRSSI     READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
 
     bool        mavPresent              () { return _mav != NULL; }
+    int         satelliteCount          () { return _satelliteCount; }
     int         remoteRSSI              () { return _remoteRSSI; }
     int         telemetryRRSSI          () { return _telemetryRRSSI; }
     int         telemetryLRSSI          () { return _telemetryLRSSI; }
