@@ -162,10 +162,10 @@ public enum UsbSerialProber {
      */
     public static List<UsbSerialDriver> findAllDevices(final UsbManager usbManager) {
         final List<UsbSerialDriver> result = new ArrayList<UsbSerialDriver>();
-        Log.i("QGC_UsbSerialProber", "Looking for USB devices");
+        //Log.i("QGC_UsbSerialProber", "Looking for USB devices");
         // For each UsbDevice, call probe() for each prober.
         for (final UsbDevice usbDevice : usbManager.getDeviceList().values()) {
-            Log.i("QGC_UsbSerialProber", "Probing device: " + usbDevice.getDeviceName() + " mid: " + usbDevice.getVendorId() + " pid: " + usbDevice.getDeviceId());
+            //Log.i("QGC_UsbSerialProber", "Probing device: " + usbDevice.getDeviceName() + " mid: " + usbDevice.getVendorId() + " pid: " + usbDevice.getDeviceId());
             result.addAll(probeSingleDevice(usbManager, usbDevice));
         }
         return result;
