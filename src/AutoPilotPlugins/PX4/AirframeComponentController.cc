@@ -40,7 +40,9 @@ bool AirframeComponentController::_typesRegistered = false;
 AirframeComponentController::AirframeComponentController(QObject* parent) :
     QObject(parent),
     _uas(NULL),
-    _autoPilotPlugin(NULL)
+    _autoPilotPlugin(NULL),
+    _currentVehicleIndex(0),
+    _autostartId(0)
 {
     _uas = UASManager::instance()->getActiveUAS();
     Q_ASSERT(_uas);
@@ -80,9 +82,11 @@ AirframeComponentController::AirframeComponentController(QObject* parent) :
         _airframeTypes.append(QVariant::fromValue(airframeType));
     }
     
-    // FIXME: Should be a user error
-    Q_UNUSED(autostartFound);
-    Q_ASSERT(autostartFound);
+    if (_autostartId != 0) {
+        // FIXME: Should be a user error
+        Q_UNUSED(autostartFound);
+        Q_ASSERT(autostartFound);
+    }
 }
 
 AirframeComponentController::~AirframeComponentController()
