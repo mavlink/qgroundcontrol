@@ -892,7 +892,7 @@ void PX4RCCalibration::_writeCalibration(void)
 {
     if (!_mav) return;
     
-    _mav->endRadioControlCalibration();
+    _mav->stopCalibration();
     
     _validateCalibration();
     
@@ -986,7 +986,7 @@ void PX4RCCalibration::_startCalibration(void)
     _resetInternalCalibrationValues();
     
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
-    _mav->startRadioControlCalibration();
+    _mav->startCalibration(UASInterface::StartCalibrationRadio);
     
     _ui->rcCalNext->setText(tr("Next"));
     _ui->rcCalCancel->setEnabled(true);
@@ -1001,7 +1001,7 @@ void PX4RCCalibration::_stopCalibration(void)
     _currentStep = -1;
     
     if (_mav) {
-        _mav->endRadioControlCalibration();
+        _mav->stopCalibration();
         _setInternalCalibrationValuesFromParameters();
     } else {
         _resetInternalCalibrationValues();
