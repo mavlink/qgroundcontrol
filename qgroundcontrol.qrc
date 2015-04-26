@@ -64,6 +64,10 @@
         <file alias="VehicleNoseDown.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDown.png</file>
         <file alias="VehicleTailDown.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
 
+        <file alias="VehicleDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleDownRotate.png</file>
+        <file alias="VehicleLeftRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleLeftRotate.png</file>
+        <file alias="VehicleNoseDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDownRotate.png</file>
+
         <!-- Airframe component resourecs -->
         <file alias="AirframeComponent.qml">src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
         <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/PX4/Images/AirframeStandardPlane.png</file>

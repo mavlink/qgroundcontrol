@@ -105,6 +105,8 @@ public:
     virtual QString getSystemTypeName() { Q_ASSERT(false); return _bogusString; };
     virtual int getAutopilotType() { return MAV_AUTOPILOT_PX4; };
     virtual QGCUASFileManager* getFileManager() {Q_ASSERT(false); return NULL; }
+    virtual void startCalibration(StartCalibrationType calType) { Q_UNUSED(calType); return; };
+    virtual void stopCalibration() { return; };
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
     virtual void sendMessage(LinkInterface* link, mavlink_message_t message){ Q_UNUSED(link); Q_UNUSED(message); Q_ASSERT(false); }
@@ -152,11 +154,6 @@ public slots:
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw)
         { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
-    virtual void startRadioControlCalibration(int param) { Q_UNUSED(param); return; };
-    virtual void endRadioControlCalibration() { return; };
-    virtual void startMagnetometerCalibration() { Q_ASSERT(false); };
-    virtual void startGyroscopeCalibration() { Q_ASSERT(false); };
-    virtual void startPressureCalibration() { Q_ASSERT(false); };
     virtual void setBatterySpecs(const QString& specs) { Q_UNUSED(specs); Q_ASSERT(false); };
     virtual QString getBatterySpecs() { Q_ASSERT(false); return _bogusString; };
     virtual void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, double lat, double lon, double alt, float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
