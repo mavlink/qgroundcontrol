@@ -635,3 +635,9 @@ void QGCApplication::_reconnect(void)
     LinkManager::instance()->createConnectedLink(_reconnectLinkConfig);
     _reconnectLinkConfig = NULL;
 }
+
+void QGCApplication::panicShutdown(const QString& panicMessage)
+{
+    QGCMessageBox::critical("Panic Shutdown", panicMessage);
+    ::exit(0);
+}

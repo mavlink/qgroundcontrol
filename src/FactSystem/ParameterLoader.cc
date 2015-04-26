@@ -27,6 +27,7 @@
 #include "ParameterLoader.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "QGCApplication.h"
 
 #include <QFile>
 #include <QDebug>
@@ -268,8 +269,12 @@ bool ParameterLoader::parameterExists(int componentId, const QString&  name)
 Fact* ParameterLoader::getFact(int componentId, const QString& name)
 {
     componentId = _actualComponentId(componentId);
-    Q_ASSERT(_mapParameterName2Variant.contains(componentId));
-    Q_ASSERT(_mapParameterName2Variant[componentId].contains(name));
+    
+    if (!_mapParameterName2Variant.contains(componentId) || !_mapParameterName2Variant[componentId].contains(name)) {
+        QString panicMessage("Required parameter (component id: %1, name: %2),  is missing from vehicle. QGroundControl cannot operate with this firmware revision. QGroundControl will now shut down.");
+        qgcApp()->panicShutdown(panicMessage.arg(componentId).arg(name));
+    }
+    
     Fact* fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
     Q_ASSERT(fact);
     return fact;

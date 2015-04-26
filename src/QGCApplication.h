@@ -98,6 +98,10 @@ public:
     /// Disconnects the current link and waits for the specified number of seconds before reconnecting.
     void reconnectAfterWait(int waitSeconds);
     
+    /// Used to shutdown the app if a fatal condition occurs from which it cannot recover
+    ///     @param panicMessage Message to display to user
+    void panicShutdown(const QString& panicMessage);
+    
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
