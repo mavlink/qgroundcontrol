@@ -27,6 +27,8 @@
 #include "FactBinder.h"
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
+#include "QGCApplication.h"
+
 #include <QDebug>
 
 FactBinder::FactBinder(void) :
@@ -83,8 +85,8 @@ void FactBinder::setName(const QString& name)
             emit nameChanged();
 			emit metaDataChanged();
 		} else {
-            qWarning() << "FAILED BINDING PARAM" << name << ": PARAM DOES NOT EXIST ON SYSTEM!";
-            Q_ASSERT(false);
+            QString panicMessage("Required parameter (component id: %1, name: %2),  is missing from vehicle. QGroundControl cannot operate with this firmware revision. QGroundControl will now shut down.");
+            qgcApp()->panicShutdown(panicMessage.arg(_componentId).arg(parsedName));
         }
     }
 }
