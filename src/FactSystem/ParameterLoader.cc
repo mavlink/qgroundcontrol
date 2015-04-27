@@ -436,9 +436,6 @@ void ParameterLoader::_waitingParamTimeout(void)
     const int maxBatchSize = 10;
     int batchCount = 0;
     
-    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
-    Q_ASSERT(mavlink);
-    
     // We timed out waiting for some parameters from the initial set. Re-request those.
     
     batchCount = 0;
