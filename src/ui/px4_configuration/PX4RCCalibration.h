@@ -35,6 +35,7 @@
 #include "UASInterface.h"
 #include "RCValueWidget.h"
 #include "QGCLoggingCategory.h"
+#include "AutoPilotPlugin.h"
 
 #include "ui_PX4RCCalibration.h"
 
@@ -254,8 +255,8 @@ private:
     RCValueWidget* _rgRCValueMonitorWidget[_chanMax];   ///< Array of radio channel value widgets
     QLabel* _rgRCValueMonitorLabel[_chanMax];           ///< Array of radio channel value labels
 
-    UASInterface* _mav;                  ///< The current MAV
-    QGCUASParamManagerInterface* _paramMgr;
+    UASInterface*       _uas;
+    AutoPilotPlugin*    _autopilot;
     
     Ui::PX4RCCalibration* _ui;
     

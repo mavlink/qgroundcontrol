@@ -40,29 +40,35 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
 
 void Fact::setValue(const QVariant& value)
 {
+    QVariant newValue;
+    
     switch (type()) {
         case FactMetaData::valueTypeInt8:
         case FactMetaData::valueTypeInt16:
         case FactMetaData::valueTypeInt32:
-            _value.setValue(QVariant(value.toInt()));
+            newValue = QVariant(value.toInt());
             break;
 
         case FactMetaData::valueTypeUint8:
         case FactMetaData::valueTypeUint16:
         case FactMetaData::valueTypeUint32:
-            _value.setValue(value.toUInt());
+            newValue = QVariant(value.toUInt());
             break;
 
         case FactMetaData::valueTypeFloat:
-            _value.setValue(value.toFloat());
+            newValue = QVariant(value.toFloat());
             break;
 
         case FactMetaData::valueTypeDouble:
-            _value.setValue(value.toDouble());
+            newValue = QVariant(value.toDouble());
             break;
     }
-    emit valueChanged(_value);
-    emit _containerValueChanged(_value);
+    
+    if (newValue != _value) {
+        _value.setValue(newValue);
+        emit valueChanged(_value);
+        emit _containerValueChanged(_value);
+    }
 }
 
 void Fact::_containerSetValue(const QVariant& value)

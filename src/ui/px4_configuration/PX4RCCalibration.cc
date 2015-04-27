@@ -30,6 +30,7 @@
 #include "PX4RCCalibration.h"
 #include "UASManager.h"
 #include "QGCMessageBox.h"
+#include "AutoPilotPluginManager.h"
 
 QGC_LOGGING_CATEGORY(PX4RCCalibrationLog, "PX4RCCalibrationLog")
 
@@ -86,8 +87,7 @@ PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
     _transmitterMode(2),
     _chanCount(0),
     _rcCalState(rcCalStateChannelWait),
-    _mav(NULL),
-    _paramMgr(NULL),
+    _uas(NULL),
     _ui(new Ui::PX4RCCalibration),
     _unitTestMode(false)
 {
@@ -122,19 +122,19 @@ PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
     _rgAttitudeControl[4].valueWidget = _ui->flapsValue;
     
     // This code assume we already have an active UAS with ready parameters
-    _mav = UASManager::instance()->getActiveUAS();
-    Q_ASSERT(_mav);
+    _uas = UASManager::instance()->getActiveUAS();
+    Q_ASSERT(_uas);
     
     // Connect new signals
     
     bool fSucceeded;
     Q_UNUSED(fSucceeded);
-    fSucceeded =  connect(_mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(_remoteControlChannelRawChanged(int,float)));
+    fSucceeded =  connect(_uas, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(_remoteControlChannelRawChanged(int,float)));
     Q_ASSERT(fSucceeded);
     
-    _paramMgr = _mav->getParamManager();
-    Q_ASSERT(_paramMgr);
-    Q_ASSERT(_paramMgr->parametersReady());
+    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
+    Q_ASSERT(_autopilot);
+    Q_ASSERT(_autopilot->pluginReady());
     
     connect(_ui->spektrumBind, &QPushButton::clicked, this, &PX4RCCalibration::_spektrumBind);
     
@@ -701,19 +701,13 @@ void PX4RCCalibration::_resetInternalCalibrationValues(void)
         rcCalFunctionReturnSwitch };
     static const size_t crgFlightModeFunctions = sizeof(rgFlightModeFunctions) / sizeof(rgFlightModeFunctions[0]);
 
-    int componentId = _paramMgr->getDefaultComponentId();
     for (size_t i=0; i < crgFlightModeFunctions; i++) {
         QVariant value;
         enum rcCalFunctions curFunction = rgFlightModeFunctions[i];
         
-        bool paramFound = _paramMgr->getParameterValue(componentId, _rgFunctionInfo[curFunction].parameterName, value);
-        Q_ASSERT(paramFound);
-        Q_UNUSED(paramFound);
-        
         bool ok;
-        int switchChannel = value.toInt(&ok);
+        int switchChannel = _autopilot->getParameterFact(_rgFunctionInfo[curFunction].parameterName)->value().toInt(&ok);
         Q_ASSERT(ok);
-        Q_UNUSED(ok);
         
         // Parameter: 1-based channel, 0=not mapped
         // _rgFunctionChannelMapping: 0-based channel, _chanMax=not mapped
@@ -729,8 +723,6 @@ void PX4RCCalibration::_resetInternalCalibrationValues(void)
 /// @brief Sets internal calibration values from the stored parameters
 void PX4RCCalibration::_setInternalCalibrationValuesFromParameters(void)
 {
-    Q_ASSERT(_paramMgr);
-    
     // Initialize all function mappings to not set
     
     for (size_t i=0; i<_chanMax; i++) {
@@ -750,58 +742,36 @@ void PX4RCCalibration::_setInternalCalibrationValuesFromParameters(void)
     QString maxTpl("RC%1_MAX");
     QString trimTpl("RC%1_TRIM");
     QString revTpl("RC%1_REV");
-    QVariant value;
-    bool paramFound;
+    
     bool convertOk;
-    int componentId = _paramMgr->getDefaultComponentId();
     
     for (int i = 0; i < _chanMax; ++i) {
         struct ChannelInfo* info = &_rgChannelInfo[i];
         
-        paramFound = _paramMgr->getParameterValue(componentId, trimTpl.arg(i+1), value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            info->rcTrim = value.toInt(&convertOk);
-            Q_ASSERT(convertOk);
-        }
+        info->rcTrim = _autopilot->getParameterFact(trimTpl.arg(i+1))->value().toInt(&convertOk);
+        Q_ASSERT(convertOk);
         
-        paramFound = _paramMgr->getParameterValue(componentId, minTpl.arg(i+1), value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            info->rcMin = value.toInt(&convertOk);
-            Q_ASSERT(convertOk);
-        }
+        info->rcMin = _autopilot->getParameterFact(minTpl.arg(i+1))->value().toInt(&convertOk);
+        Q_ASSERT(convertOk);
 
-        paramFound = _paramMgr->getParameterValue(componentId, maxTpl.arg(i+1), value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            info->rcMax = value.toInt(&convertOk);
-            Q_ASSERT(convertOk);
-        }
+        info->rcMax = _autopilot->getParameterFact(maxTpl.arg(i+1))->value().toInt(&convertOk);
+        Q_ASSERT(convertOk);
 
-        paramFound = _paramMgr->getParameterValue(componentId, revTpl.arg(i+1), value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            float floatReversed = value.toFloat(&convertOk);
-            Q_ASSERT(convertOk);
-            Q_ASSERT(floatReversed == 1.0f || floatReversed == -1.0f);
-            info->reversed = floatReversed == -1.0f;
-        }
+        float floatReversed = _autopilot->getParameterFact(revTpl.arg(i+1))->value().toFloat(&convertOk);
+        Q_ASSERT(convertOk);
+        Q_ASSERT(floatReversed == 1.0f || floatReversed == -1.0f);
+        info->reversed = floatReversed == -1.0f;
     }
     
     for (int i=0; i<rcCalFunctionMax; i++) {
         int32_t paramChannel;
         
-        paramFound = _paramMgr->getParameterValue(componentId, _rgFunctionInfo[i].parameterName, value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            paramChannel = value.toInt(&convertOk);
-            Q_ASSERT(convertOk);
-            
-            if (paramChannel != 0) {
-                _rgFunctionChannelMapping[i] = paramChannel - 1;
-                _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
-            }
+        paramChannel = _autopilot->getParameterFact(_rgFunctionInfo[i].parameterName)->value().toInt(&convertOk);
+        Q_ASSERT(convertOk);
+        
+        if (paramChannel != 0) {
+            _rgFunctionChannelMapping[i] = paramChannel - 1;
+            _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
         }
     }
     
@@ -813,7 +783,7 @@ void PX4RCCalibration::_setInternalCalibrationValuesFromParameters(void)
 void PX4RCCalibration::_spektrumBind(void)
 {
 
-    Q_ASSERT(_mav);
+    Q_ASSERT(_uas);
     
     QMessageBox bindTypeMsg(this);
     
@@ -837,7 +807,7 @@ void PX4RCCalibration::_spektrumBind(void)
         } else {
             Q_ASSERT(false);
         }
-        _mav->pairRX(0, bindType);
+        _uas->pairRX(0, bindType);
     }
 }
 
@@ -890,14 +860,11 @@ void PX4RCCalibration::_validateCalibration(void)
 /// @brief Saves the rc calibration values to the board parameters.
 void PX4RCCalibration::_writeCalibration(void)
 {
-    if (!_mav) return;
+    if (!_uas) return;
     
-    _mav->stopCalibration();
+    _uas->stopCalibration();
     
     _validateCalibration();
-    
-    QGCUASParamManagerInterface* paramMgr = _mav->getParamManager();
-    Q_ASSERT(paramMgr);
     
     QString minTpl("RC%1_MIN");
     QString maxTpl("RC%1_MAX");
@@ -907,11 +874,12 @@ void PX4RCCalibration::_writeCalibration(void)
     // Note that the rc parameters are all float, so you must cast to float in order to get the right QVariant
     for (int chan = 0; chan<_chanMax; chan++) {
         struct ChannelInfo* info = &_rgChannelInfo[chan];
-        int oneBasedChannel = chan + 1;
-        paramMgr->setPendingParam(0, trimTpl.arg(oneBasedChannel), (float)info->rcTrim);
-        paramMgr->setPendingParam(0, minTpl.arg(oneBasedChannel), (float)info->rcMin);
-        paramMgr->setPendingParam(0, maxTpl.arg(oneBasedChannel), (float)info->rcMax);
-        paramMgr->setPendingParam(0, revTpl.arg(oneBasedChannel), info->reversed ? -1.0f : 1.0f);
+        int                 oneBasedChannel = chan + 1;
+        
+        _autopilot->getParameterFact(trimTpl.arg(oneBasedChannel))->setValue((float)info->rcTrim);
+        _autopilot->getParameterFact(minTpl.arg(oneBasedChannel))->setValue((float)info->rcMin);
+        _autopilot->getParameterFact(maxTpl.arg(oneBasedChannel))->setValue((float)info->rcMax);
+        _autopilot->getParameterFact(revTpl.arg(oneBasedChannel))->setValue(info->reversed ? -1.0f : 1.0f);
     }
     
     // Write function mapping parameters
@@ -924,16 +892,13 @@ void PX4RCCalibration::_writeCalibration(void)
             // Note that the channel value is 1-based
             paramChannel = _rgFunctionChannelMapping[i] + 1;
         }
-        paramMgr->setPendingParam(0, _rgFunctionInfo[i].parameterName, paramChannel);
+        _autopilot->getParameterFact(_rgFunctionInfo[i].parameterName)->setValue(paramChannel);
     }
     
     // If the RC_CHAN_COUNT parameter is available write the channel count
-    if (paramMgr->getComponentForParam("RC_CHAN_CNT").count() != 0) {
-        paramMgr->setPendingParam(0, "RC_CHAN_CNT", _chanCount);
+    if (_autopilot->parameterExists("RC_CHAN_CNT")) {
+        _autopilot->getParameterFact("RC_CHAN_CNT")->setValue(_chanCount);
     }
-
-    //let the param mgr manage sending all the pending RC_foo updates and persisting after
-    paramMgr->sendPendingParameters(true, true);
     
     _stopCalibration();
     _setInternalCalibrationValuesFromParameters();
@@ -986,7 +951,7 @@ void PX4RCCalibration::_startCalibration(void)
     _resetInternalCalibrationValues();
     
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
-    _mav->startCalibration(UASInterface::StartCalibrationRadio);
+    _uas->startCalibration(UASInterface::StartCalibrationRadio);
     
     _ui->rcCalNext->setText(tr("Next"));
     _ui->rcCalCancel->setEnabled(true);
@@ -1000,8 +965,8 @@ void PX4RCCalibration::_stopCalibration(void)
 {
     _currentStep = -1;
     
-    if (_mav) {
-        _mav->stopCalibration();
+    if (_uas) {
+        _uas->stopCalibration();
         _setInternalCalibrationValuesFromParameters();
     } else {
         _resetInternalCalibrationValues();

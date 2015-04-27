@@ -35,7 +35,8 @@
 #include "UASInterface.h"
 #include "VehicleComponent.h"
 #include "FactSystem.h"
-#include "ParameterLoader.h"
+
+class ParameterLoader;
 
 /// This is the base class for AutoPilot plugins
 ///
@@ -115,6 +116,7 @@ public:
 signals:
     void pluginReadyChanged(bool pluginReady);
 	void setupCompleteChanged(bool setupComplete);
+    void parameterListProgress(float value);
 	
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin

@@ -81,7 +81,7 @@ AirframeComponentController::AirframeComponentController(QObject* parent) :
         
         _airframeTypes.append(QVariant::fromValue(airframeType));
     }
-    
+
     if (_autostartId != 0) {
         // FIXME: Should be a user error
         Q_UNUSED(autostartFound);
@@ -104,33 +104,14 @@ void AirframeComponentController::changeAutostart(void)
     _autoPilotPlugin->getParameterFact("SYS_AUTOSTART")->setValue(_autostartId);
     _autoPilotPlugin->getParameterFact("SYS_AUTOCONFIG")->setValue(1);
     
-    // Wait for the parameters to come back to us
-    
     qgcApp()->setOverrideCursor(Qt::WaitCursor);
     
-    int waitSeconds = 10;
-    bool success = false;
+    // Wait for the parameters to flow through system
+    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+    QGC::SLEEP::sleep(1);
+    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     
-    QGCUASParamManagerInterface* paramMgr = _uas->getParamManager();
-
-    while (true) {
-        if (paramMgr->countPendingParams() == 0) {
-            success = true;
-            break;
-        }
-        qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-        QGC::SLEEP::sleep(1);
-        if (--waitSeconds == 0) {
-            break;
-        }
-    }
-    
-    
-    if (!success) {
-        qgcApp()->restoreOverrideCursor();
-        QGCMessageBox::critical("Airframe Config", "Airframe Config parameters not received back from vehicle. Config has not been set.");
-        return;
-    }
+    // Reboot board and reconnect
     
     _uas->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -173,4 +154,3 @@ Airframe::~Airframe()
 {
     
 }
-
