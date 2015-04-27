@@ -148,7 +148,7 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                 }
                 if (intVersion <= 2) {
                     // We can't read these old files
-                    qDebug() << "Parameter version stamp too old, skipping load" << parameterFilename;
+                    qDebug() << "Parameter version stamp too old, skipping load. Found:" << intVersion << "Want: 3 File:" << parameterFilename;
                     return;
                 }
                 
