@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightDisplay.h"
 #include "UASManager.h"
 
-#define UPDATE_TIMER 100
+#define UPDATE_TIMER 500
 
 const char* kMainFlightDisplayGroup = "MainFlightDisplay";
 
