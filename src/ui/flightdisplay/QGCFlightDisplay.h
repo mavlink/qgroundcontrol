@@ -41,6 +41,18 @@ public:
     QGCFlightDisplay(QWidget* parent = NULL);
     ~QGCFlightDisplay();
 
+    enum {
+        ROLL_CHANGED,
+        PITCH_CHANGED,
+        HEADING_CHANGED,
+        GROUNDSPEED_CHANGED,
+        AIRSPEED_CHANGED,
+        CLIMBRATE_CHANGED,
+        ALTITUDERELATIVE_CHANGED,
+        ALTITUDEWGS84_CHANGED,
+        ALTITUDEAMSL_CHANGED
+    };
+
     Q_PROPERTY(float roll               READ roll               NOTIFY rollChanged)
     Q_PROPERTY(float pitch              READ pitch              NOTIFY pitchChanged)
     Q_PROPERTY(float heading            READ heading            NOTIFY headingChanged)
@@ -110,6 +122,8 @@ private slots:
 private:
     bool    _isAirplane                     ();
     bool    _shouldDisplayNavigationData    ();
+    void    _addChange                      (int id);
+    float   _oneDecimal                     (float value);
 
 private:
     UASInterface*   _mav;
@@ -135,8 +149,7 @@ private:
     float _longitude;
 
     QTimer* _refreshTimer;
-    bool    _valuesChanged;
-    quint64 _valuesLastPainted;
+    QList<int> _changes;
 };
 
 

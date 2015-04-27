@@ -43,8 +43,9 @@ QGCMovableItem {
     //----------------------------------------------------
     //-- Artificial Horizon
     QGCArtificialHorizon {
-        rollAngle:          root.rollAngle
-        pitchAngle:         root.pitchAngle
+        rollAngle:      root.rollAngle
+        pitchAngle:     root.pitchAngle
+        anchors.fill:   parent
     }
     //----------------------------------------------------
     //-- Pointer
