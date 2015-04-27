@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightDisplay.h"
 #include "UASManager.h"
 
-#define UPDATE_TIMER 50
+#define UPDATE_TIMER 500
 
 const char* kMainFlightDisplayGroup = "MainFlightDisplay";
 
@@ -58,8 +58,6 @@ QGCFlightDisplay::QGCFlightDisplay(QWidget *parent)
     , _latitude(37.803784f)
     , _longitude(-122.462276f)
     , _refreshTimer(new QTimer(this))
-    , _valuesChanged(false)
-    , _valuesLastPainted(0)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("MainFlightDisplay");
@@ -148,47 +146,47 @@ void QGCFlightDisplay::_updateAttitude(UASInterface*, double roll, double pitch,
     if (isinf(roll)) {
         _roll = std::numeric_limits<double>::quiet_NaN();
     } else {
-        bool update = false;
-        float rolldeg = roll * (180.0 / M_PI);
+        float rolldeg = _oneDecimal(roll * (180.0 / M_PI));
         if (fabs(roll - rolldeg) > 1.0) {
-            update = true;
+            _roll = rolldeg;
+            if(_refreshTimer->isActive()) {
+                emit rollChanged();
+            }
         }
-        _roll = rolldeg;
-        if (update)
-        {
-            if(_refreshTimer->isActive()) emit rollChanged();
-            _valuesChanged = true;
+        if(_roll != rolldeg) {
+            _roll = rolldeg;
+            _addChange(ROLL_CHANGED);
         }
     }
     if (isinf(pitch)) {
         _pitch = std::numeric_limits<double>::quiet_NaN();
     } else {
-        bool update = false;
-        float pitchdeg = pitch * (180.0 / M_PI);
+        float pitchdeg = _oneDecimal(pitch * (180.0 / M_PI));
         if (fabs(pitch - pitchdeg) > 1.0) {
-            update = true;
+            _pitch = pitchdeg;
+            if(_refreshTimer->isActive()) {
+                emit pitchChanged();
+            }
         }
-        _pitch = pitchdeg;
-        if (update)
-        {
-            if(_refreshTimer->isActive()) emit pitchChanged();
-            _valuesChanged = true;
+        if(_pitch != pitchdeg) {
+            _pitch = pitchdeg;
+            _addChange(PITCH_CHANGED);
         }
     }
     if (isinf(yaw)) {
         _heading = std::numeric_limits<double>::quiet_NaN();
     } else {
-        bool update = false;
-        yaw = yaw * (180.0 / M_PI);
+        yaw = _oneDecimal(yaw * (180.0 / M_PI));
         if (yaw < 0) yaw += 360;
-        if (fabs(_heading - yaw) > 10.0) {
-            update = true;
+        if (fabs(_heading - yaw) > 1.0) {
+            _heading = yaw;
+            if(_refreshTimer->isActive()) {
+                emit headingChanged();
+            }
         }
-        _heading = yaw;
-        if (update)
-        {
-            if(_refreshTimer->isActive()) emit headingChanged();
-            _valuesChanged = true;
+        if(_heading != yaw) {
+            _heading = yaw;
+            _addChange(HEADING_CHANGED);
         }
     }
 }
@@ -200,47 +198,74 @@ void QGCFlightDisplay::_updateAttitude(UASInterface* uas, int, double roll, doub
 
 void QGCFlightDisplay::_updateSpeed(UASInterface*, double groundSpeed, double airSpeed, quint64)
 {
-    double oldgroundSpeed = _groundSpeed;
-    double oldairSpeed    = _airSpeed;
-    _groundSpeed = groundSpeed;
-    _airSpeed    = airSpeed;
-    if (fabs(oldgroundSpeed - groundSpeed) > 0.5) {
-        if(_refreshTimer->isActive()) emit groundSpeedChanged();
-        _valuesChanged = true;
+    groundSpeed = _oneDecimal(groundSpeed);
+    if (fabs(_groundSpeed - groundSpeed) > 0.5) {
+        _groundSpeed = groundSpeed;
+        if(_refreshTimer->isActive()) {
+            emit groundSpeedChanged();
+        }
     }
-    if (fabs(oldairSpeed - airSpeed) > 1.0) {
-        if(_refreshTimer->isActive()) emit airSpeedChanged();
-        _valuesChanged = true;
+    airSpeed = _oneDecimal(airSpeed);
+    if (fabs(_airSpeed - airSpeed) > 1.0) {
+        _airSpeed = airSpeed;
+        if(_refreshTimer->isActive()) {
+            emit airSpeedChanged();
+        }
+    }
+    if(_groundSpeed != groundSpeed) {
+        _groundSpeed = groundSpeed;
+        _addChange(GROUNDSPEED_CHANGED);
+    }
+    if(_airSpeed != airSpeed) {
+        _airSpeed = airSpeed;
+        _addChange(AIRSPEED_CHANGED);
     }
 }
 
 void QGCFlightDisplay::_updateAltitude(UASInterface*, double altitudeAMSL, double altitudeWGS84, double altitudeRelative, double climbRate, quint64) {
-    double oldclimbRate         = _climbRate;
-    double oldaltitudeRelative  = _altitudeRelative;
-    double oldaltitudeWGS84     = _altitudeWGS84;
-    double oldaltitudeAMSL      = _altitudeAMSL;
-    _climbRate          = climbRate;
-    _altitudeRelative   = altitudeRelative;
-    _altitudeWGS84      = altitudeWGS84;
-    _altitudeAMSL       = altitudeAMSL;
-    if(_climbRate > -0.01 && _climbRate < 0.01) {
-        _climbRate = 0.0;
+    altitudeAMSL = _oneDecimal(altitudeAMSL);
+    if (fabs(_altitudeAMSL - altitudeAMSL) > 0.5) {
+        _altitudeAMSL = altitudeAMSL;
+        if(_refreshTimer->isActive()) {
+            emit altitudeAMSLChanged();
+        }
     }
-    if (fabs(oldaltitudeAMSL - altitudeAMSL) > 0.5) {
-        if(_refreshTimer->isActive()) emit altitudeAMSLChanged();
-        _valuesChanged = true;
+    altitudeWGS84 = _oneDecimal(altitudeWGS84);
+    if (fabs(_altitudeWGS84 - altitudeWGS84) > 0.5) {
+        _altitudeWGS84 = altitudeWGS84;
+        if(_refreshTimer->isActive()) {
+            emit altitudeWGS84Changed();
+        }
     }
-    if (fabs(oldaltitudeWGS84 - altitudeWGS84) > 0.5) {
-        if(_refreshTimer->isActive()) emit altitudeWGS84Changed();
-        _valuesChanged = true;
+    altitudeRelative = _oneDecimal(altitudeRelative);
+    if (fabs(_altitudeRelative - altitudeRelative) > 0.5) {
+        _altitudeRelative = altitudeRelative;
+        if(_refreshTimer->isActive()) {
+            emit altitudeRelativeChanged();
+        }
     }
-    if (fabs(oldaltitudeRelative - altitudeRelative) > 0.5) {
-        if(_refreshTimer->isActive()) emit altitudeRelativeChanged();
-        _valuesChanged = true;
+    climbRate = _oneDecimal(climbRate);
+    if (fabs(_climbRate - climbRate) > 0.5) {
+        _climbRate = climbRate;
+        if(_refreshTimer->isActive()) {
+            emit climbRateChanged();
+        }
     }
-    if (fabs(oldclimbRate - climbRate) > 0.5) {
-        if(_refreshTimer->isActive()) emit climbRateChanged();
-        _valuesChanged = true;
+    if(_altitudeAMSL != altitudeAMSL) {
+        _altitudeAMSL = altitudeAMSL;
+        _addChange(ALTITUDEAMSL_CHANGED);
+    }
+    if(_altitudeWGS84 != altitudeWGS84) {
+        _altitudeWGS84 = altitudeWGS84;
+        _addChange(ALTITUDEWGS84_CHANGED);
+    }
+    if(_altitudeRelative != altitudeRelative) {
+        _altitudeRelative = altitudeRelative;
+        _addChange(ALTITUDERELATIVE_CHANGED);
+    }
+    if(_climbRate != climbRate) {
+        _climbRate = climbRate;
+        _addChange(CLIMBRATE_CHANGED);
     }
 }
 
@@ -275,36 +300,34 @@ bool QGCFlightDisplay::_shouldDisplayNavigationData() {
 
 void QGCFlightDisplay::showEvent(QShowEvent* event)
 {
-    // React only to internal (pre-display) events
+    // Enable updates
     QWidget::showEvent(event);
     _refreshTimer->start(UPDATE_TIMER);
 }
 
 void QGCFlightDisplay::hideEvent(QHideEvent* event)
 {
-    // React only to internal (pre-display) events
+    // Disable updates
     _refreshTimer->stop();
     QWidget::hideEvent(event);
 }
 
+void QGCFlightDisplay::_addChange(int id)
+{
+    if(!_changes.contains(id)) {
+        _changes.append(id);
+    }
+}
+
+float QGCFlightDisplay::_oneDecimal(float value)
+{
+    int i = (value * 10);
+    return (float)i / 10.0;
+}
+
 void QGCFlightDisplay::_checkUpdate()
 {
-    if (_mav && (_valuesChanged || (QGC::groundTimeMilliseconds() - _valuesLastPainted) > 260)) {
-        _valuesChanged = false;
-        _valuesLastPainted = QGC::groundTimeMilliseconds();
-        emit rollChanged();
-        emit pitchChanged();
-        emit headingChanged();
-        emit altitudeAMSLChanged();
-        emit altitudeWGS84Changed();
-        emit altitudeRelativeChanged();
-        emit climbRateChanged();
-        emit groundSpeedChanged();
-        emit airSpeedChanged();
-        emit repaintRequestedChanged();
-        emit latitudeChanged();
-        emit longitudeChanged();
-    }
+    // Update current location
     if(_mav) {
         if(_latitude != _mav->getLatitude()) {
             _latitude = _mav->getLatitude();
@@ -315,5 +338,43 @@ void QGCFlightDisplay::_checkUpdate()
             emit longitudeChanged();
         }
     }
+    // Check for changes
+    // Significant changes, that is, whole number changes, are updated immediatelly.
+    // For every message however, we set a flag for what changed and this timer updates
+    // them to bring everything up-to-date. This prevents an avalanche of UI updates.
+    foreach(int i, _changes) {
+        switch (i) {
+        case ROLL_CHANGED:
+            emit rollChanged();
+            break;
+        case PITCH_CHANGED:
+            emit pitchChanged();
+            break;
+        case HEADING_CHANGED:
+            emit headingChanged();
+            break;
+        case GROUNDSPEED_CHANGED:
+            emit groundSpeedChanged();
+            break;
+        case AIRSPEED_CHANGED:
+            emit airSpeedChanged();
+            break;
+        case CLIMBRATE_CHANGED:
+            emit climbRateChanged();
+            break;
+        case ALTITUDERELATIVE_CHANGED:
+            emit altitudeRelativeChanged();
+            break;
+        case ALTITUDEWGS84_CHANGED:
+            emit altitudeWGS84Changed();
+            break;
+        case ALTITUDEAMSL_CHANGED:
+            emit altitudeAMSLChanged();
+            break;
+        default:
+            break;
+        }
+    }
+    _changes.clear();
 }
 
