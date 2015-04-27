@@ -26,6 +26,7 @@
 
 #include "QGCMapRCToParamDialog.h"
 #include "ui_QGCMapRCToParamDialog.h"
+#include "AutoPilotPluginManager.h"
 
 #include <QDebug>
 #include <QTimer>
@@ -41,6 +42,8 @@ QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id,
     ui(new Ui::QGCMapRCToParamDialog)
 {
     ui->setupUi(this);
+    
+
 
     // only enable ok button when param was refreshed
     QPushButton *okButton = ui->buttonBox->button(QDialogButtonBox::Ok);
@@ -92,44 +95,27 @@ void QGCMapRCToParamDialog::paramLoaded(bool success, float value, QString messa
     }
 }
 
-void ParamLoader::load()
+ParamLoader::ParamLoader(QString paramName, UASInterface* uas, QObject* parent) :
+    QObject(parent),
+    _uas(uas),
+    _paramName(paramName),
+    _paramReceived(false)
 {
-        // refresh the parameter from onboard to make sure the current value is used
-        paramMgr->requestParameterUpdate(paramMgr->getDefaultComponentId(), param_id);
-
-        // wait until parameter update is received
-        QEventLoop loop;
-        QTimer timer;
-        connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-        timer.start(10 * 1e3);
-        // overloaded signal:
-        connect(mav, static_cast<void (UASInterface::*)(
-                    int, int, QString, QVariant)>(&UASInterface::parameterChanged),
-                this, &ParamLoader::handleParameterChanged);
-        connect(this, &ParamLoader::correctParameterChanged,
-                &loop, &QEventLoop::quit);
-        loop.exec();
-
-        if (!param_received == true) {
-            // timeout
-            emit paramLoaded(false, 0.0f, "Timeout");
-            return;
-        }
-
-        QVariant current_param_value;
-        bool got_param = paramMgr->getParameterValue(paramMgr->getDefaultComponentId(),
-                param_id, current_param_value);
-
-        QString message = got_param ? "" : "param manager Error";
-        emit paramLoaded(got_param, current_param_value.toFloat(), message);
+    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
+    Q_ASSERT(_autopilot);
 }
 
-void ParamLoader::handleParameterChanged(int uas, int component, QString parameterName, QVariant value)
+void ParamLoader::load()
 {
-    Q_UNUSED(component);
+    connect(_autopilot->getParameterFact(_paramName), &Fact::valueChanged, this, &ParamLoader::_parameterUpdated);
+    
+    // refresh the parameter from onboard to make sure the current value is used
+    _autopilot->refreshParameter(FactSystem::defaultComponentId, _paramName);
+}
+
+void ParamLoader::_parameterUpdated(QVariant value)
+{
     Q_UNUSED(value);
-    if (uas == mav->getUASID() && parameterName == param_id) {
-        param_received = true;
-        emit correctParameterChanged();
-    }
+    
+    emit paramLoaded(true, _autopilot->getParameterFact(_paramName)->value().toFloat(), "");
 }

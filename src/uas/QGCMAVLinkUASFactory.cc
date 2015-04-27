@@ -39,9 +39,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
     // Make UAS aware that this link can be used to communicate with the actual robot
     uasInterface->addLink(link);
 
-    // First thing we do with a new UAS is get the parameters
-    uasInterface->getParamManager()->requestParameterList();
-    
     // Now add UAS to "official" list, which makes the whole application aware of it
     UASManager::instance()->addUAS(uasInterface);
     

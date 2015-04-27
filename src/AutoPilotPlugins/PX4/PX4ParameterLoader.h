@@ -32,6 +32,7 @@
 #include "ParameterLoader.h"
 #include "FactSystem.h"
 #include "UASInterface.h"
+#include "AutoPilotPlugin.h"
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -46,7 +47,7 @@ class PX4ParameterLoader : public ParameterLoader
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    PX4ParameterLoader(UASInterface* uas, QObject* parent = NULL);
+    PX4ParameterLoader(AutoPilotPlugin* autpilot,UASInterface* uas, QObject* parent = NULL);
 
     /// Override from ParameterLoader
     virtual QString getDefaultComponentIdParam(void) const { return QString("SYS_AUTOSTART"); }

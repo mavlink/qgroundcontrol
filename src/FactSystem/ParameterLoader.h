@@ -28,9 +28,13 @@
 #include <QMap>
 #include <QXmlStreamReader>
 #include <QLoggingCategory>
+#include <QMutex>
 
 #include "FactSystem.h"
 #include "UASInterface.h"
+#include "MAVLinkProtocol.h"
+#include "AutoPilotPlugin.h"
+#include "QGCMavlink.h"
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -44,7 +48,7 @@ class ParameterLoader : public QObject
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    ParameterLoader(UASInterface* uas, QObject* parent = NULL);
+    ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent = NULL);
     
     ~ParameterLoader();
     
@@ -76,6 +80,9 @@ public:
     
     const QMap<int, QMap<QString, QStringList> >& getGroupMap(void);
     
+    void readParametersFromStream(QTextStream& stream);
+    void writeParametersToStream(QTextStream &stream, const QString& name);
+
     /// Return the parameter for which the default component id is derived from. Return an empty
     /// string is this is not available.
     virtual QString getDefaultComponentIdParam(void) const = 0;
@@ -83,6 +90,12 @@ public:
 signals:
     /// Signalled when the full set of facts are ready
     void parametersReady(void);
+
+    /// Signalled to update progress of full parameter list request
+    void parameterListProgress(float value);
+    
+    /// Signalled to ourselves in order to get call on our own thread
+    void restartWaitingParamTimer(void);
     
 protected:
     /// Base implementation adds generic meta data based on variant type. Derived class can override to provide
@@ -90,21 +103,27 @@ protected:
     virtual void _addMetaDataToFact(Fact* fact);
     
 private slots:
-    void _parameterUpdate(int uas, int componentId, QString parameterName, int mavType, QVariant value);
+    void _parameterUpdate(int uasId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value);
     void _valueUpdated(const QVariant& value);
-    void _paramMgrParameterListUpToDate(void);
+    void _restartWaitingParamTimer(void);
+    void _waitingParamTimeout(void);
     
 private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
     int _actualComponentId(int componentId);
     void _determineDefaultComponentId(void);
     void _setupGroupMap(void);
-
-    int _uasId;             ///< Id for uas which this set of Facts are associated with
+    void _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
+    void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
+    MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
+    FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
+    void _saveToEEPROM(void);
     
-    QGCUASParamManagerInterface* _paramMgr;
+    AutoPilotPlugin*    _autopilot;
+    UASInterface*       _uas;
+    MAVLinkProtocol*    _mavlink;
     
-    /// First mapping id\s by component id
+    /// First mapping is by component id
     /// Second mapping is parameter name, to Fact* in QVariant
     QMap<int, QVariantMap> _mapParameterName2Variant;
     
@@ -115,6 +134,19 @@ private:
     bool _parametersReady;   ///< All params received from param mgr
     int _defaultComponentId;
     QString _defaultComponentIdParam;
+    
+    QMap<int, int>          _paramCountMap;             ///< Map of total known parameter count, keyed by component id
+    QMap<int, QList<int> >  _waitingReadParamIndexMap;  ///< Map of param indices waiting for initial first time read, keyed by component id
+    QMap<int, QStringList>  _waitingReadParamNameMap;   ///< Map of param names we are waiting to hear a read response from, keyed by component id
+    QMap<int, QStringList>  _waitingWriteParamNameMap;  ///< Map of param names we are waiting to hear a write response from, keyed by component id
+    
+    int _totalParamCount;   ///< Number of parameters across all components
+    
+    QTimer _waitingParamTimeoutTimer;
+    
+    bool _fullRefresh;
+    
+    QMutex _dataMutex;
 };
 
 #endif

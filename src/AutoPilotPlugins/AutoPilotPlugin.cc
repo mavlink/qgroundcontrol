@@ -25,11 +25,11 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "AutoPilotPlugin.h"
-#include "QGCUASParamManagerInterface.h"
 #include "SetupView.h"
 #include "QGCApplication.h"
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
+#include "ParameterLoader.h"
 
 AutoPilotPlugin::AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     QObject(parent),
@@ -160,27 +160,10 @@ const QMap<int, QMap<QString, QStringList> >& AutoPilotPlugin::getGroupMap(void)
 
 void AutoPilotPlugin::writeParametersToStream(QTextStream &stream)
 {
-	Q_ASSERT(_uas);
-	
-	_uas->getParamManager()->writeOnboardParamsToStream(stream, _uas->getUASName());
+	_getParameterLoader()->writeParametersToStream(stream, _uas->getUASName());
 }
 
 void AutoPilotPlugin::readParametersFromStream(QTextStream &stream)
 {
-	Q_ASSERT(_uas);
-	
-	Fact* autoSaveFact = NULL;
-	int previousAutoSave = 0;
-	
-	if (parameterExists("COM_AUTOS_PAR")) {
-		autoSaveFact = getParameterFact("COM_AUTOS_PAR");
-		previousAutoSave = autoSaveFact->value().toInt();
-		autoSaveFact->setValue(1);
-	}
-	
-	_uas->getParamManager()->readPendingParamsFromStream(stream);
-	
-	if (autoSaveFact) {
-		autoSaveFact->setValue(previousAutoSave);
-	}
+	_getParameterLoader()->readParametersFromStream(stream);
 }

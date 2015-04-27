@@ -228,7 +228,6 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     }
 
     _appendStatusLog(text);
-    qDebug() << text;
     
     if (_unknownFirmwareVersion) {
         // We don't know how to do visual cal with the version of firwmare
@@ -401,8 +400,8 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
 
 void SensorsComponentController::_refreshParams(void)
 {
-    // Pull full set in order to get all cal values back
-    _autopilot->refreshAllParameters();
+    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "CAL_");
+    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "SENS_");
 }
 
 bool SensorsComponentController::fixedWing(void)
