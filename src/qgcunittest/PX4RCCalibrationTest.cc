@@ -154,6 +154,12 @@ void PX4RCCalibrationTest::init(void)
     _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(UASManager::instance()->getActiveUAS());
     Q_ASSERT(_autopilot);
     
+    QSignalSpy spyPlugin(_autopilot, SIGNAL(pluginReadyChanged(bool)));
+    if (!_autopilot->pluginReady()) {
+        QCOMPARE(spyPlugin.wait(10000), true);
+    }
+    Q_ASSERT(_autopilot->pluginReady());
+    
     // This will instatiate the widget with an active uas with ready parameters
     _calWidget = new PX4RCCalibration();
     Q_CHECK_PTR(_calWidget);
