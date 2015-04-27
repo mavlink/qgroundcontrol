@@ -25,11 +25,11 @@
 #define PX4RCCALIBRATIONTEST_H
 
 #include "UnitTest.h"
-#include "MockUASManager.h"
-#include "MockUAS.h"
+#include "MockLink.h"
 #include "MultiSignalSpy.h"
 #include "px4_configuration/PX4RCCalibration.h"
 #include "QGCLoggingCategory.h"
+#include "AutoPilotPlugin.h"
 
 /// @file
 ///     @brief PX4RCCalibration Widget unit test
@@ -94,8 +94,8 @@ private:
     
     void _validateParameters(void);
     
-    MockUASManager*     _mockUASManager;
-    MockUAS*            _mockUAS;
+    MockLink*           _mockLink;
+    AutoPilotPlugin*    _autopilot;
     
     PX4RCCalibration*   _calWidget;
     
