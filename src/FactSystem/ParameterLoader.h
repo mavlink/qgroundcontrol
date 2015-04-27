@@ -34,7 +34,7 @@
 #include "UASInterface.h"
 #include "MAVLinkProtocol.h"
 #include "AutoPilotPlugin.h"
-#include "QGCMAVlink.h"
+#include "QGCMAVLink.h"
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
