@@ -93,10 +93,10 @@ void AutoPilotPluginManager::_uasDeleted(UASInterface* uas)
     int uasId = uas->getUASID();
     Q_ASSERT(uasId != 0);
     
-    Q_ASSERT(_pluginMap.contains(autopilotType));
-    Q_ASSERT(_pluginMap[autopilotType].contains(uasId));
-    delete _pluginMap[autopilotType][uasId];
-    _pluginMap[autopilotType].remove(uasId);
+    if (_pluginMap.contains(autopilotType) && _pluginMap[autopilotType].contains(uasId)) {
+        delete _pluginMap[autopilotType][uasId];
+        _pluginMap[autopilotType].remove(uasId);
+    }
 }
 
 AutoPilotPlugin* AutoPilotPluginManager::getInstanceForAutoPilotPlugin(UASInterface* uas)
