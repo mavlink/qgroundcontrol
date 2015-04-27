@@ -95,12 +95,9 @@
      <property name="title">
       <string>Tool Widgets</string>
      </property>
-     <addaction name="actionNewCustomWidget"/>
-     <addaction name="actionLoadCustomWidgetFile"/>
      <addaction name="separator"/>
     </widget>
     <addaction name="actionExperimentalPlanView"/>
-    <addaction name="actionLocal3DView"/>
     <addaction name="actionTerminalView"/>
     <addaction name="actionSimulationView"/>
     <addaction name="separator"/>
@@ -223,11 +220,6 @@
     <string>Fly</string>
    </property>
   </action>
-  <action name="actionNewCustomWidget">
-   <property name="text">
-    <string>New Custom Widget</string>
-   </property>
-  </action>
   <action name="actionMuteAudioOutput">
    <property name="checkable">
     <bool>true</bool>
@@ -287,11 +279,6 @@
     <string>Esc</string>
    </property>
   </action>
-  <action name="actionLoadCustomWidgetFile">
-   <property name="text">
-    <string>Load Custom Widget File</string>
-   </property>
-  </action>
   <action name="actionSetup">
    <property name="checkable">
     <bool>true</bool>
@@ -328,14 +315,6 @@
    </property>
    <property name="text">
     <string>Terminal</string>
-   </property>
-  </action>
-  <action name="actionLocal3DView">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Local 3D View</string>
    </property>
   </action>
   <action name="actionStatusBar">
