@@ -48,6 +48,8 @@ QT_BEGIN_NAMESPACE
 static const char V_jniClassName[] {"org/qgroundcontrol/qgchelper/UsbDeviceJNI"};
 static const char V_TAG[] {"QGC_QSerialPortInfo"};
 
+extern void cleanJavaException();
+
 QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
 {
     QList<QSerialPortInfo> serialPortInfoList;
@@ -117,22 +119,26 @@ QList<qint32> QSerialPortInfo::standardBaudRates()
 bool QSerialPortInfo::isBusy() const
 {
     QAndroidJniObject jstrL = QAndroidJniObject::fromString(d_ptr->portName);
+    cleanJavaException();
     jboolean resultL = QAndroidJniObject::callStaticMethod<jboolean>(
         V_jniClassName,
         "isDeviceNameOpen",
         "(Ljava/lang/String;)Z",
         jstrL.object<jstring>());
+    cleanJavaException();
     return resultL;
 }
 
 bool QSerialPortInfo::isValid() const
 {
     QAndroidJniObject jstrL = QAndroidJniObject::fromString(d_ptr->portName);
+    cleanJavaException();
     jboolean resultL = QAndroidJniObject::callStaticMethod<jboolean>(
         V_jniClassName,
         "isDeviceNameValid",
         "(Ljava/lang/String;)Z",
         jstrL.object<jstring>());
+    cleanJavaException();
     return resultL;
 }
 
