@@ -38,8 +38,8 @@ QGC_LOGGING_CATEGORY(PX4ParameterLoaderLog, "PX4ParameterLoaderLog")
 bool PX4ParameterLoader::_parameterMetaDataLoaded = false;
 QMap<QString, FactMetaData*> PX4ParameterLoader::_mapParameterName2FactMetaData;
 
-PX4ParameterLoader::PX4ParameterLoader(UASInterface* uas, QObject* parent) :
-    ParameterLoader(uas, parent)
+PX4ParameterLoader::PX4ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent) :
+    ParameterLoader(autopilot, uas, parent)
 {
     Q_ASSERT(uas);
 }
@@ -221,7 +221,7 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                 Q_CHECK_PTR(metaData);
                 if (_mapParameterName2FactMetaData.contains(name)) {
                     // We can't trust the meta dafa since we have dups
-                    qDebug() << "Duplicate parameter found:" << name;
+                    qCDebug(PX4ParameterLoaderLog) << "Duplicate parameter found:" << name;
                     badMetaData = true;
                     // Reset to default meta data
                     _mapParameterName2FactMetaData[name] = metaData;
@@ -236,7 +236,7 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                             metaData->setDefaultValue(varDefault);
                         } else {
                             // Non-fatal
-                            qDebug() << "Parameter meta data with bad default value, name:" << name << " type:" << type << " default:" << strDefault;
+                            qCDebug(PX4ParameterLoaderLog) << "Parameter meta data with bad default value, name:" << name << " type:" << type << " default:" << strDefault;
                         }
                     }
                 }

@@ -422,19 +422,31 @@ float MockLink::_floatUnionForParam(int componentId, const QString& paramName)
 
     switch (paramType) {
         case MAV_PARAM_TYPE_INT8:
-            valueUnion.param_int8 = (unsigned char)paramVar.toChar().toLatin1();
+            if (_autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                valueUnion.param_float = (unsigned char)paramVar.toChar().toLatin1();
+            } else {
+                valueUnion.param_int8 = (unsigned char)paramVar.toChar().toLatin1();
+            }
             break;
 
         case MAV_PARAM_TYPE_INT32:
-            valueUnion.param_int32 = paramVar.toInt();
+            if (_autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                valueUnion.param_float = paramVar.toInt();
+            } else {
+                valueUnion.param_int32 = paramVar.toInt();
+            }
             break;
 
         case MAV_PARAM_TYPE_UINT32:
-            valueUnion.param_uint32 = paramVar.toUInt();
+            if (_autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+                valueUnion.param_float = paramVar.toUInt();
+            } else {
+                valueUnion.param_uint32 = paramVar.toUInt();
+            }
             break;
 
         case MAV_PARAM_TYPE_REAL32:
-            valueUnion.param_float = paramVar.toFloat();
+                valueUnion.param_float = paramVar.toFloat();
             break;
 
         default:
@@ -454,7 +466,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
     Q_ASSERT(request.target_component == MAV_COMP_ID_ALL);
 
     foreach (int componentId, _mapParamName2Value.keys()) {
-        uint16_t paramIndex = 1;
+        uint16_t paramIndex = 0;
         int cParameters = _mapParamName2Value[componentId].count();
         
         foreach(QString paramName, _mapParamName2Value[componentId].keys()) {
@@ -469,7 +481,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
             Q_ASSERT(paramName.length() <= MAVLINK_MSG_ID_PARAM_VALUE_LEN);
             strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
 
-            qCDebug(MockLinkLog) << "Sending msg_param_value" << paramId << paramType;
+            qCDebug(MockLinkLog) << "Sending msg_param_value" << componentId << paramId << paramType << _mapParamName2Value[componentId][paramId];
 
             mavlink_msg_param_value_pack(_vehicleSystemId,
                                          componentId,                       // component id
@@ -535,7 +547,7 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
     } else {
         // Request is by index
 
-        Q_ASSERT(request.param_index >= 0 && request.param_index < _mapParamName2Value.count());
+        Q_ASSERT(request.param_index >= 0 && request.param_index < _mapParamName2Value[componentId].count());
 
         QString key = _mapParamName2Value[componentId].keys().at(request.param_index);
         Q_ASSERT(key.length() <= MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN);
@@ -617,4 +629,41 @@ void MockLink::_handleMissionItem(const mavlink_message_t& msg)
     Q_ASSERT(!_missionItems.contains(request.seq));
 
     _missionItems[request.seq] = request;
+}
+
+void MockLink::emitRemoteControlChannelRawChanged(int channel, uint16_t raw)
+{
+    uint16_t chanRaw[18];
+    
+    for (int i=0; i<18; i++) {
+        chanRaw[i] = UINT16_MAX;
+    }
+    chanRaw[channel] = raw;
+    
+    mavlink_message_t responseMsg;
+    mavlink_msg_rc_channels_pack(_vehicleSystemId,
+                                 _vehicleComponentId,
+                                 &responseMsg,          // Outgoing message
+                                 0,                     // time since boot, ignored
+                                 18,                    // channel count
+                                 chanRaw[0],            // channel raw value
+                                 chanRaw[1],            // channel raw value
+                                 chanRaw[2],            // channel raw value
+                                 chanRaw[3],            // channel raw value
+                                 chanRaw[4],            // channel raw value
+                                 chanRaw[5],            // channel raw value
+                                 chanRaw[6],            // channel raw value
+                                 chanRaw[7],            // channel raw value
+                                 chanRaw[8],            // channel raw value
+                                 chanRaw[9],            // channel raw value
+                                 chanRaw[10],           // channel raw value
+                                 chanRaw[11],           // channel raw value
+                                 chanRaw[12],           // channel raw value
+                                 chanRaw[13],           // channel raw value
+                                 chanRaw[14],           // channel raw value
+                                 chanRaw[15],           // channel raw value
+                                 chanRaw[16],           // channel raw value
+                                 chanRaw[17],           // channel raw value
+                                 0);                    // rss
+    _emitMavlinkMessage(responseMsg);
 }

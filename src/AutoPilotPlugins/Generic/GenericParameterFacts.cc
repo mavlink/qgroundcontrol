@@ -28,8 +28,8 @@
 
 #include <QDebug>
 
-GenericParameterFacts::GenericParameterFacts(UASInterface* uas, QObject* parent) :
-    ParameterLoader(uas, parent)
+GenericParameterFacts::GenericParameterFacts(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent) :
+    ParameterLoader(autopilot, uas, parent)
 {
     Q_ASSERT(uas);
 }

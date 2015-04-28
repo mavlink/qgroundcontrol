@@ -151,11 +151,9 @@ INCLUDEPATH += \
     src/uas \
     src/ui \
     src/ui/configuration \
-    src/ui/designer \
     src/ui/flightdisplay \
     src/ui/linechart \
     src/ui/map \
-    src/ui/map3D \
     src/ui/mapdisplay \
     src/ui/mavlink \
     src/ui/mission \
@@ -170,13 +168,6 @@ FORMS += \
     src/ui/configuration/SerialSettingsDialog.ui \
     src/ui/configuration/terminalconsole.ui \
     src/ui/DebugConsole.ui \
-    src/ui/designer/QGCActionButton.ui \
-    src/ui/designer/QGCCommandButton.ui \
-    src/ui/designer/QGCParamSlider.ui \
-    src/ui/designer/QGCTextLabel.ui \
-    src/ui/designer/QGCToolWidget.ui \
-    src/ui/designer/QGCToolWidgetComboBox.ui \
-    src/ui/designer/QGCXYPlot.ui \
     src/ui/HDDisplay.ui \
     src/ui/Linechart.ui \
     src/ui/MainWindow.ui \
@@ -215,7 +206,6 @@ FORMS += \
     src/ui/QGCUASFileViewMulti.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCWaypointListMulti.ui \
-    src/ui/QMap3D.ui \
     src/ui/SerialSettings.ui \
     src/ui/SettingsDialog.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
@@ -279,30 +269,17 @@ HEADERS += \
     src/QmlControls/ScreenTools.h \
     src/uas/QGCMAVLinkUASFactory.h \
     src/uas/QGCUASFileManager.h \
-    src/uas/QGCUASParamManager.h \
-    src/uas/QGCUASParamManagerInterface.h \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASManager.h \
     src/uas/UASManagerInterface.h \
     src/uas/UASMessageHandler.h \
-    src/uas/UASParameterCommsMgr.h \
-    src/uas/UASParameterDataModel.h \
     src/uas/UASWaypointManager.h \
     src/ui/configuration/ApmHighlighter.h \
     src/ui/configuration/console.h \
     src/ui/configuration/SerialSettingsDialog.h \
     src/ui/configuration/terminalconsole.h \
     src/ui/DebugConsole.h \
-    src/ui/designer/QGCCommandButton.h \
-    src/ui/designer/QGCParamSlider.h \
-    src/ui/designer/QGCRadioChannelDisplay.h \
-    src/ui/designer/QGCTextLabel.h \
-    src/ui/designer/QGCToolWidget.h \
-    src/ui/designer/QGCToolWidgetComboBox.h \
-    src/ui/designer/QGCToolWidgetItem.h \
-    src/ui/designer/QGCXYPlot.h \
-    src/ui/designer/RCChannelWidget.h \
     src/ui/flightdisplay/QGCFlightDisplay.h \
     src/ui/HDDisplay.h \
     src/ui/HSIDisplay.h \
@@ -423,27 +400,15 @@ SOURCES += \
     src/QmlControls/ScreenTools.cc \
     src/uas/QGCMAVLinkUASFactory.cc \
     src/uas/QGCUASFileManager.cc \
-    src/uas/QGCUASParamManager.cc \
     src/uas/UAS.cc \
     src/uas/UASManager.cc \
     src/uas/UASMessageHandler.cc \
-    src/uas/UASParameterCommsMgr.cc \
-    src/uas/UASParameterDataModel.cc \
     src/uas/UASWaypointManager.cc \
     src/ui/configuration/ApmHighlighter.cc \
     src/ui/configuration/console.cpp \
     src/ui/configuration/SerialSettingsDialog.cc \
     src/ui/configuration/terminalconsole.cpp \
     src/ui/DebugConsole.cc \
-    src/ui/designer/QGCCommandButton.cc \
-    src/ui/designer/QGCParamSlider.cc \
-    src/ui/designer/QGCRadioChannelDisplay.cpp \
-    src/ui/designer/QGCTextLabel.cc \
-    src/ui/designer/QGCToolWidget.cc \
-    src/ui/designer/QGCToolWidgetComboBox.cc \
-    src/ui/designer/QGCToolWidgetItem.cc \
-    src/ui/designer/QGCXYPlot.cc \
-    src/ui/designer/RCChannelWidget.cc \
     src/ui/flightdisplay/QGCFlightDisplay.cc \
     src/ui/HDDisplay.cc \
     src/ui/HSIDisplay.cc \
@@ -553,11 +518,7 @@ HEADERS += \
     src/qgcunittest/FlightGearTest.h \
     src/qgcunittest/MockMavlinkFileServer.h \
     src/qgcunittest/MockMavlinkInterface.h \
-    src/qgcunittest/MockQGCUASParamManager.h \
-    src/qgcunittest/MockUAS.h \
-    src/qgcunittest/MockUASManager.h \
     src/qgcunittest/MultiSignalSpy.h \
-    src/qgcunittest/QGCUASFileManagerTest.h \
     src/qgcunittest/TCPLinkTest.h \
     src/qgcunittest/TCPLoopBackServer.h \
     src/FactSystem/FactSystemTestBase.h \
@@ -577,11 +538,7 @@ HEADERS += \
 SOURCES += \
     src/qgcunittest/FlightGearTest.cc \
     src/qgcunittest/MockMavlinkFileServer.cc \
-    src/qgcunittest/MockQGCUASParamManager.cc \
-    src/qgcunittest/MockUAS.cc \
-    src/qgcunittest/MockUASManager.cc \
     src/qgcunittest/MultiSignalSpy.cc \
-    src/qgcunittest/QGCUASFileManagerTest.cc \
     src/qgcunittest/TCPLinkTest.cc \
     src/qgcunittest/TCPLoopBackServer.cc \
     src/FactSystem/FactSystemTestBase.cc \

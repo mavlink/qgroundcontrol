@@ -25,32 +25,29 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "PX4Component.h"
+#include "Fact.h"
+#include "AutoPilotPlugin.h"
 
 PX4Component::PX4Component(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(uas, autopilot, parent)
 {
     Q_ASSERT(uas);
     Q_ASSERT(autopilot);
-    
-    _paramMgr = _uas->getParamManager();
-    Q_ASSERT(_paramMgr);
-
-    bool fSuccess = connect(_paramMgr, SIGNAL(parameterUpdated(int, QString, QVariant)), this, SLOT(_parameterUpdated(int, QString, QVariant)));
-    Q_ASSERT(fSuccess);
-    Q_UNUSED(fSuccess);
 }
 
-void PX4Component::_parameterUpdated(int compId, QString paramName, QVariant value)
+void PX4Component::setupTriggerSignals(void)
+{
+    // Watch for changed on trigger list params
+    foreach (QString paramName, setupCompleteChangedTriggerList()) {
+        Fact* fact = _autopilot->getParameterFact(paramName);
+        
+        connect(fact, &Fact::valueChanged, this, &PX4Component::_triggerUpdated);
+    }
+}
+
+
+void PX4Component::_triggerUpdated(QVariant value)
 {
     Q_UNUSED(value);
-    
-    if (compId == _paramMgr->getDefaultComponentId()) {
-        QStringList triggerList = setupCompleteChangedTriggerList();
-        foreach(QString triggerParam, triggerList) {
-            if (paramName == triggerParam) {
-                emit setupCompleteChanged(setupComplete());
-                return;
-            }
-        }
-    }
+    emit setupCompleteChanged(setupComplete());
 }

@@ -59,9 +59,6 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     _uas = UASManager::instance()->getActiveUAS();
     Q_ASSERT(_uas);
     
-    _paramMgr = _uas->getParamManager();
-    Q_ASSERT(_paramMgr);
-    
     // Get the plugin for the uas
     
     AutoPilotPluginManager* pluginMgr = AutoPilotPluginManager::instance();
@@ -74,7 +71,7 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     
     QSignalSpy spyPlugin(_plugin, SIGNAL(pluginReadyChanged(bool)));
     if (!_plugin->pluginReady()) {
-        QCOMPARE(spyPlugin.wait(5000), true);
+        QCOMPARE(spyPlugin.wait(10000), true);
     }
     Q_ASSERT(_plugin->pluginReady());
 }
@@ -87,23 +84,17 @@ void FactSystemTestBase::_cleanup(void)
 /// Basic test of parameter values in Fact System
 void FactSystemTestBase::_parameter_default_component_id_test(void)
 {
-    // Compare the value in the Parameter Manager with the value from the FactSystem.
-    
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, FactSystem::defaultComponentId, "RC_MAP_THROTTLE"));
     Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, FactSystem::defaultComponentId, "RC_MAP_THROTTLE");
     QVERIFY(fact != NULL);
     QVariant factValue = fact->value();
     QCOMPARE(factValue.isValid(), true);
-    QVariant paramValue;
-    Q_ASSERT(_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "RC_MAP_THROTTLE", paramValue));
     
-    QCOMPARE(factValue.toInt(), paramValue.toInt());
+    QCOMPARE(factValue.toInt(), 3);
 }
 
 void FactSystemTestBase::_parameter_specific_component_id_test(void)
 {
-    // Compare the value in the Parameter Manager with the value from the FactSystem.
-    
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 50, "RC_MAP_THROTTLE"));
     Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, 50, "RC_MAP_THROTTLE");
     QVERIFY(fact != NULL);
@@ -111,10 +102,7 @@ void FactSystemTestBase::_parameter_specific_component_id_test(void)
     QCOMPARE(factValue.isValid(), true);
     
     
-    QVariant paramValue;
-    Q_ASSERT(_paramMgr->getParameterValue(50, "RC_MAP_THROTTLE", paramValue));
-    
-    QCOMPARE(factValue.toInt(), paramValue.toInt());
+    QCOMPARE(factValue.toInt(), 3);
     
     // Test another component id
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 51, "COMPONENT_51"));
@@ -123,9 +111,7 @@ void FactSystemTestBase::_parameter_specific_component_id_test(void)
     factValue = fact->value();
     QCOMPARE(factValue.isValid(), true);
     
-    Q_ASSERT(_paramMgr->getParameterValue(51, "COMPONENT_51", paramValue));
-    
-    QCOMPARE(factValue.toInt(), paramValue.toInt());
+    QCOMPARE(factValue.toInt(), 51);
 }
 
 /// Test that QML can reference a Fact
@@ -142,38 +128,7 @@ void FactSystemTestBase::_qml_test(void)
     QVERIFY(control != NULL);
     QVariant qmlValue = control->property("text").toInt();
 
-    QVariant paramMgrValue;
-    Q_ASSERT(_paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), "RC_MAP_THROTTLE", paramMgrValue));
-    
-    QCOMPARE(qmlValue.toInt(), paramMgrValue.toInt());
-}
-
-// Test correct behavior when the Param Manager gets a parameter update
-void FactSystemTestBase::_paramMgrSignal_test(void)
-{
-    // Get the parameter Fact from the AutoPilot
-    
-    Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, -1, "RC_MAP_THROTTLE");
-    QVERIFY(fact != NULL);
-    
-    // Setting a new value into the parameter should trigger a valueChanged signal on the Fact
-
-    QSignalSpy spyFact(fact, SIGNAL(valueChanged(QVariant)));
-    
-    QVariant paramValue = 12;
-    _paramMgr->setParameter(_paramMgr->getDefaultComponentId(), "RC_MAP_THROTTLE", paramValue);
-    _paramMgr->sendPendingParameters(true, false);
-
-    // Wait for the Fact::valueChanged signal to come through
-    QCOMPARE(spyFact.wait(5000), true);
-
-    // Make sure the signal has the right value
-    QList<QVariant> arguments = spyFact.takeFirst();
-    qDebug() << arguments.at(0).type();
-    QCOMPARE(arguments.at(0).toInt(), 12);
-    
-    // Make sure the Fact has the new value
-    QCOMPARE(fact->value().toInt(), 12);
+    QCOMPARE(qmlValue.toInt(), 3);
 }
 
 /// Test QML getting an updated Fact value
@@ -185,11 +140,10 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     
     widget->setSource(QUrl::fromUserInput("qrc:unittest/FactSystemTest.qml"));
     
-    // Change the value using param manager
+    // Change the value
     
     QVariant paramValue = 12;
-    _paramMgr->setParameter(_paramMgr->getDefaultComponentId(), "RC_MAP_THROTTLE", paramValue);
-    _paramMgr->sendPendingParameters(true, false);
+    _plugin->getParameterFact("RC_MAP_THROTTLE")->setValue(paramValue);
 
     QTest::qWait(500); // Let the signals flow through
     

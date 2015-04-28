@@ -27,7 +27,6 @@
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
 #include "SerialLink.h"
-#include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
 #include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
@@ -143,8 +142,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     receivedMode(false),
 
 
-    paramsOnceRequested(false),
-    paramMgr(this),
     simulation(0),
 
     // The protected members.
@@ -230,8 +227,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout.start(500);
     readSettings();
-    //need to init paramMgr after readSettings have been loaded, to properly set autopilot and so forth
-    paramMgr.initWithUAS(this);
+
     // Initial signals
     emit disarmed();
     emit armingChanged(false);
@@ -1646,26 +1642,6 @@ quint64 UAS::getUnixTime(quint64 time)
 }
 
 /**
-* @param component that will be searched for in the map of parameters.
-*/
-QList<QString> UAS::getParameterNames(int component)
-{
-    if (parameters.contains(component))
-    {
-        return parameters.value(component)->keys();
-    }
-    else
-    {
-        return QList<QString>();
-    }
-}
-
-QList<int> UAS::getComponentIds()
-{
-    return parameters.keys();
-}
-
-/**
 * @param newBaseMode that UAS is to be set to.
 * @param newCustomMode that UAS is to be set to.
 */
@@ -1912,21 +1888,6 @@ quint64 UAS::getUptime() const
     {
         return QGC::groundTimeMilliseconds() - startTime;
     }
-}
-
-void UAS::writeParametersToStorage()
-{
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
-    qDebug() << "SENT COMMAND" << MAV_CMD_PREFLIGHT_STORAGE;
-    sendMessage(msg);
-}
-
-void UAS::readParametersFromStorage()
-{
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 0, -1, -1, -1, 0, 0, 0);
-    sendMessage(msg);
 }
 
 bool UAS::isRotaryWing()
@@ -2205,115 +2166,10 @@ void UAS::enableExtra3Transmission(int rate)
     sendMessage(msg);
 }
 
-/**
- * Set a parameter value onboard
- *
- * @param component The component to set the parameter
- * @param id Name of the parameter
- */
-void UAS::setParameter(const int compId, const QString& paramId, const QVariant& value)
-{
-    if (!paramId.isNull())
-    {
-        mavlink_message_t msg;
-        mavlink_param_set_t p;
-        mavlink_param_union_t union_value;
-
-        // Assign correct value based on QVariant
-        // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
-        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
-        {
-            switch ((int)value.type())
-            {
-            case QVariant::Char:
-                union_value.param_float = (unsigned char)value.toChar().toLatin1();
-                p.param_type = MAV_PARAM_TYPE_INT8;
-                break;
-            case QVariant::Int:
-                union_value.param_float = value.toInt();
-                p.param_type = MAV_PARAM_TYPE_INT32;
-                break;
-            case QVariant::UInt:
-                union_value.param_float = value.toUInt();
-                p.param_type = MAV_PARAM_TYPE_UINT32;
-                break;
-            case QMetaType::Float:
-                union_value.param_float = value.toFloat();
-                p.param_type = MAV_PARAM_TYPE_REAL32;
-                break;
-            default:
-                qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
-                return;
-            }
-        }
-        else
-        {
-            switch ((int)value.type())
-            {
-            case QVariant::Char:
-                union_value.param_int8 = (unsigned char)value.toChar().toLatin1();
-                p.param_type = MAV_PARAM_TYPE_INT8;
-                break;
-            case QVariant::Int:
-                union_value.param_int32 = value.toInt();
-                p.param_type = MAV_PARAM_TYPE_INT32;
-                break;
-            case QVariant::UInt:
-                union_value.param_uint32 = value.toUInt();
-                p.param_type = MAV_PARAM_TYPE_UINT32;
-                break;
-            case QMetaType::Float:
-                union_value.param_float = value.toFloat();
-                p.param_type = MAV_PARAM_TYPE_REAL32;
-                break;
-            default:
-                qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
-                return;
-            }
-        }
-
-        p.param_value = union_value.param_float;
-        p.target_system = (uint8_t)uasId;
-        p.target_component = (uint8_t)compId;
-
-        //qDebug() << "SENT PARAM:" << value;
-
-        // Copy string into buffer, ensuring not to exceed the buffer size
-        for (unsigned int i = 0; i < sizeof(p.param_id); i++)
-        {
-            // String characters
-            if ((int)i < paramId.length())
-            {
-                p.param_id[i] = paramId.toLatin1()[i];
-            }
-            else
-            {
-                // Fill rest with zeros
-                p.param_id[i] = 0;
-            }
-        }
-        mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
-        sendMessage(msg);
-    }
-}
-
-
-
-
 //TODO update this to use the parameter manager / param data model instead
 void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName, const mavlink_param_value_t& rawValue,  mavlink_param_union_t& paramUnion)
 {
     int compId = msg.compid;
-
-    // Insert component if necessary
-    if (!parameters.contains(compId)) {
-        parameters.insert(compId, new QMap<QString, QVariant>());
-    }
-
-    // Insert parameter into registry
-    if (parameters.value(compId)->contains(paramName)) {
-        parameters.value(compId)->remove(paramName);
-    }
 
     QVariant paramValue;
 
@@ -2374,50 +2230,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
 
     qCDebug(UASLog) << "Received PARAM_VALUE" << paramName << paramValue << rawValue.param_type;
 
-    parameters.value(compId)->insert(paramName, paramValue);
-    emit parameterChanged(uasId, compId, paramName, paramValue);
-    emit parameterUpdate(uasId, compId, paramName, rawValue.param_type, paramValue);
-    emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, paramValue);
-}
-
-/**
-* Request parameter, use parameter name to request it.
-*/
-void UAS::requestParameter(int component, int id)
-{
-    // Request parameter, use parameter name to request it
-    mavlink_message_t msg;
-    mavlink_param_request_read_t read;
-    read.param_index = id;
-    read.param_id[0] = '\0'; // Enforce null termination
-    read.target_system = uasId;
-    read.target_component = component;
-    mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);
-    sendMessage(msg);
-    //qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM ID" << id;
-}
-
-/**
-* Request a parameter, use parameter name to request it.
-*/
-void UAS::requestParameter(int component, const QString& parameter)
-{
-    // Request parameter, use parameter name to request it
-    mavlink_message_t msg;
-    mavlink_param_request_read_t read;
-    read.param_index = -1;
-    // Copy full param name or maximum max field size
-    if (parameter.length() > MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN)
-    {
-        emit textMessageReceived(uasId, 0, MAV_SEVERITY_WARNING, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
-    }
-    strncpy(read.param_id, parameter.toStdString().c_str(), sizeof(read.param_id));
-    read.param_id[sizeof(read.param_id) - 1] = '\0'; // Enforce null termination
-    read.target_system = uasId;
-    read.target_component = component;
-    mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);
-    sendMessage(msg);
-    //qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM NAME" << parameter;
+    emit parameterUpdate(uasId, compId, paramName, rawValue.param_count, rawValue.param_index, rawValue.param_type, paramValue);
 }
 
 /**
