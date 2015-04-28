@@ -49,7 +49,7 @@ public:
         TypeXbee,       ///< XBee Proprietary Link
         TypeOpal,       ///< Opal-RT Link
 #endif
-#ifdef UNITTEST_BUILD
+#ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
 #endif
         TypeLast        // Last type value (type >= TypeLast == invalid)
