@@ -409,6 +409,15 @@ void LinkManager::loadLinkConfigurationList()
         }
         emit linkConfigurationChanged();
     }
+    
+    // Debug buids always add MockLink automatically
+#ifdef QT_DEBUG
+    MockConfiguration* pMock = new MockConfiguration("Mock Link");
+    pMock->setDynamic(true);
+    addLinkConfiguration(pMock);
+    emit linkConfigurationChanged();
+#endif
+    
     // Enable automatic PX4 hunting
     _configurationsLoaded = true;
 }
