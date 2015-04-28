@@ -88,12 +88,10 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
         case LinkConfiguration::TypeTcp:
             pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
             break;
-#ifdef UNITTEST_BUILD
-#ifndef __android__
+#ifdef QT_DEBUG
         case LinkConfiguration::TypeMock:
             pLink = new MockLink(dynamic_cast<MockConfiguration*>(config));
             break;
-#endif
 #endif
     }
     if(pLink) {
@@ -384,13 +382,11 @@ void LinkManager::loadLinkConfigurationList()
                                     pLink = (LinkConfiguration*)new TCPConfiguration(name);
                                     pLink->setPreferred(preferred);
                                     break;
-#ifdef UNITTEST_BUILD
-#ifndef __android__
+#ifdef QT_DEBUG
                                 case LinkConfiguration::TypeMock:
                                     pLink = (LinkConfiguration*)new MockConfiguration(name);
                                     pLink->setPreferred(false);
                                     break;
-#endif
 #endif
                             }
                             if(pLink) {
