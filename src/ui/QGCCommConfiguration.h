@@ -54,7 +54,7 @@ public:
         QGC_LINK_TCP,
         QGC_LINK_SIMULATION,
         QGC_LINK_FORWARDING,
-#ifdef UNITTEST_BUILD
+#ifdef QT_DEBUG
         QGC_LINK_MOCK,
 #endif
 #ifdef  QGC_XBEE_ENABLED

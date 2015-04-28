@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/unittest">
-        <file alias="MockLink.params">src/qgcunittest/MockLink.params</file>
+        <file alias="MockLink.params">src/comm/MockLink.params</file>
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
 

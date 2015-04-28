@@ -48,7 +48,7 @@ QGCCommConfiguration::QGCCommConfiguration(QWidget *parent, LinkConfiguration *c
     _ui->typeCombo->addItem(tr("Serial"),       LinkConfiguration::TypeSerial);
     _ui->typeCombo->addItem(tr("UDP"),          LinkConfiguration::TypeUdp);
     _ui->typeCombo->addItem(tr("TCP"),          LinkConfiguration::TypeTcp);
-#ifdef UNITTEST_BUILD
+#ifdef QT_DEBUG
     _ui->typeCombo->addItem(tr("Mock"),         LinkConfiguration::TypeMock);
 #endif
 
@@ -134,7 +134,7 @@ void QGCCommConfiguration::_loadTypeConfigWidget(int type)
             _ui->typeCombo->setCurrentIndex(_ui->typeCombo->findData(LinkConfiguration::TypeTcp));
         }
         break;
-#ifdef UNITTEST_BUILD
+#ifdef QT_DEBUG
         case LinkConfiguration::TypeMock: {
             _ui->linkScrollArea->setWidget(NULL);
             _ui->linkGroupBox->setTitle(tr("Mock Link"));
