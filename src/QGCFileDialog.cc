@@ -217,10 +217,10 @@ void QGCFileDialog::_validate(Options& options)
     Q_ASSERT(qgcApp());
     
     Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
-    
+#ifndef __android__
     // On OSX native dialog can hang so we always use Qt dialogs
     options |= DontUseNativeDialog;
-    
+#endif
     if (MainWindow::instance()) {
         MainWindow::instance()->hideSplashScreen();
     }

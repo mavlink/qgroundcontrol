@@ -104,7 +104,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     _app = this;
 
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
+#ifndef __android__
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+#endif
 
 #ifdef QT_DEBUG
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
