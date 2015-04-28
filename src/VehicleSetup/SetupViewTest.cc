@@ -70,6 +70,15 @@ void SetupViewTest::_clickThrough_test(void)
     LinkManager::instance()->_addLink(link);
     linkMgr->connectLink(link);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
+
+    AutoPilotPlugin* autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(UASManager::instance()->getActiveUAS());
+    Q_ASSERT(autopilot);
+    
+    QSignalSpy spyPlugin(autopilot, SIGNAL(pluginReadyChanged(bool)));
+    if (!autopilot->pluginReady()) {
+        QCOMPARE(spyPlugin.wait(10000), true);
+    }
+    Q_ASSERT(autopilot->pluginReady());
     
     // Switch to the Setup view
     _mainToolBar->onSetupView();
@@ -90,11 +99,6 @@ void SetupViewTest::_clickThrough_test(void)
     setupView->summaryButtonClicked();
     QTest::qWait(1000);
     
-    // Click through component buttons
-    UASInterface* uas = UASManager::instance()->getActiveUAS();
-    Q_ASSERT(uas);
-    AutoPilotPlugin* autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas);
-    Q_ASSERT(autopilot);
     const QVariantList& components = autopilot->vehicleComponents();
     foreach(QVariant varComponent, components) {
         setupView->setupButtonClicked(varComponent);
