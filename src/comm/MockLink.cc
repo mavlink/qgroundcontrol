@@ -503,11 +503,14 @@ void MockLink::_handleParamSet(const mavlink_message_t& msg)
 
     Q_ASSERT(request.target_system == _vehicleSystemId);
     int componentId = request.target_component;
-
+    
     // Param may not be null terminated if exactly fits
     char paramId[MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN + 1];
+    paramId[MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN] = 0;
     strncpy(paramId, request.param_id, MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN);
 
+    qCDebug(MockLinkLog) << "_handleParamSet" << componentId << paramId << request.param_type;
+    
     Q_ASSERT(_mapParamName2Value.contains(componentId));
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
     Q_ASSERT(request.param_type == _mapParamName2MavParamType[paramId]);
