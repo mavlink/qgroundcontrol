@@ -43,13 +43,12 @@ public:
     ///         signal to be emitted. Last element is signalled by NULL.
     virtual QStringList setupCompleteChangedTriggerList(void) const = 0;
     
-private slots:
-    /// @brief Connected to QGCUASParamManagerInterface::parameterUpdated signal in order to signal
-    ///         setupCompleteChanged at appropriate times.
-    void _parameterUpdated(int compId, QString paramName, QVariant value);
+    /// Should be called after the component is created (but not in constructor) to setup the
+    /// signals which are used to track parameter changes which affect setupComplete state.
+    void setupTriggerSignals(void);
     
-private:
-    QGCUASParamManagerInterface*    _paramMgr;
+private slots:
+    void _triggerUpdated(QVariant value);
 };
 
 #endif

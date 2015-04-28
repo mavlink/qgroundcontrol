@@ -40,7 +40,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
-#include "QGCUASParamManager.h"
 #include "QGCUASFileManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(UASLog)
@@ -462,11 +461,6 @@ protected: //COMMENTS FOR TEST UNIT
     bool blockHomePositionChanges;   ///< Block changes to the home position
     bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
 
-    /// PARAMETERS
-    QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
-    bool paramsOnceRequested;       ///< If the parameter list has been read at least once
-    QGCUASParamManager paramMgr; ///< Parameter manager for this UAS
-
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
 
@@ -491,11 +485,6 @@ public:
     /** @brief Get reference to the waypoint manager **/
     UASWaypointManager* getWaypointManager() {
         return &waypointManager;
-    }
-
-    /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManagerInterface* getParamManager()  {
-        return &paramMgr;
     }
 
     virtual QGCUASFileManager* getFileManager() {
@@ -820,25 +809,6 @@ public slots:
 
     /** @brief Set current mode of operation, e.g. auto or manual, does not check the arming status, for anything else than arming/disarming operations use setMode instead */
     void setModeArm(uint8_t newBaseMode, uint32_t newCustomMode);
-
-    /** @brief Request a single parameter by name */
-    void requestParameter(int component, const QString& parameter);
-    /** @brief Request a single parameter by index */
-    void requestParameter(int component, int id);
-
-    /** @brief Set a system parameter */
-    void setParameter(const int compId, const QString& paramId, const QVariant& value);
-
-    /** @brief Write parameters to permanent storage */
-    void writeParametersToStorage();
-    /** @brief Read parameters from permanent storage */
-    void readParametersFromStorage();
-
-    /** @brief Get the names of all parameters */
-    QList<QString> getParameterNames(int component);
-
-    /** @brief Get the ids of all components */
-    QList<int> getComponentIds();
 
     void enableAllDataTransmission(int rate);
     void enableRawSensorDataTransmission(int rate);

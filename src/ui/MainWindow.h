@@ -67,7 +67,6 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkDecoder.h"
 #include "QGCUASFileViewMulti.h"
 #include "QGCFlightGearLink.h"
-#include "QGCToolWidget.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;
@@ -162,8 +161,6 @@ public slots:
     void loadOldPlanView();
     /** @brief Load Terminal Console views */
     void loadTerminalView();
-    /** @brief Load local 3D view */
-    void loadLocal3DView();
     /** @brief Manage Links */
     void manageLinks();
 
@@ -231,14 +228,14 @@ protected:
 
     typedef enum _VIEW_SECTIONS
     {
-        VIEW_ANALYZE,         // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
-        VIEW_PLAN,          // New (QtQuick) Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
-        VIEW_FLIGHT,           // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
-        VIEW_SIMULATION,       // HIL Simulation view. Useful overview of the entire system when doing hardware-in-the-loop simulations.
-        VIEW_SETUP,            // Setup view. Used for initializing the system for operation. Includes UI for calibration, firmware updating/checking, and parameter modifcation.
-        VIEW_TERMINAL,         // Terminal interface. Used for communicating with the remote system, usually in a special configuration input mode.
-        VIEW_LOCAL3D,          // A local 3D view. Provides a local 3D view that makes visualizing 3D attitude/orientation/pose easy while in operation.
-        VIEW_EXPERIMENTAL_PLAN,      // Original (Qt Widget) Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
+        VIEW_ANALYZE,           // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
+        VIEW_PLAN,              // New (QtQuick) Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
+        VIEW_FLIGHT,            // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
+        VIEW_SIMULATION,        // HIL Simulation view. Useful overview of the entire system when doing hardware-in-the-loop simulations.
+        VIEW_SETUP,             // Setup view. Used for initializing the system for operation. Includes UI for calibration, firmware updating/checking, and parameter modifcation.
+        VIEW_TERMINAL,          // Terminal interface. Used for communicating with the remote system, usually in a special configuration input mode.
+        VIEW_LOCAL3D,           // Unused
+        VIEW_EXPERIMENTAL_PLAN, // Original (Qt Widget) Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
     } VIEW_SECTIONS;
 
     /** @brief Catch window resize events */
@@ -300,8 +297,6 @@ protected:
 
 private slots:
     void _showDockWidgetAction(bool show);
-    void _loadCustomWidgetFromFile(void);
-    void _createNewCustomWidget(void);
     void _linkStateChange(LinkInterface*);
 #ifdef UNITTEST_BUILD
     void _showQmlTestWidget(void);
@@ -321,7 +316,6 @@ private:
     QPointer<QWidget> _analyzeView;
     QPointer<QWidget> _simView;
     QPointer<QWidget> _terminalView;
-    QPointer<QWidget> _local3DView;
 
     // Dock widget names
     static const char* _uasControlDockWidgetName;
@@ -351,14 +345,12 @@ private:
     void _buildAnalyzeView(void);
     void _buildSimView(void);
     void _buildTerminalView(void);
-    void _buildLocal3DView(void);
 
     void _storeCurrentViewState(void);
     void _loadCurrentViewState(void);
 
     void _createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget);
     void _createInnerDockWidget(const QString& widgetName);
-    void _buildCustomWidgets(void);
     void _buildCommonWidgets(void);
     void _hideAllHilDockWidgets(void);
     void _hideAllDockWidgets(void);
@@ -370,7 +362,6 @@ private:
     bool                    _showStatusBar;
     QActionGroup*           _centerStackActionGroup;
     MAVLinkSimulationLink*  _simulationLink;
-    QList<QGCToolWidget*>   _customWidgets;
     QVBoxLayout*            _centralLayout;
     QList<QObject*>         _commsWidgetList;
     QWidget*                _currentViewWidget;     ///< Currently displayed view widget

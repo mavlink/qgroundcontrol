@@ -70,6 +70,7 @@ public:
     // MockLink methods
     MAV_AUTOPILOT getAutopilotType(void) { return _autopilotType; }
     void setAutopilotType(MAV_AUTOPILOT autopilot) { _autopilotType = autopilot; }
+    void emitRemoteControlChannelRawChanged(int channel, uint16_t raw);
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.

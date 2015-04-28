@@ -31,10 +31,11 @@ GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* paren
 {
     Q_ASSERT(uas);
     
-    _parameterFacts = new GenericParameterFacts(uas, this);
+    _parameterFacts = new GenericParameterFacts(this, uas, this);
     Q_CHECK_PTR(_parameterFacts);
     
     connect(_parameterFacts, &GenericParameterFacts::parametersReady, this, &GenericAutoPilotPlugin::_parametersReady);
+    connect(_parameterFacts, &GenericParameterFacts::parameterListProgress, this, &GenericAutoPilotPlugin::parameterListProgress);
 }
 
 QList<AutoPilotPluginManager::FullMode_t> GenericAutoPilotPlugin::getModes(void)

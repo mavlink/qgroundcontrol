@@ -40,9 +40,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
-#include "UASParameterDataModel.h"
 #include "UASWaypointManager.h"
-#include "QGCUASParamManagerInterface.h"
 
 class QGCUASFileManager;
 
@@ -133,9 +131,6 @@ public:
 
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
-
-    /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManagerInterface* getParamManager() = 0;
 
     virtual QGCUASFileManager* getFileManager() = 0;
 
@@ -314,19 +309,6 @@ public slots:
     virtual void setLocalOriginAtCurrentGPSPosition() = 0;
     /** @brief Set world frame origin / home position at this GPS position */
     virtual void setHomePosition(double lat, double lon, double alt) = 0;
-    /** @brief Request one specific onboard parameter */
-    virtual void requestParameter(int component, const QString& parameter) = 0;
-    /** @brief Write parameter to permanent storage */
-    virtual void writeParametersToStorage() = 0;
-    /** @brief Read parameter from permanent storage */
-    virtual void readParametersFromStorage() = 0;
-    /** @brief Set a system parameter
-     * @param component ID of the system component to write the parameter to
-     * @param id String identifying the parameter
-     * @warning The length of the ID string is limited by the MAVLink format! Take care to not exceed it
-     * @param value Value of the parameter, IEEE 754 single precision floating point
-     */
-    virtual void setParameter(const int component, const QString& id, const QVariant& value) = 0;
 
     /**
      * @brief Add a link to the list of current links
@@ -496,11 +478,7 @@ signals:
     void waypointSelected(int uasId, int id);
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
-    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
-    void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, QVariant value);
-    void parameterUpdate(int uas, int component, QString parameterName, int type, QVariant value);
-    void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
-    void letterDetected(int uasId, QString letter, float confidence, bool detected);
+    void parameterUpdate(int uas, int component, QString parameterName, int parameterCount, int parameterId, int type, QVariant value);
     /**
      * @brief The battery status has been updated
      *
