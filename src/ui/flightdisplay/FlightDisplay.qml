@@ -58,6 +58,13 @@ Item {
         return value ? "1" : "0";
     }
 
+    Connections {
+        target: flightDisplay
+        onShowOptionsMenuChanged: {
+            contextMenu.popup();
+        }
+    }
+
     Component.onCompleted:
     {
         mapBackground.visible               = getBool(flightDisplay.loadSetting("showMapBackground",        "0"));
@@ -609,39 +616,15 @@ Item {
         z:                  70
     }
 
-    // Button at upper left corner
-    Item {
-        id:             optionsButton
-        x:              __screenTools.pixelSizeFactor * (5)
-        y:              __screenTools.pixelSizeFactor * (5)
-        width:          __screenTools.pixelSizeFactor * (30)
-        height:         __screenTools.pixelSizeFactor * (30)
-        opacity:        0.85
-        z:              1000
-        Image {
-            id:             buttomImg
-            anchors.fill:   parent
-            source:         "/qml/buttonMore.svg"
-            mipmap:         true
-            smooth:         true
-            antialiasing:   true
-            fillMode:       Image.PreserveAspectFit
-        }
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: {
-                if (mouse.button == Qt.LeftButton)
-                {
-                    contextMenu.popup();
-                }
-                // Experimental
-                if (mouse.button == Qt.RightButton)
-                {
-                    optionsDialog.open();
-                }
+    //- Context Menu
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        onClicked: {
+            if (mouse.button == Qt.RightButton)
+            {
+                contextMenu.popup();
             }
         }
     }
-
 }

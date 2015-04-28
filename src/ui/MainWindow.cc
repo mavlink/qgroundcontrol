@@ -181,12 +181,16 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
 
     // Qt 4 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
     // TODO: Check that this is still necessary on Qt5 on Ubuntu
+
 #ifdef Q_OS_LINUX
-#ifndef __android__
     menuBar()->setNativeMenuBar(false);
 #endif
+
+    // On Mobile devices, we don't want any main menus at all.
+#ifdef __mobile__
+    menuBar()->setNativeMenuBar(false);
 #endif
-    
+
 #ifdef UNITTEST_BUILD
     QAction* qmlTestAction = new QAction("Test QML palette and controls", NULL);
     connect(qmlTestAction, &QAction::triggered, this, &MainWindow::_showQmlTestWidget);
