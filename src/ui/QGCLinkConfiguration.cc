@@ -158,7 +158,7 @@ void QGCLinkConfiguration::_fixUnnamed(LinkConfiguration* config)
                     }
                 }
                 break;
-#ifdef UNITTEST_BUILD
+#ifdef QT_DEBUG
             case LinkConfiguration::TypeMock:
                 config->setName(
                     QString("Mock Link"));

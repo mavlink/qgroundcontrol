@@ -108,6 +108,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
 
+#ifdef __android__
+    QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
+#endif
+    
+#ifndef __android__
 #ifdef QT_DEBUG
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
     // it to the correct location. This way default debug builds will have logging turned off.
@@ -137,9 +142,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
             if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
                 QTextStream out(&loggingFile);
                 out << "[Rules]\n";
-                out << "*Log=false\n";
+                out << "*Log.debug=false\n";
                 foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
-                    out << category << "=false\n";
+                    out << category << ".debug=false\n";
                 }
             } else {
                 qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
@@ -147,7 +152,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         }
     }
 #endif
+#endif
 
+    
     // Set application information
     if (_runningUnitTests) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app

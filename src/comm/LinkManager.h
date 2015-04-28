@@ -39,10 +39,8 @@ This file is part of the PIXHAWK project
 #include "UDPLink.h"
 #include "TCPLink.h"
 
-#ifdef UNITTEST_BUILD
-#ifndef __android__
+#ifdef QT_DEBUG
 #include "MockLink.h"
-#endif
 #endif
 
 #include "ProtocolInterface.h"

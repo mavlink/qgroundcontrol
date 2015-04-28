@@ -357,6 +357,12 @@ HEADERS += \
     src/ViewWidgets/ViewWidgetController.h \
     src/Waypoint.h \
 
+DebugBuild {
+HEADERS += \
+    src/comm/MockLink.h \
+    src/comm/MockLinkMissionItemHandler.h
+}
+
 !AndroidBuild {
 HEADERS += \
     src/input/JoystickInput.h \
@@ -486,6 +492,12 @@ SOURCES += \
     src/ViewWidgets/ViewWidgetController.cc \
     src/Waypoint.cc \
 
+DebugBuild {
+SOURCES += \
+    src/comm/MockLink.cc \
+    src/comm/MockLinkMissionItemHandler.cc
+}
+
 !AndroidBuild {
 SOURCES += \
     src/input/JoystickInput.cc \
@@ -529,8 +541,6 @@ HEADERS += \
     src/qgcunittest/MainWindowTest.h \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
-    src/qgcunittest/MockLink.h \
-    src/qgcunittest/MockLinkMissionItemHandler.h \
     src/qgcunittest/PX4RCCalibrationTest.h \
     src/qgcunittest/UnitTest.h \
     src/VehicleSetup/SetupViewTest.h \
@@ -549,8 +559,6 @@ SOURCES += \
     src/qgcunittest/MainWindowTest.cc \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
-    src/qgcunittest/MockLink.cc \
-    src/qgcunittest/MockLinkMissionItemHandler.cc \
     src/qgcunittest/PX4RCCalibrationTest.cc \
     src/qgcunittest/UnitTest.cc \
     src/VehicleSetup/SetupViewTest.cc \
