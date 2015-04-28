@@ -60,6 +60,7 @@ public class UsbDeviceJNI extends QtActivity
     //  USED TO DETECT WHEN A DEVICE HAS BEEN UNPLUGGED
     private BroadcastReceiver m_UsbReceiver = null;
     private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
+    private static final String TAG = "QGC_UsbDeviceJNI";
 
     private final static UsbIoManager.Listener m_Listener =
             new UsbIoManager.Listener()
@@ -67,6 +68,7 @@ public class UsbDeviceJNI extends QtActivity
                 @Override
                 public void onRunError(Exception eA, int userDataA)
                 {
+                    Log.e(TAG, "onRunError Exception");
                     nativeDeviceException(userDataA, eA.getMessage());
                 }
 
@@ -77,7 +79,6 @@ public class UsbDeviceJNI extends QtActivity
                 }
             };
 
-    private static final String TAG = "QGC_UsbDeviceJNI";
 
     //  NATIVE C++ FUNCTION THAT WILL BE CALLED IF THE DEVICE IS UNPLUGGED
     private static native void nativeDeviceHasDisconnected(int userDataA);
@@ -119,7 +120,6 @@ public class UsbDeviceJNI extends QtActivity
 
         return true;
     }
-
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
