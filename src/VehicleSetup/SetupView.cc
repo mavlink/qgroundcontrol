@@ -33,7 +33,9 @@
 #include "QGCQmlWidgetHolder.h"
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
+#ifndef __android__
 #include "FirmwareUpgradeController.h"
+#endif
 #include "ParameterEditorController.h"
 
 #include <QQmlError>
@@ -54,7 +56,9 @@ SetupView::SetupView(QWidget* parent) :
     Q_UNUSED(fSucceeded);
     Q_ASSERT(fSucceeded);
     
+#ifndef __android__
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+#endif
 	
     _ui->buttonHolder->rootContext()->setContextProperty("controller", this);
     _ui->buttonHolder->setAutoPilot(NULL);
@@ -116,6 +120,8 @@ void SetupView::_changeSetupWidget(QWidget* newWidget)
 
 void SetupView::firmwareButtonClicked(void)
 {
+#ifndef __android__
+    //FIXME: Hack out for android for now
     if (_uasCurrent && _uasCurrent->isArmed()) {
         QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
         return;
@@ -127,6 +133,7 @@ void SetupView::firmwareButtonClicked(void)
     setup->setSource(QUrl::fromUserInput("qrc:/qml/FirmwareUpgrade.qml"));
 
     _changeSetupWidget(setup);
+#endif
 }
 
 void SetupView::parametersButtonClicked(void)
