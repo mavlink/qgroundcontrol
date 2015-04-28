@@ -43,7 +43,7 @@ Rectangle {
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
     property ScreenTools __screenTools: ScreenTools { }
 
-    property int cellSpacerSize: getProportionalDimmension(4)
+    property int cellSpacerSize: mainToolBar.isMobile ? getProportionalDimmension(6) : getProportionalDimmension(4)
     property int cellHeight:     getProportionalDimmension(30)
 
     property var colorBlue:       "#1a6eaa"
@@ -133,6 +133,52 @@ Rectangle {
          return (mainToolBar.mavPresent && mainToolBar.heartbeatTimeout === 0 && mainToolBar.connectionCount > 0);
     }
 
+    //-------------------------------------------------------------------------
+    //-- Main menu for Mobile Devices
+    Menu {
+        id: maintMenu
+        ExclusiveGroup { id: mainMenuGroup }
+        MenuItem {
+            text: "Vehicle Setup"
+            checkable:  true
+            exclusiveGroup: mainMenuGroup
+            checked: (mainToolBar.currentView === MainToolBar.ViewSetup)
+            onTriggered:
+            {
+                mainToolBar.onSetupView();
+            }
+        }
+        MenuItem {
+            text: "Plan View"
+            checkable:  true
+            checked: (mainToolBar.currentView === MainToolBar.ViewPlan)
+            exclusiveGroup: mainMenuGroup
+            onTriggered:
+            {
+                mainToolBar.onPlanView();
+            }
+        }
+        MenuItem {
+            text: "Flight View"
+            checkable: true
+            checked: (mainToolBar.currentView === MainToolBar.ViewFly)
+            exclusiveGroup: mainMenuGroup
+            onTriggered:
+            {
+                mainToolBar.onFlyView();
+            }
+        }
+        //-- Flight View Context Menu
+        MenuItem {
+            text: "Flight View Options..."
+            visible: (mainToolBar.currentView === MainToolBar.ViewFly)
+            onTriggered:
+            {
+                mainToolBar.onFlyViewMenu();
+            }
+        }
+    }
+
     Row {
         id:                     row1
         height:                 cellHeight
@@ -141,11 +187,14 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         anchors.leftMargin:     getProportionalDimmension(10)
 
+        //---------------------------------------------------------------------
+        //-- Main menu for Non Mobile Devices (Chevron Buttons)
         Row {
             id:                     row11
             height:                 cellHeight
             spacing:                -getProportionalDimmension(12)
             anchors.verticalCenter: parent.verticalCenter
+            visible:                !mainToolBar.isMobile
             Connections {
                 target: __screenTools
                 onRepaintRequestedChanged: {
@@ -216,11 +265,49 @@ Rectangle {
 
         }
 
+        //---------------------------------------------------------------------
+        //-- Indicators
         Row {
             id:                     row12
             height:                 cellHeight
             spacing:                cellSpacerSize
             anchors.verticalCenter: parent.verticalCenter
+
+            //-- "Hamburger" menu for Mobile Devices
+            Item {
+                id:         actionButton
+                visible:    mainToolBar.isMobile
+                height:     cellHeight
+                width:      cellHeight
+                Image {
+                    id:             buttomImg
+                    anchors.fill:   parent
+                    source:         "/qml/buttonMore.svg"
+                    mipmap:         true
+                    smooth:         true
+                    antialiasing:   true
+                    fillMode:       Image.PreserveAspectFit
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton
+                    onClicked: {
+                        if (mouse.button == Qt.LeftButton)
+                        {
+                            maintMenu.popup();
+                        }
+                    }
+                }
+            }
+
+            //-- Separator if Hamburger menu is visible
+            Rectangle {
+                visible:    actionButton.visible
+                height:     cellHeight
+                width:      cellHeight
+                color:      "#00000000"
+                anchors.verticalCenter: parent.verticalCenter
+            }
 
             Rectangle {
                 id: messages
@@ -462,7 +549,7 @@ Rectangle {
                 QGCLabel {
                     id: batteryText
                     text: mainToolBar.batteryVoltage.toFixed(1) + 'V';
-                    font.pointSize: __screenTools.fontPointFactor * (12);
+                    font.pointSize: __screenTools.fontPointFactor * (11);
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right

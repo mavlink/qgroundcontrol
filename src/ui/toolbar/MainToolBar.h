@@ -70,6 +70,7 @@ public:
     Q_INVOKABLE void    onSetupView();
     Q_INVOKABLE void    onPlanView();
     Q_INVOKABLE void    onFlyView();
+    Q_INVOKABLE void    onFlyViewMenu();
     Q_INVOKABLE void    onAnalyzeView();
     Q_INVOKABLE void    onConnect(QString conf);
     Q_INVOKABLE void    onDisconnect(QString conf);
@@ -102,12 +103,25 @@ public:
     Q_PROPERTY(int           remoteRSSI         READ remoteRSSI                 NOTIFY remoteRSSIChanged)
     Q_PROPERTY(int           telemetryRRSSI     READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
     Q_PROPERTY(int           telemetryLRSSI     READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
+    Q_PROPERTY(bool          isAndroid          READ isAndroid                  CONSTANT)
+    Q_PROPERTY(bool          isiOS              READ isiOS                      CONSTANT)
+    Q_PROPERTY(bool          isMobile           READ isMobile                   CONSTANT)
 
     bool        mavPresent              () { return _mav != NULL; }
     int         satelliteCount          () { return _satelliteCount; }
     int         remoteRSSI              () { return _remoteRSSI; }
     int         telemetryRRSSI          () { return _telemetryRRSSI; }
     int         telemetryLRSSI          () { return _telemetryLRSSI; }
+
+#if defined (__android__)
+    bool        isAndroid               () { return true;  }
+    bool        isiOS                   () { return false; }
+    bool        isMobile                () { return true;  }
+#else
+    bool        isAndroid               () { return false; }
+    bool        isiOS                   () { return false; }
+    bool        isMobile                () { return false; }
+#endif
 
     void        setCurrentView          (int currentView);
     void        viewStateChanged        (const QString& key, bool value);
