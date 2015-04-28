@@ -53,6 +53,9 @@ public:
         ALTITUDEAMSL_CHANGED
     };
 
+    /// @brief Invokes the Flight Display Options menu
+    void showOptionsMenu() { emit showOptionsMenuChanged(); }
+
     Q_PROPERTY(float roll               READ roll               NOTIFY rollChanged)
     Q_PROPERTY(float pitch              READ pitch              NOTIFY pitchChanged)
     Q_PROPERTY(float heading            READ heading            NOTIFY headingChanged)
@@ -103,6 +106,7 @@ signals:
     void latitudeChanged        ();
     void longitudeChanged       ();
     void mavPresentChanged      ();
+    void showOptionsMenuChanged ();
 
 private slots:
     /** @brief Attitude from main autopilot / system state */
