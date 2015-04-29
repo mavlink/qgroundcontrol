@@ -210,7 +210,13 @@ Rectangle {
                         width:      parent.width
                         height:		__textHeight + (__screenTools.pixelSizeFactor * (9))
 
-                        Fact { id: modelFact; name: modelData + ":" + componentId }
+                        Fact {
+                            id: modelFact
+
+                            Component.onCompleted: {
+                                name = modelData + ":" + componentId
+                            }
+                        }
 
                         QGCLabel {
                             id:                 nameLabel
