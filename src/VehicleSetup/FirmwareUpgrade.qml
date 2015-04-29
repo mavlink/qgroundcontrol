@@ -36,7 +36,6 @@ Rectangle {
     height: 600
 
     property var qgcPal: QGCPalette { colorGroupEnabled: true }
-    property ScreenTools screenTools: ScreenTools { }
     property FirmwareUpgradeController controller: FirmwareUpgradeController {
         upgradeButton: upgradeButton
         progressBar: progressBar
@@ -51,7 +50,7 @@ Rectangle {
 
         QGCLabel {
             text: "FIRMWARE UPDATE"
-            font.pointSize: screenTools.fontPointFactor * (20);
+            font.pointSize: ScreenTools.fontPointFactor * (20);
         }
 
         Item {
@@ -119,7 +118,7 @@ Rectangle {
             height:			300
             readOnly:		true
             frameVisible:	false
-            font.pointSize: screenTools.defaultFontPointSize
+            font.pointSize: ScreenTools.defaultFontPointSize
             
 			text: qsTr("Please disconnect all vehicles from QGroundControl before selecting Upgrade.")
 

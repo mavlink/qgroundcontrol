@@ -14,7 +14,6 @@ Button {
     property bool setupComplete: true
     property bool setupIndicator: true
     property string imageResource: "subMenuButtonImage.png"
-    property ScreenTools __screenTools: ScreenTools { }
 
     style: ButtonStyle {
         id: buttonStyle
@@ -41,7 +40,7 @@ Button {
                 horizontalAlignment: TextEdit.AlignHCenter
 
                 text: control.text
-                font.pointSize: __screenTools.defaultFontPointSize
+                font.pointSize: ScreenTools.defaultFontPointSize
                 antialiasing: true
                 color: __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
 

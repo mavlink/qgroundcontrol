@@ -33,20 +33,19 @@ import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     id: root
-    property ScreenTools __screenTools: ScreenTools { }
     property real airspeed:         0
     property real groundspeed:      0
     property bool showAirSpeed:     true
     property bool showGroundSpeed:  true
     anchors.verticalCenter: parent.verticalCenter
     width:  parent.width
-    height: (showAirSpeed && showGroundSpeed) ? __screenTools.pixelSizeFactor * (50) : __screenTools.pixelSizeFactor * (25)
+    height: (showAirSpeed && showGroundSpeed) ? ScreenTools.pixelSizeFactor * (50) : ScreenTools.pixelSizeFactor * (25)
     color: "black"
     border.color: Qt.rgba(1,1,1,0.25)
     opacity: 1.0
     Column{
         anchors.centerIn: parent
-        spacing: __screenTools.pixelSizeFactor * (4)
+        spacing: ScreenTools.pixelSizeFactor * (4)
         QGCLabel {
             text: 'GS: ' + groundspeed.toFixed(0)
             font.weight: Font.DemiBold

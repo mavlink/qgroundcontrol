@@ -34,7 +34,6 @@ import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     property QGCPalette qgcPal: QGCPalette { colorGroupEnabled: true }
-    property ScreenTools screenTools: ScreenTools { }
 
     readonly property int rotationColumnWidth: 200
     readonly property var rotations: [
@@ -332,7 +331,7 @@ Rectangle {
 
         QGCLabel {
             text: "SENSORS CONFIG"
-            font.pointSize: screenTools.fontPointFactor * (20);
+            font.pointSize: ScreenTools.fontPointFactor * (20);
         }
 
         Item { height: 20; width: 10 } // spacer
@@ -437,7 +436,7 @@ Rectangle {
                     id:             orientationCalAreaHelpText
                     width:          parent.width
                     wrapMode:       Text.WordWrap
-                    font.pointSize: screenTools.fontPointFactor * (17);
+                    font.pointSize: ScreenTools.fontPointFactor * (17);
                 }
 
                 Flow {

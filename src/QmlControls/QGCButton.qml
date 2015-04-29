@@ -23,17 +23,15 @@ Button {
     property int __lastGlobalMouseX: 0
     property int __lastGlobalMouseY: 0
 
-    property ScreenTools __screenTools: ScreenTools { }
-
     Connections {
         target: __behavior
         onMouseXChanged: {
-            __lastGlobalMouseX = __screenTools.mouseX
-            __lastGlobalMouseY = __screenTools.mouseY
+            __lastGlobalMouseX = ScreenTools.mouseX
+            __lastGlobalMouseY = ScreenTools.mouseY
         }
         onMouseYChanged: {
-            __lastGlobalMouseX = __screenTools.mouseX
-            __lastGlobalMouseY = __screenTools.mouseY
+            __lastGlobalMouseX = ScreenTools.mouseX
+            __lastGlobalMouseY = ScreenTools.mouseY
         }
         onEntered: { __forceHoverOff; false; hoverTimer.start() }
         onExited: { __forceHoverOff; false; hoverTimer.stop() }
@@ -45,7 +43,7 @@ Button {
         repeat:     true
 
         onTriggered: {
-            if (__lastGlobalMouseX != __screenTools.mouseX || __lastGlobalMouseY != __screenTools.mouseY) {
+            if (__lastGlobalMouseX != ScreenTools.mouseX || __lastGlobalMouseY != ScreenTools.mouseY) {
                 __forceHoverOff = true
             } else {
                 __forceHoverOff = false
@@ -106,7 +104,7 @@ Button {
                         id:             text
                         antialiasing:   true
                         text:           control.text
-                        font.pointSize: __screenTools.defaultFontPointSize
+                        font.pointSize: ScreenTools.defaultFontPointSize
 
                         anchors.verticalCenter: parent.verticalCenter
 

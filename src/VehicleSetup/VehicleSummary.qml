@@ -35,7 +35,6 @@ Rectangle {
     height: 400
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
-    property ScreenTools screenTools: ScreenTools { }
 
     id: topLevel
     objectName: "topLevel"
@@ -47,7 +46,7 @@ Rectangle {
 
         QGCLabel {
             text: "VEHICLE SUMMARY"
-            font.pointSize: screenTools.fontPointFactor * (20);
+            font.pointSize: ScreenTools.fontPointFactor * (20);
         }
 
         Item {
@@ -60,7 +59,7 @@ Rectangle {
             width:			parent.width
 			wrapMode:		Text.WordWrap
 			color:			autopilot.setupComplete ? qgcPal.text : "red"
-            font.pointSize: autopilot.setupComplete ? screenTools.defaultFontPointSize : screenTools.fontPointFactor * (20)
+            font.pointSize: autopilot.setupComplete ? ScreenTools.defaultFontPointSize : ScreenTools.fontPointFactor * (20)
 			text: autopilot.setupComplete ?
 						"Below you will find a summary of the settings for your vehicle. To the left are the setup buttons for deatiled settings for each component." :
 						"WARNING: One or more of your vehicle's components require setup prior to flight. It will be shown with a red circular indicator below. " +

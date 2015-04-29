@@ -10,7 +10,6 @@ TextField {
     property string unitsLabel: ""
 
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
-    property ScreenTools __screenTools: ScreenTools { }
 
     textColor: __qgcPal.textFieldText
 
@@ -51,7 +50,7 @@ TextField {
                 width: unitsLabelWidthGenerator.width
 
                 text: control.unitsLabel
-                font.pointSize: __screenTools.defaultFontPointSize
+                font.pointSize: ScreenTools.defaultFontPointSize
                 antialiasing:   true
 
                 color: control.textColor
