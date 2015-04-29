@@ -1,7 +1,6 @@
 #include "QGCUnconnectedInfoWidget.h"
 #include "LinkInterface.h"
 #include "LinkManager.h"
-#include "MAVLinkSimulationLink.h"
 #include "MainWindow.h"
 #include "ui_QGCUnconnectedInfoWidget.h"
 
@@ -24,15 +23,6 @@ QGCUnconnectedInfoWidget::~QGCUnconnectedInfoWidget()
  */
 void QGCUnconnectedInfoWidget::simulate()
 {
-    // TODO What is this?
-    // Try to get reference to MAVLinkSimulationlink
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
-    foreach(LinkInterface* link, links) {
-        MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
-        if (sim) {
-            LinkManager::instance()->connectLink(sim);
-        }
-    }
 }
 
 /**

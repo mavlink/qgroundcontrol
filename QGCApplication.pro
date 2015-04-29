@@ -235,10 +235,6 @@ HEADERS += \
     src/comm/LinkInterface.h \
     src/comm/LinkManager.h \
     src/comm/MAVLinkProtocol.h \
-    src/comm/MAVLinkSimulationLink.h \
-    src/comm/MAVLinkSimulationMAV.h \
-    src/comm/MAVLinkSimulationWaypointPlanner.h \
-    src/comm/MAVLinkSwarmSimulationLink.h \
     src/comm/ProtocolInterface.h \
     src/comm/QGCFlightGearLink.h \
     src/comm/QGCHilLink.h \
@@ -378,10 +374,6 @@ SOURCES += \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkManager.cc \
     src/comm/MAVLinkProtocol.cc \
-    src/comm/MAVLinkSimulationLink.cc \
-    src/comm/MAVLinkSimulationMAV.cc \
-    src/comm/MAVLinkSimulationWaypointPlanner.cc \
-    src/comm/MAVLinkSwarmSimulationLink.cc \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \

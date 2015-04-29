@@ -44,7 +44,6 @@ public:
         TypeTcp,        ///< TCP Link
         // TODO Below is not yet implemented
 #if 0
-        TypeSimulation, ///< Simulation Link
         TypeForwarding, ///< Forwarding Link
         TypeXbee,       ///< XBee Proprietary Link
         TypeOpal,       ///< Opal-RT Link

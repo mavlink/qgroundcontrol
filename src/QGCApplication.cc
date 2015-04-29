@@ -49,7 +49,6 @@
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "UDPLink.h"
-#include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
 #include "QGCSingleton.h"
 #include "LinkManager.h"
