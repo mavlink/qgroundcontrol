@@ -85,6 +85,20 @@ const char* QGCApplication::_darkStyleFile = ":/res/styles/style-dark.css";
 const char* QGCApplication::_lightStyleFile = ":/res/styles/style-light.css";
 
 /**
+ * @brief ScreenTools creation callback
+ *
+ * This is called by the QtQuick engine for creating the singleton
+ **/
+
+#include <QQmlEngine>
+
+static QObject* screenToolsSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    ScreenTools* screenTools = new ScreenTools;
+    return screenTools;
+}
+
+/**
  * @brief Constructor for the main application.
  *
  * This constructor initializes and starts the whole application. It takes standard
@@ -272,9 +286,11 @@ void QGCApplication::_initCommon(void)
     
     // Register our Qml objects
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
-    qmlRegisterType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools");
 	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
 	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    //-- Create QML Singleton Interfaces
+    qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
+
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
@@ -465,6 +481,7 @@ void QGCApplication::_createSingletons(void)
     MAVLinkProtocol* mavlink = MAVLinkProtocol::_createSingleton();
     Q_UNUSED(mavlink);
     Q_ASSERT(mavlink);
+
 }
 
 void QGCApplication::_destroySingletons(void)

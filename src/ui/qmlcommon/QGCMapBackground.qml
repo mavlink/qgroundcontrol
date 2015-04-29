@@ -37,7 +37,6 @@ import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     id: root
-    property ScreenTools __screenTools: ScreenTools { }
     property real latitude:     37.803784
     property real longitude :   -122.462276
     property real zoomLevel:    18
@@ -165,9 +164,9 @@ Rectangle {
         z: map.z + 20
         anchors {
             bottom: parent.bottom;
-            bottomMargin:   __screenTools.pixelSizeFactor * (15)
-            rightMargin:    __screenTools.pixelSizeFactor * (20)
-            leftMargin:     __screenTools.pixelSizeFactor * (20)
+            bottomMargin:   ScreenTools.pixelSizeFactor * (15)
+            rightMargin:    ScreenTools.pixelSizeFactor * (20)
+            leftMargin:     ScreenTools.pixelSizeFactor * (20)
             left: parent.left
         }
         width: parent.width - anchors.rightMargin - anchors.leftMargin
@@ -188,9 +187,9 @@ Rectangle {
         opacity: 1
         anchors {
             bottom: zoomSlider.top;
-            bottomMargin: __screenTools.pixelSizeFactor * (8);
+            bottomMargin: ScreenTools.pixelSizeFactor * (8);
             left: zoomSlider.left
-            leftMargin: __screenTools.pixelSizeFactor * (4)
+            leftMargin: ScreenTools.pixelSizeFactor * (4)
         }
         Image {
             id: scaleImageLeft
@@ -217,7 +216,7 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
             anchors.bottom: parent.bottom
             anchors.left:   parent.left
-            anchors.bottomMargin: __screenTools.pixelSizeFactor * (10)
+            anchors.bottomMargin: ScreenTools.pixelSizeFactor * (10)
             text: "0 m"
         }
         Component.onCompleted: {

@@ -58,14 +58,12 @@ public:
       @code
       import QGroundControl.ScreenTools 1.0
       ...
-      property ScreenTools screenTools: ScreenTools { }
-      ...
         Canvas {
             id: myCanvas
             height: 40
             width:  40
             Connections {
-                target: screenTools
+                target: ScreenTools
                 onRepaintRequestedChanged: {
                     myCanvas.requestPaint();
                 }

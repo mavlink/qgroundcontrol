@@ -41,7 +41,6 @@ Rectangle {
     id: toolBarHolder
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
-    property ScreenTools __screenTools: ScreenTools { }
 
     property int cellSpacerSize: mainToolBar.isMobile ? getProportionalDimmension(6) : getProportionalDimmension(4)
     property int cellHeight:     getProportionalDimmension(30)
@@ -196,7 +195,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             visible:                !mainToolBar.isMobile
             Connections {
-                target: __screenTools
+                target: ScreenTools
                 onRepaintRequestedChanged: {
                     setupButton.repaintChevron   = true;
                     planButton.repaintChevron    = true;
@@ -338,7 +337,7 @@ Rectangle {
                     QGCLabel {
                         id: messageText
                         text: (mainToolBar.messageCount > 0) ? mainToolBar.messageCount : ''
-                        font.pointSize: __screenTools.fontPointFactor * (14);
+                        font.pointSize: ScreenTools.fontPointFactor * (14);
                         font.weight: Font.DemiBold
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -424,7 +423,7 @@ Rectangle {
                 QGCLabel {
                     id: satelitteText
                     text: mainToolBar.satelliteCount >= 0 ? mainToolBar.satelliteCount : 'NA'
-                    font.pointSize: mainToolBar.satelliteCount >= 0 ? __screenTools.fontPointFactor * (14) : __screenTools.fontPointFactor * (10)
+                    font.pointSize: mainToolBar.satelliteCount >= 0 ? ScreenTools.fontPointFactor * (14) : ScreenTools.fontPointFactor * (10)
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -459,7 +458,7 @@ Rectangle {
                     anchors.rightMargin: getProportionalDimmension(6)
                     anchors.verticalCenter: parent.verticalCenter
                     horizontalAlignment: Text.AlignRight
-                    font.pointSize: __screenTools.fontPointFactor * (12);
+                    font.pointSize: ScreenTools.fontPointFactor * (12);
                     font.weight: Font.DemiBold
                     color: colorWhite
                 }
@@ -492,7 +491,7 @@ Rectangle {
                         anchors.right: parent.right
                         QGCLabel {
                             text: 'R '
-                            font.pointSize: __screenTools.fontPointFactor * (11);
+                            font.pointSize: ScreenTools.fontPointFactor * (11);
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -500,7 +499,7 @@ Rectangle {
                             text: mainToolBar.telemetryRRSSI + 'dB'
                             width: getProportionalDimmension(30)
                             horizontalAlignment: Text.AlignRight
-                            font.pointSize: __screenTools.fontPointFactor * (11);
+                            font.pointSize: ScreenTools.fontPointFactor * (11);
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -509,7 +508,7 @@ Rectangle {
                         anchors.right: parent.right
                         QGCLabel {
                             text: 'L '
-                            font.pointSize: __screenTools.fontPointFactor * (11);
+                            font.pointSize: ScreenTools.fontPointFactor * (11);
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -517,7 +516,7 @@ Rectangle {
                             text: mainToolBar.telemetryLRSSI + 'dB'
                             width: getProportionalDimmension(30)
                             horizontalAlignment: Text.AlignRight
-                            font.pointSize: __screenTools.fontPointFactor * (11);
+                            font.pointSize: ScreenTools.fontPointFactor * (11);
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -549,7 +548,7 @@ Rectangle {
                 QGCLabel {
                     id: batteryText
                     text: mainToolBar.batteryVoltage.toFixed(1) + 'V';
-                    font.pointSize: __screenTools.fontPointFactor * (11);
+                    font.pointSize: ScreenTools.fontPointFactor * (11);
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -577,7 +576,7 @@ Rectangle {
                     QGCLabel {
                         id: armedStatusText
                         text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
-                        font.pointSize: __screenTools.fontPointFactor * (12);
+                        font.pointSize: ScreenTools.fontPointFactor * (12);
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (mainToolBar.systemArmed) ? colorOrangeText : colorGreenText
@@ -596,7 +595,7 @@ Rectangle {
                     QGCLabel {
                         id: stateStatusText
                         text: mainToolBar.currentState
-                        font.pointSize: __screenTools.fontPointFactor * (12);
+                        font.pointSize: ScreenTools.fontPointFactor * (12);
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (mainToolBar.currentState === "STANDBY") ? colorGreenText : colorRedText
@@ -617,7 +616,7 @@ Rectangle {
                 QGCLabel {
                     id: modeStatusText
                     text: mainToolBar.currentMode
-                    font.pointSize: __screenTools.fontPointFactor * (12);
+                    font.pointSize: ScreenTools.fontPointFactor * (12);
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -638,7 +637,7 @@ Rectangle {
                 QGCLabel {
                     id: connectionStatusText
                     text: qsTr("CONNECTION LOST")
-                    font.pointSize: __screenTools.fontPointFactor * (14);
+                    font.pointSize: ScreenTools.fontPointFactor * (14);
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter

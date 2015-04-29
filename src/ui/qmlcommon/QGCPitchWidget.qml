@@ -32,7 +32,6 @@ import QGroundControl.ScreenTools 1.0
 import QGroundControl.Controls 1.0
 
 Rectangle {
-    property ScreenTools screenTools: ScreenTools { }
     property real pitchAngle:       0
     property real rollAngle:        0
     property real size:             120
@@ -41,10 +40,10 @@ Rectangle {
     property real _reticleSlot:     _reticleSpacing + _reticleHeight
     property real _longDash:        size * 0.40
     property real _shortDash:       size * 0.25
-    property real _fontSize:        __screenTools.fontPointFactor * (11);
+    property real _fontSize:        ScreenTools.fontPointFactor * (11);
     height: size * 0.9
     width:  size
-    radius: screenTools.pixelSizeFactor * (8)
+    radius: ScreenTools.pixelSizeFactor * (8)
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.verticalCenter:   parent.verticalCenter
     clip: true

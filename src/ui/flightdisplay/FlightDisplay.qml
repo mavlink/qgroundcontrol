@@ -40,7 +40,6 @@ import QGroundControl.Palette 1.0
 Item {
     id: root
 
-    property ScreenTools __screenTools: ScreenTools { }
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     property real roll:    isNaN(flightDisplay.roll)    ? 0 : flightDisplay.roll
@@ -114,17 +113,17 @@ Item {
         }
         contentItem: Rectangle {
             color: __qgcPal.window
-            implicitWidth:  __screenTools.pixelSizeFactor * (360)
-            implicitHeight: __screenTools.pixelSizeFactor * (300)
+            implicitWidth:  ScreenTools.pixelSizeFactor * (360)
+            implicitHeight: ScreenTools.pixelSizeFactor * (300)
             Column {
                 id: dialogColumn
                 anchors.centerIn: parent
-                spacing:  __screenTools.adjustPixelSize(10)
+                spacing:  ScreenTools.adjustPixelSize(10)
                 width: parent.width
                 Grid {
                     columns: 2
-                    spacing:    __screenTools.pixelSizeFactor * (8)
-                    rowSpacing: __screenTools.pixelSizeFactor * (10)
+                    spacing:    ScreenTools.pixelSizeFactor * (8)
+                    rowSpacing: ScreenTools.pixelSizeFactor * (10)
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCCheckBox {
                         text: "Map Background"
@@ -221,30 +220,30 @@ Item {
                 Column {
                     id: fudgeColumn
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing:    __screenTools.adjustPixelSize(4)
+                    spacing:    ScreenTools.adjustPixelSize(4)
                     width:      parent.width
                     QGCLabel {
                         text: "Adjust Pixel Size Factor"
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     Row {
-                        spacing:    __screenTools.adjustPixelSize(4)
+                        spacing:    ScreenTools.adjustPixelSize(4)
                         anchors.horizontalCenter: parent.horizontalCenter
                         Button {
                             text: 'Inc'
                             onClicked: {
-                                __screenTools.increasePixelSize()
+                                ScreenTools.increasePixelSize()
                             }
                         }
                         Label {
-                            text: __screenTools.pixelSizeFactor.toFixed(2)
+                            text: ScreenTools.pixelSizeFactor.toFixed(2)
                             color: __qgcPal.text
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Button {
                             text: 'Dec'
                             onClicked: {
-                                __screenTools.decreasePixelSize()
+                                ScreenTools.decreasePixelSize()
                             }
                         }
                     }
@@ -253,23 +252,23 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     Row {
-                        spacing:    __screenTools.adjustPixelSize(4)
+                        spacing:    ScreenTools.adjustPixelSize(4)
                         anchors.horizontalCenter: parent.horizontalCenter
                         Button {
                             text: 'Inc'
                             onClicked: {
-                                __screenTools.increaseFontSize()
+                                ScreenTools.increaseFontSize()
                             }
                         }
                         Label {
-                            text: __screenTools.fontPointFactor.toFixed(2)
+                            text: ScreenTools.fontPointFactor.toFixed(2)
                             color: __qgcPal.text
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Button {
                             text: 'Dec'
                             onClicked: {
-                                __screenTools.decreaseFontSize()
+                                ScreenTools.decreaseFontSize()
                             }
                         }
                     }
@@ -497,16 +496,16 @@ Item {
 
     QGCCompassInstrument {
         id:                 compassInstrument
-        y:                  __screenTools.pixelSizeFactor * (5)
-        x:                  __screenTools.pixelSizeFactor * (85)
-        size:               __screenTools.pixelSizeFactor * (160)
+        y:                  ScreenTools.pixelSizeFactor * (5)
+        x:                  ScreenTools.pixelSizeFactor * (85)
+        size:               ScreenTools.pixelSizeFactor * (160)
         heading:            isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
         visible:            mapBackground.visible && showCompass
         z:                  mapBackground.z + 1
         onResetRequested: {
-            y               = __screenTools.pixelSizeFactor * (5)
-            x               = __screenTools.pixelSizeFactor * (85)
-            size            = __screenTools.pixelSizeFactor * (160)
+            y               = ScreenTools.pixelSizeFactor * (5)
+            x               = ScreenTools.pixelSizeFactor * (85)
+            size            = ScreenTools.pixelSizeFactor * (160)
             tForm.xScale    = 1
             tForm.yScale    = 1
         }
@@ -514,20 +513,20 @@ Item {
 
     QGCAttitudeInstrument {
         id:                 attitudeInstrument
-        y:                  __screenTools.pixelSizeFactor * (5)
-        size:               __screenTools.pixelSizeFactor * (160)
+        y:                  ScreenTools.pixelSizeFactor * (5)
+        size:               ScreenTools.pixelSizeFactor * (160)
         rollAngle:          roll
         pitchAngle:         pitch
         showPitch:          showPitchIndicator
         visible:            mapBackground.visible && showAttitudeIndicator
         anchors.right:      root.right
-        anchors.rightMargin: __screenTools.pixelSizeFactor * (85)
+        anchors.rightMargin: ScreenTools.pixelSizeFactor * (85)
         z:                  mapBackground.z + 1
         onResetRequested: {
-            y                   = __screenTools.pixelSizeFactor * (5)
+            y                   = ScreenTools.pixelSizeFactor * (5)
             anchors.right       = root.right
-            anchors.rightMargin = __screenTools.pixelSizeFactor * (85)
-            size                = __screenTools.pixelSizeFactor * (160)
+            anchors.rightMargin = ScreenTools.pixelSizeFactor * (85)
+            size                = ScreenTools.pixelSizeFactor * (160)
             tForm.xScale        = 1
             tForm.yScale        = 1
         }
@@ -547,8 +546,8 @@ Item {
         rollAngle:          roll
         pitchAngle:         pitch
         visible:            !mapBackground.visible && showAttitudeIndicator
-        width:              __screenTools.pixelSizeFactor * (260)
-        height:             __screenTools.pixelSizeFactor * (260)
+        width:              ScreenTools.pixelSizeFactor * (260)
+        height:             ScreenTools.pixelSizeFactor * (260)
         z:                  20
     }
 
@@ -559,15 +558,15 @@ Item {
         pitchAngle:         pitch
         rollAngle:          roll
         color:              Qt.rgba(0,0,0,0)
-        size:               __screenTools.pixelSizeFactor * (120)
+        size:               ScreenTools.pixelSizeFactor * (120)
         z:                  30
     }
 
     QGCAltitudeWidget {
         id:                 altitudeWidget
         anchors.right:      parent.right
-        width:              __screenTools.pixelSizeFactor * (60)
-        height:             parent.height * 0.65 > __screenTools.pixelSizeFactor * (280) ? __screenTools.pixelSizeFactor * (280) : parent.height * 0.65
+        width:              ScreenTools.pixelSizeFactor * (60)
+        height:             parent.height * 0.65 > ScreenTools.pixelSizeFactor * (280) ? ScreenTools.pixelSizeFactor * (280) : parent.height * 0.65
         altitude:           flightDisplay.altitudeWGS84
         z:                  30
     }
@@ -575,8 +574,8 @@ Item {
     QGCSpeedWidget {
         id:                 speedWidget
         anchors.left:       parent.left
-        width:              __screenTools.pixelSizeFactor * (60)
-        height:             parent.height * 0.65 > __screenTools.pixelSizeFactor * (280) ? __screenTools.pixelSizeFactor * (280) : parent.height * 0.65
+        width:              ScreenTools.pixelSizeFactor * (60)
+        height:             parent.height * 0.65 > ScreenTools.pixelSizeFactor * (280) ? ScreenTools.pixelSizeFactor * (280) : parent.height * 0.65
         speed:              flightDisplay.groundSpeed
         z:                  40
     }
@@ -584,7 +583,7 @@ Item {
     QGCCurrentSpeed {
         id: currentSpeed
         anchors.left:       parent.left
-        width:              __screenTools.pixelSizeFactor * (75)
+        width:              ScreenTools.pixelSizeFactor * (75)
         airspeed:           flightDisplay.airSpeed
         groundspeed:        flightDisplay.groundSpeed
         showAirSpeed:       true
@@ -596,7 +595,7 @@ Item {
     QGCCurrentAltitude {
         id: currentAltitude
         anchors.right:      parent.right
-        width:              __screenTools.pixelSizeFactor * (75)
+        width:              ScreenTools.pixelSizeFactor * (75)
         altitude:           flightDisplay.altitudeWGS84
         vertZ:              flightDisplay.climbRate
         showAltitude:       true
@@ -608,9 +607,9 @@ Item {
     QGCCompass {
         id:                 compassIndicator
         y:                  root.height * 0.7
-        x:                  root.width  * 0.5 - __screenTools.pixelSizeFactor * (60)
-        width:              __screenTools.pixelSizeFactor * (120)
-        height:             __screenTools.pixelSizeFactor * (120)
+        x:                  root.width  * 0.5 - ScreenTools.pixelSizeFactor * (60)
+        width:              ScreenTools.pixelSizeFactor * (120)
+        height:             ScreenTools.pixelSizeFactor * (120)
         heading:            isNaN(flightDisplay.heading) ? 0 : flightDisplay.heading
         visible:            !mapBackground.visible && showCompass
         z:                  70
