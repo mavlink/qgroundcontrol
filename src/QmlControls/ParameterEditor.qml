@@ -61,7 +61,7 @@ Rectangle {
     property real __textWidth:  __textControl.contentWidth
 
     Item {
-        id: editorOverlay
+        id: __editorOverlay
 
         anchors.fill:   parent
         visible:        false
@@ -105,7 +105,7 @@ Rectangle {
                         text:           "Cancel"
 
                         onClicked: {
-                            editorOverlay.visible = false
+                            __editorOverlay.visible = false
                         }
                     }
 
@@ -117,7 +117,7 @@ Rectangle {
 
                         onClicked: {
                             __editorOverlayFact.value = valueField.text
-                            editorOverlay.visible = false
+                            __editorOverlay.visible = false
                         }
                     }
                 }
@@ -176,10 +176,40 @@ Rectangle {
                         QGCLabel { text: "Default value:" }
                         QGCLabel { text: __editorOverlayFact.defaultValueAvailable ? __editorOverlayFact.defaultValue : "none" }
                     }
+
+                    QGCLabel {
+                        width:      parent.width
+                        wrapMode:   Text.WordWrap
+                        text:       "Warning: Modifying parameters while vehicle is in flight can lead to vehicle instability and possible vehicle loss. " +
+                                        "Make sure you know what you are doing and double-check your values before Save!"
+                    }
+                } // Column - Fact information
+            } // Column - Header + Fact information
+
+
+            QGCButton {
+                anchors.rightMargin:    __textWidth
+                anchors.right:          rcButton.left
+                anchors.bottom:         parent.bottom
+                visible:                __editorOverlayFact.defaultValueAvailable
+                text:                   "Reset to default"
+
+                onClicked: {
+                    __editorOverlayFact.value = __editorOverlayFact.defaultValue
+                    __editorOverlay.visible = false
                 }
             }
-        }
-    }
+
+            QGCButton {
+                id:             rcButton
+                anchors.right:  parent.right
+                anchors.bottom: parent.bottom
+                visible:        __editorOverlayFact.defaultValueAvailable
+                text:           "Set RC to Param..."
+                onClicked:      __controller.setRCToParam(__editorOverlayFact.name)
+            }
+        } // Rectangle - editorDialog
+    } // Item - editorOverlay
 
     Component {
         id: factRowsComponent
@@ -250,7 +280,7 @@ Rectangle {
 
                             onClicked: {
                                 __editorOverlayFact = modelFact
-                                editorOverlay.visible = true
+                                __editorOverlay.visible = true
                             }
                         }
                     }
