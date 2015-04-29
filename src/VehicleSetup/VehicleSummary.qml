@@ -42,6 +42,11 @@ Rectangle {
 
     color: qgcPal.window
 
+Component.onCompleted: {
+    console.log("ScreenToolSingleton");
+    console.log(ScreenToolsSingleton.defaultFontPointSize);
+}
+
     Column {
         anchors.fill: parent
 
