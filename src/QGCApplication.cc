@@ -37,6 +37,7 @@
 #include <QPainter>
 #include <QStyleFactory>
 #include <QAction>
+#include <QQmlEngine>
 
 #include <QDebug>
 
@@ -208,6 +209,17 @@ QGCApplication::~QGCApplication()
     _destroySingletons();
 }
 
+static QObject* ScreenToolsSingletonFactory(QQmlEngine *engine, QJSEngine *jsEngine)
+{
+    Q_UNUSED(engine)
+    Q_UNUSED(jsEngine)
+    
+    ScreenTools* screenTools = new ScreenTools;
+    QQmlEngine::setObjectOwnership(screenTools, QQmlEngine::CppOwnership);
+    
+    return screenTools;
+}
+
 void QGCApplication::_initCommon(void)
 {
     QSettings settings;
@@ -273,6 +285,7 @@ void QGCApplication::_initCommon(void)
     // Register our Qml objects
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
     qmlRegisterType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools");
+    qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenToolsSingleton", ScreenToolsSingletonFactory);
 	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
 	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
 }
