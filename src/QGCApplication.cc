@@ -90,8 +90,6 @@ const char* QGCApplication::_lightStyleFile = ":/res/styles/style-light.css";
  * This is called by the QtQuick engine for creating the singleton
  **/
 
-#include <QQmlEngine>
-
 static QObject* screenToolsSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     ScreenTools* screenTools = new ScreenTools;
