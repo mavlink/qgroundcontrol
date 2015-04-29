@@ -28,39 +28,6 @@ import QGroundControl.Controls 1.0
 import QGroundControl.ScreenTools 1.0
 import QGroundControl.Palette 1.0
 
-Rectangle {
-	QGCPalette { id: qgcPal; colorGroupEnabled: true }
-
-    color: qgcPal.window
-
-    // We use an ExclusiveGroup to maintain the visibility of a single editing control at a time
-    ExclusiveGroup {
-        id: exclusiveEditorGroup
-    }
-
-    Column {
-        anchors.fill:parent
-
-        QGCLabel {
-            text: "PARAMETER EDITOR"
-            font.pointSize: ScreenTools.fontPointFactor * (20)
-        }
-
-        Item {
-            height: 20
-            width:	5
-        }
-
-		QGCLabel {
-			id: infoLabel
-			width:      parent.width
-			wrapMode:   Text.WordWrap
-			text:       "Click a parameter value to modify. Right-click for additional options. Values which have been modified from the default are shown in orange. Use caution when modifying parameters here since the values are not checked for validity."
-		}
-
-		ParameterEditor {
-			width:	parent.width
-			height: parent.height - (infoLabel.y + infoLabel.height)
-		}
-    }
+ParameterEditor {
+    fullMode: true
 }
