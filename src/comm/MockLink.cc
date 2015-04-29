@@ -464,6 +464,9 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
 
     Q_ASSERT(request.target_system == _vehicleSystemId);
     Q_ASSERT(request.target_component == MAV_COMP_ID_ALL);
+    
+    // We must send the first parameter for each component first. Otherwise system won't correctly know
+    // when all parameters are loaded.
 
     foreach (int componentId, _mapParamName2Value.keys()) {
         uint16_t paramIndex = 0;
@@ -492,6 +495,46 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
                                          cParameters,                       // Total number of parameters
                                          paramIndex++);                     // Index of this parameter
             _emitMavlinkMessage(responseMsg);
+            
+            // Only first parameter the first time through
+            break;
+        }
+    }
+    
+    foreach (int componentId, _mapParamName2Value.keys()) {
+        uint16_t paramIndex = 0;
+        int cParameters = _mapParamName2Value[componentId].count();
+        bool skipParam = true;
+        
+        foreach(QString paramName, _mapParamName2Value[componentId].keys()) {
+            if (skipParam) {
+                // We've already sent the first param
+                skipParam = true;
+                paramIndex++;
+            } else {
+                char paramId[MAVLINK_MSG_ID_PARAM_VALUE_LEN];
+                mavlink_message_t       responseMsg;
+                
+                Q_ASSERT(_mapParamName2Value[componentId].contains(paramName));
+                Q_ASSERT(_mapParamName2MavParamType.contains(paramName));
+                
+                MAV_PARAM_TYPE paramType = _mapParamName2MavParamType[paramName];
+                
+                Q_ASSERT(paramName.length() <= MAVLINK_MSG_ID_PARAM_VALUE_LEN);
+                strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
+                
+                qCDebug(MockLinkLog) << "Sending msg_param_value" << componentId << paramId << paramType << _mapParamName2Value[componentId][paramId];
+                
+                mavlink_msg_param_value_pack(_vehicleSystemId,
+                                             componentId,                       // component id
+                                             &responseMsg,                      // Outgoing message
+                                             paramId,                           // Parameter name
+                                             _floatUnionForParam(componentId, paramName),    // Parameter value
+                                             paramType,                         // MAV_PARAM_TYPE
+                                             cParameters,                       // Total number of parameters
+                                             paramIndex++);                     // Index of this parameter
+                _emitMavlinkMessage(responseMsg);
+            }
         }
     }
 }

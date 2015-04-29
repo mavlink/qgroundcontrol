@@ -87,14 +87,6 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
                                     "value:" << value <<
                                     ")";
     
-#if 1
-    // This code is handy for testing re-request logic. It drops ever other param update.
-    static int increment = 0;
-    if (increment++ & 1) {
-        return;
-    }
-#endif
-    
     _dataMutex.lock();
     
     // Restart our waiting for param timer
