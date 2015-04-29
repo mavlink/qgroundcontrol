@@ -41,7 +41,6 @@ This file is part of the PIXHAWK project
 #include "UASView.h"
 #include "QGCUnconnectedInfoWidget.h"
 #include "MainWindow.h"
-#include "MAVLinkSimulationLink.h"
 #include "LinkManager.h"
 
 UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),

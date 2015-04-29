@@ -317,7 +317,8 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     if (logLink) {
         LinkManager::instance()->_deleteLink(logLink);
     }
-    logLink = new MAVLinkSimulationLink("");
+    logLink = new MockLink();
+    LinkManager::instance()->_addLink(logLink);
 
     // Select if binary or MAVLink log format is used
     mavlinkLogFormat = file.endsWith(".mavlink");
