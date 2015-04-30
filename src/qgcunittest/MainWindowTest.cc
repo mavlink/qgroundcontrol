@@ -27,7 +27,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "MainWindowTest.h"
-#include "QGCToolBar.h"
 #include "MockLink.h"
 #include "QGCMessageBox.h"
 
@@ -67,7 +66,7 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     MockLink* link = new MockLink();
     Q_CHECK_PTR(link);
     link->setAutopilotType(autopilot);
-    LinkManager::instance()->addLink(link);
+    LinkManager::instance()->_addLink(link);
     linkMgr->connectLink(link);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
     

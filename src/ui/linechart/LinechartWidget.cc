@@ -351,11 +351,15 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     {
         lastTimestamp = usec;
     } else if (usec != 0) {
-        // Difference larger than 5 secs, enforce ground time
-        if (((qint64)usec - (qint64)lastTimestamp) > 5000)
+        // Difference larger than 3 secs, enforce ground time
+        if (((qint64)usec - (qint64)lastTimestamp) > 3000)
         {
             autoGroundTimeSet = true;
-            if (activePlot) activePlot->groundTime();
+            // Tick ground time checkbox, but avoid state switching
+            timeButton->blockSignals(true);
+            timeButton->setChecked(true);
+            timeButton->blockSignals(false);
+            if (activePlot) activePlot->enforceGroundTime(true);
         }
     }
 

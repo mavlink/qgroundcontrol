@@ -84,6 +84,7 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_frame->addItem("Global/Abs. Alt",MAV_FRAME_GLOBAL);
     m_ui->comboBox_frame->addItem("Global/Rel. Alt", MAV_FRAME_GLOBAL_RELATIVE_ALT);
     m_ui->comboBox_frame->addItem("Local(NED)",MAV_FRAME_LOCAL_NED);
+    m_ui->comboBox_frame->addItem("Local Offset(NED)",MAV_FRAME_LOCAL_OFFSET_NED);
     m_ui->comboBox_frame->addItem("Mission",MAV_FRAME_MISSION);
 
     // We do not want users to mess with the current waypoint in missions -

@@ -79,7 +79,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/list-add.svg</normaloff>:/files/images/actions/list-add.svg</iconset>
+           <normaloff>:/res/PlusSign</normaloff>:/res/PlusSign</iconset>
          </property>
         </widget>
        </item>
@@ -193,10 +193,6 @@
          <property name="text">
           <string>Get</string>
          </property>
-         <property name="icon">
-          <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
-         </property>
         </widget>
        </item>
        <item row="1" column="9">
@@ -216,10 +212,6 @@
          <property name="text">
           <string>Set</string>
          </property>
-         <property name="icon">
-          <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
-         </property>
         </widget>
        </item>
        <item row="1" column="7">
@@ -238,7 +230,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/process-stop.svg</normaloff>:/files/images/actions/process-stop.svg</iconset>
+           <normaloff>:/res/Kill</normaloff>:/res/Kill</iconset>
          </property>
         </widget>
        </item>
@@ -261,7 +253,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/go-bottom.svg</normaloff>:/files/images/actions/go-bottom.svg</iconset>
+           <normaloff>:/res/BottomArrow</normaloff>:/res/BottomArrow</iconset>
          </property>
         </widget>
        </item>
@@ -358,7 +350,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/files/images/actions/go-jump.svg</normaloff>:/files/images/actions/go-jump.svg</iconset>
+           <normaloff>:/res/JumpArrow</normaloff>:/res/JumpArrow</iconset>
          </property>
         </widget>
        </item>
@@ -368,10 +360,6 @@
    </item>
   </layout>
   <action name="actionAddWaypoint">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/actions/list-add.svg</normaloff>:/files/images/actions/list-add.svg</iconset>
-   </property>
    <property name="text">
     <string>Add Waypoint</string>
    </property>
@@ -380,10 +368,6 @@
    </property>
   </action>
   <action name="actionTransmit">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
-   </property>
    <property name="text">
     <string>Transmit</string>
    </property>
@@ -392,10 +376,6 @@
    </property>
   </action>
   <action name="actionRead">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
-   </property>
    <property name="text">
     <string>Read</string>
    </property>

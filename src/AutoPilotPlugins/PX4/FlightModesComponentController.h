@@ -49,16 +49,18 @@ public:
     Q_PROPERTY(int channelCount MEMBER _channelCount CONSTANT)
     
     Q_PROPERTY(double modeSwitchLiveRange READ modeSwitchLiveRange NOTIFY switchLiveRangeChanged)
-    Q_PROPERTY(double returnSwitchLiveRange READ returnSwitchLiveRange NOTIFY switchLiveRangeChanged)
     Q_PROPERTY(double loiterSwitchLiveRange READ loiterSwitchLiveRange NOTIFY switchLiveRangeChanged)
     Q_PROPERTY(double posCtlSwitchLiveRange READ posCtlSwitchLiveRange NOTIFY switchLiveRangeChanged)
+    Q_PROPERTY(double returnSwitchLiveRange READ returnSwitchLiveRange NOTIFY switchLiveRangeChanged)
+    Q_PROPERTY(double offboardSwitchLiveRange READ offboardSwitchLiveRange NOTIFY switchLiveRangeChanged)
     
     Q_PROPERTY(bool sendLiveRCSwitchRanges READ sendLiveRCSwitchRanges WRITE setSendLiveRCSwitchRanges NOTIFY liveRCSwitchRangesChanged)
     
     double modeSwitchLiveRange(void);
-    double returnSwitchLiveRange(void);
     double loiterSwitchLiveRange(void);
     double posCtlSwitchLiveRange(void);
+    double returnSwitchLiveRange(void);
+    double offboardSwitchLiveRange(void);
     
     bool sendLiveRCSwitchRanges(void) { return _liveRCValues; }
     void setSendLiveRCSwitchRanges(bool start);

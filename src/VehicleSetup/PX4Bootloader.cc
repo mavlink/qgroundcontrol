@@ -28,7 +28,11 @@
 #include "PX4Bootloader.h"
 
 #include <QFile>
+#ifdef __android__
+#include "qserialportinfo.h"
+#else
 #include <QSerialPortInfo>
+#endif
 #include <QDebug>
 #include <QTime>
 
@@ -437,10 +441,6 @@ bool PX4Bootloader::getBoardInfo(QextSerialPort* port, uint32_t& bootloaderVersi
     }
     
     if (!getBoardInfo(port, INFO_BOARD_ID, _boardID)) {
-        goto Error;
-    }
-    if (_boardID != _boardIDPX4Flow && _boardID != _boardIDPX4FMUV1 && _boardID != _boardIDPX4FMUV2 && _boardID != _boardIDuNode) {
-        _errorString = tr("Unsupported board: %1").arg(_boardID);
         goto Error;
     }
     

@@ -37,8 +37,13 @@ This file is part of the APM_PLANNER project
 #include "terminalconsole.h"
 #include "ui_SerialSettingsDialog.h"
 
+#ifdef __android__
+#include "qserialport.h"
+#include "qserialportinfo.h"
+#else
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#endif
 #include <QIntValidator>
 #include <QLineEdit>
 

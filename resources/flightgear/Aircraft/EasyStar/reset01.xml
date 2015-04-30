@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<initialize name="reset01">
+  <!--
+    This file drops the aircraft from 1000 ft to see what happens.
+  -->
+  <ubody>       0.0 </ubody>
+  <vbody>       0.0 </vbody>
+  <wbody>       0.0 </wbody>
+  <latitude>   47.0 </latitude>
+  <longitude> 122.0 </longitude>
+  <phi>         0.0 </phi>
+  <theta>       0.0 </theta>
+  <psi>       150.0 </psi>
+  <altitude> 1000.7  </altitude>
+</initialize>

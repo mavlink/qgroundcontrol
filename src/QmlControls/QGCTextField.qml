@@ -3,6 +3,7 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.Palette 1.0
+import QGroundControl.ScreenTools 1.0
 
 TextField {
     property bool showUnits: false
@@ -17,6 +18,7 @@ TextField {
         text: unitsLabel
         width: contentWidth + ((parent.__contentHeight/3)*2)
         visible: false
+        antialiasing: true
     }
 
     style: TextFieldStyle {
@@ -31,7 +33,6 @@ TextField {
 
             Rectangle {
                 anchors.fill: parent
-
                 border.color: control.activeFocus ? "#47b" : "#999"
                 color: __qgcPal.textField
             }
@@ -49,6 +50,9 @@ TextField {
                 width: unitsLabelWidthGenerator.width
 
                 text: control.unitsLabel
+                font.pointSize: ScreenTools.defaultFontPointSize
+                antialiasing:   true
+
                 color: control.textColor
                 visible: control.showUnits
             }

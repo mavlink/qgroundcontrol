@@ -40,9 +40,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
-#include "UASParameterDataModel.h"
 #include "UASWaypointManager.h"
-#include "QGCUASParamManagerInterface.h"
 
 class QGCUASFileManager;
 
@@ -108,8 +106,6 @@ public:
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
-    /** @brief Get the status flag for the communication **/
-    virtual int getCommunicationStatus() const = 0;
 
     virtual double getLocalX() const = 0;
     virtual double getLocalY() const = 0;
@@ -136,30 +132,12 @@ public:
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
 
-    /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManagerInterface* getParamManager() = 0;
-
     virtual QGCUASFileManager* getFileManager() = 0;
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
     virtual void sendMessage(LinkInterface* link, mavlink_message_t message) = 0;
     /** @brief Send a message over all links this UAS can be reached with (!= all links) */
     virtual void sendMessage(mavlink_message_t message) = 0;
-
-    /* COMMUNICATION FLAGS */
-
-    enum CommStatus {
-        /** Unit is disconnected, no failure state reached so far **/
-        COMM_DISCONNECTED = 0,
-        /** The communication is established **/
-        COMM_CONNECTING = 1,
-        /** The communication link is up **/
-        COMM_CONNECTED = 2,
-        /** The connection is closed **/
-        COMM_DISCONNECTING = 3,
-        COMM_FAIL = 4,
-        COMM_TIMEDOUT = 5///< Communication link failed
-    };
 
     enum Airframe {
         QGC_AIRFRAME_GENERIC = 0,
@@ -230,6 +208,8 @@ public:
 
     /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
     virtual int getSystemType() = 0;
+    /** @brief Is it an airplane (or like one)?,..)*/
+    virtual bool isAirplane() = 0;
     /** @brief Indicates whether this system is capable of controlling a reverse velocity.
      * Used for, among other things, altering joystick input to either -1:1 or 0:1 range.
      */
@@ -257,6 +237,20 @@ public:
 
     static const unsigned int WAYPOINT_RADIUS_DEFAULT_FIXED_WING = 25;
     static const unsigned int WAYPOINT_RADIUS_DEFAULT_ROTARY_WING = 5;
+    
+    enum StartCalibrationType {
+        StartCalibrationRadio,
+        StartCalibrationGyro,
+        StartCalibrationMag,
+        StartCalibrationAirspeed,
+        StartCalibrationAccel
+    };
+    
+    /// Starts the specified calibration
+    virtual void startCalibration(StartCalibrationType calType) = 0;
+    
+    /// Ends any current calibration
+    virtual void stopCalibration(void) = 0;
 
 public slots:
 
@@ -315,19 +309,6 @@ public slots:
     virtual void setLocalOriginAtCurrentGPSPosition() = 0;
     /** @brief Set world frame origin / home position at this GPS position */
     virtual void setHomePosition(double lat, double lon, double alt) = 0;
-    /** @brief Request one specific onboard parameter */
-    virtual void requestParameter(int component, const QString& parameter) = 0;
-    /** @brief Write parameter to permanent storage */
-    virtual void writeParametersToStorage() = 0;
-    /** @brief Read parameter from permanent storage */
-    virtual void readParametersFromStorage() = 0;
-    /** @brief Set a system parameter
-     * @param component ID of the system component to write the parameter to
-     * @param id String identifying the parameter
-     * @warning The length of the ID string is limited by the MAVLink format! Take care to not exceed it
-     * @param value Value of the parameter, IEEE 754 single precision floating point
-     */
-    virtual void setParameter(const int component, const QString& id, const QVariant& value) = 0;
 
     /**
      * @brief Add a link to the list of current links
@@ -358,12 +339,6 @@ public slots:
 
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
-
-    virtual void startRadioControlCalibration(int param=1) = 0;
-    virtual void endRadioControlCalibration() = 0;
-    virtual void startMagnetometerCalibration() = 0;
-    virtual void startGyroscopeCalibration() = 0;
-    virtual void startPressureCalibration() = 0;
 
     /** @brief Return if this a rotary wing */
     virtual bool isRotaryWing() = 0;
@@ -471,8 +446,6 @@ signals:
     void armingChanged(int sysId, QString armingState);
     /** @brief A command has been issued **/
     void commandSent(int command);
-    /** @brief The connection status has changed **/
-    void connectionChanged(CommStatus connectionFlag);
     /** @brief The robot is connecting **/
     void connecting();
     /** @brief The robot is connected **/
@@ -505,11 +478,7 @@ signals:
     void waypointSelected(int uasId, int id);
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
-    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
-    void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, QVariant value);
-    void parameterUpdate(int uas, int component, QString parameterName, int type, QVariant value);
-    void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
-    void letterDetected(int uasId, QString letter, float confidence, bool detected);
+    void parameterUpdate(int uas, int component, QString parameterName, int parameterCount, int parameterId, int type, QVariant value);
     /**
      * @brief The battery status has been updated
      *
@@ -544,6 +513,7 @@ signals:
     void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
 
     void navigationControllerErrorsChanged(UASInterface*, double altitudeError, double speedError, double xtrackError);
+    void NavigationControllerDataChanged(UASInterface *uas, float navRoll, float navPitch, float navBearing, float targetBearing, float targetDist);
 
     void imageStarted(int imgid, int width, int height, int depth, int channels);
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);
@@ -586,8 +556,8 @@ signals:
     void remoteControlChannelRawChanged(int channelId, float raw);
     /** @brief Value of a remote control channel (scaled)*/
     void remoteControlChannelScaledChanged(int channelId, float normalized);
-    /** @brief Remote control RSSI changed */
-    void remoteControlRSSIChanged(float rssi);
+    /** @brief Remote control RSSI changed  (0% - 100%)*/
+    void remoteControlRSSIChanged(uint8_t rssi);
 
     /**
      * @brief Localization quality changed

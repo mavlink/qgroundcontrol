@@ -25,50 +25,145 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "AutoPilotPlugin.h"
+#include "SetupView.h"
+#include "QGCApplication.h"
+#include "QGCMessageBox.h"
+#include "MainWindow.h"
+#include "ParameterLoader.h"
 
 AutoPilotPlugin::AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     QObject(parent),
-    _uas(uas)
+    _uas(uas),
+    _pluginReady(false),
+	_setupComplete(false)
 {
     Q_ASSERT(_uas);
+	
+	connect(_uas, &UASInterface::disconnected, this, &AutoPilotPlugin::_uasDisconnected);
+	connect(this, &AutoPilotPlugin::pluginReadyChanged, this, &AutoPilotPlugin::_pluginReadyChanged);
+}
+
+void AutoPilotPlugin::_uasDisconnected(void)
+{
+	_pluginReady = false;
+	emit pluginReadyChanged(_pluginReady);
+}
+
+void AutoPilotPlugin::_pluginReadyChanged(bool pluginReady)
+{
+	if (pluginReady) {
+		_recalcSetupComplete();
+		if (!_setupComplete) {
+			QGCMessageBox::warning("Setup", "One or more vehicle components require setup prior to flight.");
+			
+			// Take the user to Vehicle Summary
+			MainWindow* mainWindow = MainWindow::instance();
+			Q_ASSERT(mainWindow);
+			mainWindow->getMainToolBar()->onSetupView();
+			qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+			QWidget* setupViewWidget = mainWindow->getCurrentViewWidget();
+			Q_ASSERT(setupViewWidget);
+			SetupView* setupView = qobject_cast<SetupView*>(setupViewWidget);
+			Q_ASSERT(setupView);
+			setupView->summaryButtonClicked();
+			qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+		}
+	}
+}
+
+void AutoPilotPlugin::_recalcSetupComplete(void)
+{
+	bool newSetupComplete = true;
+	
+	foreach(const QVariant componentVariant, vehicleComponents()) {
+		VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(componentVariant));
+		Q_ASSERT(component);
+		
+		if (!component->setupComplete()) {
+			newSetupComplete = false;
+			break;
+		}
+	}
+	
+	if (_setupComplete != newSetupComplete) {
+		_setupComplete = newSetupComplete;
+		emit setupCompleteChanged(_setupComplete);
+	}
+}
+
+bool AutoPilotPlugin::setupComplete(void)
+{
+	Q_ASSERT(_pluginReady);
+	return _setupComplete;
 }
 
 void AutoPilotPlugin::refreshAllParameters(void)
 {
-    Q_ASSERT(_uas);
-    QGCUASParamManagerInterface* paramMgr = _uas->getParamManager();
-    Q_ASSERT(paramMgr);
-    paramMgr->requestParameterList();
+	_getParameterLoader()->refreshAllParameters();
 }
 
-void AutoPilotPlugin::refreshParameter(const QString& param)
+void AutoPilotPlugin::refreshParameter(int componentId, const QString& name)
 {
-    Q_ASSERT(_uas);
-    QGCUASParamManagerInterface* paramMgr = _uas->getParamManager();
-    Q_ASSERT(paramMgr);
-    
-    QList<int> compIdList = paramMgr->getComponentForParam(param);
-    Q_ASSERT(compIdList.count() > 0);
-    paramMgr->requestParameterUpdate(compIdList[0], param);
+	_getParameterLoader()->refreshParameter(componentId, name);
 }
 
-void AutoPilotPlugin::refreshParametersPrefix(const QString& paramPrefix)
+void AutoPilotPlugin::refreshParametersPrefix(int componentId, const QString& namePrefix)
 {
-    foreach(QVariant varFact, parameters()) {
-        Fact* fact = qvariant_cast<Fact*>(varFact);
-        Q_ASSERT(fact);
-        if (fact->name().startsWith(paramPrefix)) {
-            refreshParameter(fact->name());
-        }
+	_getParameterLoader()->refreshParametersPrefix(componentId, namePrefix);
+}
+
+bool AutoPilotPlugin::parameterExists(const QString& name)
+{
+	return _getParameterLoader()->parameterExists(FactSystem::defaultComponentId, name);
+}
+
+Fact* AutoPilotPlugin::getParameterFact(const QString& name)
+{
+	return _getParameterLoader()->getFact(FactSystem::defaultComponentId, name);
+}
+
+bool AutoPilotPlugin::factExists(FactSystem::Provider_t provider, int componentId, const QString& name)
+{
+    switch (provider) {
+        case FactSystem::ParameterProvider:
+            return _getParameterLoader()->parameterExists(componentId, name);
+            
+        // Other providers will go here once they come online
     }
+    
+    Q_ASSERT(false);
+    return false;
 }
 
-bool AutoPilotPlugin::factExists(const QString& param)
+Fact* AutoPilotPlugin::getFact(FactSystem::Provider_t provider, int componentId, const QString& name)
 {
-    return parameters().contains(param);
+    switch (provider) {
+        case FactSystem::ParameterProvider:
+            return _getParameterLoader()->getFact(componentId, name);
+            
+        // Other providers will go here once they come online
+    }
+    
+    Q_ASSERT(false);
+    return NULL;
 }
 
-Fact* AutoPilotPlugin::getFact(const QString& name)
+QStringList AutoPilotPlugin::parameterNames(void)
 {
-    return parameters()[name].value<Fact*>();
+	return _getParameterLoader()->parameterNames();
+}
+
+const QMap<int, QMap<QString, QStringList> >& AutoPilotPlugin::getGroupMap(void)
+{
+    return _getParameterLoader()->getGroupMap();
+}
+
+void AutoPilotPlugin::writeParametersToStream(QTextStream &stream)
+{
+	_getParameterLoader()->writeParametersToStream(stream, _uas->getUASName());
+}
+
+void AutoPilotPlugin::readParametersFromStream(QTextStream &stream)
+{
+	_getParameterLoader()->readParametersFromStream(stream);
 }

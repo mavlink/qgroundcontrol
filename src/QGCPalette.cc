@@ -25,6 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "QGCPalette.h"
+#include "ScreenTools.h"
 
 #include <QApplication>
 #include <QPalette>
@@ -34,12 +35,12 @@ QList<QGCPalette*>   QGCPalette::_paletteObjects;
 QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
 
 QColor QGCPalette::_window[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0xF6, 0xF6, 0xF6), QColor(0xF6, 0xF6, 0xF6) },
+    { QColor(0xDD, 0xDD, 0xDD), QColor(0xDD, 0xDD, 0xDD) },
     { QColor(0x22, 0x22, 0x22), QColor(0x22, 0x22, 0x22) }
 };
 
 QColor QGCPalette::_windowShade[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(255, 235, 211), QColor(255, 235, 211) },
+    { QColor(204, 204, 204), QColor(204, 204, 204) },
     { QColor(51, 51, 51), QColor(51, 51, 51) }
 };
 
@@ -130,3 +131,4 @@ void QGCPalette::_themeChanged(void)
 {
     emit paletteChanged();
 }
+

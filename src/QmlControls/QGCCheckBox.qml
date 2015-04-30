@@ -3,6 +3,7 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.Palette 1.0
+import QGroundControl.ScreenTools 1.0
 
 CheckBox {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
@@ -25,9 +26,13 @@ CheckBox {
                 opacity: 0.6
             }
             Text {
-                id: text
-                text: control.text
+                id:             text
+                text:           control.text
+                antialiasing:   true
+                font.pointSize: ScreenTools.defaultFontPointSize
+
                 anchors.centerIn: parent
+
                 color: control.__qgcPal.text
             }
         }

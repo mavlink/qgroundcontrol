@@ -41,7 +41,6 @@ This file is part of the PIXHAWK project
 #include "UASView.h"
 #include "QGCUnconnectedInfoWidget.h"
 #include "MainWindow.h"
-#include "MAVLinkSimulationLink.h"
 #include "LinkManager.h"
 
 UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
@@ -118,7 +117,7 @@ void UASListWidget::updateStatus()
         LinkInterface* link = i.key();
 
         // Paranoid sanity check
-        if (!LinkManager::instance()->getLinks().contains(link))
+        if (!LinkManager::instance()->containsLink(link))
             continue;
 
         if (!link)

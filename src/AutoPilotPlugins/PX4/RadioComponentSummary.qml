@@ -6,78 +6,49 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.Controls 1.0
 
 Column {
-    anchors.fill: parent
-    anchors.margins: 8
+    Fact { id: mapRollFact;     name: "RC_MAP_ROLL" }
+    Fact { id: mapPitchFact;    name: "RC_MAP_PITCH" }
+    Fact { id: mapYawFact;      name: "RC_MAP_YAW" }
+    Fact { id: mapThrottleFact; name: "RC_MAP_THROTTLE" }
+    Fact { id: mapFlapsFact;    name: "RC_MAP_FLAPS" }
+    Fact { id: mapAux1Fact;     name: "RC_MAP_AUX1" }
+    Fact { id: mapAux2Fact;     name: "RC_MAP_AUX2" }
 
-    Component {
-        id: component
+    anchors.fill:       parent
+    anchors.margins:    8
 
-        Row {
-            width: parent.width
-
-            QGCLabel { id: label; text: labelText }
-            QGCLabel {
-                Fact { id: fact; name: factName }
-                horizontalAlignment: Text.AlignRight
-                width: parent.width - label.contentWidth
-                text: fact.value == 0 ? zeroText : fact.value
-            }
-        }
+    VehicleSummaryRow {
+        labelText: "Roll:"
+        valueText: mapRollFact.value == 0 ? "Setup required" : mapRollFact.valueString
     }
 
-    Loader {
-        property string labelText: "Roll:"
-        property string zeroText: "Setup required"
-        property string factName: "RC_MAP_ROLL"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Pitch:"
+        valueText: mapPitchFact.value == 0 ? "Setup required" : mapPitchFact.valueString
     }
 
-    Loader {
-        property string labelText: "Pitch:"
-        property string zeroText: "Setup required"
-        property string factName: "RC_MAP_PITCH"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Yaw:"
+        valueText: mapYawFact.value == 0 ? "Setup required" : mapYawFact.valueString
     }
 
-    Loader {
-        property string labelText: "Yaw:"
-        property string zeroText: "Setup required"
-        property string factName: "RC_MAP_YAW"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Throttle:"
+        valueText: mapThrottleFact.value == 0 ? "Setup required" : mapThrottleFact.valueString
     }
 
-    Loader {
-        property string labelText: "Throttle:"
-        property string zeroText: "Setup required"
-        property string factName: "RC_MAP_THROTTLE"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Flaps:"
+        valueText: mapFlapsFact.value == 0 ? "Disabled" : mapFlapsFact.valueString
     }
 
-    Loader {
-        property string labelText: "Flaps:"
-        property string zeroText: "Disabled"
-        property string factName: "RC_MAP_FLAPS"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Aux1:"
+        valueText: mapAux1Fact.value == 0 ? "Disabled" : mapAux1Fact.valueString
     }
 
-    Loader {
-        property string labelText: "Aux1:"
-        property string zeroText: "Disabled"
-        property string factName: "RC_MAP_AUX1"
-        width: parent.width
-        sourceComponent: component
-    }
-
-    Loader {
-        property string labelText: "Aux2:"
-        property string zeroText: "Disabled"
-        property string factName: "RC_MAP_AUX2"
-        width: parent.width
-        sourceComponent: component
+    VehicleSummaryRow {
+        labelText: "Aux2:"
+        valueText: mapAux2Fact.value == 0 ? "Disabled" : mapAux2Fact.valueString
     }
 }

@@ -30,7 +30,9 @@
 
 #include <QDialog>
 #include <QThread>
+
 #include "UASInterface.h"
+#include "AutoPilotPlugin.h"
 
 namespace Ui {
 class QGCMapRCToParamDialog;
@@ -42,27 +44,23 @@ class ParamLoader : public QObject
     Q_OBJECT
 
 public:
-    ParamLoader(QString param_id, UASInterface *mav, QObject * parent = 0):
-    QObject(parent),
-    mav(mav),
-    paramMgr(mav->getParamManager()),
-    param_id(param_id),
-    param_received(false)
-{}
+    ParamLoader(QString paramName, UASInterface* uas, QObject* parent = NULL);
 
 public slots:
     void load();
-    void handleParameterChanged(int uas, int component, QString parameterName, QVariant value);
 
 signals:
     void paramLoaded(bool success, float value, QString message = "");
     void correctParameterChanged();
+    
+private slots:
+    void _parameterUpdated(QVariant value);
 
-protected:
-    UASInterface *mav;
-    QGCUASParamManagerInterface* paramMgr;
-    QString param_id;
-    bool param_received;
+private:
+    UASInterface*       _uas;
+    AutoPilotPlugin*    _autopilot;
+    QString             _paramName;
+    bool                _paramReceived;
 };
 
 class QGCMapRCToParamDialog : public QDialog

@@ -43,56 +43,27 @@ class Fact : public QObject
 {
     Q_OBJECT
     
-    Q_PROPERTY(QString name READ name CONSTANT)
-    Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
-    Q_PROPERTY(QVariant valueString READ valueString NOTIFY valueChanged)
-    Q_PROPERTY(QVariant defaultValue READ defaultValue CONSTANT)
-    Q_PROPERTY(FactMetaData::ValueType_t type READ type CONSTANT)
-    Q_PROPERTY(QString shortDescription READ shortDescription CONSTANT)
-    Q_PROPERTY(QString longDescription READ longDescription CONSTANT)
-    Q_PROPERTY(QString units READ units CONSTANT)
-    Q_PROPERTY(QVariant min READ min CONSTANT)
-    Q_PROPERTY(QVariant max READ max CONSTANT)
-    
-    Q_ENUMS(FactMetaData::ValueType_t)
-    
 public:
-    Fact(QString name = "", FactMetaData::ValueType_t type = FactMetaData::valueTypeInt32, QObject* parent = NULL);
+    //Fact(int componentId, QString name = "", FactMetaData::ValueType_t type = FactMetaData::valueTypeInt32, QObject* parent = NULL);
+    Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = NULL);
     
     // Property system methods
     
-    /// Read accessor or name property
     QString name(void) const;
-    
-    /// Read accessor for value property
+    int componentId(void) const;
     QVariant value(void) const;
-    
-    /// Read accessor for valueString property
     QString valueString(void) const;
-    
-    /// Write accessor for value property
     void setValue(const QVariant& value);
-    
-    /// Read accesor for defaultValue property
     QVariant defaultValue(void);
-    
-    /// Read accesor for type property
+	bool defaultValueAvailable(void);
+    bool valueEqualsDefault(void);
     FactMetaData::ValueType_t type(void);
-    
-    /// Read accesor for shortDescription property
     QString shortDescription(void);
-    
-    /// Read accesor for longDescription property
     QString longDescription(void);
-    
-    /// Read accesor for units property
     QString units(void);
-    
-    /// Read accesor for min property
     QVariant min(void);
-
-    /// Read accesor for max property
-    QVariant max(void);
+    QVariant max(void);    
+    QString group(void);
     
     /// Sets the meta data associated with the Fact.
     void setMetaData(FactMetaData* metaData);
@@ -112,6 +83,7 @@ signals:
     
 private:
     QString                     _name;
+    int                         _componentId;
     QVariant                    _value;
     FactMetaData::ValueType_t   _type;
     FactMetaData*               _metaData;

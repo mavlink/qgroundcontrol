@@ -117,7 +117,7 @@ HDDisplay::HDDisplay(const QStringList &plotList, QString title, QWidget *parent
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintGL()));
 
     fontDatabase = QFontDatabase();
-    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
+    const QString fontFileName = ":/res/fonts/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
     const QString fontFamilyName = "Bitstream Vera Sans";
     if(!QFile::exists(fontFileName)) qDebug() << "ERROR! font file: " << fontFileName << " DOES NOT EXIST!";
 
@@ -473,16 +473,17 @@ void HDDisplay::renderOverlay()
  */
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
-    if (!uas)
-        return;
     // Disconnect any previously connected active UAS
     if (this->uas != NULL) {
         removeSource(this->uas);
+        this->uas = NULL;
     }
 
-    // Now connect the new UAS
-	addSource(uas);
-    this->uas = uas;
+    if (uas) {
+        // Now connect the new UAS
+        addSource(uas);
+        this->uas = uas;
+    }
 }
 
 /**

@@ -113,7 +113,7 @@ void QGCMAVLinkLogPlayer::play()
     }
     isPlaying = true;
     ui->playButton->setChecked(true);
-    ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-pause.svg"));
+    ui->playButton->setIcon(QIcon(":/res/Pause"));
 }
 
 void QGCMAVLinkLogPlayer::pause()
@@ -123,7 +123,7 @@ void QGCMAVLinkLogPlayer::pause()
 
     loopTimer.stop();
     isPlaying = false;
-    ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-start.svg"));
+    ui->playButton->setIcon(QIcon(":/res/Play"));
     ui->playButton->setChecked(false);
     ui->selectFileButton->setEnabled(true);
 }
@@ -246,18 +246,7 @@ void QGCMAVLinkLogPlayer::updatePositionSliderUi(float percent)
 void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
 {
     // Disallow replay when any links are connected
-    
-    bool foundConnection = false;
-    LinkManager* linkMgr = LinkManager::instance();
-    QList<LinkInterface*> links = linkMgr->getLinks();
-    foreach(LinkInterface* link, links) {
-        if (link->isConnected()) {
-            foundConnection = true;
-            break;
-        }
-    }
-    
-    if (foundConnection) {
+    if (LinkManager::instance()->anyConnectedLinks()) {
         QGCMessageBox::information(tr("Log Replay"), tr("You must close all connections prior to replaying a log."));
         return;
     }
@@ -326,9 +315,10 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     // If there's an existing MAVLinkSimulationLink() being used for an old file,
     // we replace it.
     if (logLink) {
-        LinkManager::instance()->deleteLink(logLink);
+        LinkManager::instance()->_deleteLink(logLink);
     }
-    logLink = new MAVLinkSimulationLink("");
+    logLink = new MockLink();
+    LinkManager::instance()->_addLink(logLink);
 
     // Select if binary or MAVLink log format is used
     mavlinkLogFormat = file.endsWith(".mavlink");
@@ -587,7 +577,7 @@ quint64 QGCMAVLinkLogPlayer::findNextMavlinkMessage(mavlink_message_t *msg)
     char nextByte;
     mavlink_status_t comm;
     while (logFile.getChar(&nextByte)) { // Loop over every byte
-        bool messageFound = mavlink_parse_char(logLink->getId(), nextByte, msg, &comm);
+        bool messageFound = mavlink_parse_char(logLink->getMavlinkChannel(), nextByte, msg, &comm);
 
         // If we've found a message, jump back to the start of the message, grab the timestamp,
         // and go back to the end of this file.

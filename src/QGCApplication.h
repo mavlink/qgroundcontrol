@@ -34,6 +34,8 @@
 
 #include <QApplication>
 
+#include "LinkConfiguration.h"
+
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
@@ -93,6 +95,13 @@ public:
     /// Set the current UI style
     void setStyle(bool styleIsDark);
     
+    /// Disconnects the current link and waits for the specified number of seconds before reconnecting.
+    void reconnectAfterWait(int waitSeconds);
+    
+    /// Used to shutdown the app if a fatal condition occurs from which it cannot recover
+    ///     @param panicMessage Message to display to user
+    void panicShutdown(const QString& panicMessage);
+    
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -132,6 +141,9 @@ public:
     
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
     
+private slots:
+    void _reconnect(void);
+    
 private:
     void _createSingletons(void);
     void _destroySingletons(void);
@@ -152,6 +164,8 @@ private:
     static const char*  _darkStyleFile;
     static const char*  _lightStyleFile;
     bool                _styleIsDark;      ///< true: dark style, false: light style
+    
+    LinkConfiguration* _reconnectLinkConfig;    ///< Configuration to reconnect for reconnectAfterWai
     
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;

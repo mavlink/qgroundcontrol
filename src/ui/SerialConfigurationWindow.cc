@@ -33,6 +33,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QFileInfoList>
 #include <QDebug>
 
+#ifdef __android__
+#include "qserialportinfo.h"
+#else
+#include <QSerialPortInfo>
+#endif
+
 #include <SerialConfigurationWindow.h>
 #include <SerialLink.h>
 
@@ -42,7 +48,6 @@ This file is part of the QGROUNDCONTROL project
 
 SerialConfigurationWindow::SerialConfigurationWindow(SerialConfiguration *config, QWidget *parent, Qt::WindowFlags flags)
     : QWidget(parent, flags)
-    , _userConfigured(false)
 {
     _ui.setupUi(this);
     Q_ASSERT(config != NULL);
@@ -112,16 +117,15 @@ SerialConfigurationWindow::SerialConfigurationWindow(SerialConfiguration *config
     }
 
     // Connect the individual user interface inputs
-    connect(_ui.portName,           SIGNAL(editTextChanged(QString)), this,      SLOT(setPortName(QString)));
-    connect(_ui.portName,           SIGNAL(currentIndexChanged(QString)), this,  SLOT(setPortName(QString)));
-    connect(_ui.baudRate,           SIGNAL(activated(int)), this,                SLOT(setBaudRate(int)));
-    connect(_ui.flowControlCheckBox,SIGNAL(toggled(bool)), this,                 SLOT(enableFlowControl(bool)));
-    connect(_ui.parNone,            SIGNAL(toggled(bool)), this,                 SLOT(setParityNone(bool)));
-    connect(_ui.parOdd,             SIGNAL(toggled(bool)), this,                 SLOT(setParityOdd(bool)));
-    connect(_ui.parEven,            SIGNAL(toggled(bool)), this,                 SLOT(setParityEven(bool)));
-    connect(_ui.dataBitsSpinBox,    SIGNAL(valueChanged(int)), this,             SLOT(setDataBits(int)));
-    connect(_ui.stopBitsSpinBox,    SIGNAL(valueChanged(int)), this,             SLOT(setStopBits(int)));
-    connect(_ui.advCheckBox,        SIGNAL(clicked(bool)), _ui.advGroupBox,      SLOT(setVisible(bool)));
+    connect(_ui.portName,           SIGNAL(currentIndexChanged(int)), this,  SLOT(setPortName(int)));
+    connect(_ui.baudRate,           SIGNAL(activated(int)), this,            SLOT(setBaudRate(int)));
+    connect(_ui.flowControlCheckBox,SIGNAL(toggled(bool)), this,             SLOT(enableFlowControl(bool)));
+    connect(_ui.parNone,            SIGNAL(toggled(bool)), this,             SLOT(setParityNone(bool)));
+    connect(_ui.parOdd,             SIGNAL(toggled(bool)), this,             SLOT(setParityOdd(bool)));
+    connect(_ui.parEven,            SIGNAL(toggled(bool)), this,             SLOT(setParityEven(bool)));
+    connect(_ui.dataBitsSpinBox,    SIGNAL(valueChanged(int)), this,         SLOT(setDataBits(int)));
+    connect(_ui.stopBitsSpinBox,    SIGNAL(valueChanged(int)), this,         SLOT(setStopBits(int)));
+    connect(_ui.advCheckBox,        SIGNAL(clicked(bool)), _ui.advGroupBox,  SLOT(setVisible(bool)));
 
     _ui.advCheckBox->setCheckable(true);
     _ui.advCheckBox->setChecked(false);
@@ -179,72 +183,103 @@ void SerialConfigurationWindow::hideEvent(QHideEvent* event)
 
 bool SerialConfigurationWindow::setupPortList()
 {
-    // Get the ports available on this system
-    QList<QString> ports = SerialConfiguration::getCurrentPorts();
-    QString storedName = _config->portName();
-    bool storedFound = false;
-    // Add the ports in reverse order, because we prepend them to the list
-    for (int i = ports.count() - 1; i >= 0; --i)
+    bool changed = false;
+    // Iterate found ports
+    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
+    foreach (const QSerialPortInfo &info, portList)
     {
-        // Prepend newly found port to the list
-        if (_ui.portName->findText(ports[i]) < 0)
+        QString name = info.portName();
+        // Append newly found port to the list
+        if (_ui.portName->findText(name) < 0)
         {
-            _ui.portName->insertItem(0, ports[i]);
-            if (!_userConfigured) _ui.portName->setEditText(ports[i]);
+            // We show the user the "short name" but store the full port name
+            _ui.portName->addItem(name, QVariant(info.systemLocation()));
+            changed = true;
         }
-        // Check if the stored link name is still present
-        if (ports[i].contains(storedName) || storedName.contains(ports[i]))
-            storedFound = true;
     }
-    if (storedFound)
-        _ui.portName->setEditText(storedName);
-    return (ports.count() > 0);
+    // See if configured port (if any) is present
+    if(changed) {
+        int idx = _ui.portName->count() - 1;
+        if(!_config->portName().isEmpty()) {
+            idx = _ui.portName->findData(QVariant(_config->portName()));
+            if(idx < 0) {
+                idx = 0;
+            }
+        }
+        _ui.portName->setCurrentIndex(idx);
+        if(_ui.portName->count() > 0) {
+            _ui.portName->setEditText(_ui.portName->itemText(idx));
+        }
+        if(_config->portName().isEmpty()) {
+            setPortName(idx);
+        }
+    }
+    return (_ui.portName->count() > 0);
 }
 
 void SerialConfigurationWindow::enableFlowControl(bool flow)
 {
     _config->setFlowControl(flow ? QSerialPort::HardwareControl : QSerialPort::NoFlowControl);
+    //-- If this was dynamic, it's now edited and persistent
+    _config->setDynamic(false);
 }
 
 void SerialConfigurationWindow::setParityNone(bool accept)
 {
-    if (accept) _config->setParity(QSerialPort::NoParity);
+    if (accept) {
+        _config->setParity(QSerialPort::NoParity);
+        //-- If this was dynamic, it's now edited and persistent
+        _config->setDynamic(false);
+    }
 }
 
 void SerialConfigurationWindow::setParityOdd(bool accept)
 {
-    if (accept) _config->setParity(QSerialPort::OddParity);
+    if (accept) {
+        _config->setParity(QSerialPort::OddParity);
+        //-- If this was dynamic, it's now edited and persistent
+        _config->setDynamic(false);
+    }
 }
 
 void SerialConfigurationWindow::setParityEven(bool accept)
 {
-    if (accept) _config->setParity(QSerialPort::EvenParity);
+    if (accept) {
+        _config->setParity(QSerialPort::EvenParity);
+        //-- If this was dynamic, it's now edited and persistent
+        _config->setDynamic(false);
+    }
 }
 
-void SerialConfigurationWindow::setPortName(QString port)
+void SerialConfigurationWindow::setPortName(int index)
 {
-#ifdef Q_OS_WIN
-    port = port.split("-").first();
-#endif
-    port = port.trimmed();
-    if (_config->portName() != port) {
-        _config->setPortName(port);
+    // Get the full port name and store it in the config
+    QString pname = _ui.portName->itemData(index).toString();
+    if (_config->portName() != pname) {
+        _config->setPortName(pname);
+        //-- If this was dynamic, it's now edited and persistent
+        _config->setDynamic(false);
     }
-    userConfigured = true;
 }
 
 void SerialConfigurationWindow::setBaudRate(int index)
 {
     int baud = _ui.baudRate->itemData(index).toInt();
     _config->setBaud(baud);
+    //-- If this was dynamic, it's now edited and persistent
+    _config->setDynamic(false);
 }
 
 void SerialConfigurationWindow::setDataBits(int bits)
 {
     _config->setDataBits(bits);
+    //-- If this was dynamic, it's now edited and persistent
+    _config->setDynamic(false);
 }
 
 void SerialConfigurationWindow::setStopBits(int bits)
 {
     _config->setStopBits(bits);
+    //-- If this was dynamic, it's now edited and persistent
+    _config->setDynamic(false);
 }
