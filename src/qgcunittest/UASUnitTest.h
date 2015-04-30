@@ -27,7 +27,6 @@ private slots:
     void getUASID_test(void);
     void getUASName_test(void);
     void getUpTime_test(void);
-    void getCommunicationStatus_test(void);
     void filterVoltage_test(void);
     void getAutopilotType_test(void);
     void setAutopilotType_test(void);

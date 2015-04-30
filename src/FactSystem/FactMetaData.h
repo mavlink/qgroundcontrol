@@ -41,8 +41,6 @@ class FactMetaData : public QObject
     Q_OBJECT
     
 public:
-    FactMetaData(QObject* parent = NULL);
-    
     typedef enum {
         valueTypeUint8,
         valueTypeInt8,
@@ -54,17 +52,41 @@ public:
         valueTypeDouble
     } ValueType_t;
     
-    /// Initialize the meta data given only the type.
-    void initFromTypeOnly(ValueType_t initType);
+    FactMetaData(ValueType_t type, QObject* parent = NULL);
+    
+	// Property accessors
+	QString     group(void)						{ return _group; }
+	ValueType_t type(void)                      { return _type; }
+	QVariant    defaultValue(void);
+	bool		defaultValueAvailable(void)     { return _defaultValueAvailable; }
+	QString     shortDescription(void)          { return _shortDescription; }
+	QString     longDescription(void)           { return _longDescription;}
+	QString     units(void)                     { return _units; }
+	QVariant    min(void)                       { return _min; }
+	QVariant    max(void)                       { return _max; }
+	
+	// Property setters
+	void setGroup(const QString& group)                         { _group = group; }
+	void setDefaultValue(const QVariant& defaultValue);
+	void setShortDescription(const QString& shortDescription)   { _shortDescription = shortDescription; }
+	void setLongDescription(const QString& longDescription)     { _longDescription = longDescription;}
+	void setUnits(const QString& units)                         { _units = units; }
+    void setMin(const QVariant& max);
+    void setMax(const QVariant& max);
 
-    // FIXME: This needs to switch over to Q_PROPERTY mechanism
-    ValueType_t type;
-    QVariant    defaultValue;
-    QString     shortDescription;
-    QString     longDescription;
-    QString     units;
-    QVariant    min;
-    QVariant    max;
+private:
+    QVariant _minForType(void);
+    QVariant _maxForType(void);
+    
+    QString     _group;
+    ValueType_t _type;
+    QVariant    _defaultValue;
+	bool		_defaultValueAvailable;
+    QString     _shortDescription;
+    QString     _longDescription;
+    QString     _units;
+    QVariant    _min;
+    QVariant    _max;
 };
 
 #endif

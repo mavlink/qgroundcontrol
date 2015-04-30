@@ -4,6 +4,7 @@ import QtQuick.Controls.Styles 1.2
 import QtGraphicalEffects 1.0
 
 import QGroundControl.Palette 1.0
+import QGroundControl.ScreenTools 1.0
 
 Button {
     checkable: true
@@ -39,7 +40,8 @@ Button {
                 horizontalAlignment: TextEdit.AlignHCenter
 
                 text: control.text
-                font.pixelSize: 12
+                font.pointSize: ScreenTools.defaultFontPointSize
+                antialiasing: true
                 color: __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
 
                 Rectangle {

@@ -25,15 +25,18 @@
 #define PX4RCCALIBRATIONTEST_H
 
 #include "UnitTest.h"
-#include "MockUASManager.h"
-#include "MockUAS.h"
+#include "MockLink.h"
 #include "MultiSignalSpy.h"
 #include "px4_configuration/PX4RCCalibration.h"
+#include "QGCLoggingCategory.h"
+#include "AutoPilotPlugin.h"
 
 /// @file
 ///     @brief PX4RCCalibration Widget unit test
 ///
 ///     @author Don Gagne <don@thegagnes.com>
+
+Q_DECLARE_LOGGING_CATEGORY(PX4RCCalibrationTestLog)
 
 ///     @brief PX4RCCalibration Widget unit test
 class PX4RCCalibrationTest : public UnitTest
@@ -44,7 +47,6 @@ public:
     PX4RCCalibrationTest(void);
     
 private slots:
-    void initTestCase(void);
     void init(void);
     void cleanup(void);
     
@@ -92,8 +94,8 @@ private:
     
     void _validateParameters(void);
     
-    MockUASManager*     _mockUASManager;
-    MockUAS*            _mockUAS;
+    MockLink*           _mockLink;
+    AutoPilotPlugin*    _autopilot;
     
     PX4RCCalibration*   _calWidget;
     
@@ -125,7 +127,7 @@ private:
     static const struct ChannelSettings _rgChannelSettings[_availableChannels];
     static const struct ChannelSettings _rgChannelSettingsValidate[PX4RCCalibration::_chanMax];
 	
-	static const int _rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax];
+	int _rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax];
 };
 
 #endif

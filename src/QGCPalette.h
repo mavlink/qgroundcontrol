@@ -82,7 +82,7 @@ class QGCPalette : public QObject
     
     // Text color for TextFields
     Q_PROPERTY(QColor textFieldText READ textFieldText NOTIFY paletteChanged)
-        
+    
 public:
     enum ColorGroup {
         Disabled = 0,
@@ -119,7 +119,7 @@ public:
     
     static Theme globalTheme(void) { return _theme; }
     static void setGlobalTheme(Theme newTheme);
-    
+
 signals:
     void paletteChanged(void);
     

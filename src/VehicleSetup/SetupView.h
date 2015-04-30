@@ -25,7 +25,6 @@
 #define SETUPVIEW_H
 
 #include "UASInterface.h"
-#include "ParameterEditor.h"
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
 
@@ -54,7 +53,7 @@ public:
     
 private slots:
     void _setActiveUAS(UASInterface* uas);
-    void _pluginReady(void);
+    void _pluginReadyChanged(bool pluginReady);
 
 private:
     void _changeSetupWidget(QWidget* newWidget);

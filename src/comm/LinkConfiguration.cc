@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UDPLink.h"
 #include "TCPLink.h"
 
-#ifdef UNITTEST_BUILD
+#ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
 
@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 
 LinkConfiguration::LinkConfiguration(const QString& name)
     : _preferred(false)
+    , _dynamic(false)
 {
     _link = NULL;
     _name = name;
@@ -48,18 +49,20 @@ LinkConfiguration::LinkConfiguration(const QString& name)
 
 LinkConfiguration::LinkConfiguration(LinkConfiguration* copy)
 {
-    _link      = copy->getLink();
-    _name      = copy->name();
-    _preferred = copy->isPreferred();
+    _link       = copy->getLink();
+    _name       = copy->name();
+    _preferred  = copy->isPreferred();
+    _dynamic    = copy->isDynamic();
     Q_ASSERT(!_name.isEmpty());
 }
 
 void LinkConfiguration::copyFrom(LinkConfiguration* source)
 {
     Q_ASSERT(source != NULL);
-    _link      = source->getLink();
-    _name      = source->name();
-    _preferred = source->isPreferred();
+    _link       = source->getLink();
+    _name       = source->name();
+    _preferred  = source->isPreferred();
+    _dynamic    = source->isDynamic();
 }
 
 /*!
@@ -88,7 +91,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
         case LinkConfiguration::TypeTcp:
             config = new TCPConfiguration(name);
             break;
-#ifdef UNITTEST_BUILD
+#ifdef QT_DEBUG
         case LinkConfiguration::TypeMock:
             config = new MockConfiguration(name);
             break;
@@ -114,7 +117,7 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
         case TypeTcp:
             dupe = new TCPConfiguration(dynamic_cast<TCPConfiguration*>(source));
             break;
-#ifdef UNITTEST_BUILD
+#ifdef QT_DEBUG
         case TypeMock:
             dupe = new MockConfiguration(dynamic_cast<MockConfiguration*>(source));
             break;

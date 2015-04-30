@@ -49,7 +49,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/actions/media-playback-start.svg</normaloff>:/files/images/actions/media-playback-start.svg</iconset>
+       <normaloff>:/res/Play</normaloff>:/res.Play</iconset>
      </property>
      <property name="checkable">
       <bool>true</bool>

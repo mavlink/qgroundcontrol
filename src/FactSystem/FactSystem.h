@@ -24,15 +24,12 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef FactSystem_h
-#define FactSystem_h
+#ifndef FACTSYSTEM_H
+#define FACTSYSTEM_H
 
 #include "Fact.h"
-#include "FactLoader.h"
 #include "FactMetaData.h"
-#include "UASInterface.h"
 #include "QGCSingleton.h"
-#include "FactValidator.h"
 
 /// FactSystem is a singleton which provides access to the Facts in the system
 ///
@@ -40,13 +37,21 @@
 /// additional meta data associated with a Fact such as description, min/max ranges and so forth.
 /// The FactValidator object is a QML validator which validates input according to the FactMetaData
 /// settings. Client code can then use this system to expose sets of Facts to QML code. An example
-/// of this is the PX4ParameterFacts onbject which is part of the PX4 AutoPilot plugin. It exposes
+/// of this is the PX4ParameterLoader onbject which is part of the PX4 AutoPilot plugin. It exposes
 /// the firmware parameters to QML such that you can bind QML ui elements directly to parameters.
+
 class FactSystem : public QGCSingleton
 {
     Q_OBJECT
     
     DECLARE_QGC_SINGLETON(FactSystem, FactSystem)
+    
+public:
+    typedef enum {
+        ParameterProvider,
+    } Provider_t;
+    
+    static const int defaultComponentId = -1;
     
 private:
     /// All access to FactSystem is through FactSystem::instance, so constructor is private

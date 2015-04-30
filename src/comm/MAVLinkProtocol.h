@@ -121,21 +121,21 @@ public:
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
      */
     qint32 getReceivedPacketCount(const LinkInterface *link) const {
-        return totalReceiveCounter[link->getId()];
+        return totalReceiveCounter[link->getMavlinkChannel()];
     }
     /**
      * Retrieve a total of all parsing errors for the specified link.
      * @returns -1 if this is not available for this protocol, # of errors otherwise.
      */
     qint32 getParsingErrorCount(const LinkInterface *link) const {
-        return totalErrorCounter[link->getId()];
+        return totalErrorCounter[link->getMavlinkChannel()];
     }
     /**
      * Retrieve a total of all dropped packets for the specified link.
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
      */
     qint32 getDroppedPacketCount(const LinkInterface *link) const {
-        return totalLossCounter[link->getId()];
+        return totalLossCounter[link->getMavlinkChannel()];
     }
     /**
      * Reset the counters for all metadata for this link.
@@ -254,7 +254,7 @@ signals:
     void paramRewriteTimeoutChanged(int ms);
     /** @brief Emitted if action guard status changed */
     void actionGuardChanged(bool enabled);
-    /** @brief Emitted if actiion request timeout changed */
+    /** @brief Emitted if action request timeout changed */
     void actionRetransmissionTimeoutChanged(int ms);
     /** @brief Update the packet loss from one system */
     void receiveLossChanged(int uasId, float loss);
@@ -285,7 +285,10 @@ private:
     void _startLogging(void);
     void _stopLogging(void);
     
-    QList<LinkInterface*> _connectedLinks;  ///< List of all links connected to protocol
+    /// List of all links connected to protocol. We keep SharedLinkInterface objects
+    /// which are QSharedPointer's in order to maintain reference counts across threads.
+    /// This way Link deletion works correctly.
+    QList<SharedLinkInterface> _connectedLinks;
     
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay

@@ -1,249 +1,9 @@
 <RCC>
-    <qresource prefix="/">
-        <file>files/images/control/launch.svg</file>
-        <file>files/images/status/dialog-error.svg</file>
-        <file>files/images/status/dialog-warning.svg</file>
-        <file>files/images/control/land.svg</file>
-        <file>files/images/actions/media-record.svg</file>
-        <file>files/images/actions/media-playback-stop.svg</file>
-        <file>files/images/actions/media-playback-start.svg</file>
-        <file>files/images/actions/media-playback-pause.svg</file>
-        <file>files/images/actions/list-remove.svg</file>
-        <file>files/images/actions/list-add.svg</file>
-        <file>files/images/actions/go-up.svg</file>
-        <file>files/images/actions/go-top.svg</file>
-        <file>files/images/actions/go-previous.svg</file>
-        <file>files/images/actions/go-next.svg</file>
-        <file>files/images/actions/go-last.svg</file>
-        <file>files/images/actions/go-jump.svg</file>
-        <file>files/images/actions/go-home.svg</file>
-        <file>files/images/actions/go-first.svg</file>
-        <file>files/images/actions/go-down.svg</file>
-        <file>files/images/actions/go-bottom.svg</file>
-        <file>files/images/actions/process-stop.svg</file>
-        <file>files/images/categories/preferences-system.svg</file>
-        <file>files/images/categories/applications-system.svg</file>
-        <file>files/images/categories/applications-internet.svg</file>
-        <file>files/images/categories/applications-development.svg</file>
-        <file>files/images/devices/network-wireless.svg</file>
-        <file>files/images/devices/network-wired.svg</file>
-        <file>files/images/apps/utilities-terminal.svg</file>
-        <file>files/images/apps/utilities-system-monitor.svg</file>
-        <file>files/images/apps/accessories-text-editor.svg</file>
-        <file>files/images/apps/accessories-calculator.svg</file>
-        <file>files/images/devices/input-gaming.svg</file>
-        <file>files/images/mavs/helicopter.svg</file>
-        <file>files/images/mavs/unknown.svg</file>
-        <file>files/images/mavs/fixed-wing.svg</file>
-        <file>files/images/mavs/groundstation.svg</file>
-        <file>files/images/mavs/generic.svg</file>
-        <file>files/images/mavs/quadrotor.svg</file>
-        <file>files/images/mavs/coaxial.svg</file>
-        <file>files/images/mavs/airship.svg</file>
-        <file>files/images/mavs/antenna-tracker.svg</file>
-        <file>files/images/mavs/flapping-wing.svg</file>
-        <file>files/images/mavs/free-balloon.svg</file>
-        <file>files/images/mavs/ground-rover.svg</file>
-        <file>files/images/mavs/hexarotor.svg</file>
-        <file>files/images/mavs/kite.svg</file>
-        <file>files/images/mavs/octorotor.svg</file>
-        <file>files/images/mavs/rocket.svg</file>
-        <file>files/images/mavs/submarine.svg</file>
-        <file>files/images/mavs/surface-boat.svg</file>
-        <file>files/images/mavs/tricopter.svg</file>
-        <file>files/images/actions/system-shutdown.svg</file>
-        <file>files/images/actions/system-log-out.svg</file>
-        <file>files/images/actions/system-lock-screen.svg</file>
-        <file>files/images/status/gps.svg</file>
-        <file>files/images/status/battery_0.svg</file>
-        <file>files/images/status/battery_20.svg</file>
-        <file>files/images/status/battery_40.svg</file>
-        <file>files/images/status/battery_60.svg</file>
-        <file>files/images/status/battery_80.svg</file>
-        <file>files/images/status/battery_100.svg</file>
-        <file>files/images/status/message_megaphone.png</file>
-        <file>files/images/status/message_triangle.png</file>
-        <file>files/images/status/weather-storm.svg</file>
-        <file>files/images/status/weather-snow.svg</file>
-        <file>files/images/status/weather-showers.svg</file>
-        <file>files/images/status/weather-showers-scattered.svg</file>
-        <file>files/images/status/weather-severe-alert.svg</file>
-        <file>files/images/status/weather-overcast.svg</file>
-        <file>files/images/status/weather-few-clouds.svg</file>
-        <file>files/images/status/weather-few-clouds-night.svg</file>
-        <file>files/images/status/weather-clear.svg</file>
-        <file>files/images/status/weather-clear-night.svg</file>
-        <file>files/images/status/user-trash-full.svg</file>
-        <file>files/images/status/software-update-urgent.svg</file>
-        <file>files/images/status/software-update-available.svg</file>
-        <file>files/images/status/printer-error.svg</file>
-        <file>files/images/status/network-wireless-encrypted.svg</file>
-        <file>files/images/status/network-transmit.svg</file>
-        <file>files/images/status/network-transmit-receive.svg</file>
-        <file>files/images/status/network-receive.svg</file>
-        <file>files/images/status/network-offline.svg</file>
-        <file>files/images/status/network-idle.svg</file>
-        <file>files/images/status/network-error.svg</file>
-        <file>files/images/status/mail-attachment.svg</file>
-        <file>files/images/status/image-missing.svg</file>
-        <file>files/images/status/image-loading.svg</file>
-        <file>files/images/status/folder-visiting.svg</file>
-        <file>files/images/status/folder-open.svg</file>
-        <file>files/images/status/folder-drag-accept.svg</file>
-        <file>files/images/status/dialog-information.svg</file>
-        <file>files/images/status/battery-caution.svg</file>
-        <file>files/images/status/audio-volume-muted.svg</file>
-        <file>files/images/status/audio-volume-medium.svg</file>
-        <file>files/images/status/audio-volume-low.svg</file>
-        <file>files/images/status/audio-volume-high.svg</file>
-        <file>files/images/status/colorbars.png</file>
-        <file>files/styles/style-dark.css</file>
-        <file>files/images/splash.png</file>
-        <file>files/audio/alert.wav</file>
-        <file>demo-log.txt</file>
-        <file>files/images/mapproviders/openstreetmap.png</file>
-        <file>files/images/mapproviders/google.png</file>
-        <file>files/images/mapproviders/yahoo.png</file>
-        <file>files/images/earth.html</file>
-        <file>files/images/mapproviders/googleearth.svg</file>
-        <file>files/images/contrib/slugs.png</file>
-        <file>files/styles/style-light.css</file>
-        <file>files/images/patterns/lenna.jpg</file>
-        <file>files/images/rc_stick.svg</file>
-        <file>files/images/actions/qgroundcontrol-connect.svg</file>
-        <file>files/images/mavs/frames_plus.png</file>
-        <file>files/images/mavs/frames_x.png</file>
-        <file>files/images/mavs/frames-05.png</file>
-        <file>files/images/devices/BR-HMC5883-01-2.jpg</file>
-        <file>files/images/devices/BR-APMPWRDEAN-2.jpg</file>
-        <file>files/images/devices/AC-0004-11-2.jpg</file>
-        <file>files/images/devices/BR-0004-03-2.jpg</file>
-        <file>files/images/devices/BR-0016-01-3T.jpg</file>
-        <file>files/images/devices/MinimOSD.jpg</file>
-        <file>files/images/devices/cameraGimalPitch1.png</file>
-        <file>files/images/devices/cameraGimalRoll1.png</file>
-        <file>files/images/devices/cameraGimalYaw.png</file>
-        <file>files/images/devices/Shutter.png</file>
-        <file>files/images/actions/qgroundcontrol-generic.svg</file>
-        <file>files/images/actions/qgroundcontrol-px4.svg</file>
-        <file>files/images/actions/qgroundcontrol-apm.svg</file>
-        <file>files/images/actions/qgroundcontrol-ardrone.svg</file>
-        <file>files/images/actions/qgroundcontrol-wifi.svg</file>
-        <file>files/images/firmware/apmcopter.png</file>
-        <file>files/images/firmware/apmplane.png</file>
-        <file>files/images/firmware/apmrover.png</file>
-        <file>files/images/firmware/FW icons 2013+logos.ai</file>
-        <file>files/images/firmware/heli.png</file>
-        <file>files/images/firmware/heli_off.png</file>
-        <file>files/images/firmware/heli_on.png</file>
-        <file>files/images/firmware/hexa_off.png</file>
-        <file>files/images/firmware/hexa_on.png</file>
-        <file>files/images/firmware/hexaplus.png</file>
-        <file>files/images/firmware/hexax.png</file>
-        <file>files/images/firmware/hexay.png</file>
-        <file>files/images/firmware/octaplus.png</file>
-        <file>files/images/firmware/octax.png</file>
-        <file>files/images/firmware/octo_off.png</file>
-        <file>files/images/firmware/octo_on.png</file>
-        <file>files/images/firmware/octx.png</file>
-        <file>files/images/firmware/plane.png</file>
-        <file>files/images/firmware/plane_off.png</file>
-        <file>files/images/firmware/plane_on.png</file>
-        <file>files/images/firmware/quad_off.png</file>
-        <file>files/images/firmware/quad_on.png</file>
-        <file>files/images/firmware/quad_T_off.png</file>
-        <file>files/images/firmware/quad_T_on.png</file>
-        <file>files/images/firmware/quadplus.png</file>
-        <file>files/images/firmware/quadx.png</file>
-        <file>files/images/firmware/quady.png</file>
-        <file>files/images/firmware/rover.png</file>
-        <file>files/images/firmware/rover_off.png</file>
-        <file>files/images/firmware/rover_on.png</file>
-        <file>files/images/firmware/Tir_off.png</file>
-        <file>files/images/firmware/Tir_on.png</file>
-        <file>files/images/firmware/triy.png</file>
-        <file>files/images/firmware/X8.png</file>
-        <file>files/images/firmware/X8_on.png</file>
-        <file>files/images/firmware/Y6_off.png</file>
-        <file>files/images/firmware/Y6_on.png</file>
-        <file>files/images/px4/airframes/quad_x.png</file>
-        <file>files/images/px4/airframes/quad_+.png</file>
-        <file>files/images/px4/airframes/octo_+.png</file>
-        <file>files/images/px4/airframes/hexa_+.png</file>
-        <file>files/images/px4/airframes/hexa_x.png</file>
-        <file>files/images/px4/airframes/octo_x.png</file>
-        <file>files/images/px4/airframes/flying_wing.png</file>
-        <file>files/images/px4/airframes/plane_ert.png</file>
-        <file>files/images/px4/airframes/plane_aert.png</file>
-        <file>files/images/px4/airframes/quad_h.png</file>
-        <file>files/images/px4/calibration/arrows.png</file>
-        <file>files/images/px4/calibration/accel_back.png</file>
-        <file>files/images/px4/calibration/accel_front.png</file>
-        <file>files/images/px4/calibration/accel_right.png</file>
-        <file>files/images/px4/calibration/accel_down.png</file>
-        <file>files/images/px4/calibration/accel_up.png</file>
-        <file>files/images/px4/calibration/accel_left.png</file>
-        <file>files/images/px4/calibration/mag_calibration_figure8.png</file>
-        <file>files/images/px4/calibration/mode1/radioCenter.png</file>
-        <file>files/images/px4/calibration/mode1/radioHome.png</file>
-        <file>files/images/px4/calibration/mode1/radioRollLeft.png</file>
-        <file>files/images/px4/calibration/mode1/radioRollRight.png</file>
-        <file>files/images/px4/calibration/mode1/radioPitchUp.png</file>
-        <file>files/images/px4/calibration/mode1/radioPitchDown.png</file>
-        <file>files/images/px4/calibration/mode1/radioYawLeft.png</file>
-        <file>files/images/px4/calibration/mode1/radioYawRight.png</file>
-        <file>files/images/px4/calibration/mode1/radioThrottleUp.png</file>
-        <file>files/images/px4/calibration/mode1/radioThrottleDown.png</file>
-        <file>files/images/px4/calibration/mode1/radioSwitchMinMax.png</file>
-        <file>files/images/px4/calibration/mode2/radioCenter.png</file>
-        <file>files/images/px4/calibration/mode2/radioHome.png</file>
-        <file>files/images/px4/calibration/mode2/radioRollLeft.png</file>
-        <file>files/images/px4/calibration/mode2/radioRollRight.png</file>
-        <file>files/images/px4/calibration/mode2/radioPitchUp.png</file>
-        <file>files/images/px4/calibration/mode2/radioPitchDown.png</file>
-        <file>files/images/px4/calibration/mode2/radioYawLeft.png</file>
-        <file>files/images/px4/calibration/mode2/radioYawRight.png</file>
-        <file>files/images/px4/calibration/mode2/radioThrottleUp.png</file>
-        <file>files/images/px4/calibration/mode2/radioThrottleDown.png</file>
-        <file>files/images/px4/calibration/mode2/radioSwitchMinMax.png</file>
-        <file>files/images/px4/menu/sensors.png</file>
-        <file>files/images/px4/menu/firmware_upgrade.png</file>
-        <file>files/images/px4/menu/plane.png</file>
-        <file>files/images/px4/menu/remote.png</file>
-        <file>files/images/px4/menu/cogwheels.png</file>
-        <file>files/images/px4/rc/cessna_back.png</file>
-        <file>files/images/px4/rc/cessna_side.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_15.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_14.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_13.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_12.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_19.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_18.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_17.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_16.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_07.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_06.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_04.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_03.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_02.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_01.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_24.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_00.png</file>
-        <file>files/images/px4/menu/toggle_switch.png</file>
-        <file>files/images/px4/boards/px4flow_1.x.png</file>
-        <file>files/images/px4/boards/px4fmu_1.x.png</file>
-        <file>files/images/px4/boards/px4fmu_2.x.png</file>
-    </qresource>
-    <qresource prefix="/general">
-        <file alias="vera.ttf">files/styles/Vera.ttf</file>
-    </qresource>
     <qresource prefix="/unittest">
-        <file alias="MockLink.param">src/qgcunittest/MockLink.param</file>
+        <file alias="MockLink.params">src/comm/MockLink.params</file>
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
-    <qresource prefix="/QLoggingCategory">
-        <file alias="qtlogging.ini">files/QLoggingCategory/qtlogging.ini</file>
-    </qresource>
+
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>
         <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
@@ -263,34 +23,40 @@
         <file alias="QGroundControl/Controls/QGCComboBox.qml">src/QmlControls/QGCComboBox.qml</file>
         <file alias="QGroundControl/Controls/QGCColoredImage.qml">src/QmlControls/QGCColoredImage.qml</file>
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">src/QmlControls/QGCToolBarButton.qml</file>
+        <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
 
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
-
+        <file alias="QGroundControl/Controls/VehicleSummaryRow.qml">src/QmlControls/VehicleSummaryRow.qml</file>
         <file alias="QGroundControl/Controls/arrow-down.png">src/QmlControls/arrow-down.png</file>
+        <file alias="QGroundControl/Controls/ViewWidget.qml">src/ViewWidgets/ViewWidget.qml</file>
+        <file alias="QGroundControl/Controls/ParameterEditor.qml">src/QmlControls/ParameterEditor.qml</file>
 
-        <file alias="octo_x.png">files/images/px4/airframes/octo_x.png</file>
-        <file alias="px4fmu_2.x.png">files/images/px4/boards/px4fmu_2.x.png</file>
-        <file alias="SetupViewButtons.qml">src/VehicleSetup/SetupViewButtons.qml</file>
+        <file alias="ParameterEditorWidget.qml">src/ViewWidgets/ParameterEditorWidget.qml</file>
+
+        <file alias="SetupViewButtonsConnected.qml">src/VehicleSetup/SetupViewButtonsConnected.qml</file>
+        <file alias="SetupViewButtonsDisconnected.qml">src/VehicleSetup/SetupViewButtonsDisconnected.qml</file>
+
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
-
+        <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
+        <file alias="PowerComponent.qml">src/AutoPilotPlugins/PX4/PowerComponent.qml</file>
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
         <file alias="FlightModesComponent.qml">src/AutoPilotPlugins/PX4/FlightModesComponent.qml</file>
-
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
+        <file alias="PowerComponentSummary.qml">src/AutoPilotPlugins/PX4/PowerComponentSummary.qml</file>
         <file alias="SensorsComponentSummary.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
         <file alias="SensorsComponentSummaryFixedWing.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml</file>
         <file alias="RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/RadioComponentSummary.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
-
-        <file alias="SafetyComponentTree.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.png</file>
+        <file alias="SafetyComponentTree.svg">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.svg</file>
         <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentHome.png</file>
         <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentArrowDown.png</file>
         <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentPlane.png</file>
+
         <file alias="VehicleDown.png">src/AutoPilotPlugins/PX4/Images/VehicleDown.png</file>
         <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
         <file alias="VehicleLeft.png">src/AutoPilotPlugins/PX4/Images/VehicleLeft.png</file>
@@ -298,18 +64,198 @@
         <file alias="VehicleNoseDown.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDown.png</file>
         <file alias="VehicleTailDown.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
 
-        <file alias="QGroundControl/Controls/subMenuButtonImage.png">files/Setup/cogwheels.png</file>
+        <file alias="VehicleDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleDownRotate.png</file>
+        <file alias="VehicleLeftRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleLeftRotate.png</file>
+        <file alias="VehicleNoseDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDownRotate.png</file>
+
+        <!-- Airframe component resourecs -->
+        <file alias="AirframeComponent.qml">src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
+        <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/PX4/Images/AirframeStandardPlane.png</file>
+        <file alias="AirframeFlyingWing.png">src/AutoPilotPlugins/PX4/Images/AirframeFlyingWing.png</file>
+        <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorX.png</file>
+        <file alias="AirframeQuadRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorPlus.png</file>
+        <file alias="AirframeOctoRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorX.png</file>
+        <file alias="AirframeOctoRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorPlus.png</file>
+        <file alias="AirframeHexaRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorX.png</file>
+        <file alias="AirframeHexaRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorPlus.png</file>
+        <file alias="AirframeQuadRotorH.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorH.png</file>
+        <file alias="AirframeSimulation.png">src/AutoPilotPlugins/PX4/Images/AirframeSimulation.png</file>
+
+        <file alias="QGroundControl/Controls/subMenuButtonImage.png">resources/CogWheels.png</file>
         <file alias="QGroundControl/Controls/SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SensorsComponentIcon.png</file>
         <file alias="QGroundControl/Controls/RadioComponentIcon.png">src/AutoPilotPlugins/PX4/Images/RadioComponentIcon.png</file>
         <file alias="QGroundControl/Controls/FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
         <file alias="QGroundControl/Controls/AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/Images/AirframeComponentIcon.png</file>
         <file alias="QGroundControl/Controls/SafetyComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentIcon.png</file>
+        <file alias="QGroundControl/Controls/PowerComponentIcon.png">src/AutoPilotPlugins/PX4/Images/PowerComponentIcon.png</file>
         <file alias="QGroundControl/Controls/FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="QGroundControl/Controls/VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
 
+        <file alias="PowerComponentBattery_01cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_01cell.svg</file>
+        <file alias="PowerComponentBattery_02cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_02cell.svg</file>
+        <file alias="PowerComponentBattery_03cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_03cell.svg</file>
+        <file alias="PowerComponentBattery_04cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_04cell.svg</file>
+        <file alias="PowerComponentBattery_05cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg</file>
+        <file alias="PowerComponentBattery_06cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg</file>
+        <!-- QML Main UI -->
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
+        <file alias="FlightDisplay.qml">src/ui/flightdisplay/FlightDisplay.qml</file>
+        <file alias="MapDisplay.qml">src/ui/mapdisplay/MapDisplay.qml</file>
+        <!-- QML Main UI Components -->
+        <file alias="QGroundControl/FlightControls/qmldir">src/ui/qmlcommon/qmldir</file>
+        <file alias="QGroundControl/FlightControls/QGCAltitudeWidget.qml">src/ui/qmlcommon/QGCAltitudeWidget.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCAttitudeWidget.qml">src/ui/qmlcommon/QGCAttitudeWidget.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCAttitudeInstrument.qml">src/ui/qmlcommon/QGCAttitudeInstrument.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCCompass.qml">src/ui/qmlcommon/QGCCompass.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCCompassInstrument.qml">src/ui/qmlcommon/QGCCompassInstrument.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCCurrentAltitude.qml">src/ui/qmlcommon/QGCCurrentAltitude.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCCurrentSpeed.qml">src/ui/qmlcommon/QGCCurrentSpeed.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCMapBackground.qml">src/ui/qmlcommon/QGCMapBackground.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCPitchWidget.qml">src/ui/qmlcommon/QGCPitchWidget.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCSpeedWidget.qml">src/ui/qmlcommon/QGCSpeedWidget.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCSlider.qml">src/ui/qmlcommon/QGCSlider.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCWaypointEditor.qml">src/ui/qmlcommon/QGCWaypointEditor.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCMapToolButton.qml">src/ui/qmlcommon/QGCMapToolButton.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCArtificialHorizon.qml">src/ui/qmlcommon/QGCArtificialHorizon.qml</file>
+        <!-- QML Main UI Resources -->
+        <file alias="compass.svg">src/ui/qmlcommon/compass.svg</file>
+        <file alias="compassNeedle.svg">src/ui/qmlcommon/compassNeedle.svg</file>
+        <file alias="crossHair.svg">src/ui/qmlcommon/crossHair.svg</file>
+        <file alias="rollDialWhite.svg">src/ui/qmlcommon/rollDialWhite.svg</file>
+        <file alias="rollPointerWhite.svg">src/ui/qmlcommon/rollPointerWhite.svg</file>
+        <file alias="scale.png">src/ui/qmlcommon/scale.png</file>
+        <file alias="scale_end.png">src/ui/qmlcommon/scale_end.png</file>
+        <file alias="buttonLeft.svg">src/ui/qmlcommon/buttonLeft.svg</file>
+        <file alias="buttonRight.svg">src/ui/qmlcommon/buttonRight.svg</file>
+        <file alias="buttonHome.svg">src/ui/qmlcommon/buttonHome.svg</file>
+        <file alias="buttonMore.svg">src/ui/qmlcommon/buttonMore.svg</file>
+        <file alias="attitudeInstrument.svg">src/ui/qmlcommon/attitudeInstrument.svg</file>
+        <file alias="attitudeDial.svg">src/ui/qmlcommon/attitudeDial.svg</file>
+        <file alias="attitudePointer.svg">src/ui/qmlcommon/attitudePointer.svg</file>
+        <file alias="compassInstrumentAirplane.svg">src/ui/qmlcommon/compassInstrumentAirplane.svg</file>
+        <file alias="compassInstrumentDial.svg">src/ui/qmlcommon/compassInstrumentDial.svg</file>
     </qresource>
+
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
+    </qresource>
+
+    <qresource prefix="/res">
+        <file alias="LeftArrow">resources/LeftArrow.svg</file>
+        <file alias="RightArrow">resources/RightArrow.svg</file>
+        <file alias="DownArrow">resources/DownArrow.svg</file>
+        <file alias="UpArrow">resources/UpArrow.svg</file>
+        <file alias="BottomArrow">resources/BottomArrow.svg</file>
+        <file alias="JumpArrow">resources/JumpArrow.svg</file>
+
+        <file alias="PlusSign">resources/PlusSign.svg</file>
+        <file alias="MinusSign">resources/MinusSign.svg</file>
+
+        <file alias="Play">resources/Play.svg</file>
+        <file alias="Pause">resources/Pause.svg</file>
+        <file alias="Stop">resources/Stop.svg</file>
+
+        <file alias="Launch">resources/Launch.svg</file>
+        <file alias="Land">resources/Land.svg</file>
+        <file alias="Kill">resources/Kill.svg</file>
+        <file alias="Shutdown">resources/Shutdown.svg</file>
+
+        <file alias="AntennaT">resources/Antenna_T.svg</file>
+        <file alias="AntennaRC">resources/Antenna_RC.svg</file>
+        <file alias="Gps">resources/Gps.svg</file>
+        <file alias="Megaphone">resources/Megaphone.png</file>
+        <file alias="Yield">resources/Yield.png</file>
+
+        <file alias="Battery_0">resources/Battery_0.svg</file>
+        <file alias="Battery_20">resources/Battery_20.svg</file>
+        <file alias="Battery_40">resources/Battery_40.svg</file>
+        <file alias="Battery_60">resources/Battery_60.svg</file>
+        <file alias="Battery_80">resources/Battery_80.svg</file>
+        <file alias="Battery_100">resources/Battery_100.svg</file>
+
+        <file alias="SystemLockScreen">resources/SystemLockScreen.svg</file>
+
+        <file alias="SplashScreen">resources/SplashScreen.png</file>
+
+        <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
+    </qresource>
+
+    <qresource prefix="/res/mavs">
+        <file alias="Helicopter">resources/mavs/helicopter.svg</file>
+        <file alias="Unknown">resources/mavs/unknown.svg</file>
+        <file alias="FixedWing">resources/mavs/fixed-wing.svg</file>
+        <file alias="Groundstation">resources/mavs/groundstation.svg</file>
+        <file alias="Generic">resources/mavs/generic.svg</file>
+        <file alias="QuadRotor">resources/mavs/quadrotor.svg</file>
+        <file alias="Coaxial">resources/mavs/coaxial.svg</file>
+        <file alias="Airship">resources/mavs/airship.svg</file>
+        <file alias="AntennaTracker">resources/mavs/antenna-tracker.svg</file>
+        <file alias="FlappingWing">resources/mavs/flapping-wing.svg</file>
+        <file alias="FreeBallon">resources/mavs/free-balloon.svg</file>
+        <file alias="GroundRover">resources/mavs/ground-rover.svg</file>
+        <file alias="HexaRotor">resources/mavs/hexarotor.svg</file>
+        <file alias="Kite">resources/mavs/kite.svg</file>
+        <file alias="OctoRotor">resources/mavs/octorotor.svg</file>
+        <file alias="Rocket">resources/mavs/rocket.svg</file>
+        <file alias="Submarine">resources/mavs/submarine.svg</file>
+        <file alias="SurfaceBoat">resources/mavs/surface-boat.svg</file>
+        <file alias="TriCopter">resources/mavs/tricopter.svg</file>
+    </qresource>
+
+    <qresource prefix="/res/mapproviders">
+        <file alias="openstreetmap.png">resources/mapproviders/openstreetmap.png</file>
+        <file alias="google.png">resources/mapproviders/google.png</file>
+        <file alias="yahoo.png">resources/mapproviders/yahoo.png</file>
+        <file alias="googleearth.svg">resources/mapproviders/googleearth.svg</file>
+    </qresource>
+
+    <qresource prefix="/res/calibration">
+        <file alias ="accel_back.png">resources/calibration/accel_back.png</file>
+        <file alias="accel_front.png">resources/calibration/accel_front.png</file>
+        <file alias="accel_right.png">resources/calibration/accel_right.png</file>
+        <file alias="accel_down.png">resources/calibration/accel_down.png</file>
+        <file alias="accel_up.png">resources/calibration/accel_up.png</file>
+        <file alias="accel_left.png">resources/calibration/accel_left.png</file>
+    </qresource>
+
+    <qresource prefix="/res/calibration/mode1">
+        <file alias="radioCenter.png">resources/calibration/mode1/radioCenter.png</file>
+        <file alias="radioHome.png">resources/calibration/mode1/radioHome.png</file>
+        <file alias="radioRollLeft.png">resources/calibration/mode1/radioRollLeft.png</file>
+        <file alias="radioRollRight.png">resources/calibration/mode1/radioRollRight.png</file>
+        <file alias="radioPitchUp.png">resources/calibration/mode1/radioPitchUp.png</file>
+        <file alias="radioPitchDown.png">resources/calibration/mode1/radioPitchDown.png</file>
+        <file alias="radioYawLeft.png">resources/calibration/mode1/radioYawLeft.png</file>
+        <file alias="radioYawRight.png">resources/calibration/mode1/radioYawRight.png</file>
+        <file alias="radioThrottleUp.png">resources/calibration/mode1/radioThrottleUp.png</file>
+        <file alias="radioThrottleDown.png">resources/calibration/mode1/radioThrottleDown.png</file>
+        <file alias="radioSwitchMinMax.png">resources/calibration/mode1/radioSwitchMinMax.png</file>
+    </qresource>
+
+    <qresource prefix="/res/calibration/mode2">
+        <file alias="radioCenter.png">resources/calibration/mode2/radioCenter.png</file>
+        <file alias="radioHome.png">resources/calibration/mode2/radioHome.png</file>
+        <file alias="radioRollLeft.png">resources/calibration/mode2/radioRollLeft.png</file>
+        <file alias="radioRollRight.png">resources/calibration/mode2/radioRollRight.png</file>
+        <file alias="radioPitchUp.png">resources/calibration/mode2/radioPitchUp.png</file>
+        <file alias="radioPitchDown.png">resources/calibration/mode2/radioPitchDown.png</file>
+        <file alias="radioYawLeft.png">resources/calibration/mode2/radioYawLeft.png</file>
+        <file alias="radioYawRight.png">resources/calibration/mode2/radioYawRight.png</file>
+        <file alias="radioThrottleUp.png">resources/calibration/mode2/radioThrottleUp.png</file>
+        <file alias="radioThrottleDown.png">resources/calibration/mode2/radioThrottleDown.png</file>
+        <file alias="radioSwitchMinMax.png">resources/calibration/mode2/radioSwitchMinMax.png</file>
+    </qresource>
+
+    <qresource prefix="/res/styles">
+        <file alias="style-dark.css">resources/styles/style-dark.css</file>
+        <file alias="style-light.css">resources/styles/style-light.css</file>
+    </qresource>
+
+    <qresource prefix="/res/fonts">
+        <file alias="vera.ttf">resources/styles/Vera.ttf</file>
+    </qresource>
+
+    <qresource prefix="/res/audio">
+        <file alias="Alert">resources/audio/alert.wav</file>
     </qresource>
 </RCC>

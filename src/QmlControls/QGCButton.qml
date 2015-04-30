@@ -4,7 +4,7 @@ import QtQuick.Controls.Styles 1.2
 import QtQuick.Controls.Private 1.0
 
 import QGroundControl.Palette 1.0
-import QGroundControl.MousePosition 1.0
+import QGroundControl.ScreenTools 1.0
 
 Button {
     // primary: true - this is the primary button for this group of buttons
@@ -23,17 +23,15 @@ Button {
     property int __lastGlobalMouseX: 0
     property int __lastGlobalMouseY: 0
 
-    property MousePosition __globalMousePosition: MousePosition { }
-
     Connections {
         target: __behavior
         onMouseXChanged: {
-            __lastGlobalMouseX = __globalMousePosition.mouseX
-            __lastGlobalMouseY = __globalMousePosition.mouseY
+            __lastGlobalMouseX = ScreenTools.mouseX
+            __lastGlobalMouseY = ScreenTools.mouseY
         }
         onMouseYChanged: {
-            __lastGlobalMouseX = __globalMousePosition.mouseX
-            __lastGlobalMouseY = __globalMousePosition.mouseY
+            __lastGlobalMouseX = ScreenTools.mouseX
+            __lastGlobalMouseY = ScreenTools.mouseY
         }
         onEntered: { __forceHoverOff; false; hoverTimer.start() }
         onExited: { __forceHoverOff; false; hoverTimer.stop() }
@@ -45,7 +43,7 @@ Button {
         repeat:     true
 
         onTriggered: {
-            if (__lastGlobalMouseX != __globalMousePosition.mouseX || __lastGlobalMouseY != __globalMousePosition.mouseY) {
+            if (__lastGlobalMouseX != ScreenTools.mouseX || __lastGlobalMouseY != ScreenTools.mouseY) {
                 __forceHoverOff = true
             } else {
                 __forceHoverOff = false
@@ -103,10 +101,13 @@ Button {
                     }
 
                     Text {
-                        id: text
-                        renderType: Text.NativeRendering
+                        id:             text
+                        antialiasing:   true
+                        text:           control.text
+                        font.pointSize: ScreenTools.defaultFontPointSize
+
                         anchors.verticalCenter: parent.verticalCenter
-                        text: control.text
+
                         color: __showHighlight ?
                             control.__qgcPal.buttonHighlightText :
                             (primary ? control.__qgcPal.primaryButtonText : control.__qgcPal.buttonText)

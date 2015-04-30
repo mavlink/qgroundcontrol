@@ -49,7 +49,6 @@
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "UDPLink.h"
-#include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
 #include "QGCSingleton.h"
 #include "LinkManager.h"
@@ -59,7 +58,10 @@
 #include "QGCTemporaryFile.h"
 #include "QGCFileDialog.h"
 #include "QGCPalette.h"
-#include "MousePosition.h"
+#include "ScreenTools.h"
+#include "QGCLoggingCategory.h"
+#include "ViewWidgetController.h"
+#include "ParameterEditorController.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -78,8 +80,20 @@ const char* QGCApplication::_defaultSavedFileDirectoryName = "QGroundControl";
 const char* QGCApplication::_savedFileMavlinkLogDirectoryName = "FlightData";
 const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters";
 
-const char* QGCApplication::_darkStyleFile = ":files/styles/style-dark.css";
-const char* QGCApplication::_lightStyleFile = ":files/styles/style-light.css";
+const char* QGCApplication::_darkStyleFile = ":/res/styles/style-dark.css";
+const char* QGCApplication::_lightStyleFile = ":/res/styles/style-light.css";
+
+/**
+ * @brief ScreenTools creation callback
+ *
+ * This is called by the QtQuick engine for creating the singleton
+ **/
+
+static QObject* screenToolsSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    ScreenTools* screenTools = new ScreenTools;
+    return screenTools;
+}
 
 /**
  * @brief Constructor for the main application.
@@ -101,8 +115,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     _app = this;
 
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
+#ifndef __android__
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+#endif
 
+#ifdef __android__
+    QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
+#endif
+    
+#ifndef __android__
 #ifdef QT_DEBUG
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
     // it to the correct location. This way default debug builds will have logging turned off.
@@ -128,13 +149,23 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     if (loggingDirectoryOk) {
         qDebug () << iniFileLocation;
         if (!iniFileLocation.exists(qtLoggingFile)) {
-            if (!QFile::copy(":QLoggingCategory/qtlogging.ini", iniFileLocation.filePath(qtLoggingFile))) {
-                qDebug() << "Unable to copy" << QString(qtLoggingFile) << "to" << iniFileLocation;
+            QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
+            if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                QTextStream out(&loggingFile);
+                out << "[Rules]\n";
+                out << "*Log.debug=false\n";
+                foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
+                    out << category << ".debug=false\n";
+                }
+            } else {
+                qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
             }
         }
     }
 #endif
+#endif
 
+    
     // Set application information
     if (_runningUnitTests) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
@@ -242,7 +273,7 @@ void QGCApplication::_initCommon(void)
 
     // Load application font
     QFontDatabase fontDatabase = QFontDatabase();
-    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
+    const QString fontFileName = ":/res/fonts/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
     //const QString fontFamilyName = "Bitstream Vera Sans";
     if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
     fontDatabase.addApplicationFont(fontFileName);
@@ -252,7 +283,11 @@ void QGCApplication::_initCommon(void)
     
     // Register our Qml objects
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
-    qmlRegisterType<MousePosition>("QGroundControl.MousePosition", 1, 0, "MousePosition");
+	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
+	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    //-- Create QML Singleton Interfaces
+    qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
+
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
@@ -262,7 +297,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     _createSingletons();
 
     // Show splash screen
-    QPixmap splashImage(":/files/images/splash.png");
+    QPixmap splashImage(":/res/SplashScreen");
     QSplashScreen* splashScreen = new QSplashScreen(splashImage);
     // Delete splash screen after mainWindow was displayed
     splashScreen->setAttribute(Qt::WA_DeleteOnClose);
@@ -443,6 +478,7 @@ void QGCApplication::_createSingletons(void)
     MAVLinkProtocol* mavlink = MAVLinkProtocol::_createSingleton();
     Q_UNUSED(mavlink);
     Q_ASSERT(mavlink);
+
 }
 
 void QGCApplication::_destroySingletons(void)
@@ -557,9 +593,33 @@ void QGCApplication::_loadCurrentStyle(void)
             success = false;
         }
     }
+    
+    // Now that we have the styles loaded we need to dpi adjust the font point sizes
+    
+    QString dpiAdjustedStyles;
+    if (success) {
+        QTextStream styleStream(&styles, QIODevice::ReadOnly);
+        QRegularExpression regex("font-size:.+(\\d\\d)pt;");
+        
+        while (!styleStream.atEnd()) {
+            QString adjustedLine;
+            QString line = styleStream.readLine();
+            
+            QRegularExpressionMatch match = regex.match(line);
+            if (match.hasMatch()) {
+                //qDebug() << "found:" << line << match.captured(1);
+                adjustedLine = QString("font-size: %1pt;").arg(ScreenTools::adjustFontPointSize_s(match.captured(1).toDouble()));
+                //qDebug() << "adjusted:" << adjustedLine;
+            } else {
+                adjustedLine = line;
+            }
+            
+            dpiAdjustedStyles += adjustedLine;
+        }
+    }
 
-    if (!styles.isEmpty()) {
-        setStyleSheet(styles);
+    if (!dpiAdjustedStyles.isEmpty()) {
+        setStyleSheet(dpiAdjustedStyles);
     }
 
     if (!success) {
@@ -571,4 +631,36 @@ void QGCApplication::_loadCurrentStyle(void)
 
     // Finally restore the cursor before returning.
     restoreOverrideCursor();
+}
+
+void QGCApplication::reconnectAfterWait(int waitSeconds)
+{
+    LinkManager* linkManager = LinkManager::instance();
+    Q_ASSERT(linkManager);
+    
+    Q_ASSERT(linkManager->getLinks().count() == 1);
+    LinkInterface* link = linkManager->getLinks()[0];
+    
+    // Save the link configuration so we can restart the link laster
+    _reconnectLinkConfig = LinkConfiguration::duplicateSettings(linkManager->getLinks()[0]->getLinkConfiguration());
+    
+    // Disconnect and wait
+    
+    linkManager->disconnectLink(link);
+    QTimer::singleShot(waitSeconds * 1000, this, &QGCApplication::_reconnect);
+}
+
+void QGCApplication::_reconnect(void)
+{
+    Q_ASSERT(_reconnectLinkConfig);
+    
+    qgcApp()->restoreOverrideCursor();
+    LinkManager::instance()->createConnectedLink(_reconnectLinkConfig);
+    _reconnectLinkConfig = NULL;
+}
+
+void QGCApplication::panicShutdown(const QString& panicMessage)
+{
+    QGCMessageBox::critical("Panic Shutdown", panicMessage);
+    ::exit(0);
 }

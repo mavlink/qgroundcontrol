@@ -833,7 +833,7 @@ bool QGCFlightGearLink::connectSimulation()
 #endif
     
     // Setup and verify directory which contains QGC provided aircraft files
-    QString qgcAircraftDir(QApplication::applicationDirPath() + "/files/flightgear/Aircraft");
+    QString qgcAircraftDir(QApplication::applicationDirPath() + "/flightgear/Aircraft");
     if (!QFileInfo(qgcAircraftDir).isDir()) {
         QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. Aircraft directory is missing: '%1'.").arg(qgcAircraftDir));
         return false;
@@ -854,7 +854,7 @@ bool QGCFlightGearLink::connectSimulation()
     }
     
     // Verify directory which contains QGC provided FlightGear communication protocol files
-    QDir qgcProtocolDir(QApplication::applicationDirPath() + "/files/flightgear/Protocol/");
+    QDir qgcProtocolDir(QApplication::applicationDirPath() + "/flightgear/Protocol/");
     if (!qgcProtocolDir.isReadable()) {
         QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. Protocol directory is missing (%1).").arg(qgcProtocolDir.path()));
         return false;

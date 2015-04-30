@@ -105,14 +105,14 @@ private:
     void _findBootloader(void);
     void _cancel(void);
     void _getFirmwareFile(void);
-    
-    void _setBoardIcon(int boardID);
-    
     void _downloadFirmware(void);
-    
     void _erase(void);
-        
     void _appendStatusLog(const QString& text);
+	bool _decompressJsonValue(const QJsonObject&	jsonObject,
+							  const QByteArray&     jsonDocBytes,
+							  const QString&		sizeKey,
+                              const QString&		bytesKey,
+                              QByteArray&			decompressedBytes);
     
     QString _portName;
     QString _portDescription;

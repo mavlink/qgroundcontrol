@@ -37,6 +37,9 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 #include <QMutex>
 #include <QMutexLocker>
 #include <QMetaType>
+#include <QSharedPointer>
+
+#include "QGCMAVLink.h"
 
 class LinkManager;
 class LinkConfiguration;
@@ -50,38 +53,10 @@ class LinkInterface : public QThread
 {
     Q_OBJECT
 
-    // Only LinkManager is allowed to _connect, _disconnect or delete a link
+    // Only LinkManager is allowed to create/delete or _connect/_disconnect a link
     friend class LinkManager;
 
 public:
-    LinkInterface() :
-        QThread(0),
-        _ownedByLinkManager(false),
-        _deletedByLinkManager(false),
-        _flaggedForDeletion(false)
-    {
-        // Initialize everything for the data rate calculation buffers.
-        inDataIndex  = 0;
-        outDataIndex = 0;
-
-        // Initialize our data rate buffers.
-        memset(inDataWriteAmounts, 0, sizeof(inDataWriteAmounts));
-        memset(inDataWriteTimes,   0, sizeof(inDataWriteTimes));
-        memset(outDataWriteAmounts,0, sizeof(outDataWriteAmounts));
-        memset(outDataWriteTimes,  0, sizeof(outDataWriteTimes));
-
-        qRegisterMetaType<LinkInterface*>("LinkInterface*");
-    }
-
-    /**
-     * @brief Destructor
-     * LinkManager take ownership of Links once they are added to it. Once added to LinkManager
-     * use LinkManager::deleteLink to remove if necessary.
-     **/
-    virtual ~LinkInterface() {
-        Q_ASSERT(!_ownedByLinkManager || _deletedByLinkManager);
-    }
-
     /**
      * @brief Get link configuration (if used)
      * @return A pointer to the instance of LinkConfiguration if supported. NULL otherwise.
@@ -89,14 +64,6 @@ public:
     virtual LinkConfiguration* getLinkConfiguration() { return NULL; }
 
     /* Connection management */
-
-    /**
-     * @brief Get the ID of this link
-     *
-     * The ID is an unsigned integer, starting at 0
-     * @return ID of this link
-     **/
-    virtual int getId() const = 0;
 
     /**
      * @brief Get the human readable name of this link
@@ -150,6 +117,10 @@ public:
     {
         return getCurrentDataRate(outDataIndex, outDataWriteTimes, outDataWriteAmounts);
     }
+    
+    /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
+    /// set into the link when it is added to LinkManager
+    uint8_t getMavlinkChannel(void) const { Q_ASSERT(_mavlinkChannelSet); return _mavlinkChannel; }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
@@ -169,7 +140,26 @@ public slots:
      * @param length The length of the data array
      **/
     virtual void writeBytes(const char *bytes, qint64 length) = 0;
-
+    
+protected:
+    // Links are only created by LinkManager so constructor is not public
+    LinkInterface() :
+        QThread(0),
+        _mavlinkChannelSet(false)
+    {
+        // Initialize everything for the data rate calculation buffers.
+        inDataIndex  = 0;
+        outDataIndex = 0;
+        
+        // Initialize our data rate buffers.
+        memset(inDataWriteAmounts, 0, sizeof(inDataWriteAmounts));
+        memset(inDataWriteTimes,   0, sizeof(inDataWriteTimes));
+        memset(outDataWriteAmounts,0, sizeof(outDataWriteAmounts));
+        memset(outDataWriteTimes,  0, sizeof(outDataWriteTimes));
+        
+        qRegisterMetaType<LinkInterface*>("LinkInterface*");
+    }
+    
 signals:
 
     /**
@@ -309,11 +299,6 @@ protected:
         return dataRate;
     }
 
-    static int getNextLinkId() {
-        static int nextId = 1;
-        return nextId++;
-    }
-
 protected slots:
 
     /**
@@ -338,10 +323,14 @@ private:
      * @return True if connection could be terminated, false otherwise
      **/
     virtual bool _disconnect(void) = 0;
-
-    bool _ownedByLinkManager;   ///< true: This link has been added to LinkManager, false: Link not added to LinkManager
-    bool _deletedByLinkManager; ///< true: Link being deleted from LinkManager, false: error, Links should only be deleted from LinkManager
-    bool _flaggedForDeletion;   ///< true: Garbage colletion ready
+    
+    /// Sets the mavlink channel to use for this link
+    void _setMavlinkChannel(uint8_t channel) { Q_ASSERT(!_mavlinkChannelSet); _mavlinkChannelSet = true; _mavlinkChannel = channel; }
+    
+    bool _mavlinkChannelSet;    ///< true: _mavlinkChannel has been set
+    uint8_t _mavlinkChannel;    ///< mavlink channel to use for this link, as used by mavlink_parse_char
 };
+
+typedef QSharedPointer<LinkInterface> SharedLinkInterface;
 
 #endif // _LINKINTERFACE_H_

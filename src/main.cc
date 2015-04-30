@@ -35,7 +35,9 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "configuration.h"
 #ifdef QT_DEBUG
+#ifndef __android__
 #include "UnitTest.h"
+#endif
 #include "CmdLineOptParser.h"
 #ifdef Q_OS_WIN
 #include <crtdbg.h>
@@ -101,6 +103,14 @@ int main(int argc, char *argv[])
     // anyway to silence the debug output.
     qRegisterMetaType<QSerialPort::SerialPortError>();
     qRegisterMetaType<QAbstractSocket::SocketError>();
+    // We statically link to the google QtLocation plugin
+
+#ifdef Q_OS_WIN
+    // In Windows, the compiler doesn't see the use of the class created by Q_IMPORT_PLUGIN
+#pragma warning( disable : 4930 4101 )
+#endif
+
+    Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryQGC)
 
     bool runUnitTests = false;          // Run unit tests
 
@@ -148,6 +158,7 @@ int main(int argc, char *argv[])
 
     int exitCode;
 
+#ifndef __android__
 #ifdef QT_DEBUG
     if (runUnitTests) {
         if (!app->_initForUnitTests()) {
@@ -163,6 +174,7 @@ int main(int argc, char *argv[])
         }
         exitCode = -failures;
     } else
+#endif
 #endif
     {
         if (!app->_initForNormalAppBoot()) {

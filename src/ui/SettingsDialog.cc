@@ -28,7 +28,9 @@
 #include "MainWindow.h"
 #include "ui_SettingsDialog.h"
 
+#ifndef __android__
 #include "JoystickWidget.h"
+#endif
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
@@ -39,7 +41,11 @@
 #include "QGCMessageBox.h"
 #include "MainToolBar.h"
 
+#ifndef __android__
 SettingsDialog::SettingsDialog(JoystickInput *joystick, QWidget *parent, int showTab, Qt::WindowFlags flags) :
+#else
+SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags flags) :
+#endif
 QDialog(parent, flags),
 _mainWindow(MainWindow::instance()),
 _ui(new Ui::SettingsDialog)
@@ -52,13 +58,17 @@ _ui(new Ui::SettingsDialog)
     move(position.topLeft());
 
     QGCLinkConfiguration*  pLinkConf     = new QGCLinkConfiguration(this);
+#ifndef __android__
     JoystickWidget*        pJoystickConf = new JoystickWidget(joystick, this);
+#endif
     MAVLinkSettingsWidget* pMavsettings  = new MAVLinkSettingsWidget(MAVLinkProtocol::instance(), this);
 
     // Add the link settings pane
     _ui->tabWidget->addTab(pLinkConf,     "Comm Links");
+#ifndef __android__
     // Add the joystick settings pane
     _ui->tabWidget->addTab(pJoystickConf, "Controllers");
+#endif
     // Add the MAVLink settings pane
     _ui->tabWidget->addTab(pMavsettings,  "MAVLink");
 
@@ -71,6 +81,7 @@ _ui(new Ui::SettingsDialog)
     _ui->showGPS->setChecked(settings.value(     TOOL_BAR_SHOW_GPS,      true).toBool());
     _ui->showMav->setChecked(settings.value(     TOOL_BAR_SHOW_MAV,      true).toBool());
     _ui->showMessages->setChecked(settings.value(TOOL_BAR_SHOW_MESSAGES, true).toBool());
+    _ui->showRSSI->setChecked(settings.value(   TOOL_BAR_SHOW_RSSI,      true).toBool());
     settings.endGroup();
     // Audio preferences
     _ui->audioMuteCheckBox->setChecked(GAudioOutput::instance()->isMuted());
@@ -102,9 +113,11 @@ _ui(new Ui::SettingsDialog)
         case ShowCommLinks:
             _ui->tabWidget->setCurrentWidget(pLinkConf);
             break;
+#ifndef __android__
         case ShowControllers:
             _ui->tabWidget->setCurrentWidget(pJoystickConf);
             break;
+#endif
         case ShowMavlink:
             _ui->tabWidget->setCurrentWidget(pMavsettings);
             break;
@@ -193,4 +206,9 @@ void SettingsDialog::on_showMessages_clicked(bool checked)
 void SettingsDialog::on_showMav_clicked(bool checked)
 {
     _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MAV, checked);
+}
+
+void SettingsDialog::on_showRSSI_clicked(bool checked)
+{
+    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_RSSI, checked);
 }

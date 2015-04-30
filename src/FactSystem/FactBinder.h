@@ -38,13 +38,25 @@ class FactBinder : public QObject
 {
     Q_OBJECT
     
+    Q_PROPERTY(int componentId READ componentId NOTIFY nameChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
     Q_PROPERTY(QVariant valueString READ valueString NOTIFY valueChanged)
-    Q_PROPERTY(QString units READ units CONSTANT)
-    
+    Q_PROPERTY(QString units READ units NOTIFY metaDataChanged)
+	Q_PROPERTY(QVariant defaultValue READ defaultValue NOTIFY metaDataChanged)
+    Q_PROPERTY(bool defaultValueAvailable READ defaultValueAvailable NOTIFY metaDataChanged)
+    Q_PROPERTY(bool valueEqualsDefault READ valueEqualsDefault NOTIFY valueChanged)
+	Q_PROPERTY(FactMetaData::ValueType_t type READ type  NOTIFY metaDataChanged)
+	Q_PROPERTY(QString shortDescription READ shortDescription NOTIFY metaDataChanged)
+	Q_PROPERTY(QString longDescription READ longDescription NOTIFY metaDataChanged)
+	Q_PROPERTY(QVariant min READ min NOTIFY metaDataChanged)
+	Q_PROPERTY(QVariant max READ max NOTIFY metaDataChanged)
+	Q_PROPERTY(QString group READ group NOTIFY metaDataChanged)
+
 public:
     FactBinder(void);
+    
+    int componentId(void) const;
     
     QString name(void) const;
     void setName(const QString& name);
@@ -54,16 +66,26 @@ public:
     
     QString valueString(void) const;
     
-    /// Read accesor for units property
-    QString units(void) const;
-    
+    QString                     units(void) const;
+	QVariant                    defaultValue(void);
+    bool                        defaultValueAvailable(void);
+    bool                        valueEqualsDefault(void);
+	FactMetaData::ValueType_t   type(void);
+	QString                     shortDescription(void);
+	QString                     longDescription(void);
+	QVariant                    min(void);
+	QVariant                    max(void);
+	QString                     group(void);
+
 signals:
     void nameChanged(void);
     void valueChanged(void);
+	void metaDataChanged(void);
     
 private:
     AutoPilotPlugin*    _autopilotPlugin;
     Fact*               _fact;
+    int                 _componentId;
 };
 
 #endif

@@ -80,20 +80,8 @@ public slots:
     bool say(QString text, int severity = 6);
     /** @brief Play alert sound and say notification message */
     bool alert(QString text);
-    /** @brief Start emergency sound */
-    bool startEmergency();
-    /** @brief Stop emergency sound */
-    bool stopEmergency();
-//    /** @brief Select female voice */
-//    void selectFemaleVoice();
-//    /** @brief Select male voice */
-//    void selectMaleVoice();
     /** @brief Play emergency sound once */
     void beep();
-    /** @brief Notify about positive event */
-    void notifyPositive();
-    /** @brief Notify about negative event */
-    void notifyNegative();
     /** @brief Mute/unmute sound */
     void mute(bool mute);
 

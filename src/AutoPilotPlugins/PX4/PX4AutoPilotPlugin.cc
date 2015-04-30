@@ -24,9 +24,9 @@
 #include "PX4AutoPilotPlugin.h"
 #include "AutoPilotPluginManager.h"
 #include "UASManager.h"
-#include "QGCUASParamManagerInterface.h"
-#include "PX4ParameterFacts.h"
+#include "PX4ParameterLoader.h"
 #include "FlightModesComponentController.h"
+#include "AirframeComponentController.h"
 #include "QGCMessageBox.h"
 
 /// @file
@@ -70,24 +70,26 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     _flightModesComponent(NULL),
     _sensorsComponent(NULL),
     _safetyComponent(NULL),
+    _powerComponent(NULL),
     _incorrectParameterVersion(false)
 {
     Q_ASSERT(uas);
     
     qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
+    qmlRegisterType<AirframeComponentController>("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
     
-    _parameterFacts = new PX4ParameterFacts(uas, this);
+    _parameterFacts = new PX4ParameterLoader(this, uas, this);
     Q_CHECK_PTR(_parameterFacts);
     
-    connect(_parameterFacts, &PX4ParameterFacts::factsReady, this, &PX4AutoPilotPlugin::_checkForIncorrectParameterVersion);
+    connect(_parameterFacts, &PX4ParameterLoader::parametersReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
+    connect(_parameterFacts, &PX4ParameterLoader::parameterListProgress, this, &PX4AutoPilotPlugin::parameterListProgress);
     
-    PX4ParameterFacts::loadParameterFactMetaData();
+    PX4ParameterLoader::loadParameterFactMetaData();
 }
 
 PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
 {
     delete _parameterFacts;
-    PX4ParameterFacts::deleteParameterFactMetaData();
 }
 
 QList<AutoPilotPluginManager::FullMode_t> PX4AutoPilotPlugin::getModes(void)
@@ -185,59 +187,60 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
 
 void PX4AutoPilotPlugin::clearStaticData(void)
 {
-    PX4ParameterFacts::clearStaticData();
+    PX4ParameterLoader::clearStaticData();
 }
 
-bool PX4AutoPilotPlugin::pluginIsReady(void) const
-{
-    return _parameterFacts->factsAreReady();
-}
-
-const QVariantList& PX4AutoPilotPlugin::components(void)
+const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         Q_ASSERT(_uas);
         
         _airframeComponent = new AirframeComponent(_uas, this);
         Q_CHECK_PTR(_airframeComponent);
+        _airframeComponent->setupTriggerSignals();
         _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
         
         _radioComponent = new RadioComponent(_uas, this);
         Q_CHECK_PTR(_radioComponent);
+        _radioComponent->setupTriggerSignals();
         _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
         
         _flightModesComponent = new FlightModesComponent(_uas, this);
         Q_CHECK_PTR(_flightModesComponent);
+        _flightModesComponent->setupTriggerSignals();
         _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
         
         _sensorsComponent = new SensorsComponent(_uas, this);
         Q_CHECK_PTR(_sensorsComponent);
+        _sensorsComponent->setupTriggerSignals();
         _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
+
+        _powerComponent = new PowerComponent(_uas, this);
+        Q_CHECK_PTR(_powerComponent);
+        _powerComponent->setupTriggerSignals();
+        _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
 
         _safetyComponent = new SafetyComponent(_uas, this);
         Q_CHECK_PTR(_safetyComponent);
+        _safetyComponent->setupTriggerSignals();
         _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
     }
     
     return _components;
 }
 
-const QVariantMap& PX4AutoPilotPlugin::parameters(void)
+/// This will perform various checks prior to signalling that the plug in ready
+void PX4AutoPilotPlugin::_pluginReadyPreChecks(void)
 {
-    return _parameterFacts->factMap();
-}
-
-QUrl PX4AutoPilotPlugin::setupBackgroundImage(void)
-{
-    return QUrl::fromUserInput("qrc:/qml/px4fmu_2.x.png");
-}
-
-void PX4AutoPilotPlugin::_checkForIncorrectParameterVersion(void)
-{
-    if (parameters().contains("SENS_GYRO_XOFF")) {
+    // Check for older parameter version set
+    // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
+    // should be used instead.
+    if (parameterExists("SENS_GYRO_XOFF")) {
         _incorrectParameterVersion = true;
-        QGCMessageBox::warning(tr("Setup"), tr("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
-                                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup."));
-    }
-    emit pluginReady();
+        QGCMessageBox::warning("Setup", "This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
+										"Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
+	}
+	
+    _pluginReady = true;
+    emit pluginReadyChanged(_pluginReady);
 }

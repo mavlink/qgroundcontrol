@@ -40,7 +40,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
-#include "QGCUASParamManager.h"
 #include "QGCUASFileManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(UASLog)
@@ -87,8 +86,6 @@ public:
 
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
-    /** @brief Get the status flag for the communication */
-    int getCommunicationStatus() const;
     /** @brief Add one measurement and get low-passed voltage */
     float filterVoltage(float value) const;
     /** @brief Get the links associated with this robot */
@@ -341,10 +338,13 @@ protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
     QMap<int, QString> components;///< IDs and names of all detected onboard components
-    QList<LinkInterface*> links;  ///< List of links this UAS can be reached by
+    
+    /// List of all links associated with this UAS. We keep SharedLinkInterface objects which are QSharedPointer's in order to
+    /// maintain reference counts across threads. This way Link deletion works correctly.
+    QList<SharedLinkInterface> _links;
+    
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
-    CommStatus commStatus;        ///< Communication status
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
     quint64 lastHeartbeat;        ///< Time of the last heartbeat message
@@ -461,11 +461,6 @@ protected: //COMMENTS FOR TEST UNIT
     bool blockHomePositionChanges;   ///< Block changes to the home position
     bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
 
-    /// PARAMETERS
-    QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
-    bool paramsOnceRequested;       ///< If the parameter list has been read at least once
-    QGCUASParamManager paramMgr; ///< Parameter manager for this UAS
-
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
 
@@ -492,11 +487,6 @@ public:
         return &waypointManager;
     }
 
-    /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManagerInterface* getParamManager()  {
-        return &paramMgr;
-    }
-
     virtual QGCUASFileManager* getFileManager() {
         return &fileManager;
     }
@@ -507,7 +497,8 @@ public:
     }
 
 
-    int getSystemType();
+    int  getSystemType();
+    bool isAirplane();
 
     /**
      * @brief Returns true for systems that can reverse. If the system has no control over position, it returns false as
@@ -796,8 +787,6 @@ public slots:
 
     /** @brief Add a link associated with this robot */
     void addLink(LinkInterface* link);
-    /** @brief Remove a link associated with this robot */
-    void removeLink(QObject* object);
 
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(LinkInterface* link, mavlink_message_t message);
@@ -812,9 +801,6 @@ public slots:
     /** @brief Send a message over all links this UAS can be reached with (!= all links) */
     void sendMessage(mavlink_message_t message);
 
-    /** @brief Temporary Hack for sending packets to patch Antenna. Send a message over all serial links except for this UAS's */
-    void forwardMessage(mavlink_message_t message);
-
     /** @brief Set this UAS as the system currently in focus, e.g. in the main display widgets */
     void setSelected();
 
@@ -823,25 +809,6 @@ public slots:
 
     /** @brief Set current mode of operation, e.g. auto or manual, does not check the arming status, for anything else than arming/disarming operations use setMode instead */
     void setModeArm(uint8_t newBaseMode, uint32_t newCustomMode);
-
-    /** @brief Request a single parameter by name */
-    void requestParameter(int component, const QString& parameter);
-    /** @brief Request a single parameter by index */
-    void requestParameter(int component, int id);
-
-    /** @brief Set a system parameter */
-    void setParameter(const int compId, const QString& paramId, const QVariant& value);
-
-    /** @brief Write parameters to permanent storage */
-    void writeParametersToStorage();
-    /** @brief Read parameters from permanent storage */
-    void readParametersFromStorage();
-
-    /** @brief Get the names of all parameters */
-    QList<QString> getParameterNames(int component);
-
-    /** @brief Get the ids of all components */
-    QList<int> getComponentIds();
 
     void enableAllDataTransmission(int rate);
     void enableRawSensorDataTransmission(int rate);
@@ -866,11 +833,8 @@ public slots:
     /** @brief Add an offset in body frame to the setpoint */
     void setLocalPositionOffset(float x, float y, float z, float yaw);
 
-    void startRadioControlCalibration(int param=1);
-    void endRadioControlCalibration();
-    void startMagnetometerCalibration();
-    void startGyroscopeCalibration();
-    void startPressureCalibration();
+    void startCalibration(StartCalibrationType calType);
+    void stopCalibration(void);
 
     void startDataRecording();
     void stopDataRecording();
@@ -930,7 +894,6 @@ protected:
     quint64 getUnixReferenceTime(quint64 time);
 
     virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
-    virtual void processParamValueMsgHook(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue) { Q_UNUSED(msg); Q_UNUSED(paramName); Q_UNUSED(rawValue); Q_UNUSED(paramValue); };
 
     int componentID[256];
     bool componentMulti[256];
@@ -952,6 +915,12 @@ protected slots:
     void writeSettings();
     /** @brief Read settings from disk */
     void readSettings();
+    
+private slots:
+    void _linkDisconnected(LinkInterface* link);
+    
+private:
+    bool _containsLink(LinkInterface* link);
 };
 
 

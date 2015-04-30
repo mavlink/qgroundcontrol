@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<!--
+************************************************************************
+Rascal 110 R/C airplane config. This files ties together all the components
+used by FGFS to represent the Rascal 110 (by Sig Mfg) including the flight
+dynamics model, and external 3D model.
+************************************************************************
+-->
+
+<PropertyList>
+ <sim>
+
+  <description>Easy Star (R/C)</description>
+  <author>Ken Northup, 3d model </author>
+  <author>Ron Jensen, 3d model, FDM</author>
+  <aircraft-version>0.0</aircraft-version>
+
+
+  <flight-model>jsb</flight-model>
+  <aero>easystar</aero>
+  <!--
+  <systems>
+   <autopilot>
+    <path>Aircraft/Malolo1/Systems/110-autopilot.xml</path>
+   </autopilot>
+   <electrical>
+    <path>Aircraft/Malolo1/Systems/electrical.xml</path>
+   </electrical>
+  </systems> -->
+
+  <sound>
+   <path>Aircraft/Generic/generic-sound.xml</path>
+  </sound>
+
+  <panel>
+   <visibility archive="n">false</visibility>
+  </panel>
+
+  <model>
+   <path archive="y">Aircraft/EasyStar/Models/easystar.xml</path>
+  </model>
+  
+  <view>
+   <internal archive="y">true</internal>
+   <config>
+     <x-offset-m archive="y">0.0</x-offset-m>
+     <y-offset-m archive="y">0.15</y-offset-m>
+     <z-offset-m archive="y">0.40</z-offset-m>
+     <pitch-offset-deg>0</pitch-offset-deg>
+   </config>
+  </view>
+
+  <view n="101">
+    <name>News Camera</name>
+    <type>lookat</type>
+    <internal type="bool">true</internal>
+    <config>
+
+      <eye-lat-deg-path>/position/latitude-deg</eye-lat-deg-path>
+      <eye-lon-deg-path>/position/longitude-deg</eye-lon-deg-path>
+      <eye-alt-ft-path>/position/altitude-ft</eye-alt-ft-path>
+      <eye-heading-deg-path>/orientation/heading-deg</eye-heading-deg-path>
+
+      <target-lat-deg-path>/sim/tower/latitude-deg</target-lat-deg-path>
+      <target-lon-deg-path>/sim/tower/longitude-deg</target-lon-deg-path>
+      <target-alt-ft-path>/sim/tower/altitude-ft</target-alt-ft-path>
+<!--
+      <target-heading-deg-path></target-heading-deg-path>
+      <target-pitch-deg-path></target-pitch-deg-path>
+      <target-roll-deg-path></target-roll-deg-path>
+-->
+    </config>
+  </view> 
+
+
+  <chase-distance-m archive="y" type="double">-7.5</chase-distance-m>
+  <help>
+    <title>Easy Star R/C</title>
+    <line>Cruise speed:  mph</line>
+    <line>Never-exceed (Vne):  mph</line>
+    <line>Best Glide (Vglide):  mph</line>
+    <line>Maneuvering (Va):  mph</line>
+    <line>Approach speed:  mph</line>
+    <line>Stall speed (Vs):  mph</line>
+  </help>
+
+ </sim>
+
+ <controls>
+  <flight>
+   <elevator-trim>0.00</elevator-trim> <!-- controllable -->
+  </flight>
+ </controls>
+
+</PropertyList>

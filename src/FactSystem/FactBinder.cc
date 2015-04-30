@@ -27,18 +27,21 @@
 #include "FactBinder.h"
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
+#include "QGCApplication.h"
+
 #include <QDebug>
 
 FactBinder::FactBinder(void) :
     _autopilotPlugin(NULL),
-    _fact(NULL)
+    _fact(NULL),
+    _componentId(FactSystem::defaultComponentId)
 {
     UASInterface* uas = UASManager::instance()->getActiveUAS();
     Q_ASSERT(uas);
     
     _autopilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas);
     Q_ASSERT(_autopilotPlugin);
-    Q_ASSERT(_autopilotPlugin->pluginIsReady());
+    Q_ASSERT(_autopilotPlugin->pluginReady());
 }
 
 QString FactBinder::name(void) const
@@ -50,6 +53,11 @@ QString FactBinder::name(void) const
     }
 }
 
+int FactBinder::componentId(void) const
+{
+	return _componentId;
+}
+
 void FactBinder::setName(const QString& name)
 {
     if (_fact) {
@@ -58,14 +66,27 @@ void FactBinder::setName(const QString& name)
     }
     
     if (!name.isEmpty()) {
-        if (_autopilotPlugin->factExists(name)) {
-            _fact = _autopilotPlugin->getFact(name);
+		QString parsedName = name;
+		
+		// Component id + name combination?
+		if (name.contains(":")) {
+			QStringList parts = name.split(":");
+			if (parts.count() == 2) {
+				parsedName = parts[0];
+				_componentId = parts[1].toInt();
+			}
+		}
+		
+        if (_autopilotPlugin->factExists(FactSystem::ParameterProvider, _componentId, parsedName)) {
+            _fact = _autopilotPlugin->getFact(FactSystem::ParameterProvider, _componentId, parsedName);
             connect(_fact, &Fact::valueChanged, this, &FactBinder::valueChanged);
 
             emit valueChanged();
             emit nameChanged();
-        } else {
-            qDebug() << "FAILED BINDING PARAM" << name << ": PARAM DOES NOT EXIST ON SYSTEM!";
+			emit metaDataChanged();
+		} else {
+            QString panicMessage("Required parameter (component id: %1, name: %2),  is missing from vehicle. QGroundControl cannot operate with this firmware revision. QGroundControl will now shut down.");
+            qgcApp()->panicShutdown(panicMessage.arg(_componentId).arg(parsedName));
         }
     }
 }
@@ -84,7 +105,8 @@ void FactBinder::setValue(const QVariant& value)
     if (_fact) {
         _fact->setValue(value);
     } else {
-        qDebug() << "FAILED SETTING PARAM VALUE" << value.toString() << ": PARAM DOES NOT EXIST ON SYSTEM!";
+        qWarning() << "FAILED SETTING PARAM VALUE" << _fact->name() << ": PARAM DOES NOT EXIST ON SYSTEM!";
+        Q_ASSERT(false);
     }
 }
 
@@ -103,5 +125,86 @@ QString FactBinder::units(void) const
         return _fact->units();
     } else {
         return QString();
+    }
+}
+
+QVariant FactBinder::defaultValue(void)
+{
+    if (_fact) {
+        return _fact->defaultValue();
+    } else {
+		return QVariant(0);
+    }
+}
+
+FactMetaData::ValueType_t FactBinder::type(void)
+{
+    if (_fact) {
+        return _fact->type();
+    } else {
+		return FactMetaData::valueTypeUint32;
+    }
+}
+
+QString FactBinder::shortDescription(void)
+{
+    if (_fact) {
+        return _fact->shortDescription();
+    } else {
+        return QString();
+    }
+}
+
+QString FactBinder::longDescription(void)
+{
+    if (_fact) {
+        return _fact->longDescription();
+    } else {
+        return QString();
+    }
+}
+
+QVariant FactBinder::min(void)
+{
+    if (_fact) {
+        return _fact->min();
+    } else {
+		return QVariant(0);
+    }
+}
+
+QVariant FactBinder::max(void)
+{
+    if (_fact) {
+        return _fact->max();
+    } else {
+		return QVariant(0);
+    }
+}
+
+QString FactBinder::group(void)
+{
+    if (_fact) {
+        return _fact->group();
+    } else {
+        return QString();
+    }
+}
+
+bool FactBinder::defaultValueAvailable(void)
+{
+    if (_fact) {
+        return _fact->defaultValueAvailable();
+    } else {
+        return false;
+    }
+}
+
+bool FactBinder::valueEqualsDefault(void)
+{
+    if (_fact) {
+        return _fact->valueEqualsDefault();
+    } else {
+        return false;
     }
 }

@@ -25,25 +25,26 @@
 #define GenericParameterFacts_h
 
 #include <QObject>
-#include <QMap>
-#include <QXmlStreamReader>
-#include <QLoggingCategory>
 
-#include "FactSystem.h"
+#include "ParameterLoader.h"
 #include "UASInterface.h"
+#include "AutoPilotPlugin.h"
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 /// Collection of Parameter Facts for Generic AutoPilot
 
-class GenericParameterFacts : public FactLoader
+class GenericParameterFacts : public ParameterLoader
 {
     Q_OBJECT
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    GenericParameterFacts(UASInterface* uas, QObject* parent = NULL);
+    GenericParameterFacts(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent = NULL);
+    
+    /// Override from ParameterLoader
+    virtual QString getDefaultComponentIdParam(void) const { return QString(); }
 };
 
 #endif

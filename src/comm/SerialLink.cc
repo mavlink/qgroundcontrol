@@ -12,14 +12,21 @@
 #include <QDebug>
 #include <QSettings>
 #include <QMutexLocker>
+
+#ifdef __android__
+#include "qserialport.h"
+#include "qserialportinfo.h"
+#else
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#endif
 
 #include "SerialLink.h"
 #include "QGC.h"
 #include "MG.h"
+#include "QGCLoggingCategory.h"
 
-Q_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
+QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
 SerialLink::SerialLink(SerialConfiguration* config)
 {
@@ -33,8 +40,6 @@ SerialLink::SerialLink(SerialConfiguration* config)
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
-    // Set unique ID and add link to the list of links
-    _id = getNextLinkId();
 
     qCDebug(SerialLinkLog) << "Create SerialLink " << config->portName() << config->baud() << config->flowControl()
              << config->parity() << config->dataBits() << config->stopBits();
@@ -62,7 +67,7 @@ SerialLink::~SerialLink()
 
 bool SerialLink::_isBootloader()
 {
-    QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
+    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
     if( portList.count() == 0){
         return false;
     }
@@ -88,6 +93,7 @@ bool SerialLink::_isBootloader()
  **/
 void SerialLink::run()
 {
+#ifndef __android__
     // Initialize the connection
     if (!_hardwareConnect(_type)) {
         // Need to error out here.
@@ -98,6 +104,7 @@ void SerialLink::run()
         _emitLinkError("Error connecting: " + err);
         return;
     }
+#endif
 
     qint64  msecs = QDateTime::currentMSecsSinceEpoch();
     qint64  initialmsecs = QDateTime::currentMSecsSinceEpoch();
@@ -250,10 +257,13 @@ bool SerialLink::_disconnect(void)
             _stopp = true;
         }
         wait(); // This will terminate the thread and close the serial port
-        return true;
+    } else {
+        _transmitBuffer.clear(); //clear the output buffer to avoid sending garbage at next connect
+        qCDebug(SerialLinkLog) << "Already disconnected";
     }
-    _transmitBuffer.clear(); //clear the output buffer to avoid sending garbage at next connect
-    qCDebug(SerialLinkLog) << "Already disconnected";
+#ifdef __android__
+    LinkManager::instance()->suspendConfigurationUpdates(false);
+#endif
     return true;
 }
 
@@ -271,6 +281,19 @@ bool SerialLink::_connect(void)
         QMutexLocker locker(&this->_stoppMutex);
         _stopp = false;
     }
+#ifdef __android__
+    LinkManager::instance()->suspendConfigurationUpdates(true);
+    // Initialize the connection
+    if (!_hardwareConnect(_type)) {
+        // Need to error out here.
+        QString err("Could not create port.");
+        if (_port) {
+            err = _port->errorString();
+        }
+        _emitLinkError("Error connecting: " + err);
+        return false;
+    }
+#endif
     start(HighPriority);
     return true;
 }
@@ -333,6 +356,9 @@ bool SerialLink::_hardwareConnect(QString &type)
 
     // After the bootloader times out, it still can take a second or so for the Pixhawk USB driver to come up and make
     // the port available for open. So we retry a few times to wait for it.
+#ifdef __android__
+    _port->open(QIODevice::ReadWrite);
+#else
     for (int openRetries = 0; openRetries < 4; openRetries++) {
         if (!_port->open(QIODevice::ReadWrite)) {
             qCDebug(SerialLinkLog) << "Port open failed, retrying";
@@ -341,6 +367,7 @@ bool SerialLink::_hardwareConnect(QString &type)
             break;
         }
     }
+#endif
     if (!_port->isOpen() ) {
         emit communicationUpdate(getName(),"Error opening port: " + _port->errorString());
         _port->close();
@@ -388,11 +415,6 @@ bool SerialLink::isConnected() const
     }
     
     return isConnected;
-}
-
-int SerialLink::getId() const
-{
-    return _id;
 }
 
 QString SerialLink::getName() const
@@ -580,15 +602,4 @@ void SerialConfiguration::loadSettings(QSettings& settings, const QString& root)
     if(settings.contains("parity"))      _parity       = settings.value("parity").toInt();
     if(settings.contains("portName"))    _portName     = settings.value("portName").toString();
     settings.endGroup();
-}
-
-QList<QString> SerialConfiguration::getCurrentPorts()
-{
-    QList<QString> ports;
-    QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
-    foreach (const QSerialPortInfo &info, portList)
-    {
-        ports.append(info.portName());
-    }
-    return ports;
 }

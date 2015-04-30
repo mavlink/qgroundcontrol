@@ -14,9 +14,11 @@ LicenseData license.txt
 Section
   SetOutPath $INSTDIR
   File /r release\*.*
+  File deploy\px4driver.msi
   WriteUninstaller $INSTDIR\QGroundControl_uninstall.exe
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "DisplayName" "QGroundControl"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "UninstallString" "$\"$INSTDIR\QGroundControl_uninstall.exe$\""
+  ExecWait '"msiexec" /i "px4driver.msi"'
 SectionEnd 
 
 Section "Uninstall"

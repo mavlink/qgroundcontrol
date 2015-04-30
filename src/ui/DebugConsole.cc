@@ -91,8 +91,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Connect to UAS manager to get notified about new UAS
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(uasCreated(UASInterface*)));
 
-    // Get a list of all existing links
-    links = QList<LinkInterface*>();
+    // Add all existing links
     foreach (LinkInterface* link, LinkManager::instance()->getLinks()) {
         addLink(link);
     }
@@ -171,37 +170,52 @@ void DebugConsole::uasCreated(UASInterface* uas)
  */
 void DebugConsole::addLink(LinkInterface* link)
 {
-    // Add link to link list
-    links.insert(link->getId(), link);
+    // Add link to list
+    
+    foreach (SharedLinkInterface sharedLink, _links) {
+        Q_ASSERT(sharedLink.data() != link);
+    }
+    _links.append(LinkManager::instance()->sharedPointerForLink(link));
 
-    m_ui->linkComboBox->insertItem(link->getId(), link->getName());
+    m_ui->linkComboBox->insertItem(link->getMavlinkChannel(), link->getName());
     // Set new item as current
-    m_ui->linkComboBox->setCurrentIndex(qMax(0, links.size() - 1));
+    m_ui->linkComboBox->setCurrentIndex(qMax(0, _links.size() - 1));
     linkSelected(m_ui->linkComboBox->currentIndex());
 
     // Register for name changes
     connect(link, SIGNAL(nameChanged(QString)), this, SLOT(updateLinkName(QString)), Qt::UniqueConnection);
-    connect(LinkManager::instance(), &LinkManager::linkDeleted, this, &DebugConsole::removeLink, Qt::UniqueConnection);
+    connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &DebugConsole::removeLink, Qt::UniqueConnection);
 }
 
-void DebugConsole::removeLink(LinkInterface* const linkInterface)
+void DebugConsole::removeLink(LinkInterface* const link)
 {
-    // Add link to link list
-    if (links.contains(linkInterface)) {
-        int linkIndex = links.indexOf(linkInterface);
-
-        links.removeAt(linkIndex);
-
-        m_ui->linkComboBox->removeItem(linkIndex);
-    }
     // Now if this was the current link, clean up some stuff.
-    if (linkInterface == currLink)
+    if (link == currLink)
     {
+        disconnect(currLink, &LinkInterface::bytesReceived, this, &DebugConsole::receiveBytes);
+        disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
+        disconnect(currLink, &LinkInterface::communicationUpdate, this, &DebugConsole::linkStatusUpdate);
+        
         // Like disable the update time for the UI.
         snapShotTimer.stop();
-
+        
         currLink = NULL;
     }
+    
+    bool found = false;
+    int linkIndex;
+    for (linkIndex=0; linkIndex<_links.count(); linkIndex++) {
+        if (_links[linkIndex].data() == link) {
+            found = true;
+            _links.removeAt(linkIndex);
+            break;
+        }
+    }
+    Q_UNUSED(found);
+    Q_ASSERT(found);
+    
+    m_ui->linkComboBox->removeItem(linkIndex);
+    
 }
 void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
 {
@@ -211,23 +225,14 @@ void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
     m_ui->receiveText->ensureCursorVisible();
 }
 
-void DebugConsole::linkSelected(int linkId)
+void DebugConsole::linkSelected(int linkIndex)
 {
-    // Disconnect
-    if (currLink)
-    {
-        disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
-        disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
-        disconnect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
-        snapShotTimer.stop();
-    }
-
     // Clear data
     m_ui->receiveText->clear();
 
     // Connect new link
-    if (linkId != -1) {
-        currLink = links[linkId];
+    if (linkIndex != -1) {
+        currLink = _links[linkIndex].data();
         connect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
         disconnect(currLink, &LinkInterface::connected, this, &DebugConsole::_linkConnected);
         connect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
@@ -241,13 +246,21 @@ void DebugConsole::linkSelected(int linkId)
  */
 void DebugConsole::updateLinkName(QString name)
 {
-	// Set name if signal came from a link
     LinkInterface* link = qobject_cast<LinkInterface*>(sender());
-	if((link != NULL) && (links.contains(link)))
-	{
-		const qint16 &linkIndex(links.indexOf(link));
-		m_ui->linkComboBox->setItemText(linkIndex,name);
-	}
+    if (link != NULL) {
+        bool found = false;
+        int linkIndex;
+        for (linkIndex=0; linkIndex<_links.count(); linkIndex++) {
+            if (_links[linkIndex].data() == link) {
+                found = true;
+                break;
+            }
+        }
+        
+        if (found) {
+            m_ui->linkComboBox->setItemText(linkIndex, name);
+        }
+    }
 }
 
 void DebugConsole::setAutoHold(bool hold)

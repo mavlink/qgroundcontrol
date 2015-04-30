@@ -36,6 +36,8 @@
 #include "VehicleComponent.h"
 #include "FactSystem.h"
 
+class ParameterLoader;
+
 /// This is the base class for AutoPilot plugins
 ///
 /// The AutoPilotPlugin class is an abstract base class which represent the methods and objects
@@ -50,44 +52,89 @@ class AutoPilotPlugin : public QObject
 public:
     AutoPilotPlugin(UASInterface* uas, QObject* parent);
     
-    Q_PROPERTY(QVariantList components READ components CONSTANT)
-    Q_PROPERTY(QUrl setupBackgroundImage READ setupBackgroundImage CONSTANT)
-    
+	/// true: plugin is ready for use, plugin should no longer be used
+	Q_PROPERTY(bool pluginReady READ pluginReady NOTIFY pluginReadyChanged)
+	
+    /// List of VehicleComponent objects
+    Q_PROPERTY(QVariantList vehicleComponents READ vehicleComponents CONSTANT)
+
+	/// false: One or more vehicle components require setup
+	Q_PROPERTY(bool setupComplete READ setupComplete NOTIFY setupCompleteChanged)
+	
     /// Re-request the full set of parameters from the autopilot
-    Q_INVOKABLE void refreshAllParameters(void);
+	Q_INVOKABLE void refreshAllParameters(void);
     
     /// Request a refresh on the specific parameter
-    Q_INVOKABLE void refreshParameter(const QString& param);
+	Q_INVOKABLE void refreshParameter(int componentId, const QString& name);
     
-    // Request a refresh on all parameters that begin with the specified prefix
-    Q_INVOKABLE void refreshParametersPrefix(const QString& paramPrefix);
+    /// Request a refresh on all parameters that begin with the specified prefix
+	Q_INVOKABLE void refreshParametersPrefix(int componentId, const QString& namePrefix);
     
-    Q_INVOKABLE bool factExists(const QString& param);
+	/// Returns true if the specifed parameter exists from the default component
+	Q_INVOKABLE bool parameterExists(const QString& name);
+	
+	/// Returns all parameter names
+	/// FIXME: component id missing, generic to fact
+	QStringList parameterNames(void);
+	
+	/// Returns the specified parameter Fact from the default component
+	/// WARNING: Will assert if fact does not exists. If that possibility exists, check for existince first with
+	/// factExists.
+	Fact* getParameterFact(const QString& name);
+	
+	/// Writes the parameter facts to the specified stream
+	void writeParametersToStream(QTextStream &stream);
+	
+	/// Reads the parameters from the stream and updates values
+	void readParametersFromStream(QTextStream &stream);
+	
+    /// Returns true if the specifed fact exists
+    Q_INVOKABLE bool factExists(FactSystem::Provider_t  provider,       ///< fact provider
+                                int                     componentId,    ///< fact component, -1=default component
+                                const QString&          name);          ///< fact name
     
-    Fact* getFact(const QString& name);
+    /// Returns the specified Fact.
+    /// WARNING: Will assert if fact does not exists. If that possibility exists, check for existince first with
+    /// factExists.
+    Fact* getFact(FactSystem::Provider_t    provider,       ///< fact provider
+                  int                       componentId,    ///< fact component, -1=default component
+                  const QString&            name);          ///< fact name
+    
+    const QMap<int, QMap<QString, QStringList> >& getGroupMap(void);
 
-    // Property accessors
-    virtual const QVariantList& components(void) = 0;
-    virtual const QVariantMap& parameters(void) = 0;    
-    virtual QUrl setupBackgroundImage(void) = 0;
+    // Must be implemented by derived class
+    virtual const QVariantList& vehicleComponents(void) = 0;
     
-    /// Returns true if the plugin is ready for use
-    virtual bool pluginIsReady(void) const = 0;
-    
-    /// FIXME: Kind of hacky
     static void clearStaticData(void);
-    
+	
+	// Property accessors
+	bool pluginReady(void) { return _pluginReady; }
+	bool setupComplete(void);
+	
     UASInterface* uas(void) { return _uas; }
     
 signals:
-    /// Signalled when plugin is ready for use
-    void pluginReady(void);
-    
+    void pluginReadyChanged(bool pluginReady);
+	void setupCompleteChanged(bool setupComplete);
+    void parameterListProgress(float value);
+	
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
     AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
     
-    UASInterface* _uas;
+	/// Returns the ParameterLoader
+	virtual ParameterLoader* _getParameterLoader(void) = 0;
+	
+    UASInterface*   _uas;
+    bool            _pluginReady;
+	bool			_setupComplete;
+	
+private slots:
+	void _uasDisconnected(void);
+	void _pluginReadyChanged(bool pluginReady);
+	
+private:
+	void _recalcSetupComplete(void);
 };
 
 #endif

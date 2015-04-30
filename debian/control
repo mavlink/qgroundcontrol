@@ -1,0 +1,15 @@
+Source: qgroundcontrol
+Section: electronics
+Priority: optional
+Maintainer: Daniel Agar <daniel@agar.ca>
+Build-Depends: debhelper (>= 9), qt54tools, qt54base, qt54declarative, qt54serialport, qt54svg, qt54webkit, qt54quickcontrols, qt54xmlpatterns, qt54x11extras, qt54websockets, qt54sensors, qt54script, qt54quick1, qt54qbs, qt54multimedia, qt54location, qt54imageformats, qt54graphicaleffects, qt54creator, qt54connectivity, libsdl1.2-dev, libudev-dev
+Standards-Version: 3.9.5
+Homepage: https://github.com/mavlink/qgroundcontrol
+Vcs-Git: git://github.com/mavlink/qgroundcontrol.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/qgroundcontrol.git;a=summary
+
+Package: qgroundcontrol
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, qt54tools, qt54base, qt54declarative, qt54serialport, qt54svg, qt54webkit, qt54quickcontrols, qt54xmlpatterns, qt54x11extras, qt54websockets, qt54sensors, qt54script, qt54quick1, qt54multimedia, qt54location, qt54imageformats, qt54graphicaleffects, qt54connectivity
+Description: Open Source Micro Air Vehicle Ground Control Station
+ <insert long description, indented with spaces>

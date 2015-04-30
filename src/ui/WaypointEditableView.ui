@@ -216,7 +216,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/actions/go-up.svg</normaloff>:/files/images/actions/go-up.svg</iconset>
+       <normaloff>:/res/UpArrow</normaloff>:/res/UpArrow</iconset>
      </property>
     </widget>
    </item>
@@ -248,7 +248,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/actions/go-down.svg</normaloff>:/files/images/actions/go-down.svg</iconset>
+       <normaloff>:/res/DownArrow</normaloff>:/res/DownArrow</iconset>
      </property>
     </widget>
    </item>
@@ -277,7 +277,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/actions/list-remove.svg</normaloff>:/files/images/actions/list-remove.svg</iconset>
+       <normaloff>:/res/MinusSign</normaloff>:/res/MinusSign</iconset>
      </property>
     </widget>
    </item>

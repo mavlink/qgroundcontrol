@@ -51,8 +51,6 @@ UDPLink::UDPLink(UDPConfiguration* config)
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
 
-    // Set unique ID and add link to the list of links
-    _id = getNextLinkId();
     qDebug() << "UDP Created " << _config->name();
 }
 
@@ -94,7 +92,6 @@ QString UDPLink::getName() const
 
 void UDPLink::addHost(const QString& host)
 {
-    qDebug() << "UDP:" << "ADDING HOST:" << host;
     _config->addHost(host);
 }
 
@@ -176,8 +173,7 @@ void UDPLink::readBytes()
         // added to the list and will start receiving datagrams from here. Even a port scanner
         // would trigger this.
         // Add host to broadcast list if not yet present, or update its port
-        QString host(sender.toString() + ":" + QString("%1").arg((int)senderPort));
-        _config->addHost(host);
+        _config->addHost(sender.toString(), (int)senderPort);
     }
 }
 
@@ -242,11 +238,6 @@ bool UDPLink::isConnected() const
     return _connectState;
 }
 
-int UDPLink::getId() const
-{
-    return _id;
-}
-
 qint64 UDPLink::getConnectionSpeed() const
 {
     return 54000000; // 54 Mbit
@@ -285,7 +276,6 @@ UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration
 
 void UDPConfiguration::copyFrom(LinkConfiguration *source)
 {
-    _confMutex.lock();
     LinkConfiguration::copyFrom(source);
     UDPConfiguration* usource = dynamic_cast<UDPConfiguration*>(source);
     Q_ASSERT(usource != NULL);
@@ -297,7 +287,6 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
             addHost(host, port);
         } while(usource->nextHost(host, port));
     }
-    _confMutex.unlock();
 }
 
 /**
@@ -305,7 +294,6 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
  */
 void UDPConfiguration::addHost(const QString& host)
 {
-    qDebug() << "UDP:" << "ADDING HOST:" << host;
     if (host.contains(":"))
     {
         QHostInfo info = QHostInfo::fromName(host.split(":").first());
@@ -316,33 +304,44 @@ void UDPConfiguration::addHost(const QString& host)
             QHostAddress address;
             for (int i = 0; i < hostAddresses.size(); i++)
             {
-                // Exclude loopback IPv4 and all IPv6 addresses
+                // Exclude all IPv6 addresses
                 if (!hostAddresses.at(i).toString().contains(":"))
                 {
                     address = hostAddresses.at(i);
                 }
             }
+            _confMutex.lock();
             _hosts[address.toString()] = host.split(":").last().toInt();
+            _confMutex.unlock();
+            qDebug() << "UDP:" << "ADDING HOST:" << address.toString() << ":" << host.split(":").last();
         }
     }
     else
     {
-        QHostInfo info = QHostInfo::fromName(host);
-        if (info.error() == QHostInfo::NoError)
-        {
-            // Set port according to default (same as local port)
-            _hosts[info.addresses().first().toString()] = (int)_localPort;
-        }
+        addHost(host, (int)_localPort);
     }
 }
 
 void UDPConfiguration::addHost(const QString& host, int port)
 {
-    _hosts[host.trimmed()] = port;
+    QMutexLocker locker(&_confMutex);
+    if(_hosts.contains(host)) {
+        if(_hosts[host] != port) {
+            _hosts[host] = port;
+        }
+    } else {
+        QHostInfo info = QHostInfo::fromName(host);
+        if (info.error() == QHostInfo::NoError)
+        {
+            _hosts[info.addresses().first().toString()] = port;
+            qDebug() << "UDP:" << "ADDING HOST:" << info.addresses().first().toString() << ":" << port;
+        }
+    }
 }
 
 void UDPConfiguration::removeHost(const QString& host)
 {
+    QMutexLocker locker(&_confMutex);
     QString tHost = host;
     if (tHost.contains(":")) {
         tHost = tHost.split(":").first();
@@ -356,15 +355,19 @@ void UDPConfiguration::removeHost(const QString& host)
 
 bool UDPConfiguration::firstHost(QString& host, int& port)
 {
+    _confMutex.lock();
     _it = _hosts.begin();
     if(_it == _hosts.end()) {
+        _confMutex.unlock();
         return false;
     }
+    _confMutex.unlock();
     return nextHost(host, port);
 }
 
 bool UDPConfiguration::nextHost(QString& host, int& port)
 {
+    QMutexLocker locker(&_confMutex);
     if(_it != _hosts.end()) {
         host = _it.key();
         port = _it.value();
@@ -402,8 +405,9 @@ void UDPConfiguration::saveSettings(QSettings& settings, const QString& root)
 void UDPConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     _confMutex.lock();
-    settings.beginGroup(root);
     _hosts.clear();
+    _confMutex.unlock();
+    settings.beginGroup(root);
     _localPort = (quint16)settings.value("port", QGC_UDP_LOCAL_PORT).toUInt();
     int hostCount = settings.value("hostCount", 0).toInt();
     for(int i = 0; i < hostCount; i++) {
@@ -414,7 +418,6 @@ void UDPConfiguration::loadSettings(QSettings& settings, const QString& root)
         }
     }
     settings.endGroup();
-    _confMutex.unlock();
 }
 
 void UDPConfiguration::updateSettings()
