@@ -27,7 +27,7 @@
 #include "QGCFileDialog.h"
 
 #include <QSettings>
-#include <Qurl>
+#include <QUrl>
 
 const char* CustomCommandWidgetController::_settingsKey = "CustomCommand.QmlFile";
 
