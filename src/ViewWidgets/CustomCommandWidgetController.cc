@@ -27,6 +27,7 @@
 #include "QGCFileDialog.h"
 
 #include <QSettings>
+#include <Qurl>
 
 const char* CustomCommandWidgetController::_settingsKey = "CustomCommand.QmlFile";
 
@@ -64,7 +65,8 @@ void CustomCommandWidgetController::selectQmlFile(void)
         _customQmlFile.clear();
         settings.remove(_settingsKey);
     } else {
-        _customQmlFile = QString("file:%1").arg(qmlFile);
+		QUrl url = QUrl::fromLocalFile(qmlFile);
+		_customQmlFile = url.toString();
         settings.setValue(_settingsKey, _customQmlFile);
     }
     
