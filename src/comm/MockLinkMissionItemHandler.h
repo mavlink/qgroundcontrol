@@ -29,7 +29,6 @@
 #include <QObject>
 #include <vector>
 
-#include "MAVLinkSimulationLink.h"
 #include "QGCMAVLink.h"
 
 /* Alreedy defined in MAVLinkSimulationLink.h above!

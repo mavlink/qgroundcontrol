@@ -40,7 +40,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QDesktopWidget>
 
 #include "QGC.h"
-#include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
 #include "MAVLinkProtocol.h"
 #include "QGCWaypointListMulti.h"
@@ -149,7 +148,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     , _lowPowerMode(false)
     , _showStatusBar(false)
     , _centerStackActionGroup(new QActionGroup(this))
-    , _simulationLink(NULL)
     , _centralLayout(NULL)
     , _currentViewWidget(NULL)
     , _splashScreen(splashScreen)
@@ -346,11 +344,6 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
 
 MainWindow::~MainWindow()
 {
-    if (_simulationLink)
-    {
-        delete _simulationLink;
-        _simulationLink = NULL;
-    }
 #ifndef __android__
     if (joystick)
     {
@@ -857,8 +850,6 @@ void MainWindow::connectCommonActions()
     // Application Settings
     connect(_ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
 
-    connect(_ui.actionSimulate, SIGNAL(triggered(bool)), this, SLOT(simulateLink(bool)));
-
     // Update Tool Bar
     _mainToolBar->setCurrentView(_currentView);
 }
@@ -902,19 +893,6 @@ void MainWindow::showSettings()
     SettingsDialog settings(this);
 #endif
     settings.exec();
-}
-
-void MainWindow::simulateLink(bool simulate) {
-    if (simulate) {
-        if (!_simulationLink) {
-            _simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
-            Q_CHECK_PTR(_simulationLink);
-        }
-        LinkManager::instance()->connectLink(_simulationLink);
-    } else {
-        Q_ASSERT(_simulationLink);
-        LinkManager::instance()->disconnectLink(_simulationLink);
-    }
 }
 
 void MainWindow::commsWidgetDestroyed(QObject *obj)

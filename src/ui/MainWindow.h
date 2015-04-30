@@ -47,7 +47,6 @@ This file is part of the QGROUNDCONTROL project
 #include "WaypointList.h"
 #include "CameraView.h"
 #include "UASListWidget.h"
-#include "MAVLinkSimulationLink.h"
 #ifndef __android__
 #include "input/JoystickInput.h"
 #endif
@@ -145,8 +144,6 @@ public:
 public slots:
     /** @brief Show the application settings */
     void showSettings();
-    /** @brief Simulate a link */
-    void simulateLink(bool simulate);
 
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
@@ -292,7 +289,6 @@ protected:
     QAction* returnUASAct;
     QAction* stopUASAct;
     QAction* killUASAct;
-    QAction* simulateUASAct;
 
 
     LogCompressor* comp;
@@ -366,7 +362,6 @@ private:
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
     bool                    _showStatusBar;
     QActionGroup*           _centerStackActionGroup;
-    MAVLinkSimulationLink*  _simulationLink;
     QVBoxLayout*            _centralLayout;
     QList<QObject*>         _commsWidgetList;
     QWidget*                _currentViewWidget;     ///< Currently displayed view widget

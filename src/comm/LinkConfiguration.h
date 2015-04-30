@@ -44,14 +44,11 @@ public:
         TypeTcp,        ///< TCP Link
         // TODO Below is not yet implemented
 #if 0
-        TypeSimulation, ///< Simulation Link
         TypeForwarding, ///< Forwarding Link
         TypeXbee,       ///< XBee Proprietary Link
         TypeOpal,       ///< Opal-RT Link
 #endif
-#ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
-#endif
         TypeLast        // Last type value (type >= TypeLast == invalid)
     };
 
