@@ -98,7 +98,11 @@ ViewWidget {
 
                 QGCButton {
                     text:       "Clear Qml file"
-                    onClicked:  controller.clearQmlFile()
+
+                    onClicked: {
+                        errorOutput.visible = false
+                        controller.clearQmlFile()
+                    }
                 }
             }
         }
