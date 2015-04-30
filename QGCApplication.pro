@@ -352,6 +352,8 @@ HEADERS += \
     src/ui/WaypointList.h \
     src/ui/WaypointViewOnlyView.h \
     src/ViewWidgets/ParameterEditorWidget.h \
+    src/ViewWidgets/CustomCommandWidget.h \
+    src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/ViewWidgetController.h \
     src/Waypoint.h \
 
@@ -479,6 +481,8 @@ SOURCES += \
     src/ui/WaypointList.cc \
     src/ui/WaypointViewOnlyView.cc \
     src/ViewWidgets/ParameterEditorWidget.cc \
+    src/ViewWidgets/CustomCommandWidget.cc \
+    src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/ViewWidgetController.cc \
     src/Waypoint.cc \
 
