@@ -62,6 +62,7 @@
 #include "QGCLoggingCategory.h"
 #include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
+#include "CustomCommandWidgetController.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -285,9 +286,10 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
 	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
 	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<CustomCommandWidgetController>("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
+
     //-- Create QML Singleton Interfaces
     qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
-
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
