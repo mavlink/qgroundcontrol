@@ -235,6 +235,8 @@ HEADERS += \
     src/comm/LinkInterface.h \
     src/comm/LinkManager.h \
     src/comm/MAVLinkProtocol.h \
+    src/comm/MockLink.h \
+    src/comm/MockLinkMissionItemHandler.h \
     src/comm/ProtocolInterface.h \
     src/comm/QGCFlightGearLink.h \
     src/comm/QGCHilLink.h \
@@ -353,12 +355,6 @@ HEADERS += \
     src/ViewWidgets/ViewWidgetController.h \
     src/Waypoint.h \
 
-DebugBuild {
-HEADERS += \
-    src/comm/MockLink.h \
-    src/comm/MockLinkMissionItemHandler.h
-}
-
 !AndroidBuild {
 HEADERS += \
     src/input/JoystickInput.h \
@@ -374,6 +370,8 @@ SOURCES += \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkManager.cc \
     src/comm/MAVLinkProtocol.cc \
+    src/comm/MockLink.cc \
+    src/comm/MockLinkMissionItemHandler.cc \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
@@ -483,12 +481,6 @@ SOURCES += \
     src/ViewWidgets/ParameterEditorWidget.cc \
     src/ViewWidgets/ViewWidgetController.cc \
     src/Waypoint.cc \
-
-DebugBuild {
-SOURCES += \
-    src/comm/MockLink.cc \
-    src/comm/MockLinkMissionItemHandler.cc
-}
 
 !AndroidBuild {
 SOURCES += \
