@@ -41,7 +41,6 @@ Rectangle {
 	property bool fullMode: true
 
 	QGCPalette { id: __qgcPal; colorGroupEnabled: true }
-	ScreenTools { id: __screenTools }
 	ParameterEditorController { id: __controller }
 	QGCLabel { id: __textControl; text: "X"; visible: false }
 
@@ -219,10 +218,10 @@ Rectangle {
             x:      __leftMargin
 
             QGCLabel {
-                height:				__textHeight + (__screenTools.pixelSizeFactor * (9))
+                height:				__textHeight + (ScreenTools.pixelSizeFactor * (9))
                 text:               group
                 verticalAlignment:	Text.AlignVCenter
-                font.pointSize:     __screenTools.fontPointFactor * (16);
+                font.pointSize:     ScreenTools.fontPointFactor * (16);
             }
 
             Rectangle {
@@ -238,7 +237,7 @@ Rectangle {
                     Item {
                         x:			__leftMargin
                         width:      parent.width
-                        height:		__textHeight + (__screenTools.pixelSizeFactor * (9))
+                        height:		__textHeight + (ScreenTools.pixelSizeFactor * (9))
 
                         Fact {
                             id: modelFact
@@ -304,7 +303,7 @@ Rectangle {
             height: firstButton.height
 
             QGCLabel {
-                font.pointSize: __screenTools.fontPointFactor * (20)
+                font.pointSize: ScreenTools.fontPointFactor * (20)
                 visible:        fullMode
                 text:           "PARAMETER EDITOR"
             }
@@ -361,10 +360,10 @@ Rectangle {
                             readonly property int componentId: parseInt(modelData)
 
                             QGCLabel {
-                                height:				contentHeight + (__screenTools.pixelSizeFactor * (9))
+                                height:				contentHeight + (ScreenTools.pixelSizeFactor * (9))
                                 text:               "Component #: " + componentId.toString()
                                 verticalAlignment:	Text.AlignVCenter
-                                font.pointSize:     __screenTools.fontPointFactor * (16);
+                                font.pointSize:     ScreenTools.fontPointFactor * (16);
                             }
 
                             Repeater {
@@ -386,7 +385,7 @@ Rectangle {
 
                                     Item {
                                         width:  1
-                                        height: __screenTools.pixelSizeFactor * (3)
+                                        height: ScreenTools.pixelSizeFactor * (3)
                                     }
                                 } // Column - Group
                             } // Repeater - Groups

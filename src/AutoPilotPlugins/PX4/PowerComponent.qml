@@ -45,7 +45,6 @@ Rectangle {
 
     property int firstColumnWidth: 220
     property int textEditWidth:    80
-    property ScreenTools screenTools: ScreenTools { }
 
     property Fact battNumCells: Fact { name: "BAT_N_CELLS" }
     property Fact battHighVolt: Fact { name: "BAT_V_CHARGED" }
@@ -98,13 +97,13 @@ Rectangle {
 
         QGCLabel {
             text: "POWER CONFIG"
-            font.pointSize: screenTools.fontPointFactor * (20);
+            font.pointSize: ScreenTools.fontPointFactor * (20);
         }
 
         QGCLabel {
             text: "Battery"
             color: palette.text
-            font.pointSize: screenTools.fontPointFactor * (20);
+            font.pointSize: ScreenTools.fontPointFactor * (20);
         }
 
         Rectangle {
@@ -162,7 +161,7 @@ Rectangle {
                         width: 40
                         antialiasing: true
                         Connections {
-                            target: screenTools
+                            target: ScreenTools
                             onRepaintRequestedChanged: {
                                 arrows.requestPaint();
                             }
@@ -231,7 +230,7 @@ Rectangle {
                 QGCLabel {
                     text: "Propeller Function"
                     color: palette.text
-                    font.pointSize: screenTools.fontPointFactor * (20);
+                    font.pointSize: ScreenTools.fontPointFactor * (20);
                 }
                 Rectangle {
                     width: parent.width
@@ -245,7 +244,7 @@ Rectangle {
                 QGCLabel {
                     text: "Magnetometer Distortion"
                     color: palette.text
-                    font.pointSize: screenTools.fontPointFactor * (20);
+                    font.pointSize: ScreenTools.fontPointFactor * (20);
                 }
                 Rectangle {
                     width: parent.width
@@ -264,7 +263,7 @@ Rectangle {
         QGCLabel {
             text: "Advanced Power Settings"
             color: palette.text
-            font.pointSize: screenTools.fontPointFactor * (20);
+            font.pointSize: ScreenTools.fontPointFactor * (20);
             visible: showAdvanced.checked
         }
         Rectangle {

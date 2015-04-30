@@ -36,7 +36,6 @@ Item {
     Loader {
         property FlightModesComponentController controller: FlightModesComponentController { }
         property QGCPalette qgcPal: QGCPalette { colorGroupEnabled: true }
-        property ScreenTools screenTools: ScreenTools { }
         property bool loading: true
 
         anchors.fill: parent
@@ -364,7 +363,7 @@ Item {
 
                 QGCLabel {
                     text: "FLIGHT MODES CONFIG"
-                    font.pointSize: screenTools.fontPointFactor * (20);
+                    font.pointSize: ScreenTools.fontPointFactor * (20);
                 }
 
                 Item { height: 20; width: 10 } // spacer
@@ -894,7 +893,7 @@ Item {
 
                 QGCLabel {
                     text: "FLIGHT MODES CONFIG"
-                    font.pointSize: screenTools.fontPointFactor * (20);
+                    font.pointSize: ScreenTools.fontPointFactor * (20);
                 }
 
                 QGCLabel {

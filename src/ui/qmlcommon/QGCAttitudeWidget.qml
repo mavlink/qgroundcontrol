@@ -33,7 +33,6 @@ import QGroundControl.ScreenTools 1.0
 Item {
     id: root
     anchors.centerIn: parent
-    property ScreenTools __screenTools: ScreenTools { }
     property real rollAngle :   0
     property real pitchAngle:   0
 
