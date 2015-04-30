@@ -113,10 +113,11 @@ void QGCUASFileView::_uploadFile(void)
         path.prepend("/" + name);
         item = item->parent();
     } while (item);
-    qDebug() << "Upload: " << path;
 
     QString uploadFromHere = QGCFileDialog::getOpenFileName(this, tr("Upload File"),
                                                                QDir::homePath());
+
+    qDebug() << "Upload: " << uploadFromHere << "to path" << path;
 
     _manager->uploadPath(path, uploadFromHere);
 }
