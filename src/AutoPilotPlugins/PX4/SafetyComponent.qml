@@ -38,7 +38,6 @@ Rectangle {
     height: 600
     color: palette.window
 
-    property ScreenTools screenTools: ScreenTools { }
     property int flightLineWidth: 2             // width of lines for flight graphic
     property int loiterAltitudeColumnWidth: 180 // width of loiter altitude column
     property int shadedMargin: 20               // margin inset for shaded areas
@@ -54,7 +53,7 @@ Rectangle {
 
         QGCLabel {
             text: "SAFETY CONFIG"
-            font.pointSize: screenTools.fontPointFactor * (20);
+            font.pointSize: ScreenTools.fontPointFactor * (20);
         }
 
         Item { height: 20; width: 10 } // spacer
@@ -62,7 +61,7 @@ Rectangle {
         //-----------------------------------------------------------------
         //-- Return Home Triggers
 
-        QGCLabel { text: "Triggers For Return Home"; color: palette.text; font.pointSize: screenTools.fontPointFactor * (20); }
+        QGCLabel { text: "Triggers For Return Home"; color: palette.text; font.pointSize: ScreenTools.fontPointFactor * (20); }
 
         Item { height: 10; width: 10 } // spacer
 
@@ -121,7 +120,7 @@ Rectangle {
         //-----------------------------------------------------------------
         //-- Return Home Settings
 
-        QGCLabel { text: "Return Home Settings"; font.pointSize: screenTools.fontPointFactor * (20); }
+        QGCLabel { text: "Return Home Settings"; font.pointSize: ScreenTools.fontPointFactor * (20); }
 
         Item { height: 10; width: 10 } // spacer
 
@@ -291,7 +290,7 @@ Rectangle {
         QGCLabel {
             property Fact fact: Fact { name: "NAV_RCL_OBC" }
             width: parent.width
-            font.pointSize: screenTools.fontPointFactor * (14);
+            font.pointSize: ScreenTools.fontPointFactor * (14);
             text: "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
             visible: fact.value !== 0
             wrapMode: Text.Wrap
@@ -299,7 +298,7 @@ Rectangle {
         QGCLabel {
             property Fact fact: Fact { name: "NAV_DLL_OBC" }
             width: parent.width
-            font.pointSize: screenTools.fontPointFactor * (14);
+            font.pointSize: ScreenTools.fontPointFactor * (14);
             text: "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
             visible: fact.value !== 0
             wrapMode: Text.Wrap

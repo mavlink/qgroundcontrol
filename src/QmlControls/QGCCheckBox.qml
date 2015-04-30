@@ -7,7 +7,6 @@ import QGroundControl.ScreenTools 1.0
 
 CheckBox {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
-    property ScreenTools __screenTools: ScreenTools { }
 
     style: CheckBoxStyle {
         label: Item {
@@ -30,7 +29,7 @@ CheckBox {
                 id:             text
                 text:           control.text
                 antialiasing:   true
-                font.pointSize: __screenTools.defaultFontPointSize
+                font.pointSize: ScreenTools.defaultFontPointSize
 
                 anchors.centerIn: parent
 

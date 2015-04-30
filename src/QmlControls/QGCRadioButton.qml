@@ -7,7 +7,6 @@ import QGroundControl.ScreenTools 1.0
 
 RadioButton {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
-    property ScreenTools __screenTools: ScreenTools { }
 
     style: RadioButtonStyle {
         label: Item {
@@ -29,7 +28,7 @@ RadioButton {
             Text {
                 id:             text
                 text:           control.text
-                font.pointSize: __screenTools.defaultFontPointSize
+                font.pointSize: ScreenTools.defaultFontPointSize
                 antialiasing:   true
 
                 anchors.centerIn: parent

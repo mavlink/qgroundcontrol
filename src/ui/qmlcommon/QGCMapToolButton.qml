@@ -11,7 +11,6 @@ Button {
     property var imageSource: undefined
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
     property bool __showHighlight: (pressed | hovered | checked) && !__forceHoverOff
-    property ScreenTools __screenTools: ScreenTools { }
 
     // This fixes the issue with button hover where if a Button is near the edge oa QQuickWidget you can
     // move the mouse fast enough such that the MouseArea does not trigger an onExited. This is turn
@@ -24,12 +23,12 @@ Button {
     Connections {
         target: __behavior
         onMouseXChanged: {
-            __lastGlobalMouseX = __screenTools.mouseX
-            __lastGlobalMouseY = __screenTools.mouseY
+            __lastGlobalMouseX = ScreenTools.mouseX
+            __lastGlobalMouseY = ScreenTools.mouseY
         }
         onMouseYChanged: {
-            __lastGlobalMouseX = __screenTools.mouseX
-            __lastGlobalMouseY = __screenTools.mouseY
+            __lastGlobalMouseX = ScreenTools.mouseX
+            __lastGlobalMouseY = ScreenTools.mouseY
         }
         onEntered: { __forceHoverOff; false; hoverTimer.start() }
         onExited:  { __forceHoverOff; false; hoverTimer.stop()  }
@@ -40,7 +39,7 @@ Button {
         interval:   250
         repeat:     true
         onTriggered: {
-            if (__lastGlobalMouseX != __screenTools.mouseX || __lastGlobalMouseY != __screenTools.mouseY) {
+            if (__lastGlobalMouseX != ScreenTools.mouseX || __lastGlobalMouseY != ScreenTools.mouseY) {
                 __forceHoverOff = true
             } else {
                 __forceHoverOff = false
