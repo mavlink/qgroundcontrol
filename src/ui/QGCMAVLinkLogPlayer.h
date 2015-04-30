@@ -6,7 +6,7 @@
 
 #include "MAVLinkProtocol.h"
 #include "LinkInterface.h"
-#include "MAVLinkSimulationLink.h"
+#include "MockLink.h"
 
 namespace Ui
 {
@@ -67,7 +67,7 @@ protected:
     quint64 logEndTime;            ///< The last timestamp in the current log file. In units of microseconds since epoch UTC.
     float accelerationFactor;
     MAVLinkProtocol* mavlink;
-    MAVLinkSimulationLink* logLink;
+    MockLink* logLink;
     QFile logFile;
     QTimer loopTimer;
     int loopCounter;

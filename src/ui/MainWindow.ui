@@ -101,7 +101,6 @@
     <addaction name="actionTerminalView"/>
     <addaction name="actionSimulationView"/>
     <addaction name="separator"/>
-    <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="menuTools"/>
    </widget>
@@ -168,17 +167,6 @@
   <action name="actionAdd_Link">
    <property name="text">
     <string>Manage Communication Links</string>
-   </property>
-  </action>
-  <action name="actionSimulate">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Simulate</string>
-   </property>
-   <property name="toolTip">
-    <string>Simulate one vehicle to test and evaluate this application</string>
    </property>
   </action>
   <action name="actionOnline_Documentation">
