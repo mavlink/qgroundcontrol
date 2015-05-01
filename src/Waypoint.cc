@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 
 Waypoint::Waypoint(
+    QObject *parent,
     quint16 id,
     double  x,
     double  y,
@@ -49,7 +50,8 @@ Waypoint::Waypoint(
     int     action,
     const QString& description
     )
-    : _id(id)
+    : QObject(parent)
+    , _id(id)
     , _x(x)
     , _y(y)
     , _z(z)
@@ -69,6 +71,7 @@ Waypoint::Waypoint(
 }
 
 Waypoint::Waypoint(const Waypoint& other)
+    : QObject(NULL)
 {
     *this = other;
 }
