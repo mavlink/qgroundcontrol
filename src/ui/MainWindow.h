@@ -324,6 +324,7 @@ private:
     static const char* _waypointsDockWidgetName;
     static const char* _mavlinkDockWidgetName;
     static const char* _parametersDockWidgetName;
+    static const char* _customCommandWidgetName;
     static const char* _filesDockWidgetName;
     static const char* _uasStatusDetailsDockWidgetName;
     static const char* _mapViewDockWidgetName;
