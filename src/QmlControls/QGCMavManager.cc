@@ -33,8 +33,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMavManager.h"
 
 #define UPDATE_TIMER 50
-#define DEFAULT_LAT  38.965767
-#define DEFAULT_LON -120.083923
+#define DEFAULT_LAT  38.965767f
+#define DEFAULT_LON -120.083923f
 
 MavManager::MavManager(QObject *parent)
     : QObject(parent)
