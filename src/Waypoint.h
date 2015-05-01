@@ -45,6 +45,7 @@ class Waypoint : public QObject
     Q_OBJECT
 public:
     Waypoint(
+        QObject *parent = 0,
         quint16 id = 0,
         double  x = 0.0,
         double  y = 0.0,
