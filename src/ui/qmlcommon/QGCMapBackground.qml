@@ -52,6 +52,7 @@ Item {
     property alias  mapItem:            map
     property alias  waypoints:          polyLine
     property alias  mapMenu:            mapTypeMenu
+    property alias  readOnly:           map.readOnly
 
     Component.onCompleted: {
         map.zoomLevel   = 18
@@ -142,8 +143,11 @@ Item {
                     polyLine.addCoordinate(coord);
                     map.addMarker(coord, MavManager.waypoints[i].id);
                 }
-                root.longitude = MavManager.waypoints[0].longitude
-                root.latitude  = MavManager.waypoints[0].latitude
+                if (typeof MavManager.waypoints != 'undefined' && MavManager.waypoints.length > 0) {
+                    root.longitude = MavManager.waypoints[0].longitude
+                    root.latitude  = MavManager.waypoints[0].latitude
+                }
+                map.changed = false
             }
         }
     }
@@ -166,10 +170,17 @@ Item {
 
     Map {
         id: map
-        property real lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
-        property real lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
+
+        property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
+        property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
+        property int    currentMarker
+        property int    pressX : -1
+        property int    pressY : -1
+        property bool   changed:  false
+        property bool   readOnly: false
         property variant scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
         property variant markers
+
         plugin:     mapPlugin
         width:      1
         height:     1
@@ -203,13 +214,23 @@ Item {
             scaleTimer.restart()
         }
 
+        function updateMarker(coord, wpid)
+        {
+            if(wpid < polyLine.path.length) {
+                var tmpPath = polyLine.path;
+                tmpPath[wpid] = coord;
+                polyLine.path = tmpPath;
+                map.changed = true;
+            }
+        }
+
         function addMarker(coord, wpid)
         {
             var marker = Qt.createQmlObject ('QGCWaypoint {}', map)
             map.addMapItem(marker)
             marker.z = map.z + 1
             marker.coordinate = coord
-            marker.waypointID.text = wpid
+            marker.waypointID = wpid
             // Update list of markers
             var count = map.markers.length
             var myArray = []
@@ -261,7 +282,7 @@ Item {
             id:             polyLine
             visible:        path.length > 1 && root.showWaypoints
             line.width:     3
-            line.color:     "#e35cd8"
+            line.color:     map.changed ? "#f97a2e" : "#e35cd8"
             smooth:         true
             antialiasing:   true
         }

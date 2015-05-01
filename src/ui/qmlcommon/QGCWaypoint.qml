@@ -32,20 +32,50 @@ import QtLocation 5.3
 
 MapQuickItem {
     id: marker
-    property alias waypointID: number
-    anchorPoint.x: image.width  / 2
-    anchorPoint.y: image.height / 2
+    property int waypointID: 0
+    anchorPoint.x: markerIcon.width  / 2
+    anchorPoint.y: markerIcon.height / 2
     sourceItem: Rectangle {
-        id: image
-        width:  24
-        height: 24
+        id: markerIcon
+        width:  30
+        height: 30
+        color:  markerMouseArea.containsMouse ? (markerMouseArea.pressed ? Qt.rgba(0.69,0.2,0.68,0.25) : Qt.rgba(0.69,0.2,0.68,0.75)) : Qt.rgba(0,0,0,0.5)
+        radius: 8
         border.color: Qt.rgba(0,0,0,0.75)
-        color: Qt.rgba(0,0,0,0.5)
         Text {
             id: number
             anchors.centerIn: parent
-            font.pointSize: 10
+            font.pointSize: 11
+            font.weight: Font.DemiBold
             color: "white"
+            text: marker.waypointID
+        }
+        MouseArea  {
+            id: markerMouseArea
+            enabled: !map.readOnly
+            anchors.fill:    parent
+            hoverEnabled:    true
+            drag.target:     marker
+            preventStealing: true
+            property int pressX : -1
+            property int pressY : -1
+            property int jitterThreshold : 4
+            onPressed : {
+                pressX = mouse.x;
+                pressY = mouse.y;
+                map.currentMarker = -1;
+                for (var i = 0; i < map.markers.length; i++) {
+                    if (marker === map.markers[i]) {
+                        map.currentMarker = i;
+                        break;
+                    }
+                }
+            }
+            onPositionChanged: {
+                if (Math.abs(pressX - mouse.x ) < jitterThreshold && Math.abs(pressY - mouse.y) < jitterThreshold) {
+                    map.updateMarker(marker.coordinate, marker.waypointID)
+                }
+            }
         }
     }
 }

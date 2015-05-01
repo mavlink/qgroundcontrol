@@ -482,6 +482,7 @@ Item {
         heading:            0 // isNaN(MavManager.heading) ? 0 : MavManager.heading
         latitude:           mapBackground.visible ? ((MavManager.latitude  === 0) ?   37.803784 : MavManager.latitude)  :   37.803784
         longitude:          mapBackground.visible ? ((MavManager.longitude === 0) ? -122.462276 : MavManager.longitude) : -122.462276
+        readOnly:           true
       //interactive:        !MavManager.mavPresent
         z:                  10
     }
