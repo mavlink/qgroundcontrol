@@ -35,6 +35,7 @@ import QGroundControl.Controls 1.0
 import QGroundControl.FactControls 1.0
 import QGroundControl.Palette 1.0
 import QGroundControl.MainToolBar 1.0
+import QGroundControl.MavManager 1.0
 import QGroundControl.ScreenTools 1.0
 
 Rectangle {
@@ -42,7 +43,7 @@ Rectangle {
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
 
-    property int cellSpacerSize: mainToolBar.isMobile ? getProportionalDimmension(6) : getProportionalDimmension(4)
+    property int cellSpacerSize: ScreenTools.isMobile ? getProportionalDimmension(6) : getProportionalDimmension(4)
     property int cellHeight:     getProportionalDimmension(30)
 
     property var colorBlue:       "#1a6eaa"
@@ -83,24 +84,24 @@ Rectangle {
     }
 
     function getBatteryIcon() {
-        if(mainToolBar.batteryPercent < 20.0)
+        if(MavManager.batteryPercent < 20.0)
             return "qrc:/res/Battery_0";
-        else if(mainToolBar.batteryPercent < 40.0)
+        else if(MavManager.batteryPercent < 40.0)
             return "qrc:/res/Battery_20";
-        else if(mainToolBar.batteryPercent < 60.0)
+        else if(MavManager.batteryPercent < 60.0)
             return "qrc:/res/Battery_40";
-        else if(mainToolBar.batteryPercent < 80.0)
+        else if(MavManager.batteryPercent < 80.0)
             return "qrc:/res/Battery_60";
-        else if(mainToolBar.batteryPercent < 90.0)
+        else if(MavManager.batteryPercent < 90.0)
             return "qrc:/res/Battery_80";
         else
             return "qrc:/res/Battery_100";
     }
 
     function getBatteryColor() {
-        if (mainToolBar.batteryPercent > 40.0)
+        if (MavManager.batteryPercent > 40.0)
             return colorGreen;
-        if(mainToolBar.batteryPercent > 0.01)
+        if(MavManager.batteryPercent > 0.01)
             return colorRed;
         // This means there is no battery level data
         return colorBlue;
@@ -108,13 +109,13 @@ Rectangle {
 
     function getSatelliteColor() {
         // No GPS data
-        if (mainToolBar.satelliteCount < 0)
+        if (MavManager.satelliteCount < 0)
             return qgcPal.button
         // No Lock
-        if(mainToolBar.satelliteLock < 2)
+        if(MavManager.satelliteLock < 2)
             return colorRed;
         // 2D Lock
-        if(mainToolBar.satelliteLock === 2)
+        if(MavManager.satelliteLock === 2)
             return colorBlue;
         // Lock is 3D or more
         return colorGreen;
@@ -129,7 +130,7 @@ Rectangle {
     }
 
     function showMavStatus() {
-         return (mainToolBar.mavPresent && mainToolBar.heartbeatTimeout === 0 && mainToolBar.connectionCount > 0);
+         return (MavManager.mavPresent && MavManager.heartbeatTimeout === 0 && mainToolBar.connectionCount > 0);
     }
 
     //-------------------------------------------------------------------------
@@ -193,7 +194,7 @@ Rectangle {
             height:                 cellHeight
             spacing:                -getProportionalDimmension(12)
             anchors.verticalCenter: parent.verticalCenter
-            visible:                !mainToolBar.isMobile
+            visible:                !ScreenTools.isMobile
             Connections {
                 target: ScreenTools
                 onRepaintRequestedChanged: {
@@ -275,7 +276,7 @@ Rectangle {
             //-- "Hamburger" menu for Mobile Devices
             Item {
                 id:         actionButton
-                visible:    mainToolBar.isMobile
+                visible:    ScreenTools.isMobile
                 height:     cellHeight
                 width:      cellHeight
                 Image {
@@ -391,7 +392,7 @@ Rectangle {
                 border.color: "#00000000"
                 border.width: 0
                 Image {
-                    source: mainToolBar.systemPixmap
+                    source: MavManager.systemPixmap
                     height: cellHeight * 0.75
                     fillMode: Image.PreserveAspectFit
                     anchors.verticalCenter: parent.verticalCenter
@@ -422,8 +423,8 @@ Rectangle {
 
                 QGCLabel {
                     id: satelitteText
-                    text: mainToolBar.satelliteCount >= 0 ? mainToolBar.satelliteCount : 'NA'
-                    font.pointSize: mainToolBar.satelliteCount >= 0 ? ScreenTools.fontPointFactor * (14) : ScreenTools.fontPointFactor * (10)
+                    text: MavManager.satelliteCount >= 0 ? MavManager.satelliteCount : 'NA'
+                    font.pointSize: MavManager.satelliteCount >= 0 ? ScreenTools.fontPointFactor * (14) : ScreenTools.fontPointFactor * (10)
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -547,7 +548,7 @@ Rectangle {
 
                 QGCLabel {
                     id: batteryText
-                    text: mainToolBar.batteryVoltage.toFixed(1) + 'V';
+                    text: MavManager.batteryVoltage.toFixed(1) + 'V';
                     font.pointSize: ScreenTools.fontPointFactor * (11);
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
@@ -575,11 +576,11 @@ Rectangle {
 
                     QGCLabel {
                         id: armedStatusText
-                        text: (mainToolBar.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
+                        text: (MavManager.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
                         font.pointSize: ScreenTools.fontPointFactor * (12);
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
-                        color: (mainToolBar.systemArmed) ? colorOrangeText : colorGreenText
+                        color: (MavManager.systemArmed) ? colorOrangeText : colorGreenText
                     }
                 }
 
@@ -594,11 +595,11 @@ Rectangle {
 
                     QGCLabel {
                         id: stateStatusText
-                        text: mainToolBar.currentState
+                        text: MavManager.currentState
                         font.pointSize: ScreenTools.fontPointFactor * (12);
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
-                        color: (mainToolBar.currentState === "STANDBY") ? colorGreenText : colorRedText
+                        color: (MavManager.currentState === "STANDBY") ? colorGreenText : colorRedText
                     }
                 }
 
@@ -615,7 +616,7 @@ Rectangle {
 
                 QGCLabel {
                     id: modeStatusText
-                    text: mainToolBar.currentMode
+                    text: MavManager.currentMode
                     font.pointSize: ScreenTools.fontPointFactor * (12);
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -628,7 +629,7 @@ Rectangle {
                 id: connectionStatus
                 width: getProportionalDimmension(160)
                 height: cellHeight
-                visible: (mainToolBar.connectionCount > 0 && mainToolBar.mavPresent && mainToolBar.heartbeatTimeout != 0)
+                visible: (mainToolBar.connectionCount > 0 && MavManager.mavPresent && MavManager.heartbeatTimeout != 0)
                 anchors.verticalCenter: parent.verticalCenter
                 color: "#00000000"
                 border.color: "#00000000"

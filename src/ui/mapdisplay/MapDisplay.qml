@@ -45,56 +45,6 @@ Rectangle {
     property real pitch:   isNaN(mapEngine.pitch)   ? 0 : mapEngine.pitch
     property bool showWaypointEditor: true
 
-    function getBool(value) {
-        return value === '0' ? false : true;
-    }
-
-    function setBool(value) {
-        return value ? "1" : "0";
-    }
-
-    Component.onCompleted:
-    {
-        mapTypeMenu.update();
-    }
-
-    Menu {
-        id: mapTypeMenu
-        title: "Map Type..."
-        ExclusiveGroup { id: currentMapType }
-        function setCurrentMap(map) {
-            for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
-                if (map === mapBackground.mapItem.supportedMapTypes[i].name) {
-                    mapBackground.mapItem.activeMapType = mapBackground.mapItem.supportedMapTypes[i]
-                    mapEngine.saveSetting("currentMapType", map);
-                    return;
-                }
-            }
-        }
-        function addMap(map, checked) {
-            var mItem = mapTypeMenu.addItem(map);
-            mItem.checkable = true
-            mItem.checked   = checked
-            mItem.exclusiveGroup = currentMapType
-            var menuSlot = function() {setCurrentMap(map);};
-            mItem.triggered.connect(menuSlot);
-        }
-        function update() {
-            clear()
-            var map = ''
-            if (mapBackground.mapItem.supportedMapTypes.length > 0)
-                map = mapBackground.mapItem.activeMapType.name;
-            map = mapEngine.loadSetting("currentMapType", map);
-            for (var i = 0; i < mapBackground.mapItem.supportedMapTypes.length; i++) {
-                var name = mapBackground.mapItem.supportedMapTypes[i].name;
-                addMap(name, map === name);
-            }
-            if(map != '')
-                setCurrentMap(map);
-        }
-
-    }
-
     SplitView {
         id:           splitView
         anchors.fill: parent
@@ -117,6 +67,9 @@ Rectangle {
             heading:                isNaN(mapEngine.heading) ? 0 : mapEngine.heading
             latitude:               37.803784   // mapEngine.latitude
             longitude:              -122.462276 // mapEngine.longitude
+            showWaypoints:          true
+            mapName:                'MainMapDisplay'
+
             // Chevron button at upper right corner of Map Display
             Item {
                 id:             openWaypoints
@@ -164,7 +117,7 @@ Rectangle {
         onClicked: {
             if (mouse.button == Qt.RightButton)
             {
-                mapTypeMenu.popup()
+                mapBackground.mapMenu.popup()
             }
         }
         z: splitView.z + 5

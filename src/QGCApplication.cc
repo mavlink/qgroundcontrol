@@ -58,11 +58,13 @@
 #include "QGCTemporaryFile.h"
 #include "QGCFileDialog.h"
 #include "QGCPalette.h"
-#include "ScreenTools.h"
 #include "QGCLoggingCategory.h"
 #include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
 #include "CustomCommandWidgetController.h"
+
+#include "ScreenTools.h"
+#include "QGCMavManager.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -94,6 +96,18 @@ static QObject* screenToolsSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     ScreenTools* screenTools = new ScreenTools;
     return screenTools;
+}
+
+/**
+ * @brief MavManager creation callback
+ *
+ * This is called by the QtQuick engine for creating the singleton
+**/
+
+static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    MavManager* mavManager = new MavManager;
+    return mavManager;
 }
 
 /**
@@ -287,9 +301,11 @@ void QGCApplication::_initCommon(void)
 	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
 	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<CustomCommandWidgetController>("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
-
     //-- Create QML Singleton Interfaces
     qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
+    qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
+    //-- Register Waypoint Interface
+    qmlRegisterInterface<Waypoint>("Waypoint");
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)

@@ -23,33 +23,29 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Main Flight Display
+ *   @brief QGC Waypoint Marker
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef QGCFLIGHTDISPLAY_H
-#define QGCFLIGHTDISPLAY_H
+import QtQuick 2.4
+import QtLocation 5.3
 
-#include "QGCQmlWidgetHolder.h"
-
-class UASInterface;
-
-class QGCFlightDisplay : public QGCQmlWidgetHolder
-{
-    Q_OBJECT
-public:
-    QGCFlightDisplay(QWidget* parent = NULL);
-    ~QGCFlightDisplay();
-
-    /// @brief Invokes the Flight Display Options menu
-    void showOptionsMenu() { emit showOptionsMenuChanged(); }
-
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
-
-signals:
-    void showOptionsMenuChanged ();
-
-};
-
-#endif // QGCFLIGHTDISPLAY_H
+MapQuickItem {
+    id: marker
+    property alias waypointID: number
+    anchorPoint.x: image.width  / 2
+    anchorPoint.y: image.height / 2
+    sourceItem: Rectangle {
+        id: image
+        width:  24
+        height: 24
+        border.color: Qt.rgba(0,0,0,0.75)
+        color: Qt.rgba(0,0,0,0.5)
+        Text {
+            id: number
+            anchors.centerIn: parent
+            font.pointSize: 10
+            color: "white"
+        }
+    }
+}

@@ -37,7 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #define TOOL_BAR_SHOW_GPS       "ShowGPS"
 #define TOOL_BAR_SHOW_MAV       "ShowMav"
 #define TOOL_BAR_SHOW_MESSAGES  "ShowMessages"
-#define TOOL_BAR_SHOW_RSSI       "ShowRSSI"
+#define TOOL_BAR_SHOW_RSSI      "ShowRSSI"
 
 class UASInterface;
 class UASMessage;
@@ -53,19 +53,19 @@ public:
     ~MainToolBar();
 
     typedef enum {
+        MessageNone,
+        MessageNormal,
+        MessageWarning,
+        MessageError
+    } MessageType_t;
+
+    typedef enum {
         ViewNone    = -1,
         ViewAnalyze, // MainWindow::VIEW_ENGINEER
         ViewPlan   , // MainWindow::VIEW_MISSION
         ViewFly    , // MainWindow::VIEW_FLIGHT
         ViewSetup  , // MainWindow::VIEW_SETUP
     } ViewType_t;
-
-    typedef enum {
-        MessageNone,
-        MessageNormal,
-        MessageWarning,
-        MessageError
-    } MessageType_t;
 
     Q_INVOKABLE void    onSetupView();
     Q_INVOKABLE void    onPlanView();
@@ -75,25 +75,14 @@ public:
     Q_INVOKABLE void    onConnect(QString conf);
     Q_INVOKABLE void    onDisconnect(QString conf);
     Q_INVOKABLE void    onEnterMessageArea(int x, int y);
-    Q_INVOKABLE QString getMavIconColor();
 
-    Q_PROPERTY(int           connectionCount    MEMBER _connectionCount         NOTIFY connectionCountChanged)
-    Q_PROPERTY(double        batteryVoltage     MEMBER _batteryVoltage          NOTIFY batteryVoltageChanged)
-    Q_PROPERTY(double        batteryPercent     MEMBER _batteryPercent          NOTIFY batteryPercentChanged)
     Q_PROPERTY(ViewType_t    currentView        MEMBER _currentView             NOTIFY currentViewChanged)
     Q_PROPERTY(QStringList   configList         MEMBER _linkConfigurations      NOTIFY configListChanged)
-    Q_PROPERTY(bool          systemArmed        MEMBER _systemArmed             NOTIFY systemArmedChanged)
-    Q_PROPERTY(unsigned int  heartbeatTimeout   MEMBER _currentHeartbeatTimeout NOTIFY heartbeatTimeoutChanged)
-    Q_PROPERTY(QString       currentMode        MEMBER _currentMode             NOTIFY currentModeChanged)
     Q_PROPERTY(MessageType_t messageType        MEMBER _currentMessageType      NOTIFY messageTypeChanged)
     Q_PROPERTY(int           newMessageCount    MEMBER _currentMessageCount     NOTIFY newMessageCountChanged)
     Q_PROPERTY(int           messageCount       MEMBER _messageCount            NOTIFY messageCountChanged)
-    Q_PROPERTY(QString       systemPixmap       MEMBER _systemPixmap            NOTIFY systemPixmapChanged)
-    Q_PROPERTY(int           satelliteCount     READ   satelliteCount           NOTIFY satelliteCountChanged)
+    Q_PROPERTY(int           connectionCount    READ connectionCount            NOTIFY connectionCountChanged)
     Q_PROPERTY(QStringList   connectedList      MEMBER _connectedList           NOTIFY connectedListChanged)
-    Q_PROPERTY(bool          mavPresent         READ mavPresent                 NOTIFY mavPresentChanged)
-    Q_PROPERTY(QString       currentState       MEMBER _currentState            NOTIFY currentStateChanged)
-    Q_PROPERTY(int           satelliteLock      MEMBER _satelliteLock           NOTIFY satelliteLockChanged)
     Q_PROPERTY(bool          showGPS            MEMBER _showGPS                 NOTIFY showGPSChanged)
     Q_PROPERTY(bool          showMav            MEMBER _showMav                 NOTIFY showMavChanged)
     Q_PROPERTY(bool          showMessages       MEMBER _showMessages            NOTIFY showMessagesChanged)
@@ -103,48 +92,22 @@ public:
     Q_PROPERTY(int           remoteRSSI         READ remoteRSSI                 NOTIFY remoteRSSIChanged)
     Q_PROPERTY(int           telemetryRRSSI     READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
     Q_PROPERTY(int           telemetryLRSSI     READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
-    Q_PROPERTY(bool          isAndroid          READ isAndroid                  CONSTANT)
-    Q_PROPERTY(bool          isiOS              READ isiOS                      CONSTANT)
-    Q_PROPERTY(bool          isMobile           READ isMobile                   CONSTANT)
-
-    bool        mavPresent              () { return _mav != NULL; }
-    int         satelliteCount          () { return _satelliteCount; }
-    int         remoteRSSI              () { return _remoteRSSI; }
-    int         telemetryRRSSI          () { return _telemetryRRSSI; }
-    int         telemetryLRSSI          () { return _telemetryLRSSI; }
-
-#if defined (__android__)
-    bool        isAndroid               () { return true;  }
-    bool        isiOS                   () { return false; }
-    bool        isMobile                () { return true;  }
-#else
-    bool        isAndroid               () { return false; }
-    bool        isiOS                   () { return false; }
-    bool        isMobile                () { return false; }
-#endif
 
     void        setCurrentView          (int currentView);
     void        viewStateChanged        (const QString& key, bool value);
+    int         remoteRSSI              () { return _remoteRSSI; }
+    int         telemetryRRSSI          () { return _telemetryRRSSI; }
+    int         telemetryLRSSI          () { return _telemetryLRSSI; }
+    int         connectionCount         () { return _connectionCount; }
 
 signals:
     void connectionCountChanged         (int count);
-    void batteryVoltageChanged          (double value);
-    void batteryPercentChanged          (double value);
     void currentViewChanged             ();
     void configListChanged              ();
-    void systemArmedChanged             (bool systemArmed);
-    void heartbeatTimeoutChanged        (unsigned int hbTimeout);
-    void currentModeChanged             ();
     void messageTypeChanged             (MessageType_t type);
     void newMessageCountChanged         (int count);
     void messageCountChanged            (int count);
-    void currentConfigChanged           (QString config);
-    void systemPixmapChanged            (QPixmap pix);
-    void satelliteCountChanged          (int count);
     void connectedListChanged           (QStringList connectedList);
-    void mavPresentChanged              (bool present);
-    void currentStateChanged            (QString state);
-    void satelliteLockChanged           (int lock);
     void showGPSChanged                 (bool value);
     void showMavChanged                 (bool value);
     void showMessagesChanged            (bool value);
@@ -156,27 +119,17 @@ signals:
     void telemetryLRSSIChanged          (int value);
 
 private slots:
-    void _setActiveUAS                  (UASInterface* active);
-    void _updateBatteryRemaining        (UASInterface*, double voltage, double, double percent, int);
-    void _updateArmingState             (bool armed);
+    void _forgetUAS                     (UASInterface* uas);
+    void _setActiveUAS                  (UASInterface* uas);
     void _updateConfigurations          ();
     void _linkConnected                 (LinkInterface* link);
     void _linkDisconnected              (LinkInterface* link);
-    void _updateState                   (UASInterface* system, QString name, QString description);
-    void _updateMode                    (int system, QString name, QString description);
-    void _updateName                    (const QString& name);
-    void _setSystemType                 (UASInterface* uas, unsigned int systemType);
-    void _heartbeatTimeout              (bool timeout, unsigned int ms);
     void _handleTextMessage             (int newCount);
-    void _updateCurrentWaypoint         (quint16 id);
-    void _updateWaypointDistance        (double distance);
-    void _setSatelliteCount             (double val, QString name);
     void _leaveMessageView              ();
-    void _setSatLoc                     (UASInterface* uas, int fix);
     void _setProgressBarValue           (float value);
+    void _updatePixelSize               ();
     void _remoteControlRSSIChanged      (uint8_t rssi);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
-    void _updatePixelSize               ();
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
@@ -186,27 +139,15 @@ private:
     UASInterface*   _mav;
     QQuickItem*     _toolBar;
     ViewType_t      _currentView;
-    double          _batteryVoltage;
-    double          _batteryPercent;
     QStringList     _linkConfigurations;
     int             _connectionCount;
-    bool            _systemArmed;
-    QString         _currentState;
-    QString         _currentMode;
-    QString         _systemName;
-    QString         _systemPixmap;
-    unsigned int    _currentHeartbeatTimeout;
-    double          _waypointDistance;
-    quint16         _currentWaypoint;
     int             _currentMessageCount;
     int             _messageCount;
     int             _currentErrorCount;
     int             _currentWarningCount;
     int             _currentNormalCount;
     MessageType_t   _currentMessageType;
-    int             _satelliteCount;
     QStringList     _connectedList;
-    int             _satelliteLock;
     bool            _showGPS;
     bool            _showMav;
     bool            _showMessages;
