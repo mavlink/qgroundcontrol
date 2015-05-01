@@ -41,21 +41,13 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _mav(NULL)
     , _toolBar(NULL)
     , _currentView(ViewNone)
-    , _batteryVoltage(0.0)
-    , _batteryPercent(0.0)
     , _connectionCount(0)
-    , _systemArmed(false)
-    , _currentHeartbeatTimeout(0)
-    , _waypointDistance(0.0)
-    , _currentWaypoint(0)
     , _currentMessageCount(0)
     , _messageCount(0)
     , _currentErrorCount(0)
     , _currentWarningCount(0)
     , _currentNormalCount(0)
     , _currentMessageType(MessageNone)
-    , _satelliteCount(-1)
-    , _satelliteLock(0)
     , _showGPS(true)
     , _showMav(true)
     , _showMessages(true)
@@ -88,13 +80,10 @@ MainToolBar::MainToolBar(QWidget* parent)
     setContextPropertyObject("mainToolBar", this);
     setSource(QUrl::fromUserInput("qrc:/qml/MainToolBar.qml"));
     setVisible(true);
-    // Configure the toolbar for the current default UAS (which should be none as we just booted)
-    _setActiveUAS(UASManager::instance()->getActiveUAS());
     emit configListChanged();
-    emit heartbeatTimeoutChanged(_currentHeartbeatTimeout);
     emit connectionCountChanged(_connectionCount);
+    _setActiveUAS(UASManager::instance()->getActiveUAS());
     // Link signals
-    connect(UASManager::instance(),      &UASManager::activeUASSet,              this, &MainToolBar::_setActiveUAS);
     connect(LinkManager::instance(),     &LinkManager::linkConfigurationChanged, this, &MainToolBar::_updateConfigurations);
     connect(LinkManager::instance(),     &LinkManager::linkConnected,            this, &MainToolBar::_linkConnected);
     connect(LinkManager::instance(),     &LinkManager::linkDisconnected,         this, &MainToolBar::_linkDisconnected);
@@ -103,6 +92,8 @@ MainToolBar::MainToolBar(QWidget* parent)
     connect(MAVLinkProtocol::instance(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
         SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)),   this, SLOT(_forgetUAS(UASInterface*)));
 }
 
 MainToolBar::~MainToolBar()
@@ -254,15 +245,6 @@ void MainToolBar::onEnterMessageArea(int x, int y)
     }
 }
 
-QString MainToolBar::getMavIconColor()
-{
-    // TODO: Not using because not only the colors are ghastly, it doesn't respect dark/light palette
-    if(_mav)
-        return _mav->getColor().name();
-    else
-        return QString("black");
-}
-
 void MainToolBar::_leaveMessageView()
 {
     // Mouse has left the message window area (and it has closed itself)
@@ -295,74 +277,53 @@ void MainToolBar::setCurrentView(int currentView)
     }
 }
 
+void MainToolBar::_forgetUAS(UASInterface* uas)
+{
+    if (_mav != NULL && _mav == uas) {
+        disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &MainToolBar::_handleTextMessage);
+        disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
+        disconnect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        _mav = NULL;
+    }
+}
 void MainToolBar::_setActiveUAS(UASInterface* active)
 {
     // Do nothing if system is the same
     if (_mav == active) {
         return;
     }
-    // If switching the UAS, disconnect the existing one.
-    if (_mav)
-    {
-        disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &MainToolBar::_handleTextMessage);
-        disconnect(_mav, &UASInterface::heartbeatTimeout,                                       this, &MainToolBar::_heartbeatTimeout);
-        disconnect(_mav, &UASInterface::batteryChanged,                                         this, &MainToolBar::_updateBatteryRemaining);
-        disconnect(_mav, &UASInterface::modeChanged,                                            this, &MainToolBar::_updateMode);
-        disconnect(_mav, &UASInterface::nameChanged,                                            this, &MainToolBar::_updateName);
-        disconnect(_mav, &UASInterface::systemTypeSet,                                          this, &MainToolBar::_setSystemType);
-        disconnect(_mav, &UASInterface::localizationChanged,                                    this, &MainToolBar::_setSatLoc);
-        disconnect(_mav, &UASInterface::remoteControlRSSIChanged,                               this, &MainToolBar::_remoteControlRSSIChanged);
-        disconnect(_mav, SIGNAL(statusChanged(UASInterface*,QString,QString)),                  this, SLOT(_updateState(UASInterface*,QString,QString)));
-        disconnect(_mav, SIGNAL(armingChanged(bool)),                                           this, SLOT(_updateArmingState(bool)));
-
-        if (_mav->getWaypointManager()) {
-            disconnect(_mav->getWaypointManager(), &UASWaypointManager::currentWaypointChanged,  this, &MainToolBar::_updateCurrentWaypoint);
-            disconnect(_mav->getWaypointManager(), &UASWaypointManager::waypointDistanceChanged, this, &MainToolBar::_updateWaypointDistance);
-        }
-        
-        UAS* pUas = dynamic_cast<UAS*>(_mav);
-        if(pUas) {
-            disconnect(pUas, &UAS::satelliteCountChanged, this, &MainToolBar::_setSatelliteCount);
-        }
-        
-        disconnect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+    // Disconnect the previous one (if any)
+    if(_mav) {
+        _forgetUAS(_mav);
     }
     // Connect new system
     _mav = active;
     if (_mav)
     {
-        _setSystemType(_mav, _mav->getSystemType());
-        _updateArmingState(_mav->isArmed());
         connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged, this, &MainToolBar::_handleTextMessage);
-        connect(_mav, &UASInterface::heartbeatTimeout,                                      this, &MainToolBar::_heartbeatTimeout);
-        connect(_mav, &UASInterface::batteryChanged,                                        this, &MainToolBar::_updateBatteryRemaining);
-        connect(_mav, &UASInterface::modeChanged,                                           this, &MainToolBar::_updateMode);
-        connect(_mav, &UASInterface::nameChanged,                                           this, &MainToolBar::_updateName);
-        connect(_mav, &UASInterface::systemTypeSet,                                         this, &MainToolBar::_setSystemType);
-        connect(_mav, &UASInterface::localizationChanged,                                   this, &MainToolBar::_setSatLoc);
-        connect(_mav, &UASInterface::remoteControlRSSIChanged,                              this, &MainToolBar::_remoteControlRSSIChanged);
-        connect(_mav, SIGNAL(statusChanged(UASInterface*,QString,QString)),                 this, SLOT(_updateState(UASInterface*, QString,QString)));
-        connect(_mav, SIGNAL(armingChanged(bool)),                                          this, SLOT(_updateArmingState(bool)));
-        
-        if (_mav->getWaypointManager()) {
-            connect(_mav->getWaypointManager(), &UASWaypointManager::currentWaypointChanged,  this, &MainToolBar::_updateCurrentWaypoint);
-            connect(_mav->getWaypointManager(), &UASWaypointManager::waypointDistanceChanged, this, &MainToolBar::_updateWaypointDistance);
-        }
-        
-        UAS* pUas = dynamic_cast<UAS*>(_mav);
-        if(pUas) {
-            _setSatelliteCount(pUas->getSatelliteCount(), QString(""));
-            connect(pUas, &UAS::satelliteCountChanged, this, &MainToolBar::_setSatelliteCount);
-        }
-        
+        connect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
         connect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
-        
-        // Reset connection lost (if any)
-        _currentHeartbeatTimeout = 0;
-        emit heartbeatTimeoutChanged(_currentHeartbeatTimeout);
     }
-    // Let toolbar know about it
-    emit mavPresentChanged(_mav != NULL);
+}
+
+void MainToolBar::_updateConfigurations()
+{
+    QStringList tmpList;
+    QList<LinkConfiguration*> configs = LinkManager::instance()->getLinkConfigurationList();
+    foreach(LinkConfiguration* conf, configs) {
+        if(conf) {
+            if(conf->isPreferred()) {
+                tmpList.insert(0,conf->name());
+            } else {
+                tmpList << conf->name();
+            }
+        }
+    }
+    // Any changes?
+    if(tmpList != _linkConfigurations) {
+        _linkConfigurations = tmpList;
+        emit configListChanged();
+    }
 }
 
 void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned remrssi, unsigned, unsigned, unsigned)
@@ -390,53 +351,6 @@ void MainToolBar::_remoteControlRSSIChanged(uint8_t rssi)
             _remoteRSSI = rssi;
             emit remoteRSSIChanged(_remoteRSSI);
         }
-    }
-}
-
-void MainToolBar::_updateArmingState(bool armed)
-{
-    if(_systemArmed != armed) {
-        _systemArmed = armed;
-        emit systemArmedChanged(armed);
-    }
-}
-
-void MainToolBar::_updateBatteryRemaining(UASInterface*, double voltage, double, double percent, int)
-{
-
-    if(percent < 0.0) {
-        percent = 0.0;
-    }
-    if(voltage < 0.0) {
-        voltage = 0.0;
-    }
-    if (_batteryVoltage != voltage) {
-        _batteryVoltage = voltage;
-        emit batteryVoltageChanged(voltage);
-    }
-    if (_batteryPercent != percent) {
-        _batteryPercent = percent;
-        emit batteryPercentChanged(voltage);
-    }
-}
-
-void MainToolBar::_updateConfigurations()
-{
-    QStringList tmpList;
-    QList<LinkConfiguration*> configs = LinkManager::instance()->getLinkConfigurationList();
-    foreach(LinkConfiguration* conf, configs) {
-        if(conf) {
-            if(conf->isPreferred()) {
-                tmpList.insert(0,conf->name());
-            } else {
-                tmpList << conf->name();
-            }
-        }
-    }
-    // Any changes?
-    if(tmpList != _linkConfigurations) {
-        _linkConfigurations = tmpList;
-        emit configListChanged();
     }
 }
 
@@ -484,120 +398,6 @@ void MainToolBar::_updateConnection(LinkInterface *disconnectedLink)
     if(_connectionCount != 1 && _remoteRSSI > 0) {
         _remoteRSSI = 0;
         emit remoteRSSIChanged(_remoteRSSI);
-    }
-}
-
-void MainToolBar::_updateState(UASInterface*, QString name, QString)
-{
-    if (_currentState != name) {
-        _currentState = name;
-        emit currentStateChanged(_currentState);
-    }
-}
-
-void MainToolBar::_updateMode(int, QString name, QString)
-{
-    if (name.size()) {
-        QString shortMode = name;
-        shortMode = shortMode.replace("D|", "");
-        shortMode = shortMode.replace("A|", "");
-        if (_currentMode != shortMode) {
-            _currentMode = shortMode;
-            emit currentModeChanged();
-        }
-    }
-}
-
-void MainToolBar::_updateName(const QString& name)
-{
-    if (_systemName != name) {
-        _systemName = name;
-        // TODO: emit signal and use it
-    }
-}
-
-/**
- * The current system type is represented through the system icon.
- *
- * @param uas Source system, has to be the same as this->uas
- * @param systemType type ID, following the MAVLink system type conventions
- * @see http://pixhawk.ethz.ch/software/mavlink
- */
-void MainToolBar::_setSystemType(UASInterface*, unsigned int systemType)
-{
-    _systemPixmap = "qrc:/res/mavs/";
-    switch (systemType) {
-        case MAV_TYPE_GENERIC:
-            _systemPixmap += "Generic";
-            break;
-        case MAV_TYPE_FIXED_WING:
-            _systemPixmap += "FixedWing";
-            break;
-        case MAV_TYPE_QUADROTOR:
-            _systemPixmap += "QuadRotor";
-            break;
-        case MAV_TYPE_COAXIAL:
-            _systemPixmap += "Coaxial";
-            break;
-        case MAV_TYPE_HELICOPTER:
-            _systemPixmap += "Helicopter";
-            break;
-        case MAV_TYPE_ANTENNA_TRACKER:
-            _systemPixmap += "AntennaTracker";
-            break;
-        case MAV_TYPE_GCS:
-            _systemPixmap += "Groundstation";
-            break;
-        case MAV_TYPE_AIRSHIP:
-            _systemPixmap += "Airship";
-            break;
-        case MAV_TYPE_FREE_BALLOON:
-            _systemPixmap += "FreeBalloon";
-            break;
-        case MAV_TYPE_ROCKET:
-            _systemPixmap += "Rocket";
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-            _systemPixmap += "GroundRover";
-            break;
-        case MAV_TYPE_SURFACE_BOAT:
-            _systemPixmap += "SurfaceBoat";
-            break;
-        case MAV_TYPE_SUBMARINE:
-            _systemPixmap += "Submarine";
-            break;
-        case MAV_TYPE_HEXAROTOR:
-            _systemPixmap += "HexaRotor";
-            break;
-        case MAV_TYPE_OCTOROTOR:
-            _systemPixmap += "OctoRotor";
-            break;
-        case MAV_TYPE_TRICOPTER:
-            _systemPixmap += "TriCopter";
-            break;
-        case MAV_TYPE_FLAPPING_WING:
-            _systemPixmap += "FlappingWing";
-            break;
-        case MAV_TYPE_KITE:
-            _systemPixmap += "Kite";
-            break;
-        default:
-            _systemPixmap += "Unknown";
-            break;
-    }
-    emit systemPixmapChanged(_systemPixmap);
-}
-
-void MainToolBar::_heartbeatTimeout(bool timeout, unsigned int ms)
-{
-    unsigned int elapsed = ms;
-    if (!timeout)
-    {
-        elapsed = 0;
-    }
-    if(elapsed != _currentHeartbeatTimeout) {
-        _currentHeartbeatTimeout = elapsed;
-        emit heartbeatTimeoutChanged(_currentHeartbeatTimeout);
     }
 }
 
@@ -659,42 +459,6 @@ void MainToolBar::_handleTextMessage(int newCount)
     if(newCount != _messageCount) {
         _messageCount = newCount;
         emit messageCountChanged(_messageCount);
-    }
-}
-
-void MainToolBar::_updateWaypointDistance(double distance)
-{
-    if (_waypointDistance != distance) {
-        _waypointDistance = distance;
-        // TODO: emit signal and use it
-    }
-}
-
-void MainToolBar::_updateCurrentWaypoint(quint16 id)
-{
-    if (_currentWaypoint != id) {
-        _currentWaypoint = id;
-        // TODO: emit signal and use it
-    }
-}
-
-void MainToolBar::_setSatelliteCount(double val, QString)
-{
-    // I'm assuming that a negative value or over 99 means there is no GPS
-    if(val < 0.0)  val = -1.0;
-    if(val > 99.0) val = -1.0;
-    if(_satelliteCount != (int)val) {
-        _satelliteCount = (int)val;
-        emit satelliteCountChanged(_satelliteCount);
-    }
-}
-
-void MainToolBar::_setSatLoc(UASInterface*, int fix)
-{
-    // fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D lock, 3: 3D lock
-    if(_satelliteLock != fix) {
-        _satelliteLock = fix;
-        emit satelliteLockChanged(_satelliteLock);
     }
 }
 

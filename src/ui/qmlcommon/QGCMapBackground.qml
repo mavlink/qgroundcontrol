@@ -28,25 +28,73 @@ This file is part of the QGROUNDCONTROL project
  */
 
 import QtQuick 2.4
-import QtPositioning 5.3
+import QtQuick.Controls 1.3
 import QtLocation 5.3
+import QtPositioning 5.3
 
 import QGroundControl.Controls 1.0
 import QGroundControl.FlightControls 1.0
 import QGroundControl.ScreenTools 1.0
+import QGroundControl.MavManager 1.0
 
-Rectangle {
-    id: root
-    property real latitude:     37.803784
-    property real longitude :   -122.462276
-    property real zoomLevel:    18
-    property real heading:      0
-    property bool alwaysNorth:  true
-    property bool interactive:  true
-    property alias mapItem:     map
+Item {
+    id:     root
+    clip:   true
 
-    color: Qt.rgba(0,0,0,0)
-    clip: true
+    property real   latitude:           0
+    property real   longitude:          0
+    property real   zoomLevel:          18
+    property real   heading:            0
+    property bool   alwaysNorth:        true
+    property bool   interactive:        true
+    property bool   showWaypoints:      false
+    property string mapName:            'defaultMap'
+    property alias  mapItem:            map
+    property alias  waypoints:          polyLine
+    property alias  mapMenu:            mapTypeMenu
+
+    Component.onCompleted: {
+        map.zoomLevel   = 18
+        map.markers     = []
+        mapTypeMenu.update();
+    }
+
+    //-- Menu to select supported map types
+    Menu {
+        id: mapTypeMenu
+        title: "Map Type..."
+        ExclusiveGroup { id: currMapType }
+        function setCurrentMap(mapID) {
+            for (var i = 0; i < map.supportedMapTypes.length; i++) {
+                if (mapID === map.supportedMapTypes[i].name) {
+                    map.activeMapType = map.supportedMapTypes[i]
+                    MavManager.saveSetting(root.mapName + "/currentMapType", mapID);
+                    return;
+                }
+            }
+        }
+        function addMap(mapID, checked) {
+            var mItem = mapTypeMenu.addItem(mapID);
+            mItem.checkable = true
+            mItem.checked   = checked
+            mItem.exclusiveGroup = currMapType
+            var menuSlot = function() {setCurrentMap(mapID);};
+            mItem.triggered.connect(menuSlot);
+        }
+        function update() {
+            clear()
+            var mapID = ''
+            if (map.supportedMapTypes.length > 0)
+                mapID = map.activeMapType.name;
+            mapID = MavManager.loadSetting(root.mapName + "/currentMapType", mapID);
+            for (var i = 0; i < map.supportedMapTypes.length; i++) {
+                var name = map.supportedMapTypes[i].name;
+                addMap(name, mapID === name);
+            }
+            if(mapID != '')
+                setCurrentMap(mapID);
+        }
+    }
 
     function adjustSize() {
         if(root.visible) {
@@ -83,9 +131,37 @@ Rectangle {
         return dist
     }
 
+    function updateWaypoints() {
+        polyLine.path = []
+        // Are we initialized?
+        if (typeof map.markers != 'undefined' && typeof root.longitude != 'undefined') {
+            map.deleteMarkers()
+            if(root.showWaypoints) {
+                for(var i = 0; i < MavManager.waypoints.length; i++) {
+                    var coord = QtPositioning.coordinate(MavManager.waypoints[i].latitude, MavManager.waypoints[i].longitude, MavManager.waypoints[i].altitude);
+                    polyLine.addCoordinate(coord);
+                    map.addMarker(coord, MavManager.waypoints[i].id);
+                }
+                root.longitude = MavManager.waypoints[0].longitude
+                root.latitude  = MavManager.waypoints[0].latitude
+            }
+        }
+    }
+
     Plugin {
         id:   mapPlugin
         name: "QGroundControl"
+    }
+
+    Connections {
+        target: MavManager
+        onWaypointsChanged: {
+            root.updateWaypoints();
+        }
+    }
+
+    onShowWaypointsChanged: {
+        root.updateWaypoints();
     }
 
     Map {
@@ -93,24 +169,27 @@ Rectangle {
         property real lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
         property real lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
         property variant scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
+        property variant markers
         plugin:     mapPlugin
         width:      1
         height:     1
         zoomLevel:  root.zoomLevel
         anchors.centerIn: parent
         center:     QtPositioning.coordinate(lat, lon)
+        gesture.flickDeceleration: 3000
+        gesture.enabled: root.interactive
+
         /*
         // There is a bug currently in Qt where it fails to render a map taller than 6 tiles high. Until
         // that's fixed, we can't rotate the map as it would require a larger map, which can easely grow
         // larger than 6 tiles high.
+        // https://bugreports.qt.io/browse/QTBUG-45508
         transform: Rotation {
             origin.x: map.width  / 2
             origin.y: map.height / 2
             angle: map.visible ? (alwaysNorth ? 0 : -heading) : 0
         }
         */
-        gesture.flickDeceleration: 3000
-        gesture.enabled: root.interactive
 
         onWidthChanged: {
             scaleTimer.restart()
@@ -124,8 +203,32 @@ Rectangle {
             scaleTimer.restart()
         }
 
-        Component.onCompleted: {
-            map.zoomLevel = 18
+        function addMarker(coord, wpid)
+        {
+            var marker = Qt.createQmlObject ('QGCWaypoint {}', map)
+            map.addMapItem(marker)
+            marker.z = map.z + 1
+            marker.coordinate = coord
+            marker.waypointID.text = wpid
+            // Update list of markers
+            var count = map.markers.length
+            var myArray = []
+            for (var i = 0; i < count; i++){
+                myArray.push(markers[i])
+            }
+            myArray.push(marker)
+            markers = myArray
+        }
+
+        function deleteMarkers()
+        {
+            if (typeof map.markers != 'undefined') {
+                var count = map.markers.length
+                for (var i = 0; i < count; i++) {
+                    map.markers[i].destroy()
+                }
+            }
+            map.markers = []
         }
 
         function calculateScale() {
@@ -153,6 +256,15 @@ Rectangle {
             scaleImage.width = (scaleImage.sourceSize.width * f) - 2 * scaleImageLeft.sourceSize.width
             scaleText.text = text
         }
+
+        MapPolyline {
+            id:             polyLine
+            visible:        path.length > 1 && root.showWaypoints
+            line.width:     3
+            line.color:     "#e35cd8"
+            smooth:         true
+            antialiasing:   true
+        }
     }
 
     QGCSlider {
@@ -161,7 +273,7 @@ Rectangle {
         maximum: map.maximumZoomLevel;
         opacity: 1
         visible: parent.visible
-        z: map.z + 20
+        z: 1000
         anchors {
             bottom: parent.bottom;
             bottomMargin:   ScreenTools.pixelSizeFactor * (15)

@@ -45,6 +45,10 @@ class ScreenTools : public QObject
 public:
     ScreenTools();
 
+    Q_PROPERTY(bool     isAndroid           READ isAndroid  CONSTANT)
+    Q_PROPERTY(bool     isiOS               READ isiOS      CONSTANT)
+    Q_PROPERTY(bool     isMobile            READ isMobile   CONSTANT)
+
     //! Returns the global mouse X position
     Q_PROPERTY(int      mouseX              READ mouseX)
     //! Returns the global mouse Y position
@@ -109,6 +113,16 @@ public:
     double  fontPointFactor     ();
     double  pixelSizeFactor     ();
     double  defaultFontPointSize(void);
+
+#if defined (__android__)
+    bool    isAndroid           () { return true;  }
+    bool    isiOS               () { return false; }
+    bool    isMobile            () { return true;  }
+#else
+    bool    isAndroid           () { return false; }
+    bool    isiOS               () { return false; }
+    bool    isMobile            () { return false; }
+#endif
 
 signals:
     void repaintRequestedChanged();
