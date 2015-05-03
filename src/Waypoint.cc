@@ -34,43 +34,85 @@ This file is part of the QGROUNDCONTROL project
 
 #include "Waypoint.h"
 
-Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _param1, double _param2, double _param3, double _param4,
-                   bool _autocontinue, bool _current, MAV_FRAME _frame, MAV_CMD _action, const QString& _description)
-    : id(_id),
-      x(_x),
-      y(_y),
-      z(_z),
-      yaw(_param4),
-      frame(_frame),
-      action(_action),
-      autocontinue(_autocontinue),
-      current(_current),
-      orbit(_param3),
-      param1(_param1),
-      param2(_param2),
-      name(QString("WP%1").arg(id, 2, 10, QChar('0'))),
-      description(_description),
-      reachedTime(0)
+Waypoint::Waypoint(
+    QObject *parent,
+    quint16 id,
+    double  x,
+    double  y,
+    double  z,
+    double  param1,
+    double  param2,
+    double  param3,
+    double  param4,
+    bool    autocontinue,
+    bool    current,
+    int     frame,
+    int     action,
+    const QString& description
+    )
+    : QObject(parent)
+    , _id(id)
+    , _x(x)
+    , _y(y)
+    , _z(z)
+    , _yaw(param4)
+    , _frame(frame)
+    , _action(action)
+    , _autocontinue(autocontinue)
+    , _current(current)
+    , _orbit(param3)
+    , _param1(param1)
+    , _param2(param2)
+    , _name(QString("WP%1").arg(id, 2, 10, QChar('0')))
+    , _description(description)
+    , _reachedTime(0)
 {
+
+}
+
+Waypoint::Waypoint(const Waypoint& other)
+    : QObject(NULL)
+{
+    *this = other;
 }
 
 Waypoint::~Waypoint()
 {    
 }
 
+const Waypoint& Waypoint::operator=(const Waypoint& other)
+{
+    _id              = other.getId();
+    _x               = other.getX();
+    _y               = other.getY();
+    _z               = other.getZ();
+    _yaw             = other.getYaw();
+    _frame           = other.getFrame();
+    _action          = other.getAction();
+    _autocontinue    = other.getAutoContinue();
+    _current         = other.getCurrent();
+    _orbit           = other.getParam3();
+    _param1          = other.getParam1();
+    _param2          = other.getParam2();
+    _name            = other.getName();
+    _description     = other.getDescription();
+    _reachedTime     = other.getReachedTime();
+    return *this;
+}
+
 bool Waypoint::isNavigationType()
 {
-    return (action < MAV_CMD_NAV_LAST);
+    return (_action < MAV_CMD_NAV_LAST);
 }
 
 void Waypoint::save(QTextStream &saveStream)
 {
     QString position("%1\t%2\t%3");
-    position = position.arg(x, 0, 'g', 18);
-    position = position.arg(y, 0, 'g', 18);
-    position = position.arg(z, 0, 'g', 18);
+    position = position.arg(_x, 0, 'g', 18);
+    position = position.arg(_y, 0, 'g', 18);
+    position = position.arg(_z, 0, 'g', 18);
     QString parameters("%1\t%2\t%3\t%4");
-    parameters = parameters.arg(param1, 0, 'g', 18).arg(param2, 0, 'g', 18).arg(orbit, 0, 'g', 18).arg(yaw, 0, 'g', 18);
+    parameters = parameters.arg(_param1, 0, 'g', 18).arg(_param2, 0, 'g', 18).arg(_orbit, 0, 'g', 18).arg(_yaw, 0, 'g', 18);
     // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE> <DESCRIPTION>
     // as documented here: http://qgroundcontrol.org/waypoint_protocol
     saveStream << this->getId() << "\t" << this->getCurrent() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
@@ -80,19 +122,19 @@ bool Waypoint::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
     if (wpParams.size() == 12) {
-        this->id = wpParams[0].toInt();
-        this->current = (wpParams[1].toInt() == 1 ? true : false);
-        this->frame = (MAV_FRAME) wpParams[2].toInt();
-        this->action = (MAV_CMD) wpParams[3].toInt();
-        this->param1 = wpParams[4].toDouble();
-        this->param2 = wpParams[5].toDouble();
-        this->orbit = wpParams[6].toDouble();
-        this->yaw = wpParams[7].toDouble();
-        this->x = wpParams[8].toDouble();
-        this->y = wpParams[9].toDouble();
-        this->z = wpParams[10].toDouble();
-        this->autocontinue = (wpParams[11].toInt() == 1 ? true : false);
-        //this->description = wpParams[12];
+        _id = wpParams[0].toInt();
+        _current = (wpParams[1].toInt() == 1 ? true : false);
+        _frame = (MAV_FRAME) wpParams[2].toInt();
+        _action = (MAV_CMD) wpParams[3].toInt();
+        _param1 = wpParams[4].toDouble();
+        _param2 = wpParams[5].toDouble();
+        _orbit = wpParams[6].toDouble();
+        _yaw = wpParams[7].toDouble();
+        _x = wpParams[8].toDouble();
+        _y = wpParams[9].toDouble();
+        _z = wpParams[10].toDouble();
+        _autocontinue = (wpParams[11].toInt() == 1 ? true : false);
+        //_description = wpParams[12];
         return true;
     }
     return false;
@@ -101,129 +143,120 @@ bool Waypoint::load(QTextStream &loadStream)
 
 void Waypoint::setId(quint16 id)
 {
-    this->id = id;
-    this->name = QString("WP%1").arg(id, 2, 10, QChar('0'));
+    _id = id;
+    _name = QString("WP%1").arg(id, 2, 10, QChar('0'));
     emit changed(this);
 }
 
 void Waypoint::setX(double x)
 {
-    if (!isinf(x) && !isnan(x) && ((this->frame == MAV_FRAME_LOCAL_NED) || (this->frame == MAV_FRAME_LOCAL_ENU)))
+    if (!isinf(x) && !isnan(x) && ((_frame == MAV_FRAME_LOCAL_NED) || (_frame == MAV_FRAME_LOCAL_ENU)))
     {
-        this->x = x;
+        _x = x;
         emit changed(this);
     }
 }
 
 void Waypoint::setY(double y)
 {
-    if (!isinf(y) && !isnan(y) && ((this->frame == MAV_FRAME_LOCAL_NED) || (this->frame == MAV_FRAME_LOCAL_ENU)))
+    if (!isinf(y) && !isnan(y) && ((_frame == MAV_FRAME_LOCAL_NED) || (_frame == MAV_FRAME_LOCAL_ENU)))
     {
-        this->y = y;
+        _y = y;
         emit changed(this);
     }
 }
 
 void Waypoint::setZ(double z)
 {
-    if (!isinf(z) && !isnan(z) && ((this->frame == MAV_FRAME_LOCAL_NED) || (this->frame == MAV_FRAME_LOCAL_ENU)))
+    if (!isinf(z) && !isnan(z) && ((_frame == MAV_FRAME_LOCAL_NED) || (_frame == MAV_FRAME_LOCAL_ENU)))
     {
-        this->z = z;
+        _z = z;
         emit changed(this);
     }
 }
 
 void Waypoint::setLatitude(double lat)
 {
-    if (this->x != lat && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_x != lat && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        this->x = lat;
+        _x = lat;
         emit changed(this);
     }
 }
 
 void Waypoint::setLongitude(double lon)
 {
-    if (this->y != lon && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_y != lon && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        this->y = lon;
+        _y = lon;
         emit changed(this);
     }
 }
 
 void Waypoint::setAltitude(double altitude)
 {
-    if (this->z != altitude && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_z != altitude && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        this->z = altitude;
+        _z = altitude;
         emit changed(this);
     }
 }
 
 void Waypoint::setYaw(int yaw)
 {
-    if (this->yaw != yaw)
+    if (_yaw != yaw)
     {
-        this->yaw = yaw;
+        _yaw = yaw;
         emit changed(this);
     }
 }
 
 void Waypoint::setYaw(double yaw)
 {
-    if (this->yaw != yaw)
+    if (_yaw != yaw)
     {
-        this->yaw = yaw;
+        _yaw = yaw;
         emit changed(this);
     }
 }
 
-void Waypoint::setAction(int action)
+void Waypoint::setAction(int /*MAV_CMD*/ action)
 {
-    if (this->action != (MAV_CMD)action)
-    {
-        this->action = (MAV_CMD)action;
-        emit changed(this);
-    }
-}
-
-void Waypoint::setAction(MAV_CMD action)
-{
-    if (this->action != action) {
-        this->action = action;
+    if (_action != action) {
+        _action = action;
 
         // Flick defaults according to WP type
 
-        if (this->action == MAV_CMD_NAV_TAKEOFF) {
+        if (_action == MAV_CMD_NAV_TAKEOFF) {
             // We default to 15 degrees minimum takeoff pitch
-            this->param1 = 15.0;
+            _param1 = 15.0;
         }
 
         emit changed(this);
     }
 }
 
-void Waypoint::setFrame(MAV_FRAME frame)
+void Waypoint::setFrame(int /*MAV_FRAME*/ frame)
 {
-    if (this->frame != frame) {
-        this->frame = frame;
+    if (_frame != frame) {
+        _frame = frame;
         emit changed(this);
     }
 }
 
 void Waypoint::setAutocontinue(bool autoContinue)
 {
-    if (this->autocontinue != autoContinue) {
-        this->autocontinue = autoContinue;
+    if (_autocontinue != autoContinue) {
+        _autocontinue = autoContinue;
         emit changed(this);
     }
 }
 
 void Waypoint::setCurrent(bool current)
 {
-    if (this->current != current)
+    if (_current != current)
     {
-        this->current = current;
+        _current = current;
         // The current waypoint index is handled by the list
         // and not part of the individual waypoint update state
     }
@@ -231,9 +264,9 @@ void Waypoint::setCurrent(bool current)
 
 void Waypoint::setAcceptanceRadius(double radius)
 {
-    if (this->param2 != radius)
+    if (_param2 != radius)
     {
-        this->param2 = radius;
+        _param2 = radius;
         emit changed(this);
     }
 }
@@ -242,90 +275,90 @@ void Waypoint::setParam1(double param1)
 {
     //// // qDebug() << "SENDER:" << QObject::sender();
     //// // qDebug() << "PARAM1 SET REQ:" << param1;
-    if (this->param1 != param1)
+    if (_param1 != param1)
     {
-        this->param1 = param1;
+        _param1 = param1;
         emit changed(this);
     }
 }
 
 void Waypoint::setParam2(double param2)
 {
-    if (this->param2 != param2)
+    if (_param2 != param2)
     {
-        this->param2 = param2;
+        _param2 = param2;
         emit changed(this);
     }
 }
 
 void Waypoint::setParam3(double param3)
 {
-    if (this->orbit != param3) {
-        this->orbit = param3;
+    if (_orbit != param3) {
+        _orbit = param3;
         emit changed(this);
     }
 }
 
 void Waypoint::setParam4(double param4)
 {
-    if (this->yaw != param4) {
-        this->yaw = param4;
+    if (_yaw != param4) {
+        _yaw = param4;
         emit changed(this);
     }
 }
 
 void Waypoint::setParam5(double param5)
 {
-    if (this->x != param5) {
-        this->x = param5;
+    if (_x != param5) {
+        _x = param5;
         emit changed(this);
     }
 }
 
 void Waypoint::setParam6(double param6)
 {
-    if (this->y != param6) {
-        this->y = param6;
+    if (_y != param6) {
+        _y = param6;
         emit changed(this);
     }
 }
 
 void Waypoint::setParam7(double param7)
 {
-    if (this->z != param7) {
-        this->z = param7;
+    if (_z != param7) {
+        _z = param7;
         emit changed(this);
     }
 }
 
 void Waypoint::setLoiterOrbit(double orbit)
 {
-    if (this->orbit != orbit) {
-        this->orbit = orbit;
+    if (_orbit != orbit) {
+        _orbit = orbit;
         emit changed(this);
     }
 }
 
 void Waypoint::setHoldTime(int holdTime)
 {
-    if (this->param1 != holdTime) {
-        this->param1 = holdTime;
+    if (_param1 != holdTime) {
+        _param1 = holdTime;
         emit changed(this);
     }
 }
 
 void Waypoint::setHoldTime(double holdTime)
 {
-    if (this->param1 != holdTime) {
-        this->param1 = holdTime;
+    if (_param1 != holdTime) {
+        _param1 = holdTime;
         emit changed(this);
     }
 }
 
 void Waypoint::setTurns(int turns)
 {
-    if (this->param1 != turns) {
-        this->param1 = turns;
+    if (_param1 != turns) {
+        _param1 = turns;
         emit changed(this);
     }
 }
