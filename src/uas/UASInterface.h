@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ProtocolInterface.h"
 #include "UASWaypointManager.h"
 
-class QGCUASFileManager;
+class FileManager;
 
 enum BatteryType
 {
@@ -132,7 +132,7 @@ public:
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
 
-    virtual QGCUASFileManager* getFileManager() = 0;
+    virtual FileManager* getFileManager() = 0;
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
     virtual void sendMessage(LinkInterface* link, mavlink_message_t message) = 0;
