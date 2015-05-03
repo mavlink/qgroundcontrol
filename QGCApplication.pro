@@ -356,6 +356,7 @@ HEADERS += \
     src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/ViewWidgetController.h \
     src/Waypoint.h \
+    src/QmlControls/QGCMavManager.h
 
 !AndroidBuild {
 HEADERS += \
@@ -485,6 +486,7 @@ SOURCES += \
     src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/ViewWidgetController.cc \
     src/Waypoint.cc \
+    src/QmlControls/QGCMavManager.cc
 
 !AndroidBuild {
 SOURCES += \

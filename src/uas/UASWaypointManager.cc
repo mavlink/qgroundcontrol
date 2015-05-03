@@ -179,12 +179,37 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id) {
 
-            Waypoint *lwp_vo = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
+            Waypoint *lwp_vo = new Waypoint(
+                NULL,
+                wp->seq, wp->x,
+                wp->y,
+                wp->z,
+                wp->param1,
+                wp->param2,
+                wp->param3,
+                wp->param4,
+                wp->autocontinue,
+                wp->current,
+                (MAV_FRAME) wp->frame,
+                (MAV_CMD) wp->command);
+
             addWaypointViewOnly(lwp_vo);
 
-
             if (read_to_edit == true) {
-                Waypoint *lwp_ed = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
+                Waypoint *lwp_ed = new Waypoint(
+                    NULL,
+                    wp->seq,
+                    wp->x,
+                    wp->y,
+                    wp->z,
+                    wp->param1,
+                    wp->param2,
+                    wp->param3,
+                    wp->param4,
+                    wp->autocontinue,
+                    wp->current,
+                    (MAV_FRAME) wp->frame,
+                    (MAV_CMD) wp->command);
                 addWaypointEditable(lwp_ed, false);
                 if (wp->current == 1) currentWaypointEditable = lwp_ed;
             }
@@ -216,7 +241,20 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
             && wp->seq < waypointsViewOnly.size() && waypointsViewOnly[wp->seq]->getAction()) {
         // accept single sent waypoints because they can contain updates about remaining DO_JUMP repetitions
         // but only update view only side
-        Waypoint *lwp_vo = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
+        Waypoint *lwp_vo = new Waypoint(
+            NULL,
+            wp->seq,
+            wp->x,
+            wp->y,
+            wp->z,
+            wp->param1,
+            wp->param2,
+            wp->param3,
+            wp->param4,
+            wp->autocontinue,
+            wp->current,
+            (MAV_FRAME) wp->frame,
+            (MAV_CMD) wp->command);
 
         waypointsViewOnly.replace(wp->seq, lwp_vo);
         emit waypointViewOnlyListChanged();

@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 
 #include <QObject>
 #include <QString>
+#include <QtQml>
 #include <QTextStream>
 #include "QGCMAVLink.h"
 #include "QGC.h"
@@ -42,157 +43,193 @@ This file is part of the PIXHAWK project
 class Waypoint : public QObject
 {
     Q_OBJECT
-
 public:
-    Waypoint(quint16 id = 0, double x = 0.0, double y = 0.0, double z = 0.0, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0,
-             bool autocontinue = true, bool current = false, MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_CMD action=MAV_CMD_NAV_WAYPOINT, const QString& description=QString(""));
+    Waypoint(
+        QObject *parent = 0,
+        quint16 id = 0,
+        double  x = 0.0,
+        double  y = 0.0,
+        double  z = 0.0,
+        double  param1 = 0.0,
+        double  param2 = 0.0,
+        double  param3 = 0.0,
+        double  param4 = 0.0,
+        bool    autocontinue = true,
+        bool    current = false,
+        int     frame = MAV_FRAME_GLOBAL,
+        int     action = MAV_CMD_NAV_WAYPOINT,
+        const QString& description=QString(""));
+
+    Waypoint(const Waypoint& other);
     ~Waypoint();
 
+    const Waypoint& operator=(const Waypoint& other);
+
+    Q_PROPERTY(double  longitude READ longitude  NOTIFY longitudeChanged)
+    Q_PROPERTY(double  latitude  READ latitude   NOTIFY latitudeChanged)
+    Q_PROPERTY(double  altitude  READ altitude   NOTIFY altitudeChanged)
+    Q_PROPERTY(quint16 id        READ id         CONSTANT)
+
+    double  latitude()  { return _x; }
+    double  longitude() { return _y; }
+    double  altitude()  { return _z; }
+    quint16 id()        { return _id; }
+
     quint16 getId() const {
-        return id;
+        return _id;
     }
     double getX() const {
-        return x;
+        return _x;
     }
     double getY() const {
-        return y;
+        return _y;
     }
     double getZ() const {
-        return z;
+        return _z;
     }
     double getLatitude() const {
-        return x;
+        return _x;
     }
     double getLongitude() const {
-        return y;
+        return _y;
     }
     double getAltitude() const {
-        return z;
+        return _z;
     }
     double getYaw() const {
-        return yaw;
+        return _yaw;
     }
     bool getAutoContinue() const {
-        return autocontinue;
+        return _autocontinue;
     }
     bool getCurrent() const {
-        return current;
+        return _current;
     }
     double getLoiterOrbit() const {
-        return orbit;
+        return _orbit;
     }
     double getAcceptanceRadius() const {
-        return param2;
+        return _param2;
     }
     double getHoldTime() const {
-        return param1;
+        return _param1;
     }
     double getParam1() const {
-        return param1;
+        return _param1;
     }
     double getParam2() const {
-        return param2;
+        return _param2;
     }
     double getParam3() const {
-        return orbit;
+        return _orbit;
     }
     double getParam4() const {
-        return yaw;
+        return _yaw;
     }
     double getParam5() const {
-        return x;
+        return _x;
     }
     double getParam6() const {
-        return y;
+        return _y;
     }
     double getParam7() const {
-        return z;
+        return _z;
     }
     int getTurns() const {
-        return param1;
+        return _param1;
     }
-    MAV_FRAME getFrame() const {
-        return frame;
+    // MAV_FRAME
+    int getFrame() const {
+        return _frame;
     }
-    MAV_CMD getAction() const {
-        return action;
+    // MAV_CMD
+    int getAction() const {
+        return _action;
     }
     const QString& getName() const {
-        return name;
+        return _name;
     }
     const QString& getDescription() const {
-        return description;
+        return _description;
     }
 
     /** @brief Returns true if x, y, z contain reasonable navigation data */
     bool isNavigationType();
+
+    /** @brief Get the time this waypoint was reached */
+    quint64 getReachedTime() const { return _reachedTime; }
 
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);
 
 
 protected:
-    quint16 id;
-    double x;
-    double y;
-    double z;
-    double yaw;
-    MAV_FRAME frame;
-    MAV_CMD action;
-    bool autocontinue;
-    bool current;
-    double orbit;
-    double param1;
-    double param2;
-    int turns;
-    QString name;
-    QString description;
-    quint64 reachedTime;
+    quint16 _id;
+    double  _x;
+    double  _y;
+    double  _z;
+    double  _yaw;
+    int     _frame;
+    int     _action;
+    bool    _autocontinue;
+    bool    _current;
+    double  _orbit;
+    double  _param1;
+    double  _param2;
+    int     _turns;
+    QString _name;
+    QString _description;
+    quint64 _reachedTime;
 
-public slots:
-    void setId(quint16 id);
-    void setX(double x);
-    void setY(double y);
-    void setZ(double z);
-    void setLatitude(double lat);
-    void setLongitude(double lon);
-    void setAltitude(double alt);
+public:
+    void setId          (quint16 _id);
+    void setX           (double _x);
+    void setY           (double _y);
+    void setZ           (double _z);
+    void setLatitude    (double lat);
+    void setLongitude   (double lon);
+    void setAltitude    (double alt);
     /** @brief Yaw angle in COMPASS DEGREES: 0-360 */
-    void setYaw(int yaw);
+    void setYaw         (int _yaw);
     /** @brief Yaw angle in COMPASS DEGREES: 0-360 */
-    void setYaw(double yaw);
+    void setYaw         (double _yaw);
     /** @brief Set the waypoint action */
-    void setAction(int action);
-    void setAction(MAV_CMD action);
-    void setFrame(MAV_FRAME frame);
+    void setAction      (int _action);
+    void setFrame       (int _frame);
     void setAutocontinue(bool autoContinue);
-    void setCurrent(bool current);
-    void setLoiterOrbit(double orbit);
-    void setParam1(double param1);
-    void setParam2(double param2);
-    void setParam3(double param3);
-    void setParam4(double param4);
-    void setParam5(double param5);
-    void setParam6(double param6);
-    void setParam7(double param7);
+    void setCurrent     (bool _current);
+    void setLoiterOrbit (double _orbit);
+    void setParam1      (double _param1);
+    void setParam2      (double _param2);
+    void setParam3      (double param3);
+    void setParam4      (double param4);
+    void setParam5      (double param5);
+    void setParam6      (double param6);
+    void setParam7      (double param7);
     void setAcceptanceRadius(double radius);
-    void setHoldTime(int holdTime);
-    void setHoldTime(double holdTime);
+    void setHoldTime    (int holdTime);
+    void setHoldTime    (double holdTime);
     /** @brief Number of turns for loiter waypoints */
-    void setTurns(int turns);
+    void setTurns       (int _turns);
     /** @brief Set waypoint as reached */
-    void setReached() { reachedTime = QGC::groundTimeMilliseconds(); }
+    void setReached     () { _reachedTime = QGC::groundTimeMilliseconds(); }
     /** @brief Wether this waypoint has been reached yet */
-    bool isReached() { return (reachedTime > 0); }
-    /** @brief Get the time this waypoint was reached */
-    quint64 getReachedTime() { return reachedTime; }
+    bool isReached      () { return (_reachedTime > 0); }
+
     void setChanged() {
         emit changed(this);
     }
 
 signals:
     /** @brief Announces a change to the waypoint data */
-    void changed(Waypoint* wp);    
+    void changed(Waypoint* wp);
+
+    void latitudeChanged    ();
+    void longitudeChanged   ();
+    void altitudeChanged    ();
+
 };
+
+QML_DECLARE_TYPE(Waypoint)
 
 #endif // WAYPOINT_H
