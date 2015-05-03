@@ -40,7 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
-#include "QGCUASFileManager.h"
+#include "FileManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(UASLog)
 
@@ -332,7 +332,7 @@ public:
     bool isFixedWing();
 
     friend class UASWaypointManager;
-    friend class QGCUASFileManager;
+    friend class FileManager;
 
 protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
@@ -435,7 +435,7 @@ protected: //COMMENTS FOR TEST UNIT
     double groundSpeed;          ///< Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
     UASWaypointManager waypointManager;
-    QGCUASFileManager   fileManager;
+    FileManager   fileManager;
 
     /// ATTITUDE
     bool attitudeKnown;             ///< True if attitude was received, false else
@@ -487,7 +487,7 @@ public:
         return &waypointManager;
     }
 
-    virtual QGCUASFileManager* getFileManager() {
+    virtual FileManager* getFileManager() {
         return &fileManager;
     }
 
