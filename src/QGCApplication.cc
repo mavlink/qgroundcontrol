@@ -64,7 +64,7 @@
 #include "CustomCommandWidgetController.h"
 
 #include "ScreenTools.h"
-#include "QGCMavManager.h"
+#include "MavManager.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"

@@ -263,6 +263,7 @@ HEADERS += \
     src/QGCQuickWidget.h \
     src/QGCSingleton.h \
     src/QGCTemporaryFile.h \
+    src/QmlControls/MavManager.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenTools.h \
     src/uas/QGCMAVLinkUASFactory.h \
@@ -278,7 +279,7 @@ HEADERS += \
     src/ui/configuration/SerialSettingsDialog.h \
     src/ui/configuration/terminalconsole.h \
     src/ui/DebugConsole.h \
-    src/ui/flightdisplay/QGCFlightDisplay.h \
+    src/ui/flightdisplay/FlightDisplay.h \
     src/ui/HDDisplay.h \
     src/ui/HSIDisplay.h \
     src/ui/HUD.h \
@@ -351,12 +352,11 @@ HEADERS += \
     src/ui/WaypointEditableView.h \
     src/ui/WaypointList.h \
     src/ui/WaypointViewOnlyView.h \
-    src/ViewWidgets/ParameterEditorWidget.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
+    src/ViewWidgets/ParameterEditorWidget.h \
     src/ViewWidgets/ViewWidgetController.h \
     src/Waypoint.h \
-    src/QmlControls/QGCMavManager.h
 
 !AndroidBuild {
 HEADERS += \
@@ -395,6 +395,7 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCSingleton.cc \
     src/QGCTemporaryFile.cc \
+    src/QmlControls/MavManager.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenTools.cc \
     src/uas/QGCMAVLinkUASFactory.cc \
@@ -408,7 +409,7 @@ SOURCES += \
     src/ui/configuration/SerialSettingsDialog.cc \
     src/ui/configuration/terminalconsole.cpp \
     src/ui/DebugConsole.cc \
-    src/ui/flightdisplay/QGCFlightDisplay.cc \
+    src/ui/flightdisplay/FlightDisplay.cc \
     src/ui/HDDisplay.cc \
     src/ui/HSIDisplay.cc \
     src/ui/HUD.cc \
@@ -481,12 +482,11 @@ SOURCES += \
     src/ui/WaypointEditableView.cc \
     src/ui/WaypointList.cc \
     src/ui/WaypointViewOnlyView.cc \
-    src/ViewWidgets/ParameterEditorWidget.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
+    src/ViewWidgets/ParameterEditorWidget.cc \
     src/ViewWidgets/ViewWidgetController.cc \
     src/Waypoint.cc \
-    src/QmlControls/QGCMavManager.cc
 
 !AndroidBuild {
 SOURCES += \
