@@ -246,10 +246,10 @@ void QGCUASFileManager::_writeAckResponse(Request* writeAck)
     }
 
 
-    if( *((uint32_t*)writeAck->data) !=_writeSize){
+    if( writeAck->writeFileLength !=_writeSize){
         _currentOperation = kCOIdle;
         _writeFileAccumulator.clear();
-        _emitErrorMessage(tr("Write: Size returned (%1) differs from size requested (%2)").arg(*((uint32_t*)writeAck->data)).arg(_writeSize));
+        _emitErrorMessage(tr("Write: Size returned (%1) differs from size requested (%2)").arg(writeAck->writeFileLength).arg(_writeSize));
         return;
     }
 
@@ -283,9 +283,7 @@ void QGCUASFileManager::_writeFileDatablock(void)
 
     request.hdr.size = _writeSize;
 
-    // memcpy this?   _writeFileAccumulator.mid(_writeOffset, _writeSize), _writeSize);
-    for(uint32_t index=0; index < _writeSize; index++)
-        request.data[index] = _writeFileAccumulator.at(_writeOffset+index);
+    memcpy(request.data, &_writeFileAccumulator.data()[_writeOffset], _writeSize);
 
     _sendRequest(&request);
 }
@@ -598,9 +596,14 @@ void QGCUASFileManager::_ackTimeout(void)
             _sendTerminateCommand();
             break;
         case kCOCreate:
+            _currentOperation = kCOAck;
+            _writeFileAccumulator.clear();
+            _emitErrorMessage(tr("Timeout waiting for ack: Sending Create command"));
+            _sendTerminateCommand();
         case kCOWrite:
             _currentOperation = kCOAck;
-            _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
+            _writeFileAccumulator.clear();
+            _emitErrorMessage(tr("Timeout waiting for ack: Sending Write command"));
             _sendTerminateCommand();
             break;
         default:
