@@ -192,7 +192,7 @@ Item {
 
         /*
         // There is a bug currently in Qt where it fails to render a map taller than 6 tiles high. Until
-        // that's fixed, we can't rotate the map as it would require a larger map, which can easely grow
+        // that's fixed, we can't rotate the map as it would require a larger map, which can easily grow
         // larger than 6 tiles high.
         // https://bugreports.qt.io/browse/QTBUG-45508
         transform: Rotation {
@@ -212,6 +212,16 @@ Item {
 
         onZoomLevelChanged:{
             scaleTimer.restart()
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onDoubleClicked: {
+                var coord = map.toCoordinate(Qt.point(mouse.x, mouse.y));
+                map.addMarker(coord, polyLine.path.length);
+                polyLine.addCoordinate(coord);
+                map.changed = true;
+            }
         }
 
         function updateMarker(coord, wpid)
