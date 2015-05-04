@@ -34,12 +34,12 @@ This file is part of the QGROUNDCONTROL project
 
 class UASInterface;
 
-class QGCFlightDisplay : public QGCQmlWidgetHolder
+class FlightDisplay : public QGCQmlWidgetHolder
 {
     Q_OBJECT
 public:
-    QGCFlightDisplay(QWidget* parent = NULL);
-    ~QGCFlightDisplay();
+    FlightDisplay(QWidget* parent = NULL);
+    ~FlightDisplay();
 
     /// @brief Invokes the Flight Display Options menu
     void showOptionsMenu() { emit showOptionsMenuChanged(); }
