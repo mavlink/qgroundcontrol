@@ -1,5 +1,6 @@
 Module QGroundControl.FactControls
 
+FactPanel 1.0 FactPanel.qml
 FactLabel 1.0 FactLabel.qml
 FactTextField 1.0 FactTextField.qml
 FactCheckBox 1.0 FactCheckBox.qml

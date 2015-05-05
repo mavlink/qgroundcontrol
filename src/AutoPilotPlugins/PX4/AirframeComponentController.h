@@ -33,14 +33,15 @@
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
+#include "FactPanelController.h"
 
 /// MVC Controller for AirframeComponent.qml.
-class AirframeComponentController : public QObject
+class AirframeComponentController : public FactPanelController
 {
     Q_OBJECT
     
 public:
-    AirframeComponentController(QObject* parent = NULL);
+    AirframeComponentController(void);
     ~AirframeComponentController();
     
     Q_PROPERTY(QVariantList airframeTypes MEMBER _airframeTypes CONSTANT)
@@ -63,7 +64,6 @@ private:
     static bool _typesRegistered;
     
     UASInterface*       _uas;
-    AutoPilotPlugin*    _autoPilotPlugin;
     QVariantList        _airframeTypes;
     QString             _currentAirframeType;
     QString             _currentVehicleName;

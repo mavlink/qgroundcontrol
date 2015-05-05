@@ -35,16 +35,11 @@
 #include <QDebug>
 
 /// @brief A Fact is used to hold a single value within the system.
-///
-/// Along with the value property is a set of meta data which further describes the Fact. This information is
-/// exposed through QObject Properties such that you can bind to it from QML as well as use it within C++ code.
-/// Since the meta data is common to all instances of the same Fact, it is acually stored once in a seperate object.
 class Fact : public QObject
 {
     Q_OBJECT
     
 public:
-    //Fact(int componentId, QString name = "", FactMetaData::ValueType_t type = FactMetaData::valueTypeInt32, QObject* parent = NULL);
     Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = NULL);
     
     // Property system methods

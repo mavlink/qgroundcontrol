@@ -37,19 +37,13 @@
 
 bool AirframeComponentController::_typesRegistered = false;
 
-AirframeComponentController::AirframeComponentController(QObject* parent) :
-    QObject(parent),
+AirframeComponentController::AirframeComponentController(void) :
     _uas(NULL),
-    _autoPilotPlugin(NULL),
     _currentVehicleIndex(0),
     _autostartId(0)
 {
     _uas = UASManager::instance()->getActiveUAS();
     Q_ASSERT(_uas);
-    
-    _autoPilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
-    Q_ASSERT(_autoPilotPlugin);
-    Q_ASSERT(_autoPilotPlugin->pluginReady());
 
     if (!_typesRegistered) {
         _typesRegistered = true;
@@ -57,10 +51,16 @@ AirframeComponentController::AirframeComponentController(QObject* parent) :
         qmlRegisterUncreatableType<Airframe>("QGroundControl.Controllers", 1, 0, "Aiframe", "Can only reference Airframe");
     }
     
+    QStringList usedFacts;
+    usedFacts << "SYS_AUTOSTART" << "SYS_AUTOCONFIG";
+    if (!_allFactsExists(usedFacts)) {
+        return;
+    }
+    
     // Load up member variables
     
     bool autostartFound = false;
-    _autostartId = _autoPilotPlugin->getParameterFact("SYS_AUTOSTART")->value().toInt();
+    _autostartId = _autopilot->getParameterFact("SYS_AUTOSTART")->value().toInt();
     
     for (const AirframeComponentAirframes::AirframeType_t* pType=&AirframeComponentAirframes::rgAirframeTypes[0]; pType->name != NULL; pType++) {
         AirframeType* airframeType = new AirframeType(pType->name, pType->imageResource, this);
@@ -81,7 +81,7 @@ AirframeComponentController::AirframeComponentController(QObject* parent) :
         
         _airframeTypes.append(QVariant::fromValue(airframeType));
     }
-
+    
     if (_autostartId != 0) {
         // FIXME: Should be a user error
         Q_UNUSED(autostartFound);
@@ -101,8 +101,8 @@ void AirframeComponentController::changeAutostart(void)
 		return;
 	}
 	
-    _autoPilotPlugin->getParameterFact("SYS_AUTOSTART")->setValue(_autostartId);
-    _autoPilotPlugin->getParameterFact("SYS_AUTOCONFIG")->setValue(1);
+    _autopilot->getParameterFact("SYS_AUTOSTART")->setValue(_autostartId);
+    _autopilot->getParameterFact("SYS_AUTOCONFIG")->setValue(1);
     
     qgcApp()->setOverrideCursor(Qt::WaitCursor);
     

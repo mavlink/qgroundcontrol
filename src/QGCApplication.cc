@@ -166,6 +166,10 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 #endif
 #endif
 
+    // Set up timer for delayed missing fact display
+    _missingFactDelayedDisplayTimer.setSingleShot(true);
+    _missingFactDelayedDisplayTimer.setInterval(_missingFactDelayedDisplayTimerTimeout);
+    connect(&_missingFactDelayedDisplayTimer, &QTimer::timeout, this, &QGCApplication::_missingFactsDisplay);
     
     // Set application information
     if (_runningUnitTests) {
@@ -660,8 +664,28 @@ void QGCApplication::_reconnect(void)
     _reconnectLinkConfig = NULL;
 }
 
-void QGCApplication::panicShutdown(const QString& panicMessage)
+void QGCApplication::reportMissingFact(const QString& name)
 {
-    QGCMessageBox::critical("Panic Shutdown", panicMessage);
-    ::exit(0);
+    _missingFacts += name;
+    _missingFactDelayedDisplayTimer.start();
+}
+
+/// Called when the delay timer fires to show the missing facts warning
+void QGCApplication::_missingFactsDisplay(void)
+{
+    Q_ASSERT(_missingFacts.count());
+    
+    QString facts;
+    foreach (QString fact, _missingFacts) {
+        if (facts.isEmpty()) {
+            facts += fact;
+        } else {
+            facts += QString(", %1").arg(fact);
+        }
+    }
+    _missingFacts.clear();
+    
+    QGCMessageBox::critical("Missing Parameters",
+                            QString("Parameters missing from firmware: %1.\n\n"
+                                    "You should quit QGroundControl immediately and update your firmware.").arg(facts));
 }
