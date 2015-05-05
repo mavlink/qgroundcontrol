@@ -482,7 +482,7 @@ void QGCUASFileManager::uploadPath(const QString& toPath, const QFileInfo& uploa
         return;
     }
 
-    if(not uploadFile.isReadable()){
+    if(!uploadFile.isReadable()){
         _emitErrorMessage(tr("File (%1) is not readable for upload").arg(uploadFile.path()));
     }
 
