@@ -30,7 +30,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "UASManager.h"
 #include "Waypoint.h"
-#include "QGCMavManager.h"
+#include "MavManager.h"
 
 #define UPDATE_TIMER 50
 #define DEFAULT_LAT  38.965767f

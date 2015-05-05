@@ -34,7 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "UASMessageHandler.h"
 #include "UASMessageView.h"
-#include "QGCFlightDisplay.h"
+#include "FlightDisplay.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
     : QGCQmlWidgetHolder(parent)
@@ -150,7 +150,7 @@ void MainToolBar::onFlyView()
 
 void MainToolBar::onFlyViewMenu()
 {
-    QGCFlightDisplay* fdsp = MainWindow::instance()->getFlightDisplay();
+    FlightDisplay* fdsp = MainWindow::instance()->getFlightDisplay();
     if(fdsp) {
         fdsp->showOptionsMenu();
     }

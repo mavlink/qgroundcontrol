@@ -32,12 +32,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 
 #include "MainWindow.h"
-#include "QGCFlightDisplay.h"
+#include "FlightDisplay.h"
 #include "UASManager.h"
 
 const char* kMainFlightDisplayGroup = "MainFlightDisplay";
 
-QGCFlightDisplay::QGCFlightDisplay(QWidget *parent)
+FlightDisplay::FlightDisplay(QWidget *parent)
     : QGCQmlWidgetHolder(parent)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
@@ -56,11 +56,11 @@ QGCFlightDisplay::QGCFlightDisplay(QWidget *parent)
     setVisible(true);
 }
 
-QGCFlightDisplay::~QGCFlightDisplay()
+FlightDisplay::~FlightDisplay()
 {
 }
 
-void QGCFlightDisplay::saveSetting(const QString &name, const QString& value)
+void FlightDisplay::saveSetting(const QString &name, const QString& value)
 {
     QSettings settings;
     QString key(kMainFlightDisplayGroup);
@@ -68,7 +68,7 @@ void QGCFlightDisplay::saveSetting(const QString &name, const QString& value)
     settings.setValue(key, value);
 }
 
-QString QGCFlightDisplay::loadSetting(const QString &name, const QString& defaultValue)
+QString FlightDisplay::loadSetting(const QString &name, const QString& defaultValue)
 {
     QSettings settings;
     QString key(kMainFlightDisplayGroup);
