@@ -47,6 +47,7 @@ private slots:
     void _listComplete(void);
     
     void _downloadFile(void);
+    void _uploadFile(void);
     void _downloadLength(unsigned int length);
     void _downloadProgress(unsigned int length);
     void _downloadErrorMessage(const QString& msg);
@@ -74,6 +75,7 @@ private:
     
     bool _listInProgress;       ///< Indicates that a listDirectory command is in progress
     bool _downloadInProgress;   ///< Indicates that a downloadPath command is in progress
+    bool _uploadInProgress;     ///< Indicates that a upload command is in progress
 };
 
 #endif // QGCUASFILEVIEW_H

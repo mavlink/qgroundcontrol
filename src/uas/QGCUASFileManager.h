@@ -64,14 +64,25 @@ signals:
     /// @brief Signalled during file download to indicate download progress
     ///     @param bytesReceived Number of bytes currently received from file
     void downloadFileProgress(unsigned int bytesReceived);
-    
+
     /// @brief Signaled to indicate completion of file download. If an error occurs during download this signal will not be emitted.
     void downloadFileComplete(void);
+
+    /// @brief Signalled after createFile acknowledge is returned to indicate length of file being downloaded
+    void uploadFileLength(unsigned int length);
+
+    /// @brief Signalled during file upload to indicate progress
+    ///     @param bytesReceived Number of bytes currently transmitted to file
+    void uploadFileProgress(unsigned int bytesReceived);
+
+    /// @brief Signaled to indicate completion of file upload. If an error occurs during download this signal will not be emitted.
+    void uploadFileComplete(void);
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
     void listDirectory(const QString& dirPath);
     void downloadPath(const QString& from, const QDir& downloadDir);
+    void uploadPath(const QString& toPath, const QFileInfo& uploadFile);
 
 protected:
     
@@ -100,6 +111,9 @@ protected:
 
             // File length returned by Open command
             uint32_t openFileLength;
+
+            // Length of file chunk written by write command
+            uint32_t writeFileLength;
         };
     };
 
@@ -134,7 +148,9 @@ protected:
 		kErrInvalidSession,         ///< Session is not currently open
 		kErrNoSessionsAvailable,	///< All available Sessions in use
 		kErrEOF,                    ///< Offset past end of file for List and Read commands
-		kErrUnknownCommand          ///< Unknown command opcode
+        kErrUnknownCommand,          ///< Unknown command opcode
+        kErrFailFileExists,         ///< File exists already
+        kErrFailFileProtected       ///< File is write protected
     };
 
     enum OperationState
@@ -144,6 +160,8 @@ protected:
             kCOList,    // waiting for List response
             kCOOpen,    // waiting for Open response
             kCORead,    // waiting for Read response
+            kCOCreate,  // waiting for Create response
+            kCOWrite,   // waiting for Write response
         };
     
     
@@ -161,6 +179,9 @@ protected:
     void _openAckResponse(Request* openAck);
     void _readAckResponse(Request* readAck);
     void _listAckResponse(Request* listAck);
+    void _createAckResponse(Request* createAck);
+    void _writeAckResponse(Request* writeAck);
+    void _writeFileDatablock(void);
     void _sendListCommand(void);
     void _sendTerminateCommand(void);
     void _closeReadSession(bool success);
@@ -179,10 +200,14 @@ protected:
     
     uint8_t     _activeSession;             ///< currently active session, 0 for none
     uint32_t    _readOffset;                ///< current read offset
+    uint32_t    _writeOffset;               ///< current write offset
+    uint32_t    _writeSize;                 ///< current write data size
+    uint32_t    _writeFileSize;             ///< current write file size
     QByteArray  _readFileAccumulator;       ///< Holds file being downloaded
+    QByteArray  _writeFileAccumulator;      ///< Holds file being uploaded
     QDir        _readFileDownloadDir;       ///< Directory to download file to
     QString     _readFileDownloadFilename;  ///< Filename (no path) for download file
-    
+
     uint8_t     _systemIdQGC;               ///< System ID for QGC
     uint8_t     _systemIdServer;            ///< System ID for server
     
