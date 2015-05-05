@@ -78,14 +78,24 @@ public:
 	QString                     group(void);
 
 signals:
+    void factMissing(const QString& name);
     void nameChanged(void);
     void valueChanged(void);
 	void metaDataChanged(void);
     
+private slots:
+    void _delayedFactMissing(void);
+    
 private:
+    // Overrides from QObject
+    void connectNotify(const QMetaMethod & signal);
+    void disconnectNotify(const QMetaMethod & signal);
+    
     AutoPilotPlugin*    _autopilotPlugin;
     Fact*               _fact;
     int                 _componentId;
+    bool                _factMissingSignalConnected;
+    QStringList         _missedFactMissingSignals;
 };
 
 #endif

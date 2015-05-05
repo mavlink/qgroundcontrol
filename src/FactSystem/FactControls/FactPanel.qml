@@ -22,40 +22,40 @@
  ======================================================================*/
 
 /// @file
-///     @brief Battery, propeller and magnetometer summary
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick 2.2
-import QtQuick.Controls 1.2
+import QtQuick 2.3
+import QtQuick.Controls 1.3
 
 import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
+import QGroundControl.Palette 1.0
 
-FactPanel {
-    anchors.fill: parent
+Item {
+    property string __missingFacts: ""
 
-    Fact { id: batVChargedFact;     name: "BAT_V_CHARGED";  onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: batVEmptyFact;       name: "BAT_V_EMPTY";    onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: batCellsFact;        name: "BAT_N_CELLS";    onFactMissing: showMissingFactOverlay(name) }
+    function showMissingFactOverlay(missingFactName) {
+            if (__missingFacts.length != 0) {
+                __missingFacts = __missingFacts.concat(", ")
+            }
+        __missingFacts = __missingFacts.concat(missingFactName)
+        __missingFactOverlay.visible = true
+    }
 
-    Column {
-        anchors.fill:       parent
-        anchors.margins:    8
+    Rectangle {
+        QGCPalette { id: __qgcPal; colorGroupEnabled: true }
 
-        VehicleSummaryRow {
-            labelText: "Battery Full:"
-            valueText: batVChargedFact.valueString
-        }
+        id:             __missingFactOverlay
+        anchors.fill:   parent
+        z:              9999
+        visible:        false
+        color:          __qgcPal.window
+        opacity:        0.85
 
-        VehicleSummaryRow {
-            labelText: "Battery Empty:"
-            valueText: batVEmptyFact.valueString
-        }
-
-        VehicleSummaryRow {
-            labelText: "Number of Cells:"
-            valueText: batCellsFact.valueString
+        QGCLabel {
+            anchors.fill:   parent
+            wrapMode:       Text.WordWrap
+            text:           "Fact(s) missing: " + __missingFacts
         }
     }
 }

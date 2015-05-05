@@ -1,36 +1,40 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
 
 import QGroundControl.FactSystem 1.0
+import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
 
-Column {
-    Fact { id: modeSwFact;      name: "RC_MAP_MODE_SW" }
-    Fact { id: posCtlSwFact;    name: "RC_MAP_POSCTL_SW" }
-    Fact { id: loiterSwFact;    name: "RC_MAP_LOITER_SW" }
-    Fact { id: returnSwFact;    name: "RC_MAP_RETURN_SW" }
+FactPanel {
+    anchors.fill: parent
 
-    anchors.fill:       parent
-    anchors.margins:    8
+    Fact { id: modeSwFact;      name: "RC_MAP_MODE_SW";     onFactMissing: showMissingFactOverlay(name) }
+    Fact { id: posCtlSwFact;    name: "RC_MAP_POSCTL_SW";   onFactMissing: showMissingFactOverlay(name) }
+    Fact { id: loiterSwFact;    name: "RC_MAP_LOITER_SW";   onFactMissing: showMissingFactOverlay(name) }
+    Fact { id: returnSwFact;    name: "RC_MAP_RETURN_SW";   onFactMissing: showMissingFactOverlay(name) }
 
-    VehicleSummaryRow {
-        labelText: "Mode switch:"
-        valueText: modeSwFact.value == 0 ? "Setup required" : modeSwFact.valueString
-    }
+    Column {
+        anchors.fill:       parent
+        anchors.margins:    8
 
-    VehicleSummaryRow {
-        labelText: "Position Ctl switch:"
-        valueText: posCtlSwFact.value == 0 ? "Disabled" : posCtlSwFact.valueString
-    }
+        VehicleSummaryRow {
+            labelText: "Mode switch:"
+            valueText: modeSwFact.value == 0 ? "Setup required" : modeSwFact.valueString
+        }
 
-    VehicleSummaryRow {
-        labelText: "Loiter switch:"
-        valueText: loiterSwFact.value == 0 ? "Disabled" : loiterSwFact.valueString
-    }
+        VehicleSummaryRow {
+            labelText: "Position Ctl switch:"
+            valueText: posCtlSwFact.value == 0 ? "Disabled" : posCtlSwFact.valueString
+        }
 
-    VehicleSummaryRow {
-        labelText: "Return switch:"
-        valueText: returnSwFact.value == 0 ? "Disabled" : returnSwFact.valueString
+        VehicleSummaryRow {
+            labelText: "Loiter switch:"
+            valueText: loiterSwFact.value == 0 ? "Disabled" : loiterSwFact.valueString
+        }
+
+        VehicleSummaryRow {
+            labelText: "Return switch:"
+            valueText: returnSwFact.value == 0 ? "Disabled" : returnSwFact.valueString
+        }
     }
 }

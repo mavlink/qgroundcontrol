@@ -34,7 +34,8 @@
 FactBinder::FactBinder(void) :
     _autopilotPlugin(NULL),
     _fact(NULL),
-    _componentId(FactSystem::defaultComponentId)
+    _componentId(FactSystem::defaultComponentId),
+    _factMissingSignalConnected(false)
 {
     UASInterface* uas = UASManager::instance()->getActiveUAS();
     Q_ASSERT(uas);
@@ -85,8 +86,12 @@ void FactBinder::setName(const QString& name)
             emit nameChanged();
 			emit metaDataChanged();
 		} else {
-            QString panicMessage("Required parameter (component id: %1, name: %2),  is missing from vehicle. QGroundControl cannot operate with this firmware revision. QGroundControl will now shut down.");
-            qgcApp()->panicShutdown(panicMessage.arg(_componentId).arg(parsedName));
+            qgcApp()->reportMissingFact(name);
+            if (_factMissingSignalConnected) {
+                emit factMissing(name);
+            } else {
+                _missedFactMissingSignals << name;
+            }
         }
     }
 }
@@ -206,5 +211,29 @@ bool FactBinder::valueEqualsDefault(void)
         return _fact->valueEqualsDefault();
     } else {
         return false;
+    }
+}
+
+void FactBinder::connectNotify(const QMetaMethod & signal)
+{
+    if (signal == QMetaMethod::fromSignal(&FactBinder::factMissing)) {
+        _factMissingSignalConnected = true;
+        if (_missedFactMissingSignals.count()) {
+            QTimer::singleShot(10, this, &FactBinder::_delayedFactMissing);
+        }
+    }
+}
+
+void FactBinder::disconnectNotify(const QMetaMethod & signal)
+{
+    if (signal == QMetaMethod::fromSignal(&FactBinder::factMissing)) {
+        _factMissingSignalConnected = false;
+    }
+}
+
+void FactBinder::_delayedFactMissing(void)
+{
+    foreach (QString name, _missedFactMissingSignals) {
+        emit factMissing(name);
     }
 }
