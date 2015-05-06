@@ -39,6 +39,36 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include <QHostInfo>
 
+static bool is_ip(const QString& address)
+{
+    int a,b,c,d;
+    if (sscanf(address.toStdString().c_str(), "%d.%d.%d.%d", &a, &b, &c, &d) != 4)
+        return false;
+    return true;
+}
+
+static QString get_ip_address(const QString& address)
+{
+    if(is_ip(address))
+        return address;
+    // Need to look it up
+    QHostInfo info = QHostInfo::fromName(address);
+    if (info.error() == QHostInfo::NoError)
+    {
+        QList<QHostAddress> hostAddresses = info.addresses();
+        QHostAddress address;
+        for (int i = 0; i < hostAddresses.size(); i++)
+        {
+            // Exclude all IPv6 addresses
+            if (!hostAddresses.at(i).toString().contains(":"))
+            {
+                return hostAddresses.at(i).toString();
+            }
+        }
+    }
+    return QString("");
+}
+
 UDPLink::UDPLink(UDPConfiguration* config)
     : _socket(NULL)
     , _connectState(false)
@@ -294,28 +324,12 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
  */
 void UDPConfiguration::addHost(const QString& host)
 {
+    // Handle x.x.x.x:p
     if (host.contains(":"))
     {
-        QHostInfo info = QHostInfo::fromName(host.split(":").first());
-        if (info.error() == QHostInfo::NoError)
-        {
-            // Add host
-            QList<QHostAddress> hostAddresses = info.addresses();
-            QHostAddress address;
-            for (int i = 0; i < hostAddresses.size(); i++)
-            {
-                // Exclude all IPv6 addresses
-                if (!hostAddresses.at(i).toString().contains(":"))
-                {
-                    address = hostAddresses.at(i);
-                }
-            }
-            _confMutex.lock();
-            _hosts[address.toString()] = host.split(":").last().toInt();
-            _confMutex.unlock();
-            qDebug() << "UDP:" << "ADDING HOST:" << address.toString() << ":" << host.split(":").last();
-        }
+        addHost(host.split(":").first(), host.split(":").last().toInt());
     }
+    // If no port, use default
     else
     {
         addHost(host, (int)_localPort);
@@ -330,11 +344,12 @@ void UDPConfiguration::addHost(const QString& host, int port)
             _hosts[host] = port;
         }
     } else {
-        QHostInfo info = QHostInfo::fromName(host);
-        if (info.error() == QHostInfo::NoError)
-        {
-            _hosts[info.addresses().first().toString()] = port;
-            qDebug() << "UDP:" << "ADDING HOST:" << info.addresses().first().toString() << ":" << port;
+        QString ipAdd = get_ip_address(host);
+        if(ipAdd.isEmpty()) {
+            qWarning() << "UDP:" << "Could not resolve" << host;
+        } else {
+            _hosts[ipAdd] = port;
+            qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
         }
     }
 }
