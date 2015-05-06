@@ -41,26 +41,22 @@ protected:
     FileManager* _manager;
     
 private slots:
-    void _refreshTree(void);
     void _listEntryReceived(const QString& entry);
-    void _listErrorMessage(const QString& msg);
-    void _listComplete(void);
     
+    void _refreshTree(void);
     void _downloadFile(void);
     void _uploadFile(void);
-    void _downloadLength(unsigned int length);
-    void _downloadProgress(unsigned int length);
-    void _downloadErrorMessage(const QString& msg);
-    void _downloadComplete(void);
+    
+    void _commandProgress(int value);
+    void _commandError(const QString& msg);
+    void _commandComplete(void);
 
     void _currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
 
 private:
-    void _connectDownloadSignals(void);
-    void _disconnectDownloadSignals(void);
-    void _connectListSignals(void);
-    void _disconnectListSignals(void);
+    void _listComplete(void);
     void _requestDirectoryList(const QString& dir);
+    void _setAllButtonsEnabled(bool enabled);
 
     static const int        _typeFile = QTreeWidgetItem::UserType + 1;
     static const int        _typeDir = QTreeWidgetItem::UserType + 2;
@@ -70,12 +66,14 @@ private:
     QList<QTreeWidgetItem*> _walkItemStack;
     Ui::QGCUASFileView      _ui;
     
-    QString _downloadFilename;  ///< File currently being downloaded, not including path
-    QTime   _downloadStartTime; ///< Time at which download started
+    enum CommandState {
+        commandNone,        ///< No command active
+        commandList,        ///< List command active
+        commandDownload,    ///< Download command active
+        commandUpload       ///< Upload command active
+    };
     
-    bool _listInProgress;       ///< Indicates that a listDirectory command is in progress
-    bool _downloadInProgress;   ///< Indicates that a downloadPath command is in progress
-    bool _uploadInProgress;     ///< Indicates that a upload command is in progress
+    CommandState _currentCommand;   ///< Current active command
 };
 
 #endif // QGCUASFILEVIEW_H

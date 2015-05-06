@@ -53,13 +53,11 @@ private slots:
     void cleanup(void);
     
     // Test cases
-#if 0
     void _ackTest(void);
     void _noAckTest(void);
     void _resetTest(void);
     void _listTest(void);
     void _readDownloadTest(void);
-#endif
 	void _streamDownloadTest(void);
 	
     // Connected to FileManager listEntry signal
@@ -70,19 +68,15 @@ private:
 
     enum {
         listEntrySignalIndex = 0,
-        listCompleteSignalIndex,
-        downloadFileLengthSignalIndex,
-        downloadFileCompleteSignalIndex,
-        errorMessageSignalIndex,
+        commandCompleteSignalIndex,
+        commandErrorSignalIndex,
         maxSignalIndex
     };
     
     enum {
-        listEntrySignalMask =               1 << listEntrySignalIndex,
-        listCompleteSignalMask =            1 << listCompleteSignalIndex,
-        downloadFileLengthSignalMask =      1 << downloadFileLengthSignalIndex,
-        downloadFileCompleteSignalMask =    1 << downloadFileCompleteSignalIndex,
-        errorMessageSignalMask =            1 << errorMessageSignalIndex,
+        listEntrySignalMask =       1 << listEntrySignalIndex,
+        commandCompleteSignalMask = 1 << commandCompleteSignalIndex,
+        commandErrorSignalMask =    1 << errorMessageSignalIndex,
     };
 
     static const uint8_t    _systemIdQGC = 255;

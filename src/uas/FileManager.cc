@@ -48,20 +48,22 @@ FileManager::FileManager(QObject* parent, UASInterface* uas, uint8_t unitTestSys
     Q_ASSERT(sizeof(RequestHeader) == 12);
 }
 
-/// @brief Respond to the Ack associated with the Open command with the next Read command.
+/// Respond to the Ack associated with the Open command with the next read command.
 void FileManager::_openAckResponse(Request* openAck)
 {
-	Q_ASSERT(_currentOperation == kCOOpenRead || _currentOperation == kCOOpenStream);
+    qCDebug(FileManagerLog) << QString("_openAckResponse: _currentOperation(%1) _readFileLength(%2)").arg(_currentOperation).arg(openAck->openFileLength);
+    
+	Q_ASSERT(_currentOperation == kCOOpenRead || _currentOperation == kCOOpenBurst);
 	_currentOperation = _currentOperation == kCOOpenRead ? kCORead : kCOBurst;
     _activeSession = openAck->hdr.session;
     
     // File length comes back in data
     Q_ASSERT(openAck->hdr.size == sizeof(uint32_t));
-    emit downloadFileLength(openAck->openFileLength);
+    _downloadFileSize = openAck->openFileLength;
     
     // Start the sequence of read commands
 
-    _downloadOffset = 0;                // Start reading at beginning of file
+    _downloadOffset = 0;            // Start reading at beginning of file
     _readFileAccumulator.clear();   // Start with an empty file
 
     Request request;
@@ -74,10 +76,14 @@ void FileManager::_openAckResponse(Request* openAck)
     _sendRequest(&request);
 }
 
-/// @brief Closes out a read session by writing the file and doing cleanup.
+/// Closes out a download session by writing the file and doing cleanup.
 ///     @param success true: successful download completion, false: error during download
 void FileManager::_closeDownloadSession(bool success)
 {
+    qCDebug(FileManagerLog) << QString("_closeDownloadSession: success(%1)").arg(success);
+    
+    _currentOperation = kCOIdle;
+    
     if (success) {
         QString downloadFilePath = _readFileDownloadDir.absoluteFilePath(_readFileDownloadFilename);
 
@@ -95,11 +101,31 @@ void FileManager::_closeDownloadSession(bool success)
         }
         file.close();
 
-        emit downloadFileComplete();
+        emit commandComplete();
     }
+    
+    // If !success error is emitted elsewhere
 
     // Close the open session
-    _sendTerminateCommand();
+    _sendResetCommand();
+}
+
+/// Closes out an upload session doing cleanup.
+///     @param success true: successful upload completion, false: error during download
+void FileManager::_closeUploadSession(bool success)
+{
+    qCDebug(FileManagerLog) << QString("_closeUploadSession: success(%1)").arg(success);
+    
+    _currentOperation = kCOIdle;
+    _writeFileAccumulator.clear();
+    _writeFileSize = 0;
+    
+    if (success) {
+        emit commandComplete();
+    }
+    
+    // Close the open session
+    _sendResetCommand();
 }
 
 /// Respond to the Ack associated with the Read or Stream commands.
@@ -107,15 +133,13 @@ void FileManager::_closeDownloadSession(bool success)
 void FileManager::_downloadAckResponse(Request* readAck, bool readFile)
 {
     if (readAck->hdr.session != _activeSession) {
-        _currentOperation = kCOIdle;
-        _readFileAccumulator.clear();
+        _closeDownloadSession(false /* failure */);
         _emitErrorMessage(tr("Download: Incorrect session returned"));
         return;
     }
 
     if (readAck->hdr.offset != _downloadOffset) {
-        _currentOperation = kCOIdle;
-        _readFileAccumulator.clear();
+        _closeDownloadSession(false /* failure */);
         _emitErrorMessage(tr("Download: Offset returned (%1) differs from offset requested/expected (%2)").arg(readAck->hdr.offset).arg(_downloadOffset));
         return;
     }
@@ -124,7 +148,10 @@ void FileManager::_downloadAckResponse(Request* readAck, bool readFile)
 
 	_downloadOffset += readAck->hdr.size;
     _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
-    emit downloadFileProgress(_readFileAccumulator.length());
+    
+    if (_downloadFileSize != 0) {
+        emit commandProgress(100 * ((float)_readFileAccumulator.length() / (float)_downloadFileSize));
+    }
 
     if (readAck->hdr.size == sizeof(readAck->data)) {
 		if (readFile || readAck->hdr.burstComplete) {
@@ -143,7 +170,6 @@ void FileManager::_downloadAckResponse(Request* readAck, bool readFile)
 		}
     } else if (readFile) {
         // We only receieved a partial buffer back. These means we are at EOF
-        _currentOperation = kCOIdle;
         _closeDownloadSession(true /* success */);
     }
 }
@@ -198,7 +224,7 @@ void FileManager::_listAckResponse(Request* listAck)
         // Directory is empty, we're done
         Q_ASSERT(listAck->hdr.opcode == kRspAck);
         _currentOperation = kCOIdle;
-        emit listComplete();
+        emit commandComplete();
     } else {
         // Possibly more entries to come, need to keep trying till we get EOF
         _currentOperation = kCOList;
@@ -210,14 +236,16 @@ void FileManager::_listAckResponse(Request* listAck)
 /// @brief Respond to the Ack associated with the create command.
 void FileManager::_createAckResponse(Request* createAck)
 {
+    qCDebug(FileManagerLog) << "_createAckResponse";
+    
     _currentOperation = kCOWrite;
     _activeSession = createAck->hdr.session;
 
-    // Start the sequence of read commands
+    // Start the sequence of write commands from the beginning of the file
 
-    _writeOffset = 0;                // Start writing at beginning of file
+    _writeOffset = 0;
     _writeSize = 0;
-
+    
     _writeFileDatablock();
 }
 
@@ -225,37 +253,30 @@ void FileManager::_createAckResponse(Request* createAck)
 void FileManager::_writeAckResponse(Request* writeAck)
 {
     if(_writeOffset + _writeSize >= _writeFileSize){
-        _writeFileAccumulator.clear();
-        _writeFileSize = 0;
-        _currentOperation = kCOIdle;
-        emit uploadFileComplete();
+        _closeUploadSession(true /* success */);
     }
 
     if (writeAck->hdr.session != _activeSession) {
-        _currentOperation = kCOIdle;
-        _writeFileAccumulator.clear();
+        _closeUploadSession(false /* failure */);
         _emitErrorMessage(tr("Write: Incorrect session returned"));
         return;
     }
 
     if (writeAck->hdr.offset != _writeOffset) {
-        _currentOperation = kCOIdle;
-        _writeFileAccumulator.clear();
+        _closeUploadSession(false /* failure */);
         _emitErrorMessage(tr("Write: Offset returned (%1) differs from offset requested (%2)").arg(writeAck->hdr.offset).arg(_writeOffset));
         return;
     }
 
     if (writeAck->hdr.size != sizeof(uint32_t)) {
-        _currentOperation = kCOIdle;
-        _writeFileAccumulator.clear();
+        _closeUploadSession(false /* failure */);
         _emitErrorMessage(tr("Write: Returned invalid size of write size data"));
         return;
     }
 
 
-    if( writeAck->writeFileLength !=_writeSize){
-        _currentOperation = kCOIdle;
-        _writeFileAccumulator.clear();
+    if( writeAck->writeFileLength !=_writeSize) {
+        _closeUploadSession(false /* failure */);
         _emitErrorMessage(tr("Write: Size returned (%1) differs from size requested (%2)").arg(writeAck->writeFileLength).arg(_writeSize));
         return;
     }
@@ -266,12 +287,8 @@ void FileManager::_writeAckResponse(Request* writeAck)
 /// @brief Send next write file data block.
 void FileManager::_writeFileDatablock(void)
 {
-    /// @brief Maximum data size in RequestHeader::data
-//	static const uint8_t	kMaxDataLength = MAVLINK_MSG_FILE_TRANSFER_PROTOCOL_FIELD_PAYLOAD_LEN - sizeof(RequestHeader);
-//    static const uint8_t	kMaxDataLength = Request.data;
-
-    if(_writeOffset + _writeSize >= _writeFileSize){
-        _sendTerminateCommand();
+    if (_writeOffset + _writeSize >= _writeFileSize){
+        _closeUploadSession(true /* success */);
         return;
     }
 
@@ -373,15 +390,13 @@ void FileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
         if (request->hdr.req_opcode == kCmdListDirectory && errorCode == kErrEOF) {
             // This is not an error, just the end of the list loop
-            emit listComplete();
+            emit commandComplete();
             return;
         } else if ((request->hdr.req_opcode == kCmdReadFile || request->hdr.req_opcode == kCmdBurstReadFile) && errorCode == kErrEOF) {
             // This is not an error, just the end of the download loop
             _closeDownloadSession(true /* success */);
             return;
         } else if (request->hdr.req_opcode == kCmdCreateFile) {
-            // End a failed create file operation
-            _sendTerminateCommand();
             _emitErrorMessage(tr("Nak received creating file, error: %1").arg(errorString(request->data[0])));
             return;
         } else {
@@ -389,6 +404,9 @@ void FileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (request->hdr.req_opcode == kCmdReadFile || request->hdr.req_opcode == kCmdBurstReadFile) {
                 // Nak error during download loop, download failed
                 _closeDownloadSession(false /* failure */);
+            } else if (request->hdr.req_opcode == kCmdWriteFile) {
+                // Nak error during upload loop, upload failed
+                _closeUploadSession(false /* failure */);
             }
             _emitErrorMessage(tr("Nak received, error: %1").arg(errorString(request->data[0])));
         }
@@ -468,7 +486,7 @@ void FileManager::_downloadWorker(const QString& from, const QDir& downloadDir, 
 	i++; // move past slash
 	_readFileDownloadFilename = from.right(from.size() - i);
 	
-	_currentOperation = readFile ? kCOOpenRead : kCOOpenStream;
+	_currentOperation = readFile ? kCOOpenRead : kCOOpenBurst;
 	
 	Request request;
 	request.hdr.session = 0;
@@ -493,8 +511,9 @@ void FileManager::uploadPath(const QString& toPath, const QFileInfo& uploadFile)
         return;
     }
 
-    if(!uploadFile.isReadable()){
+    if (!uploadFile.isReadable()){
         _emitErrorMessage(tr("File (%1) is not readable for upload").arg(uploadFile.path()));
+        return;
     }
 
     QFile file(uploadFile.absoluteFilePath());
@@ -607,35 +626,38 @@ void FileManager::_ackTimeout(void)
         case kCORead:
         case kCOBurst:
             _closeDownloadSession(false /* failure */);
-            _currentOperation = kCOAck;
-            _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
+            _emitErrorMessage(tr("Timeout waiting for ack: Download failed"));
+            break;
+            
+        case kCOOpenRead:
+        case kCOOpenBurst:
+            _currentOperation = kCOIdle;
+            _emitErrorMessage(tr("Timeout waiting for ack: Download failed"));
+            _sendResetCommand();
             break;
             
         case kCOCreate:
-            _currentOperation = kCOAck;
-            _writeFileAccumulator.clear();
-            _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
-            _sendTerminateCommand();
+            _currentOperation = kCOIdle;
+            _emitErrorMessage(tr("Timeout waiting for ack: Upload failed"));
+            _sendResetCommand();
             break;
             
         case kCOWrite:
-            _currentOperation = kCOAck;
-            _writeFileAccumulator.clear();
-            _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
+            _closeUploadSession(false /* failure */);
+            _emitErrorMessage(tr("Timeout waiting for ack: Upload failed"));
             break;
 			
         default:
             _currentOperation = kCOIdle;
-            _emitErrorMessage(QString("Timeout waiting for ack: operation (%1)").arg(_currentOperation));
+            _emitErrorMessage(QString("Timeout waiting for ack: Command failed (%1)").arg(_currentOperation));
             break;
     }
 }
 
-void FileManager::_sendTerminateCommand(void)
+void FileManager::_sendResetCommand(void)
 {
     Request request;
-    request.hdr.session = _activeSession;
-    request.hdr.opcode = kCmdTerminateSession;
+    request.hdr.opcode = kCmdResetSessions;
     request.hdr.size = 0;
     _sendRequest(&request);
 }
@@ -643,7 +665,7 @@ void FileManager::_sendTerminateCommand(void)
 void FileManager::_emitErrorMessage(const QString& msg)
 {
 	qCDebug(FileManagerLog) << "Error:" << msg;
-    emit errorMessage(msg);
+    emit commandError(msg);
 }
 
 void FileManager::_emitListEntry(const QString& entry)
