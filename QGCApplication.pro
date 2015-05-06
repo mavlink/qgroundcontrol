@@ -625,7 +625,8 @@ SOURCES += \
 # Fact System code
 
 INCLUDEPATH += \
-    src/FactSystem
+    src/FactSystem \
+    src/FactSystem/FactControls \
 
 HEADERS += \
     src/FactSystem/Fact.h \
@@ -634,6 +635,7 @@ HEADERS += \
     src/FactSystem/FactSystem.h \
     src/FactSystem/FactValidator.h \
     src/FactSystem/ParameterLoader.h \
+    src/FactSystem/FactControls/FactPanelController.h \
 
 SOURCES += \
     src/FactSystem/Fact.cc \
@@ -642,6 +644,7 @@ SOURCES += \
     src/FactSystem/FactSystem.cc \
     src/FactSystem/FactValidator.cc \
     src/FactSystem/ParameterLoader.cc \
+    src/FactSystem/FactControls/FactPanelController.cc \
 
 # Android
 
