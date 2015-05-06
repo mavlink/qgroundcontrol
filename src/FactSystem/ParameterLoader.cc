@@ -386,8 +386,7 @@ Fact* ParameterLoader::getFact(int componentId, const QString& name)
     componentId = _actualComponentId(componentId);
     
     if (!_mapParameterName2Variant.contains(componentId) || !_mapParameterName2Variant[componentId].contains(name)) {
-        QString panicMessage("Required parameter (component id: %1, name: %2),  is missing from vehicle. QGroundControl cannot operate with this firmware revision. QGroundControl will now shut down.");
-        qgcApp()->panicShutdown(panicMessage.arg(componentId).arg(name));
+        return NULL;
     }
     
     Fact* fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
