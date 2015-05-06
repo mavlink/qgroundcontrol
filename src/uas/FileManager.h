@@ -35,6 +35,7 @@ Q_DECLARE_LOGGING_CATEGORY(FileManagerLog)
 class FileManager : public QObject
 {
     Q_OBJECT
+    
 public:
     FileManager(QObject* parent, UASInterface* uas, uint8_t unitTestSystemIdQGC = 0);
     
@@ -65,38 +66,23 @@ public:
     void uploadPath(const QString& toPath, const QFileInfo& uploadFile);
     
 signals:
-    /// @brief Signalled whenever an error occurs during the listDirectory or downloadPath methods.
-    void errorMessage(const QString& msg);
-    
     // Signals associated with the listDirectory method
     
-    /// @brief Signalled to indicate a new directory entry was received.
+    /// Signalled to indicate a new directory entry was received.
     void listEntry(const QString& entry);
     
-    /// @brief Signalled after listDirectory completes. If an error occurs during directory listing this signal will not be emitted.
-    void listComplete(void);
+    // Signals associated with all commands
     
-    // Signals associated with the downloadPath method
+    /// Signalled after a command has completed
+    void commandComplete(void);
     
-    /// @brief Signalled after downloadPath is called to indicate length of file being downloaded
-    void downloadFileLength(unsigned int length);
+    /// Signalled when an error occurs during a command. In this case a commandComplete signal will
+    /// not be sent.
+    void commandError(const QString& msg);
     
-    /// @brief Signalled during file download to indicate download progress
-    ///     @param bytesReceived Number of bytes currently received from file
-    void downloadFileProgress(unsigned int bytesReceived);
-
-    /// @brief Signaled to indicate completion of file download. If an error occurs during download this signal will not be emitted.
-    void downloadFileComplete(void);
-
-    /// @brief Signalled after createFile acknowledge is returned to indicate length of file being downloaded
-    void uploadFileLength(unsigned int length);
-
-    /// @brief Signalled during file upload to indicate progress
-    ///     @param bytesReceived Number of bytes currently transmitted to file
-    void uploadFileProgress(unsigned int bytesReceived);
-
-    /// @brief Signaled to indicate completion of file upload. If an error occurs during download this signal will not be emitted.
-    void uploadFileComplete(void);
+    /// Signalled during a lengthy command to show progress
+    ///     @param value Amount of progress: 0.0 = none, 1.0 = complete
+    void commandProgress(int value);
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
@@ -184,7 +170,7 @@ private:
             kCOAck,			// waiting for an Ack
             kCOList,		// waiting for List response
             kCOOpenRead,    // waiting for Open response followed by Read download
-			kCOOpenStream,  // waiting for Open response, followed by Stream download
+			kCOOpenBurst,   // waiting for Open response, followed by Burst download
             kCORead,		// waiting for Read response
 			kCOBurst,		// waiting for Burst response
             kCOWrite,       // waiting for Write response
@@ -205,8 +191,9 @@ private:
     void _writeAckResponse(Request* writeAck);
     void _writeFileDatablock(void);
     void _sendListCommand(void);
-    void _sendTerminateCommand(void);
+    void _sendResetCommand(void);
     void _closeDownloadSession(bool success);
+    void _closeUploadSession(bool success);
 	void _downloadWorker(const QString& from, const QDir& downloadDir, bool readFile);
     
     static QString errorString(uint8_t errorCode);
@@ -222,15 +209,19 @@ private:
     QString     _listPath;      ///< path for the current List operation
     
     uint8_t     _activeSession;             ///< currently active session, 0 for none
+    
     uint32_t    _readOffset;                ///< current read offset
+    
     uint32_t    _writeOffset;               ///< current write offset
     uint32_t    _writeSize;                 ///< current write data size
-    uint32_t    _writeFileSize;             ///< current write file size
+    uint32_t    _writeFileSize;             ///< Size of file being uploaded
+    QByteArray  _writeFileAccumulator;      ///< Holds file being uploaded
+    
     uint32_t    _downloadOffset;            ///< current download offset
     QByteArray  _readFileAccumulator;       ///< Holds file being downloaded
-    QByteArray  _writeFileAccumulator;      ///< Holds file being uploaded
     QDir        _readFileDownloadDir;       ///< Directory to download file to
     QString     _readFileDownloadFilename;  ///< Filename (no path) for download file
+    uint32_t    _downloadFileSize;          ///< Size of file being downloaded
 
     uint8_t     _systemIdQGC;               ///< System ID for QGC
     uint8_t     _systemIdServer;            ///< System ID for server
