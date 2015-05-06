@@ -622,7 +622,6 @@ void FileManager::_ackTimeout(void)
             _currentOperation = kCOAck;
             _writeFileAccumulator.clear();
             _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
-            _sendTerminateCommand();
             break;
 			
         default:

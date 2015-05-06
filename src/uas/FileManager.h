@@ -61,7 +61,6 @@ public:
 	///		@param dirPath Fully qualified path to list
 	void listDirectory(const QString& dirPath);
 	
-    
     /// Upload the specified file to the specified location
     void uploadPath(const QString& toPath, const QFileInfo& uploadFile);
     
