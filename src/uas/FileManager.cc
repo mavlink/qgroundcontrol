@@ -379,7 +379,7 @@ void FileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // This is not an error, just the end of the download loop
             _closeDownloadSession(true /* success */);
             return;
-        } else if (previousOperation == kCOCreate) {
+        } else if (request->hdr.req_opcode == kCmdCreateFile) {
             // End a failed create file operation
             _sendTerminateCommand();
             _emitErrorMessage(tr("Nak received creating file, error: %1").arg(errorString(request->data[0])));
@@ -614,14 +614,14 @@ void FileManager::_ackTimeout(void)
         case kCOCreate:
             _currentOperation = kCOAck;
             _writeFileAccumulator.clear();
-            _emitErrorMessage(tr("Timeout waiting for ack: Sending Create command"));
+            _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
             _sendTerminateCommand();
             break;
             
         case kCOWrite:
             _currentOperation = kCOAck;
             _writeFileAccumulator.clear();
-            _emitErrorMessage(tr("Timeout waiting for ack: Sending Write command"));
+            _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
             _sendTerminateCommand();
             break;
 			
