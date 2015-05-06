@@ -25,7 +25,7 @@
 #define MOCKMAVLINKFILESERVER_H
 
 #include "MockMavlinkInterface.h"
-#include "QGCUASFileManager.h"
+#include "FileManager.h"
 
 /// @file
 ///     @brief Mock implementation of Mavlink FTP server. Used as mavlink plugin to MockUAS.
@@ -77,7 +77,8 @@ public:
     struct FileTestCase {
         const char* filename;               ///< Filename to download
         uint8_t     length;                 ///< Length of file in bytes
-        bool        fMultiPacketResponse;   ///< true: multiple acks required to download, false: single ack contains entire download
+		int			packetCount;			///< Number of packets required for data
+        bool        exactFit;				///< true: last packet is exact fit, false: last packet is partially filled
     };
     
     /// @brief The numbers of test cases in the rgFileTestCases array.
@@ -91,13 +92,14 @@ signals:
     void terminateCommandReceived(void);
     
 private:
-    void _sendAck(uint16_t seqNumber);
-    void _sendNak(QGCUASFileManager::ErrorCode error, uint16_t seqNumber);
-    void _emitResponse(QGCUASFileManager::Request* request, uint16_t seqNumber);
-    void _listCommand(QGCUASFileManager::Request* request, uint16_t seqNumber);
-    void _openCommand(QGCUASFileManager::Request* request, uint16_t seqNumber);
-    void _readCommand(QGCUASFileManager::Request* request, uint16_t seqNumber);
-    void _terminateCommand(QGCUASFileManager::Request* request, uint16_t seqNumber);
+	void _sendAck(uint16_t seqNumber, FileManager::Opcode reqOpcode);
+    void _sendNak(FileManager::ErrorCode error, uint16_t seqNumber, FileManager::Opcode reqOpcode);
+    void _emitResponse(FileManager::Request* request, uint16_t seqNumber);
+    void _listCommand(FileManager::Request* request, uint16_t seqNumber);
+    void _openCommand(FileManager::Request* request, uint16_t seqNumber);
+    void _readCommand(FileManager::Request* request, uint16_t seqNumber);
+	void _streamCommand(FileManager::Request* request, uint16_t seqNumber);
+    void _terminateCommand(FileManager::Request* request, uint16_t seqNumber);
     uint16_t _nextSeqNumber(uint16_t seqNumber);
     
     QStringList _fileList;  ///< List of files returned by List command

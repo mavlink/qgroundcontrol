@@ -27,7 +27,7 @@
 #include <QWidget>
 #include <QTreeWidgetItem>
 
-#include "uas/QGCUASFileManager.h"
+#include "uas/FileManager.h"
 #include "ui_QGCUASFileView.h"
 
 class QGCUASFileView : public QWidget
@@ -35,10 +35,10 @@ class QGCUASFileView : public QWidget
     Q_OBJECT
 
 public:
-    explicit QGCUASFileView(QWidget *parent, QGCUASFileManager *manager);
+    explicit QGCUASFileView(QWidget *parent, FileManager *manager);
 
 protected:
-    QGCUASFileManager* _manager;
+    FileManager* _manager;
     
 private slots:
     void _refreshTree(void);
