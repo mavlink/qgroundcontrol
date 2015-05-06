@@ -61,6 +61,10 @@ public:
 	///		@param dirPath Fully qualified path to list
 	void listDirectory(const QString& dirPath);
 	
+    
+    /// Upload the specified file to the specified location
+    void uploadPath(const QString& toPath, const QFileInfo& uploadFile);
+    
 signals:
     /// @brief Signalled whenever an error occurs during the listDirectory or downloadPath methods.
     void errorMessage(const QString& msg);
@@ -97,9 +101,6 @@ signals:
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
-    void listDirectory(const QString& dirPath);
-    void downloadPath(const QString& from, const QDir& downloadDir);
-    void uploadPath(const QString& toPath, const QFileInfo& uploadFile);
 	
 private slots:
 	void _ackTimeout(void);
@@ -188,6 +189,7 @@ private:
             kCORead,		// waiting for Read response
 			kCOBurst,		// waiting for Burst response
             kCOWrite,       // waiting for Write response
+            kCOCreate,      // waiting for Create response
         };
     
     bool _sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpState);
