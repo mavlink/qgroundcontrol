@@ -32,7 +32,10 @@
         <file alias="QGroundControl/Controls/VehicleSummaryRow.qml">src/QmlControls/VehicleSummaryRow.qml</file>
         <file alias="QGroundControl/Controls/arrow-down.png">src/QmlControls/arrow-down.png</file>
         <file alias="QGroundControl/Controls/ViewWidget.qml">src/ViewWidgets/ViewWidget.qml</file>
-        <file alias="QGroundControl/Controls/ViewWithDialog.qml">src/QmlControls/ViewWithDialog.qml</file>
+
+        <file alias="QGroundControl/Controls/QGCView.qml">src/QmlControls/QGCView.qml</file>
+        <file alias="QGroundControl/Controls/QGCViewPanel.qml">src/QmlControls/QGCViewPanel.qml</file>
+        <file alias="QGroundControl/Controls/QGCViewDialog.qml">src/QmlControls/QGCViewDialog.qml</file>
 
         <file alias="QGroundControl/Controls/ParameterEditor.qml">src/QmlControls/ParameterEditor.qml</file>
 

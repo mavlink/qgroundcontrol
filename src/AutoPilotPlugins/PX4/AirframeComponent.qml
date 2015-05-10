@@ -32,8 +32,9 @@ import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.Controllers 1.0
 
-ViewWithDialog {
-    viewComponent: view
+QGCView {
+    id:             rootQGCView
+    viewComponent:  view
 
     Component {
         id: view
@@ -45,9 +46,13 @@ ViewWithDialog {
             signal showDialog(Component component, string title, int charWidth, int buttons)
             signal hideDialog
 
-            function doWorkAfterComponentCompleted() {
-                if (controller.showCustomConfigPanel) {
-                    panel.showDialog(customConfigDialog, "Custom Airframe Config", 50, StandardButton.Reset)
+            Connections {
+                target: rootQGCView
+
+                onCompleted: {
+                    if (controller.showCustomConfigPanel) {
+                        panel.showDialog(customConfigDialog, "Custom Airframe Config", 50, StandardButton.Reset)
+                    }
                 }
             }
 
