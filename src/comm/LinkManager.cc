@@ -506,9 +506,12 @@ void LinkManager::_updateConfigurationList(void)
         // We only care about dynamic links
         if(pLink->isDynamic()) {
             if(pLink->type() == LinkConfiguration::TypeSerial) {
-                SerialConfiguration* pSerial = dynamic_cast<SerialConfiguration*>(pLink);
-                if(!currentPorts.contains(pSerial->portName())) {
-                    _confToDelete.append(pSerial);
+                // Don't mess with connected link. Let it deal with the disapearing device.
+                if(pLink->getLink() == NULL) {
+                    SerialConfiguration* pSerial = dynamic_cast<SerialConfiguration*>(pLink);
+                    if(!currentPorts.contains(pSerial->portName())) {
+                        _confToDelete.append(pSerial);
+                    }
                 }
             }
         }
