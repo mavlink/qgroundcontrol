@@ -40,7 +40,8 @@ bool AirframeComponentController::_typesRegistered = false;
 AirframeComponentController::AirframeComponentController(void) :
     _uas(NULL),
     _currentVehicleIndex(0),
-    _autostartId(0)
+    _autostartId(0),
+    _showCustomConfigPanel(false)
 {
     _uas = UASManager::instance()->getActiveUAS();
     Q_ASSERT(_uas);
@@ -82,10 +83,9 @@ AirframeComponentController::AirframeComponentController(void) :
         _airframeTypes.append(QVariant::fromValue(airframeType));
     }
     
-    if (_autostartId != 0) {
-        // FIXME: Should be a user error
-        Q_UNUSED(autostartFound);
-        Q_ASSERT(autostartFound);
+    if (_autostartId != 0 && !autostartFound) {
+        _showCustomConfigPanel = true;
+        emit showCustomConfigPanelChanged(true);
     }
 }
 
