@@ -35,7 +35,14 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 
 Item {
+    id: __rootItem
+
     property Component viewComponent
+
+    /// This is signalled when the top level Item reaches Component.onCompleted. This allows
+    /// the view subcomponent to connect to this signal and do work once the full ui is ready
+    /// to go.
+    signal completed
 
     function __showDialog(component, title, charWidth, buttons) {
         __acceptButton.visible = false
@@ -43,6 +50,7 @@ Item {
         __dialogCharWidth = charWidth
         __dialogTitle = title
 
+        // Accept role buttons
         if (buttons & StandardButton.Ok) {
             __acceptButton.text = "Ok"
             __acceptButton.visible = true
@@ -52,12 +60,6 @@ Item {
         } else if (buttons & StandardButton.Save) {
             __acceptButton.text = "Save"
             __acceptButton.visible = true
-        } else if (buttons & StandardButton.Cancel) {
-            __rejectButton.text = "Cancel"
-            __rejectButton.visible = true
-        } else if (buttons & StandardButton.Close) {
-            __rejectButton.text = "Cancel"
-            __rejectButton.visible = true
         } else if (buttons & StandardButton.Apply) {
             __acceptButton.text = "Apply"
             __acceptButton.visible = true
@@ -73,15 +75,6 @@ Item {
         } else if (buttons & StandardButton.YesToAll) {
             __acceptButton.text = "Yes to All"
             __acceptButton.visible = true
-        } else if (buttons & StandardButton.No) {
-            __rejectButton.text = "No"
-            __rejectButton.visible = true
-        } else if (buttons & StandardButton.NoToAll) {
-            __rejectButton.text = "No to All"
-            __rejectButton.visible = true
-        } else if (buttons & StandardButton.Abort) {
-            __rejectButton.text = "Abort"
-            __rejectButton.visible = true
         } else if (buttons & StandardButton.Retry) {
             __acceptButton.text = "Retry"
             __acceptButton.visible = true
@@ -95,6 +88,25 @@ Item {
             __acceptButton.text = "Ignore"
             __acceptButton.visible = true
         }
+
+        // Reject role buttons
+        if (buttons & StandardButton.Cancel) {
+            __rejectButton.text = "Cancel"
+            __rejectButton.visible = true
+        } else if (buttons & StandardButton.Close) {
+            __rejectButton.text = "Cancel"
+            __rejectButton.visible = true
+        } else if (buttons & StandardButton.No) {
+            __rejectButton.text = "No"
+            __rejectButton.visible = true
+        } else if (buttons & StandardButton.NoToAll) {
+            __rejectButton.text = "No to All"
+            __rejectButton.visible = true
+        } else if (buttons & StandardButton.Abort) {
+            __rejectButton.text = "Abort"
+            __rejectButton.visible = true
+        }
+
         __dialogComponent = component
         __viewPanel.enabled = false
         __dialogOverlay.visible = true
@@ -120,7 +132,7 @@ Item {
 
     property Component __dialogComponent
 
-    Component.onCompleted: __viewPanel.item.doWorkAfterComponentCompleted()
+    Component.onCompleted: completed()
 
     Connections {
         target: __viewPanel.item
@@ -161,7 +173,7 @@ Item {
         // This is the main dialog panel which is anchored to the right edge
         Rectangle {
             id:             __dialogPanel
-            width:          __textWidth * __dialogCharWidth
+            width:          __dialogCharWidth == -1 ? parent.width : __textWidth * __dialogCharWidth
             height:         parent.height
             anchors.right:  parent.right
             color:          __qgcPal.windowShadeDark
