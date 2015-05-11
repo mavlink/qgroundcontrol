@@ -37,12 +37,11 @@ class FileManager : public QObject
     Q_OBJECT
     
 public:
-    FileManager(QObject* parent, UASInterface* uas, uint8_t unitTestSystemIdQGC = 0);
+    FileManager(QObject* parent, UASInterface* uas);
     
     /// These methods are only used for testing purposes.
     bool _sendCmdTestAck(void) { return _sendOpcodeOnlyCmd(kCmdNone, kCOAck); };
     bool _sendCmdTestNoAck(void) { return _sendOpcodeOnlyCmd(kCmdTestNoAck, kCOAck); };
-    bool _sendCmdReset(void) { return _sendOpcodeOnlyCmd(kCmdResetSessions, kCOAck); };
     
     /// Timeout in msecs to wait for an Ack time come back. This is public so we can write unit tests which wait long enough
     /// for the FileManager to timeout.
@@ -226,9 +225,9 @@ private:
     uint8_t     _systemIdQGC;               ///< System ID for QGC
     uint8_t     _systemIdServer;            ///< System ID for server
     
-    // We give MockMavlinkFileServer friend access so that it can use the data structures and opcodes
+    // We give MockLinkFileServer friend access so that it can use the data structures and opcodes
     // to build a mock mavlink file server for testing.
-    friend class MockMavlinkFileServer;
+    friend class MockLinkFileServer;
 };
 
 #endif // FileManager_H

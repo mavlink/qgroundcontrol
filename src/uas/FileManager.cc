@@ -32,13 +32,13 @@
 
 QGC_LOGGING_CATEGORY(FileManagerLog, "FileManagerLog")
 
-FileManager::FileManager(QObject* parent, UASInterface* uas, uint8_t unitTestSystemIdQGC) :
+FileManager::FileManager(QObject* parent, UASInterface* uas) :
     QObject(parent),
     _currentOperation(kCOIdle),
     _mav(uas),
     _lastOutgoingSeqNumber(0),
     _activeSession(0),
-    _systemIdQGC(unitTestSystemIdQGC)
+    _systemIdQGC(0)
 {
     connect(&_ackTimer, &QTimer::timeout, this, &FileManager::_ackTimeout);
     
@@ -104,8 +104,8 @@ void FileManager::_closeDownloadSession(bool success)
         emit commandComplete();
     }
     
-    // If !success error is emitted elsewhere
-
+    _readFileAccumulator.clear();
+    
     // Close the open session
     _sendResetCommand();
 }
@@ -153,24 +153,19 @@ void FileManager::_downloadAckResponse(Request* readAck, bool readFile)
         emit commandProgress(100 * ((float)_readFileAccumulator.length() / (float)_downloadFileSize));
     }
 
-    if (readAck->hdr.size == sizeof(readAck->data)) {
-		if (readFile || readAck->hdr.burstComplete) {
-			// Possibly still more data to read, send next read request
+    if (readFile || readAck->hdr.burstComplete) {
+        // Possibly still more data to read, send next read request
 
-			Request request;
-			request.hdr.session = _activeSession;
-            request.hdr.opcode = readFile ? kCmdReadFile : kCmdBurstReadFile;
-			request.hdr.offset = _downloadOffset;
-			request.hdr.size = 0;
+        Request request;
+        request.hdr.session = _activeSession;
+        request.hdr.opcode = readFile ? kCmdReadFile : kCmdBurstReadFile;
+        request.hdr.offset = _downloadOffset;
+        request.hdr.size = 0;
 
-			_sendRequest(&request);
-		} else {
-			// Streaming, so next ack should come automatically
-			_setupAckTimeout();
-		}
-    } else if (readFile) {
-        // We only receieved a partial buffer back. These means we are at EOF
-        _closeDownloadSession(true /* success */);
+        _sendRequest(&request);
+    } else if (!readFile) {
+        // Streaming, so next ack should come automatically
+        _setupAckTimeout();
     }
 }
 
@@ -340,7 +335,30 @@ void FileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
     // Make sure we have a good sequence number
     uint16_t expectedSeqNumber = _lastOutgoingSeqNumber + 1;
     if (incomingSeqNumber != expectedSeqNumber) {
-        _currentOperation = kCOIdle;
+        switch (_currentOperation) {
+            case kCOBurst:
+            case kCORead:
+                _closeDownloadSession(false /* failure */);
+                break;
+            
+            case kCOWrite:
+                _closeUploadSession(false /* failure */);
+                break;
+                
+            case kCOOpenRead:
+            case kCOOpenBurst:
+            case kCOCreate:
+                // We could have an open session hanging around
+                _currentOperation = kCOIdle;
+                _sendResetCommand();
+                break;
+                
+            default:
+                // Don't need to do anything special
+                _currentOperation = kCOIdle;
+                break;
+        }
+        
         _emitErrorMessage(tr("Bad sequence number on received message: expected(%1) received(%2)").arg(expectedSeqNumber).arg(incomingSeqNumber));
         return;
     }
@@ -457,12 +475,22 @@ void FileManager::_sendListCommand(void)
 
 void FileManager::downloadPath(const QString& from, const QDir& downloadDir)
 {
+    if (_currentOperation != kCOIdle) {
+        _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
+        return;
+    }
+    
 	qCDebug(FileManagerLog) << "downloadPath from:" << from << "to:" << downloadDir;
 	_downloadWorker(from, downloadDir, true /* read file */);
 }
 
 void FileManager::streamPath(const QString& from, const QDir& downloadDir)
 {
+    if (_currentOperation != kCOIdle) {
+        _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
+        return;
+    }
+    
 	qCDebug(FileManagerLog) << "streamPath from:" << from << "to:" << downloadDir;
 	_downloadWorker(from, downloadDir, false /* stream file */);
 }
@@ -677,7 +705,6 @@ void FileManager::_emitListEntry(const QString& entry)
 /// @brief Sends the specified Request out to the UAS.
 void FileManager::_sendRequest(Request* request)
 {
-	qCDebug(FileManagerLog) << "_sendRequest opcode:" << request->hdr.opcode;
 
     mavlink_message_t message;
 
@@ -686,6 +713,8 @@ void FileManager::_sendRequest(Request* request)
     _lastOutgoingSeqNumber++;
 
     request->hdr.seqNumber = _lastOutgoingSeqNumber;
+    
+    qCDebug(FileManagerLog) << "_sendRequest opcode:" << request->hdr.opcode << "seqNumber:" << request->hdr.seqNumber;
     
     if (_systemIdQGC == 0) {
         _systemIdQGC = MAVLinkProtocol::instance()->getSystemId();
