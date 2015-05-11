@@ -21,29 +21,25 @@
  
  ======================================================================*/
 
-#ifndef MOCKMAVLINKFILESERVER_H
-#define MOCKMAVLINKFILESERVER_H
-
-#include "MockMavlinkInterface.h"
-#include "FileManager.h"
-
 /// @file
-///     @brief Mock implementation of Mavlink FTP server. Used as mavlink plugin to MockUAS.
-///             Only root directory access is supported.
-///
 ///     @author Don Gagne <don@thegagnes.com>
+
+#ifndef MockLinkFileServer_H
+#define MockLinkFileServer_H
+
+#include "FileManager.h"
 
 #include <QStringList>
 
-class MockMavlinkFileServer : public MockMavlinkInterface
+class MockLink;
+
+/// Mock implementation of Mavlink FTP server.
+class MockLinkFileServer : public QObject
 {
     Q_OBJECT
     
 public:
-    /// @brief Constructor for MockMavlinkFileServer
-    ///     @param System ID for QGroundControl App
-    ///     @pqram System ID for this Server
-    MockMavlinkFileServer(uint8_t systemIdQGC, uint8_t systemIdServer);
+    MockLinkFileServer(uint8_t systemIdServer, uint8_t componentIdServer, MockLink* mockLink);
     
     /// @brief Sets the list of files returned by the List command. Prepend names with F or D
     /// to indicate (F)ile or (D)irectory.
@@ -70,8 +66,8 @@ public:
     /// @brief The number of ErrorModes in the rgFailureModes array.
     static const size_t cFailureModes;
     
-    // From MockMavlinkInterface
-    virtual void sendMessage(mavlink_message_t message);
+    /// Called to handle an FTP message
+    void handleFTPMessage(const mavlink_message_t& message);
     
     /// @brief Used to represent a single test case for download testing.
     struct FileTestCase {
@@ -88,18 +84,22 @@ public:
     static const FileTestCase rgFileTestCases[cFileTestCases];
     
 signals:
-    /// @brief You can connect to this signal to be notified when the server receives a Terminate command.
+    /// You can connect to this signal to be notified when the server receives a Terminate command.
     void terminateCommandReceived(void);
     
+    /// You can connect to this signal to be notified when the server receives a Reset command.
+    void resetCommandReceived(void);
+    
 private:
-	void _sendAck(uint16_t seqNumber, FileManager::Opcode reqOpcode);
-    void _sendNak(FileManager::ErrorCode error, uint16_t seqNumber, FileManager::Opcode reqOpcode);
-    void _emitResponse(FileManager::Request* request, uint16_t seqNumber);
-    void _listCommand(FileManager::Request* request, uint16_t seqNumber);
-    void _openCommand(FileManager::Request* request, uint16_t seqNumber);
-    void _readCommand(FileManager::Request* request, uint16_t seqNumber);
-	void _streamCommand(FileManager::Request* request, uint16_t seqNumber);
-    void _terminateCommand(FileManager::Request* request, uint16_t seqNumber);
+	void _sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, FileManager::Opcode reqOpcode);
+    void _sendNak(uint8_t targetSystemId, uint8_t targetComponentId, FileManager::ErrorCode error, uint16_t seqNumber, FileManager::Opcode reqOpcode);
+    void _sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, FileManager::Request* request, uint16_t seqNumber);
+    void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
+    void _openCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
+    void _readCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
+	void _streamCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
+    void _terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
+    void _resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
     uint16_t _nextSeqNumber(uint16_t seqNumber);
     
     QStringList _fileList;  ///< List of files returned by List command
@@ -108,7 +108,8 @@ private:
     uint8_t                 _readFileLength;    ///< Length of active file being read
     ErrorMode_t             _errMode;           ///< Currently set error mode, as specified by setErrorMode
     const uint8_t           _systemIdServer;    ///< System ID for server
-    const uint8_t           _systemIdQGC;       ///< QGC System ID
+    const uint8_t           _componentIdServer; ///< Component ID for server
+    MockLink*               _mockLink;          ///< MockLink to communicate through
 };
 
 #endif

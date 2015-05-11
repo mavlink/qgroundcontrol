@@ -28,6 +28,7 @@
 #include <QLoggingCategory>
 
 #include "MockLinkMissionItemHandler.h"
+#include "MockLinkFileServer.h"
 #include "LinkManager.h"
 #include "QGCMAVLink.h"
 
@@ -71,6 +72,11 @@ public:
     MAV_AUTOPILOT getAutopilotType(void) { return _autopilotType; }
     void setAutopilotType(MAV_AUTOPILOT autopilot) { _autopilotType = autopilot; }
     void emitRemoteControlChannelRawChanged(int channel, uint16_t raw);
+    
+    /// Sends the specified mavlink message to QGC
+    void respondWithMavlinkMessage(const mavlink_message_t& msg);
+    
+    MockLinkFileServer* getFileServer(void) { return _fileServer; }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
@@ -109,7 +115,6 @@ private:
     void _handleIncomingNSHBytes(const char* bytes, int cBytes);
     void _handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes);
     void _loadParams(void);
-    void _emitMavlinkMessage(const mavlink_message_t& msg);
     void _handleHeartBeat(const mavlink_message_t& msg);
     void _handleSetMode(const mavlink_message_t& msg);
     void _handleParamRequestList(const mavlink_message_t& msg);
@@ -118,6 +123,7 @@ private:
     void _handleMissionRequestList(const mavlink_message_t& msg);
     void _handleMissionRequest(const mavlink_message_t& msg);
     void _handleMissionItem(const mavlink_message_t& msg);
+    void _handleFTP(const mavlink_message_t& msg);
     float _floatUnionForParam(int componentId, const QString& paramName);
     void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
 
@@ -144,6 +150,8 @@ private:
 
     MockConfiguration* _config;
     MAV_AUTOPILOT _autopilotType;
+    
+    MockLinkFileServer* _fileServer;
 };
 
 #endif
