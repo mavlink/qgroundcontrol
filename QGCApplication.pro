@@ -236,6 +236,7 @@ HEADERS += \
     src/comm/LinkManager.h \
     src/comm/MAVLinkProtocol.h \
     src/comm/MockLink.h \
+    src/comm/MockLinkFileServer.h \
     src/comm/MockLinkMissionItemHandler.h \
     src/comm/ProtocolInterface.h \
     src/comm/QGCFlightGearLink.h \
@@ -374,6 +375,7 @@ SOURCES += \
     src/comm/LinkManager.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/MockLink.cc \
+    src/comm/MockLinkFileServer.cc \
     src/comm/MockLinkMissionItemHandler.cc \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
@@ -518,8 +520,6 @@ INCLUDEPATH += \
 
 HEADERS += \
     src/qgcunittest/FlightGearTest.h \
-    src/qgcunittest/MockMavlinkFileServer.h \
-    src/qgcunittest/MockMavlinkInterface.h \
     src/qgcunittest/MultiSignalSpy.h \
     src/qgcunittest/TCPLinkTest.h \
     src/qgcunittest/TCPLoopBackServer.h \
@@ -534,10 +534,10 @@ HEADERS += \
     src/qgcunittest/PX4RCCalibrationTest.h \
     src/qgcunittest/UnitTest.h \
     src/VehicleSetup/SetupViewTest.h \
+    src/qgcunittest/FileManagerTest.h \
 
 SOURCES += \
     src/qgcunittest/FlightGearTest.cc \
-    src/qgcunittest/MockMavlinkFileServer.cc \
     src/qgcunittest/MultiSignalSpy.cc \
     src/qgcunittest/TCPLinkTest.cc \
     src/qgcunittest/TCPLoopBackServer.cc \
@@ -552,6 +552,7 @@ SOURCES += \
     src/qgcunittest/PX4RCCalibrationTest.cc \
     src/qgcunittest/UnitTest.cc \
     src/VehicleSetup/SetupViewTest.cc \
+    src/qgcunittest/FileManagerTest.cc \
 
 } # DebugBuild|WindowsDebugAndRelease
 } # AndroidBuild
