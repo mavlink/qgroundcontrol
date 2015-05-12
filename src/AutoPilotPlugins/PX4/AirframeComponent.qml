@@ -64,22 +64,18 @@ QGCView {
             Component {
                 id: customConfigDialogComponent
 
-                QGCViewDialog {
-                    id: customConfigDialog
+                QGCViewMessage {
+                    id:             customConfigDialog
+
+                    message:        "Your vehicle is using a custom airframe configuration. " +
+                                        "This configuration can only be modified through the Parameter Editor.\n\n" +
+                                        "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
 
                     Fact { id: sys_autostart; name: "SYS_AUTOSTART" }
 
                     function accept() {
                         sys_autostart.value = 0
                         customConfigDialog.hideDialog()
-                    }
-
-                    QGCLabel {
-                        anchors.fill:   parent
-                        wrapMode:       Text.WordWrap
-                        text:           "Your vehicle is using a custom airframe configuration. " +
-                                        "This configuration can only be modified through the Parameter Editor.\n\n" +
-                                        "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
                     }
                 }
             }

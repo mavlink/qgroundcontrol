@@ -20,4 +20,5 @@ ViewWidget 1.0 ViewWidget.qml
 QGCView 1.0 QGCView.qml
 QGCViewPanel 1.0 QGCViewPanel.qml
 QGCViewDialog 1.0 QGCViewDialog.qml
+QGCViewMessage 1.0 QGCViewMessage.qml
 
