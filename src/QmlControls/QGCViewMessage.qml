@@ -27,15 +27,15 @@
 import QtQuick 2.3
 import QtQuick.Controls 1.3
 
-import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
+import QGroundControl.Palette 1.0
 
-Rectangle {
-    property QGCPalette qgcPal: QGCPalette { colorGroupEnabled: enabled }
+QGCViewDialog {
+    property string message
 
-    signal showDialog(Component component, string title, int charWidth, int buttons)
-    signal hideDialog
-    signal showMessage(string title, string message, int buttons)
-
-    color: qgcPal.window
+    QGCLabel {
+        anchors.fill:   parent
+        wrapMode:       Text.WordWrap
+        text:           message
+    }
 }
