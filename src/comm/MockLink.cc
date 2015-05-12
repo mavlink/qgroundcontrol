@@ -75,7 +75,8 @@ MockLink::MockLink(MockConfiguration* config) :
     _mavlinkStarted(false),
     _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED),
     _mavState(MAV_STATE_STANDBY),
-    _autopilotType(MAV_AUTOPILOT_PX4)
+    _autopilotType(MAV_AUTOPILOT_PX4),
+    _fileServer(NULL)
 {
     _config = config;
     union px4_custom_mode   px4_cm;
@@ -84,6 +85,9 @@ MockLink::MockLink(MockConfiguration* config) :
     px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
     _mavCustomMode = px4_cm.data;
 
+    _fileServer = new MockLinkFileServer(_vehicleSystemId, _vehicleComponentId, this);
+    Q_CHECK_PTR(_fileServer);
+    
     _missionItemHandler = new MockLinkMissionItemHandler(_vehicleSystemId, this);
     Q_CHECK_PTR(_missionItemHandler);
 
@@ -218,7 +222,6 @@ void MockLink::_loadParams(void)
 void MockLink::_sendHeartBeat(void)
 {
     mavlink_message_t   msg;
-    uint8_t             buffer[MAVLINK_MAX_PACKET_LEN];
 
     mavlink_msg_heartbeat_pack(_vehicleSystemId,
                                _vehicleComponentId,
@@ -228,7 +231,14 @@ void MockLink::_sendHeartBeat(void)
                                _mavBaseMode,        // MAV_MODE
                                _mavCustomMode,      // custom mode
                                _mavState);          // MAV_STATE
+    
+    respondWithMavlinkMessage(msg);
+}
 
+void MockLink::respondWithMavlinkMessage(const mavlink_message_t& msg)
+{
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    
     int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
     QByteArray bytes((char *)buffer, cBuffer);
     emit bytesReceived(this, bytes);
@@ -332,21 +342,16 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
                 _handleMissionCount(msg);
                 break;
 #endif
+                
+            case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
+                _handleFTP(msg);
+                break;
 
             default:
                 qDebug() << "MockLink: Unhandled mavlink message, id:" << msg.msgid;
                 break;
         }
     }
-}
-
-void MockLink::_emitMavlinkMessage(const mavlink_message_t& msg)
-{
-    uint8_t outputBuffer[MAVLINK_MAX_PACKET_LEN];
-
-    int cBuffer = mavlink_msg_to_send_buffer(outputBuffer, &msg);
-    QByteArray bytes((char *)outputBuffer, cBuffer);
-    emit bytesReceived(this, bytes);
 }
 
 void MockLink::_handleHeartBeat(const mavlink_message_t& msg)
@@ -494,7 +499,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
                                          paramType,                         // MAV_PARAM_TYPE
                                          cParameters,                       // Total number of parameters
                                          paramIndex++);                     // Index of this parameter
-            _emitMavlinkMessage(responseMsg);
+            respondWithMavlinkMessage(responseMsg);
             
             // Only first parameter the first time through
             break;
@@ -533,7 +538,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
                                              paramType,                         // MAV_PARAM_TYPE
                                              cParameters,                       // Total number of parameters
                                              paramIndex++);                     // Index of this parameter
-                _emitMavlinkMessage(responseMsg);
+                respondWithMavlinkMessage(responseMsg);
             }
         }
     }
@@ -571,7 +576,7 @@ void MockLink::_handleParamSet(const mavlink_message_t& msg)
                                  request.param_type,                                        // Send same type back
                                  _mapParamName2Value[componentId].count(),                  // Total number of parameters
                                  _mapParamName2Value[componentId].keys().indexOf(paramId)); // Index of this parameter
-    _emitMavlinkMessage(responseMsg);
+    respondWithMavlinkMessage(responseMsg);
 }
 
 void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
@@ -613,7 +618,7 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
                                  _mapParamName2MavParamType[paramId],                       // Parameter type
                                  _mapParamName2Value[componentId].count(),                  // Total number of parameters
                                  _mapParamName2Value[componentId].keys().indexOf(paramId)); // Index of this parameter
-    _emitMavlinkMessage(responseMsg);
+    respondWithMavlinkMessage(responseMsg);
 }
 
 void MockLink::_handleMissionRequestList(const mavlink_message_t& msg)
@@ -632,7 +637,7 @@ void MockLink::_handleMissionRequestList(const mavlink_message_t& msg)
                                    msg.sysid,               // Target is original sender
                                    msg.compid,              // Target is original sender
                                    _missionItems.count());  // Number of mission items
-    _emitMavlinkMessage(responseMsg);
+    respondWithMavlinkMessage(responseMsg);
 }
 
 void MockLink::_handleMissionRequest(const mavlink_message_t& msg)
@@ -660,7 +665,7 @@ void MockLink::_handleMissionRequest(const mavlink_message_t& msg)
                                   item.autocontinue,
                                   item.param1, item.param2, item.param3, item.param4,
                                   item.x, item.y, item.z);
-    _emitMavlinkMessage(responseMsg);
+    respondWithMavlinkMessage(responseMsg);
 }
 
 void MockLink::_handleMissionItem(const mavlink_message_t& msg)
@@ -711,5 +716,11 @@ void MockLink::emitRemoteControlChannelRawChanged(int channel, uint16_t raw)
                                  chanRaw[16],           // channel raw value
                                  chanRaw[17],           // channel raw value
                                  0);                    // rss
-    _emitMavlinkMessage(responseMsg);
+    respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_handleFTP(const mavlink_message_t& msg)
+{
+    Q_ASSERT(_fileServer);
+    _fileServer->handleFTPMessage(msg);
 }

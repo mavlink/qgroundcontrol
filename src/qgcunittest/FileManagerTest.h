@@ -28,9 +28,8 @@
 #include <QtTest/QtTest>
 
 #include "UnitTest.h"
-#include "MockUAS.h"
-#include "MockMavlinkFileServer.h"
 #include "FileManager.h"
+#include "MockLink.h"
 #include "MultiSignalSpy.h"
 
 /// @file
@@ -47,18 +46,13 @@ public:
     
 private slots:
     // Test case initialization
-    void initTestCase(void);
-    void cleanupTestCase(void);
     void init(void);
     void cleanup(void);
     
     // Test cases
     void _ackTest(void);
     void _noAckTest(void);
-    void _resetTest(void);
     void _listTest(void);
-    void _readDownloadTest(void);
-	void _streamDownloadTest(void);
 	
     // Connected to FileManager listEntry signal
     void listEntry(const QString& entry);
@@ -76,16 +70,15 @@ private:
     enum {
         listEntrySignalMask =       1 << listEntrySignalIndex,
         commandCompleteSignalMask = 1 << commandCompleteSignalIndex,
-        commandErrorSignalMask =    1 << errorMessageSignalIndex,
+        commandErrorSignalMask =    1 << commandErrorSignalIndex,
     };
 
     static const uint8_t    _systemIdQGC = 255;
     static const uint8_t    _systemIdServer = 128;
 
-    MockUAS*                _mockUAS;
-    MockMavlinkFileServer   _mockFileServer;
-    
-    FileManager*  _fileManager;
+    MockLink*           _mockLink;
+    MockLinkFileServer* _fileServer;
+    FileManager*        _fileManager;
 
     MultiSignalSpy*     _multiSpy;
     static const size_t _cSignals = maxSignalIndex;
