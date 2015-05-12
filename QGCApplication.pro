@@ -167,7 +167,6 @@ FORMS += \
     src/QGCQmlWidgetHolder.ui \
     src/ui/configuration/SerialSettingsDialog.ui \
     src/ui/configuration/terminalconsole.ui \
-    src/ui/DebugConsole.ui \
     src/ui/HDDisplay.ui \
     src/ui/Linechart.ui \
     src/ui/MainWindow.ui \
@@ -278,7 +277,6 @@ HEADERS += \
     src/ui/configuration/console.h \
     src/ui/configuration/SerialSettingsDialog.h \
     src/ui/configuration/terminalconsole.h \
-    src/ui/DebugConsole.h \
     src/ui/flightdisplay/FlightDisplay.h \
     src/ui/HDDisplay.h \
     src/ui/HSIDisplay.h \
@@ -408,7 +406,6 @@ SOURCES += \
     src/ui/configuration/console.cpp \
     src/ui/configuration/SerialSettingsDialog.cc \
     src/ui/configuration/terminalconsole.cpp \
-    src/ui/DebugConsole.cc \
     src/ui/flightdisplay/FlightDisplay.cc \
     src/ui/HDDisplay.cc \
     src/ui/HSIDisplay.cc \
