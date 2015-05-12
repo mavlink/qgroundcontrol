@@ -501,7 +501,8 @@ void MainWindow::_buildSimView(void)
 void MainWindow::_showDockWidget(const QString& name, bool show)
 {
     if (!_mapName2DockWidget.contains(name)) {
-        qWarning() << "Attempt to show unknown dock widget" << name;
+        // Don't show any sort of warning here. Dock Widgets which have been remove could still be in settings.
+        // Which would cause us to end up here.
         return;
     }
 
