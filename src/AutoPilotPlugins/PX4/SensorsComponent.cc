@@ -87,7 +87,9 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
     QStringList triggers;
     
     triggers << "CAL_MAG0_ID" << "CAL_GYRO0_ID" << "CAL_ACC0_ID";
-    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING) {
+    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING ||
+        _uas->getSystemType() == MAV_TYPE_VTOL_DUOROTOR ||
+        _uas->getSystemType() == MAV_TYPE_VTOL_QUADROTOR) {
         triggers << "SENS_DPRES_OFF";
     }
     
@@ -123,7 +125,9 @@ QUrl SensorsComponent::summaryQmlSource(void) const
     QString summaryQml;
     
     qDebug() << _uas->getSystemType();
-    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING) {
+    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING ||
+        _uas->getSystemType() == MAV_TYPE_VTOL_DUOROTOR ||
+        _uas->getSystemType() == MAV_TYPE_VTOL_QUADROTOR) {
         summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
     } else {
         summaryQml = "qrc:/qml/SensorsComponentSummary.qml";
