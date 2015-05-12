@@ -164,7 +164,6 @@ INCLUDEPATH += \
 
 FORMS += \
     src/QGCQmlWidgetHolder.ui \
-    src/ui/DebugConsole.ui \
     src/ui/HDDisplay.ui \
     src/ui/Linechart.ui \
     src/ui/MainWindow.ui \
@@ -272,7 +271,6 @@ HEADERS += \
     src/uas/UASManagerInterface.h \
     src/uas/UASMessageHandler.h \
     src/uas/UASWaypointManager.h \
-    src/ui/DebugConsole.h \
     src/ui/flightdisplay/FlightDisplay.h \
     src/ui/HDDisplay.h \
     src/ui/HSIDisplay.h \
@@ -399,7 +397,6 @@ SOURCES += \
     src/uas/UASManager.cc \
     src/uas/UASMessageHandler.cc \
     src/uas/UASWaypointManager.cc \
-    src/ui/DebugConsole.cc \
     src/ui/flightdisplay/FlightDisplay.cc \
     src/ui/HDDisplay.cc \
     src/ui/HSIDisplay.cc \
