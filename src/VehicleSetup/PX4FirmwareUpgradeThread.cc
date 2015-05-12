@@ -118,6 +118,22 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
     _timerRetry->start();
 }
 
+bool PX4FirmwareUpgradeThreadController::pluggedInBoard(void)
+{
+    qDebug() << "pluggedInBoard";
+    
+    QString portName;
+    QString portDescription;
+    
+    foreach (QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
+        if (!info.portName().isEmpty() && (info.description().contains("PX4") || info.vendorIdentifier() == 9900 /* 3DR */)) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 void PX4FirmwareUpgradeThreadWorker::findBootloader(const QString portName, int msecTimeout)
 {
     Q_UNUSED(msecTimeout);
