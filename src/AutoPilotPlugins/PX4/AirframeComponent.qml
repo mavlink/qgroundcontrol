@@ -51,7 +51,7 @@ QGCView {
 
                 onCompleted: {
                     if (controller.showCustomConfigPanel) {
-                        panel.showDialog(customConfigDialog, "Custom Airframe Config", 50, StandardButton.Reset)
+                        panel.showDialog(customConfigDialogComponent, "Custom Airframe Config", 50, StandardButton.Reset)
                     }
                 }
             }
@@ -62,23 +62,45 @@ QGCView {
             }
 
             Component {
-                id: customConfigDialog
+                id: customConfigDialogComponent
 
-                QGCLabel {
-                    id:             customConfigPanel
-                    anchors.fill:   parent
-                    wrapMode:       Text.WordWrap
-                    text:           "Your vehicle is using a custom airframe configuration. " +
-                                    "This configuration can only be modified through the Parameter Editor.\n\n" +
-                                    "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
-
-                    signal hideDialog
+                QGCViewDialog {
+                    id: customConfigDialog
 
                     Fact { id: sys_autostart; name: "SYS_AUTOSTART" }
 
                     function accept() {
                         sys_autostart.value = 0
-                        customConfigPanel.hideDialog()
+                        customConfigDialog.hideDialog()
+                    }
+
+                    QGCLabel {
+                        anchors.fill:   parent
+                        wrapMode:       Text.WordWrap
+                        text:           "Your vehicle is using a custom airframe configuration. " +
+                                        "This configuration can only be modified through the Parameter Editor.\n\n" +
+                                        "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
+                    }
+                }
+            }
+
+            Component {
+                id: applyRestartDialogComponent
+
+                QGCViewDialog {
+                    id: applyRestartDialog
+
+                    function accept() {
+                        controller.changeAutostart()
+                        applyRestartDialog.hideDialog()
+                    }
+
+                    QGCLabel {
+                        anchors.fill:   parent
+                        wrapMode:       Text.WordWrap
+                        text:           "Clicking Apply will save the changes you have made to your aiframe configuration. " +
+                                        "Your vehicle will also be rebooted in order to complete the process. " +
+                                        "After your vehicle reboots, you can reconnect it to QGroundControl."
                     }
                 }
             }
@@ -117,7 +139,7 @@ QGCView {
                     anchors.right:  parent.right
                     text:           "Apply and Restart"
 
-                    onClicked: { controller.changeAutostart() }
+                    onClicked:      panel.showDialog(applyRestartDialogComponent, "Apply and Restart", 50, StandardButton.Apply | StandardButton.Cancel)
                 }
 
                 Item {
