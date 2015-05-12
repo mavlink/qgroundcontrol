@@ -64,15 +64,11 @@ QGCView {
             Component {
                 id: customConfigDialog
 
-                QGCLabel {
+                QGCViewMessage {
                     id:             customConfigPanel
-                    anchors.fill:   parent
-                    wrapMode:       Text.WordWrap
-                    text:           "Your vehicle is using a custom airframe configuration. " +
-                                    "This configuration can only be modified through the Parameter Editor.\n\n" +
-                                    "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
-
-                    signal hideDialog
+                    message:        "Your vehicle is using a custom airframe configuration. " +
+                                        "This configuration can only be modified through the Parameter Editor.\n\n" +
+                                        "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
 
                     Fact { id: sys_autostart; name: "SYS_AUTOSTART" }
 
