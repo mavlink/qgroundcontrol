@@ -53,7 +53,7 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, 
     connect(this, &ParameterLoader::restartWaitingParamTimer, this, &ParameterLoader::_restartWaitingParamTimer);
     
     _waitingParamTimeoutTimer.setSingleShot(true);
-    _waitingParamTimeoutTimer.setInterval(100);
+    _waitingParamTimeoutTimer.setInterval(1000);
     connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_waitingParamTimeout);
     
     // FIXME: Why not direct connect?
