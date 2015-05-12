@@ -74,7 +74,11 @@ void FirmwareUpgradeController::_cancel(void)
 /// @brief Begins the process or searching for the board
 void FirmwareUpgradeController::_findBoard(void)
 {
-    _appendStatusLog(tr("Plug your board into USB now..."));
+    QString msg("Plug your board into USB now. Press Ok when board is plugged in.");
+    
+    _appendStatusLog(msg);
+    emit showMessage("Firmware Upgrade", msg);
+    
     _searchingForBoard = true;
     _threadController->findBoard(_findBoardTimeoutMsec);
 }
@@ -84,9 +88,10 @@ void FirmwareUpgradeController::_foundBoard(bool firstTry, const QString portNam
 {
     if (firstTry) {
         // Board is still plugged
-        _appendStatusLog(tr("Please unplug your board before beginning the Firmware Upgrade process."));
-        _appendStatusLog(tr("Click Upgrade again once the board is unplugged."));
         _cancel();
+        emit showMessage("Board plugged in",
+                         "Please unplug your board before beginning the Firmware Upgrade process. "
+                            "Click Upgrade again once the board is unplugged.");
     } else {
         _portName = portName;
         _portDescription = portDescription;
@@ -142,8 +147,8 @@ void FirmwareUpgradeController::_findTimeout(void)
     } else {
         msg = tr("Unable to communicate with Bootloader. If the board is currently connected via USB. Disconnect it and try Upgrade again.");
     }
-    _appendStatusLog(msg);
     _cancel();
+    emit showMessage("Error", msg);
 }
 
 /// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
@@ -602,27 +607,6 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
 
 void FirmwareUpgradeController::doFirmwareUpgrade(void)
 {
-    QString warningMsg;
-    
-    if (_firmwareType == BetaFirmware) {
-        warningMsg = tr("WARNING: BETA FIRMWARE\n"
-                        "This firmware version is ONLY intended for beta testers. "
-                        "Although it has received FLIGHT TESTING, it represents actively changed code. Do NOT use for normal operation.\n\n"
-                        "Are you sure you want to continue?");
-    } else if (_firmwareType == DeveloperFirmware) {
-        warningMsg = tr("WARNING: CONTINUOUS BUILD FIRMWARE\n"
-                        "This firmware has NOT BEEN FLIGHT TESTED. "
-                        "It is only intended for DEVELOPERS. Run bench tests without props first. "
-                        "Do NOT fly this without addional safety precautions. Follow the mailing "
-                        "list actively when using it.\n\n"
-                        "Are you sure you want to continue?");
-    }
-    if (!warningMsg.isEmpty()) {
-        if (QGCMessageBox::warning(tr("Firmware Upgrade"), warningMsg, QGCMessageBox::Yes | QGCMessageBox::No, QGCMessageBox::No) == QGCMessageBox::No) {
-            return;
-        }
-    }
-
     Q_ASSERT(_upgradeButton);
     _upgradeButton->setEnabled(false);
     
@@ -640,4 +624,14 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text)
                               "append",
                               Q_RETURN_ARG(QVariant, returnedValue),
                               Q_ARG(QVariant, varText));
+}
+
+bool FirmwareUpgradeController::activeQGCConnections(void)
+{
+    return LinkManager::instance()->anyConnectedLinks();
+}
+
+bool FirmwareUpgradeController::pluggedInBoard(void)
+{
+    return _threadController->pluggedInBoard();
 }
