@@ -31,15 +31,15 @@
 #include <QQuickItem>
 
 #include "UASInterface.h"
-#include "AutoPilotPlugin.h"
+#include "FactPanelController.h"
 
 /// Sensors Component MVC Controller for SensorsComponent.qml.
-class SensorsComponentController : public QObject
+class SensorsComponentController : public FactPanelController
 {
     Q_OBJECT
     
 public:
-    SensorsComponentController(AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    SensorsComponentController(void);
     
     Q_PROPERTY(bool fixedWing READ fixedWing CONSTANT)
     
@@ -167,9 +167,6 @@ private:
     
     bool _unknownFirmwareVersion;
     bool _waitingForCancel;
-    
-    AutoPilotPlugin*    _autopilot;
-    UASInterface*       _uas;
 };
 
 #endif

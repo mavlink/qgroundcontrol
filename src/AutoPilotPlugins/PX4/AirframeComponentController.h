@@ -66,7 +66,6 @@ signals:
 private:
     static bool _typesRegistered;
     
-    UASInterface*       _uas;
     QVariantList        _airframeTypes;
     QString             _currentAirframeType;
     QString             _currentVehicleName;

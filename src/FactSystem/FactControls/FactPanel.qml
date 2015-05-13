@@ -31,7 +31,11 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.Palette 1.0
 
-Item {
+Rectangle {
+    color: __qgcPal.window
+
+    QGCPalette { id: __qgcPal; colorGroupEnabled: true }
+
     property string __missingFacts: ""
 
     function showMissingFactOverlay(missingFactName) {
@@ -43,8 +47,6 @@ Item {
     }
 
     Rectangle {
-        QGCPalette { id: __qgcPal; colorGroupEnabled: true }
-
         id:             __missingFactOverlay
         anchors.fill:   parent
         z:              9999

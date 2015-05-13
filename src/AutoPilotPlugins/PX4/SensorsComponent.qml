@@ -31,10 +31,59 @@ import QGroundControl.FactControls 1.0
 import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controllers 1.0
 
 QGCView {
     id:             rootQGCView
     viewComponent:  view
+
+    // Help text which is shown both in the status text area prior to pressing a cal button and in the
+    // pre-calibration dialog.
+
+    readonly property string compassHelp:   "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration is is best " +
+                                                "to be connected to your vehicle via radio instead of USB since the USB cable will likely get in the way."
+    readonly property string gyroHelp:      "For Gyroscope calibration you will need to place your vehicle right side up on solid surface and leave it still."
+    readonly property string accelHelp:     "For Accelerometer calibration you will need to place your vehicle on all six sides and hold it still there for a few seconds."
+    readonly property string airspeedHelp:  "For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor."
+
+    property var controller
+
+    // Used to pass what type of calibration is being performed to the preCalibrationDialog
+    property string preCalibrationDialogType
+
+    // Used to pass help text to the preCalibrationDialog dialog
+    property string preCalibrationDialogHelp
+
+    readonly property int rotationColumnWidth: 200
+    readonly property var rotations: [
+        "ROTATION_NONE",
+        "ROTATION_YAW_45",
+        "ROTATION_YAW_90",
+        "ROTATION_YAW_135",
+        "ROTATION_YAW_180",
+        "ROTATION_YAW_225",
+        "ROTATION_YAW_270",
+        "ROTATION_YAW_315",
+        "ROTATION_ROLL_180",
+        "ROTATION_ROLL_180_YAW_45",
+        "ROTATION_ROLL_180_YAW_90",
+        "ROTATION_ROLL_180_YAW_135",
+        "ROTATION_PITCH_180",
+        "ROTATION_ROLL_180_YAW_225",
+        "ROTATION_ROLL_180_YAW_270",
+        "ROTATION_ROLL_180_YAW_315",
+        "ROTATION_ROLL_90",
+        "ROTATION_ROLL_90_YAW_45",
+        "ROTATION_ROLL_90_YAW_90",
+        "ROTATION_ROLL_90_YAW_135",
+        "ROTATION_ROLL_270",
+        "ROTATION_ROLL_270_YAW_45",
+        "ROTATION_ROLL_270_YAW_90",
+        "ROTATION_ROLL_270_YAW_135",
+        "ROTATION_PITCH_90",
+        "ROTATION_PITCH_270",
+        "ROTATION_ROLL_270_YAW_270"
+    ]
 
     Component {
         id: preCalibrationDialogComponent
@@ -42,80 +91,41 @@ QGCView {
         QGCViewDialog {
             id: preCalibrationDialog
 
-            Fact { id: sys_autostart; name: "SYS_AUTOSTART" }
-
             function accept() {
-                sys_autostart.value = 0
-                customConfigDialog.hideDialog()
+                if (preCalibrationDialogType == "gyro") {
+                    controller.calibrateGyro()
+                } else if (preCalibrationDialogType == "accel") {
+                    controller.calibrateAccel()
+                } else if (preCalibrationDialogType == "compass") {
+                    controller.calibrateCompass()
+                } else if (preCalibrationDialogType == "airspeed") {
+                    controller.calibrateAirspeed()
+                }
+                preCalibrationDialog.hideDialog()
             }
 
-            QGCLabel {
-                anchors.fill:   parent
-                wrapMode:       Text.WordWrap
-                text:           "Your vehicle is using a custom airframe configuration. " +
-                                "This configuration can only be modified through the Parameter Editor.\n\n" +
-                                "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
-            }
-            Rectangle {
-                property string calibrationType
+            Column {
+                anchors.fill: parent
+                spacing:                10
 
-                id:                         boardRotationOverlay
-                width:                      300
-                height:                     boardRotationOverlayColumn.height + 11
-                anchors.verticalCenter:     parent.verticalCenter
-                anchors.horizontalCenter:   parent.horizontalCenter
-                color:                      qgcPal.window
-                border.width:               1
-                border.color:               qgcPal.text
-                visible:                    false
-                z:                          overlay.z + 1
+                QGCLabel {
+                    width:      parent.width
+                    wrapMode:   Text.WordWrap
+                    text:       preCalibrationDialogHelp
+                }
 
-                Column {
-                    id:                 boardRotationOverlayColumn
-                    anchors.topMargin:  10
-                    anchors.top:        parent.top
-                    width:              parent.width
-                    spacing:            10
+                QGCLabel {
+                    width:      parent.width
+                    wrapMode:   Text.WordWrap
+                    visible:    preCalibrationDialogType != "airspeed"
+                    text:       "Please check and/or update board rotation before calibrating"
+                }
 
-                    Column {
-                        anchors.leftMargin:     10
-                        anchors.rightMargin:    10
-                        anchors.left:           parent.left
-                        anchors.right:          parent.right
-                        spacing:                10
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text:       "Please check and/or update board rotation before calibrating"
-                        }
-
-                        FactComboBox {
-                            width:  rotationColumnWidth
-                            model:  rotations
-                            fact:   Fact { name: "SENS_BOARD_ROT" }
-                        }
-                    }
-
-                    QGCButton {
-                        x:          1
-                        width:      parent.width - 2
-                        primary:    true
-                        text:       "OK"
-
-                        onClicked: {
-                            boardRotationOverlay.visible = false
-                            overlay.visible = false
-
-                            if (boardRotationOverlay.calibrationType == "gyro") {
-                                controller.calibrateGyro()
-                            } else if (boardRotationOverlay.calibrationType == "accel") {
-                                controller.calibrateAccel()
-                            } else if (boardRotationOverlay.calibrationType == "compass") {
-                                controller.calibrateCompass()
-                            }
-                        }
-                    }
+                FactComboBox {
+                    width:      rotationColumnWidth
+                    model:      rotations
+                    visible:    preCalibrationDialogType != "airspeed"
+                    fact:       Fact { name: "SENS_BOARD_ROT"; onFactMissing: showMissingFactOverlay(name) }
                 }
             }
         }
@@ -124,42 +134,44 @@ QGCView {
     Component {
         id: view
 
-        // FIXME: Need to convert QGCViewPanel to FactPanel
         QGCViewPanel {
-            anchors.fill: parent
+            id:             viewPanel
+
+            Connections {
+                target: rootQGCView
+
+                onCompleted: {
+                    rootQGCView.controller = viewPanel.controller
+                }
+            }
+
+            SensorsComponentController {
+                id:                         controller
+                factPanel:                  viewPanel
+                statusLog:                  statusTextArea
+                progressBar:                progressBar
+                compassButton:              compassButton
+                gyroButton:                 gyroButton
+                accelButton:                accelButton
+                airspeedButton:             airspeedButton
+                cancelButton:               cancelButton
+                orientationCalAreaHelpText: orientationCalAreaHelpText
+
+                onResetStatusTextArea: statusTextArea.text = statusTextAreaDefaultText
+
+                onSetCompassRotations: showCompassRotationOverlay()
+
+                onWaitingForCancelChanged: {
+                    if (controller.waitingForCancel) {
+                        showMessage(
+                    } else {
+                        hideDialog()
+                    }
+                }
+            }
 
             QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-            readonly property int rotationColumnWidth: 200
-            readonly property var rotations: [
-                "ROTATION_NONE",
-                "ROTATION_YAW_45",
-                "ROTATION_YAW_90",
-                "ROTATION_YAW_135",
-                "ROTATION_YAW_180",
-                "ROTATION_YAW_225",
-                "ROTATION_YAW_270",
-                "ROTATION_YAW_315",
-                "ROTATION_ROLL_180",
-                "ROTATION_ROLL_180_YAW_45",
-                "ROTATION_ROLL_180_YAW_90",
-                "ROTATION_ROLL_180_YAW_135",
-                "ROTATION_PITCH_180",
-                "ROTATION_ROLL_180_YAW_225",
-                "ROTATION_ROLL_180_YAW_270",
-                "ROTATION_ROLL_180_YAW_315",
-                "ROTATION_ROLL_90",
-                "ROTATION_ROLL_90_YAW_45",
-                "ROTATION_ROLL_90_YAW_90",
-                "ROTATION_ROLL_90_YAW_135",
-                "ROTATION_ROLL_270",
-                "ROTATION_ROLL_270_YAW_45",
-                "ROTATION_ROLL_270_YAW_90",
-                "ROTATION_ROLL_270_YAW_135",
-                "ROTATION_PITCH_90",
-                "ROTATION_PITCH_270",
-                "ROTATION_ROLL_270_YAW_270"
-            ]
 
             readonly property string statusTextAreaDefaultText: "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration is is best " +
                                                                     "to be connected to your vehicle via radio instead of USB since the USB cable will likely get in the way.\n\n" +
@@ -180,33 +192,6 @@ QGCView {
             property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
 
             color: qgcPal.window
-
-            // We use this bogus loader just so we can get an onLoaded signal to hook to in order to
-            // finish controller initialization.
-            Component {
-                id: loadSignal;
-                Item { }
-            }
-            Loader {
-                sourceComponent: loadSignal
-                onLoaded: {
-                    controller.statusLog = statusTextArea
-                    controller.progressBar = progressBar
-                    controller.compassButton = compassButton
-                    controller.gyroButton = gyroButton
-                    controller.accelButton = accelButton
-                    controller.airspeedButton = airspeedButton
-                    controller.cancelButton = cancelButton
-                    controller.orientationCalAreaHelpText = orientationCalAreaHelpText
-                }
-            }
-
-            Connections {
-                target: controller
-
-                onResetStatusTextArea: statusTextArea.text = statusTextAreaDefaultText
-                onSetCompassRotations: showCompassRotationOverlay()
-            }
 
             Rectangle {
                 id:             overlay
@@ -383,7 +368,11 @@ QGCView {
                         text:           "Compass"
                         indicatorGreen: fact.value != 0
 
-                        onClicked: showBoardRotationOverlay("compass")
+                        onClicked: {
+                            preCalibrationDialogType = "compass"
+                            preCalibrationDialogHelp = compassHelp
+                            showDialog(preCalibrationDialogComponent, "Calibrate Compass", 50, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
 
                     IndicatorButton {
@@ -394,7 +383,11 @@ QGCView {
                         text:           "Gyroscope"
                         indicatorGreen: fact.value != 0
 
-                        onClicked: showBoardRotationOverlay("gyro")
+                        onClicked: {
+                            preCalibrationDialogType = "gyro"
+                            preCalibrationDialogHelp = gyroHelp
+                            showDialog(preCalibrationDialogComponent, "Calibrate Gyro", 50, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
 
                     IndicatorButton {
@@ -405,7 +398,11 @@ QGCView {
                         text:           "Accelerometer"
                         indicatorGreen: fact.value != 0
 
-                        onClicked: showBoardRotationOverlay("accel")
+                        onClicked: {
+                            preCalibrationDialogType = "accel"
+                            preCalibrationDialogHelp = accelHelp
+                            showDialog(preCalibrationDialogComponent, "Calibrate Accelerometer", 50, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
 
                     IndicatorButton {
@@ -416,7 +413,12 @@ QGCView {
                         text:           "Airspeed"
                         visible:        controller.fixedWing
                         indicatorGreen: fact.value != 0
-                        onClicked:      controller.calibrateAirspeed()
+
+                        onClicked: {
+                            preCalibrationDialogType = "airspeed"
+                            preCalibrationDialogHelp = airspeedHelp
+                            showDialog(preCalibrationDialogComponent, "Calibrate Airspeed", 50, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
 
                     QGCButton {

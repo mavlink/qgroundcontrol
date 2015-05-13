@@ -32,8 +32,7 @@
 #include <QVariant>
 #include <QQmlProperty>
 
-SensorsComponentController::SensorsComponentController(AutoPilotPlugin* autopilot, QObject* parent) :
-    QObject(parent),
+SensorsComponentController::SensorsComponentController(void) :
     _statusLog(NULL),
     _progressBar(NULL),
     _compassButton(NULL),
@@ -67,15 +66,8 @@ SensorsComponentController::SensorsComponentController(AutoPilotPlugin* autopilo
     _orientationCalLeftSideRotate(false),
     _orientationCalNoseDownSideRotate(false),
     _unknownFirmwareVersion(false),
-    _waitingForCancel(false),
-    _autopilot(autopilot)
+    _waitingForCancel(false)
 {
-    Q_ASSERT(_autopilot);
-    Q_ASSERT(_autopilot->pluginReady());
-    
-    _uas = _autopilot->uas();
-    Q_ASSERT(_uas);
-    
     // Mag rotation parameters are optional
     _showCompass0 = _autopilot->parameterExists("CAL_MAG0_ROT") &&
                         _autopilot->getParameterFact("CAL_MAG0_ROT")->value().toInt() >= 0;
