@@ -105,6 +105,9 @@ public:
     PX4FirmwareUpgradeThreadController(QObject* parent = NULL);
     ~PX4FirmwareUpgradeThreadController(void);
     
+    /// Returns true is a board is currently connected via USB
+    bool pluggedInBoard(void);
+    
     /// @brief Begins the process of searching for a PX4 board connected to any serial port.
     ///     @param msecTimeout Numbers of msecs to continue looking for a board to become available.
     void findBoard(int msecTimeout);
