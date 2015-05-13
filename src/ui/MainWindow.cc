@@ -117,7 +117,6 @@ const char* MainWindow::_hdd2DockWidgetName = "HEAD_DOWN_DISPLAY_2_DOCKWIDGET";
 const char* MainWindow::_pfdDockWidgetName = "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET";
 const char* MainWindow::_hudDockWidgetName = "HEAD_UP_DISPLAY_DOCKWIDGET";
 const char* MainWindow::_uasInfoViewDockWidgetName = "UAS_INFO_INFOVIEW_DOCKWIDGET";
-const char* MainWindow::_debugConsoleDockWidgetName = "COMMUNICATION_CONSOLE_DOCKWIDGET";
 
 static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
 
@@ -441,7 +440,6 @@ void MainWindow::_buildCommonWidgets(void)
         { _pfdDockWidgetName,               "Primary Flight Display",   Qt::RightDockWidgetArea },
         { _hudDockWidgetName,               "Video Downlink",           Qt::RightDockWidgetArea },
         { _uasInfoViewDockWidgetName,       "Info View",                Qt::LeftDockWidgetArea },
-        { _debugConsoleDockWidgetName,      "Communications Console",   Qt::LeftDockWidgetArea },
     };
     static const size_t cDockWidgetInfo = sizeof(rgDockWidgetInfo) / sizeof(rgDockWidgetInfo[0]);
 
@@ -503,7 +501,8 @@ void MainWindow::_buildSimView(void)
 void MainWindow::_showDockWidget(const QString& name, bool show)
 {
     if (!_mapName2DockWidget.contains(name)) {
-        qWarning() << "Attempt to show unknown dock widget" << name;
+        // Don't show any sort of warning here. Dock Widgets which have been remove could still be in settings.
+        // Which would cause us to end up here.
         return;
     }
 
@@ -574,8 +573,6 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         QGCTabbedInfoView* pInfoView = new QGCTabbedInfoView(this);
         pInfoView->addSource(mavlinkDecoder);
         widget = pInfoView;
-    } else if (widgetName == _debugConsoleDockWidgetName) {
-        widget = new DebugConsole(this);
     } else {
         qWarning() << "Attempt to create unknown Inner Dock Widget" << widgetName;
     }
