@@ -189,13 +189,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     connect(&_missingFactDelayedDisplayTimer, &QTimer::timeout, this, &QGCApplication::_missingFactsDisplay);
     
     // Set application information
-    //if (_runningUnitTests) {
+    if (_runningUnitTests) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
         // name. Also we want to run unit tests with clean settings every time.
-        //setApplicationName(QString("%1_unittest").arg(QGC_APPLICATION_NAME));
-    //} else {
+        setApplicationName(QString("%1_unittest").arg(QGC_APPLICATION_NAME));
+    } else {
         setApplicationName(QGC_APPLICATION_NAME);
-    //}
+    }
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
@@ -222,6 +222,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
     QSettings settings;
+    qDebug() << settings.fileName();
 
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
