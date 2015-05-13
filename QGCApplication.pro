@@ -150,7 +150,6 @@ INCLUDEPATH += \
     src/QmlControls \
     src/uas \
     src/ui \
-    src/ui/configuration \
     src/ui/flightdisplay \
     src/ui/linechart \
     src/ui/map \
@@ -165,8 +164,6 @@ INCLUDEPATH += \
 
 FORMS += \
     src/QGCQmlWidgetHolder.ui \
-    src/ui/configuration/SerialSettingsDialog.ui \
-    src/ui/configuration/terminalconsole.ui \
     src/ui/DebugConsole.ui \
     src/ui/HDDisplay.ui \
     src/ui/Linechart.ui \
@@ -275,10 +272,6 @@ HEADERS += \
     src/uas/UASManagerInterface.h \
     src/uas/UASMessageHandler.h \
     src/uas/UASWaypointManager.h \
-    src/ui/configuration/ApmHighlighter.h \
-    src/ui/configuration/console.h \
-    src/ui/configuration/SerialSettingsDialog.h \
-    src/ui/configuration/terminalconsole.h \
     src/ui/DebugConsole.h \
     src/ui/flightdisplay/FlightDisplay.h \
     src/ui/HDDisplay.h \
@@ -406,10 +399,6 @@ SOURCES += \
     src/uas/UASManager.cc \
     src/uas/UASMessageHandler.cc \
     src/uas/UASWaypointManager.cc \
-    src/ui/configuration/ApmHighlighter.cc \
-    src/ui/configuration/console.cpp \
-    src/ui/configuration/SerialSettingsDialog.cc \
-    src/ui/configuration/terminalconsole.cpp \
     src/ui/DebugConsole.cc \
     src/ui/flightdisplay/FlightDisplay.cc \
     src/ui/HDDisplay.cc \

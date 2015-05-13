@@ -30,7 +30,7 @@
 #include <QFont>
 #include <QFontMetrics>
 
-const double ScreenTools::_defaultFontPointSize = 12;
+const double ScreenTools::_defaultFontPointSize = 13;
 
 ScreenTools::ScreenTools()
 {

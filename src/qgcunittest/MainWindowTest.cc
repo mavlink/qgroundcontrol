@@ -68,18 +68,22 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     link->setAutopilotType(autopilot);
     LinkManager::instance()->_addLink(link);
     linkMgr->connectLink(link);
-    QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
+    
+    // Wait for the uas to work it's way through the various threads
+    
+    QSignalSpy spyUas(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)));
+    QCOMPARE(spyUas.wait(5000), true);
     
     // Cycle through all the top level views
     
     _mainToolBar->onSetupView();
-    QTest::qWait(1000);
+    QTest::qWait(200);
     _mainToolBar->onPlanView();
-    QTest::qWait(1000);
+    QTest::qWait(200);
     _mainToolBar->onFlyView();
-    QTest::qWait(1000);
+    QTest::qWait(200);
     _mainToolBar->onAnalyzeView();
-    QTest::qWait(1000);
+    QTest::qWait(200);
     
     // On MainWindow close we should get a message box telling the user to disconnect first. Cancel should do nothing.
     setExpectedMessageBox(QGCMessageBox::Cancel);
