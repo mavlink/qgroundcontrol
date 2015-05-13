@@ -53,7 +53,6 @@ This file is part of the QGROUNDCONTROL project
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
-#include "DebugConsole.h"
 #include "ParameterEditorWidget.h"
 #include "HDDisplay.h"
 #include "HSIDisplay.h"
@@ -332,7 +331,6 @@ private:
     static const char* _pfdDockWidgetName;
     static const char* _hudDockWidgetName;
     static const char* _uasInfoViewDockWidgetName;
-    static const char* _debugConsoleDockWidgetName;
 
     QMap<QString, QDockWidget*>     _mapName2DockWidget;
     QMap<int, QDockWidget*>         _mapUasId2HilDockWidget;
