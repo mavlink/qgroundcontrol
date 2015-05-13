@@ -391,7 +391,7 @@ SOURCES += \
     src/QGCComboBox.cc \
     src/QGCDockWidget.cc \
     src/QGCFileDialog.cc \
-    src/QGCLoggingCategory.cc \
+    src/QGCLoggingCategory.cc \ 
     src/QGCPalette.cc \
     src/QGCQmlWidgetHolder.cpp \
     src/QGCQuickWidget.cc \

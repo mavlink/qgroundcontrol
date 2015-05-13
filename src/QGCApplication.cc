@@ -138,6 +138,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
 #endif
     
+    qDebug() << "Here 1";
+    
 #ifndef __android__
 #ifdef QT_DEBUG
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
@@ -161,16 +163,17 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         loggingDirectoryOk = true;
     }
 
+    qDebug () << iniFileLocation;
+    
     if (loggingDirectoryOk) {
-        qDebug () << iniFileLocation;
         if (!iniFileLocation.exists(qtLoggingFile)) {
             QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
             if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
                 QTextStream out(&loggingFile);
                 out << "[Rules]\n";
-                out << "*Log.debug=false\n";
+                out << "*Log.debug=true\n";
                 foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
-                    out << category << ".debug=false\n";
+                    out << category << ".debug=true\n";
                 }
             } else {
                 qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
@@ -180,6 +183,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 #endif
 #endif
 
+    qDebug() << "Here 2";
     // Set up timer for delayed missing fact display
     _missingFactDelayedDisplayTimer.setSingleShot(true);
     _missingFactDelayedDisplayTimer.setInterval(_missingFactDelayedDisplayTimerTimeout);
@@ -196,6 +200,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
+    qDebug() << "Here 3";
     // Version string is build from component parts. Format is:
     //  vMajor.Minor.BuildNumber BuildType
     QString versionString("v%1.%2.%3 %4");
@@ -214,9 +219,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         // Add additional command line option flags here
     };
 
+    qDebug() << "Here 4";
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
     QSettings settings;
+    qDebug() << "Settings:" << settings.fileName();
 
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
@@ -231,6 +238,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
+    qDebug() << "Here 5";
 }
 
 QGCApplication::~QGCApplication()
@@ -242,6 +250,7 @@ void QGCApplication::_initCommon(void)
 {
     QSettings settings;
 
+    qDebug() << "Init 1";
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
     if (settings.contains(_settingsVersionKey)) {
@@ -261,6 +270,7 @@ void QGCApplication::_initCommon(void)
                                       "Your saved settings have been reset to defaults."));
     }
 
+    qDebug() << "Init 2";
     _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
     _loadCurrentStyle();
 
@@ -282,6 +292,7 @@ void QGCApplication::_initCommon(void)
         Q_ASSERT(pathCreated);
         savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
     }
+    qDebug() << "Init 3";
 
     if (!savedFilesLocation.isEmpty()) {
         if (!validatePossibleSavedFilesLocation(savedFilesLocation)) {
@@ -289,6 +300,7 @@ void QGCApplication::_initCommon(void)
         }
     }
     settings.setValue(_savedFilesLocationKey, savedFilesLocation);
+    qDebug() << "Init 4";
 
     // Load application font
     QFontDatabase fontDatabase = QFontDatabase();
@@ -299,6 +311,7 @@ void QGCApplication::_initCommon(void)
     // Avoid Using setFont(). In the Qt docu you can read the following:
     //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
     // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
+    qDebug() << "Init 5";
     
     // Register our Qml objects
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
@@ -310,6 +323,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
     //-- Register Waypoint Interface
     qmlRegisterInterface<Waypoint>("Waypoint");
+    qDebug() << "Init 6";
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)

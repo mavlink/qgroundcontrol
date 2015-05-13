@@ -319,7 +319,9 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     windowNameUpdateTimer.start(15000);
     emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
+#ifndef Q_OS_MAC
     if (!qgcApp()->runningUnitTests()) {
+#endif
         _ui.actionStatusBar->setChecked(_showStatusBar);
         showStatusBarCallback(_showStatusBar);
 #ifdef __android__
@@ -341,7 +343,9 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
         qd.activateWindow();
         qd.close();
 #endif
+#ifndef Q_OS_MAC
     }
+#endif
 }
 
 MainWindow::~MainWindow()

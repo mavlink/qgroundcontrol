@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
 #endif // QT_DEBUG
 
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
+    qDebug() << "Back to main";
     Q_CHECK_PTR(app);
 
     // There appears to be a threading issue in qRegisterMetaType which can cause it to throw a qWarning
@@ -153,6 +154,7 @@ int main(int argc, char *argv[])
     // while we only have the main thread. That should prevent it from hitting the race condition later
     // on in the code.
     qRegisterMetaType<QList<QPair<QByteArray,QByteArray> > >();
+    qDebug() << "After register type";
 
     app->_initCommon();
 
