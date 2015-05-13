@@ -163,8 +163,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         loggingDirectoryOk = true;
     }
 
+    qDebug () << iniFileLocation;
+    
     if (loggingDirectoryOk) {
-        qDebug () << iniFileLocation;
         if (!iniFileLocation.exists(qtLoggingFile)) {
             QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
             if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
