@@ -77,7 +77,7 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     // Cycle through all the top level views
     
     _mainToolBar->onSetupView();
-    QTest::qWait(2in00);
+    QTest::qWait(200);
     _mainToolBar->onPlanView();
     QTest::qWait(200);
     _mainToolBar->onFlyView();
