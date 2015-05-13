@@ -129,7 +129,7 @@ QGCView {
                 QGCLabel {
                     anchors.top:    headingSpacer.bottom
                     width:          parent.width - applyButton.width - 5
-                    text:           "Select you airframe type and specific vehicle bellow. Click 'Apply and Restart' when ready and your vehicle will be disconnected, rebooted to the new settings and re-connected."
+                    text:           "Select your airframe type and specific vehicle bellow. Click 'Apply and Restart' when ready and your vehicle will be disconnected, rebooted to the new settings and re-connected."
                     wrapMode:       Text.WordWrap
                 }
 
