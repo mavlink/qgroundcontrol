@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 #endif
 #endif // QT_DEBUG
 
-    QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
+    QGCApplication* app = new QGCApplication(argc, argv, false);
     qDebug() << "Back to main";
     Q_CHECK_PTR(app);
 
