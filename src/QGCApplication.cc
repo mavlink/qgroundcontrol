@@ -222,7 +222,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
     QSettings settings;
-    qDebug() << settings.fileName();
+    qDebug() << "Settings:" << settings.fileName();
 
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
