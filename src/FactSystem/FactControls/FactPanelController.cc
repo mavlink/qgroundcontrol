@@ -33,10 +33,10 @@ FactPanelController::FactPanelController(void) :
 	_autopilot(NULL),
     _factPanel(NULL)
 {
-    UASInterface* uas = UASManager::instance()->getActiveUAS();
-    Q_ASSERT(uas);
+    _uas = UASManager::instance()->getActiveUAS();
+    Q_ASSERT(_uas);
     
-    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(uas);
+    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
     Q_ASSERT(_autopilot);
     Q_ASSERT(_autopilot->pluginReady());
     

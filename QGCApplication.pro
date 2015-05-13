@@ -548,7 +548,8 @@ SOURCES += \
 #
 
 INCLUDEPATH += \
-    src/VehicleSetup
+    src/VehicleSetup \
+    src/AutoPilotPlugins/PX4 \
 
 FORMS += \
     src/VehicleSetup/SetupView.ui \

@@ -62,6 +62,9 @@
 #include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
 #include "CustomCommandWidgetController.h"
+#include "FlightModesComponentController.h"
+#include "AirframeComponentController.h"
+#include "SensorsComponentController.h"
 
 #include "ScreenTools.h"
 #include "MavManager.h"
@@ -310,13 +313,20 @@ void QGCApplication::_initCommon(void)
     // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
     
     // Register our Qml objects
+    
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
+    
 	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
 	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<CustomCommandWidgetController>("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
+    qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
+    qmlRegisterType<AirframeComponentController>("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
+    qmlRegisterType<SensorsComponentController>("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
+    
     //-- Create QML Singleton Interfaces
     qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
     qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
+    
     //-- Register Waypoint Interface
     qmlRegisterInterface<Waypoint>("Waypoint");
 }
