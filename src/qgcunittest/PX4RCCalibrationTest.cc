@@ -156,7 +156,7 @@ void PX4RCCalibrationTest::init(void)
     
     QSignalSpy spyPlugin(_autopilot, SIGNAL(pluginReadyChanged(bool)));
     if (!_autopilot->pluginReady()) {
-        QCOMPARE(spyPlugin.wait(10000), true);
+        QCOMPARE(spyPlugin.wait(60000), true);
     }
     Q_ASSERT(_autopilot->pluginReady());
     
