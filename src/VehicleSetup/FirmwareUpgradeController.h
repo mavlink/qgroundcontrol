@@ -49,7 +49,7 @@ class FirmwareUpgradeController : public QObject
 public:
     FirmwareUpgradeController(void);
     
-    /// Supported firmware types
+    /// Supported firmware types. If you modify these you will need to update the qml file as well.
     typedef enum {
         StableFirmware,
         BetaFirmware,
@@ -71,6 +71,9 @@ public:
     /// Progress bar for you know what
     Q_PROPERTY(QQuickItem* progressBar READ progressBar WRITE setProgressBar)
     
+    Q_INVOKABLE bool activeQGCConnections(void);
+    Q_INVOKABLE bool pluggedInBoard(void);
+    
     /// Begins the firware upgrade process
     Q_INVOKABLE void doFirmwareUpgrade(void);
 
@@ -85,6 +88,9 @@ public:
     
     QQuickItem* statusLog(void) { return _statusLog; }
     void setStatusLog(QQuickItem* statusLog) { _statusLog = statusLog; }
+    
+signals:
+    void showMessage(const QString& title, const QString& message);
     
 private slots:
     void _downloadProgress(qint64 curr, qint64 total);
