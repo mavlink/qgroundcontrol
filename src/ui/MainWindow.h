@@ -161,8 +161,6 @@ public slots:
     void loadPlanView();
     /** @brief Load Old (Qt Widget) Map View (Mission) */
     void loadOldPlanView();
-    /** @brief Load Terminal Console views */
-    void loadTerminalView();
     /** @brief Manage Links */
     void manageLinks();
 
@@ -235,8 +233,8 @@ protected:
         VIEW_FLIGHT,            // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
         VIEW_SIMULATION,        // HIL Simulation view. Useful overview of the entire system when doing hardware-in-the-loop simulations.
         VIEW_SETUP,             // Setup view. Used for initializing the system for operation. Includes UI for calibration, firmware updating/checking, and parameter modifcation.
-        VIEW_TERMINAL,          // Terminal interface. Used for communicating with the remote system, usually in a special configuration input mode.
-        VIEW_LOCAL3D,           // Unused
+        VIEW_UNUSED1,           // Unused (don't remove, or it will screw up saved settigns indices)
+        VIEW_UNUSED2,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_EXPERIMENTAL_PLAN, // Original (Qt Widget) Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
     } VIEW_SECTIONS;
 
