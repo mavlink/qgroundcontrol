@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
 
     app->_initCommon();
 
-    int exitCode;
+    int exitCode = 0;
 
 #ifndef __android__
 #ifdef QT_DEBUG
