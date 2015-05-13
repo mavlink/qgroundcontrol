@@ -514,7 +514,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t& msg)
         foreach(QString paramName, _mapParamName2Value[componentId].keys()) {
             if (skipParam) {
                 // We've already sent the first param
-                skipParam = true;
+                skipParam = false;
                 paramIndex++;
             } else {
                 char paramId[MAVLINK_MSG_ID_PARAM_VALUE_LEN];
