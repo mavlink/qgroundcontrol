@@ -217,7 +217,10 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
     QSettings settings;
-
+#ifdef UNITTEST_BUILD
+    qDebug() << "Settings location" << settings.fileName();
+    Q_ASSERT(settings.isWritable());
+#endif
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
 
@@ -269,8 +272,13 @@ void QGCApplication::_initCommon(void)
     QString savedFilesLocation;
     if (settings.contains(_savedFilesLocationKey)) {
         savedFilesLocation = settings.value(_savedFilesLocationKey).toString();
-    } else {
-        // No location set. Create a default one in Documents standard location.
+        if (!validatePossibleSavedFilesLocation(savedFilesLocation)) {
+            savedFilesLocation.clear();
+        }
+    }
+    
+    if (savedFilesLocation.isEmpty()) {
+        // No location set (or invalid). Create a default one in Documents standard location.
 
         QString documentsLocation = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 
@@ -288,6 +296,7 @@ void QGCApplication::_initCommon(void)
             savedFilesLocation.clear();
         }
     }
+    qDebug() << "Saved files location" << savedFilesLocation;
     settings.setValue(_savedFilesLocationKey, savedFilesLocation);
 
     // Load application font
@@ -401,7 +410,6 @@ QString QGCApplication::savedFilesLocation(void)
 {
     QSettings settings;
 
-    Q_ASSERT(settings.contains(_savedFilesLocationKey));
     return settings.value(_savedFilesLocationKey).toString();
 }
 
