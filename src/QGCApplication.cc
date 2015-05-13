@@ -248,6 +248,7 @@ void QGCApplication::_initCommon(void)
 {
     QSettings settings;
 
+    qDebug() << "Init 1";
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
     if (settings.contains(_settingsVersionKey)) {
@@ -267,6 +268,7 @@ void QGCApplication::_initCommon(void)
                                       "Your saved settings have been reset to defaults."));
     }
 
+    qDebug() << "Init 2";
     _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
     _loadCurrentStyle();
 
@@ -288,6 +290,7 @@ void QGCApplication::_initCommon(void)
         Q_ASSERT(pathCreated);
         savedFilesLocation = documentsDir.filePath(_defaultSavedFileDirectoryName);
     }
+    qDebug() << "Init 3";
 
     if (!savedFilesLocation.isEmpty()) {
         if (!validatePossibleSavedFilesLocation(savedFilesLocation)) {
@@ -295,6 +298,7 @@ void QGCApplication::_initCommon(void)
         }
     }
     settings.setValue(_savedFilesLocationKey, savedFilesLocation);
+    qDebug() << "Init 4";
 
     // Load application font
     QFontDatabase fontDatabase = QFontDatabase();
@@ -305,6 +309,7 @@ void QGCApplication::_initCommon(void)
     // Avoid Using setFont(). In the Qt docu you can read the following:
     //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
     // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
+    qDebug() << "Init 5";
     
     // Register our Qml objects
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
@@ -316,6 +321,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
     //-- Register Waypoint Interface
     qmlRegisterInterface<Waypoint>("Waypoint");
+    qDebug() << "Init 6";
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
