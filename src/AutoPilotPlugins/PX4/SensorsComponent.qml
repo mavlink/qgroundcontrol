@@ -40,13 +40,11 @@ QGCView {
     // Help text which is shown both in the status text area prior to pressing a cal button and in the
     // pre-calibration dialog.
 
-    readonly property string compassHelp:   "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration is is best " +
-                                                "to be connected to your vehicle via radio instead of USB since the USB cable will likely get in the way."
+    readonly property string compassHelp:   "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration it is best " +
+                                                "to be connected to your vehicle via radio instead of USB, since the USB cable will likely get in the way."
     readonly property string gyroHelp:      "For Gyroscope calibration you will need to place your vehicle right side up on solid surface and leave it still."
-    readonly property string accelHelp:     "For Accelerometer calibration you will need to place your vehicle on all six sides and hold it still there for a few seconds."
+    readonly property string accelHelp:     "For Accelerometer calibration you will need to place your vehicle on all six sides and hold it still in each orientation for a few seconds."
     readonly property string airspeedHelp:  "For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor."
-
-    property var controller
 
     // Used to pass what type of calibration is being performed to the preCalibrationDialog
     property string preCalibrationDialogType
@@ -85,6 +83,22 @@ QGCView {
         "ROTATION_ROLL_270_YAW_270"
     ]
 
+    SensorsComponentController {
+        id:                         controller
+
+        onResetStatusTextArea: statusLog.text = statusTextAreaDefaultText
+
+        onSetCompassRotations: showDialog(compassRotationDialogComponent, "Set Compass Rotation(s)", 50, StandardButton.Ok)
+
+        onWaitingForCancelChanged: {
+            if (controller.waitingForCancel) {
+                showMessage("Calibration Cancel", "Waiting for Vehicle to response to Cancel. This may take a few seconds.", 0)
+            } else {
+                hideDialog()
+            }
+        }
+    }
+
     Component {
         id: preCalibrationDialogComponent
 
@@ -118,7 +132,7 @@ QGCView {
                     width:      parent.width
                     wrapMode:   Text.WordWrap
                     visible:    preCalibrationDialogType != "airspeed"
-                    text:       "Please check and/or update board rotation before calibrating"
+                    text:       "Please check and/or update board rotation before calibrating."
                 }
 
                 FactComboBox {
@@ -132,6 +146,82 @@ QGCView {
     }
 
     Component {
+        id: compassRotationDialogComponent
+
+        QGCViewDialog {
+            id: compassRotationDialog
+
+            Column {
+                anchors.fill: parent
+                spacing:                10
+
+                QGCLabel {
+                    width:      parent.width
+                    wrapMode:   Text.WordWrap
+                    text:       "Please check and/or update compass rotation(s)"
+                }
+
+                // Compass 0 rotation
+                Component {
+                    id: compass0ComponentLabel
+
+                    QGCLabel { text: "Compass Orientation" }
+                }
+                Component {
+                    id: compass0ComponentCombo
+
+                    FactComboBox {
+                        id:     compass0RotationCombo
+                        width:  rotationColumnWidth
+                        model:  rotations
+                        fact:   Fact { name: "CAL_MAG0_ROT"; onFactMissing: showMissingFactOverlay(name) }
+                    }
+                }
+                Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel : null }
+                Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo : null }
+
+                // Compass 1 rotation
+                Component {
+                    id: compass1ComponentLabel
+
+                    QGCLabel { text: "Compass 1 Orientation" }
+                }
+                Component {
+                    id: compass1ComponentCombo
+
+                    FactComboBox {
+                        id:     compass1RotationCombo
+                        width:  rotationColumnWidth
+                        model:  rotations
+                        fact:   Fact { name: "CAL_MAG1_ROT"; onFactMissing: showMissingFactOverlay(name) }
+                    }
+                }
+                Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel : null }
+                Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo : null }
+
+                // Compass 2 rotation
+                Component {
+                    id: compass2ComponentLabel
+
+                    QGCLabel { text: "Compass 2 Orientation" }
+                }
+                Component {
+                    id: compass2ComponentCombo
+
+                    FactComboBox {
+                        id:     compass1RotationCombo
+                        width:  rotationColumnWidth
+                        model:  rotations
+                        fact:   Fact { name: "CAL_MAG2_ROT"; onFactMissing: showMissingFactOverlay(name) }
+                    }
+                }
+                Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel : null }
+                Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo : null }
+            } // Column
+        } // QGCViewDialog
+    } // Component - compassRotationDialogComponent
+
+    Component {
         id: view
 
         QGCViewPanel {
@@ -141,21 +231,20 @@ QGCView {
                 target: rootQGCView
 
                 onCompleted: {
-                    rootQGCView.controller = viewPanel.controller
+                    controller.factPanel = viewPanel
+                    controller.statusLog = statusTextArea
+                    controller.progressBar = progressBar
+                    controller.compassButton = compassButton
+                    controller.gyroButton = gyroButton
+                    controller.accelButton = accelButton
+                    controller.airspeedButton = airspeedButton
+                    controller.cancelButton = cancelButton
+                    controller.orientationCalAreaHelpText = orientationCalAreaHelpText
                 }
             }
 
             SensorsComponentController {
                 id:                         controller
-                factPanel:                  viewPanel
-                statusLog:                  statusTextArea
-                progressBar:                progressBar
-                compassButton:              compassButton
-                gyroButton:                 gyroButton
-                accelButton:                accelButton
-                airspeedButton:             airspeedButton
-                cancelButton:               cancelButton
-                orientationCalAreaHelpText: orientationCalAreaHelpText
 
                 onResetStatusTextArea: statusTextArea.text = statusTextAreaDefaultText
 
@@ -163,7 +252,7 @@ QGCView {
 
                 onWaitingForCancelChanged: {
                     if (controller.waitingForCancel) {
-                        showMessage(
+                        showMessage("Calibration Cancel", "Waiting for Vehicle to response to Cancel. This may take a few seconds.", 0)
                     } else {
                         hideDialog()
                     }
@@ -193,148 +282,6 @@ QGCView {
 
             color: qgcPal.window
 
-            Rectangle {
-                id:             overlay
-                anchors.fill:   parent
-                color:          qgcPal.window
-                opacity:        0.75
-                z:              100
-                visible:        false
-            }
-
-            Rectangle {
-                width:                      300
-                height:                     100
-                anchors.verticalCenter:     parent.verticalCenter
-                anchors.horizontalCenter:   parent.horizontalCenter
-                color:                      qgcPal.window
-                border.width:               1
-                border.color:               qgcPal.text
-                visible:                    controller.waitingForCancel
-                z:                          overlay.z + 1
-
-                onVisibleChanged: {
-                    overlay.visible = visible
-                }
-
-                QGCLabel {
-                    anchors.fill:           parent
-                    verticalAlignment:      Text.AlignVCenter
-                    horizontalAlignment:    Text.AlignHCenter
-                    text:                   "Waiting for Cancel (may take a few seconds)"
-                }
-            }
-
-
-            function showBoardRotationOverlay(calibrationType) {
-                boardRotationOverlay.calibrationType = calibrationType
-                boardRotationOverlay.visible = true
-                overlay.visible = true
-            }
-
-            Rectangle {
-                id:                         compassRotationOverlay
-                width:                      300
-                height:                     compassRotationOverlayColumn.height + 11
-                anchors.verticalCenter:     parent.verticalCenter
-                anchors.horizontalCenter:   parent.horizontalCenter
-                color:                      qgcPal.window
-                border.width:               1
-                border.color:               qgcPal.text
-                visible:                    false
-                z:                          overlay.z + 1
-
-                Column {
-                    id:                 compassRotationOverlayColumn
-                    anchors.topMargin:  10
-                    anchors.top:        parent.top
-                    width:              parent.width
-                    spacing:            10
-
-                    Column {
-                        anchors.leftMargin:     10
-                        anchors.rightMargin:    10
-                        anchors.left:           parent.left
-                        anchors.right:          parent.right
-                        spacing:                10
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text:       "Please check and/or update compass rotation(s)"
-                        }
-
-                        // Compass 0 rotation
-                        Component {
-                            id: compass0ComponentLabel
-
-                            QGCLabel { text: "Compass Orientation" }
-                        }
-                        Component {
-                            id: compass0ComponentCombo
-
-                            FactComboBox {
-                                id:     compass0RotationCombo
-                                width:  rotationColumnWidth
-                                model:  rotations
-                                fact:   Fact { name: "CAL_MAG0_ROT" }
-                            }
-                        }
-                        Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel : null }
-                        Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo : null }
-
-                        // Compass 1 rotation
-                        Component {
-                            id: compass1ComponentLabel
-
-                            QGCLabel { text: "Compass 1 Orientation" }
-                        }
-                        Component {
-                            id: compass1ComponentCombo
-
-                            FactComboBox {
-                                id:     compass1RotationCombo
-                                width:  rotationColumnWidth
-                                model:  rotations
-                                fact:   Fact { name: "CAL_MAG1_ROT" }
-                            }
-                        }
-                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel : null }
-                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo : null }
-
-                        // Compass 2 rotation
-                        Component {
-                            id: compass2ComponentLabel
-
-                            QGCLabel { text: "Compass 2 Orientation" }
-                        }
-                        Component {
-                            id: compass2ComponentCombo
-
-                            FactComboBox {
-                                id:     compass1RotationCombo
-                                width:  rotationColumnWidth
-                                model:  rotations
-                                fact:   Fact { name: "CAL_MAG2_ROT" }
-                            }
-                        }
-                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel : null }
-                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo : null }
-                    }
-
-                    QGCButton {
-                        x:          1
-                        width:      parent.width - 2
-                        primary:    true
-                        text:       "OK"
-
-                        onClicked: {
-                            compassRotationOverlay.visible = false
-                            overlay.visible = false
-                       }
-                    }
-                }
-            }
 
             function showCompassRotationOverlay() {
                 if (showCompass0Rot || showCompass1Rot || showCompass2Rot) {

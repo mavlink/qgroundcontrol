@@ -106,7 +106,7 @@ Item {
         }
     }
 
-    function __showDialog(component, title, charWidth, buttons) {
+    function showDialog(component, title, charWidth, buttons) {
         __dialogCharWidth = charWidth
         __dialogTitle = title
 
@@ -117,7 +117,7 @@ Item {
         __dialogOverlay.visible = true
     }
 
-    function __showMessage(title, message, buttons) {
+    function showMessage(title, message, buttons) {
         __dialogCharWidth = 50
         __dialogTitle = title
         __messageDialogText = message
@@ -129,7 +129,7 @@ Item {
         __dialogOverlay.visible = true
     }
 
-    function __hideDialog() {
+    function hideDialog() {
         __dialogComponent = null
         __viewPanel.enabled = true
         __dialogOverlay.visible = false
@@ -156,9 +156,9 @@ Item {
     Connections {
         target: __viewPanel.item
 
-        onShowDialog:   __showDialog(component, title, charWidth, buttons)
-        onShowMessage:  __showMessage(title, message, buttons)
-        onHideDialog:   __hideDialog()
+        onShowDialog:   __rootItem.showDialog(component, title, charWidth, buttons)
+        onShowMessage:  __rootItem.showMessage(title, message, buttons)
+        onHideDialog:   __rootItem.hideDialog()
     }
 
     Connections {
