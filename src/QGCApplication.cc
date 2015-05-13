@@ -138,6 +138,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
 #endif
     
+    qDebug() << "Here 1";
+    
 #ifndef __android__
 #ifdef QT_DEBUG
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
@@ -180,6 +182,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 #endif
 #endif
 
+    qDebug() << "Here 2";
     // Set up timer for delayed missing fact display
     _missingFactDelayedDisplayTimer.setSingleShot(true);
     _missingFactDelayedDisplayTimer.setInterval(_missingFactDelayedDisplayTimerTimeout);
@@ -196,6 +199,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
+    qDebug() << "Here 3";
     // Version string is build from component parts. Format is:
     //  vMajor.Minor.BuildNumber BuildType
     QString versionString("v%1.%2.%3 %4");
@@ -214,6 +218,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         // Add additional command line option flags here
     };
 
+    qDebug() << "Here 4";
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
     QSettings settings;
@@ -231,6 +236,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
+    qDebug() << "Here 5";
 }
 
 QGCApplication::~QGCApplication()
