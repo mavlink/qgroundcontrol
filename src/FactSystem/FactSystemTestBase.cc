@@ -71,7 +71,7 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     
     QSignalSpy spyPlugin(_plugin, SIGNAL(pluginReadyChanged(bool)));
     if (!_plugin->pluginReady()) {
-        QCOMPARE(spyPlugin.wait(20000), true);
+        QCOMPARE(spyPlugin.wait(60000), true);
     }
     Q_ASSERT(_plugin->pluginReady());
 }

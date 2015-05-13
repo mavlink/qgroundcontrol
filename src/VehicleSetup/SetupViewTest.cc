@@ -76,7 +76,7 @@ void SetupViewTest::_clickThrough_test(void)
     
     QSignalSpy spyPlugin(autopilot, SIGNAL(pluginReadyChanged(bool)));
     if (!autopilot->pluginReady()) {
-        QCOMPARE(spyPlugin.wait(20000), true);
+        QCOMPARE(spyPlugin.wait(60000), true);
     }
     Q_ASSERT(autopilot->pluginReady());
     

@@ -168,9 +168,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
             if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
                 QTextStream out(&loggingFile);
                 out << "[Rules]\n";
-                out << "*Log.debug=true\n";
+                out << "*Log.debug=false\n";
                 foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
-                    out << category << ".debug=true\n";
+                    out << category << ".debug=false\n";
                 }
             } else {
                 qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
