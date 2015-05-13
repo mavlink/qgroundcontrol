@@ -161,6 +161,7 @@ int main(int argc, char *argv[])
 #ifndef __android__
 #ifdef QT_DEBUG
     if (runUnitTests) {
+#if 0
         if (!app->_initForUnitTests()) {
             return -1;
         }
@@ -173,6 +174,7 @@ int main(int argc, char *argv[])
             qDebug() << failures << " TESTS FAILED!";
         }
         exitCode = -failures;
+#endif
     } else
 #endif
 #endif
