@@ -27,7 +27,7 @@
 #include "FileManagerTest.h"
 #include "UASManager.h"
 
-UT_REGISTER_TEST(FileManagerTest)
+//UT_REGISTER_TEST(FileManagerTest)
 
 FileManagerTest::FileManagerTest(void) :
     _mockLink(NULL),
