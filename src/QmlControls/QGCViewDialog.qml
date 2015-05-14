@@ -30,8 +30,11 @@ import QtQuick.Controls 1.3
 import QGroundControl.Controls 1.0
 import QGroundControl.Palette 1.0
 
-Rectangle {
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+import QGroundControl.FactSystem 1.0
+import QGroundControl.FactControls 1.0
+
+FactPanel {
+    QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
 
     signal hideDialog
 
@@ -43,5 +46,5 @@ Rectangle {
         hideDialog()
     }
 
-    color: qgcPal.windowShadeDark
+    color: __qgcPal.windowShadeDark
 }

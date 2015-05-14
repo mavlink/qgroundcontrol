@@ -32,8 +32,7 @@
 #include <QVariant>
 #include <QQmlProperty>
 
-SensorsComponentController::SensorsComponentController(AutoPilotPlugin* autopilot, QObject* parent) :
-    QObject(parent),
+SensorsComponentController::SensorsComponentController(void) :
     _statusLog(NULL),
     _progressBar(NULL),
     _compassButton(NULL),
@@ -67,15 +66,8 @@ SensorsComponentController::SensorsComponentController(AutoPilotPlugin* autopilo
     _orientationCalLeftSideRotate(false),
     _orientationCalNoseDownSideRotate(false),
     _unknownFirmwareVersion(false),
-    _waitingForCancel(false),
-    _autopilot(autopilot)
+    _waitingForCancel(false)
 {
-    Q_ASSERT(_autopilot);
-    Q_ASSERT(_autopilot->pluginReady());
-    
-    _uas = _autopilot->uas();
-    Q_ASSERT(_uas);
-    
     // Mag rotation parameters are optional
     _showCompass0 = _autopilot->parameterExists("CAL_MAG0_ROT") &&
                         _autopilot->getParameterFact("CAL_MAG0_ROT")->value().toInt() >= 0;
@@ -400,6 +392,15 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
 
 void SensorsComponentController::_refreshParams(void)
 {
+    QStringList fastRefreshList;
+    
+    // We ask for a refresh on these first so that the rotation combo show up as fast as possible
+    fastRefreshList << "CAL_MAG0_ID" << "CAL_MAG1_ID" << "CAL_MAG2_ID" << "CAL_MAG0_ROT" << "CAL_MAG1_ROT" << "CAL_MAG2_ROT";
+    foreach (QString paramName, fastRefreshList) {
+        _autopilot->refreshParameter(FactSystem::defaultComponentId, paramName);
+    }
+    
+    // Now ask for all to refresh
     _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "CAL_");
     _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "SENS_");
 }

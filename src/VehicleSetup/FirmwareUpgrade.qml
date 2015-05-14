@@ -44,6 +44,8 @@ QGCView {
         QGCViewPanel {
             id: panel
 
+            QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+
             FirmwareUpgradeController {
                 id:             controller
                 upgradeButton:  upgradeButton
