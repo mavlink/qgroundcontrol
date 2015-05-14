@@ -458,8 +458,8 @@ void LinkManager::_updateConfigurationList(void)
 #endif
         // Save port name
         currentPorts << portInfo.systemLocation();
-        // Is this a PX4?
-        if (portInfo.vendorIdentifier() == 9900) {
+        // Is this a PX4 and NOT in bootloader mode?
+        if (portInfo.vendorIdentifier() == 9900 && !portInfo.description().contains("BL")) {
             SerialConfiguration* pSerial = _findSerialConfiguration(portInfo.systemLocation());
             if (pSerial) {
                 //-- If this port is configured make sure it has the preferred flag set
