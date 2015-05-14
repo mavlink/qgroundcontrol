@@ -34,7 +34,7 @@ import QGroundControl.ScreenTools 1.0
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 
-Item {
+FactPanel {
     id: __rootItem
 
     property Component viewComponent
@@ -164,7 +164,7 @@ Item {
     Connections {
         target: __dialogComponentLoader.item
 
-        onHideDialog: __hideDialog()
+        onHideDialog: __rootItem.hideDialog()
     }
 
     Loader {

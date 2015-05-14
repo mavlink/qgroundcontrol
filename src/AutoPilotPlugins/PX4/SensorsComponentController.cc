@@ -392,6 +392,15 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
 
 void SensorsComponentController::_refreshParams(void)
 {
+    QStringList fastRefreshList;
+    
+    // We ask for a refresh on these first so that the rotation combo show up as fast as possible
+    fastRefreshList << "CAL_MAG0_ID" << "CAL_MAG1_ID" << "CAL_MAG2_ID" << "CAL_MAG0_ROT" << "CAL_MAG1_ROT" << "CAL_MAG2_ROT";
+    foreach (QString paramName, fastRefreshList) {
+        _autopilot->refreshParameter(FactSystem::defaultComponentId, paramName);
+    }
+    
+    // Now ask for all to refresh
     _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "CAL_");
     _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "SENS_");
 }

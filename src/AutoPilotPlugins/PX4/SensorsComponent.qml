@@ -46,6 +46,8 @@ QGCView {
     readonly property string accelHelp:     "For Accelerometer calibration you will need to place your vehicle on all six sides and hold it still in each orientation for a few seconds."
     readonly property string airspeedHelp:  "For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor."
 
+    readonly property string statusTextAreaDefaultText: compassHelp + "\n\n" + gyroHelp + "\n\n" + accelHelp + "\n\n" + airspeedHelp + "\n\n"
+
     // Used to pass what type of calibration is being performed to the preCalibrationDialog
     property string preCalibrationDialogType
 
@@ -83,12 +85,28 @@ QGCView {
         "ROTATION_ROLL_270_YAW_270"
     ]
 
+    Fact { id: cal_mag0_id; name: "CAL_MAG0_ID"; onFactMissing: showMissingFactOverlay(name) }
+    Fact { id: cal_mag1_id; name: "CAL_MAG1_ID"; onFactMissing: showMissingFactOverlay(name) }
+    Fact { id: cal_mag2_id; name: "CAL_MAG2_ID"; onFactMissing: showMissingFactOverlay(name) }
+    Fact { id: cal_mag0_rot; name: "CAL_MAG0_ROT"; onFactMissing: showMissingFactOverlay(name) }
+    Fact { id: cal_mag1_rot; name: "CAL_MAG1_ROT"; onFactMissing: showMissingFactOverlay(name) }
+    Fact { id: cal_mag2_rot; name: "CAL_MAG2_ROT"; onFactMissing: showMissingFactOverlay(name) }
+
+    // Id > = signals compass available, rot < 0 signals internal compass
+    property bool showCompass0Rot: cal_mag0_id.value > 0 && cal_mag0_rot.value >= 0
+    property bool showCompass1Rot: cal_mag1_id.value > 0 && cal_mag1_rot.value >= 0
+    property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
+
     SensorsComponentController {
-        id:                         controller
+        id: controller
 
         onResetStatusTextArea: statusLog.text = statusTextAreaDefaultText
 
-        onSetCompassRotations: showDialog(compassRotationDialogComponent, "Set Compass Rotation(s)", 50, StandardButton.Ok)
+        onSetCompassRotations: {
+            if (showCompass0Rot || showCompass1Rot || showCompass2Rot) {
+            showDialog(compassRotationDialogComponent, "Set Compass Rotation(s)", 50, StandardButton.Ok)
+            }
+        }
 
         onWaitingForCancelChanged: {
             if (controller.waitingForCancel) {
@@ -243,52 +261,12 @@ QGCView {
                 }
             }
 
-            SensorsComponentController {
-                id:                         controller
-
-                onResetStatusTextArea: statusTextArea.text = statusTextAreaDefaultText
-
-                onSetCompassRotations: showCompassRotationOverlay()
-
-                onWaitingForCancelChanged: {
-                    if (controller.waitingForCancel) {
-                        showMessage("Calibration Cancel", "Waiting for Vehicle to response to Cancel. This may take a few seconds.", 0)
-                    } else {
-                        hideDialog()
-                    }
-                }
-            }
-
             QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
 
-            readonly property string statusTextAreaDefaultText: "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration is is best " +
-                                                                    "to be connected to your vehicle via radio instead of USB since the USB cable will likely get in the way.\n\n" +
-                                                                    "For Gyroscope calibration you will need to place your vehicle right side up on solid surface and leave it still.\n\n" +
-                                                                    "For Accelerometer calibration you will need to place your vehicle on all six sides and hold it still there for a few seconds.\n\n" +
-                                                                    "For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor.\n\n"
-
-            Fact { id: cal_mag0_id; name: "CAL_MAG0_ID" }
-            Fact { id: cal_mag1_id; name: "CAL_MAG1_ID" }
-            Fact { id: cal_mag2_id; name: "CAL_MAG2_ID" }
-            Fact { id: cal_mag0_rot; name: "CAL_MAG0_ROT" }
-            Fact { id: cal_mag1_rot; name: "CAL_MAG1_ROT" }
-            Fact { id: cal_mag2_rot; name: "CAL_MAG2_ROT" }
-
-            // Id > = signals compass available, rot < 0 signals internal compass
-            property bool showCompass0Rot: cal_mag0_id.value > 0 && cal_mag0_rot.value >= 0
-            property bool showCompass1Rot: cal_mag1_id.value > 0 && cal_mag1_rot.value >= 0
-            property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
 
             color: qgcPal.window
 
-
-            function showCompassRotationOverlay() {
-                if (showCompass0Rot || showCompass1Rot || showCompass2Rot) {
-                    compassRotationOverlay.visible = true
-                    overlay.visible = true
-                }
-            }
 
             Column {
                 anchors.fill: parent
