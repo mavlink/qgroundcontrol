@@ -39,12 +39,8 @@ QGCView {
     Component {
         id: view
 
-        FactPanel {
+        QGCViewPanel {
             id:             panel
-            anchors.fill:   parent
-
-            signal showDialog(Component component, string title, int charWidth, int buttons)
-            signal hideDialog
 
             Connections {
                 target: rootQGCView
