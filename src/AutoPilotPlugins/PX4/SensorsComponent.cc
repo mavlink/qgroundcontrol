@@ -110,11 +110,7 @@ QWidget* SensorsComponent::setupWidget(void) const
     QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
     Q_CHECK_PTR(holder);
     
-    holder->setAutoPilot(_autopilot);
-    
-    SensorsComponentController* controller = new SensorsComponentController(_autopilot, holder);
-    holder->setContextPropertyObject("controller", controller);
-    
+    holder->setAutoPilot(_autopilot);    
     holder->setSource(QUrl::fromUserInput("qrc:/qml/SensorsComponent.qml"));
     
     return holder;

@@ -56,6 +56,7 @@ protected:
     /// Report a missing fact to the FactPanel Qml element
     void _reportMissingFact(const QString& missingFact);
     
+    UASInterface*       _uas;
 	AutoPilotPlugin*    _autopilot;
     
 private slots:

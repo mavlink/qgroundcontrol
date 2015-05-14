@@ -38,14 +38,10 @@
 bool AirframeComponentController::_typesRegistered = false;
 
 AirframeComponentController::AirframeComponentController(void) :
-    _uas(NULL),
     _currentVehicleIndex(0),
     _autostartId(0),
     _showCustomConfigPanel(false)
 {
-    _uas = UASManager::instance()->getActiveUAS();
-    Q_ASSERT(_uas);
-
     if (!_typesRegistered) {
         _typesRegistered = true;
         qmlRegisterUncreatableType<AirframeType>("QGroundControl.Controllers", 1, 0, "AiframeType", "Can only reference AirframeType");
