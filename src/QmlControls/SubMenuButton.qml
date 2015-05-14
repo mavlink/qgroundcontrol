@@ -49,7 +49,7 @@ Button {
 
                     readonly property real indicatorRadius: 4
 
-                    x: parent.width - (indicatorRadius * 2) - 5
+                    x: parent.width - (indicatorRadius * 2) - 3
                     y: (parent.height - (indicatorRadius * 2)) / 2
                     width: indicatorRadius * 2
                     height: indicatorRadius * 2
