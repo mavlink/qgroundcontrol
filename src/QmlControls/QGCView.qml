@@ -115,6 +115,8 @@ FactPanel {
         __dialogComponent = component
         __viewPanel.enabled = false
         __dialogOverlay.visible = true
+
+        __animateShowDialog.start()
     }
 
     function showMessage(title, message, buttons) {
@@ -127,12 +129,13 @@ FactPanel {
         __dialogComponent = __messageDialog
         __viewPanel.enabled = false
         __dialogOverlay.visible = true
+
+        __animateShowDialog.start()
     }
 
     function hideDialog() {
-        __dialogComponent = null
         __viewPanel.enabled = true
-        __dialogOverlay.visible = false
+        __animateHideDialog.start()
     }
 
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
@@ -180,13 +183,64 @@ FactPanel {
         anchors.fill:   parent
         z:              5000
 
+        readonly property int __animationDuration: 200
+
+        ParallelAnimation {
+            id: __animateShowDialog
+
+
+            NumberAnimation {
+                target:     __transparentSection
+                properties: "opacity"
+                from:       0.0
+                to:         0.8
+                duration:   __dialogOverlay.__animationDuration
+            }
+
+            NumberAnimation {
+                target:     __transparentSection
+                properties: "width"
+                from:       __dialogOverlay.width
+                to:         __dialogOverlay.width - __dialogPanel.width
+                duration:   __dialogOverlay.__animationDuration
+            }
+        }
+
+        ParallelAnimation {
+            id: __animateHideDialog
+
+            NumberAnimation {
+                target:     __transparentSection
+                properties: "opacity"
+                from:       0.8
+                to:         0.0
+                duration:   __dialogOverlay.__animationDuration
+            }
+
+            NumberAnimation {
+                target:     __transparentSection
+                properties: "width"
+                from:       __dialogOverlay.width - __dialogPanel.width
+                to:         __dialogOverlay.width
+                duration:   __dialogOverlay.__animationDuration
+            }
+
+            onRunningChanged: {
+                if (!running) {
+                    __dialogComponent = null
+                    __dialogOverlay.visible = false
+                }
+            }
+        }
+
         // This covers the parent with an transparent section
         Rectangle {
+            id:             __transparentSection
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
             anchors.left:   parent.left
-            anchors.right:  __dialogPanel.left
-            opacity:        0.80
+            width:          parent.width
+            opacity:        0.0
             color:          __qgcPal.window
         }
 
@@ -195,7 +249,7 @@ FactPanel {
             id:             __dialogPanel
             width:          __dialogCharWidth == -1 ? parent.width : __textWidth * __dialogCharWidth
             height:         parent.height
-            anchors.right:  parent.right
+            anchors.left:   __transparentSection.right
             color:          __qgcPal.windowShadeDark
 
             Rectangle {
