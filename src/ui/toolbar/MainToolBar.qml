@@ -526,15 +526,14 @@ Rectangle {
             }
 
             Rectangle {
-                id: battery
-                width: getProportionalDimmension(60)
+                id: batteryStatus
+                width:  MavManager.batteryConsumed < 0.0 ? getProportionalDimmension(60) : getProportionalDimmension(80)
                 height: cellHeight
                 visible: showMavStatus() && (mainToolBar.showBattery)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getBatteryColor();
                 border.color: "#00000000"
                 border.width: 0
-
                 Image {
                     source: getBatteryIcon();
                     height: getProportionalDimmension(20)
@@ -547,15 +546,37 @@ Rectangle {
                 }
 
                 QGCLabel {
-                    id: batteryText
+                    visible: batteryStatus.visible && MavManager.batteryConsumed < 0.0
                     text: MavManager.batteryVoltage.toFixed(1) + 'V';
                     font.pointSize: ScreenTools.fontPointFactor * (11);
                     font.weight: Font.DemiBold
-                    anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: getProportionalDimmension(6)
                     horizontalAlignment: Text.AlignRight
                     color: colorWhite
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    getProportionalDimmension(6)
+                    visible: batteryStatus.visible && MavManager.batteryConsumed >= 0.0
+                    QGCLabel {
+                        text: MavManager.batteryVoltage.toFixed(1) + 'V';
+                        width: getProportionalDimmension(30)
+                        horizontalAlignment: Text.AlignRight
+                        font.pointSize: ScreenTools.fontPointFactor * (11);
+                        font.weight: Font.DemiBold
+                        color: colorWhite
+                    }
+                    QGCLabel {
+                        text: MavManager.batteryConsumed.toFixed(0) + 'mA';
+                        width: getProportionalDimmension(30)
+                        horizontalAlignment: Text.AlignRight
+                        font.pointSize: ScreenTools.fontPointFactor * (11);
+                        font.weight: Font.DemiBold
+                        color: colorWhite
+                    }
                 }
             }
 
