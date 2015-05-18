@@ -559,6 +559,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
 
             break;
+
+        case MAVLINK_MSG_ID_BATTERY_STATUS:
+        {
+            if (multiComponentSourceDetected && wrongComponent)
+            {
+                break;
+            }
+            mavlink_battery_status_t bat_status;
+            mavlink_msg_battery_status_decode(&message, &bat_status);
+            emit batteryConsumedChanged(this, (double)bat_status.current_consumed);
+        }
+            break;
+
         case MAVLINK_MSG_ID_SYS_STATUS:
         {
             if (multiComponentSourceDetected && wrongComponent)
