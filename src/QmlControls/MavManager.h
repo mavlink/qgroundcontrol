@@ -76,6 +76,7 @@ public:
     Q_PROPERTY(bool         mavPresent          READ mavPresent         NOTIFY mavPresentChanged)
     Q_PROPERTY(double       batteryVoltage      READ batteryVoltage     NOTIFY batteryVoltageChanged)
     Q_PROPERTY(double       batteryPercent      READ batteryPercent     NOTIFY batteryPercentChanged)
+    Q_PROPERTY(double       batteryConsumed     READ batteryConsumed    NOTIFY batteryConsumedChanged)
     Q_PROPERTY(bool         systemArmed         READ systemArmed        NOTIFY systemArmedChanged)
     Q_PROPERTY(QString      currentMode         READ currentMode        NOTIFY currentModeChanged)
     Q_PROPERTY(QString      systemPixmap        READ systemPixmap       NOTIFY systemPixmapChanged)
@@ -103,6 +104,7 @@ public:
     int             satelliteCount      () { return _satelliteCount; }
     double          batteryVoltage      () { return _batteryVoltage; }
     double          batteryPercent      () { return _batteryPercent; }
+    double          batteryConsumed     () { return _batteryConsumed; }
     bool            systemArmed         () { return _systemArmed; }
     QString         currentMode         () { return _currentMode; }
     QString         systemPixmap        () { return _systemPixmap; }
@@ -130,6 +132,7 @@ signals:
     void mavPresentChanged      ();
     void batteryVoltageChanged  ();
     void batteryPercentChanged  ();
+    void batteryConsumedChanged ();
     void systemArmedChanged     ();
     void heartbeatTimeoutChanged();
     void currentModeChanged     ();
@@ -158,6 +161,7 @@ private slots:
     void _setActiveUAS                      (UASInterface* uas);
     void _checkUpdate                       ();
     void _updateBatteryRemaining            (UASInterface*, double voltage, double, double percent, int);
+    void _updateBatteryConsumedChanged      (UASInterface*, double current_consumed);
     void _updateArmingState                 (bool armed);
     void _updateState                       (UASInterface* system, QString name, QString description);
     void _updateMode                        (int system, QString name, QString description);
@@ -197,6 +201,7 @@ private:
     QList<int>      _changes;
     double          _batteryVoltage;
     double          _batteryPercent;
+    double          _batteryConsumed;
     bool            _systemArmed;
     QString         _currentState;
     QString         _currentMode;

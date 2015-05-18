@@ -57,6 +57,7 @@ MavManager::MavManager(QObject *parent)
     , _refreshTimer(new QTimer(this))
     , _batteryVoltage(0.0)
     , _batteryPercent(0.0)
+    , _batteryConsumed(0.0)
     , _systemArmed(false)
     , _currentHeartbeatTimeout(0)
     , _waypointDistance(0.0)
@@ -108,6 +109,7 @@ void MavManager::_forgetUAS(UASInterface* uas)
         disconnect(_mav, &UASInterface::NavigationControllerDataChanged, this, &MavManager::_updateNavigationControllerData);
         disconnect(_mav, &UASInterface::heartbeatTimeout,                this, &MavManager::_heartbeatTimeout);
         disconnect(_mav, &UASInterface::batteryChanged,                  this, &MavManager::_updateBatteryRemaining);
+        disconnect(_mav, &UASInterface::batteryConsumedChanged,          this, &MavManager::_updateBatteryConsumedChanged);
         disconnect(_mav, &UASInterface::modeChanged,                     this, &MavManager::_updateMode);
         disconnect(_mav, &UASInterface::nameChanged,                     this, &MavManager::_updateName);
         disconnect(_mav, &UASInterface::systemTypeSet,                   this, &MavManager::_setSystemType);
@@ -157,6 +159,7 @@ void MavManager::_setActiveUAS(UASInterface* uas)
         connect(_mav, &UASInterface::NavigationControllerDataChanged,   this, &MavManager::_updateNavigationControllerData);
         connect(_mav, &UASInterface::heartbeatTimeout,                  this, &MavManager::_heartbeatTimeout);
         connect(_mav, &UASInterface::batteryChanged,                    this, &MavManager::_updateBatteryRemaining);
+        connect(_mav, &UASInterface::batteryConsumedChanged,            this, &MavManager::_updateBatteryConsumedChanged);
         connect(_mav, &UASInterface::modeChanged,                       this, &MavManager::_updateMode);
         connect(_mav, &UASInterface::nameChanged,                       this, &MavManager::_updateName);
         connect(_mav, &UASInterface::systemTypeSet,                     this, &MavManager::_setSystemType);
@@ -436,6 +439,15 @@ void MavManager::_updateBatteryRemaining(UASInterface*, double voltage, double, 
         emit batteryPercentChanged();
     }
 }
+
+void MavManager::_updateBatteryConsumedChanged(UASInterface*, double current_consumed)
+{
+    if(_batteryConsumed != current_consumed) {
+        _batteryConsumed = current_consumed;
+        emit batteryConsumedChanged();
+    }
+}
+
 
 void MavManager::_updateState(UASInterface*, QString name, QString)
 {
