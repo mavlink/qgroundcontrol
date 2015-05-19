@@ -215,7 +215,7 @@ void FileManager::_listAckResponse(Request* listAck)
         cListEntries++;
     }
 
-    if (listAck->hdr.size == 0) {
+    if (listAck->hdr.size == 0 || cListEntries == 0) {
         // Directory is empty, we're done
         Q_ASSERT(listAck->hdr.opcode == kRspAck);
         _currentOperation = kCOIdle;
