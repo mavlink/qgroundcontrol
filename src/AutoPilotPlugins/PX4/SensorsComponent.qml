@@ -186,7 +186,7 @@ QGCView {
                 Component {
                     id: compass0ComponentLabel
 
-                    QGCLabel { text: "Compass Orientation" }
+                    QGCLabel { text: "External Compass Orientation" }
                 }
                 Component {
                     id: compass0ComponentCombo
@@ -470,7 +470,7 @@ QGCView {
                     Column {
                         x: parent.width - rotationColumnWidth
 
-                        QGCLabel { text: "Autpilot Orientation" }
+                        QGCLabel { text: "Autopilot Orientation" }
 
                         FactComboBox {
                             id:     boardRotationCombo
@@ -483,7 +483,7 @@ QGCView {
                         Component {
                             id: compass0ComponentLabel2
 
-                            QGCLabel { text: "Compass Orientation" }
+                            QGCLabel { text: "External Compass Orientation" }
                         }
                         Component {
                             id: compass0ComponentCombo2
