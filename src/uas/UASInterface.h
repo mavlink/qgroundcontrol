@@ -243,7 +243,8 @@ public:
         StartCalibrationGyro,
         StartCalibrationMag,
         StartCalibrationAirspeed,
-        StartCalibrationAccel
+        StartCalibrationAccel,
+        StartCalibrationLevel
     };
     
     /// Starts the specified calibration
