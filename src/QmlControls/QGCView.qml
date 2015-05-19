@@ -106,7 +106,15 @@ FactPanel {
         }
     }
 
+    function __stopAllAnimations() {
+        if (__animateHideDialog.running) {
+            __animateHideDialog.stop()
+        }
+    }
+
     function showDialog(component, title, charWidth, buttons) {
+        __stopAllAnimations()
+
         __dialogCharWidth = charWidth
         __dialogTitle = title
 
@@ -120,6 +128,8 @@ FactPanel {
     }
 
     function showMessage(title, message, buttons) {
+        __stopAllAnimations()
+
         __dialogCharWidth = 50
         __dialogTitle = title
         __messageDialogText = message
