@@ -85,6 +85,7 @@ public:
     Q_INVOKABLE void calibrateCompass(void);
     Q_INVOKABLE void calibrateGyro(void);
     Q_INVOKABLE void calibrateAccel(void);
+    Q_INVOKABLE void calibrateLevel(void);
     Q_INVOKABLE void calibrateAirspeed(void);
     Q_INVOKABLE void cancelCalibration(void);
     
