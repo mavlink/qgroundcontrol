@@ -1472,6 +1472,9 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
         case StartCalibrationAccel:
             accelCal = 1;
             break;
+        case StartCalibrationLevel:
+            accelCal = 2;
+            break;
     }
     
     mavlink_message_t msg;
