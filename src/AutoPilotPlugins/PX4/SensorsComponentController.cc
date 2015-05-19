@@ -191,6 +191,12 @@ void SensorsComponentController::calibrateAccel(void)
     _uas->startCalibration(UASInterface::StartCalibrationAccel);
 }
 
+void SensorsComponentController::calibrateLevel(void)
+{
+    _startLogCalibration();
+    _uas->startCalibration(UASInterface::StartCalibrationLevel);
+}
+
 void SensorsComponentController::calibrateAirspeed(void)
 {
     _startLogCalibration();
