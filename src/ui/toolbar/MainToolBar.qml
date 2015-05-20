@@ -552,6 +552,7 @@ Rectangle {
                     font.weight: Font.DemiBold
                     anchors.right: parent.right
                     anchors.rightMargin: getProportionalDimmension(6)
+                    anchors.verticalCenter: parent.verticalCenter
                     horizontalAlignment: Text.AlignRight
                     color: colorWhite
                 }
