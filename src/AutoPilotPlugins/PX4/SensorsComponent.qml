@@ -425,11 +425,19 @@ QGCView {
                             id:             orientationCalAreaHelpText
                             width:          parent.width
                             wrapMode:       Text.WordWrap
-                            font.pointSize: ScreenTools.fontPointFactor * (17);
+                            font.pointSize: ScreenTools.fontPointFactor * (22);
+                            anchors.top: orientationCalArea.top
+                            anchors.left: orientationCalArea.left
+                            anchors.topMargin: 15
+                            anchors.leftMargin: 15
+                            anchors.rightMargin: 15
+                            anchors.bottomMargin: 15
                         }
 
                         Flow {
-                            y:          orientationCalAreaHelpText.height
+                            anchors.top: orientationCalAreaHelpText.bottom
+                            anchors.left: orientationCalAreaHelpText.left
+                            anchors.topMargin: 15
                             width:      parent.width
                             height:     parent.height - orientationCalAreaHelpText.implicitHeight
                             spacing:    5
