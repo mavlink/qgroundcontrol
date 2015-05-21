@@ -181,41 +181,34 @@ QGCView {
                 anchors.fill: parent
                 spacing:      10
 
-                Column {
-                    spacing:      5
-                    // Compass 0 rotation
-                    Component {
-                        id: compass0ComponentLabel
-
-                        QGCLabel {
-                            font.pointSize: sideBarH1PointSize
-                            text: "External Compass Orientation"
-                        }
-
-                    }
-                    Component {
-                        id: compass0ComponentText
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text:       compassRotationText
-                        }
-                    }
-                    Component {
-                        id: compass0ComponentCombo
-
-                        FactComboBox {
-                            id:     compass0RotationCombo
-                            width:  rotationColumnWidth
-                            model:  rotations
-                            fact:   Fact { name: "CAL_MAG0_ROT"; onFactMissing: showMissingFactOverlay(name) }
-                        }
-                    }
-                    Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel : null }
-                    Loader { sourceComponent: showCompass0Rot ? compass0ComponentText : null }
-                    Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo : null }
+                QGCLabel {
+                    width:      parent.width
+                    wrapMode:   Text.WordWrap
+                    text:       compassRotationText
                 }
+
+                // Compass 0 rotation
+                Component {
+                    id: compass0ComponentLabel
+
+                    QGCLabel {
+                        font.pointSize: sideBarH1PointSize
+                        text: "External Compass Orientation"
+                    }
+
+                }
+                Component {
+                    id: compass0ComponentCombo
+
+                    FactComboBox {
+                        id:     compass0RotationCombo
+                        width:  rotationColumnWidth
+                        model:  rotations
+                        fact:   Fact { name: "CAL_MAG0_ROT"; onFactMissing: showMissingFactOverlay(name) }
+                    }
+                }
+                Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel : null }
+                Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo : null }
                 // Compass 1 rotation
                 Component {
                     id: compass1ComponentLabel
