@@ -267,6 +267,7 @@ QGCView {
                     controller.gyroButton = gyroButton
                     controller.accelButton = accelButton
                     controller.airspeedButton = airspeedButton
+                    controller.levelButton = levelButton
                     controller.cancelButton = cancelButton
                     controller.orientationCalAreaHelpText = orientationCalAreaHelpText
                 }
