@@ -31,6 +31,8 @@
 #include <QFontMetrics>
 
 const double ScreenTools::_defaultFontPointSize = 13;
+const double ScreenTools::_mediumFontPointSize = 16;
+const double ScreenTools::_largeFontPointSize = 20;
 
 ScreenTools::ScreenTools()
 {
@@ -92,7 +94,7 @@ void ScreenTools::_updatePixelSize()
 void ScreenTools::_updateFontSize()
 {
     emit fontPointFactorChanged();
-    emit defaultFontPointSizeChanged();
+    emit fontSizesChanged();
 }
 
 double ScreenTools::fontPointFactor()
@@ -108,4 +110,14 @@ double ScreenTools::pixelSizeFactor()
 double ScreenTools::defaultFontPointSize(void)
 {
     return _defaultFontPointSize * MainWindow::fontPointFactor();
+}
+
+double ScreenTools::mediumFontPointSize(void)
+{
+    return _mediumFontPointSize * MainWindow::fontPointFactor();
+}
+
+double ScreenTools::largeFontPointSize(void)
+{
+    return _largeFontPointSize * MainWindow::fontPointFactor();
 }
