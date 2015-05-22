@@ -40,6 +40,7 @@ enum PX4_CUSTOM_MAIN_MODE {
     PX4_CUSTOM_MAIN_MODE_AUTO,
     PX4_CUSTOM_MAIN_MODE_ACRO,
     PX4_CUSTOM_MAIN_MODE_OFFBOARD,
+    PX4_CUSTOM_MAIN_MODE_STABILIZED,
 };
 
 enum PX4_CUSTOM_SUB_MODE_AUTO {
@@ -100,6 +101,18 @@ QList<AutoPilotPluginManager::FullMode_t> PX4AutoPilotPlugin::getModes(void)
     fullMode.baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
     fullMode.customMode = px4_cm.data;
     modeList << fullMode;
+
+    px4_cm.data = 0;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_ACRO;
+    fullMode.baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
+    fullMode.customMode = px4_cm.data;
+    modeList << fullMode;
+
+    px4_cm.data = 0;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_STABILIZED;
+    fullMode.baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED;
+    fullMode.customMode = px4_cm.data;
+    modeList << fullMode;
     
     px4_cm.data = 0;
     px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_ALTCTL;
@@ -140,6 +153,10 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
         
         if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL) {
             mode = "|MANUAL";
+        } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_ACRO) {
+            mode = "|ACRO";
+        } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_STABILIZED) {
+            mode = "|STAB";
         } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_ALTCTL) {
             mode = "|ALTCTL";
         } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_POSCTL) {
