@@ -565,6 +565,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/FlightModesComponent.h \
     src/AutoPilotPlugins/PX4/FlightModesComponentController.h \
     src/AutoPilotPlugins/PX4/PowerComponent.h \
+    src/AutoPilotPlugins/PX4/PowerComponentController.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4Component.h \
     src/AutoPilotPlugins/PX4/PX4ParameterLoader.h \
@@ -593,6 +594,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
     src/AutoPilotPlugins/PX4/FlightModesComponentController.cc \
     src/AutoPilotPlugins/PX4/PowerComponent.cc \
+    src/AutoPilotPlugins/PX4/PowerComponentController.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
     src/AutoPilotPlugins/PX4/PX4ParameterLoader.cc \

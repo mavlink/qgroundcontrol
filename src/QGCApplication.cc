@@ -65,6 +65,7 @@
 #include "FlightModesComponentController.h"
 #include "AirframeComponentController.h"
 #include "SensorsComponentController.h"
+#include "PowerComponentController.h"
 
 #include "ScreenTools.h"
 #include "MavManager.h"
@@ -322,6 +323,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
     qmlRegisterType<AirframeComponentController>("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
     qmlRegisterType<SensorsComponentController>("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
+    qmlRegisterType<PowerComponentController>("QGroundControl.Controllers", 1, 0, "PowerComponentController");
     
     //-- Create QML Singleton Interfaces
     qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
