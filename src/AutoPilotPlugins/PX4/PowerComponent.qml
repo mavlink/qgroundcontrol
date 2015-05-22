@@ -253,10 +253,7 @@ QGCView {
 
                     Column {
                         anchors.margins:    10
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
-                        anchors.top:        parent.top
-                        anchors.bottom:     calibrateButton.bottom
+                        anchors.fill:       parent
                         spacing:            10
 
                         QGCLabel {
@@ -264,7 +261,6 @@ QGCView {
                         }
 
                         QGCButton {
-                            id:         calibrateButton
                             text:       "Calibrate"
                             onClicked:  controller.calibrateEsc()
                         }
