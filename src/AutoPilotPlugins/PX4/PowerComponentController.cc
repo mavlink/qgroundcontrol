@@ -105,8 +105,15 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
         return;
     }
 
+    
     QString failedPrefix("calibration failed: ");
     if (text.startsWith(failedPrefix)) {
+        QString failureText = text.right(text.length() - failedPrefix.length());
+        if (failureText.startsWith("Disconnect battery")) {
+            emit disconnectBattery();
+            return;
+        }
+        
         _stopCalibration();
         emit calibrationFailed(text.right(text.length() - failedPrefix.length()));
         return;
