@@ -1455,6 +1455,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
     int airspeedCal = 0;
     int radioCal = 0;
     int accelCal = 0;
+    int escCal = 0;
     
     switch (calType) {
         case StartCalibrationGyro:
@@ -1475,6 +1476,9 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
         case StartCalibrationLevel:
             accelCal = 2;
             break;
+        case StartCalibrationEsc:
+            escCal = 1;
+            break;
     }
     
     mavlink_message_t msg;
@@ -1491,7 +1495,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
                                   radioCal,                         // radio cal
                                   accelCal,                         // accel cal
                                   airspeedCal,                      // airspeed cal
-                                  0);                               // unused
+                                  escCal);                          // esc cal
     sendMessage(msg);
 }
 

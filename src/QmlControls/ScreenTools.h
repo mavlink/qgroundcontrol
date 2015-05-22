@@ -85,8 +85,13 @@ public:
     Q_PROPERTY(double   fontPointFactor      READ fontPointFactor      NOTIFY fontPointFactorChanged)
     //! Returns the pixel size factor
     Q_PROPERTY(double   pixelSizeFactor      READ pixelSizeFactor      NOTIFY pixelSizeFactorChanged)
+    
     //! Returns the system wide default font point size (properly scaled)
-    Q_PROPERTY(double   defaultFontPointSize READ defaultFontPointSize NOTIFY defaultFontPointSizeChanged)
+    Q_PROPERTY(double   defaultFontPointSize READ defaultFontPointSize NOTIFY fontSizesChanged)
+    //! Returns the system wide default font point size (properly scaled)
+    Q_PROPERTY(double   mediumFontPointSize READ mediumFontPointSize NOTIFY fontSizesChanged)
+    //! Returns the system wide default font point size (properly scaled)
+    Q_PROPERTY(double   largeFontPointSize READ largeFontPointSize NOTIFY fontSizesChanged)
 
     //! Utility for adjusting font point size. Not dynamic (no signals)
     Q_INVOKABLE qreal   adjustFontPointSize(qreal pointSize);
@@ -113,6 +118,8 @@ public:
     double  fontPointFactor     ();
     double  pixelSizeFactor     ();
     double  defaultFontPointSize(void);
+    double  mediumFontPointSize(void);
+    double  largeFontPointSize(void);
 
 #if defined (__android__)
     bool    isAndroid           () { return true;  }
@@ -128,7 +135,7 @@ signals:
     void repaintRequestedChanged();
     void pixelSizeFactorChanged();
     void fontPointFactorChanged();
-    void defaultFontPointSizeChanged();
+    void fontSizesChanged();
 
 private slots:
     void _updateCanvas();
@@ -137,7 +144,8 @@ private slots:
 
 private:
     static const double _defaultFontPointSize;
-
+    static const double _mediumFontPointSize;
+    static const double _largeFontPointSize;
 };
 
 #endif
