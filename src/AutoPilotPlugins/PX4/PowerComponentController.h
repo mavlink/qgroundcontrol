@@ -49,6 +49,7 @@ signals:
     void newerFirmware(void);
     void incorrectFirmwareRevReporting(void);
     void connectBattery(void);
+    void disconnectBattery(void);
     void batteryConnected(void);
     void calibrationFailed(const QString& errorMessage);
     void calibrationSuccess(const QStringList& warningMessages);
