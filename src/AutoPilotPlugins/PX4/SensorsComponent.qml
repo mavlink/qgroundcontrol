@@ -40,14 +40,16 @@ QGCView {
     // Help text which is shown both in the status text area prior to pressing a cal button and in the
     // pre-calibration dialog.
 
-    readonly property string compassHelp:   "For Compass calibration you will need to rotate your vehicle through a number of positions. For this calibration it is best " +
-                                                "to be connected to your vehicle via radio instead of USB, since the USB cable will likely get in the way."
-    readonly property string gyroHelp:      "For Gyroscope calibration you will need to place your vehicle right side up on solid surface and leave it still."
-    readonly property string accelHelp:     "For Accelerometer calibration you will need to place your vehicle on all six sides on a level surface and hold it still in each orientation for a few seconds."
-    readonly property string levelHelp:     "To level the horizon you need to place the vehicle in its level flight position."
+    readonly property string boardRotationText: "If the autopilot is mounted in flight direction, leave the default value (ROTATION_NONE)"
+    readonly property string compassRotationText: "If the compass or GPS module is mounted in flight direction, leave the default value (ROTATION_NONE)"
+
+    readonly property string compassHelp:   "For Compass calibration you will need to rotate your vehicle through a number of positions. Most users prefer to do this wirelessly with the telemetry link."
+    readonly property string gyroHelp:      "For Gyroscope calibration you will need to place your vehicle on a surface and leave it still."
+    readonly property string accelHelp:     "For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds."
+    readonly property string levelHelp:     "To level the horizon you need to place the vehicle in its level flight position and press OK."
     readonly property string airspeedHelp:  "For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor."
 
-    readonly property string statusTextAreaDefaultText: compassHelp + "\n\n" + gyroHelp + "\n\n" + accelHelp + "\n\n" + airspeedHelp + "\n\n"
+    readonly property string statusTextAreaDefaultText: "Start the individual calibration steps by clicking one of the buttons above."
 
     // Used to pass what type of calibration is being performed to the preCalibrationDialog
     property string preCalibrationDialogType
@@ -55,7 +57,10 @@ QGCView {
     // Used to pass help text to the preCalibrationDialog dialog
     property string preCalibrationDialogHelp
 
-    readonly property int rotationColumnWidth: 200
+    readonly property int sideBarH1PointSize: (ScreenTools.defaultFontPointSize * 1.3 + 0.5)
+    readonly property int mainTextH1PointSize: (ScreenTools.defaultFontPointSize * 1.5 + 0.5)
+
+    readonly property int rotationColumnWidth: 300
     readonly property var rotations: [
         "ROTATION_NONE",
         "ROTATION_YAW_45",
@@ -141,7 +146,7 @@ QGCView {
 
             Column {
                 anchors.fill: parent
-                spacing:                10
+                spacing:                5
 
                 QGCLabel {
                     width:      parent.width
@@ -152,14 +157,14 @@ QGCView {
                 QGCLabel {
                     width:      parent.width
                     wrapMode:   Text.WordWrap
-                    visible:    preCalibrationDialogType != "airspeed"
-                    text:       "Please check and/or update board rotation before calibrating."
+                    visible:    (preCalibrationDialogType != "airspeed") && (preCalibrationDialogType != "gyro")
+                    text:       boardRotationText
                 }
 
                 FactComboBox {
                     width:      rotationColumnWidth
                     model:      rotations
-                    visible:    preCalibrationDialogType != "airspeed"
+                    visible:    preCalibrationDialogType != "airspeed" && (preCalibrationDialogType != "gyro")
                     fact:       Fact { name: "SENS_BOARD_ROT"; onFactMissing: showMissingFactOverlay(name) }
                 }
             }
@@ -174,19 +179,23 @@ QGCView {
 
             Column {
                 anchors.fill: parent
-                spacing:                10
+                spacing:      10
 
                 QGCLabel {
                     width:      parent.width
                     wrapMode:   Text.WordWrap
-                    text:       "Please check and/or update compass rotation(s)"
+                    text:       compassRotationText
                 }
 
                 // Compass 0 rotation
                 Component {
                     id: compass0ComponentLabel
 
-                    QGCLabel { text: "External Compass Orientation" }
+                    QGCLabel {
+                        font.pointSize: sideBarH1PointSize
+                        text: "External Compass Orientation"
+                    }
+
                 }
                 Component {
                     id: compass0ComponentCombo
@@ -200,7 +209,6 @@ QGCView {
                 }
                 Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel : null }
                 Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo : null }
-
                 // Compass 1 rotation
                 Component {
                     id: compass1ComponentLabel
@@ -259,6 +267,7 @@ QGCView {
                     controller.gyroButton = gyroButton
                     controller.accelButton = accelButton
                     controller.airspeedButton = airspeedButton
+                    controller.levelButton = levelButton
                     controller.cancelButton = cancelButton
                     controller.orientationCalAreaHelpText = orientationCalAreaHelpText
                 }
@@ -335,11 +344,14 @@ QGCView {
 
                     IndicatorButton {
                         property Fact fact: Fact { name: "SENS_BOARD_X_OFF" }
+                        property Fact checkAcc: Fact { name: "CAL_ACC0_ID" }
+                        property Fact checkGyro: Fact { name: "CAL_GYRO0_ID" }
 
                         id:             levelButton
                         width:          parent.buttonWidth
                         text:           "Level Horizon"
                         indicatorGreen: fact.value != 0
+                        enabled: checkAcc.value != 0 && checkGyro.value != 0
 
                         onClicked: {
                             preCalibrationDialogType = "level"
@@ -413,11 +425,19 @@ QGCView {
                             id:             orientationCalAreaHelpText
                             width:          parent.width
                             wrapMode:       Text.WordWrap
-                            font.pointSize: ScreenTools.fontPointFactor * (17);
+                            font.pointSize: ScreenTools.fontPointFactor * (22);
+                            anchors.top: orientationCalArea.top
+                            anchors.left: orientationCalArea.left
+                            anchors.topMargin: 15
+                            anchors.leftMargin: 15
+                            anchors.rightMargin: 15
+                            anchors.bottomMargin: 15
                         }
 
                         Flow {
-                            y:          orientationCalAreaHelpText.height
+                            anchors.top: orientationCalAreaHelpText.bottom
+                            anchors.left: orientationCalAreaHelpText.left
+                            anchors.topMargin: 15
                             width:      parent.width
                             height:     parent.height - orientationCalAreaHelpText.implicitHeight
                             spacing:    5
@@ -468,73 +488,108 @@ QGCView {
                     }
 
                     Column {
+                        anchors.left: orientationCalArea.right
+                        anchors.leftMargin: 5
+                        spacing: 20
                         x: parent.width - rotationColumnWidth
 
-                        QGCLabel { text: "Autopilot Orientation" }
+                        Column {
+                            spacing:            5
 
-                        FactComboBox {
-                            id:     boardRotationCombo
-                            width:  rotationColumnWidth;
-                            model:  rotations
-                            fact:   Fact { name: "SENS_BOARD_ROT" }
-                        }
+                            QGCLabel {
+                                font.pointSize: sideBarH1PointSize
+                                text: "Autopilot Orientation"
+                            }
 
-                        // Compass 0 rotation
-                        Component {
-                            id: compass0ComponentLabel2
-
-                            QGCLabel { text: "External Compass Orientation" }
-                        }
-                        Component {
-                            id: compass0ComponentCombo2
+                            QGCLabel {
+                                width:      parent.width
+                                wrapMode:   Text.WordWrap
+                                text: boardRotationText
+                            }
 
                             FactComboBox {
-                                id:     compass0RotationCombo
-                                width:  rotationColumnWidth
+                                id:     boardRotationCombo
+                                width:  rotationColumnWidth;
                                 model:  rotations
-                                fact:   Fact { name: "CAL_MAG0_ROT" }
+                                fact:   Fact { name: "SENS_BOARD_ROT" }
                             }
                         }
-                        Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel2 : null }
-                        Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo2 : null }
 
-                        // Compass 1 rotation
-                        Component {
-                            id: compass1ComponentLabel2
+                        Column {
+                            spacing:            5
 
-                            QGCLabel { text: "Compass 1 Orientation" }
-                        }
-                        Component {
-                            id: compass1ComponentCombo2
+                            // Compass 0 rotation
+                            Component {
+                                id: compass0ComponentLabel2
 
-                            FactComboBox {
-                                id:     compass1RotationCombo
-                                width:  rotationColumnWidth
-                                model:  rotations
-                                fact:   Fact { name: "CAL_MAG1_ROT" }
+                                QGCLabel {
+                                    font.pointSize: sideBarH1PointSize
+                                    text: "External Compass Orientation"
+                                }
                             }
-                        }
-                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel2 : null }
-                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo2 : null }
+                            Component {
+                                id: compass0ComponentCombo2
 
-                        // Compass 2 rotation
-                        Component {
-                            id: compass2ComponentLabel2
-
-                            QGCLabel { text: "Compass 2 Orientation" }
-                        }
-                        Component {
-                            id: compass2ComponentCombo2
-
-                            FactComboBox {
-                                id:     compass1RotationCombo
-                                width:  rotationColumnWidth
-                                model:  rotations
-                                fact:   Fact { name: "CAL_MAG2_ROT" }
+                                FactComboBox {
+                                    id:     compass0RotationCombo
+                                    width:  rotationColumnWidth
+                                    model:  rotations
+                                    fact:   Fact { name: "CAL_MAG0_ROT" }
+                                }
                             }
+                            Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel2 : null }
+                            Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo2 : null }
                         }
-                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel2 : null }
-                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo2 : null }
+
+                        Column {
+                            spacing:            5
+                            // Compass 1 rotation
+                            Component {
+                                id: compass1ComponentLabel2
+
+                                QGCLabel {
+                                    font.pointSize: sideBarH1PointSize
+                                    text: "External Compass 1 Orientation"
+                                }
+                            }
+                            Component {
+                                id: compass1ComponentCombo2
+
+                                FactComboBox {
+                                    id:     compass1RotationCombo
+                                    width:  rotationColumnWidth
+                                    model:  rotations
+                                    fact:   Fact { name: "CAL_MAG1_ROT" }
+                                }
+                            }
+                            Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel2 : null }
+                            Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo2 : null }
+                        }
+
+                        Column {
+                            spacing:            5
+                            // Compass 2 rotation
+                            Component {
+                                id: compass2ComponentLabel2
+
+                                QGCLabel {
+                                    font.pointSize: sidebarH1PointSize
+                                    text: "Compass 2 Orientation"
+                                }
+                            }
+                            Component {
+                                id: compass2ComponentCombo2
+
+                                FactComboBox {
+                                    id:     compass1RotationCombo
+                                    width:  rotationColumnWidth
+                                    model:  rotations
+                                    fact:   Fact { name: "CAL_MAG2_ROT" }
+                                }
+                            }
+                            Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel2 : null }
+                            Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo2 : null }
+                        }
                     }
                 }
             }
