@@ -218,6 +218,7 @@ bool UDPLink::_disconnect(void)
     this->wait();
     if (_socket) {
         // Make sure delete happen on correct thread
+        _socket->close();
         _socket->deleteLater();
         _socket = NULL;
         emit disconnected();
@@ -250,10 +251,12 @@ bool UDPLink::_hardwareConnect()
     QHostAddress host = QHostAddress::Any;
     _socket = new QUdpSocket();
     _socket->setProxy(QNetworkProxy::NoProxy);
-    _connectState = _socket->bind(host, _config->localPort());
-    QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint);
     if (_connectState) {
+        QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
         emit connected();
+    } else {
+        emit communicationError("UDP Link Error", "Error binding UDP port");
     }
     return _connectState;
 }
