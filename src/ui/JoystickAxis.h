@@ -45,6 +45,8 @@ public:
     void setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
     void setInverted(bool newValue);
     void setRangeLimit(bool newValue);
+    void setAxisRangeMin(float min);
+    void setAxisRangeMax(float max);
 
 signals:
     /** @brief Signal a change in this axis' yaw/pitch/roll mapping */
