@@ -164,7 +164,7 @@ void QGCXPlaneLink::run()
 
     socket = new QUdpSocket(this);
     socket->moveToThread(this);
-    connectState = socket->bind(localHost, localPort);
+    connectState = socket->bind(localHost, localPort, QAbstractSocket::ReuseAddressHint);
     if (!connectState) {
 
         emit statusMessage("Binding socket failed!");
