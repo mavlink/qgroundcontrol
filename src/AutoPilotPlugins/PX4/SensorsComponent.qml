@@ -60,7 +60,7 @@ QGCView {
     readonly property int sideBarH1PointSize: (ScreenTools.defaultFontPointSize * 1.3 + 0.5)
     readonly property int mainTextH1PointSize: (ScreenTools.defaultFontPointSize * 1.5 + 0.5)
 
-    readonly property int rotationColumnWidth: 300
+    readonly property int rotationColumnWidth: 250
     readonly property var rotations: [
         "ROTATION_NONE",
         "ROTATION_YAW_45",
