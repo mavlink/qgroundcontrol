@@ -90,7 +90,7 @@ void QGCFlightGearLink::run()
     _udpCommSocket = new QUdpSocket(this);
     Q_CHECK_PTR(_udpCommSocket);
     _udpCommSocket->moveToThread(this);
-    _udpCommSocket->bind(host, port);
+    _udpCommSocket->bind(host, port, QAbstractSocket::ReuseAddressHint);
     QObject::connect(_udpCommSocket, SIGNAL(readyRead()), this, SLOT(readBytes()));
     
     
