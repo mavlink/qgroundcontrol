@@ -952,7 +952,7 @@ void MainWindow::_loadCurrentViewState(void)
         case VIEW_ANALYZE:
             _buildAnalyzeView();
             centerView = _analyzeView;
-            defaultWidgets = "MAVLINK_INSPECTOR_DOCKWIDGET,PARAMETER_INTERFACE_DOCKWIDGET,FILE_VIEW_DOCKWIDGET,HEAD_UP_DISPLAY_DOCKWIDGET";
+            defaultWidgets = "PARAMETER_INTERFACE_DOCKWIDGET,FILE_VIEW_DOCKWIDGET";
             break;
 
         case VIEW_FLIGHT:
