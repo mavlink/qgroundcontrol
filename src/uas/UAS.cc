@@ -2552,60 +2552,31 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                     yawrate
                     );
         } else if (joystickMode == JoystickInput::JOYSTICK_MODE_MANUAL) {
-            if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED)) {
 
-                // Transmit the manual commands only if they've changed OR if it's been a little bit since they were last transmit. To make sure there aren't issues with
-                // response rate, we make sure that a message is transmit when the commands have changed, then one more time, and then switch to the lower transmission rate
-                // if no command inputs have changed.
-                // The default transmission rate is 50Hz, but when no inputs have changed it drops down to 5Hz.
-                bool sendCommand = false;
-                if (countSinceLastTransmission++ >= 10) {
-                    sendCommand = true;
-                    countSinceLastTransmission = 0;
-                } else if ((!isnan(roll) && roll != manualRollAngle) || (!isnan(pitch) && pitch != manualPitchAngle) ||
-                        (!isnan(yaw) && yaw != manualYawAngle) || (!isnan(thrust) && thrust != manualThrust) ||
-                        buttons != manualButtons) {
-                    sendCommand = true;
+            // Save the new manual control inputs
+            manualRollAngle = roll;
+            manualPitchAngle = pitch;
+            manualYawAngle = yaw;
+            manualThrust = thrust;
+            manualButtons = buttons;
 
-                    // Ensure that another message will be sent the next time this function is called
-                    countSinceLastTransmission = 10;
-                }
+            // Store scaling values for all 3 axes
+            const float axesScaling = 1.0 * 1000.0;
 
-                // Now if we should trigger an update, let's do that
-                if (sendCommand) {
-                    // Save the new manual control inputs
-                    manualRollAngle = roll;
-                    manualPitchAngle = pitch;
-                    manualYawAngle = yaw;
-                    manualThrust = thrust;
-                    manualButtons = buttons;
+            // Calculate the new commands for roll, pitch, yaw, and thrust
+            const float newRollCommand = roll * axesScaling;
+            // negate pitch value because pitch is negative for pitching forward but mavlink message argument is positive for forward
+            const float newPitchCommand = -pitch * axesScaling;
+            const float newYawCommand = yaw * axesScaling;
+            const float newThrustCommand = thrust * axesScaling;
 
-                    // Store scaling values for all 3 axes
-                    const float axesScaling = 1.0 * 1000.0;
+            // Send the MANUAL_COMMAND message
+            mavlink_message_t message;
+            mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+            sendMessage(message);
 
-                    // Calculate the new commands for roll, pitch, yaw, and thrust
-                    const float newRollCommand = roll * axesScaling;
-                    // negate pitch value because pitch is negative for pitching forward but mavlink message argument is positive for forward
-                    const float newPitchCommand = -pitch * axesScaling;
-                    const float newYawCommand = yaw * axesScaling;
-                    const float newThrustCommand = thrust * axesScaling;
-
-                    // Send the MANUAL_COMMAND message
-                    mavlink_message_t message;
-                    mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
-                    sendMessage(message);
-
-                    // Emit an update in control values to other UI elements, like the HSI display
-                    emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
-                }
-        } else {
-            return;
-        }
-
-        sendMessage(message);
-
-        // Emit an update in control values to other UI elements, like the HSI display
-        emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
+            // Emit an update in control values to other UI elements, like the HSI display
+            emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
         }
     }
 }
