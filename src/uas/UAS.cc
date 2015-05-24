@@ -2401,7 +2401,7 @@ void UAS::toggleAutonomy()
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons)
+void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, quint8 joystickMode)
 {
     Q_UNUSED(xHat);
     Q_UNUSED(yHat);
@@ -2414,33 +2414,145 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
     static quint16 manualButtons = 0;
     static quint8 countSinceLastTransmission = 0; // Track how many calls to this function have occurred since the last MAVLink transmission
 
-    // We only transmit manual command messages if the system has manual inputs enabled and is armed
-    if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
-    {
+    // Transmit the external setpoints only if they've changed OR if it's been a little bit since they were last transmit. To make sure there aren't issues with
+    // response rate, we make sure that a message is transmit when the commands have changed, then one more time, and then switch to the lower transmission rate
+    // if no command inputs have changed.
 
-        // Transmit the manual commands only if they've changed OR if it's been a little bit since they were last transmit. To make sure there aren't issues with
-        // response rate, we make sure that a message is transmit when the commands have changed, then one more time, and then switch to the lower transmission rate
-        // if no command inputs have changed.
-        // The default transmission rate is 50Hz, but when no inputs have changed it drops down to 5Hz.
-        bool sendCommand = false;
-        if (countSinceLastTransmission++ >= 10)
-        {
-            sendCommand = true;
-            countSinceLastTransmission = 0;
-        }
-        else if ((!isnan(roll) && roll != manualRollAngle) || (!isnan(pitch) && pitch != manualPitchAngle) ||
-                   (!isnan(yaw) && yaw != manualYawAngle) || (!isnan(thrust) && thrust != manualThrust) ||
-                   buttons != manualButtons)
-        {
-            sendCommand = true;
+    // The default transmission rate is 25Hz, but when no inputs have changed it drops down to 5Hz.
+    bool sendCommand = false;
+    if (countSinceLastTransmission++ >= 5) {
+        sendCommand = true;
+        countSinceLastTransmission = 0;
+    } else if ((!isnan(roll) && roll != manualRollAngle) || (!isnan(pitch) && pitch != manualPitchAngle) ||
+             (!isnan(yaw) && yaw != manualYawAngle) || (!isnan(thrust) && thrust != manualThrust) ||
+             buttons != manualButtons) {
+        sendCommand = true;
 
-            // Ensure that another message will be sent the next time this function is called
-            countSinceLastTransmission = 10;
-        }
+        // Ensure that another message will be sent the next time this function is called
+        countSinceLastTransmission = 10;
+    }
 
-        // Now if we should trigger an update, let's do that
-        if (sendCommand)
-        {
+    // Now if we should trigger an update, let's do that
+    if (sendCommand) {
+        // Save the new manual control inputs
+        manualRollAngle = roll;
+        manualPitchAngle = pitch;
+        manualYawAngle = yaw;
+        manualThrust = thrust;
+        manualButtons = buttons;
+
+        mavlink_message_t message;
+
+        if (joystickMode == JoystickInput::JOYSTICK_MODE_ATTITUDE) {
+            // send an external attitude setpoint command (rate control disabled)
+            float attitudeQuaternion[4];
+            mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
+            uint8_t typeMask = 0x7; // disable rate control
+            mavlink_msg_set_attitude_target_pack(mavlink->getSystemId(),
+                mavlink->getComponentId(),
+                &message,
+                QGC::groundTimeUsecs(),
+                this->uasId,
+                0,
+                typeMask,
+                attitudeQuaternion,
+                0,
+                0,
+                0,
+                thrust
+                );
+        } else if (joystickMode == JoystickInput::JOYSTICK_MODE_POSITION) {
+            // Send the the local position setpoint (local pos sp external message)
+            static float px = 0;
+            static float py = 0;
+            static float pz = 0;
+            //XXX: find decent scaling
+            px -= pitch;
+            py += roll;
+            pz -= 2.0f*(thrust-0.5);
+            uint16_t typeMask = (1<<11)|(7<<6)|(7<<3); // select only POSITION control
+            mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
+                    mavlink->getComponentId(),
+                    &message,
+                    QGC::groundTimeUsecs(),
+                    this->uasId,
+                    0,
+                    MAV_FRAME_LOCAL_NED,
+                    typeMask,
+                    px,
+                    py,
+                    pz,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    yaw,
+                    0
+                    );
+        } else if (joystickMode == JoystickInput::JOYSTICK_MODE_FORCE) {
+            // Send the the force setpoint (local pos sp external message)
+            float dcm[3][3];
+            mavlink_euler_to_dcm(roll, pitch, yaw, dcm);
+            const float fx = -dcm[0][2] * thrust;
+            const float fy = -dcm[1][2] * thrust;
+            const float fz = -dcm[2][2] * thrust;
+            uint16_t typeMask = (3<<10)|(7<<3)|(7<<0)|(1<<9); // select only FORCE control (disable everything else)
+            mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
+                    mavlink->getComponentId(),
+                    &message,
+                    QGC::groundTimeUsecs(),
+                    this->uasId,
+                    0,
+                    MAV_FRAME_LOCAL_NED,
+                    typeMask,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    fx,
+                    fy,
+                    fz,
+                    0,
+                    0
+                    );
+        } else if (joystickMode == JoystickInput::JOYSTICK_MODE_VELOCITY) {
+            // Send the the local velocity setpoint (local pos sp external message)
+            static float vx = 0;
+            static float vy = 0;
+            static float vz = 0;
+            static float yawrate = 0;
+            //XXX: find decent scaling
+            vx -= pitch;
+            vy += roll;
+            vz -= 2.0f*(thrust-0.5);
+            yawrate += yaw; //XXX: not sure what scale to apply here
+            uint16_t typeMask = (1<<10)|(7<<6)|(7<<0); // select only VELOCITY control
+            mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
+                    mavlink->getComponentId(),
+                    &message,
+                    QGC::groundTimeUsecs(),
+                    this->uasId,
+                    0,
+                    MAV_FRAME_LOCAL_NED,
+                    typeMask,
+                    0,
+                    0,
+                    0,
+                    vx,
+                    vy,
+                    vz,
+                    0,
+                    0,
+                    0,
+                    0,
+                    yawrate
+                    );
+        } else if (joystickMode == JoystickInput::JOYSTICK_MODE_MANUAL) {
+
             // Save the new manual control inputs
             manualRollAngle = roll;
             manualPitchAngle = pitch;
@@ -2453,7 +2565,8 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
 
             // Calculate the new commands for roll, pitch, yaw, and thrust
             const float newRollCommand = roll * axesScaling;
-            const float newPitchCommand = pitch * axesScaling;
+            // negate pitch value because pitch is negative for pitching forward but mavlink message argument is positive for forward
+            const float newPitchCommand = -pitch * axesScaling;
             const float newYawCommand = yaw * axesScaling;
             const float newThrustCommand = thrust * axesScaling;
 
