@@ -47,29 +47,31 @@ Item {
     Component {
         id: validComponent
 
-        Rectangle {
-            Fact { id: rc_map_throttle;     name: "RC_MAP_THROTTLE" }
-            Fact { id: rc_map_yaw;          name: "RC_MAP_YAW" }
-            Fact { id: rc_map_pitch;        name: "RC_MAP_PITCH" }
-            Fact { id: rc_map_roll;         name: "RC_MAP_ROLL" }
-            Fact { id: rc_map_flaps;        name: "RC_MAP_FLAPS" }
-            Fact { id: rc_map_aux1;         name: "RC_MAP_AUX1" }
-            Fact { id: rc_map_aux2;         name: "RC_MAP_AUX2" }
+        FactPanel {
+            Fact { id: rc_map_throttle;     name: "RC_MAP_THROTTLE"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_yaw;          name: "RC_MAP_YAW"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_pitch;        name: "RC_MAP_PITCH"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_roll;         name: "RC_MAP_ROLL"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_flaps;        name: "RC_MAP_FLAPS"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_aux1;         name: "RC_MAP_AUX1"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_aux2;         name: "RC_MAP_AUX2"; onFactMissing: showMissingFactOverlay(name) }
 
-            Fact { id: rc_map_mode_sw;      name: "RC_MAP_MODE_SW" }
-            Fact { id: rc_map_posctl_sw;    name: "RC_MAP_POSCTL_SW" }
-            Fact { id: rc_map_return_sw;    name: "RC_MAP_RETURN_SW" }
-            Fact { id: rc_map_offboard_sw;  name: "RC_MAP_OFFB_SW" }
-            Fact { id: rc_map_loiter_sw;    name: "RC_MAP_LOITER_SW" }
+            Fact { id: rc_map_mode_sw;      name: "RC_MAP_MODE_SW"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_posctl_sw;    name: "RC_MAP_POSCTL_SW"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_return_sw;    name: "RC_MAP_RETURN_SW"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_offboard_sw;  name: "RC_MAP_OFFB_SW"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_loiter_sw;    name: "RC_MAP_LOITER_SW"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_map_acro_sw;      name: "RC_MAP_ACRO_SW"; onFactMissing: showMissingFactOverlay(name) }
 
-            Fact { id: rc_assist_th;        name: "RC_ASSIST_TH" }
-            Fact { id: rc_posctl_th;        name: "RC_POSCTL_TH" }
-            Fact { id: rc_auto_th;          name: "RC_AUTO_TH" }
-            Fact { id: rc_loiter_th;        name: "RC_LOITER_TH" }
-            Fact { id: rc_return_th;        name: "RC_RETURN_TH" }
-            Fact { id: rc_offboard_th;      name: "RC_OFFB_TH" }
+            Fact { id: rc_posctl_th;        name: "RC_POSCTL_TH"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_return_th;        name: "RC_RETURN_TH"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_offboard_th;      name: "RC_OFFB_TH"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_loiter_th;        name: "RC_LOITER_TH"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_acro_th;          name: "RC_ACRO_TH"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_assist_th;        name: "RC_ASSIST_TH"; onFactMissing: showMissingFactOverlay(name) }
+            Fact { id: rc_auto_th;          name: "RC_AUTO_TH"; onFactMissing: showMissingFactOverlay(name) }
 
-            Fact { id: rc_th_user;          name: "RC_TH_USER" }
+            Fact { id: rc_th_user;          name: "RC_TH_USER"; onFactMissing: showMissingFactOverlay(name) }
 
             property int throttleChannel:   rc_map_throttle.value
             property int yawChannel:        rc_map_yaw.value
@@ -97,9 +99,6 @@ Item {
             readonly property int progressBarHeight: 200
 
             anchors.fill: parent
-
-
-            color: qgcPal.window
 
             Component {
                 id: dragHandle
@@ -136,7 +135,7 @@ Item {
                 id: unassignedModeTileComponent
 
                 Rectangle {
-                    Fact { id: fact; name: tileParam }
+                    Fact { id: fact; name: tileParam; onFactMissing: showMissingFactOverlay(name) }
                     property bool dragEnabled: fact.value == 0
 
                     id:             outerRect
@@ -222,7 +221,7 @@ Item {
                 id: assignedModeTileComponent
 
                 Rectangle {
-                    Fact { id: fact; name: tileDragEnabled ? tileParam : "" }
+                    Fact { id: fact; name: tileDragEnabled ? tileParam : ""; onFactMissing: showMissingFactOverlay(name) }
 
                     width:          tileWidth
                     height:         tileHeight
