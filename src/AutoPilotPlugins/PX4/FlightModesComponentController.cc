@@ -77,6 +77,12 @@ void FlightModesComponentController::_validateConfiguration(void)
         _channelCount = _chanMax;
     }
     
+    // Acro is not full supported yet. If Acro is mapped you uhave to set up the hard way.
+    if (_autoPilotPlugin->getParameterFact("RC_MAP_ACRO_SW")->value().toInt() != 0) {
+        _validConfiguration = false;
+        _configurationErrors += "Flight Mode setup does not yet support Acro switch";
+    }
+    
     // Make sure switches are valid and within channel range
     
     QStringList switchParams, switchNames;

@@ -409,7 +409,7 @@ void PX4RCCalibrationTest::_fullCalibration_test(void)
                 // First make sure this function isn't being use for a switch
                 
                 QStringList switchList;
-                switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW";
+                switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
                 
                 foreach (QString switchParam, switchList) {
                     Q_ASSERT(_autopilot->getParameterFact(switchParam)->value().toInt() != channel + 1);
