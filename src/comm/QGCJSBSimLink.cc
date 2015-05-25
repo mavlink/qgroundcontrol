@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -24,8 +24,7 @@ This file is part of the QGROUNDCONTROL project
 /**
  * @file
  *   @brief Definition of UDP connection (server) for unmanned vehicles
- *   @see Flightgear Manual http://mapserver.flightgear.org/getstart.pdf
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *   @author Lorenz Meier <lorenz@px4.io>
  *
  */
 
@@ -78,7 +77,7 @@ void QGCJSBSimLink::run()
     if (!mav) return;
     socket = new QUdpSocket(this);
     socket->moveToThread(this);
-    connectState = socket->bind(host, port);
+    connectState = socket->bind(host, port, QAbstractSocket::ReuseAddressHint);
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
