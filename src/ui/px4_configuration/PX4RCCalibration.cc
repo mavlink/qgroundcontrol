@@ -76,6 +76,7 @@ const struct PX4RCCalibration::FunctionInfo PX4RCCalibration::_rgFunctionInfo[PX
     { "RC_MAP_POSCTL_SW" },
     { "RC_MAP_LOITER_SW" },
     { "RC_MAP_RETURN_SW" },
+    { "RC_MAP_ACRO_SW" },
     { "RC_MAP_FLAPS" },
     { "RC_MAP_AUX1" },
     { "RC_MAP_AUX2" },
