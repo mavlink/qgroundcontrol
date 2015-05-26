@@ -620,7 +620,6 @@ INCLUDEPATH += \
 
 HEADERS += \
     src/FactSystem/Fact.h \
-    src/FactSystem/FactBinder.h \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactSystem.h \
     src/FactSystem/FactValidator.h \
@@ -629,7 +628,6 @@ HEADERS += \
 
 SOURCES += \
     src/FactSystem/Fact.cc \
-    src/FactSystem/FactBinder.cc \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactSystem.cc \
     src/FactSystem/FactValidator.cc \

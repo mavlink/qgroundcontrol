@@ -55,9 +55,10 @@ QGCView {
             property int firstColumnWidth: 220
             property int textEditWidth:    80
 
-            property Fact battNumCells: Fact { name: "BAT_N_CELLS"; onFactMissing: showMissingFactOverlay(name) }
-            property Fact battHighVolt: Fact { name: "BAT_V_CHARGED"; onFactMissing: showMissingFactOverlay(name) }
-            property Fact battLowVolt:  Fact { name: "BAT_V_EMPTY"; onFactMissing: showMissingFactOverlay(name) }
+            property Fact battNumCells:     controller.getParameterFact(-1, "BAT_N_CELLS")
+            property Fact battHighVolt:     controller.getParameterFact(-1, "BAT_V_CHARGED")
+            property Fact battLowVolt:      controller.getParameterFact(-1, "BAT_V_EMPTY")
+            property Fact battVoltLoadDrop: controller.getParameterFact(-1, "BAT_V_LOAD_DROP")
 
             property alias battHigh: battHighRow
             property alias battLow:  battLowRow
@@ -150,7 +151,7 @@ QGCView {
                                     FactTextField {
                                         id: cellsField
                                         width: textEditWidth
-                                        fact: Fact { name: "BAT_N_CELLS"; onFactMissing: showMissingFactOverlay(name) }
+                                        fact: battNumCells
                                         showUnits: true
                                     }
                                 }
@@ -161,7 +162,7 @@ QGCView {
                                     FactTextField {
                                         id: battHighField
                                         width: textEditWidth
-                                        fact: Fact { name: "BAT_V_CHARGED"; onFactMissing: showMissingFactOverlay(name) }
+                                        fact: battHighVolt
                                         showUnits: true
                                     }
                                 }
@@ -172,7 +173,7 @@ QGCView {
                                     FactTextField {
                                         id: battLowField
                                         width: textEditWidth
-                                        fact: Fact { name: "BAT_V_EMPTY"; onFactMissing: showMissingFactOverlay(name) }
+                                        fact: battLowVolt
                                         showUnits: true
                                     }
                                 }
@@ -332,7 +333,7 @@ QGCView {
                             FactTextField {
                                 id: battDropField
                                 width: textEditWidth
-                                fact: Fact { name: "BAT_V_LOAD_DROP"; onFactMissing: showMissingFactOverlay(name) }
+                                fact: battVoltLoadDrop
                                 showUnits: true
                             }
                         }

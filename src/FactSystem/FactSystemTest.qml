@@ -24,21 +24,29 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QGroundControl.FactSystem 1.0
+import QGroundControl.FactControls 1.0
 
-Item {
+FactPanel {
+    id: panel
+
+    FactPanelController { id: controller; factPanel: panel }
+
     // Use default component id
     TextInput {
         objectName: "testControl"
-        Fact { id: fact1; name: "RC_MAP_THROTTLE" }
-        text: fact1.value
-        onAccepted: { fact1.value = text; }
+        text:       fact1.value
+
+        property Fact fact1: controller.getParameterFact(-1, "RC_MAP_THROTTLE")
+
+        onAccepted: fact1.value = text
     }
 
     // Use specific component id
     TextInput {
-        objectName: "testControl"
-		Fact { id: fact2; name: "COMPONENT_51:51" }
-        text: fact2.value
-        onAccepted: { fact2.value = text; }
+        text:       fact2.value
+
+        property Fact fact2: controller.getParameterFact(51, "COMPONENT_51")
+
+        onAccepted: fact2.value = text
     }
 }

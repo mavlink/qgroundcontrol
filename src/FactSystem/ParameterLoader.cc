@@ -35,6 +35,8 @@
 
 QGC_LOGGING_CATEGORY(ParameterLoaderLog, "ParameterLoaderLog")
 
+Fact ParameterLoader::_defaultFact;
+
 ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent) :
     QObject(parent),
     _autopilot(autopilot),
@@ -386,13 +388,11 @@ Fact* ParameterLoader::getFact(int componentId, const QString& name)
     componentId = _actualComponentId(componentId);
     
     if (!_mapParameterName2Variant.contains(componentId) || !_mapParameterName2Variant[componentId].contains(name)) {
-        return NULL;
+        qgcApp()->reportMissingParameter(componentId, name);
+        return &_defaultFact;
     }
     
-    Fact* fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
-    Q_ASSERT(fact);
-    
-    return fact;
+    return _mapParameterName2Variant[componentId][name].value<Fact*>();
 }
 
 QStringList ParameterLoader::parameterNames(void)

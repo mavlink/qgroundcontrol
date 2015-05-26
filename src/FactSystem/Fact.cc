@@ -28,14 +28,25 @@
 
 #include <QtQml>
 
+Fact::Fact(void) :
+    _componentId(-1),
+    _value(0),
+    _type(FactMetaData::valueTypeInt32),
+    _metaData(NULL)
+{    
+    FactMetaData* metaData = new FactMetaData(_type, this);
+    setMetaData(metaData);
+}
+
 Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent) :
     QObject(parent),
     _name(name),
     _componentId(componentId),
+    _value(0),
     _type(type),
     _metaData(NULL)
 {
-    _value = 0;
+
 }
 
 void Fact::setValue(const QVariant& value)

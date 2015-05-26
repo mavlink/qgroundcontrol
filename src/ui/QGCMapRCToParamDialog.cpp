@@ -101,13 +101,13 @@ ParamLoader::ParamLoader(QString paramName, UASInterface* uas, QObject* parent) 
     _paramName(paramName),
     _paramReceived(false)
 {
-    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
+    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas).data();
     Q_ASSERT(_autopilot);
 }
 
 void ParamLoader::load()
 {
-    connect(_autopilot->getParameterFact(_paramName), &Fact::valueChanged, this, &ParamLoader::_parameterUpdated);
+    connect(_autopilot->getParameterFact(FactSystem::defaultComponentId, _paramName), &Fact::valueChanged, this, &ParamLoader::_parameterUpdated);
     
     // refresh the parameter from onboard to make sure the current value is used
     _autopilot->refreshParameter(FactSystem::defaultComponentId, _paramName);
@@ -117,5 +117,5 @@ void ParamLoader::_parameterUpdated(QVariant value)
 {
     Q_UNUSED(value);
     
-    emit paramLoaded(true, _autopilot->getParameterFact(_paramName)->value().toFloat(), "");
+    emit paramLoaded(true, _autopilot->getParameterFact(FactSystem::defaultComponentId, _paramName)->value().toFloat(), "");
 }

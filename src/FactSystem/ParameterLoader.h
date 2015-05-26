@@ -147,6 +147,8 @@ private:
     bool _fullRefresh;
     
     QMutex _dataMutex;
+    
+    static Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 };
 
 #endif

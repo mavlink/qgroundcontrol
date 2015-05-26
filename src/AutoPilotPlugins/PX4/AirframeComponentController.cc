@@ -48,16 +48,16 @@ AirframeComponentController::AirframeComponentController(void) :
         qmlRegisterUncreatableType<Airframe>("QGroundControl.Controllers", 1, 0, "Aiframe", "Can only reference Airframe");
     }
     
-    QStringList usedFacts;
-    usedFacts << "SYS_AUTOSTART" << "SYS_AUTOCONFIG";
-    if (!_allFactsExists(usedFacts)) {
+    QStringList usedParams;
+    usedParams << "SYS_AUTOSTART" << "SYS_AUTOCONFIG";
+    if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
         return;
     }
     
     // Load up member variables
     
     bool autostartFound = false;
-    _autostartId = _autopilot->getParameterFact("SYS_AUTOSTART")->value().toInt();
+    _autostartId = getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt();
     
     for (const AirframeComponentAirframes::AirframeType_t* pType=&AirframeComponentAirframes::rgAirframeTypes[0]; pType->name != NULL; pType++) {
         AirframeType* airframeType = new AirframeType(pType->name, pType->imageResource, this);
@@ -99,9 +99,8 @@ void AirframeComponentController::changeAutostart(void)
 	
     qgcApp()->setOverrideCursor(Qt::WaitCursor);
     
-    _autopilot->getParameterFact("SYS_AUTOSTART")->setValue(_autostartId);
-    _autopilot->getParameterFact("SYS_AUTOCONFIG")->setValue(1);
-    
+    getParameterFact(-1, "SYS_AUTOSTART")->setValue(_autostartId);
+    getParameterFact(-1, "SYS_AUTOCONFIG")->setValue(1);
     
     // Wait for the parameters to flow through system
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);

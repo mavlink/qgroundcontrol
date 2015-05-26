@@ -7,7 +7,7 @@ import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 
 QGCTextField {
-    property Fact fact: Fact { }
+    property Fact fact: null
     text: fact.valueString
     unitsLabel: fact.units
     onEditingFinished: fact.value = text
