@@ -129,6 +129,8 @@ void FactSystemTestBase::_qml_test(void)
     QVariant qmlValue = control->property("text").toInt();
 
     QCOMPARE(qmlValue.toInt(), 3);
+    
+    delete widget;
 }
 
 /// Test QML getting an updated Fact value
@@ -153,5 +155,7 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     QObject* control = rootObject->findChild<QObject*>("testControl");
     QVERIFY(control != NULL);
     QCOMPARE(control->property("text").toInt(), 12);
+    
+    delete widget;
 }
 
