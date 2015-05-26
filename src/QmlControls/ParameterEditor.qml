@@ -43,7 +43,6 @@ QGCView {
     property bool fullMode: true
 
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
-    ParameterEditorController { id: __controller }
     QGCLabel { id: __textMeasure; text: "X"; visible: false }
     property Fact __editorDialogFact: Fact { }
 
@@ -60,6 +59,8 @@ QGCView {
 
         QGCViewPanel {
             id: panel
+
+            ParameterEditorController { id: controller; factPanel: panel }
 
             Component {
                 id: factRowsComponent
@@ -82,21 +83,15 @@ QGCView {
                     }
 
                     Repeater {
-                        model: __controller.getFactsForGroup(componentId, group)
+                        model: controller.getFactsForGroup(componentId, group)
 
                         Column {
+                            property Fact modelFact: controller.getParameterFact(componentId, modelData)
+
                             Item {
                                 x:			__leftMargin
                                 width:      parent.width
                                 height:		__textHeight + (ScreenTools.pixelSizeFactor * (9))
-
-                                Fact {
-                                    id: modelFact
-
-                                    Component.onCompleted: {
-                                        name = modelData + ":" + componentId
-                                    }
-                                }
 
                                 QGCLabel {
                                     id:                 nameLabel
@@ -166,22 +161,22 @@ QGCView {
 
                         QGCButton {
                             text:		"Clear RC to Param"
-                            onClicked:	__controller.clearRCToParam()
+                            onClicked:	controller.clearRCToParam()
                         }
                         QGCButton {
                             text:		"Save to file"
                             visible:	fullMode
-                            onClicked:	__controller.saveToFile()
+                            onClicked:	controller.saveToFile()
                         }
                         QGCButton {
                             text:		"Load from file"
                             visible:	fullMode
-                            onClicked:	__controller.loadFromFile()
+                            onClicked:	controller.loadFromFile()
                         }
                         QGCButton {
                             id:			firstButton
                             text:		"Refresh"
-                            onClicked:	__controller.refresh()
+                            onClicked:	controller.refresh()
                         }
                     }
                 }
@@ -203,7 +198,7 @@ QGCView {
 
                         Column {
                             Repeater {
-                                model: __controller.componentIds
+                                model: controller.componentIds
 
                                 Column {
                                     id: componentColumn
@@ -218,7 +213,7 @@ QGCView {
                                     }
 
                                     Repeater {
-                                        model: __controller.getGroupsForComponent(componentColumn.componentId)
+                                        model: controller.getGroupsForComponent(componentColumn.componentId)
 
                                         Column {
                                             QGCButton {
@@ -260,8 +255,8 @@ QGCView {
                             id:     factRowsLoader
                             width:  factScrollView.width
 
-                            property int componentId:   __controller.componentIds[0]
-                            property string group:      __controller.getGroupsForComponent(__controller.componentIds[0])[0]
+                            property int componentId:   controller.componentIds[0]
+                            property string group:      controller.getGroupsForComponent(controller.componentIds[0])[0]
                             sourceComponent:            factRowsComponent
                         }
                     } // ScrollView - Facts
@@ -275,6 +270,8 @@ QGCView {
 
         QGCViewDialog {
             id:             editorDialog
+
+            ParameterEditorController { id: controller; factPanel: editorDialog }
 
             property bool fullMode: true
 
@@ -364,7 +361,7 @@ QGCView {
                 anchors.bottom: parent.bottom
                 visible:        __editorDialogFact.defaultValueAvailable
                 text:           "Set RC to Param..."
-                onClicked:      __controller.setRCToParam(__editorDialogFact.name)
+                onClicked:      controller.setRCToParam(__editorDialogFact.name)
             }
         } // Rectangle - editorDialog
     } // Component - Editor Dialog

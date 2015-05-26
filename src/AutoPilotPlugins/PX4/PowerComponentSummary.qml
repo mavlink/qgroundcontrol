@@ -31,13 +31,19 @@ import QtQuick.Controls 1.2
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
+import QGroundControl.Palette 1.0
 
 FactPanel {
-    anchors.fill: parent
+    id:             panel
+    anchors.fill:   parent
+    color:          qgcPal.windowShadeDark
 
-    Fact { id: batVChargedFact;     name: "BAT_V_CHARGED";  onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: batVEmptyFact;       name: "BAT_V_EMPTY";    onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: batCellsFact;        name: "BAT_N_CELLS";    onFactMissing: showMissingFactOverlay(name) }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+    FactPanelController { id: controller; factPanel: panel }
+
+    property Fact batVChargedFact:  controller.getParameterFact(-1, "BAT_V_CHARGED")
+    property Fact batVEmptyFact:    controller.getParameterFact(-1, "BAT_V_EMPTY")
+    property Fact batCellsFact:     controller.getParameterFact(-1, "BAT_N_CELLS")
 
     Column {
         anchors.fill:       parent

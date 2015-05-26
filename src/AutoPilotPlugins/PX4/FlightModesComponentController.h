@@ -33,14 +33,15 @@
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
+#include "FactPanelController.h"
 
 /// MVC Controller for FlightModesComponent.qml.
-class FlightModesComponentController : public QObject
+class FlightModesComponentController : public FactPanelController
 {
     Q_OBJECT
     
 public:
-    FlightModesComponentController(QObject* parent = NULL);
+    FlightModesComponentController(void);
     ~FlightModesComponentController();
     
     Q_PROPERTY(bool validConfiguration MEMBER _validConfiguration CONSTANT)
@@ -79,8 +80,6 @@ private:
     
     static const int _chanMax = 18;
     
-    UASInterface*                   _uas;
-
     QList<double>   _rcValues;
     bool            _liveRCValues;
     int             _rgRCMin[_chanMax];
@@ -90,8 +89,6 @@ private:
     bool    _validConfiguration;
     QString _configurationErrors;
     int     _channelCount;
-    
-    AutoPilotPlugin*    _autoPilotPlugin;
 };
 
 #endif

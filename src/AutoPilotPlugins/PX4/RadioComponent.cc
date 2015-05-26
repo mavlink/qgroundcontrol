@@ -62,7 +62,7 @@ bool RadioComponent::setupComplete(void) const
     QStringList attitudeMappings;
     attitudeMappings << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
     foreach(QString mapParam, attitudeMappings) {
-        if (_autopilot->getParameterFact(mapParam)->value().toInt() == 0) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, mapParam)->value().toInt() == 0) {
             return false;
         }
     }
@@ -80,13 +80,13 @@ bool RadioComponent::setupComplete(void) const
         QString param;
         
         param = QString("RC%1_MIN").arg(i);
-        rcMin = _autopilot->getParameterFact(param)->value().toInt();
+        rcMin = _autopilot->getParameterFact(FactSystem::defaultComponentId, param)->value().toInt();
         
         param = QString("RC%1_MAX").arg(i);
-        rcMax = _autopilot->getParameterFact(param)->value().toInt();
+        rcMax = _autopilot->getParameterFact(FactSystem::defaultComponentId, param)->value().toInt();
         
         param = QString("RC%1_TRIM").arg(i);
-        rcTrim = _autopilot->getParameterFact(param)->value().toInt();
+        rcTrim = _autopilot->getParameterFact(FactSystem::defaultComponentId, param)->value().toInt();
         
         if (rcMin == rcMinDefault && rcMax == rcMaxDefault && rcTrim == rcTrimDefault) {
             return false;

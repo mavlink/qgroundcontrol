@@ -33,6 +33,9 @@
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 #include "UASManagerInterface.h"
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(FactPanelControllerLog)
 
 /// FactPanelController is used in combination with the FactPanel Qml control for handling
 /// missing Facts from C++ code.
@@ -45,16 +48,19 @@ public:
 	
     Q_PROPERTY(QQuickItem* factPanel READ factPanel WRITE setFactPanel)
     
+    Q_INVOKABLE Fact* getParameterFact(int componentId, const QString& name);
+    Q_INVOKABLE bool parameterExists(int componentId, const QString& name);
+    
     QQuickItem* factPanel(void);
     void setFactPanel(QQuickItem* panel);
     
 protected:
-    /// Checks for existence of the specified facts
-    /// @return true: all facts exists, false: facts missing and reported
-    bool _allFactsExists(QStringList factList);
+    /// Checks for existence of the specified parameters
+    /// @return true: all parameters exists, false: parameters missing and reported
+    bool _allParametersExists(int componentId, QStringList names);
     
-    /// Report a missing fact to the FactPanel Qml element
-    void _reportMissingFact(const QString& missingFact);
+    /// Report a missing parameter to the FactPanel Qml element
+    void _reportMissingParameter(int componentId, const QString& name);
     
     UASInterface*       _uas;
 	AutoPilotPlugin*    _autopilot;
@@ -63,10 +69,12 @@ private slots:
     void _checkForMissingFactPanel(void);
     
 private:
-    void _notifyPanelMissingFact(const QString& missingFact);
+    void _notifyPanelMissingParameter(const QString& missingParam);
+    void _notifyPanelErrorMsg(const QString& errorMsg);
+    void _showInternalError(const QString& errorMsg);
 
     QQuickItem*         _factPanel;
-    QStringList         _delayedMissingFacts;
+    QStringList         _delayedMissingParams;
 };
 
 #endif

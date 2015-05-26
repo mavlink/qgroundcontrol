@@ -96,9 +96,9 @@ public:
     /// Set the current UI style
     void setStyle(bool styleIsDark);
     
-    /// Used to report a missing Fact. Warning will be displayed to user. Method may be called
+    /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
     /// multiple times.
-    void reportMissingFact(const QString& name);
+    void reportMissingParameter(int componentId, const QString& name);
     
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -140,7 +140,7 @@ public:
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
     
 private slots:
-    void _missingFactsDisplay(void);
+    void _missingParamsDisplay(void);
     
 private:
     void _createSingletons(void);
@@ -163,9 +163,9 @@ private:
     static const char*  _lightStyleFile;
     bool                _styleIsDark;      ///< true: dark style, false: light style
     
-    static const int    _missingFactDelayedDisplayTimerTimeout = 1000;  ///< Timeout to wait for next missing fact to come in before display
-    QTimer              _missingFactDelayedDisplayTimer;                ///< Timer use to delay missing fact display
-    QStringList         _missingFacts;                                  ///< List of missing facts to be displayed
+    static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;  ///< Timeout to wait for next missing fact to come in before display
+    QTimer              _missingParamsDelayedDisplayTimer;                ///< Timer use to delay missing fact display
+    QStringList         _missingParams;                                  ///< List of missing facts to be displayed
     
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;

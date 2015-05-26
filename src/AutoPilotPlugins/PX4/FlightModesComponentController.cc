@@ -32,20 +32,17 @@
 #include <QVariant>
 #include <QQmlProperty>
 
-FlightModesComponentController::FlightModesComponentController(QObject* parent) :
-    QObject(parent),
+FlightModesComponentController::FlightModesComponentController(void) :
     _liveRCValues(false),
     _validConfiguration(false),
-    _channelCount(18),
-    _autoPilotPlugin(NULL)
+    _channelCount(18)
 {
-    _uas = UASManager::instance()->getActiveUAS();
-    Q_ASSERT(_uas);
+    QStringList usedParams;
+    usedParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2" << "RC_MAP_ACRO_SW";
+    if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
+        return;
+    }
     
-    _autoPilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
-    Q_ASSERT(_autoPilotPlugin);
-    Q_ASSERT(_autoPilotPlugin->pluginReady());
-
     _initRcValues();
     _validateConfiguration();
 }
@@ -69,16 +66,14 @@ void FlightModesComponentController::_validateConfiguration(void)
 {
     _validConfiguration = true;
     
-    _channelCount = _autoPilotPlugin->parameterExists("RC_CHAN_CNT") ?
-                        _autoPilotPlugin->getParameterFact("RC_CHAN_CNT")->value().toInt() :
-                        _chanMax;
+    _channelCount = parameterExists(FactSystem::defaultComponentId, "RC_CHAN_CNT") ? getParameterFact(FactSystem::defaultComponentId, "RC_CHAN_CNT")->value().toInt() : _chanMax;
     if (_channelCount <= 0 || _channelCount > _chanMax) {
         // Parameter exists, but has not yet been set or is invalid. Use default
         _channelCount = _chanMax;
     }
     
     // Acro is not full supported yet. If Acro is mapped you uhave to set up the hard way.
-    if (_autoPilotPlugin->getParameterFact("RC_MAP_ACRO_SW")->value().toInt() != 0) {
+    if (getParameterFact(FactSystem::defaultComponentId, "RC_MAP_ACRO_SW")->value().toInt() != 0) {
         _validConfiguration = false;
         _configurationErrors += "Flight Mode setup does not yet support Acro switch";
     }
@@ -92,7 +87,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     switchNames << "Mode Switch" << "Return Switch" << "Loiter Switch" << "PosCtl Switch" << "Offboard Switch";
     
     for(int i=0; i<switchParams.count(); i++) {
-        int map = _autoPilotPlugin->getParameterFact(switchParams[i])->value().toInt();
+        int map = getParameterFact(FactSystem::defaultComponentId, switchParams[i])->value().toInt();
         switchMappings << map;
         
         if (map < 0 || map > _channelCount) {
@@ -109,7 +104,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     attitudeNames << "Throttle" << "Yaw" << "Pitch" << "Roll" << "Flaps" << "Aux1" << "Aux2" << "Acro";
 
     for (int i=0; i<attitudeParams.count(); i++) {
-        int map = _autoPilotPlugin->getParameterFact(attitudeParams[i])->value().toInt();
+        int map = getParameterFact(FactSystem::defaultComponentId, attitudeParams[i])->value().toInt();
 
         for (int j=0; j<switchParams.count(); j++) {
             if (map != 0 && map == switchMappings[j]) {
@@ -127,7 +122,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     singleSwitchNames << "Return Switch" << "Offboard Switch";
     
     for (int i=0; i<singleSwitchParams.count(); i++) {
-        int map = _autoPilotPlugin->getParameterFact(singleSwitchParams[i])->value().toInt();
+        int map = getParameterFact(FactSystem::defaultComponentId, singleSwitchParams[i])->value().toInt();
         
         for (int j=0; j<switchParams.count(); j++) {
             if (map != 0 && singleSwitchParams[i] != switchParams[j] && map == switchMappings[j]) {
@@ -152,10 +147,10 @@ void FlightModesComponentController::setSendLiveRCSwitchRanges(bool start)
             
             QVariant value;
             
-            _rgRCMin[i] = _autoPilotPlugin->getParameterFact(rcMinParam)->value().toInt();
-            _rgRCMax[i] = _autoPilotPlugin->getParameterFact(rcMaxParam)->value().toInt();
+            _rgRCMin[i] = getParameterFact(FactSystem::defaultComponentId, rcMinParam)->value().toInt();
+            _rgRCMax[i] = getParameterFact(FactSystem::defaultComponentId, rcMaxParam)->value().toInt();
             
-            float floatReversed = _autoPilotPlugin->getParameterFact(rcRevParam)->value().toFloat();
+            float floatReversed = getParameterFact(-1, rcRevParam)->value().toFloat();
             _rgRCReversed[i] = floatReversed == -1.0f;
         }
         
@@ -196,7 +191,7 @@ double FlightModesComponentController::_switchLiveRange(const QString& param)
 {
     QVariant value;
     
-    int channel = _autoPilotPlugin->getParameterFact(param)->value().toInt();
+    int channel = getParameterFact(-1, param)->value().toInt();
     if (channel == 0) {
         return 1.0;
     } else {
