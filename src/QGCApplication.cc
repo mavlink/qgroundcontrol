@@ -185,9 +185,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 #endif
 
     // Set up timer for delayed missing fact display
-    _missingFactDelayedDisplayTimer.setSingleShot(true);
-    _missingFactDelayedDisplayTimer.setInterval(_missingFactDelayedDisplayTimerTimeout);
-    connect(&_missingFactDelayedDisplayTimer, &QTimer::timeout, this, &QGCApplication::_missingFactsDisplay);
+    _missingParamsDelayedDisplayTimer.setSingleShot(true);
+    _missingParamsDelayedDisplayTimer.setInterval(_missingParamsDelayedDisplayTimerTimeout);
+    connect(&_missingParamsDelayedDisplayTimer, &QTimer::timeout, this, &QGCApplication::_missingParamsDisplay);
     
     // Set application information
     if (_runningUnitTests) {
@@ -675,28 +675,28 @@ void QGCApplication::_loadCurrentStyle(void)
     restoreOverrideCursor();
 }
 
-void QGCApplication::reportMissingFact(const QString& name)
+void QGCApplication::reportMissingParameter(int componentId, const QString& name)
 {
-    _missingFacts += name;
-    _missingFactDelayedDisplayTimer.start();
+    _missingParams += QString("%1:%2").arg(componentId).arg(name);
+    _missingParamsDelayedDisplayTimer.start();
 }
 
-/// Called when the delay timer fires to show the missing facts warning
-void QGCApplication::_missingFactsDisplay(void)
+/// Called when the delay timer fires to show the missing parameters warning
+void QGCApplication::_missingParamsDisplay(void)
 {
-    Q_ASSERT(_missingFacts.count());
+    Q_ASSERT(_missingParams.count());
     
-    QString facts;
-    foreach (QString fact, _missingFacts) {
-        if (facts.isEmpty()) {
-            facts += fact;
+    QString params;
+    foreach (QString name, _missingParams) {
+        if (params.isEmpty()) {
+            params += name;
         } else {
-            facts += QString(", %1").arg(fact);
+            params += QString(", %1").arg(name);
         }
     }
-    _missingFacts.clear();
+    _missingParams.clear();
     
     QGCMessageBox::critical("Missing Parameters",
                             QString("Parameters missing from firmware: %1.\n\n"
-                                    "You should quit QGroundControl immediately and update your firmware.").arg(facts));
+                                    "You should quit QGroundControl immediately and update your firmware.").arg(params));
 }

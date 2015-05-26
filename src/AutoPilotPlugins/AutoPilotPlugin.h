@@ -71,16 +71,16 @@ public:
 	Q_INVOKABLE void refreshParametersPrefix(int componentId, const QString& namePrefix);
     
 	/// Returns true if the specifed parameter exists from the default component
-	Q_INVOKABLE bool parameterExists(const QString& name);
+    Q_INVOKABLE bool parameterExists(int componentId, const QString& name);
 	
 	/// Returns all parameter names
 	/// FIXME: component id missing, generic to fact
 	QStringList parameterNames(void);
 	
 	/// Returns the specified parameter Fact from the default component
-	/// WARNING: Will assert if fact does not exists. If that possibility exists, check for existince first with
-	/// factExists.
-	Fact* getParameterFact(const QString& name);
+	/// WARNING: Returns a default Fact if parameter does not exists. If that possibility exists, check for existince first with
+	/// parameterExists.
+    Fact* getParameterFact(int componentId, const QString& name);
 	
 	/// Writes the parameter facts to the specified stream
 	void writeParametersToStream(QTextStream &stream);

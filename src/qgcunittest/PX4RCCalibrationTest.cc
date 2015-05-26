@@ -412,7 +412,7 @@ void PX4RCCalibrationTest::_fullCalibration_test(void)
                 switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
                 
                 foreach (QString switchParam, switchList) {
-                    Q_ASSERT(_autopilot->getParameterFact(switchParam)->value().toInt() != channel + 1);
+                    Q_ASSERT(_autopilot->getParameterFact(FactSystem::defaultComponentId, switchParam)->value().toInt() != channel + 1);
                 }
                 
                 _rgFunctionChannelMap[function] = channel;
@@ -424,7 +424,7 @@ void PX4RCCalibrationTest::_fullCalibration_test(void)
         
         // If we aren't mapping this function during calibration, set it to the previous setting
         if (!found) {
-            _rgFunctionChannelMap[function] = _autopilot->getParameterFact(PX4RCCalibration::_rgFunctionInfo[function].parameterName)->value().toInt();
+            _rgFunctionChannelMap[function] = _autopilot->getParameterFact(FactSystem::defaultComponentId, PX4RCCalibration::_rgFunctionInfo[function].parameterName)->value().toInt();
             qCDebug(PX4RCCalibrationTestLog) << "Assigning switch" << function << _rgFunctionChannelMap[function];
             if (_rgFunctionChannelMap[function] == 0) {
                 _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
@@ -488,8 +488,8 @@ void PX4RCCalibrationTest::_validateParameters(void)
             expectedParameterValue = chanIndex + 1; // 1-based parameter value
         }
         
-        qCDebug(PX4RCCalibrationTestLog) << "Validate" << chanFunction << _autopilot->getParameterFact(PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt();
-        QCOMPARE(_autopilot->getParameterFact(PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt(), expectedParameterValue);
+        qCDebug(PX4RCCalibrationTestLog) << "Validate" << chanFunction << _autopilot->getParameterFact(FactSystem::defaultComponentId, PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt();
+        QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt(), expectedParameterValue);
     }
 
     // Validate the channel settings. Note the channels are 1-based in parameter names.
@@ -503,13 +503,13 @@ void PX4RCCalibrationTest::_validateParameters(void)
 		int rcTrimExpected = _rgChannelSettingsValidate[chan].rcTrim;
         bool rcReversedExpected = _rgChannelSettingsValidate[chan].reversed;
 
-        int rcMinActual = _autopilot->getParameterFact(minTpl.arg(oneBasedChannel))->value().toInt(&convertOk);
+        int rcMinActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->value().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        int rcMaxActual = _autopilot->getParameterFact(maxTpl.arg(oneBasedChannel))->value().toInt(&convertOk);
+        int rcMaxActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->value().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        int rcTrimActual = _autopilot->getParameterFact(trimTpl.arg(oneBasedChannel))->value().toInt(&convertOk);
+        int rcTrimActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->value().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        float rcReversedFloat = _autopilot->getParameterFact(revTpl.arg(oneBasedChannel))->value().toFloat(&convertOk);
+        float rcReversedFloat = _autopilot->getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->value().toFloat(&convertOk);
         QCOMPARE(convertOk, true);
         bool rcReversedActual = (rcReversedFloat == -1.0f);
         
@@ -531,6 +531,6 @@ void PX4RCCalibrationTest::_validateParameters(void)
             expectedValue = _rgFunctionChannelMap[chanFunction] + 1; // 1-based
         }
         // qCDebug(PX4RCCalibrationTestLog) << chanFunction << expectedValue << mapParamsSet[PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName].toInt();
-        QCOMPARE(_autopilot->getParameterFact(PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt(), expectedValue);
+        QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt(), expectedValue);
     }
 }

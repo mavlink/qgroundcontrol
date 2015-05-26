@@ -31,12 +31,11 @@ import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.ScreenTools 1.0
 
-Rectangle {
-    QGCPalette { id: palette; colorGroupEnabled: true }
+FactPanel {
+    id:     panel
 
-    width: 600
-    height: 600
-    color: palette.window
+    QGCPalette { id: palette; colorGroupEnabled: true }
+    FactPanelController { id: controller; factPanel: panel }
 
     property int flightLineWidth: 2             // width of lines for flight graphic
     property int loiterAltitudeColumnWidth: 180 // width of loiter altitude column
@@ -53,7 +52,7 @@ Rectangle {
 
         QGCLabel {
             text: "SAFETY CONFIG"
-            font.pointSize: ScreenTools.fontPointFactor * (20);
+            font.pointSize: ScreenTools.largeFontPointSize
         }
 
         Item { height: 20; width: 10 } // spacer
@@ -61,7 +60,7 @@ Rectangle {
         //-----------------------------------------------------------------
         //-- Return Home Triggers
 
-        QGCLabel { text: "Triggers For Return Home"; color: palette.text; font.pointSize: ScreenTools.fontPointFactor * (20); }
+        QGCLabel { text: "Triggers For Return Home"; font.pointSize: ScreenTools.mediumFontPointSize; }
 
         Item { height: 10; width: 10 } // spacer
 
@@ -84,29 +83,29 @@ Rectangle {
                     QGCLabel { text: "RC Transmitter Signal Loss"; width: firstColumnWidth; anchors.baseline: rcLossField.baseline }
                     QGCLabel { text: "Return Home after"; anchors.baseline: rcLossField.baseline }
                     FactTextField {
-                        id: rcLossField
-                        fact: Fact { name: "COM_RC_LOSS_T" }
-                        showUnits: true
+                        id:         rcLossField
+                        fact:       controller.getParameterFact(-1, "COM_RC_LOSS_T")
+                        showUnits:  true
                     }
                 }
 
                 Row {
                     spacing: 10
                     FactCheckBox {
-                        id: telemetryTimeoutCheckbox
-                        fact: Fact { name: "COM_DL_LOSS_EN" }
-                        checkedValue: 1
-                        uncheckedValue: 0
-                        text: "Telemetry Signal Timeout"
-                        anchors.baseline: telemetryLossField.baseline
-                        width: firstColumnWidth
+                        id:                 telemetryTimeoutCheckbox
+                        anchors.baseline:   telemetryLossField.baseline
+                        width:              firstColumnWidth
+                        fact:               controller.getParameterFact(-1, "COM_DL_LOSS_EN")
+                        checkedValue:       1
+                        uncheckedValue:     0
+                        text:               "Telemetry Signal Timeout"
                     }
                     QGCLabel { text: "Return Home after"; anchors.baseline: telemetryLossField.baseline }
                     FactTextField {
-                        id: telemetryLossField
-                        fact: Fact { name: "COM_DL_LOSS_T" }
-                        showUnits: true
-                        enabled: telemetryTimeoutCheckbox.checked
+                        id:         telemetryLossField
+                        fact:       controller.getParameterFact(-1, "COM_DL_LOSS_T")
+                        showUnits:  true
+                        enabled:    telemetryTimeoutCheckbox.checked
                     }
                 }
 
@@ -120,59 +119,61 @@ Rectangle {
         //-----------------------------------------------------------------
         //-- Return Home Settings
 
-        QGCLabel { text: "Return Home Settings"; font.pointSize: ScreenTools.fontPointFactor * (20); }
+        QGCLabel { text: "Return Home Settings"; font.pointSize: ScreenTools.mediumFontPointSize; }
 
         Item { height: 10; width: 10 } // spacer
 
         Rectangle {
-            width: parent.width
+            width:  parent.width
             height: settingsColumn.height
-            color: palette.windowShade
+            color:  palette.windowShade
 
             Column {
-                id: settingsColumn
-                width: parent.width
-                anchors.margins: shadedMargin
-                anchors.left: parent.left
+                id:                 settingsColumn
+                width:              parent.width
+                anchors.margins:    shadedMargin
+                anchors.left:       parent.left
 
                 Item { height: shadedMargin; width: 10 } // top margin
 
                 // This item is the holder for the climb alt and loiter seconds fields
                 Item {
-                    width: parent.width
+                    width:  parent.width
                     height: climbAltitudeColumn.height
 
                     Column {
-                        id: climbAltitudeColumn
-                        spacing: controlVerticalSpacing
+                        id:         climbAltitudeColumn
+                        spacing:    controlVerticalSpacing
 
                         QGCLabel { text: "Climb to altitude of" }
                         FactTextField {
-                            id: climbField
-                            fact: Fact { name: "RTL_RETURN_ALT" }
-                            showUnits: true
+                            id:         climbField
+                            fact:       controller.getParameterFact(-1, "RTL_RETURN_ALT")
+                            showUnits:  true
                         }
                     }
 
 
                     Column {
-                        x: flightGraphic.width - 200
-                        spacing: controlVerticalSpacing
+                        x:          flightGraphic.width - 200
+                        spacing:    controlVerticalSpacing
 
                         QGCCheckBox {
-                            id: homeLoiterCheckbox
-                            property Fact fact: Fact { name: "RTL_LAND_DELAY" }
+                            id:         homeLoiterCheckbox
+                            checked:    fact.value > 0
+                            text:       "Loiter at Home altitude for"
 
-                            checked: fact.value > 0
-                            text: "Loiter at Home altitude for"
+                            property Fact fact: controller.getParameterFact(-1, "RTL_LAND_DELAY")
+
                             onClicked: {
                                 fact.value = checked ? 60 : -1
                             }
                         }
+
                         FactTextField {
-                            fact: Fact { name: "RTL_LAND_DELAY" }
-                            showUnits: true
-                            enabled: homeLoiterCheckbox.checked == true
+                            fact:       controller.getParameterFact(-1, "RTL_LAND_DELAY")
+                            showUnits:  true
+                            enabled:    homeLoiterCheckbox.checked == true
                         }
                     }
                 }
@@ -181,88 +182,88 @@ Rectangle {
 
                 // This row holds the flight graphic and the home loiter alt column
                 Row {
-                    width: parent.width
-                    spacing: 20
+                    width:      parent.width
+                    spacing:    20
 
                     // Flight graphic
                     Item {
-                        id: flightGraphic
-                        width: parent.width - loiterAltitudeColumnWidth
+                        id:     flightGraphic
+                        width:  parent.width - loiterAltitudeColumnWidth
                         height: 200 // controls the height of the flight graphic
 
                         Rectangle {
-                            x: planeWidth / 2
+                            x:      planeWidth / 2
                             height: planeImage.y - 5
-                            width: flightLineWidth
-                            color: palette.button
+                            width:  flightLineWidth
+                            color:  palette.button
                         }
                         Rectangle {
-                            x: planeWidth / 2
+                            x:      planeWidth / 2
                             height: flightLineWidth
-                            width: parent.width - x
-                            color: palette.button
+                            width:  parent.width - x
+                            color:  palette.button
                         }
                         Rectangle {
-                            x: parent.width - flightLineWidth
+                            x:      parent.width - flightLineWidth
                             height: parent.height - homeWidth - arrowToHomeSpacing
-                            width: flightLineWidth
-                            color: palette.button
+                            width:  flightLineWidth
+                            color:  palette.button
                         }
 
                         QGCColoredImage {
-                            id: planeImage
-                            y: parent.height - planeWidth - 40
-                            source: "/qml/SafetyComponentPlane.png"
-                            fillMode: Image.PreserveAspectFit
-                            width: planeWidth
-                            height: planeWidth
-                            smooth: true
-                            color: palette.button
+                            id:         planeImage
+                            y:          parent.height - planeWidth - 40
+                            source:     "/qml/SafetyComponentPlane.png"
+                            fillMode:   Image.PreserveAspectFit
+                            width:      planeWidth
+                            height:     planeWidth
+                            smooth:     true
+                            color:      palette.button
                         }
 
                         QGCColoredImage {
-                            x: planeWidth + 70
-                            y: parent.height - height - 20
-                            width: 80
-                            height: parent.height / 2
-                            source: "/qml/SafetyComponentTree.svg"
-                            fillMode: Image.Stretch
-                            smooth: true
-                            color: palette.windowShadeDark
+                            x:          planeWidth + 70
+                            y:          parent.height - height - 20
+                            width:      80
+                            height:     parent.height / 2
+                            source:     "/qml/SafetyComponentTree.svg"
+                            fillMode:   Image.Stretch
+                            smooth:     true
+                            color:      palette.windowShadeDark
                         }
 
                         QGCColoredImage {
-                            x: planeWidth + 15
-                            y: parent.height - height
-                            width: 100
-                            height: parent.height * .75
-                            source: "/qml/SafetyComponentTree.svg"
-                            fillMode: Image.PreserveAspectFit
-                            smooth: true
-                            color: palette.button
+                            x:          planeWidth + 15
+                            y:          parent.height - height
+                            width:      100
+                            height:     parent.height * .75
+                            source:     "/qml/SafetyComponentTree.svg"
+                            fillMode:   Image.PreserveAspectFit
+                            smooth:     true
+                            color:      palette.button
                         }
 
                         QGCColoredImage {
-                            x: parent.width - (arrowWidth/2) - 1
-                            y: parent.height - homeWidth - arrowToHomeSpacing - 2
-                            source: "/qml/SafetyComponentArrowDown.png"
-                            fillMode: Image.PreserveAspectFit
-                            width: arrowWidth
-                            height: arrowWidth
-                            smooth: true
-                            color: palette.button
+                            x:          parent.width - (arrowWidth/2) - 1
+                            y:          parent.height - homeWidth - arrowToHomeSpacing - 2
+                            source:     "/qml/SafetyComponentArrowDown.png"
+                            fillMode:   Image.PreserveAspectFit
+                            width:      arrowWidth
+                            height:     arrowWidth
+                            smooth:     true
+                            color:      palette.button
                         }
 
                         QGCColoredImage {
-                            id: homeImage
-                            x: parent.width - (homeWidth / 2)
-                            y: parent.height - homeWidth
-                            source: "/qml/SafetyComponentHome.png"
-                            fillMode: Image.PreserveAspectFit
-                            width: homeWidth
-                            height: homeWidth
-                            smooth: true
-                            color: palette.button
+                            id:         homeImage
+                            x:          parent.width - (homeWidth / 2)
+                            y:          parent.height - homeWidth
+                            source:     "/qml/SafetyComponentHome.png"
+                            fillMode:   Image.PreserveAspectFit
+                            width:      homeWidth
+                            height:     homeWidth
+                            smooth:     true
+                            color:  palette.button
                         }
                     }
 
@@ -270,15 +271,15 @@ Rectangle {
                         spacing: controlVerticalSpacing
 
                         QGCLabel {
-                            text: "Home loiter altitude";
-                            color: palette.text;
-                            enabled: homeLoiterCheckbox.checked === true
+                            text:       "Home loiter altitude";
+                            color:      palette.text;
+                            enabled:    homeLoiterCheckbox.checked === true
                         }
                         FactTextField {
-                            id: descendField;
-                            fact: Fact { name: "RTL_DESCEND_ALT" }
-                            enabled: homeLoiterCheckbox.checked === true
-                            showUnits: true
+                            id:         descendField;
+                            fact:       controller.getParameterFact(-1, "RTL_DESCEND_ALT")
+                            enabled:    homeLoiterCheckbox.checked === true
+                            showUnits:  true
                         }
                     }
                 }
@@ -288,20 +289,23 @@ Rectangle {
         }
 
         QGCLabel {
-            property Fact fact: Fact { name: "NAV_RCL_OBC" }
-            width: parent.width
-            font.pointSize: ScreenTools.fontPointFactor * (14);
-            text: "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
-            visible: fact.value !== 0
-            wrapMode: Text.Wrap
+            width:          parent.width
+            font.pointSize: ScreenTools.mediumFontPointSize
+            text:           "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
+            visible:        fact.value !== 0
+            wrapMode:       Text.Wrap
+
+            property Fact fact: controller.getParameterFact(-1, "NAV_RCL_OBC")
         }
+
         QGCLabel {
-            property Fact fact: Fact { name: "NAV_DLL_OBC" }
-            width: parent.width
-            font.pointSize: ScreenTools.fontPointFactor * (14);
-            text: "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
-            visible: fact.value !== 0
-            wrapMode: Text.Wrap
+            width:          parent.width
+            font.pointSize: ScreenTools.mediumFontPointSize
+            text:           "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
+            visible:        fact.value !== 0
+            wrapMode:       Text.Wrap
+
+            property Fact fact: controller.getParameterFact(-1, "NAV_DLL_OBC")
         }
     }
 }

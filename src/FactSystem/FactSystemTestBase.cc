@@ -143,7 +143,7 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     // Change the value
     
     QVariant paramValue = 12;
-    _plugin->getParameterFact("RC_MAP_THROTTLE")->setValue(paramValue);
+    _plugin->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_THROTTLE")->setValue(paramValue);
 
     QTest::qWait(500); // Let the signals flow through
     

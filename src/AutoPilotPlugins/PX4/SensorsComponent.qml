@@ -91,12 +91,19 @@ QGCView {
         "ROTATION_ROLL_270_YAW_270"
     ]
 
-    Fact { id: cal_mag0_id; name: "CAL_MAG0_ID"; onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: cal_mag1_id; name: "CAL_MAG1_ID"; onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: cal_mag2_id; name: "CAL_MAG2_ID"; onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: cal_mag0_rot; name: "CAL_MAG0_ROT"; onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: cal_mag1_rot; name: "CAL_MAG1_ROT"; onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: cal_mag2_rot; name: "CAL_MAG2_ROT"; onFactMissing: showMissingFactOverlay(name) }
+    property Fact cal_mag0_id:      controller.getParameterFact(-1, "CAL_MAG0_ID")
+    property Fact cal_mag1_id:      controller.getParameterFact(-1, "CAL_MAG1_ID")
+    property Fact cal_mag2_id:      controller.getParameterFact(-1, "CAL_MAG2_ID")
+    property Fact cal_mag0_rot:     controller.getParameterFact(-1, "CAL_MAG0_ROT")
+    property Fact cal_mag1_rot:     controller.getParameterFact(-1, "CAL_MAG1_ROT")
+    property Fact cal_mag2_rot:     controller.getParameterFact(-1, "CAL_MAG2_ROT")
+
+    property Fact cal_gyro0_id:     controller.getParameterFact(-1, "CAL_GYRO0_ID")
+    property Fact cal_acc0_id:      controller.getParameterFact(-1, "CAL_ACC0_ID")
+
+    property Fact sens_board_rot:   controller.getParameterFact(-1, "SENS_BOARD_ROT")
+    property Fact sens_board_x_off: controller.getParameterFact(-1, "SENS_BOARD_X_OFF")
+    property Fact sens_dpres_off:   controller.getParameterFact(-1, "SENS_DPRES_OFF")
 
     // Id > = signals compass available, rot < 0 signals internal compass
     property bool showCompass0Rot: cal_mag0_id.value > 0 && cal_mag0_rot.value >= 0
@@ -165,7 +172,7 @@ QGCView {
                     width:      rotationColumnWidth
                     model:      rotations
                     visible:    preCalibrationDialogType != "airspeed" && (preCalibrationDialogType != "gyro")
-                    fact:       Fact { name: "SENS_BOARD_ROT"; onFactMissing: showMissingFactOverlay(name) }
+                    fact:       sens_board_rot
                 }
             }
         }
@@ -204,7 +211,7 @@ QGCView {
                         id:     compass0RotationCombo
                         width:  rotationColumnWidth
                         model:  rotations
-                        fact:   Fact { name: "CAL_MAG0_ROT"; onFactMissing: showMissingFactOverlay(name) }
+                        fact:   cal_mag0_rot
                     }
                 }
                 Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel : null }
@@ -222,7 +229,7 @@ QGCView {
                         id:     compass1RotationCombo
                         width:  rotationColumnWidth
                         model:  rotations
-                        fact:   Fact { name: "CAL_MAG1_ROT"; onFactMissing: showMissingFactOverlay(name) }
+                        fact:   cal_mag1_rot
                     }
                 }
                 Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel : null }
@@ -241,7 +248,7 @@ QGCView {
                         id:     compass1RotationCombo
                         width:  rotationColumnWidth
                         model:  rotations
-                        fact:   Fact { name: "CAL_MAG2_ROT"; onFactMissing: showMissingFactOverlay(name) }
+                        fact:   cal_mag2_rot
                     }
                 }
                 Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel : null }
@@ -285,7 +292,7 @@ QGCView {
 
                 QGCLabel {
                     text: "SENSORS CONFIG"
-                    font.pointSize: ScreenTools.fontPointFactor * (20);
+                    font.pointSize: ScreenTools.largeFontPointSize
                 }
 
                 Item { height: 20; width: 10 } // spacer
@@ -298,12 +305,10 @@ QGCView {
                     QGCLabel { text: "Calibrate:"; anchors.baseline: compassButton.baseline }
 
                     IndicatorButton {
-                        property Fact fact: Fact { name: "CAL_MAG0_ID" }
-
                         id:             compassButton
                         width:          parent.buttonWidth
                         text:           "Compass"
-                        indicatorGreen: fact.value != 0
+                        indicatorGreen: cal_mag0_id.value != 0
 
                         onClicked: {
                             preCalibrationDialogType = "compass"
@@ -313,12 +318,10 @@ QGCView {
                     }
 
                     IndicatorButton {
-                        property Fact fact: Fact { name: "CAL_GYRO0_ID" }
-
                         id:             gyroButton
                         width:          parent.buttonWidth
                         text:           "Gyroscope"
-                        indicatorGreen: fact.value != 0
+                        indicatorGreen: cal_gyro0_id.value != 0
 
                         onClicked: {
                             preCalibrationDialogType = "gyro"
@@ -328,12 +331,10 @@ QGCView {
                     }
 
                     IndicatorButton {
-                        property Fact fact: Fact { name: "CAL_ACC0_ID" }
-
                         id:             accelButton
                         width:          parent.buttonWidth
                         text:           "Accelerometer"
-                        indicatorGreen: fact.value != 0
+                        indicatorGreen: cal_acc0_id.value != 0
 
                         onClicked: {
                             preCalibrationDialogType = "accel"
@@ -343,15 +344,11 @@ QGCView {
                     }
 
                     IndicatorButton {
-                        property Fact fact: Fact { name: "SENS_BOARD_X_OFF" }
-                        property Fact checkAcc: Fact { name: "CAL_ACC0_ID" }
-                        property Fact checkGyro: Fact { name: "CAL_GYRO0_ID" }
-
                         id:             levelButton
                         width:          parent.buttonWidth
                         text:           "Level Horizon"
-                        indicatorGreen: fact.value != 0
-                        enabled: checkAcc.value != 0 && checkGyro.value != 0
+                        indicatorGreen: sens_board_x_off.value != 0
+                        enabled:        cal_acc0_id.value != 0 && cal_gyro0_id.value != 0
 
                         onClicked: {
                             preCalibrationDialogType = "level"
@@ -361,13 +358,11 @@ QGCView {
                     }
 
                     IndicatorButton {
-                        property Fact fact: Fact { name: "SENS_DPRES_OFF" }
-
                         id:             airspeedButton
                         width:          parent.buttonWidth
                         text:           "Airspeed"
                         visible:        controller.fixedWing
-                        indicatorGreen: fact.value != 0
+                        indicatorGreen: sens_dpres_off.value != 0
 
                         onClicked: {
                             preCalibrationDialogType = "airspeed"
@@ -511,7 +506,7 @@ QGCView {
                                 id:     boardRotationCombo
                                 width:  rotationColumnWidth;
                                 model:  rotations
-                                fact:   Fact { name: "SENS_BOARD_ROT" }
+                                fact:   sens_board_rot
                             }
                         }
 
@@ -534,7 +529,7 @@ QGCView {
                                     id:     compass0RotationCombo
                                     width:  rotationColumnWidth
                                     model:  rotations
-                                    fact:   Fact { name: "CAL_MAG0_ROT" }
+                                    fact:   cal_mag0_rot
                                 }
                             }
                             Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel2 : null }
@@ -559,7 +554,7 @@ QGCView {
                                     id:     compass1RotationCombo
                                     width:  rotationColumnWidth
                                     model:  rotations
-                                    fact:   Fact { name: "CAL_MAG1_ROT" }
+                                    fact:   cal_mag1_rot
                                 }
                             }
                             Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel2 : null }
@@ -584,7 +579,7 @@ QGCView {
                                     id:     compass1RotationCombo
                                     width:  rotationColumnWidth
                                     model:  rotations
-                                    fact:   Fact { name: "CAL_MAG2_ROT" }
+                                    fact:   cal_mag2_rot
                                 }
                             }
                             Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel2 : null }

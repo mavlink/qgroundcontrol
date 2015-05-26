@@ -142,7 +142,7 @@ bool AirframeComponent::requiresSetup(void) const
 
 bool AirframeComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact("SYS_AUTOSTART")->value().toInt() != 0;
+    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt() != 0;
 }
 
 QString AirframeComponent::setupStateDescription(void) const

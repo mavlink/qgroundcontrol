@@ -4,15 +4,21 @@ import QtQuick.Controls 1.2
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
+import QGroundControl.Palette 1.0
 
 FactPanel {
-    anchors.fill: parent
+    id:             panel
+    anchors.fill:   parent
+    color:          qgcPal.windowShadeDark
 
-    Fact { id: returnAltFact;   name: "RTL_RETURN_ALT";     onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: descendAltFact;  name: "RTL_DESCEND_ALT";    onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: landDelayFact;   name: "RTL_LAND_DELAY";     onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: commDLLossFact;  name: "COM_DL_LOSS_EN";     onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: commRCLossFact;  name: "COM_RC_LOSS_T";      onFactMissing: showMissingFactOverlay(name) }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+    FactPanelController { id: controller; factPanel: panel }
+
+    property Fact returnAltFact:    controller.getParameterFact(-1, "RTL_RETURN_ALT")
+    property Fact descendAltFact:   controller.getParameterFact(-1, "RTL_DESCEND_ALT")
+    property Fact landDelayFact:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
+    property Fact commDLLossFact:   controller.getParameterFact(-1, "COM_DL_LOSS_EN")
+    property Fact commRCLossFact:   controller.getParameterFact(-1, "COM_RC_LOSS_T")
 
     Column {
         anchors.fill:       parent

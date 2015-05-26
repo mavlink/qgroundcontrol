@@ -31,6 +31,7 @@ import QGroundControl.FactControls 1.0
 import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.Controllers 1.0
+import QGroundControl.ScreenTools 1.0
 
 QGCView {
     id:             rootQGCView
@@ -67,7 +68,7 @@ QGCView {
                                         "This configuration can only be modified through the Parameter Editor.\n\n" +
                                         "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
 
-                    Fact { id: sys_autostart; name: "SYS_AUTOSTART" }
+                    property Fact sys_autostart: controller.getParameterFact(-1, "SYS_AUTOSTART")
 
                     function accept() {
                         sys_autostart.value = 0
@@ -107,7 +108,7 @@ QGCView {
                 QGCLabel {
                     id:             header
                     width:          parent.width
-                    font.pointSize: 20
+                    font.pointSize: ScreenTools.largeFontPointSize
                     text:           "AIRFRAME CONFIG"
                 }
 

@@ -39,7 +39,7 @@ void PX4Component::setupTriggerSignals(void)
 {
     // Watch for changed on trigger list params
     foreach (QString paramName, setupCompleteChangedTriggerList()) {
-        Fact* fact = _autopilot->getParameterFact(paramName);
+        Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
         
         connect(fact, &Fact::valueChanged, this, &PX4Component::_triggerUpdated);
     }

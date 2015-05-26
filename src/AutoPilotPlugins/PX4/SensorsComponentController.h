@@ -135,10 +135,6 @@ private:
     bool _showGyroCalArea;
     bool _showOrientationCalArea;
     
-    bool _showCompass0;
-    bool _showCompass1;
-    bool _showCompass2;
-    
     bool _gyroCalInProgress;
     bool _magCalInProgress;
     bool _accelCalInProgress;

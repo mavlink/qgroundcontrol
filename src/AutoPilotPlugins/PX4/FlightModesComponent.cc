@@ -73,7 +73,7 @@ bool FlightModesComponent::requiresSetup(void) const
 
 bool FlightModesComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact("RC_MAP_MODE_SW")->value().toInt() != 0;
+    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->value().toInt() != 0;
 }
 
 QString FlightModesComponent::setupStateDescription(void) const
