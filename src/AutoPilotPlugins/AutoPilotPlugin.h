@@ -51,6 +51,7 @@ class AutoPilotPlugin : public QObject
 
 public:
     AutoPilotPlugin(UASInterface* uas, QObject* parent);
+    ~AutoPilotPlugin();
     
 	/// true: plugin is ready for use, plugin should no longer be used
 	Q_PROPERTY(bool pluginReady READ pluginReady NOTIFY pluginReadyChanged)

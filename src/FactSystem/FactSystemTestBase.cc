@@ -64,7 +64,7 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     AutoPilotPluginManager* pluginMgr = AutoPilotPluginManager::instance();
     Q_ASSERT(pluginMgr);
     
-    _plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas);
+    _plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas).data();
     Q_ASSERT(_plugin);
 
     // Wait for the plugin to be ready

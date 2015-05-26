@@ -40,6 +40,7 @@ class ParameterEditorController : public FactPanelController
     
 public:
     ParameterEditorController(void);
+    ~ParameterEditorController();
 
     Q_PROPERTY(QStringList componentIds MEMBER _componentIds CONSTANT)
 	

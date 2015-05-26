@@ -282,7 +282,7 @@ void MainToolBar::_forgetUAS(UASInterface* uas)
     if (_mav != NULL && _mav == uas) {
         disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &MainToolBar::_handleTextMessage);
         disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
-        disconnect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        disconnect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav).data(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
         _mav = NULL;
     }
 }
@@ -302,7 +302,7 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
     {
         connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged, this, &MainToolBar::_handleTextMessage);
         connect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
-        connect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        connect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav).data(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
     }
 }
 

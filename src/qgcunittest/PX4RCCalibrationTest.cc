@@ -151,7 +151,7 @@ void PX4RCCalibrationTest::init(void)
     LinkManager::instance()->connectLink(_mockLink);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
     
-    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(UASManager::instance()->getActiveUAS());
+    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(UASManager::instance()->getActiveUAS()).data();
     Q_ASSERT(_autopilot);
     
     QSignalSpy spyPlugin(_autopilot, SIGNAL(pluginReadyChanged(bool)));

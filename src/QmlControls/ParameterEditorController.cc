@@ -42,6 +42,11 @@ ParameterEditorController::ParameterEditorController(void)
 	}
 }
 
+ParameterEditorController::~ParameterEditorController()
+{
+    
+}
+
 QStringList ParameterEditorController::getGroupsForComponent(int componentId)
 {
 	const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
