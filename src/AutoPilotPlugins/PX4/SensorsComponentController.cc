@@ -420,7 +420,8 @@ bool SensorsComponentController::fixedWing(void)
     Q_ASSERT(uas);
     return uas->getSystemType() == MAV_TYPE_FIXED_WING ||
             uas->getSystemType() == MAV_TYPE_VTOL_DUOROTOR ||
-            uas->getSystemType() == MAV_TYPE_VTOL_QUADROTOR;
+            uas->getSystemType() == MAV_TYPE_VTOL_QUADROTOR ||
+            uas->getSystemType() == MAV_TYPE_VTOL_TILTROTOR;
 }
 
 void SensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)
