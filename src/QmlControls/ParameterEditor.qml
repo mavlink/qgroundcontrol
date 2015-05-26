@@ -83,7 +83,7 @@ QGCView {
                     }
 
                     Repeater {
-                        model: controller.getFactsForGroup(componentId, group)
+                        model: autopilot ? controller.getFactsForGroup(componentId, group) : 0
 
                         Column {
                             property Fact modelFact: controller.getParameterFact(componentId, modelData)
