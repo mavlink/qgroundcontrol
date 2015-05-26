@@ -74,13 +74,13 @@ void AutoPilotPluginManager::_uasCreated(UASInterface* uas)
         case MAV_AUTOPILOT_PX4:
             plugin = new PX4AutoPilotPlugin(uas, this);
             Q_CHECK_PTR(plugin);
-            _pluginMap[MAV_AUTOPILOT_PX4][uasId] = plugin;
+            _pluginMap[MAV_AUTOPILOT_PX4][uasId] = QSharedPointer<AutoPilotPlugin>(plugin);
             break;
         case MAV_AUTOPILOT_GENERIC:
         default:
             plugin = new GenericAutoPilotPlugin(uas, this);
             Q_CHECK_PTR(plugin);
-            _pluginMap[MAV_AUTOPILOT_GENERIC][uasId] = plugin;
+            _pluginMap[MAV_AUTOPILOT_GENERIC][uasId] = QSharedPointer<AutoPilotPlugin>(plugin);
     }
 }
 
@@ -94,12 +94,12 @@ void AutoPilotPluginManager::_uasDeleted(UASInterface* uas)
     Q_ASSERT(uasId != 0);
     
     if (_pluginMap.contains(autopilotType) && _pluginMap[autopilotType].contains(uasId)) {
-        delete _pluginMap[autopilotType][uasId];
+        _pluginMap[autopilotType][uasId].clear();
         _pluginMap[autopilotType].remove(uasId);
     }
 }
 
-AutoPilotPlugin* AutoPilotPluginManager::getInstanceForAutoPilotPlugin(UASInterface* uas)
+QSharedPointer<AutoPilotPlugin> AutoPilotPluginManager::getInstanceForAutoPilotPlugin(UASInterface* uas)
 {
     Q_ASSERT(uas);
     

@@ -43,6 +43,11 @@ AutoPilotPlugin::AutoPilotPlugin(UASInterface* uas, QObject* parent) :
 	connect(this, &AutoPilotPlugin::pluginReadyChanged, this, &AutoPilotPlugin::_pluginReadyChanged);
 }
 
+AutoPilotPlugin::~AutoPilotPlugin()
+{
+    
+}
+
 void AutoPilotPlugin::_uasDisconnected(void)
 {
 	_pluginReady = false;

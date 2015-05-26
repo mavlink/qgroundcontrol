@@ -101,7 +101,7 @@ ParamLoader::ParamLoader(QString paramName, UASInterface* uas, QObject* parent) 
     _paramName(paramName),
     _paramReceived(false)
 {
-    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
+    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas).data();
     Q_ASSERT(_autopilot);
 }
 

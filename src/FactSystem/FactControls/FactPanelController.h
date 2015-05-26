@@ -62,8 +62,8 @@ protected:
     /// Report a missing parameter to the FactPanel Qml element
     void _reportMissingParameter(int componentId, const QString& name);
     
-    UASInterface*       _uas;
-	AutoPilotPlugin*    _autopilot;
+    UASInterface*                   _uas;
+	QSharedPointer<AutoPilotPlugin> _autopilot;
     
 private slots:
     void _checkForMissingFactPanel(void);

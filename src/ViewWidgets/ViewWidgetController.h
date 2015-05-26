@@ -48,9 +48,9 @@ private slots:
 	void _pluginReadyChanged(bool pluginReady);
 
 private:
-	AutoPilotPlugin*		_autopilot;
-	UASManagerInterface*	_uasManager;
-	UASInterface*			_uas;
+	AutoPilotPlugin*        _autopilot;
+	UASManagerInterface*    _uasManager;
+	UASInterface*           _uas;
 };
 
 #endif
