@@ -45,7 +45,7 @@ FactPanel {
     TextInput {
         text:       fact2.value
 
-        property Fact fact1: controller.getParameterFact(51, "COMPONENT_51")
+        property Fact fact2: controller.getParameterFact(51, "COMPONENT_51")
 
         onAccepted: fact2.value = text
     }
