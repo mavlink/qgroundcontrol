@@ -36,9 +36,14 @@ const double ScreenTools::_largeFontPointSize = 20;
 
 ScreenTools::ScreenTools()
 {
-    connect(MainWindow::instance(), &MainWindow::repaintCanvas,     this, &ScreenTools::_updateCanvas);
-    connect(MainWindow::instance(), &MainWindow::pixelSizeChanged,  this, &ScreenTools::_updatePixelSize);
-    connect(MainWindow::instance(), &MainWindow::fontSizeChanged,   this, &ScreenTools::_updateFontSize);
+    MainWindow* mainWindow = MainWindow::instance();
+    
+    // Unit tests can run Qml without MainWindow
+    if (mainWindow) {
+        connect(mainWindow, &MainWindow::repaintCanvas,     this, &ScreenTools::_updateCanvas);
+        connect(mainWindow, &MainWindow::pixelSizeChanged,  this, &ScreenTools::_updatePixelSize);
+        connect(mainWindow, &MainWindow::fontSizeChanged,   this, &ScreenTools::_updateFontSize);
+    }
 }
 
 qreal ScreenTools::adjustFontPointSize(qreal pointSize)
