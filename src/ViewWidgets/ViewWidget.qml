@@ -25,8 +25,9 @@ Rectangle {
 		}
 
 		onPluginDisconnected: {
+            pageLoader.sourceComponent = null
 			pageLoader.sourceComponent = disconnectedComponent
-			pageLoader.autopilot = {}
+			pageLoader.autopilot = null
 		}
 	}
 

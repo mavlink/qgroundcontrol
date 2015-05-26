@@ -62,7 +62,7 @@ bool SensorsComponent::requiresSetup(void) const
 bool SensorsComponent::setupComplete(void) const
 {
     foreach(QString triggerParam, setupCompleteChangedTriggerList()) {
-        if (_autopilot->getParameterFact(triggerParam)->value().toFloat() == 0.0f) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, triggerParam)->value().toFloat() == 0.0f) {
             return false;
         }
     }

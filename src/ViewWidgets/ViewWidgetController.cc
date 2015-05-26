@@ -41,13 +41,13 @@ void ViewWidgetController::_activeUasChanged(UASInterface* currentUas)
 		if (_uas) {
 			disconnect(_autopilot, &AutoPilotPlugin::pluginReadyChanged, this, &ViewWidgetController::_pluginReadyChanged);
 			_uas = NULL;
-			_autopilot =  NULL;
+			_autopilot = NULL;
 			emit pluginDisconnected();
 		}
 		
 		if (currentUas) {
 			_uas = currentUas;
-			_autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(currentUas);
+			_autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(currentUas).data();
 			Q_ASSERT(_autopilot);
 			
 			connect(_autopilot, &AutoPilotPlugin::pluginReadyChanged, this, &ViewWidgetController::_pluginReadyChanged);

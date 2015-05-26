@@ -84,7 +84,7 @@ void SetupView::_setActiveUAS(UASInterface* uas)
     _uasCurrent = uas;
     
     if (_uasCurrent) {
-        _autoPilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent);
+        _autoPilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent).data();
         _pluginReadyChanged(_autoPilotPlugin->pluginReady());
         connect(_autoPilotPlugin, &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
     }

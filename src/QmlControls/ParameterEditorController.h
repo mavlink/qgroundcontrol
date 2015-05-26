@@ -32,13 +32,15 @@
 
 #include "AutoPilotPlugin.h"
 #include "UASInterface.h"
+#include "FactPanelController.h"
 
-class ParameterEditorController : public QObject
+class ParameterEditorController : public FactPanelController
 {
     Q_OBJECT
     
 public:
     ParameterEditorController(void);
+    ~ParameterEditorController();
 
     Q_PROPERTY(QStringList componentIds MEMBER _componentIds CONSTANT)
 	
@@ -54,8 +56,6 @@ public:
 	QList<QObject*> model(void);
 	
 private:
-	UASInterface*		_uas;
-	AutoPilotPlugin*	_autopilot;
 	QStringList			_componentIds;
 };
 

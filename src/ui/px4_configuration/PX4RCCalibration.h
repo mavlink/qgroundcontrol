@@ -256,8 +256,8 @@ private:
     RCValueWidget* _rgRCValueMonitorWidget[_chanMax];   ///< Array of radio channel value widgets
     QLabel* _rgRCValueMonitorLabel[_chanMax];           ///< Array of radio channel value labels
 
-    UASInterface*       _uas;
-    AutoPilotPlugin*    _autopilot;
+    UASInterface*                   _uas;
+    QSharedPointer<AutoPilotPlugin> _autopilot;
     
     Ui::PX4RCCalibration* _ui;
     

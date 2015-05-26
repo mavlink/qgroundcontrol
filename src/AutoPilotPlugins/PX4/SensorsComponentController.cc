@@ -69,13 +69,7 @@ SensorsComponentController::SensorsComponentController(void) :
     _unknownFirmwareVersion(false),
     _waitingForCancel(false)
 {
-    // Mag rotation parameters are optional
-    _showCompass0 = _autopilot->parameterExists("CAL_MAG0_ROT") &&
-                        _autopilot->getParameterFact("CAL_MAG0_ROT")->value().toInt() >= 0;
-    _showCompass1 = _autopilot->parameterExists("CAL_MAG1_ROT") &&
-                        _autopilot->getParameterFact("CAL_MAG1_ROT")->value().toInt() >= 0;
-    _showCompass2 = _autopilot->parameterExists("CAL_MAG2_ROT") &&
-                        _autopilot->getParameterFact("CAL_MAG2_ROT")->value().toInt() >= 0;
+
 }
 
 /// Appends the specified text to the status log area in the ui

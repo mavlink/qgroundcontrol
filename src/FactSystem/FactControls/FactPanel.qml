@@ -36,18 +36,24 @@ Rectangle {
 
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
 
-    property string __missingFacts: ""
+    property string __missingParams: ""
+    property string __errorMsg: ""
 
-    function showMissingFactOverlay(missingFactName) {
-            if (__missingFacts.length != 0) {
-                __missingFacts = __missingFacts.concat(", ")
+    function showMissingParameterOverlay(missingParamName) {
+            if (__missingParams.length != 0) {
+                __missingParams = __missingParams.concat(", ")
             }
-        __missingFacts = __missingFacts.concat(missingFactName)
-        __missingFactOverlay.visible = true
+        __missingParams = __missingParams.concat(missingParamName)
+        __missingParamsOverlay.visible = true
+    }
+
+    function showError(errorMsg) {
+        __errorMsg = errorMsg
+        __missingParamsOverlay.visible = true
     }
 
     Rectangle {
-        id:             __missingFactOverlay
+        id:             __missingParamsOverlay
         anchors.fill:   parent
         z:              9999
         visible:        false
@@ -57,7 +63,7 @@ Rectangle {
         QGCLabel {
             anchors.fill:   parent
             wrapMode:       Text.WordWrap
-            text:           "Fact(s) missing: " + __missingFacts
+            text:           __errorMsg.length ? __errorMsg : "Paremeters(s) missing: " + __missingParams
         }
     }
 }

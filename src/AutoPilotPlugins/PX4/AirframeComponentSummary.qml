@@ -5,15 +5,18 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.Controllers 1.0
+import QGroundControl.Palette 1.0
 
 FactPanel {
     id:             panel
     anchors.fill:   parent
+    color:          qgcPal.windowShadeDark
 
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     AirframeComponentController { id: controller; factPanel: panel }
 
-    Fact { id: sysIdFact;           name: "MAV_SYS_ID";     onFactMissing: showMissingFactOverlay(name) }
-    Fact { id: sysAutoStartFact;    name: "SYS_AUTOSTART";  onFactMissing: showMissingFactOverlay(name) }
+    property Fact sysIdFact:        controller.getParameterFact(-1, "MAV_SYS_ID")
+    property Fact sysAutoStartFact: controller.getParameterFact(-1, "SYS_AUTOSTART")
 
     property bool autoStartSet: sysAutoStartFact.value != 0
 

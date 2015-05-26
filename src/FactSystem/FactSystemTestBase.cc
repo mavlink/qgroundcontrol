@@ -64,7 +64,7 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     AutoPilotPluginManager* pluginMgr = AutoPilotPluginManager::instance();
     Q_ASSERT(pluginMgr);
     
-    _plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas);
+    _plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas).data();
     Q_ASSERT(_plugin);
 
     // Wait for the plugin to be ready
@@ -129,6 +129,8 @@ void FactSystemTestBase::_qml_test(void)
     QVariant qmlValue = control->property("text").toInt();
 
     QCOMPARE(qmlValue.toInt(), 3);
+    
+    delete widget;
 }
 
 /// Test QML getting an updated Fact value
@@ -143,7 +145,7 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     // Change the value
     
     QVariant paramValue = 12;
-    _plugin->getParameterFact("RC_MAP_THROTTLE")->setValue(paramValue);
+    _plugin->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_THROTTLE")->setValue(paramValue);
 
     QTest::qWait(500); // Let the signals flow through
     
@@ -153,5 +155,7 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     QObject* control = rootObject->findChild<QObject*>("testControl");
     QVERIFY(control != NULL);
     QCOMPARE(control->property("text").toInt(), 12);
+    
+    delete widget;
 }
 

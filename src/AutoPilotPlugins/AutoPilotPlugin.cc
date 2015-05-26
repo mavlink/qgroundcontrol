@@ -43,6 +43,11 @@ AutoPilotPlugin::AutoPilotPlugin(UASInterface* uas, QObject* parent) :
 	connect(this, &AutoPilotPlugin::pluginReadyChanged, this, &AutoPilotPlugin::_pluginReadyChanged);
 }
 
+AutoPilotPlugin::~AutoPilotPlugin()
+{
+    
+}
+
 void AutoPilotPlugin::_uasDisconnected(void)
 {
 	_pluginReady = false;
@@ -112,14 +117,14 @@ void AutoPilotPlugin::refreshParametersPrefix(int componentId, const QString& na
 	_getParameterLoader()->refreshParametersPrefix(componentId, namePrefix);
 }
 
-bool AutoPilotPlugin::parameterExists(const QString& name)
+bool AutoPilotPlugin::parameterExists(int componentId, const QString& name)
 {
-	return _getParameterLoader()->parameterExists(FactSystem::defaultComponentId, name);
+    return _getParameterLoader()->parameterExists(componentId, name);
 }
 
-Fact* AutoPilotPlugin::getParameterFact(const QString& name)
+Fact* AutoPilotPlugin::getParameterFact(int componentId, const QString& name)
 {
-	return _getParameterLoader()->getFact(FactSystem::defaultComponentId, name);
+    return _getParameterLoader()->getFact(componentId, name);
 }
 
 bool AutoPilotPlugin::factExists(FactSystem::Provider_t provider, int componentId, const QString& name)
