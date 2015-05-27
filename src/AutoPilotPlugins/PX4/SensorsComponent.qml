@@ -89,6 +89,7 @@ QGCView {
         "ROTATION_PITCH_90",
         "ROTATION_PITCH_270",
         "ROTATION_ROLL_270_YAW_270",
+        "ROTATION_ROLL_180_PITCH_270",
         "ROTATION_PITCH_90_YAW_180"
     ]
 
