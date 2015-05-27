@@ -88,7 +88,9 @@ QGCView {
         "ROTATION_ROLL_270_YAW_135",
         "ROTATION_PITCH_90",
         "ROTATION_PITCH_270",
-        "ROTATION_ROLL_270_YAW_270"
+        "ROTATION_ROLL_270_YAW_270",
+        "ROTATION_ROLL_180_PITCH_270",
+        "ROTATION_PITCH_90_YAW_180"
     ]
 
     property Fact cal_mag0_id:      controller.getParameterFact(-1, "CAL_MAG0_ID")
