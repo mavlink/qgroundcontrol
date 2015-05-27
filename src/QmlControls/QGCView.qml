@@ -37,6 +37,8 @@ import QGroundControl.FactControls 1.0
 FactPanel {
     id: __rootItem
 
+    property bool __completedSignalled: false
+
     property Component viewComponent
 
     /// This is signalled when the top level Item reaches Component.onCompleted. This allows
@@ -164,7 +166,19 @@ FactPanel {
 
     property Component __dialogComponent
 
-    Component.onCompleted: completed()
+    function __signalCompleted() {
+        // When we use this control inside a QGCQmlWidgetHolder Component.onCompleted is signalled
+        // before the width and height are adjusted. So we need to wait for width and heigth to be
+        // set before we signal our own completed signal.
+        if (!__completedSignalled && width != 0 && height != 0) {
+            __completedSignalled = true
+            completed()
+        }
+    }
+
+    Component.onCompleted:  __signalCompleted()
+    onWidthChanged:         __signalCompleted()
+    onHeightChanged:        __signalCompleted()
 
     Connections {
         target: __viewPanel.item
