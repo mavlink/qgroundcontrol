@@ -1,0 +1,17 @@
+#! /bin/bash
+
+version="2.4"
+rsync -av --delete --exclude=.git ~/git/qgroundcontrol/ ~/tmp/qgroundcontrol-${version}/
+
+cd ~/tmp
+tar pczf qgroundcontrol_${version}.orig.tar.gz qgroundcontrol-${version}
+
+cd ~/tmp/qgroundcontrol-${version}/
+debuild -S
+
+dput ppa:qgroundcontrol/ppa qgroundcontrol_${version}-0ubuntu1_source.changes
+
+
+
+# test building the source deb locally
+debuild --prepend-path=/usr/lib/ccache -sa
