@@ -42,9 +42,12 @@ This file is part of the QGROUNDCONTROL project
 static bool is_ip(const QString& address)
 {
     int a,b,c,d;
-    if (sscanf(address.toStdString().c_str(), "%d.%d.%d.%d", &a, &b, &c, &d) != 4)
+    if (sscanf(address.toStdString().c_str(), "%d.%d.%d.%d", &a, &b, &c, &d) != 4
+            && strcmp("::1", address.toStdString().c_str())) {
         return false;
-    return true;
+    } else {
+        return true;
+    }
 }
 
 static QString get_ip_address(const QString& address)
@@ -134,6 +137,10 @@ void UDPLink::removeHost(const QString& host)
 
 void UDPLink::writeBytes(const char* data, qint64 size)
 {
+    if (!_socket) {
+        return;
+    }
+
     // Broadcast to all connected systems
     QString host;
     int port;
@@ -349,7 +356,7 @@ void UDPConfiguration::addHost(const QString& host, int port)
     } else {
         QString ipAdd = get_ip_address(host);
         if(ipAdd.isEmpty()) {
-            qWarning() << "UDP:" << "Could not resolve" << host;
+            qWarning() << "UDP:" << "Could not resolve host:" << host << "port:" << port;
         } else {
             _hosts[ipAdd] = port;
             qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
