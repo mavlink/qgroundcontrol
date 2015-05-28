@@ -153,8 +153,8 @@ FactPanel {
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
     QGCLabel { id: __textMeasure; text: "X"; visible: false }
 
-    property real __textHeight: __textMeasure.contentHeight
-    property real __textWidth:  __textMeasure.contentWidth
+    property real defaultTextHeight: __textMeasure.contentHeight
+    property real defaultTextWidth:  __textMeasure.contentWidth
 
     /// The width of the dialog panel in characters
     property int __dialogCharWidth: 75
@@ -271,7 +271,7 @@ FactPanel {
         // This is the main dialog panel which is anchored to the right edge
         Rectangle {
             id:             __dialogPanel
-            width:          __dialogCharWidth == -1 ? parent.width : __textWidth * __dialogCharWidth
+            width:          __dialogCharWidth == -1 ? parent.width : defaultTextWidth * __dialogCharWidth
             height:         parent.height
             anchors.left:   __transparentSection.right
             color:          __qgcPal.windowShadeDark
@@ -287,7 +287,7 @@ FactPanel {
                 }
 
                 QGCLabel {
-                    x:                  __textWidth
+                    x:                  defaultTextWidth
                     height:             parent.height
                     verticalAlignment:	Text.AlignVCenter
                     text:               __dialogTitle

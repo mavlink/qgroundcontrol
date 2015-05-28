@@ -50,6 +50,7 @@
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
+        <file alias="RadioComponent.qml">src/AutoPilotPlugins/PX4/RadioComponent.qml</file>
         <file alias="PowerComponent.qml">src/AutoPilotPlugins/PX4/PowerComponent.qml</file>
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
         <file alias="FlightModesComponent.qml">src/AutoPilotPlugins/PX4/FlightModesComponent.qml</file>
@@ -220,7 +221,7 @@
     </qresource>
 
     <qresource prefix="/res/calibration">
-        <file alias ="accel_back.png">resources/calibration/accel_back.png</file>
+        <file alias="accel_back.png">resources/calibration/accel_back.png</file>
         <file alias="accel_front.png">resources/calibration/accel_front.png</file>
         <file alias="accel_right.png">resources/calibration/accel_right.png</file>
         <file alias="accel_down.png">resources/calibration/accel_down.png</file>
@@ -228,7 +229,7 @@
         <file alias="accel_left.png">resources/calibration/accel_left.png</file>
     </qresource>
 
-    <qresource prefix="/res/calibration/mode1">
+    <qresource prefix="/qml/calibration/mode1">
         <file alias="radioCenter.png">resources/calibration/mode1/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode1/radioHome.png</file>
         <file alias="radioRollLeft.png">resources/calibration/mode1/radioRollLeft.png</file>
@@ -242,7 +243,7 @@
         <file alias="radioSwitchMinMax.png">resources/calibration/mode1/radioSwitchMinMax.png</file>
     </qresource>
 
-    <qresource prefix="/res/calibration/mode2">
+    <qresource prefix="/qml/calibration/mode2">
         <file alias="radioCenter.png">resources/calibration/mode2/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode2/radioHome.png</file>
         <file alias="radioRollLeft.png">resources/calibration/mode2/radioRollLeft.png</file>
