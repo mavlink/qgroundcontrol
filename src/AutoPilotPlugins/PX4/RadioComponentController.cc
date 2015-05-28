@@ -34,6 +34,11 @@
 
 QGC_LOGGING_CATEGORY(RadioComponentControllerLog, "RadioComponentControllerLog")
 
+#ifdef UNITTEST_BUILD
+// Nasty hack to expose controller to unit test code
+RadioComponentController* RadioComponentController::_unitTestController = NULL;
+#endif
+
 const int RadioComponentController::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
 const int RadioComponentController::_rcCalPWMCenterPoint = ((RadioComponentController::_rcCalPWMValidMaxValue - RadioComponentController::_rcCalPWMValidMinValue) / 2.0f) + RadioComponentController::_rcCalPWMValidMinValue;
 // FIXME: Double check these mins againt 150% throws
@@ -93,6 +98,11 @@ RadioComponentController::RadioComponentController(void) :
     _nextButton(NULL),
     _skipButton(NULL)
 {
+#ifdef UNITTEST_BUILD
+    // Nasty hack to expose controller to unit test code
+    _unitTestController = this;
+#endif
+
     connect(_uas, &UASInterface::remoteControlChannelRawChanged, this, &RadioComponentController::_remoteControlChannelRawChanged);
     _loadSettings();
     

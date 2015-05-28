@@ -38,7 +38,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(RadioComponentControllerLog)
 
-//class RadioComponentControllerTest;
+class RadioConfigest;
 
 namespace Ui {
     class RadioComponentController;
@@ -49,7 +49,7 @@ class RadioComponentController : public FactPanelController
 {
     Q_OBJECT
     
-    //friend class RadioComponentControllerTest; ///< This allows our unit test to access internal information needed.
+    friend class RadioConfigTest; ///< This allows our unit test to access internal information needed.
     
 public:
     RadioComponentController(void);
@@ -324,6 +324,11 @@ private:
     QQuickItem* _skipButton;
     
     QString _imageHelp;
+    
+#ifdef UNITTEST_BUILD
+    // Nasty hack to expose controller to unit test code
+    static RadioComponentController*    _unitTestController;
+#endif
 };
 
 #endif // RadioComponentController_H
