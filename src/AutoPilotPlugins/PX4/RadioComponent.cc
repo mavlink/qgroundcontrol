@@ -25,7 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "RadioComponent.h"
-#include "PX4RCCalibration.h"
+#include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 
 RadioComponent::RadioComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
@@ -140,7 +140,11 @@ QStringList RadioComponent::paramFilterList(void) const
 
 QWidget* RadioComponent::setupWidget(void) const
 {
-    return new PX4RCCalibration;
+    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
+    Q_CHECK_PTR(holder);
+    holder->setAutoPilot(_autopilot);
+    holder->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
+    return holder;
 }
 
 QUrl RadioComponent::summaryQmlSource(void) const

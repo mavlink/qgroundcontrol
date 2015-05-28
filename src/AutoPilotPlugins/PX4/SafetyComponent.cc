@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SafetyComponent.h"
-#include "PX4RCCalibration.h"
 #include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 
