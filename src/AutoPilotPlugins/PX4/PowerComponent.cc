@@ -25,7 +25,6 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #include "PowerComponent.h"
-#include "PX4RCCalibration.h"
 #include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 

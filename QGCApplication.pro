@@ -184,7 +184,6 @@ FORMS += \
     src/ui/mission/QGCMissionNavTakeoff.ui \
     src/ui/mission/QGCMissionNavWaypoint.ui \
     src/ui/mission/QGCMissionOther.ui \
-    src/ui/px4_configuration/PX4RCCalibration.ui \
     src/ui/QGCCommConfiguration.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCHilConfiguration.ui \
@@ -305,8 +304,6 @@ HEADERS += \
     src/ui/mission/QGCMissionNavTakeoff.h \
     src/ui/mission/QGCMissionNavWaypoint.h \
     src/ui/mission/QGCMissionOther.h \
-    src/ui/px4_configuration/PX4RCCalibration.h \
-    src/ui/px4_configuration/RCValueWidget.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/QGCHilConfiguration.h \
@@ -431,8 +428,6 @@ SOURCES += \
     src/ui/mission/QGCMissionNavTakeoff.cc \
     src/ui/mission/QGCMissionNavWaypoint.cc \
     src/ui/mission/QGCMissionOther.cc \
-    src/ui/px4_configuration/PX4RCCalibration.cc \
-    src/ui/px4_configuration/RCValueWidget.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/QGCHilConfiguration.cc \
@@ -517,10 +512,10 @@ HEADERS += \
     src/qgcunittest/MainWindowTest.h \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
-    src/qgcunittest/PX4RCCalibrationTest.h \
     src/qgcunittest/UnitTest.h \
     src/VehicleSetup/SetupViewTest.h \
     src/qgcunittest/FileManagerTest.h \
+    src/qgcunittest/PX4RCCalibrationTest.h \
 
 SOURCES += \
     src/qgcunittest/FlightGearTest.cc \
@@ -535,10 +530,10 @@ SOURCES += \
     src/qgcunittest/MainWindowTest.cc \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
-    src/qgcunittest/PX4RCCalibrationTest.cc \
     src/qgcunittest/UnitTest.cc \
     src/VehicleSetup/SetupViewTest.cc \
     src/qgcunittest/FileManagerTest.cc \
+    src/qgcunittest/PX4RCCalibrationTest.cc \
 
 } # DebugBuild|WindowsDebugAndRelease
 } # AndroidBuild
@@ -570,6 +565,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/PX4Component.h \
     src/AutoPilotPlugins/PX4/PX4ParameterLoader.h \
     src/AutoPilotPlugins/PX4/RadioComponent.h \
+    src/AutoPilotPlugins/PX4/RadioComponentController.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
@@ -599,6 +595,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
     src/AutoPilotPlugins/PX4/PX4ParameterLoader.cc \
     src/AutoPilotPlugins/PX4/RadioComponent.cc \
+    src/AutoPilotPlugins/PX4/RadioComponentController.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \

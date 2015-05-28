@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009, 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -23,57 +23,123 @@
 
 
 /// @file
-///     @brief PX4 RC Calibration Widget
+///     @brief Radio Config Qml Controller
 ///     @author Don Gagne <don@thegagnes.com
 
-#ifndef PX4RCCalibration_H
-#define PX4RCCalibration_H
+#ifndef RadioComponentController_H
+#define RadioComponentController_H
 
-#include <QWidget>
 #include <QTimer>
 
+#include "FactPanelController.h"
 #include "UASInterface.h"
-#include "RCValueWidget.h"
 #include "QGCLoggingCategory.h"
 #include "AutoPilotPlugin.h"
 
-#include "ui_PX4RCCalibration.h"
+Q_DECLARE_LOGGING_CATEGORY(RadioComponentControllerLog)
 
-Q_DECLARE_LOGGING_CATEGORY(PX4RCCalibrationLog)
-
-class PX4RCCalibrationTest;
+class RadioConfigest;
 
 namespace Ui {
-    class PX4RCCalibration;
+    class RadioComponentController;
 }
 
 
-class PX4RCCalibration : public QWidget
+class RadioComponentController : public FactPanelController
 {
     Q_OBJECT
     
-    friend class PX4RCCalibrationTest; ///< This allows our unit test to access internal information needed.
+    friend class RadioConfigTest; ///< This allows our unit test to access internal information needed.
     
 public:
-    explicit PX4RCCalibration(QWidget *parent = 0);
-    ~ PX4RCCalibration();
+    RadioComponentController(void);
+    ~RadioComponentController();
+    
+    Q_PROPERTY(int minChannelCount MEMBER _chanMinimum CONSTANT)
+    Q_PROPERTY(int channelCount READ channelCount NOTIFY channelCountChanged)
+    
+    Q_PROPERTY(QQuickItem* statusText MEMBER _statusText)
+    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
+    Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
+    Q_PROPERTY(QQuickItem* skipButton MEMBER _skipButton)
+    
+    Q_PROPERTY(bool rollChannelMapped READ rollChannelMapped NOTIFY rollChannelMappedChanged)
+    Q_PROPERTY(bool pitchChannelMapped READ pitchChannelMapped NOTIFY pitchChannelMappedChanged)
+    Q_PROPERTY(bool yawChannelMapped READ yawChannelMapped NOTIFY yawChannelMappedChanged)
+    Q_PROPERTY(bool throttleChannelMapped READ throttleChannelMapped NOTIFY throttleChannelMappedChanged)
+    
+    Q_PROPERTY(int rollChannelRCValue READ rollChannelRCValue NOTIFY rollChannelRCValueChanged)
+    Q_PROPERTY(int pitchChannelRCValue READ pitchChannelRCValue NOTIFY pitchChannelRCValueChanged)
+    Q_PROPERTY(int yawChannelRCValue READ yawChannelRCValue NOTIFY yawChannelRCValueChanged)
+    Q_PROPERTY(int throttleChannelRCValue READ throttleChannelRCValue NOTIFY throttleChannelRCValueChanged)
+    
+    Q_PROPERTY(int rollChannelReversed READ rollChannelReversed NOTIFY rollChannelReversedChanged)
+    Q_PROPERTY(int pitchChannelReversed READ pitchChannelReversed NOTIFY pitchChannelReversedChanged)
+    Q_PROPERTY(int yawChannelReversed READ yawChannelReversed NOTIFY yawChannelReversedChanged)
+    Q_PROPERTY(int throttleChannelReversed READ throttleChannelReversed NOTIFY throttleChannelReversedChanged)
+    
+    Q_PROPERTY(int transmitterMode READ transmitterMode WRITE setTransmitterMode NOTIFY transmitterModeChanged)
+    Q_PROPERTY(QString imageHelp MEMBER _imageHelp NOTIFY imageHelpChanged)
+    
+    Q_ENUMS(BindModes)
+    enum BindModes {
+        DSM2,
+        DSMX7,
+        DSMX8
+    };
+    
+    Q_INVOKABLE void spektrumBindMode(int mode);
+    Q_INVOKABLE void cancelButtonClicked(void);
+    Q_INVOKABLE void skipButtonClicked(void);
+    Q_INVOKABLE void nextButtonClicked(void);
+    Q_INVOKABLE void start(void);
+    
+    int rollChannelRCValue(void);
+    int pitchChannelRCValue(void);
+    int yawChannelRCValue(void);
+    int throttleChannelRCValue(void);
+    
+    bool rollChannelMapped(void);
+    bool pitchChannelMapped(void);
+    bool yawChannelMapped(void);
+    bool throttleChannelMapped(void);
+    
+    bool rollChannelReversed(void);
+    bool pitchChannelReversed(void);
+    bool yawChannelReversed(void);
+    bool throttleChannelReversed(void);
+    
+    int channelCount(void);
+    
+    int transmitterMode(void) { return _transmitterMode; }
+    void setTransmitterMode(int mode);
     
 signals:
+    void channelCountChanged(int channelCount);
+    void channelRCValueChanged(int channel, int rcValue);
+    
+    void rollChannelMappedChanged(bool mapped);
+    void pitchChannelMappedChanged(bool mapped);
+    void yawChannelMappedChanged(bool mapped);
+    void throttleChannelMappedChanged(bool mapped);
+    
+    void rollChannelRCValueChanged(int rcValue);
+    void pitchChannelRCValueChanged(int rcValue);
+    void yawChannelRCValueChanged(int rcValue);
+    void throttleChannelRCValueChanged(int rcValue);
+    
+    void rollChannelReversedChanged(bool reversed);
+    void pitchChannelReversedChanged(bool reversed);
+    void yawChannelReversedChanged(bool reversed);
+    void throttleChannelReversedChanged(bool reversed);
+    
+    void imageHelpChanged(QString source);
+    void transmitterModeChanged(int mode);
+    
     // @brief Signalled when in unit test mode and a message box should be displayed by the next button
     void nextButtonMessageBoxDisplayed(void);
 
 private slots:
-    void _nextButton(void);
-    void _skipButton(void);
-    void _spektrumBind(void);
-    
-    void _mode1Toggled(bool checked);
-    void _mode2Toggled(bool checked);
-    
-    void _trimNYI(void);
-    
-    void _updateView(void);
-    
     void _remoteControlChannelRawChanged(int chan, float val);
     
 private:
@@ -115,8 +181,8 @@ private:
         rcCalStateSave
     };
     
-    typedef void (PX4RCCalibration::*inputFn)(enum rcCalFunctions function, int chan, int value);
-    typedef void (PX4RCCalibration::*buttonFn)(void);
+    typedef void (RadioComponentController::*inputFn)(enum rcCalFunctions function, int chan, int value);
+    typedef void (RadioComponentController::*buttonFn)(void);
     struct stateMachineEntry {
         enum rcCalFunctions function;
         const char*         instructions;
@@ -140,19 +206,11 @@ private:
         int                 rcTrim;     ///< Trim position
     };
     
-    /// @brief Information to relate a function to it's value widget.
-    struct AttitudeInfo {
-        enum rcCalFunctions function;
-        RCValueWidget*      valueWidget;
-    };
-    
-    // Methods - see source code for documentation
-    
     int _currentStep;  ///< Current step of state machine
     
     const struct stateMachineEntry* _getStateMachineEntry(int step);
     
-    void _nextStep(void);
+    void _advanceState(void);
     void _setupCurrentState(void);
     
     void _inputCenterWaitBegin(enum rcCalFunctions function, int channel, int value);
@@ -186,13 +244,12 @@ private:
     
     void _rcCalSaveCurrentValues(void);
     
-    void _showMinMaxOnRadioWidgets(bool show);
-    void _showTrimOnRadioWidgets(bool show);
-    
     void _setHelpImage(const char* imageFile);
     
     void _loadSettings(void);
     void _storeSettings(void);
+    
+    void _signalAllAttiudeValueChanges(void);
     
     // @brief Called by unit test code to set the mode to unit testing
     void _setUnitTestMode(void){ _unitTestMode = true; }
@@ -225,7 +282,6 @@ private:
     int _rgFunctionChannelMapping[rcCalFunctionMax];                    ///< Maps from rcCalFunctions to channel index. _chanMax indicates channel not set for this function.
 
     static const int _attitudeControls = 5;
-    struct AttitudeInfo _rgAttitudeControl[_attitudeControls];
     
     int _chanCount;                     ///< Number of actual rc channels available
     static const int _chanMax = 18;     ///< Maximum number of supported rc channels
@@ -253,16 +309,6 @@ private:
     
     int _rcRawValue[_chanMax];         ///< Current set of raw channel values
     
-    RCValueWidget* _rgRCValueMonitorWidget[_chanMax];   ///< Array of radio channel value widgets
-    QLabel* _rgRCValueMonitorLabel[_chanMax];           ///< Array of radio channel value labels
-
-    UASInterface*                   _uas;
-    QSharedPointer<AutoPilotPlugin> _autopilot;
-    
-    Ui::PX4RCCalibration* _ui;
-    
-    QTimer _updateTimer;    ///< Timer used to update widgete ui
-    
     int     _stickDetectChannel;
     int     _stickDetectInitialValue;
     int     _stickDetectValue;
@@ -271,6 +317,18 @@ private:
     static const int _stickDetectSettleMSecs;
     
     bool _unitTestMode;
+    
+    QQuickItem* _statusText;
+    QQuickItem* _cancelButton;
+    QQuickItem* _nextButton;
+    QQuickItem* _skipButton;
+    
+    QString _imageHelp;
+    
+#ifdef UNITTEST_BUILD
+    // Nasty hack to expose controller to unit test code
+    static RadioComponentController*    _unitTestController;
+#endif
 };
 
-#endif // PX4RCCalibration_H
+#endif // RadioComponentController_H

@@ -21,30 +21,30 @@
  
  ======================================================================*/
 
-#ifndef PX4RCCALIBRATIONTEST_H
-#define PX4RCCALIBRATIONTEST_H
+#ifndef RadioConfigTest_H
+#define RadioConfigTest_H
 
 #include "UnitTest.h"
 #include "MockLink.h"
 #include "MultiSignalSpy.h"
-#include "px4_configuration/PX4RCCalibration.h"
+#include "RadioComponentController.h"
 #include "QGCLoggingCategory.h"
 #include "AutoPilotPlugin.h"
+#include "QGCQmlWidgetHolder.h"
 
 /// @file
-///     @brief PX4RCCalibration Widget unit test
+///     @brief Radio Config unit test
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-Q_DECLARE_LOGGING_CATEGORY(PX4RCCalibrationTestLog)
+Q_DECLARE_LOGGING_CATEGORY(RadioConfigTestLog)
 
-///     @brief PX4RCCalibration Widget unit test
-class PX4RCCalibrationTest : public UnitTest
+class RadioConfigTest : public UnitTest
 {
     Q_OBJECT
     
 public:
-    PX4RCCalibrationTest(void);
+    RadioConfigTest(void);
     
 private slots:
     void init(void);
@@ -71,10 +71,10 @@ private:
     void _minRCChannels(void);
     void _beginCalibration(void);
     void _stickMoveWaitForSettle(int channel, int value);
-    void _stickMoveAutoStep(const char* functionStr, enum PX4RCCalibration::rcCalFunctions function, enum MoveToDirection direction, bool identifyStep);
+    void _stickMoveAutoStep(const char* functionStr, enum RadioComponentController::rcCalFunctions function, enum MoveToDirection direction, bool identifyStep);
     void _switchMinMaxStep(void);
     void _flapsDetectStep(void);
-    void _switchSelectAutoStep(const char* functionStr, PX4RCCalibration::rcCalFunctions function);
+    void _switchSelectAutoStep(const char* functionStr, RadioComponentController::rcCalFunctions function);
     
     enum {
         validateMinMaxMask =    1 << 0,
@@ -97,20 +97,13 @@ private:
     MockLink*           _mockLink;
     AutoPilotPlugin*    _autopilot;
     
-    PX4RCCalibration*   _calWidget;
+    QGCQmlWidgetHolder* _calWidget;
     
     enum {
         nextButtonMask =        1 << 0,
         cancelButtonMask =      1 << 1,
         skipButtonMask =        1 << 2
     };
-    
-    QPushButton*    _nextButton;
-    QPushButton*    _cancelButton;
-    QPushButton*    _skipButton;
-    QLabel*         _statusLabel;
-    
-    RCValueWidget* _rgValueWidget[PX4RCCalibration::_chanMax];
     
     const char*         _rgSignals[1];
     MultiSignalSpy*     _multiSpyNextButtonMessageBox;
@@ -125,9 +118,11 @@ private:
     static const int _stickSettleWait;
 	
     static const struct ChannelSettings _rgChannelSettings[_availableChannels];
-    static const struct ChannelSettings _rgChannelSettingsValidate[PX4RCCalibration::_chanMax];
+    static const struct ChannelSettings _rgChannelSettingsValidate[RadioComponentController::_chanMax];
 	
-	int _rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax];
+	int _rgFunctionChannelMap[RadioComponentController::rcCalFunctionMax];
+    
+    RadioComponentController*   _controller;
 };
 
 #endif
