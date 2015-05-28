@@ -515,8 +515,7 @@ HEADERS += \
     src/qgcunittest/UnitTest.h \
     src/VehicleSetup/SetupViewTest.h \
     src/qgcunittest/FileManagerTest.h \
-
-#src/qgcunittest/PX4RCCalibrationTest.h \
+    src/qgcunittest/PX4RCCalibrationTest.h \
 
 SOURCES += \
     src/qgcunittest/FlightGearTest.cc \
@@ -534,8 +533,7 @@ SOURCES += \
     src/qgcunittest/UnitTest.cc \
     src/VehicleSetup/SetupViewTest.cc \
     src/qgcunittest/FileManagerTest.cc \
-
-#src/qgcunittest/PX4RCCalibrationTest.cc \
+    src/qgcunittest/PX4RCCalibrationTest.cc \
 
 } # DebugBuild|WindowsDebugAndRelease
 } # AndroidBuild

@@ -22,29 +22,30 @@
  ======================================================================*/
 
 #include "PX4RCCalibrationTest.h"
+#include "RadioComponentController.h"
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 
 /// @file
-///     @brief QPX4RCCalibration Widget unit test
+///     @brief QRadioComponentController Widget unit test
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-UT_REGISTER_TEST(PX4RCCalibrationTest)
-QGC_LOGGING_CATEGORY(PX4RCCalibrationTestLog, "PX4RCCalibrationTestLog")
+UT_REGISTER_TEST(RadioConfigTest)
+QGC_LOGGING_CATEGORY(RadioConfigTestLog, "RadioConfigTestLog")
 
 // This will check for the wizard buttons being enabled of disabled according to the mask you pass in.
 // We use a macro instead of a method so that we get better line number reporting on failure.
 #define CHK_BUTTONS(mask) \
 { \
-    if (_nextButton->isEnabled() != !!((mask) & nextButtonMask) || \
-        _skipButton->isEnabled() != !!((mask) & skipButtonMask) || \
-        _cancelButton->isEnabled() != !!((mask) & cancelButtonMask) ) { \
-        qCDebug(PX4RCCalibrationTestLog) << _statusLabel->text(); \
+    if (_controller->_nextButton->isEnabled() != !!((mask) & nextButtonMask) || \
+        _controller->_skipButton->isEnabled() != !!((mask) & skipButtonMask) || \
+        _controller->_cancelButton->isEnabled() != !!((mask) & cancelButtonMask) ) { \
+        qCDebug(RadioConfigTestLog) << _controller->_statusText->property("text"); \
     } \
-    QCOMPARE(_nextButton->isEnabled(), !!((mask) & nextButtonMask)); \
-    QCOMPARE(_skipButton->isEnabled(), !!((mask) & skipButtonMask)); \
-    QCOMPARE(_cancelButton->isEnabled(), !!((mask) & cancelButtonMask)); \
+    QCOMPARE(_controller->_nextButton->isEnabled(), !!((mask) & nextButtonMask)); \
+    QCOMPARE(_controller->_skipButton->isEnabled(), !!((mask) & skipButtonMask)); \
+    QCOMPARE(_controller->_cancelButton->isEnabled(), !!((mask) & cancelButtonMask)); \
 }
 
 // This allows you to write unit tests which will click the Cancel button the first time through, followed
@@ -53,7 +54,7 @@ QGC_LOGGING_CATEGORY(PX4RCCalibrationTestLog, "PX4RCCalibrationTestLog")
 { \
     if (mode == testModeStandalone && tryCancel ## cancelNum) { \
         QTest::mouseClick(_cancelButton, Qt::LeftButton); \
-        QCOMPARE(_calWidget->_rcCalState, PX4RCCalibration::rcCalStateChannelWait); \
+        QCOMPARE(_controller->_rcCalState, RadioComponentController::rcCalStateChannelWait); \
         tryCancel ## cancelNum = false; \
         goto StartOver; \
     } else { \
@@ -61,87 +62,91 @@ QGC_LOGGING_CATEGORY(PX4RCCalibrationTestLog, "PX4RCCalibrationTestLog")
     } \
 }
 
-const int PX4RCCalibrationTest::_stickSettleWait = PX4RCCalibration::_stickDetectSettleMSecs * 1.5;
+const int RadioConfigTest::_stickSettleWait = RadioComponentController::_stickDetectSettleMSecs * 1.5;
 
-const int PX4RCCalibrationTest::_testMinValue = PX4RCCalibration::_rcCalPWMDefaultMinValue + 10;
-const int PX4RCCalibrationTest::_testMaxValue = PX4RCCalibration::_rcCalPWMDefaultMaxValue - 10;
-const int PX4RCCalibrationTest::_testCenterValue = PX4RCCalibrationTest::_testMinValue + ((PX4RCCalibrationTest::_testMaxValue - PX4RCCalibrationTest::_testMinValue) / 2);
+const int RadioConfigTest::_testMinValue = RadioComponentController::_rcCalPWMDefaultMinValue + 10;
+const int RadioConfigTest::_testMaxValue = RadioComponentController::_rcCalPWMDefaultMaxValue - 10;
+const int RadioConfigTest::_testCenterValue = RadioConfigTest::_testMinValue + ((RadioConfigTest::_testMaxValue - RadioConfigTest::_testMinValue) / 2);
 
-const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChannelSettings[PX4RCCalibrationTest::_availableChannels] = {
+const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSettings[RadioConfigTest::_availableChannels] = {
 	// Function										Min                 Max                 #  Reversed
 	
 	// Channel 0 : Not mapped to function, Simulate invalid Min/Max
-	{ PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,	_testCenterValue,   0, false },
+	{ RadioComponentController::rcCalFunctionMax,			_testCenterValue,	_testCenterValue,   0, false },
 	
     // Channels 1-4: Mapped to attitude control function
-    { PX4RCCalibration::rcCalFunctionRoll,			_testMinValue,      _testMaxValue,      0, true },
-    { PX4RCCalibration::rcCalFunctionPitch,			_testMinValue,      _testMaxValue,      0, false },
-    { PX4RCCalibration::rcCalFunctionYaw,			_testMinValue,      _testMaxValue,      0, true },
-    { PX4RCCalibration::rcCalFunctionThrottle,		_testMinValue,      _testMaxValue,      0,  false },
+    { RadioComponentController::rcCalFunctionRoll,			_testMinValue,      _testMaxValue,      0, true },
+    { RadioComponentController::rcCalFunctionPitch,			_testMinValue,      _testMaxValue,      0, false },
+    { RadioComponentController::rcCalFunctionYaw,			_testMinValue,      _testMaxValue,      0, true },
+    { RadioComponentController::rcCalFunctionThrottle,		_testMinValue,      _testMaxValue,      0,  false },
     
     // Channels 5-8: Not mapped to function, Simulate invalid Min/Max, since available channel Min/Max is still shown.
     // These are here to skip over the flight mode functions
-    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
-    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
-    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
-    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
     
     // Channels 9-11: Remainder of non-flight mode switches
-    { PX4RCCalibration::rcCalFunctionFlaps,			_testMinValue,      _testMaxValue,      0, false },
-    { PX4RCCalibration::rcCalFunctionAux1,			_testMinValue,      _testMaxValue,      0, false },
-    { PX4RCCalibration::rcCalFunctionAux2,			_testMinValue,      _testMaxValue,      0, false },
+    { RadioComponentController::rcCalFunctionFlaps,			_testMinValue,      _testMaxValue,      0, false },
+    { RadioComponentController::rcCalFunctionAux1,			_testMinValue,      _testMaxValue,      0, false },
+    { RadioComponentController::rcCalFunctionAux2,			_testMinValue,      _testMaxValue,      0, false },
 	
     // Channel 12 : Not mapped to function, Simulate invalid Min, valid Max
-    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,	_testMaxValue,      0,  false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,	_testMaxValue,      0,  false },
     
 	// Channel 13 : Not mapped to function, Simulate valid Min, invalid Max
-	{ PX4RCCalibration::rcCalFunctionMax,           _testMinValue,      _testCenterValue,   0,	false },
+	{ RadioComponentController::rcCalFunctionMax,           _testMinValue,      _testCenterValue,   0,	false },
 	
     // Channels 14-17: Not mapped to function, Simulate invalid Min/Max, since available channel Min/Max is still shown
-    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
-    { PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
-	{ PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
-	{ PX4RCCalibration::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+	{ RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+	{ RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
 };
 
-const struct PX4RCCalibrationTest::ChannelSettings PX4RCCalibrationTest::_rgChannelSettingsValidate[PX4RCCalibration::_chanMax] = {
+// Note the: 1500/*RadioComponentController::_rcCalPWMCenterPoint*/ entires. For some reason I couldn't get the compiler to do the
+// right thing with the constant. So I just hacked inthe real value instead of fighting with it any longer.
+const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSettingsValidate[RadioComponentController::_chanMax] = {
     // Function										Min Value									Max Value									Trim Value										Reversed
 	
     // Channels 0: not mapped and should be set to defaults
-	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+	{ RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
 	
     // Channels 1-4: Mapped to attitude control function
-	{ PX4RCCalibration::rcCalFunctionRoll,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
-    { PX4RCCalibration::rcCalFunctionPitch,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
-    { PX4RCCalibration::rcCalFunctionYaw,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
-    { PX4RCCalibration::rcCalFunctionThrottle,		_testMinValue,                              _testMaxValue,                              _testMinValue,                                  false },
+	{ RadioComponentController::rcCalFunctionRoll,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
+    { RadioComponentController::rcCalFunctionPitch,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { RadioComponentController::rcCalFunctionYaw,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               true },
+    { RadioComponentController::rcCalFunctionThrottle,		_testMinValue,                              _testMaxValue,                              _testMinValue,                                  false },
     
     // Channels 5-8: not mapped and should be set to defaults
-    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
     
     // Channels 9-11: Remainder of non-flight mode switches
-    { PX4RCCalibration::rcCalFunctionFlaps,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
-    { PX4RCCalibration::rcCalFunctionAux1,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
-    { PX4RCCalibration::rcCalFunctionAux2,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { RadioComponentController::rcCalFunctionFlaps,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { RadioComponentController::rcCalFunctionAux1,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
+    { RadioComponentController::rcCalFunctionAux2,			_testMinValue,                              _testMaxValue,                              _testCenterValue,                               false },
 	
 	// Channels 12-17 are not mapped and should be set to defaults
-	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-	{ PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
-    { PX4RCCalibration::rcCalFunctionMax,			PX4RCCalibration::_rcCalPWMDefaultMinValue,	PX4RCCalibration::_rcCalPWMDefaultMaxValue,	PX4RCCalibration::_rcCalPWMCenterPoint,         false },
+	{ RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+	{ RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+	{ RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+	{ RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
 };
 
-PX4RCCalibrationTest::PX4RCCalibrationTest(void) :
-    _calWidget(NULL)
+RadioConfigTest::RadioConfigTest(void) :
+    _calWidget(NULL),
+    _controller(NULL)
 {
+    
 }
 
-void PX4RCCalibrationTest::init(void)
+void RadioConfigTest::init(void)
 {
     UnitTest::init();
     
@@ -161,40 +166,26 @@ void PX4RCCalibrationTest::init(void)
     Q_ASSERT(_autopilot->pluginReady());
     
     // This will instatiate the widget with an active uas with ready parameters
-    _calWidget = new PX4RCCalibration();
+    _calWidget = new QGCQmlWidgetHolder();
     Q_CHECK_PTR(_calWidget);
-    _calWidget->_setUnitTestMode();    
-
-    // Get pointers to the push buttons
-    _cancelButton = _calWidget->findChild<QPushButton*>("rcCalCancel");
-    _nextButton = _calWidget->findChild<QPushButton*>("rcCalNext");
-    _skipButton = _calWidget->findChild<QPushButton*>("rcCalSkip");
+    _calWidget->setAutoPilot(_autopilot);
+    _calWidget->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
     
-    Q_ASSERT(_cancelButton);
-    Q_ASSERT(_nextButton);
-    Q_ASSERT(_skipButton);
-    
-    _statusLabel = _calWidget->findChild<QLabel*>("rcCalStatus");
-    Q_ASSERT(_statusLabel);
- 
-    for (size_t i=0; i<PX4RCCalibration::_chanMax; i++) {
-        QString radioWidgetName("channel%1Value");
+    // Nasty hack to get to controller
+    _controller = RadioComponentController::_unitTestController;
+    Q_ASSERT(_controller);
 
-        RCValueWidget* radioWidget = _calWidget->findChild<RCValueWidget*>(radioWidgetName.arg(i+1));
-        Q_ASSERT(radioWidget);
-        
-        _rgValueWidget[i] = radioWidget;
-    }
+    _controller->_setUnitTestMode();
     
     _rgSignals[0] = SIGNAL(nextButtonMessageBoxDisplayed());
     _multiSpyNextButtonMessageBox = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpyNextButtonMessageBox);
-    QCOMPARE(_multiSpyNextButtonMessageBox->init(_calWidget, _rgSignals, 1), true);
+    QCOMPARE(_multiSpyNextButtonMessageBox->init(_controller, _rgSignals, 1), true);
     
-    QCOMPARE(_calWidget->_currentStep, -1);
+    QCOMPARE(_controller->_currentStep, -1);
 }
 
-void PX4RCCalibrationTest::cleanup(void)
+void RadioConfigTest::cleanup(void)
 {
     Q_ASSERT(_calWidget);
     delete _calWidget;
@@ -208,26 +199,26 @@ void PX4RCCalibrationTest::cleanup(void)
 }
 
 /// @brief Test for correct behavior in determining minimum numbers of channels for flight.
-void PX4RCCalibrationTest::_minRCChannels_test(void)
+void RadioConfigTest::_minRCChannels_test(void)
 {
     // Next button won't be enabled until we see the minimum number of channels.
-    for (int chan=0; chan<PX4RCCalibration::_chanMinimum; chan++) {
-        _mockLink->emitRemoteControlChannelRawChanged(chan, (float)PX4RCCalibration::_rcCalPWMCenterPoint);
+    for (int chan=0; chan<RadioComponentController::_chanMinimum; chan++) {
+        _mockLink->emitRemoteControlChannelRawChanged(chan, (float)RadioComponentController::_rcCalPWMCenterPoint);
         
         // We use _chanCount internally so we should validate it
-        QCOMPARE(_calWidget->_chanCount, chan+1);
+        QCOMPARE(_controller->_chanCount, chan+1);
         
         // Validate Next button state
-        QTest::mouseClick(_nextButton, Qt::LeftButton);
+        _controller->nextButtonClicked();
         bool signalFound = _multiSpyNextButtonMessageBox->waitForSignalByIndex(0, 200);
-        if (chan == PX4RCCalibration::_chanMinimum - 1) {
+        if (chan == RadioComponentController::_chanMinimum - 1) {
             // Last channel should trigger Calibration available
             QCOMPARE(signalFound, false);
-            QCOMPARE(_calWidget->_currentStep, 0);
+            QCOMPARE(_controller->_currentStep, 0);
         } else {
             // Still less than the minimum channels. Next button should show message box. Calibration should not start.
             QCOMPARE(signalFound, true);
-            QCOMPARE(_calWidget->_currentStep, -1);
+            QCOMPARE(_controller->_currentStep, -1);
         }
         _multiSpyNextButtonMessageBox->clearAllSignals();
 
@@ -235,29 +226,29 @@ void PX4RCCalibrationTest::_minRCChannels_test(void)
         // Leaving code here because RC Cal could be restructured to handle this case at some point.
 #if 0
         // Only available channels should have visible widget. A ui update cycle needs to have passed so we wait a little.
-        QTest::qWait(PX4RCCalibration::_updateInterval * 2);
-        for (int chanWidget=0; chanWidget<PX4RCCalibration::_chanMax; chanWidget++) {
-            qCDebug(PX4RCCalibrationTestLog) << _rgValueWidget[chanWidget]->objectName() << chanWidget << chan;
+        QTest::qWait(RadioComponentController::_updateInterval * 2);
+        for (int chanWidget=0; chanWidget<RadioComponentController::_chanMax; chanWidget++) {
+            qCDebug(RadioConfigTestLog) << _rgValueWidget[chanWidget]->objectName() << chanWidget << chan;
             QCOMPARE(_rgValueWidget[chanWidget]->isVisible(), !!(chanWidget <= chan));
         }
 #endif
     }
 }
 
-void PX4RCCalibrationTest::_beginCalibration(void)
+void RadioConfigTest::_beginCalibration(void)
 {
     CHK_BUTTONS(nextButtonMask | cancelButtonMask);
 
     // We should already have enough channels to proceed with calibration. Click next to start the process.
     
-    QTest::mouseClick(_nextButton, Qt::LeftButton);
-    QCOMPARE(_calWidget->_currentStep, 1);
+    _controller->nextButtonClicked();
+    QCOMPARE(_controller->_currentStep, 1);
     CHK_BUTTONS(cancelButtonMask);
 }
 
-void PX4RCCalibrationTest::_stickMoveWaitForSettle(int channel, int value)
+void RadioConfigTest::_stickMoveWaitForSettle(int channel, int value)
 {
-    qCDebug(PX4RCCalibrationTestLog) << "_stickMoveWaitForSettle channel:value" << channel << value;
+    qCDebug(RadioConfigTestLog) << "_stickMoveWaitForSettle channel:value" << channel << value;
 
     // Move the stick, this will initialized the settle checker
     _mockLink->emitRemoteControlChannelRawChanged(channel, value);
@@ -266,21 +257,21 @@ void PX4RCCalibrationTest::_stickMoveWaitForSettle(int channel, int value)
     _mockLink->emitRemoteControlChannelRawChanged(channel, value);
     
     // Wait long enough for the settle timer to expire
-    QTest::qWait(PX4RCCalibration::_stickDetectSettleMSecs * 1.5);
+    QTest::qWait(RadioComponentController::_stickDetectSettleMSecs * 1.5);
     
     // Emit the signal again so that we detect stick settle
     _mockLink->emitRemoteControlChannelRawChanged(channel, value);
 }
 
-void PX4RCCalibrationTest::_stickMoveAutoStep(const char* functionStr, enum PX4RCCalibration::rcCalFunctions function, enum PX4RCCalibrationTest::MoveToDirection direction, bool identifyStep)
+void RadioConfigTest::_stickMoveAutoStep(const char* functionStr, enum RadioComponentController::rcCalFunctions function, enum RadioConfigTest::MoveToDirection direction, bool identifyStep)
 {
     Q_UNUSED(functionStr);
-    qCDebug(PX4RCCalibrationTestLog) << "_stickMoveAutoStep function:direction:reversed:identifyStep" << functionStr << function << direction << identifyStep;
+    qCDebug(RadioConfigTestLog) << "_stickMoveAutoStep function:direction:reversed:identifyStep" << functionStr << function << direction << identifyStep;
     
     CHK_BUTTONS(cancelButtonMask);
     
     int channel = _rgFunctionChannelMap[function];
-    int saveStep = _calWidget->_currentStep;
+    int saveStep = _controller->_currentStep;
     
     bool reversed = _rgChannelSettings[channel].reversed;
     
@@ -288,16 +279,16 @@ void PX4RCCalibrationTest::_stickMoveAutoStep(const char* functionStr, enum PX4R
         // We have already identified the function channel mapping. Move other channels around to make sure there is no impact.
         
         int otherChannel = channel + 1;
-        if (otherChannel >= PX4RCCalibration::_chanMax) {
+        if (otherChannel >= RadioComponentController::_chanMax) {
             otherChannel = 0;
         }
         
         _stickMoveWaitForSettle(otherChannel, _testMinValue);
-        QCOMPARE(_calWidget->_currentStep, saveStep);
+        QCOMPARE(_controller->_currentStep, saveStep);
         CHK_BUTTONS(cancelButtonMask);
         
-        _stickMoveWaitForSettle(otherChannel, PX4RCCalibration::_rcCalPWMCenterPoint);
-        QCOMPARE(_calWidget->_currentStep, saveStep);
+        _stickMoveWaitForSettle(otherChannel, RadioComponentController::_rcCalPWMCenterPoint);
+        QCOMPARE(_controller->_currentStep, saveStep);
         CHK_BUTTONS(cancelButtonMask);
     }
     
@@ -309,24 +300,22 @@ void PX4RCCalibrationTest::_stickMoveAutoStep(const char* functionStr, enum PX4R
     } else if (direction == moveToMax) {
         value = reversed ? _testMinValue : _testMaxValue;
     } else if (direction == moveToCenter) {
-        value = PX4RCCalibration::_rcCalPWMCenterPoint;
+        value = RadioComponentController::_rcCalPWMCenterPoint;
     } else {
         Q_ASSERT(false);
     }
     
     _stickMoveWaitForSettle(channel, value);
-    QCOMPARE(_calWidget->_currentStep, saveStep + 1);
+    QCOMPARE(_controller->_currentStep, saveStep + 1);
 }
 
-void PX4RCCalibrationTest::_switchMinMaxStep(void)
+void RadioConfigTest::_switchMinMaxStep(void)
 {
     CHK_BUTTONS(nextButtonMask | cancelButtonMask);
     
     // Try setting a min/max value that is below the threshold to make sure min/max doesn't go valid
-    _mockLink->emitRemoteControlChannelRawChanged(0, (float)(PX4RCCalibration::_rcCalPWMValidMinValue + 1));
-    _mockLink->emitRemoteControlChannelRawChanged(0, (float)(PX4RCCalibration::_rcCalPWMValidMaxValue - 1));
-    QCOMPARE(_rgValueWidget[0]->isMinValid(), false);
-    QCOMPARE(_rgValueWidget[0]->isMaxValid(), false);
+    _mockLink->emitRemoteControlChannelRawChanged(0, (float)(RadioComponentController::_rcCalPWMValidMinValue + 1));
+    _mockLink->emitRemoteControlChannelRawChanged(0, (float)(RadioComponentController::_rcCalPWMValidMaxValue - 1));
     
     // Send min/max values switch channels
     for (int chan=0; chan<_availableChannels; chan++) {
@@ -336,23 +325,23 @@ void PX4RCCalibrationTest::_switchMinMaxStep(void)
     
     _channelHomePosition();
 
-    int saveStep = _calWidget->_currentStep;
-    QTest::mouseClick(_nextButton, Qt::LeftButton);
-    QCOMPARE(_calWidget->_currentStep, saveStep + 1);
+    int saveStep = _controller->_currentStep;
+    _controller->nextButtonClicked();
+    QCOMPARE(_controller->_currentStep, saveStep + 1);
 }
 
-void PX4RCCalibrationTest::_flapsDetectStep(void)
+void RadioConfigTest::_flapsDetectStep(void)
 {
-    int channel = _rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionFlaps];
+    int channel = _rgFunctionChannelMap[RadioComponentController::rcCalFunctionFlaps];
     
-    qCDebug(PX4RCCalibrationTestLog) << "_flapsDetectStep channel" << channel;
+    qCDebug(RadioConfigTestLog) << "_flapsDetectStep channel" << channel;
     
     // Test code can't handle reversed flaps channel
     Q_ASSERT(!_rgChannelSettings[channel].reversed);
     
     CHK_BUTTONS(nextButtonMask | cancelButtonMask | skipButtonMask);
     
-    int saveStep = _calWidget->_currentStep;
+    int saveStep = _controller->_currentStep;
 
     // Wiggle channel to identify
     _stickMoveWaitForSettle(channel, _testMaxValue);
@@ -362,35 +351,35 @@ void PX4RCCalibrationTest::_flapsDetectStep(void)
     _stickMoveWaitForSettle(channel, _testMaxValue);
     
     // User has to hit next at this step
-    QCOMPARE(_calWidget->_currentStep, saveStep);
+    QCOMPARE(_controller->_currentStep, saveStep);
     CHK_BUTTONS(nextButtonMask | cancelButtonMask | skipButtonMask);
-    QTest::mouseClick(_nextButton, Qt::LeftButton);
-    QCOMPARE(_calWidget->_currentStep, saveStep + 1);
+    _controller->nextButtonClicked();
+    QCOMPARE(_controller->_currentStep, saveStep + 1);
 }
 
-void PX4RCCalibrationTest::_switchSelectAutoStep(const char* functionStr, PX4RCCalibration::rcCalFunctions function)
+void RadioConfigTest::_switchSelectAutoStep(const char* functionStr, RadioComponentController::rcCalFunctions function)
 {
     Q_UNUSED(functionStr);
-    ////qCDebug(PX4RCCalibrationTestLog)() << "_switchSelectAutoStep" << functionStr << "function:" << function;
+    ////qCDebug(RadioConfigTestLog)() << "_switchSelectAutoStep" << functionStr << "function:" << function;
     
     int buttonMask = cancelButtonMask;
-    if (function != PX4RCCalibration::rcCalFunctionModeSwitch) {
+    if (function != RadioComponentController::rcCalFunctionModeSwitch) {
         buttonMask |= skipButtonMask;
     }
     
     CHK_BUTTONS(buttonMask);
     
-    int saveStep = _calWidget->_currentStep;
+    int saveStep = _controller->_currentStep;
     
     // Wiggle stick for channel
     int channel = _rgFunctionChannelMap[function];
     _mockLink->emitRemoteControlChannelRawChanged(channel, _testMinValue);
     _mockLink->emitRemoteControlChannelRawChanged(channel, _testMaxValue);
     
-    QCOMPARE(_calWidget->_currentStep, saveStep + 1);
+    QCOMPARE(_controller->_currentStep, saveStep + 1);
 }
 
-void PX4RCCalibrationTest::_fullCalibration_test(void)
+void RadioConfigTest::_fullCalibration_test(void)
 {
     // IMPORTANT NOTE: We used channels 1-5 for attitude mapping in the test below.
     // MockLink.params file cannot have flight mode switches mapped to those channels.
@@ -399,11 +388,11 @@ void PX4RCCalibrationTest::_fullCalibration_test(void)
     /// _rgFunctionChannelMap maps from function index to channel index. For channels which are not part of
     /// rc cal set the mapping the the previous mapping.
     
-    for (int function=0; function<PX4RCCalibration::rcCalFunctionMax; function++) {
+    for (int function=0; function<RadioComponentController::rcCalFunctionMax; function++) {
         bool found = false;
         
         // If we are mapping this function during cal set it into _rgFunctionChannelMap
-        for (int channel=0; channel<PX4RCCalibrationTest::_availableChannels; channel++) {
+        for (int channel=0; channel<RadioConfigTest::_availableChannels; channel++) {
             if (_rgChannelSettings[channel].function == function) {
                 
                 // First make sure this function isn't being use for a switch
@@ -424,8 +413,8 @@ void PX4RCCalibrationTest::_fullCalibration_test(void)
         
         // If we aren't mapping this function during calibration, set it to the previous setting
         if (!found) {
-            _rgFunctionChannelMap[function] = _autopilot->getParameterFact(FactSystem::defaultComponentId, PX4RCCalibration::_rgFunctionInfo[function].parameterName)->value().toInt();
-            qCDebug(PX4RCCalibrationTestLog) << "Assigning switch" << function << _rgFunctionChannelMap[function];
+            _rgFunctionChannelMap[function] = _autopilot->getParameterFact(FactSystem::defaultComponentId, RadioComponentController::_rgFunctionInfo[function].parameterName)->value().toInt();
+            qCDebug(RadioConfigTestLog) << "Assigning switch" << function << _rgFunctionChannelMap[function];
             if (_rgFunctionChannelMap[function] == 0) {
                 _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
             } else {
@@ -435,42 +424,42 @@ void PX4RCCalibrationTest::_fullCalibration_test(void)
     }
     
     _channelHomePosition();
-    QTest::mouseClick(_nextButton, Qt::LeftButton);    
+    _controller->nextButtonClicked();
     _beginCalibration();
-    _stickMoveAutoStep("Throttle", PX4RCCalibration::rcCalFunctionThrottle, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Throttle", PX4RCCalibration::rcCalFunctionThrottle, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Yaw", PX4RCCalibration::rcCalFunctionYaw, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Yaw", PX4RCCalibration::rcCalFunctionYaw, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Roll", PX4RCCalibration::rcCalFunctionRoll, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Roll", PX4RCCalibration::rcCalFunctionRoll, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Pitch", PX4RCCalibration::rcCalFunctionPitch, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Pitch", PX4RCCalibration::rcCalFunctionPitch, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Pitch", PX4RCCalibration::rcCalFunctionPitch, moveToCenter, false /* not identify step */);
+    _stickMoveAutoStep("Throttle", RadioComponentController::rcCalFunctionThrottle, moveToMax, true /* identify step */);
+    _stickMoveAutoStep("Throttle", RadioComponentController::rcCalFunctionThrottle, moveToMin, false /* not identify step */);
+    _stickMoveAutoStep("Yaw", RadioComponentController::rcCalFunctionYaw, moveToMax, true /* identify step */);
+    _stickMoveAutoStep("Yaw", RadioComponentController::rcCalFunctionYaw, moveToMin, false /* not identify step */);
+    _stickMoveAutoStep("Roll", RadioComponentController::rcCalFunctionRoll, moveToMax, true /* identify step */);
+    _stickMoveAutoStep("Roll", RadioComponentController::rcCalFunctionRoll, moveToMin, false /* not identify step */);
+    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToMax, true /* identify step */);
+    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToMin, false /* not identify step */);
+    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToCenter, false /* not identify step */);
     _switchMinMaxStep();
     _flapsDetectStep();
-    _stickMoveAutoStep("Flaps", PX4RCCalibration::rcCalFunctionFlaps, moveToMin, false /* not identify step */);
-    _switchSelectAutoStep("Aux1", PX4RCCalibration::rcCalFunctionAux1);
-    _switchSelectAutoStep("Aux2", PX4RCCalibration::rcCalFunctionAux2);
+    _stickMoveAutoStep("Flaps", RadioComponentController::rcCalFunctionFlaps, moveToMin, false /* not identify step */);
+    _switchSelectAutoStep("Aux1", RadioComponentController::rcCalFunctionAux1);
+    _switchSelectAutoStep("Aux2", RadioComponentController::rcCalFunctionAux2);
 
     // One more click and the parameters should get saved
-    QTest::mouseClick(_nextButton, Qt::LeftButton);
+    _controller->nextButtonClicked();
     _validateParameters();
 }
 
 /// @brief Sets rc input to Throttle down home position. Centers all other channels.
-void PX4RCCalibrationTest::_channelHomePosition(void)
+void RadioConfigTest::_channelHomePosition(void)
 {
     // Initialize available channels to center point.
     for (int i=0; i<_availableChannels; i++) {
-        _mockLink->emitRemoteControlChannelRawChanged(i, (float)PX4RCCalibration::_rcCalPWMCenterPoint);
+        _mockLink->emitRemoteControlChannelRawChanged(i, (float)RadioComponentController::_rcCalPWMCenterPoint);
     }
     
     // Throttle to min - 1 (throttle is not reversed). We do this so that the trim value is below the min value. This should end up
     // being validated and raised to min value. If not, something is wrong with RC Cal code.
-    _mockLink->emitRemoteControlChannelRawChanged(_rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionThrottle], _testMinValue - 1);
+    _mockLink->emitRemoteControlChannelRawChanged(_rgFunctionChannelMap[RadioComponentController::rcCalFunctionThrottle], _testMinValue - 1);
 }
 
-void PX4RCCalibrationTest::_validateParameters(void)
+void RadioConfigTest::_validateParameters(void)
 {
     QString minTpl("RC%1_MIN");
     QString maxTpl("RC%1_MAX");
@@ -478,7 +467,7 @@ void PX4RCCalibrationTest::_validateParameters(void)
     QString revTpl("RC%1_REV");
     
     // Check mapping for all fuctions
-    for (int chanFunction=0; chanFunction<PX4RCCalibration::rcCalFunctionMax; chanFunction++) {
+    for (int chanFunction=0; chanFunction<RadioComponentController::rcCalFunctionMax; chanFunction++) {
         int chanIndex = _rgFunctionChannelMap[chanFunction];
         
         int expectedParameterValue;
@@ -488,12 +477,12 @@ void PX4RCCalibrationTest::_validateParameters(void)
             expectedParameterValue = chanIndex + 1; // 1-based parameter value
         }
         
-        qCDebug(PX4RCCalibrationTestLog) << "Validate" << chanFunction << _autopilot->getParameterFact(FactSystem::defaultComponentId, PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt();
-        QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt(), expectedParameterValue);
+        qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _autopilot->getParameterFact(FactSystem::defaultComponentId, RadioComponentController::_rgFunctionInfo[chanFunction].parameterName)->value().toInt();
+        QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, RadioComponentController::_rgFunctionInfo[chanFunction].parameterName)->value().toInt(), expectedParameterValue);
     }
 
     // Validate the channel settings. Note the channels are 1-based in parameter names.
-    for (int chan = 0; chan<PX4RCCalibration::_chanMax; chan++) {
+    for (int chan = 0; chan<RadioComponentController::_chanMax; chan++) {
         int oneBasedChannel = chan + 1;
         bool convertOk;
         
@@ -513,8 +502,8 @@ void PX4RCCalibrationTest::_validateParameters(void)
         QCOMPARE(convertOk, true);
         bool rcReversedActual = (rcReversedFloat == -1.0f);
         
-        qCDebug(PX4RCCalibrationTestLog) << "_validateParemeters expected channel:min:max:trim:rev" << chan << rcMinExpected << rcMaxExpected << rcTrimExpected << rcReversedExpected;
-        qCDebug(PX4RCCalibrationTestLog) << "_validateParemeters actual channel:min:max:trim:rev" << chan << rcMinActual << rcMaxActual << rcTrimActual << rcReversedActual;
+        qCDebug(RadioConfigTestLog) << "_validateParemeters expected channel:min:max:trim:rev" << chan << rcMinExpected << rcMaxExpected << rcTrimExpected << rcReversedExpected;
+        qCDebug(RadioConfigTestLog) << "_validateParemeters actual channel:min:max:trim:rev" << chan << rcMinActual << rcMaxActual << rcTrimActual << rcReversedActual;
 
         QCOMPARE(rcMinExpected, rcMinActual);
         QCOMPARE(rcMaxExpected, rcMaxActual);
@@ -523,14 +512,14 @@ void PX4RCCalibrationTest::_validateParameters(void)
     }
     
     // Check mapping for all fuctions
-    for (int chanFunction=0; chanFunction<PX4RCCalibration::rcCalFunctionMax; chanFunction++) {
+    for (int chanFunction=0; chanFunction<RadioComponentController::rcCalFunctionMax; chanFunction++) {
         int expectedValue;
         if (_rgFunctionChannelMap[chanFunction] == -1) {
             expectedValue = 0;  // 0 signals no mapping
         } else {
             expectedValue = _rgFunctionChannelMap[chanFunction] + 1; // 1-based
         }
-        // qCDebug(PX4RCCalibrationTestLog) << chanFunction << expectedValue << mapParamsSet[PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName].toInt();
-        QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, PX4RCCalibration::_rgFunctionInfo[chanFunction].parameterName)->value().toInt(), expectedValue);
+        // qCDebug(RadioConfigTestLog) << chanFunction << expectedValue << mapParamsSet[RadioComponentController::_rgFunctionInfo[chanFunction].parameterName].toInt();
+        QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, RadioComponentController::_rgFunctionInfo[chanFunction].parameterName)->value().toInt(), expectedValue);
     }
 }
