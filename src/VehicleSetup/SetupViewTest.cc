@@ -92,16 +92,21 @@ void SetupViewTest::_clickThrough_test(void)
     Q_ASSERT(setupView);
 
     // Click through fixed buttons
-    setupView->firmwareButtonClicked();
+    qDebug() << "Showing firmware";
+    setupView->showFirmware();
     QTest::qWait(1000);
-    setupView->parametersButtonClicked();
+    qDebug() << "Showing parameters";
+    setupView->showParameters();
     QTest::qWait(1000);
-    setupView->summaryButtonClicked();
+    qDebug() << "Showing summary";
+    setupView->showSummary();
     QTest::qWait(1000);
     
     const QVariantList& components = autopilot->vehicleComponents();
     foreach(QVariant varComponent, components) {
-        setupView->setupButtonClicked(varComponent);
+        VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(varComponent));
+        qDebug() << "Showing" << component->name();
+        setupView->showVehicleComponentSetup(component->setupSource());
     }
 
     // On MainWindow close we should get a message box telling the user to disconnect first. Disconnect will then pop

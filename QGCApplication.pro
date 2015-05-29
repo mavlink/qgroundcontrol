@@ -546,9 +546,6 @@ INCLUDEPATH += \
     src/VehicleSetup \
     src/AutoPilotPlugins/PX4 \
 
-FORMS += \
-    src/VehicleSetup/SetupView.ui \
-
 HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \

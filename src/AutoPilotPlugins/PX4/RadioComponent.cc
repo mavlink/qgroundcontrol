@@ -138,13 +138,9 @@ QStringList RadioComponent::paramFilterList(void) const
     return list;
 }
 
-QWidget* RadioComponent::setupWidget(void) const
+QUrl RadioComponent::setupSource(void) const
 {
-    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
-    Q_CHECK_PTR(holder);
-    holder->setAutoPilot(_autopilot);
-    holder->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
-    return holder;
+    return QUrl::fromUserInput("qrc:/qml/RadioComponent.qml");
 }
 
 QUrl RadioComponent::summaryQmlSource(void) const

@@ -104,16 +104,9 @@ QStringList FlightModesComponent::paramFilterList(void) const
     return list;
 }
 
-QWidget* FlightModesComponent::setupWidget(void) const
+QUrl FlightModesComponent::setupSource(void) const
 {
-    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
-    Q_CHECK_PTR(holder);
-    
-    holder->setAutoPilot(_autopilot);
-    
-    holder->setSource(QUrl::fromUserInput("qrc:/qml/FlightModesComponent.qml"));
-    
-    return holder;
+    return QUrl::fromUserInput("qrc:/qml/FlightModesComponent.qml");
 }
 
 QUrl FlightModesComponent::summaryQmlSource(void) const

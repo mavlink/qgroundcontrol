@@ -171,16 +171,9 @@ QStringList AirframeComponent::paramFilterList(void) const
     return list;
 }
 
-QWidget* AirframeComponent::setupWidget(void) const
+QUrl AirframeComponent::setupSource(void) const
 {
-    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
-    Q_CHECK_PTR(holder);
-    
-    holder->setAutoPilot(_autopilot);
-    
-    holder->setSource(QUrl::fromUserInput("qrc:/qml/AirframeComponent.qml"));
-    
-    return holder;
+    return QUrl::fromUserInput("qrc:/qml/AirframeComponent.qml");
 }
 
 QUrl AirframeComponent::summaryQmlSource(void) const
