@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SetupView.h"
-#include "ui_SetupView.h"
 
 #include "UASManager.h"
 #include "AutoPilotPluginManager.h"
