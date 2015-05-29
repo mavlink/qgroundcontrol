@@ -43,26 +43,20 @@
 #include <QDebug>
 
 SetupView::SetupView(QWidget* parent) :
-    QWidget(parent),
+    QGCQmlWidgetHolder(parent),
     _uasCurrent(NULL),
-    _initComplete(false),
-    _autoPilotPlugin(NULL),
-    _currentSetupWidget(NULL),
-    _ui(new Ui::SetupView)
+    _initComplete(false)
 {
-    _ui->setupUi(this);
-
-    bool fSucceeded = connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
-    Q_UNUSED(fSucceeded);
-    Q_ASSERT(fSucceeded);
-    
-#ifndef __android__
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+#ifdef __android__
+    _showFirmware = false;
+#else
+    _showFirmware = true;
 #endif
-	
-    _ui->buttonHolder->rootContext()->setContextProperty("controller", this);
-    _ui->buttonHolder->setAutoPilot(NULL);
-    _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtonsDisconnected.qml"));
+    
+    connect(UASManager::instance(), &UASManager::activeUASSet, this, &SetupView::_setActiveUAS);
+    
+    getRootContext()->setContextProperty("controller", this);
+    setSource(QUrl::fromUserInput("qrc:/qml/SetupView.qml"));
     
     _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
@@ -75,8 +69,7 @@ SetupView::~SetupView()
 void SetupView::_setActiveUAS(UASInterface* uas)
 {
     if (_uasCurrent) {
-        Q_ASSERT(_autoPilotPlugin);
-        disconnect(_autoPilotPlugin, &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
+        disconnect(_autopilot.data(), &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
     }
 
     _pluginReadyChanged(false);
@@ -84,98 +77,69 @@ void SetupView::_setActiveUAS(UASInterface* uas)
     _uasCurrent = uas;
     
     if (_uasCurrent) {
-        _autoPilotPlugin = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent).data();
-        _pluginReadyChanged(_autoPilotPlugin->pluginReady());
-        connect(_autoPilotPlugin, &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
+        _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent);
+        if (_autopilot.data()->pluginReady()) {
+            _pluginReadyChanged(_autopilot.data()->pluginReady());
+        }
+        connect(_autopilot.data(), &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
     }
 }
 
 void SetupView::_pluginReadyChanged(bool pluginReady)
 {
     if (pluginReady) {
-        _ui->buttonHolder->setAutoPilot(_autoPilotPlugin);
-        _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtonsConnected.qml"));
-        summaryButtonClicked();
-        QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("summaryButton");
-        Q_ASSERT(button);
-        button->setProperty("checked", true);
+        _readyAutopilot = _autopilot.data();
+        emit autopilotChanged(_readyAutopilot);
     } else {
-        _ui->buttonHolder->setSource(QUrl::fromUserInput("qrc:/qml/SetupViewButtonsDisconnected.qml"));
-        _ui->buttonHolder->setAutoPilot(NULL);
-        firmwareButtonClicked();
-        QObject* button = _ui->buttonHolder->rootObject()->findChild<QObject*>("firmwareButton");
-        Q_ASSERT(button);
-        button->setProperty("checked", true);
+        _readyAutopilot = NULL;
+        emit autopilotChanged(NULL);
+        _autopilot.clear();
     }
 }
 
-void SetupView::_changeSetupWidget(QWidget* newWidget)
-{
-    if (_currentSetupWidget) {
-        delete _currentSetupWidget;
-    }
-    _currentSetupWidget = newWidget;
-    _ui->horizontalLayout->addWidget(newWidget);
-}
-
-void SetupView::firmwareButtonClicked(void)
+#ifdef UNITTEST_BUILD
+void SetupView::showFirmware(void)
 {
 #ifndef __android__
-    //FIXME: Hack out for android for now
-    if (_uasCurrent && _uasCurrent->isArmed()) {
-        QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
-        return;
-    }
-
-    QGCQmlWidgetHolder* setup = new QGCQmlWidgetHolder;
-    Q_CHECK_PTR(setup);
-    
-    setup->setSource(QUrl::fromUserInput("qrc:/qml/FirmwareUpgrade.qml"));
-
-    _changeSetupWidget(setup);
+    QVariant returnedValue;
+    bool success = QMetaObject::invokeMethod(getRootObject(),
+                                             "showFirmwarePanel",
+                                             Q_RETURN_ARG(QVariant, returnedValue));
+    Q_ASSERT(success);
 #endif
 }
 
-void SetupView::parametersButtonClicked(void)
+void SetupView::showParameters(void)
 {
-	QGCQmlWidgetHolder* setup = new QGCQmlWidgetHolder;
-	Q_CHECK_PTR(setup);
-
-	Q_ASSERT(_autoPilotPlugin);
-	setup->setAutoPilot(_autoPilotPlugin);
-	setup->setSource(QUrl::fromUserInput("qrc:/qml/SetupParameterEditor.qml"));
-	
-	_changeSetupWidget(setup);
+    QVariant returnedValue;
+    bool success = QMetaObject::invokeMethod(getRootObject(),
+                                             "showParametersPanel",
+                                             Q_RETURN_ARG(QVariant, returnedValue));
+    Q_ASSERT(success);
 }
 
-void SetupView::summaryButtonClicked(void)
+void SetupView::showSummary(void)
 {
-    Q_ASSERT(_autoPilotPlugin);
-    
-    QGCQmlWidgetHolder* summary = new QGCQmlWidgetHolder;
-    Q_CHECK_PTR(summary);
-
-    summary->setAutoPilot(_autoPilotPlugin);
-    summary->setSource(QUrl::fromUserInput("qrc:/qml/VehicleSummary.qml"));
-
-    _changeSetupWidget(summary);
+    QVariant returnedValue;
+    bool success = QMetaObject::invokeMethod(getRootObject(),
+                                             "showSummaryPanel",
+                                             Q_RETURN_ARG(QVariant, returnedValue));
+    Q_ASSERT(success);
 }
 
-void SetupView::setupButtonClicked(const QVariant& component)
+void SetupView::showVehicleComponentSetup(const QUrl& url)
 {
-    if (_uasCurrent->isArmed()) {
-        QGCMessageBox::warning("Setup", "Setup cannot be performed while vehicle is armed.");
-        return;
-    }
+    QVariant returnedValue;
+    QVariant varSource = url;
+    bool success = QMetaObject::invokeMethod(getRootObject(),
+                                             "showVehicleComponentPanel",
+                                             Q_RETURN_ARG(QVariant, returnedValue),
+                                             Q_ARG(QVariant, varSource));
+    Q_ASSERT(success);
+}
+#endif
 
-    VehicleComponent* vehicle = qobject_cast<VehicleComponent*>(component.value<QObject*>());
-    Q_ASSERT(vehicle);
-    
-    QString setupPrereq = vehicle->prerequisiteSetup();
-    if (!setupPrereq.isEmpty()) {
-        QGCMessageBox::warning("Setup", QString("%1 setup must be completed prior to %2 setup.").arg(setupPrereq).arg(vehicle->name()));
-        return;
-    }
-    
-    _changeSetupWidget(vehicle->setupWidget());
+AutoPilotPlugin* SetupView::autopilot(void)
+{
+    return _readyAutopilot;
 }

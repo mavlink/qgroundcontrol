@@ -43,6 +43,7 @@
         <file alias="ParameterEditorWidget.qml">src/ViewWidgets/ParameterEditorWidget.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
 
+        <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
         <file alias="SetupViewButtonsConnected.qml">src/VehicleSetup/SetupViewButtonsConnected.qml</file>
         <file alias="SetupViewButtonsDisconnected.qml">src/VehicleSetup/SetupViewButtonsDisconnected.qml</file>
 

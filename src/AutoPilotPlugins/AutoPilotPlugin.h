@@ -61,6 +61,8 @@ public:
 
 	/// false: One or more vehicle components require setup
 	Q_PROPERTY(bool setupComplete READ setupComplete NOTIFY setupCompleteChanged)
+    
+    Q_PROPERTY(bool armed READ armed NOTIFY armedChanged)
 	
     /// Re-request the full set of parameters from the autopilot
 	Q_INVOKABLE void refreshAllParameters(void);
@@ -111,6 +113,7 @@ public:
 	// Property accessors
 	bool pluginReady(void) { return _pluginReady; }
 	bool setupComplete(void);
+    bool armed(void);
 	
     UASInterface* uas(void) { return _uas; }
     
@@ -118,6 +121,7 @@ signals:
     void pluginReadyChanged(bool pluginReady);
 	void setupCompleteChanged(bool setupComplete);
     void parameterListProgress(float value);
+    void armedChanged(bool armed);
 	
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin

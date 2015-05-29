@@ -27,6 +27,7 @@
 #include "UASInterface.h"
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
+#include "QGCQmlWidgetHolder.h"
 
 #include <QWidget>
 
@@ -34,11 +35,7 @@
 ///     @brief This class is used to display the UI for the VehicleComponent objects.
 ///     @author Don Gagne <don@thegagnes.com>
 
-namespace Ui {
-    class SetupView;
-}
-
-class SetupView : public QWidget
+class SetupView : public QGCQmlWidgetHolder
 {
     Q_OBJECT
 
@@ -46,24 +43,31 @@ public:
     explicit SetupView(QWidget* parent = 0);
     ~SetupView();
     
-    Q_INVOKABLE void firmwareButtonClicked(void);
-    Q_INVOKABLE void parametersButtonClicked(void);
-    Q_INVOKABLE void summaryButtonClicked(void);
-    Q_INVOKABLE void setupButtonClicked(const QVariant& component);
+    Q_PROPERTY(AutoPilotPlugin* autopilot READ autopilot NOTIFY autopilotChanged)
+    Q_PROPERTY (bool showFirmware MEMBER _showFirmware CONSTANT)
+    
+#ifdef UNITTEST_BUILD
+    void showFirmware(void);
+    void showParameters(void);
+    void showSummary(void);
+    void showVehicleComponentSetup(const QUrl& url);
+#endif
+    
+    AutoPilotPlugin* autopilot(void);
+    
+signals:
+    void autopilotChanged(AutoPilotPlugin* autopilot);
     
 private slots:
     void _setActiveUAS(UASInterface* uas);
     void _pluginReadyChanged(bool pluginReady);
 
 private:
-    void _changeSetupWidget(QWidget* newWidget);
-
-    UASInterface*       _uasCurrent;        ///< Currently active UAS
-    bool                _initComplete;      ///< true: parameters are ready and ui has been setup
-    AutoPilotPlugin*    _autoPilotPlugin;
-    QWidget*            _currentSetupWidget;
-    
-    Ui::SetupView* _ui;
+    UASInterface*                   _uasCurrent;
+    bool                            _initComplete;      ///< true: parameters are ready and ui has been setup
+    QSharedPointer<AutoPilotPlugin> _autopilot;         // Shared pointer to prevent shutdown ordering problems
+    AutoPilotPlugin*                _readyAutopilot;    // NULL if autopilot is not yet read
+    bool                            _showFirmware;
 };
 
 #endif
