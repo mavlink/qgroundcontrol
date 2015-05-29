@@ -683,23 +683,6 @@ void MainWindow::loadSettings()
     _fontFactor     = settings.value("FONT_SIZE_FACTOR",    _fontFactor).toDouble();
     _pixelFactor    = settings.value("PIXEL_SIZE_FACTOR",   _pixelFactor).toDouble();
     settings.endGroup();
-    // Select the proper view. Default to the flight view or load the last one used if it's supported.
-    VIEW_SECTIONS currentViewCandidate = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", _currentView).toInt();
-    switch (currentViewCandidate) {
-        case VIEW_ANALYZE:
-        case VIEW_PLAN:
-        case VIEW_EXPERIMENTAL_PLAN:
-        case VIEW_FLIGHT:
-        case VIEW_SIMULATION:
-        case VIEW_SETUP:
-            _currentView = currentViewCandidate;
-            break;
-        default:
-            // Leave _currentView to the default
-            break;
-    }
-    // Put it back, which will set it to a valid value
-    settings.setValue("CURRENT_VIEW", _currentView);
 }
 
 void MainWindow::storeSettings()
