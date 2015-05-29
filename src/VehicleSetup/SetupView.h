@@ -50,7 +50,7 @@ public:
     void showFirmware(void);
     void showParameters(void);
     void showSummary(void);
-    void showVehicleComponentSetup(const QUrl& url);
+    void showVehicleComponentSetup(VehicleComponent* vehicleComponent);
 #endif
     
     AutoPilotPlugin* autopilot(void);
