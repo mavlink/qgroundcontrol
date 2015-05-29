@@ -178,6 +178,10 @@ ReleaseBuild {
 		# Use link time code generation for better optimization (I believe this is supported in MSVC Express, but not 100% sure)
 		QMAKE_LFLAGS_LTCG = /LTCG
 		QMAKE_CFLAGS_LTCG = -GL
+
+		# Turn on debugging information so we can collect good crash dumps from release builds
+		QMAKE_CXXFLAGS_RELEASE += /Zi 
+		QMAKE_LFLAGS_RELEASE += /DEBUG
     }
 }
 
