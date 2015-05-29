@@ -106,7 +106,8 @@ void SetupViewTest::_clickThrough_test(void)
     foreach(QVariant varComponent, components) {
         VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(varComponent));
         qDebug() << "Showing" << component->name();
-        setupView->showVehicleComponentSetup(component->setupSource());
+        setupView->showVehicleComponentSetup(component);
+        QTest::qWait(1000);
     }
 
     // On MainWindow close we should get a message box telling the user to disconnect first. Disconnect will then pop

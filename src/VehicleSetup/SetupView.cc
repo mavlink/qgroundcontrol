@@ -127,14 +127,13 @@ void SetupView::showSummary(void)
     Q_ASSERT(success);
 }
 
-void SetupView::showVehicleComponentSetup(const QUrl& url)
+void SetupView::showVehicleComponentSetup(VehicleComponent* vehicleComponent)
 {
     QVariant returnedValue;
-    QVariant varSource = url;
     bool success = QMetaObject::invokeMethod(getRootObject(),
                                              "showVehicleComponentPanel",
                                              Q_RETURN_ARG(QVariant, returnedValue),
-                                             Q_ARG(QVariant, varSource));
+                                             Q_ARG(QVariant, QVariant::fromValue((VehicleComponent*)vehicleComponent)));
     Q_ASSERT(success);
 }
 #endif

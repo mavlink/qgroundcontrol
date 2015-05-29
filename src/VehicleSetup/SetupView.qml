@@ -76,13 +76,18 @@ Rectangle {
         panelLoader.source = "SetupParameterEditor.qml";
     }
 
-    function showVehicleComponentPanel(setupSource)
+    function showVehicleComponentPanel(vehicleComponent)
     {
         if (controller.autopilot.armed) {
             messagePanelText = armedVehicleText
             panelLoader.sourceComponent = messagePanelComponent
         } else {
-            panelLoader.source = setupSource
+            if (vehicleComponent.prerequisiteSetup != "") {
+                messagePanelText = vehicleComponent.prerequisiteSetup + " setup must be completed prior to " + vehicleComponent.name + " setup."
+                panelLoader.sourceComponent = messagePanelComponent
+            } else {
+                panelLoader.source = vehicleComponent.setupSource
+            }
         }
     }
 
@@ -126,9 +131,13 @@ Rectangle {
 
         Item {
             QGCLabel {
-                anchors.fill:   parent
-                wrapMode:       Text.WordWrap
-                text:           messagePanelText
+                anchors.margins:        defaultTextWidth * 2
+                anchors.fill:           parent
+                verticalAlignment:      Text.AlignVCenter
+                horizontalAlignment:    Text.AlignHCenter
+                wrapMode:               Text.WordWrap
+                font.pointSize:         ScreenTools.mediumFontPointSize
+                text:                   messagePanelText
             }
         }
     }
@@ -170,7 +179,7 @@ Rectangle {
                 exclusiveGroup: setupButtonGroup
                 text:           modelData.name.toUpperCase()
 
-                onClicked: showVehicleComponentPanel(modelData.setupSource)
+                onClicked: showVehicleComponentPanel(modelData)
             }
         }
 
