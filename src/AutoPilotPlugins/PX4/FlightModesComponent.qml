@@ -62,6 +62,7 @@ Item {
             property Fact rc_map_return_sw:     controller.getParameterFact(-1, "RC_MAP_RETURN_SW")
             property Fact rc_map_offboard_sw:   controller.getParameterFact(-1, "RC_MAP_OFFB_SW")
             property Fact rc_map_loiter_sw:     controller.getParameterFact(-1, "RC_MAP_LOITER_SW")
+            property Fact rc_map_acro_sw:       controller.getParameterFact(-1, "RC_MAP_ACRO_SW")
 
             property Fact rc_assist_th:         controller.getParameterFact(-1, "RC_ASSIST_TH")
             property Fact rc_posctl_th:         controller.getParameterFact(-1, "RC_POSCTL_TH")
@@ -69,6 +70,7 @@ Item {
             property Fact rc_loiter_th:         controller.getParameterFact(-1, "RC_LOITER_TH")
             property Fact rc_return_th:         controller.getParameterFact(-1, "RC_RETURN_TH")
             property Fact rc_offboard_th:       controller.getParameterFact(-1, "RC_OFFB_TH")
+            property Fact rc_acro_th:           controller.getParameterFact(-1, "RC_ACRO_TH")
 
             property Fact rc_th_user:           controller.getParameterFact(-1, "RC_TH_USER")
 
@@ -85,6 +87,7 @@ Item {
             property int returnChannel:     rc_map_return_sw.value
             property int offboardChannel:   rc_map_offboard_sw.value
             property int loiterChannel:     rc_map_loiter_sw.value
+            property int acroChannel:       rc_map_acro_sw.value
 
             property real rcThUserValue: rc_th_user.value
 
@@ -277,6 +280,7 @@ Item {
             onOffboardChannelChanged: if (!inRedistribution) redistributeThresholds()
             onLoiterChannelChanged: if (!inRedistribution) redistributeThresholds()
             onPosCtlChannelChanged: if (!inRedistribution) redistributeThresholds()
+            onAcroChannelChanged: if (!inRedistribution) redistributeThresholds()
             onRcThUserValue: if (!inRedistribution) redistributeThresholds()
 
             function redistributeThresholds() {
@@ -290,9 +294,11 @@ Item {
 
                     var loiterOnModeSwitch = modeChannel == loiterChannel
                     var posCtlOnModeSwitch = modeChannel == posCtlChannel
+                    var acroOnModeSwitch = modeChannel == acroChannel
 
                     positions += loiterOnModeSwitch ? 1 : 0
                     positions += posCtlOnModeSwitch ? 1 : 0
+                    positions += acroOnModeSwitch ? 1 : 0
 
                     var increment = 1.0 / positions
                     var currentThreshold = 0.0
@@ -300,12 +306,18 @@ Item {
                     // Make sure we don't re-enter
                     inRedistribution = true
 
+                    if (acroOnModeSwitch) {
+                        currentThreshold += increment
+                        rc_acro_th.value = currentThreshold
+                    }
+
                     currentThreshold += increment
                     rc_assist_th.value = currentThreshold
                     if (posCtlOnModeSwitch) {
                         currentThreshold += increment
                         rc_posctl_th.value = currentThreshold
                     }
+
                     currentThreshold += increment
                     rc_auto_th.value = currentThreshold
                     if (loiterOnModeSwitch) {
@@ -355,6 +367,16 @@ Item {
 
                     inRedistribution = false
                 }
+
+                if (acroChannel != 0 & acroChannel != modeChannel) {
+                    inRedistribution = true
+
+                    // If only two positions don't set threshold at midrange. Setting to 0.25
+                    // allows for this channel to work with either two or three position switch
+                    rc_acro_th.value = 0.25
+
+                    inRedistribution = false
+                }
             }
 
             Column {
@@ -369,7 +391,7 @@ Item {
 
                 QGCLabel {
                     width: parent.width
-                    text: "The Main Mode, Loiter and PostCtl switches can be assigned to any channel which is not currently being used for attitude control. The Return and Offboard switches must be assigned to their seperate channel. " +
+                    text: "The Main Mode, Loiter, PostCtl and Acro switches can be assigned to any channel which is not currently being used for attitude control. The Return and Offboard switches must be assigned to their seperate channel. " +
                             "All channels are displayed below. " +
                             "You can drag Flight Modes from the Flight Modes section below to a channel and drop it there. You can also drag switches assigned to a channel " +
                             "to another channel or back to the Unassigned Switches section. The Switch Display section at the very bottom will show you the results of your Flight Mode setup."
@@ -403,9 +425,10 @@ Item {
                             property bool returnMapped:     channel == returnChannel
                             property bool offboardMapped:   channel == offboardChannel
                             property bool loiterMapped:     channel == loiterChannel
+                            property bool acroMapped:       channel == acroChannel
 
                             property bool nonFlightModeMapping: throttleMapped | yawMapped | pitchMapped | rollMapped | flapsMapped | aux1Mapped | aux2Mapped
-                            property bool unassignedMapping: !(nonFlightModeMapping | modeMapped | posCtlMapped | returnMapped | offboardMapped | loiterMapped)
+                            property bool unassignedMapping: !(nonFlightModeMapping | modeMapped | posCtlMapped | returnMapped | offboardMapped | loiterMapped | acroMapped)
                             property bool singleSwitchMapping: returnMapped | offboardMapped
 
                             id:     channelTarget
@@ -554,6 +577,16 @@ Item {
                                     visible:            posCtlMapped
                                     sourceComponent:    assignedModeTileComponent
                                 }
+                                Loader {
+                                    property string tileLabel:          "Acro/Stabilize"
+                                    property bool tileVisible:          visible
+                                    property bool tileDragEnabled:      true
+                                    property string tileParam:          "RC_MAP_ACRO_SW"
+                                    property bool singleSwitchRequired: false
+
+                                    visible:            acroMapped
+                                    sourceComponent:    assignedModeTileComponent
+                                }
                             }
 
                             DropArea {
@@ -608,6 +641,12 @@ Item {
                         sourceComponent:                    unassignedModeTileComponent
                     }
                     Loader {
+                        property string tileLabel:          "Acro/Stabilize"
+                        property string tileParam:          "RC_MAP_ACRO_SW"
+                        property bool singleSwitchRequired: false
+                        sourceComponent:                    unassignedModeTileComponent
+                    }
+                    Loader {
                         property string tileLabel:          "Return"
                         property string tileParam:          "RC_MAP_RETURN_SW"
                         property bool singleSwitchRequired: true
@@ -654,6 +693,7 @@ Item {
                     property bool modeSwitchVisible:        modeChannel != 0
                     property bool loiterSwitchVisible:      loiterChannel != 0 && loiterChannel != modeChannel && loiterChannel != returnChannel
                     property bool posCtlSwitchVisible:      posCtlChannel != 0 && posCtlChannel != modeChannel
+                    property bool acroSwitchVisible:        acroChannel != 0 && acroChannel != modeChannel
                     property bool returnSwitchVisible:      returnChannel != 0
                     property bool offboardSwitchVisible:    offboardChannel != 0
 
@@ -724,6 +764,14 @@ Item {
                                     visible:                modeChannel == posCtlChannel
                                     horizontalAlignment:    Text.AlignRight
                                     text:                   "Assist: AltCtl"
+                                }
+
+                                QGCLabel {
+                                    width:                  parent.width
+                                    y:                      (parent.height * (1.0 - rc_acro_th.value)) - (implicitHeight / 2)
+                                    visible:                modeChannel == acroChannel
+                                    horizontalAlignment:    Text.AlignRight
+                                    text:                   "Acro/Stabilize"
                                 }
 
                                 QGCLabel {
@@ -809,6 +857,39 @@ Item {
                     }
 
                     Column {
+                        visible: parent.acroSwitchVisible
+
+                        QGCLabel { text: "Acro/Stabilize Switch" }
+
+                        Row {
+                            Item {
+                                height: progressBarHeight
+                                width:  150
+
+                                QGCLabel {
+                                    width:                  parent.width
+                                    y:                      (parent.height * (1.0 - rc_acro_th.value)) - (implicitHeight / 2)
+                                    horizontalAlignment:    Text.AlignRight
+                                    text:                   "Acro/Stabilize"
+                                }
+
+                                QGCLabel {
+                                    width:                  parent.width
+                                    y:                      parent.height - (implicitHeight / 2)
+                                    horizontalAlignment:    Text.AlignRight
+                                    text:                   "Manual"
+                                }
+                            }
+
+                            ProgressBar {
+                                height:         progressBarHeight
+                                orientation:    Qt.Vertical
+                                value:          controller.acroSwitchLiveRange
+                            }
+                        }
+                    }
+
+                    Column {
                         visible: parent.returnSwitchVisible
 
                         QGCLabel { text: "Return Switch" }
@@ -828,7 +909,6 @@ Item {
                                 QGCLabel {
                                     width:                  parent.width
                                     y:                      parent.height - (implicitHeight / 2)
-                                    visible:                returnChannel != loiterChannel
                                     horizontalAlignment:    Text.AlignRight
                                     text:                   "Return Off"
                                 }
