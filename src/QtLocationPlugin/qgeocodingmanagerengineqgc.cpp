@@ -54,6 +54,7 @@
 #include <QtPositioning/QGeoAddress>
 #include <QtPositioning/QGeoShape>
 #include <QtPositioning/QGeoRectangle>
+#include <QDebug>
 
 #include "qgeocodingmanagerengineqgc.h"
 #include "qgeocodereplyqgc.h"
