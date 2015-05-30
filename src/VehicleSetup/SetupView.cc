@@ -44,7 +44,8 @@
 SetupView::SetupView(QWidget* parent) :
     QGCQmlWidgetHolder(parent),
     _uasCurrent(NULL),
-    _initComplete(false)
+    _initComplete(false),
+	_readyAutopilot(NULL)
 {
 #ifdef __android__
     _showFirmware = false;
