@@ -87,9 +87,9 @@ MacBuild {
 }
 
 iOSBuild {
-    QMAKE_INFO_PLIST = $${BASEDIR}/ios/Info.plist
+    QMAKE_INFO_PLIST = $${BASEDIR}/ios/iOS-Info.plist
     ICON = $${BASEDIR}/resources/icons/macx.icns
-    OTHER_FILES += $${BASEDIR}/Info.plist
+    OTHER_FILES += $${BASEDIR}/iOS-Info.plist
 }
 
 LinuxBuild {
