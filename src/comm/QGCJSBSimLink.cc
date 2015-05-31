@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <iostream>
 
+#include "UAS.h"
 #include "QGCJSBSimLink.h"
 #include "QGC.h"
 #include "QGCMessageBox.h"

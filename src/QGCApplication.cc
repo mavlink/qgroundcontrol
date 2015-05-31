@@ -49,7 +49,9 @@
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "UDPLink.h"
+#ifndef __ios__
 #include "SerialLink.h"
+#endif
 #include "QGCSingleton.h"
 #include "LinkManager.h"
 #include "UASManager.h"
@@ -67,7 +69,7 @@
 #include "SensorsComponentController.h"
 #include "PowerComponentController.h"
 #include "RadioComponentController.h"
-#ifndef __android__
+#ifndef __mobile__
 #include "FirmwareUpgradeController.h"
 #endif
 #include "AutoPilotPlugin.h"
@@ -144,11 +146,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
 
-#ifdef __android__
+#ifdef __mobile__
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
 #endif
     
-#ifndef __android__
+#ifndef __mobile__
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
     // it to the correct location. This way default debug builds will have logging turned off.
 
@@ -324,15 +326,15 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Can only reference, cannot create");
     qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Can only reference, cannot create");
     
-	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
-	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
+    qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<CustomCommandWidgetController>("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
     qmlRegisterType<AirframeComponentController>("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
     qmlRegisterType<SensorsComponentController>("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
     qmlRegisterType<PowerComponentController>("QGroundControl.Controllers", 1, 0, "PowerComponentController");
     qmlRegisterType<RadioComponentController>("QGroundControl.Controllers", 1, 0, "RadioComponentController");
-#ifndef __android__
+#ifndef __mobile__
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
 #endif
 

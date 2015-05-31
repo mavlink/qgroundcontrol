@@ -32,8 +32,7 @@ linux {
         CONFIG += LinuxBuild
     } else : android-g++ {
         message("Android build")
-        CONFIG  += AndroidBuild
-        DEFINES += __mobile__
+        CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
         warning("Android build is experimental and not fully functional")
     } else {
@@ -54,8 +53,17 @@ linux {
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
+} else : ios {
+    message("iOS build")
+    CONFIG += iOSBuild MobileBuild app_bundle
+    DEFINES += __ios__
+    warning("iOS build is experimental and not yet functional")
 } else {
-    error("Unsupported build platform, only Linux, Windows, and Mac are supported")
+    error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
+}
+
+MobileBuild {
+    DEFINES += __mobile__
 }
 
 # Installer configuration
@@ -86,29 +94,46 @@ win32:debug_and_release {
 
 # Setup our build directories
 
-BASEDIR      = $${IN_PWD}
-
-DebugBuild {
-    DESTDIR  = $${OUT_PWD}/debug
-    BUILDDIR = $${OUT_PWD}/build-debug
-}
+BASEDIR      = $$IN_PWD
+DESTDIR      = $${OUT_PWD}/debug
+BUILDDIR     = $${OUT_PWD}/build-debug
 
 ReleaseBuild {
     DESTDIR  = $${OUT_PWD}/release
     BUILDDIR = $${OUT_PWD}/build-release
 }
 
-OBJECTS_DIR = $${BUILDDIR}/obj
-MOC_DIR     = $${BUILDDIR}/moc
-UI_DIR      = $${BUILDDIR}/ui
-RCC_DIR     = $${BUILDDIR}/rcc
-LANGUAGE    = C++
+iOSBuild {
+    # For whatever reason, the iOS build fails with these set. Some files have the full,
+    # properly concatenaded path and file name while others have only the second portion,
+    # as if BUILDDIR was empty.
+    OBJECTS_DIR = ~/tmp/qgcfoo
+    MOC_DIR     = ~/tmp/qgcfoo
+    UI_DIR      = ~/tmp/qgcfoo
+    RCC_DIR     = ~/tmp/qgcfoo
+} else {
+    OBJECTS_DIR = $${BUILDDIR}/obj
+    MOC_DIR     = $${BUILDDIR}/moc
+    UI_DIR      = $${BUILDDIR}/ui
+    RCC_DIR     = $${BUILDDIR}/rcc
+}
+
+LANGUAGE = C++
+
+AndroidBuild {
+    target.path = $$DESTDIR
+}
 
 # We place the created plugin lib into the objects dir so that make clean will clean it as well
-LOCATION_PLUGIN_DESTDIR = $${OBJECTS_DIR}
-LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
+iOSBuild {
+    LOCATION_PLUGIN_DESTDIR = ~/tmp/qgcfoo
+} else {
+    LOCATION_PLUGIN_DESTDIR = $$OBJECTS_DIR
+}
 
-message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
+LOCATION_PLUGIN_NAME = QGeoServiceProviderFactoryQGC
+
+message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET OUTPUT $$OUT_PWD)
 
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
@@ -119,6 +144,10 @@ DEFINES += _TTY_NOWARN_
 
 AndroidBuild {
     DEFINES += __STDC_LIMIT_MACROS
+}
+
+iOSBuild {
+    QMAKE_IOS_DEPLOYMENT_TARGET = 7.0
 }
 
 MacBuild {
@@ -134,7 +163,6 @@ LinuxBuild {
 
 WindowsBuild {
 	DEFINES += __STDC_LIMIT_MACROS
-
 	# Specify multi-process compilation within Visual Studio.
 	# (drastically improves compilation times for multi-core computers)
 	QMAKE_CXXFLAGS_DEBUG += -MP
@@ -173,7 +201,6 @@ WindowsBuild {
 
 ReleaseBuild {
     DEFINES += QT_NO_DEBUG
-
 	WindowsBuild {
 		# Use link time code generation for better optimization (I believe this is supported in MSVC Express, but not 100% sure)
 		QMAKE_LFLAGS_LTCG = /LTCG
