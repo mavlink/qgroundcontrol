@@ -246,7 +246,6 @@ HEADERS += \
     src/comm/MockLinkMissionItemHandler.h \
     src/comm/ProtocolInterface.h \
     src/comm/QGCMAVLink.h \
-    src/comm/QGCXPlaneLink.h \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
     src/GAudioOutput.h \
@@ -360,6 +359,7 @@ HEADERS += \
     src/comm/QGCFlightGearLink.h \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
+    src/comm/QGCXPlaneLink.h \
     src/input/JoystickInput.h \
     src/ui/CameraView.h \
     src/ui/JoystickAxis.h \
