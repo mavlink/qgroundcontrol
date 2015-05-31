@@ -144,7 +144,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 #endif
     
 #ifndef __android__
-#ifdef QT_DEBUG
     // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
     // it to the correct location. This way default debug builds will have logging turned off.
 
@@ -182,7 +181,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
             }
         }
     }
-#endif
 #endif
 
     // Set up timer for delayed missing fact display
