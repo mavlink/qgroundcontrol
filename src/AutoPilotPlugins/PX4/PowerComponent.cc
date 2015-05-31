@@ -86,13 +86,9 @@ QStringList PowerComponent::paramFilterList(void) const
     return list;
 }
 
-QWidget* PowerComponent::setupWidget(void) const
+QUrl PowerComponent::setupSource(void) const
 {
-    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
-    Q_CHECK_PTR(holder);
-    holder->setAutoPilot(_autopilot);
-    holder->setSource(QUrl::fromUserInput("qrc:/qml/PowerComponent.qml"));
-    return holder;
+    return QUrl::fromUserInput("qrc:/qml/PowerComponent.qml");
 }
 
 QUrl PowerComponent::summaryQmlSource(void) const

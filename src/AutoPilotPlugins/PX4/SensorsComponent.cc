@@ -105,15 +105,9 @@ QStringList SensorsComponent::paramFilterList(void) const
     return list;
 }
 
-QWidget* SensorsComponent::setupWidget(void) const
+QUrl SensorsComponent::setupSource(void) const
 {
-    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
-    Q_CHECK_PTR(holder);
-    
-    holder->setAutoPilot(_autopilot);    
-    holder->setSource(QUrl::fromUserInput("qrc:/qml/SensorsComponent.qml"));
-    
-    return holder;
+    return QUrl::fromUserInput("qrc:/qml/SensorsComponent.qml");
 }
 
 QUrl SensorsComponent::summaryQmlSource(void) const

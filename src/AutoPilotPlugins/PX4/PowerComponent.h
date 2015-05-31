@@ -47,7 +47,7 @@ public:
     virtual bool        requiresSetup           (void) const;
     virtual bool        setupComplete           (void) const;
     virtual QString     setupStateDescription   (void) const;
-    virtual QWidget*    setupWidget             (void) const;
+    virtual QUrl        setupSource             (void) const;
     virtual QStringList paramFilterList         (void) const;
     virtual QUrl        summaryQmlSource        (void) const;
     virtual QString     prerequisiteSetup       (void) const;

@@ -113,7 +113,8 @@ QGCView {
     property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
 
     SensorsComponentController {
-        id: controller
+        id:         controller
+        factPanel:  rootQGCView.viewPanel
 
         onResetStatusTextArea: statusLog.text = statusTextAreaDefaultText
 

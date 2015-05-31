@@ -40,6 +40,7 @@ FactPanel {
     property bool __completedSignalled: false
 
     property Component viewComponent
+    property var viewPanel: __viewPanelLoader.item
 
     /// This is signalled when the top level Item reaches Component.onCompleted. This allows
     /// the view subcomponent to connect to this signal and do work once the full ui is ready
@@ -123,7 +124,7 @@ FactPanel {
         __setupDialogButtons(buttons)
 
         __dialogComponent = component
-        __viewPanel.enabled = false
+        __viewPanelLoader.enabled = false
         __dialogOverlay.visible = true
 
         __animateShowDialog.start()
@@ -139,14 +140,14 @@ FactPanel {
         __setupDialogButtons(buttons)
 
         __dialogComponent = __messageDialog
-        __viewPanel.enabled = false
+        __viewPanelLoader.enabled = false
         __dialogOverlay.visible = true
 
         __animateShowDialog.start()
     }
 
     function hideDialog() {
-        __viewPanel.enabled = true
+        __viewPanelLoader.enabled = true
         __animateHideDialog.start()
     }
 
@@ -181,7 +182,7 @@ FactPanel {
     onHeightChanged:        __signalCompleted()
 
     Connections {
-        target: __viewPanel.item
+        target: __viewPanelLoader.item
 
         onShowDialog:   __rootItem.showDialog(component, title, charWidth, buttons)
         onShowMessage:  __rootItem.showMessage(title, message, buttons)
@@ -195,7 +196,7 @@ FactPanel {
     }
 
     Loader {
-        id:                 __viewPanel
+        id:                 __viewPanelLoader
         anchors.fill:       parent
         focus:              true
         sourceComponent:    viewComponent

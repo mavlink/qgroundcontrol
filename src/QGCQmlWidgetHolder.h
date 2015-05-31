@@ -50,8 +50,11 @@ public:
     void setAutoPilot(AutoPilotPlugin* autoPilot);
 
     /// Get Root Context
-    QQmlContext* getRootContext();
+    QQmlContext* getRootContext(void);
 
+    /// Get Root Object
+    QQuickItem* getRootObject(void);
+    
     /// Sets the QML into the control. Will display errors message box if error occurs loading source.
     /// @return true: source loaded, false: source not loaded, errors occured
     bool setSource(const QUrl& qmlUrl);

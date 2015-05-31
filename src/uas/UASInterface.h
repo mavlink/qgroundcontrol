@@ -444,8 +444,6 @@ signals:
     void dropRateChanged(int systemId,  float receiveDrop);
     /** @brief Robot mode has changed */
     void modeChanged(int sysId, QString status, QString description);
-    /** @brief Robot armed state has changed */
-    void armingChanged(int sysId, QString armingState);
     /** @brief A command has been issued **/
     void commandSent(int command);
     /** @brief The robot is connecting **/
