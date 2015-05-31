@@ -29,8 +29,9 @@
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 #include "UASManagerInterface.h"
+#include "FactPanelController.h"
 
-class CustomCommandWidgetController : public QObject
+class CustomCommandWidgetController : public FactPanelController
 {
 	Q_OBJECT
 	
