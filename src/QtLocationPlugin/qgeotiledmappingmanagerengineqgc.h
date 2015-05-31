@@ -48,7 +48,19 @@
 #define QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H
 
 #include <QtLocation/QGeoServiceProvider>
+#if QT_VERSION >= 0x050500
+#include <QtLocation/private/qgeotiledmap_p.h>
+#endif
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
+
+#if QT_VERSION >= 0x050500
+class QGeoTiledMapQGC : public QGeoTiledMap
+{
+    Q_OBJECT
+public:
+    QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent = 0);
+};
+#endif
 
 class QGeoTiledMappingManagerEngineQGC : public QGeoTiledMappingManagerEngine
 {
@@ -56,7 +68,16 @@ class QGeoTiledMappingManagerEngineQGC : public QGeoTiledMappingManagerEngine
 public:
     QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
     ~QGeoTiledMappingManagerEngineQGC();
+#if QT_VERSION < 0x050500
     QGeoMapData *createMapData();
+#else
+    QGeoMap *createMap();
+    QString customCopyright() const;
+#endif
+private:
+#if QT_VERSION >= 0x050500
+    QString m_customCopyright;
+#endif
 };
 
 #endif // QGEOTILEDMAPPINGMANAGERENGINEGOOGLE_H

@@ -87,9 +87,11 @@ int main(int argc, char *argv[])
 {
 
 #ifdef Q_OS_MAC
+#ifndef __ios__
     // Prevent Apple's app nap from screwing us over
     // tip: the domain can be cross-checked on the command line with <defaults domains>
     QProcess::execute("defaults write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES");
+#endif
 #endif
 
     // install the message handler
