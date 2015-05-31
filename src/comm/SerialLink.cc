@@ -37,9 +37,6 @@ SerialLink::SerialLink(SerialConfiguration* config)
     Q_ASSERT(config != NULL);
     _config = config;
     _config->setLink(this);
-    // We're doing it wrong - because the Qt folks got the API wrong:
-    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
-    moveToThread(this);
 
     qCDebug(SerialLinkLog) << "Create SerialLink " << config->portName() << config->baud() << config->flowControl()
              << config->parity() << config->dataBits() << config->stopBits();
@@ -59,10 +56,6 @@ SerialLink::~SerialLink()
     _disconnect();
     if(_port) delete _port;
     _port = NULL;
-    // Tell the thread to exit
-    quit();
-    // Wait for it to exit
-    wait();
 }
 
 bool SerialLink::_isBootloader()
@@ -207,10 +200,7 @@ void SerialLink::run()
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
     if(_port && _port->isOpen()) {
-        QByteArray byteArray(data, size);
-        _writeMutex.lock();
-        _transmitBuffer.append(byteArray);
-        _writeMutex.unlock();
+        _port->write(data, size);
     } else {
         // Error occured
         _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(getName()));
@@ -250,17 +240,12 @@ void SerialLink::readBytes()
  **/
 bool SerialLink::_disconnect(void)
 {
-    if (isRunning())
-    {
-        {
-            QMutexLocker locker(&_stoppMutex);
-            _stopp = true;
-        }
-        wait(); // This will terminate the thread and close the serial port
-    } else {
-        _transmitBuffer.clear(); //clear the output buffer to avoid sending garbage at next connect
-        qCDebug(SerialLinkLog) << "Already disconnected";
+    if (_port) {
+        _port->close();
+        delete _port;
+        _port = NULL;
     }
+    
 #ifdef __android__
     LinkManager::instance()->suspendConfigurationUpdates(false);
 #endif
@@ -275,14 +260,14 @@ bool SerialLink::_disconnect(void)
 bool SerialLink::_connect(void)
 {
     qCDebug(SerialLinkLog) << "CONNECT CALLED";
-    if (isRunning())
+    if (isRunning()) {
         _disconnect();
-    {
-        QMutexLocker locker(&this->_stoppMutex);
-        _stopp = false;
     }
+    
 #ifdef __android__
     LinkManager::instance()->suspendConfigurationUpdates(true);
+#endif
+    
     // Initialize the connection
     if (!_hardwareConnect(_type)) {
         // Need to error out here.
@@ -293,8 +278,6 @@ bool SerialLink::_connect(void)
         _emitLinkError("Error connecting: " + err);
         return false;
     }
-#endif
-    start(HighPriority);
     return true;
 }
 
@@ -343,12 +326,12 @@ bool SerialLink::_hardwareConnect(QString &type)
         emit communicationUpdate(getName(),"Error opening port: " + _config->portName());
         return false; // couldn't create serial port.
     }
-    _port->moveToThread(this);
 
     // We need to catch this signal and then emit disconnected. You can't connect
     // signal to signal otherwise disonnected will have the wrong QObject::Sender
     QObject::connect(_port, SIGNAL(aboutToClose()), this, SLOT(_rerouteDisconnected()));
     QObject::connect(_port, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(linkError(QSerialPort::SerialPortError)));
+    QObject::connect(_port, &QIODevice::readyRead, this, &SerialLink::_readBytes);
 
     //  port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
 
@@ -371,6 +354,8 @@ bool SerialLink::_hardwareConnect(QString &type)
     if (!_port->isOpen() ) {
         emit communicationUpdate(getName(),"Error opening port: " + _port->errorString());
         _port->close();
+        delete _port;
+        _port = NULL;
         return false; // couldn't open serial port
     }
 
@@ -388,6 +373,18 @@ bool SerialLink::_hardwareConnect(QString &type)
              << _config->baud() << _config->dataBits() << _config->parity() << _config->stopBits();
 
     return true; // successful connection
+}
+
+void SerialLink::_readBytes(void)
+{
+    qint64 byteCount = _port->bytesAvailable();
+    if (byteCount)
+    {
+        QByteArray buffer;
+        buffer.resize(byteCount);
+        _port->read(buffer.data(), buffer.size());
+        emit bytesReceived(this, buffer);
+    }
 }
 
 void SerialLink::linkError(QSerialPort::SerialPortError error)

@@ -153,6 +153,7 @@ protected:
 
 private slots:
     void _rerouteDisconnected(void);
+    void _readBytes(void);
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
