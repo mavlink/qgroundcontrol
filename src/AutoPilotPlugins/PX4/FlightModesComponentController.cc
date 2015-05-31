@@ -72,19 +72,13 @@ void FlightModesComponentController::_validateConfiguration(void)
         _channelCount = _chanMax;
     }
     
-    // Acro is not full supported yet. If Acro is mapped you uhave to set up the hard way.
-    if (getParameterFact(FactSystem::defaultComponentId, "RC_MAP_ACRO_SW")->value().toInt() != 0) {
-        _validConfiguration = false;
-        _configurationErrors += "Flight Mode setup does not yet support Acro switch";
-    }
-    
     // Make sure switches are valid and within channel range
     
     QStringList switchParams, switchNames;
     QList<int> switchMappings;
     
-    switchParams << "RC_MAP_MODE_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_OFFB_SW";
-    switchNames << "Mode Switch" << "Return Switch" << "Loiter Switch" << "PosCtl Switch" << "Offboard Switch";
+    switchParams << "RC_MAP_MODE_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_OFFB_SW" << "RC_MAP_ACRO_SW";
+    switchNames << "Mode Switch" << "Return Switch" << "Loiter Switch" << "PosCtl Switch" << "Offboard Switch" << "Acro Switch";
     
     for(int i=0; i<switchParams.count(); i++) {
         int map = getParameterFact(FactSystem::defaultComponentId, switchParams[i])->value().toInt();
@@ -224,3 +218,7 @@ double FlightModesComponentController::posCtlSwitchLiveRange(void)
     return _switchLiveRange("RC_MAP_POSCTL_SW");
 }
 
+double FlightModesComponentController::acroSwitchLiveRange(void)
+{
+    return _switchLiveRange("RC_MAP_ACRO_SW");
+}
