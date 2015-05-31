@@ -47,7 +47,7 @@ This file is part of the QGROUNDCONTROL project
 #include "WaypointList.h"
 #include "CameraView.h"
 #include "UASListWidget.h"
-#ifndef __android__
+#ifndef __mobile__
 #include "input/JoystickInput.h"
 #endif
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
@@ -65,7 +65,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
 #include "QGCUASFileViewMulti.h"
-#include "QGCFlightGearLink.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;
@@ -263,7 +262,7 @@ protected:
 
     QPointer<QGCUASFileViewMulti> fileWidget;
 
-#ifndef __android__
+#ifndef __mobile__
     JoystickInput* joystick; ///< The joystick manager for QGC
 #endif
 
@@ -290,7 +289,6 @@ protected:
 
     LogCompressor* comp;
     QTimer* videoTimer;
-    QGCFlightGearLink* fgLink;
     QTimer windowNameUpdateTimer;
 
 private slots:
@@ -353,7 +351,9 @@ private:
     void _hideAllHilDockWidgets(void);
     void _hideAllDockWidgets(void);
     void _showDockWidget(const QString &name, bool show);
+#ifndef __mobile__
     void _showHILConfigurationWidgets(void);
+#endif
 
     bool                    _autoReconnect;
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets

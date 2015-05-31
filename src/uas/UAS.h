@@ -36,12 +36,14 @@ This file is part of the QGROUNDCONTROL project
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
 #include "QGCMAVLink.h"
+#include "FileManager.h"
+#ifndef __mobile__
+#include "JoystickInput.h"
 #include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
-#include "FileManager.h"
-#include "JoystickInput.h"
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(UASLog)
 
@@ -463,7 +465,9 @@ protected: //COMMENTS FOR TEST UNIT
     bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
 
     /// SIMULATION
+#ifndef __mobile__
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
+#endif
 
 public:
     /** @brief Set the current battery type */
@@ -493,10 +497,11 @@ public:
     }
 
     /** @brief Get the HIL simulation */
+#ifndef __mobile__
     QGCHilLink* getHILSimulation() const {
         return simulation;
     }
-
+#endif
 
     int  getSystemType();
     bool isAirplane();
@@ -703,6 +708,7 @@ public slots:
     void go();
 
     /** @brief Enable / disable HIL */
+#ifndef __mobile__
     void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
@@ -744,7 +750,7 @@ public slots:
 
     /** @brief Stops the UAV's Hardware-in-the-Loop simulation status **/
     void stopHil();
-
+#endif
 
     /** @brief Stops the robot system. If it is an MAV, the robot starts the emergency landing procedure **/
     void emergencySTOP();
@@ -781,10 +787,14 @@ public slots:
     void toggleAutonomy();
 
     /** @brief Set the values for the manual control of the vehicle */
+#ifndef __mobile__
     void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, quint8);
+#endif
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
+#ifndef __mobile__
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
+#endif
 
     /** @brief Add a link associated with this robot */
     void addLink(LinkInterface* link);
