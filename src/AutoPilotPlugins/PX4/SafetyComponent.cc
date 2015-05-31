@@ -84,16 +84,9 @@ QStringList SafetyComponent::paramFilterList(void) const
     return list;
 }
 
-QWidget* SafetyComponent::setupWidget(void) const
+QUrl SafetyComponent::setupSource(void) const
 {
-    QGCQmlWidgetHolder* holder = new QGCQmlWidgetHolder();
-    Q_CHECK_PTR(holder);
-
-    holder->setAutoPilot(_autopilot);
-
-    holder->setSource(QUrl::fromUserInput("qrc:/qml/SafetyComponent.qml"));
-
-    return holder;
+    return QUrl::fromUserInput("qrc:/qml/SafetyComponent.qml");
 }
 
 QUrl SafetyComponent::summaryQmlSource(void) const

@@ -27,7 +27,6 @@
 #include "FactSystem.h"
 #include "UASManager.h"
 #include "QGCApplication.h"
-#include "VehicleComponent.h"
 #include "FactPanelController.h"
 
 #include <QtQml>
@@ -42,7 +41,6 @@ FactSystem::FactSystem(QObject* parent) :
     
     qmlRegisterType<Fact>(_factSystemQmlUri, 1, 0, "Fact");
     qmlRegisterType<FactPanelController>(_factSystemQmlUri, 1, 0, "FactPanelController");
-    qmlRegisterUncreatableType<VehicleComponent>(_factSystemQmlUri, 1, 0, "VehicleComponent", "Can only reference, cannot create");
 }
 
 FactSystem::~FactSystem()

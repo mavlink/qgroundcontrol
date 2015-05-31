@@ -51,6 +51,8 @@
 #include <QtPositioning/QGeoAddress>
 #include <QtPositioning/QGeoLocation>
 #include <QtPositioning/QGeoRectangle>
+#include <QSet>
+#include <QDebug>
 
 #include "qgeocodereplyqgc.h"
 

@@ -53,7 +53,12 @@ void QGCQmlWidgetHolder::setContextPropertyObject(const QString& name, QObject* 
     _ui.qmlWidget->rootContext()->setContextProperty(name, object);
 }
 
-QQmlContext* QGCQmlWidgetHolder::getRootContext()
+QQmlContext* QGCQmlWidgetHolder::getRootContext(void)
 {
     return _ui.qmlWidget->rootContext();
+}
+
+QQuickItem* QGCQmlWidgetHolder::getRootObject(void)
+{
+    return _ui.qmlWidget->rootObject();
 }
