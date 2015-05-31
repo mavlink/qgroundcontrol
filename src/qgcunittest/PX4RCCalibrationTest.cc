@@ -167,6 +167,7 @@ void RadioConfigTest::init(void)
     
     // This will instatiate the widget with an active uas with ready parameters
     _calWidget = new QGCQmlWidgetHolder();
+    _calWidget->resize(600, 600);
     Q_CHECK_PTR(_calWidget);
     _calWidget->setAutoPilot(_autopilot);
     _calWidget->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
