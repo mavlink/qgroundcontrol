@@ -107,6 +107,9 @@ void UDPLink::run()
 {
     _hardwareConnect();
     exec();
+    if (_socket) {
+        _socket->close();
+    }
 }
 
 void UDPLink::_restartConnection()
@@ -225,7 +228,6 @@ bool UDPLink::_disconnect(void)
     this->wait();
     if (_socket) {
         // Make sure delete happen on correct thread
-        _socket->close();
         _socket->deleteLater();
         _socket = NULL;
         emit disconnected();
@@ -249,12 +251,17 @@ bool UDPLink::_connect(void)
     }
     // TODO When would this ever return false?
     bool connected = true;
-    start(HighPriority);
+    // I see no reason to run this in "HighPriority"
+    start(NormalPriority);
     return connected;
 }
 
 bool UDPLink::_hardwareConnect()
 {
+    if (_socket) {
+        delete _socket;
+        _socket = NULL;
+    }
     QHostAddress host = QHostAddress::Any;
     _socket = new QUdpSocket();
     _socket->setProxy(QNetworkProxy::NoProxy);
