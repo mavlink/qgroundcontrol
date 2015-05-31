@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 /// @file
@@ -45,30 +45,19 @@ SetupView::SetupView(QWidget* parent) :
     QGCQmlWidgetHolder(parent),
     _uasCurrent(NULL),
     _initComplete(false),
-	_readyAutopilot(NULL)
+    _readyAutopilot(NULL)
 {
-<<<<<<< HEAD
-#ifdef __android__
+#ifdef __mobile__
     _showFirmware = false;
 #else
     _showFirmware = true;
-=======
-    _ui->setupUi(this);
-
-    bool fSucceeded = connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
-    Q_UNUSED(fSucceeded);
-    Q_ASSERT(fSucceeded);
-    
-#ifndef __mobile__
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
->>>>>>> First stab at iOS builds
 #endif
-    
+
     connect(UASManager::instance(), &UASManager::activeUASSet, this, &SetupView::_setActiveUAS);
-    
+
     getRootContext()->setContextProperty("controller", this);
     setSource(QUrl::fromUserInput("qrc:/qml/SetupView.qml"));
-    
+
     _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
@@ -84,9 +73,9 @@ void SetupView::_setActiveUAS(UASInterface* uas)
     }
 
     _pluginReadyChanged(false);
-    
+
     _uasCurrent = uas;
-    
+
     if (_uasCurrent) {
         _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent);
         if (_autopilot.data()->pluginReady()) {
@@ -111,28 +100,12 @@ void SetupView::_pluginReadyChanged(bool pluginReady)
 #ifdef UNITTEST_BUILD
 void SetupView::showFirmware(void)
 {
-<<<<<<< HEAD
-#ifndef __android__
+#ifndef __mobile__
     QVariant returnedValue;
     bool success = QMetaObject::invokeMethod(getRootObject(),
                                              "showFirmwarePanel",
                                              Q_RETURN_ARG(QVariant, returnedValue));
     Q_ASSERT(success);
-=======
-#ifndef __mobile__
-    //FIXME: Hack out for android for now
-    if (_uasCurrent && _uasCurrent->isArmed()) {
-        QGCMessageBox::warning("Setup", "Firmware Update cannot be performed while vehicle is armed.");
-        return;
-    }
-
-    QGCQmlWidgetHolder* setup = new QGCQmlWidgetHolder;
-    Q_CHECK_PTR(setup);
-    
-    setup->setSource(QUrl::fromUserInput("qrc:/qml/FirmwareUpgrade.qml"));
-
-    _changeSetupWidget(setup);
->>>>>>> First stab at iOS builds
 #endif
 }
 
