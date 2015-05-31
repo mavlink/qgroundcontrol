@@ -135,6 +135,7 @@ void QGCLinkConfiguration::_fixUnnamed(LinkConfiguration* config)
     //-- Check for "Unnamed"
     if (config->name() == tr("Unnamed")) {
         switch(config->type()) {
+#ifndef __ios__
             case LinkConfiguration::TypeSerial: {
                 QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
 #ifdef Q_OS_WIN32
@@ -146,6 +147,7 @@ void QGCLinkConfiguration::_fixUnnamed(LinkConfiguration* config)
                 config->setName(QString("Serial Device on %1").arg(tname));
                 break;
                 }
+#endif
             case LinkConfiguration::TypeUdp:
                 config->setName(
                     QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));

@@ -46,13 +46,25 @@
 
 #include <QtLocation/private/qgeocameracapabilities_p.h>
 #include <QtLocation/private/qgeomaptype_p.h>
+#if QT_VERSION < 0x050500
 #include <QtLocation/private/qgeotiledmapdata_p.h>
+#else
+#include <QtLocation/private/qgeotiledmap_p.h>
+#endif
 #include <QDir>
 #include <QStandardPaths>
 
 #include "qgeotiledmappingmanagerengineqgc.h"
 #include "qgeotilefetcherqgc.h"
 #include "OpenPilotMaps.h"
+
+#if QT_VERSION >= 0x050500
+QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent)
+    : QGeoTiledMap(engine, parent)
+{
+
+}
+#endif
 
 QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
 :   QGeoTiledMappingManagerEngine()
@@ -151,13 +163,34 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     *error = QGeoServiceProvider::NoError;
     errorString->clear();
+
+#if QT_VERSION >= 0x050500
+    if (parameters.contains(QStringLiteral("mapping.copyright")))
+        m_customCopyright = parameters.value(QStringLiteral("mapping.copyright")).toString().toLatin1();
+#endif
 }
 
 QGeoTiledMappingManagerEngineQGC::~QGeoTiledMappingManagerEngineQGC()
 {
 }
 
+#if QT_VERSION < 0x050500
+
 QGeoMapData *QGeoTiledMappingManagerEngineQGC::createMapData()
 {
     return new QGeoTiledMapData(this, 0);
 }
+
+#else
+
+QGeoMap *QGeoTiledMappingManagerEngineQGC::createMap()
+{
+    return new QGeoTiledMapQGC(this);
+}
+
+QString QGeoTiledMappingManagerEngineQGC::customCopyright() const
+{
+    return m_customCopyright;
+}
+
+#endif

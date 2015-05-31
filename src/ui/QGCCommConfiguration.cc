@@ -30,8 +30,10 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QPushButton>
 
+#ifndef __ios__
 #include "SerialLink.h"
 #include "SerialConfigurationWindow.h"
+#endif
 #include "QGCUDPLinkConfiguration.h"
 #include "QGCTCPLinkConfiguration.h"
 #include "QGCCommConfiguration.h"
@@ -45,7 +47,9 @@ QGCCommConfiguration::QGCCommConfiguration(QWidget *parent, LinkConfiguration *c
     // Add link types
     _config = config;
     _ui->typeCombo->addItem(tr("Select Type"),  LinkConfiguration::TypeLast);
+#ifndef __ios__
     _ui->typeCombo->addItem(tr("Serial"),       LinkConfiguration::TypeSerial);
+#endif
     _ui->typeCombo->addItem(tr("UDP"),          LinkConfiguration::TypeUdp);
     _ui->typeCombo->addItem(tr("TCP"),          LinkConfiguration::TypeTcp);
 #ifdef QT_DEBUG
@@ -113,6 +117,7 @@ void QGCCommConfiguration::_loadTypeConfigWidget(int type)
 {
     Q_ASSERT(_config != NULL);
     switch(type) {
+#ifndef __ios__
         case LinkConfiguration::TypeSerial: {
             QWidget* conf = new SerialConfigurationWindow((SerialConfiguration*)_config, this);
             _ui->linkScrollArea->setWidget(conf);
@@ -120,6 +125,7 @@ void QGCCommConfiguration::_loadTypeConfigWidget(int type)
             _ui->typeCombo->setCurrentIndex(_ui->typeCombo->findData(LinkConfiguration::TypeSerial));
         }
         break;
+#endif
         case LinkConfiguration::TypeUdp: {
             QWidget* conf = new QGCUDPLinkConfiguration((UDPConfiguration*)_config, this);
             _ui->linkScrollArea->setWidget(conf);

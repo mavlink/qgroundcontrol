@@ -2,7 +2,9 @@
 #include <QtEndian>
 
 #include "MainWindow.h"
+#ifndef __ios__
 #include "SerialLink.h"
+#endif
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGC.h"
 #include "ui_QGCMAVLinkLogPlayer.h"

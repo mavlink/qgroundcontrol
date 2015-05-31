@@ -39,7 +39,9 @@ public:
 
     ///  The link types supported by QGC
     enum {
+#ifndef __ios__
         TypeSerial,     ///< Serial Link
+#endif
         TypeUdp,        ///< UDP Link
         TypeTcp,        ///< TCP Link
         // TODO Below is not yet implemented

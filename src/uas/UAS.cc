@@ -26,7 +26,9 @@
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
+#ifndef __ios__
 #include "SerialLink.h"
+#endif
 #include <Eigen/Geometry>
 #include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
@@ -141,8 +143,9 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     blockHomePositionChanges(false),
     receivedMode(false),
 
-
+#ifndef __mobile__
     simulation(0),
+#endif
 
     // The protected members.
     connectionLost(false),
@@ -2401,6 +2404,7 @@ void UAS::toggleAutonomy()
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
+#ifndef __mobile__
 void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, quint8 joystickMode)
 {
     Q_UNUSED(xHat);
@@ -2580,7 +2584,9 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
         }
     }
 }
+#endif
 
+#ifndef __mobile__
 void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw)
 {
     // If system has manual inputs enabled and is armed
@@ -2614,6 +2620,7 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
         qDebug() << "3DMOUSE/MANUAL CONTROL: IGNORING COMMANDS: Set mode to MANUAL to send 3DMouse commands first";
     }
 }
+#endif
 
 /**
 * @return the type of the system
@@ -2747,6 +2754,7 @@ bool UAS::emergencyKILL()
 /**
 * If enabled, connect the flight gear link.
 */
+#ifndef __mobile__
 void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration)
 {
     Q_UNUSED(configuration);
@@ -2775,10 +2783,12 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
         stopHil();
     }
 }
+#endif
 
 /**
 * If enabled, connect the JSBSim link.
 */
+#ifndef __mobile__
 void UAS::enableHilJSBSim(bool enable, QString options)
 {
     QGCJSBSimLink* link = dynamic_cast<QGCJSBSimLink*>(simulation);
@@ -2802,10 +2812,12 @@ void UAS::enableHilJSBSim(bool enable, QString options)
         stopHil();
     }
 }
+#endif
 
 /**
 * If enabled, connect the X-plane gear link.
 */
+#ifndef __mobile__
 void UAS::enableHilXPlane(bool enable)
 {
     QGCXPlaneLink* link = dynamic_cast<QGCXPlaneLink*>(simulation);
@@ -2827,6 +2839,7 @@ void UAS::enableHilXPlane(bool enable)
         stopHil();
     }
 }
+#endif
 
 /**
 * @param time_us Timestamp (microseconds since UNIX epoch or microseconds since system boot)
@@ -2846,6 +2859,7 @@ void UAS::enableHilXPlane(bool enable)
 * @param yacc Y acceleration (mg)
 * @param zacc Z acceleration (mg)
 */
+#ifndef __mobile__
 void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
@@ -2875,6 +2889,7 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
         emit valueChanged(uasId, "IAS sim", "m/s", ind_airspeed, getUnixTime());
         emit valueChanged(uasId, "TAS sim", "m/s", true_airspeed, getUnixTime());
 }
+#endif
 
 /**
 * @param time_us Timestamp (microseconds since UNIX epoch or microseconds since system boot)
@@ -2894,6 +2909,7 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
 * @param yacc Y acceleration (mg)
 * @param zacc Z acceleration (mg)
 */
+#ifndef __mobile__
 void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
@@ -2930,11 +2946,13 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
+#endif
 
 /*
 * @param abs_pressure Absolute Pressure (hPa)
 * @param diff_pressure Differential Pressure  (hPa)
 */
+#ifndef __mobile__
 void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
                                     float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed)
 {
@@ -2955,7 +2973,9 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
+#endif
 
+#ifndef __mobile__
 void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
                     float flow_comp_m_y, quint8 quality, float ground_distance)
 {
@@ -2988,7 +3008,9 @@ void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, floa
     }
 
 }
+#endif
 
+#ifndef __mobile__
 void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites)
 {
     // Only send at 10 Hz max rate
@@ -3017,11 +3039,12 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
-
+#endif
 
 /**
 * Connect flight gear link.
 **/
+#ifndef __mobile__
 void UAS::startHil()
 {
     if (hilEnabled) return;
@@ -3032,10 +3055,12 @@ void UAS::startHil()
     // Connect HIL simulation link
     simulation->connectSimulation();
 }
+#endif
 
 /**
 * disable flight gear link.
 */
+#ifndef __mobile__
 void UAS::stopHil()
 {
     if (simulation && simulation->isConnected()) {
@@ -3046,6 +3071,7 @@ void UAS::stopHil()
     hilEnabled = false;
     sensorHil = false;
 }
+#endif
 
 void UAS::shutdown()
 {
