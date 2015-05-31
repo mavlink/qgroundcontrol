@@ -54,6 +54,7 @@ public:
     Q_PROPERTY(double posCtlSwitchLiveRange READ posCtlSwitchLiveRange NOTIFY switchLiveRangeChanged)
     Q_PROPERTY(double returnSwitchLiveRange READ returnSwitchLiveRange NOTIFY switchLiveRangeChanged)
     Q_PROPERTY(double offboardSwitchLiveRange READ offboardSwitchLiveRange NOTIFY switchLiveRangeChanged)
+    Q_PROPERTY(double acroSwitchLiveRange READ acroSwitchLiveRange NOTIFY switchLiveRangeChanged)
     
     Q_PROPERTY(bool sendLiveRCSwitchRanges READ sendLiveRCSwitchRanges WRITE setSendLiveRCSwitchRanges NOTIFY liveRCSwitchRangesChanged)
     
@@ -62,6 +63,7 @@ public:
     double posCtlSwitchLiveRange(void);
     double returnSwitchLiveRange(void);
     double offboardSwitchLiveRange(void);
+    double acroSwitchLiveRange(void);
     
     bool sendLiveRCSwitchRanges(void) { return _liveRCValues; }
     void setSendLiveRCSwitchRanges(bool start);
