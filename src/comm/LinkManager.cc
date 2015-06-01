@@ -481,7 +481,10 @@ void LinkManager::_updateConfigurationList(void)
                 }
             } else {
                 // Lets create a new Serial configuration automatically
-                pSerial = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
+		if (portInfo.description() == "AeroCore")
+	                pSerial = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
+		else
+	                pSerial = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
                 pSerial->setDynamic(true);
                 pSerial->setPreferred(true);
                 pSerial->setBaud(115200);
