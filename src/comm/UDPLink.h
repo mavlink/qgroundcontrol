@@ -37,6 +37,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutex>
 #include <QUdpSocket>
 
+#if defined(QGC_ZEROCONF_ENABLED)
+#include <dns_sd.h>
+#endif
+
 #include "QGCConfig.h"
 #include "LinkManager.h"
 
@@ -200,6 +204,12 @@ private:
 
     bool _hardwareConnect();
     void _restartConnection();
+
+#if defined(QGC_ZEROCONF_ENABLED)
+    void _registerZeroconf(uint16_t port, const std::string& regType);
+    void _deregisterZeroconf();
+    DNSServiceRef  _dnssServiceRef;
+#endif
 
 signals:
     //Signals are defined by LinkInterface

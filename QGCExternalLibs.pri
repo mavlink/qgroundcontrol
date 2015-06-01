@@ -278,3 +278,19 @@ else:WindowsBuild {
     DEFINES += QGC_SPEECH_ENABLED
     LIBS    += -lOle32
 }
+
+#
+# [OPTIONAL] Zeroconf for UDP links
+#
+contains (DEFINES, DISABLE_ZEROCONF) {
+    message("Skipping support for Zeroconf (manual override from command line)")
+    DEFINES -= DISABLE_ZEROCONF
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_ZEROCONF) {
+    message("Skipping support for Zeroconf (manual override from user_config.pri)")
+# Mac support is built into OS
+} else:MacBuild|iOSBuild {
+    message("Including support for Zeroconf (Bonjour)")
+    DEFINES += QGC_ZEROCONF_ENABLED
+}
+

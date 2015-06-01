@@ -39,6 +39,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include <QHostInfo>
 
+static const char* kZeroconfRegistration = "_qgroundcontrol._udp";
+
 static bool is_ip(const QString& address)
 {
     int a,b,c,d;
@@ -75,6 +77,7 @@ static QString get_ip_address(const QString& address)
 UDPLink::UDPLink(UDPConfiguration* config)
     : _socket(NULL)
     , _connectState(false)
+    , _dnssServiceRef(NULL)
 {
     Q_ASSERT(config != NULL);
     _config = config;
@@ -108,6 +111,7 @@ void UDPLink::run()
     _hardwareConnect();
     exec();
     if (_socket) {
+        _deregisterZeroconf();
         _socket->close();
     }
 }
@@ -267,6 +271,7 @@ bool UDPLink::_hardwareConnect()
     _socket->setProxy(QNetworkProxy::NoProxy);
     _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint);
     if (_connectState) {
+        _registerZeroconf(_config->localPort(), kZeroconfRegistration);
         QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
         emit connected();
     } else {
@@ -298,6 +303,40 @@ qint64 UDPLink::getCurrentInDataRate() const
 qint64 UDPLink::getCurrentOutDataRate() const
 {
     return 0;
+}
+
+void UDPLink::_registerZeroconf(uint16_t port, const std::string &regType)
+{
+#if defined(QGC_ZEROCONF_ENABLED)
+    DNSServiceErrorType result = DNSServiceRegister(&_dnssServiceRef, 0, 0, 0,
+        regType.c_str(),
+        NULL,
+        NULL,
+        htons(port),
+        0,
+        NULL,
+        NULL,
+        NULL);
+    if (result != kDNSServiceErr_NoError)
+    {
+        emit communicationError("UDP Link Error", "Error registering Zeroconf");
+        _dnssServiceRef = NULL;
+    }
+#else
+    Q_UNUSED(port);
+    Q_UNUSED(regType);
+#endif
+}
+
+void UDPLink::_deregisterZeroconf()
+{
+#if defined(QGC_ZEROCONF_ENABLED)
+    if (_dnssServiceRef)
+     {
+         DNSServiceRefDeallocate(_dnssServiceRef);
+         _dnssServiceRef = NULL;
+     }
+#endif
 }
 
 //--------------------------------------------------------------------------
