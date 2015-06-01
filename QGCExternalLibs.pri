@@ -292,5 +292,7 @@ contains (DEFINES, DISABLE_ZEROCONF) {
 } else:MacBuild|iOSBuild {
     message("Including support for Zeroconf (Bonjour)")
     DEFINES += QGC_ZEROCONF_ENABLED
+} else {
+    message("Skipping support for Zeroconf (unsupported platform)")
 }
 
