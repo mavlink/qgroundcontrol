@@ -32,9 +32,9 @@ import QGroundControl.Controls 1.0
 import QGroundControl.Palette 1.0
 
 Rectangle {
-    color: __qgcPal.window
+    color: qgcPal.window
 
-    QGCPalette { id: __qgcPal; colorGroupEnabled: true }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     property string __missingParams: ""
     property string __errorMsg: ""
@@ -57,7 +57,7 @@ Rectangle {
         anchors.fill:   parent
         z:              9999
         visible:        false
-        color:          __qgcPal.window
+        color:          qgcPal.window
         opacity:        0.85
 
         QGCLabel {
