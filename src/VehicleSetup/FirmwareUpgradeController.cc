@@ -167,7 +167,14 @@ void FirmwareUpgradeController::_getFirmwareFile(void)
         "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4",
         "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4"
     };
-    
+
+    static const char* rgAeroCoreFirmware[3] =
+    {
+	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/stable/aerocore_default.px4",
+	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/beta/aerocore_default.px4",
+	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/master/aerocore_default.px4"
+    };
+
     static const char* rgPX4FlowFirmware[3] =
     {
         "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4",
@@ -190,7 +197,11 @@ void FirmwareUpgradeController::_getFirmwareFile(void)
         case _boardIDPX4FMUV2:
             prgFirmware = rgPX4FMUV2Firmware;
             break;
-            
+
+	case _boardIDAeroCore:
+            prgFirmware = rgAeroCoreFirmware;
+            break;
+
         default:
             prgFirmware = NULL;
             break;
@@ -427,7 +438,9 @@ void FirmwareUpgradeController::_downloadFinished(void)
             firmwareBoardID = _boardIDPX4Flow;
         } else if (downloadFilename.toLower().contains("px4fmu-v1")) {
             firmwareBoardID = _boardIDPX4FMUV1;
-        }
+        } else if (downloadFilename.toLower().contains("aerocore")) {
+            firmwareBoardID = _boardIDAeroCore;
+	}
         
         if (firmwareBoardID != 0 &&  firmwareBoardID != _boardID) {
             _appendStatusLog(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_boardID));
