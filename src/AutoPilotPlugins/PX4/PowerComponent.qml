@@ -37,309 +37,295 @@ import QGroundControl.ScreenTools 1.0
 import QGroundControl.Controllers 1.0
 
 QGCView {
-    id:             rootQGCView
-    viewComponent:  view
+    id:         rootQGCView
+    viewPanel:  panel
 
-    Component {
-        id: view
+    property int firstColumnWidth: 220
+    property int textEditWidth:    80
 
-        QGCViewPanel {
-            id: viewPanel
+    property Fact battNumCells:     controller.getParameterFact(-1, "BAT_N_CELLS")
+    property Fact battHighVolt:     controller.getParameterFact(-1, "BAT_V_CHARGED")
+    property Fact battLowVolt:      controller.getParameterFact(-1, "BAT_V_EMPTY")
+    property Fact battVoltLoadDrop: controller.getParameterFact(-1, "BAT_V_LOAD_DROP")
 
-            QGCPalette { id: palette; colorGroupEnabled: enabled }
+    property alias battHigh: battHighRow
+    property alias battLow:  battLowRow
 
-            width:  600
-            height: 600
-            color:  palette.window
+    function getBatteryImage()
+    {
+        switch(battNumCells.value) {
+            case 1:  return "/qml/PowerComponentBattery_01cell.svg";
+            case 2:  return "/qml/PowerComponentBattery_02cell.svg"
+            case 3:  return "/qml/PowerComponentBattery_03cell.svg"
+            case 4:  return "/qml/PowerComponentBattery_04cell.svg"
+            case 5:  return "/qml/PowerComponentBattery_05cell.svg"
+            case 6:  return "/qml/PowerComponentBattery_06cell.svg"
+            default: return "/qml/PowerComponentBattery_01cell.svg";
+        }
+    }
 
-            property int firstColumnWidth: 220
-            property int textEditWidth:    80
+    function drawArrowhead(ctx, x, y, radians)
+    {
+        ctx.save();
+        ctx.beginPath();
+        ctx.translate(x,y);
+        ctx.rotate(radians);
+        ctx.moveTo(0,0);
+        ctx.lineTo(5,10);
+        ctx.lineTo(-5,10);
+        ctx.closePath();
+        ctx.restore();
+        ctx.fill();
+    }
 
-            property Fact battNumCells:     controller.getParameterFact(-1, "BAT_N_CELLS")
-            property Fact battHighVolt:     controller.getParameterFact(-1, "BAT_V_CHARGED")
-            property Fact battLowVolt:      controller.getParameterFact(-1, "BAT_V_EMPTY")
-            property Fact battVoltLoadDrop: controller.getParameterFact(-1, "BAT_V_LOAD_DROP")
+    function drawLineWithArrow(ctx, x1, y1, x2, y2)
+    {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        var rd = Math.atan((y2 - y1) / (x2 - x1));
+        rd += ((x2 > x1) ? 90 : -90) * Math.PI/180;
+        drawArrowhead(ctx, x2, y2, rd);
+    }
 
-            property alias battHigh: battHighRow
-            property alias battLow:  battLowRow
+    PowerComponentController {
+        id:         controller
+        factPanel:  panel
 
-            function getBatteryImage()
-            {
-                switch(battNumCells.value) {
-                    case 1:  return "/qml/PowerComponentBattery_01cell.svg";
-                    case 2:  return "/qml/PowerComponentBattery_02cell.svg"
-                    case 3:  return "/qml/PowerComponentBattery_03cell.svg"
-                    case 4:  return "/qml/PowerComponentBattery_04cell.svg"
-                    case 5:  return "/qml/PowerComponentBattery_05cell.svg"
-                    case 6:  return "/qml/PowerComponentBattery_06cell.svg"
-                    default: return "/qml/PowerComponentBattery_01cell.svg";
-                }
+        onOldFirmware:          showMessage("ESC Calibration", "QGroundControl cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.", StandardButton.Ok)
+        onNewerFirmware:        showMessage("ESC Calibration", "QGroundControl cannot perform ESC Calibration with this version of firmware. You will need to upgrade QGroundControl.", StandardButton.Ok)
+        onBatteryConnected:     showMessage("ESC Calibration", "Performing calibration. This will take a few seconds..", 0)
+        onCalibrationFailed:    showMessage("ESC Calibration failed", errorMessage, StandardButton.Ok)
+        onCalibrationSuccess:   showMessage("ESC Calibration", "Calibration complete. You can disconnect your battery now if you like.", StandardButton.Ok)
+        onConnectBattery:       showMessage("ESC Calibration", "WARNING: Props must be removed from vehicle prior to performing ESC calibration.\n\nConnect the battery now and calibration will begin.", 0)
+        onDisconnectBattery:    showMessage("ESC Calibration failed", "You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.", StandardButton.Ok)
+    }
+
+    QGCPalette { id: palette; colorGroupEnabled: panel.enabled }
+
+    QGCViewPanel {
+        id:             panel
+        anchors.fill:   parent
+
+
+        Column {
+            anchors.fill: parent
+            spacing: 10
+
+            QGCLabel {
+                text: "POWER CONFIG"
+                font.pointSize: ScreenTools.largeFontPointSize
             }
 
-            function drawArrowhead(ctx, x, y, radians)
-            {
-                ctx.save();
-                ctx.beginPath();
-                ctx.translate(x,y);
-                ctx.rotate(radians);
-                ctx.moveTo(0,0);
-                ctx.lineTo(5,10);
-                ctx.lineTo(-5,10);
-                ctx.closePath();
-                ctx.restore();
-                ctx.fill();
+            QGCLabel {
+                text: "Battery"
+                font.pointSize: ScreenTools.mediumFontPointSize
             }
 
-            function drawLineWithArrow(ctx, x1, y1, x2, y2)
-            {
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.stroke();
-                var rd = Math.atan((y2 - y1) / (x2 - x1));
-                rd += ((x2 > x1) ? 90 : -90) * Math.PI/180;
-                drawArrowhead(ctx, x2, y2, rd);
-            }
+            Rectangle {
+                width: parent.width
+                height: 120
+                color: palette.windowShade
 
-            PowerComponentController {
-                id:         controller
-                factPanel:  viewPanel
+                Column {
+                    id: batteryColumn
+                    spacing: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: (parent.x + 20)
 
-                onOldFirmware:          showMessage("ESC Calibration", "QGroundControl cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.", StandardButton.Ok)
-                onNewerFirmware:        showMessage("ESC Calibration", "QGroundControl cannot perform ESC Calibration with this version of firmware. You will need to upgrade QGroundControl.", StandardButton.Ok)
-                onBatteryConnected:     showMessage("ESC Calibration", "Performing calibration. This will take a few seconds..", 0)
-                onCalibrationFailed:    showMessage("ESC Calibration failed", errorMessage, StandardButton.Ok)
-                onCalibrationSuccess:   showMessage("ESC Calibration", "Calibration complete. You can disconnect your battery now if you like.", StandardButton.Ok)
-                onConnectBattery:       showMessage("ESC Calibration", "WARNING: Props must be removed from vehicle prior to performing ESC calibration.\n\nConnect the battery now and calibration will begin.", 0)
-                onDisconnectBattery:    showMessage("ESC Calibration failed", "You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.", StandardButton.Ok)
-            }
-
-            Column {
-                anchors.fill: parent
-                spacing: 10
-
-                QGCLabel {
-                    text: "POWER CONFIG"
-                    font.pointSize: ScreenTools.largeFontPointSize
-                }
-
-                QGCLabel {
-                    text: "Battery"
-                    color: palette.text
-                    font.pointSize: ScreenTools.mediumFontPointSize
-                }
-
-                Rectangle {
-                    width: parent.width
-                    height: 120
-                    color: palette.windowShade
-
-                    Column {
-                        id: batteryColumn
+                    Row {
                         spacing: 10
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: (parent.x + 20)
-
-                        Row {
+                        Column {
+                            id: voltageCol
                             spacing: 10
-                            Column {
-                                id: voltageCol
+                            Row {
                                 spacing: 10
-                                Row {
-                                    spacing: 10
-                                    QGCLabel { text: "Number of Cells (in Series)"; width: firstColumnWidth; anchors.baseline: cellsField.baseline}
-                                    FactTextField {
-                                        id: cellsField
-                                        width: textEditWidth
-                                        fact: battNumCells
-                                        showUnits: true
-                                    }
-                                }
-                                Row {
-                                    id: battHighRow
-                                    spacing: 10
-                                    QGCLabel { text: "Full Voltage (per cell)"; width: firstColumnWidth; anchors.baseline: battHighField.baseline}
-                                    FactTextField {
-                                        id: battHighField
-                                        width: textEditWidth
-                                        fact: battHighVolt
-                                        showUnits: true
-                                    }
-                                }
-                                Row {
-                                    id: battLowRow
-                                    spacing: 10
-                                    QGCLabel { text: "Empty Voltage (per cell)"; width: firstColumnWidth; anchors.baseline: battLowField.baseline}
-                                    FactTextField {
-                                        id: battLowField
-                                        width: textEditWidth
-                                        fact: battLowVolt
-                                        showUnits: true
-                                    }
+                                QGCLabel { text: "Number of Cells (in Series)"; width: firstColumnWidth; anchors.baseline: cellsField.baseline}
+                                FactTextField {
+                                    id: cellsField
+                                    width: textEditWidth
+                                    fact: battNumCells
+                                    showUnits: true
                                 }
                             }
-                            Canvas {
-                                id: arrows
-                                height: voltageCol.height
-                                width: 40
-                                antialiasing: true
-                                Connections {
-                                    target: ScreenTools
-                                    onRepaintRequestedChanged: {
-                                        arrows.requestPaint();
-                                    }
-                                }
-                                onPaint: {
-                                    var y0 = voltageCol.mapFromItem(battHigh, 0, battHigh.height / 2).y;
-                                    var y1 = voltageCol.mapFromItem(battLow,  0, battLow.height  / 2).y;
-                                    var context = getContext("2d");
-                                    context.reset();
-                                    context.strokeStyle = palette.button;
-                                    context.fillStyle   = palette.button;
-                                    drawLineWithArrow(context, 0, y0, width, height * 0.25);
-                                    drawLineWithArrow(context, 0, y1, width, height * 0.85);
-                                }
-                            }
-                            QGCColoredImage {
-                                height:   voltageCol.height
-                                width:    voltageCol.height * 0.75
-                                source:   getBatteryImage();
-                                fillMode: Image.PreserveAspectFit
-                                smooth:   true
-                                color:    palette.button
-                                cache:    false
-                            }
-                            Item { width: 20; height: 1; }
-                            Column {
+                            Row {
+                                id: battHighRow
                                 spacing: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                Row {
-                                    spacing: 10
-                                    QGCLabel {
-                                        text: "Battery Max:"
-                                        color: palette.text
-                                        width: 80
-                                    }
-                                    QGCLabel {
-                                        text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
-                                        color: palette.text
-                                    }
+                                QGCLabel { text: "Full Voltage (per cell)"; width: firstColumnWidth; anchors.baseline: battHighField.baseline}
+                                FactTextField {
+                                    id: battHighField
+                                    width: textEditWidth
+                                    fact: battHighVolt
+                                    showUnits: true
                                 }
-                                Row {
-                                    spacing: 10
-                                    QGCLabel {
-                                        text: "Battery Min:"
-                                        color: palette.text
-                                        width: 80
-                                    }
-                                    QGCLabel {
-                                        text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
-                                        color: palette.text
-                                    }
+                            }
+                            Row {
+                                id: battLowRow
+                                spacing: 10
+                                QGCLabel { text: "Empty Voltage (per cell)"; width: firstColumnWidth; anchors.baseline: battLowField.baseline}
+                                FactTextField {
+                                    id: battLowField
+                                    width: textEditWidth
+                                    fact: battLowVolt
+                                    showUnits: true
                                 }
                             }
                         }
-                    }
-                }
-
-                QGCLabel {
-                    text:           "ESC Calibration"
-                    font.pointSize: ScreenTools.mediumFontPointSize
-                }
-
-                Rectangle {
-                    width:              parent.width
-                    height:             80
-                    color:              palette.windowShade
-
-                    Column {
-                        anchors.margins:    10
-                        anchors.fill:       parent
-                        spacing:            10
-
-                        QGCLabel {
-                            text: "WARNING: Props must be removed from vehicle prior to performing ESC calibration."
+                        Canvas {
+                            id: arrows
+                            height: voltageCol.height
+                            width: 40
+                            antialiasing: true
+                            Connections {
+                                target: ScreenTools
+                                onRepaintRequestedChanged: {
+                                    arrows.requestPaint();
+                                }
+                            }
+                            onPaint: {
+                                var y0 = voltageCol.mapFromItem(battHigh, 0, battHigh.height / 2).y;
+                                var y1 = voltageCol.mapFromItem(battLow,  0, battLow.height  / 2).y;
+                                var context = getContext("2d");
+                                context.reset();
+                                context.strokeStyle = palette.button;
+                                context.fillStyle   = palette.button;
+                                drawLineWithArrow(context, 0, y0, width, height * 0.25);
+                                drawLineWithArrow(context, 0, y1, width, height * 0.85);
+                            }
                         }
-
-                        QGCButton {
-                            text:       "Calibrate"
-                            onClicked:  controller.calibrateEsc()
+                        QGCColoredImage {
+                            height:   voltageCol.height
+                            width:    voltageCol.height * 0.75
+                            source:   getBatteryImage();
+                            fillMode: Image.PreserveAspectFit
+                            smooth:   true
+                            color:    palette.button
+                            cache:    false
                         }
-                    }
-                }
-
-                /*
-                 * This is disabled for now
-                Row {
-                    width: parent.width
-                    spacing: 30
-                    visible: showAdvanced.checked
-                    Column {
-                        spacing: 10
-                        width: (parent.width / 2) - 5
-                        QGCLabel {
-                            text: "Propeller Function"
-                            color: palette.text
-                            font.pointSize: ScreenTools.fontPointFactor * (20);
-                        }
-                        Rectangle {
-                            width: parent.width
-                            height: 160
-                            color: palette.windowShade
-                        }
-                    }
-                    Column {
-                        spacing: 10
-                        width: (parent.width / 2) - 5
-                        QGCLabel {
-                            text: "Magnetometer Distortion"
-                            color: palette.text
-                            font.pointSize: ScreenTools.fontPointFactor * (20);
-                        }
-                        Rectangle {
-                            width: parent.width
-                            height: 160
-                            color: palette.windowShade
-                        }
-
-                    }
-                }
-                */
-
-                //-- Advanced Settings
-                QGCCheckBox {
-                    id: showAdvanced
-                    text: "Show Advanced Settings"
-                }
-                QGCLabel {
-                    text: "Advanced Power Settings"
-                    color: palette.text
-                    font.pointSize: ScreenTools.fontPointFactor * (20);
-                    visible: showAdvanced.checked
-                }
-                Rectangle {
-                    width: parent.width
-                    height: 40
-                    color: palette.windowShade
-                    visible: showAdvanced.checked
-                    Column {
-                        id: advBatteryColumn
-                        spacing: 10
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: (parent.x + 20)
-                        Row {
+                        Item { width: 20; height: 1; }
+                        Column {
                             spacing: 10
-                            QGCLabel { text: "Voltage Drop on Full Load (per cell)"; width: firstColumnWidth; anchors.baseline: battDropField.baseline}
-                            FactTextField {
-                                id: battDropField
-                                width: textEditWidth
-                                fact: battVoltLoadDrop
-                                showUnits: true
+                            anchors.verticalCenter: parent.verticalCenter
+                            Row {
+                                spacing: 10
+                                QGCLabel {
+                                    text: "Battery Max:"
+                                    width: 80
+                                }
+                                QGCLabel {
+                                    text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
+                                }
+                            }
+                            Row {
+                                spacing: 10
+                                QGCLabel {
+                                    text: "Battery Min:"
+                                    width: 80
+                                }
+                                QGCLabel {
+                                    text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
+                                }
                             }
                         }
                     }
                 }
-            } // Column
-        } // QGCViewPanel
-    } // Component - view
+            }
+
+            QGCLabel {
+                text:           "ESC Calibration"
+                font.pointSize: ScreenTools.mediumFontPointSize
+            }
+
+            Rectangle {
+                width:              parent.width
+                height:             80
+                color:              palette.windowShade
+
+                Column {
+                    anchors.margins:    10
+                    anchors.fill:       parent
+                    spacing:            10
+
+                    QGCLabel {
+                        text: "WARNING: Props must be removed from vehicle prior to performing ESC calibration."
+                    }
+
+                    QGCButton {
+                        text:       "Calibrate"
+                        onClicked:  controller.calibrateEsc()
+                    }
+                }
+            }
+
+            /*
+             * This is disabled for now
+            Row {
+                width: parent.width
+                spacing: 30
+                visible: showAdvanced.checked
+                Column {
+                    spacing: 10
+                    width: (parent.width / 2) - 5
+                    QGCLabel {
+                        text: "Propeller Function"
+                        font.pointSize: ScreenTools.fontPointFactor * (20);
+                    }
+                    Rectangle {
+                        width: parent.width
+                        height: 160
+                        color: palette.windowShade
+                    }
+                }
+                Column {
+                    spacing: 10
+                    width: (parent.width / 2) - 5
+                    QGCLabel {
+                        text: "Magnetometer Distortion"
+                        font.pointSize: ScreenTools.fontPointFactor * (20);
+                    }
+                    Rectangle {
+                        width: parent.width
+                        height: 160
+                        color: palette.windowShade
+                    }
+
+                }
+            }
+            */
+
+            //-- Advanced Settings
+            QGCCheckBox {
+                id: showAdvanced
+                text: "Show Advanced Settings"
+            }
+            QGCLabel {
+                text: "Advanced Power Settings"
+                font.pointSize: ScreenTools.fontPointFactor * (20);
+                visible: showAdvanced.checked
+            }
+            Rectangle {
+                width: parent.width
+                height: 40
+                color: palette.windowShade
+                visible: showAdvanced.checked
+                Column {
+                    id: advBatteryColumn
+                    spacing: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: (parent.x + 20)
+                    Row {
+                        spacing: 10
+                        QGCLabel { text: "Voltage Drop on Full Load (per cell)"; width: firstColumnWidth; anchors.baseline: battDropField.baseline}
+                        FactTextField {
+                            id: battDropField
+                            width: textEditWidth
+                            fact: battVoltLoadDrop
+                            showUnits: true
+                        }
+                    }
+                }
+            }
+        } // Column
+    } // QGCViewPanel
 }

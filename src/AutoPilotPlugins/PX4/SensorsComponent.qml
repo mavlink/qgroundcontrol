@@ -34,8 +34,8 @@ import QGroundControl.ScreenTools 1.0
 import QGroundControl.Controllers 1.0
 
 QGCView {
-    id:             rootQGCView
-    viewComponent:  view
+    id:         rootQGCView
+    viewPanel:  panel
 
     // Help text which is shown both in the status text area prior to pressing a cal button and in the
     // pre-calibration dialog.
@@ -113,8 +113,17 @@ QGCView {
     property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
 
     SensorsComponentController {
-        id:         controller
-        factPanel:  rootQGCView.viewPanel
+        id:                         controller
+        factPanel:                  panel
+        statusLog:                  statusTextArea
+        progressBar:                progressBar
+        compassButton:              compassButton
+        gyroButton:                 gyroButton
+        accelButton:                accelButton
+        airspeedButton:             airspeedButton
+        levelButton:                levelButton
+        cancelButton:               cancelButton
+        orientationCalAreaHelpText: orientationCalAreaHelpText
 
         onResetStatusTextArea: statusLog.text = statusTextAreaDefaultText
 
@@ -132,6 +141,8 @@ QGCView {
             }
         }
     }
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     Component {
         id: preCalibrationDialogComponent
@@ -260,337 +271,310 @@ QGCView {
         } // QGCViewDialog
     } // Component - compassRotationDialogComponent
 
-    Component {
-        id: view
+    QGCViewPanel {
+        id:             panel
+        anchors.fill:   parent
 
-        QGCViewPanel {
-            id:             viewPanel
+        Column {
+            anchors.fill: parent
 
-            Connections {
-                target: rootQGCView
+            QGCLabel {
+                text: "SENSORS CONFIG"
+                font.pointSize: ScreenTools.largeFontPointSize
+            }
 
-                onCompleted: {
-                    controller.factPanel = viewPanel
-                    controller.statusLog = statusTextArea
-                    controller.progressBar = progressBar
-                    controller.compassButton = compassButton
-                    controller.gyroButton = gyroButton
-                    controller.accelButton = accelButton
-                    controller.airspeedButton = airspeedButton
-                    controller.levelButton = levelButton
-                    controller.cancelButton = cancelButton
-                    controller.orientationCalAreaHelpText = orientationCalAreaHelpText
+            Item { height: 20; width: 10 } // spacer
+
+            Row {
+                readonly property int buttonWidth: 120
+
+                spacing: 20
+
+                QGCLabel { text: "Calibrate:"; anchors.baseline: compassButton.baseline }
+
+                IndicatorButton {
+                    id:             compassButton
+                    width:          parent.buttonWidth
+                    text:           "Compass"
+                    indicatorGreen: cal_mag0_id.value != 0
+
+                    onClicked: {
+                        preCalibrationDialogType = "compass"
+                        preCalibrationDialogHelp = compassHelp
+                        showDialog(preCalibrationDialogComponent, "Calibrate Compass", 50, StandardButton.Cancel | StandardButton.Ok)
+                    }
+                }
+
+                IndicatorButton {
+                    id:             gyroButton
+                    width:          parent.buttonWidth
+                    text:           "Gyroscope"
+                    indicatorGreen: cal_gyro0_id.value != 0
+
+                    onClicked: {
+                        preCalibrationDialogType = "gyro"
+                        preCalibrationDialogHelp = gyroHelp
+                        showDialog(preCalibrationDialogComponent, "Calibrate Gyro", 50, StandardButton.Cancel | StandardButton.Ok)
+                    }
+                }
+
+                IndicatorButton {
+                    id:             accelButton
+                    width:          parent.buttonWidth
+                    text:           "Accelerometer"
+                    indicatorGreen: cal_acc0_id.value != 0
+
+                    onClicked: {
+                        preCalibrationDialogType = "accel"
+                        preCalibrationDialogHelp = accelHelp
+                        showDialog(preCalibrationDialogComponent, "Calibrate Accelerometer", 50, StandardButton.Cancel | StandardButton.Ok)
+                    }
+                }
+
+                IndicatorButton {
+                    id:             levelButton
+                    width:          parent.buttonWidth
+                    text:           "Level Horizon"
+                    indicatorGreen: sens_board_x_off.value != 0
+                    enabled:        cal_acc0_id.value != 0 && cal_gyro0_id.value != 0
+
+                    onClicked: {
+                        preCalibrationDialogType = "level"
+                        preCalibrationDialogHelp = levelHelp
+                        showDialog(preCalibrationDialogComponent, "Level Horizon", 50, StandardButton.Cancel | StandardButton.Ok)
+                    }
+                }
+
+                IndicatorButton {
+                    id:             airspeedButton
+                    width:          parent.buttonWidth
+                    text:           "Airspeed"
+                    visible:        controller.fixedWing
+                    indicatorGreen: sens_dpres_off.value != 0
+
+                    onClicked: {
+                        preCalibrationDialogType = "airspeed"
+                        preCalibrationDialogHelp = airspeedHelp
+                        showDialog(preCalibrationDialogComponent, "Calibrate Airspeed", 50, StandardButton.Cancel | StandardButton.Ok)
+                    }
+                }
+
+                QGCButton {
+                    id:         cancelButton
+                    text:       "Cancel"
+                    enabled:    false
+                    onClicked:  controller.cancelCalibration()
                 }
             }
 
-            QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+            Item { height: 20; width: 10 } // spacer
 
+            ProgressBar {
+                id: progressBar
+                width: parent.width - rotationColumnWidth
+            }
 
+            Item { height: 10; width: 10 } // spacer
 
-            color: qgcPal.window
+            Item {
+                readonly property int calibrationAreaHeight: 300
+                property int calDisplayAreaWidth: parent.width - rotationColumnWidth
 
+                width:  parent.width
+                height: parent.height - y
 
-            Column {
-                anchors.fill: parent
+                TextArea {
+                    id:             statusTextArea
+                    width:          parent.calDisplayAreaWidth
+                    height:         parent.height
+                    readOnly:       true
+                    frameVisible:   false
+                    text:           statusTextAreaDefaultText
 
-                QGCLabel {
-                    text: "SENSORS CONFIG"
-                    font.pointSize: ScreenTools.largeFontPointSize
+                    style: TextAreaStyle {
+                        textColor: qgcPal.text
+                        backgroundColor: qgcPal.windowShade
+                    }
                 }
 
-                Item { height: 20; width: 10 } // spacer
+                Rectangle {
+                    id:         orientationCalArea
+                    width:      parent.calDisplayAreaWidth
+                    height:     parent.height
+                    visible:    controller.showOrientationCalArea
+                    color:      qgcPal.windowShade
 
-                Row {
-                    readonly property int buttonWidth: 120
+                    QGCLabel {
+                        id:             orientationCalAreaHelpText
+                        width:          parent.width
+                        wrapMode:       Text.WordWrap
+                        font.pointSize: ScreenTools.fontPointFactor * (22);
+                        anchors.top: orientationCalArea.top
+                        anchors.left: orientationCalArea.left
+                        anchors.topMargin: 15
+                        anchors.leftMargin: 15
+                        anchors.rightMargin: 15
+                        anchors.bottomMargin: 15
+                    }
 
+                    Flow {
+                        anchors.top: orientationCalAreaHelpText.bottom
+                        anchors.left: orientationCalAreaHelpText.left
+                        anchors.topMargin: 15
+                        width:      parent.width
+                        height:     parent.height - orientationCalAreaHelpText.implicitHeight
+                        spacing:    5
+
+                        VehicleRotationCal {
+                            visible:            controller.orientationCalDownSideVisible
+                            calValid:           controller.orientationCalDownSideDone
+                            calInProgress:      controller.orientationCalDownSideInProgress
+                            calInProgressText:  controller.orientationCalDownSideRotate ? "Rotate" : "Hold Still"
+                            imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qml/VehicleDownRotate.png" : "qrc:///qml/VehicleDown.png"
+                        }
+                        VehicleRotationCal {
+                            visible:            controller.orientationCalUpsideDownSideVisible
+                            calValid:           controller.orientationCalUpsideDownSideDone
+                            calInProgress:      controller.orientationCalUpsideDownSideInProgress
+                            calInProgressText:  "Hold Still"
+                            imageSource:        "qrc:///qml/VehicleUpsideDown.png"
+                        }
+                        VehicleRotationCal {
+                            visible:            controller.orientationCalNoseDownSideVisible
+                            calValid:           controller.orientationCalNoseDownSideDone
+                            calInProgress:      controller.orientationCalNoseDownSideInProgress
+                            calInProgressText:  controller.orientationCalNoseDownSideRotate ? "Rotate" : "Hold Still"
+                            imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qml/VehicleNoseDownRotate.png" : "qrc:///qml/VehicleNoseDown.png"
+                        }
+                        VehicleRotationCal {
+                            visible:            controller.orientationCalTailDownSideVisible
+                            calValid:           controller.orientationCalTailDownSideDone
+                            calInProgress:      controller.orientationCalTailDownSideInProgress
+                            calInProgressText:  "Hold Still"
+                            imageSource:        "qrc:///qml/VehicleTailDown.png"
+                        }
+                        VehicleRotationCal {
+                            visible:            controller.orientationCalLeftSideVisible
+                            calValid:           controller.orientationCalLeftSideDone
+                            calInProgress:      controller.orientationCalLeftSideInProgress
+                            calInProgressText:  controller.orientationCalLeftSideRotate ? "Rotate" : "Hold Still"
+                            imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qml/VehicleLeftRotate.png" : "qrc:///qml/VehicleLeft.png"
+                        }
+                        VehicleRotationCal {
+                            visible:            controller.orientationCalRightSideVisible
+                            calValid:           controller.orientationCalRightSideDone
+                            calInProgress:      controller.orientationCalRightSideInProgress
+                            calInProgressText:  "Hold Still"
+                            imageSource:        "qrc:///qml/VehicleRight.png"
+                        }
+                    }
+                }
+
+                Column {
+                    anchors.left: orientationCalArea.right
+                    anchors.leftMargin: 5
                     spacing: 20
+                    x: parent.width - rotationColumnWidth
 
-                    QGCLabel { text: "Calibrate:"; anchors.baseline: compassButton.baseline }
-
-                    IndicatorButton {
-                        id:             compassButton
-                        width:          parent.buttonWidth
-                        text:           "Compass"
-                        indicatorGreen: cal_mag0_id.value != 0
-
-                        onClicked: {
-                            preCalibrationDialogType = "compass"
-                            preCalibrationDialogHelp = compassHelp
-                            showDialog(preCalibrationDialogComponent, "Calibrate Compass", 50, StandardButton.Cancel | StandardButton.Ok)
-                        }
-                    }
-
-                    IndicatorButton {
-                        id:             gyroButton
-                        width:          parent.buttonWidth
-                        text:           "Gyroscope"
-                        indicatorGreen: cal_gyro0_id.value != 0
-
-                        onClicked: {
-                            preCalibrationDialogType = "gyro"
-                            preCalibrationDialogHelp = gyroHelp
-                            showDialog(preCalibrationDialogComponent, "Calibrate Gyro", 50, StandardButton.Cancel | StandardButton.Ok)
-                        }
-                    }
-
-                    IndicatorButton {
-                        id:             accelButton
-                        width:          parent.buttonWidth
-                        text:           "Accelerometer"
-                        indicatorGreen: cal_acc0_id.value != 0
-
-                        onClicked: {
-                            preCalibrationDialogType = "accel"
-                            preCalibrationDialogHelp = accelHelp
-                            showDialog(preCalibrationDialogComponent, "Calibrate Accelerometer", 50, StandardButton.Cancel | StandardButton.Ok)
-                        }
-                    }
-
-                    IndicatorButton {
-                        id:             levelButton
-                        width:          parent.buttonWidth
-                        text:           "Level Horizon"
-                        indicatorGreen: sens_board_x_off.value != 0
-                        enabled:        cal_acc0_id.value != 0 && cal_gyro0_id.value != 0
-
-                        onClicked: {
-                            preCalibrationDialogType = "level"
-                            preCalibrationDialogHelp = levelHelp
-                            showDialog(preCalibrationDialogComponent, "Level Horizon", 50, StandardButton.Cancel | StandardButton.Ok)
-                        }
-                    }
-
-                    IndicatorButton {
-                        id:             airspeedButton
-                        width:          parent.buttonWidth
-                        text:           "Airspeed"
-                        visible:        controller.fixedWing
-                        indicatorGreen: sens_dpres_off.value != 0
-
-                        onClicked: {
-                            preCalibrationDialogType = "airspeed"
-                            preCalibrationDialogHelp = airspeedHelp
-                            showDialog(preCalibrationDialogComponent, "Calibrate Airspeed", 50, StandardButton.Cancel | StandardButton.Ok)
-                        }
-                    }
-
-                    QGCButton {
-                        id:         cancelButton
-                        text:       "Cancel"
-                        enabled:    false
-                        onClicked:  controller.cancelCalibration()
-                    }
-                }
-
-                Item { height: 20; width: 10 } // spacer
-
-                ProgressBar {
-                    id: progressBar
-                    width: parent.width - rotationColumnWidth
-                }
-
-                Item { height: 10; width: 10 } // spacer
-
-                Item {
-                    readonly property int calibrationAreaHeight: 300
-                    property int calDisplayAreaWidth: parent.width - rotationColumnWidth
-
-                    width:  parent.width
-                    height: parent.height - y
-
-                    TextArea {
-                        id:             statusTextArea
-                        width:          parent.calDisplayAreaWidth
-                        height:         parent.height
-                        readOnly:       true
-                        frameVisible:   false
-                        text:           statusTextAreaDefaultText
-
-                        style: TextAreaStyle {
-                            textColor: qgcPal.text
-                            backgroundColor: qgcPal.windowShade
-                        }
-                    }
-
-                    Rectangle {
-                        id:         orientationCalArea
-                        width:      parent.calDisplayAreaWidth
-                        height:     parent.height
-                        visible:    controller.showOrientationCalArea
-                        color:      qgcPal.windowShade
+                    Column {
+                        spacing:            5
 
                         QGCLabel {
-                            id:             orientationCalAreaHelpText
-                            width:          parent.width
-                            wrapMode:       Text.WordWrap
-                            font.pointSize: ScreenTools.fontPointFactor * (22);
-                            anchors.top: orientationCalArea.top
-                            anchors.left: orientationCalArea.left
-                            anchors.topMargin: 15
-                            anchors.leftMargin: 15
-                            anchors.rightMargin: 15
-                            anchors.bottomMargin: 15
+                            font.pointSize: sideBarH1PointSize
+                            text: "Autopilot Orientation"
                         }
 
-                        Flow {
-                            anchors.top: orientationCalAreaHelpText.bottom
-                            anchors.left: orientationCalAreaHelpText.left
-                            anchors.topMargin: 15
+                        QGCLabel {
                             width:      parent.width
-                            height:     parent.height - orientationCalAreaHelpText.implicitHeight
-                            spacing:    5
+                            wrapMode:   Text.WordWrap
+                            text: boardRotationText
+                        }
 
-                            VehicleRotationCal {
-                                visible:            controller.orientationCalDownSideVisible
-                                calValid:           controller.orientationCalDownSideDone
-                                calInProgress:      controller.orientationCalDownSideInProgress
-                                calInProgressText:  controller.orientationCalDownSideRotate ? "Rotate" : "Hold Still"
-                                imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qml/VehicleDownRotate.png" : "qrc:///qml/VehicleDown.png"
-                            }
-                            VehicleRotationCal {
-                                visible:            controller.orientationCalUpsideDownSideVisible
-                                calValid:           controller.orientationCalUpsideDownSideDone
-                                calInProgress:      controller.orientationCalUpsideDownSideInProgress
-                                calInProgressText:  "Hold Still"
-                                imageSource:        "qrc:///qml/VehicleUpsideDown.png"
-                            }
-                            VehicleRotationCal {
-                                visible:            controller.orientationCalNoseDownSideVisible
-                                calValid:           controller.orientationCalNoseDownSideDone
-                                calInProgress:      controller.orientationCalNoseDownSideInProgress
-                                calInProgressText:  controller.orientationCalNoseDownSideRotate ? "Rotate" : "Hold Still"
-                                imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qml/VehicleNoseDownRotate.png" : "qrc:///qml/VehicleNoseDown.png"
-                            }
-                            VehicleRotationCal {
-                                visible:            controller.orientationCalTailDownSideVisible
-                                calValid:           controller.orientationCalTailDownSideDone
-                                calInProgress:      controller.orientationCalTailDownSideInProgress
-                                calInProgressText:  "Hold Still"
-                                imageSource:        "qrc:///qml/VehicleTailDown.png"
-                            }
-                            VehicleRotationCal {
-                                visible:            controller.orientationCalLeftSideVisible
-                                calValid:           controller.orientationCalLeftSideDone
-                                calInProgress:      controller.orientationCalLeftSideInProgress
-                                calInProgressText:  controller.orientationCalLeftSideRotate ? "Rotate" : "Hold Still"
-                                imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qml/VehicleLeftRotate.png" : "qrc:///qml/VehicleLeft.png"
-                            }
-                            VehicleRotationCal {
-                                visible:            controller.orientationCalRightSideVisible
-                                calValid:           controller.orientationCalRightSideDone
-                                calInProgress:      controller.orientationCalRightSideInProgress
-                                calInProgressText:  "Hold Still"
-                                imageSource:        "qrc:///qml/VehicleRight.png"
-                            }
+                        FactComboBox {
+                            id:     boardRotationCombo
+                            width:  rotationColumnWidth;
+                            model:  rotations
+                            fact:   sens_board_rot
                         }
                     }
 
                     Column {
-                        anchors.left: orientationCalArea.right
-                        anchors.leftMargin: 5
-                        spacing: 20
-                        x: parent.width - rotationColumnWidth
+                        spacing:            5
 
-                        Column {
-                            spacing:            5
+                        // Compass 0 rotation
+                        Component {
+                            id: compass0ComponentLabel2
 
                             QGCLabel {
                                 font.pointSize: sideBarH1PointSize
-                                text: "Autopilot Orientation"
+                                text: "External Compass Orientation"
                             }
-
-                            QGCLabel {
-                                width:      parent.width
-                                wrapMode:   Text.WordWrap
-                                text: boardRotationText
-                            }
+                        }
+                        Component {
+                            id: compass0ComponentCombo2
 
                             FactComboBox {
-                                id:     boardRotationCombo
-                                width:  rotationColumnWidth;
+                                id:     compass0RotationCombo
+                                width:  rotationColumnWidth
                                 model:  rotations
-                                fact:   sens_board_rot
+                                fact:   cal_mag0_rot
                             }
                         }
+                        Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel2 : null }
+                        Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo2 : null }
+                    }
 
-                        Column {
-                            spacing:            5
+                    Column {
+                        spacing:            5
+                        // Compass 1 rotation
+                        Component {
+                            id: compass1ComponentLabel2
 
-                            // Compass 0 rotation
-                            Component {
-                                id: compass0ComponentLabel2
-
-                                QGCLabel {
-                                    font.pointSize: sideBarH1PointSize
-                                    text: "External Compass Orientation"
-                                }
+                            QGCLabel {
+                                font.pointSize: sideBarH1PointSize
+                                text: "External Compass 1 Orientation"
                             }
-                            Component {
-                                id: compass0ComponentCombo2
-
-                                FactComboBox {
-                                    id:     compass0RotationCombo
-                                    width:  rotationColumnWidth
-                                    model:  rotations
-                                    fact:   cal_mag0_rot
-                                }
-                            }
-                            Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel2 : null }
-                            Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo2 : null }
                         }
+                        Component {
+                            id: compass1ComponentCombo2
 
-                        Column {
-                            spacing:            5
-                            // Compass 1 rotation
-                            Component {
-                                id: compass1ComponentLabel2
-
-                                QGCLabel {
-                                    font.pointSize: sideBarH1PointSize
-                                    text: "External Compass 1 Orientation"
-                                }
+                            FactComboBox {
+                                id:     compass1RotationCombo
+                                width:  rotationColumnWidth
+                                model:  rotations
+                                fact:   cal_mag1_rot
                             }
-                            Component {
-                                id: compass1ComponentCombo2
-
-                                FactComboBox {
-                                    id:     compass1RotationCombo
-                                    width:  rotationColumnWidth
-                                    model:  rotations
-                                    fact:   cal_mag1_rot
-                                }
-                            }
-                            Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel2 : null }
-                            Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo2 : null }
                         }
+                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel2 : null }
+                        Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo2 : null }
+                    }
 
-                        Column {
-                            spacing:            5
-                            // Compass 2 rotation
-                            Component {
-                                id: compass2ComponentLabel2
+                    Column {
+                        spacing:            5
+                        // Compass 2 rotation
+                        Component {
+                            id: compass2ComponentLabel2
 
-                                QGCLabel {
-                                    font.pointSize: sidebarH1PointSize
-                                    text: "Compass 2 Orientation"
-                                }
+                            QGCLabel {
+                                font.pointSize: sidebarH1PointSize
+                                text: "Compass 2 Orientation"
                             }
-                            Component {
-                                id: compass2ComponentCombo2
-
-                                FactComboBox {
-                                    id:     compass1RotationCombo
-                                    width:  rotationColumnWidth
-                                    model:  rotations
-                                    fact:   cal_mag2_rot
-                                }
-                            }
-                            Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel2 : null }
-                            Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo2 : null }
                         }
+                        Component {
+                            id: compass2ComponentCombo2
+
+                            FactComboBox {
+                                id:     compass1RotationCombo
+                                width:  rotationColumnWidth
+                                model:  rotations
+                                fact:   cal_mag2_rot
+                            }
+                        }
+                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentLabel2 : null }
+                        Loader { sourceComponent: showCompass2Rot ? compass2ComponentCombo2 : null }
                     }
                 }
             }
-        } // Rectangle
-    } // Component - view
-}
+        }
+    } // QGCViewPanel
+} // QGCView

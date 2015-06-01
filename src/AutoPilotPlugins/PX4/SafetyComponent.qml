@@ -34,7 +34,7 @@ import QGroundControl.ScreenTools 1.0
 FactPanel {
     id:     panel
 
-    QGCPalette { id: palette; colorGroupEnabled: true }
+    QGCPalette { id: palette; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
 
     property int flightLineWidth: 2             // width of lines for flight graphic
