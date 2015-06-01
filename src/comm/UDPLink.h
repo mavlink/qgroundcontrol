@@ -205,9 +205,10 @@ private:
     bool _hardwareConnect();
     void _restartConnection();
 
-#if defined(QGC_ZEROCONF_ENABLED)
     void _registerZeroconf(uint16_t port, const std::string& regType);
     void _deregisterZeroconf();
+
+#if defined(QGC_ZEROCONF_ENABLED)
     DNSServiceRef  _dnssServiceRef;
 #endif
 

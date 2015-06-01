@@ -77,7 +77,9 @@ static QString get_ip_address(const QString& address)
 UDPLink::UDPLink(UDPConfiguration* config)
     : _socket(NULL)
     , _connectState(false)
+    #if defined(QGC_ZEROCONF_ENABLED)
     , _dnssServiceRef(NULL)
+    #endif
 {
     Q_ASSERT(config != NULL);
     _config = config;
