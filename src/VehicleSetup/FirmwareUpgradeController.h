@@ -127,6 +127,7 @@ private:
     static const int _boardIDPX4FMUV1 = 5;  ///< Board ID for PX4 V1 board
     static const int _boardIDPX4FMUV2 = 9;  ///< Board ID for PX4 V2 board
     static const int _boardIDPX4Flow = 6;   ///< Board ID for PX4 Flow board
+    static const int _boardIDAeroCore = 98;   ///< Board ID for Gumstix AeroCore board
 
     uint32_t    _boardID;           ///< Board ID
     uint32_t    _boardFlashSize;    ///< Flash size in bytes of board
