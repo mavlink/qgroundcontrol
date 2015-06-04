@@ -21,7 +21,7 @@ FactPanel {
     property Fact mag0IdFact:       controller.getParameterFact(-1, "CAL_MAG0_ID")
     property Fact gyro0IdFact:      controller.getParameterFact(-1, "CAL_GYRO0_ID")
     property Fact accel0IdFact:     controller.getParameterFact(-1, "CAL_ACC0_ID")
-    property Fact dpresssOffFact:   controller.getParameterFact(-1, "SENS_DPRES_OFF")
+    property Fact dpressOffFact:    controller.getParameterFact(-1, "SENS_DPRES_OFF")
 
     Column {
         anchors.fill:       parent
