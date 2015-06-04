@@ -33,6 +33,7 @@ This file is part of the PIXHAWK project
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
+#include "QGCLoggingCategory.h"
 
 // Links
 #ifndef __ios__
@@ -48,6 +49,8 @@ This file is part of the PIXHAWK project
 #include "ProtocolInterface.h"
 #include "QGCSingleton.h"
 #include "MAVLinkProtocol.h"
+
+Q_DECLARE_LOGGING_CATEGORY(LinkManagerLog)
 
 class LinkManagerTest;
 
