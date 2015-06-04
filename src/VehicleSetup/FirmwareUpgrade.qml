@@ -34,57 +34,147 @@ import QGroundControl.Controllers 1.0
 import QGroundControl.ScreenTools 1.0
 
 QGCView {
-    viewPanel: panel
+    id:         qgcView
+    viewPanel:  panel
 
     property string firmwareWarningMessage
+    readonly property string title:         "FIRMWARE UPDATE"
+    property bool controllerCompleted:      false
+    property bool controllerAndViewReady:   false
+    property string firmwareName
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
+    function checkForConnections() {
+        if (controller.qgcConnections) {
+            showDialog(activeConnectionsDialogComponent, title, 50, 0)
+        }
+    }
+
     FirmwareUpgradeController {
         id:             controller
-        upgradeButton:  upgradeButton
+        /*upgradeButton:  upgradeButton
         progressBar:    progressBar
         statusLog:      statusTextArea
-        firmwareType:   FirmwareUpgradeController.StableFirmware
+        firmwareType:   FirmwareUpgradeController.StableFirmware*/
 
         onShowMessage: {
             showMessage(title, message, StandardButton.Ok)
         }
-    }
 
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-
-        Component {
-            id: firmwareWarningComponent
-
-            QGCViewMessage {
-                message: firmwareWarningMessage
-
-                function accept() {
-                    hideDialog()
-                    controller.doFirmwareUpgrade();
-                }
+        onQgcConnectionsChanged: {
+            if (controller.qgcConnections) {
+                checkForConnections()
+            } else {
+                hideDialog()
             }
         }
 
+        Component.onCompleted: {
+            controllerCompleted = true
+            if (qgcView.completedSignalled) {
+                controllerAndViewReady = true
+                checkForConnections()
+            }
+        }
+    }
+
+    onCompleted: {
+        if (controllerCompleted) {
+            controllerAndViewReady = true
+            checkForConnections()
+        }
+    }
+
+    Component {
+        id: activeConnectionsDialogComponent
+
+        QGCViewMessage {
+            message: "There are still vehicles connected to QGroundControl. " +
+                        "You must disconnect all vehicles from QGroundControl prior to Firmware Upgrade."
+
+        }
+    }
+
+    Component {
+        id: apmFirmwareSelect
+
         Column {
-            anchors.fill: parent
+            spacing: defaultTextHeight
 
             QGCLabel {
-                text: "FIRMWARE UPDATE"
-                font.pointSize: ScreenTools.fontPointFactor * (20);
+                text: firmwareName
             }
 
-            Item {
-                // Just used as a spacer
-                height: 20
-                width: 10
+            Flow {
+                spacing: 10
+
+                Repeater {
+                    model: [ "Rover", "Plane", "Copter", "Heli"]
+
+                    QGCButton {
+                        text: modelData
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: firmwareSelect
+
+        Column {
+            spacing: defaultTextHeight
+
+            QGCLabel {
+                text:           "Please select which type of firmware you would like to install:"
+                font.pointSize: ScreenTools.mediumFontPointSize
+            }
+
+            Flow {
+                id:         firmwareSelect
+                spacing:    defaultTextWidth * 2
+
+                QGCButton {
+                    iconSource: "/res/firmware/px4.png"
+
+                    onClicked: {
+                        firmwareName = "PX4 Flight Stack"
+                        loader.sourceComponent = firmwareInstall
+                    }
+                }
+
+                QGCButton {
+                    iconSource: "/res/firmware/apm.png"
+
+                    onClicked: {
+                        firmwareName = "APM Flight Stack"
+                        loader.sourceComponent = apmFirmwareSelect
+                    }
+                }
+
+                QGCButton {
+                    iconSource: "/res/firmware/3drradio.png"
+                }
+
+                QGCButton {
+                    text: "PX4 Flow"
+                }
+            }
+        }
+    } // Component - firmwareSelect
+
+    Component {
+        id: firmwareInstall
+
+        Column {
+
+            QGCLabel {
+                text: firmwareName
             }
 
             Row {
-                spacing: 10
+                spacing:    10
 
                 ListModel {
                     id: firmwareItems
@@ -185,6 +275,41 @@ QGCView {
                     textColor:          qgcPal.text
                     backgroundColor:    qgcPal.windowShade
                 }
+            }
+        } // Column
+    } // Component - firmwareInstall
+
+    QGCViewPanel {
+        id:             panel
+        anchors.fill:   parent
+
+        Component {
+            id: firmwareWarningComponent
+
+            QGCViewMessage {
+                message: firmwareWarningMessage
+
+                function accept() {
+                    hideDialog()
+                    controller.doFirmwareUpgrade();
+                }
+            }
+        }
+
+        Column {
+            anchors.fill:   parent
+            spacing:        10
+
+            QGCLabel {
+                text:           title
+                font.pointSize: ScreenTools.largeFontPointSize
+            }
+
+            Loader {
+                id:                 loader
+                width:              parent.width
+                height:             parent.height - x
+                sourceComponent:    firmwareSelect
             }
         } // Column
     } // QGCViewPanel
