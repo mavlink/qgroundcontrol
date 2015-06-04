@@ -58,6 +58,8 @@ FirmwareUpgradeController::FirmwareUpgradeController(void) :
     connect(_threadController, &PX4FirmwareUpgradeThreadController::findTimeout, this, &FirmwareUpgradeController::_findTimeout);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress, this, &FirmwareUpgradeController::_updateProgress);
     
+    connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &FirmwareUpgradeController::_linkDisconnected);
+    
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 }
 
@@ -639,7 +641,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text)
                               Q_ARG(QVariant, varText));
 }
 
-bool FirmwareUpgradeController::activeQGCConnections(void)
+bool FirmwareUpgradeController::qgcConnections(void)
 {
     return LinkManager::instance()->anyConnectedLinks();
 }
@@ -647,4 +649,10 @@ bool FirmwareUpgradeController::activeQGCConnections(void)
 bool FirmwareUpgradeController::pluggedInBoard(void)
 {
     return _threadController->pluggedInBoard();
+}
+
+void FirmwareUpgradeController::_linkDisconnected(LinkInterface* link)
+{
+    Q_UNUSED(link);
+    emit qgcConnectionsChanged(qgcConnections());
 }

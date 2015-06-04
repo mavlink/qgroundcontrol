@@ -28,6 +28,7 @@
 #define FirmwareUpgradeController_H
 
 #include "PX4FirmwareUpgradeThread.h"
+#include "LinkManager.h"
 
 #include <QObject>
 #include <QUrl>
@@ -68,10 +69,11 @@ public:
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
     
+    Q_PROPERTY(bool qgcConnections READ qgcConnections NOTIFY qgcConnectionsChanged)
+    
     /// Progress bar for you know what
     Q_PROPERTY(QQuickItem* progressBar READ progressBar WRITE setProgressBar)
     
-    Q_INVOKABLE bool activeQGCConnections(void);
     Q_INVOKABLE bool pluggedInBoard(void);
     
     /// Begins the firware upgrade process
@@ -89,8 +91,11 @@ public:
     QQuickItem* statusLog(void) { return _statusLog; }
     void setStatusLog(QQuickItem* statusLog) { _statusLog = statusLog; }
     
+    bool qgcConnections(void);
+    
 signals:
     void showMessage(const QString& title, const QString& message);
+    void qgcConnectionsChanged(bool connections);
     
 private slots:
     void _downloadProgress(qint64 curr, qint64 total);
@@ -105,6 +110,7 @@ private slots:
     void _updateProgress(int curr, int total);
     void _restart(void);
     void _eraseProgressTick(void);
+    void _linkDisconnected(LinkInterface* link);
 
 private:
     void _findBoard(void);
