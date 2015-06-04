@@ -48,6 +48,8 @@ QGCView {
     function checkForConnections() {
         if (controller.qgcConnections) {
             showDialog(activeConnectionsDialogComponent, title, 50, 0)
+        } else {
+            showMessage(title, "Connect you vehicle/board via USB now.", 0)
         }
     }
 
