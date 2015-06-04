@@ -193,6 +193,13 @@
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
     </qresource>
 
+    <qresource prefix="/res/firmware">
+        <file alias="px4.png">resources/firmware/px4.png</file>
+        <file alias="apm.png">resources/firmware/apm.png</file>
+        <file alias="3drradio.png">resources/firmware/3drradio.png</file>
+    </qresource>
+
+
     <qresource prefix="/res/mavs">
         <file alias="Helicopter">resources/mavs/helicopter.svg</file>
         <file alias="Unknown">resources/mavs/unknown.svg</file>
