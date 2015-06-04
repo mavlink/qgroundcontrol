@@ -47,7 +47,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 
 IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
-
+QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 
 /**
  * @brief Private singleton constructor
@@ -459,15 +459,13 @@ void LinkManager::_updateConfigurationList(void)
     QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
     // Iterate Comm Ports
     foreach (QSerialPortInfo portInfo, portList) {
-#if 0
-        qDebug() << "-----------------------------------------------------";
-        qDebug() << "portName:         " << portInfo.portName();
-        qDebug() << "systemLocation:   " << portInfo.systemLocation();
-        qDebug() << "description:      " << portInfo.description();
-        qDebug() << "manufacturer:     " << portInfo.manufacturer();
-        qDebug() << "serialNumber:     " << portInfo.serialNumber();
-        qDebug() << "vendorIdentifier: " << portInfo.vendorIdentifier();
-#endif
+        qCDebug(LinkManagerLog) << "-----------------------------------------------------";
+        qCDebug(LinkManagerLog) << "portName:         " << portInfo.portName();
+        qCDebug(LinkManagerLog) << "systemLocation:   " << portInfo.systemLocation();
+        qCDebug(LinkManagerLog) << "description:      " << portInfo.description();
+        qCDebug(LinkManagerLog) << "manufacturer:     " << portInfo.manufacturer();
+        qCDebug(LinkManagerLog) << "serialNumber:     " << portInfo.serialNumber();
+        qCDebug(LinkManagerLog) << "vendorIdentifier: " << portInfo.vendorIdentifier();
         // Save port name
         currentPorts << portInfo.systemLocation();
         // Is this a PX4 and NOT in bootloader mode?
@@ -483,6 +481,8 @@ void LinkManager::_updateConfigurationList(void)
                 // Lets create a new Serial configuration automatically
                 if (portInfo.description() == "AeroCore") {
                     pSerial = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
+                } else if (portInfo.description().contains("PX4Flow")) {
+                    pSerial = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
                 } else if (portInfo.description().contains("PX4")) {
                     pSerial = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
                 } else {
