@@ -43,15 +43,17 @@ QGCView {
     property bool controllerAndViewReady:   false
     property string firmwareName
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
-
     function checkForConnections() {
         if (controller.qgcConnections) {
-            showDialog(activeConnectionsDialogComponent, title, 50, 0)
+            statusTextArea.append("QGC Connections")
+        } else if (controller.mustUnplugBoard) {
+            statusTextArea.append("Unplug")
         } else {
-            showMessage(title, "Connect you vehicle/board via USB now.", 0)
+            statusTextArea.append("Plug in")
         }
     }
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     FirmwareUpgradeController {
         id:             controller
@@ -67,8 +69,12 @@ QGCView {
         onQgcConnectionsChanged: {
             if (controller.qgcConnections) {
                 checkForConnections()
-            } else {
-                hideDialog()
+            }
+        }
+
+        onPluggedInBoardChanged: {
+            if (controller.mustUnplugBoard) {
+                checkForConnections()
             }
         }
 
@@ -89,12 +95,53 @@ QGCView {
     }
 
     Component {
+        id: disconnectComponent
+
+        Column {
+            spacing: defaultTextHeight
+
+            QGCLabel { text: "In order to start the upgrade process you must disconnect all QGroundControl connections and unplug the device from USB." }
+
+            QGCLabel {
+                visible:    controller.qgcConnections
+                text:       "There are still active connections to QGroundControl."
+            }
+
+            QGCLabel {
+                visible:    !controller.qgcConnections && controller.mustUnplugBoard
+                text:       "Device is still plugged in via USB"
+            }
+
+            QGCLabel {
+                visible:    !controller.qgcConnections && !controller.mustUnplugBoard
+                text:       "Plug device into USB now"
+            }
+        }
+    }
+
+    Component {
         id: activeConnectionsDialogComponent
 
         QGCViewMessage {
             message: "There are still vehicles connected to QGroundControl. " +
                         "You must disconnect all vehicles from QGroundControl prior to Firmware Upgrade."
 
+        }
+    }
+
+    Component {
+        id: pixhawkFirmwareSelectComponent
+
+        Column {
+            spacing: defaultTextHeight
+
+            QGCButton {
+                text: "PX4 Flight Stack"
+            }
+
+            QGCButton {
+                text: "APM Flight Stack"
+            }
         }
     }
 
@@ -121,50 +168,6 @@ QGCView {
             }
         }
     }
-
-    Component {
-        id: firmwareSelect
-
-        Column {
-            spacing: defaultTextHeight
-
-            QGCLabel {
-                text:           "Please select which type of firmware you would like to install:"
-                font.pointSize: ScreenTools.mediumFontPointSize
-            }
-
-            Flow {
-                id:         firmwareSelect
-                spacing:    defaultTextWidth * 2
-
-                QGCButton {
-                    iconSource: "/res/firmware/px4.png"
-
-                    onClicked: {
-                        firmwareName = "PX4 Flight Stack"
-                        loader.sourceComponent = firmwareInstall
-                    }
-                }
-
-                QGCButton {
-                    iconSource: "/res/firmware/apm.png"
-
-                    onClicked: {
-                        firmwareName = "APM Flight Stack"
-                        loader.sourceComponent = apmFirmwareSelect
-                    }
-                }
-
-                QGCButton {
-                    iconSource: "/res/firmware/3drradio.png"
-                }
-
-                QGCButton {
-                    text: "PX4 Flow"
-                }
-            }
-        }
-    } // Component - firmwareSelect
 
     Component {
         id: firmwareInstall
@@ -281,22 +284,22 @@ QGCView {
         } // Column
     } // Component - firmwareInstall
 
+    Component {
+        id: firmwareWarningComponent
+
+        QGCViewMessage {
+            message: firmwareWarningMessage
+
+            function accept() {
+                hideDialog()
+                controller.doFirmwareUpgrade();
+            }
+        }
+    }
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
-
-        Component {
-            id: firmwareWarningComponent
-
-            QGCViewMessage {
-                message: firmwareWarningMessage
-
-                function accept() {
-                    hideDialog()
-                    controller.doFirmwareUpgrade();
-                }
-            }
-        }
 
         Column {
             anchors.fill:   parent
@@ -307,12 +310,41 @@ QGCView {
                 font.pointSize: ScreenTools.largeFontPointSize
             }
 
-            Loader {
-                id:                 loader
-                width:              parent.width
-                height:             parent.height - x
-                sourceComponent:    firmwareSelect
-            }
+            Column {
+                width: parent.width
+
+                QGCLabel {
+                    width:      parent.width
+                    wrapMode:   Text.WordWrap
+                    text:       "QGroundControl can upgrade the firmware on Pixhawk devices as well as 3DR Radios and PX4 Flow Smart Cameras."
+                }
+
+                Item {
+                    // Just used as a spacer
+                    height: 20
+                    width: 10
+                }
+
+                ProgressBar {
+                    id: progressBar
+                    width: parent.width
+                }
+
+                TextArea {
+                    id: statusTextArea
+
+                    width:			parent.width
+                    height:			300
+                    readOnly:		true
+                    frameVisible:	false
+                    font.pointSize: ScreenTools.defaultFontPointSize
+
+                    style: TextAreaStyle {
+                        textColor:          qgcPal.text
+                        backgroundColor:    qgcPal.windowShade
+                    }
+                }
+            } // Column
         } // Column
     } // QGCViewPanel
 } // QGCView

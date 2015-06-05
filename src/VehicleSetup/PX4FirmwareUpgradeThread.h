@@ -28,16 +28,24 @@
 #ifndef PX4FirmwareUpgradeThread_H
 #define PX4FirmwareUpgradeThread_H
 
+#include "PX4Bootloader.h"
+
 #include <QObject>
 #include <QThread>
 #include <QTimer>
 #include <QTime>
+#include <QSerialPortInfo>
 
 #include "qextserialport.h"
 
 #include <stdint.h>
 
-#include "PX4Bootloader.h"
+typedef enum {
+    FoundBoardPX4FMUV1,
+    FoundBoardPX4FMUV2,
+    FoundBoardPX4Flow,
+    FoundBoard3drRadio
+} PX4FirmwareUpgradeFoundBoardType_t;
 
 /// @brief Used to run bootloader commands on a seperate thread. These routines are mainly meant to to be called
 ///         internally by the PX4FirmwareUpgradeThreadController. Clients should call the various public methods
@@ -60,7 +68,7 @@ public:
     
 public slots:
     void init(void);
-    void findBoard(int msecTimeout);
+    void startFindBoardLoop(void);
     void findBootloader(const QString portName, int msecTimeout);
     void timeout(void);
     void cancelFind(void);
@@ -70,7 +78,9 @@ public slots:
     void erase(void);
     
 signals:
-    void foundBoard(bool firstTry, const QString portname, QString portDescription);
+    void foundBoard(bool firstAttempt, const QSerialPortInfo &portInfo, int type);
+    void boardGone();
+    void noBoardFound();
     void foundBootloader(int bootloaderVersion, int boardID, int flashSize);
     void bootloaderSyncFailed(void);
     void error(const int command, const QString errorString);
@@ -85,6 +95,8 @@ private slots:
     void _closeFind(void);
     
 private:
+    bool _findBoardFromPorts(QSerialPortInfo& portInfo, PX4FirmwareUpgradeFoundBoardType_t& type);
+    
     PX4Bootloader*      _bootloader;
     QextSerialPort*     _bootloaderPort;
     QTimer*             _timerTimeout;
@@ -92,7 +104,22 @@ private:
     QTime               _elapsed;
     QString             _portName;
     static const int    _retryTimeout = 1000;
-    bool                _findBoardFirstAttempt;
+    
+    bool                _foundBoard;            ///< true: board is currently connected
+    bool                _findBoardFirstAttempt; ///< true: this is our first try looking for a board
+    QSerialPortInfo     _foundBoardPortInfo;    ///< port info for found board
+    
+    // Serial port info for supported devices
+    
+    static const int    _pixhawkVendorId = 9900;
+    static const int    _pixhawkFMUV2ProductId = 17;
+    static const int    _pixhawkFMUV1ProductId = 16;
+    
+    static const int    _flowVendorId = _pixhawkVendorId;
+    static const int    _flowProductId = 21;
+    
+    static const int    _3drRadioVendorId = 1027;
+    static const int    _3drRadioProductId = 24597;
 };
 
 /// @brief Provides methods to interact with the bootloader. The commands themselves are signalled
@@ -105,12 +132,9 @@ public:
     PX4FirmwareUpgradeThreadController(QObject* parent = NULL);
     ~PX4FirmwareUpgradeThreadController(void);
     
-    /// Returns true is a board is currently connected via USB
-    bool pluggedInBoard(void);
-    
-    /// @brief Begins the process of searching for a PX4 board connected to any serial port.
-    ///     @param msecTimeout Numbers of msecs to continue looking for a board to become available.
-    void findBoard(int msecTimeout);
+    /// @brief Begins the process of searching for a supported board connected to any serial port. This will
+    /// continue until cancelFind is called. Signals foundBoard and boardGone as boards come and go.
+    void startFindBoardLoop(void);
     
     /// @brief Begins the process of attempting to communicate with the bootloader on the specified port.
     ///     @param portName Name of port to attempt a bootloader connection on.
@@ -131,13 +155,15 @@ public:
     
     /// @brief Send and erase command to the bootloader
     void erase(void) { emit _eraseOnThread(); }
-
+    
 signals:
-    /// @brief Emitted by the findBoard process when it finds the board.
-    ///     @param firstTry true: board found on first attempt
-    ///     @param portName Port that board is on
-    ///     @param portDescription User friendly port description
-    void foundBoard(bool firstTry, const QString portname, QString portDescription);
+    /// @brief Emitted by the find board process when it finds a board.
+    void foundBoard(bool firstAttempt, const QSerialPortInfo &portInfo, int type);
+    
+    void noBoardFound(void);
+    
+    /// @brief Emitted by the find board process when a board it previously reported as found disappears.
+    void boardGone(void);
     
     /// @brief Emitted by the findBootloader process when has a connection to the bootloader
     void foundBootloader(int bootloaderVersion, int boardID, int flashSize);
@@ -161,7 +187,7 @@ signals:
     void updateProgress(int curr, int total);
     
     void _initThreadWorker(void);
-    void _findBoardOnThread(int msecTimeout);
+    void _startFindBoardLoopOnThread(void);
     void _findBootloaderOnThread(const QString& portName, int msecTimeout);
     void _sendBootloaderRebootOnThread(void);
     void _programOnThread(const QString firmwareFilename);
@@ -170,7 +196,9 @@ signals:
     void _cancelFindOnThread(void);
     
 private slots:
-    void _foundBoard(bool firstTry, const QString portname, QString portDescription);
+    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
+    void _noBoardFound(void);
+    void _boardGone(void);
     void _foundBootloader(int bootloaderVersion, int boardID, int flashSize);
     void _bootloaderSyncFailed(void);
     void _error(const int errorCommand, const QString errorString) { emit error(errorCommand, errorString); }

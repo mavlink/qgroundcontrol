@@ -45,12 +45,14 @@ FirmwareUpgradeController::FirmwareUpgradeController(void) :
     _downloadNetworkReply(NULL),
     _firmwareType(StableFirmware),
     _upgradeButton(NULL),
-    _statusLog(NULL)
+    _statusLog(NULL),
+    _mustUnplugBoard(false)
 {
     _threadController = new PX4FirmwareUpgradeThreadController(this);
     Q_CHECK_PTR(_threadController);
 
     connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBoard, this, &FirmwareUpgradeController::_foundBoard);
+    connect(_threadController, &PX4FirmwareUpgradeThreadController::boardGone, this, &FirmwareUpgradeController::_boardGone);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBootloader, this, &FirmwareUpgradeController::_foundBootloader);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::bootloaderSyncFailed, this, &FirmwareUpgradeController::_bootloaderSyncFailed);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::error, this, &FirmwareUpgradeController::_error);
@@ -61,6 +63,8 @@ FirmwareUpgradeController::FirmwareUpgradeController(void) :
     connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &FirmwareUpgradeController::_linkDisconnected);
     
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
+    
+    _threadController->startFindBoardLoop();
 }
 
 /// @brief Cancels the current state and returns to the begin start
@@ -73,37 +77,24 @@ void FirmwareUpgradeController::_cancel(void)
     _upgradeButton->setEnabled(true);
 }
 
-/// @brief Begins the process or searching for the board
-void FirmwareUpgradeController::_findBoard(void)
+void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int type)
 {
-    QString msg("Plug your board into USB now. Press Ok when board is plugged in.");
+    Q_UNUSED(type);
     
-    _appendStatusLog(msg);
-    emit showMessage("Firmware Upgrade", msg);
-    
-    _searchingForBoard = true;
-    _threadController->findBoard(_findBoardTimeoutMsec);
+    if (firstAttempt) {
+        // Board was already plugged in when firmware panel was displayed
+        _mustUnplugBoard = true;
+        _pluggedInBoardInfo = info;
+        emit pluggedInBoardChanged();
+    } else {
+        
+    }
 }
 
-/// @brief Called when board has been found by the findBoard process
-void FirmwareUpgradeController::_foundBoard(bool firstTry, const QString portName, QString portDescription)
+void FirmwareUpgradeController::_boardGone(void)
 {
-    if (firstTry) {
-        // Board is still plugged
-        _cancel();
-        emit showMessage("Board plugged in",
-                         "Please unplug your board before beginning the Firmware Upgrade process. "
-                            "Click Upgrade again once the board is unplugged.");
-    } else {
-        _portName = portName;
-        _portDescription = portDescription;
-
-        _appendStatusLog(tr("Board found:"));
-        _appendStatusLog(tr("  Port: %1").arg(_portName));
-        _appendStatusLog(tr("  Description: %1").arg(_portName));
-        
-        _findBootloader();
-    }
+    _mustUnplugBoard = false;
+    emit pluggedInBoardChanged();
 }
 
 /// @brief Begins the findBootloader process to connect to the bootloader
@@ -200,7 +191,7 @@ void FirmwareUpgradeController::_getFirmwareFile(void)
             prgFirmware = rgPX4FMUV2Firmware;
             break;
 
-	case _boardIDAeroCore:
+        case _boardIDAeroCore:
             prgFirmware = rgAeroCoreFirmware;
             break;
 
@@ -622,10 +613,12 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
 
 void FirmwareUpgradeController::doFirmwareUpgrade(void)
 {
+#if 0
     Q_ASSERT(_upgradeButton);
     _upgradeButton->setEnabled(false);
     
     _findBoard();
+#endif
 }
 
 /// Appends the specified text to the status log area in the ui
@@ -644,11 +637,6 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text)
 bool FirmwareUpgradeController::qgcConnections(void)
 {
     return LinkManager::instance()->anyConnectedLinks();
-}
-
-bool FirmwareUpgradeController::pluggedInBoard(void)
-{
-    return _threadController->pluggedInBoard();
 }
 
 void FirmwareUpgradeController::_linkDisconnected(LinkInterface* link)
