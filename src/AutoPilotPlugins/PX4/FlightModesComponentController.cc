@@ -94,8 +94,8 @@ void FlightModesComponentController::_validateConfiguration(void)
     
     QStringList attitudeParams, attitudeNames;
     
-    attitudeParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2" << "RC_MAP_ACRO_SW";
-    attitudeNames << "Throttle" << "Yaw" << "Pitch" << "Roll" << "Flaps" << "Aux1" << "Aux2" << "Acro";
+    attitudeParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2";
+    attitudeNames << "Throttle" << "Yaw" << "Pitch" << "Roll" << "Flaps" << "Aux1" << "Aux2";
 
     for (int i=0; i<attitudeParams.count(); i++) {
         int map = getParameterFact(FactSystem::defaultComponentId, attitudeParams[i])->value().toInt();
