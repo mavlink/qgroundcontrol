@@ -60,6 +60,19 @@ public:
 
     Q_ENUMS(FirmwareType_t)
     
+    typedef enum {
+        FoundBoardPX4FMUV1,
+        FoundBoardPX4FMUV2,
+        FoundBoardPX4Flow,
+        FoundBoard3drRadio
+    } FoundBoardType_t;
+    
+    Q_ENUMS(FoundBoardType_t);
+    
+    Q_PROPERTY(bool mustUnplugBoard MEMBER _mustUnplugBoard NOTIFY pluggedInBoardChanged)
+    Q_PROPERTY(QString pluggedInBoardPort READ pluggedInBoardPort NOTIFY pluggedInBoardChanged)
+    Q_PROPERTY(QString pluggedInBoardDescription READ pluggedInBoardDescription NOTIFY pluggedInBoardChanged)
+    
     /// Firmare type to load
     Q_PROPERTY(FirmwareType_t firmwareType READ firmwareType WRITE setFirmwareType)
     
@@ -73,8 +86,6 @@ public:
     
     /// Progress bar for you know what
     Q_PROPERTY(QQuickItem* progressBar READ progressBar WRITE setProgressBar)
-    
-    Q_INVOKABLE bool pluggedInBoard(void);
     
     /// Begins the firware upgrade process
     Q_INVOKABLE void doFirmwareUpgrade(void);
@@ -93,7 +104,11 @@ public:
     
     bool qgcConnections(void);
     
+    QString pluggedInBoardPort(void) { return _pluggedInBoardInfo.portName(); }
+    QString pluggedInBoardDescription(void) { return _pluggedInBoardInfo.description(); }
+    
 signals:
+    void pluggedInBoardChanged();
     void showMessage(const QString& title, const QString& message);
     void qgcConnectionsChanged(bool connections);
     
@@ -101,7 +116,8 @@ private slots:
     void _downloadProgress(qint64 curr, qint64 total);
     void _downloadFinished(void);
     void _downloadError(QNetworkReply::NetworkError code);
-    void _foundBoard(bool firstTry, const QString portname, QString portDescription);
+    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
+    void _boardGone();
     void _foundBootloader(int bootloaderVersion, int boardID, int flashSize);
     void _error(const int command, const QString errorString);
     void _bootloaderSyncFailed(void);
@@ -113,7 +129,6 @@ private slots:
     void _linkDisconnected(LinkInterface* link);
 
 private:
-    void _findBoard(void);
     void _findBootloader(void);
     void _cancel(void);
     void _getFirmwareFile(void);
@@ -163,6 +178,9 @@ private:
     QQuickItem*     _progressBar;
     
     bool _searchingForBoard;    ///< true: searching for board, false: search for bootloader
+    
+    bool            _mustUnplugBoard;       ///< true: board must be unplugged prio to flash
+    QSerialPortInfo _pluggedInBoardInfo;    /// Port info associated with plugged in board
 };
 
 #endif

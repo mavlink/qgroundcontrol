@@ -38,7 +38,9 @@ PX4FirmwareUpgradeThreadWorker::PX4FirmwareUpgradeThreadWorker(QObject* parent) 
     _bootloader(NULL),
     _bootloaderPort(NULL),
     _timerTimeout(NULL),
-    _timerRetry(NULL)   
+    _timerRetry(NULL),
+    _foundBoard(false),
+    _findBoardFirstAttempt(true)
 {
     
 }
@@ -74,12 +76,11 @@ void PX4FirmwareUpgradeThreadWorker::init(void)
     connect(_bootloader, &PX4Bootloader::updateProgramProgress, this, &PX4FirmwareUpgradeThreadWorker::_updateProgramProgress);
 }
 
-void PX4FirmwareUpgradeThreadWorker::findBoard(int msecTimeout)
+void PX4FirmwareUpgradeThreadWorker::startFindBoardLoop(void)
 {
+    _foundBoard = false;
     _findBoardFirstAttempt = true;
     connect(_timerRetry, &QTimer::timeout, this, &PX4FirmwareUpgradeThreadWorker::_findBoardOnce);
-    _timerTimeout->start(msecTimeout);
-    _elapsed.start();
     _findBoardOnce();
 }
 
@@ -87,64 +88,67 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
 {
     qCDebug(FirmwareUpgradeLog) << "_findBoardOnce";
     
-    QString portName;
-    QString portDescription;
+    QSerialPortInfo                     portInfo;
+    PX4FirmwareUpgradeFoundBoardType_t  boardType;
     
-    foreach (QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
-        if (!info.portName().isEmpty() && (info.description().contains("PX4") || info.vendorIdentifier() == 9900 /* 3DR */)) {
-            
-            qCDebug(FirmwareUpgradeLog) << "Found Board:";
-            qCDebug(FirmwareUpgradeLog) << "\tport name:" << info.portName();
-            qCDebug(FirmwareUpgradeLog) << "\tdescription:" << info.description();
-            qCDebug(FirmwareUpgradeLog) << "\tsystem location:" << info.systemLocation();
-            qCDebug(FirmwareUpgradeLog) << "\tvendor ID:" << info.vendorIdentifier();
-            qCDebug(FirmwareUpgradeLog) << "\tproduct ID:" << info.productIdentifier();
-            
-            portName = info.systemLocation();
-            portDescription = info.description();
-            
-            _closeFind();
-            emit foundBoard(_findBoardFirstAttempt, portName, portDescription);
-            return;
+    if (_findBoardFromPorts(portInfo, boardType)) {
+        if (!_foundBoard) {
+            _foundBoard = true;
+            _foundBoardPortInfo = portInfo;
+            emit foundBoard(_findBoardFirstAttempt, portInfo, boardType);
+        }
+    } else {
+        if (_foundBoard) {
+            _foundBoard = false;
+            qCDebug(FirmwareUpgradeLog) << "Board gone";
+            emit boardGone();
+        } else if (_findBoardFirstAttempt) {
+            emit noBoardFound();
         }
     }
     
     _findBoardFirstAttempt = false;
-    
-    emit updateProgress(_elapsed.elapsed(), _timerTimeout->interval());
     _timerRetry->start();
 }
 
-bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QString& portName, QString& portDescription)
+bool PX4FirmwareUpgradeThreadWorker::findBoardFromPorts(QSerialPortInfo& portInfo, PX4FirmwareUpgradeFoundBoardType_t& type)
 {
+    bool found = false;
+    
     foreach (QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
-        if (!info.portName().isEmpty() && (info.description().contains("PX4") || info.vendorIdentifier() == 9900 /* 3DR */)) {
-            
-            qCDebug(FirmwareUpgradeLog) << "Found Board:";
-            qCDebug(FirmwareUpgradeLog) << "\tport name:" << info.portName();
-            qCDebug(FirmwareUpgradeLog) << "\tdescription:" << info.description();
-            qCDebug(FirmwareUpgradeLog) << "\tsystem location:" << info.systemLocation();
-            qCDebug(FirmwareUpgradeLog) << "\tvendor ID:" << info.vendorIdentifier();
-            qCDebug(FirmwareUpgradeLog) << "\tproduct ID:" << info.productIdentifier();
-            
-            portName = info.systemLocation();
-            portDescription = info.description();
-            return true;
+#if 0
+        qCDebug(FirmwareUpgradeLog) << "Serial Port --------------";
+        qCDebug(FirmwareUpgradeLog) << "\tport name:" << info.portName();
+        qCDebug(FirmwareUpgradeLog) << "\tdescription:" << info.description();
+        qCDebug(FirmwareUpgradeLog) << "\tsystem location:" << info.systemLocation();
+        qCDebug(FirmwareUpgradeLog) << "\tvendor ID:" << info.vendorIdentifier();
+        qCDebug(FirmwareUpgradeLog) << "\tproduct ID:" << info.productIdentifier();
+#endif
+        
+        if (!info.portName().isEmpty()) {
+            if (info.vendorIdentifier() == _pixhawkVendorId) {
+                if (info.productIdentifier() == _pixhawkFMUV2ProductId) {
+                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V2";
+                    type = FoundBoardPX4FMUV1;
+                    found = true;
+                } else if (info.productIdentifier() == _pixhawkFMUV1ProductId) {
+                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V1";
+                    type = FoundBoardPX4FMUV2;
+                    found = true;
+                }
+            } else if (info.vendorIdentifier() == _flowVendorId && info.productIdentifier() == _flowProductId) {
+                qCDebug(FirmwareUpgradeLog) << "Found PX4 Flow";
+                type = FoundBoardPX4Flow;
+                found = true;
+            } else if (info.vendorIdentifier() == _3drRadioVendorId && info.productIdentifier() == _3drRadioProductId) {
+                qCDebug(FirmwareUpgradeLog) << "Found 3DR Radio";
+                type = FoundBoard3drRadio;
+                found = true;
+            }
         }
-    }
-    
-    return false;
-}
-
-bool PX4FirmwareUpgradeThreadController::pluggedInBoard(void)
-{
-    qCDebug(FirmwareUpgradeLog) << "pluggedInBoard";
-    
-    QString portName;
-    QString portDescription;
-    
-    foreach (QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
-        if (!info.portName().isEmpty() && (info.description().contains("PX4") || info.vendorIdentifier() == 9900 /* 3DR */)) {
+        
+        if (found) {
+            portInfo = info;
             return true;
         }
     }
@@ -191,7 +195,6 @@ void PX4FirmwareUpgradeThreadWorker::_findBootloaderOnce(void)
 
 void PX4FirmwareUpgradeThreadWorker::_closeFind(void)
 {
-    emit updateProgress(100, 100);
     disconnect(_timerRetry, SIGNAL(timeout()), 0, 0);
     _timerRetry->stop();
     _timerTimeout->stop();
@@ -274,6 +277,8 @@ PX4FirmwareUpgradeThreadController::PX4FirmwareUpgradeThreadController(QObject* 
     _worker->moveToThread(_workerThread);
     
     connect(_worker, &PX4FirmwareUpgradeThreadWorker::foundBoard, this, &PX4FirmwareUpgradeThreadController::_foundBoard);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::noBoardFound, this, &PX4FirmwareUpgradeThreadController::_noBoardFound);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::boardGone, this, &PX4FirmwareUpgradeThreadController::_boardGone);
     connect(_worker, &PX4FirmwareUpgradeThreadWorker::foundBootloader, this, &PX4FirmwareUpgradeThreadController::_foundBootloader);
     connect(_worker, &PX4FirmwareUpgradeThreadWorker::bootloaderSyncFailed, this, &PX4FirmwareUpgradeThreadController::_bootloaderSyncFailed);
     connect(_worker, &PX4FirmwareUpgradeThreadWorker::error, this, &PX4FirmwareUpgradeThreadController::_error);
@@ -282,7 +287,7 @@ PX4FirmwareUpgradeThreadController::PX4FirmwareUpgradeThreadController(QObject* 
     connect(_worker, &PX4FirmwareUpgradeThreadWorker::updateProgress, this, &PX4FirmwareUpgradeThreadController::_updateProgress);
 
     connect(this, &PX4FirmwareUpgradeThreadController::_initThreadWorker, _worker, &PX4FirmwareUpgradeThreadWorker::init);
-    connect(this, &PX4FirmwareUpgradeThreadController::_findBoardOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::findBoard);
+    connect(this, &PX4FirmwareUpgradeThreadController::_startFindBoardLoopOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::startFindBoardLoop);
     connect(this, &PX4FirmwareUpgradeThreadController::_findBootloaderOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::findBootloader);
     connect(this, &PX4FirmwareUpgradeThreadController::_sendBootloaderRebootOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::sendBootloaderReboot);
     connect(this, &PX4FirmwareUpgradeThreadController::_programOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::program);
@@ -301,10 +306,10 @@ PX4FirmwareUpgradeThreadController::~PX4FirmwareUpgradeThreadController()
     _workerThread->wait();
 }
 
-void PX4FirmwareUpgradeThreadController::findBoard(int msecTimeout)
+void PX4FirmwareUpgradeThreadController::startFindBoardLoop(void)
 {
     qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadController::findBoard";
-    emit _findBoardOnThread(msecTimeout);
+    emit _startFindBoardLoopOnThread();
 }
 
 void PX4FirmwareUpgradeThreadController::findBootloader(const QString& portName, int msecTimeout)
@@ -313,9 +318,19 @@ void PX4FirmwareUpgradeThreadController::findBootloader(const QString& portName,
     emit _findBootloaderOnThread(portName, msecTimeout);
 }
 
-void PX4FirmwareUpgradeThreadController::_foundBoard(bool firstTry, const QString portName, QString portDescription)
+void PX4FirmwareUpgradeThreadController::_foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type)
 {
-    emit foundBoard(firstTry, portName, portDescription);
+    emit foundBoard(firstAttempt, portInfo, type);
+}
+
+void PX4FirmwareUpgradeThreadController::_boardGone(void)
+{
+    emit boardGone();
+}
+
+void PX4FirmwareUpgradeThreadController::_noBoardFound(void)
+{
+    emit noBoardFound();
 }
 
 void PX4FirmwareUpgradeThreadController::_foundBootloader(int bootloaderVersion, int boardID, int flashSize)
