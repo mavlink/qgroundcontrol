@@ -164,7 +164,10 @@ bool PX4Bootloader::getCommandResponse(QextSerialPort* port, int responseTimeout
     return true;
 }
 
-bool PX4Bootloader::getBoardInfo(QextSerialPort* port, uint8_t param, uint32_t& value)
+/// Send a PROTO_GET_DEVICE command to retrieve a value from the PX4 bootloader
+///     @param param Value to retrieve using INFO_BOARD_* enums
+///     @param value Returned value
+bool PX4Bootloader::_getPX4BoardInfo(QextSerialPort* port, uint8_t param, uint32_t& value)
 {
     uint8_t buf[3] = { PROTO_GET_DEVICE, param, PROTO_EOC };
     
@@ -425,10 +428,10 @@ bool PX4Bootloader::sync(QextSerialPort* port)
     }
 }
 
-bool PX4Bootloader::getBoardInfo(QextSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize)
+bool PX4Bootloader::getPX4BoardInfo(QextSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize)
 {
     
-    if (!getBoardInfo(port, INFO_BL_REV, _bootloaderVersion)) {
+    if (!_getPX4BoardInfo(port, INFO_BL_REV, _bootloaderVersion)) {
         goto Error;
     }
     if (_bootloaderVersion < BL_REV_MIN || _bootloaderVersion > BL_REV_MAX) {
@@ -436,11 +439,11 @@ bool PX4Bootloader::getBoardInfo(QextSerialPort* port, uint32_t& bootloaderVersi
         goto Error;
     }
     
-    if (!getBoardInfo(port, INFO_BOARD_ID, _boardID)) {
+    if (!_getPX4BoardInfo(port, INFO_BOARD_ID, _boardID)) {
         goto Error;
     }
     
-    if (!getBoardInfo(port, INFO_FLASH_SIZE, _boardFlashSize)) {
+    if (!_getPX4BoardInfo(port, INFO_FLASH_SIZE, _boardFlashSize)) {
         qWarning() << _errorString;
         goto Error;
     }
@@ -453,6 +456,31 @@ bool PX4Bootloader::getBoardInfo(QextSerialPort* port, uint32_t& bootloaderVersi
     
 Error:
     _errorString.prepend("Get Board Info: ");
+    return false;
+}
+
+bool PX4Bootloader::get3DRRadioBoardId(QextSerialPort* port, uint32_t& boardID)
+{
+    uint8_t buf[2] = { PROTO_GET_DEVICE, PROTO_EOC };
+    
+    if (!write(port, buf, sizeof(buf))) {
+        goto Error;
+    }
+    port->flush();
+    
+    if (!read(port, (uint8_t*)buf, 2)) {
+        goto Error;
+    }
+    if (!getCommandResponse(port)) {
+        goto Error;
+    }
+    
+    boardID = buf[0];
+    
+    return true;
+    
+Error:
+    _errorString.prepend("Get Board Id: ");
     return false;
 }
 
