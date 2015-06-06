@@ -340,6 +340,7 @@ void UASManager::removeUAS(UASInterface* uas)
         // Notify other UI elements that a UAS is being deleted before finally deleting it.
         qDebug() << "Deleting UAS object: " << uas->getUASName();
         emit UASDeleted(uas);
+        emit UASDeleted(uas->getUASID());
         uas->deleteLater();
     }
 }
