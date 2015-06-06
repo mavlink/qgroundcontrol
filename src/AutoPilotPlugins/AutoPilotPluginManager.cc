@@ -40,7 +40,7 @@ AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
     
     // We need to track uas coming and going so that we can instantiate plugins for each uas
     connect(uasMgr, &UASManagerInterface::UASCreated, this, &AutoPilotPluginManager::_uasCreated);
-    connect(uasMgr, &UASManagerInterface::UASDeleted, this, &AutoPilotPluginManager::_uasDeleted);
+    connect(uasMgr, SIGNAL(UASDeleted(UASInterface*)), this, SLOT(_uasDeleted(UASInterface*)));
 }
 
 AutoPilotPluginManager::~AutoPilotPluginManager()
