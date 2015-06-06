@@ -146,6 +146,9 @@ public slots:
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
 
+    /** @brief Remove an old UAS */
+    void UASDeleted(int uasID);
+
     void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
     void loadSetupView();

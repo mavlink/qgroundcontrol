@@ -237,15 +237,16 @@ void QGCXPlaneLink::run()
         QGC::SLEEP::msleep(5);
     }
 
-    if (mav)
+    uas = dynamic_cast<UAS*>(mav);
+    if (uas)
     {
-        disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-        disconnect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
+        disconnect(uas, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
+        disconnect(uas, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
 
-        disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-        disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
-        disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+        disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), uas, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+        disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), uas, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), uas, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
+        disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), uas, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
 
         // Do not toggle HIL state on the UAS - this is not the job of this link, but of the
         // UAS object
