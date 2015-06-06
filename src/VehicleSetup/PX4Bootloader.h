@@ -68,7 +68,7 @@ public:
     bool sendCommand(QextSerialPort* port, uint8_t cmd, int responseTimeout = _responseTimeout);
     
     /// @brief Program the board with the specified firmware
-    bool program(QextSerialPort* port, const QString& firmwareFilename);
+    bool program(QextSerialPort* port, const QString& firmwareFilename, uint16_t startAddress);
     
     /// @brief Verify the board flash. How it works depend on bootloader rev
     ///         Rev 2: Read the flash back and compare it against the firmware file
@@ -104,35 +104,36 @@ signals:
 private:
     enum {
         // protocol bytes
-        PROTO_INSYNC =      0x12,   ///< 'in sync' byte sent before status
-        PROTO_EOC = 		0x20,   ///< end of command
+        PROTO_INSYNC =          0x12,   ///< 'in sync' byte sent before status
+        PROTO_EOC =             0x20,   ///< end of command
         
         // Reply bytes
-        PROTO_OK =          0x10,   ///< INSYNC/OK      - 'ok' response
-        PROTO_FAILED =		0x11,   ///< INSYNC/FAILED  - 'fail' response
-        PROTO_INVALID =		0x13,	///< INSYNC/INVALID - 'invalid' response for bad commands
+        PROTO_OK =              0x10,   ///< INSYNC/OK      - 'ok' response
+        PROTO_FAILED =          0x11,   ///< INSYNC/FAILED  - 'fail' response
+        PROTO_INVALID =         0x13,	///< INSYNC/INVALID - 'invalid' response for bad commands
         
         // Command bytes
-        PROTO_GET_SYNC =	0x21,   ///< NOP for re-establishing sync
-        PROTO_GET_DEVICE =	0x22,   ///< get device ID bytes
-        PROTO_CHIP_ERASE =	0x23,   ///< erase program area and reset program address
-        PROTO_PROG_MULTI =	0x27,   ///< write bytes at program address and increment
-        PROTO_GET_CRC =		0x29,	///< compute & return a CRC
-        PROTO_BOOT =		0x30,   ///< boot the application
+        PROTO_GET_SYNC =        0x21,   ///< NOP for re-establishing sync
+        PROTO_GET_DEVICE =      0x22,   ///< get device ID bytes
+        PROTO_CHIP_ERASE =      0x23,   ///< erase program area and reset program address
+        PROTO_LOAD_ADDRESS =    0x24,	///< set next programming address
+        PROTO_PROG_MULTI =      0x27,   ///< write bytes at program address and increment
+        PROTO_GET_CRC =         0x29,	///< compute & return a CRC
+        PROTO_BOOT =            0x30,   ///< boot the application
         
         // Command bytes - Rev 2 boootloader only
-        PROTO_CHIP_VERIFY	= 0x24, ///< begin verify mode
-        PROTO_READ_MULTI	= 0x28, ///< read bytes at programm address and increment
+        PROTO_CHIP_VERIFY	=   0x24, ///< begin verify mode
+        PROTO_READ_MULTI	=   0x28, ///< read bytes at programm address and increment
         
-        INFO_BL_REV         = 1,    ///< bootloader protocol revision
-        BL_REV_MIN          = 2,    ///< Minimum supported bootlader protocol
-        BL_REV_MAX			= 4,    ///< Maximum supported bootloader protocol
-        INFO_BOARD_ID		= 2,    ///< board type
-        INFO_BOARD_REV		= 3,    ///< board revision
-        INFO_FLASH_SIZE		= 4,    ///< max firmware size in bytes
+        INFO_BL_REV         =   1,    ///< bootloader protocol revision
+        BL_REV_MIN          =   2,    ///< Minimum supported bootlader protocol
+        BL_REV_MAX			=   4,    ///< Maximum supported bootloader protocol
+        INFO_BOARD_ID		=   2,    ///< board type
+        INFO_BOARD_REV		=   3,    ///< board revision
+        INFO_FLASH_SIZE		=   4,    ///< max firmware size in bytes
         
-        PROG_MULTI_MAX		= 32,   ///< write size for PROTO_PROG_MULTI, must be multiple of 4
-        READ_MULTI_MAX		= 32    ///< read size for PROTO_READ_MULTI, must be multiple of 4
+        PROG_MULTI_MAX		=   32,   ///< write size for PROTO_PROG_MULTI, must be multiple of 4
+        READ_MULTI_MAX		=   32    ///< read size for PROTO_READ_MULTI, must be multiple of 4
     };
     
     bool _findBootloader(void);

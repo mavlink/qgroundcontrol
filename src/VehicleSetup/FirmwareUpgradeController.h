@@ -129,11 +129,16 @@ private:
     void _getFirmwareFile(FirmwareType_t firmwareType);
     void _downloadFirmware(void);
     void _appendStatusLog(const QString& text, bool critical = false);
-	bool _decompressJsonValue(const QJsonObject&	jsonObject,
+    bool _px4ToBin(const QString& downloadFilename);
+    bool _ihxToBin(const QString& downloadFilename, uint16_t& startAddress);
+    bool _decompressJsonValue(const QJsonObject&	jsonObject,
 							  const QByteArray&     jsonDocBytes,
 							  const QString&		sizeKey,
                               const QString&		bytesKey,
                               QByteArray&			decompressedBytes);
+    bool _readByteFromStream(QTextStream& stream, uint8_t& byte);
+    bool _readWordFromStream(QTextStream& stream, uint16_t& word);
+    bool _readBytesFromStream(QTextStream& stream, uint8_t byteCount, QByteArray& bytes);
     
     typedef struct {
         FirmwareType_t  firmwareType;

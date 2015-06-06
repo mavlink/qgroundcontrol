@@ -163,6 +163,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
 void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QSerialPortInfo& portInfo)
 {
 #if 0
+    // FIXME:
     QSerialPort port(portInfo);
     
     port.setBaudRate(QSerialPort::Baud57600);
@@ -263,13 +264,13 @@ void PX4FirmwareUpgradeThreadWorker::sendBootloaderReboot(void)
     }
 }
 
-void PX4FirmwareUpgradeThreadWorker::flash(const QString& firmwareFilename)
+void PX4FirmwareUpgradeThreadWorker::flash(const QString& firmwareFilename, uint16_t startAddress)
 {
     qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::flash";
     
     if (_erase()) {
         emit status("Programming new version...");
-        if (!_bootloader->program(_bootloaderPort, firmwareFilename)) {
+        if (!_bootloader->program(_bootloaderPort, firmwareFilename, startAddress)) {
             _bootloaderPort->deleteLater();
             _bootloaderPort = NULL;
             qCDebug(FirmwareUpgradeLog) << "Program failed:" << _bootloader->errorString();
