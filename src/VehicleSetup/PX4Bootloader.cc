@@ -219,7 +219,7 @@ bool PX4Bootloader::erase(QextSerialPort* port)
     return true;
 }
 
-bool PX4Bootloader::program(QextSerialPort* port, const QString& firmwareFilename)
+bool PX4Bootloader::program(QextSerialPort* port, const QString& firmwareFilename, uint16_t startAddress)
 {
     QFile firmwareFile(firmwareFilename);
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
@@ -227,6 +227,25 @@ bool PX4Bootloader::program(QextSerialPort* port, const QString& firmwareFilenam
         return false;
     }
     uint32_t imageSize = (uint32_t)firmwareFile.size();
+    
+    if (startAddress != 0) {
+        bool failed = true;
+        
+        if (write(port, PROTO_LOAD_ADDRESS) &&
+                write(port, startAddress & 0xFF) &&
+                write(port, (startAddress >> 8) & 0xFF) &&
+                write(port, PROTO_EOC)) {
+            port->flush();
+            if (getCommandResponse(port)) {
+                failed = false;
+            }
+        }
+        
+        if (failed) {
+            _errorString = "Unable to set start address";
+            return false;
+        }
+    }
     
     uint8_t imageBuf[PROG_MULTI_MAX];
     uint32_t bytesSent = 0;
@@ -476,6 +495,9 @@ bool PX4Bootloader::get3DRRadioBoardId(QextSerialPort* port, uint32_t& boardID)
     }
     
     boardID = buf[0];
+    
+    _bootloaderVersion = 0;
+    _boardFlashSize = 0;
     
     return true;
     

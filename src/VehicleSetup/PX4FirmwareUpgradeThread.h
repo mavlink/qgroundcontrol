@@ -62,7 +62,7 @@ public slots:
     void init(void);
     void startFindBoardLoop(void);
     void sendBootloaderReboot(void);
-    void flash(const QString& firmwareFilename);
+    void flash(const QString& firmwareFilename, uint16_t startAddress);
     
 signals:
     void foundBoard(bool firstAttempt, const QSerialPortInfo &portInfo, int type);
@@ -128,7 +128,7 @@ public:
     void sendBootloaderReboot(void) { emit _sendBootloaderRebootOnThread(); }
     
     /// @brief Erase/Flash/Verify
-    void flash(const QString& firmwareFilename) { emit _flashOnThread(firmwareFilename); }
+    void flash(const QString& firmwareFilename, uint16_t startAddress) { emit _flashOnThread(firmwareFilename, startAddress); }
     
 signals:
     /// @brief Emitted by the find board process when it finds a board.
@@ -160,7 +160,7 @@ signals:
     void _initThreadWorker(void);
     void _startFindBoardLoopOnThread(void);
     void _sendBootloaderRebootOnThread(void);
-    void _flashOnThread(const QString& firmwareFilename);
+    void _flashOnThread(const QString& firmwareFilename, uint16_t startAddress);
     
 private slots:
     void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);

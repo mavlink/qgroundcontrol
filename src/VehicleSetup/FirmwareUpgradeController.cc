@@ -324,6 +324,248 @@ void FirmwareUpgradeController::_downloadProgress(qint64 curr, qint64 total)
     }
 }
 
+bool FirmwareUpgradeController::_px4ToBin(const QString& downloadFilename)
+{
+    // We need to collect information from the .px4 file as well as pull the binary image out to a seperate file.
+    
+    QFile px4File(downloadFilename);
+    if (!px4File.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        _appendStatusLog(tr("Unable to open firmware file %1, error: %2").arg(downloadFilename).arg(px4File.errorString()));
+        return false;
+    }
+    
+    QByteArray bytes = px4File.readAll();
+    px4File.close();
+    QJsonDocument doc = QJsonDocument::fromJson(bytes);
+    
+    if (doc.isNull()) {
+        _appendStatusLog(tr("Supplied file is not a valid JSON document"));
+        return false;
+    }
+    
+    QJsonObject px4Json = doc.object();
+    
+    // Make sure the keys we need are available
+    static const char* rgJsonKeys[] = { "board_id", "image_size", "description", "git_identity" };
+    for (size_t i=0; i<sizeof(rgJsonKeys)/sizeof(rgJsonKeys[0]); i++) {
+        if (!px4Json.contains(rgJsonKeys[i])) {
+            _appendStatusLog(tr("Incorrectly formatted firmware file. No %1 key.").arg(rgJsonKeys[i]));
+            return false;
+        }
+    }
+    
+    uint32_t firmwareBoardID = (uint32_t)px4Json.value(QString("board_id")).toInt();
+    if (firmwareBoardID != _bootloaderBoardID) {
+        _appendStatusLog(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_bootloaderBoardID));
+        return false;
+    }
+    
+    // Decompress the parameter xml and save to file
+    QByteArray decompressedBytes;
+    bool success = _decompressJsonValue(px4Json,               // JSON object
+                                        bytes,                 // Raw bytes of JSON document
+                                        "parameter_xml_size",  // key which holds byte size
+                                        "parameter_xml",       // key which holds compress bytes
+                                        decompressedBytes);    // Returned decompressed bytes
+    if (success) {
+        QSettings settings;
+        QDir parameterDir = QFileInfo(settings.fileName()).dir();
+        QString parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
+        qDebug() << parameterFilename;
+        QFile parameterFile(parameterFilename);
+        if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            qint64 bytesWritten = parameterFile.write(decompressedBytes);
+            if (bytesWritten != decompressedBytes.count()) {
+                _appendStatusLog(tr("Write failed for parameter meta data file, error: %1").arg(parameterFile.errorString()));
+                parameterFile.close();
+                QFile::remove(parameterFilename);
+            } else {
+                parameterFile.close();
+            }
+        } else {
+            _appendStatusLog(tr("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename).arg(parameterFile.errorString()));
+        }
+        
+    }
+    
+    // Decompress the image and save to file
+    _imageSize = px4Json.value(QString("image_size")).toInt();
+    success = _decompressJsonValue(px4Json,               // JSON object
+                                   bytes,                 // Raw bytes of JSON document
+                                   "image_size",          // key which holds byte size
+                                   "image",               // key which holds compress bytes
+                                   decompressedBytes);    // Returned decompressed bytes
+    if (!success) {
+        return false;
+    }
+    
+    // Pad image to 4-byte boundary
+    while ((decompressedBytes.count() % 4) != 0) {
+        decompressedBytes.append(static_cast<char>(static_cast<unsigned char>(0xFF)));
+    }
+    
+    // Store decompressed image file in same location as original download file
+    QDir downloadDir = QFileInfo(downloadFilename).dir();
+    QString decompressFilename = downloadDir.filePath("PX4FlashUpgrade.bin");
+    
+    QFile decompressFile(decompressFilename);
+    if (!decompressFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        _appendStatusLog(tr("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename).arg(decompressFile.errorString()));
+        return false;
+    }
+    
+    qint64 bytesWritten = decompressFile.write(decompressedBytes);
+    if (bytesWritten != decompressedBytes.count()) {
+        _appendStatusLog(tr("Write failed for decompressed image file, error: %1").arg(decompressFile.errorString()));
+        return false;
+    }
+    decompressFile.close();
+    
+    _firmwareFilename = decompressFilename;
+    
+    return true;
+}
+
+bool FirmwareUpgradeController::_readByteFromStream(QTextStream& stream, uint8_t& byte)
+{
+    QString hex = stream.read(2);
+    
+    if (hex.count() != 2) {
+        return false;
+    }
+    
+    bool success;
+    byte = (uint8_t)hex.toInt(&success, 16);
+    
+    return success;
+}
+
+bool FirmwareUpgradeController::_readWordFromStream(QTextStream& stream, uint16_t& word)
+{
+    QString hex = stream.read(4);
+    
+    if (hex.count() != 4) {
+        return false;
+    }
+    
+    bool success;
+    word = (uint16_t)hex.toInt(&success, 16);
+    
+    return success;
+}
+
+bool FirmwareUpgradeController::_readBytesFromStream(QTextStream& stream, uint8_t byteCount, QByteArray& bytes)
+{
+    bytes.clear();
+    
+    while (byteCount) {
+        uint8_t byte;
+        
+        if (!_readByteFromStream(stream, byte)) {
+            return false;
+        }
+        bytes += byte;
+        
+        byteCount--;
+    }
+    
+    return true;
+}
+
+bool FirmwareUpgradeController::_ihxToBin(const QString& downloadFilename, uint16_t& startAddress)
+{
+    // We need to collect information from the .px4 file as well as pull the binary image out to a seperate file.
+    
+    QFile ihxFile(downloadFilename);
+    if (!ihxFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        _appendStatusLog(QString("Unable to open firmware file %1, error: %2").arg(downloadFilename).arg(ihxFile.errorString()));
+        return false;
+    }
+    
+    QTextStream stream(&ihxFile);
+    QString     line;
+    uint16_t    nextAddress = 0;
+    QByteArray  binBytes;
+    
+    startAddress = 0;
+    
+    while (true) {
+        if (stream.read(1) != ":") {
+            _appendStatusLog("Incorrectly formatted .ihx file, line does not begin with :", true);
+            return false;
+        }
+        
+        uint8_t     byteCount;
+        uint16_t    address;
+        uint8_t     recordType;
+        QByteArray  bytes;
+        uint8_t     crc;
+        
+        if (!_readByteFromStream(stream, byteCount) ||
+            !_readWordFromStream(stream, address) ||
+            !_readByteFromStream(stream, recordType) ||
+            !_readBytesFromStream(stream, byteCount, bytes) ||
+            !_readByteFromStream(stream, crc)) {
+            _appendStatusLog("Incorrectly formatted line in .ihx file, line too short", true);
+            return false;
+        }
+        
+        if (!(recordType == 0 || recordType == 1)) {
+            _appendStatusLog(QString("Unsupported record type in file: %1").arg(recordType), true);
+            return false;
+        }
+        
+        if (recordType == 0) {
+            if (startAddress == 0) {
+                startAddress = address;
+                nextAddress = address;
+            }
+            
+            if (address != nextAddress) {
+                _appendStatusLog("Addresses which are not consecutive are not supported", true);
+                return false;
+            }
+            
+            binBytes += bytes;
+            
+            nextAddress += byteCount;
+        } else if (recordType == 1) {
+            // EOF
+            break;
+        }
+        
+        // Move to next line
+        QString line = stream.readLine();
+    }
+    
+    ihxFile.close();
+    
+    _appendStatusLog("NYI", true);
+    
+    return false;
+    
+    // Store bin file in same location as original download file
+    QDir downloadDir = QFileInfo(downloadFilename).dir();
+    QString binFilename = downloadDir.filePath("IHXFlashUpgrade.bin");
+    
+    QFile binFile(binFilename);
+    if (!binFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        _appendStatusLog(tr("Unable to open bin file %1 for writing, error: %2").arg(binFilename).arg(binFile.errorString()));
+        return false;
+    }
+    
+    qint64 bytesWritten = binFile.write(binBytes);
+    if (bytesWritten != binBytes.count()) {
+        _appendStatusLog(tr("Write failed for bin image file, error: %1").arg(binFile.errorString()));
+        return false;
+    }
+    binFile.close();
+    
+    _firmwareFilename = binFilename;
+    
+    return true;
+}
+
 /// @brief Called when the firmware download completes.
 void FirmwareUpgradeController::_downloadFinished(void)
 {
@@ -358,112 +600,18 @@ void FirmwareUpgradeController::_downloadFinished(void)
     file.write(reply->readAll());
     file.close();
     
+    uint16_t startAddress = 0;
     
     if (downloadFilename.endsWith(".px4")) {
-        // We need to collect information from the .px4 file as well as pull the binary image out to a seperate file.
-        
-        QFile px4File(downloadFilename);
-        if (!px4File.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            _appendStatusLog(tr("Unable to open firmware file %1, error: %2").arg(downloadFilename).arg(px4File.errorString()));
-            return;
-        }
-        
-        QByteArray bytes = px4File.readAll();
-        px4File.close();
-        QJsonDocument doc = QJsonDocument::fromJson(bytes);
-        
-        if (doc.isNull()) {
-            _appendStatusLog(tr("Supplied file is not a valid JSON document"));
+        if (!_px4ToBin(downloadFilename)) {
             cancel();
             return;
         }
-        
-        QJsonObject px4Json = doc.object();
-
-        // Make sure the keys we need are available
-        static const char* rgJsonKeys[] = { "board_id", "image_size", "description", "git_identity" };
-        for (size_t i=0; i<sizeof(rgJsonKeys)/sizeof(rgJsonKeys[0]); i++) {
-            if (!px4Json.contains(rgJsonKeys[i])) {
-                _appendStatusLog(tr("Incorrectly formatted firmware file. No %1 key.").arg(rgJsonKeys[i]));
-                cancel();
-                return;
-            }
-        }
-        
-        uint32_t firmwareBoardID = (uint32_t)px4Json.value(QString("board_id")).toInt();
-        if (firmwareBoardID != _bootloaderBoardID) {
-            _appendStatusLog(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_bootloaderBoardID));
+    } else if (downloadFilename.endsWith(".ihx")) {
+        if (!_ihxToBin(downloadFilename, startAddress)) {
             cancel();
             return;
         }
-        
-        // Decompress the parameter xml and save to file
-        QByteArray decompressedBytes;
-        bool success = _decompressJsonValue(px4Json,               // JSON object
-                                            bytes,                 // Raw bytes of JSON document
-                                            "parameter_xml_size",  // key which holds byte size
-                                            "parameter_xml",       // key which holds compress bytes
-                                            decompressedBytes);    // Returned decompressed bytes
-        if (success) {
-            QSettings settings;
-            QDir parameterDir = QFileInfo(settings.fileName()).dir();
-            QString parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
-			qDebug() << parameterFilename;
-            QFile parameterFile(parameterFilename);
-            if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                qint64 bytesWritten = parameterFile.write(decompressedBytes);
-                if (bytesWritten != decompressedBytes.count()) {
-                    _appendStatusLog(tr("Write failed for parameter meta data file, error: %1").arg(parameterFile.errorString()));
-                    parameterFile.close();
-                    QFile::remove(parameterFilename);
-                } else {
-                    parameterFile.close();
-                }
-            } else {
-                _appendStatusLog(tr("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename).arg(parameterFile.errorString()));
-            }
-            
-        }
-        
-        // FIXME: Save NYI
-        
-        // Decompress the image and save to file
-        _imageSize = px4Json.value(QString("image_size")).toInt();
-		success = _decompressJsonValue(px4Json,               // JSON object
-                                       bytes,                 // Raw bytes of JSON document
-                                       "image_size",          // key which holds byte size
-                                       "image",               // key which holds compress bytes
-                                       decompressedBytes);    // Returned decompressed bytes
-        if (!success) {
-            cancel();
-            return;
-        }
-
-        // Pad image to 4-byte boundary
-        while ((decompressedBytes.count() % 4) != 0) {
-            decompressedBytes.append(static_cast<char>(static_cast<unsigned char>(0xFF)));
-        }
-        
-        // Store decompressed image file in same location as original download file
-        QDir downloadDir = QFileInfo(downloadFilename).dir();
-        QString decompressFilename = downloadDir.filePath("PX4FlashUpgrade.bin");
-        
-        QFile decompressFile(decompressFilename);
-        if (!decompressFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            _appendStatusLog(tr("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename).arg(decompressFile.errorString()));
-            cancel();
-            return;
-        }
-        
-        qint64 bytesWritten = decompressFile.write(decompressedBytes);
-        if (bytesWritten != decompressedBytes.count()) {
-            _appendStatusLog(tr("Write failed for decompressed image file, error: %1").arg(decompressFile.errorString()));
-            cancel();
-            return;
-        }
-        decompressFile.close();
-        
-        _firmwareFilename = decompressFilename;
     } else {
         uint32_t firmwareBoardID = 0;
         
@@ -512,7 +660,7 @@ void FirmwareUpgradeController::_downloadFinished(void)
         return;
     }
 
-    _threadController->flash(_firmwareFilename);
+    _threadController->flash(_firmwareFilename, startAddress);
 }
 
 /// Decompress a set of bytes stored in a Json document.
