@@ -62,11 +62,6 @@ public:
     ///     @param responseTimeout Msecs to wait for response bytes to become available on port
     bool getCommandResponse(QextSerialPort* port, const int responseTimeout = _responseTimeout);
     
-    /// @brief Send a PROTO_GET_DEVICE command to retrieve a value from the bootloader
-    ///     @param param Value to retrieve using INFO_BOARD_* enums
-    ///     @param value Returned value
-    bool getBoardInfo(QextSerialPort* port, uint8_t param, uint32_t& value);
-    
     /// @brief Send a command to the bootloader
     ///     @param cmd Command to send using PROTO_* enums
     /// @return true: Command sent and valid sync response returned
@@ -84,11 +79,14 @@ public:
     /// @return true: Valid sync response was received
     bool sync(QextSerialPort* port);
     
-    /// @brief Retrieve a set of board info from the bootloader
+    /// @brief Retrieve a set of board info from the bootloader of PX4 FMU and PX4 Flow boards
     ///     @param bootloaderVersion Returned INFO_BL_REV
     ///     @param boardID Returned INFO_BOARD_ID
     ///     @param flashSize Returned INFO_FLASH_SIZE
-    bool getBoardInfo(QextSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize);
+    bool getPX4BoardInfo(QextSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize);
+    
+    /// @brief Retrieve the board id from a 3DR Radio
+    bool get3DRRadioBoardId(QextSerialPort* port, uint32_t& boardID);
     
     /// @brief Opens a port to the bootloader
     bool open(QextSerialPort* port, const QString portName);
@@ -138,6 +136,9 @@ private:
     };
     
     bool _findBootloader(void);
+    bool _getPX4BoardInfo(QextSerialPort* port, uint8_t param, uint32_t& value);
+    
+
     bool _downloadFirmware(void);
     bool _bootloaderVerifyRev2(QextSerialPort* port, const QString firmwareFilename);
     bool _bootloaderVerifyRev3(QextSerialPort* port);

@@ -43,156 +43,183 @@
 FirmwareUpgradeController::FirmwareUpgradeController(void) :
     _downloadManager(NULL),
     _downloadNetworkReply(NULL),
-    _firmwareType(StableFirmware),
-    _upgradeButton(NULL),
-    _statusLog(NULL),
-    _mustUnplugBoard(false)
+    _statusLog(NULL)
 {
     _threadController = new PX4FirmwareUpgradeThreadController(this);
     Q_CHECK_PTR(_threadController);
 
     connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBoard, this, &FirmwareUpgradeController::_foundBoard);
+    connect(_threadController, &PX4FirmwareUpgradeThreadController::noBoardFound, this, &FirmwareUpgradeController::_noBoardFound);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::boardGone, this, &FirmwareUpgradeController::_boardGone);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBootloader, this, &FirmwareUpgradeController::_foundBootloader);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::bootloaderSyncFailed, this, &FirmwareUpgradeController::_bootloaderSyncFailed);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::error, this, &FirmwareUpgradeController::_error);
-    connect(_threadController, &PX4FirmwareUpgradeThreadController::complete, this, &FirmwareUpgradeController::_complete);
-    connect(_threadController, &PX4FirmwareUpgradeThreadController::findTimeout, this, &FirmwareUpgradeController::_findTimeout);
+    connect(_threadController, &PX4FirmwareUpgradeThreadController::status, this, &FirmwareUpgradeController::_status);
+    connect(_threadController, &PX4FirmwareUpgradeThreadController::flashComplete, this, &FirmwareUpgradeController::_flashComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress, this, &FirmwareUpgradeController::_updateProgress);
     
     connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &FirmwareUpgradeController::_linkDisconnected);
     
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
-    
+}
+
+void FirmwareUpgradeController::startBoardSearch(void)
+{
+    _bootloaderFound = true;
+    _startFlashWhenBootloaderFound = false;
     _threadController->startFindBoardLoop();
 }
 
-/// @brief Cancels the current state and returns to the begin start
-void FirmwareUpgradeController::_cancel(void)
+void FirmwareUpgradeController::flash(FirmwareType_t firmwareType)
 {
-    // Bootloader may still still open, reboot to close and heopfully get back to FMU
-    _threadController->sendBootloaderReboot();
-    
-    Q_ASSERT(_upgradeButton);
-    _upgradeButton->setEnabled(true);
+    _getFirmwareFile(firmwareType);
+}
+
+void FirmwareUpgradeController::cancel(void)
+{
+    // FIXME: Needs to cancel any controller operations
+    _appendStatusLog("Firmware upgrade cancelled");
+    _appendStatusLog("***CANCEL NYI***");
+    _threadController->cancel();
 }
 
 void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int type)
 {
-    Q_UNUSED(type);
-    
-    if (firstAttempt) {
-        // Board was already plugged in when firmware panel was displayed
-        _mustUnplugBoard = true;
-        _pluggedInBoardInfo = info;
-        emit pluggedInBoardChanged();
-    } else {
-        
+    _foundBoardInfo = info;
+    switch (type) {
+        case FoundBoardPX4FMUV1:
+            _foundBoardType = "PX4 FMU V1";
+            _startFlashWhenBootloaderFound = false;
+            break;
+        case FoundBoardPX4FMUV2:
+            _foundBoardType = "Pixhawk";
+            _startFlashWhenBootloaderFound = false;
+            break;
+        case FoundBoardPX4Flow:
+        case FoundBoard3drRadio:
+            _foundBoardType = type == FoundBoardPX4Flow ? "PX4 Flow" : "3DR Radio";
+            if (!firstAttempt) {
+                // PX4 Flow and Radio always flash stable firmware, so we can start right away without
+                // any further user input.
+                _startFlashWhenBootloaderFound = true;
+                _startFlashWhenBootloaderFoundFirmwareType = PX4StableFirmware;
+            }
+            break;
     }
+    
+    qCDebug(FirmwareUpgradeLog) << _foundBoardType;
+    emit boardFound();
+}
+
+void FirmwareUpgradeController::_noBoardFound(void)
+{
+    emit noBoardFound();
 }
 
 void FirmwareUpgradeController::_boardGone(void)
 {
-    _mustUnplugBoard = false;
-    emit pluggedInBoardChanged();
-}
-
-/// @brief Begins the findBootloader process to connect to the bootloader
-void FirmwareUpgradeController::_findBootloader(void)
-{
-    _appendStatusLog(tr("Attemping to communicate with bootloader..."));
-    _searchingForBoard = false;
-    _threadController->findBootloader(_portName, _findBootloaderTimeoutMsec);
+    emit boardGone();
 }
 
 /// @brief Called when the bootloader is connected to by the findBootloader process. Moves the state machine
 ///         to the next step.
 void FirmwareUpgradeController::_foundBootloader(int bootloaderVersion, int boardID, int flashSize)
 {
+    _bootloaderFound = true;
     _bootloaderVersion = bootloaderVersion;
-    _boardID = boardID;
-    _boardFlashSize = flashSize;
+    _bootloaderBoardID = boardID;
+    _bootloaderBoardFlashSize = flashSize;
     
     _appendStatusLog(tr("Connected to bootloader:"));
     _appendStatusLog(tr("  Version: %1").arg(_bootloaderVersion));
-    _appendStatusLog(tr("  Board ID: %1").arg(_boardID));
-    _appendStatusLog(tr("  Flash size: %1").arg(_boardFlashSize));
+    _appendStatusLog(tr("  Board ID: %1").arg(_bootloaderBoardID));
+    _appendStatusLog(tr("  Flash size: %1").arg(_bootloaderBoardFlashSize));
     
-    _getFirmwareFile();
+    if (_startFlashWhenBootloaderFound) {
+        flash(_startFlashWhenBootloaderFoundFirmwareType);
+    }
 }
 
 /// @brief Called when the findBootloader process is unable to sync to the bootloader. Moves the state
 ///         machine to the appropriate error state.
 void FirmwareUpgradeController::_bootloaderSyncFailed(void)
 {
-    _appendStatusLog(tr("Unable to sync with bootloader."));
-    _cancel();
-}
-
-/// @brief Called when the findBoard or findBootloader process times out. Moves the state machine to the
-///         appropriate error state.
-void FirmwareUpgradeController::_findTimeout(void)
-{
-    QString msg;
-    
-    if (_searchingForBoard) {
-        msg = tr("Unable to detect your board. If the board is currently connected via USB. Disconnect it and try Upgrade again.");
-    } else {
-        msg = tr("Unable to communicate with Bootloader. If the board is currently connected via USB. Disconnect it and try Upgrade again.");
-    }
-    _cancel();
-    emit showMessage("Error", msg);
+    _appendStatusLog(tr("Unable to sync with bootloader."), true);
+    cancel();
 }
 
 /// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
-void FirmwareUpgradeController::_getFirmwareFile(void)
+void FirmwareUpgradeController::_getFirmwareFile(FirmwareType_t firmwareType)
 {
-    static const char* rgPX4FMUV1Firmware[3] =
-    {
-        "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v1_default.px4",
-        "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v1_default.px4",
-        "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v1_default.px4"
+    static DownloadLocationByFirmwareType_t rgPX4FMUV2Firmware[] = {
+        { PX4StableFirmware,            "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v2_default.px4" },
+        { PX4BetaFirmware,              "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4" },
+        { PX4DeveloperFirmware,         "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4"},
+        { ApmArduCopterQuadFirmware,    "http://firmware.diydrones.com/Copter/stable/PX4-quad/ArduCopter-v2.px4" },
+        { ApmArduCopterX8Firmware,      "http://firmware.diydrones.com/Copter/stable/PX4-octa-quad/ArduCopter-v2.px4" },
+        { ApmArduCopterHexaFirmware,    "http://firmware.diydrones.com/Copter/stable/PX4-hexa/ArduCopter-v2.px4" },
+        { ApmArduCopterOctoFirmware,    "http://firmware.diydrones.com/Copter/stable/PX4-octa/ArduCopter-v2.px4" },
+        { ApmArduCopterYFirmware,       "http://firmware.diydrones.com/Copter/stable/PX4-tri/ArduCopter-v2.px4" },
+        { ApmArduCopterY6Firmware,      "http://firmware.diydrones.com/Copter/stable/PX4-y6/ArduCopter-v2.px4" },
+        { ApmArduCopterHeliFirmware,    "http://firmware.diydrones.com/Copter/stable/PX4-heli/ArduCopter-v2.px4" },
+        { ApmArduPlaneFirmware,         "http://firmware.diydrones.com/Plane/stable/PX4/ArduPlane-v2.px4" },
+        { ApmRoverFirmware,             "http://firmware.diydrones.com/Plane/stable/PX4/APMrover2-v2.px4" },
     };
-    
-    static const char* rgPX4FMUV2Firmware[3] =
-    {
-        "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v2_default.px4",
-        "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4",
-        "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4"
-    };
+    static const size_t crgPX4FMUV2Firmware = sizeof(rgPX4FMUV2Firmware) / sizeof(rgPX4FMUV2Firmware[0]);
 
-    static const char* rgAeroCoreFirmware[3] =
-    {
-	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/stable/aerocore_default.px4",
-	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/beta/aerocore_default.px4",
-	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/master/aerocore_default.px4"
+    static const DownloadLocationByFirmwareType_t rgAeroCoreFirmware[] = {
+        { PX4StableFirmware,    "http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/stable/aerocore_default.px4" },
+        { PX4BetaFirmware,      "http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/beta/aerocore_default.px4" },
+        { PX4DeveloperFirmware, "http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/master/aerocore_default.px4" },
     };
+    static const size_t crgAeroCoreFirmware = sizeof(rgAeroCoreFirmware) / sizeof(rgAeroCoreFirmware[0]);
 
-    static const char* rgPX4FlowFirmware[3] =
-    {
-        "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4",
-        "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4",
-        "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4"
+    static const DownloadLocationByFirmwareType_t rgPX4FMUV1Firmware[] = {
+        { PX4StableFirmware,    "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v1_default.px4" },
+        { PX4BetaFirmware,      "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v1_default.px4" },
+        { PX4DeveloperFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v1_default.px4" },
     };
+    static const size_t crgPX4FMUV1Firmware = sizeof(rgPX4FMUV1Firmware) / sizeof(rgPX4FMUV1Firmware[0]);
     
-    Q_ASSERT(sizeof(rgPX4FMUV1Firmware) == sizeof(rgPX4FMUV2Firmware) && sizeof(rgPX4FMUV1Firmware) == sizeof(rgPX4FlowFirmware));
+    static const DownloadLocationByFirmwareType_t rgPX4FlowFirmware[] = {
+        { PX4StableFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
+    };
+    static const size_t crgPX4FlowFirmware = sizeof(rgPX4FlowFirmware) / sizeof(rgPX4FlowFirmware[0]);
     
-    const char** prgFirmware;
-    switch (_boardID) {
+    static const DownloadLocationByFirmwareType_t rg3DRRadioFirmware[] = {
+        { PX4StableFirmware, "http://firmware.diydrones.com/SiK/stable/radio~hm_trp.ihx" },
+    };
+    static const size_t crg3DRRadioFirmware = sizeof(rg3DRRadioFirmware) / sizeof(rg3DRRadioFirmware[0]);
+    
+    // Select the firmware set based on board type
+    
+    const DownloadLocationByFirmwareType_t* prgFirmware;
+    size_t crgFirmware;
+    
+    switch (_bootloaderBoardID) {
         case _boardIDPX4FMUV1:
             prgFirmware = rgPX4FMUV1Firmware;
+            crgFirmware = crgPX4FMUV1Firmware;
             break;
             
         case _boardIDPX4Flow:
             prgFirmware = rgPX4FlowFirmware;
+            crgFirmware = crgPX4FlowFirmware;
             break;
             
         case _boardIDPX4FMUV2:
             prgFirmware = rgPX4FMUV2Firmware;
+            crgFirmware = crgPX4FMUV2Firmware;
             break;
 
         case _boardIDAeroCore:
             prgFirmware = rgAeroCoreFirmware;
+            crgFirmware = crgAeroCoreFirmware;
+            break;
+
+        case _boardID3DRRadio:
+            prgFirmware = rg3DRRadioFirmware;
+            crgFirmware = crg3DRRadioFirmware;
             break;
 
         default:
@@ -200,23 +227,40 @@ void FirmwareUpgradeController::_getFirmwareFile(void)
             break;
     }
 
-    if (prgFirmware == NULL && _firmwareType != CustomFirmware) {
-            QGCMessageBox::critical(tr("Firmware Upgrade"), tr("Attemping to flash an unknown board type, you must select 'Custom firmware file'"));
-            _cancel();
+    if (prgFirmware == NULL && firmwareType != PX4CustomFirmware) {
+            _appendStatusLog("Attempting to flash an unknown board type, you must select 'Custom firmware file'", true);
+            cancel();
             return;
     }
     
-    if (_firmwareType == CustomFirmware) {
+    if (firmwareType == PX4CustomFirmware) {
         _firmwareFilename = QGCFileDialog::getOpenFileName(NULL,                                                                // Parent to main window
                                                            tr("Select Firmware File"),                                          // Dialog Caption
                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
                                                            tr("Firmware Files (*.px4 *.bin)"));                                 // File filter
     } else {
-        _firmwareFilename = prgFirmware[_firmwareType];
+        bool found = false;
+        
+        for (size_t i=0; i<crgFirmware; i++) {
+            if (prgFirmware->firmwareType == firmwareType) {
+                found = true;
+                break;
+            }
+            prgFirmware++;
+        }
+        
+        if (found) {
+            _firmwareFilename = prgFirmware->downloadLocation;
+        } else {
+            _appendStatusLog("Unable to find specified firmware download location", true);
+            cancel();
+            return;
+        }
     }
     
     if (_firmwareFilename.isEmpty()) {
-        _cancel();
+        _appendStatusLog("No firmware file selected");
+        cancel();
     } else {
         _downloadFirmware();
     }
@@ -240,7 +284,7 @@ void FirmwareUpgradeController::_downloadFirmware(void)
         downloadFile = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
         if (downloadFile.isEmpty()) {
             _appendStatusLog(tr("Unabled to find writable download location. Tried downloads and temp directory."));
-            _cancel();
+            cancel();
             return;
         }
     }
@@ -307,7 +351,7 @@ void FirmwareUpgradeController::_downloadFinished(void)
     QFile file(downloadFilename);
     if (!file.open(QIODevice::WriteOnly)) {
         _appendStatusLog(tr("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
-        _cancel();
+        cancel();
         return;
     }
     
@@ -330,7 +374,7 @@ void FirmwareUpgradeController::_downloadFinished(void)
         
         if (doc.isNull()) {
             _appendStatusLog(tr("Supplied file is not a valid JSON document"));
-            _cancel();
+            cancel();
             return;
         }
         
@@ -341,15 +385,15 @@ void FirmwareUpgradeController::_downloadFinished(void)
         for (size_t i=0; i<sizeof(rgJsonKeys)/sizeof(rgJsonKeys[0]); i++) {
             if (!px4Json.contains(rgJsonKeys[i])) {
                 _appendStatusLog(tr("Incorrectly formatted firmware file. No %1 key.").arg(rgJsonKeys[i]));
-                _cancel();
+                cancel();
                 return;
             }
         }
         
         uint32_t firmwareBoardID = (uint32_t)px4Json.value(QString("board_id")).toInt();
-        if (firmwareBoardID != _boardID) {
-            _appendStatusLog(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_boardID));
-            _cancel();
+        if (firmwareBoardID != _bootloaderBoardID) {
+            _appendStatusLog(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_bootloaderBoardID));
+            cancel();
             return;
         }
         
@@ -391,7 +435,7 @@ void FirmwareUpgradeController::_downloadFinished(void)
                                        "image",               // key which holds compress bytes
                                        decompressedBytes);    // Returned decompressed bytes
         if (!success) {
-            _cancel();
+            cancel();
             return;
         }
 
@@ -407,20 +451,20 @@ void FirmwareUpgradeController::_downloadFinished(void)
         QFile decompressFile(decompressFilename);
         if (!decompressFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             _appendStatusLog(tr("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename).arg(decompressFile.errorString()));
-            _cancel();
+            cancel();
             return;
         }
         
         qint64 bytesWritten = decompressFile.write(decompressedBytes);
         if (bytesWritten != decompressedBytes.count()) {
             _appendStatusLog(tr("Write failed for decompressed image file, error: %1").arg(decompressFile.errorString()));
-            _cancel();
+            cancel();
             return;
         }
         decompressFile.close();
         
         _firmwareFilename = decompressFilename;
-    } else if (downloadFilename.endsWith(".bin")) {
+    } else {
         uint32_t firmwareBoardID = 0;
         
         // Take some educated guesses on board id based on firmware build system file name conventions
@@ -433,11 +477,13 @@ void FirmwareUpgradeController::_downloadFinished(void)
             firmwareBoardID = _boardIDPX4FMUV1;
         } else if (downloadFilename.toLower().contains("aerocore")) {
             firmwareBoardID = _boardIDAeroCore;
-	}
+        } else if (downloadFilename.toLower().contains("radio")) {
+            firmwareBoardID = _boardID3DRRadio;
+        }
         
-        if (firmwareBoardID != 0 &&  firmwareBoardID != _boardID) {
-            _appendStatusLog(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_boardID));
-            _cancel();
+        if (firmwareBoardID != 0 &&  firmwareBoardID != _bootloaderBoardID) {
+            _appendStatusLog(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_bootloaderBoardID));
+            cancel();
             return;
         }
         
@@ -446,24 +492,27 @@ void FirmwareUpgradeController::_downloadFinished(void)
         QFile binFile(_firmwareFilename);
         if (!binFile.open(QIODevice::ReadOnly)) {
             _appendStatusLog(tr("Unabled to open firmware file %1, %2").arg(_firmwareFilename).arg(binFile.errorString()));
-            _cancel();
+            cancel();
             return;
         }
         _imageSize = (uint32_t)binFile.size();
         binFile.close();
-    } else {
-        // Standard firmware builds (stable/continuous/...) are always .bin or .px4. Select file dialog for custom
-        // firmware filters to .bin and .px4. So we should never get a file that ends in anything else.
-        Q_ASSERT(false);
     }
     
-    if (_imageSize > _boardFlashSize) {
-        _appendStatusLog(tr("Image size of %1 is too large for board flash size %2").arg(_imageSize).arg(_boardFlashSize));
-        _cancel();
+    // We can't proceed unless we have the bootloader
+    if (!_bootloaderFound) {
+        _appendStatusLog(tr("Bootloader not found").arg(_imageSize).arg(_bootloaderBoardFlashSize), true);
+        cancel();
+        return;
+    }
+    
+    if (_bootloaderBoardFlashSize != 0 && _imageSize > _bootloaderBoardFlashSize) {
+        _appendStatusLog(tr("Image size of %1 is too large for board flash size %2").arg(_imageSize).arg(_bootloaderBoardFlashSize), true);
+        cancel();
         return;
     }
 
-    _erase();
+    _threadController->flash(_firmwareFilename);
 }
 
 /// Decompress a set of bytes stored in a Json document.
@@ -475,12 +524,12 @@ bool FirmwareUpgradeController::_decompressJsonValue(const QJsonObject&	jsonObje
 {
     // Validate decompressed size key
     if (!jsonObject.contains(sizeKey)) {
-        _appendStatusLog(QString("Firmware file missing %1 key").arg(sizeKey));
+        _appendStatusLog(QString("Firmware file missing %1 key").arg(sizeKey), true);
         return false;
     }
     int decompressedSize = jsonObject.value(QString(sizeKey)).toInt();
     if (decompressedSize == 0) {
-        _appendStatusLog(QString("Firmware file has invalid decompressed size for %1").arg(sizeKey));
+        _appendStatusLog(QString("Firmware file has invalid decompressed size for %1").arg(sizeKey), true);
         return false;
     }
     
@@ -492,12 +541,12 @@ bool FirmwareUpgradeController::_decompressJsonValue(const QJsonObject&	jsonObje
 	
 	QStringList parts = QString(jsonDocBytes).split(QString("\"%1\": \"").arg(bytesKey));
     if (parts.count() == 1) {
-        _appendStatusLog(QString("Could not find compressed bytes for %1 in Firmware file").arg(bytesKey));
+        _appendStatusLog(QString("Could not find compressed bytes for %1 in Firmware file").arg(bytesKey), true);
         return false;
     }
 	parts = parts.last().split("\"");
     if (parts.count() == 1) {
-        _appendStatusLog(QString("Incorrectly formed compressed bytes section for %1 in Firmware file").arg(bytesKey));
+        _appendStatusLog(QString("Incorrectly formed compressed bytes section for %1 in Firmware file").arg(bytesKey), true);
         return false;
     }
 	
@@ -513,11 +562,11 @@ bool FirmwareUpgradeController::_decompressJsonValue(const QJsonObject&	jsonObje
 	decompressedBytes = qUncompress(raw);
     
     if (decompressedBytes.count() == 0) {
-        _appendStatusLog(QString("Firmware file has 0 length %1").arg(bytesKey));
+        _appendStatusLog(QString("Firmware file has 0 length %1").arg(bytesKey), true);
         return false;
     }
     if (decompressedBytes.count() != decompressedSize) {
-        _appendStatusLog(QString("Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)").arg(decompressedSize).arg(decompressedBytes.count()));
+        _appendStatusLog(QString("Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)").arg(decompressedSize).arg(decompressedBytes.count()), true);
         return false;
     }
     
@@ -531,61 +580,29 @@ void FirmwareUpgradeController::_downloadError(QNetworkReply::NetworkError code)
     if (code == QNetworkReply::OperationCanceledError) {
         _appendStatusLog(tr("Download cancelled"));
     } else {
-        _appendStatusLog(tr("Error during download. Error: %1").arg(code));
+        _appendStatusLog(tr("Error during download. Error: %1").arg(code), true);
     }
-    _cancel();
-}
-
-/// @brief Erase the board
-void FirmwareUpgradeController::_erase(void)
-{
-    _appendStatusLog(tr("Erasing previous firmware..."));
-    
-    // We set up our own progress bar for erase since the erase command does not provide one
-    _eraseTickCount = 0;
-    _eraseTimer.start(_eraseTickMsec);
-    
-    // Erase command
-    _threadController->erase();
+    cancel();
 }
 
 /// @brief Signals completion of one of the specified bootloader commands. Moves the state machine to the
 ///         appropriate next step.
-void FirmwareUpgradeController::_complete(const int command)
+void FirmwareUpgradeController::_flashComplete(void)
 {
-    if (command == PX4FirmwareUpgradeThreadWorker::commandProgram) {
-        _appendStatusLog(tr("Verifying board programming..."));
-        _threadController->verify(_firmwareFilename);
-    } else if (command == PX4FirmwareUpgradeThreadWorker::commandVerify) {
-        _appendStatusLog(tr("Upgrade complete"));
-        QGCMessageBox::information(tr("Firmware Upgrade"), tr("Upgrade completed succesfully"));
-        _cancel();
-    } else if (command == PX4FirmwareUpgradeThreadWorker::commandErase) {
-        _eraseTimer.stop();
-        _appendStatusLog(tr("Flashing new firmware to board..."));
-        _threadController->program(_firmwareFilename);
-    } else if (command == PX4FirmwareUpgradeThreadWorker::commandCancel) {
-        // FIXME: This is no longer needed, no Cancel
-        if (_searchingForBoard) {
-            _appendStatusLog(tr("Board not found"));
-            _cancel();
-        } else {
-            _appendStatusLog(tr("Bootloader not found"));
-            _cancel();
-        }
-    } else {
-        Q_ASSERT(false);
-    }
+    _appendStatusLog("Upgrade complete", true);
+    QGCMessageBox::information("Firmware Upgrade", "Upgrade completed succesfully");
 }
 
-/// @brief Signals that an error has occured with the specified bootloader commands. Moves the state machine
-///         to the appropriate error state.
-void FirmwareUpgradeController::_error(const int command, const QString errorString)
+void FirmwareUpgradeController::_error(const QString& errorString)
 {
-    Q_UNUSED(command);
-    
-    _appendStatusLog(tr("Error: %1").arg(errorString));
-    _cancel();
+    _appendStatusLog(tr("Error: %1").arg(errorString), true);
+    emit error();
+    cancel();
+}
+
+void FirmwareUpgradeController::_status(const QString& statusString)
+{
+    _appendStatusLog(statusString);
 }
 
 /// @brief Updates the progress bar from long running bootloader commands
@@ -597,13 +614,6 @@ void FirmwareUpgradeController::_updateProgress(int curr, int total)
     }
 }
 
-/// @brief Resets the state machine back to the beginning
-void FirmwareUpgradeController::_restart(void)
-{
-    // FIXME: NYI
-    //_setupState(upgradeStateBegin);
-}
-
 /// @brief Moves the progress bar ahead on tick while erasing the board
 void FirmwareUpgradeController::_eraseProgressTick(void)
 {
@@ -611,23 +621,20 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
     _progressBar->setProperty("value", (float)(_eraseTickCount*_eraseTickMsec) / (float)_eraseTotalMsec);
 }
 
-void FirmwareUpgradeController::doFirmwareUpgrade(void)
-{
-#if 0
-    Q_ASSERT(_upgradeButton);
-    _upgradeButton->setEnabled(false);
-    
-    _findBoard();
-#endif
-}
-
 /// Appends the specified text to the status log area in the ui
-void FirmwareUpgradeController::_appendStatusLog(const QString& text)
+void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool critical)
 {
     Q_ASSERT(_statusLog);
     
     QVariant returnedValue;
-    QVariant varText = text;
+    QVariant varText;
+    
+    if (critical) {
+        varText = QString("<font color=\"yellow\">%1</font>").arg(text);
+    } else {
+        varText = text;
+    }
+    
     QMetaObject::invokeMethod(_statusLog,
                               "append",
                               Q_RETURN_ARG(QVariant, returnedValue),
@@ -644,3 +651,4 @@ void FirmwareUpgradeController::_linkDisconnected(LinkInterface* link)
     Q_UNUSED(link);
     emit qgcConnectionsChanged(qgcConnections());
 }
+

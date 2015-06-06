@@ -58,24 +58,11 @@ public:
     PX4FirmwareUpgradeThreadWorker(QObject* parent = NULL);
     ~PX4FirmwareUpgradeThreadWorker();
     
-    enum {
-        commandBootloader,
-        commandProgram,
-        commandVerify,
-        commandErase,
-        commandCancel
-    };
-    
 public slots:
     void init(void);
     void startFindBoardLoop(void);
-    void findBootloader(const QString portName, int msecTimeout);
-    void timeout(void);
-    void cancelFind(void);
     void sendBootloaderReboot(void);
-    void program(const QString firmwareFilename);
-    void verify(const QString firmwareFilename);
-    void erase(void);
+    void flash(const QString& firmwareFilename);
     
 signals:
     void foundBoard(bool firstAttempt, const QSerialPortInfo &portInfo, int type);
@@ -83,26 +70,26 @@ signals:
     void noBoardFound();
     void foundBootloader(int bootloaderVersion, int boardID, int flashSize);
     void bootloaderSyncFailed(void);
-    void error(const int command, const QString errorString);
-    void complete(const int command);
-    void findTimeout(void);
+    void error(const QString& errorString);
+    void status(const QString& status);
+    void flashComplete();
     void updateProgress(int curr, int total);
     
 private slots:
     void _findBoardOnce(void);
-    void _findBootloaderOnce(void);
     void _updateProgramProgress(int curr, int total) { emit updateProgress(curr, total); }
-    void _closeFind(void);
     
 private:
     bool _findBoardFromPorts(QSerialPortInfo& portInfo, PX4FirmwareUpgradeFoundBoardType_t& type);
+    void _findBootloader(const QSerialPortInfo& portInfo, bool radioMode);
+    void _3drRadioForceBootloader(const QSerialPortInfo& portInfo);
+    bool _erase(void);
+    void _verify(const QString& firmwareFilename);
     
     PX4Bootloader*      _bootloader;
     QextSerialPort*     _bootloaderPort;
-    QTimer*             _timerTimeout;
     QTimer*             _timerRetry;
     QTime               _elapsed;
-    QString             _portName;
     static const int    _retryTimeout = 1000;
     
     bool                _foundBoard;            ///< true: board is currently connected
@@ -111,11 +98,10 @@ private:
     
     // Serial port info for supported devices
     
-    static const int    _pixhawkVendorId = 9900;
+    static const int    _px4VendorId = 9900;
+    
     static const int    _pixhawkFMUV2ProductId = 17;
     static const int    _pixhawkFMUV1ProductId = 16;
-    
-    static const int    _flowVendorId = _pixhawkVendorId;
     static const int    _flowProductId = 21;
     
     static const int    _3drRadioVendorId = 1027;
@@ -136,25 +122,13 @@ public:
     /// continue until cancelFind is called. Signals foundBoard and boardGone as boards come and go.
     void startFindBoardLoop(void);
     
-    /// @brief Begins the process of attempting to communicate with the bootloader on the specified port.
-    ///     @param portName Name of port to attempt a bootloader connection on.
-    ///     @param msecTimeout Number of msecs to continue to wait for a bootloader to appear on the port.
-    void findBootloader(const QString& portName, int msecTimeout);
-    
-    /// @brief Cancel an in progress findBoard or FindBootloader
-    void cancelFind(void) { emit _cancelFindOnThread(); }
+    void cancel(void);
     
     /// @brief Sends a reboot command to the bootloader
     void sendBootloaderReboot(void) { emit _sendBootloaderRebootOnThread(); }
     
-    /// @brief Flash the specified firmware onto the board
-    void program(const QString firmwareFilename) { emit _programOnThread(firmwareFilename); }
-    
-    /// @brief Verify the board flash with respect to the specified firmware image
-    void verify(const QString firmwareFilename) { emit _verifyOnThread(firmwareFilename); }
-    
-    /// @brief Send and erase command to the bootloader
-    void erase(void) { emit _eraseOnThread(); }
+    /// @brief Erase/Flash/Verify
+    void flash(const QString& firmwareFilename) { emit _flashOnThread(firmwareFilename); }
     
 signals:
     /// @brief Emitted by the find board process when it finds a board.
@@ -169,31 +143,24 @@ signals:
     void foundBootloader(int bootloaderVersion, int boardID, int flashSize);
     
     /// @brief Emitted by the bootloader commands when an error occurs.
-    ///     @param errorCommand Command which caused the error, using PX4FirmwareUpgradeThreadWorker command* enum values
-    void error(const int errorCommand, const QString errorString);
+    void error(const QString& errorString);
+    
+    void status(const QString& status);
     
     /// @brief Signalled when the findBootloader process connects to the port, but cannot sync to the
     ///         bootloader.
     void bootloaderSyncFailed(void);
     
-    /// @brief Signalled when the findBoard or findBootloader process times out before success
-    void findTimeout(void);
-    
-    /// @brief Signalled by the bootloader commands other than find* that they have complete successfully.
-    ///     @param command Command which completed, using PX4FirmwareUpgradeThreadWorker command* enum values
-    void complete(const int command);
+    void flashComplete(void);
     
     /// @brief Signalled to update progress for long running bootloader commands
     void updateProgress(int curr, int total);
     
+    // Internal signals to communicator with thread worker
     void _initThreadWorker(void);
     void _startFindBoardLoopOnThread(void);
-    void _findBootloaderOnThread(const QString& portName, int msecTimeout);
     void _sendBootloaderRebootOnThread(void);
-    void _programOnThread(const QString firmwareFilename);
-    void _verifyOnThread(const QString firmwareFilename);
-    void _eraseOnThread(void);
-    void _cancelFindOnThread(void);
+    void _flashOnThread(const QString& firmwareFilename);
     
 private slots:
     void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
@@ -201,9 +168,9 @@ private slots:
     void _boardGone(void);
     void _foundBootloader(int bootloaderVersion, int boardID, int flashSize);
     void _bootloaderSyncFailed(void);
-    void _error(const int errorCommand, const QString errorString) { emit error(errorCommand, errorString); }
-    void _complete(const int command) { emit complete(command); }
-    void _findTimeout(void);
+    void _error(const QString& errorString) { emit error(errorString); }
+    void _status(const QString& statusText) { emit status(statusText); }
+    void _flashComplete(void) { emit flashComplete(); }
     void _updateProgress(int curr, int total) { emit updateProgress(curr, total); }
     
 private:
