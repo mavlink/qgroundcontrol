@@ -29,6 +29,8 @@ QGCHilConfiguration::QGCHilConfiguration(UAS *mav, QWidget *parent) :
     }
 
     settings.endGroup();
+
+    connect(mav, SIGNAL(destroyed()), this, SLOT(deleteLater()));
 }
 
 void QGCHilConfiguration::receiveStatusMessage(const QString& message)
