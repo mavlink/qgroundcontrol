@@ -64,20 +64,20 @@ Rectangle {
     }
 
     function getMessageColor() {
-        if(mainToolBar.messageType === MainToolBar.MessageNone)
+        if(MavManager.messageType === MavManager.MessageNone)
             return qgcPal.button;
-        if(mainToolBar.messageType === MainToolBar.MessageNormal)
+        if(MavManager.messageType === MavManager.MessageNormal)
             return colorBlue;
-        if(mainToolBar.messageType === MainToolBar.MessageWarning)
+        if(MavManager.messageType === MavManager.MessageWarning)
             return colorOrange;
-        if(mainToolBar.messageType === MainToolBar.MessageError)
+        if(MavManager.messageType === MavManager.MessageError)
             return colorRed;
         // Cannot be so make make it obnoxious to show error
         return "purple";
     }
 
     function getMessageIcon() {
-        if(mainToolBar.messageType === MainToolBar.MessageNormal || mainToolBar.messageType === MainToolBar.MessageNone)
+        if(MavManager.messageType === MavManager.MessageNormal || MavManager.messageType === MavManager.MessageNone)
             return "qrc:/res/Megaphone";
         else
             return "qrc:/res/Yield";
@@ -311,7 +311,7 @@ Rectangle {
 
             Rectangle {
                 id: messages
-                width: (mainToolBar.messageCount > 99) ? getProportionalDimmension(65) : getProportionalDimmension(60)
+                width: (MavManager.messageCount > 99) ? getProportionalDimmension(65) : getProportionalDimmension(60)
                 height: cellHeight
                 visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
                 anchors.verticalCenter: parent.verticalCenter
@@ -337,7 +337,7 @@ Rectangle {
                     width: messages.width - messageIcon.width
                     QGCLabel {
                         id: messageText
-                        text: (mainToolBar.messageCount > 0) ? mainToolBar.messageCount : ''
+                        text: (MavManager.messageCount > 0) ? MavManager.messageCount : ''
                         font.pointSize: ScreenTools.fontPointFactor * (14);
                         font.weight: Font.DemiBold
                         anchors.verticalCenter: parent.verticalCenter
@@ -350,7 +350,7 @@ Rectangle {
                 Image {
                     id: dropDown
                     source: "QGroundControl/Controls/arrow-down.png"
-                    visible: (messages.showTriangle) && (mainToolBar.messageCount > 0)
+                    visible: (messages.showTriangle) && (MavManager.messageCount > 0)
                     anchors.bottom: parent.bottom
                     anchors.right: parent.right
                     anchors.bottomMargin: getProportionalDimmension(3)

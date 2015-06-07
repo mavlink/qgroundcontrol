@@ -15,3 +15,4 @@ QGCAttitudeInstrument 1.0 QGCAttitudeInstrument.qml
 QGCCompassInstrument  1.0 QGCCompassInstrument.qml
 QGCArtificialHorizon  1.0 QGCArtificialHorizon.qml
 QGCWaypoint           1.0 QGCWaypoint.qml
+QGCHudMessage         1.0 QGCHudMessage.qml

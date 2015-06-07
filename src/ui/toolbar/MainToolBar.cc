@@ -32,9 +32,11 @@ This file is part of the QGROUNDCONTROL project
 
 #include "MainToolBar.h"
 #include "MainWindow.h"
-#include "UASMessageHandler.h"
 #include "UASMessageView.h"
+#include "UASMessageHandler.h"
 #include "FlightDisplay.h"
+#include "QGCApplication.h"
+#include "MavManager.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
     : QGCQmlWidgetHolder(parent)
@@ -42,12 +44,6 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _toolBar(NULL)
     , _currentView(ViewNone)
     , _connectionCount(0)
-    , _currentMessageCount(0)
-    , _messageCount(0)
-    , _currentErrorCount(0)
-    , _currentWarningCount(0)
-    , _currentNormalCount(0)
-    , _currentMessageType(MessageNone)
     , _showGPS(true)
     , _showMav(true)
     , _showMessages(true)
@@ -215,20 +211,8 @@ void MainToolBar::onEnterMessageArea(int x, int y)
     // If not already there and messages are actually present
     if(!_rollDownMessages && UASMessageHandler::instance()->messages().count())
     {
-        // Reset Counts
-        int count = _currentMessageCount;
-        MessageType_t type = _currentMessageType;
-        _currentErrorCount   = 0;
-        _currentWarningCount = 0;
-        _currentNormalCount  = 0;
-        _currentMessageCount = 0;
-        _currentMessageType = MessageNone;
-        if(count != _currentMessageCount) {
-            emit newMessageCountChanged(0);
-        }
-        if(type != _currentMessageType) {
-            emit messageTypeChanged(MessageNone);
-        }
+        if(qgcApp()->getMavManager())
+            qgcApp()->getMavManager()->resetMessages();
         // Show messages
         int dialogWidth = 400;
         x = x - (dialogWidth >> 1);
@@ -280,7 +264,6 @@ void MainToolBar::setCurrentView(int currentView)
 void MainToolBar::_forgetUAS(UASInterface* uas)
 {
     if (_mav != NULL && _mav == uas) {
-        disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &MainToolBar::_handleTextMessage);
         disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
         disconnect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav).data(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
         _mav = NULL;
@@ -300,7 +283,6 @@ void MainToolBar::_setActiveUAS(UASInterface* active)
     _mav = active;
     if (_mav)
     {
-        connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged, this, &MainToolBar::_handleTextMessage);
         connect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
         connect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav).data(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
     }
@@ -398,67 +380,6 @@ void MainToolBar::_updateConnection(LinkInterface *disconnectedLink)
     if(_connectionCount != 1 && _remoteRSSI > 0) {
         _remoteRSSI = 0;
         emit remoteRSSIChanged(_remoteRSSI);
-    }
-}
-
-void MainToolBar::_handleTextMessage(int newCount)
-{
-    // Reset?
-    if(!newCount) {
-        _currentMessageCount = 0;
-        _currentNormalCount  = 0;
-        _currentWarningCount = 0;
-        _currentErrorCount   = 0;
-        _messageCount        = 0;
-        _currentMessageType  = MessageNone;
-        emit newMessageCountChanged(0);
-        emit messageTypeChanged(MessageNone);
-        emit messageCountChanged(0);
-        return;
-    }
-
-    UASMessageHandler* pMh = UASMessageHandler::instance();
-    Q_ASSERT(pMh);
-    MessageType_t type = newCount ? _currentMessageType : MessageNone;
-    int errorCount     = _currentErrorCount;
-    int warnCount      = _currentWarningCount;
-    int normalCount    = _currentNormalCount;
-    //-- Add current message counts
-    errorCount  += pMh->getErrorCount();
-    warnCount   += pMh->getWarningCount();
-    normalCount += pMh->getNormalCount();
-    //-- See if we have a higher level
-    if(errorCount != _currentErrorCount) {
-        _currentErrorCount = errorCount;
-        type = MessageError;
-    }
-    if(warnCount != _currentWarningCount) {
-        _currentWarningCount = warnCount;
-        if(_currentMessageType != MessageError) {
-            type = MessageWarning;
-        }
-    }
-    if(normalCount != _currentNormalCount) {
-        _currentNormalCount = normalCount;
-        if(_currentMessageType != MessageError && _currentMessageType != MessageWarning) {
-            type = MessageNormal;
-        }
-    }
-    int count = _currentErrorCount + _currentWarningCount + _currentNormalCount;
-    if(count != _currentMessageCount) {
-        _currentMessageCount = count;
-        // Display current total new messages count
-        emit newMessageCountChanged(count);
-    }
-    if(type != _currentMessageType) {
-        _currentMessageType = type;
-        // Update message level
-        emit messageTypeChanged(type);
-    }
-    // Update message count (all messages)
-    if(newCount != _messageCount) {
-        _messageCount = newCount;
-        emit messageCountChanged(_messageCount);
     }
 }
 
