@@ -1473,6 +1473,9 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
         case StartCalibrationRadio:
             radioCal = 1;
             break;
+        case StartCalibrationCopyTrims:
+            radioCal = 2;
+            break;
         case StartCalibrationAccel:
             accelCal = 1;
             break;

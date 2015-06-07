@@ -42,6 +42,7 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
+    readonly property string dialogTitle: "Radio Config"
     readonly property real labelToMonitorMargin: defaultTextWidth * 3
     property bool controllerCompleted: false
     property bool controllerAndViewReady: false
@@ -49,11 +50,15 @@ QGCView {
     function updateChannelCount()
     {
         if (controllerAndViewReady) {
+/*
+            FIXME: Turned off for now, since it prevents binding. Need to restructure to
+            allow binding and still check channel count
             if (controller.channelCount < controller.minChannelCount) {
-                showDialog(channelCountDialogComponent, "Radio Config", 50, 0)
+                showDialog(channelCountDialogComponent, dialogTitle, 50, 0)
             } else {
                 hideDialog()
             }
+*/
         }
     }
 
@@ -88,6 +93,32 @@ QGCView {
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
+
+        Component {
+            id: copyTrimsDialogComponent
+
+            QGCViewMessage {
+                message: "Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."
+
+                function accept() {
+                    hideDialog()
+                    controller.copyTrims()
+                }
+            }
+        }
+
+        Component {
+            id: zeroTrimsDialogComponent
+
+            QGCViewMessage {
+                message: "Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration."
+
+                function accept() {
+                    hideDialog()
+                    controller.nextButtonClicked()
+                }
+            }
+        }
 
         Component {
             id: channelCountDialogComponent
@@ -245,22 +276,6 @@ QGCView {
             anchors.right:  columnSpacer.left
             spacing:        10
 
-            Row {
-                spacing: 10
-
-                QGCLabel {
-                    anchors.baseline:   bindButton.baseline
-                    text:               "Place Spektrum satellite receiver in bind mode:"
-                }
-
-                QGCButton {
-                    id:     bindButton
-                    text:   "Spektrum Bind"
-
-                    onClicked: showDialog(spektrumBindDialogComponent, "Radio Config", 50, StandardButton.Ok | StandardButton.Cancel)
-                }
-            }
-
             // Attitude Controls
             Column {
                 width:      parent.width
@@ -412,7 +427,7 @@ QGCView {
                     primary:    true
                     text:       "Calibrate"
 
-                    onClicked: controller.nextButtonClicked()
+                    onClicked: showDialog(zeroTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
                 }
             } // Row - Buttons
 
@@ -422,6 +437,35 @@ QGCView {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
             }
+
+            Item {
+                width: 10
+                height: defaultTextHeight * 2
+            }
+
+            QGCLabel { text: "Additional Radio setup:" }
+
+            Row {
+                spacing: 10
+
+                QGCLabel {
+                    anchors.baseline:   bindButton.baseline
+                    text:               "Place Spektrum satellite receiver in bind mode:"
+                }
+
+                QGCButton {
+                    id:     bindButton
+                    text:   "Spektrum Bind"
+
+                    onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                }
+            }
+
+            QGCButton {
+                text: "Copy Trims"
+                onClicked: showDialog(copyTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+            }
+
         } // Column - Left Column
 
         Item {
