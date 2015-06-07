@@ -58,6 +58,12 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
+    function checkForConnections() {
+        if (controller.qgcConnections) {
+            showDialog(activeConnectionsDialogComponent, title, 50, 0)
+        }
+    }
+
     FirmwareUpgradeController {
         id:             controller
         progressBar:    progressBar
@@ -95,6 +101,10 @@ QGCView {
                 }
             }
         }
+    }
+
+    Component {
+        id: firmwareSelect
 
         onError: hideDialog()
 
@@ -424,6 +434,41 @@ QGCView {
                     }
                 }
             } // Column
+        } // Column
+    } // Component - firmwareInstall
+
+    QGCViewPanel {
+        id:             panel
+        anchors.fill:   parent
+
+        Component {
+            id: firmwareWarningComponent
+
+            QGCViewMessage {
+                message: firmwareWarningMessage
+
+                function accept() {
+                    hideDialog()
+                    controller.doFirmwareUpgrade();
+                }
+            }
+        }
+
+        Column {
+            anchors.fill:   parent
+            spacing:        10
+
+            QGCLabel {
+                text:           title
+                font.pointSize: ScreenTools.largeFontPointSize
+            }
+
+            Loader {
+                id:                 loader
+                width:              parent.width
+                height:             parent.height - x
+                sourceComponent:    firmwareSelect
+            }
         } // Column
     } // QGCViewPanel
 } // QGCView

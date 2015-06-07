@@ -799,4 +799,3 @@ void FirmwareUpgradeController::_linkDisconnected(LinkInterface* link)
     Q_UNUSED(link);
     emit qgcConnectionsChanged(qgcConnections());
 }
-
