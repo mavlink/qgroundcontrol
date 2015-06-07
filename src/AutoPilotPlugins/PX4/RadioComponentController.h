@@ -93,6 +93,7 @@ public:
     Q_INVOKABLE void skipButtonClicked(void);
     Q_INVOKABLE void nextButtonClicked(void);
     Q_INVOKABLE void start(void);
+    Q_INVOKABLE void copyTrims(void);
     
     int rollChannelRCValue(void);
     int pitchChannelRCValue(void);

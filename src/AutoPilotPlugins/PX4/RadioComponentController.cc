@@ -1050,3 +1050,8 @@ void RadioComponentController::_signalAllAttiudeValueChanges(void)
     emit yawChannelReversedChanged(yawChannelReversed());
     emit throttleChannelReversedChanged(throttleChannelReversed());
 }
+
+void RadioComponentController::copyTrims(void)
+{
+    _uas->startCalibration(UASInterface::StartCalibrationRadio);
+}
