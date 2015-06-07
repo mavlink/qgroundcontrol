@@ -37,8 +37,11 @@ ViewWidget {
 		id: commandComponenet
 
         Item {
+            id: bogusFactPanel
 
-            CustomCommandWidgetController { id: controller }
+            // We aren't really using the controller in a FactPanel for this usage so we
+            // pass in a bogus item to keep it from getting upset.
+            CustomCommandWidgetController { id: controller; factPanel: bogusFactPanel }
 
             Item {
                 anchors.top:    parent.top
