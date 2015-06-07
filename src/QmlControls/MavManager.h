@@ -46,6 +46,13 @@ public:
     explicit MavManager(QObject *parent = 0);
     ~MavManager();
 
+    typedef enum {
+        MessageNone,
+        MessageNormal,
+        MessageWarning,
+        MessageError
+    } MessageType_t;
+
     enum {
         ROLL_CHANGED,
         PITCH_CHANGED,
@@ -58,10 +65,19 @@ public:
         ALTITUDEAMSL_CHANGED
     };
 
+    // Called when the message drop-down is invoked to clear current count
+    void resetMessages();
+
     Q_INVOKABLE QString     getMavIconColor();
     Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
     Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);
 
+    //-- System Messages
+    Q_PROPERTY(MessageType_t messageType        READ messageType        NOTIFY messageTypeChanged)
+    Q_PROPERTY(int          newMessageCount     READ newMessageCount    NOTIFY newMessageCountChanged)
+    Q_PROPERTY(int          messageCount        READ messageCount       NOTIFY messageCountChanged)
+    Q_PROPERTY(QString      latestError         READ latestError        NOTIFY latestErrorChanged)
+    //-- UAV Stats
     Q_PROPERTY(float        roll                READ roll               NOTIFY rollChanged)
     Q_PROPERTY(float        pitch               READ pitch              NOTIFY pitchChanged)
     Q_PROPERTY(float        heading             READ heading            NOTIFY headingChanged)
@@ -87,8 +103,13 @@ public:
     Q_PROPERTY(double       waypointDistance    READ waypointDistance   NOTIFY waypointDistanceChanged)
     Q_PROPERTY(uint16_t     currentWaypoint     READ currentWaypoint    NOTIFY currentWaypointChanged)
     Q_PROPERTY(unsigned int heartbeatTimeout    READ heartbeatTimeout   NOTIFY heartbeatTimeoutChanged)
+    //-- Waypoint management
     Q_PROPERTY(QQmlListProperty<Waypoint> waypoints READ waypoints NOTIFY waypointsChanged)
 
+    MessageType_t   messageType         () { return _currentMessageType; }
+    int             newMessageCount     () { return _currentMessageCount; }
+    int             messageCount        () { return _messageCount; }
+    QString         latestError         () { return _latestError; }
     float           roll                () { return _roll; }
     float           pitch               () { return _pitch; }
     float           heading             () { return _heading; }
@@ -118,6 +139,10 @@ public:
     QQmlListProperty<Waypoint> waypoints() {return QQmlListProperty<Waypoint>(this, _waypoints); }
 
 signals:
+    void messageTypeChanged     ();
+    void newMessageCountChanged ();
+    void messageCountChanged    ();
+    void latestErrorChanged     ();
     void rollChanged            ();
     void pitchChanged           ();
     void headingChanged         ();
@@ -147,6 +172,7 @@ signals:
     void waypointsChanged       ();
 
 private slots:
+    void _handleTextMessage                 (int newCount);
     /** @brief Attitude from main autopilot / system state */
     void _updateAttitude                    (UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief Attitude from one specific component / redundant autopilot */
@@ -182,6 +208,13 @@ private:
 
 private:
     UASInterface*   _mav;
+    int             _currentMessageCount;
+    int             _messageCount;
+    int             _currentErrorCount;
+    int             _currentWarningCount;
+    int             _currentNormalCount;
+    MessageType_t   _currentMessageType;
+    QString         _latestError;
     float           _roll;
     float           _pitch;
     float           _heading;
