@@ -119,6 +119,7 @@ static QObject* screenToolsSingletonFactory(QQmlEngine*, QJSEngine*)
 static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     MavManager* mavManager = new MavManager;
+    qgcApp()->setMavManager(mavManager);
     return mavManager;
 }
 
@@ -133,10 +134,11 @@ static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
  **/
 
 
-QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
-    QApplication(argc, argv),
-    _runningUnitTests(unitTesting),
-    _styleIsDark(true)
+QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
+    : QApplication(argc, argv)
+    , _runningUnitTests(unitTesting)
+    , _styleIsDark(true)
+    , _pMavManager(NULL)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -341,7 +343,7 @@ void QGCApplication::_initCommon(void)
     //-- Create QML Singleton Interfaces
     qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
     qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
-    
+
     //-- Register Waypoint Interface
     qmlRegisterInterface<Waypoint>("Waypoint");
 }
@@ -709,7 +711,19 @@ void QGCApplication::_missingParamsDisplay(void)
     }
     _missingParams.clear();
     
-    QGCMessageBox::critical("Missing Parameters",
-                            QString("Parameters missing from firmware: %1.\n\n"
-                                    "You should quit QGroundControl immediately and update your firmware.").arg(params));
+    QGCMessageBox::critical(
+        "Missing Parameters",
+        QString("Parameters missing from firmware: %1.\n\n"
+                "You should quit QGroundControl immediately and update your firmware.").arg(params));
+}
+
+void QGCApplication::setMavManager(MavManager* pMgr)
+{
+    if(!_pMavManager)
+        _pMavManager = pMgr;
+}
+
+MavManager* QGCApplication::getMavManager()
+{
+    return _pMavManager;
 }

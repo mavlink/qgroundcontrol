@@ -44,6 +44,7 @@
 // Work around circular header includes
 class QGCSingleton;
 class MainWindow;
+class MavManager;
 
 /**
  * @brief The main application and management class.
@@ -99,6 +100,12 @@ public:
     /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
     /// multiple times.
     void reportMissingParameter(int componentId, const QString& name);
+
+    /// When the singleton is created, it sets a pointer for subsequent use
+    void setMavManager(MavManager* pMgr);
+
+    /// MavManager accessor
+    MavManager* getMavManager();
     
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -166,7 +173,8 @@ private:
     static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;  ///< Timeout to wait for next missing fact to come in before display
     QTimer              _missingParamsDelayedDisplayTimer;                ///< Timer use to delay missing fact display
     QStringList         _missingParams;                                  ///< List of missing facts to be displayed
-    
+    MavManager*         _pMavManager;
+
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
 };
