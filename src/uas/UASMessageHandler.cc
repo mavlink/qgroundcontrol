@@ -163,6 +163,17 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     message->_setFormatedText(QString("<p style=\"color:#CCCCCC\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
     _messages.append(message);
     int count = _messages.count();
+    switch (severity)
+    {
+    case MAV_SEVERITY_EMERGENCY:
+    case MAV_SEVERITY_ALERT:
+    case MAV_SEVERITY_CRITICAL:
+    case MAV_SEVERITY_ERROR:
+        _latestError = severityText + " " + text;
+        break;
+    default:
+        break;
+    }
     _mutex.unlock();
     emit textMessageReceived(message);
     emit textMessageCountChanged(count);
