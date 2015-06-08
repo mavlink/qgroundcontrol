@@ -83,7 +83,7 @@ Item {
             id:     label
             color:  "black"
             text:   slider.value.toFixed(2)
-            width:  font.pointSize * 3.5
+            width:  font.pixelSize * 3.5
             anchors.horizontalCenter:   labelRect.horizontalCenter
             horizontalAlignment:        Text.AlignHCenter
             anchors.verticalCenter:     labelRect.verticalCenter

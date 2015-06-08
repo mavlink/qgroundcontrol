@@ -338,7 +338,7 @@ Rectangle {
                     QGCLabel {
                         id: messageText
                         text: (MavManager.messageCount > 0) ? MavManager.messageCount : ''
-                        font.pointSize: ScreenTools.fontPointFactor * (14);
+                        font.pixelSize: ScreenTools.font14
                         font.weight: Font.DemiBold
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -424,7 +424,7 @@ Rectangle {
                 QGCLabel {
                     id: satelitteText
                     text: MavManager.satelliteCount >= 0 ? MavManager.satelliteCount : 'NA'
-                    font.pointSize: MavManager.satelliteCount >= 0 ? ScreenTools.fontPointFactor * (14) : ScreenTools.fontPointFactor * (10)
+                    font.pixelSize: MavManager.satelliteCount >= 0 ? ScreenTools.font14 : ScreenTools.font10
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
@@ -459,7 +459,7 @@ Rectangle {
                     anchors.rightMargin: getProportionalDimmension(6)
                     anchors.verticalCenter: parent.verticalCenter
                     horizontalAlignment: Text.AlignRight
-                    font.pointSize: ScreenTools.fontPointFactor * (12);
+                    font.pixelSize: ScreenTools.font12
                     font.weight: Font.DemiBold
                     color: colorWhite
                 }
@@ -492,7 +492,7 @@ Rectangle {
                         anchors.right: parent.right
                         QGCLabel {
                             text: 'R '
-                            font.pointSize: ScreenTools.fontPointFactor * (11);
+                            font.pixelSize: ScreenTools.font11
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -500,7 +500,7 @@ Rectangle {
                             text: mainToolBar.telemetryRRSSI + 'dB'
                             width: getProportionalDimmension(30)
                             horizontalAlignment: Text.AlignRight
-                            font.pointSize: ScreenTools.fontPointFactor * (11);
+                            font.pixelSize: ScreenTools.font11
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -509,7 +509,7 @@ Rectangle {
                         anchors.right: parent.right
                         QGCLabel {
                             text: 'L '
-                            font.pointSize: ScreenTools.fontPointFactor * (11);
+                            font.pixelSize: ScreenTools.font11
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -517,7 +517,7 @@ Rectangle {
                             text: mainToolBar.telemetryLRSSI + 'dB'
                             width: getProportionalDimmension(30)
                             horizontalAlignment: Text.AlignRight
-                            font.pointSize: ScreenTools.fontPointFactor * (11);
+                            font.pixelSize: ScreenTools.font11
                             font.weight: Font.DemiBold
                             color: colorWhite
                         }
@@ -548,7 +548,7 @@ Rectangle {
                 QGCLabel {
                     visible: batteryStatus.visible && MavManager.batteryConsumed < 0.0
                     text: MavManager.batteryVoltage.toFixed(1) + 'V';
-                    font.pointSize: ScreenTools.fontPointFactor * (11);
+                    font.pixelSize: ScreenTools.font11
                     font.weight: Font.DemiBold
                     anchors.right: parent.right
                     anchors.rightMargin: getProportionalDimmension(6)
@@ -566,7 +566,7 @@ Rectangle {
                         text: MavManager.batteryVoltage.toFixed(1) + 'V';
                         width: getProportionalDimmension(30)
                         horizontalAlignment: Text.AlignRight
-                        font.pointSize: ScreenTools.fontPointFactor * (11);
+                        font.pixelSize: ScreenTools.font11
                         font.weight: Font.DemiBold
                         color: colorWhite
                     }
@@ -574,7 +574,7 @@ Rectangle {
                         text: MavManager.batteryConsumed.toFixed(0) + 'mA';
                         width: getProportionalDimmension(30)
                         horizontalAlignment: Text.AlignRight
-                        font.pointSize: ScreenTools.fontPointFactor * (11);
+                        font.pixelSize: ScreenTools.font11
                         font.weight: Font.DemiBold
                         color: colorWhite
                     }
@@ -599,7 +599,7 @@ Rectangle {
                     QGCLabel {
                         id: armedStatusText
                         text: (MavManager.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
-                        font.pointSize: ScreenTools.fontPointFactor * (12);
+                        font.pixelSize: ScreenTools.font12
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (MavManager.systemArmed) ? colorOrangeText : colorGreenText
@@ -618,7 +618,7 @@ Rectangle {
                     QGCLabel {
                         id: stateStatusText
                         text: MavManager.currentState
-                        font.pointSize: ScreenTools.fontPointFactor * (12);
+                        font.pixelSize: ScreenTools.font12
                         font.weight: Font.DemiBold
                         anchors.centerIn: parent
                         color: (MavManager.currentState === "STANDBY") ? colorGreenText : colorRedText
@@ -639,7 +639,7 @@ Rectangle {
                 QGCLabel {
                     id: modeStatusText
                     text: MavManager.currentMode
-                    font.pointSize: ScreenTools.fontPointFactor * (12);
+                    font.pixelSize: ScreenTools.font12
                     font.weight: Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
@@ -660,7 +660,7 @@ Rectangle {
                 QGCLabel {
                     id: connectionStatusText
                     text: qsTr("CONNECTION LOST")
-                    font.pointSize: ScreenTools.fontPointFactor * (14);
+                    font.pixelSize: ScreenTools.font14
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter

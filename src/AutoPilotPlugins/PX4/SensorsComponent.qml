@@ -57,8 +57,8 @@ QGCView {
     // Used to pass help text to the preCalibrationDialog dialog
     property string preCalibrationDialogHelp
 
-    readonly property int sideBarH1PointSize: (ScreenTools.defaultFontPointSize * 1.3 + 0.5)
-    readonly property int mainTextH1PointSize: (ScreenTools.defaultFontPointSize * 1.5 + 0.5)
+    readonly property int sideBarH1PointSize: (ScreenTools.defaultFontPizelSize * 1.3 + 0.5)
+    readonly property int mainTextH1PointSize: (ScreenTools.defaultFontPizelSize * 1.5 + 0.5)
 
     readonly property int rotationColumnWidth: 250
     readonly property var rotations: [
@@ -213,7 +213,7 @@ QGCView {
                     id: compass0ComponentLabel
 
                     QGCLabel {
-                        font.pointSize: sideBarH1PointSize
+                        font.pixelSize: sideBarH1PointSize
                         text: "External Compass Orientation"
                     }
 
@@ -280,7 +280,7 @@ QGCView {
 
             QGCLabel {
                 text: "SENSORS CONFIG"
-                font.pointSize: ScreenTools.largeFontPointSize
+                font.pixelSize: ScreenTools.largeFontPixelSize
             }
 
             Item { height: 20; width: 10 } // spacer
@@ -408,7 +408,7 @@ QGCView {
                         id:             orientationCalAreaHelpText
                         width:          parent.width
                         wrapMode:       Text.WordWrap
-                        font.pointSize: ScreenTools.fontPointFactor * (22);
+                        font.pixelSize: ScreenTools.font22;
                         anchors.top: orientationCalArea.top
                         anchors.left: orientationCalArea.left
                         anchors.topMargin: 15
@@ -480,7 +480,7 @@ QGCView {
                         spacing:            5
 
                         QGCLabel {
-                            font.pointSize: sideBarH1PointSize
+                            font.pixelSize: sideBarH1PointSize
                             text: "Autopilot Orientation"
                         }
 
@@ -506,7 +506,7 @@ QGCView {
                             id: compass0ComponentLabel2
 
                             QGCLabel {
-                                font.pointSize: sideBarH1PointSize
+                                font.pixelSize: sideBarH1PointSize
                                 text: "External Compass Orientation"
                             }
                         }
@@ -531,7 +531,7 @@ QGCView {
                             id: compass1ComponentLabel2
 
                             QGCLabel {
-                                font.pointSize: sideBarH1PointSize
+                                font.pixelSize: sideBarH1PointSize
                                 text: "External Compass 1 Orientation"
                             }
                         }
@@ -556,7 +556,7 @@ QGCView {
                             id: compass2ComponentLabel2
 
                             QGCLabel {
-                                font.pointSize: sidebarH1PointSize
+                                font.pixelSize: sidebarH1PointSize
                                 text: "Compass 2 Orientation"
                             }
                         }
