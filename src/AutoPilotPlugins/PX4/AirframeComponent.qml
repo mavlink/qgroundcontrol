@@ -97,7 +97,7 @@ QGCView {
         QGCLabel {
             id:             header
             width:          parent.width
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pixelSize: ScreenTools.largeFontPixelSize
             text:           "AIRFRAME CONFIG"
         }
 

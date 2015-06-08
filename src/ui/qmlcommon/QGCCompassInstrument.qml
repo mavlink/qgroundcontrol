@@ -35,7 +35,7 @@ QGCMovableItem {
     id:                     root
     property real heading:  0
     property real size:     ScreenTools.pixelSizeFactor * (120)
-    property real _fontSize: ScreenTools.fontPointFactor * (12)
+    property int _fontSize: ScreenTools.font12
     width:                  size
     height:                 size
     Rectangle {
@@ -72,7 +72,7 @@ QGCMovableItem {
         QGCLabel {
             text:           heading.toFixed(0)
             font.weight:    Font.DemiBold
-            font.pointSize: _fontSize < 1 ? 1 : _fontSize;
+            font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
             color: "white"
             anchors.centerIn: parent
         }

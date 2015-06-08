@@ -45,7 +45,7 @@ MapQuickItem {
         Text {
             id: number
             anchors.centerIn: parent
-            font.pointSize: 11
+            font.pixelSize: 11
             font.weight: Font.DemiBold
             color: "white"
             text: marker.waypointID

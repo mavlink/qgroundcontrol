@@ -114,7 +114,7 @@ Rectangle {
                 verticalAlignment:      Text.AlignVCenter
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
-                font.pointSize:         ScreenTools.mediumFontPointSize
+                font.pixelSize:         ScreenTools.mediumFontPixelSize
                 text:                   "Welcome to QGroundControl. " +
                                             "QGroundControl supports any <font color=\"orange\"><a href=\"http://www.qgroundcontrol.org/mavlink/start\">mavlink</a></font> enabled vehicle. " +
                                             "If you are using the <font color=\"orange\"><a href=\"https://pixhawk.org/choice\">PX4 Flight Stack</a></font>, you also get full support for setting up and calibrating your vehicle. "+
@@ -136,7 +136,7 @@ Rectangle {
                 verticalAlignment:      Text.AlignVCenter
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
-                font.pointSize:         ScreenTools.mediumFontPointSize
+                font.pixelSize:         ScreenTools.mediumFontPixelSize
                 text:                   messagePanelText
             }
         }

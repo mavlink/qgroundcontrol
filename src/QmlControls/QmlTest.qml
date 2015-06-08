@@ -483,5 +483,37 @@ Rectangle {
                 }
             }
         }
+        Row {
+            Column {
+                Text { font.pixelSize: 8;  color: "white"; text: "Text Test 8px"; }
+                Text { font.pixelSize: 9;  color: "white"; text: "Text Test 9px"; }
+                Text { font.pixelSize: 10; color: "white"; text: "Text Test 10px"; }
+                Text { font.pixelSize: 11; color: "white"; text: "Text Test 11px"; }
+                Text { font.pixelSize: 12; color: "white"; text: "Text Test 12px"; }
+                Text { font.pixelSize: 13; color: "white"; text: "Text Test 13px"; }
+                Text { font.pixelSize: 14; color: "white"; text: "Text Test 14px"; }
+                Text { font.pixelSize: 15; color: "white"; text: "Text Test 15px"; }
+                Text { font.pixelSize: 16; color: "white"; text: "Text Test 16px"; }
+                Text { font.pixelSize: 17; color: "white"; text: "Text Test 17px"; }
+                Text { font.pixelSize: 18; color: "white"; text: "Text Test 18px"; }
+                Text { font.pixelSize: 19; color: "white"; text: "Text Test 19px"; }
+                Text { font.pixelSize: 20; color: "white"; text: "Text Test 20px"; }
+            }
+            Column {
+                Text { font.pixelSize: 8;  color: "white"; text: "Text Test 8pt"; }
+                Text { font.pixelSize: 9;  color: "white"; text: "Text Test 9pt"; }
+                Text { font.pixelSize: 10; color: "white"; text: "Text Test 10pt"; }
+                Text { font.pixelSize: 11; color: "white"; text: "Text Test 11pt"; }
+                Text { font.pixelSize: 12; color: "white"; text: "Text Test 12pt"; }
+                Text { font.pixelSize: 13; color: "white"; text: "Text Test 13pt"; }
+                Text { font.pixelSize: 14; color: "white"; text: "Text Test 14pt"; }
+                Text { font.pixelSize: 15; color: "white"; text: "Text Test 15pt"; }
+                Text { font.pixelSize: 16; color: "white"; text: "Text Test 16pt"; }
+                Text { font.pixelSize: 17; color: "white"; text: "Text Test 17pt"; }
+                Text { font.pixelSize: 18; color: "white"; text: "Text Test 18pt"; }
+                Text { font.pixelSize: 19; color: "white"; text: "Text Test 19pt"; }
+                Text { font.pixelSize: 20; color: "white"; text: "Text Test 20pt"; }
+            }
+        }
     }
 }
