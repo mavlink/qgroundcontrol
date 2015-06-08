@@ -236,6 +236,8 @@ QGCView {
                     duration:   1500
                 }
 
+                /*
+                // FIXME: Bar animation is turned off for now to figure out better usbaility
                 onRcValueChanged: {
                     if (Math.abs(rcValue - __lastRcValue) > __rcValueMaxJitter) {
                         __lastRcValue = rcValue
@@ -243,7 +245,6 @@ QGCView {
                     }
                 }
 
-                /*
                 // rcValue debugger
                 QGCLabel {
                     anchors.fill: parent
@@ -427,7 +428,13 @@ QGCView {
                     primary:    true
                     text:       "Calibrate"
 
-                    onClicked: showDialog(zeroTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                    onClicked: {
+                        if (text == "Calibrate") {
+                            showDialog(zeroTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                        } else {
+                            controller.nextButtonClicked()
+                        }
+                    }
                 }
             } // Row - Buttons
 
@@ -440,7 +447,14 @@ QGCView {
 
             Item {
                 width: 10
-                height: defaultTextHeight * 2
+                height: defaultTextHeight * 4
+            }
+
+            Rectangle {
+                width:          parent.width
+                height:         1
+                border.color:   qgcPal.text
+                border.width:   1
             }
 
             QGCLabel { text: "Additional Radio setup:" }
