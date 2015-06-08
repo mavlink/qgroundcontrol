@@ -43,16 +43,30 @@ class FirmwareImage : public QObject
 public:
     FirmwareImage(QObject *parent = 0);
     
-    /// Loads the specified firmware file. Supported formats: .px4, .bin, .ihx.
+    /// Loads the specified image file. Supported formats: .px4, .bin, .ihx.
     /// Emits errorMesssage and statusMessage signals while loading.
+    ///     @param imageFilename Image file to load
+    ///     @param boardId Board id that we are going to load this image onto
     /// @return true: success, false: failure
-    bool load(const QString& firmwareFilename);
+    bool load(const QString& imageFilename, uint32_t boardId);
     
-    bool firmwareIsBinFormat(void) { return _binFormat; }
+    /// @return true: image format is .bin
+    bool imageIsBinFormat(void) const { return _binFormat; }
     
-    QString binFilename(void) { return _binFilename; }
+    /// @return Filename for .bin file
+    QString binFilename(void) const { return _binFilename; }
+    
+    /// @return Block count from .ihx image
     uint16_t ihxBlockCount(void) const;
-    uint32_t ihxByteCount(void) const { return _ihxByteCount; }
+    
+    /// @return Total byte count of .ihx image
+    uint32_t ihxTotalByteCount(void) const { return _ihxByteCount; }
+    
+    /// Retrieves the specified block from the .ihx image
+    ///     @param index Index of block to return
+    ///     @param address Address of returned block
+    ///     @param byets Bytes of returned block
+    /// @return true: block retrieved
     bool ihxGetBlock(uint16_t index, uint16_t& address, QByteArray& bytes) const;
     
 signals:
@@ -72,6 +86,7 @@ private:
                               QByteArray&			decompressedBytes);
 
     bool                        _binFormat;
+    uint32_t                    _boardId;
     QString                     _binFilename;
     QMap<uint16_t, QByteArray>  _ihxBlockMap;
     uint32_t                    _ihxByteCount;

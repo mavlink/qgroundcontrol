@@ -591,7 +591,7 @@ HEADERS+= \
 !MobileBuild {
 HEADERS += \
     src/VehicleSetup/FirmwareUpgradeController.h \
-    src/VehicleSetup/PX4Bootloader.h \
+    src/VehicleSetup/Bootloader.h \
     src/VehicleSetup/PX4FirmwareUpgradeThread.h \
     src/VehicleSetup/FirmwareImage.h \
 
@@ -623,7 +623,7 @@ SOURCES += \
 !MobileBuild {
 SOURCES += \
     src/VehicleSetup/FirmwareUpgradeController.cc \
-    src/VehicleSetup/PX4Bootloader.cc \
+    src/VehicleSetup/Bootloader.cc \
     src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
     src/VehicleSetup/FirmwareImage.cc \
 

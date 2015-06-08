@@ -22,70 +22,44 @@
  ======================================================================*/
 
 /// @file
-///     @brief PX4 Bootloader Utility routines
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef PX4Bootloader_H
-#define PX4Bootloader_H
+#ifndef Bootloader_H
+#define Bootloader_H
 
-#include "IntelHexFirmware.h"
+#include "FirmwareImage.h"
 
 #include "qextserialport.h"
 
 #include <stdint.h>
 
-/// @brief This class is used to communicate with the Bootloader.
-class PX4Bootloader : public QObject
+/// Bootloader Utility routines. Works with PX4 bootloader and 3DR Radio bootloader.
+class Bootloader : public QObject
 {
     Q_OBJECT
     
 public:
-    explicit PX4Bootloader(QObject *parent = 0);
+    explicit Bootloader(QObject *parent = 0);
     
     /// @brief Returns the error message associated with the last failed call to one of the bootloader
     ///         utility routine below.
     QString errorString(void) { return _errorString; }
     
-    /// @brief Write a byte to the port
-    ///     @param port Port to write to
-    ///     @param data Bytes to write
-    ///     @param maxSize Number of bytes to write
-    /// @return true: success
-    bool write(QextSerialPort* port, const uint8_t* data, qint64 maxSize);
-    bool write(QextSerialPort* port, const uint8_t byte);
-    
-    /// @brief Read a set of bytes from the port
-    ///     @param data Read bytes into this buffer
-    ///     @param maxSize Number of bytes to read
-    ///     @param readTimeout Msecs to wait for bytes to become available on port
-    bool read(QextSerialPort* port, uint8_t* data, qint64 maxSize, int readTimeout = _readTimout);
-    
-    /// @brief Read a PROTO_SYNC command response from the bootloader
-    ///     @param responseTimeout Msecs to wait for response bytes to become available on port
-    bool getCommandResponse(QextSerialPort* port, const int responseTimeout = _responseTimeout);
-    
-    /// @brief Send a command to the bootloader
-    ///     @param cmd Command to send using PROTO_* enums
-    /// @return true: Command sent and valid sync response returned
-    bool sendCommand(QextSerialPort* port, uint8_t cmd, int responseTimeout = _responseTimeout);
-    
-    /// @brief Program the board with the specified firmware .bin file
-    bool program(QextSerialPort* port, const QString& binFilename);
-    
-    /// @brief Program the board with the specified firmware .ihx file
-    bool program(QextSerialPort* port, const IntelHexFirmware& ihxFirmware);
-    
-    /// @brief Verify the board flash. How it works depend on bootloader rev
-    ///         Rev 2: Read the flash back and compare it against the firmware file
-    ///         Rev 3: Compare CRCs for flash and file
-    bool verify(QextSerialPort* port, const QString binFilename);
-    
-    /// @brief Verify the board flash.
-    bool verify(QextSerialPort* port, const IntelHexFirmware& ihxFirmware);
+    /// @brief Opens a port to the bootloader
+    bool open(QextSerialPort* port, const QString portName);
     
     /// @brief Read a PROTO_SYNC response from the bootloader
     /// @return true: Valid sync response was received
     bool sync(QextSerialPort* port);
+    
+    /// @brief Erases the current program
+    bool erase(QextSerialPort* port);
+    
+    /// @brief Program the board with the specified image
+    bool program(QextSerialPort* port, const FirmwareImage* image);
+    
+    /// @brief Verify the board flash.
+    bool verify(QextSerialPort* port, const FirmwareImage* image);
     
     /// @brief Retrieve a set of board info from the bootloader of PX4 FMU and PX4 Flow boards
     ///     @param bootloaderVersion Returned INFO_BL_REV
@@ -96,20 +70,39 @@ public:
     /// @brief Retrieve the board id from a 3DR Radio
     bool get3DRRadioBoardId(QextSerialPort* port, uint32_t& boardID);
     
-    /// @brief Opens a port to the bootloader
-    bool open(QextSerialPort* port, const QString portName);
-    
     /// @brief Sends a PROTO_REBOOT command to the bootloader
-    bool sendBootloaderReboot(QextSerialPort* port);
+    bool reboot(QextSerialPort* port);
     
-    /// @brief Sends a PROTO_ERASE command to the bootlader
-    bool erase(QextSerialPort* port);
+    // Supported bootloader board ids
+    static const int boardIDPX4FMUV1 = 5;   ///< PX4 V1 board
+    static const int boardIDPX4FMUV2 = 9;   ///< PX4 V2 board
+    static const int boardIDPX4Flow = 6;    ///< PX4 Flow board
+    static const int boardIDAeroCore = 98;  ///< Gumstix AeroCore board
+    static const int boardID3DRRadio = 78;  ///< 3DR Radio
     
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines
-    void updateProgramProgress(int curr, int total);
+    void updateProgress(int curr, int total);
     
 private:
+    bool _binProgram(QextSerialPort* port, const FirmwareImage* image);
+    bool _ihxProgram(QextSerialPort* port, const FirmwareImage* image);
+    
+    bool _write(QextSerialPort* port, const uint8_t* data, qint64 maxSize);
+    bool _write(QextSerialPort* port, const uint8_t byte);
+    
+    bool _read(QextSerialPort* port, uint8_t* data, qint64 maxSize, int readTimeout = _readTimout);
+    
+    bool _sendCommand(QextSerialPort* port, uint8_t cmd, int responseTimeout = _responseTimeout);
+    bool _getCommandResponse(QextSerialPort* port, const int responseTimeout = _responseTimeout);
+    
+    bool _getPX4BoardInfo(QextSerialPort* port, uint8_t param, uint32_t& value);
+    
+    bool _verifyBytes(QextSerialPort* port, const FirmwareImage* image);
+    bool _binVerifyBytes(QextSerialPort* port, const FirmwareImage* image);
+    bool _ihxVerifyBytes(QextSerialPort* port, const FirmwareImage* image);
+    bool _verifyCRC(QextSerialPort* port);
+
     enum {
         // protocol bytes
         PROTO_INSYNC =          0x12,   ///< 'in sync' byte sent before status
@@ -143,14 +136,6 @@ private:
         PROG_MULTI_MAX		=   32,   ///< write size for PROTO_PROG_MULTI, must be multiple of 4
         READ_MULTI_MAX		=   32    ///< read size for PROTO_READ_MULTI, must be multiple of 4
     };
-    
-    bool _findBootloader(void);
-    bool _getPX4BoardInfo(QextSerialPort* port, uint8_t param, uint32_t& value);
-    
-
-    bool _downloadFirmware(void);
-    bool _bootloaderVerifyRev2(QextSerialPort* port, const QString firmwareFilename);
-    bool _bootloaderVerifyRev3(QextSerialPort* port);
     
     uint32_t    _boardID;           ///< board id for currently connected board
     uint32_t    _boardFlashSize;    ///< flash size for currently connected board

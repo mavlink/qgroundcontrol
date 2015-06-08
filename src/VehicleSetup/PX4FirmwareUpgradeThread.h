@@ -28,8 +28,8 @@
 #ifndef PX4FirmwareUpgradeThread_H
 #define PX4FirmwareUpgradeThread_H
 
-#include "PX4Bootloader.h"
-#include "IntelHexFirmware.h"
+#include "Bootloader.h"
+#include "FirmwareImage.h"
 
 #include <QObject>
 #include <QThread>
@@ -48,6 +48,8 @@ typedef enum {
     FoundBoard3drRadio
 } PX4FirmwareUpgradeFoundBoardType_t;
 
+class PX4FirmwareUpgradeThreadController;
+
 /// @brief Used to run bootloader commands on a seperate thread. These routines are mainly meant to to be called
 ///         internally by the PX4FirmwareUpgradeThreadController. Clients should call the various public methods
 ///         exposed by PX4FirmwareUpgradeThreadController.
@@ -56,39 +58,29 @@ class PX4FirmwareUpgradeThreadWorker : public QObject
     Q_OBJECT
     
 public:
-    PX4FirmwareUpgradeThreadWorker(QObject* parent = NULL);
+    PX4FirmwareUpgradeThreadWorker(PX4FirmwareUpgradeThreadController* controller);
     ~PX4FirmwareUpgradeThreadWorker();
     
-public slots:
-    void init(void);
-    void startFindBoardLoop(void);
-    void sendBootloaderReboot(void);
-    void binFlash(const QString& binFilename);
-    void ihxFlash(const IntelHexFirmware& ihxFirmware);
-    
 signals:
-    void foundBoard(bool firstAttempt, const QSerialPortInfo &portInfo, int type);
-    void boardGone();
-    void noBoardFound();
-    void foundBootloader(int bootloaderVersion, int boardID, int flashSize);
-    void bootloaderSyncFailed(void);
-    void error(const QString& errorString);
-    void status(const QString& status);
-    void flashComplete();
     void updateProgress(int curr, int total);
     
 private slots:
+    void _init(void);
+    void _startFindBoardLoop(void);
+    void _reboot(void);
+    void _flash(void);
     void _findBoardOnce(void);
-    void _updateProgramProgress(int curr, int total) { emit updateProgress(curr, total); }
+    void _updateProgress(int curr, int total) { emit updateProgress(curr, total); }
     
 private:
     bool _findBoardFromPorts(QSerialPortInfo& portInfo, PX4FirmwareUpgradeFoundBoardType_t& type);
-    void _findBootloader(const QSerialPortInfo& portInfo, bool radioMode);
+    bool _findBootloader(const QSerialPortInfo& portInfo, bool radioMode, bool errorOnNotFound);
     void _3drRadioForceBootloader(const QSerialPortInfo& portInfo);
     bool _erase(void);
-    void _binOrIhxFlash(const QString* binFilename, const IntelHexFirmware* ihxFirmware, bool firmwareIsBin);
     
-    PX4Bootloader*      _bootloader;
+    PX4FirmwareUpgradeThreadController* _controller;
+    
+    Bootloader*      _bootloader;
     QextSerialPort*     _bootloaderPort;
     QTimer*             _timerRetry;
     QTime               _elapsed;
@@ -127,10 +119,11 @@ public:
     void cancel(void);
     
     /// @brief Sends a reboot command to the bootloader
-    void sendBootloaderReboot(void) { emit _sendBootloaderRebootOnThread(); }
+    void reboot(void) { emit _rebootOnThread(); }
     
-    void binFlash(const QString& binFilename) { emit _binFlashOnThread(binFilename); }
-    void ihxFlash(const IntelHexFirmware& ihxFirmware) { emit _ihxFlashOnThread(ihxFirmware); }
+    void flash(const FirmwareImage* image);
+    
+    const FirmwareImage* image(void);
     
 signals:
     /// @brief Emitted by the find board process when it finds a board.
@@ -161,11 +154,10 @@ signals:
     // Internal signals to communicator with thread worker
     void _initThreadWorker(void);
     void _startFindBoardLoopOnThread(void);
-    void _sendBootloaderRebootOnThread(void);
-    void _binFlashOnThread(const QString& binFilename);
-    void _ihxFlashOnThread(const IntelHexFirmware& ihxFirmware);
+    void _rebootOnThread(void);
+    void _flashOnThread(void);
     
-private slots:
+private:
     void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
     void _noBoardFound(void);
     void _boardGone(void);
@@ -176,9 +168,12 @@ private slots:
     void _flashComplete(void) { emit flashComplete(); }
     void _updateProgress(int curr, int total) { emit updateProgress(curr, total); }
     
-private:
     PX4FirmwareUpgradeThreadWorker* _worker;
     QThread*                        _workerThread;  ///< Thread which PX4FirmwareUpgradeThreadWorker runs on
+    
+    const FirmwareImage* _image;
+    
+    friend class PX4FirmwareUpgradeThreadWorker;
 };
 
 #endif
