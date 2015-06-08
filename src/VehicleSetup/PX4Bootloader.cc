@@ -219,33 +219,14 @@ bool PX4Bootloader::erase(QextSerialPort* port)
     return true;
 }
 
-bool PX4Bootloader::program(QextSerialPort* port, const QString& firmwareFilename, uint16_t startAddress)
+bool PX4Bootloader::program(QextSerialPort* port, const QString& binFilename)
 {
-    QFile firmwareFile(firmwareFilename);
+    QFile firmwareFile(binFilename);
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
-        _errorString = tr("Unable to open firmware file %1: %2").arg(firmwareFilename).arg(firmwareFile.errorString());
+        _errorString = tr("Unable to open firmware file %1: %2").arg(binFilename).arg(firmwareFile.errorString());
         return false;
     }
     uint32_t imageSize = (uint32_t)firmwareFile.size();
-    
-    if (startAddress != 0) {
-        bool failed = true;
-        
-        if (write(port, PROTO_LOAD_ADDRESS) &&
-                write(port, startAddress & 0xFF) &&
-                write(port, (startAddress >> 8) & 0xFF) &&
-                write(port, PROTO_EOC)) {
-            port->flush();
-            if (getCommandResponse(port)) {
-                failed = false;
-            }
-        }
-        
-        if (failed) {
-            _errorString = "Unable to set start address";
-            return false;
-        }
-    }
     
     uint8_t imageBuf[PROG_MULTI_MAX];
     uint32_t bytesSent = 0;
@@ -306,12 +287,69 @@ bool PX4Bootloader::program(QextSerialPort* port, const QString& firmwareFilenam
     return true;
 }
 
-bool PX4Bootloader::verify(QextSerialPort* port, const QString firmwareFilename)
+bool PX4Bootloader::program(QextSerialPort* port, const IntelHexFirmware& ihxFirmware)
+{
+    uint32_t imageSize = ihxFirmware.byteCount();
+    uint32_t bytesSent = 0;
+
+    for (uint16_t index=0; index<ihxFirmware.blockCount(); index++) {
+        bool        failed;
+        uint16_t    flashAddress;
+        QByteArray  bytes;
+        
+        if (!ihxFirmware.getBlock(index, flashAddress, bytes)) {
+            _errorString = QString("Unable to retrieve block from ihx: index %1").arg(index);
+            return false;
+        }
+        
+        // Set flash address
+        
+        failed = true;
+        if (write(port, PROTO_LOAD_ADDRESS) &&
+                write(port, flashAddress & 0xFF) &&
+                write(port, (flashAddress >> 8) & 0xFF) &&
+                write(port, PROTO_EOC)) {
+            port->flush();
+            if (getCommandResponse(port)) {
+                failed = false;
+            }
+        }
+        
+        if (failed) {
+            _errorString = QString("Unable to set flash start address: 0x%2").arg(flashAddress, 8, 16, QLatin1Char('0'));
+            return false;
+        }
+        
+        // Flash
+        
+        failed = true;
+        if (write(port, PROTO_PROG_MULTI) &&
+                write(port, (uint8_t)bytes.count()) &&
+                write(port, (uint8_t *)bytes.data(), bytes.count()) &&
+                write(port, PROTO_EOC)) {
+            port->flush();
+            if (getCommandResponse(port)) {
+                failed = false;
+            }
+        }
+        if (failed) {
+            _errorString = QString("Flash failed: %1 at address 0x%2").arg(_errorString).arg(flashAddress, 8, 16, QLatin1Char('0'));
+            return false;
+        }
+        
+        bytesSent += bytes.count();
+        emit updateProgramProgress(bytesSent, imageSize);
+    }
+    
+    return true;
+}
+
+bool PX4Bootloader::verify(QextSerialPort* port, const QString binFilename)
 {
     bool ret;
     
     if (_bootloaderVersion <= 2) {
-        ret = _bootloaderVerifyRev2(port, firmwareFilename);
+        ret = _bootloaderVerifyRev2(port, binFilename);
     } else {
         ret = _bootloaderVerifyRev3(port);
     }
@@ -323,11 +361,11 @@ bool PX4Bootloader::verify(QextSerialPort* port, const QString firmwareFilename)
 
 /// @brief Verify the flash on bootloader version 2 by reading it back and comparing it against
 /// the original firmware file.
-bool PX4Bootloader::_bootloaderVerifyRev2(QextSerialPort* port, const QString firmwareFilename)
+bool PX4Bootloader::_bootloaderVerifyRev2(QextSerialPort* port, const QString binFilename)
 {
-    QFile firmwareFile(firmwareFilename);
+    QFile firmwareFile(binFilename);
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
-        _errorString = tr("Unable to open firmware file %1: %2").arg(firmwareFilename).arg(firmwareFile.errorString());
+        _errorString = tr("Unable to open firmware file %1: %2").arg(binFilename).arg(firmwareFile.errorString());
         return false;
     }
     uint32_t imageSize = (uint32_t)firmwareFile.size();

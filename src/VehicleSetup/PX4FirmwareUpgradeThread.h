@@ -29,6 +29,7 @@
 #define PX4FirmwareUpgradeThread_H
 
 #include "PX4Bootloader.h"
+#include "IntelHexFirmware.h"
 
 #include <QObject>
 #include <QThread>
@@ -62,7 +63,8 @@ public slots:
     void init(void);
     void startFindBoardLoop(void);
     void sendBootloaderReboot(void);
-    void flash(const QString& firmwareFilename, uint16_t startAddress);
+    void binFlash(const QString& binFilename);
+    void ihxFlash(const IntelHexFirmware& ihxFirmware);
     
 signals:
     void foundBoard(bool firstAttempt, const QSerialPortInfo &portInfo, int type);
@@ -84,7 +86,7 @@ private:
     void _findBootloader(const QSerialPortInfo& portInfo, bool radioMode);
     void _3drRadioForceBootloader(const QSerialPortInfo& portInfo);
     bool _erase(void);
-    void _verify(const QString& firmwareFilename);
+    void _binOrIhxFlash(const QString* binFilename, const IntelHexFirmware* ihxFirmware, bool firmwareIsBin);
     
     PX4Bootloader*      _bootloader;
     QextSerialPort*     _bootloaderPort;
@@ -127,8 +129,8 @@ public:
     /// @brief Sends a reboot command to the bootloader
     void sendBootloaderReboot(void) { emit _sendBootloaderRebootOnThread(); }
     
-    /// @brief Erase/Flash/Verify
-    void flash(const QString& firmwareFilename, uint16_t startAddress) { emit _flashOnThread(firmwareFilename, startAddress); }
+    void binFlash(const QString& binFilename) { emit _binFlashOnThread(binFilename); }
+    void ihxFlash(const IntelHexFirmware& ihxFirmware) { emit _ihxFlashOnThread(ihxFirmware); }
     
 signals:
     /// @brief Emitted by the find board process when it finds a board.
@@ -160,7 +162,8 @@ signals:
     void _initThreadWorker(void);
     void _startFindBoardLoopOnThread(void);
     void _sendBootloaderRebootOnThread(void);
-    void _flashOnThread(const QString& firmwareFilename, uint16_t startAddress);
+    void _binFlashOnThread(const QString& binFilename);
+    void _ihxFlashOnThread(const IntelHexFirmware& ihxFirmware);
     
 private slots:
     void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
