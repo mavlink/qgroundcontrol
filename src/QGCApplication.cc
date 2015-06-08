@@ -147,46 +147,61 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifndef __android__
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
+    
+    // Parse command line options
+    
+    bool fClearSettingsOptions = false; // Clear stored settings
+    bool fullLogging = false; // Turn on all logging
+    
+    CmdLineOpt_t rgCmdLineOptions[] = {
+        { "--clear-settings",   &fClearSettingsOptions, QString() },
+        { "--full-logging",     &fullLogging,           QString() },
+        // Add additional command line option flags here
+    };
+    
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
 #ifdef __mobile__
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
-#endif
-    
-#ifndef __mobile__
-    // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
-    // it to the correct location. This way default debug builds will have logging turned off.
+#else
+    if (fullLogging) {
+        QLoggingCategory::setFilterRules(QStringLiteral("*Log=true"));
+    } else {
+        // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
+        // it to the correct location. This way default debug builds will have logging turned off.
 
-    static const char* qtProjectDir = "QtProject";
-    static const char* qtLoggingFile = "qtlogging.ini";
-    bool loggingDirectoryOk = false;
+        static const char* qtProjectDir = "QtProject";
+        static const char* qtLoggingFile = "qtlogging.ini";
+        bool loggingDirectoryOk = false;
 
-    QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
-    if (!iniFileLocation.cd(qtProjectDir)) {
-        if (!iniFileLocation.mkdir(qtProjectDir)) {
-            qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);
-        } else {
-            if (!iniFileLocation.cd(qtProjectDir)) {
-                qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);;
+        QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
+        if (!iniFileLocation.cd(qtProjectDir)) {
+            if (!iniFileLocation.mkdir(qtProjectDir)) {
+                qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);
+            } else {
+                if (!iniFileLocation.cd(qtProjectDir)) {
+                    qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);;
+                }
+                loggingDirectoryOk = true;
             }
+        } else {
             loggingDirectoryOk = true;
         }
-    } else {
-        loggingDirectoryOk = true;
-    }
 
-    if (loggingDirectoryOk) {
-        qDebug () << iniFileLocation;
-        if (!iniFileLocation.exists(qtLoggingFile)) {
-            QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
-            if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                QTextStream out(&loggingFile);
-                out << "[Rules]\n";
-                out << "*Log.debug=false\n";
-                foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
-                    out << category << ".debug=false\n";
+        if (loggingDirectoryOk) {
+            qDebug () << iniFileLocation;
+            if (!iniFileLocation.exists(qtLoggingFile)) {
+                QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
+                if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                    QTextStream out(&loggingFile);
+                    out << "[Rules]\n";
+                    out << "*Log.debug=false\n";
+                    foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
+                        out << category << ".debug=false\n";
+                    }
+                } else {
+                    qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
                 }
-            } else {
-                qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
             }
         }
     }
@@ -216,17 +231,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
-
-    // Parse command line options
-
-    bool fClearSettingsOptions = false; // Clear stored settings
-
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, QString() },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
     QSettings settings;
 #ifdef UNITTEST_BUILD
