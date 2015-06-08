@@ -27,10 +27,14 @@
 
 #include "FirmwareImage.h"
 
+#include <QDebug>
 #include <QFile>
 #include <QTextStream>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSettings>
+#include <QFileInfo>
+#include <QDir>
 
 FirmwareImage::FirmwareImage(QObject* parent) :
     QObject(parent),
@@ -39,8 +43,10 @@ FirmwareImage::FirmwareImage(QObject* parent) :
     
 }
 
-bool FirmwareImage::load(const QString& firmwareFilename)
+bool FirmwareImage::load(const QString& firmwareFilename, uint32_t boardId)
 {
+    _boardId = boardId;
+    
     if (firmwareFilename.endsWith(".bin")) {
         _binFormat = true;
         return true;
@@ -158,13 +164,13 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
     return true;
 }
 
-bool FirmwareImage::_px4Load(const QString& firmwareFilename)
+bool FirmwareImage::_px4Load(const QString& imageFilename)
 {
     // We need to collect information from the .px4 file as well as pull the binary image out to a seperate file.
     
-    QFile px4File(firmwareFilename);
+    QFile px4File(imageFilename);
     if (!px4File.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit errorMessage(QString("Unable to open firmware file %1, error: %2").arg(firmwareFilename).arg(px4File.errorString()));
+        emit errorMessage(QString("Unable to open firmware file %1, error: %2").arg(imageFilename).arg(px4File.errorString()));
         return false;
     }
     
@@ -188,9 +194,9 @@ bool FirmwareImage::_px4Load(const QString& firmwareFilename)
         }
     }
     
-    uint32_t firmwareBoardID = (uint32_t)px4Json.value(QString("board_id")).toInt();
-    if (firmwareBoardID != _bootloaderBoardID) {
-        emit errorMessage(QString("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_bootloaderBoardID)));
+    uint32_t firmwareBoardId = (uint32_t)px4Json.value(QString("board_id")).toInt();
+    if (firmwareBoardId != _boardId) {
+        emit errorMessage(QString("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardId).arg(_boardId));
         return false;
     }
     
@@ -202,23 +208,25 @@ bool FirmwareImage::_px4Load(const QString& firmwareFilename)
                                         "parameter_xml",       // key which holds compress bytes
                                         decompressedBytes);    // Returned decompressed bytes
     if (success) {
+        // We cache the parameter xml in the same location as settings
         QSettings settings;
         QDir parameterDir = QFileInfo(settings.fileName()).dir();
         QString parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
         qDebug() << parameterFilename;
         QFile parameterFile(parameterFilename);
+        
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);
             if (bytesWritten != decompressedBytes.count()) {
                 // FIXME: What about these warnings?
-                emit statusMessage(QString("Write failed for parameter meta data file, error: %1").arg(parameterFile.errorString())));
+                emit statusMessage(QString("Write failed for parameter meta data file, error: %1").arg(parameterFile.errorString()));
                 parameterFile.close();
                 QFile::remove(parameterFilename);
             } else {
                 parameterFile.close();
             }
         } else {
-            emit statusMessage(QString("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename).arg(parameterFile.errorString())));
+            emit statusMessage(QString("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename).arg(parameterFile.errorString()));
         }
     }
     
@@ -239,18 +247,18 @@ bool FirmwareImage::_px4Load(const QString& firmwareFilename)
     }
     
     // Store decompressed image file in same location as original download file
-    QDir downloadDir = QFileInfo(downloadFilename).dir();
-    QString decompressFilename = downloadDir.filePath("PX4FlashUpgrade.bin");
+    QDir imageDir = QFileInfo(imageFilename).dir();
+    QString decompressFilename = imageDir.filePath("PX4FlashUpgrade.bin");
     
     QFile decompressFile(decompressFilename);
     if (!decompressFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        emit errorMessage(QString("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename).arg(decompressFile.errorString())));
+        emit errorMessage(QString("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename).arg(decompressFile.errorString()));
         return false;
     }
     
     qint64 bytesWritten = decompressFile.write(decompressedBytes);
     if (bytesWritten != decompressedBytes.count()) {
-        emit errorMessage(QString("Write failed for decompressed image file, error: %1").arg(decompressFile.errorString())));
+        emit errorMessage(QString("Write failed for decompressed image file, error: %1").arg(decompressFile.errorString()));
         return false;
     }
     decompressFile.close();

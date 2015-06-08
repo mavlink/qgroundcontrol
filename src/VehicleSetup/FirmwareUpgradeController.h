@@ -138,13 +138,6 @@ private:
     QString _portName;
     QString _portDescription;
 
-    // Supported bootloader board ids
-    static const int _boardIDPX4FMUV1 = 5;      ///< PX4 V1 board
-    static const int _boardIDPX4FMUV2 = 9;      ///< PX4 V2 board
-    static const int _boardIDPX4Flow = 6;       ///< PX4 Flow board
-    static const int _boardIDAeroCore = 98;     ///< Gumstix AeroCore board
-    static const int _boardID3DRRadio = 78;     ///< 3DR Radio
-
     /// Information which comes back from the bootloader
     bool        _bootloaderFound;           ///< true: we have received the foundBootloader signals
     uint32_t    _bootloaderVersion;         ///< Bootloader version
