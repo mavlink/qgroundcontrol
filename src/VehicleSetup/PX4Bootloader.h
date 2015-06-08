@@ -28,6 +28,8 @@
 #ifndef PX4Bootloader_H
 #define PX4Bootloader_H
 
+#include "IntelHexFirmware.h"
+
 #include "qextserialport.h"
 
 #include <stdint.h>
@@ -67,13 +69,19 @@ public:
     /// @return true: Command sent and valid sync response returned
     bool sendCommand(QextSerialPort* port, uint8_t cmd, int responseTimeout = _responseTimeout);
     
-    /// @brief Program the board with the specified firmware
-    bool program(QextSerialPort* port, const QString& firmwareFilename, uint16_t startAddress);
+    /// @brief Program the board with the specified firmware .bin file
+    bool program(QextSerialPort* port, const QString& binFilename);
+    
+    /// @brief Program the board with the specified firmware .ihx file
+    bool program(QextSerialPort* port, const IntelHexFirmware& ihxFirmware);
     
     /// @brief Verify the board flash. How it works depend on bootloader rev
     ///         Rev 2: Read the flash back and compare it against the firmware file
     ///         Rev 3: Compare CRCs for flash and file
-    bool verify(QextSerialPort* port, const QString firmwareFilename);
+    bool verify(QextSerialPort* port, const QString binFilename);
+    
+    /// @brief Verify the board flash.
+    bool verify(QextSerialPort* port, const IntelHexFirmware& ihxFirmware);
     
     /// @brief Read a PROTO_SYNC response from the bootloader
     /// @return true: Valid sync response was received

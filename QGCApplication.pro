@@ -593,7 +593,7 @@ HEADERS += \
     src/VehicleSetup/FirmwareUpgradeController.h \
     src/VehicleSetup/PX4Bootloader.h \
     src/VehicleSetup/PX4FirmwareUpgradeThread.h \
-    src/VehicleSetup/IntelHexFirmware.h \
+    src/VehicleSetup/FirmwareImage.h \
 
 }
 
@@ -625,7 +625,7 @@ SOURCES += \
     src/VehicleSetup/FirmwareUpgradeController.cc \
     src/VehicleSetup/PX4Bootloader.cc \
     src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
-    src/VehicleSetup/IntelHexFirmware.cc \
+    src/VehicleSetup/FirmwareImage.cc \
 
 }
 

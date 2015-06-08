@@ -264,13 +264,21 @@ void PX4FirmwareUpgradeThreadWorker::sendBootloaderReboot(void)
     }
 }
 
-void PX4FirmwareUpgradeThreadWorker::flash(const QString& firmwareFilename, uint16_t startAddress)
+void PX4FirmwareUpgradeThreadWorker::_binOrIhxFlash(const QString* binFilename, const IntelHexFirmware* ihxFirmware, bool firmwareIsBin)
 {
-    qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::flash";
+    qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::_binOrIhxFlash";
     
     if (_erase()) {
         emit status("Programming new version...");
-        if (!_bootloader->program(_bootloaderPort, firmwareFilename, startAddress)) {
+        
+        bool success;
+        if (firmwareIsBin) {
+            success = _bootloader->program(_bootloaderPort, *binFilename);
+        } else {
+            success = _bootloader->program(_bootloaderPort, *ihxFirmware);
+        }
+        
+        if (!success) {
             _bootloaderPort->deleteLater();
             _bootloaderPort = NULL;
             qCDebug(FirmwareUpgradeLog) << "Program failed:" << _bootloader->errorString();
@@ -280,7 +288,21 @@ void PX4FirmwareUpgradeThreadWorker::flash(const QString& firmwareFilename, uint
             emit status("Program complete");
         }
         
-        _verify(firmwareFilename);
+        emit status("Verifying program...");
+        
+        if (firmwareIsBin) {
+            success = _bootloader->verify(_bootloaderPort, *binFilename);
+        } else {
+            success = _bootloader->verify(_bootloaderPort, *ihxFirmware);
+        }
+        
+        if (success) {
+            qCDebug(FirmwareUpgradeLog) << "Verify failed:" << _bootloader->errorString();
+            emit error(_bootloader->errorString());
+        } else {
+            qCDebug(FirmwareUpgradeLog) << "Verify complete";
+            emit status("Verify complete");
+        }
     }
     
     sendBootloaderReboot();
@@ -288,18 +310,14 @@ void PX4FirmwareUpgradeThreadWorker::flash(const QString& firmwareFilename, uint
     emit flashComplete();
 }
 
-void PX4FirmwareUpgradeThreadWorker::_verify(const QString& firmwareFilename)
+void PX4FirmwareUpgradeThreadWorker::ihxFlash(const IntelHexFirmware& ihxFirmware)
 {
-    qCDebug(FirmwareUpgradeLog) << "Verify";
-    
-    emit status("Verifying program...");
-    if (!_bootloader->verify(_bootloaderPort, firmwareFilename)) {
-        qCDebug(FirmwareUpgradeLog) << "Verify failed:" << _bootloader->errorString();
-        emit error(_bootloader->errorString());
-    } else {
-        qCDebug(FirmwareUpgradeLog) << "Verify complete";
-        emit status("Verify complete");
-    }
+    _binOrIhxFlash(NULL, &ihxFirmware, false);
+}
+
+void PX4FirmwareUpgradeThreadWorker::binFlash(const QString& binFilename)
+{
+    _binOrIhxFlash(&binFilename, NULL, true);
 }
 
 bool PX4FirmwareUpgradeThreadWorker::_erase(void)
@@ -341,7 +359,8 @@ PX4FirmwareUpgradeThreadController::PX4FirmwareUpgradeThreadController(QObject* 
 
     connect(this, &PX4FirmwareUpgradeThreadController::_initThreadWorker, _worker, &PX4FirmwareUpgradeThreadWorker::init);
     connect(this, &PX4FirmwareUpgradeThreadController::_startFindBoardLoopOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::startFindBoardLoop);
-    connect(this, &PX4FirmwareUpgradeThreadController::_flashOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::flash);
+    connect(this, &PX4FirmwareUpgradeThreadController::_binFlashOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::binFlash);
+    connect(this, &PX4FirmwareUpgradeThreadController::_ihxFlashOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::ihxFlash);
     connect(this, &PX4FirmwareUpgradeThreadController::_sendBootloaderRebootOnThread, _worker, &PX4FirmwareUpgradeThreadWorker::sendBootloaderReboot);
     
     _workerThread->start();
