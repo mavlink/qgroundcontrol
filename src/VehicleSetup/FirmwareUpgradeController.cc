@@ -397,8 +397,6 @@ void FirmwareUpgradeController::_flashComplete(void)
     _appendStatusLog("Upgrade complete", true);
     _appendStatusLog("------------------------------------------", false);
     emit flashComplete();
-    
-    QGCMessageBox::information("Firmware Upgrade", "Upgrade completed succesfully");
 }
 
 void FirmwareUpgradeController::_error(const QString& errorString)

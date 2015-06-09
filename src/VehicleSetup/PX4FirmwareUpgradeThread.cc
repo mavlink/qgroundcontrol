@@ -319,7 +319,7 @@ bool PX4FirmwareUpgradeThreadWorker::_erase(void)
 {
     qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::_erase";
     
-    emit status("Erasing previous program...");
+    emit status("Erasing previous program (can take a few seconds)...");
     
     if (_bootloader->erase(_bootloaderPort)) {
         qCDebug(FirmwareUpgradeLog) << "Erase complete";
