@@ -38,24 +38,26 @@
 
 FirmwareImage::FirmwareImage(QObject* parent) :
     QObject(parent),
-    _ihxByteCount(0)
+    _imageSize(0)
 {
     
 }
 
-bool FirmwareImage::load(const QString& firmwareFilename, uint32_t boardId)
+bool FirmwareImage::load(const QString& imageFilename, uint32_t boardId)
 {
+    _imageSize = 0;
     _boardId = boardId;
     
-    if (firmwareFilename.endsWith(".bin")) {
+    if (imageFilename.endsWith(".bin")) {
+        return _binLoad(imageFilename);
         _binFormat = true;
         return true;
-    } else if (firmwareFilename.endsWith(".px4")) {
+    } else if (imageFilename.endsWith(".px4")) {
         _binFormat = true;
-        return _px4Load(firmwareFilename);
-    } else if (firmwareFilename.endsWith(".ihx")) {
+        return _px4Load(imageFilename);
+    } else if (imageFilename.endsWith(".ihx")) {
         _binFormat = false;
-        return _ihxLoad(firmwareFilename);
+        return _ihxLoad(imageFilename);
     } else {
         emit errorMessage("Unsupported file format");
         return false;
@@ -110,7 +112,7 @@ bool FirmwareImage::_readBytesFromStream(QTextStream& stream, uint8_t byteCount,
 
 bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
 {
-    _ihxByteCount = 0;
+    _imageSize = 0;
     _ihxBlockMap.clear();
     
     QFile ihxFile(ihxFilename);
@@ -149,7 +151,7 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
         
         if (recordType == 0) {
             _ihxBlockMap[address] = bytes;
-            _ihxByteCount += blockByteCount;
+            _imageSize += blockByteCount;
         } else if (recordType == 1) {
             // EOF
             break;
@@ -166,6 +168,8 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
 
 bool FirmwareImage::_px4Load(const QString& imageFilename)
 {
+    _imageSize = 0;
+    
     // We need to collect information from the .px4 file as well as pull the binary image out to a seperate file.
     
     QFile px4File(imageFilename);
@@ -344,4 +348,19 @@ bool FirmwareImage::ihxGetBlock(uint16_t index, uint16_t& address, QByteArray& b
     } else {
         return false;
     }
+}
+
+bool FirmwareImage::_binLoad(const QString& imageFilename)
+{
+    QFile binFile(imageFilename);
+    if (!binFile.open(QIODevice::ReadOnly)) {
+        emit errorMessage(QString("Unabled to open firmware file %1, %2").arg(imageFilename).arg(binFile.errorString()));
+        return false;
+    }
+    
+    _imageSize = (uint32_t)binFile.size();
+    
+    binFile.close();
+    
+    return true;
 }

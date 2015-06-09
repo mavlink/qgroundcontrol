@@ -123,7 +123,7 @@ public:
     
     void flash(const FirmwareImage* image);
     
-    const FirmwareImage* image(void);
+    const FirmwareImage* image(void) { return _image; }
     
 signals:
     /// @brief Emitted by the find board process when it finds a board.

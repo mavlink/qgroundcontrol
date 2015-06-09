@@ -50,6 +50,9 @@ public:
     /// @return true: success, false: failure
     bool load(const QString& imageFilename, uint32_t boardId);
     
+    /// Returns the number of bytes in the image.
+    uint32_t imageSize(void) const { return _imageSize; }
+    
     /// @return true: image format is .bin
     bool imageIsBinFormat(void) const { return _binFormat; }
     
@@ -58,9 +61,6 @@ public:
     
     /// @return Block count from .ihx image
     uint16_t ihxBlockCount(void) const;
-    
-    /// @return Total byte count of .ihx image
-    uint32_t ihxTotalByteCount(void) const { return _ihxByteCount; }
     
     /// Retrieves the specified block from the .ihx image
     ///     @param index Index of block to return
@@ -74,6 +74,7 @@ signals:
     void statusMessage(const QString& warningtring);
     
 private:
+    bool _binLoad(const QString& px4Filename);
     bool _px4Load(const QString& px4Filename);
     bool _ihxLoad(const QString& ihxFilename);
     bool _readByteFromStream(QTextStream& stream, uint8_t& byte);
@@ -89,7 +90,7 @@ private:
     uint32_t                    _boardId;
     QString                     _binFilename;
     QMap<uint16_t, QByteArray>  _ihxBlockMap;
-    uint32_t                    _ihxByteCount;
+    uint32_t                    _imageSize;
 };
 
 #endif
