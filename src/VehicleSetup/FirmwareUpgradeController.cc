@@ -26,24 +26,17 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FirmwareUpgradeController.h"
-
-#include <QFile>
-#include <QFileInfo>
-#include <QStandardPaths>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QDir>
-#include <QQmlProperty>
-#include <QDebug>
-
+#include "Bootloader.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
+
 
 /// @Brief Constructs a new FirmwareUpgradeController Widget. This widget is used within the PX4VehicleConfig set of screens.
 FirmwareUpgradeController::FirmwareUpgradeController(void) :
     _downloadManager(NULL),
     _downloadNetworkReply(NULL),
-    _statusLog(NULL)
+    _statusLog(NULL),
+    _image(NULL)
 {
     _threadController = new PX4FirmwareUpgradeThreadController(this);
     Q_CHECK_PTR(_threadController);
@@ -197,27 +190,27 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareType_t firmwareType)
     size_t crgFirmware;
     
     switch (_bootloaderBoardID) {
-        case _boardIDPX4FMUV1:
+        case Bootloader::boardIDPX4FMUV1:
             prgFirmware = rgPX4FMUV1Firmware;
             crgFirmware = crgPX4FMUV1Firmware;
             break;
             
-        case _boardIDPX4Flow:
+        case Bootloader::boardIDPX4Flow:
             prgFirmware = rgPX4FlowFirmware;
             crgFirmware = crgPX4FlowFirmware;
             break;
             
-        case _boardIDPX4FMUV2:
+        case Bootloader::boardIDPX4FMUV2:
             prgFirmware = rgPX4FMUV2Firmware;
             crgFirmware = crgPX4FMUV2Firmware;
             break;
 
-        case _boardIDAeroCore:
+        case Bootloader::boardIDAeroCore:
             prgFirmware = rgAeroCoreFirmware;
             crgFirmware = crgAeroCoreFirmware;
             break;
 
-        case _boardID3DRRadio:
+        case Bootloader::boardID3DRRadio:
             prgFirmware = rg3DRRadioFirmware;
             crgFirmware = crg3DRRadioFirmware;
             break;
@@ -357,52 +350,14 @@ void FirmwareUpgradeController::_downloadFinished(void)
     
     file.write(reply->readAll());
     file.close();
+    FirmwareImage* image = new FirmwareImage(this);
     
-    uint16_t startAddress = 0;
+    connect(image, &FirmwareImage::statusMessage, this, &FirmwareUpgradeController::_status);
+    connect(image, &FirmwareImage::errorMessage, this, &FirmwareUpgradeController::_error);
     
-    if (downloadFilename.endsWith(".px4")) {
-        if (!_px4ToBin(downloadFilename)) {
-            cancel();
-            return;
-        }
-    } else if (downloadFilename.endsWith(".ihx")) {
-        if (!_ihxToBin(downloadFilename, startAddress)) {
-            cancel();
-            return;
-        }
-    } else {
-        uint32_t firmwareBoardID = 0;
-        
-        // Take some educated guesses on board id based on firmware build system file name conventions
-        
-        if (downloadFilename.toLower().contains("px4fmu-v1")) {
-            firmwareBoardID = _boardIDPX4FMUV2;
-        } else if (downloadFilename.toLower().contains("px4flow")) {
-            firmwareBoardID = _boardIDPX4Flow;
-        } else if (downloadFilename.toLower().contains("px4fmu-v1")) {
-            firmwareBoardID = _boardIDPX4FMUV1;
-        } else if (downloadFilename.toLower().contains("aerocore")) {
-            firmwareBoardID = _boardIDAeroCore;
-        } else if (downloadFilename.toLower().contains("radio")) {
-            firmwareBoardID = _boardID3DRRadio;
-        }
-        
-        if (firmwareBoardID != 0 &&  firmwareBoardID != _bootloaderBoardID) {
-            _appendStatusLog(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardID).arg(_bootloaderBoardID));
-            cancel();
-            return;
-        }
-        
-        _firmwareFilename = downloadFilename;
-        
-        QFile binFile(_firmwareFilename);
-        if (!binFile.open(QIODevice::ReadOnly)) {
-            _appendStatusLog(tr("Unabled to open firmware file %1, %2").arg(_firmwareFilename).arg(binFile.errorString()));
-            cancel();
-            return;
-        }
-        _imageSize = (uint32_t)binFile.size();
-        binFile.close();
+    if (!image->load(downloadFilename, _bootloaderBoardID)) {
+        cancel();
+        return;
     }
     
     // We can't proceed unless we have the bootloader
@@ -418,7 +373,7 @@ void FirmwareUpgradeController::_downloadFinished(void)
         return;
     }
 
-    _threadController->flash(_firmwareFilename, startAddress);
+    _threadController->flash(image);
 }
 
 /// @brief Called when an error occurs during download
@@ -436,12 +391,18 @@ void FirmwareUpgradeController::_downloadError(QNetworkReply::NetworkError code)
 ///         appropriate next step.
 void FirmwareUpgradeController::_flashComplete(void)
 {
+    delete _image;
+    _image = NULL;
+    
     _appendStatusLog("Upgrade complete", true);
     QGCMessageBox::information("Firmware Upgrade", "Upgrade completed succesfully");
 }
 
 void FirmwareUpgradeController::_error(const QString& errorString)
 {
+    delete _image;
+    _image = NULL;
+    
     _appendStatusLog(tr("Error: %1").arg(errorString), true);
     emit error();
     cancel();

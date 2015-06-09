@@ -29,6 +29,7 @@
 
 #include "PX4FirmwareUpgradeThread.h"
 #include "LinkManager.h"
+#include "FirmwareImage.h"
 
 #include <QObject>
 #include <QUrl>
@@ -174,6 +175,8 @@ private:
     
     QSerialPortInfo _foundBoardInfo;
     QString         _foundBoardType;
+    
+    FirmwareImage*  _image;
 };
 
 #endif

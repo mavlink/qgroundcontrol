@@ -224,6 +224,15 @@ bool Bootloader::erase(QextSerialPort* port)
     return true;
 }
 
+bool Bootloader::program(QextSerialPort* port, const FirmwareImage* image)
+{
+    if (image->imageIsBinFormat()) {
+        return _binProgram(port, image);
+    } else {
+        return _ihxProgram(port, image);
+    }
+}
+
 bool Bootloader::_binProgram(QextSerialPort* port, const FirmwareImage* image)
 {
     QFile firmwareFile(image->binFilename());
@@ -294,7 +303,7 @@ bool Bootloader::_binProgram(QextSerialPort* port, const FirmwareImage* image)
 
 bool Bootloader::_ihxProgram(QextSerialPort* port, const FirmwareImage* image)
 {
-    uint32_t imageSize = image->ihxTotalByteCount();
+    uint32_t imageSize = image->imageSize();
     uint32_t bytesSent = 0;
 
     for (uint16_t index=0; index<image->ihxBlockCount(); index++) {
@@ -377,6 +386,8 @@ bool Bootloader::_verifyBytes(QextSerialPort* port, const FirmwareImage* image)
 
 bool Bootloader::_binVerifyBytes(QextSerialPort* port, const FirmwareImage* image)
 {
+    Q_ASSERT(image->imageIsBinFormat());
+    
     QFile firmwareFile(image->binFilename());
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
         _errorString = tr("Unable to open firmware file %1: %2").arg(image->binFilename()).arg(firmwareFile.errorString());
@@ -389,15 +400,15 @@ bool Bootloader::_binVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
     }
     
     uint8_t fileBuf[READ_MULTI_MAX];
-    uint8_t flashBuf[READ_MULTI_MAX];
+    uint8_t readBuf[READ_MULTI_MAX];
     uint32_t bytesVerified = 0;
     
     Q_ASSERT(PROG_MULTI_MAX <= 0x8F);
     
     while (bytesVerified < imageSize) {
         int bytesToRead = imageSize - bytesVerified;
-        if (bytesToRead > (int)sizeof(fileBuf)) {
-            bytesToRead = (int)sizeof(fileBuf);
+        if (bytesToRead > (int)sizeof(readBuf)) {
+            bytesToRead = (int)sizeof(readBuf);
         }
         
         Q_ASSERT((bytesToRead % 4) == 0);
@@ -411,33 +422,107 @@ bool Bootloader::_binVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
         Q_ASSERT(bytesToRead <= 0x8F);
         
         bool failed = true;
-        if (_write(port, PROTO_READ_MULTI)) {
-            if (_write(port, (uint8_t)bytesToRead)) {
-                if (_write(port, PROTO_EOC)) {
-                    port->flush();
-                    if (_read(port, flashBuf, sizeof(flashBuf))) {
-                        if (_getCommandResponse(port)) {
-                            failed = false;
-                        }
-                    }
+        if (_write(port, PROTO_READ_MULTI) &&
+            _write(port, (uint8_t)bytesToRead) &&
+            _write(port, PROTO_EOC)) {
+            port->flush();
+            if (_read(port, readBuf, sizeof(readBuf))) {
+                if (_getCommandResponse(port)) {
+                    failed = false;
                 }
             }
         }
         if (failed) {
-            _errorString = tr("Verify failed: %1 at address: 0x%2").arg(_errorString).arg(bytesVerified, 8, 16, QLatin1Char('0'));
+            _errorString = tr("Read failed: %1 at address: 0x%2").arg(_errorString).arg(bytesVerified, 8, 16, QLatin1Char('0'));
             return false;
         }
 
         for (int i=0; i<bytesToRead; i++) {
-            if (fileBuf[i] != flashBuf[i]) {
-                _errorString = tr("Compare failed at %1: file(0x%2) flash(0x%3) at address: 0x%4").arg(bytesVerified + i).arg(fileBuf[i], 2, 16, QLatin1Char('0')).arg(flashBuf[i], 2, 16, QLatin1Char('0')).arg(bytesVerified, 8, 16, QLatin1Char('0'));
+            if (fileBuf[i] != readBuf[i]) {
+                _errorString = tr("Compare failed: expected(0x%1) actual(0x%2) at address: 0x%3").arg(fileBuf[i], 2, 16, QLatin1Char('0')).arg(readBuf[i], 2, 16, QLatin1Char('0')).arg(bytesVerified + i, 8, 16, QLatin1Char('0'));
                 return false;
             }
         }
         
         bytesVerified += bytesToRead;
+        
+        emit updateProgress(bytesVerified, imageSize);
     }
+    
     firmwareFile.close();
+    
+    return true;
+}
+
+bool Bootloader::_ihxVerifyBytes(QextSerialPort* port, const FirmwareImage* image)
+{
+    Q_ASSERT(!image->imageIsBinFormat());
+    
+    uint32_t imageSize = image->imageSize();
+    uint32_t bytesVerified = 0;
+    
+    for (uint16_t index=0; index<image->ihxBlockCount(); index++) {
+        bool        failed;
+        uint16_t    readAddress;
+        QByteArray  imageBytes;
+        
+        if (!image->ihxGetBlock(index, readAddress, imageBytes)) {
+            _errorString = QString("Unable to retrieve block from ihx: index %1").arg(index);
+            return false;
+        }
+        
+        // Set read address
+        
+        failed = true;
+        if (_write(port, PROTO_LOAD_ADDRESS) &&
+            _write(port, readAddress & 0xFF) &&
+            _write(port, (readAddress >> 8) & 0xFF) &&
+            _write(port, PROTO_EOC)) {
+            port->flush();
+            if (_getCommandResponse(port)) {
+                failed = false;
+            }
+        }
+        
+        if (failed) {
+            _errorString = QString("Unable to set read start address: 0x%2").arg(readAddress, 8, 16, QLatin1Char('0'));
+            return false;
+        }
+        
+        // Read back
+        
+        uint8_t readBuf[READ_MULTI_MAX];
+        uint8_t bytesToRead = imageBytes.count();
+
+        failed = true;
+        if (_write(port, PROTO_READ_MULTI) &&
+            _write(port, bytesToRead) &&
+            _write(port, PROTO_EOC)) {
+            port->flush();
+            if (_read(port, readBuf, bytesToRead)) {
+                if (_getCommandResponse(port)) {
+                    failed = false;
+                }
+            }
+        }
+        if (failed) {
+            _errorString = tr("Read failed: %1 at address: 0x%2").arg(_errorString).arg(readAddress, 8, 16, QLatin1Char('0'));
+            return false;
+        }
+        
+        // Compare
+        
+        for (int i=0; i<bytesToRead; i++) {
+            if ((uint8_t)imageBytes[i] != readBuf[i]) {
+                _errorString = QString("Compare failed: expected(0x%1) actual(0x%2) at address: 0x%3").arg(imageBytes[i], 2, 16, QLatin1Char('0')).arg(readBuf[i], 2, 16, QLatin1Char('0')).arg(readAddress + i, 8, 16, QLatin1Char('0'));
+                return false;
+            }
+        }
+        
+        bytesVerified += bytesToRead;
+        
+        emit updateProgress(bytesVerified, imageSize);
+    }
     
     return true;
 }
