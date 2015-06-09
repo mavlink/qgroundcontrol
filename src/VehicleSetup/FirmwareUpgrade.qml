@@ -39,6 +39,7 @@ QGCView {
 
     // User visible string
     readonly property string title:             "FIRMWARE UPDATE"
+    readonly property string welcomeText:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
     readonly property string plugInText:        "<font color=\"yellow\">Plug in your device</font> via USB to <font color=\"yellow\">start</font> firmware upgrade"
     readonly property string qgcDisconnectText: "All QGroundControl connections to vehicles must be disconnected prior to firmware upgrade.\n" +
                                                     "Click <font color=\"yellow\">Disconnect</font> in the toolbar above."
@@ -46,9 +47,9 @@ QGCView {
                                                     "<font color=\"yellow\">Disconnect {0}</font> from usb."
 
     property string firmwareWarningMessage
-    property bool controllerCompleted:      false
-    property bool controllerAndViewReady:   false
-    property bool initialBoardSearch:       true
+    property bool   controllerCompleted:      false
+    property bool   controllerAndViewReady:   false
+    property bool   initialBoardSearch:       true
     property string firmwareName
 
     function cancelFlash() {
@@ -98,18 +99,25 @@ QGCView {
 
         onError: hideDialog()
 
-/*
-        onFlashComplete: {
-            initialBoardSearch = true
-            controller.startBoardSearch()
-        }
-*/
+        onFlashComplete: flashCompleteWait.running = true
     }
 
     onCompleted: {
         if (controllerCompleted) {
             controllerAndViewReady = true
             controller.start()
+        }
+    }
+
+    Timer {
+        id:         flashCompleteWait
+        interval:   15000
+
+        onTriggered: {
+            initialBoardSearch = true
+            progressBar.value = 0
+            statusTextArea.append(welcomeText)
+            controller.startBoardSearch()
         }
     }
 
@@ -390,12 +398,6 @@ QGCView {
                 font.pointSize: ScreenTools.largeFontPointSize
             }
 
-            QGCLabel {
-                width:      parent.width
-                wrapMode:   Text.WordWrap
-                text:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
-            }
-
             ProgressBar {
                 id: progressBar
                 width: parent.width
@@ -410,6 +412,7 @@ QGCView {
                 frameVisible:	false
                 font.pointSize: ScreenTools.defaultFontPointSize
                 textFormat:     TextEdit.RichText
+                text:           welcomeText
 
                 style: TextAreaStyle {
                     textColor:          qgcPal.text
