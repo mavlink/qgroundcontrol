@@ -1053,5 +1053,5 @@ void RadioComponentController::_signalAllAttiudeValueChanges(void)
 
 void RadioComponentController::copyTrims(void)
 {
-    _uas->startCalibration(UASInterface::StartCalibrationRadio);
+    _uas->startCalibration(UASInterface::StartCalibrationCopyTrims);
 }
