@@ -58,8 +58,8 @@ Item {
     }
     Rectangle {
         anchors.centerIn: compass
-        width:  ScreenTools.pixelSizeFactor * (40)
-        height: ScreenTools.pixelSizeFactor * (25)
+        width:  ScreenTools.defaultFontPixelSize * (3.33)
+        height: ScreenTools.defaultFontPixelSize * (2.08)
         border.color: Qt.rgba(1,1,1,0.15)
         color: Qt.rgba(0,0,0,0.25)
         QGCLabel {

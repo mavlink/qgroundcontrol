@@ -40,7 +40,7 @@ Button {
                 horizontalAlignment: TextEdit.AlignHCenter
 
                 text: control.text
-                font.pixelSize: ScreenTools.defaultFontPizelSize
+                font.pixelSize: ScreenTools.defaultFontPixelSize
                 antialiasing: true
                 color: __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
 

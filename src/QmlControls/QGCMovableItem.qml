@@ -9,8 +9,8 @@ import QGroundControl.ScreenTools 1.0
 Item {
     id: root
     property bool   allowDragging:  true
-    property real   minimumWidth:   ScreenTools.pixelSizeFactor * (60)
-    property real   minimumHeight:  ScreenTools.pixelSizeFactor * (60)
+    property real   minimumWidth:   ScreenTools.defaultFontPixelSize * (5)
+    property real   minimumHeight:  ScreenTools.defaultFontPixelSize * (5)
     property alias  tForm:          tform
     signal          resetRequested()
     transform: Scale {

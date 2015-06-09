@@ -39,13 +39,13 @@ Rectangle {
     property bool showClimbRate: true
     anchors.verticalCenter: parent.verticalCenter
     width:  parent.width
-    height: (showAltitude && showClimbRate) ? ScreenTools.pixelSizeFactor * (50) : ScreenTools.pixelSizeFactor * (25)
+    height: (showAltitude && showClimbRate) ? ScreenTools.defaultFontPixelSize * (4.16) : ScreenTools.defaultFontPixelSize * (2.08)
     color: "black"
     border.color: Qt.rgba(1,1,1,0.25)
     opacity: 1.0
     Column{
         anchors.centerIn: parent
-        spacing: ScreenTools.pixelSizeFactor * (4)
+        spacing: ScreenTools.defaultFontPixelSize * (0.33)
         QGCLabel {
             text: 'h: ' + altitude.toFixed(0)
             font.weight: Font.DemiBold

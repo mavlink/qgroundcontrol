@@ -63,10 +63,10 @@ QGCView {
                 x:      __leftMargin
 
                 QGCLabel {
-                    height:				defaultTextHeight + (ScreenTools.pixelSizeFactor * (9))
+                    height:				defaultTextHeight + (ScreenTools.defaultFontPizelSize * 0.5)
                     text:               group
                     verticalAlignment:	Text.AlignVCenter
-                    font.pixelSize:     ScreenTools.font16;
+                    font.pixelSize:     ScreenTools.mediumFontPixelSize
                 }
 
                 Rectangle {
@@ -84,7 +84,7 @@ QGCView {
                         Item {
                             x:			__leftMargin
                             width:      parent.width
-                            height:		defaultTextHeight + (ScreenTools.pixelSizeFactor * (9))
+                            height:		defaultTextHeight + (ScreenTools.defaultFontPixelSize * 0.5)
 
                             QGCLabel {
                                 id:                 nameLabel
@@ -142,7 +142,7 @@ QGCView {
                 height: firstButton.height
 
                 QGCLabel {
-                    font.pixelSize: ScreenTools.font20;
+                    font.pixelSize: ScreenTools.largeFontPixelSize
                     visible:        fullMode
                     text:           "PARAMETER EDITOR"
                 }
@@ -199,10 +199,10 @@ QGCView {
                                 readonly property int componentId: parseInt(modelData)
 
                                 QGCLabel {
-                                    height:				contentHeight + (ScreenTools.pixelSizeFactor * (9))
+                                    height:				contentHeight + (ScreenTools.defaultFontPixelHeight * 0.5)
                                     text:               "Component #: " + componentId.toString()
                                     verticalAlignment:	Text.AlignVCenter
-                                    font.pixelSize:     ScreenTools.font16;
+                                    font.pixelSize:     ScreenTools.mediumFontPixelSize
                                 }
 
                                 Repeater {
@@ -224,7 +224,7 @@ QGCView {
 
                                         Item {
                                             width:  1
-                                            height: ScreenTools.pixelSizeFactor * (3)
+                                            height: ScreenTools.defaultFontPixelSize * 0.25
                                         }
                                     } // Column - Group
                                 } // Repeater - Groups

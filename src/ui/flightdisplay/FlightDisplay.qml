@@ -118,17 +118,17 @@ Item {
         }
         contentItem: Rectangle {
             color: __qgcPal.window
-            implicitWidth:  ScreenTools.pixelSizeFactor * (360)
-            implicitHeight: ScreenTools.pixelSizeFactor * (300)
+            implicitWidth:  ScreenTools.defaultFontPixelSize * (30)
+            implicitHeight: ScreenTools.defaultFontPixelSize * (30)
             Column {
                 id: dialogColumn
                 anchors.centerIn: parent
-                spacing:  ScreenTools.adjustPixelSize(10)
+                spacing:  ScreenTools.defaultFontPixelSize
                 width: parent.width
                 Grid {
                     columns: 2
-                    spacing:    ScreenTools.pixelSizeFactor * (8)
-                    rowSpacing: ScreenTools.pixelSizeFactor * (10)
+                    spacing:    ScreenTools.defaultFontPixelSize * (0.66)
+                    rowSpacing: ScreenTools.defaultFontPixelSize * (0.83)
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCCheckBox {
                         text: "Map Background"
@@ -432,25 +432,25 @@ Item {
 
     QGCHudMessage {
         id:     hudMessage
-        y:      ScreenTools.pixelSizeFactor * (5)
+        y:      ScreenTools.defaultFontPizelSize * (0.42)
         width:  (parent.width - 520 > 200) ? parent.width - 520 : 200
-        height: ScreenTools.pixelSizeFactor * (30)
+        height: ScreenTools.defaultFontPizelSize * (2.5)
         anchors.horizontalCenter: parent.horizontalCenter
         z:      mapBackground.z + 1
     }
 
     QGCCompassInstrument {
         id:                 compassInstrument
-        y:                  ScreenTools.pixelSizeFactor * (5)
-        x:                  ScreenTools.pixelSizeFactor * (85)
-        size:               ScreenTools.pixelSizeFactor * (160)
+        y:                  ScreenTools.defaultFontPixelSize * (0.42)
+        x:                  ScreenTools.defaultFontPixelSize * (7.1)
+        size:               ScreenTools.defaultFontPixelSize * (13.3)
         heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
         visible:            mapBackground.visible && showCompass
         z:                  mapBackground.z + 2
         onResetRequested: {
-            y               = ScreenTools.pixelSizeFactor * (5)
-            x               = ScreenTools.pixelSizeFactor * (85)
-            size            = ScreenTools.pixelSizeFactor * (160)
+            y               = ScreenTools.defaultFontPixelSize * (0.42)
+            x               = ScreenTools.defaultFontPixelSize * (7.1)
+            size            = ScreenTools.defaultFontPixelSize * (13.3)
             tForm.xScale    = 1
             tForm.yScale    = 1
         }
@@ -458,20 +458,20 @@ Item {
 
     QGCAttitudeInstrument {
         id:                 attitudeInstrument
-        y:                  ScreenTools.pixelSizeFactor * (5)
-        size:               ScreenTools.pixelSizeFactor * (160)
+        y:                  ScreenTools.defaultFontPixelSize * (0.42)
+        size:               ScreenTools.defaultFontPixelSize * (13.3)
         rollAngle:          roll
         pitchAngle:         pitch
         showPitch:          showPitchIndicator
         visible:            mapBackground.visible && showAttitudeIndicator
         anchors.right:      root.right
-        anchors.rightMargin: ScreenTools.pixelSizeFactor * (85)
+        anchors.rightMargin: ScreenTools.defaultFontPixelSize * (7.1)
         z:                  mapBackground.z + 2
         onResetRequested: {
-            y                   = ScreenTools.pixelSizeFactor * (5)
+            y                   = ScreenTools.defaultFontPixelSize * (0.42)
             anchors.right       = root.right
-            anchors.rightMargin = ScreenTools.pixelSizeFactor * (85)
-            size                = ScreenTools.pixelSizeFactor * (160)
+            anchors.rightMargin = ScreenTools.defaultFontPixelSize * (7.1)
+            size                = ScreenTools.defaultFontPixelSize * (13.3)
             tForm.xScale        = 1
             tForm.yScale        = 1
         }
@@ -490,8 +490,8 @@ Item {
         rollAngle:          roll
         pitchAngle:         pitch
         visible:            !mapBackground.visible && showAttitudeIndicator
-        width:              ScreenTools.pixelSizeFactor * (260)
-        height:             ScreenTools.pixelSizeFactor * (260)
+        width:              ScreenTools.defaultFontPixelSize * (21.7)
+        height:             ScreenTools.defaultFontPixelSize * (21.7)
         z:                  20
     }
 
@@ -502,15 +502,15 @@ Item {
         pitchAngle:         pitch
         rollAngle:          roll
         color:              Qt.rgba(0,0,0,0)
-        size:               ScreenTools.pixelSizeFactor * (120)
+        size:               ScreenTools.defaultFontPixelSize * (10)
         z:                  30
     }
 
     QGCAltitudeWidget {
         id:                 altitudeWidget
         anchors.right:      parent.right
-        width:              ScreenTools.pixelSizeFactor * (60)
-        height:             parent.height * 0.65 > ScreenTools.pixelSizeFactor * (280) ? ScreenTools.pixelSizeFactor * (280) : parent.height * 0.65
+        width:              ScreenTools.defaultFontPixelSize * (5)
+        height:             parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
         altitude:           MavManager.altitudeWGS84
         z:                  30
     }
@@ -518,8 +518,8 @@ Item {
     QGCSpeedWidget {
         id:                 speedWidget
         anchors.left:       parent.left
-        width:              ScreenTools.pixelSizeFactor * (60)
-        height:             parent.height * 0.65 > ScreenTools.pixelSizeFactor * (280) ? ScreenTools.pixelSizeFactor * (280) : parent.height * 0.65
+        width:              ScreenTools.defaultFontPixelSize * (5)
+        height:             parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
         speed:              MavManager.groundSpeed
         z:                  40
     }
@@ -527,7 +527,7 @@ Item {
     QGCCurrentSpeed {
         id: currentSpeed
         anchors.left:       parent.left
-        width:              ScreenTools.pixelSizeFactor * (75)
+        width:              ScreenTools.defaultFontPixelSize * (6.25)
         airspeed:           MavManager.airSpeed
         groundspeed:        MavManager.groundSpeed
         showAirSpeed:       true
@@ -539,7 +539,7 @@ Item {
     QGCCurrentAltitude {
         id: currentAltitude
         anchors.right:      parent.right
-        width:              ScreenTools.pixelSizeFactor * (75)
+        width:              ScreenTools.defaultFontPixelSize * (6.25)
         altitude:           MavManager.altitudeWGS84
         vertZ:              MavManager.climbRate
         showAltitude:       true
@@ -551,9 +551,9 @@ Item {
     QGCCompass {
         id:                 compassIndicator
         y:                  root.height * 0.7
-        x:                  root.width  * 0.5 - ScreenTools.pixelSizeFactor * (60)
-        width:              ScreenTools.pixelSizeFactor * (120)
-        height:             ScreenTools.pixelSizeFactor * (120)
+        x:                  root.width  * 0.5 - ScreenTools.defaultFontPixelSize * (5)
+        width:              ScreenTools.defaultFontPixelSize * (10)
+        height:             ScreenTools.defaultFontPixelSize * (10)
         heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
         visible:            !mapBackground.visible && showCompass
         z:                  70

@@ -307,9 +307,9 @@ Item {
         z: 1000
         anchors {
             bottom: parent.bottom;
-            bottomMargin:   ScreenTools.pixelSizeFactor * (15)
-            rightMargin:    ScreenTools.pixelSizeFactor * (20)
-            leftMargin:     ScreenTools.pixelSizeFactor * (20)
+            bottomMargin:   ScreenTools.defaultFontPixelSize * (1.25)
+            rightMargin:    ScreenTools.defaultFontPixelSize * (1.66)
+            leftMargin:     ScreenTools.defaultFontPixelSize * (1.66)
             left: parent.left
         }
         width: parent.width - anchors.rightMargin - anchors.leftMargin
@@ -330,9 +330,9 @@ Item {
         opacity: 1
         anchors {
             bottom: zoomSlider.top;
-            bottomMargin: ScreenTools.pixelSizeFactor * (8);
+            bottomMargin: ScreenTools.defaultFontPixelSize * (0.66);
             left: zoomSlider.left
-            leftMargin: ScreenTools.pixelSizeFactor * (4)
+            leftMargin: ScreenTools.defaultFontPixelSize * (0.33)
         }
         Image {
             id: scaleImageLeft
@@ -359,7 +359,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             anchors.bottom: parent.bottom
             anchors.left:   parent.left
-            anchors.bottomMargin: ScreenTools.pixelSizeFactor * (10)
+            anchors.bottomMargin: ScreenTools.defaultFontPixelSize * (0.83)
             text: "0 m"
         }
         Component.onCompleted: {

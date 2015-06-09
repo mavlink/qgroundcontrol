@@ -69,13 +69,13 @@
 #include "SensorsComponentController.h"
 #include "PowerComponentController.h"
 #include "RadioComponentController.h"
+#include "ScreenToolsController.h"
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
 #endif
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
 
-#include "ScreenTools.h"
 #include "MavManager.h"
 
 #ifdef QGC_RTLAB_ENABLED
@@ -104,10 +104,10 @@ const char* QGCApplication::_lightStyleFile = ":/res/styles/style-light.css";
  * This is called by the QtQuick engine for creating the singleton
  **/
 
-static QObject* screenToolsSingletonFactory(QQmlEngine*, QJSEngine*)
+static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    ScreenTools* screenTools = new ScreenTools;
-    return screenTools;
+    ScreenToolsController* screenToolsController = new ScreenToolsController;
+    return screenToolsController;
 }
 
 /**
@@ -261,6 +261,33 @@ void QGCApplication::_initCommon(void)
 {
     QSettings settings;
 
+    // Register our Qml objects
+    
+    qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
+    
+    qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Can only reference, cannot create");
+    qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Can only reference, cannot create");
+    
+    qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
+    qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<CustomCommandWidgetController>("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
+    qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
+    qmlRegisterType<AirframeComponentController>("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
+    qmlRegisterType<SensorsComponentController>("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
+    qmlRegisterType<PowerComponentController>("QGroundControl.Controllers", 1, 0, "PowerComponentController");
+    qmlRegisterType<RadioComponentController>("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+    qmlRegisterType<ScreenToolsController>("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
+    
+#ifndef __mobile__
+    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+#endif
+    
+    //-- Create QML Singleton Interfaces
+    qmlRegisterSingletonType<ScreenToolsController>("QGroundControl.ScreenToolsController", 1, 0, "ScreenToolsController", screenToolsControllerSingletonFactory);
+    qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
+    
+    //-- Register Waypoint Interface
+    qmlRegisterInterface<Waypoint>("Waypoint");
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
     if (settings.contains(_settingsVersionKey)) {
@@ -314,42 +341,6 @@ void QGCApplication::_initCommon(void)
     }
     qDebug() << "Saved files location" << savedFilesLocation;
     settings.setValue(_savedFilesLocationKey, savedFilesLocation);
-
-    // Load application font
-    QFontDatabase fontDatabase = QFontDatabase();
-    const QString fontFileName = ":/res/fonts/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
-    //const QString fontFamilyName = "Bitstream Vera Sans";
-    if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
-    fontDatabase.addApplicationFont(fontFileName);
-    // Avoid Using setFont(). In the Qt docu you can read the following:
-    //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
-    // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
-    
-    // Register our Qml objects
-    
-    qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
-    
-    qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Can only reference, cannot create");
-    qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Can only reference, cannot create");
-    
-	qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
-	qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
-    qmlRegisterType<CustomCommandWidgetController>("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
-    qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
-    qmlRegisterType<AirframeComponentController>("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
-    qmlRegisterType<SensorsComponentController>("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
-    qmlRegisterType<PowerComponentController>("QGroundControl.Controllers", 1, 0, "PowerComponentController");
-    qmlRegisterType<RadioComponentController>("QGroundControl.Controllers", 1, 0, "RadioComponentController");
-#ifndef __mobile__
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
-#endif
-
-    //-- Create QML Singleton Interfaces
-    qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
-    qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
-
-    //-- Register Waypoint Interface
-    qmlRegisterInterface<Waypoint>("Waypoint");
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
@@ -656,10 +647,12 @@ void QGCApplication::_loadCurrentStyle(void)
     }
     
     // Now that we have the styles loaded we need to adjust the font sizes.
-
-    QString fSmall  = QString("%1px;").arg(ScreenTools::font10_s());
-    QString fNormal = QString("%1px;").arg(ScreenTools::defaultFontPizelSize_s());
-    QString fLarge  = QString("%1px;").arg(ScreenTools::largeFontPixelSize_s());
+    
+    QString fSmall  = QString("%1px;").arg(ScreenToolsController::smallFontPixelSize_s());
+    QString fNormal = QString("%1px;").arg(ScreenToolsController::defaultFontPixelSize_s());
+    QString fLarge  = QString("%1px;").arg(ScreenToolsController::largeFontPixelSize_s());
+    
+    qDebug() << fSmall << fNormal << fLarge;
 
     styles.replace("FONT_SMALL",  fSmall);
     styles.replace("FONT_NORMAL", fNormal);
