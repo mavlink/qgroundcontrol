@@ -74,7 +74,7 @@ QGCView {
 
             QGCLabel {
                 text: "FIRMWARE UPDATE"
-                font.pointSize: ScreenTools.fontPointFactor * (20);
+                font.pixelSize: ScreenTools.font20;
             }
 
             Item {
@@ -177,7 +177,7 @@ QGCView {
                 height:			300
                 readOnly:		true
                 frameVisible:	false
-                font.pointSize: ScreenTools.defaultFontPointSize
+                font.pixelSize: ScreenTools.defaultFontPizelSize
                 
                 text: qsTr("Please disconnect all vehicles from QGroundControl before selecting Upgrade.")
 

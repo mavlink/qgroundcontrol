@@ -115,12 +115,12 @@ QGCView {
 
             QGCLabel {
                 text: "POWER CONFIG"
-                font.pointSize: ScreenTools.largeFontPointSize
+                font.pixelSize: ScreenTools.largeFontPixelSize
             }
 
             QGCLabel {
                 text: "Battery"
-                font.pointSize: ScreenTools.mediumFontPointSize
+                font.pixelSize: ScreenTools.mediumFontPixelSize
             }
 
             Rectangle {
@@ -234,7 +234,7 @@ QGCView {
 
             QGCLabel {
                 text:           "ESC Calibration"
-                font.pointSize: ScreenTools.mediumFontPointSize
+                font.pixelSize: ScreenTools.mediumFontPixelSize
             }
 
             Rectangle {
@@ -269,7 +269,7 @@ QGCView {
                     width: (parent.width / 2) - 5
                     QGCLabel {
                         text: "Propeller Function"
-                        font.pointSize: ScreenTools.fontPointFactor * (20);
+                        font.pixelSize: ScreenTools.font20;
                     }
                     Rectangle {
                         width: parent.width
@@ -282,7 +282,7 @@ QGCView {
                     width: (parent.width / 2) - 5
                     QGCLabel {
                         text: "Magnetometer Distortion"
-                        font.pointSize: ScreenTools.fontPointFactor * (20);
+                        font.pixelSize: ScreenTools.font20;
                     }
                     Rectangle {
                         width: parent.width
@@ -301,7 +301,7 @@ QGCView {
             }
             QGCLabel {
                 text: "Advanced Power Settings"
-                font.pointSize: ScreenTools.fontPointFactor * (20);
+                font.pixelSize: ScreenTools.font20;
                 visible: showAdvanced.checked
             }
             Rectangle {

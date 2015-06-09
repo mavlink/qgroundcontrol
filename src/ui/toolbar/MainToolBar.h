@@ -113,7 +113,6 @@ private slots:
     void _linkDisconnected              (LinkInterface* link);
     void _leaveMessageView              ();
     void _setProgressBarValue           (float value);
-    void _updatePixelSize               ();
     void _remoteControlRSSIChanged      (uint8_t rssi);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
 
