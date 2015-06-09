@@ -39,7 +39,7 @@ QGCView {
 
     // User visible string
     readonly property string title:             "FIRMWARE UPDATE"
-    readonly property string plugInText:        "<font color=\"yellow\">Plug in your device</font> via USB to start firmware upgrade"
+    readonly property string plugInText:        "<font color=\"yellow\">Plug in your device</font> via USB to <font color=\"yellow\">start</font> firmware upgrade"
     readonly property string qgcDisconnectText: "All QGroundControl connections to vehicles must be disconnected prior to firmware upgrade.\n" +
                                                     "Click <font color=\"yellow\">Disconnect</font> in the toolbar above."
     property string usbUnplugText:              "Device must be disconnected from USB to start firmware upgrade.\n" +
@@ -98,10 +98,12 @@ QGCView {
 
         onError: hideDialog()
 
-        onFlashCancelled: {
+/*
+        onFlashComplete: {
             initialBoardSearch = true
-            controller.start()
+            controller.startBoardSearch()
         }
+*/
     }
 
     onCompleted: {
@@ -388,42 +390,32 @@ QGCView {
                 font.pointSize: ScreenTools.largeFontPointSize
             }
 
-            Column {
+            QGCLabel {
+                width:      parent.width
+                wrapMode:   Text.WordWrap
+                text:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
+            }
+
+            ProgressBar {
+                id: progressBar
                 width: parent.width
+            }
 
-                QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    text:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
+            TextArea {
+                id: statusTextArea
+
+                width:			parent.width
+                height:         parent.height - x
+                readOnly:		true
+                frameVisible:	false
+                font.pointSize: ScreenTools.defaultFontPointSize
+                textFormat:     TextEdit.RichText
+
+                style: TextAreaStyle {
+                    textColor:          qgcPal.text
+                    backgroundColor:    qgcPal.windowShade
                 }
-
-                Item {
-                    // Just used as a spacer
-                    height: 20
-                    width: 10
-                }
-
-                ProgressBar {
-                    id: progressBar
-                    width: parent.width
-                }
-
-                TextArea {
-                    id: statusTextArea
-
-                    width:			parent.width
-                    height:			300
-                    readOnly:		true
-                    frameVisible:	false
-                    font.pointSize: ScreenTools.defaultFontPointSize
-                    textFormat:     TextEdit.RichText
-
-                    style: TextAreaStyle {
-                        textColor:          qgcPal.text
-                        backgroundColor:    qgcPal.windowShade
-                    }
-                }
-            } // Column
+            }
         } // Column
-    } // QGCViewPanel
+    }
 } // QGCView

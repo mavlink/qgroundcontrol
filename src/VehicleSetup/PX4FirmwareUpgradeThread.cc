@@ -36,7 +36,6 @@
 #include <QserialPort>
 
 PX4FirmwareUpgradeThreadWorker::PX4FirmwareUpgradeThreadWorker(PX4FirmwareUpgradeThreadController* controller) :
-    QObject(controller),
     _controller(controller),
     _bootloader(NULL),
     _bootloaderPort(NULL),
@@ -96,7 +95,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
         if (!_foundBoard) {
             _foundBoard = true;
             _foundBoardPortInfo = portInfo;
-            _controller->_foundBoard(_findBoardFirstAttempt, portInfo, boardType);
+            emit foundBoard(_findBoardFirstAttempt, portInfo, boardType);
             if (!_findBoardFirstAttempt) {
                 if (boardType == FoundBoard3drRadio) {
                     _3drRadioForceBootloader(portInfo);
@@ -111,9 +110,9 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
         if (_foundBoard) {
             _foundBoard = false;
             qCDebug(FirmwareUpgradeLog) << "Board gone";
-            _controller->_boardGone();
+            emit boardGone();
         } else if (_findBoardFirstAttempt) {
-            _controller->_noBoardFound();
+            emit noBoardFound();
         }
     }
     
@@ -180,7 +179,7 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QSerialPortI
     
     port.setBaudRate(QSerialPort::Baud57600);
     
-    _controller->_status("Putting Radio into command mode");
+    emit status("Putting radio into command mode");
     
     // Wait a little while for the USB port to initialize. 3DR Radio boot is really slow.
     for (int i=0; i<12; i++) {
@@ -192,27 +191,27 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QSerialPortI
     }
     
     if (!port.isOpen()) {
-        _controller->_error(QString("Unable to open port: %1 error: %2").arg(portInfo.systemLocation()).arg(port.errorString()));
+        emit error(QString("Unable to open port: %1 error: %2").arg(portInfo.systemLocation()).arg(port.errorString()));
         return;
     }
 
     // Put radio into command mode
     port.write("+++", 3);
     if (!port.waitForReadyRead(1500)) {
-        _controller->_error("Unable to put radio into command mode");
+        emit error("Unable to put radio into command mode");
         return;
     }
     QByteArray bytes = port.readAll();
     if (!bytes.contains("OK")) {
-        _controller->_error("Unable to put radio into command mode");
+        emit error("Unable to put radio into command mode");
         return;
     }
 
-    _controller->_status("Rebooting radio to bootloader");
+    emit status("Rebooting radio to bootloader");
     
     port.write("AT&UPDATE\r\n");
     if (!port.waitForBytesWritten(1500)) {
-        _controller->_error("Unable to reboot radio");
+        emit error("Unable to reboot radio");
         return;
     }
     QGC::SLEEP::msleep(2000);
@@ -256,7 +255,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QSerialPortInfo& port
         }
         if (success) {
             qCDebug(FirmwareUpgradeLog) << "Found bootloader";
-            _controller->_foundBootloader(bootloaderVersion, boardID, flashSize);
+            emit foundBootloader(bootloaderVersion, boardID, flashSize);
             return true;
         }
     }
@@ -266,7 +265,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QSerialPortInfo& port
     _bootloaderPort = NULL;
     qCDebug(FirmwareUpgradeLog) << "Bootloader error:" << _bootloader->errorString();
     if (errorOnNotFound) {
-        _controller->_error(_bootloader->errorString());
+        emit error(_bootloader->errorString());
     }
     
     return false;
@@ -285,50 +284,50 @@ void PX4FirmwareUpgradeThreadWorker::_reboot(void)
 
 void PX4FirmwareUpgradeThreadWorker::_flash(void)
 {
-    qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::_binOrIhxFlash";
+    qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::_flash";
     
     if (_erase()) {
-        _controller->_status("Programming new version...");
+        emit status("Programming new version...");
         
         if (_bootloader->program(_bootloaderPort, _controller->image())) {
             qCDebug(FirmwareUpgradeLog) << "Program complete";
-            _controller->_status("Program complete");
+            emit status("Program complete");
         } else {
             _bootloaderPort->deleteLater();
             _bootloaderPort = NULL;
             qCDebug(FirmwareUpgradeLog) << "Program failed:" << _bootloader->errorString();
-            _controller->_error(_bootloader->errorString());
+            emit error(_bootloader->errorString());
         }
         
-        _controller->_status("Verifying program...");
+        emit status("Verifying program...");
         
         if (_bootloader->verify(_bootloaderPort, _controller->image())) {
             qCDebug(FirmwareUpgradeLog) << "Verify complete";
-            _controller->_status("Verify complete");
+            emit status("Verify complete");
         } else {
             qCDebug(FirmwareUpgradeLog) << "Verify failed:" << _bootloader->errorString();
-            _controller->_error(_bootloader->errorString());
+            emit error(_bootloader->errorString());
         }
     }
     
     emit _reboot();
     
-    _controller->_flashComplete();
+    emit flashComplete();
 }
 
 bool PX4FirmwareUpgradeThreadWorker::_erase(void)
 {
     qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::_erase";
     
-    _controller->_status("Erasing previous program...");
+    emit status("Erasing previous program...");
     
     if (_bootloader->erase(_bootloaderPort)) {
         qCDebug(FirmwareUpgradeLog) << "Erase complete";
-        _controller->_status("Erase complete");
+        emit status("Erase complete");
         return true;
     } else {
         qCDebug(FirmwareUpgradeLog) << "Erase failed:" << _bootloader->errorString();
-        _controller->_error(_bootloader->errorString());
+        emit error(_bootloader->errorString());
         return false;
     }
 }
@@ -343,7 +342,15 @@ PX4FirmwareUpgradeThreadController::PX4FirmwareUpgradeThreadController(QObject* 
     Q_CHECK_PTR(_workerThread);
     _worker->moveToThread(_workerThread);
     
-    connect(_worker, &PX4FirmwareUpgradeThreadWorker::updateProgress, this, &PX4FirmwareUpgradeThreadController::_updateProgress);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::updateProgress,       this, &PX4FirmwareUpgradeThreadController::_updateProgress);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::foundBoard,           this, &PX4FirmwareUpgradeThreadController::_foundBoard);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::noBoardFound,         this, &PX4FirmwareUpgradeThreadController::_noBoardFound);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::boardGone,            this, &PX4FirmwareUpgradeThreadController::_boardGone);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::foundBootloader,      this, &PX4FirmwareUpgradeThreadController::_foundBootloader);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::bootloaderSyncFailed, this, &PX4FirmwareUpgradeThreadController::_bootloaderSyncFailed);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::error,                this, &PX4FirmwareUpgradeThreadController::_error);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::status,               this, &PX4FirmwareUpgradeThreadController::_status);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::flashComplete,        this, &PX4FirmwareUpgradeThreadController::_flashComplete);
 
     _workerThread->start();
     
@@ -354,6 +361,8 @@ PX4FirmwareUpgradeThreadController::~PX4FirmwareUpgradeThreadController()
 {
     _workerThread->quit();
     _workerThread->wait();
+    
+    delete _workerThread;
 }
 
 void PX4FirmwareUpgradeThreadController::startFindBoardLoop(void)
@@ -366,30 +375,6 @@ void PX4FirmwareUpgradeThreadController::cancel(void)
 {
     qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadController::cancel";
     qWarning() << "P4FirmwareUpgradeThreadController::cancel NYI";
-}
-void PX4FirmwareUpgradeThreadController::_foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type)
-{
-    emit foundBoard(firstAttempt, portInfo, type);
-}
-
-void PX4FirmwareUpgradeThreadController::_boardGone(void)
-{
-    emit boardGone();
-}
-
-void PX4FirmwareUpgradeThreadController::_noBoardFound(void)
-{
-    emit noBoardFound();
-}
-
-void PX4FirmwareUpgradeThreadController::_foundBootloader(int bootloaderVersion, int boardID, int flashSize)
-{
-    emit foundBootloader(bootloaderVersion, boardID, flashSize);
-}
-
-void PX4FirmwareUpgradeThreadController::_bootloaderSyncFailed(void)
-{    
-    emit bootloaderSyncFailed();
 }
 
 void PX4FirmwareUpgradeThreadController::flash(const FirmwareImage* image)
