@@ -70,10 +70,9 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pointSize:         ScreenTools.fontPointFactor * (25);
+            font.pixelSize:         ScreenTools.font22;
             font.bold:              true
             color:                  "black"
-
             text: parent.calText
         }
         QGCLabel {
@@ -81,9 +80,8 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pointSize:         ScreenTools.fontPointFactor * (25);
+            font.pixelSize:         ScreenTools.font22;
             color:                  calInProgress ? "yellow" : "white"
-
             text: parent.calText
         }
     }

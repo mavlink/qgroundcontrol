@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QQmlEngine>
 
 #include "MainToolBar.h"
+#include "ScreenTools.h"
 #include "MainWindow.h"
 #include "UASMessageView.h"
 #include "UASMessageHandler.h"
@@ -57,13 +58,14 @@ MainToolBar::MainToolBar(QWidget* parent)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("MainToolBar");
-    _updatePixelSize();
     setMinimumWidth(MainWindow::instance()->minimumWidth());
     // Get rid of layout default margins
     QLayout* pl = layout();
     if(pl) {
         pl->setContentsMargins(0,0,0,0);
     }
+    setMinimumHeight(40 * ScreenTools::pixelSizeFactor_s());
+    setMaximumHeight(40 * ScreenTools::pixelSizeFactor_s());
     // Tool Bar Preferences
     QSettings settings;
     settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
@@ -83,7 +85,6 @@ MainToolBar::MainToolBar(QWidget* parent)
     connect(LinkManager::instance(),     &LinkManager::linkConfigurationChanged, this, &MainToolBar::_updateConfigurations);
     connect(LinkManager::instance(),     &LinkManager::linkConnected,            this, &MainToolBar::_linkConnected);
     connect(LinkManager::instance(),     &LinkManager::linkDisconnected,         this, &MainToolBar::_linkDisconnected);
-    connect(MainWindow::instance(),      &MainWindow::pixelSizeChanged,          this, &MainToolBar::_updatePixelSize);
     // RSSI (didn't like standard connection)
     connect(MAVLinkProtocol::instance(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
@@ -387,10 +388,4 @@ void MainToolBar::_setProgressBarValue(float value)
 {
     _progressBarValue = value;
     emit progressBarValueChanged(value);
-}
-
-void MainToolBar::_updatePixelSize()
-{
-    setMinimumHeight(40 * MainWindow::pixelSizeFactor());
-    setMaximumHeight(40 * MainWindow::pixelSizeFactor());
 }

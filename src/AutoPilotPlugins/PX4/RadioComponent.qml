@@ -258,7 +258,7 @@ QGCView {
 
         QGCLabel {
             id:             header
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pixelSize: ScreenTools.largeFontPixelSize
             text:           "RADIO CONFIG"
         }
 

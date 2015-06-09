@@ -104,7 +104,7 @@ Button {
                         id:             text
                         antialiasing:   true
                         text:           control.text
-                        font.pointSize: ScreenTools.defaultFontPointSize
+                        font.pixelSize: ScreenTools.defaultFontPizelSize
 
                         anchors.verticalCenter: parent.verticalCenter
 

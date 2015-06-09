@@ -230,63 +230,6 @@ Item {
                         }
                     }
                 }
-                //-- Hack tool to find optimal scale factor
-                Column {
-                    id: fudgeColumn
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing:    ScreenTools.adjustPixelSize(4)
-                    width:      parent.width
-                    QGCLabel {
-                        text: "Adjust Pixel Size Factor"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Row {
-                        spacing:    ScreenTools.adjustPixelSize(4)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        Button {
-                            text: 'Inc'
-                            onClicked: {
-                                ScreenTools.increasePixelSize()
-                            }
-                        }
-                        Label {
-                            text: ScreenTools.pixelSizeFactor.toFixed(2)
-                            color: __qgcPal.text
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Button {
-                            text: 'Dec'
-                            onClicked: {
-                                ScreenTools.decreasePixelSize()
-                            }
-                        }
-                    }
-                    QGCLabel {
-                        text: "Adjust Font Size Factor"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Row {
-                        spacing:    ScreenTools.adjustPixelSize(4)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        Button {
-                            text: 'Inc'
-                            onClicked: {
-                                ScreenTools.increaseFontSize()
-                            }
-                        }
-                        Label {
-                            text: ScreenTools.fontPointFactor.toFixed(2)
-                            color: __qgcPal.text
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Button {
-                            text: 'Dec'
-                            onClicked: {
-                                ScreenTools.decreaseFontSize()
-                            }
-                        }
-                    }
-                }
             }
         }
     }

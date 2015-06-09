@@ -655,33 +655,16 @@ void QGCApplication::_loadCurrentStyle(void)
         }
     }
     
-    // Now that we have the styles loaded we need to dpi adjust the font point sizes
-    
-    QString dpiAdjustedStyles;
-    if (success) {
-        QTextStream styleStream(&styles, QIODevice::ReadOnly);
-        QRegularExpression regex("font-size:.+(\\d\\d)pt;");
-        
-        while (!styleStream.atEnd()) {
-            QString adjustedLine;
-            QString line = styleStream.readLine();
-            
-            QRegularExpressionMatch match = regex.match(line);
-            if (match.hasMatch()) {
-                //qDebug() << "found:" << line << match.captured(1);
-                adjustedLine = QString("font-size: %1pt;").arg(ScreenTools::adjustFontPointSize_s(match.captured(1).toDouble()));
-                //qDebug() << "adjusted:" << adjustedLine;
-            } else {
-                adjustedLine = line;
-            }
-            
-            dpiAdjustedStyles += adjustedLine;
-        }
-    }
+    // Now that we have the styles loaded we need to adjust the font sizes.
 
-    if (!dpiAdjustedStyles.isEmpty()) {
-        setStyleSheet(dpiAdjustedStyles);
-    }
+    QString fSmall  = QString("%1px;").arg(ScreenTools::font10_s());
+    QString fNormal = QString("%1px;").arg(ScreenTools::defaultFontPizelSize_s());
+    QString fLarge  = QString("%1px;").arg(ScreenTools::largeFontPixelSize_s());
+
+    styles.replace("FONT_SMALL",  fSmall);
+    styles.replace("FONT_NORMAL", fNormal);
+    styles.replace("FONT_LARGE",  fLarge);
+    setStyleSheet(styles);
 
     if (!success) {
         // Fall back to plastique if we can't load our own
