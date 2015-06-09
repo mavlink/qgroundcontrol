@@ -972,8 +972,8 @@ Item {
                 spacing: 20
 
                 QGCLabel {
-                    text: "FLIGHT MODES CONFIG"
-                    font.pixelSize: ScreenTools.font20;
+                    text:           "FLIGHT MODES CONFIG"
+                    font.pixelSize: ScreenTools.largeFontPixelSize
                 }
 
                 QGCLabel {

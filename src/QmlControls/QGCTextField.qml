@@ -50,7 +50,7 @@ TextField {
                 width: unitsLabelWidthGenerator.width
 
                 text: control.unitsLabel
-                font.pixelSize: ScreenTools.defaultFontPizelSize
+                font.pixelSize: ScreenTools.defaultFontPixelSize
                 antialiasing:   true
 
                 color: control.textColor

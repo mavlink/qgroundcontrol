@@ -11,7 +11,7 @@ ComboBox {
     property bool __showHighlight: pressed | hovered
 
     style: ComboBoxStyle {
-        font.pixelSize: ScreenTools.defaultFontPizelSize
+        font.pixelSize: ScreenTools.defaultFontPixelSize
         textColor: __showHighlight ?
                     control.__qgcPal.buttonHighlightText :
                     control.__qgcPal.buttonText

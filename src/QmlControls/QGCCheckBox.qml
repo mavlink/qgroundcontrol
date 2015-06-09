@@ -29,7 +29,7 @@ CheckBox {
                 id:             text
                 text:           control.text
                 antialiasing:   true
-                font.pixelSize: ScreenTools.defaultFontPizelSize
+                font.pixelSize: ScreenTools.defaultFontPixelSize
 
                 anchors.centerIn: parent
 

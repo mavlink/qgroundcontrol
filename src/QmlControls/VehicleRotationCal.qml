@@ -70,7 +70,7 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pixelSize:         ScreenTools.font22;
+            font.pixelSize:         ScreenTools.mediumFontPixelSize
             font.bold:              true
             color:                  "black"
             text: parent.calText
@@ -80,7 +80,7 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pixelSize:         ScreenTools.font22;
+            font.pixelSize:         ScreenTools.mediumFontPixelSize
             color:                  calInProgress ? "yellow" : "white"
             text: parent.calText
         }

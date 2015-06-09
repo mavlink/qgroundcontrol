@@ -179,7 +179,7 @@ QGCView {
                             antialiasing: true
                             Connections {
                                 target: ScreenTools
-                                onRepaintRequestedChanged: {
+                                onRepaintRequested: {
                                     arrows.requestPaint();
                                 }
                             }
@@ -269,7 +269,7 @@ QGCView {
                     width: (parent.width / 2) - 5
                     QGCLabel {
                         text: "Propeller Function"
-                        font.pixelSize: ScreenTools.font20;
+                        font.pixelSize: ScreenTools.mediumFontPixelSize
                     }
                     Rectangle {
                         width: parent.width
@@ -282,7 +282,7 @@ QGCView {
                     width: (parent.width / 2) - 5
                     QGCLabel {
                         text: "Magnetometer Distortion"
-                        font.pixelSize: ScreenTools.font20;
+                        font.pixelSize: ScreenTools.mediumFontPixelSize
                     }
                     Rectangle {
                         width: parent.width
@@ -300,9 +300,9 @@ QGCView {
                 text: "Show Advanced Settings"
             }
             QGCLabel {
-                text: "Advanced Power Settings"
-                font.pixelSize: ScreenTools.font20;
-                visible: showAdvanced.checked
+                text:           "Advanced Power Settings"
+                font.pixelSize: ScreenTools.mediumFontPixelSize
+                visible:        showAdvanced.checked
             }
             Rectangle {
                 width: parent.width
