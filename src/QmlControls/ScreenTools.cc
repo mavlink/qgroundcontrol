@@ -28,7 +28,7 @@
 #include "MainWindow.h"
 
 // Pixel size, instead of a physical thing is actually a philosophical question when
-// it comes to Qt. Fonts are that and some heavy Kabalistic Voodoo added to the mix.
+// it comes to Qt.
 // The values below came from actually measuring the elements on the screen on these
 // devices. I have yet to find a constant from Qt so these things can be properly
 // computed at runtime.
