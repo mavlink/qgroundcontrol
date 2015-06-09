@@ -459,6 +459,8 @@ void LinkManager::_updateConfigurationList(void)
     QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
     // Iterate Comm Ports
     foreach (QSerialPortInfo portInfo, portList) {
+#if 0
+        // Too noisy for most logging, so turn on as needed
         qCDebug(LinkManagerLog) << "-----------------------------------------------------";
         qCDebug(LinkManagerLog) << "portName:         " << portInfo.portName();
         qCDebug(LinkManagerLog) << "systemLocation:   " << portInfo.systemLocation();
@@ -466,6 +468,7 @@ void LinkManager::_updateConfigurationList(void)
         qCDebug(LinkManagerLog) << "manufacturer:     " << portInfo.manufacturer();
         qCDebug(LinkManagerLog) << "serialNumber:     " << portInfo.serialNumber();
         qCDebug(LinkManagerLog) << "vendorIdentifier: " << portInfo.vendorIdentifier();
+#endif
         // Save port name
         currentPorts << portInfo.systemLocation();
         // Is this a PX4 and NOT in bootloader mode?
