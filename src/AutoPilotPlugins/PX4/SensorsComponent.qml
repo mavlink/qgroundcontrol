@@ -57,8 +57,8 @@ QGCView {
     // Used to pass help text to the preCalibrationDialog dialog
     property string preCalibrationDialogHelp
 
-    readonly property int sideBarH1PointSize: (ScreenTools.defaultFontPizelSize * 1.3 + 0.5)
-    readonly property int mainTextH1PointSize: (ScreenTools.defaultFontPizelSize * 1.5 + 0.5)
+    readonly property int sideBarH1PointSize:  ScreenTools.mediumFontPixelSize
+    readonly property int mainTextH1PointSize: ScreenTools.mediumFontPixelSize // Seems to be unused
 
     readonly property int rotationColumnWidth: 250
     readonly property var rotations: [
