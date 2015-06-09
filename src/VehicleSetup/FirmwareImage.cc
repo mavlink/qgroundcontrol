@@ -26,6 +26,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FirmwareImage.h"
+#include "QGCLoggingCategory.h"
 
 #include <QDebug>
 #include <QFile>
@@ -113,7 +114,7 @@ bool FirmwareImage::_readBytesFromStream(QTextStream& stream, uint8_t byteCount,
 bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
 {
     _imageSize = 0;
-    _ihxBlockMap.clear();
+    _ihxBlocks.clear();
     
     QFile ihxFile(ihxFilename);
     if (!ihxFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -150,10 +151,35 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
         }
         
         if (recordType == 0) {
-            _ihxBlockMap[address] = bytes;
+            bool appendToLastBlock = false;
+            
+            // Can we append this block to the last one?
+            
+            if (_ihxBlocks.count()) {
+                int lastBlockIndex = _ihxBlocks.count() - 1;
+                
+                if (_ihxBlocks[lastBlockIndex].address + _ihxBlocks[lastBlockIndex].bytes.count() == address) {
+                    appendToLastBlock = true;
+                }
+            }
+            
+            if (appendToLastBlock) {
+                _ihxBlocks[_ihxBlocks.count() - 1].bytes += bytes;
+                qCDebug(FirmwareUpgradeLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+            } else {
+                IntelHexBlock_t block;
+                
+                block.address = address;
+                block.bytes = bytes;
+                
+                _ihxBlocks += block;
+                qCDebug(FirmwareUpgradeLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+            }
+            
             _imageSize += blockByteCount;
         } else if (recordType == 1) {
             // EOF
+            qCDebug(FirmwareUpgradeLog) << QString("_ihxLoad - EOF");
             break;
         }
         
@@ -281,7 +307,7 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
 {
     // Validate decompressed size key
     if (!jsonObject.contains(sizeKey)) {
-        emit errorMessage(QString("Firmware file missing %1 key").arg(sizeKey));
+        emit statusMessage(QString("Firmware file missing %1 key").arg(sizeKey));
         return false;
     }
     int decompressedSize = jsonObject.value(QString(sizeKey)).toInt();
@@ -334,7 +360,7 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
 
 uint16_t FirmwareImage::ihxBlockCount(void) const
 {
-    return _ihxBlockMap.keys().count();
+    return _ihxBlocks.count();
 }
 
 bool FirmwareImage::ihxGetBlock(uint16_t index, uint16_t& address, QByteArray& bytes) const
@@ -343,7 +369,8 @@ bool FirmwareImage::ihxGetBlock(uint16_t index, uint16_t& address, QByteArray& b
     bytes.clear();
     
     if (index < ihxBlockCount()) {
-        bytes = _ihxBlockMap[_ihxBlockMap.keys()[index]];
+        address = _ihxBlocks[index].address;
+        bytes = _ihxBlocks[index].bytes;
         return true;
     } else {
         return false;

@@ -26,6 +26,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "Bootloader.h"
+#include "QGCLoggingCategory.h"
 
 #include <QFile>
 #include <QSerialPortInfo>
@@ -316,6 +317,8 @@ bool Bootloader::_ihxProgram(QextSerialPort* port, const FirmwareImage* image)
             return false;
         }
         
+        qCDebug(FirmwareUpgradeLog) << QString("Bootloader::_ihxProgram - address:%1 size:%2 block:%3").arg(flashAddress).arg(bytes.count()).arg(index);
+        
         // Set flash address
         
         failed = true;
@@ -336,24 +339,39 @@ bool Bootloader::_ihxProgram(QextSerialPort* port, const FirmwareImage* image)
         
         // Flash
         
-        failed = true;
-        if (_write(port, PROTO_PROG_MULTI) &&
-                _write(port, (uint8_t)bytes.count()) &&
-                _write(port, (uint8_t *)bytes.data(), bytes.count()) &&
-                _write(port, PROTO_EOC)) {
-            port->flush();
-            if (_getCommandResponse(port)) {
-                failed = false;
+        int bytesIndex = 0;
+        uint16_t bytesLeftToWrite = bytes.count();
+        
+        while (bytesLeftToWrite > 0) {
+            uint8_t bytesToWrite;
+        
+            if (bytesLeftToWrite > PROG_MULTI_MAX) {
+                bytesToWrite = PROG_MULTI_MAX;
+            } else {
+                bytesToWrite = bytesLeftToWrite;
             }
-        }
-        if (failed) {
-            _errorString = QString("Flash failed: %1 at address 0x%2").arg(_errorString).arg(flashAddress, 8, 16, QLatin1Char('0'));
-            return false;
-        }
         
-        bytesSent += bytes.count();
-        
-        emit updateProgress(bytesSent, imageSize);
+            failed = true;
+            if (_write(port, PROTO_PROG_MULTI) &&
+                    _write(port, bytesToWrite) &&
+                    _write(port, &((uint8_t *)bytes.data())[bytesIndex], bytesToWrite) &&
+                    _write(port, PROTO_EOC)) {
+                port->flush();
+                if (_getCommandResponse(port)) {
+                    failed = false;
+                }
+            }
+            if (failed) {
+                _errorString = QString("Flash failed: %1 at address 0x%2").arg(_errorString).arg(flashAddress, 8, 16, QLatin1Char('0'));
+                return false;
+            }
+            
+            bytesIndex += bytesToWrite;
+            bytesLeftToWrite -= bytesToWrite;
+            bytesSent += bytesToWrite;
+            
+            emit updateProgress(bytesSent, imageSize);
+        }
     }
     
     return true;
@@ -471,6 +489,8 @@ bool Bootloader::_ihxVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
             return false;
         }
         
+        qCDebug(FirmwareUpgradeLog) << QString("Bootloader::_ihxVerifyBytes - address:%1 size:%2 block:%3").arg(readAddress).arg(imageBytes.count()).arg(index);
+        
         // Set read address
         
         failed = true;
@@ -491,37 +511,50 @@ bool Bootloader::_ihxVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
         
         // Read back
         
-        uint8_t readBuf[READ_MULTI_MAX];
-        uint8_t bytesToRead = imageBytes.count();
-
-        failed = true;
-        if (_write(port, PROTO_READ_MULTI) &&
-            _write(port, bytesToRead) &&
-            _write(port, PROTO_EOC)) {
-            port->flush();
-            if (_read(port, readBuf, bytesToRead)) {
-                if (_getCommandResponse(port)) {
-                    failed = false;
+        int         bytesIndex = 0;
+        uint16_t    bytesLeftToRead = imageBytes.count();
+        
+        while (bytesLeftToRead > 0) {
+            uint8_t bytesToRead;
+            uint8_t readBuf[READ_MULTI_MAX];
+            
+            if (bytesLeftToRead > READ_MULTI_MAX) {
+                bytesToRead = READ_MULTI_MAX;
+            } else {
+                bytesToRead = bytesLeftToRead;
+            }
+            
+            failed = true;
+            if (_write(port, PROTO_READ_MULTI) &&
+                _write(port, bytesToRead) &&
+                _write(port, PROTO_EOC)) {
+                port->flush();
+                if (_read(port, readBuf, bytesToRead)) {
+                    if (_getCommandResponse(port)) {
+                        failed = false;
+                    }
                 }
             }
-        }
-        if (failed) {
-            _errorString = tr("Read failed: %1 at address: 0x%2").arg(_errorString).arg(readAddress, 8, 16, QLatin1Char('0'));
-            return false;
-        }
-        
-        // Compare
-        
-        for (int i=0; i<bytesToRead; i++) {
-            if ((uint8_t)imageBytes[i] != readBuf[i]) {
-                _errorString = QString("Compare failed: expected(0x%1) actual(0x%2) at address: 0x%3").arg(imageBytes[i], 2, 16, QLatin1Char('0')).arg(readBuf[i], 2, 16, QLatin1Char('0')).arg(readAddress + i, 8, 16, QLatin1Char('0'));
+            if (failed) {
+                _errorString = tr("Read failed: %1 at address: 0x%2").arg(_errorString).arg(readAddress, 8, 16, QLatin1Char('0'));
                 return false;
             }
+            
+            // Compare
+            
+            for (int i=0; i<bytesToRead; i++) {
+                if ((uint8_t)imageBytes[bytesIndex + i] != readBuf[i]) {
+                    _errorString = QString("Compare failed: expected(0x%1) actual(0x%2) at address: 0x%3").arg(imageBytes[bytesIndex + i], 2, 16, QLatin1Char('0')).arg(readBuf[i], 2, 16, QLatin1Char('0')).arg(readAddress + i, 8, 16, QLatin1Char('0'));
+                    return false;
+                }
+            }
+            
+            bytesVerified += bytesToRead;
+            bytesIndex += bytesToRead;
+            bytesLeftToRead -= bytesToRead;
+            
+            emit updateProgress(bytesVerified, imageSize);
         }
-        
-        bytesVerified += bytesToRead;
-        
-        emit updateProgress(bytesVerified, imageSize);
     }
     
     return true;

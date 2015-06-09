@@ -39,7 +39,7 @@ QGCView {
 
     // User visible string
     readonly property string title:             "FIRMWARE UPDATE"
-    readonly property string plugInText:        "<font color=\"yellow\">Plug in your device</font> via USB to start firmware upgrade"
+    readonly property string plugInText:        "<font color=\"yellow\">Plug in your device</font> via USB to <font color=\"yellow\">start</font> firmware upgrade"
     readonly property string qgcDisconnectText: "All QGroundControl connections to vehicles must be disconnected prior to firmware upgrade.\n" +
                                                     "Click <font color=\"yellow\">Disconnect</font> in the toolbar above."
     property string usbUnplugText:              "Device must be disconnected from USB to start firmware upgrade.\n" +
@@ -57,12 +57,6 @@ QGCView {
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
-
-    function checkForConnections() {
-        if (controller.qgcConnections) {
-            showDialog(activeConnectionsDialogComponent, title, 50, 0)
-        }
-    }
 
     FirmwareUpgradeController {
         id:             controller
@@ -101,17 +95,15 @@ QGCView {
                 }
             }
         }
-    }
-
-    Component {
-        id: firmwareSelect
 
         onError: hideDialog()
 
-        onFlashCancelled: {
+/*
+        onFlashComplete: {
             initialBoardSearch = true
-            controller.start()
+            controller.startBoardSearch()
         }
+*/
     }
 
     onCompleted: {
@@ -398,77 +390,32 @@ QGCView {
                 font.pointSize: ScreenTools.largeFontPointSize
             }
 
-            Column {
-                width: parent.width
-
-                QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    text:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
-                }
-
-                Item {
-                    // Just used as a spacer
-                    height: 20
-                    width: 10
-                }
-
-                ProgressBar {
-                    id: progressBar
-                    width: parent.width
-                }
-
-                TextArea {
-                    id: statusTextArea
-
-                    width:			parent.width
-                    height:			300
-                    readOnly:		true
-                    frameVisible:	false
-                    font.pointSize: ScreenTools.defaultFontPointSize
-                    textFormat:     TextEdit.RichText
-
-                    style: TextAreaStyle {
-                        textColor:          qgcPal.text
-                        backgroundColor:    qgcPal.windowShade
-                    }
-                }
-            } // Column
-        } // Column
-    } // Component - firmwareInstall
-
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-
-        Component {
-            id: firmwareWarningComponent
-
-            QGCViewMessage {
-                message: firmwareWarningMessage
-
-                function accept() {
-                    hideDialog()
-                    controller.doFirmwareUpgrade();
-                }
-            }
-        }
-
-        Column {
-            anchors.fill:   parent
-            spacing:        10
-
             QGCLabel {
-                text:           title
-                font.pointSize: ScreenTools.largeFontPointSize
+                width:      parent.width
+                wrapMode:   Text.WordWrap
+                text:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
             }
 
-            Loader {
-                id:                 loader
-                width:              parent.width
-                height:             parent.height - x
-                sourceComponent:    firmwareSelect
+            ProgressBar {
+                id: progressBar
+                width: parent.width
+            }
+
+            TextArea {
+                id: statusTextArea
+
+                width:			parent.width
+                height:         parent.height - x
+                readOnly:		true
+                frameVisible:	false
+                font.pointSize: ScreenTools.defaultFontPointSize
+                textFormat:     TextEdit.RichText
+
+                style: TextAreaStyle {
+                    textColor:          qgcPal.text
+                    backgroundColor:    qgcPal.windowShade
+                }
             }
         } // Column
-    } // QGCViewPanel
+    }
 } // QGCView

@@ -133,8 +133,8 @@ private:
         INFO_BOARD_REV		=   3,    ///< board revision
         INFO_FLASH_SIZE		=   4,    ///< max firmware size in bytes
         
-        PROG_MULTI_MAX		=   32,   ///< write size for PROTO_PROG_MULTI, must be multiple of 4
-        READ_MULTI_MAX		=   32    ///< read size for PROTO_READ_MULTI, must be multiple of 4
+        PROG_MULTI_MAX		=   64,   ///< write size for PROTO_PROG_MULTI, must be multiple of 4
+        READ_MULTI_MAX		=   255   ///< read size for PROTO_READ_MULTI, must be multiple of 4
     };
     
     uint32_t    _boardID;           ///< board id for currently connected board

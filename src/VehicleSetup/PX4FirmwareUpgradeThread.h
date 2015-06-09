@@ -63,6 +63,14 @@ public:
     
 signals:
     void updateProgress(int curr, int total);
+    void foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
+    void noBoardFound(void);
+    void boardGone(void);
+    void foundBootloader(int bootloaderVersion, int boardID, int flashSize);
+    void bootloaderSyncFailed(void);
+    void error(const QString& errorString);
+    void status(const QString& statusText);
+    void flashComplete(void);
     
 private slots:
     void _init(void);
@@ -157,23 +165,23 @@ signals:
     void _rebootOnThread(void);
     void _flashOnThread(void);
     
-private:
-    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
-    void _noBoardFound(void);
-    void _boardGone(void);
-    void _foundBootloader(int bootloaderVersion, int boardID, int flashSize);
-    void _bootloaderSyncFailed(void);
+private slots:
+    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type) { emit foundBoard(firstAttempt, portInfo, type); }
+    void _noBoardFound(void) { emit noBoardFound(); }
+    void _boardGone(void) { emit boardGone(); }
+    void _foundBootloader(int bootloaderVersion, int boardID, int flashSize) { emit foundBootloader(bootloaderVersion, boardID, flashSize); }
+    void _bootloaderSyncFailed(void) { emit bootloaderSyncFailed(); }
     void _error(const QString& errorString) { emit error(errorString); }
     void _status(const QString& statusText) { emit status(statusText); }
     void _flashComplete(void) { emit flashComplete(); }
+    
+private:
     void _updateProgress(int curr, int total) { emit updateProgress(curr, total); }
     
     PX4FirmwareUpgradeThreadWorker* _worker;
     QThread*                        _workerThread;  ///< Thread which PX4FirmwareUpgradeThreadWorker runs on
     
     const FirmwareImage* _image;
-    
-    friend class PX4FirmwareUpgradeThreadWorker;
 };
 
 #endif

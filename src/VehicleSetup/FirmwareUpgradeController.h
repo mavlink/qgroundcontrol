@@ -106,6 +106,7 @@ signals:
     void boardFound(void);
     void noBoardFound(void);
     void boardGone(void);
+    void flashComplete(void);
     void flashCancelled(void);
     void qgcConnectionsChanged(bool connections);
     void error(void);

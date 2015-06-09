@@ -30,7 +30,7 @@
 #include <QObject>
 #include <QString>
 #include <QByteArray>
-#include <QMap>
+#include <QList>
 #include <QTextStream>
 
 #include <stdint.h>
@@ -77,20 +77,27 @@ private:
     bool _binLoad(const QString& px4Filename);
     bool _px4Load(const QString& px4Filename);
     bool _ihxLoad(const QString& ihxFilename);
+    
     bool _readByteFromStream(QTextStream& stream, uint8_t& byte);
     bool _readWordFromStream(QTextStream& stream, uint16_t& word);
     bool _readBytesFromStream(QTextStream& stream, uint8_t byteCount, QByteArray& bytes);
+    
     bool _decompressJsonValue(const QJsonObject&	jsonObject,
                               const QByteArray&     jsonDocBytes,
                               const QString&		sizeKey,
                               const QString&		bytesKey,
                               QByteArray&			decompressedBytes);
+    
+    typedef struct {
+        uint16_t    address;
+        QByteArray  bytes;
+    } IntelHexBlock_t;
 
-    bool                        _binFormat;
-    uint32_t                    _boardId;
-    QString                     _binFilename;
-    QMap<uint16_t, QByteArray>  _ihxBlockMap;
-    uint32_t                    _imageSize;
+    bool                    _binFormat;
+    uint32_t                _boardId;
+    QString                 _binFilename;
+    QList<IntelHexBlock_t>  _ihxBlocks;
+    uint32_t                _imageSize;
 };
 
 #endif
