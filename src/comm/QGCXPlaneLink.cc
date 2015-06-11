@@ -267,8 +267,6 @@ void QGCXPlaneLink::run()
 
     emit simulationDisconnected();
     emit simulationConnected(false);
-
-    this->deleteLater();
 }
 
 void QGCXPlaneLink::setPort(int localPort)
