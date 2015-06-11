@@ -170,9 +170,9 @@ void FirmwareUpgradeController::_getFirmwareFile(void)
 
     static const char* rgAeroCoreFirmware[3] =
     {
-	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/stable/aerocore_default.px4",
-	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/beta/aerocore_default.px4",
-	"http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/master/aerocore_default.px4"
+	"http://gumstix-aerocore.s3.amazonaws.com/PX4/stable/aerocore_default.px4",
+	"http://gumstix-aerocore.s3.amazonaws.com/PX4/beta/aerocore_default.px4",
+	"http://gumstix-aerocore.s3.amazonaws.com/PX4/master/aerocore_default.px4"
     };
 
     static const char* rgPX4FlowFirmware[3] =
