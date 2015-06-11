@@ -245,7 +245,8 @@ public:
         StartCalibrationAirspeed,
         StartCalibrationAccel,
         StartCalibrationLevel,
-        StartCalibrationEsc
+        StartCalibrationEsc,
+        StartCalibrationCopyTrims
     };
     
     /// Starts the specified calibration

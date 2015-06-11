@@ -119,6 +119,7 @@ static QObject* screenToolsSingletonFactory(QQmlEngine*, QJSEngine*)
 static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     MavManager* mavManager = new MavManager;
+    qgcApp()->setMavManager(mavManager);
     return mavManager;
 }
 
@@ -133,10 +134,11 @@ static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
  **/
 
 
-QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
-    QApplication(argc, argv),
-    _runningUnitTests(unitTesting),
-    _styleIsDark(true)
+QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
+    : QApplication(argc, argv)
+    , _runningUnitTests(unitTesting)
+    , _styleIsDark(true)
+    , _pMavManager(NULL)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -145,46 +147,61 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 #ifndef __android__
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
+    
+    // Parse command line options
+    
+    bool fClearSettingsOptions = false; // Clear stored settings
+    bool fullLogging = false; // Turn on all logging
+    
+    CmdLineOpt_t rgCmdLineOptions[] = {
+        { "--clear-settings",   &fClearSettingsOptions, QString() },
+        { "--full-logging",     &fullLogging,           QString() },
+        // Add additional command line option flags here
+    };
+    
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
 #ifdef __mobile__
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
-#endif
-    
-#ifndef __mobile__
-    // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
-    // it to the correct location. This way default debug builds will have logging turned off.
+#else
+    if (fullLogging) {
+        QLoggingCategory::setFilterRules(QStringLiteral("*Log=true"));
+    } else {
+        // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
+        // it to the correct location. This way default debug builds will have logging turned off.
 
-    static const char* qtProjectDir = "QtProject";
-    static const char* qtLoggingFile = "qtlogging.ini";
-    bool loggingDirectoryOk = false;
+        static const char* qtProjectDir = "QtProject";
+        static const char* qtLoggingFile = "qtlogging.ini";
+        bool loggingDirectoryOk = false;
 
-    QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
-    if (!iniFileLocation.cd(qtProjectDir)) {
-        if (!iniFileLocation.mkdir(qtProjectDir)) {
-            qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);
-        } else {
-            if (!iniFileLocation.cd(qtProjectDir)) {
-                qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);;
+        QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
+        if (!iniFileLocation.cd(qtProjectDir)) {
+            if (!iniFileLocation.mkdir(qtProjectDir)) {
+                qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);
+            } else {
+                if (!iniFileLocation.cd(qtProjectDir)) {
+                    qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);;
+                }
+                loggingDirectoryOk = true;
             }
+        } else {
             loggingDirectoryOk = true;
         }
-    } else {
-        loggingDirectoryOk = true;
-    }
 
-    if (loggingDirectoryOk) {
-        qDebug () << iniFileLocation;
-        if (!iniFileLocation.exists(qtLoggingFile)) {
-            QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
-            if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                QTextStream out(&loggingFile);
-                out << "[Rules]\n";
-                out << "*Log.debug=false\n";
-                foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
-                    out << category << ".debug=false\n";
+        if (loggingDirectoryOk) {
+            qDebug () << iniFileLocation;
+            if (!iniFileLocation.exists(qtLoggingFile)) {
+                QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
+                if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                    QTextStream out(&loggingFile);
+                    out << "[Rules]\n";
+                    out << "*Log.debug=false\n";
+                    foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
+                        out << category << ".debug=false\n";
+                    }
+                } else {
+                    qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
                 }
-            } else {
-                qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
             }
         }
     }
@@ -214,17 +231,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting) :
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
-
-    // Parse command line options
-
-    bool fClearSettingsOptions = false; // Clear stored settings
-
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, QString() },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
     QSettings settings;
 #ifdef UNITTEST_BUILD
@@ -341,7 +347,7 @@ void QGCApplication::_initCommon(void)
     //-- Create QML Singleton Interfaces
     qmlRegisterSingletonType<ScreenTools>("QGroundControl.ScreenTools", 1, 0, "ScreenTools", screenToolsSingletonFactory);
     qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
-    
+
     //-- Register Waypoint Interface
     qmlRegisterInterface<Waypoint>("Waypoint");
 }
@@ -649,33 +655,16 @@ void QGCApplication::_loadCurrentStyle(void)
         }
     }
     
-    // Now that we have the styles loaded we need to dpi adjust the font point sizes
-    
-    QString dpiAdjustedStyles;
-    if (success) {
-        QTextStream styleStream(&styles, QIODevice::ReadOnly);
-        QRegularExpression regex("font-size:.+(\\d\\d)pt;");
-        
-        while (!styleStream.atEnd()) {
-            QString adjustedLine;
-            QString line = styleStream.readLine();
-            
-            QRegularExpressionMatch match = regex.match(line);
-            if (match.hasMatch()) {
-                //qDebug() << "found:" << line << match.captured(1);
-                adjustedLine = QString("font-size: %1pt;").arg(ScreenTools::adjustFontPointSize_s(match.captured(1).toDouble()));
-                //qDebug() << "adjusted:" << adjustedLine;
-            } else {
-                adjustedLine = line;
-            }
-            
-            dpiAdjustedStyles += adjustedLine;
-        }
-    }
+    // Now that we have the styles loaded we need to adjust the font sizes.
 
-    if (!dpiAdjustedStyles.isEmpty()) {
-        setStyleSheet(dpiAdjustedStyles);
-    }
+    QString fSmall  = QString("%1px;").arg(ScreenTools::font10_s());
+    QString fNormal = QString("%1px;").arg(ScreenTools::defaultFontPizelSize_s());
+    QString fLarge  = QString("%1px;").arg(ScreenTools::largeFontPixelSize_s());
+
+    styles.replace("FONT_SMALL",  fSmall);
+    styles.replace("FONT_NORMAL", fNormal);
+    styles.replace("FONT_LARGE",  fLarge);
+    setStyleSheet(styles);
 
     if (!success) {
         // Fall back to plastique if we can't load our own
@@ -709,7 +698,19 @@ void QGCApplication::_missingParamsDisplay(void)
     }
     _missingParams.clear();
     
-    QGCMessageBox::critical("Missing Parameters",
-                            QString("Parameters missing from firmware: %1.\n\n"
-                                    "You should quit QGroundControl immediately and update your firmware.").arg(params));
+    QGCMessageBox::critical(
+        "Missing Parameters",
+        QString("Parameters missing from firmware: %1.\n\n"
+                "You should quit QGroundControl immediately and update your firmware.").arg(params));
+}
+
+void QGCApplication::setMavManager(MavManager* pMgr)
+{
+    if(!_pMavManager)
+        _pMavManager = pMgr;
+}
+
+MavManager* QGCApplication::getMavManager()
+{
+    return _pMavManager;
 }

@@ -230,63 +230,6 @@ Item {
                         }
                     }
                 }
-                //-- Hack tool to find optimal scale factor
-                Column {
-                    id: fudgeColumn
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing:    ScreenTools.adjustPixelSize(4)
-                    width:      parent.width
-                    QGCLabel {
-                        text: "Adjust Pixel Size Factor"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Row {
-                        spacing:    ScreenTools.adjustPixelSize(4)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        Button {
-                            text: 'Inc'
-                            onClicked: {
-                                ScreenTools.increasePixelSize()
-                            }
-                        }
-                        Label {
-                            text: ScreenTools.pixelSizeFactor.toFixed(2)
-                            color: __qgcPal.text
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Button {
-                            text: 'Dec'
-                            onClicked: {
-                                ScreenTools.decreasePixelSize()
-                            }
-                        }
-                    }
-                    QGCLabel {
-                        text: "Adjust Font Size Factor"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Row {
-                        spacing:    ScreenTools.adjustPixelSize(4)
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        Button {
-                            text: 'Inc'
-                            onClicked: {
-                                ScreenTools.increaseFontSize()
-                            }
-                        }
-                        Label {
-                            text: ScreenTools.fontPointFactor.toFixed(2)
-                            color: __qgcPal.text
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Button {
-                            text: 'Dec'
-                            onClicked: {
-                                ScreenTools.decreaseFontSize()
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -487,6 +430,15 @@ Item {
         z:                  10
     }
 
+    QGCHudMessage {
+        id:     hudMessage
+        y:      ScreenTools.pixelSizeFactor * (5)
+        width:  (parent.width - 520 > 200) ? parent.width - 520 : 200
+        height: ScreenTools.pixelSizeFactor * (30)
+        anchors.horizontalCenter: parent.horizontalCenter
+        z:      mapBackground.z + 1
+    }
+
     QGCCompassInstrument {
         id:                 compassInstrument
         y:                  ScreenTools.pixelSizeFactor * (5)
@@ -494,7 +446,7 @@ Item {
         size:               ScreenTools.pixelSizeFactor * (160)
         heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
         visible:            mapBackground.visible && showCompass
-        z:                  mapBackground.z + 1
+        z:                  mapBackground.z + 2
         onResetRequested: {
             y               = ScreenTools.pixelSizeFactor * (5)
             x               = ScreenTools.pixelSizeFactor * (85)
@@ -514,7 +466,7 @@ Item {
         visible:            mapBackground.visible && showAttitudeIndicator
         anchors.right:      root.right
         anchors.rightMargin: ScreenTools.pixelSizeFactor * (85)
-        z:                  mapBackground.z + 1
+        z:                  mapBackground.z + 2
         onResetRequested: {
             y                   = ScreenTools.pixelSizeFactor * (5)
             anchors.right       = root.right
@@ -531,7 +483,6 @@ Item {
         rollAngle:          roll
         pitchAngle:         pitch
         visible:            !mapBackground.visible
-        z:                  10
     }
 
     QGCAttitudeWidget {

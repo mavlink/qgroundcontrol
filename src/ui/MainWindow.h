@@ -130,21 +130,15 @@ public:
     
     QWidget* getCurrentViewWidget(void) { return _currentViewWidget; }
 
-    //! Returns the font point size factor
-    static double   fontPointFactor() { return _fontFactor; }
-    //! Returns the pixel size factor
-    static double   pixelSizeFactor() { return _pixelFactor; }
-    //! Sets pixel size factor
-    void            setPixelSizeFactor(double size);
-    //! Sets font size factor
-    void            setFontSizeFactor(double size);
-
 public slots:
     /** @brief Show the application settings */
     void showSettings();
 
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
+
+    /** @brief Remove an old UAS */
+    void UASDeleted(int uasID);
 
     void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
@@ -206,10 +200,6 @@ signals:
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
     /** Emitted when any the Canvas elements within QML wudgets need updating */
     void repaintCanvas();
-    /** Emitted when pixel size factor changes */
-    void pixelSizeChanged();
-    /** Emitted when pixel size factor changes */
-    void fontSizeChanged();
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
@@ -369,10 +359,6 @@ private:
 
     QString _getWindowStateKey();
     QString _getWindowGeometryKey();
-
-    // UI Dimension Factors
-    static double _pixelFactor;
-    static double _fontFactor;
 
 };
 
