@@ -27,33 +27,53 @@
 #include "ScreenTools.h"
 #include "MainWindow.h"
 
-#include <QFont>
-#include <QFontMetrics>
+// Pixel size, instead of a physical thing is actually a philosophical question when
+// it comes to Qt.
+// The values below came from actually measuring the elements on the screen on these
+// devices. I have yet to find a constant from Qt so these things can be properly
+// computed at runtime.
 
-const double ScreenTools::_defaultFontPointSize = 13;
-const double ScreenTools::_mediumFontPointSize = 16;
-const double ScreenTools::_largeFontPointSize = 20;
+#if defined(Q_OS_OSX)
+double ScreenTools::_pixelFactor    = 1.0;
+#elif defined(__ios__)
+double ScreenTools::_pixelFactor    = 0.75;
+#elif defined(Q_OS_WIN)
+double ScreenTools::_pixelFactor    = 0.86;
+#elif defined(__android__)
+double ScreenTools::_pixelFactor    = 2.5;
+#elif defined(Q_OS_LINUX)
+double ScreenTools::_pixelFactor    = 1.0;
+#endif
+
+#if defined(__android__)
+#define FONT_FACTOR 2
+#else
+#define FONT_FACTOR 1
+#endif
+
+int ScreenTools::_font8  = 8  * FONT_FACTOR;
+int ScreenTools::_font9  = 9  * FONT_FACTOR;
+int ScreenTools::_font10 = 10 * FONT_FACTOR;
+int ScreenTools::_font11 = 11 * FONT_FACTOR;
+int ScreenTools::_font12 = 12 * FONT_FACTOR;
+int ScreenTools::_font13 = 13 * FONT_FACTOR;
+int ScreenTools::_font14 = 14 * FONT_FACTOR;
+int ScreenTools::_font15 = 15 * FONT_FACTOR;
+int ScreenTools::_font16 = 16 * FONT_FACTOR;
+int ScreenTools::_font17 = 17 * FONT_FACTOR;
+int ScreenTools::_font18 = 18 * FONT_FACTOR;
+int ScreenTools::_font19 = 19 * FONT_FACTOR;
+int ScreenTools::_font20 = 20 * FONT_FACTOR;
+int ScreenTools::_font21 = 21 * FONT_FACTOR;
+int ScreenTools::_font22 = 22 * FONT_FACTOR;
 
 ScreenTools::ScreenTools()
 {
     MainWindow* mainWindow = MainWindow::instance();
-    
     // Unit tests can run Qml without MainWindow
     if (mainWindow) {
-        connect(mainWindow, &MainWindow::repaintCanvas,     this, &ScreenTools::_updateCanvas);
-        connect(mainWindow, &MainWindow::pixelSizeChanged,  this, &ScreenTools::_updatePixelSize);
-        connect(mainWindow, &MainWindow::fontSizeChanged,   this, &ScreenTools::_updateFontSize);
+        connect(mainWindow, &MainWindow::repaintCanvas, this, &ScreenTools::_updateCanvas);
     }
-}
-
-qreal ScreenTools::adjustFontPointSize(qreal pointSize)
-{
-    return adjustFontPointSize_s(pointSize);
-}
-
-qreal ScreenTools::adjustFontPointSize_s(qreal pointSize)
-{
-    return pointSize * MainWindow::fontPointFactor();
 }
 
 qreal ScreenTools::adjustPixelSize(qreal pixelSize)
@@ -63,66 +83,10 @@ qreal ScreenTools::adjustPixelSize(qreal pixelSize)
 
 qreal ScreenTools::adjustPixelSize_s(qreal pixelSize)
 {
-    return pixelSize * MainWindow::pixelSizeFactor();
-}
-
-void ScreenTools::increasePixelSize()
-{
-    MainWindow::instance()->setPixelSizeFactor(MainWindow::pixelSizeFactor() + 0.025);
-}
-
-void ScreenTools::decreasePixelSize()
-{
-    MainWindow::instance()->setPixelSizeFactor(MainWindow::pixelSizeFactor() - 0.025);
-}
-
-void ScreenTools::increaseFontSize()
-{
-    MainWindow::instance()->setFontSizeFactor(MainWindow::fontPointFactor() + 0.025);
-}
-
-void ScreenTools::decreaseFontSize()
-{
-    MainWindow::instance()->setFontSizeFactor(MainWindow::fontPointFactor() - 0.025);
+    return pixelSize * _pixelFactor;
 }
 
 void ScreenTools::_updateCanvas()
 {
     emit repaintRequestedChanged();
-}
-
-void ScreenTools::_updatePixelSize()
-{
-    emit pixelSizeFactorChanged();
-}
-
-void ScreenTools::_updateFontSize()
-{
-    emit fontPointFactorChanged();
-    emit fontSizesChanged();
-}
-
-double ScreenTools::fontPointFactor()
-{
-    return MainWindow::fontPointFactor();
-}
-
-double ScreenTools::pixelSizeFactor()
-{
-    return MainWindow::pixelSizeFactor();
-}
-
-double ScreenTools::defaultFontPointSize(void)
-{
-    return _defaultFontPointSize * MainWindow::fontPointFactor();
-}
-
-double ScreenTools::mediumFontPointSize(void)
-{
-    return _mediumFontPointSize * MainWindow::fontPointFactor();
-}
-
-double ScreenTools::largeFontPointSize(void)
-{
-    return _largeFontPointSize * MainWindow::fontPointFactor();
 }

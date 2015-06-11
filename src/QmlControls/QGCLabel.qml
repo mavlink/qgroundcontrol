@@ -10,7 +10,7 @@ Text {
 
     property bool enabled: true
 
-    font.pointSize: ScreenTools.defaultFontPointSize
+    font.pixelSize: ScreenTools.defaultFontPizelSize
     color:          __qgcPal.text
     antialiasing:   true
 }

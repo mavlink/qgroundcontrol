@@ -52,7 +52,7 @@ FactPanel {
 
         QGCLabel {
             text: "SAFETY CONFIG"
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pixelSize: ScreenTools.largeFontPixelSize
         }
 
         Item { height: 20; width: 10 } // spacer
@@ -60,7 +60,7 @@ FactPanel {
         //-----------------------------------------------------------------
         //-- Return Home Triggers
 
-        QGCLabel { text: "Triggers For Return Home"; font.pointSize: ScreenTools.mediumFontPointSize; }
+        QGCLabel { text: "Triggers For Return Home"; font.pixelSize: ScreenTools.mediumFontPixelSize; }
 
         Item { height: 10; width: 10 } // spacer
 
@@ -119,7 +119,7 @@ FactPanel {
         //-----------------------------------------------------------------
         //-- Return Home Settings
 
-        QGCLabel { text: "Return Home Settings"; font.pointSize: ScreenTools.mediumFontPointSize; }
+        QGCLabel { text: "Return Home Settings"; font.pixelSize: ScreenTools.mediumFontPixelSize; }
 
         Item { height: 10; width: 10 } // spacer
 
@@ -290,7 +290,7 @@ FactPanel {
 
         QGCLabel {
             width:          parent.width
-            font.pointSize: ScreenTools.mediumFontPointSize
+            font.pixelSize: ScreenTools.mediumFontPixelSize
             text:           "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
             visible:        fact.value !== 0
             wrapMode:       Text.Wrap
@@ -300,7 +300,7 @@ FactPanel {
 
         QGCLabel {
             width:          parent.width
-            font.pointSize: ScreenTools.mediumFontPointSize
+            font.pixelSize: ScreenTools.mediumFontPixelSize
             text:           "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
             visible:        fact.value !== 0
             wrapMode:       Text.Wrap

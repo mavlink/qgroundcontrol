@@ -107,6 +107,10 @@ public:
      * @brief Get normal message count (Resets count once read)
      */
     int getNormalCount();
+    /**
+     * @brief Get latest error message
+     */
+    QString getLatestError()   { return _latestError; }
 public slots:
     /**
      * @brief Set currently active UAS
@@ -140,6 +144,7 @@ private:
     int _errorCount;
     int _warningCount;
     int _normalCount;
+    QString _latestError;
 };
 
 #endif // QGCMESSAGEHANDLER_H

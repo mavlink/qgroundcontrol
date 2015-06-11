@@ -102,9 +102,10 @@ void AirframeComponentController::changeAutostart(void)
     getParameterFact(-1, "SYS_AUTOSTART")->setValue(_autostartId);
     getParameterFact(-1, "SYS_AUTOCONFIG")->setValue(1);
     
-    // Wait for the parameters to flow through system
+    // FactSystem doesn't currently have a mechanism to wait for the parameters to come backf from the board.
+    // So instead we wait for enough time for the parameters to hoepfully make it to the board.
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-    QGC::SLEEP::sleep(1);
+    QGC::SLEEP::sleep(3);
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     
     // Reboot board

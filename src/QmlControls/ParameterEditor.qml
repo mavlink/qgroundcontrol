@@ -66,7 +66,7 @@ QGCView {
                     height:				defaultTextHeight + (ScreenTools.pixelSizeFactor * (9))
                     text:               group
                     verticalAlignment:	Text.AlignVCenter
-                    font.pointSize:     ScreenTools.fontPointFactor * (16);
+                    font.pixelSize:     ScreenTools.font16;
                 }
 
                 Rectangle {
@@ -142,7 +142,7 @@ QGCView {
                 height: firstButton.height
 
                 QGCLabel {
-                    font.pointSize: ScreenTools.fontPointFactor * (20)
+                    font.pixelSize: ScreenTools.font20;
                     visible:        fullMode
                     text:           "PARAMETER EDITOR"
                 }
@@ -202,7 +202,7 @@ QGCView {
                                     height:				contentHeight + (ScreenTools.pixelSizeFactor * (9))
                                     text:               "Component #: " + componentId.toString()
                                     verticalAlignment:	Text.AlignVCenter
-                                    font.pointSize:     ScreenTools.fontPointFactor * (16);
+                                    font.pixelSize:     ScreenTools.font16;
                                 }
 
                                 Repeater {

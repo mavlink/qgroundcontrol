@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QQmlEngine>
 #include <QSettings>
 
-#include "MainWindow.h"
+#include "ScreenTools.h"
 #include "FlightDisplay.h"
 #include "UASManager.h"
 
@@ -48,8 +48,8 @@ FlightDisplay::FlightDisplay(QWidget *parent)
         pl->setContentsMargins(0,0,0,0);
     }
 #ifndef __android__
-    setMinimumWidth( 380 * MainWindow::pixelSizeFactor());
-    setMinimumHeight(400 * MainWindow::pixelSizeFactor());
+    setMinimumWidth( 380 * ScreenTools::pixelSizeFactor_s());
+    setMinimumHeight(400 * ScreenTools::pixelSizeFactor_s());
 #endif
     setContextPropertyObject("flightDisplay", this);
     setSource(QUrl::fromUserInput("qrc:/qml/FlightDisplay.qml"));

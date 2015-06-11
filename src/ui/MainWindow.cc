@@ -83,29 +83,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LogCompressor.h"
 
-// Pixel size, instead of a physical thing is actually a philosophical question when
-// it comes to Qt. Fonts are that and some heavy Kabalistic Voodoo added to the mix.
-// The values below came from actually measuring the elements on the screen on these
-// devices. I have yet to find a constant from Qt so these things can be properly
-// computed at runtime.
-
-#if defined(Q_OS_OSX)
-double MainWindow::_pixelFactor    = 1.0;
-double MainWindow::_fontFactor     = 1.0;
-#elif defined(__ios__)
-double MainWindow::_pixelFactor    = 1.0;
-double MainWindow::_fontFactor     = 1.0;
-#elif defined(Q_OS_WIN)
-double MainWindow::_pixelFactor    = 0.86;
-double MainWindow::_fontFactor     = 0.63;
-#elif defined(__android__)
-double MainWindow::_pixelFactor    = 2.0;
-double MainWindow::_fontFactor     = 1.23;
-#elif defined(Q_OS_LINUX)
-double MainWindow::_pixelFactor    = 1.0;
-double MainWindow::_fontFactor     = 0.85;
-#endif
-
 /// The key under which the Main Window settings are saved
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
@@ -689,8 +666,6 @@ void MainWindow::loadSettings()
     _autoReconnect  = settings.value("AUTO_RECONNECT",      _autoReconnect).toBool();
     _lowPowerMode   = settings.value("LOW_POWER_MODE",      _lowPowerMode).toBool();
     _showStatusBar  = settings.value("SHOW_STATUSBAR",      _showStatusBar).toBool();
-    _fontFactor     = settings.value("FONT_SIZE_FACTOR",    _fontFactor).toDouble();
-    _pixelFactor    = settings.value("PIXEL_SIZE_FACTOR",   _pixelFactor).toDouble();
     settings.endGroup();
 }
 
@@ -701,8 +676,6 @@ void MainWindow::storeSettings()
     settings.setValue("AUTO_RECONNECT",     _autoReconnect);
     settings.setValue("LOW_POWER_MODE",     _lowPowerMode);
     settings.setValue("SHOW_STATUSBAR",     _showStatusBar);
-    settings.setValue("FONT_SIZE_FACTOR",   _fontFactor);
-    settings.setValue("PIXEL_SIZE_FACTOR",  _pixelFactor);
     settings.endGroup();
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
 	
@@ -796,6 +769,7 @@ void MainWindow::connectCommonActions()
 
     // Connect internal actions
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(UASDeleted(int)), this, SLOT(UASDeleted(int)));
 
     // Unmanned System controls
     connect(_ui.actionLiftoff, SIGNAL(triggered()), UASManager::instance(), SLOT(launchActiveUAS()));
@@ -906,6 +880,14 @@ void MainWindow::UASCreated(UASInterface* uas)
     if (_analyzeView != linechartWidget)
     {
         _analyzeView = linechartWidget;
+    }
+}
+
+void MainWindow::UASDeleted(int uasId)
+{
+    if (_mapUasId2HilDockWidget.contains(uasId)) {
+        _mapUasId2HilDockWidget[uasId]->deleteLater();
+        _mapUasId2HilDockWidget.remove(uasId);
     }
 }
 
@@ -1188,22 +1170,6 @@ void MainWindow::restoreLastUsedConnection()
 void MainWindow::_linkStateChange(LinkInterface*)
 {
     emit repaintCanvas();
-}
-
-void MainWindow::setPixelSizeFactor(double size) {
-    if(size < 0.1) {
-        size = 0.1;
-    }
-    _pixelFactor = size;
-    emit pixelSizeChanged();
-}
-
-void MainWindow::setFontSizeFactor(double size) {
-    if(size < 0.1) {
-        size = 0.1;
-    }
-    _fontFactor = size;
-    emit fontSizeChanged();
 }
 
 #ifdef QGC_MOUSE_ENABLED_LINUX

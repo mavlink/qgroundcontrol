@@ -46,7 +46,7 @@ Rectangle {
 
         QGCLabel {
             text: "VEHICLE SUMMARY"
-            font.pointSize: ScreenTools.fontPointFactor * (20);
+            font.pixelSize: ScreenTools.font20;
         }
 
         Item {
@@ -59,7 +59,7 @@ Rectangle {
             width:			parent.width
 			wrapMode:		Text.WordWrap
 			color:			setupComplete ? qgcPal.text : "red"
-            font.pointSize: setupComplete ? ScreenTools.defaultFontPointSize : ScreenTools.fontPointFactor * (20)
+            font.pixelSize: setupComplete ? ScreenTools.defaultFontPizelSize : ScreenTools.font20
 			text:           setupComplete ?
                                 "Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component." :
                                 "WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left."

@@ -10,27 +10,27 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
 
     // Create the title label. Scale the font based on available size.
     titleLabel = new QLabel(this);
-     titleLabel->setAlignment(Qt::AlignHCenter);
-     titleLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
-     titleLabel->setObjectName(QString::fromUtf8("title"));
-     QFont titlefont = titleLabel->font();
-     titlefont.setPixelSize(this->height() / 4.0);
-     titleLabel->setFont(titlefont);
-     layout->addWidget(titleLabel);
+    titleLabel->setAlignment(Qt::AlignHCenter);
+    titleLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
+    titleLabel->setObjectName(QString::fromUtf8("title"));
+    QFont titlefont = titleLabel->font();
+    titlefont.setPixelSize(this->height() / 4.0);
+    titleLabel->setFont(titlefont);
+    layout->addWidget(titleLabel);
 
-     // Create the value label. Scale the font based on available size.
-     valueLabel = new QLabel(this);
-     valueLabel->setAlignment(Qt::AlignHCenter);
-     valueLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
-     valueLabel->setObjectName(QString::fromUtf8("value"));
-     valueLabel->setText("0.00");
+    // Create the value label. Scale the font based on available size.
+    valueLabel = new QLabel(this);
+    valueLabel->setAlignment(Qt::AlignHCenter);
+    valueLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
+    valueLabel->setObjectName(QString::fromUtf8("value"));
+    valueLabel->setText("0.00");
     QFont valuefont = valueLabel->font();
     valuefont.setPixelSize(this->height() / 2.0);
     valueLabel->setFont(valuefont);
     layout->addWidget(valueLabel);
 
     // And make sure the items are evenly spaced in the UASQuickView.
-    layout->addSpacerItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    layout->addSpacerItem(new QSpacerItem(10, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     this->setLayout(layout);
 }
 void UASQuickViewTextItem::setValue(double value)
@@ -61,7 +61,7 @@ void UASQuickViewTextItem::setTitle(QString title)
 {
     if (title.indexOf(".") != -1 && title.indexOf(":") != -1)
     {
-        titleLabel->setText(title.mid(title.indexOf(".")+1));
+        titleLabel->setText(title.mid(title.indexOf(".") + 1));
     }
     else
     {
@@ -73,7 +73,7 @@ int UASQuickViewTextItem::minValuePixelSize()
     QFont valuefont = valueLabel->font();
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(this->height());
-    titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
+    titlefont.setPixelSize(valuefont.pixelSize() * 0.75);
     //spacerItem->setGeometry(QRect(0,0,20,this->height()/10.0));
 
     QFontMetrics metrics(valuefont);
@@ -87,18 +87,18 @@ int UASQuickViewTextItem::minValuePixelSize()
         //QFontMetrics titlefm( titlefont );
         //QRect titlebound = titlefm.boundingRect(0,0, titleLabel->width(), titleLabel->height(), Qt::TextWordWrap | Qt::AlignLeft, titleLabel->text());
 
-        if ((valbound.width() <= valueLabel->width() && valbound.height() <= valueLabel->height()))// && (titlebound.width() <= titleLabel->width() && titlebound.height() <= titleLabel->height()))
+        if ((valbound.width() <= valueLabel->width() && valbound.height() <= valueLabel->height())) // && (titlebound.width() <= titleLabel->width() && titlebound.height() <= titleLabel->height()))
             fit = true;
         else
         {
-            if (valuefont.pixelSize()-5 <= 0)
+            if (valuefont.pixelSize() - 1 <= 6)
             {
                 fit = true;
-                valuefont.setPixelSize(5);
+                valuefont.setPixelSize(6);
             }
             else
             {
-                valuefont.setPixelSize(valuefont.pixelSize() - 5);
+                valuefont.setPixelSize(valuefont.pixelSize() - 1);
             }
             //titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
             //qDebug() << "Point size:" << valuefont.pixelSize() << valueLabel->width() << valueLabel->height();
@@ -111,7 +111,7 @@ void UASQuickViewTextItem::setValuePixelSize(int size)
     QFont valuefont = valueLabel->font();
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(size);
-    titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
+    titlefont.setPixelSize(valuefont.pixelSize() * 0.75);
     valueLabel->setFont(valuefont);
     titleLabel->setFont(titlefont);
     update();

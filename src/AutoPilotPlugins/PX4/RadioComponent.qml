@@ -42,6 +42,7 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
+    readonly property string dialogTitle: "Radio Config"
     readonly property real labelToMonitorMargin: defaultTextWidth * 3
     property bool controllerCompleted: false
     property bool controllerAndViewReady: false
@@ -49,11 +50,15 @@ QGCView {
     function updateChannelCount()
     {
         if (controllerAndViewReady) {
+/*
+            FIXME: Turned off for now, since it prevents binding. Need to restructure to
+            allow binding and still check channel count
             if (controller.channelCount < controller.minChannelCount) {
-                showDialog(channelCountDialogComponent, "Radio Config", 50, 0)
+                showDialog(channelCountDialogComponent, dialogTitle, 50, 0)
             } else {
                 hideDialog()
             }
+*/
         }
     }
 
@@ -88,6 +93,32 @@ QGCView {
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
+
+        Component {
+            id: copyTrimsDialogComponent
+
+            QGCViewMessage {
+                message: "Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."
+
+                function accept() {
+                    hideDialog()
+                    controller.copyTrims()
+                }
+            }
+        }
+
+        Component {
+            id: zeroTrimsDialogComponent
+
+            QGCViewMessage {
+                message: "Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration."
+
+                function accept() {
+                    hideDialog()
+                    controller.nextButtonClicked()
+                }
+            }
+        }
 
         Component {
             id: channelCountDialogComponent
@@ -205,6 +236,8 @@ QGCView {
                     duration:   1500
                 }
 
+                /*
+                // FIXME: Bar animation is turned off for now to figure out better usbaility
                 onRcValueChanged: {
                     if (Math.abs(rcValue - __lastRcValue) > __rcValueMaxJitter) {
                         __lastRcValue = rcValue
@@ -212,7 +245,6 @@ QGCView {
                     }
                 }
 
-                /*
                 // rcValue debugger
                 QGCLabel {
                     anchors.fill: parent
@@ -226,7 +258,7 @@ QGCView {
 
         QGCLabel {
             id:             header
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pixelSize: ScreenTools.largeFontPixelSize
             text:           "RADIO CONFIG"
         }
 
@@ -244,22 +276,6 @@ QGCView {
             anchors.left:   parent.left
             anchors.right:  columnSpacer.left
             spacing:        10
-
-            Row {
-                spacing: 10
-
-                QGCLabel {
-                    anchors.baseline:   bindButton.baseline
-                    text:               "Place Spektrum satellite receiver in bind mode:"
-                }
-
-                QGCButton {
-                    id:     bindButton
-                    text:   "Spektrum Bind"
-
-                    onClicked: showDialog(spektrumBindDialogComponent, "Radio Config", 50, StandardButton.Ok | StandardButton.Cancel)
-                }
-            }
 
             // Attitude Controls
             Column {
@@ -412,7 +428,13 @@ QGCView {
                     primary:    true
                     text:       "Calibrate"
 
-                    onClicked: controller.nextButtonClicked()
+                    onClicked: {
+                        if (text == "Calibrate") {
+                            showDialog(zeroTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                        } else {
+                            controller.nextButtonClicked()
+                        }
+                    }
                 }
             } // Row - Buttons
 
@@ -422,6 +444,42 @@ QGCView {
                 width:      parent.width
                 wrapMode:   Text.WordWrap
             }
+
+            Item {
+                width: 10
+                height: defaultTextHeight * 4
+            }
+
+            Rectangle {
+                width:          parent.width
+                height:         1
+                border.color:   qgcPal.text
+                border.width:   1
+            }
+
+            QGCLabel { text: "Additional Radio setup:" }
+
+            Row {
+                spacing: 10
+
+                QGCLabel {
+                    anchors.baseline:   bindButton.baseline
+                    text:               "Place Spektrum satellite receiver in bind mode:"
+                }
+
+                QGCButton {
+                    id:     bindButton
+                    text:   "Spektrum Bind"
+
+                    onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                }
+            }
+
+            QGCButton {
+                text: "Copy Trims"
+                onClicked: showDialog(copyTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+            }
+
         } // Column - Left Column
 
         Item {
