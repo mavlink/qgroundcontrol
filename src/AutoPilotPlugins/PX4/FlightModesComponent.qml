@@ -936,7 +936,7 @@ Item {
                                     width:                  parent.width
                                     y:                      (parent.height * (1.0 - rc_return_th.value)) - (implicitHeight / 2)
                                     horizontalAlignment:    Text.AlignRight
-                                    text:                   "Offboad"
+                                    text:                   "Offboard"
                                 }
 
                                 QGCLabel {
