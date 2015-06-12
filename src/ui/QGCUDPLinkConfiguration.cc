@@ -72,13 +72,16 @@ void QGCUDPLinkConfiguration::_editHost(int row)
 {
     if(row < _viewModel->hosts.count()) {
         bool ok;
+        QString oldName = _viewModel->hosts.at(row);
         QString hostName = QInputDialog::getText(
             this, tr("Edit a MAVLink host target"),
-            tr("Host (hostname:port):                                                     "), QLineEdit::Normal, _viewModel->hosts.at(row), &ok);
+            tr("Host (hostname:port):                                                     "), QLineEdit::Normal, oldName, &ok);
         if (ok && !hostName.isEmpty()) {
             _viewModel->beginChange();
             _viewModel->hosts.replace(row, hostName);
             _viewModel->endChange();
+            _config->removeHost(oldName);
+            _config->addHost(hostName);
         }
     }
 }
@@ -119,7 +122,9 @@ void QGCUDPLinkConfiguration::on_removeHost_clicked()
 {
     QModelIndex index = _ui->listView->currentIndex();
     if(index.row() < _viewModel->hosts.count()) {
+        QString oldName = _viewModel->hosts.at(index.row());
         _viewModel->hosts.removeAt(index.row());
+        _config->removeHost(oldName);
         _reloadList();
     }
 }
