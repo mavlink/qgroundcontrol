@@ -368,6 +368,7 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
     UDPConfiguration* usource = dynamic_cast<UDPConfiguration*>(source);
     Q_ASSERT(usource != NULL);
     _localPort = usource->localPort();
+    _hosts.clear();
     QString host;
     int port;
     if(usource->firstHost(host, port)) {
@@ -407,7 +408,7 @@ void UDPConfiguration::addHost(const QString& host, int port)
             qWarning() << "UDP:" << "Could not resolve host:" << host << "port:" << port;
         } else {
             _hosts[ipAdd] = port;
-            qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
+            //qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
         }
     }
 }
