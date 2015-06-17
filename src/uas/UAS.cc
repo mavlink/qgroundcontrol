@@ -2578,7 +2578,6 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             const float newThrustCommand = thrust * axesScaling;
 
             // Send the MANUAL_COMMAND message
-            mavlink_message_t message;
             mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
         }
 
