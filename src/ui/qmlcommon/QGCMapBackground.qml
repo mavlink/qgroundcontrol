@@ -336,19 +336,19 @@ Item {
         }
         Image {
             id: scaleImageLeft
-            source: "/qml/scale_end.png"
+            source: "/qmlimages/scale_end.png"
             anchors.bottom: parent.bottom
             anchors.left: parent.left
         }
         Image {
             id: scaleImage
-            source: "/qml/scale.png"
+            source: "/qmlimages/scale.png"
             anchors.bottom: parent.bottom
             anchors.left: scaleImageLeft.right
         }
         Image {
             id: scaleImageRight
-            source: "/qml/scale_end.png"
+            source: "/qmlimages/scale_end.png"
             anchors.bottom: parent.bottom
             anchors.left: scaleImage.right
         }

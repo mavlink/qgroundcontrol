@@ -132,7 +132,7 @@ QString AirframeComponent::description(void) const
 
 QString AirframeComponent::iconResource(void) const
 {
-    return "AirframeComponentIcon.png";
+    return "/qmlimages/AirframeComponentIcon.png";
 }
 
 bool AirframeComponent::requiresSetup(void) const

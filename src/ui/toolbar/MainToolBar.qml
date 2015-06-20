@@ -282,7 +282,7 @@ Rectangle {
                 Image {
                     id:             buttomImg
                     anchors.fill:   parent
-                    source:         "/qml/buttonMore.svg"
+                    source:         "/qmlimages/buttonMore.svg"
                     mipmap:         true
                     smooth:         true
                     antialiasing:   true
@@ -349,7 +349,7 @@ Rectangle {
 
                 Image {
                     id: dropDown
-                    source: "QGroundControl/Controls/arrow-down.png"
+                    source: "/qmlimages/arrow-down.png"
                     visible: (messages.showTriangle) && (MavManager.messageCount > 0)
                     anchors.bottom: parent.bottom
                     anchors.right: parent.right

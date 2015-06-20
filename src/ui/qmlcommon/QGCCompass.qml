@@ -37,7 +37,7 @@ Item {
     Image {
         id: compass
         anchors.centerIn: parent
-        source: "/qml/compass.svg"
+        source: "/qmlimages/compass.svg"
         mipmap: true
         width: root.width
         fillMode: Image.PreserveAspectFit
@@ -51,7 +51,7 @@ Item {
         id: pointer
         anchors.bottom: compass.top
         anchors.horizontalCenter: root.horizontalCenter
-        source: "/qml/compassNeedle.svg"
+        source: "/qmlimages/compassNeedle.svg"
         smooth:   true
         width:    compass.width * 0.1
         fillMode: Image.PreserveAspectFit

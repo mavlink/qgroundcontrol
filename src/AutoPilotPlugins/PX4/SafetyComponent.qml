@@ -213,7 +213,7 @@ FactPanel {
                         QGCColoredImage {
                             id:         planeImage
                             y:          parent.height - planeWidth - 40
-                            source:     "/qml/SafetyComponentPlane.png"
+                            source:     "/qmlimages/SafetyComponentPlane.png"
                             fillMode:   Image.PreserveAspectFit
                             width:      planeWidth
                             height:     planeWidth
@@ -226,7 +226,7 @@ FactPanel {
                             y:          parent.height - height - 20
                             width:      80
                             height:     parent.height / 2
-                            source:     "/qml/SafetyComponentTree.svg"
+                            source:     "/qmlimages/SafetyComponentTree.svg"
                             fillMode:   Image.Stretch
                             smooth:     true
                             color:      palette.windowShadeDark
@@ -237,7 +237,7 @@ FactPanel {
                             y:          parent.height - height
                             width:      100
                             height:     parent.height * .75
-                            source:     "/qml/SafetyComponentTree.svg"
+                            source:     "/qmlimages/SafetyComponentTree.svg"
                             fillMode:   Image.PreserveAspectFit
                             smooth:     true
                             color:      palette.button
@@ -246,7 +246,7 @@ FactPanel {
                         QGCColoredImage {
                             x:          parent.width - (arrowWidth/2) - 1
                             y:          parent.height - homeWidth - arrowToHomeSpacing - 2
-                            source:     "/qml/SafetyComponentArrowDown.png"
+                            source:     "/qmlimages/SafetyComponentArrowDown.png"
                             fillMode:   Image.PreserveAspectFit
                             width:      arrowWidth
                             height:     arrowWidth
@@ -258,7 +258,7 @@ FactPanel {
                             id:         homeImage
                             x:          parent.width - (homeWidth / 2)
                             y:          parent.height - homeWidth
-                            source:     "/qml/SafetyComponentHome.png"
+                            source:     "/qmlimages/SafetyComponentHome.png"
                             fillMode:   Image.PreserveAspectFit
                             width:      homeWidth
                             height:     homeWidth
