@@ -213,6 +213,18 @@ QString QGCAudioWorker::_fixTextMessageForAudio(const QString& string) {
     if(result.contains("RC_MAP_MODE_SW", Qt::CaseInsensitive)) {
         result.replace("RC_MAP_MODE_SW", "RC mode switch", Qt::CaseInsensitive);
     }
+    if(result.contains("REJ.", Qt::CaseInsensitive)) {
+        result.replace("REJ.", "Rejected", Qt::CaseInsensitive);
+    }
+    if(result.contains("WP", Qt::CaseInsensitive)) {
+        result.replace("WP", "way point", Qt::CaseInsensitive);
+    }
+    if(result.contains("CMD", Qt::CaseInsensitive)) {
+        result.replace("CMD", "command", Qt::CaseInsensitive);
+    }
+    if(result.contains(" id ", Qt::CaseInsensitive)) {
+        result.replace(" id ", " eye dee ", Qt::CaseInsensitive);
+    }
     int number;
     if(_getMillisecondString(string, match, number) && number > 1000) {
         if(number < 60000) {
@@ -229,5 +241,6 @@ QString QGCAudioWorker::_fixTextMessageForAudio(const QString& string) {
         }
         result.replace(match, newNumber);
     }
+    // qDebug() << "Speech: " << result;
     return result;
 }
