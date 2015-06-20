@@ -239,7 +239,7 @@ QGCView {
 
             Rectangle {
                 width:              parent.width
-                height:             80
+                height:             140
                 color:              palette.windowShade
 
                 Column {
@@ -248,7 +248,7 @@ QGCView {
                     spacing:            10
 
                     QGCLabel {
-                        text: "WARNING: Props must be removed from vehicle prior to performing ESC calibration."
+                        text: "WARNING:\n\nPropellers must be removed from vehicle prior to performing ESC calibration.\nYou must use USB connection for this operation.\n"
                     }
 
                     QGCButton {
