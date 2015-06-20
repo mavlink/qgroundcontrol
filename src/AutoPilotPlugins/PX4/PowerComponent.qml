@@ -54,13 +54,13 @@ QGCView {
     function getBatteryImage()
     {
         switch(battNumCells.value) {
-            case 1:  return "/qml/PowerComponentBattery_01cell.svg";
-            case 2:  return "/qml/PowerComponentBattery_02cell.svg"
-            case 3:  return "/qml/PowerComponentBattery_03cell.svg"
-            case 4:  return "/qml/PowerComponentBattery_04cell.svg"
-            case 5:  return "/qml/PowerComponentBattery_05cell.svg"
-            case 6:  return "/qml/PowerComponentBattery_06cell.svg"
-            default: return "/qml/PowerComponentBattery_01cell.svg";
+            case 1:  return "/qmlimages/PowerComponentBattery_01cell.svg";
+            case 2:  return "/qmlimages/PowerComponentBattery_02cell.svg"
+            case 3:  return "/qmlimages/PowerComponentBattery_03cell.svg"
+            case 4:  return "/qmlimages/PowerComponentBattery_04cell.svg"
+            case 5:  return "/qmlimages/PowerComponentBattery_05cell.svg"
+            case 6:  return "/qmlimages/PowerComponentBattery_06cell.svg"
+            default: return "/qmlimages/PowerComponentBattery_01cell.svg";
         }
     }
 

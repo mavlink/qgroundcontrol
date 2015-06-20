@@ -46,7 +46,7 @@ QString SafetyComponent::description(void) const
 
 QString SafetyComponent::iconResource(void) const
 {
-    return "SafetyComponentIcon.png";
+    return "/qmlimages/SafetyComponentIcon.png";
 }
 
 bool SafetyComponent::requiresSetup(void) const

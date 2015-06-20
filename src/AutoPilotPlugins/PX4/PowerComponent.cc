@@ -46,7 +46,7 @@ QString PowerComponent::description(void) const
 
 QString PowerComponent::iconResource(void) const
 {
-    return "PowerComponentIcon.png";
+    return "/qmlimages/PowerComponentIcon.png";
 }
 
 bool PowerComponent::requiresSetup(void) const

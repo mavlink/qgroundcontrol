@@ -45,7 +45,7 @@ QGCMovableItem {
     }
     Image {
         id:                 pointer
-        source:             "/qml/compassInstrumentAirplane.svg"
+        source:             "/qmlimages/compassInstrumentAirplane.svg"
         mipmap:             true
         width:              size * 0.75
         fillMode:           Image.PreserveAspectFit
@@ -58,7 +58,7 @@ QGCMovableItem {
     }
     Image {
         id:                 compassDial
-        source:             "/qml/compassInstrumentDial.svg"
+        source:             "/qmlimages/compassInstrumentDial.svg"
         mipmap:             true
         fillMode:           Image.PreserveAspectFit
         anchors.fill:       parent
