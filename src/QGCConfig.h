@@ -19,7 +19,7 @@
 #define QGC_ORG_DOMAIN "org.qgroundcontrol"
 
 #define QGC_APPLICATION_VERSION_MAJOR 2
-#define QGC_APPLICATION_VERSION_MINOR 5
+#define QGC_APPLICATION_VERSION_MINOR 6
 
 // The following #definess can be overriden from the command line so that automated build systems can
 // add additional build identification.
@@ -32,7 +32,7 @@
 #endif
 
 #ifndef QGC_APPLICATION_VERSION_BUILDTYPE
-#define QGC_APPLICATION_VERSION_BUILDTYPE "(Stable)"
+#define QGC_APPLICATION_VERSION_BUILDTYPE "(Development)"
 #endif
 
 #endif // QGC_CONFIGURATION_H
