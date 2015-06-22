@@ -243,9 +243,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 UAS::~UAS()
 {
     stopHil();
-    // wait for the simulator to exit
-    simulation->wait();
-    simulation->deleteLater();
+    if (simulation) {
+        // wait for the simulator to exit
+        simulation->wait();
+        simulation->deleteLater();
+    }
     writeSettings();
 }
 
