@@ -80,12 +80,12 @@ QGCXPlaneLink::~QGCXPlaneLink()
     storeSettings();
     // Tell the thread to exit
     _should_exit = true;
-    // Wait for it to exit
-    wait();
 
-//    if(connectState) {
-//       disconnectSimulation();
-//    }
+    if (socket) {
+        socket->close();
+        socket->deleteLater();
+        socket = NULL;
+    }
 }
 
 void QGCXPlaneLink::loadSettings()
@@ -169,10 +169,12 @@ void QGCXPlaneLink::run()
 
         emit statusMessage("Binding socket failed!");
 
-        delete socket;
+        socket->deleteLater();
         socket = NULL;
         return;
     }
+
+    emit statusMessage(tr("Waiting for XPlane.."));
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
@@ -188,6 +190,9 @@ void QGCXPlaneLink::run()
         connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), uas, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), Qt::QueuedConnection);
 
         uas->startHil();
+    } else {
+        emit statusMessage(tr("Failed to connect to drone instance"));
+        return;
     }
 
 #pragma pack(push, 1)
@@ -253,6 +258,8 @@ void QGCXPlaneLink::run()
     }
 
     connectState = false;
+
+    QObject::disconnect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
     socket->close();
     socket->deleteLater();
@@ -908,7 +915,6 @@ bool QGCXPlaneLink::disconnectSimulation()
     if (connectState)
     {
         _should_exit = true;
-        wait();
     } else {
         emit simulationDisconnected();
         emit simulationConnected(false);
