@@ -4,6 +4,70 @@
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
 
+    <qresource prefix="/qmlimages">
+        <file alias="SafetyComponentTree.svg">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.svg</file>
+        <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentHome.png</file>
+        <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentArrowDown.png</file>
+        <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentPlane.png</file>
+
+        <file alias="VehicleDown.png">src/AutoPilotPlugins/PX4/Images/VehicleDown.png</file>
+        <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
+        <file alias="VehicleLeft.png">src/AutoPilotPlugins/PX4/Images/VehicleLeft.png</file>
+        <file alias="VehicleRight.png">src/AutoPilotPlugins/PX4/Images/VehicleRight.png</file>
+        <file alias="VehicleNoseDown.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDown.png</file>
+        <file alias="VehicleTailDown.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
+
+        <file alias="VehicleDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleDownRotate.png</file>
+        <file alias="VehicleLeftRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleLeftRotate.png</file>
+        <file alias="VehicleNoseDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDownRotate.png</file>
+
+        <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/PX4/Images/AirframeStandardPlane.png</file>
+        <file alias="AirframeFlyingWing.png">src/AutoPilotPlugins/PX4/Images/AirframeFlyingWing.png</file>
+        <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorX.png</file>
+        <file alias="AirframeQuadRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorPlus.png</file>
+        <file alias="AirframeOctoRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorX.png</file>
+        <file alias="AirframeOctoRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorPlus.png</file>
+        <file alias="AirframeHexaRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorX.png</file>
+        <file alias="AirframeHexaRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorPlus.png</file>
+        <file alias="AirframeQuadRotorH.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorH.png</file>
+        <file alias="AirframeSimulation.png">src/AutoPilotPlugins/PX4/Images/AirframeSimulation.png</file>
+
+        <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
+        <file alias="subMenuButtonImage.png">resources/CogWheels.png</file>
+        <file alias="SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SensorsComponentIcon.png</file>
+        <file alias="RadioComponentIcon.png">src/AutoPilotPlugins/PX4/Images/RadioComponentIcon.png</file>
+        <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
+        <file alias="AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/Images/AirframeComponentIcon.png</file>
+        <file alias="SafetyComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentIcon.png</file>
+        <file alias="PowerComponentIcon.png">src/AutoPilotPlugins/PX4/Images/PowerComponentIcon.png</file>
+        <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
+        <file alias="VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
+
+        <file alias="PowerComponentBattery_01cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_01cell.svg</file>
+        <file alias="PowerComponentBattery_02cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_02cell.svg</file>
+        <file alias="PowerComponentBattery_03cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_03cell.svg</file>
+        <file alias="PowerComponentBattery_04cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_04cell.svg</file>
+        <file alias="PowerComponentBattery_05cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg</file>
+        <file alias="PowerComponentBattery_06cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg</file>
+
+        <file alias="attitudeDial.svg">src/ui/qmlcommon/attitudeDial.svg</file>
+        <file alias="attitudeInstrument.svg">src/ui/qmlcommon/attitudeInstrument.svg</file>
+        <file alias="attitudePointer.svg">src/ui/qmlcommon/attitudePointer.svg</file>
+        <file alias="buttonHome.svg">src/ui/qmlcommon/buttonHome.svg</file>
+        <file alias="buttonLeft.svg">src/ui/qmlcommon/buttonLeft.svg</file>
+        <file alias="buttonMore.svg">src/ui/qmlcommon/buttonMore.svg</file>
+        <file alias="buttonRight.svg">src/ui/qmlcommon/buttonRight.svg</file>
+        <file alias="compass.svg">src/ui/qmlcommon/compass.svg</file>
+        <file alias="compassInstrumentAirplane.svg">src/ui/qmlcommon/compassInstrumentAirplane.svg</file>
+        <file alias="compassInstrumentDial.svg">src/ui/qmlcommon/compassInstrumentDial.svg</file>
+        <file alias="compassNeedle.svg">src/ui/qmlcommon/compassNeedle.svg</file>
+        <file alias="crossHair.svg">src/ui/qmlcommon/crossHair.svg</file>
+        <file alias="rollDialWhite.svg">src/ui/qmlcommon/rollDialWhite.svg</file>
+        <file alias="rollPointerWhite.svg">src/ui/qmlcommon/rollPointerWhite.svg</file>
+        <file alias="scale.png">src/ui/qmlcommon/scale.png</file>
+        <file alias="scale_end.png">src/ui/qmlcommon/scale_end.png</file>
+    </qresource>
+
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>
         <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
@@ -34,7 +98,6 @@
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/Controls/VehicleSummaryRow.qml">src/QmlControls/VehicleSummaryRow.qml</file>
-        <file alias="QGroundControl/Controls/arrow-down.png">src/QmlControls/arrow-down.png</file>
         <file alias="QGroundControl/Controls/ViewWidget.qml">src/ViewWidgets/ViewWidget.qml</file>
 
         <file alias="QGroundControl/Controls/QGCView.qml">src/QmlControls/QGCView.qml</file>
@@ -66,51 +129,9 @@
         <file alias="RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/RadioComponentSummary.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
-        <file alias="SafetyComponentTree.svg">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.svg</file>
-        <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentHome.png</file>
-        <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentArrowDown.png</file>
-        <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentPlane.png</file>
-
-        <file alias="VehicleDown.png">src/AutoPilotPlugins/PX4/Images/VehicleDown.png</file>
-        <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
-        <file alias="VehicleLeft.png">src/AutoPilotPlugins/PX4/Images/VehicleLeft.png</file>
-        <file alias="VehicleRight.png">src/AutoPilotPlugins/PX4/Images/VehicleRight.png</file>
-        <file alias="VehicleNoseDown.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDown.png</file>
-        <file alias="VehicleTailDown.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
-
-        <file alias="VehicleDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleDownRotate.png</file>
-        <file alias="VehicleLeftRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleLeftRotate.png</file>
-        <file alias="VehicleNoseDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDownRotate.png</file>
 
         <!-- Airframe component resourecs -->
         <file alias="AirframeComponent.qml">src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
-        <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/PX4/Images/AirframeStandardPlane.png</file>
-        <file alias="AirframeFlyingWing.png">src/AutoPilotPlugins/PX4/Images/AirframeFlyingWing.png</file>
-        <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorX.png</file>
-        <file alias="AirframeQuadRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorPlus.png</file>
-        <file alias="AirframeOctoRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorX.png</file>
-        <file alias="AirframeOctoRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorPlus.png</file>
-        <file alias="AirframeHexaRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorX.png</file>
-        <file alias="AirframeHexaRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorPlus.png</file>
-        <file alias="AirframeQuadRotorH.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorH.png</file>
-        <file alias="AirframeSimulation.png">src/AutoPilotPlugins/PX4/Images/AirframeSimulation.png</file>
-
-        <file alias="QGroundControl/Controls/subMenuButtonImage.png">resources/CogWheels.png</file>
-        <file alias="QGroundControl/Controls/SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SensorsComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/RadioComponentIcon.png">src/AutoPilotPlugins/PX4/Images/RadioComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/Images/AirframeComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/SafetyComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/PowerComponentIcon.png">src/AutoPilotPlugins/PX4/Images/PowerComponentIcon.png</file>
-        <file alias="QGroundControl/Controls/FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
-        <file alias="QGroundControl/Controls/VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
-
-        <file alias="PowerComponentBattery_01cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_01cell.svg</file>
-        <file alias="PowerComponentBattery_02cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_02cell.svg</file>
-        <file alias="PowerComponentBattery_03cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_03cell.svg</file>
-        <file alias="PowerComponentBattery_04cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_04cell.svg</file>
-        <file alias="PowerComponentBattery_05cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg</file>
-        <file alias="PowerComponentBattery_06cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg</file>
         <!-- QML Main UI -->
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="FlightDisplay.qml">src/ui/flightdisplay/FlightDisplay.qml</file>
@@ -134,23 +155,6 @@
         <file alias="QGroundControl/FlightControls/qmldir">src/ui/qmlcommon/qmldir</file>
         <!-- QML Map Resources -->
         <file alias="QGroundControl/FlightControls/QGCWaypoint.qml">src/ui/qmlcommon/QGCWaypoint.qml</file>
-        <!-- QML Main UI Resources -->
-        <file alias="attitudeDial.svg">src/ui/qmlcommon/attitudeDial.svg</file>
-        <file alias="attitudeInstrument.svg">src/ui/qmlcommon/attitudeInstrument.svg</file>
-        <file alias="attitudePointer.svg">src/ui/qmlcommon/attitudePointer.svg</file>
-        <file alias="buttonHome.svg">src/ui/qmlcommon/buttonHome.svg</file>
-        <file alias="buttonLeft.svg">src/ui/qmlcommon/buttonLeft.svg</file>
-        <file alias="buttonMore.svg">src/ui/qmlcommon/buttonMore.svg</file>
-        <file alias="buttonRight.svg">src/ui/qmlcommon/buttonRight.svg</file>
-        <file alias="compass.svg">src/ui/qmlcommon/compass.svg</file>
-        <file alias="compassInstrumentAirplane.svg">src/ui/qmlcommon/compassInstrumentAirplane.svg</file>
-        <file alias="compassInstrumentDial.svg">src/ui/qmlcommon/compassInstrumentDial.svg</file>
-        <file alias="compassNeedle.svg">src/ui/qmlcommon/compassNeedle.svg</file>
-        <file alias="crossHair.svg">src/ui/qmlcommon/crossHair.svg</file>
-        <file alias="rollDialWhite.svg">src/ui/qmlcommon/rollDialWhite.svg</file>
-        <file alias="rollPointerWhite.svg">src/ui/qmlcommon/rollPointerWhite.svg</file>
-        <file alias="scale.png">src/ui/qmlcommon/scale.png</file>
-        <file alias="scale_end.png">src/ui/qmlcommon/scale_end.png</file>
     </qresource>
 
     <qresource prefix="/AutoPilotPlugins/PX4">

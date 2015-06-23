@@ -30,7 +30,7 @@ ComboBox {
             Image {
                 id: imageItem
                 visible: control.menu !== null
-                source: "arrow-down.png"
+                source: "/qmlimages/arrow-down.png"
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
                 anchors.rightMargin: dropDownButtonWidth / 2

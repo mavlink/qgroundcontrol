@@ -51,7 +51,7 @@ QGCMovableItem {
     //-- Pointer
     Image {
         id:         pointer
-        source:     "/qml/attitudePointer.svg"
+        source:     "/qmlimages/attitudePointer.svg"
         mipmap:     true
         fillMode:   Image.PreserveAspectFit
         anchors.fill: parent
@@ -60,7 +60,7 @@ QGCMovableItem {
     //-- Instrument Dial
     Image {
         id:         instrumentDial
-        source:     "/qml/attitudeDial.svg"
+        source:     "/qmlimages/attitudeDial.svg"
         mipmap:     true
         fillMode:   Image.PreserveAspectFit
         anchors.fill: parent
@@ -86,7 +86,7 @@ QGCMovableItem {
     Image {
         id:                 crossHair
         anchors.centerIn:   parent
-        source:             "/qml/crossHair.svg"
+        source:             "/qmlimages/crossHair.svg"
         mipmap:             true
         width:              size * 0.75
         fillMode:           Image.PreserveAspectFit
@@ -95,7 +95,7 @@ QGCMovableItem {
     //-- Instrument Pannel
     Image {
         id:             pannel
-        source:         "/qml/attitudeInstrument.svg"
+        source:         "/qmlimages/attitudeInstrument.svg"
         mipmap:         true
         fillMode:       Image.PreserveAspectFit
         anchors.fill:   parent

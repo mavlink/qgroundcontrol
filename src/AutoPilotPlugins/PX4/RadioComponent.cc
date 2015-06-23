@@ -48,7 +48,7 @@ QString RadioComponent::description(void) const
 
 QString RadioComponent::iconResource(void) const
 {
-    return "RadioComponentIcon.png";
+    return "/qmlimages/RadioComponentIcon.png";
 }
 
 bool RadioComponent::requiresSetup(void) const
