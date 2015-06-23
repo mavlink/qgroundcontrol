@@ -82,7 +82,7 @@ Rectangle {
                 Image {
                     id:             buttomImg
                     anchors.fill:   parent
-                    source:         showWaypointEditor ? "/qml/buttonRight.svg" : "/qml/buttonLeft.svg"
+                    source:         showWaypointEditor ? "/qmlimages/buttonRight.svg" : "/qmlimages/buttonLeft.svg"
                     mipmap:         true
                     smooth:         true
                     antialiasing:   true
@@ -144,25 +144,25 @@ Rectangle {
             QGCMapToolButton {
                 width:  50
                 height: 50
-                imageSource: "/qml/buttonHome.svg"
+                imageSource: "/qmlimages/buttonHome.svg"
                 exclusiveGroup: mainActionGroup
             }
             QGCMapToolButton {
                 width:  50
                 height: 50
-                imageSource: "/qml/buttonHome.svg"
+                imageSource: "/qmlimages/buttonHome.svg"
                 exclusiveGroup: mainActionGroup
             }
             QGCMapToolButton {
                 width:  50
                 height: 50
-                imageSource: "/qml/buttonHome.svg"
+                imageSource: "/qmlimages/buttonHome.svg"
                 exclusiveGroup: mainActionGroup
             }
             QGCMapToolButton {
                 width:  50
                 height: 50
-                imageSource: "/qml/buttonHome.svg"
+                imageSource: "/qmlimages/buttonHome.svg"
                 exclusiveGroup: mainActionGroup
             }
         }

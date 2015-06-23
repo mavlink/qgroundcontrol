@@ -430,42 +430,42 @@ QGCView {
                             calValid:           controller.orientationCalDownSideDone
                             calInProgress:      controller.orientationCalDownSideInProgress
                             calInProgressText:  controller.orientationCalDownSideRotate ? "Rotate" : "Hold Still"
-                            imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qml/VehicleDownRotate.png" : "qrc:///qml/VehicleDown.png"
+                            imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qmlimages/VehicleDownRotate.png" : "qrc:///qmlimages/VehicleDown.png"
                         }
                         VehicleRotationCal {
                             visible:            controller.orientationCalUpsideDownSideVisible
                             calValid:           controller.orientationCalUpsideDownSideDone
                             calInProgress:      controller.orientationCalUpsideDownSideInProgress
                             calInProgressText:  "Hold Still"
-                            imageSource:        "qrc:///qml/VehicleUpsideDown.png"
+                            imageSource:        "qrc:///qmlimages/VehicleUpsideDown.png"
                         }
                         VehicleRotationCal {
                             visible:            controller.orientationCalNoseDownSideVisible
                             calValid:           controller.orientationCalNoseDownSideDone
                             calInProgress:      controller.orientationCalNoseDownSideInProgress
                             calInProgressText:  controller.orientationCalNoseDownSideRotate ? "Rotate" : "Hold Still"
-                            imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qml/VehicleNoseDownRotate.png" : "qrc:///qml/VehicleNoseDown.png"
+                            imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qmlimages/VehicleNoseDownRotate.png" : "qrc:///qmlimages/VehicleNoseDown.png"
                         }
                         VehicleRotationCal {
                             visible:            controller.orientationCalTailDownSideVisible
                             calValid:           controller.orientationCalTailDownSideDone
                             calInProgress:      controller.orientationCalTailDownSideInProgress
                             calInProgressText:  "Hold Still"
-                            imageSource:        "qrc:///qml/VehicleTailDown.png"
+                            imageSource:        "qrc:///qmlimages/VehicleTailDown.png"
                         }
                         VehicleRotationCal {
                             visible:            controller.orientationCalLeftSideVisible
                             calValid:           controller.orientationCalLeftSideDone
                             calInProgress:      controller.orientationCalLeftSideInProgress
                             calInProgressText:  controller.orientationCalLeftSideRotate ? "Rotate" : "Hold Still"
-                            imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qml/VehicleLeftRotate.png" : "qrc:///qml/VehicleLeft.png"
+                            imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qmlimages/VehicleLeftRotate.png" : "qrc:///qmlimages/VehicleLeft.png"
                         }
                         VehicleRotationCal {
                             visible:            controller.orientationCalRightSideVisible
                             calValid:           controller.orientationCalRightSideDone
                             calInProgress:      controller.orientationCalRightSideInProgress
                             calInProgressText:  "Hold Still"
-                            imageSource:        "qrc:///qml/VehicleRight.png"
+                            imageSource:        "qrc:///qmlimages/VehicleRight.png"
                         }
                     }
                 }

@@ -13,7 +13,7 @@ Button {
     text: "Button"
     property bool setupComplete: true
     property bool setupIndicator: true
-    property string imageResource: "subMenuButtonImage.png"
+    property string imageResource: "/qmlimages/subMenuButtonImage.png"
 
     style: ButtonStyle {
         id: buttonStyle

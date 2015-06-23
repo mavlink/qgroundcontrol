@@ -51,7 +51,7 @@ QString SensorsComponent::description(void) const
 
 QString SensorsComponent::iconResource(void) const
 {
-    return "SensorsComponentIcon.png";
+    return "/qmlimages/SensorsComponentIcon.png";
 }
 
 bool SensorsComponent::requiresSetup(void) const

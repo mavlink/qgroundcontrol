@@ -149,7 +149,7 @@ Rectangle {
         SubMenuButton {
             id:             summaryButton
             width:          buttonWidth
-            imageResource: "VehicleSummaryIcon.png"
+            imageResource: "/qmlimages/VehicleSummaryIcon.png"
             setupIndicator: false
             exclusiveGroup: setupButtonGroup
             text:           "SUMMARY"
@@ -160,7 +160,7 @@ Rectangle {
         SubMenuButton {
             id:             firmwareButton
             width:          buttonWidth
-            imageResource:  "FirmwareUpgradeIcon.png"
+            imageResource:  "/qmlimages/FirmwareUpgradeIcon.png"
             setupIndicator: false
             exclusiveGroup: setupButtonGroup
             visible:        controller.showFirmware

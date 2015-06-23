@@ -39,7 +39,7 @@ Item {
     Image {
         id: rollDial
         anchors     { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
-        source:     "/qml/rollDialWhite.svg"
+        source:     "/qmlimages/rollDialWhite.svg"
         mipmap:     true
         width:      parent.width
         fillMode:   Image.PreserveAspectFit
@@ -53,7 +53,7 @@ Item {
     Image {
         id: pointer
         anchors     { bottom: root.verticalCenter; horizontalCenter: parent.horizontalCenter}
-        source:     "/qml/rollPointerWhite.svg"
+        source:     "/qmlimages/rollPointerWhite.svg"
         mipmap:     true
         width:      rollDial.width
         fillMode:   Image.PreserveAspectFit
@@ -62,7 +62,7 @@ Item {
     Image {
         id:                 crossHair
         anchors.centerIn:   parent
-        source:             "/qml/crossHair.svg"
+        source:             "/qmlimages/crossHair.svg"
         mipmap:             true
         width:              parent.width
         fillMode:           Image.PreserveAspectFit
