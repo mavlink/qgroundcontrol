@@ -28,7 +28,7 @@ RadioButton {
             Text {
                 id:             text
                 text:           control.text
-                font.pixelSize: ScreenTools.defaultFontPizelSize
+                font.pixelSize: ScreenTools.defaultFontPixelSize
                 antialiasing:   true
 
                 anchors.centerIn: parent

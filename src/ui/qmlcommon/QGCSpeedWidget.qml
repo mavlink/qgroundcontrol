@@ -34,13 +34,13 @@ import QGroundControl.Controls 1.0
 Rectangle {
     id: root
     property real speed:           0
-    property real _reticleSpacing: ScreenTools.pixelSizeFactor * (10)
-    property real _reticleHeight:  ScreenTools.pixelSizeFactor * (2)
+    property real _reticleSpacing: ScreenTools.defaultFontPixelSize * (0.83)
+    property real _reticleHeight:  ScreenTools.defaultFontPixelSize * (0.166)
     property real _reticleSlot:    _reticleSpacing + _reticleHeight
     anchors.verticalCenter: parent.verticalCenter
     z:10
     smooth: true
-    radius: ScreenTools.pixelSizeFactor * (5)
+    radius: ScreenTools.defaultFontPixelSize * (0.42)
     border.color: Qt.rgba(1,1,1,0.25)
     gradient: Gradient {
         GradientStop { position: 0.0; color: Qt.rgba(0,0,0,0.65) }
@@ -49,7 +49,7 @@ Rectangle {
     }
     Rectangle {
         id:     clipRect
-        height: parent.height - ScreenTools.pixelSizeFactor * (5)
+        height: parent.height - ScreenTools.defaultFontPixelSize * (0.42)
         width:  parent.width
         clip:   true
         color:  Qt.rgba(0,0,0,0);
@@ -63,14 +63,14 @@ Rectangle {
                 model: 40
                 Rectangle {
                     property int _speed: -(index - 20)
-                    width:  (_speed % 5 === 0) ? ScreenTools.pixelSizeFactor * (10) : ScreenTools.pixelSizeFactor * (15)
+                    width:  (_speed % 5 === 0) ? ScreenTools.defaultFontPixelSize * (0.83) : ScreenTools.defaultFontPixelSize * (1.25)
                     anchors.right: parent.right
                     height: _reticleHeight
                     color:  Qt.rgba(1,1,1,0.35)
                     QGCLabel {
                         visible: (_speed % 5 === 0)
                         anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.horizontalCenterOffset: ScreenTools.pixelSizeFactor * (-30)
+                        anchors.horizontalCenterOffset: ScreenTools.defaultFontPixelSize * (-2.5)
                         anchors.verticalCenter:   parent.verticalCenter
                         antialiasing: true
                         font.weight: Font.DemiBold

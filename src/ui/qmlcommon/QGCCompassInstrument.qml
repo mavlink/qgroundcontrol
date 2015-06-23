@@ -34,8 +34,8 @@ import QGroundControl.ScreenTools 1.0
 QGCMovableItem {
     id:                     root
     property real heading:  0
-    property real size:     ScreenTools.pixelSizeFactor * (120)
-    property int _fontSize: ScreenTools.font12
+    property real size:     ScreenTools.defaultFontPixelSize * (10)
+    property int _fontSize: ScreenTools.defaultFontPixelSize
     width:                  size
     height:                 size
     Rectangle {

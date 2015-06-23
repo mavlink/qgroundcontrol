@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QQmlEngine>
 
 #include "MainToolBar.h"
-#include "ScreenTools.h"
+#include "ScreenToolsController.h"
 #include "MainWindow.h"
 #include "UASMessageView.h"
 #include "UASMessageHandler.h"
@@ -64,8 +64,8 @@ MainToolBar::MainToolBar(QWidget* parent)
     if(pl) {
         pl->setContentsMargins(0,0,0,0);
     }
-    setMinimumHeight(40 * ScreenTools::pixelSizeFactor_s());
-    setMaximumHeight(40 * ScreenTools::pixelSizeFactor_s());
+    setMinimumHeight(ScreenToolsController::defaultFontPixelSize_s() * 3);
+    setMaximumHeight(ScreenToolsController::defaultFontPixelSize_s() * 3);
     // Tool Bar Preferences
     QSettings settings;
     settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
