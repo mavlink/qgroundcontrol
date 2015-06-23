@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QQmlEngine>
 #include <QSettings>
 
-#include "ScreenTools.h"
+#include "ScreenToolsController.h"
 #include "QGCMapDisplay.h"
 #include "UASManager.h"
 
@@ -48,8 +48,8 @@ QGCMapDisplay::QGCMapDisplay(QWidget *parent)
         pl->setContentsMargins(0,0,0,0);
     }
 #ifndef __android__
-    setMinimumWidth( 380 * ScreenTools::pixelSizeFactor_s());
-    setMinimumHeight(400 * ScreenTools::pixelSizeFactor_s());
+    setMinimumWidth( 32 * ScreenToolsController::defaultFontPixelSize_s());
+    setMinimumHeight(33 * ScreenToolsController::defaultFontPixelSize_s());
 #endif
     setContextPropertyObject("mapEngine", this);
     setSource(QUrl::fromUserInput("qrc:/qml/MapDisplay.qml"));

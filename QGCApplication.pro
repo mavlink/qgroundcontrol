@@ -267,7 +267,7 @@ HEADERS += \
     src/QGCTemporaryFile.h \
     src/QmlControls/MavManager.h \
     src/QmlControls/ParameterEditorController.h \
-    src/QmlControls/ScreenTools.h \
+    src/QmlControls/ScreenToolsController.h \
     src/uas/QGCMAVLinkUASFactory.h \
     src/uas/FileManager.h \
     src/uas/UAS.h \
@@ -398,7 +398,7 @@ SOURCES += \
     src/QGCTemporaryFile.cc \
     src/QmlControls/MavManager.cc \
     src/QmlControls/ParameterEditorController.cc \
-    src/QmlControls/ScreenTools.cc \
+    src/QmlControls/ScreenToolsController.cc \
     src/uas/QGCMAVLinkUASFactory.cc \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \

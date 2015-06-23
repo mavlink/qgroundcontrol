@@ -405,16 +405,16 @@ QGCView {
                     color:      qgcPal.windowShade
 
                     QGCLabel {
-                        id:             orientationCalAreaHelpText
-                        width:          parent.width
-                        wrapMode:       Text.WordWrap
-                        font.pixelSize: ScreenTools.font22;
-                        anchors.top: orientationCalArea.top
-                        anchors.left: orientationCalArea.left
-                        anchors.topMargin: 15
-                        anchors.leftMargin: 15
-                        anchors.rightMargin: 15
-                        anchors.bottomMargin: 15
+                        id:                     orientationCalAreaHelpText
+                        width:                  parent.width
+                        wrapMode:               Text.WordWrap
+                        font.pixelSize:         ScreenTools.mediumFontPixelSize
+                        anchors.top:            orientationCalArea.top
+                        anchors.left:           orientationCalArea.left
+                        anchors.topMargin:      15
+                        anchors.leftMargin:     15
+                        anchors.rightMargin:    15
+                        anchors.bottomMargin:   15
                     }
 
                     Flow {
