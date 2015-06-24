@@ -436,7 +436,7 @@ QGCView {
                             visible:            controller.orientationCalUpsideDownSideVisible
                             calValid:           controller.orientationCalUpsideDownSideDone
                             calInProgress:      controller.orientationCalUpsideDownSideInProgress
-                            calInProgressText:  "Hold Still"
+                            calInProgressText:  controller.orientationCalUpsideDownSideRotate ? "Rotate" : "Hold Still"
                             imageSource:        "qrc:///qmlimages/VehicleUpsideDown.png"
                         }
                         VehicleRotationCal {
@@ -450,7 +450,7 @@ QGCView {
                             visible:            controller.orientationCalTailDownSideVisible
                             calValid:           controller.orientationCalTailDownSideDone
                             calInProgress:      controller.orientationCalTailDownSideInProgress
-                            calInProgressText:  "Hold Still"
+                            calInProgressText:  controller.orientationCalTailDownSideRotate ? "Rotate" : "Hold Still"
                             imageSource:        "qrc:///qmlimages/VehicleTailDown.png"
                         }
                         VehicleRotationCal {
@@ -464,7 +464,7 @@ QGCView {
                             visible:            controller.orientationCalRightSideVisible
                             calValid:           controller.orientationCalRightSideDone
                             calInProgress:      controller.orientationCalRightSideInProgress
-                            calInProgressText:  "Hold Still"
+                            calInProgressText:  controller.orientationCalRightSideRotate ? "Rotate" : "Hold Still"
                             imageSource:        "qrc:///qmlimages/VehicleRight.png"
                         }
                     }

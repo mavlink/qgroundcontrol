@@ -64,8 +64,11 @@ SensorsComponentController::SensorsComponentController(void) :
     _orientationCalNoseDownSideInProgress(false),
     _orientationCalTailDownSideInProgress(false),
     _orientationCalDownSideRotate(false),
+    _orientationCalUpsideDownSideRotate(false),
     _orientationCalLeftSideRotate(false),
+    _orientationCalRightSideRotate(false),
     _orientationCalNoseDownSideRotate(false),
+    _orientationCalTailDownSideRotate(false),
     _unknownFirmwareVersion(false),
     _waitingForCancel(false)
 {
@@ -242,9 +245,11 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         
         // Split version number and cal type
         QStringList parts = text.split(" ");
-        if (parts.count() != 2 && parts[0].toInt() != 1) {
+        if (parts.count() != 2 && parts[0].toInt() != _supportedFirmwareCalVersion) {
             _unknownFirmwareVersion = true;
-            qDebug() << "Unknown cal firmware version, using log";
+            QString msg = "Unsupported calibration firmware version, using log";
+            _appendStatusLog(msg);
+            qDebug() << msg;
             return;
         }
         
@@ -287,7 +292,10 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             } else if (text == "mag") {
                 _magCalInProgress = true;
                 _orientationCalDownSideVisible = true;
+                _orientationCalUpsideDownSideVisible = true;
                 _orientationCalLeftSideVisible = true;
+                _orientationCalRightSideVisible = true;
+                _orientationCalTailDownSideVisible = true;
                 _orientationCalNoseDownSideVisible = true;
             } else if (text == "gyro") {
                 _gyroCalInProgress = true;
@@ -314,6 +322,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             }
         } else if (side == "up") {
             _orientationCalUpsideDownSideInProgress = true;
+            if (_magCalInProgress) {
+                _orientationCalUpsideDownSideRotate = true;
+            }
         } else if (side == "left") {
             _orientationCalLeftSideInProgress = true;
             if (_magCalInProgress) {
@@ -321,6 +332,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             }
         } else if (side == "right") {
             _orientationCalRightSideInProgress = true;
+            if (_magCalInProgress) {
+                _orientationCalRightSideRotate = true;
+            }
         } else if (side == "front") {
             _orientationCalNoseDownSideInProgress = true;
             if (_magCalInProgress) {
@@ -328,6 +342,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             }
         } else if (side == "back") {
             _orientationCalTailDownSideInProgress = true;
+            if (_magCalInProgress) {
+                _orientationCalTailDownSideRotate = true;
+            }
         }
         
         if (_magCalInProgress) {
