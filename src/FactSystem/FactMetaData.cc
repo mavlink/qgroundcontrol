@@ -34,7 +34,7 @@
 
 FactMetaData::FactMetaData(ValueType_t type, QObject* parent) :
     QObject(parent),
-    _group("Default Group"),
+    _group("*Default Group"),
     _type(type),
     _defaultValue(0),
     _defaultValueAvailable(false),
