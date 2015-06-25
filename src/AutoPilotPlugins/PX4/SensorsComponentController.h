@@ -78,8 +78,11 @@ public:
     Q_PROPERTY(bool orientationCalTailDownSideInProgress MEMBER _orientationCalTailDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
     
     Q_PROPERTY(bool orientationCalDownSideRotate MEMBER _orientationCalDownSideRotate NOTIFY orientationCalSidesRotateChanged)
+    Q_PROPERTY(bool orientationCalUpsideDownSideRotate MEMBER _orientationCalUpsideDownSideRotate NOTIFY orientationCalSidesRotateChanged)
     Q_PROPERTY(bool orientationCalLeftSideRotate MEMBER _orientationCalLeftSideRotate NOTIFY orientationCalSidesRotateChanged)
+    Q_PROPERTY(bool orientationCalRightSideRotate MEMBER _orientationCalRightSideRotate NOTIFY orientationCalSidesRotateChanged)
     Q_PROPERTY(bool orientationCalNoseDownSideRotate MEMBER _orientationCalNoseDownSideRotate NOTIFY orientationCalSidesRotateChanged)
+    Q_PROPERTY(bool orientationCalTailDownSideRotate MEMBER _orientationCalTailDownSideRotate NOTIFY orientationCalSidesRotateChanged)
     
     Q_PROPERTY(bool waitingForCancel MEMBER _waitingForCancel NOTIFY waitingForCancelChanged)
     
@@ -161,11 +164,16 @@ private:
     bool _orientationCalTailDownSideInProgress;
     
     bool _orientationCalDownSideRotate;
+    bool _orientationCalUpsideDownSideRotate;
     bool _orientationCalLeftSideRotate;
+    bool _orientationCalRightSideRotate;
     bool _orientationCalNoseDownSideRotate;
+    bool _orientationCalTailDownSideRotate;
     
     bool _unknownFirmwareVersion;
     bool _waitingForCancel;
+    
+    static const int _supportedFirmwareCalVersion = 2;
 };
 
 #endif
