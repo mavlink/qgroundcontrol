@@ -90,7 +90,7 @@ UDPLink::UDPLink(UDPConfiguration* config)
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
 
-    qDebug() << "UDP Created " << _config->name();
+    //qDebug() << "UDP Created " << _config->name();
 }
 
 UDPLink::~UDPLink()
@@ -425,7 +425,7 @@ void UDPConfiguration::addHost(const QString& host, int port)
             qWarning() << "UDP:" << "Could not resolve host:" << host << "port:" << port;
         } else {
             _hosts[ipAdd] = port;
-            qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
+            //qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
         }
     }
 }
@@ -440,7 +440,7 @@ void UDPConfiguration::removeHost(const QString& host)
     tHost = tHost.trimmed();
     QMap<QString, int>::iterator i = _hosts.find(tHost);
     if(i != _hosts.end()) {
-        qDebug() << "UDP:" << "Removed host:" << host;
+        //qDebug() << "UDP:" << "Removed host:" << host;
         _hosts.erase(i);
     } else {
         qWarning() << "UDP:" << "Could not remove unknown host:" << host;
