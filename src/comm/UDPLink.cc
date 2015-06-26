@@ -190,7 +190,7 @@ bool UDPLink::_writeBytes()
             } while (_config->nextHost(host, port));
             //-- Remove hosts that are no longer there
             foreach (QString ghost, goneHosts) {
-                _config->removeHost(host);
+                _config->removeHost(ghost);
             }
         }
         delete qdata;
