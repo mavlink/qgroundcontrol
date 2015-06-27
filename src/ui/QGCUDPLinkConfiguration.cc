@@ -90,6 +90,7 @@ void QGCUDPLinkConfiguration::on_portNumber_valueChanged(int arg1)
 {
     if(!_inConstructor) {
         _config->setLocalPort(arg1);
+        _config->setDynamic(false);
     }
 }
 
