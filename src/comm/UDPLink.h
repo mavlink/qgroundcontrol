@@ -36,6 +36,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QMap>
 #include <QMutex>
 #include <QUdpSocket>
+#include <QMutexLocker>
+#include <QQueue>
+#include <QByteArray>
 
 #if defined(QGC_ZEROCONF_ENABLED)
 #include <dns_sd.h>
@@ -212,8 +215,12 @@ private:
     DNSServiceRef  _dnssServiceRef;
 #endif
 
-signals:
-    //Signals are defined by LinkInterface
+    bool                _running;
+    QMutex              _mutex;
+    QQueue<QByteArray*> _outQueue;
+
+    bool _dequeBytes    ();
+    void _sendBytes     (const char* data, qint64 size);
 
 };
 
