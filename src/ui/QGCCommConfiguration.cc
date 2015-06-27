@@ -190,4 +190,7 @@ void QGCCommConfiguration::on_nameEdit_textEdited(const QString &arg1)
 {
     Q_UNUSED(arg1);
     _updateUI();
+    if(_config) {
+        _config->setDynamic(false);
+    }
 }

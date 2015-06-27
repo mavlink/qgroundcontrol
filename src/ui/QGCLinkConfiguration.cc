@@ -225,9 +225,14 @@ void QGCLinkConfiguration::_updateButtons()
     LinkConfiguration* config = NULL;
     QModelIndex index = _ui->linkView->currentIndex();
     bool enabled = (index.row() >= 0);
+    bool deleteEnabled = true;
     if(enabled) {
         config = _viewModel->getConfiguration(index.row());
         if(config) {
+            // Can't delete a dynamic link
+            if(config->isDynamic()) {
+                deleteEnabled = false;
+            }
             LinkInterface* link = config->getLink();
             if(link) {
                 _ui->connectLinkButton->setText("Disconnect");
@@ -237,7 +242,7 @@ void QGCLinkConfiguration::_updateButtons()
         }
     }
     _ui->connectLinkButton->setEnabled(enabled);
-    _ui->delLinkButton->setEnabled(config != NULL);
+    _ui->delLinkButton->setEnabled(config != NULL && deleteEnabled);
     _ui->editLinkButton->setEnabled(config != NULL);
 }
 
