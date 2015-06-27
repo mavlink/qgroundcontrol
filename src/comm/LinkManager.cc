@@ -357,6 +357,8 @@ void LinkManager::saveLinkConfigurationList()
 
 void LinkManager::loadLinkConfigurationList()
 {
+    bool udpExists = false;
+    bool linksChanged = false;
     QSettings settings;
     // Is the group even there?
     if(settings.contains(LinkConfiguration::settingsRoot() + "/count")) {
@@ -402,6 +404,14 @@ void LinkManager::loadLinkConfigurationList()
                                 // Have the instance load its own values
                                 pLink->loadSettings(settings, root);
                                 addLinkConfiguration(pLink);
+                                linksChanged = true;
+                                // Check for UDP links
+                                if(pLink->type() == LinkConfiguration::TypeUdp) {
+                                    UDPConfiguration* uLink = dynamic_cast<UDPConfiguration*>(pLink);
+                                    if(uLink && uLink->localPort() == QGC_UDP_LOCAL_PORT) {
+                                        udpExists = true;
+                                    }
+                                }
                             }
                         } else {
                             qWarning() << "Link Configuration " << root << " has an empty name." ;
@@ -416,7 +426,6 @@ void LinkManager::loadLinkConfigurationList()
                 qWarning() << "Link Configuration " << root << " has no type." ;
             }
         }
-        emit linkConfigurationChanged();
     }
     
     // Debug buids always add MockLink automatically
@@ -424,10 +433,22 @@ void LinkManager::loadLinkConfigurationList()
     MockConfiguration* pMock = new MockConfiguration("Mock Link");
     pMock->setDynamic(true);
     addLinkConfiguration(pMock);
-    emit linkConfigurationChanged();
+    linksChanged = true;
 #endif
+
+    //-- If we don't have a configured UDP link, create a default one
+    if(!udpExists) {
+        UDPConfiguration* uLink = new UDPConfiguration("Default UDP Link");
+        uLink->setLocalPort(QGC_UDP_LOCAL_PORT);
+        uLink->setDynamic();
+        addLinkConfiguration(uLink);
+        linksChanged = true;
+    }
     
-    // Enable automatic PX4 hunting
+    if(linksChanged) {
+        emit linkConfigurationChanged();
+    }
+    // Enable automatic Serial PX4/3DR Radio hunting
     _configurationsLoaded = true;
 }
 
