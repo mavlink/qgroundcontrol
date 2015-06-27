@@ -219,7 +219,8 @@ private:
     QMutex              _mutex;
     QQueue<QByteArray*> _outQueue;
 
-    bool _writeBytes    ();
+    bool _dequeBytes    ();
+    void _sendBytes     (const char* data, qint64 size);
 
 };
 
