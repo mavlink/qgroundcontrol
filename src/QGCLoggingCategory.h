@@ -31,7 +31,7 @@
 #include <QStringList>
 
 // Add Global logging categories (not class specific) here using Q_DECLARE_LOGGING_CATEGORY
-    // There currently are no global categories
+Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeLog)
 
 /// @def QGC_LOGGING_CATEGORY
 /// This is a QGC specific replacement for Q_LOGGING_CATEGORY. It will register the category name into a
