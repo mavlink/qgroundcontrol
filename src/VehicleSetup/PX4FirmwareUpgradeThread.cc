@@ -33,7 +33,7 @@
 #include <QTimer>
 #include <QSerialPortInfo>
 #include <QDebug>
-#include <QserialPort>
+#include <QSerialPort>
 
 PX4FirmwareUpgradeThreadWorker::PX4FirmwareUpgradeThreadWorker(PX4FirmwareUpgradeThreadController* controller) :
     _controller(controller),
