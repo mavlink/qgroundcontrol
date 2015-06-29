@@ -106,6 +106,7 @@
         <file alias="QGroundControl/Controls/QGCViewMessage.qml">src/QmlControls/QGCViewMessage.qml</file>
 
         <file alias="QGroundControl/Controls/ParameterEditor.qml">src/QmlControls/ParameterEditor.qml</file>
+        <file alias="QGroundControl/Controls/ParameterEditorDialog.qml">src/QmlControls/ParameterEditorDialog.qml</file>
 
         <file alias="ParameterEditorWidget.qml">src/ViewWidgets/ParameterEditorWidget.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
