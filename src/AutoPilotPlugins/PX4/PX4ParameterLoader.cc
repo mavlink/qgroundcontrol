@@ -116,10 +116,11 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
         return;
     }
     
-    QString factGroup;
-    FactMetaData* metaData = NULL;
-    int xmlState = XmlStateNone;
-    bool badMetaData = true;
+    QString         factGroup;
+    QString         errorString;
+    FactMetaData*   metaData = NULL;
+    int             xmlState = XmlStateNone;
+    bool            badMetaData = true;
     
     while (!xml.atEnd()) {
         if (xml.isStartElement()) {
@@ -221,22 +222,22 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                 Q_CHECK_PTR(metaData);
                 if (_mapParameterName2FactMetaData.contains(name)) {
                     // We can't trust the meta dafa since we have dups
-                    qCDebug(PX4ParameterLoaderLog) << "Duplicate parameter found:" << name;
+                    qCWarning(PX4ParameterLoaderLog) << "Duplicate parameter found:" << name;
                     badMetaData = true;
                     // Reset to default meta data
                     _mapParameterName2FactMetaData[name] = metaData;
                 } else {
                     _mapParameterName2FactMetaData[name] = metaData;
+                    metaData->setName(name);
                     metaData->setGroup(factGroup);
                     
-                    if (xml.attributes().hasAttribute("default")) {
-                        bool convertOk;
-                        QVariant varDefault = _stringToTypedVariant(strDefault, metaData->type(), &convertOk);
-                        if (convertOk) {
+                    if (xml.attributes().hasAttribute("default") && !strDefault.isEmpty()) {
+                        QVariant varDefault;
+                        
+                        if (metaData->convertAndValidate(strDefault, false, varDefault, errorString)) {
                             metaData->setDefaultValue(varDefault);
                         } else {
-                            // Non-fatal
-                            qCDebug(PX4ParameterLoaderLog) << "Parameter meta data with bad default value, name:" << name << " type:" << type << " default:" << strDefault;
+                            qCWarning(PX4ParameterLoaderLog) << "Invalid default value, name:" << name << " type:" << type << " default:" << strDefault << " error:" << errorString;
                         }
                     }
                 }
@@ -252,12 +253,14 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                     if (elementName == "short_desc") {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
+                        text = text.replace("\n", " ");
                         qCDebug(PX4ParameterLoaderLog) << "Short description:" << text;
                         metaData->setShortDescription(text);
 
                     } else if (elementName == "long_desc") {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
+                        text = text.replace("\n", " ");
                         qCDebug(PX4ParameterLoaderLog) << "Long description:" << text;
                         metaData->setLongDescription(text);
                         
@@ -265,26 +268,24 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
                         qCDebug(PX4ParameterLoaderLog) << "Min:" << text;
-                        bool convertOk;
-                        QVariant varMin = _stringToTypedVariant(text, metaData->type(), &convertOk);
-                        if (convertOk) {
+                        
+                        QVariant varMin;
+                        if (metaData->convertAndValidate(text, true /* convertOnly */, varMin, errorString)) {
                             metaData->setMin(varMin);
                         } else {
-                            // Non-fatal
-                            qDebug() << "Parameter meta data with bad min value:" << text;
+                            qCWarning(PX4ParameterLoaderLog) << "Invalid min value, name:" << metaData->name() << " type:" << metaData->type() << " min:" << text << " error:" << errorString;
                         }
                         
                     } else if (elementName == "max") {
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
                         qCDebug(PX4ParameterLoaderLog) << "Max:" << text;
-                        bool convertOk;
-                        QVariant varMax = _stringToTypedVariant(text, metaData->type(), &convertOk);
-                        if (convertOk) {
+                        
+                        QVariant varMax;
+                        if (metaData->convertAndValidate(text, true /* convertOnly */, varMax, errorString)) {
                             metaData->setMax(varMax);
                         } else {
-                            // Non-fatal
-                            qDebug() << "Parameter meta data with bad max value:" << text;
+                            qCWarning(PX4ParameterLoaderLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
                         }
                         
                     } else if (elementName == "unit") {
@@ -302,7 +303,16 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
             QString elementName = xml.name().toString();
 
             if (elementName == "parameter") {
-                // Done loading this one parameter
+                // Done loading this parameter, validate default value
+                if (metaData->defaultValueAvailable()) {
+                    QVariant var;
+                    
+                    if (!metaData->convertAndValidate(metaData->defaultValue(), false /* convertOnly */, var, errorString)) {
+                        qCWarning(PX4ParameterLoaderLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->defaultValue() << " error:" << errorString;
+                    }
+                }
+                
+                // Reset for next parameter
                 metaData = NULL;
                 badMetaData = false;
                 xmlState = XmlStateFoundGroup;
