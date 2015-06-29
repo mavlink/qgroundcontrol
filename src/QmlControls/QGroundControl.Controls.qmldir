@@ -14,8 +14,10 @@ SubMenuButton 1.0 SubMenuButton.qml
 IndicatorButton 1.0 IndicatorButton.qml
 VehicleRotationCal 1.0 VehicleRotationCal.qml
 VehicleSummaryRow 1.0 VehicleSummaryRow.qml
-ParameterEditor 1.0 ParameterEditor.qml
 ViewWidget 1.0 ViewWidget.qml
+
+ParameterEditor 1.0 ParameterEditor.qml
+ParameterEditorDialog 1.0 ParameterEditorDialog.qml
 
 QGCView 1.0 QGCView.qml
 QGCViewPanel 1.0 QGCViewPanel.qml
