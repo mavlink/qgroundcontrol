@@ -37,7 +37,8 @@ import QGroundControl.FactControls 1.0
 FactPanel {
     id: __rootItem
 
-    property bool completedSignalled: false
+    property var qgcView:               __rootItem  /// Used by Fact controls for validation dialogs
+    property bool completedSignalled:   false
 
     property var viewPanel
 
