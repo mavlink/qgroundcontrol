@@ -51,88 +51,94 @@ QGCView {
 
     ParameterEditorController { id: controller; factPanel: panel }
 
+    Component {
+        id: editorDialogComponent
+
+        ParameterEditorDialog { fact: __editorDialogFact }
+    } // Component - Editor Dialog
+
+    Component {
+        id: factRowsComponent
+
+        Column {
+            id:     factColumn
+            x:      __leftMargin
+
+            QGCLabel {
+                text:               group
+                verticalAlignment:	Text.AlignVCenter
+                font.pixelSize:     ScreenTools.mediumFontPixelSize
+            }
+
+            Rectangle {
+                width:  parent.width
+                height: 1
+                color:  __qgcPal.text
+            }
+
+            Repeater {
+                model: controller.getFactsForGroup(componentId, group)
+
+                Column {
+                    property Fact modelFact: controller.getParameterFact(componentId, modelData)
+
+                    Item {
+                        x:			__leftMargin
+                        width:      parent.width
+                        height:		ScreenTools.defaultFontPixelSize * 1.75
+
+                        QGCLabel {
+                            id:                 nameLabel
+                            width:              defaultTextWidth * (__maxParamChars + 1)
+                            height:             parent.height
+                            verticalAlignment:	Text.AlignVCenter
+                            text:               modelFact.name
+                        }
+
+                        QGCLabel {
+                            id:                 valueLabel
+                            width:              defaultTextWidth * 20
+                            height:             parent.height
+                            anchors.left:       nameLabel.right
+                            verticalAlignment:	Text.AlignVCenter
+                            color:              modelFact.valueEqualsDefault ? __qgcPal.text : "orange"
+                            text:               modelFact.valueString + " " + modelFact.units
+                        }
+
+                        QGCLabel {
+                            height:             parent.height
+                            anchors.left:       valueLabel.right
+                            verticalAlignment:	Text.AlignVCenter
+                            visible:            fullMode
+                            text:               modelFact.shortDescription
+                        }
+
+                        MouseArea {
+                            anchors.fill:       parent
+                             acceptedButtons:   Qt.LeftButton
+
+                            onClicked: {
+                                __editorDialogFact = modelFact
+                                showDialog(editorDialogComponent, "Parameter Editor", fullMode ? 50 : -1, StandardButton.Cancel | StandardButton.Save)
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        x:      __leftMargin
+                        width:  factColumn.width - __leftMargin - __rightMargin
+                        height: 1
+                        color:  __qgcPal.windowShade
+                    }
+                } // Column - Fact
+            } // Repeater - Facts
+        } // Column - Facts
+    } // Component - factRowsComponent
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
 
-        Component {
-            id: factRowsComponent
-
-            Column {
-                id:     factColumn
-                x:      __leftMargin
-
-                QGCLabel {
-                    height:				defaultTextHeight + (ScreenTools.defaultFontPizelSize * 0.5)
-                    text:               group
-                    verticalAlignment:	Text.AlignVCenter
-                    font.pixelSize:     ScreenTools.mediumFontPixelSize
-                }
-
-                Rectangle {
-                    width:  parent.width
-                    height: 1
-                    color:  __qgcPal.text
-                }
-
-                Repeater {
-                    model: controller.getFactsForGroup(componentId, group)
-
-                    Column {
-                        property Fact modelFact: controller.getParameterFact(componentId, modelData)
-
-                        Item {
-                            x:			__leftMargin
-                            width:      parent.width
-                            height:		defaultTextHeight + (ScreenTools.defaultFontPixelSize * 0.5)
-
-                            QGCLabel {
-                                id:                 nameLabel
-                                width:              defaultTextWidth * (__maxParamChars + 1)
-                                height:             parent.height
-                                verticalAlignment:	Text.AlignVCenter
-                                text:               modelFact.name
-                            }
-
-                            QGCLabel {
-                                id:                 valueLabel
-                                width:              defaultTextWidth * 20
-                                height:             parent.height
-                                anchors.left:       nameLabel.right
-                                verticalAlignment:	Text.AlignVCenter
-                                color:              modelFact.valueEqualsDefault ? __qgcPal.text : "orange"
-                                text:               modelFact.valueString + " " + modelFact.units
-                            }
-
-                            QGCLabel {
-                                height:             parent.height
-                                anchors.left:       valueLabel.right
-                                verticalAlignment:	Text.AlignVCenter
-                                visible:            fullMode
-                                text:               modelFact.shortDescription
-                            }
-
-                            MouseArea {
-                                anchors.fill:       parent
-                                 acceptedButtons:   Qt.LeftButton
-
-                                onClicked: {
-                                    __editorDialogFact = modelFact
-                                    showDialog(editorDialogComponent, "Parameter Editor", fullMode ? 50 : -1, StandardButton.Cancel | StandardButton.Save)
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            x:      __leftMargin
-                            width:  factColumn.width - __leftMargin - __rightMargin
-                            height: 1
-                            color:  __qgcPal.windowShade
-                        }
-                    } // Column - Fact
-                } // Repeater - Facts
-            } // Column - Facts
-        } // Component - factRowsComponent
 
         Column {
             anchors.fill: parent
@@ -255,106 +261,5 @@ QGCView {
                 } // ScrollView - Facts
             } // Item - Group ScrollView + Facts
         } // Column - Outer
-    }
-
-    Component {
-        id: editorDialogComponent
-
-        QGCViewDialog {
-            id:             editorDialog
-
-            ParameterEditorController { id: controller; factPanel: editorDialog }
-
-            property bool fullMode: true
-
-            function accept() {
-                __editorDialogFact.value = valueField.text
-                editorDialog.hideDialog()
-            }
-
-            Column {
-                spacing:        defaultTextHeight
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-
-                QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    text:       __editorDialogFact.shortDescription ? __editorDialogFact.shortDescription : "Description missing"
-                }
-
-                QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    visible:    __editorDialogFact.longDescription
-                    text:       __editorDialogFact.longDescription
-                }
-
-                QGCTextField {
-                    id:     valueField
-                    text:   __editorDialogFact.valueString
-                }
-
-                QGCLabel { text: __editorDialogFact.name }
-
-                Row {
-                    spacing: defaultTextWidth
-
-                    QGCLabel { text: "Units:" }
-                    QGCLabel { text: __editorDialogFact.units ? __editorDialogFact.units : "none" }
-                }
-
-                Row {
-                    spacing: defaultTextWidth
-
-                    QGCLabel { text: "Minimum value:" }
-                    QGCLabel { text: __editorDialogFact.min }
-                }
-
-                Row {
-                    spacing: defaultTextWidth
-
-                    QGCLabel { text: "Maxmimum value:" }
-                    QGCLabel { text: __editorDialogFact.max }
-                }
-
-                Row {
-                    spacing: defaultTextWidth
-
-                    QGCLabel { text: "Default value:" }
-                    QGCLabel { text: __editorDialogFact.defaultValueAvailable ? __editorDialogFact.defaultValue : "none" }
-                }
-
-                QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    text:       "Warning: Modifying parameters while vehicle is in flight can lead to vehicle instability and possible vehicle loss. " +
-                                    "Make sure you know what you are doing and double-check your values before Save!"
-                }
-            } // Column - Fact information
-
-
-            QGCButton {
-                anchors.rightMargin:    defaultTextWidth
-                anchors.right:          rcButton.left
-                anchors.bottom:         parent.bottom
-                visible:                __editorDialogFact.defaultValueAvailable
-                text:                   "Reset to default"
-
-                onClicked: {
-                    __editorDialogFact.value = __editorDialogFact.defaultValue
-                    editorDialog.hideDialog()
-                }
-            }
-
-            QGCButton {
-                id:             rcButton
-                anchors.right:  parent.right
-                anchors.bottom: parent.bottom
-                visible:        __editorDialogFact.defaultValueAvailable
-                text:           "Set RC to Param..."
-                onClicked:      controller.setRCToParam(__editorDialogFact.name)
-            }
-        } // Rectangle - editorDialog
-    } // Component - Editor Dialog
+    } // QGCViewPanel
 } // QGCView

@@ -55,8 +55,14 @@ public:
     Q_PROPERTY(QString shortDescription READ shortDescription CONSTANT)
     Q_PROPERTY(QString longDescription READ longDescription CONSTANT)
     Q_PROPERTY(QVariant min READ min CONSTANT)
+    Q_PROPERTY(bool minIsDefaultForType READ minIsDefaultForType CONSTANT)
     Q_PROPERTY(QVariant max READ max CONSTANT)
+    Q_PROPERTY(bool maxIsDefaultForType READ maxIsDefaultForType CONSTANT)
     Q_PROPERTY(QString group READ group CONSTANT)
+    
+    /// Convert and validate value
+    ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
+    Q_INVOKABLE QString validate(const QString& value, bool convertOnly);
     
     // Property system methods
     
@@ -73,7 +79,9 @@ public:
     QString longDescription(void);
     QString units(void);
     QVariant min(void);
+    bool minIsDefaultForType(void);
     QVariant max(void);    
+    bool maxIsDefaultForType(void);
     QString group(void);
     
     /// Sets the meta data associated with the Fact.
