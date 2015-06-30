@@ -167,6 +167,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     if (fullLogging) {
         QLoggingCategory::setFilterRules(QStringLiteral("*Log=true"));
     } else {
+        if (_runningUnitTests) {
+            // We need to turn off these warnings until the firmware meta data is cleaned up
+            QLoggingCategory::setFilterRules(QStringLiteral("PX4ParameterLoaderLog.warning=false"));
+        }
+        
         // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
         // it to the correct location. This way default debug builds will have logging turned off.
 
