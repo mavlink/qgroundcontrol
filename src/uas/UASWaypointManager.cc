@@ -48,7 +48,8 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
       current_partner_systemid(0),
       current_partner_compid(0),
       currentWaypointEditable(),
-      protocol_timer(this)
+      protocol_timer(this),
+	  _updateWPlist_timer(this)
 {
     _offlineEditingModeMessage = tr("You are in offline editing mode. Make sure to save your mission to a file before connecting to a system - you will need to load the file into the system, the offline list will be cleared on connect.");
     
@@ -67,6 +68,9 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
     // We signal to ourselves here so that tiemrs are started and stopped on correct thread
     connect(this, SIGNAL(_startProtocolTimer(void)), this, SLOT(_startProtocolTimerOnThisThread(void)));
     connect(this, SIGNAL(_stopProtocolTimer(void)), this, SLOT(_stopProtocolTimerOnThisThread(void)));
+	_updateWPlist_timer.setInterval(1500);
+	_updateWPlist_timer.setSingleShot(true);
+	connect(&_updateWPlist_timer, SIGNAL(timeout()), this, SLOT(_updateWPonTimer()));
 }
 
 UASWaypointManager::~UASWaypointManager()
@@ -167,8 +171,20 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
 
 
     } else {
-        qDebug("Rejecting waypoint count message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
-    }
+		if (current_state != WP_GETLIST_GETWPS && systemId == current_partner_systemid)
+		{
+			qDebug("Requesting new waypoints. Propably changed onboard.");
+			if (!_updateWPlist_timer.isActive())
+			{
+				current_state = WP_IDLE;
+				_updateWPlist_timer.start();
+			}
+		}
+		else
+		{
+			qDebug("Rejecting waypoint count message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
+		}
+	}
 }
 
 void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_mission_item_t *wp)
@@ -1196,4 +1212,14 @@ void UASWaypointManager::_startProtocolTimerOnThisThread(void)
 void UASWaypointManager::_stopProtocolTimerOnThisThread(void)
 {
     protocol_timer.stop();
+}
+
+
+void UASWaypointManager::_updateWPonTimer()
+{
+	while (current_state != WP_IDLE)
+	{
+		Sleep(100);
+	}
+	readWaypoints(true);
 }
