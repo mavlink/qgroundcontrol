@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QApplication>
 #include <QSslSocket>
+#include <QSerialPortInfo>
 
 #include "QGCApplication.h"
 #include "MainWindow.h"
@@ -49,6 +50,7 @@ This file is part of the QGROUNDCONTROL project
 #undef main
 #endif
 
+Q_DECLARE_METATYPE(QSerialPortInfo)
 
 #ifdef Q_OS_WIN
 
@@ -107,6 +109,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QSerialPort::SerialPortError>();
 #endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
+    qRegisterMetaType<QSerialPortInfo>();
+    
     // We statically link to the google QtLocation plugin
 
 #ifdef Q_OS_WIN
