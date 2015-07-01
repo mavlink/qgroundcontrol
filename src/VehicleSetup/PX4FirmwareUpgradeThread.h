@@ -100,17 +100,6 @@ private:
     bool                _foundBoard;            ///< true: board is currently connected
     bool                _findBoardFirstAttempt; ///< true: this is our first try looking for a board
     QSerialPortInfo     _foundBoardPortInfo;    ///< port info for found board
-    
-    // Serial port info for supported devices
-    
-    static const int    _px4VendorId = 9900;
-    
-    static const int    _pixhawkFMUV2ProductId = 17;
-    static const int    _pixhawkFMUV1ProductId = 16;
-    static const int    _flowProductId = 21;
-    
-    static const int    _3drRadioVendorId = 1027;
-    static const int    _3drRadioProductId = 24597;
 };
 
 /// @brief Provides methods to interact with the bootloader. The commands themselves are signalled
