@@ -98,7 +98,7 @@ QGCView {
         onBatteryConnected:     showMessage("ESC Calibration", "Performing calibration. This will take a few seconds..", 0)
         onCalibrationFailed:    showMessage("ESC Calibration failed", errorMessage, StandardButton.Ok)
         onCalibrationSuccess:   showMessage("ESC Calibration", "Calibration complete. You can disconnect your battery now if you like.", StandardButton.Ok)
-        onConnectBattery:       showMessage("ESC Calibration", "WARNING: Props must be removed from vehicle prior to performing ESC calibration.\n\nConnect the battery now and calibration will begin.", 0)
+        onConnectBattery:       showMessage("ESC Calibration", "<font color=\"yellow\">WARNING: Props must be removed from vehicle prior to performing ESC calibration.</font> Connect the battery now and calibration will begin.", 0)
         onDisconnectBattery:    showMessage("ESC Calibration failed", "You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.", StandardButton.Ok)
     }
 
@@ -248,7 +248,12 @@ QGCView {
                     spacing:            10
 
                     QGCLabel {
-                        text: "WARNING:\n\nPropellers must be removed from vehicle prior to performing ESC calibration.\nYou must use USB connection for this operation.\n"
+                        color:  "yellow"
+                        text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</font>"
+                    }
+
+                    QGCLabel {
+                        text: "You must use USB connection for this operation."
                     }
 
                     QGCButton {
