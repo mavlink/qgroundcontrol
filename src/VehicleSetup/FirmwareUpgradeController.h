@@ -154,8 +154,6 @@ private:
     
     bool            _startFlashWhenBootloaderFound;
     FirmwareType_t  _startFlashWhenBootloaderFoundFirmwareType;
-    
-    uint32_t    _imageSize;         ///< Image size of firmware being flashed
 
     QPixmap _boardIcon;             ///< Icon used to display image of board
     
