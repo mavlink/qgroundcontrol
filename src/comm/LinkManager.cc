@@ -45,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
+#include "SerialPortIds.h"
 
 IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
@@ -493,7 +494,7 @@ void LinkManager::_updateConfigurationList(void)
         // Save port name
         currentPorts << portInfo.systemLocation();
         // Is this a PX4 and NOT in bootloader mode?
-        if (portInfo.vendorIdentifier() == 9900 && !portInfo.description().contains("BL")) {
+        if (portInfo.vendorIdentifier() == SerialPortIds::px4VendorId && !portInfo.description().contains("BL")) {
             SerialConfiguration* pSerial = _findSerialConfiguration(portInfo.systemLocation());
             if (pSerial) {
                 //-- If this port is configured make sure it has the preferred flag set
@@ -521,7 +522,7 @@ void LinkManager::_updateConfigurationList(void)
             }
         }
         // Is this an FTDI Chip? It could be a 3DR Modem
-        if (portInfo.vendorIdentifier() == 1027) {
+        if (portInfo.vendorIdentifier() == SerialPortIds::threeDRRadioVendorId && portInfo.productIdentifier() == SerialPortIds::threeDRRadioProductId) {
             SerialConfiguration* pSerial = _findSerialConfiguration(portInfo.systemLocation());
             if (pSerial) {
                 //-- If this port is configured make sure it has the preferred flag set, unless someone else already has it set.
