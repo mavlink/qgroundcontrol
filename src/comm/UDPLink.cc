@@ -214,9 +214,7 @@ void UDPLink::_sendBytes(const char* data, qint64 size)
                 // This host is gone. Add to list to be removed
                 goneHosts.append(host);
             }
-            // Log the amount and time written out for future data rate calculations.
-            QMutexLocker dataRateLocker(&dataRateMutex);
-            logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
+            _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
         } while (_config->nextHost(host, port));
         //-- Remove hosts that are no longer there
         foreach (QString ghost, goneHosts) {
@@ -242,9 +240,7 @@ void UDPLink::readBytes()
         // FIXME TODO Check if this method is better than retrieving the data by individual processes
         emit bytesReceived(this, datagram);
 
-        // Log this data reception for this timestep
-        QMutexLocker dataRateLocker(&dataRateMutex);
-        logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, datagram.length(), QDateTime::currentMSecsSinceEpoch());
+        _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
 
 //        // Echo data for debugging purposes
 //        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
