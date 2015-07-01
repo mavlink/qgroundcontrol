@@ -84,6 +84,9 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
             return;
         }
         
+#if 0
+        // FIXME: Cal version check is not working. Needs to be able to cancel, calibration
+        
         int firmwareRev = parts[0].toInt();
         if (firmwareRev < _neededFirmwareRev) {
             emit oldFirmware();
@@ -93,6 +96,7 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
             emit newerFirmware();
             return;
         }
+#endif
     }
 
     if (text == "Connect battery now") {
