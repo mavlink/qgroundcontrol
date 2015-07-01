@@ -29,6 +29,7 @@
 #include "Bootloader.h"
 #include "QGCLoggingCategory.h"
 #include "QGC.h"
+#include "SerialPortIds.h"
 
 #include <QTimer>
 #include <QSerialPortInfo>
@@ -145,24 +146,29 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
 #endif
         
         if (!info.portName().isEmpty()) {
-            if (info.vendorIdentifier() == _px4VendorId) {
-                if (info.productIdentifier() == _pixhawkFMUV2ProductId) {
-                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V2";
-                    type = FoundBoardPX4FMUV2;
-                    found = true;
-                } else if (info.productIdentifier() == _pixhawkFMUV1ProductId) {
-                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V1";
-                    type = FoundBoardPX4FMUV2;
-                    found = true;
-                } else if (info.productIdentifier() == _flowProductId) {
-                    qCDebug(FirmwareUpgradeLog) << "Found PX4 Flow";
-                    type = FoundBoardPX4Flow;
-                    found = true;
-                }
-            } else if (info.vendorIdentifier() == _3drRadioVendorId && info.productIdentifier() == _3drRadioProductId) {
-                qCDebug(FirmwareUpgradeLog) << "Found 3DR Radio";
-                type = FoundBoard3drRadio;
-                found = true;
+            switch (info.vendorIdentifier()) {
+                case SerialPortIds::px4VendorId:
+                    if (info.productIdentifier() == SerialPortIds::pixhawkFMUV2ProductId) {
+                        qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V2";
+                        type = FoundBoardPX4FMUV2;
+                        found = true;
+                    } else if (info.productIdentifier() == SerialPortIds::pixhawkFMUV1ProductId) {
+                        qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V1";
+                        type = FoundBoardPX4FMUV2;
+                        found = true;
+                    } else if (info.productIdentifier() == SerialPortIds::px4FlowProductId) {
+                        qCDebug(FirmwareUpgradeLog) << "Found PX4 Flow";
+                        type = FoundBoardPX4Flow;
+                        found = true;
+                    }
+                    break;
+                case SerialPortIds::threeDRRadioVendorId:
+                    if (info.productIdentifier() == SerialPortIds::threeDRRadioProductId) {
+                        qCDebug(FirmwareUpgradeLog) << "Found 3DR Radio";
+                        type = FoundBoard3drRadio;
+                        found = true;
+                    }
+                    break;
             }
         }
         

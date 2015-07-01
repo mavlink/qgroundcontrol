@@ -268,6 +268,7 @@ HEADERS += \
     src/QmlControls/MavManager.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
+    src/SerialPortIds.h \
     src/uas/QGCMAVLinkUASFactory.h \
     src/uas/FileManager.h \
     src/uas/UAS.h \
