@@ -363,12 +363,12 @@ void FirmwareUpgradeController::_downloadFinished(void)
     
     // We can't proceed unless we have the bootloader
     if (!_bootloaderFound) {
-        _errorCancel(QString("Bootloader not found").arg(_imageSize).arg(_bootloaderBoardFlashSize));
+        _errorCancel("Bootloader not found");
         return;
     }
     
-    if (_bootloaderBoardFlashSize != 0 && _imageSize > _bootloaderBoardFlashSize) {
-        _errorCancel(QString("Image size of %1 is too large for board flash size %2").arg(_imageSize).arg(_bootloaderBoardFlashSize));
+    if (_bootloaderBoardFlashSize != 0 && image->imageSize() > _bootloaderBoardFlashSize) {
+        _errorCancel(QString("Image size of %1 is too large for board flash size %2").arg(image->imageSize()).arg(_bootloaderBoardFlashSize));
         return;
     }
 
