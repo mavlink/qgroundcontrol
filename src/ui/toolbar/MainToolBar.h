@@ -134,6 +134,7 @@ private:
     bool            _showBattery;
     float           _progressBarValue;
     int             _remoteRSSI;
+    double          _remoteRSSIstore;
     int             _telemetryRRSSI;
     int             _telemetryLRSSI;
 

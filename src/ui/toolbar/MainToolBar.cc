@@ -52,6 +52,7 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _showBattery(true)
     , _progressBarValue(0.0f)
     , _remoteRSSI(0)
+    , _remoteRSSIstore(100.0)
     , _telemetryRRSSI(0)
     , _telemetryLRSSI(0)
     , _rollDownMessages(0)
@@ -328,10 +329,16 @@ void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned
 
 void MainToolBar::_remoteControlRSSIChanged(uint8_t rssi)
 {
-    // We only care if we haveone single connection
+    // We only care if we have one single connection
     if(_connectionCount == 1) {
-        if(_remoteRSSI != rssi) {
-            _remoteRSSI = rssi;
+        // Low pass to git rid of jitter
+        _remoteRSSIstore = (_remoteRSSIstore * 0.9f) + ((float)rssi * 0.1);
+        uint8_t filteredRSSI = (uint8_t)ceil(_remoteRSSIstore);
+        if(_remoteRSSIstore < 0.1) {
+            filteredRSSI = 0;
+        }
+        if(_remoteRSSI != filteredRSSI) {
+            _remoteRSSI = filteredRSSI;
             emit remoteRSSIChanged(_remoteRSSI);
         }
     }
