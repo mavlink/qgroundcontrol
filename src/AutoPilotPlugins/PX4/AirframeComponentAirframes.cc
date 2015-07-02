@@ -28,9 +28,10 @@
 
 const AirframeComponentAirframes::AirframeInfo_t AirframeComponentAirframes::_rgAirframeInfoStandardPlane[] = {
     { "Multiplex Easystar 1/2", 2100 },
-    { "Hobbyking Bixler 1/2",   2101 },
+    { "Generic AERT",           2101 },
     { "3DR Skywalker",          2102 },
     { "Skyhunter (1800 mm)",    2103 },
+    { "Generic AETR",           2104 },
     { NULL,                     0 }
 };
 
