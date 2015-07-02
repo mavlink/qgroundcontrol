@@ -54,6 +54,10 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
+    ui.liftoffButton->hide();
+    ui.landButton->hide();
+    ui.shutdownButton->hide();
+
     ui.gridLayout->setAlignment(Qt::AlignTop);
 }
 
