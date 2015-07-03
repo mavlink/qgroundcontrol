@@ -50,6 +50,7 @@ public:
     Q_PROPERTY(bool     isAndroid           READ isAndroid  CONSTANT)
     Q_PROPERTY(bool     isiOS               READ isiOS      CONSTANT)
     Q_PROPERTY(bool     isMobile            READ isMobile   CONSTANT)
+    Q_PROPERTY(bool     hasVideo            READ hasVideo   CONSTANT)
 
     //! Used to trigger a \c Canvas element repaint.
     /*!
@@ -108,6 +109,12 @@ public:
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }
     bool    isMobile            () { return false; }
+#endif
+
+#if defined(QGC_GST_STREAMING)
+    bool    hasVideo            () { return true; }
+#else
+    bool    hasVideo            () { return false; }
 #endif
 
 signals:
