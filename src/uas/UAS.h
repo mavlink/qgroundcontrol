@@ -76,7 +76,7 @@ public:
     /** @brief Translate from mode id to text */
     QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const;
     /** @brief Translate from mode id to audio text */
-    static QString getAudioModeTextFor(int id);
+    QString getAudioModeTextFor(uint8_t base_mode, uint32_t custom_mode) const;
     /** @brief Get the unique system id */
     int getUASID() const;
     /** @brief Get the airframe */
