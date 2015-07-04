@@ -310,8 +310,9 @@ QGCView {
                 visible:        showAdvanced.checked
             }
             Rectangle {
+                id: batteryRectangle
                 width: parent.width
-                height: 40
+                height: 140
                 color: palette.windowShade
                 visible: showAdvanced.checked
                 Column {
@@ -327,6 +328,23 @@ QGCView {
                             width: textEditWidth
                             fact: battVoltLoadDrop
                             showUnits: true
+                        }
+                    }
+                    QGCLabel {
+                        width: batteryRectangle.width - 30
+                        wrapMode: Text.WordWrap
+                        text: "All batteries have an internal resistance. This causes the voltage to drop when under load. " +
+                              "This value tells the flight controller how much to compensate when computing the true battery minimum voltage. " +
+                              "<font color=\"yellow\">If this value is set too high, the flight controller will allow the battery to drop bellow its minimum safety " +
+                              "voltage, which will cause damage to the battery.</font>"
+                    }
+                    Row {
+                        spacing: 10
+                        QGCLabel {
+                            text: "Compensated Minimum Voltage:"
+                        }
+                        QGCLabel {
+                            text: ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + ' V'
                         }
                     }
                 }
