@@ -124,6 +124,17 @@ QList<AutoPilotPluginManager::FullMode_t> AutoPilotPluginManager::getModes(int a
     }
 }
 
+QString AutoPilotPluginManager::getAudioModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const
+{
+    switch (autopilotType) {
+        case MAV_AUTOPILOT_PX4:
+            return PX4AutoPilotPlugin::getAudioModeText(baseMode, customMode);
+        case MAV_AUTOPILOT_GENERIC:
+        default:
+            return GenericAutoPilotPlugin::getAudioModeText(baseMode, customMode);
+    }
+}
+
 QString AutoPilotPluginManager::getShortModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const
 {
     switch (autopilotType) {
