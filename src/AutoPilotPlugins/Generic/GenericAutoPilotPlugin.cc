@@ -60,6 +60,15 @@ QList<AutoPilotPluginManager::FullMode_t> GenericAutoPilotPlugin::getModes(void)
     return modeList;
 }
 
+QString GenericAutoPilotPlugin::getAudioModeText(uint8_t baseMode, uint32_t customMode)
+{
+    Q_UNUSED(customMode);
+
+    QString mode = "";
+
+    return mode;
+}
+
 QString GenericAutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMode)
 {
     Q_UNUSED(customMode);

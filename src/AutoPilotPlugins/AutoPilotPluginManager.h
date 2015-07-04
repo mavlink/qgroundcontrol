@@ -63,6 +63,9 @@ public:
     /// @brief Returns a human readable short description for the specified mode.
     QString getShortModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const;
 
+    /// @brief Returns a human hearable short description for the specified mode.
+    QString getAudioModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const;
+
 private slots:
     void _uasCreated(UASInterface* uas);
     void _uasDeleted(UASInterface* uas);

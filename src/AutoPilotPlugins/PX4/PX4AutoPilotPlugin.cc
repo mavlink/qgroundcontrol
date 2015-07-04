@@ -141,6 +141,63 @@ QList<AutoPilotPluginManager::FullMode_t> PX4AutoPilotPlugin::getModes(void)
     return modeList;
 }
 
+QString PX4AutoPilotPlugin::getAudioModeText(uint8_t baseMode, uint32_t customMode)
+{
+    QString mode;
+
+    Q_ASSERT(baseMode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED);
+
+    if (baseMode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
+        union px4_custom_mode px4_mode;
+        px4_mode.data = customMode;
+
+        if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL) {
+            mode = "manual";
+        } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_ACRO) {
+            mode = "caro";
+        } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_STABILIZED) {
+            mode = "stabilized";
+        } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_ALTCTL) {
+            mode = "altitude control";
+        } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_POSCTL) {
+            mode = "position control";
+        } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_AUTO) {
+            mode = "auto and ";
+            if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_READY) {
+                mode += "ready";
+            } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF) {
+                mode += "taking off";
+            } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_LOITER) {
+                mode += "loitering";
+            } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_MISSION) {
+                mode += "following waypoints";
+            } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_RTL) {
+                mode += "returning to land";
+            } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_LAND) {
+                mode += "landing";
+            }
+        } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_OFFBOARD) {
+            mode = "offboard controlled";
+        }
+
+        if (baseMode != 0)
+        {
+            mode += " mode";
+        }
+
+        // ARMED STATE DECODING
+        if (baseMode & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_SAFETY)
+        {
+            mode.append(" and armed");
+        }
+
+    } else {
+        mode = "";
+    }
+
+    return mode;
+}
+
 QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMode)
 {
     QString mode;
