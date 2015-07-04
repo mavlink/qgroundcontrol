@@ -571,7 +571,7 @@ Rectangle {
                         color: colorWhite
                     }
                     QGCLabel {
-                        text: MavManager.batteryConsumed.toFixed(0) + 'mA';
+                        text: MavManager.batteryConsumed.toFixed(0) + 'mAh';
                         width: getProportionalDimmension(30)
                         horizontalAlignment: Text.AlignRight
                         font.pixelSize: ScreenTools.smallFontPixelSize
