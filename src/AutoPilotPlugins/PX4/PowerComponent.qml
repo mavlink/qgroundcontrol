@@ -310,8 +310,9 @@ QGCView {
                 visible:        showAdvanced.checked
             }
             Rectangle {
+                id: batteryRectangle
                 width: parent.width
-                height: 40
+                height: 140
                 color: palette.windowShade
                 visible: showAdvanced.checked
                 Column {
@@ -327,6 +328,22 @@ QGCView {
                             width: textEditWidth
                             fact: battVoltLoadDrop
                             showUnits: true
+                        }
+                    }
+                    QGCLabel {
+                        width: batteryRectangle.width - 30
+                        wrapMode: Text.WordWrap
+                        text: "Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full " +
+                              "throttle, divided by the number of battery cells. Leave at the default if unsure. " +
+                              "<font color=\"yellow\">If this value is set too high, the battery might be deep discharged and damaged.</font>"
+                    }
+                    Row {
+                        spacing: 10
+                        QGCLabel {
+                            text: "Compensated Minimum Voltage:"
+                        }
+                        QGCLabel {
+                            text: ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + ' V'
                         }
                     }
                 }
