@@ -333,10 +333,9 @@ QGCView {
                     QGCLabel {
                         width: batteryRectangle.width - 30
                         wrapMode: Text.WordWrap
-                        text: "All batteries have an internal resistance. This causes the voltage to drop when under load. " +
-                              "This value tells the flight controller how much to compensate when computing the true battery minimum voltage. " +
-                              "<font color=\"yellow\">If this value is set too high, the flight controller will allow the battery to drop bellow its minimum safety " +
-                              "voltage, which will cause damage to the battery.</font>"
+                        text: "Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full " +
+                              "throttle, divided by the number of battery cells. Leave at the default if unsure. " +
+                              "<font color=\"yellow\">If this value is set too high, the battery might be deep discharged and damaged.</font>"
                     }
                     Row {
                         spacing: 10
