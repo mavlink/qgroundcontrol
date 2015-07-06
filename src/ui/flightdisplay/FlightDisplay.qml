@@ -91,6 +91,13 @@ Item {
             videoBackground.visible = false;
             flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
         }
+        // Disable video if we don't have support for it
+        if(!flightDisplay.hasVideo) {
+            videoBackground.visible = false;
+            flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
+        }
+        // Enable/Disable menu accordingly
+        videoMenu.enabled = flightDisplay.hasVideo;
     }
 
     Menu {
@@ -141,6 +148,7 @@ Item {
         MenuSeparator {}
 
         MenuItem {
+            id: videoMenu
             text: "Video Background"
             checkable: true
             checked: videoBackground.visible

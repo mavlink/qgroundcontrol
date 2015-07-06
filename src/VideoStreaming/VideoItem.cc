@@ -32,35 +32,51 @@ This file is part of the QGROUNDCONTROL project
 #include <QtQuick/QSGFlatColorMaterial>
 
 #include "VideoItem.h"
+#if defined(QGC_GST_STREAMING)
 #include "VideoSurface_p.h"
+#endif
 
+#if defined(QGC_GST_STREAMING)
 struct VideoItem::Private
 {
     QPointer<VideoSurface> surface;
     bool surfaceDirty;
     QRectF targetArea;
 };
+#endif
 
 VideoItem::VideoItem(QQuickItem *parent)
-    : QQuickItem(parent), _data(new Private)
+    : QQuickItem(parent)
+#if defined(QGC_GST_STREAMING)
+    , _data(new Private)
+#endif
 {
+#if defined(QGC_GST_STREAMING)
     _data->surfaceDirty = true;
     setFlag(QQuickItem::ItemHasContents, true);
+#endif
 }
 
 VideoItem::~VideoItem()
 {
+#if defined(QGC_GST_STREAMING)
     setSurface(0);
     delete _data;
+#endif
 }
 
 VideoSurface *VideoItem::surface() const
 {
+#if defined(QGC_GST_STREAMING)
     return _data->surface.data();
+#else
+    return NULL;
+#endif
 }
 
 void VideoItem::setSurface(VideoSurface *surface)
 {
+#if defined(QGC_GST_STREAMING)
     if (_data->surface) {
         _data->surface.data()->_data->items.remove(this);
     }
@@ -69,8 +85,10 @@ void VideoItem::setSurface(VideoSurface *surface)
     if (_data->surface) {
         _data->surface.data()->_data->items.insert(this);
     }
+#endif
 }
 
+#if defined(QGC_GST_STREAMING)
 QSGNode* VideoItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData*)
 {
     QRectF r = boundingRect();
@@ -111,3 +129,4 @@ QSGNode* VideoItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData*)
 
     return newNode;
 }
+#endif

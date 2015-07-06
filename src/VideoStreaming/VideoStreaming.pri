@@ -50,25 +50,12 @@ VideoEnabled {
         GST_PLUGIN_BUILD_STATIC \
         QTGLVIDEOSINK_NAME=qt5glvideosink \
         QTVIDEOSINK_NAME=qt5videosink
-        #QT_NO_KEYWORDS \
 
     INCLUDEPATH += \
-        $$PWD \
         $$PWD/gstqtvideosink \
         $$PWD/gstqtvideosink/delegates \
         $$PWD/gstqtvideosink/painters \
         $$PWD/gstqtvideosink/utils \
-
-    HEADERS += \
-        $$PWD/VideoItem.h \
-        $$PWD/VideoReceiver.h \
-        $$PWD/VideoSurface.h \
-        $$PWD/VideoSurface_p.h \
-
-    SOURCES += \
-        $$PWD/VideoItem.cc \
-        $$PWD/VideoReceiver.cc \
-        $$PWD/VideoSurface.cc \
 
     #-- QtGstreamer (gutted to our needs)
 

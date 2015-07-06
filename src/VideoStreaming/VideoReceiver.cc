@@ -32,18 +32,23 @@ This file is part of the QGROUNDCONTROL project
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
+#if defined(QGC_GST_STREAMING)
     , _pipeline(NULL)
     , _videoSink(NULL)
+#endif
 {
 
 }
 
 VideoReceiver::~VideoReceiver()
 {
+#if defined(QGC_GST_STREAMING)
     stop();
     setVideoSink(NULL);
+#endif
 }
 
+#if defined(QGC_GST_STREAMING)
 void VideoReceiver::setVideoSink(GstElement* sink)
 {
     if (_videoSink) {
@@ -55,9 +60,11 @@ void VideoReceiver::setVideoSink(GstElement* sink)
         gst_object_ref_sink(_videoSink);
     }
 }
+#endif
 
 void VideoReceiver::start()
 {
+#if defined(QGC_GST_STREAMING)
     if (_uri.isEmpty()) {
         qCritical() << "VideoReceiver::start() failed because URI is not specified";
         return;
@@ -158,15 +165,18 @@ void VideoReceiver::start()
             _pipeline = NULL;
         }
     }
+#endif
 }
 
 void VideoReceiver::stop()
 {
+#if defined(QGC_GST_STREAMING)
     if (_pipeline != NULL) {
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_object_unref(_pipeline);
         _pipeline = NULL;
     }
+#endif
 }
 
 void VideoReceiver::setUri(const QString & uri)
@@ -175,6 +185,7 @@ void VideoReceiver::setUri(const QString & uri)
     _uri = uri;
 }
 
+#if defined(QGC_GST_STREAMING)
 void VideoReceiver::_onBusMessage(GstMessage* msg)
 {
     switch (GST_MESSAGE_TYPE(msg)) {
@@ -196,7 +207,9 @@ void VideoReceiver::_onBusMessage(GstMessage* msg)
         break;
     }
 }
+#endif
 
+#if defined(QGC_GST_STREAMING)
 gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 {
     Q_UNUSED(bus)
@@ -205,3 +218,4 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
     pThis->_onBusMessage(msg);
     return TRUE;
 }
+#endif

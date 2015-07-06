@@ -31,11 +31,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QQmlEngine>
 #include <QSettings>
 
-#if defined(QGC_GST_STREAMING)
 #include <VideoItem.h>
 #include <VideoSurface.h>
 #include "VideoReceiver.h"
-#endif
 
 #include "ScreenToolsController.h"
 #include "FlightDisplay.h"
@@ -59,7 +57,6 @@ FlightDisplay::FlightDisplay(QWidget *parent)
 #endif
     setContextPropertyObject("flightDisplay", this);
 
-#if defined(QGC_GST_STREAMING)
     /*
      * This is the receiving end of an UDP RTP stream. The sender can be setup with this command:
      *
@@ -89,9 +86,10 @@ FlightDisplay::FlightDisplay(QWidget *parent)
     setContextPropertyObject("videoDisplay", pSurface);
     VideoReceiver* pReceiver = new VideoReceiver(this);
     pReceiver->setUri(QLatin1Literal("udp://0.0.0.0:5000"));
+#if defined(QGC_GST_STREAMING)
     pReceiver->setVideoSink(pSurface->videoSink());
-    setContextPropertyObject("videoReceiver", pReceiver);
 #endif
+    setContextPropertyObject("videoReceiver", pReceiver);
 
     setSource(QUrl::fromUserInput("qrc:/qml/FlightDisplay.qml"));
     setVisible(true);

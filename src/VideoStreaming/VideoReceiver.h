@@ -31,7 +31,9 @@ This file is part of the QGROUNDCONTROL project
 #define VIDEORECEIVER_H
 
 #include <QObject>
+#if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
+#endif
 
 class VideoReceiver : public QObject
 {
@@ -40,7 +42,9 @@ public:
     explicit VideoReceiver(QObject* parent = 0);
     ~VideoReceiver();
 
+#if defined(QGC_GST_STREAMING)
     void setVideoSink(GstElement* sink);
+#endif
 
 public Q_SLOTS:
     void start  ();
@@ -48,12 +52,19 @@ public Q_SLOTS:
     void setUri (const QString& uri);
 
 private:
+
+#if defined(QGC_GST_STREAMING)
     void            _onBusMessage(GstMessage* message);
     static gboolean _onBusMessage(GstBus* bus, GstMessage* msg, gpointer data);
+#endif
 
     QString     _uri;
+
+#if defined(QGC_GST_STREAMING)
     GstElement* _pipeline;
     GstElement* _videoSink;
+#endif
+
 };
 
 #endif // VIDEORECEIVER_H

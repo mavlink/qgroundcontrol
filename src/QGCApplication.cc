@@ -40,9 +40,9 @@
 
 #include <QDebug>
 
-#if defined(QGC_GST_STREAMING)
 #include <VideoItem.h>
 #include <VideoSurface.h>
+#if defined(QGC_GST_STREAMING)
 G_BEGIN_DECLS
 GST_PLUGIN_STATIC_DECLARE(QTVIDEOSINK_NAME);
 G_END_DECLS
@@ -264,11 +264,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
 
-#if defined(QGC_GST_STREAMING)
     //----------------------------------------------------------------
     //-- Video Streaming
     qmlRegisterType<VideoItem>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
     qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QLatin1String("VideoSurface from QML is not supported"));
+#if defined(QGC_GST_STREAMING)
     GError* error = NULL;
     if (!gst_init_check(&argc, &argv, &error)) {
         qCritical() << "gst_init_check() failed: " << error->message;

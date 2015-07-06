@@ -32,9 +32,13 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QtCore/QObject>
 
+#if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
+#endif
 
+#if defined(QGC_GST_STREAMING)
 class VideoSurfacePrivate;
+#endif
 
 class VideoSurface : public QObject
 {
@@ -48,15 +52,21 @@ public:
      * The element will be constructed the first time that this function
      * is called. The surface will always keep a reference to this element.
      */
+#if defined(QGC_GST_STREAMING)
     GstElement* videoSink() const;
+#endif
 
 protected:
+#if defined(QGC_GST_STREAMING)
     void onUpdate();
     static void onUpdateThunk(GstElement* sink, gpointer data);
+#endif
 
 private:
     friend class VideoItem;
+#if defined(QGC_GST_STREAMING)
     VideoSurfacePrivate * const _data;
+#endif
 };
 
 Q_DECLARE_METATYPE(VideoSurface*)
