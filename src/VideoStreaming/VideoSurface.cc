@@ -27,25 +27,33 @@ This file is part of the QGROUNDCONTROL project
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
+#if defined(QGC_GST_STREAMING)
 #include "VideoSurface_p.h"
+#endif
+#include "VideoSurface.h"
 
 #include <QtCore/QDebug>
 #include <QtQuick/QQuickItem>
 
 VideoSurface::VideoSurface(QObject *parent)
     : QObject(parent)
+#if defined(QGC_GST_STREAMING)
     , _data(new VideoSurfacePrivate)
+#endif
 {
 }
 
 VideoSurface::~VideoSurface()
 {
+#if defined(QGC_GST_STREAMING)
     if (_data->videoSink != NULL) {
         gst_element_set_state(_data->videoSink, GST_STATE_NULL);
     }
     delete _data;
+#endif
 }
 
+#if defined(QGC_GST_STREAMING)
 GstElement* VideoSurface::videoSink() const
 {
     if (_data->videoSink == NULL) {
@@ -71,4 +79,5 @@ void VideoSurface::onUpdateThunk(GstElement* sink, gpointer data)
     VideoSurface* pThis = (VideoSurface* )data;
     pThis->onUpdate();
 }
+#endif
 

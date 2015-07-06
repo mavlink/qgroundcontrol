@@ -47,12 +47,16 @@ public:
     void setSurface(VideoSurface *surface);
 
 protected:
+#if defined(QGC_GST_STREAMING)
     /*! Reimplemented from QQuickItem. */
     virtual QSGNode* updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updatePaintNodeData);
+#endif
 
 private:
+#if defined(QGC_GST_STREAMING)
     struct Private;
     Private* const _data;
+#endif
 };
 
 #endif // VIDEO_ITEM_H
