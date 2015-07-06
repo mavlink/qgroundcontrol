@@ -85,6 +85,8 @@ void VideoItem::setSurface(VideoSurface *surface)
     if (_data->surface) {
         _data->surface.data()->_data->items.insert(this);
     }
+#else
+    Q_UNUSED(surface)
 #endif
 }
 
