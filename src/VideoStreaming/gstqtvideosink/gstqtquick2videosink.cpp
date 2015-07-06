@@ -254,7 +254,7 @@ gst_qt_quick2_video_sink_show_frame(GstVideoSink *sink, GstBuffer *buffer)
 {
     GstQtQuick2VideoSink *self = GST_QT_QUICK2_VIDEO_SINK (sink);
 
-    GST_TRACE_OBJECT(self, "Posting new buffer (%"GST_PTR_FORMAT") for rendering.", buffer);
+    GST_TRACE_OBJECT(self, "Posting new buffer (%" GST_PTR_FORMAT ") for rendering.", buffer);
 
     QCoreApplication::postEvent(self->priv->delegate, new BaseDelegate::BufferEvent(buffer));
 

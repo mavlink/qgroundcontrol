@@ -28,7 +28,6 @@ LinuxBuild {
     CONFIG += link_pkgconfig
     packagesExist(gstreamer-1.0) {
         message("Including support for video streaming")
-        DEFINES     += QGC_GST_STREAMING
         PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0
         CONFIG      += VideoEnabled
     }
@@ -37,10 +36,18 @@ LinuxBuild {
     GST_ROOT = /Library/Frameworks/GStreamer.framework
     exists($$GST_ROOT) {
         message("Including support for video streaming")
-        DEFINES     += QGC_GST_STREAMING
         CONFIG      += VideoEnabled
         INCLUDEPATH += $$GST_ROOT/Headers
         LIBS        += -F/Library/Frameworks -framework GStreamer
+    }
+} else:iOSBuild {
+    #- gstreamer framework installed by the gstreamer iOS SDK installer (default to home directory)
+    GST_ROOT = $$(HOME)/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework
+    exists($$GST_ROOT) {
+        message("Including support for video streaming")
+        CONFIG      += VideoEnabled
+        INCLUDEPATH += $$GST_ROOT/Headers
+        LIBS        += -F$$(HOME)/Library/Developer/GStreamer/iPhone.sdk -framework GStreamer
     }
 } else:WindowsBuild {
     #- gstreamer installed by default under c:/gstreamer
@@ -51,7 +58,6 @@ LinuxBuild {
         GST_ROOT = c:/gstreamer/1.0/x86
         exists($$GST_ROOT) {
             message("Including support for video streaming")
-            DEFINES     += QGC_GST_STREAMING
             CONFIG      += VideoEnabled
             LIBS        += -L$$GST_ROOT/lib/gstreamer-1.0/static -lgstreamer-1.0 -lgstvideo-1.0 -lgstbase-1.0
             LIBS        += -L$$GST_ROOT/lib -lglib-2.0 -lintl -lgobject-2.0
@@ -67,6 +73,7 @@ LinuxBuild {
 VideoEnabled {
 
     DEFINES += \
+        QGC_GST_STREAMING \
         GST_PLUGIN_BUILD_STATIC \
         QTGLVIDEOSINK_NAME=qt5glvideosink \
         QTVIDEOSINK_NAME=qt5videosink

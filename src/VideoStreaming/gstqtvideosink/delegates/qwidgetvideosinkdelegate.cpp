@@ -43,7 +43,7 @@ QWidget *QWidgetVideoSinkDelegate::widget() const
 
 void QWidgetVideoSinkDelegate::setWidget(QWidget *widget)
 {
-    GST_LOG_OBJECT(m_sink, "Setting \"widget\" property to %"GST_PTR_FORMAT, widget);
+    GST_LOG_OBJECT(m_sink, "Setting \"widget\" property to %" GST_PTR_FORMAT, widget);
 
     if (m_widget) {
         m_widget.data()->removeEventFilter(this);

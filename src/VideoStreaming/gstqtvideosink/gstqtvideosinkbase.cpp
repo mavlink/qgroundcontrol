@@ -213,7 +213,7 @@ GstFlowReturn GstQtVideoSinkBase::show_frame(GstVideoSink *video_sink, GstBuffer
 {
     GstQtVideoSinkBase *sink = GST_QT_VIDEO_SINK_BASE(video_sink);
 
-    GST_TRACE_OBJECT(sink, "Posting new buffer (%"GST_PTR_FORMAT") for rendering.", buffer);
+    GST_TRACE_OBJECT(sink, "Posting new buffer (%" GST_PTR_FORMAT") for rendering.", buffer);
 
     QCoreApplication::postEvent(sink->delegate, new BaseDelegate::BufferEvent(buffer));
 

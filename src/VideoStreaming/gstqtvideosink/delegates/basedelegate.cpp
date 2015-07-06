@@ -161,7 +161,7 @@ bool BaseDelegate::event(QEvent *event)
         BufferEvent *bufEvent = dynamic_cast<BufferEvent*>(event);
         Q_ASSERT(bufEvent);
 
-        GST_TRACE_OBJECT(m_sink, "Received buffer %"GST_PTR_FORMAT, bufEvent->buffer);
+        GST_TRACE_OBJECT(m_sink, "Received buffer %" GST_PTR_FORMAT, bufEvent->buffer);
 
         if (isActive()) {
             gst_buffer_replace (&m_buffer, bufEvent->buffer);

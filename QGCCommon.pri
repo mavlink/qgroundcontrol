@@ -54,10 +54,13 @@ linux {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
 } else : ios {
+    !equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 4) {
+        error("Unsupported Qt version, 5.5.x or greater is required for iOS")
+    }
     message("iOS build")
     CONFIG += iOSBuild MobileBuild app_bundle
     DEFINES += __ios__
-    warning("iOS build is experimental and not yet functional")
+    warning("iOS build is experimental and not yet fully functional")
 } else {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
 }
@@ -107,10 +110,10 @@ iOSBuild {
     # For whatever reason, the iOS build fails with these set. Some files have the full,
     # properly concatenaded path and file name while others have only the second portion,
     # as if BUILDDIR was empty.
-    OBJECTS_DIR = ~/tmp/qgcfoo
-    MOC_DIR     = ~/tmp/qgcfoo
-    UI_DIR      = ~/tmp/qgcfoo
-    RCC_DIR     = ~/tmp/qgcfoo
+    OBJECTS_DIR = $$(HOME)/tmp/qgcfoo
+    MOC_DIR     = $$(HOME)/tmp/qgcfoo
+    UI_DIR      = $$(HOME)/tmp/qgcfoo
+    RCC_DIR     = $$(HOME)/tmp/qgcfoo
 } else {
     OBJECTS_DIR = $${BUILDDIR}/obj
     MOC_DIR     = $${BUILDDIR}/moc
@@ -126,7 +129,7 @@ AndroidBuild {
 
 # We place the created plugin lib into the objects dir so that make clean will clean it as well
 iOSBuild {
-    LOCATION_PLUGIN_DESTDIR = ~/tmp/qgcfoo
+    LOCATION_PLUGIN_DESTDIR = $$(HOME)/tmp/qgcfoo
 } else {
     LOCATION_PLUGIN_DESTDIR = $$OBJECTS_DIR
 }
