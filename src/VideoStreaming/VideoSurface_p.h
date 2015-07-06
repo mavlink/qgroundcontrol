@@ -30,8 +30,8 @@ This file is part of the QGROUNDCONTROL project
 #ifndef VIDEO_SURFACE_P_H
 #define VIDEO_SURFACE_P_H
 
-#include "videosurface.h"
-#include "videoitem.h"
+#include "VideoSurface.h"
+#include "VideoItem.h"
 
 class VideoSurfacePrivate
 {

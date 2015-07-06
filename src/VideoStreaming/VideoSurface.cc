@@ -27,7 +27,7 @@ This file is part of the QGROUNDCONTROL project
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#include "videosurface_p.h"
+#include "VideoSurface_p.h"
 
 #include <QtCore/QDebug>
 #include <QtQuick/QQuickItem>

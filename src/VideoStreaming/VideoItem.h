@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #define VIDEO_ITEM_H
 
 #include <QtQuick/QQuickItem>
-#include "videosurface.h"
+#include "VideoSurface.h"
 
 class VideoItem : public QQuickItem
 {

@@ -29,7 +29,7 @@ LinuxBuild {
     packagesExist(gstreamer-1.0) {
         message("Including support for video streaming")
         DEFINES     += QGC_GST_STREAMING
-        PKGCONFIG   += gstreamer-1.0
+        PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0
         CONFIG      += VideoEnabled
     }
 } else:MacBuild {
