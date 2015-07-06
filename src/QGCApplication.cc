@@ -41,8 +41,8 @@
 #include <QDebug>
 
 #if defined(QGC_GST_STREAMING)
-#include <videoitem.h>
-#include <videosurface.h>
+#include <VideoItem.h>
+#include <VideoSurface.h>
 G_BEGIN_DECLS
 GST_PLUGIN_STATIC_DECLARE(QTVIDEOSINK_NAME);
 G_END_DECLS

@@ -32,8 +32,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 
 #if defined(QGC_GST_STREAMING)
-#include <videoitem.h>
-#include <videosurface.h>
+#include <VideoItem.h>
+#include <VideoSurface.h>
 #include "VideoReceiver.h"
 #endif
 

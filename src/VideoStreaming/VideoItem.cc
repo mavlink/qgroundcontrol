@@ -31,8 +31,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QtQuick/QSGNode>
 #include <QtQuick/QSGFlatColorMaterial>
 
-#include "videoitem.h"
-#include "videosurface_p.h"
+#include "VideoItem.h"
+#include "VideoSurface_p.h"
 
 struct VideoItem::Private
 {
