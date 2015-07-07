@@ -3,24 +3,20 @@
         <file alias="MockLink.params">src/comm/MockLink.params</file>
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
-
     <qresource prefix="/qmlimages">
         <file alias="SafetyComponentTree.svg">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.svg</file>
         <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentHome.png</file>
         <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentArrowDown.png</file>
         <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentPlane.png</file>
-
         <file alias="VehicleDown.png">src/AutoPilotPlugins/PX4/Images/VehicleDown.png</file>
         <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
         <file alias="VehicleLeft.png">src/AutoPilotPlugins/PX4/Images/VehicleLeft.png</file>
         <file alias="VehicleRight.png">src/AutoPilotPlugins/PX4/Images/VehicleRight.png</file>
         <file alias="VehicleNoseDown.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDown.png</file>
         <file alias="VehicleTailDown.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
-
         <file alias="VehicleDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleDownRotate.png</file>
         <file alias="VehicleLeftRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleLeftRotate.png</file>
         <file alias="VehicleNoseDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDownRotate.png</file>
-
         <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/PX4/Images/AirframeStandardPlane.png</file>
         <file alias="AirframeFlyingWing.png">src/AutoPilotPlugins/PX4/Images/AirframeFlyingWing.png</file>
         <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorX.png</file>
@@ -31,7 +27,6 @@
         <file alias="AirframeHexaRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorPlus.png</file>
         <file alias="AirframeQuadRotorH.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorH.png</file>
         <file alias="AirframeSimulation.png">src/AutoPilotPlugins/PX4/Images/AirframeSimulation.png</file>
-
         <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
         <file alias="subMenuButtonImage.png">resources/CogWheels.png</file>
         <file alias="SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SensorsComponentIcon.png</file>
@@ -42,14 +37,12 @@
         <file alias="PowerComponentIcon.png">src/AutoPilotPlugins/PX4/Images/PowerComponentIcon.png</file>
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
-
         <file alias="PowerComponentBattery_01cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_01cell.svg</file>
         <file alias="PowerComponentBattery_02cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_02cell.svg</file>
         <file alias="PowerComponentBattery_03cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_03cell.svg</file>
         <file alias="PowerComponentBattery_04cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_04cell.svg</file>
         <file alias="PowerComponentBattery_05cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg</file>
         <file alias="PowerComponentBattery_06cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg</file>
-
         <file alias="attitudeDial.svg">src/ui/qmlcommon/attitudeDial.svg</file>
         <file alias="attitudeInstrument.svg">src/ui/qmlcommon/attitudeInstrument.svg</file>
         <file alias="attitudePointer.svg">src/ui/qmlcommon/attitudePointer.svg</file>
@@ -67,18 +60,15 @@
         <file alias="scale.png">src/ui/qmlcommon/scale.png</file>
         <file alias="scale_end.png">src/ui/qmlcommon/scale_end.png</file>
     </qresource>
-
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>
         <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
-
         <file alias="QGroundControl/FactControls/qmldir">src/FactSystem/FactControls/qmldir</file>
         <file alias="QGroundControl/FactControls/FactPanel.qml">src/FactSystem/FactControls/FactPanel.qml</file>
         <file alias="QGroundControl/FactControls/FactLabel.qml">src/FactSystem/FactControls/FactLabel.qml</file>
         <file alias="QGroundControl/FactControls/FactTextField.qml">src/FactSystem/FactControls/FactTextField.qml</file>
         <file alias="QGroundControl/FactControls/FactCheckBox.qml">src/FactSystem/FactControls/FactCheckBox.qml</file>
         <file alias="QGroundControl/FactControls/FactComboBox.qml">src/FactSystem/FactControls/FactComboBox.qml</file>
-
         <file alias="QGroundControl/Controls/qmldir">src/QmlControls/QGroundControl.Controls.qmldir</file>
         <file alias="QGroundControl/Controls/QGCButton.qml">src/QmlControls/QGCButton.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
@@ -89,32 +79,25 @@
         <file alias="QGroundControl/Controls/QGCColoredImage.qml">src/QmlControls/QGCColoredImage.qml</file>
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">src/QmlControls/QGCToolBarButton.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
-
         <file alias="QGroundControl/ScreenTools/qmldir">src/QmlControls/QGroundControl.ScreenTools.qmldir</file>
         <file alias="QGroundControl/ScreenTools/ScreenTools.qml">src/QmlControls/ScreenTools.qml</file>
         <file alias="ScreenToolsFontQuery.qml">src/QmlControls/ScreenToolsFontQuery.qml</file>
-
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/Controls/VehicleSummaryRow.qml">src/QmlControls/VehicleSummaryRow.qml</file>
         <file alias="QGroundControl/Controls/ViewWidget.qml">src/ViewWidgets/ViewWidget.qml</file>
-
         <file alias="QGroundControl/Controls/QGCView.qml">src/QmlControls/QGCView.qml</file>
         <file alias="QGroundControl/Controls/QGCViewPanel.qml">src/QmlControls/QGCViewPanel.qml</file>
         <file alias="QGroundControl/Controls/QGCViewDialog.qml">src/QmlControls/QGCViewDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCViewMessage.qml">src/QmlControls/QGCViewMessage.qml</file>
-
         <file alias="QGroundControl/Controls/ParameterEditor.qml">src/QmlControls/ParameterEditor.qml</file>
         <file alias="QGroundControl/Controls/ParameterEditorDialog.qml">src/QmlControls/ParameterEditorDialog.qml</file>
-
         <file alias="ParameterEditorWidget.qml">src/ViewWidgets/ParameterEditorWidget.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
-
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
         <file alias="SetupViewButtonsConnected.qml">src/VehicleSetup/SetupViewButtonsConnected.qml</file>
         <file alias="SetupViewButtonsDisconnected.qml">src/VehicleSetup/SetupViewButtonsDisconnected.qml</file>
-
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
@@ -130,14 +113,10 @@
         <file alias="RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/RadioComponentSummary.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
-
-        <!-- Airframe component resourecs -->
         <file alias="AirframeComponent.qml">src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
-        <!-- QML Main UI -->
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="FlightDisplay.qml">src/ui/flightdisplay/FlightDisplay.qml</file>
         <file alias="MapDisplay.qml">src/ui/mapdisplay/MapDisplay.qml</file>
-        <!-- QML Main UI Components -->
         <file alias="QGroundControl/FlightControls/QGCAltitudeWidget.qml">src/ui/qmlcommon/QGCAltitudeWidget.qml</file>
         <file alias="QGroundControl/FlightControls/QGCArtificialHorizon.qml">src/ui/qmlcommon/QGCArtificialHorizon.qml</file>
         <file alias="QGroundControl/FlightControls/QGCAttitudeInstrument.qml">src/ui/qmlcommon/QGCAttitudeInstrument.qml</file>
@@ -152,16 +131,14 @@
         <file alias="QGroundControl/FlightControls/QGCPitchWidget.qml">src/ui/qmlcommon/QGCPitchWidget.qml</file>
         <file alias="QGroundControl/FlightControls/QGCSlider.qml">src/ui/qmlcommon/QGCSlider.qml</file>
         <file alias="QGroundControl/FlightControls/QGCSpeedWidget.qml">src/ui/qmlcommon/QGCSpeedWidget.qml</file>
+        <file alias="QGroundControl/FlightControls/QGCVideoBackground.qml">src/ui/qmlcommon/QGCVideoBackground.qml</file>
         <file alias="QGroundControl/FlightControls/QGCWaypointEditor.qml">src/ui/qmlcommon/QGCWaypointEditor.qml</file>
         <file alias="QGroundControl/FlightControls/qmldir">src/ui/qmlcommon/qmldir</file>
-        <!-- QML Map Resources -->
         <file alias="QGroundControl/FlightControls/QGCWaypoint.qml">src/ui/qmlcommon/QGCWaypoint.qml</file>
     </qresource>
-
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>
-
     <qresource prefix="/res">
         <file alias="LeftArrow">resources/LeftArrow.svg</file>
         <file alias="RightArrow">resources/RightArrow.svg</file>
@@ -169,45 +146,35 @@
         <file alias="UpArrow">resources/UpArrow.svg</file>
         <file alias="BottomArrow">resources/BottomArrow.svg</file>
         <file alias="JumpArrow">resources/JumpArrow.svg</file>
-
         <file alias="PlusSign">resources/PlusSign.svg</file>
         <file alias="MinusSign">resources/MinusSign.svg</file>
-
         <file alias="Play">resources/Play.svg</file>
         <file alias="Pause">resources/Pause.svg</file>
         <file alias="Stop">resources/Stop.svg</file>
-
         <file alias="Launch">resources/Launch.svg</file>
         <file alias="Land">resources/Land.svg</file>
         <file alias="Kill">resources/Kill.svg</file>
         <file alias="Shutdown">resources/Shutdown.svg</file>
-
         <file alias="AntennaT">resources/Antenna_T.svg</file>
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
         <file alias="Gps">resources/Gps.svg</file>
         <file alias="Megaphone">resources/Megaphone.png</file>
         <file alias="Yield">resources/Yield.png</file>
-
         <file alias="Battery_0">resources/Battery_0.svg</file>
         <file alias="Battery_20">resources/Battery_20.svg</file>
         <file alias="Battery_40">resources/Battery_40.svg</file>
         <file alias="Battery_60">resources/Battery_60.svg</file>
         <file alias="Battery_80">resources/Battery_80.svg</file>
         <file alias="Battery_100">resources/Battery_100.svg</file>
-
         <file alias="SystemLockScreen">resources/SystemLockScreen.svg</file>
-
         <file alias="SplashScreen">resources/SplashScreen.png</file>
-
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
     </qresource>
-
     <qresource prefix="/res/firmware">
         <file alias="px4.png">resources/firmware/px4.png</file>
         <file alias="apm.png">resources/firmware/apm.png</file>
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>
     </qresource>
-
     <qresource prefix="/res/mavs">
         <file alias="Helicopter">resources/mavs/helicopter.svg</file>
         <file alias="Unknown">resources/mavs/unknown.svg</file>
@@ -229,14 +196,12 @@
         <file alias="SurfaceBoat">resources/mavs/surface-boat.svg</file>
         <file alias="TriCopter">resources/mavs/tricopter.svg</file>
     </qresource>
-
     <qresource prefix="/res/mapproviders">
         <file alias="openstreetmap.png">resources/mapproviders/openstreetmap.png</file>
         <file alias="google.png">resources/mapproviders/google.png</file>
         <file alias="yahoo.png">resources/mapproviders/yahoo.png</file>
         <file alias="googleearth.svg">resources/mapproviders/googleearth.svg</file>
     </qresource>
-
     <qresource prefix="/res/calibration">
         <file alias="accel_back.png">resources/calibration/accel_back.png</file>
         <file alias="accel_front.png">resources/calibration/accel_front.png</file>
@@ -245,7 +210,6 @@
         <file alias="accel_up.png">resources/calibration/accel_up.png</file>
         <file alias="accel_left.png">resources/calibration/accel_left.png</file>
     </qresource>
-
     <qresource prefix="/qml/calibration/mode1">
         <file alias="radioCenter.png">resources/calibration/mode1/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode1/radioHome.png</file>
@@ -259,7 +223,6 @@
         <file alias="radioThrottleDown.png">resources/calibration/mode1/radioThrottleDown.png</file>
         <file alias="radioSwitchMinMax.png">resources/calibration/mode1/radioSwitchMinMax.png</file>
     </qresource>
-
     <qresource prefix="/qml/calibration/mode2">
         <file alias="radioCenter.png">resources/calibration/mode2/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode2/radioHome.png</file>
@@ -273,16 +236,13 @@
         <file alias="radioThrottleDown.png">resources/calibration/mode2/radioThrottleDown.png</file>
         <file alias="radioSwitchMinMax.png">resources/calibration/mode2/radioSwitchMinMax.png</file>
     </qresource>
-
     <qresource prefix="/res/styles">
         <file alias="style-dark.css">resources/styles/style-dark.css</file>
         <file alias="style-light.css">resources/styles/style-light.css</file>
     </qresource>
-
     <qresource prefix="/res/fonts">
         <file alias="vera.ttf">resources/styles/Vera.ttf</file>
     </qresource>
-
     <qresource prefix="/res/audio">
         <file alias="Alert">resources/audio/alert.wav</file>
     </qresource>

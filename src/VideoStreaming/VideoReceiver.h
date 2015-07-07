@@ -23,41 +23,48 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Main Flight Display
+ *   @brief QGC Video Receiver
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef QGCFLIGHTDISPLAY_H
-#define QGCFLIGHTDISPLAY_H
+#ifndef VIDEORECEIVER_H
+#define VIDEORECEIVER_H
 
-#include "QGCQmlWidgetHolder.h"
+#include <QObject>
+#if defined(QGC_GST_STREAMING)
+#include <gst/gst.h>
+#endif
 
-class UASInterface;
-
-class FlightDisplay : public QGCQmlWidgetHolder
+class VideoReceiver : public QObject
 {
     Q_OBJECT
 public:
-    FlightDisplay(QWidget* parent = NULL);
-    ~FlightDisplay();
-
-    /// @brief Invokes the Flight Display Options menu
-    void showOptionsMenu() { emit showOptionsMenuChanged(); }
-
-    Q_PROPERTY(bool hasVideo READ hasVideo CONSTANT)
-
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
+    explicit VideoReceiver(QObject* parent = 0);
+    ~VideoReceiver();
 
 #if defined(QGC_GST_STREAMING)
-    bool    hasVideo            () { return true; }
-#else
-    bool    hasVideo            () { return false; }
+    void setVideoSink(GstElement* sink);
 #endif
 
-signals:
-    void showOptionsMenuChanged ();
+public Q_SLOTS:
+    void start  ();
+    void stop   ();
+    void setUri (const QString& uri);
+
+private:
+
+#if defined(QGC_GST_STREAMING)
+    void            _onBusMessage(GstMessage* message);
+    static gboolean _onBusMessage(GstBus* bus, GstMessage* msg, gpointer data);
+#endif
+
+    QString     _uri;
+
+#if defined(QGC_GST_STREAMING)
+    GstElement* _pipeline;
+    GstElement* _videoSink;
+#endif
 
 };
 
-#endif // QGCFLIGHTDISPLAY_H
+#endif // VIDEORECEIVER_H

@@ -23,41 +23,25 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Main Flight Display
+ *   @brief QGC Video Surface (Private Interface)
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef QGCFLIGHTDISPLAY_H
-#define QGCFLIGHTDISPLAY_H
+#ifndef VIDEO_SURFACE_P_H
+#define VIDEO_SURFACE_P_H
 
-#include "QGCQmlWidgetHolder.h"
+#include "VideoSurface.h"
+#include "VideoItem.h"
 
-class UASInterface;
-
-class FlightDisplay : public QGCQmlWidgetHolder
+class VideoSurfacePrivate
 {
-    Q_OBJECT
 public:
-    FlightDisplay(QWidget* parent = NULL);
-    ~FlightDisplay();
-
-    /// @brief Invokes the Flight Display Options menu
-    void showOptionsMenu() { emit showOptionsMenuChanged(); }
-
-    Q_PROPERTY(bool hasVideo READ hasVideo CONSTANT)
-
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
-
-#if defined(QGC_GST_STREAMING)
-    bool    hasVideo            () { return true; }
-#else
-    bool    hasVideo            () { return false; }
-#endif
-
-signals:
-    void showOptionsMenuChanged ();
-
+    VideoSurfacePrivate()
+        : videoSink(NULL)
+    {
+    }
+    QSet<VideoItem*> items;
+    GstElement* videoSink;
 };
 
-#endif // QGCFLIGHTDISPLAY_H
+#endif // VIDEO_SURFACE_P_H
