@@ -23,41 +23,52 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Main Flight Display
+ *   @brief QGC Video Surface
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef QGCFLIGHTDISPLAY_H
-#define QGCFLIGHTDISPLAY_H
+#ifndef VIDEO_SURFACE_H
+#define VIDEO_SURFACE_H
 
-#include "QGCQmlWidgetHolder.h"
-
-class UASInterface;
-
-class FlightDisplay : public QGCQmlWidgetHolder
-{
-    Q_OBJECT
-public:
-    FlightDisplay(QWidget* parent = NULL);
-    ~FlightDisplay();
-
-    /// @brief Invokes the Flight Display Options menu
-    void showOptionsMenu() { emit showOptionsMenuChanged(); }
-
-    Q_PROPERTY(bool hasVideo READ hasVideo CONSTANT)
-
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
+#include <QtCore/QObject>
 
 #if defined(QGC_GST_STREAMING)
-    bool    hasVideo            () { return true; }
-#else
-    bool    hasVideo            () { return false; }
+#include <gst/gst.h>
 #endif
 
-signals:
-    void showOptionsMenuChanged ();
+#if defined(QGC_GST_STREAMING)
+class VideoSurfacePrivate;
+#endif
 
+class VideoSurface : public QObject
+{
+    Q_OBJECT
+    Q_DISABLE_COPY(VideoSurface)
+public:
+    explicit VideoSurface(QObject *parent = 0);
+    virtual ~VideoSurface();
+
+    /*! Returns the video sink element that provides this surface's image.
+     * The element will be constructed the first time that this function
+     * is called. The surface will always keep a reference to this element.
+     */
+#if defined(QGC_GST_STREAMING)
+    GstElement* videoSink() const;
+#endif
+
+protected:
+#if defined(QGC_GST_STREAMING)
+    void onUpdate();
+    static void onUpdateThunk(GstElement* sink, gpointer data);
+#endif
+
+private:
+    friend class VideoItem;
+#if defined(QGC_GST_STREAMING)
+    VideoSurfacePrivate * const _data;
+#endif
 };
 
-#endif // QGCFLIGHTDISPLAY_H
+Q_DECLARE_METATYPE(VideoSurface*)
+
+#endif // VIDEO_SURFACE_H

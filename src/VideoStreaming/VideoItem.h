@@ -23,41 +23,40 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Main Flight Display
+ *   @brief QGC Video Item
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef QGCFLIGHTDISPLAY_H
-#define QGCFLIGHTDISPLAY_H
+#ifndef VIDEO_ITEM_H
+#define VIDEO_ITEM_H
 
-#include "QGCQmlWidgetHolder.h"
+#include <QtQuick/QQuickItem>
+#include "VideoSurface.h"
 
-class UASInterface;
-
-class FlightDisplay : public QGCQmlWidgetHolder
+class VideoItem : public QQuickItem
 {
     Q_OBJECT
+    Q_DISABLE_COPY(VideoItem)
+    Q_PROPERTY(VideoSurface* surface READ surface WRITE setSurface)
+
 public:
-    FlightDisplay(QWidget* parent = NULL);
-    ~FlightDisplay();
+    explicit VideoItem(QQuickItem *parent = 0);
+    virtual ~VideoItem();
 
-    /// @brief Invokes the Flight Display Options menu
-    void showOptionsMenu() { emit showOptionsMenuChanged(); }
+    VideoSurface *surface() const;
+    void setSurface(VideoSurface *surface);
 
-    Q_PROPERTY(bool hasVideo READ hasVideo CONSTANT)
-
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
-
+protected:
 #if defined(QGC_GST_STREAMING)
-    bool    hasVideo            () { return true; }
-#else
-    bool    hasVideo            () { return false; }
+    /*! Reimplemented from QQuickItem. */
+    virtual QSGNode* updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updatePaintNodeData);
 #endif
 
-signals:
-    void showOptionsMenuChanged ();
-
+private:
+#if defined(QGC_GST_STREAMING)
+    struct Private;
+    Private* const _data;
+#endif
 };
 
-#endif // QGCFLIGHTDISPLAY_H
+#endif // VIDEO_ITEM_H

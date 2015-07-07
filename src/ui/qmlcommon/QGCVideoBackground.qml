@@ -23,41 +23,31 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Main Flight Display
+ *   @brief QGC Video Background
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef QGCFLIGHTDISPLAY_H
-#define QGCFLIGHTDISPLAY_H
+import QtQuick 2.4
+import QtQuick.Controls 1.3
+import QGroundControl.QgcQtGStreamer 1.0
 
-#include "QGCQmlWidgetHolder.h"
-
-class UASInterface;
-
-class FlightDisplay : public QGCQmlWidgetHolder
-{
-    Q_OBJECT
-public:
-    FlightDisplay(QWidget* parent = NULL);
-    ~FlightDisplay();
-
-    /// @brief Invokes the Flight Display Options menu
-    void showOptionsMenu() { emit showOptionsMenuChanged(); }
-
-    Q_PROPERTY(bool hasVideo READ hasVideo CONSTANT)
-
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
-
-#if defined(QGC_GST_STREAMING)
-    bool    hasVideo            () { return true; }
-#else
-    bool    hasVideo            () { return false; }
-#endif
-
-signals:
-    void showOptionsMenuChanged ();
-
-};
-
-#endif // QGCFLIGHTDISPLAY_H
+VideoItem {
+    id: videoBackground
+    property var display
+    property var receiver
+    surface: display
+    onVisibleChanged: {
+        if(videoBackground.receiver && videoBackground.display) {
+            if(videoBackground.visible) {
+                videoBackground.receiver.start();
+            } else {
+                videoBackground.receiver.stop();
+            }
+        }
+    }
+    Component.onCompleted: {
+        if(videoBackground.visible && videoBackground.receiver) {
+            videoBackground.receiver.start();
+        }
+    }
+}

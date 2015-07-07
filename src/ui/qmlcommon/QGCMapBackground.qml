@@ -64,6 +64,7 @@ Item {
     Menu {
         id: mapTypeMenu
         title: "Map Type..."
+        enabled: root.visible
         ExclusiveGroup { id: currMapType }
         function setCurrentMap(mapID) {
             for (var i = 0; i < map.supportedMapTypes.length; i++) {

@@ -27,7 +27,7 @@ This file is part of the QGROUNDCONTROL project
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.3
+import QtQuick 2.4
 import QtQuick.Controls 1.3
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Dialogs 1.2
@@ -58,6 +58,10 @@ Item {
         return value ? "1" : "0";
     }
 
+    function showHudInstruments() {
+        return videoBackground.visible || mapBackground.visible;
+    }
+
     Connections {
         target: flightDisplay
         onShowOptionsMenuChanged: {
@@ -70,6 +74,7 @@ Item {
         mapBackground.visible               = getBool(flightDisplay.loadSetting("showMapBackground",        "0"));
         mapBackground.showWaypoints         = getBool(flightDisplay.loadSetting("mapShowWaypoints",         "0"));
         mapBackground.alwaysNorth           = getBool(flightDisplay.loadSetting("mapAlwaysPointsNorth",     "0"));
+        videoBackground.visible             = getBool(flightDisplay.loadSetting("showVideoBackground",      "0"));
         showAttitudeIndicator               = getBool(flightDisplay.loadSetting("showAttitudeIndicator",    "1"));
         showPitchIndicator                  = getBool(flightDisplay.loadSetting("showPitchIndicator",       "1"));
         showCompass                         = getBool(flightDisplay.loadSetting("showCompass",              "1"));
@@ -81,170 +86,36 @@ Item {
         currentAltitude.showAltitude        = getBool(flightDisplay.loadSetting("showCurrentAltitude",      "1"));
         // Insert Map Type menu before separator
         contextMenu.insertItem(2, mapBackground.mapMenu);
-    }
-
-    // TODO: This is to replace the context menu but it is not working. Not only the buttons don't show,
-    // the default placement is random and mostly off screen on mobile devices.
-    Dialog {
-        id: optionsDialog
-        modality: Qt.WindowModal
-        title: "Flight Display Options"
-        standardButtons: StandardButton.Close | StandardButton.RestoreDefaults
-        onReset: {
-            showPitchIndicator = true;
-            flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
-            showAttitudeIndicator = true;
-            flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
-            showCompass = true;
-            flightDisplay.saveSetting("showCompass", setBool(showCompass));
-            altitudeWidget.visible = true;
-            flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
-            currentAltitude.showAltitude = true;
-            flightDisplay.saveSetting("showCurrentAltitude", setBool(currentAltitude.showAltitude));
-            currentAltitude.showClimbRate = true;
-            flightDisplay.saveSetting("showCurrentClimbRate", setBool(currentAltitude.showClimbRate));
-            speedWidget.visible = true;
-            flightDisplay.saveSetting("showSpeedWidget", setBool(speedWidget.visible));
-            currentSpeed.showAirSpeed = true;
-            flightDisplay.saveSetting("showCurrentAirSpeed", setBool(currentSpeed.showAirSpeed));
-            currentSpeed.showGroundSpeed = true;
-            flightDisplay.saveSetting("showCurrentGroundSpeed", setBool(currentSpeed.showGroundSpeed));
-            mapBackground.visible = false;
-            flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
-            mapBackground.alwaysNorth = false;
-            flightDisplay.saveSetting("mapAlwaysPointsNorth", setBool(mapBackground.alwaysNorth));
-            mapBackground.showWaypoints = false
-            flightDisplay.saveSetting("mapShowWaypoints", setBool(mapBackground.showWaypoints));
+        // Video or Map. Not both:
+        if(mapBackground.visible && videoBackground.visible) {
+            videoBackground.visible = false;
+            flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
         }
-        contentItem: Rectangle {
-            color: __qgcPal.window
-            implicitWidth:  ScreenTools.defaultFontPixelSize * (30)
-            implicitHeight: ScreenTools.defaultFontPixelSize * (30)
-            Column {
-                id: dialogColumn
-                anchors.centerIn: parent
-                spacing:  ScreenTools.defaultFontPixelSize
-                width: parent.width
-                Grid {
-                    columns: 2
-                    spacing:    ScreenTools.defaultFontPixelSize * (0.66)
-                    rowSpacing: ScreenTools.defaultFontPixelSize * (0.83)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QGCCheckBox {
-                        text: "Map Background"
-                        checked: mapBackground.visible
-                        onClicked:
-                        {
-                            mapBackground.visible = !mapBackground.visible;
-                            flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Map Show Waypoints"
-                        checked: mapBackground.showWaypoints
-                        onClicked:
-                        {
-                            mapBackground.showWaypoints = !mapBackground.showWaypoints;
-                            flightDisplay.saveSetting("mapShowWaypoints", setBool(mapBackground.showWaypoints));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Pitch Indicator"
-                        checked: showPitchIndicator
-                        onClicked:
-                        {
-                            showPitchIndicator = !showPitchIndicator;
-                            flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Attitude Indicator"
-                        checked: showAttitudeIndicator
-                        onClicked:
-                        {
-                            showAttitudeIndicator = !showAttitudeIndicator;
-                            flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Compass"
-                        checked: showCompass
-                        onClicked:
-                        {
-                            showCompass = !showCompass;
-                            flightDisplay.saveSetting("showCompass", setBool(showCompass));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Altitude Indicator"
-                        checked: altitudeWidget.visible
-                        onClicked:
-                        {
-                            altitudeWidget.visible = !altitudeWidget.visible;
-                            flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Current Altitude"
-                        checked: currentAltitude.showAltitude
-                        onClicked:
-                        {
-                            currentAltitude.showAltitude = !currentAltitude.showAltitude;
-                            flightDisplay.saveSetting("showCurrentAltitude", setBool(currentAltitude.showAltitude));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Current Climb Rate"
-                        checked: currentAltitude.showClimbRate
-                        onClicked:
-                        {
-                            currentAltitude.showClimbRate = !currentAltitude.showClimbRate;
-                            flightDisplay.saveSetting("showCurrentClimbRate", setBool(currentAltitude.showClimbRate));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Speed Indicator"
-                        checked: speedWidget.visible
-                        onClicked:
-                        {
-                            speedWidget.visible = !speedWidget.visible;
-                            flightDisplay.saveSetting("showSpeedWidget", setBool(speedWidget.visible));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Current Air Speed"
-                        checked: currentSpeed.showAirSpeed
-                        onClicked:
-                        {
-                            currentSpeed.showAirSpeed = !currentSpeed.showAirSpeed;
-                            flightDisplay.saveSetting("showCurrentAirSpeed", setBool(currentSpeed.showAirSpeed));
-                        }
-                    }
-                    QGCCheckBox {
-                        text: "Current Ground Speed"
-                        checked: currentSpeed.showGroundSpeed
-                        onClicked:
-                        {
-                            currentSpeed.showGroundSpeed = !currentSpeed.showGroundSpeed;
-                            flightDisplay.saveSetting("showCurrentGroundSpeed", setBool(currentSpeed.showGroundSpeed));
-                        }
-                    }
-                }
-            }
+        // Disable video if we don't have support for it
+        if(!flightDisplay.hasVideo) {
+            videoBackground.visible = false;
+            flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
         }
+        // Enable/Disable menu accordingly
+        videoMenu.enabled = flightDisplay.hasVideo;
     }
 
     Menu {
         id: contextMenu
 
+        ExclusiveGroup { id: backgroundDisplay }
+
         MenuItem {
             text: "Map Background"
             checkable: true
             checked: mapBackground.visible
+            exclusiveGroup: backgroundDisplay
             onTriggered:
             {
                 mapBackground.visible = !mapBackground.visible;
                 flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
+                videoBackground.visible = mapBackground.visible ? false : videoBackground.visible;
+                flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
             }
         }
 
@@ -252,6 +123,7 @@ Item {
             text: "Map Show Waypoints"
             checkable: true
             checked: mapBackground.showWaypoints
+            enabled: mapBackground.visible
             onTriggered:
             {
                 mapBackground.showWaypoints = !mapBackground.showWaypoints;
@@ -260,16 +132,7 @@ Item {
         }
 
         /*
-        MenuItem {
-            text: "Options Dialog"
-            onTriggered:
-            {
-                optionsDialog.open()
-            }
-        }
-        */
-
-        /*
+        //-- Off until Qt 5.5.x, which fixes bug in 5.4.x
         MenuItem {
             text: "Map Always Points North"
             checkable: true
@@ -281,6 +144,23 @@ Item {
             }
         }
         */
+
+        MenuSeparator {}
+
+        MenuItem {
+            id: videoMenu
+            text: "Video Background"
+            checkable: true
+            checked: videoBackground.visible
+            exclusiveGroup: backgroundDisplay
+            onTriggered:
+            {
+                videoBackground.visible = !videoBackground.visible;
+                flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
+                mapBackground.visible = videoBackground.visible ? false : mapBackground.visible;
+                flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
+            }
+        }
 
         MenuSeparator {}
 
@@ -413,9 +293,19 @@ Item {
                 flightDisplay.saveSetting("mapAlwaysPointsNorth", setBool(mapBackground.alwaysNorth));
                 mapBackground.showWaypoints = false
                 flightDisplay.saveSetting("mapShowWaypoints", setBool(mapBackground.showWaypoints));
+                videoBackground.visible = false;
+                flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
             }
         }
 
+    }
+
+    QGCVideoBackground {
+        id:                 videoBackground
+        anchors.fill:       parent
+        display:            videoDisplay
+        receiver:           videoReceiver
+        z:                  10
     }
 
     QGCMapBackground {
@@ -431,12 +321,12 @@ Item {
     }
 
     QGCHudMessage {
-        id:     hudMessage
-        y:      ScreenTools.defaultFontPizelSize * (0.42)
-        width:  (parent.width - 520 > 200) ? parent.width - 520 : 200
-        height: ScreenTools.defaultFontPizelSize * (2.5)
+        id:                 hudMessage
+        y:                  ScreenTools.defaultFontPizelSize * (0.42)
+        width:              (parent.width - 520 > 200) ? parent.width - 520 : 200
+        height:             ScreenTools.defaultFontPizelSize * (2.5)
         anchors.horizontalCenter: parent.horizontalCenter
-        z:      mapBackground.z + 1
+        z:                  mapBackground.z + 1
     }
 
     QGCCompassInstrument {
@@ -445,7 +335,7 @@ Item {
         x:                  ScreenTools.defaultFontPixelSize * (7.1)
         size:               ScreenTools.defaultFontPixelSize * (13.3)
         heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
-        visible:            mapBackground.visible && showCompass
+        visible:            showHudInstruments() && showCompass
         z:                  mapBackground.z + 2
         onResetRequested: {
             y               = ScreenTools.defaultFontPixelSize * (0.42)
@@ -463,7 +353,7 @@ Item {
         rollAngle:          roll
         pitchAngle:         pitch
         showPitch:          showPitchIndicator
-        visible:            mapBackground.visible && showAttitudeIndicator
+        visible:            showHudInstruments() && showAttitudeIndicator
         anchors.right:      root.right
         anchors.rightMargin: ScreenTools.defaultFontPixelSize * (7.1)
         z:                  mapBackground.z + 2
@@ -482,14 +372,14 @@ Item {
         anchors.fill:       parent
         rollAngle:          roll
         pitchAngle:         pitch
-        visible:            !mapBackground.visible
+        visible:            !showHudInstruments()
     }
 
     QGCAttitudeWidget {
         id:                 attitudeWidget
         rollAngle:          roll
         pitchAngle:         pitch
-        visible:            !mapBackground.visible && showAttitudeIndicator
+        visible:            !showHudInstruments() && showAttitudeIndicator
         width:              ScreenTools.defaultFontPixelSize * (21.7)
         height:             ScreenTools.defaultFontPixelSize * (21.7)
         z:                  20
@@ -497,7 +387,7 @@ Item {
 
     QGCPitchWidget {
         id:                 pitchWidget
-        visible:            showPitchIndicator && !mapBackground.visible
+        visible:            showPitchIndicator && !showHudInstruments()
         anchors.verticalCenter: parent.verticalCenter
         pitchAngle:         pitch
         rollAngle:          roll
@@ -555,7 +445,7 @@ Item {
         width:              ScreenTools.defaultFontPixelSize * (10)
         height:             ScreenTools.defaultFontPixelSize * (10)
         heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
-        visible:            !mapBackground.visible && showCompass
+        visible:            !showHudInstruments() && showCompass
         z:                  70
     }
 
