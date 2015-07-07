@@ -51,22 +51,17 @@ LinuxBuild {
     }
 } else:WindowsBuild {
     #- gstreamer installed by default under c:/gstreamer
-    #  This is not working. It builds but at runtime, it expects to find
-    #  the gstreamer DLLs, even though it is, in theory, linking to it
-    #  statically.
-    exists(foobar_removethistobuild) {
-        GST_ROOT = c:/gstreamer/1.0/x86
-        exists($$GST_ROOT) {
-            message("Including support for video streaming")
-            CONFIG      += VideoEnabled
-            LIBS        += -L$$GST_ROOT/lib/gstreamer-1.0/static -lgstreamer-1.0 -lgstvideo-1.0 -lgstbase-1.0
-            LIBS        += -L$$GST_ROOT/lib -lglib-2.0 -lintl -lgobject-2.0
-            INCLUDEPATH += \
-                $$GST_ROOT/include/gstreamer-1.0 \
-                $$GST_ROOT/include/glib-2.0 \
-                $$GST_ROOT/lib/gstreamer-1.0\include \
-                $$GST_ROOT/lib/glib-2.0/include
-        }
+    GST_ROOT = c:/gstreamer/1.0/x86
+    exists($$GST_ROOT) {
+        message("Including support for video streaming")
+        CONFIG      += VideoEnabled
+        LIBS        += -L$$GST_ROOT/lib/gstreamer-1.0/static -lgstreamer-1.0 -lgstvideo-1.0 -lgstbase-1.0
+        LIBS        += -L$$GST_ROOT/lib -lglib-2.0 -lintl -lgobject-2.0
+        INCLUDEPATH += \
+            $$GST_ROOT/include/gstreamer-1.0 \
+            $$GST_ROOT/include/glib-2.0 \
+            $$GST_ROOT/lib/gstreamer-1.0\include \
+            $$GST_ROOT/lib/glib-2.0/include
     }
 }
 
