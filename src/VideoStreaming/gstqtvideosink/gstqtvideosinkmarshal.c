@@ -1,6 +1,9 @@
 
 #include	<glib-object.h>
 
+#if defined(_MSC_VER)
+#pragma warning(disable: 4100)
+#endif
 
 #ifdef G_ENABLE_DEBUG
 #define g_marshal_value_peek_boolean(v)  g_value_get_boolean (v)

@@ -114,7 +114,7 @@ void VideoReceiver::start()
 
         gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, decoder, _videoSink, NULL);
 
-        if (gst_element_link_many(dataSource, demux, parser, decoder, _videoSink, NULL) != TRUE) {
+        if (gst_element_link_many(dataSource, demux, parser, decoder, _videoSink, NULL) != (gboolean)TRUE) {
             break;
         }
 
