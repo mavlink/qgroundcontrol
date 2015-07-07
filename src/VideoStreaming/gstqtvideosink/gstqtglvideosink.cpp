@@ -21,6 +21,23 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
+/*
+ * Note on the marshallers
+ *
+ * If it ever needs to be recreated, here is what you need to do:
+ *
+ * cat > marshaller.src
+ * VOID:POINTER,FLOAT,FLOAT,FLOAT,FLOAT
+ * VOID:POINTER,DOUBLE,DOUBLE,DOUBLE,DOUBLE
+ * POINTER:POINTER,FLOAT,FLOAT,FLOAT,FLOAT
+ * POINTER:POINTER,DOUBLE,DOUBLE,DOUBLE,DOUBLE
+ * Ctrl+D (EOF)
+ *
+ * glib-genmarshal --header marshaller.list > gstqtvideosinkmarshal.h
+ * glib-genmarshal --body marshaller.list > gstqtvideosinkmarshal.c
+ *
+ */
+
 #include "gstqtglvideosink.h"
 #include "gstqtvideosinkmarshal.h"
 #include "delegates/qtvideosinkdelegate.h"
