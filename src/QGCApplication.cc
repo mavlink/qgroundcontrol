@@ -131,6 +131,14 @@ static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
     return mavManager;
 }
 
+#if defined(QGC_GST_STREAMING)
+static void qgcputenv(const QString& key, const QString& root, const QString& path)
+{
+    QString value = root + path;
+    qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
+}
+#endif
+
 /**
  * @brief Constructor for the main application.
  *
@@ -140,12 +148,6 @@ static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
  * @param argc The number of command-line parameters
  * @param argv The string array of parameters
  **/
-
-static void qgcputenv(const QString& key, const QString& root, const QString& path)
-{
-    QString value = root + path;
-    qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
-}
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     : QApplication(argc, argv)
