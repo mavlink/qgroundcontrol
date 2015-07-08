@@ -18,7 +18,7 @@
 # -------------------------------------------------
 
 installer {
-    DEFINES += __installer_version__
+    DEFINES += QGC_INSTALL_RELEASE
     MacBuild {
         VideoEnabled {
             # Install the gstreamer framework
