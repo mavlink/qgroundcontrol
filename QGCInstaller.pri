@@ -18,6 +18,7 @@
 # -------------------------------------------------
 
 installer {
+    DEFINES += __installer_version__
     MacBuild {
         VideoEnabled {
             # Install the gstreamer framework
