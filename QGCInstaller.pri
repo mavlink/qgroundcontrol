@@ -19,6 +19,19 @@
 
 installer {
     MacBuild {
+        VideoEnabled {
+            # Install the gstreamer framework
+            # This will:
+            # Copy from the original distibution into libs/lib/Framworks (if not already there)
+            # Prune the framework, removing stuff we don't need
+            # Relocate all dylibs so they can work under @executable_path/...
+            # Copy the result into the app bundle
+            # Make sure qgroundcontrol can find them
+            message("Preparing GStreamer Framework")
+            QMAKE_POST_LINK += && $$BASEDIR/tools/prepare_gstreamer_framework.sh $$BASEDIR/libs/lib/Frameworks/ $$DESTDIR/$${TARGET}.app $${TARGET}
+        } else {
+            message("Skipping GStreamer Framework")
+        }
         # We cd to release directory so we can run macdeployqt without a path to the
         # qgroundcontrol.app file. If you specify a path to the .app file the symbolic
         # links to plugins will not be created correctly.
@@ -27,7 +40,6 @@ installer {
         QMAKE_POST_LINK += && cd ..
         QMAKE_POST_LINK += && hdiutil create -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/qgroundcontrol.dmg
     }
-
     WindowsBuild {
 		# The pdb moving command are commented out for now since we are including the .pdb in the installer. This makes it much
 		# easier to debug user crashes.
