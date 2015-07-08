@@ -28,12 +28,13 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#include <QtGlobal>
 #include <QApplication>
 #include <QSslSocket>
 #ifndef __mobile__
 #include <QSerialPortInfo>
 #endif
-
+#include <QProcessEnvironment>
 #include "QGCApplication.h"
 #include "MainWindow.h"
 #include "configuration.h"

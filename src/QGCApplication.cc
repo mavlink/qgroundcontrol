@@ -141,6 +141,11 @@ static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
  * @param argv The string array of parameters
  **/
 
+static void qgcputenv(const QString& key, const QString& root, const QString& path)
+{
+    QString value = root + path;
+    qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
+}
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     : QApplication(argc, argv)
@@ -266,8 +271,28 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     //----------------------------------------------------------------
     //-- Video Streaming
+#if defined(QGC_GST_STREAMING)
+#ifdef Q_OS_MAC
+#ifndef __ios__
+    QString currentDir = QCoreApplication::applicationDirPath();
+    qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/gst-plugin-scanner");
+    qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
+    qgcputenv("GIO_EXTRA_MODULES",            currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gio/modules");
+    qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0",   currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+    qgcputenv("GST_PLUGIN_SYSTEM_PATH",       currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+    qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+    qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+//    QStringList env = QProcessEnvironment::systemEnvironment().keys();
+//    foreach(QString key, env) {
+//        qDebug() << key << QProcessEnvironment::systemEnvironment().value(key);
+//    }
+#endif
+#endif
+#endif
+
     qmlRegisterType<VideoItem>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
     qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QLatin1String("VideoSurface from QML is not supported"));
+
 #if defined(QGC_GST_STREAMING)
     GError* error = NULL;
     if (!gst_init_check(&argc, &argv, &error)) {
