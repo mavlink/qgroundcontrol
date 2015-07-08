@@ -134,11 +134,13 @@ static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
 #if defined(QGC_GST_STREAMING)
 #ifdef Q_OS_MAC
 #ifndef __ios__
+#ifdef __installer_version__
 static void qgcputenv(const QString& key, const QString& root, const QString& path)
 {
     QString value = root + path;
     qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
 }
+#endif
 #endif
 #endif
 #endif
@@ -280,6 +282,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #if defined(QGC_GST_STREAMING)
 #ifdef Q_OS_MAC
 #ifndef __ios__
+#ifdef __installer_version__
     QString currentDir = QCoreApplication::applicationDirPath();
     qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/gst-plugin-scanner");
     qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
@@ -292,6 +295,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 //    foreach(QString key, env) {
 //        qDebug() << key << QProcessEnvironment::systemEnvironment().value(key);
 //    }
+#endif
 #endif
 #endif
 #endif
