@@ -132,11 +132,15 @@ static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 #if defined(QGC_GST_STREAMING)
+#ifdef Q_OS_MAC
+#ifndef __ios__
 static void qgcputenv(const QString& key, const QString& root, const QString& path)
 {
     QString value = root + path;
     qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
 }
+#endif
+#endif
 #endif
 
 /**
