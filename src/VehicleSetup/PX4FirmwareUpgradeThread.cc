@@ -160,6 +160,10 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
                         qCDebug(FirmwareUpgradeLog) << "Found PX4 Flow";
                         type = FoundBoardPX4Flow;
                         found = true;
+                    } else if (info.productIdentifier() == SerialPortIds::AeroCoreProductId) {
+                        qCDebug(FirmwareUpgradeLog) << "Found AeroCore";
+                        type = FoundBoardAeroCore;
+                        found = true;
                     }
                     break;
                 case SerialPortIds::threeDRRadioVendorId:

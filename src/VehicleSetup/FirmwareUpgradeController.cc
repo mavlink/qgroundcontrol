@@ -94,6 +94,10 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
             _foundBoardType = "Pixhawk";
             _startFlashWhenBootloaderFound = false;
             break;
+	case FoundBoardAeroCore:
+            _foundBoardType = "AeroCore";
+            _startFlashWhenBootloaderFound = false;
+            break;
         case FoundBoardPX4Flow:
         case FoundBoard3drRadio:
             _foundBoardType = type == FoundBoardPX4Flow ? "PX4 Flow" : "3DR Radio";
@@ -167,9 +171,18 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareType_t firmwareType)
     static const size_t crgPX4FMUV2Firmware = sizeof(rgPX4FMUV2Firmware) / sizeof(rgPX4FMUV2Firmware[0]);
     
     static const DownloadLocationByFirmwareType_t rgAeroCoreFirmware[] = {
-        { PX4StableFirmware,    "http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/stable/aerocore_default.px4" },
-        { PX4BetaFirmware,      "http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/beta/aerocore_default.px4" },
-        { PX4DeveloperFirmware, "http://s3-us-west-2.amazonaws.com/gumstix-aerocore/PX4/master/aerocore_default.px4" },
+        { PX4StableFirmware,    	"http://gumstix-aerocore.s3.amazonaws.com/PX4/stable/aerocore_default.px4" },
+        { PX4BetaFirmware,      	"http://gumstix-aerocore.s3.amazonaws.com/PX4/beta/aerocore_default.px4" },
+        { PX4DeveloperFirmware, 	"http://gumstix-aerocore.s3.amazonaws.com/PX4/master/aerocore_default.px4" },
+        { ApmArduCopterQuadFirmware,    "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-quad/ArduCopter-aerocore.px4" },
+        { ApmArduCopterX8Firmware,      "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-octa-quad/ArduCopter-aerocore.px4" },
+        { ApmArduCopterHexaFirmware,    "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-hexa/ArduCopter-aerocore.px4" },
+        { ApmArduCopterOctoFirmware,    "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-octa/ArduCopter-aerocore.px4" },
+        { ApmArduCopterYFirmware,       "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-tri/ArduCopter-aerocore.px4" },
+        { ApmArduCopterY6Firmware,      "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-y6/ArduCopter-aerocore.px4" },
+        { ApmArduCopterHeliFirmware,    "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-heli/ArduCopter-aerocore.px4" },
+        { ApmArduPlaneFirmware,         "http://gumstix-aerocore.s3.amazonaws.com/APM/Plane/stable/PX4/ArduPlane-aerocore.px4" },
+        { ApmRoverFirmware,             "http://gumstix-aerocore.s3.amazonaws.com/APM/Plane/stable/PX4/APMrover2-aerocore.px4" },
     };
     static const size_t crgAeroCoreFirmware = sizeof(rgAeroCoreFirmware) / sizeof(rgAeroCoreFirmware[0]);
     
