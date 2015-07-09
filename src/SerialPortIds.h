@@ -32,6 +32,8 @@ public:
 
     static const int pixhawkFMUV2ProductId =    17;     ///< Product ID for Pixhawk V2 board
     static const int pixhawkFMUV1ProductId =    16;     ///< Product ID for PX4 FMU V1 board
+
+    static const int AeroCoreProductId =    	4097;     ///< Product ID for the AeroCore board
     
     static const int px4FlowProductId =         21;     ///< Product ID for PX4 Flow board
 

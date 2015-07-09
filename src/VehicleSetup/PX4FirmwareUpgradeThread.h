@@ -45,7 +45,8 @@ typedef enum {
     FoundBoardPX4FMUV1,
     FoundBoardPX4FMUV2,
     FoundBoardPX4Flow,
-    FoundBoard3drRadio
+    FoundBoard3drRadio,
+    FoundBoardAeroCore
 } PX4FirmwareUpgradeFoundBoardType_t;
 
 class PX4FirmwareUpgradeThreadController;
