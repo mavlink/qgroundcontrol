@@ -301,7 +301,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Status Bar</string>
+    <string>Show Status Bar</string>
    </property>
   </action>
   <action name="actionExperimentalPlanView">

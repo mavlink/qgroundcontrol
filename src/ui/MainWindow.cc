@@ -625,7 +625,6 @@ void MainWindow::showStatusBarCallback(bool checked)
 {
     _showStatusBar = checked;
     checked ? statusBar()->show() : statusBar()->hide();
-    _ui.actionStatusBar->setText(checked ? "Hide Status Bar" : "Show Status Bar");
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
