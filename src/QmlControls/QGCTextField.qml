@@ -60,4 +60,10 @@ TextField {
 
         padding.right: control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight/3
     }
+
+    onActiveFocusChanged: {
+        if (activeFocus) {
+            selectAll()
+        }
+    }
 }
