@@ -59,6 +59,7 @@ QGCViewDialog {
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
             forceSave.visible = true
         }
+        valueField.forceActiveFocus();
     }
 
     Column {
@@ -82,6 +83,14 @@ QGCViewDialog {
         QGCTextField {
             id:     valueField
             text:   validate ? validateValue : fact.valueString
+
+            onAccepted: accept()
+
+            Keys.onReleased: {
+                if (event.key == Qt.Key_Escape) {
+                    reject()
+                }
+            }
         }
 
         QGCLabel { text: fact.name }
