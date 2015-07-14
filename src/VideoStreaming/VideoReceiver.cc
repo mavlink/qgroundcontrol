@@ -87,34 +87,41 @@ void VideoReceiver::start()
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_pipeline_new()";
             break;
         }
 
         if ((dataSource = gst_element_factory_make("udpsrc", "udp-source")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('udpsrc')";
             break;
         }
 
         if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
             break;
         }
 
         g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, NULL);
 
         if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
             break;
         }
 
         if ((parser = gst_element_factory_make("h264parse", "h264-parser")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('h264parse')";
             break;
         }
 
         if ((decoder = gst_element_factory_make("avdec_h264", "h264-decoder")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('avdec_h264')";
             break;
         }
 
         gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, decoder, _videoSink, NULL);
 
         if (gst_element_link_many(dataSource, demux, parser, decoder, _videoSink, NULL) != (gboolean)TRUE) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_link_many()";
             break;
         }
 

@@ -27,7 +27,6 @@
 LinuxBuild {
     CONFIG += link_pkgconfig
     packagesExist(gstreamer-1.0) {
-        message("Including support for video streaming")
         PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0
         CONFIG      += VideoEnabled
     }
@@ -35,7 +34,6 @@ LinuxBuild {
     #- gstreamer framework installed by the gstreamer devel installer
     GST_ROOT = /Library/Frameworks/GStreamer.framework
     exists($$GST_ROOT) {
-        message("Including support for video streaming")
         CONFIG      += VideoEnabled
         INCLUDEPATH += $$GST_ROOT/Headers
         LIBS        += -F/Library/Frameworks -framework GStreamer
@@ -44,7 +42,6 @@ LinuxBuild {
     #- gstreamer framework installed by the gstreamer iOS SDK installer (default to home directory)
     GST_ROOT = $$(HOME)/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework
     exists($$GST_ROOT) {
-        message("Including support for video streaming")
         CONFIG      += VideoEnabled
         INCLUDEPATH += $$GST_ROOT/Headers
         LIBS        += -F$$(HOME)/Library/Developer/GStreamer/iPhone.sdk -framework GStreamer
@@ -53,7 +50,6 @@ LinuxBuild {
     #- gstreamer installed by default under c:/gstreamer
     GST_ROOT = c:/gstreamer/1.0/x86
     exists($$GST_ROOT) {
-        message("Including support for video streaming")
         CONFIG      += VideoEnabled
         LIBS        += -L$$GST_ROOT/lib/gstreamer-1.0/static -lgstreamer-1.0 -lgstvideo-1.0 -lgstbase-1.0
         LIBS        += -L$$GST_ROOT/lib -lglib-2.0 -lintl -lgobject-2.0
@@ -66,6 +62,8 @@ LinuxBuild {
 }
 
 VideoEnabled {
+
+    message("Including support for video streaming")
 
     DEFINES += \
         QGC_GST_STREAMING \
@@ -123,6 +121,25 @@ VideoEnabled {
         $$PWD/gstqtvideosink/utils/utils.cpp \
 
 } else {
-    message("Skipping support for video streaming (Unsupported platform)")
+    LinuxBuild|MacBuild|iOSBuild|WindowsBuild {
+        message("Skipping support for video streaming (GStreamer libraries not installed)")
+        MacBuild {
+            message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/osx/")
+            message("  Select the devel package and install it (gstreamer-1.0-devel-1.x.x-x86_64.pkg)")
+            message("  It will be installed in /Libraries/Frameworks")
+        }
+        LinuxBuild {
+            message("  You can install it using apt-get")
+            message("  sudo apt-get install gstreamer1.0*")
+            message("  sudo apt-get install libgstreamer1.0*")
+        }
+        WindowsBuild {
+            message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/windows/")
+            message("  Select the devel AND runtime packages and install them (x86, not the 64-Bit)")
+            message("  It will be installed in C:/gstreamer. You need to update you PATH to point to the bin directory.")
+        }
+    } else {
+        message("Skipping support for video streaming (Unsupported platform)")
+    }
 }
 
