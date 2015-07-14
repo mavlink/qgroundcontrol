@@ -19,6 +19,8 @@ ViewWidget 1.0 ViewWidget.qml
 ParameterEditor 1.0 ParameterEditor.qml
 ParameterEditorDialog 1.0 ParameterEditorDialog.qml
 
+ModeSwitchDisplay 1.0 ModeSwitchDisplay.qml
+
 QGCView 1.0 QGCView.qml
 QGCViewPanel 1.0 QGCViewPanel.qml
 QGCViewDialog 1.0 QGCViewDialog.qml
