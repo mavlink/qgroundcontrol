@@ -134,7 +134,7 @@ void FlightModesComponentController::_init(void)
     
     _channelListModel << "Disabled";
     _channelListModelChannel << 0;
-    for (int channel=1; channel<_channelCount; channel++) {
+    for (int channel=1; channel<=_channelCount; channel++) {
         if (!usedChannels.contains(channel)) {
             _channelListModel << QString("Channel %1").arg(channel);
             _channelListModelChannel << channel;
