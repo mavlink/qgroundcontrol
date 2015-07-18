@@ -42,9 +42,11 @@ QGCView {
 
     // User visible strings
 
-    readonly property string topHelpText:               "Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. " +
+    property string topHelpText:                        "Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. " +
                                                         "You can assign multiple flight modes to a single channel. " +
-                                                        "Turn your radio control on to test switch settings."
+                                                        "Turn your radio control on to test switch settings. " +
+                                                        "The following channels: " + controller.reservedChannels +
+                                                        " are not available for Flight Modes since they are already in use for other functions."
 
 
     readonly property string fwManualModeName:          "Manual/Main"
