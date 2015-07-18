@@ -141,6 +141,17 @@ void FlightModesComponentController::_init(void)
         }
     }
     
+    // Setup reserved channels string for ui
+    
+    bool first = true;
+    foreach (int usedChannel, usedChannels) {
+        if (!first) {
+            _reservedChannels += ", ";
+        }
+        _reservedChannels += QString("%1").arg(usedChannel);
+        first = false;
+    }
+    
     _recalcModeRows();
 }
 

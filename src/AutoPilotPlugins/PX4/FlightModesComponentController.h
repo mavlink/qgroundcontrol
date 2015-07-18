@@ -51,6 +51,8 @@ public:
     Q_PROPERTY(int channelCount MEMBER _channelCount CONSTANT)
     Q_PROPERTY(bool fixedWing MEMBER _fixedWing CONSTANT)
     
+    Q_PROPERTY(QString reservedChannels MEMBER _reservedChannels CONSTANT)
+    
     Q_PROPERTY(int assistModeRow    MEMBER _assistModeRow   NOTIFY modeRowsChanged)
     Q_PROPERTY(int autoModeRow      MEMBER _autoModeRow     NOTIFY modeRowsChanged)
     Q_PROPERTY(int acroModeRow      MEMBER _acroModeRow     NOTIFY modeRowsChanged)
@@ -214,6 +216,7 @@ private:
     bool    _validConfiguration;
     QString _configurationErrors;
     int     _channelCount;
+    QString _reservedChannels;
 
     int _assistModeRow;
     int _autoModeRow;
