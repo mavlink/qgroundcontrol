@@ -44,7 +44,7 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: "Airspeed:"
-            valueText: dPressOffFact.value  == 0 ? "Setup required" : "Ready"
+            valueText: dpressOffFact.value  == 0 ? "Setup required" : "Ready"
         }
     }
 }
