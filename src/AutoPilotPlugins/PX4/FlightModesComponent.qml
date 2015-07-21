@@ -53,7 +53,9 @@ QGCView {
     readonly property string mrManualModeName:          "Stabilized/Main"
     readonly property string fwManualModeDescription:   "The pilot has full control of the aircraft, no assistance is provided. " +
                                                         "The Main mode switch must always be assigned to a channel in order to fly"
-    readonly property string mrManualModeDescription:   "Centering roll/pitch stick will return the multirotor to a level attitude, but it will continue drifting in the direction it was previously sent. " +
+    readonly property string mrManualModeDescription:   "Roll and Pitch control angle of multi-rotor in respective direction. " +
+                                                        "Centering Roll/Pitch will return multirotor to level attitude. " +
+                                                        "Position is not automatically held, multi-rotor will continue drifting in the direction it was previously travelling. " +
                                                         "Altitude is controlled fully by pilot using the Throttle stick. " +
                                                         "The Main mode switch must always be assigned to a channel in order to fly"
 
@@ -67,44 +69,51 @@ QGCView {
 
     readonly property string fwAcroModeName:            "Stabilized"
     readonly property string mrAcroModeName:            "Acro"
-    readonly property string fwAcroModeDescription:     "Need Stablized description"
-    readonly property string mrAcroModeDescription:     "Need Acro mode description"
+    readonly property string fwAcroModeDescription:     "Roll and Pitch control angle of aircraft in respective direction. " +
+                                                        "Centering Roll/Pitch will return the aircraft to a level attitude. " +
+                                                        "Neither altitude nor direction is automatically controlled. " +
+                                                        "Both Throttle and Yaw and in full control of pilot."
+    readonly property string mrAcroModeDescription:     "Roll and Pitch control angular rate of change of multi-rotor in respective direction. " +
+                                                        "This allows for multi-rotor to rotate through a full 360 degrees in roll and/or pitch. " +
+                                                        "Centering Roll/Pitch will return the multirotor to a level attitude. " +
+                                                        "Position is not automatically held, multi-rotor will continue drifting in the direction it was previously travelling. " +
+                                                        "Altitude is under manual control of pilot using the Throttle stick."
 
-    readonly property string fwAltCtlModeName:          "Attitude Control"
-    readonly property string mrAltCtlModeName:          "Altitude Control"
-    readonly property string fwAltCtlModeDescription:   "Aileron and Elevator sticks affect roll and pitch according to the Attitude Control settings. " +
-                                                        "Altitude is not maintained automatically. " +
-                                                        "Rudder is controlled fully by the pilot."
-    readonly property string mrAltCtlModeDescription:   "Same as Stablized mode except that Throttle controls climb/sink rate. Centered throttle holds altitude steady."
+    readonly property string altCtlModeName:            "Altitude Control"
+    readonly property string fwAltCtlModeDescription:   "Current Altitude is maintained automatically when Pitch is centered. " +
+                                                        "Roll and Pitch centered gives level flight, but does not maintain straight line direction against wind. " +
+                                                        "Throttle controls speed, Pitch controls climb/sink rate, Roll controls turn rate. " +
+                                                        "Position Control and Attitude Control must always be on the same channel."
+    readonly property string mrAltCtlModeDescription:   "Same as Stablized mode except that Throttle controls climb/sink rate. Centered Throttle holds altitude steady."
 
     readonly property string posCtlModeName:            "Position Control"
-    readonly property string fwPosCtlModeDescription:   "Throttle controls speed, pitch controls climb/sink rate, roll controls yaw rate. " +
-                                                        "Roll and Pitch centered gives level, straight-line flight. " +
+    readonly property string fwPosCtlModeDescription:   "Current Altitude is maintained automatically when Pitch is centered. " +
+                                                        "Roll and Pitch centered gives level flight in a straight line compensating against wind. " +
+                                                        "Throttle controls speed, Pitch controls climb/sink rate, Roll controls turn rate. " +
                                                         "Position Control and Attitude Control must always be on the same channel."
     readonly property string mrPosCtlModeDescription:   "Roll and Pitch control left-right and front-back speed over ground respectively. " +
-                                                        "When roll and pitch are centered, the multirotor will hold position. " +
+                                                        "Centering Roll/Pitch will level and hold position. " +
                                                         "Yaw controls yaw rate as in Stablized mode. " +
-                                                        "Throttle controls climb/sink rate. Centered throttle holds altitude steady. " +
+                                                        "Centered throttle holds current altitude. " +
+                                                        "Throttle above/below center controls climb/sink rate. " +
                                                         "Position Control and Attitude Control must always be on the same channel."
 
     readonly property string missionModeName:           "Mission"
     readonly property string missionModeDescription:    "The aircraft obeys the programmed mission sent by QGroundControl. " +
-                                                        "If no mission was sent, aircraft will loiter at current position instead."
+                                                        "If no mission was sent, aircraft will Loiter at current position instead."
 
     readonly property string loiterModeName:            "Loiter"
     readonly property string fwLoiterModeDescription:   "The aircraft flies in a circle around the current position at the current altitude. " +
                                                         "Loiter and Mission must always be on the same channel."
-    readonly property string mrLoiterModeDescription:   "The multirotor hovers in a fixed position at the current position and altitude. " +
+    readonly property string mrLoiterModeDescription:   "The multirotor hovers at the current position and altitude. " +
                                                         "Loiter and Mission must always be on the same channel."
 
     readonly property string returnModeName:            "Return"
-    readonly property string fwReturnModeDescription:   "The aircraft returns to the home position and loiters above it." +
-                                                        "The settings which control this sequence can be found under Setup - Safety."
-    readonly property string mrReturnModeDescription:   "The multirotor returns to the home position, loiters and then lands. " +
+    readonly property string returnModeDescription:     "The vehicle returns to the home position, loiters and then lands. " +
                                                         "The settings which control this sequence can be found under Setup - Safety."
 
     readonly property string offboardModeName:          "Offboard"
-    readonly property string offboardModeDescription:   "Offboard description"
+    readonly property string offboardModeDescription:   "All flight control aspects are controlled by an offboard system."
 
     readonly property real modeSpacing: ScreenTools.defaultFontPixelHeight / 3
 
@@ -296,7 +305,7 @@ QGCView {
 
                 ModeSwitchDisplay {
                     id:                     altCtlMode
-                    flightModeName:         controller.fixedWing ? fwAltCtlModeName : mrAltCtlModeName
+                    flightModeName:         altCtlModeName
                     flightModeDescription:  controller.fixedWing ? fwAltCtlModeDescription : mrAltCtlModeDescription
                     rcValue:                controller.altCtlModeRcValue
                     modeChannelIndex:       controller.altCtlModeChannelIndex
@@ -363,7 +372,7 @@ QGCView {
                 ModeSwitchDisplay {
                     id:                     returnMode
                     flightModeName:         returnModeName
-                    flightModeDescription:  controller.fixedWing ? fwReturnModeDescription : mrReturnModeDescription
+                    flightModeDescription:  returnModeDescription
                     rcValue:                controller.returnModeRcValue
                     modeChannelIndex:       controller.returnModeChannelIndex
                     modeChannelEnabled:     true
