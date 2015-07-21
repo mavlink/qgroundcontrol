@@ -80,7 +80,9 @@ public:
     
     const QMap<int, QMap<QString, QStringList> >& getGroupMap(void);
     
-    void readParametersFromStream(QTextStream& stream);
+    /// Returns error messages from loading
+    QString readParametersFromStream(QTextStream& stream);
+    
     void writeParametersToStream(QTextStream &stream, const QString& name);
 
     /// Return the parameter for which the default component id is derived from. Return an empty

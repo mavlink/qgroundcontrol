@@ -89,7 +89,8 @@ public:
 	void writeParametersToStream(QTextStream &stream);
 	
 	/// Reads the parameters from the stream and updates values
-	void readParametersFromStream(QTextStream &stream);
+    /// @return Errors during load. Empty string for no errors
+	QString readParametersFromStream(QTextStream &stream);
 	
     /// Returns true if the specifed fact exists
     Q_INVOKABLE bool factExists(FactSystem::Provider_t  provider,       ///< fact provider
