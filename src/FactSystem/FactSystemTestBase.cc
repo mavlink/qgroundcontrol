@@ -30,6 +30,7 @@
 #include "AutoPilotPluginManager.h"
 #include "UASManager.h"
 #include "QGCApplication.h"
+#include "QGCMessageBox.h"
 #include "QGCQuickWidget.h"
 
 #include <QQuickItem>
@@ -49,12 +50,21 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     MockLink* link = new MockLink();
     link->setAutopilotType(autopilot);
     _linkMgr->_addLink(link);
+    
+    if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        // Connect will pop a warning dialog
+        setExpectedMessageBox(QGCMessageBox::Ok);
+    }
     _linkMgr->connectLink(link);
     
     // Wait for the uas to work it's way through the various threads
 
     QSignalSpy spyUas(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)));
     QCOMPARE(spyUas.wait(5000), true);
+    
+    if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        checkExpectedMessageBox();
+    }
     
     _uas = UASManager::instance()->getActiveUAS();
     Q_ASSERT(_uas);
