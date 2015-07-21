@@ -95,6 +95,8 @@ void ParameterEditorController::saveToFile(void)
 
 void ParameterEditorController::loadFromFile(void)
 {
+    QString errors;
+    
     Q_ASSERT(_autopilot);
     
     QString msgTitle("Load Parameters");
@@ -112,8 +114,12 @@ void ParameterEditorController::loadFromFile(void)
         }
         
         QTextStream stream(&file);
-        _autopilot->readParametersFromStream(stream);
+        errors = _autopilot->readParametersFromStream(stream);
         file.close();
+        
+        if (!errors.isEmpty()) {
+            emit showErrorMessage(errors);
+        }
     }
 }
 

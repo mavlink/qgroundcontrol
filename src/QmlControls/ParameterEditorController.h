@@ -54,6 +54,9 @@ public:
 	Q_INVOKABLE void setRCToParam(const QString& paramName);
 	
 	QList<QObject*> model(void);
+    
+signals:
+    void showErrorMessage(const QString& errorMsg);
 	
 private:
 	QStringList			_componentIds;
