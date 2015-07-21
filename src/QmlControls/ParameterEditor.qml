@@ -49,7 +49,14 @@ QGCView {
     readonly property real __rightMargin: 20
     readonly property int __maxParamChars: 16
 
-    ParameterEditorController { id: controller; factPanel: panel }
+    ParameterEditorController {
+        id: controller;
+        factPanel: panel
+
+        onShowErrorMessage: {
+            showMessage("Parameter Load Errors", errorMsg, StandardButton.Ok)
+        }
+    }
 
     Component {
         id: editorDialogComponent
