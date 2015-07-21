@@ -67,12 +67,21 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     Q_CHECK_PTR(link);
     link->setAutopilotType(autopilot);
     LinkManager::instance()->_addLink(link);
+    
+    if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        // Connect will pop a warning dialog
+        setExpectedMessageBox(QGCMessageBox::Ok);
+    }
     linkMgr->connectLink(link);
     
     // Wait for the uas to work it's way through the various threads
     
     QSignalSpy spyUas(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)));
     QCOMPARE(spyUas.wait(5000), true);
+    
+    if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        checkExpectedMessageBox();
+    }
     
     // Cycle through all the top level views
     
