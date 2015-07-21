@@ -579,8 +579,9 @@ void ParameterLoader::_saveToEEPROM(void)
     qCDebug(ParameterLoaderLog) << "_saveToEEPROM";
 }
 
-void ParameterLoader::readParametersFromStream(QTextStream& stream)
+QString ParameterLoader::readParametersFromStream(QTextStream& stream)
 {
+    QString errors;
     bool userWarned = false;
     
     while (!stream.atEnd()) {
@@ -597,7 +598,7 @@ void ParameterLoader::readParametersFromStream(QTextStream& stream)
                                                                                   QGCMessageBox::Ok | QGCMessageBox::Cancel,
                                                                                   QGCMessageBox::Cancel);
                     if (button == QGCMessageBox::Cancel) {
-                        return;
+                        return QString();
                     }
                 }   
                 
@@ -607,18 +608,29 @@ void ParameterLoader::readParametersFromStream(QTextStream& stream)
                 uint    mavType = wpParams.at(4).toUInt();
                 
                 if (!_autopilot->factExists(FactSystem::ParameterProvider, componentId, paramName)) {
+                    QString error;
+                    error = QString("Skipped parameter %1:%2 - does not exist on this vehicle\n").arg(componentId).arg(paramName);
+                    errors += error;
+                    qCDebug(ParameterLoaderLog) << error;
                     continue;
                 }
                 
                 Fact* fact = _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName);
                 if (fact->type() != _mavTypeToFactType((MAV_PARAM_TYPE)mavType)) {
+                    QString error;
+                    error  = QString("Skipped parameter %1:%2 - type mismatch %3:%4\n").arg(componentId).arg(paramName).arg(fact->type()).arg(_mavTypeToFactType((MAV_PARAM_TYPE)mavType));
+                    errors += error;
+                    qCDebug(ParameterLoaderLog) << error;
                     continue;
                 }
                 
+                qCDebug(ParameterLoaderLog) << "Updating parameter" << componentId << paramName << valStr;
                 fact->setValue(valStr);
             }
         }
     }
+    
+    return errors;
 }
 
 void ParameterLoader::writeParametersToStream(QTextStream &stream, const QString& name)

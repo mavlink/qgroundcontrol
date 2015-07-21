@@ -163,9 +163,9 @@ void AutoPilotPlugin::writeParametersToStream(QTextStream &stream)
 	_getParameterLoader()->writeParametersToStream(stream, _uas->getUASName());
 }
 
-void AutoPilotPlugin::readParametersFromStream(QTextStream &stream)
+QString AutoPilotPlugin::readParametersFromStream(QTextStream &stream)
 {
-	_getParameterLoader()->readParametersFromStream(stream);
+	return _getParameterLoader()->readParametersFromStream(stream);
 }
 
 bool AutoPilotPlugin::armed(void)
