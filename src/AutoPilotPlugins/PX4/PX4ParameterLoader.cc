@@ -92,11 +92,16 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
 
     Q_ASSERT(_mapParameterName2FactMetaData.count() == 0);
 
-	// First look for meta data that comes from a firmware download. Fall back to resource if not there.
-	QSettings settings;
-	QDir parameterDir = QFileInfo(settings.fileName()).dir();
-	QString parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
-	if (!QFile(parameterFilename).exists()) {
+    QString parameterFilename;
+    
+    // We want unit test builds to always use the resource based meta data to provide repeatable results
+    if (!qgcApp()->runningUnitTests()) {
+        // First look for meta data that comes from a firmware download. Fall back to resource if not there.
+        QSettings settings;
+        QDir parameterDir = QFileInfo(settings.fileName()).dir();
+        parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
+    }
+	if (parameterFilename.isEmpty() || !QFile(parameterFilename).exists()) {
 		parameterFilename = ":/AutoPilotPlugins/PX4/ParameterFactMetaData.xml";
 	}
 	
