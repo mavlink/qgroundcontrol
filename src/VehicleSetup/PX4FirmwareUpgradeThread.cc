@@ -263,8 +263,6 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QSerialPortInfo& port
         }
     }
     
-    QGC::SLEEP::msleep(2000);
-    
     if (_bootloader->sync(_bootloaderPort)) {
         bool success;
         
