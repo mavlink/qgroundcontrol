@@ -43,9 +43,9 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, 
     _uas(uas),
     _mavlink(MAVLinkProtocol::instance()),
     _parametersReady(false),
+    _initialLoadComplete(false),
     _defaultComponentId(FactSystem::defaultComponentId),
-    _totalParamCount(0),
-    _fullRefresh(false)
+    _totalParamCount(0)
 {
     Q_ASSERT(_autopilot);
     Q_ASSERT(_uas);
@@ -89,6 +89,15 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
                                     "value:" << value <<
                                     ")";
     
+#if 0
+    // Handy for testing retry logic
+    static int counter = 0;
+    if (counter++ & 0x3) {
+        qCDebug(ParameterLoaderLog) << "Artificial discard" << counter;
+        return;
+    }
+#endif
+    
     _dataMutex.lock();
     
     // Restart our waiting for param timer
@@ -102,25 +111,23 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     
     // If we've never seen this component id before, setup the wait lists.
     if (!_waitingReadParamIndexMap.contains(componentId)) {
-        QStringList paramNameList;
-        QList<int>  paramIndexList;
-        
-        // Parameter index is 0-based
-        for (int i=0; i<parameterCount; i++) {
-            paramIndexList << i;
+        // Add all indices to the wait list, parameter index is 0-based
+        for (int waitingIndex=0; waitingIndex<parameterCount; waitingIndex++) {
+            // This will add the new component id, as well as the the new waiting index and set the retry count for that index to 0
+            _waitingReadParamIndexMap[componentId][waitingIndex] = 0;
         }
         
-        _waitingReadParamIndexMap[componentId] = paramIndexList;
-        _waitingReadParamNameMap[componentId] = paramNameList;
-        _waitingWriteParamNameMap[componentId] = paramNameList;
+        // The read and write waiting lists for this component are initialized the empty
+        _waitingReadParamNameMap[componentId] = QMap<QString, int>();
+        _waitingWriteParamNameMap[componentId] = QMap<QString, int>();
         
         qCDebug(ParameterLoaderLog) << "Seeing component for first time, id:" << componentId << "parameter count:" << parameterCount;
     }
     
     // Remove this parameter from the waiting lists
-    _waitingReadParamIndexMap[componentId].removeOne(parameterId);
-    _waitingReadParamNameMap[componentId].removeOne(parameterName);
-    _waitingWriteParamNameMap[componentId].removeOne(parameterName);
+    _waitingReadParamIndexMap[componentId].remove(parameterId);
+    _waitingReadParamNameMap[componentId].remove(parameterName);
+    _waitingWriteParamNameMap[componentId].remove(parameterName);
     qCDebug(ParameterLoaderLog) << "_waitingReadParamIndexMap:" << _waitingReadParamIndexMap[componentId];
     qCDebug(ParameterLoaderLog) << "_waitingReadParamNameMap" << _waitingReadParamNameMap[componentId];
     qCDebug(ParameterLoaderLog) << "_waitingWriteParamNameMap" << _waitingWriteParamNameMap[componentId];
@@ -237,18 +244,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
         _saveToEEPROM();
     }
     
-    // Check to see if we have the full param list for the first time
-    
-    if (_fullRefresh) {
-        if (waitingParamCount == 0) {
-            if (!_parametersReady) {
-                _parametersReady = true;
-                _determineDefaultComponentId();
-                _setupGroupMap();
-                emit parametersReady();
-            }
-        }
-    }
+    _checkInitialLoadComplete();
 }
 
 /// Connected to Fact::valueUpdated
@@ -265,8 +261,8 @@ void ParameterLoader::_valueUpdated(const QVariant& value)
     _dataMutex.lock();
     
     Q_ASSERT(_waitingWriteParamNameMap.contains(componentId));
-    _waitingWriteParamNameMap[componentId].removeOne(name);
-    _waitingWriteParamNameMap[componentId] << name;
+    _waitingWriteParamNameMap[componentId].remove(name);    // Remove any old entry
+    _waitingWriteParamNameMap[componentId][name] = 0;       // Add new entry and set retry count
     _waitingParamTimeoutTimer.start();
     
     _dataMutex.unlock();
@@ -285,18 +281,13 @@ void ParameterLoader::refreshAllParameters(void)
 {
     _dataMutex.lock();
     
-    _fullRefresh = true;
-    
     // Reset index wait lists
     foreach (int componentId, _paramCountMap.keys()) {
-        QList<int>  paramIndexList;
-        
-        // Parameter index is 0-based
-        for (int i=0; i<_paramCountMap[componentId]; i++) {
-            paramIndexList << i;
+        // Add/Update all indices to the wait list, parameter index is 0-based
+        for (int waitingIndex=0; waitingIndex<_paramCountMap[componentId]; waitingIndex++) {
+            // This will add a new waiting index if needed and set the retry count for that index to 0
+            _waitingReadParamIndexMap[componentId][waitingIndex] = 0;
         }
-        
-        _waitingReadParamIndexMap[componentId] = paramIndexList;
     }
     
     _dataMutex.unlock();
@@ -349,8 +340,8 @@ void ParameterLoader::refreshParameter(int componentId, const QString& name)
     Q_ASSERT(_waitingReadParamNameMap.contains(componentId));
     
     if (_waitingReadParamNameMap.contains(componentId)) {
-        _waitingReadParamNameMap[componentId].removeOne(name);
-        _waitingReadParamNameMap[componentId] << name;
+        _waitingReadParamNameMap[componentId].remove(name); // Remove old wait entry if there
+        _waitingReadParamNameMap[componentId][name] = 0;    // Add new wait entry and update retry count
         emit restartWaitingParamTimer();
     }
     
@@ -431,23 +422,35 @@ void ParameterLoader::_waitingParamTimeout(void)
     
     batchCount = 0;
     foreach(int componentId, _waitingReadParamIndexMap.keys()) {
-        foreach(int paramIndex, _waitingReadParamIndexMap[componentId]) {
-            paramsRequested = true;
-            _readParameterRaw(componentId, "", paramIndex);
-            qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramIndex:" << paramIndex << ")";
-            
-            if (++batchCount > maxBatchSize) {
-                goto Out;
+        foreach(int paramIndex, _waitingReadParamIndexMap[componentId].keys()) {
+            _waitingReadParamIndexMap[componentId][paramIndex]++;   // Bump retry count
+            if (_waitingReadParamIndexMap[componentId][paramIndex] > _maxInitialLoadRetry) {
+                // Give up on this index
+                _failedReadParamIndexMap[componentId] << paramIndex;
+                qCDebug(ParameterLoaderLog) << "Giving up on (componentId:" << componentId << "paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
+                _waitingReadParamIndexMap[componentId].remove(paramIndex);
+            } else {
+                // Retry again
+                paramsRequested = true;
+                _readParameterRaw(componentId, "", paramIndex);
+                qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
+                
+                if (++batchCount > maxBatchSize) {
+                    goto Out;
+                }
             }
         }
     }
+    // We need to check for initial load complete here as well, since it could complete on a max retry failure
+    _checkInitialLoadComplete();
     
     if (!paramsRequested) {
         foreach(int componentId, _waitingWriteParamNameMap.keys()) {
-            foreach(QString paramName, _waitingWriteParamNameMap[componentId]) {
+            foreach(QString paramName, _waitingWriteParamNameMap[componentId].keys()) {
                 paramsRequested = true;
+                _waitingWriteParamNameMap[componentId][paramName]++;   // Bump retry count
                 _writeParameterRaw(componentId, paramName, _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->value());
-                qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentId << "paramName:" << paramName << ")";
+                qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
                 
                 if (++batchCount > maxBatchSize) {
                     goto Out;
@@ -458,10 +461,11 @@ void ParameterLoader::_waitingParamTimeout(void)
     
     if (!paramsRequested) {
         foreach(int componentId, _waitingReadParamNameMap.keys()) {
-            foreach(QString paramName, _waitingReadParamNameMap[componentId]) {
+            foreach(QString paramName, _waitingReadParamNameMap[componentId].keys()) {
                 paramsRequested = true;
+                _waitingReadParamNameMap[componentId][paramName]++;   // Bump retry count
                 _readParameterRaw(componentId, paramName, -1);
-                qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramName:" << paramName << ")";
+                qCDebug(ParameterLoaderLog) << "Read re-request for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingReadParamNameMap[componentId][paramName] << ")";
                 
                 if (++batchCount > maxBatchSize) {
                     goto Out;
@@ -714,4 +718,53 @@ FactMetaData::ValueType_t ParameterLoader::_mavTypeToFactType(MAV_PARAM_TYPE mav
 void ParameterLoader::_restartWaitingParamTimer(void)
 {
     _waitingParamTimeoutTimer.start();
+}
+
+void ParameterLoader::_checkInitialLoadComplete(void)
+{
+    // Already processed?
+    if (_initialLoadComplete) {
+        return;
+    }
+    
+    foreach (int componentId, _waitingReadParamIndexMap.keys()) {
+        if (_waitingReadParamIndexMap[componentId].count()) {
+            // We are still waiting on some parameters, not done yet
+            return;
+        }
+    }
+    
+    
+    // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
+    _initialLoadComplete = true;
+    
+    // Check for load failures
+    QString indexList;
+    bool initialLoadFailures = false;
+    foreach (int componentId, _failedReadParamIndexMap.keys()) {
+        foreach (int paramIndex, _failedReadParamIndexMap[componentId]) {
+            if (initialLoadFailures) {
+                indexList += ", ";
+            }
+            indexList += QString("%1").arg(paramIndex);
+            initialLoadFailures = true;
+            qCDebug(ParameterLoaderLog) << "Gave up on initial load after max retries (componentId:" << componentId << "paramIndex:" << paramIndex << ")";
+        }
+    }
+    
+    if (initialLoadFailures) {
+        QGCMessageBox::critical("Parameter Load Failure",
+                                QString("QGroundControl was unable to retrieve the full set of parameters from the vehicle. "
+                                        "This will cause QGroundControl to be unable to display it's full user interface. "
+                                        "This usually indicates an error in the vehicle's firmware. "
+                                        "Please upgrade your firmware to the latest version if possible. "
+                                        "If that doesn't work, notify the firmware developers of this error. "
+                                        "The following parameter indices could not be loaded after the maximum number of retries: %1.").arg(indexList));
+    } else {
+        // No failed parameters, ok to signal ready
+        _parametersReady = true;
+        _determineDefaultComponentId();
+        _setupGroupMap();
+        emit parametersReady();
+    }
 }

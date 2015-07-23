@@ -120,6 +120,7 @@ private:
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
     void _saveToEEPROM(void);
+    void _checkInitialLoadComplete(void);
     
     AutoPilotPlugin*    _autopilot;
     UASInterface*       _uas;
@@ -133,20 +134,22 @@ private:
     /// Second mapping is group name, to Fact
     QMap<int, QMap<QString, QStringList> > _mapGroup2ParameterName;
     
-    bool _parametersReady;   ///< All params received from param mgr
+    bool _parametersReady;      ///< true: full set of parameters correctly loaded
+    bool _initialLoadComplete;  ///< true: Initial load of all parameters complete, whether succesful or not
     int _defaultComponentId;
     QString _defaultComponentIdParam;
     
-    QMap<int, int>          _paramCountMap;             ///< Map of total known parameter count, keyed by component id
-    QMap<int, QList<int> >  _waitingReadParamIndexMap;  ///< Map of param indices waiting for initial first time read, keyed by component id
-    QMap<int, QStringList>  _waitingReadParamNameMap;   ///< Map of param names we are waiting to hear a read response from, keyed by component id
-    QMap<int, QStringList>  _waitingWriteParamNameMap;  ///< Map of param names we are waiting to hear a write response from, keyed by component id
+    static const int _maxInitialLoadRetry = 5;                  ///< Maximum a retries on initial index based load
+    
+    QMap<int, int>                  _paramCountMap;             ///< Key: Component id, Value: count of parameters in this component
+    QMap<int, QMap<int, int> >      _waitingReadParamIndexMap;  ///< Key: Component id, Value: Map { Key: parameter index still waiting for, Value: retry count }
+    QMap<int, QMap<QString, int> >  _waitingReadParamNameMap;   ///< Key: Component id, Value: Map { Key: parameter name still waiting for, Value: retry count }
+    QMap<int, QMap<QString, int> >  _waitingWriteParamNameMap;  ///< Key: Component id, Value: Map { Key: parameter name still waiting for, Value: retry count }
+    QMap<int, QList<int> >          _failedReadParamIndexMap;   ///< Key: Component id, Value: failed parameter index
     
     int _totalParamCount;   ///< Number of parameters across all components
     
     QTimer _waitingParamTimeoutTimer;
-    
-    bool _fullRefresh;
     
     QMutex _dataMutex;
     
