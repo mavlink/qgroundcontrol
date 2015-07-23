@@ -2221,17 +2221,17 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
 
         case MAV_PARAM_TYPE_UINT8:
             if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                paramValue = QVariant(QChar((unsigned char)paramUnion.param_float));
+                paramValue = QVariant((unsigned short)paramUnion.param_float);
             } else {
-                paramValue = QVariant(QChar((unsigned char)paramUnion.param_uint8));
+                paramValue = QVariant(paramUnion.param_uint8);
             }
             break;
 
         case MAV_PARAM_TYPE_INT8:
             if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                paramValue = QVariant(QChar((char)paramUnion.param_float));
+                paramValue = QVariant((short)paramUnion.param_float);
             } else  {
-                paramValue = QVariant(QChar((char)paramUnion.param_int8));
+                paramValue = QVariant(paramUnion.param_int8);
             }
             break;
 
