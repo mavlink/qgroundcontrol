@@ -32,7 +32,7 @@ LinuxBuild {
     }
 } else:MacBuild {
     #- gstreamer framework installed by the gstreamer devel installer
-    GST_ROOT = /Library/Frameworks/GStreamer.framework
+    GST_ROOT = /Library/Frameworks/Versions/1.0/GStreamer.framework
     exists($$GST_ROOT) {
         CONFIG      += VideoEnabled
         INCLUDEPATH += $$GST_ROOT/Headers
