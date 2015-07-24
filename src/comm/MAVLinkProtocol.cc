@@ -56,6 +56,7 @@ MAVLinkProtocol::MAVLinkProtocol(QObject* parent) :
     systemId(QGC::defaultSystemId),
     _logSuspendError(false),
     _logSuspendReplay(false),
+    _logWasArmed(false),
     _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension)),
     _linkMgr(LinkManager::instance()),
     _heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
@@ -329,6 +330,15 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     emit protocolStatusMessage(tr("MAVLink Protocol"), tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
                     _stopLogging();
                     _logSuspendError = true;
+                }
+                
+                // Check for the vehicle arming going by. This is used to trigger log save.
+                if (!_logWasArmed && message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                    mavlink_heartbeat_t state;
+                    mavlink_msg_heartbeat_decode(&message, &state);
+                    if (state.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY) {
+                        _logWasArmed = true;
+                    }
                 }
             }
 
@@ -690,12 +700,13 @@ void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
         // If the signals are not connected it means we are running a unit test. In that case just delete log files
-        if (qgcApp()->promptFlightDataSave()) {
+        if (_logWasArmed && qgcApp()->promptFlightDataSave()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());
         }
     }
+    _logWasArmed = false;
 }
 
 /// @brief Checks the temp directory for log files which may have been left there.
