@@ -163,13 +163,13 @@ void LogReplayLink::writeBytes(const char* bytes, qint64 cBytes)
 /// @return A Unix timestamp in microseconds UTC for found message or 0 if parsing failed
 quint64 LogReplayLink::_parseTimestamp(const QByteArray& bytes)
 {
-    quint64 timestamp = qFromBigEndian(*((quint64*)(bytes.constData())));
+    quint64 timestamp = qFromBigEndian<quint64>(*((quint64*)(bytes.constData())));
     quint64 currentTimestamp = ((quint64)QDateTime::currentMSecsSinceEpoch()) * 1000;
     
     // Now if the parsed timestamp is in the future, it must be an old file where the timestamp was stored as
     // little endian, so switch it.
     if (timestamp > currentTimestamp) {
-        timestamp = qbswap(timestamp);
+        timestamp = qbswap<quint64>(timestamp);
     }
     
     return timestamp;
