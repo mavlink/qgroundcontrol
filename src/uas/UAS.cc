@@ -3414,3 +3414,14 @@ bool UAS::_containsLink(LinkInterface* link)
 
     return false;
 }
+
+bool UAS::isLogReplay(void)
+{
+    QList<LinkInterface*> links = getLinks();
+    
+    if (links.count() == 1) {
+        return links[0]->isLogReplay();
+    } else {
+        return false;
+    }
+}

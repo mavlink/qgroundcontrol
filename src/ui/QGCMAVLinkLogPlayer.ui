@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>789</width>
+    <width>948</width>
     <height>38</height>
    </rect>
   </property>
@@ -49,7 +49,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/res/Play</normaloff>:/res.Play</iconset>
+       <normaloff>:/res/Play</normaloff>:/res/Play</iconset>
      </property>
      <property name="checkable">
       <bool>true</bool>

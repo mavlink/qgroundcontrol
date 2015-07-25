@@ -41,6 +41,7 @@ This file is part of the PIXHAWK project
 #endif
 #include "UDPLink.h"
 #include "TCPLink.h"
+#include "LogReplayLink.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -110,6 +111,7 @@ public:
     void setConnectionsAllowed(void) { _connectionsSuspended = false; }
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
+    /// Link takes ownership of config.
     LinkInterface* createConnectedLink(LinkConfiguration* config);
 
     /// Creates, connects (and adds) a link  based on the given configuration name.

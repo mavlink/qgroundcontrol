@@ -91,6 +91,9 @@ public:
      * @return The nominal data rate of the interface in bit per second, 0 if unknown
      **/
     virtual qint64 getConnectionSpeed() const = 0;
+    
+    /// @return true: This link is replaying a log file, false: Normal two-way communication link
+    virtual bool isLogReplay(void) { return false; }
 
     /**
      * @Brief Get the current incoming data rate.
