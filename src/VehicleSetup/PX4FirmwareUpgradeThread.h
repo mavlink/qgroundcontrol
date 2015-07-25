@@ -96,7 +96,7 @@ private:
     QextSerialPort*     _bootloaderPort;
     QTimer*             _timerRetry;
     QTime               _elapsed;
-    static const int    _retryTimeout = 1000;
+    static const int    _retryTimeout = 100;
     
     bool                _foundBoard;            ///< true: board is currently connected
     bool                _findBoardFirstAttempt; ///< true: this is our first try looking for a board
