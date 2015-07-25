@@ -93,6 +93,7 @@ public:
     float filterVoltage(float value) const;
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*> getLinks();
+    bool isLogReplay(void);
 
     Q_PROPERTY(double localX READ getLocalX WRITE setLocalX NOTIFY localXChanged)
     Q_PROPERTY(double localY READ getLocalY WRITE setLocalY NOTIFY localYChanged)

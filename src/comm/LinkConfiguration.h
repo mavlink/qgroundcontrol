@@ -44,13 +44,14 @@ public:
 #endif
         TypeUdp,        ///< UDP Link
         TypeTcp,        ///< TCP Link
-        // TODO Below is not yet implemented
 #if 0
+        // TODO Below is not yet implemented
         TypeForwarding, ///< Forwarding Link
         TypeXbee,       ///< XBee Proprietary Link
         TypeOpal,       ///< Opal-RT Link
 #endif
         TypeMock,       ///< Mock Link for Unitesting
+        TypeLogReplay,
         TypeLast        // Last type value (type >= TypeLast == invalid)
     };
 
