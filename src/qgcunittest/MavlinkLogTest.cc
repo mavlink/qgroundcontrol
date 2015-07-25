@@ -31,6 +31,7 @@
 #include "MockLink.h"
 #include "QGCTemporaryFile.h"
 #include "QGCApplication.h"
+#include "UAS.h"
 
 UT_REGISTER_TEST(MavlinkLogTest)
 
@@ -133,7 +134,7 @@ void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
     // Zero length log files should not generate any additional UI pop-ups. It should just be deleted silently.
 }
 
-void MavlinkLogTest::_connectLog_test(void)
+void MavlinkLogTest::_connectLogWorker(bool arm)
 {
     LinkManager* linkMgr = LinkManager::instance();
     Q_CHECK_PTR(linkMgr);
@@ -142,20 +143,48 @@ void MavlinkLogTest::_connectLog_test(void)
     Q_CHECK_PTR(link);
     LinkManager::instance()->_addLink(link);
     linkMgr->connectLink(link);
-    QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
     
-    // On Disconnect: We should get a getSaveFileName dialog.
-    QDir logSaveDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-    QString logSaveFile(logSaveDir.filePath(_saveLogFilename));
-    setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
+    // Wait for the uas to work it's way through the various threads
+    
+    QSignalSpy spyUas(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)));
+    QCOMPARE(spyUas.wait(5000), true);
+
+    UASInterface* uasInterface = UASManager::instance()->getActiveUAS();
+    QVERIFY(uasInterface);
+    UAS* uas = dynamic_cast<UAS*>(uasInterface);
+    QVERIFY(uas);
+    
+    QDir logSaveDir;
+    
+    if (arm) {
+        uas->armSystem();
+        QTest::qWait(1500); // Wait long enough for heartbeat to come through
+        
+        // On Disconnect: We should get a getSaveFileName dialog.
+        logSaveDir.setPath(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        QString logSaveFile(logSaveDir.filePath(_saveLogFilename));
+        setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
+    }
     
     linkMgr->disconnectLink(link);
     QTest::qWait(1000); // Need to allow signals to move between threads
 
-    checkExpectedFileDialog();
+    if (arm) {
+        checkExpectedFileDialog();
     
-    // Make sure the file is there and delete it
-    QCOMPARE(logSaveDir.remove(_saveLogFilename), true);
+        // Make sure the file is there and delete it
+        QCOMPARE(logSaveDir.remove(_saveLogFilename), true);
+    }
+}
+
+void MavlinkLogTest::_connectLogNoArm_test(void)
+{
+    _connectLogWorker(false);
+}
+
+void MavlinkLogTest::_connectLogArm_test(void)
+{
+    _connectLogWorker(true);
 }
 
 void MavlinkLogTest::_deleteTempLogFiles_test(void)
