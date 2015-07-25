@@ -100,11 +100,8 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     QTest::qWait(1000); // Need to allow signals to move between threads    
     checkExpectedMessageBox();
 
-    // We are going to disconnect the link which is going to pop a save file dialog
-    setExpectedFileDialog(getSaveFileName, QStringList());
     linkMgr->disconnectLink(link);
     QTest::qWait(1000); // Need to allow signals to move between threads
-    checkExpectedFileDialog();
 }
 
 void MainWindowTest::_connectWindowClosePX4_test(void) {
