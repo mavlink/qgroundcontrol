@@ -395,7 +395,7 @@ void MainWindow::_buildCommonWidgets(void)
 
     // Log player
     // TODO: Make this optional with a preferences setting or under a "View" menu
-    logPlayer = new QGCMAVLinkLogPlayer(MAVLinkProtocol::instance(), statusBar());
+    logPlayer = new QGCMAVLinkLogPlayer(statusBar());
     statusBar()->addPermanentWidget(logPlayer);
 
     // In order for Qt to save and restore state of widgets all widgets must be created ahead of time. We only create the QDockWidget
