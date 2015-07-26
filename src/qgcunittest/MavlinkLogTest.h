@@ -45,7 +45,8 @@ private slots:
     void _bootLogDetectionCancel_test(void);
     void _bootLogDetectionSave_test(void);
     void _bootLogDetectionZeroLength_test(void);
-    void _connectLog_test(void);
+    void _connectLogNoArm_test(void);
+    void _connectLogArm_test(void);
     void _deleteTempLogFiles_test(void);
     
 signals:
@@ -53,6 +54,7 @@ signals:
     
 private:
     void _createTempLogFile(bool zeroLength);
+    void _connectLogWorker(bool arm);
     
     static const char* _tempLogFileTemplate;    ///< Template for temporary log file
     static const char* _logFileExtension;       ///< Extension for log files

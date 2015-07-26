@@ -110,14 +110,11 @@ void SetupViewTest::_clickThrough_test(void)
         QTest::qWait(1000);
     }
 
-    // On MainWindow close we should get a message box telling the user to disconnect first. Disconnect will then pop
-    // the log file save dialog.
+    // On MainWindow close we should get a message box telling the user to disconnect first.
     
     setExpectedMessageBox(QGCMessageBox::Yes);
-    setExpectedFileDialog(getSaveFileName, QStringList());
     
     _mainWindow->close();
     QTest::qWait(1000); // Need to allow signals to move between threads
     checkExpectedMessageBox();
-    checkExpectedFileDialog();
 }
