@@ -25,7 +25,7 @@ class QGCMAVLinkLogPlayer : public QWidget
     Q_OBJECT
 
 public:
-    explicit QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *parent = 0);
+    explicit QGCMAVLinkLogPlayer(QWidget *parent = 0);
     ~QGCMAVLinkLogPlayer();
 
 private slots:

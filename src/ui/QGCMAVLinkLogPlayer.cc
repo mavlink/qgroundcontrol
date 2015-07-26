@@ -13,13 +13,11 @@
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 
-QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *parent) :
+QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(QWidget *parent) :
     QWidget(parent),
     _replayLink(NULL),
     _ui(new Ui::QGCMAVLinkLogPlayer)
-{
-    Q_ASSERT(mavlink);
-    
+{    
     _ui->setupUi(this);
     _ui->horizontalLayout->setAlignment(Qt::AlignTop);
 
