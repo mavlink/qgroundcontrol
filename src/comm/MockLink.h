@@ -144,9 +144,9 @@ private:
     typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
     MissionList_t   _missionItems;
 
-    uint8_t _mavBaseMode;
-    uint8_t _mavCustomMode;
-    uint8_t _mavState;
+    uint8_t     _mavBaseMode;
+    uint32_t    _mavCustomMode;
+    uint8_t     _mavState;
 
     MockConfiguration* _config;
     MAV_AUTOPILOT _autopilotType;
