@@ -166,6 +166,9 @@ public:
          *         interface. The LinkInterface can support multiple protocols.
          **/
     virtual QList<LinkInterface*> getLinks() = 0;
+    
+    /// @returns true: UAS is connected to log replay link
+    virtual bool isLogReplay(void) = 0;
 
     /**
      * @brief Get the color for this UAS

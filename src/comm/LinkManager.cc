@@ -96,6 +96,9 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
         case LinkConfiguration::TypeTcp:
             pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
             break;
+        case LinkConfiguration::TypeLogReplay:
+            pLink = new LogReplayLink(dynamic_cast<LogReplayLinkConfiguration*>(config));
+            break;
 #ifdef QT_DEBUG
         case LinkConfiguration::TypeMock:
             pLink = new MockLink(dynamic_cast<MockConfiguration*>(config));
@@ -392,6 +395,10 @@ void LinkManager::loadLinkConfigurationList()
                                     break;
                                 case LinkConfiguration::TypeTcp:
                                     pLink = (LinkConfiguration*)new TCPConfiguration(name);
+                                    pLink->setPreferred(preferred);
+                                    break;
+                                case LinkConfiguration::TypeLogReplay:
+                                    pLink = (LinkConfiguration*)new LogReplayLinkConfiguration(name);
                                     pLink->setPreferred(preferred);
                                     break;
 #ifdef QT_DEBUG

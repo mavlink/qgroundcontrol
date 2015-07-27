@@ -353,17 +353,12 @@ qint64 SerialLink::getConnectionSpeed() const
 
 void SerialLink::_resetConfiguration()
 {
-    bool somethingChanged = false;
     if (_port) {
-        somethingChanged = _port->setBaudRate     (_config->baud());
-        somethingChanged |= _port->setDataBits    (static_cast<QSerialPort::DataBits>    (_config->dataBits()));
-        somethingChanged |= _port->setFlowControl (static_cast<QSerialPort::FlowControl> (_config->flowControl()));
-        somethingChanged |= _port->setStopBits    (static_cast<QSerialPort::StopBits>    (_config->stopBits()));
-        somethingChanged |= _port->setParity      (static_cast<QSerialPort::Parity>      (_config->parity()));
-    }
-    if(somethingChanged) {
-        qCDebug(SerialLinkLog) << "Reconfiguring port";
-        emit updateLink(this);
+        _port->setBaudRate      (_config->baud());
+        _port->setDataBits      (static_cast<QSerialPort::DataBits>    (_config->dataBits()));
+        _port->setFlowControl   (static_cast<QSerialPort::FlowControl> (_config->flowControl()));
+        _port->setStopBits      (static_cast<QSerialPort::StopBits>    (_config->stopBits()));
+        _port->setParity        (static_cast<QSerialPort::Parity>      (_config->parity()));
     }
 }
 

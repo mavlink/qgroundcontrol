@@ -161,6 +161,7 @@ FORMS += \
     src/QGCQmlWidgetHolder.ui \
     src/ui/HDDisplay.ui \
     src/ui/Linechart.ui \
+    src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MainWindow.ui \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
@@ -228,6 +229,7 @@ HEADERS += \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
     src/comm/LinkManager.h \
+    src/comm/LogReplayLink.h \
     src/comm/MAVLinkProtocol.h \
     src/comm/MockLink.h \
     src/comm/MockLinkFileServer.h \
@@ -276,6 +278,7 @@ HEADERS += \
     src/ui/linechart/LinechartWidget.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/linechart/ScrollZoomer.h \
+    src/ui/LogReplayLinkConfigurationWidget.h \
     src/ui/MainWindow.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/map/QGCMapTool.h \
@@ -365,6 +368,7 @@ SOURCES += \
     src/CmdLineOptParser.cc \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkManager.cc \
+    src/comm/LogReplayLink.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/MockLink.cc \
     src/comm/MockLinkFileServer.cc \
@@ -405,6 +409,7 @@ SOURCES += \
     src/ui/linechart/LinechartWidget.cc \
     src/ui/linechart/Scrollbar.cc \
     src/ui/linechart/ScrollZoomer.cc \
+    src/ui/LogReplayLinkConfigurationWidget.cc \
     src/ui/MainWindow.cc \
     src/ui/map/MAV2DIcon.cc \
     src/ui/map/QGCMapTool.cc \
