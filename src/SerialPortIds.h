@@ -28,17 +28,18 @@
 class SerialPortIds {
 
 public:
-    static const int px4VendorId =              9900;   ///< Vendor ID for Pixhawk board (V2 and V1) and PX4 Flow
+    static const int px4VendorId =                          9900;   ///< Vendor ID for Pixhawk board (V2 and V1) and PX4 Flow
 
-    static const int pixhawkFMUV2ProductId =    17;     ///< Product ID for Pixhawk V2 board
-    static const int pixhawkFMUV1ProductId =    16;     ///< Product ID for PX4 FMU V1 board
+    static const int pixhawkFMUV2ProductId =                17;     ///< Product ID for Pixhawk V2 board
+    static const int pixhawkFMUV2OldBootloaderProductId =   22;     ///< Product ID for Bootloader on older Pixhawk V2 boards
+    static const int pixhawkFMUV1ProductId =                16;     ///< Product ID for PX4 FMU V1 board
 
-    static const int AeroCoreProductId =    	4097;     ///< Product ID for the AeroCore board
+    static const int AeroCoreProductId =                    4097;   ///< Product ID for the AeroCore board
     
-    static const int px4FlowProductId =         21;     ///< Product ID for PX4 Flow board
+    static const int px4FlowProductId =                     21;     ///< Product ID for PX4 Flow board
 
-    static const int threeDRRadioVendorId =     1027;   ///< Vendor ID for 3DR Radio
-    static const int threeDRRadioProductId =    24597;  ///< Product ID for 3DR Radio
+    static const int threeDRRadioVendorId =                 1027;   ///< Vendor ID for 3DR Radio
+    static const int threeDRRadioProductId =                24597;  ///< Product ID for 3DR Radio
 };
 
 #endif
