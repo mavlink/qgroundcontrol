@@ -119,13 +119,11 @@ public:
     void    requestReset();
     bool    isConnected() const;
     qint64  getConnectionSpeed() const;
+    
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool    connect(void);
     bool    disconnect(void);
-
-signals: //[TODO] Refactor to Linkinterface
-    void updateLink(LinkInterface*);
 
 public slots:
 

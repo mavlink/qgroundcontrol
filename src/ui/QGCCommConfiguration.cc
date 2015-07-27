@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "QGCUDPLinkConfiguration.h"
 #include "QGCTCPLinkConfiguration.h"
+#include "LogReplayLinkConfigurationWidget.h"
 #include "QGCCommConfiguration.h"
 #include "ui_QGCCommConfiguration.h"
 
@@ -52,6 +53,7 @@ QGCCommConfiguration::QGCCommConfiguration(QWidget *parent, LinkConfiguration *c
 #endif
     _ui->typeCombo->addItem(tr("UDP"),          LinkConfiguration::TypeUdp);
     _ui->typeCombo->addItem(tr("TCP"),          LinkConfiguration::TypeTcp);
+    _ui->typeCombo->addItem(tr("Log replay"),   LinkConfiguration::TypeLogReplay);
 #ifdef QT_DEBUG
     _ui->typeCombo->addItem(tr("Mock"),         LinkConfiguration::TypeMock);
 #endif
@@ -140,6 +142,13 @@ void QGCCommConfiguration::_loadTypeConfigWidget(int type)
             _ui->typeCombo->setCurrentIndex(_ui->typeCombo->findData(LinkConfiguration::TypeTcp));
         }
         break;
+        case LinkConfiguration::TypeLogReplay: {
+            QWidget* conf = new LogReplayLinkConfigurationWidget((LogReplayLinkConfiguration*)_config, this);
+            _ui->linkScrollArea->setWidget(conf);
+            _ui->linkGroupBox->setTitle("Log Replay");
+            _ui->typeCombo->setCurrentIndex(_ui->typeCombo->findData(LinkConfiguration::TypeLogReplay));
+        }
+            break;
 #ifdef QT_DEBUG
         case LinkConfiguration::TypeMock: {
             _ui->linkScrollArea->setWidget(NULL);
