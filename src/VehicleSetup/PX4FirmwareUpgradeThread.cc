@@ -136,19 +136,17 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
     bool found = false;
     
     foreach (QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
-#if 0
         qCDebug(FirmwareUpgradeLog) << "Serial Port --------------";
         qCDebug(FirmwareUpgradeLog) << "\tport name:" << info.portName();
         qCDebug(FirmwareUpgradeLog) << "\tdescription:" << info.description();
         qCDebug(FirmwareUpgradeLog) << "\tsystem location:" << info.systemLocation();
         qCDebug(FirmwareUpgradeLog) << "\tvendor ID:" << info.vendorIdentifier();
         qCDebug(FirmwareUpgradeLog) << "\tproduct ID:" << info.productIdentifier();
-#endif
         
         if (!info.portName().isEmpty()) {
             switch (info.vendorIdentifier()) {
                 case SerialPortIds::px4VendorId:
-                    if (info.productIdentifier() == SerialPortIds::pixhawkFMUV2ProductId) {
+                    if (info.productIdentifier() == SerialPortIds::pixhawkFMUV2ProductId || info.productIdentifier() == SerialPortIds::pixhawkFMUV2OldBootloaderProductId) {
                         qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V2";
                         type = FoundBoardPX4FMUV2;
                         found = true;
