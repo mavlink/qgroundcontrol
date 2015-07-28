@@ -136,13 +136,16 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     , _splashScreen(splashScreen)
     , _currentView(VIEW_SETUP)
 {
+
     Q_ASSERT(_instance == NULL);
     _instance = this;
 
     if (splashScreen) {
         connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
     }
-
+#ifdef Q_OS_LINUX
+    menuBar()->setNativeMenuBar(false);
+#endif
     // Setup user interface
     loadSettings();
     emit initStatusChanged(tr("Setting up user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
@@ -163,9 +166,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     // Qt 4 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
     // TODO: Check that this is still necessary on Qt5 on Ubuntu
 
-#ifdef Q_OS_LINUX
-    menuBar()->setNativeMenuBar(false);
-#endif
+
 
     // On Mobile devices, we don't want any main menus at all.
 #ifdef __mobile__
