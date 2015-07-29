@@ -56,16 +56,14 @@ GAudioOutput::GAudioOutput(QObject *parent) :
     worker->moveToThread(thread);
     connect(this, &GAudioOutput::textToSpeak, worker, &QGCAudioWorker::say);
     connect(this, &GAudioOutput::beepOnce, worker, &QGCAudioWorker::beep);
+    connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+    connect(thread, &QThread::finished, worker, &QObject::deleteLater);
     thread->start();
 }
 
 GAudioOutput::~GAudioOutput()
 {
     thread->quit();
-    thread->wait();
-
-    delete worker;
-    delete thread;
 }
 
 
