@@ -30,6 +30,7 @@
 #include <QObject>
 #include <QQuickItem>
 #include <QList>
+#include <QMap>
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
@@ -38,6 +39,8 @@
 class AirframeComponentAirframes
 {
 public:
+    AirframeComponentAirframes();
+
     typedef struct {
         const char* name;
         int         autostartId;
@@ -46,23 +49,13 @@ public:
     typedef struct {
         const char* name;
         const char* imageResource;
-        const AirframeInfo_t* rgAirframeInfo;
+        QList<AirframeInfo_t> rgAirframeInfo;
     } AirframeType_t;
     
 public:
-    static const AirframeType_t rgAirframeTypes[];
+    static QMap<QString, AirframeType_t> rgAirframeTypes;
     
 private:
-    static const AirframeInfo_t _rgAirframeInfoStandardPlane[];
-    static const AirframeInfo_t _rgAirframeInfoFlyingWing[];
-    static const AirframeInfo_t _rgAirframeInfoQuadRotorX[];
-    static const AirframeInfo_t _rgAirframeInfoQuadRotorPlus[];
-    static const AirframeInfo_t _rgAirframeInfoOctoRotorX[];
-    static const AirframeInfo_t _rgAirframeInfoOctoRotorPlus[];
-    static const AirframeInfo_t _rgAirframeInfoHexaRotorX[];
-    static const AirframeInfo_t _rgAirframeInfoHexaRotorPlus[];
-    static const AirframeInfo_t _rgAirframeInfoQuadRotorH[];
-    static const AirframeInfo_t _rgAirframeInfoSimulation[];
 };
 
 #endif
