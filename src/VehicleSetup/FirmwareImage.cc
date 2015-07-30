@@ -242,9 +242,8 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         QSettings settings;
         QDir parameterDir = QFileInfo(settings.fileName()).dir();
         QString parameterFilename = parameterDir.filePath("PX4ParameterFactMetaData.xml");
-        qDebug() << parameterFilename;
         QFile parameterFile(parameterFilename);
-        
+
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);
             if (bytesWritten != decompressedBytes.count()) {
@@ -257,6 +256,35 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
             }
         } else {
             emit statusMessage(QString("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename).arg(parameterFile.errorString()));
+        }
+    }
+
+    // Decompress the airframe xml and save to file
+    success = _decompressJsonValue(px4Json,               // JSON object
+                                        bytes,                 // Raw bytes of JSON document
+                                        "airframe_xml_size",  // key which holds byte size
+                                        "airframe_xml",       // key which holds compress bytes
+                                        decompressedBytes);    // Returned decompressed bytes
+    if (success) {
+        // We cache the airframe xml in the same location as settings and parameters
+        QSettings settings;
+        QDir airframeDir = QFileInfo(settings.fileName()).dir();
+        QString airframeFilename = airframeDir.filePath("PX4AirframeFactMetaData.xml");
+        qDebug() << airframeFilename;
+        QFile airframeFile(airframeFilename);
+
+        if (airframeFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            qint64 bytesWritten = airframeFile.write(decompressedBytes);
+            if (bytesWritten != decompressedBytes.count()) {
+                // FIXME: What about these warnings?
+                emit statusMessage(QString("Write failed for airframe meta data file, error: %1").arg(airframeFile.errorString()));
+                airframeFile.close();
+                QFile::remove(airframeFilename);
+            } else {
+                airframeFile.close();
+            }
+        } else {
+            emit statusMessage(QString("Unable to open airframe meta data file %1 for writing, error: %2").arg(airframeFilename).arg(airframeFile.errorString()));
         }
     }
     
