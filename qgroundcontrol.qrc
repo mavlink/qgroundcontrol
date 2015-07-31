@@ -244,7 +244,7 @@
     <qresource prefix="/res/audio">
         <file alias="Alert">resources/audio/alert.wav</file>
     </qresource>
-    <qresource prefix="/AutopilotPlugins/PX4">
+    <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>
