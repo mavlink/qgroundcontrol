@@ -894,6 +894,8 @@ signals:
     void groundSpeedChanged(double val, QString name);
     void airSpeedChanged(double val, QString name);
     void bearingToWaypointChanged(double val,QString name);
+    void _sendMessageOnThread(mavlink_message_t message);
+    void _sendMessageOnThreadLink(LinkInterface* link, mavlink_message_t message);
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
     quint64 getUnixTime(quint64 time=0);
@@ -924,6 +926,10 @@ protected slots:
     void writeSettings();
     /** @brief Read settings from disk */
     void readSettings();
+    /** @brief Send a message over this link (to this or to all UAS on this link) */
+    void _sendMessageLink(LinkInterface* link, mavlink_message_t message);
+    /** @brief Send a message over all links this UAS can be reached with (!= all links) */
+    void _sendMessage(mavlink_message_t message);
     
 private slots:
     void _linkDisconnected(LinkInterface* link);
