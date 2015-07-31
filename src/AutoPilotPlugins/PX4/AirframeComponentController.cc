@@ -61,15 +61,16 @@ AirframeComponentController::AirframeComponentController(void) :
 
 
     
-    for (unsigned tindex = 0; tindex < AirframeComponentAirframes::rgAirframeTypes.count(); tindex++) {
+    for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
 
-        const AirframeComponentAirframes::AirframeType_t* pType = &AirframeComponentAirframes::rgAirframeTypes.values().at(tindex);
+        const AirframeComponentAirframes::AirframeType_t* pType = AirframeComponentAirframes::get().values().at(tindex);
 
         AirframeType* airframeType = new AirframeType(pType->name, pType->imageResource, this);
         Q_CHECK_PTR(airframeType);
 
-        for (unsigned index = 0; index < pType->rgAirframeInfo.count(); index++) {
-            const AirframeComponentAirframes::AirframeInfo_t* pInfo = &pType->rgAirframeInfo.at(index);
+        for (int index = 0; index < pType->rgAirframeInfo.count(); index++) {
+            const AirframeComponentAirframes::AirframeInfo_t* pInfo = pType->rgAirframeInfo.at(index);
+            Q_CHECK_PTR(pInfo);
 
             if (_autostartId == pInfo->autostartId) {
                 Q_ASSERT(!autostartFound);
