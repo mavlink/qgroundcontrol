@@ -30,6 +30,7 @@ QMap<QString, AirframeComponentAirframes::AirframeType_t*> AirframeComponentAirf
 
 QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAirframes::get() {
 
+#if 0
     // Set a single airframe to prevent the UI from going crazy
     if (rgAirframeTypes.count() == 0) {
         // Standard planes
@@ -45,18 +46,39 @@ QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAir
 
         // Flying wings
     }
+#endif
 
     return rgAirframeTypes;
+}
+
+void AirframeComponentAirframes::insert(QString& group, QString& image, QString& name, int id)
+{
+    AirframeType_t *g;
+    if (!rgAirframeTypes.contains(group)) {
+        g = new AirframeType_t;
+        g->name = group;
+        g->imageResource = QString("qrc:/qmlimages/").append(image);
+        qDebug() << "IMAGE:" << g->imageResource;
+        rgAirframeTypes.insert(group, g);
+    } else {
+        g = rgAirframeTypes.value(group);
+    }
+
+    AirframeInfo_t *i = new AirframeInfo_t;
+    i->name = name;
+    i->autostartId = id;
+
+    g->rgAirframeInfo.append(i);
 }
 
 void AirframeComponentAirframes::clear() {
 
     // Run through all and delete them
-    for (unsigned tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
+    for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
 
         const AirframeComponentAirframes::AirframeType_t* pType = AirframeComponentAirframes::get().values().at(tindex);
 
-        for (unsigned index = 0; index < pType->rgAirframeInfo.count(); index++) {
+        for (int index = 0; index < pType->rgAirframeInfo.count(); index++) {
             const AirframeComponentAirframes::AirframeInfo_t* pInfo = pType->rgAirframeInfo.at(index);
             delete pInfo;
         }
