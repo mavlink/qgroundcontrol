@@ -57,7 +57,11 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
     if (!rgAirframeTypes.contains(group)) {
         g = new AirframeType_t;
         g->name = group;
-        g->imageResource = QString("qrc:/qmlimages/").append(image);
+        if (image.length() > 0) {
+            g->imageResource = QString("qrc:/qmlimages/").append(image);
+        } else {
+            g->imageResource = QString("qrc:/qmlimages/AirframeStandardPlane.png");
+        }
         qDebug() << "IMAGE:" << g->imageResource;
         rgAirframeTypes.insert(group, g);
     } else {
