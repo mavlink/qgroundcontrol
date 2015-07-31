@@ -39,21 +39,22 @@
 class AirframeComponentAirframes
 {
 public:
-    AirframeComponentAirframes();
-
     typedef struct {
-        const char* name;
+        QString name;
         int         autostartId;
     } AirframeInfo_t;
     
     typedef struct {
-        const char* name;
-        const char* imageResource;
-        QList<AirframeInfo_t> rgAirframeInfo;
+        QString name;
+        QString imageResource;
+        QList<AirframeInfo_t*> rgAirframeInfo;
     } AirframeType_t;
+
+    static QMap<QString, AirframeComponentAirframes::AirframeType_t*>& get();
+    static void clear();
     
-public:
-    static QMap<QString, AirframeType_t> rgAirframeTypes;
+protected:
+    static QMap<QString, AirframeType_t*> rgAirframeTypes;
     
 private:
 };
