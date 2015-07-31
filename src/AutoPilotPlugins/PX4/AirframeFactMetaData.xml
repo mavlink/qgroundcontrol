@@ -1,0 +1,288 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<airframes>
+  <version>1</version>
+  <airframe_group image="AirframeFlyingWing.png" name="Flying Wing">
+    <airframe id="3030" maintainer="Simon Wilks &lt;simon@px4.io&gt;" name="IO Camflyer">
+      <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+      <type>Flying Wing</type>
+      <url>https://pixhawk.org/platforms/planes/bormatec_camflyer_q</url>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">left aileron</output>
+      <output name="MAIN2">right aileron</output>
+      <output name="MAIN4">throttle</output>
+    </airframe>
+    <airframe id="3031" maintainer="Simon Wilks &lt;simon@px4.io&gt;" name="Phantom FPV Flying Wing">
+      <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+      <type>Flying Wing</type>
+      <url>https://pixhawk.org/platforms/planes/z-84_wing_wing</url>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">left aileron</output>
+      <output name="MAIN2">right aileron</output>
+      <output name="MAIN4">throttle</output>
+    </airframe>
+    <airframe id="3032" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;, Julian Oes &lt;julian@px4.io&gt;" name="Skywalker X5 Flying Wing">
+      <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;, Julian Oes &lt;julian@px4.io&gt;</maintainer>
+      <type>Flying Wing</type>
+      <url>https://pixhawk.org/platforms/planes/skywalker_x5</url>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">left aileron</output>
+      <output name="MAIN2">right aileron</output>
+      <output name="MAIN4">throttle</output>
+    </airframe>
+    <airframe id="3033" maintainer="Simon Wilks &lt;simon@px4.io&gt;" name="Wing Wing (aka Z-84) Flying Wing">
+      <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+      <type>Flying Wing</type>
+      <url>https://pixhawk.org/platforms/planes/z-84_wing_wing</url>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">left aileron</output>
+      <output name="MAIN2">right aileron</output>
+      <output name="MAIN4">throttle</output>
+    </airframe>
+    <airframe id="3034" maintainer="Simon Wilks &lt;simon@px4.io&gt;" name="FX-79 Buffalo Flying Wing">
+      <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+      <type>Flying Wing</type>
+    </airframe>
+    <airframe id="3035" maintainer="Simon Wilks &lt;simon@px4.io&gt;" name="Viper">
+      <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+      <type>Flying Wing</type>
+    </airframe>
+    <airframe id="3100" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="TBS Caipirinha">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Flying Wing</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeHexaRotorPlus.png" name="Hexarotor +">
+    <airframe id="7001" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="Generic Hexarotor + geometry">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
+      <type>Hexarotor +</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="" name="Hexarotor Coaxial">
+    <airframe id="11001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic Hexa coaxial geometry">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Hexarotor Coaxial</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeHexaRotorX.png" name="Hexarotor x">
+    <airframe id="6001" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="Generic Hexarotor x geometry">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
+      <type>Hexarotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeOctoRotorPlus.png" name="Octorotor +">
+    <airframe id="9001" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="Generic Octocopter + geometry">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
+      <type>Octorotor +</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="" name="Octorotor Coaxial">
+    <airframe id="12001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic 10&quot; Octo coaxial geometry">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Octorotor Coaxial</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeOctoRotorX.png" name="Octorotor x">
+    <airframe id="8001" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="Generic Octocopter X geometry">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
+      <type>Octorotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeQuadRotorPlus.png" name="Quadrotor +">
+    <airframe id="5001" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="Generic 10&quot; Quad + geometry">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
+      <type>Quadrotor +</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeQuadRotorH.png" name="Quadrotor Wide">
+    <airframe id="10015" maintainer="Anton Babushkin &lt;anton@px4.io&gt;, Simon Wilks &lt;simon@px4.io&gt;" name="Team Blacksheep Discovery">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;, Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+      <type>Quadrotor Wide</type>
+    </airframe>
+    <airframe id="10016" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="3DR Iris Quadrotor">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
+      <type>Quadrotor Wide</type>
+    </airframe>
+    <airframe id="10017" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;" name="Steadidrone QU4D">
+      <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;</maintainer>
+      <type>Quadrotor Wide</type>
+    </airframe>
+    <airframe id="10018" maintainer="Simon Wilks &lt;simon@px4.io&gt;" name="Team Blacksheep Discovery Endurance">
+      <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+      <type>Quadrotor Wide</type>
+    </airframe>
+    <airframe id="10019" maintainer="Anton Matosov &lt;anton.matosov@gmail.com&gt;" name="HobbyKing SK450 DeadCat modification">
+      <maintainer>Anton Matosov &lt;anton.matosov@gmail.com&gt;</maintainer>
+      <type>Quadrotor Wide</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeQuadRotorX.png" name="Quadrotor x">
+    <airframe id="4001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic Quadrotor X config">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+    <airframe id="4008" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="AR.Drone Frame">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
+    <airframe id="4010" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="DJI Flame Wheel F330">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+    <airframe id="4011" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="DJI Flame Wheel F450">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+    <airframe id="4012" maintainer="Pavel Kirienko &lt;pavel@px4.io&gt;" name="F450-sized quadrotor with CAN">
+      <maintainer>Pavel Kirienko &lt;pavel@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
+    <airframe id="4020" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;" name="Hobbyking Micro PCB">
+      <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="" name="Rover">
+    <airframe id="50001" maintainer="John Doe &lt;john@example.com&gt;" name="Axial Racing AX10">
+      <type>Rover</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeSimulation.png" name="Simulation">
+    <airframe id="1000" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="HILStar (XPlane)">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Simulation</type>
+      <output name="MAIN1">aileron</output>
+      <output name="MAIN2">elevator</output>
+      <output name="MAIN3">rudder</output>
+      <output name="MAIN4">throttle</output>
+    </airframe>
+    <airframe id="1001" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="HIL Quadcopter X">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
+      <type>Simulation</type>
+    </airframe>
+    <airframe id="1003" maintainer="Anton Babushkin &lt;anton@px4.io&gt;" name="HIL Quadcopter +">
+      <maintainer>Anton Babushkin &lt;anton@px4.io&gt;</maintainer>
+      <type>Simulation</type>
+    </airframe>
+    <airframe id="1004" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;" name="HIL Rascal 110 (Flightgear)">
+      <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;</maintainer>
+      <type>Simulation</type>
+    </airframe>
+    <airframe id="1005" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;" name="HIL Malolo 1 (Flightgear)">
+      <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;</maintainer>
+      <type>Simulation</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="AirframeStandardPlane.png" name="Standard Plane">
+    <airframe id="2100" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Multiplex Easystar">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Standard Plane</type>
+    </airframe>
+    <airframe id="2101" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Standard AERT Plane">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Standard Plane</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">aileron</output>
+      <output name="MAIN2">elevator</output>
+      <output name="MAIN3">throttle</output>
+      <output name="MAIN4">rudder</output>
+      <output name="MAIN5">flaps</output>
+    </airframe>
+    <airframe id="2102" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Skywalker (3DR Aero)">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Standard Plane</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">aileron</output>
+      <output name="MAIN2">elevator</output>
+      <output name="MAIN3">throttle</output>
+      <output name="MAIN4">rudder</output>
+      <output name="MAIN5">flaps</output>
+    </airframe>
+    <airframe id="2103" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Skyhunter 1800">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Standard Plane</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">aileron</output>
+      <output name="MAIN2">elevator</output>
+      <output name="MAIN4">throttle</output>
+    </airframe>
+    <airframe id="2104" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Standard AETR Plane">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Standard Plane</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output name="MAIN1">aileron</output>
+      <output name="MAIN2">elevator</output>
+      <output name="MAIN3">throttle</output>
+      <output name="MAIN4">rudder</output>
+      <output name="MAIN5">flaps</output>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="" name="Tricopter Y+">
+    <airframe id="14001" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y+ Geometry">
+      <maintainer>Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;</maintainer>
+      <type>Tricopter Y+</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="" name="Tricopter Y-">
+    <airframe id="14002" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y- Geometry">
+      <maintainer>Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;</maintainer>
+      <type>Tricopter Y-</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="" name="VTOL Tailsitter">
+    <airframe id="13001" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Duorotor Tailsitter">
+      <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
+      <type>VTOL Tailsitter</type>
+    </airframe>
+    <airframe id="13003" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Quadrotor X Tailsitter">
+      <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
+      <type>VTOL Tailsitter</type>
+    </airframe>
+    <airframe id="13004" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Quadrotor + Tailsitter">
+      <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
+      <type>VTOL Tailsitter</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="" name="VTOL Tiltrotor">
+    <airframe id="13002" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="BirdsEyeView Aerobotics FireFly6">
+      <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
+      <type>VTOL Tiltrotor</type>
+    </airframe>
+  </airframe_group>
+</airframes>

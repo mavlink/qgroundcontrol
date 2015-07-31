@@ -137,9 +137,6 @@
         <file alias="QGroundControl/FlightControls/qmldir">src/ui/qmlcommon/qmldir</file>
         <file alias="QGroundControl/FlightControls/QGCWaypoint.qml">src/ui/qmlcommon/QGCWaypoint.qml</file>
     </qresource>
-    <qresource prefix="/AutoPilotPlugins/PX4">
-        <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
-    </qresource>
     <qresource prefix="/res">
         <file alias="LeftArrow">resources/LeftArrow.svg</file>
         <file alias="RightArrow">resources/RightArrow.svg</file>
@@ -246,5 +243,9 @@
     </qresource>
     <qresource prefix="/res/audio">
         <file alias="Alert">resources/audio/alert.wav</file>
+    </qresource>
+    <qresource prefix="/AutoPilotPlugins/PX4">
+        <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
+        <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>
 </RCC>
