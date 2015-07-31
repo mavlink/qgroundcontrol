@@ -58,13 +58,20 @@ AirframeComponentController::AirframeComponentController(void) :
     
     bool autostartFound = false;
     _autostartId = getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt();
+
+
     
-    for (const AirframeComponentAirframes::AirframeType_t* pType=&AirframeComponentAirframes::rgAirframeTypes[0]; pType->name != NULL; pType++) {
+    for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
+
+        const AirframeComponentAirframes::AirframeType_t* pType = AirframeComponentAirframes::get().values().at(tindex);
+
         AirframeType* airframeType = new AirframeType(pType->name, pType->imageResource, this);
         Q_CHECK_PTR(airframeType);
-        
-        int index = 0;
-        for (const AirframeComponentAirframes::AirframeInfo_t* pInfo=&pType->rgAirframeInfo[0]; pInfo->name != NULL; pInfo++) {
+
+        for (int index = 0; index < pType->rgAirframeInfo.count(); index++) {
+            const AirframeComponentAirframes::AirframeInfo_t* pInfo = pType->rgAirframeInfo.at(index);
+            Q_CHECK_PTR(pInfo);
+
             if (_autostartId == pInfo->autostartId) {
                 Q_ASSERT(!autostartFound);
                 autostartFound = true;
@@ -73,7 +80,6 @@ AirframeComponentController::AirframeComponentController(void) :
                 _currentVehicleIndex = index;
             }
             airframeType->addAirframe(pInfo->name, pInfo->autostartId);
-            index++;
         }
         
         _airframeTypes.append(QVariant::fromValue(airframeType));

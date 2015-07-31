@@ -25,6 +25,7 @@
 #include "AutoPilotPluginManager.h"
 #include "UASManager.h"
 #include "PX4ParameterLoader.h"
+#include "PX4AirframeLoader.h"
 #include "FlightModesComponentController.h"
 #include "AirframeComponentController.h"
 #include "QGCMessageBox.h"
@@ -81,13 +82,18 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     
     connect(_parameterFacts, &PX4ParameterLoader::parametersReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
     connect(_parameterFacts, &PX4ParameterLoader::parameterListProgress, this, &PX4AutoPilotPlugin::parameterListProgress);
+
+    _airframeFacts = new PX4AirframeLoader(this, uas, this);
+    Q_CHECK_PTR(_airframeFacts);
     
     PX4ParameterLoader::loadParameterFactMetaData();
+    PX4AirframeLoader::loadAirframeFactMetaData();
 }
 
 PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
 {
     delete _parameterFacts;
+    delete _airframeFacts;
 }
 
 QList<AutoPilotPluginManager::FullMode_t> PX4AutoPilotPlugin::getModes(void)
@@ -259,6 +265,7 @@ QString PX4AutoPilotPlugin::getShortModeText(uint8_t baseMode, uint32_t customMo
 void PX4AutoPilotPlugin::clearStaticData(void)
 {
     PX4ParameterLoader::clearStaticData();
+    PX4AirframeLoader::clearStaticData();
 }
 
 const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
