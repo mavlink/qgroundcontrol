@@ -49,6 +49,22 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
 
 }
 
+void Fact::forceSetValue(const QVariant& value)
+{
+    if (_metaData) {
+        QVariant    typedValue;
+        QString     errorString;
+        
+        if (_metaData->convertAndValidate(value, true /* convertOnly */, typedValue, errorString)) {
+            _value.setValue(typedValue);
+            emit valueChanged(_value);
+            emit _containerValueChanged(_value);
+        }
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+}
+
 void Fact::setValue(const QVariant& value)
 {
     if (_metaData) {
@@ -71,6 +87,7 @@ void Fact::_containerSetValue(const QVariant& value)
 {
     _value = value;
     emit valueChanged(_value);
+    emit vehicleUpdated(_value);
 }
 
 QString Fact::name(void) const

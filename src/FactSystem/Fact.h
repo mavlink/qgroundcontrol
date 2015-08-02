@@ -84,6 +84,9 @@ public:
     bool maxIsDefaultForType(void);
     QString group(void);
     
+    /// Sets and sends new value to vehicle even if value is the same
+    void forceSetValue(const QVariant& value);
+    
     /// Sets the meta data associated with the Fact.
     void setMetaData(FactMetaData* metaData);
     
@@ -94,6 +97,9 @@ signals:
     ///
     /// This signal is only meant for use by the QT property system. It should not be connected to by client code.
     void valueChanged(QVariant value);
+    
+    /// Signalled when the param write ack comes back from the vehicle
+    void vehicleUpdated(QVariant value);
     
     /// Signalled when property has been changed by a call to the property write accessor
     ///
