@@ -151,12 +151,18 @@ QGCView {
 
                     // Outer summary item rectangle
                     Rectangle {
+                        id:     airframeBackground
                         readonly property real titleHeight: 30
                         readonly property real innerMargin: 10
 
                         width:  250
                         height: 200
-                        color:  qgcPal.windowShade
+                        color:  (modelData.name != controller.currentAirframeType) ? qgcPal.windowShade : qgcPal.buttonHighlight
+
+                        MouseArea {
+                                anchors.fill: parent
+                                onClicked: airframeCheckBox.checked = true
+                            }
 
                         Rectangle {
                             id:     title
@@ -200,6 +206,9 @@ QGCView {
                             onCheckedChanged: {
                                 if (checked && combo.currentIndex != -1) {
                                     controller.autostartId = modelData.airframes[combo.currentIndex].autostartId
+                                    airframeBackground.color = qgcPal.buttonHighlight;
+                                } else {
+                                    airframeBackground.color = qgcPal.windowShade;
                                 }
                             }
                         }
@@ -214,10 +223,9 @@ QGCView {
                             model:  modelData.airframes
                             currentIndex: (modelData.name == controller.currentAirframeType) ? controller.currentVehicleIndex : 0
 
-                            onCurrentIndexChanged: {
-                                if (airframeCheckBox.checked) {
-                                    controller.autostartId = modelData.airframes[currentIndex].autostartId
-                                }
+                            onActivated: {
+                                controller.autostartId = modelData.airframes[currentIndex].autostartId
+                                airframeCheckBox.checked = true;
                             }
                         }
                     }
