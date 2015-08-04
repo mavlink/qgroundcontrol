@@ -127,7 +127,7 @@ void AirframeComponentController::_waitParamWriteSignal(QVariant value)
         // Now that both params have made it to the vehicle we can reboot it. All these signals are flying
         // around on the main thread, so we need to allow the stack to unwind back to the event loop before
         // we reboot.
-        QTimer::singleShot(100, this, &AirframeComponentController::_rebootAfterStackUnwind);
+        QTimer::singleShot(800, this, &AirframeComponentController::_rebootAfterStackUnwind);
     }
 }
 
@@ -135,8 +135,10 @@ void AirframeComponentController::_rebootAfterStackUnwind(void)
 {    
     _uas->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-    QGC::SLEEP::sleep(1);
-    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+    for (unsigned i = 0; i < 2000; i++) {
+        QGC::SLEEP::usleep(500);
+        qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
     LinkManager::instance()->disconnectAll();
     qgcApp()->restoreOverrideCursor();
 }
