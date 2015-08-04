@@ -111,7 +111,7 @@ QGCView {
         QGCLabel {
             anchors.top:    headingSpacer.bottom
             width:          parent.width - applyButton.width - 5
-            text:           "Select your airframe type and specific vehicle bellow. Click 'Apply and Restart' when ready and your vehicle will be disconnected, rebooted to the new settings and re-connected."
+            text:           "Please select your airframe type. Click 'Apply and Restart' to reboot the autopilot. Please re-connect then manually."
             wrapMode:       Text.WordWrap
         }
 
@@ -151,12 +151,18 @@ QGCView {
 
                     // Outer summary item rectangle
                     Rectangle {
+                        id:     airframeBackground
                         readonly property real titleHeight: 30
                         readonly property real innerMargin: 10
 
                         width:  250
                         height: 200
-                        color:  qgcPal.windowShade
+                        color:  (modelData.name != controller.currentAirframeType) ? qgcPal.windowShade : qgcPal.buttonHighlight
+
+                        MouseArea {
+                                anchors.fill: parent
+                                onClicked: airframeCheckBox.checked = true
+                            }
 
                         Rectangle {
                             id:     title
@@ -200,6 +206,9 @@ QGCView {
                             onCheckedChanged: {
                                 if (checked && combo.currentIndex != -1) {
                                     controller.autostartId = modelData.airframes[combo.currentIndex].autostartId
+                                    airframeBackground.color = qgcPal.buttonHighlight;
+                                } else {
+                                    airframeBackground.color = qgcPal.windowShade;
                                 }
                             }
                         }
@@ -212,11 +221,13 @@ QGCView {
                             anchors.top: image.bottom
                             width:  parent.width - (innerMargin * 2)
                             model:  modelData.airframes
-                            currentIndex: (modelData.name == controller.currentAirframeType) ? controller.currentVehicleIndex : 0
+                            currentIndex: (modelData.name == controller.currentAirframeType) ? controller.currentVehicleIndex : -1
 
-                            onCurrentIndexChanged: {
-                                if (airframeCheckBox.checked) {
-                                    controller.autostartId = modelData.airframes[currentIndex].autostartId
+                            onActivated: {
+                                if (index != -1) {
+                                    currentIndex = index
+                                    controller.autostartId = modelData.airframes[index].autostartId
+                                    airframeCheckBox.checked = true;
                                 }
                             }
                         }
