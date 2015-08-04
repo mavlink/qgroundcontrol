@@ -63,15 +63,20 @@ signals:
     void autostartIdChanged(int newAutostartId);
     void showCustomConfigPanelChanged(bool show);
     
+private slots:
+    void _waitParamWriteSignal(QVariant value);
+    void _rebootAfterStackUnwind(void);
+    
 private:
     static bool _typesRegistered;
     
-    QVariantList        _airframeTypes;
-    QString             _currentAirframeType;
-    QString             _currentVehicleName;
-    int                 _currentVehicleIndex;
-    int                 _autostartId;
-    bool                _showCustomConfigPanel;
+    QVariantList    _airframeTypes;
+    QString         _currentAirframeType;
+    QString         _currentVehicleName;
+    int             _currentVehicleIndex;
+    int             _autostartId;
+    bool            _showCustomConfigPanel;
+    int             _waitParamWriteSignalCount;
 };
 
 class Airframe : public QObject
