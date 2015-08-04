@@ -46,6 +46,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include <QHostInfo>
 
+#define REMOVE_GONE_HOSTS 0
+
 static const char* kZeroconfRegistration = "_qgroundcontrol._udp";
 
 static bool is_ip(const QString& address)
@@ -212,9 +214,20 @@ void UDPLink::_sendBytes(const char* data, qint64 size)
             QHostAddress currentHost(host);
             if(_socket->writeDatagram(data, size, currentHost, (quint16)port) < 0) {
                 // This host is gone. Add to list to be removed
-                goneHosts.append(host);
+                // We should keep track of hosts that were manually added (static) and
+                // hosts that were added because we heard from them (dynamic). Only
+                // dynamic hosts should be removed and even then, after a few tries, not
+                // the first failure. In the mean time, we don't remove anything.
+                if(REMOVE_GONE_HOSTS) {
+                    goneHosts.append(host);
+                }
+            } else {
+                // Only log rate if data actually got sent. Not sure about this as
+                // "host not there" takes time too regardless of size of data. In fact,
+                // 1 byte or "UDP frame size" bytes are the same as that's the data
+                // unit sent by UDP.
+                _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
             }
-            _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
         } while (_config->nextHost(host, port));
         //-- Remove hosts that are no longer there
         foreach (QString ghost, goneHosts) {
