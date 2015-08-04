@@ -105,23 +105,39 @@ void AirframeComponentController::changeAutostart(void)
 	
     qgcApp()->setOverrideCursor(Qt::WaitCursor);
     
-    getParameterFact(-1, "SYS_AUTOSTART")->setValue(_autostartId);
-    getParameterFact(-1, "SYS_AUTOCONFIG")->setValue(1);
+    Fact* sysAutoStartFact  = getParameterFact(-1, "SYS_AUTOSTART");
+    Fact* sysAutoConfigFact = getParameterFact(-1, "SYS_AUTOCONFIG");
     
-    // FactSystem doesn't currently have a mechanism to wait for the parameters to come backf from the board.
-    // So instead we wait for enough time for the parameters to hoepfully make it to the board.
-    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-    QGC::SLEEP::sleep(3);
-    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+    // We need to wait for the vehicleUpdated signals to come back before we reboot
+    _waitParamWriteSignalCount = 0;
+    connect(sysAutoStartFact, &Fact::vehicleUpdated, this, &AirframeComponentController::_waitParamWriteSignal);
+    connect(sysAutoConfigFact, &Fact::vehicleUpdated, this, &AirframeComponentController::_waitParamWriteSignal);
     
-    // Reboot board
+    // We use forceSetValue to params are sent even if the previous value is that same as the new value
+    sysAutoStartFact->forceSetValue(_autostartId);
+    sysAutoConfigFact->forceSetValue(1);
+}
+
+void AirframeComponentController::_waitParamWriteSignal(QVariant value)
+{
+    Q_UNUSED(value);
     
+    _waitParamWriteSignalCount++;
+    if (_waitParamWriteSignalCount == 2) {
+        // Now that both params have made it to the vehicle we can reboot it. All these signals are flying
+        // around on the main thread, so we need to allow the stack to unwind back to the event loop before
+        // we reboot.
+        QTimer::singleShot(100, this, &AirframeComponentController::_rebootAfterStackUnwind);
+    }
+}
+
+void AirframeComponentController::_rebootAfterStackUnwind(void)
+{    
     _uas->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     QGC::SLEEP::sleep(1);
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     LinkManager::instance()->disconnectAll();
-    
     qgcApp()->restoreOverrideCursor();
 }
 
