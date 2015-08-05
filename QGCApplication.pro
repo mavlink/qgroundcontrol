@@ -18,9 +18,10 @@
 # -------------------------------------------------
 
 include(QGCCommon.pri)
+include(git_version.pri)
 
 TARGET = qgroundcontrol
-TEMPLATE =  app
+TEMPLATE = app
 
 # Load additional config flags from user_config.pri
 exists(user_config.pri):infile(user_config.pri, CONFIG) {
