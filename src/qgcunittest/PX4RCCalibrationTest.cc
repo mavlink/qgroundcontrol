@@ -503,8 +503,8 @@ void RadioConfigTest::_validateParameters(void)
         QCOMPARE(convertOk, true);
         bool rcReversedActual = (rcReversedFloat == -1.0f);
         
-        qCDebug(RadioConfigTestLog) << "_validateParemeters expected channel:min:max:trim:rev" << chan << rcMinExpected << rcMaxExpected << rcTrimExpected << rcReversedExpected;
-        qCDebug(RadioConfigTestLog) << "_validateParemeters actual channel:min:max:trim:rev" << chan << rcMinActual << rcMaxActual << rcTrimActual << rcReversedActual;
+        qCDebug(RadioConfigTestLog) << "_validateParameters expected channel:min:max:trim:rev" << chan << rcMinExpected << rcMaxExpected << rcTrimExpected << rcReversedExpected;
+        qCDebug(RadioConfigTestLog) << "_validateParameters actual channel:min:max:trim:rev" << chan << rcMinActual << rcMaxActual << rcTrimActual << rcReversedActual;
 
         QCOMPARE(rcMinExpected, rcMinActual);
         QCOMPARE(rcMaxExpected, rcMaxActual);
