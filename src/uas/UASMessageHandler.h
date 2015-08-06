@@ -63,6 +63,11 @@ public:
      * @brief Get (html) formatted text (in the form: "[11:44:21.137 - COMP:50] Info: [pm] sending list")
      */
     QString getFormatedText()   { return _formatedText; }
+    /**
+     * @return true: This message is a of a severity which is considered an error
+     */
+    bool severityIsError();
+    
 private:
     UASMessage(int componentid, int severity, QString text);
     void _setFormatedText(const QString formatedText) { _formatedText = formatedText; }
