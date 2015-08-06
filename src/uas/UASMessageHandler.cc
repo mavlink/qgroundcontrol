@@ -57,6 +57,7 @@ UASMessageHandler::UASMessageHandler(QObject *parent)
     : QGCSingleton(parent)
     , _activeUAS(NULL)
     , _errorCount(0)
+    , _errorCountTotal(0)
     , _warningCount(0)
     , _normalCount(0)
 {
@@ -125,6 +126,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
         //Use set RGB values from given color from QGC
         style = QString("color: rgb(%1, %2, %3); font-weight:bold").arg(QGC::colorRed.red()).arg(QGC::colorRed.green()).arg(QGC::colorRed.blue());
         _errorCount++;
+        _errorCountTotal++;
         break;
     case MAV_SEVERITY_NOTICE:
     case MAV_SEVERITY_WARNING:
@@ -176,20 +178,19 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     message->_setFormatedText(QString("<p style=\"color:#CCCCCC\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
     _messages.append(message);
     int count = _messages.count();
-    switch (severity)
-    {
-    case MAV_SEVERITY_EMERGENCY:
-    case MAV_SEVERITY_ALERT:
-    case MAV_SEVERITY_CRITICAL:
-    case MAV_SEVERITY_ERROR:
+    if (message->severityIsError()) {
         _latestError = severityText + " " + text;
-        break;
-    default:
-        break;
     }
     _mutex.unlock();
     emit textMessageReceived(message);
     emit textMessageCountChanged(count);
+}
+
+int UASMessageHandler::getErrorCountTotal() {
+    _mutex.lock();
+    int c = _errorCountTotal;
+    _mutex.unlock();
+    return c;
 }
 
 int UASMessageHandler::getErrorCount() {
