@@ -756,7 +756,7 @@ void ParameterLoader::_checkInitialLoadComplete(void)
     // Check for any errors during vehicle boot
     
     UASMessageHandler* msgHandler = UASMessageHandler::instance();
-    if (msgHandler->getErrorCount()) {
+    if (msgHandler->getErrorCountTotal()) {
         QString errors;
         
         msgHandler->lockAccess();
