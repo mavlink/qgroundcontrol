@@ -38,6 +38,19 @@ UASMessage::UASMessage(int componentid, int severity, QString text)
     _text     = text;
 }
 
+bool UASMessage::severityIsError()
+{
+    switch (_severity) {
+        case MAV_SEVERITY_EMERGENCY:
+        case MAV_SEVERITY_ALERT:
+        case MAV_SEVERITY_CRITICAL:
+        case MAV_SEVERITY_ERROR:
+            return true;
+        default:
+            return false;
+    }
+}
+
 IMPLEMENT_QGC_SINGLETON(UASMessageHandler, UASMessageHandler)
 
 UASMessageHandler::UASMessageHandler(QObject *parent)
