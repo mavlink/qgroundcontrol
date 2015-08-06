@@ -29,6 +29,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
 #include "QGCMessageBox.h"
+#include "UASMessageHandler.h"
 
 #include <QFile>
 #include <QDebug>
@@ -752,14 +753,37 @@ void ParameterLoader::_checkInitialLoadComplete(void)
         }
     }
     
+    // Check for any errors during vehicle boot
+    
+    UASMessageHandler* msgHandler = UASMessageHandler::instance();
+    if (msgHandler->getErrorCount()) {
+        QString errors;
+        
+        msgHandler->lockAccess();
+        foreach (UASMessage* msg, msgHandler->messages()) {
+            if (msg->severityIsError()) {
+                errors += msg->getText();
+                errors += "\n";
+            }
+        }
+        msgHandler->unlockAccess();
+        
+        QGCMessageBox::critical("Vehicle startup errors",
+                                QString("Errors were detected during vehicle startup:\n"
+                                        "%1"
+                                        "You should resolve these prior to flight.").arg(errors));
+    }
+    
+    // Warn of parameter load failure
+    
     if (initialLoadFailures) {
         QGCMessageBox::critical("Parameter Load Failure",
-                                QString("QGroundControl was unable to retrieve the full set of parameters from the vehicle. "
-                                        "This will cause QGroundControl to be unable to display it's full user interface. "
-                                        "This usually indicates an error in the vehicle's firmware. "
-                                        "Please upgrade your firmware to the latest version if possible. "
-                                        "If that doesn't work, notify the firmware developers of this error. "
-                                        "The following parameter indices could not be loaded after the maximum number of retries: %1.").arg(indexList));
+                                "QGroundControl was unable to retrieve the full set of parameters from the vehicle. "
+                                "This will cause QGroundControl to be unable to display it's full user interface. "
+                                "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
+                                "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.");
+        qCWarning(ParameterLoaderLog) << "The following parameter indices could not be loaded after the maximum number of retries: " << indexList;
+
     } else {
         // No failed parameters, ok to signal ready
         _parametersReady = true;
