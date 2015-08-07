@@ -30,7 +30,7 @@ QGCQmlWidgetHolder::QGCQmlWidgetHolder(QWidget *parent) :
     QWidget(parent)
 {
     _ui.setupUi(this);
-    _ui.qmlWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    setResizeMode(QQuickWidget::SizeRootObjectToView);
 }
 
 QGCQmlWidgetHolder::~QGCQmlWidgetHolder()
@@ -61,4 +61,9 @@ QQmlContext* QGCQmlWidgetHolder::getRootContext(void)
 QQuickItem* QGCQmlWidgetHolder::getRootObject(void)
 {
     return _ui.qmlWidget->rootObject();
+}
+
+void QGCQmlWidgetHolder::setResizeMode(QQuickWidget::ResizeMode resizeMode)
+{
+    _ui.qmlWidget->setResizeMode(resizeMode);
 }
