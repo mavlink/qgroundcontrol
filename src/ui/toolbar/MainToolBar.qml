@@ -43,14 +43,15 @@ Rectangle {
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
 
-    property int cellSpacerSize: ScreenTools.isMobile ? getProportionalDimmension(6) : getProportionalDimmension(4)
-    property int cellHeight:     getProportionalDimmension(30)
+    readonly property real toolBarHeight:   ScreenTools.defaultFontPixelHeight * 3
+    property int cellSpacerSize:            ScreenTools.isMobile ? getProportionalDimmension(6) : getProportionalDimmension(4)
+    readonly property int cellHeight:       getProportionalDimmension(30)
 
-    property var colorBlue:       "#1a6eaa"
-    property var colorGreen:      "#329147"
-    property var colorRed:        "#942324"
-    property var colorOrange:     "#a76f26"
-    property var colorWhite:      "#f0f0f0"
+    readonly property var colorBlue:    "#1a6eaa"
+    readonly property var colorGreen:   "#329147"
+    readonly property var colorRed:     "#942324"
+    readonly property var colorOrange:  "#a76f26"
+    readonly property var colorWhite:   "#f0f0f0"
 
     property var colorOrangeText: (qgcPal.globalTheme === QGCPalette.Light) ? "#b75711" : "#ea8225"
     property var colorRedText:    (qgcPal.globalTheme === QGCPalette.Light) ? "#ee1112" : "#ef2526"
@@ -59,8 +60,13 @@ Rectangle {
 
     color:  qgcPal.windowShade
 
+    Connections {
+        target: mainToolBar
+        onShowMessage: mainToolBar.height = 100
+    }
+
     function getProportionalDimmension(val) {
-        return toolBarHolder.height * val / 40
+        return toolBarHeight * val / 40
     }
 
     function getMessageColor() {
