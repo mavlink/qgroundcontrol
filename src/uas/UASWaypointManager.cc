@@ -1217,9 +1217,9 @@ void UASWaypointManager::_stopProtocolTimerOnThisThread(void)
 
 void UASWaypointManager::_updateWPonTimer()
 {
-	while (current_state != WP_IDLE)
-	{
-		Sleep(100);
-	}
-	readWaypoints(true);
+    while (current_state != WP_IDLE)
+    {
+        QGC::SLEEP::msleep(100);
+    }
+    readWaypoints(true);
 }
