@@ -172,6 +172,15 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
                     }
                     break;
             }
+            if (!found) {
+                // Fall back to port name matching which could lead to incorrect board mapping. But in some cases the
+                // vendor and product id do not come through correctly so this is used as a last chance detection method.
+                if (info.description() == "PX4 FMU v2.x") {
+                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V2 (by name matching fallback)";
+                    type = FoundBoardPX4FMUV2;
+                    found = true;
+                }
+            }
         }
         
         if (found) {
