@@ -373,7 +373,8 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
 
-            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
+            QString line = QString("%1\t%2\t%3\t%4\n").arg(time).arg(uasId).arg(curve).arg(value, 0, 'e', 15);
+            logFile->write(line.toLatin1());
         }
     }
 }
