@@ -143,6 +143,20 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     blockHomePositionChanges(false),
     receivedMode(false),
 
+    xacc_var(0.0),
+    yacc_var(0.0),
+    zacc_var(0.0),
+    rollspeed_var(0.0),
+    pitchspeed_var(0.0),
+    yawspeed_var(0.0),
+    xmag_var(0.0),
+    ymag_var(0.0),
+    zmag_var(0.0),
+    abs_pressure_var(0.0),
+    diff_pressure_var(0.0),
+    pressure_alt_var(0.0),
+    temperature_var(0.0),
+
 #ifndef __mobile__
     simulation(0),
 #endif
@@ -2989,6 +3003,8 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
 {
     if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
+
+
         mavlink_message_t msg;
         mavlink_msg_hil_sensor_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                    time_us, xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
@@ -3003,6 +3019,13 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
         setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
+}
+#endif
+
+#ifndef __mobile__
+float UAS::addZeroMeanNoise(float truth_meas, noise_var)
+{
+    
 }
 #endif
 
