@@ -152,7 +152,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
                         found = true;
                     } else if (info.productIdentifier() == SerialPortIds::pixhawkFMUV1ProductId) {
                         qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V1";
-                        type = FoundBoardPX4FMUV2;
+                        type = FoundBoardPX4FMUV1;
                         found = true;
                     } else if (info.productIdentifier() == SerialPortIds::px4FlowProductId) {
                         qCDebug(FirmwareUpgradeLog) << "Found PX4 Flow";
@@ -171,6 +171,19 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
                         found = true;
                     }
                     break;
+            }
+            if (!found) {
+                // Fall back to port name matching which could lead to incorrect board mapping. But in some cases the
+                // vendor and product id do not come through correctly so this is used as a last chance detection method.
+                if (info.description() == "PX4 FMU v2.x" || info.description() == "PX4 BL FMU v2.x") {
+                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V2 (by name matching fallback)";
+                    type = FoundBoardPX4FMUV2;
+                    found = true;
+                } else if (info.description() == "PX4 FMU v1.x" || info.description() == "PX4 BL FMU v1.x") {
+                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V1 (by name matching fallback)";
+                    type = FoundBoardPX4FMUV1;
+                    found = true;
+                }
             }
         }
         

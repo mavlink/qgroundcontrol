@@ -47,8 +47,6 @@ Item {
     property real pitch:   isNaN(MavManager.pitch)   ? 0 : MavManager.pitch
 
     property bool showPitchIndicator:       true
-    property bool showAttitudeIndicator:    true
-    property bool showCompass:              true
 
     function getBool(value) {
         return value === '0' ? false : true;
@@ -58,8 +56,11 @@ Item {
         return value ? "1" : "0";
     }
 
-    function showHudInstruments() {
-        return videoBackground.visible || mapBackground.visible;
+    function enforceExclusiveOption(setWidget, alternateWidget, defaultSetting, alternateSetting) {
+        setWidget.visible = !setWidget.visible;
+        flightDisplay.saveSetting(defaultSetting, setBool(setWidget.visible));
+        alternateWidget.visible = setWidget.visible ? false : alternateWidget.visible;
+        flightDisplay.saveSetting(alternateSetting, setBool(alternateWidget.visible));
     }
 
     Connections {
@@ -75,9 +76,11 @@ Item {
         mapBackground.showWaypoints         = getBool(flightDisplay.loadSetting("mapShowWaypoints",         "0"));
         mapBackground.alwaysNorth           = getBool(flightDisplay.loadSetting("mapAlwaysPointsNorth",     "0"));
         videoBackground.visible             = getBool(flightDisplay.loadSetting("showVideoBackground",      "0"));
-        showAttitudeIndicator               = getBool(flightDisplay.loadSetting("showAttitudeIndicator",    "1"));
         showPitchIndicator                  = getBool(flightDisplay.loadSetting("showPitchIndicator",       "1"));
-        showCompass                         = getBool(flightDisplay.loadSetting("showCompass",              "1"));
+        compassWidget.visible               = getBool(flightDisplay.loadSetting("showCompassWidget",        "0"));
+        compassHUD.visible                  = getBool(flightDisplay.loadSetting("showCompassHUD",           "1"));
+        attitudeWidget.visible              = getBool(flightDisplay.loadSetting("showAttitudeWidget",       "0"));
+        attitudeHUD.visible                 = getBool(flightDisplay.loadSetting("showAttitudeHUD",          "1"));
         altitudeWidget.visible              = getBool(flightDisplay.loadSetting("showAltitudeWidget",       "1"));
         speedWidget.visible                 = getBool(flightDisplay.loadSetting("showSpeedWidget",          "1"));
         currentSpeed.showAirSpeed           = getBool(flightDisplay.loadSetting("showCurrentAirSpeed",      "1"));
@@ -91,6 +94,16 @@ Item {
             videoBackground.visible = false;
             flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
         }
+        // Compass HUD or Widget. Not both:
+        if(compassWidget.visible && compassHUD.visible) {
+            compassWidget.visible = false;
+            flightDisplay.saveSetting("showCompassWidget", setBool(compassWidget.visible));
+        }
+        // Attitude HUD or Widget. Not both:
+        if(attitudeWidget.visible && attitudeHUD.visible) {
+            attitudeWidget.visible = false;
+            flightDisplay.saveSetting("showAttitudeWidget", setBool(attitudeWidget.visible));
+        }
         // Disable video if we don't have support for it
         if(!flightDisplay.hasVideo) {
             videoBackground.visible = false;
@@ -103,19 +116,13 @@ Item {
     Menu {
         id: contextMenu
 
-        ExclusiveGroup { id: backgroundDisplay }
-
         MenuItem {
             text: "Map Background"
             checkable: true
             checked: mapBackground.visible
-            exclusiveGroup: backgroundDisplay
             onTriggered:
             {
-                mapBackground.visible = !mapBackground.visible;
-                flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
-                videoBackground.visible = mapBackground.visible ? false : videoBackground.visible;
-                flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
+                enforceExclusiveOption(mapBackground, videoBackground, "showMapBackground", "showVideoBackground");
             }
         }
 
@@ -152,22 +159,39 @@ Item {
             text: "Video Background"
             checkable: true
             checked: videoBackground.visible
-            exclusiveGroup: backgroundDisplay
             onTriggered:
             {
-                videoBackground.visible = !videoBackground.visible;
-                flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
-                mapBackground.visible = videoBackground.visible ? false : mapBackground.visible;
-                flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
+                enforceExclusiveOption(videoBackground, mapBackground, "showVideoBackground", "showMapBackground");
             }
         }
 
         MenuSeparator {}
 
         MenuItem {
+            text: "Attitude Widget"
+            checkable:  true
+            checked:    attitudeWidget.visible
+            onTriggered:
+            {
+                enforceExclusiveOption(attitudeWidget, attitudeHUD, "showAttitudeWidget", "showAttitudeHUD");
+            }
+        }
+
+        MenuItem {
+            text: "Attitude HUD"
+            checkable:  true
+            checked:    attitudeHUD.visible
+            onTriggered:
+            {
+                enforceExclusiveOption(attitudeHUD, attitudeWidget, "showAttitudeHUD", "showAttitudeWidget");
+            }
+        }
+
+        MenuItem {
             text: "Pitch Indicator"
             checkable:  true
             checked:    showPitchIndicator
+            enabled:    attitudeHUD.visible || attitudeWidget.visible
             onTriggered:
             {
                 showPitchIndicator = !showPitchIndicator;
@@ -176,24 +200,22 @@ Item {
         }
 
         MenuItem {
-            text: "Attitude Indicator"
-            checkable:  true
-            checked:    showAttitudeIndicator
+            text: "Compass Widget"
+            checkable: true
+            checked: compassWidget.visible
             onTriggered:
             {
-                showAttitudeIndicator = !showAttitudeIndicator;
-                flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
+                enforceExclusiveOption(compassWidget, compassHUD, "showCompassWidget", "showCompassHUD");
             }
         }
 
         MenuItem {
-            text: "Compass"
+            text: "Compass HUD"
             checkable: true
-            checked: showCompass
+            checked: compassHUD.visible
             onTriggered:
             {
-                showCompass = !showCompass;
-                flightDisplay.saveSetting("showCompass", setBool(showCompass));
+                enforceExclusiveOption(compassHUD, compassWidget, "showCompassHUD", "showCompassWidget");
             }
         }
 
@@ -271,10 +293,14 @@ Item {
             {
                 showPitchIndicator = true;
                 flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
-                showAttitudeIndicator = true;
-                flightDisplay.saveSetting("showAttitudeIndicator", setBool(showAttitudeIndicator));
-                showCompass = true;
-                flightDisplay.saveSetting("showCompass", setBool(showCompass));
+                attitudeWidget.visible = false;
+                flightDisplay.saveSetting("showAttitudeWidget", setBool(attitudeWidget.visible));
+                attitudeHUD.visible = true;
+                flightDisplay.saveSetting("showAttitudeHUD", setBool(attitudeHUD.visible));
+                compassWidget.visible = false
+                flightDisplay.saveSetting("showCompassWidget", setBool(compassWidget.visible));
+                compassHUD.visible = true
+                flightDisplay.saveSetting("showCompassHUD", setBool(compassHUD.visible));
                 altitudeWidget.visible = true;
                 flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
                 currentAltitude.showAltitude = true;
@@ -299,6 +325,8 @@ Item {
         }
 
     }
+
+    // Video and Map backgrounds are exclusive. If one is enabled the other is disabled.
 
     QGCVideoBackground {
         id:                 videoBackground
@@ -329,13 +357,14 @@ Item {
         z:                  mapBackground.z + 1
     }
 
-    QGCCompassInstrument {
-        id:                 compassInstrument
+    // Floating (Top Left) Compass Widget
+
+    QGCCompassWidget {
+        id:                 compassWidget
         y:                  ScreenTools.defaultFontPixelSize * (0.42)
         x:                  ScreenTools.defaultFontPixelSize * (7.1)
         size:               ScreenTools.defaultFontPixelSize * (13.3)
         heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
-        visible:            showHudInstruments() && showCompass
         z:                  mapBackground.z + 2
         onResetRequested: {
             y               = ScreenTools.defaultFontPixelSize * (0.42)
@@ -346,14 +375,37 @@ Item {
         }
     }
 
-    QGCAttitudeInstrument {
-        id:                 attitudeInstrument
+    // HUD (lower middle) Compass
+
+    QGCCompassHUD {
+        id:                 compassHUD
+        y:                  root.height * 0.7
+        x:                  root.width  * 0.5 - ScreenTools.defaultFontPixelSize * (5)
+        width:              ScreenTools.defaultFontPixelSize * (10)
+        height:             ScreenTools.defaultFontPixelSize * (10)
+        heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
+        z:                  70
+    }
+
+    // Sky/Ground background (visible when no Map or Video is enabled)
+
+    QGCArtificialHorizon {
+        id:                 artificialHoriz
+        anchors.fill:       parent
+        rollAngle:          roll
+        pitchAngle:         pitch
+        visible:            !videoBackground.visible && !mapBackground.visible
+    }
+
+    // Floating (Top Right) Attitude Widget
+
+    QGCAttitudeWidget {
+        id:                 attitudeWidget
         y:                  ScreenTools.defaultFontPixelSize * (0.42)
         size:               ScreenTools.defaultFontPixelSize * (13.3)
         rollAngle:          roll
         pitchAngle:         pitch
         showPitch:          showPitchIndicator
-        visible:            showHudInstruments() && showAttitudeIndicator
         anchors.right:      root.right
         anchors.rightMargin: ScreenTools.defaultFontPixelSize * (7.1)
         z:                  mapBackground.z + 2
@@ -367,33 +419,16 @@ Item {
         }
     }
 
-    QGCArtificialHorizon {
-        id:                 artificialHoriz
-        anchors.fill:       parent
-        rollAngle:          roll
-        pitchAngle:         pitch
-        visible:            !showHudInstruments()
-    }
+    // HUD (center) Attitude Indicator
 
-    QGCAttitudeWidget {
-        id:                 attitudeWidget
+    QGCAttitudeHUD {
+        id:                 attitudeHUD
         rollAngle:          roll
         pitchAngle:         pitch
-        visible:            !showHudInstruments() && showAttitudeIndicator
-        width:              ScreenTools.defaultFontPixelSize * (21.7)
-        height:             ScreenTools.defaultFontPixelSize * (21.7)
+        showPitch:          showPitchIndicator
+        width:              ScreenTools.defaultFontPixelSize * (30)
+        height:             ScreenTools.defaultFontPixelSize * (30)
         z:                  20
-    }
-
-    QGCPitchWidget {
-        id:                 pitchWidget
-        visible:            showPitchIndicator && !showHudInstruments()
-        anchors.verticalCenter: parent.verticalCenter
-        pitchAngle:         pitch
-        rollAngle:          roll
-        color:              Qt.rgba(0,0,0,0)
-        size:               ScreenTools.defaultFontPixelSize * (10)
-        z:                  30
     }
 
     QGCAltitudeWidget {
@@ -436,17 +471,6 @@ Item {
         showClimbRate:      true
         visible:            (currentAltitude.showAltitude || currentAltitude.showClimbRate)
         z:                  60
-    }
-
-    QGCCompass {
-        id:                 compassIndicator
-        y:                  root.height * 0.7
-        x:                  root.width  * 0.5 - ScreenTools.defaultFontPixelSize * (5)
-        width:              ScreenTools.defaultFontPixelSize * (10)
-        height:             ScreenTools.defaultFontPixelSize * (10)
-        heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
-        visible:            !showHudInstruments() && showCompass
-        z:                  70
     }
 
     //- Context Menu

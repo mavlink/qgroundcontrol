@@ -18,6 +18,9 @@
 #include <cmath>
 #include <qmath.h>
 
+#include <limits>
+#include <cstdlib>
+
 #include "UAS.h"
 #include "LinkInterface.h"
 #include "UASManager.h"
@@ -142,6 +145,23 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 
     blockHomePositionChanges(false),
     receivedMode(false),
+
+    // Initialize HIL sensor noise variances to 0.  If user wants corrupted sensor values they will need to set them
+    // Note variances calculated from flight case from this log: http://dash.oznet.ch/view/MRjW8NUNYQSuSZkbn8dEjY
+    // TODO: calibrate stand-still pixhawk variances
+    xacc_var(1.2914f),
+    yacc_var(0.7048f),
+    zacc_var(1.9577f),
+    rollspeed_var(0.8126f),
+    pitchspeed_var(0.6145f),
+    yawspeed_var(0.5852f),
+    xmag_var(0.4786f),
+    ymag_var(0.4566f),
+    zmag_var(0.3333f),
+    abs_pressure_var(1.1604f),
+    diff_pressure_var(1.1604f),
+    pressure_alt_var(1.1604f),
+    temperature_var(1.4290f),
 
 #ifndef __mobile__
     simulation(0),
@@ -2990,6 +3010,42 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
 }
 #endif
 
+#ifndef __mobile__
+float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
+{
+    /* Calculate normally distributed variable noise with mean = 0 and variance = noise_var.  Calculated according to 
+    Box-Muller transform */
+    static const float epsilon = std::numeric_limits<float>::min(); //used to ensure non-zero uniform numbers
+    static const float two_pi = 2.0f * 3.14159265358979323846f; // 2*pi
+    static float z0; //calculated normal distribution random variables with mu = 0, var = 1;
+    float u1, u2;        //random variables generated from c++ rand();
+    
+    /*Generate random variables in range (0 1] */
+    do
+    {
+        //TODO seed rand() with srand(time) but srand(time should be called once on startup)
+        //currently this will generate repeatable random noise
+        u1 = rand() * (1.0 / RAND_MAX);
+        u2 = rand() * (1.0 / RAND_MAX);
+    }
+    while ( u1 <= epsilon );  //Have a catch to ensure non-zero for log()
+
+    z0 = sqrt(-2.0 * log(u1)) * cos(two_pi * u2); //calculate normally distributed variable with mu = 0, var = 1
+    
+    //TODO add bias term that changes randomly to simulate accelerometer and gyro bias the exf should handle these
+    //as well
+    float noise = z0 * (noise_var*noise_var); //calculate normally distributed variable with mu = 0, std = var^2  
+    
+    //Finally gaurd against any case where the noise is not real
+    if(std::isfinite(noise)){
+            return truth_meas + noise;
+    }
+    else{
+        return truth_meas;
+    }
+}
+#endif
+
 /*
 * @param abs_pressure Absolute Pressure (hPa)
 * @param diff_pressure Differential Pressure  (hPa)
@@ -3000,11 +3056,25 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
 {
     if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
+        float xacc_corrupt = addZeroMeanNoise(xacc, xacc_var);
+        float yacc_corrupt = addZeroMeanNoise(yacc, yacc_var);
+        float zacc_corrupt = addZeroMeanNoise(zacc, zacc_var);
+        float rollspeed_corrupt = addZeroMeanNoise(rollspeed,rollspeed_var);
+        float pitchspeed_corrupt = addZeroMeanNoise(pitchspeed,pitchspeed_var);
+        float yawspeed_corrupt = addZeroMeanNoise(yawspeed,yawspeed_var);
+        float xmag_corrupt = addZeroMeanNoise(xmag, xmag_var);
+        float ymag_corrupt = addZeroMeanNoise(ymag, ymag_var);
+        float zmag_corrupt = addZeroMeanNoise(zmag, zmag_var);
+        float abs_pressure_corrupt = addZeroMeanNoise(abs_pressure,abs_pressure_var);
+        float diff_pressure_corrupt = addZeroMeanNoise(diff_pressure, diff_pressure_var);
+        float pressure_alt_corrupt = addZeroMeanNoise(pressure_alt, pressure_alt_var);
+        float temperature_corrupt = addZeroMeanNoise(temperature,temperature_var);
+
         mavlink_message_t msg;
         mavlink_msg_hil_sensor_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
-                                   time_us, xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
-                                     xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature,
-                                     fields_changed);
+                                   time_us, xacc_corrupt, yacc_corrupt, zacc_corrupt, rollspeed_corrupt, pitchspeed_corrupt,
+                                    yawspeed_corrupt, xmag_corrupt, ymag_corrupt, zmag_corrupt, abs_pressure_corrupt, 
+                                    diff_pressure_corrupt, pressure_alt_corrupt, temperature_corrupt, fields_changed);
         sendMessage(msg);
         lastSendTimeSensors = QGC::groundTimeMilliseconds();
     }
