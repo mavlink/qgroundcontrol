@@ -1,19 +1,19 @@
 Module QGroundControl.FlightControls
 
 QGCAltitudeWidget       1.0 QGCAltitudeWidget.qml
+QGCArtificialHorizon    1.0 QGCArtificialHorizon.qml
+QGCAttitudeHUD          1.0 QGCAttitudeHUD.qml
 QGCAttitudeWidget       1.0 QGCAttitudeWidget.qml
-QGCCompass              1.0 QGCCompass.qml
+QGCCompassHUD           1.0 QGCCompassHUD.qml
+QGCCompassWidget        1.0 QGCCompassWidget.qml
 QGCCurrentAltitude      1.0 QGCCurrentAltitude.qml
 QGCCurrentSpeed         1.0 QGCCurrentSpeed.qml
-QGCMapBackground        1.0 QGCMapBackground.qml
-QGCPitchWidget          1.0 QGCPitchWidget.qml
-QGCSpeedWidget          1.0 QGCSpeedWidget.qml
-QGCSlider               1.0 QGCSlider.qml
-QGCWaypointEditor       1.0 QGCWaypointEditor.qml
-QGCMapToolButton        1.0 QGCMapToolButton.qml
-QGCAttitudeInstrument   1.0 QGCAttitudeInstrument.qml
-QGCCompassInstrument    1.0 QGCCompassInstrument.qml
-QGCArtificialHorizon    1.0 QGCArtificialHorizon.qml
-QGCWaypoint             1.0 QGCWaypoint.qml
 QGCHudMessage           1.0 QGCHudMessage.qml
+QGCMapBackground        1.0 QGCMapBackground.qml
+QGCMapToolButton        1.0 QGCMapToolButton.qml
+QGCPitchIndicator       1.0 QGCPitchIndicator.qml
+QGCSlider               1.0 QGCSlider.qml
+QGCSpeedWidget          1.0 QGCSpeedWidget.qml
 QGCVideoBackground      1.0 QGCVideoBackground.qml
+QGCWaypoint             1.0 QGCWaypoint.qml
+QGCWaypointEditor       1.0 QGCWaypointEditor.qml

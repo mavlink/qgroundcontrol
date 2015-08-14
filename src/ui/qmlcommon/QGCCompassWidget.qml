@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief QGC Compass
+ *   @brief QGC Compass Widget
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
