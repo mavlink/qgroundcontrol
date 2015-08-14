@@ -149,19 +149,19 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     // Initialize HIL sensor noise variances to 0.  If user wants corrupted sensor values they will need to set them
     // Note variances calculated from flight case from this log: http://dash.oznet.ch/view/MRjW8NUNYQSuSZkbn8dEjY
     // TODO: calibrate stand-still pixhawk variances
-    xacc_var(1.2914),
-    yacc_var(0.7048),
-    zacc_var(1.9577),
-    rollspeed_var(0.8126),
-    pitchspeed_var(0.6145),
-    yawspeed_var(0.5852),
-    xmag_var(0.4786),
-    ymag_var(0.4566),
-    zmag_var(0.3333),
-    abs_pressure_var(1.1604),
-    diff_pressure_var(1.1604),
-    pressure_alt_var(1.1604),
-    temperature_var(1.4290),
+    xacc_var(1.2914f),
+    yacc_var(0.7048f),
+    zacc_var(1.9577f),
+    rollspeed_var(0.8126f),
+    pitchspeed_var(0.6145f),
+    yawspeed_var(0.5852f),
+    xmag_var(0.4786f),
+    ymag_var(0.4566f),
+    zmag_var(0.3333f),
+    abs_pressure_var(1.1604f),
+    diff_pressure_var(1.1604f),
+    pressure_alt_var(1.1604f),
+    temperature_var(1.4290f),
 
 #ifndef __mobile__
     simulation(0),
@@ -3005,7 +3005,7 @@ float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
     /* Calculate normally distributed variable noise with mean = 0 and variance = noise_var.  Calculated according to 
     Box-Muller transform */
     static const float epsilon = std::numeric_limits<float>::min(); //used to ensure non-zero uniform numbers
-    static const float two_pi = 2.0*3.14159265358979323846; // 2*pi
+    static const float two_pi = 2.0f * 3.14159265358979323846f; // 2*pi
     static float z0; //calculated normal distribution random variables with mu = 0, var = 1;
     float u1, u2;        //random variables generated from c++ rand();
     
