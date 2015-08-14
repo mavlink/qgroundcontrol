@@ -78,6 +78,10 @@ void QGCMissionNavFollow::changedSysFollow(int newIndex)
 
 void QGCMissionNavFollow::FollowWaypointUpdate(UASInterface* SenderUAS, double lat, double lon, double altAMSL, double altWGS84, quint64 usec)
 {
+	Q_UNUSED(usec);
+	Q_UNUSED(altAMSL);
+	Q_UNUSED(SenderUAS);
+
 	//TODO Transform all this into relative coordinates w.r.t. home position later on.
 	
 	if (lastWPUpdate.elapsed() > ui->UpdateTimedoubleSpinBox->value()*1000.0) {
