@@ -58,7 +58,8 @@ bool RadioComponent::requiresSetup(void) const
 
 bool RadioComponent::setupComplete(void) const
 {
-    // Check for mapped attitude controls
+    // The best we can do to detect the need for a radio calibration is look for attitude
+    // controls to be mapped.
     QStringList attitudeMappings;
     attitudeMappings << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
     foreach(QString mapParam, attitudeMappings) {
@@ -85,9 +86,6 @@ QString RadioComponent::setupStateDescription(void) const
 QStringList RadioComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
-    
-    // The best we can do to detect the need for a radio calibration is look for attitude
-    // controls to be mapped.
     
     triggers << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
     
