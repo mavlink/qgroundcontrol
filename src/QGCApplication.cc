@@ -772,3 +772,13 @@ MavManager* QGCApplication::getMavManager()
 {
     return _pMavManager;
 }
+
+void QGCApplication::showToolBarMessage(const QString& message)
+{
+    MainWindow* mainWindow = MainWindow::instance();
+    if (mainWindow) {
+        mainWindow->getMainToolBar()->showToolBarMessage(message);
+    } else {
+        QGCMessageBox::information("", message);
+    }
+}
