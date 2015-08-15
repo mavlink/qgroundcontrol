@@ -91,6 +91,8 @@ public:
     int         telemetryLRSSI          () { return _telemetryLRSSI; }
     int         connectionCount         () { return _connectionCount; }
     
+    void showToolBarMessage(const QString& message) { emit showMessage(message); }
+    
 signals:
     void connectionCountChanged         (int count);
     void currentViewChanged             ();

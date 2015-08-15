@@ -45,7 +45,10 @@ Rectangle {
 
     readonly property real toolBarHeight:   ScreenTools.defaultFontPixelHeight * 3
     property int cellSpacerSize:            ScreenTools.isMobile ? getProportionalDimmension(6) : getProportionalDimmension(4)
-    readonly property int cellHeight:       getProportionalDimmension(30)
+    readonly property int cellHeight:       toolBarHeight * 0.75
+
+    readonly property real horizontalMargins:   ScreenTools.defaultFontPixelWidth / 2
+    readonly property real verticalMargins:     ScreenTools.defaultFontPixelHeight / 4
 
     readonly property var colorBlue:    "#1a6eaa"
     readonly property var colorGreen:   "#329147"
@@ -62,7 +65,12 @@ Rectangle {
 
     Connections {
         target: mainToolBar
-        onShowMessage: mainToolBar.height = 100
+
+        onShowMessage: {
+            toolBarMessage.text = message
+            mainToolBar.height = toolBarHeight + toolBarMessage.contentHeight + verticalMargins
+            toolBarMessageArea.visible = true
+        }
     }
 
     function getProportionalDimmension(val) {
@@ -183,24 +191,24 @@ Rectangle {
                 mainToolBar.onFlyViewMenu();
             }
         }
-    }
+    } // Menu
 
     Row {
-        id:                     row1
-        height:                 cellHeight
-        anchors.left:           parent.left
-        spacing:                getProportionalDimmension(4)
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin:     getProportionalDimmension(10)
+        id:         toolRow
+        x:          horizontalMargins
+        y:          (toolBarHeight - cellHeight) / 2
+        height:     cellHeight
+        spacing:    getProportionalDimmension(4)
 
         //---------------------------------------------------------------------
         //-- Main menu for Non Mobile Devices (Chevron Buttons)
         Row {
-            id:                     row11
-            height:                 cellHeight
-            spacing:                -getProportionalDimmension(12)
-            anchors.verticalCenter: parent.verticalCenter
-            visible:                !ScreenTools.isMobile
+            id:             row11
+            height:         cellHeight
+            spacing:        -getProportionalDimmension(12)
+            anchors.top:    parent.top
+            visible:        !ScreenTools.isMobile
+
             Connections {
                 target: ScreenTools
                 onRepaintRequested: {
@@ -219,7 +227,6 @@ Rectangle {
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
                 text: qsTr("Setup")
-                anchors.verticalCenter: parent.verticalCenter
                 checked: (mainToolBar.currentView === MainToolBar.ViewSetup)
                 onClicked: {
                     mainToolBar.onSetupView();
@@ -233,7 +240,6 @@ Rectangle {
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
                 text: qsTr("Plan")
-                anchors.verticalCenter: parent.verticalCenter
                 checked: (mainToolBar.currentView === MainToolBar.ViewPlan)
                 onClicked: {
                     mainToolBar.onPlanView();
@@ -247,7 +253,6 @@ Rectangle {
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
                 text: qsTr("Fly")
-                anchors.verticalCenter: parent.verticalCenter
                 checked: (mainToolBar.currentView === MainToolBar.ViewFly)
                 onClicked: {
                     mainToolBar.onFlyView();
@@ -261,15 +266,13 @@ Rectangle {
                 height: cellHeight
                 exclusiveGroup: mainActionGroup
                 text: qsTr("Analyze")
-                anchors.verticalCenter: parent.verticalCenter
                 checked: (mainToolBar.currentView === MainToolBar.ViewAnalyze)
                 onClicked: {
                     mainToolBar.onAnalyzeView();
                 }
                 z: 700
             }
-
-        }
+        } // Row
 
         //---------------------------------------------------------------------
         //-- Indicators
@@ -673,17 +676,17 @@ Rectangle {
                     color: colorRedText
                 }
             }
-        }
-    }
+        } // Row
+    } // Row
 
     Row {
-        id: row2
-        height: cellHeight
-        spacing: cellSpacerSize
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin:  getProportionalDimmension(10)
-        anchors.rightMargin: getProportionalDimmension(10)
+        id:                     connectRow
+        anchors.rightMargin:    verticalMargins
+        anchors.right:          parent.right
+        anchors.top:            toolRow.top
+        anchors.verticalCenter: toolRow.verticalCenter
+        height:                 toolRow.height
+        spacing:                cellSpacerSize
 
         Menu {
             id: connectMenu
@@ -718,7 +721,6 @@ Rectangle {
             visible:    mainToolBar.connectionCount === 0
             text:       qsTr("Connect")
             menu:       connectMenu
-            anchors.verticalCenter: parent.verticalCenter
         }
 
         QGCButton {
@@ -726,7 +728,6 @@ Rectangle {
             width:      getProportionalDimmension(100)
             visible:    mainToolBar.connectionCount === 1
             text:       qsTr("Disconnect")
-            anchors.verticalCenter: parent.verticalCenter
             onClicked: {
                 mainToolBar.onDisconnect("");
             }
@@ -756,18 +757,47 @@ Rectangle {
             text:       "Disconnect"
             visible:    mainToolBar.connectionCount > 1
             menu:       disconnectMenu
-            anchors.verticalCenter: parent.verticalCenter
         }
-
-    }
+    } // Row
 
     // Progress bar
     Rectangle {
-        readonly property int progressBarHeight: getProportionalDimmension(3)
-        y:      parent.height  - progressBarHeight
-        height: progressBarHeight
-        width:  parent.width * mainToolBar.progressBarValue
-        color:  qgcPal.text
+        id:             progressBar
+        anchors.top:    toolRow.bottom
+        height:         getProportionalDimmension(3)
+        width:          parent.width * mainToolBar.progressBarValue
+        color:          qgcPal.text
     }
-}
 
+    // Toolbar message area
+    Rectangle {
+        id:                 toolBarMessageArea
+        anchors.margins:    horizontalMargins
+        anchors.top:        progressBar.bottom
+        anchors.bottom:     parent.bottom
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        color:              qgcPal.windowShadeDark
+        visible:            false
+
+        QGCLabel {
+            id:             toolBarMessage
+            anchors.fill:   parent
+            wrapMode:       Text.WordWrap
+        }
+
+        QGCButton {
+            id:                     toolBarMessageCloseButton
+            anchors.rightMargin:    horizontalMargins
+            anchors.topMargin:      verticalMargins
+            anchors.top:            parent.top
+            anchors.right:          parent.right
+            text:                   "Close Message"
+
+            onClicked: {
+                parent.visible = false
+                mainToolBar.height = toolBarHeight
+            }
+        }
+    }
+} // Rectangle
