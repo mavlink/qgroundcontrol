@@ -144,6 +144,7 @@ public:
     }
     // MAV_CMD
     int getAction() const {
+        if (_action == MAV_CMD_NAV_FOLLOW) return MAV_CMD_NAV_LOITER_UNLIM; //Note: Only temporary
         return _action;
     }
     const QString& getName() const {

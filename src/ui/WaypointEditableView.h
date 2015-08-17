@@ -54,6 +54,7 @@ class QGCMissionNavReturnToLaunch;
 class QGCMissionNavLand;
 class QGCMissionNavTakeoff;
 class QGCMissionNavSweep;
+class QGCMissionNavFollow;
 class QGCMissionDoJump;
 class QGCMissionDoStartSearch;
 class QGCMissionDoFinishSearch;
@@ -110,6 +111,7 @@ protected:
     QGCMissionNavLand* MissionNavLandWidget;
     QGCMissionNavTakeoff* MissionNavTakeoffWidget;
     QGCMissionNavSweep* MissionNavSweepWidget;
+    QGCMissionNavFollow* MissionNavFollowWidget;
     QGCMissionDoJump* MissionDoJumpWidget;
     QGCMissionDoStartSearch* MissionDoStartSearchWidget;
     QGCMissionDoFinishSearch* MissionDoFinishSearchWidget;

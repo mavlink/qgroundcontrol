@@ -179,6 +179,7 @@ FORMS += \
     src/ui/mission/QGCMissionNavSweep.ui \
     src/ui/mission/QGCMissionNavTakeoff.ui \
     src/ui/mission/QGCMissionNavWaypoint.ui \
+    src/ui/mission/QGCMissionNavFollow.ui \
     src/ui/mission/QGCMissionOther.ui \
     src/ui/QGCCommConfiguration.ui \
     src/ui/QGCDataPlot2D.ui \
@@ -301,6 +302,7 @@ HEADERS += \
     src/ui/mission/QGCMissionNavSweep.h \
     src/ui/mission/QGCMissionNavTakeoff.h \
     src/ui/mission/QGCMissionNavWaypoint.h \
+    src/ui/mission/QGCMissionNavFollow.h \
     src/ui/mission/QGCMissionOther.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCDataPlot2D.h \
@@ -433,6 +435,7 @@ SOURCES += \
     src/ui/mission/QGCMissionNavSweep.cc \
     src/ui/mission/QGCMissionNavTakeoff.cc \
     src/ui/mission/QGCMissionNavWaypoint.cc \
+    src/ui/mission/QGCMissionNavFollow.cc \
     src/ui/mission/QGCMissionOther.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCDataPlot2D.cc \

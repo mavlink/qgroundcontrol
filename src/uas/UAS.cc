@@ -1415,23 +1415,34 @@ void UAS::setHomePosition(double lat, double lon, double alt)
                                                                  QMessageBox::Cancel);
     if (button == QMessageBox::Yes)
     {
-        mavlink_message_t msg;
-        mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_DO_SET_HOME, 1, 0, 0, 0, 0, lat, lon, alt);
-        // Send message twice to increase chance that it reaches its goal
-        sendMessage(msg);
-
-        // Send new home position to UAS
-        mavlink_set_gps_global_origin_t home;
-        home.target_system = uasId;
-        home.latitude = lat*1E7;
-        home.longitude = lon*1E7;
-        home.altitude = alt*1000;
-        qDebug() << "lat:" << home.latitude << " lon:" << home.longitude;
-        mavlink_msg_set_gps_global_origin_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &home);
-        sendMessage(msg);
+        setHomePositionSilent(lat, lon, alt);
     } else {
         blockHomePositionChanges = true;
     }
+}
+
+/**
+* Set the home position of the UAS, but silently without asking the user for re-verification.
+* @param lat The latitude fo the home position
+* @param lon The longitude of the home position
+* @param alt The altitude of the home position
+*/
+void UAS::setHomePositionSilent(double lat, double lon, double alt)
+{
+	mavlink_message_t msg;
+	mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_DO_SET_HOME, 1, 0, 0, 0, 0, lat, lon, alt);
+	// Send message twice to increase chance that it reaches its goal
+	sendMessage(msg);
+
+	// Send new home position to UAS
+	mavlink_set_gps_global_origin_t home;
+	home.target_system = uasId;
+	home.latitude = lat*1E7;
+	home.longitude = lon*1E7;
+	home.altitude = alt * 1000;
+	qDebug() << "lat:" << home.latitude << " lon:" << home.longitude;
+	mavlink_msg_set_gps_global_origin_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &home);
+	sendMessage(msg);
 }
 
 /**
