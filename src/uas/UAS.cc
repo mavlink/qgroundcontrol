@@ -1415,7 +1415,7 @@ void UAS::setHomePosition(double lat, double lon, double alt)
                                                                  QMessageBox::Cancel);
     if (button == QMessageBox::Yes)
     {
-		setHomePositionSilent(lat, lon, alt);
+        setHomePositionSilent(lat, lon, alt);
     } else {
         blockHomePositionChanges = true;
     }

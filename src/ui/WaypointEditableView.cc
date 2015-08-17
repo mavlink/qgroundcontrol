@@ -60,7 +60,7 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     MissionNavLandWidget = NULL;
     MissionNavTakeoffWidget = NULL;
     MissionNavSweepWidget = NULL;
-	MissionNavFollowWidget = NULL;
+    MissionNavFollowWidget = NULL;
     MissionConditionDelayWidget = NULL;
     MissionDoJumpWidget = NULL;
     MissionDoStartSearchWidget = NULL;
@@ -76,7 +76,7 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_action->addItem(tr("NAV: Loiter Turns"),MAV_CMD_NAV_LOITER_TURNS);
     m_ui->comboBox_action->addItem(tr("NAV: Ret. to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
     m_ui->comboBox_action->addItem(tr("NAV: Land"),MAV_CMD_NAV_LAND);
-	m_ui->comboBox_action->addItem(tr("NAV: Follow"), MAV_CMD_NAV_FOLLOW);
+    m_ui->comboBox_action->addItem(tr("NAV: Follow"), MAV_CMD_NAV_FOLLOW);
     //m_ui->comboBox_action->addItem(tr("NAV: Target"),MAV_CMD_NAV_TARGET);
     m_ui->comboBox_action->addItem(tr("IF: Delay over"),MAV_CMD_CONDITION_DELAY);
     //m_ui->comboBox_action->addItem(tr("IF: Yaw angle is"),MAV_CMD_CONDITION_YAW);
@@ -153,7 +153,7 @@ void WaypointEditableView::updateActionView(int action)
     if(MissionNavLandWidget) MissionNavLandWidget->hide();
     if(MissionNavTakeoffWidget) MissionNavTakeoffWidget->hide();
     if(MissionNavSweepWidget) MissionNavSweepWidget->hide();
-	if(MissionNavFollowWidget) MissionNavFollowWidget->hide();
+    if(MissionNavFollowWidget) MissionNavFollowWidget->hide();
     if(MissionConditionDelayWidget) MissionConditionDelayWidget->hide();
     if(MissionDoJumpWidget) MissionDoJumpWidget->hide();
     if(MissionDoStartSearchWidget) MissionDoStartSearchWidget->hide();
@@ -185,9 +185,9 @@ void WaypointEditableView::updateActionView(int action)
         case MAV_CMD_NAV_TAKEOFF:
             if(MissionNavTakeoffWidget) MissionNavTakeoffWidget->show();
             break;
-		case MAV_CMD_NAV_FOLLOW:
-			if (MissionNavFollowWidget) MissionNavFollowWidget->show();
-			break;
+        case MAV_CMD_NAV_FOLLOW:
+            if (MissionNavFollowWidget) MissionNavFollowWidget->show();
+            break;
         case MAV_CMD_CONDITION_DELAY:
             if(MissionConditionDelayWidget) MissionConditionDelayWidget->show();
             break;
@@ -232,11 +232,11 @@ void WaypointEditableView::changedAction(int index)
 
 void WaypointEditableView::initializeActionView(int actionID)
 {
-	//remove old action-widgets if necessary
-	delete MissionNavFollowWidget;
-	MissionNavFollowWidget = NULL;
-	
-	//initialize a new action-widget, if needed.
+    //remove old action-widgets if necessary
+    delete MissionNavFollowWidget;
+    MissionNavFollowWidget = NULL;
+    
+    //initialize a new action-widget, if needed.
     switch(actionID) {
     case MAV_CMD_NAV_WAYPOINT:
         if (!MissionNavWaypointWidget)
@@ -287,13 +287,13 @@ void WaypointEditableView::initializeActionView(int actionID)
             m_ui->customActionWidget->layout()->addWidget(MissionNavTakeoffWidget);
         }
         break;
-	case MAV_CMD_NAV_FOLLOW:
-		if (!MissionNavFollowWidget)
-		{
-			MissionNavFollowWidget = new QGCMissionNavFollow(this);
-			m_ui->customActionWidget->layout()->addWidget(MissionNavFollowWidget);
-		}
-		break;
+    case MAV_CMD_NAV_FOLLOW:
+        if (!MissionNavFollowWidget)
+        {
+            MissionNavFollowWidget = new QGCMissionNavFollow(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionNavFollowWidget);
+        }
+        break;
     case MAV_CMD_CONDITION_DELAY:
         if (!MissionConditionDelayWidget)
         {

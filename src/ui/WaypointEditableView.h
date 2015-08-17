@@ -111,7 +111,7 @@ protected:
     QGCMissionNavLand* MissionNavLandWidget;
     QGCMissionNavTakeoff* MissionNavTakeoffWidget;
     QGCMissionNavSweep* MissionNavSweepWidget;
-	QGCMissionNavFollow* MissionNavFollowWidget;
+    QGCMissionNavFollow* MissionNavFollowWidget;
     QGCMissionDoJump* MissionDoJumpWidget;
     QGCMissionDoStartSearch* MissionDoStartSearchWidget;
     QGCMissionDoFinishSearch* MissionDoFinishSearchWidget;

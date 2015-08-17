@@ -908,8 +908,8 @@ public slots:
     void setLocalOriginAtCurrentGPSPosition();
     /** @brief Set world frame origin / home position at this GPS position */
     void setHomePosition(double lat, double lon, double alt);
-	/** @brief Set world frame origin / home position at this GPS position, but silently without user input */
-	void setHomePositionSilent(double lat, double lon, double alt);
+    /** @brief Set world frame origin / home position at this GPS position, but silently without user input */
+    void setHomePositionSilent(double lat, double lon, double alt);
     /** @brief Set local position setpoint */
     void setLocalPositionSetpoint(float x, float y, float z, float yaw);
     /** @brief Add an offset in body frame to the setpoint */

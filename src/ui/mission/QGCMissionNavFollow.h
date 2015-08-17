@@ -19,26 +19,26 @@ public:
 
 public slots:
     void updateFrame(MAV_FRAME);
-	void changedSysFollow(int);
-	void changedUASList(void);
-	void FollowWaypointUpdate(UASInterface* SenderUAS, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
+    void changedSysFollow(int);
+    void changedUASList(void);
+    void FollowWaypointUpdate(UASInterface* SenderUAS, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
 
-	void changedRelN(double);
-	void changedRelE(double);
-	void changedRelAlt(double);
+    void changedRelN(double);
+    void changedRelE(double);
+    void changedRelAlt(double);
 
 protected:
     WaypointEditableView* WEV;
 
-	double m_RelN;
-	double m_RelE;
-	double m_RelAlt;
+    double m_RelN;
+    double m_RelE;
+    double m_RelAlt;
 
-	QTime lastWPUpdate;
+    QTime lastWPUpdate;
 
 private:
     Ui::QGCMissionNavFollow *ui;
-	UASManagerInterface* uasMgr;
+    UASManagerInterface* uasMgr;
 };
 
 #endif // QGCMISSIONNAVFOLLOW_H
