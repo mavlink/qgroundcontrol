@@ -168,6 +168,7 @@ signals:
 private slots:
     void _startProtocolTimerOnThisThread(void);                 ///< Starts the protocol timer
     void _stopProtocolTimerOnThisThread(void);                 ///< Starts the protocol timer
+    void _updateWPonTimer(void);                               ///< Starts requesting WP on timer timeout
 
 private:
     UAS* uas;                                       ///< Reference to the corresponding UAS
@@ -184,6 +185,7 @@ private:
     QPointer<Waypoint> currentWaypointEditable;                      ///< The currently used waypoint
     QList<mavlink_mission_item_t *> waypoint_buffer;  ///< buffer for waypoints during communication
     QTimer protocol_timer;                          ///< Timer to catch timeouts
+    QTimer _updateWPlist_timer;                     ///< update WP list if modified by another instance onboard
     bool standalone;                                ///< If standalone is set, do not write to UAS
     int uasid;                                   ///< The ID of the current UAS. Retrieved via `uas->getUASID();`, stored as an `int` to match its return type.
 
