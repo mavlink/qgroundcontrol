@@ -69,19 +69,20 @@ public:
     Q_INVOKABLE void    onDisconnect(QString conf);
     Q_INVOKABLE void    onEnterMessageArea(int x, int y);
 
-    Q_PROPERTY(ViewType_t    currentView        MEMBER _currentView             NOTIFY currentViewChanged)
-    Q_PROPERTY(QStringList   configList         MEMBER _linkConfigurations      NOTIFY configListChanged)
-    Q_PROPERTY(int           connectionCount    READ connectionCount            NOTIFY connectionCountChanged)
-    Q_PROPERTY(QStringList   connectedList      MEMBER _connectedList           NOTIFY connectedListChanged)
-    Q_PROPERTY(bool          showGPS            MEMBER _showGPS                 NOTIFY showGPSChanged)
-    Q_PROPERTY(bool          showMav            MEMBER _showMav                 NOTIFY showMavChanged)
-    Q_PROPERTY(bool          showMessages       MEMBER _showMessages            NOTIFY showMessagesChanged)
-    Q_PROPERTY(bool          showBattery        MEMBER _showBattery             NOTIFY showBatteryChanged)
-    Q_PROPERTY(bool          showRSSI           MEMBER _showRSSI                NOTIFY showRSSIChanged)
-    Q_PROPERTY(float         progressBarValue   MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
-    Q_PROPERTY(int           remoteRSSI         READ remoteRSSI                 NOTIFY remoteRSSIChanged)
-    Q_PROPERTY(int           telemetryRRSSI     READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
-    Q_PROPERTY(int           telemetryLRSSI     READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
+    Q_PROPERTY(double       height              MEMBER _toolbarHeight           NOTIFY heightChanged)
+    Q_PROPERTY(ViewType_t   currentView         MEMBER _currentView             NOTIFY currentViewChanged)
+    Q_PROPERTY(QStringList  configList          MEMBER _linkConfigurations      NOTIFY configListChanged)
+    Q_PROPERTY(int          connectionCount     READ connectionCount            NOTIFY connectionCountChanged)
+    Q_PROPERTY(QStringList  connectedList       MEMBER _connectedList           NOTIFY connectedListChanged)
+    Q_PROPERTY(bool         showGPS             MEMBER _showGPS                 NOTIFY showGPSChanged)
+    Q_PROPERTY(bool         showMav             MEMBER _showMav                 NOTIFY showMavChanged)
+    Q_PROPERTY(bool         showMessages        MEMBER _showMessages            NOTIFY showMessagesChanged)
+    Q_PROPERTY(bool         showBattery         MEMBER _showBattery             NOTIFY showBatteryChanged)
+    Q_PROPERTY(bool         showRSSI            MEMBER _showRSSI                NOTIFY showRSSIChanged)
+    Q_PROPERTY(float        progressBarValue    MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
+    Q_PROPERTY(int          remoteRSSI          READ remoteRSSI                 NOTIFY remoteRSSIChanged)
+    Q_PROPERTY(int          telemetryRRSSI      READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
+    Q_PROPERTY(int          telemetryLRSSI      READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
 
     void        setCurrentView          (int currentView);
     void        viewStateChanged        (const QString& key, bool value);
@@ -89,7 +90,9 @@ public:
     int         telemetryRRSSI          () { return _telemetryRRSSI; }
     int         telemetryLRSSI          () { return _telemetryLRSSI; }
     int         connectionCount         () { return _connectionCount; }
-
+    
+    void showToolBarMessage(const QString& message) { emit showMessage(message); }
+    
 signals:
     void connectionCountChanged         (int count);
     void currentViewChanged             ();
@@ -104,6 +107,10 @@ signals:
     void remoteRSSIChanged              (int value);
     void telemetryRRSSIChanged          (int value);
     void telemetryLRSSIChanged          (int value);
+    void heightChanged                  (double height);
+    
+    /// Shows a non-modal message below the toolbar
+    void showMessage(const QString& message);
 
 private slots:
     void _forgetUAS                     (UASInterface* uas);
@@ -115,6 +122,7 @@ private slots:
     void _setProgressBarValue           (float value);
     void _remoteControlRSSIChanged      (uint8_t rssi);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
+    void _heightChanged                 (double height);
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
@@ -137,6 +145,7 @@ private:
     double          _remoteRSSIstore;
     int             _telemetryRRSSI;
     int             _telemetryLRSSI;
+    double          _toolbarHeight;
 
     UASMessageViewRollDown* _rollDownMessages;
 };

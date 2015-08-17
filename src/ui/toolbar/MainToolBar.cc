@@ -92,6 +92,8 @@ MainToolBar::MainToolBar(QWidget* parent)
         SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)),   this, SLOT(_forgetUAS(UASInterface*)));
+    
+    connect(this, &MainToolBar::heightChanged, this, &MainToolBar::_heightChanged);
 }
 
 MainToolBar::~MainToolBar()
@@ -395,4 +397,10 @@ void MainToolBar::_setProgressBarValue(float value)
 {
     _progressBarValue = value;
     emit progressBarValueChanged(value);
+}
+
+void MainToolBar::_heightChanged(double height)
+{
+    setMinimumHeight(height);
+    setMaximumHeight(height);
 }
