@@ -107,6 +107,9 @@ public:
     /// MavManager accessor
     MavManager* getMavManager();
     
+    /// Show a non-modal message to the user
+    void showToolBarMessage(const QString& message);
+    
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);

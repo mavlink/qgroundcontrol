@@ -758,20 +758,25 @@ void ParameterLoader::_checkInitialLoadComplete(void)
     UASMessageHandler* msgHandler = UASMessageHandler::instance();
     if (msgHandler->getErrorCountTotal()) {
         QString errors;
+        bool firstError = true;
         
         msgHandler->lockAccess();
         foreach (UASMessage* msg, msgHandler->messages()) {
             if (msg->severityIsError()) {
+                if (!firstError) {
+                    errors += "\n";
+                }
+                errors += " - ";
                 errors += msg->getText();
-                errors += "\n";
+                firstError = false;
             }
         }
         msgHandler->unlockAccess();
         
-        QGCMessageBox::critical("Vehicle startup errors",
-                                QString("Errors were detected during vehicle startup:\n"
-                                        "%1"
-                                        "You should resolve these prior to flight.").arg(errors));
+        if (!firstError) {
+            QString errorMsg = QString("Errors were detected during vehicle startup. You should resolve these prior to flight.\n%1").arg(errors);
+            qgcApp()->showToolBarMessage(errorMsg);
+        }
     }
     
     // Warn of parameter load failure

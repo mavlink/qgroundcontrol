@@ -60,6 +60,9 @@ public:
     bool setSource(const QUrl& qmlUrl);
 
     void setContextPropertyObject(const QString& name, QObject* object);
+    
+    /// Sets the resize mode for the QQuickWidget container
+    void setResizeMode(QQuickWidget::ResizeMode resizeMode);
 
 private:
     Ui::QGCQmlWidgetHolder _ui;
