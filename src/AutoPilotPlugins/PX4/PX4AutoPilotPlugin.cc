@@ -273,35 +273,47 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         Q_ASSERT(_uas);
         
-        _airframeComponent = new AirframeComponent(_uas, this);
-        Q_CHECK_PTR(_airframeComponent);
-        _airframeComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
-        
-        _radioComponent = new RadioComponent(_uas, this);
-        Q_CHECK_PTR(_radioComponent);
-        _radioComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
-        
-        _flightModesComponent = new FlightModesComponent(_uas, this);
-        Q_CHECK_PTR(_flightModesComponent);
-        _flightModesComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
-        
-        _sensorsComponent = new SensorsComponent(_uas, this);
-        Q_CHECK_PTR(_sensorsComponent);
-        _sensorsComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
+        if (pluginReady()) {
+            bool noRCTransmitter = false;
+            if (parameterExists(FactSystem::defaultComponentId, "COM_RC_IN_MODE")) {
+                Fact* rcFact = getParameterFact(FactSystem::defaultComponentId, "COM_RC_IN_MODE");
+                noRCTransmitter = rcFact->value().toInt() == 1;
+            }
 
-        _powerComponent = new PowerComponent(_uas, this);
-        Q_CHECK_PTR(_powerComponent);
-        _powerComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
-
-        _safetyComponent = new SafetyComponent(_uas, this);
-        Q_CHECK_PTR(_safetyComponent);
-        _safetyComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+            _airframeComponent = new AirframeComponent(_uas, this);
+            Q_CHECK_PTR(_airframeComponent);
+            _airframeComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+            
+            if (!noRCTransmitter) {
+                _radioComponent = new RadioComponent(_uas, this);
+                Q_CHECK_PTR(_radioComponent);
+                _radioComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
+                
+                _flightModesComponent = new FlightModesComponent(_uas, this);
+                Q_CHECK_PTR(_flightModesComponent);
+                _flightModesComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+            }
+            
+            _sensorsComponent = new SensorsComponent(_uas, this);
+            Q_CHECK_PTR(_sensorsComponent);
+            _sensorsComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
+            
+            _powerComponent = new PowerComponent(_uas, this);
+            Q_CHECK_PTR(_powerComponent);
+            _powerComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
+            
+            _safetyComponent = new SafetyComponent(_uas, this);
+            Q_CHECK_PTR(_safetyComponent);
+            _safetyComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+        } else {
+            qWarning() << "Call to vehicleCompenents prior to pluginReady";
+        }
     }
     
     return _components;
