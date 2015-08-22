@@ -263,6 +263,37 @@ QGCView {
                 }
             }
 
+            QGCLabel {
+                text:           "UAVCAN ESC Configuration"
+                font.pixelSize: ScreenTools.mediumFontPixelSize
+            }
+
+            Rectangle {
+                width:              parent.width
+                height:             140
+                color:              palette.windowShade
+
+                Column {
+                    anchors.margins:    10
+                    anchors.fill:       parent
+                    spacing:            10
+
+                    QGCLabel {
+                        color:  "yellow"
+                        text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</font>"
+                    }
+
+                    QGCLabel {
+                        text: "You must use USB connection for this operation."
+                    }
+
+                    QGCButton {
+                        text:       "Configure"
+                        onClicked:  controller.busConfigureActuators()
+                    }
+                }
+            }
+
             /*
              * This is disabled for now
             Row {
