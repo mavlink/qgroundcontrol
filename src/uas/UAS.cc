@@ -1515,6 +1515,9 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
         case StartCalibrationEsc:
             escCal = 1;
             break;
+        case StartCalibrationUavcanEsc:
+            escCal = 2;
+            break;
     }
     
     mavlink_message_t msg;
@@ -1552,6 +1555,54 @@ void UAS::stopCalibration(void)
                                   0,                                // accel cal
                                   0,                                // airspeed cal
                                   0);                               // unused
+    sendMessage(msg);
+}
+
+void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
+{
+    int actuatorCal = 0;
+
+    switch (calType) {
+        case StartBusConfigActuators:
+            actuatorCal = 1;
+            break;
+    }
+
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack(mavlink->getSystemId(),
+                                  mavlink->getComponentId(),
+                                  &msg,
+                                  uasId,
+                                  0,                                // target component
+                                  MAV_CMD_PREFLIGHT_UAVCAN,    // command id
+                                  0,                                // 0=first transmission of command
+                                  actuatorCal,                      // actuators
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0);
+    sendMessage(msg);
+}
+
+void UAS::stopBusConfig(void)
+{
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack(mavlink->getSystemId(),
+                                  mavlink->getComponentId(),
+                                  &msg,
+                                  uasId,
+                                  0,                                // target component
+                                  MAV_CMD_PREFLIGHT_UAVCAN,    // command id
+                                  0,                                // 0=first transmission of command
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0,
+                                  0);
     sendMessage(msg);
 }
 
