@@ -249,7 +249,12 @@ public:
         StartCalibrationAccel,
         StartCalibrationLevel,
         StartCalibrationEsc,
-        StartCalibrationCopyTrims
+        StartCalibrationCopyTrims,
+        StartCalibrationUavcanEsc
+    };
+
+    enum StartBusConfigType {
+        StartBusConfigActuators
     };
     
     /// Starts the specified calibration
@@ -257,6 +262,12 @@ public:
     
     /// Ends any current calibration
     virtual void stopCalibration(void) = 0;
+
+    /// Starts the specified bus configuration
+    virtual void startBusConfig(StartBusConfigType calType) = 0;
+
+    /// Ends any current bus configuration
+    virtual void stopBusConfig(void) = 0;
 
 public slots:
 

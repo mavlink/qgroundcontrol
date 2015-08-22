@@ -916,6 +916,9 @@ public slots:
     void startCalibration(StartCalibrationType calType);
     void stopCalibration(void);
 
+    void startBusConfig(StartBusConfigType calType);
+    void stopBusConfig(void);
+
     void startDataRecording();
     void stopDataRecording();
     void deleteSettings();
