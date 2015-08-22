@@ -146,7 +146,7 @@
      </property>
      <item>
       <property name="text">
-       <string>mavlink.droneos.com:14555</string>
+       <string>dronelink.io:14555</string>
       </property>
      </item>
      <item>
@@ -236,7 +236,7 @@
    <item row="15" column="0" colspan="3">
     <widget class="QCheckBox" name="droneOSCheckBox">
      <property name="text">
-      <string>Forward MAVLink packets of all links to http://droneos.com</string>
+      <string>Forward MAVLink packets of all links to the host below</string>
      </property>
     </widget>
    </item>
@@ -280,7 +280,7 @@
    <item row="16" column="1" colspan="2">
     <widget class="QLineEdit" name="droneOSLineEdit">
      <property name="text">
-      <string>Enter your DroneOS API Token/Key</string>
+      <string>Enter your authentication token</string>
      </property>
      <property name="maxLength">
       <number>32</number>
