@@ -82,7 +82,10 @@ public:
     Q_INVOKABLE int mouseX(void) { return QCursor::pos().x(); }
     Q_INVOKABLE int mouseY(void) { return QCursor::pos().y(); }
     
-    // Used to calculate font sizes based on default font size
+	// Used to adjust default font size on an OS basis
+	Q_PROPERTY(double defaultFontPixelSizeRatio   MEMBER _defaultFontPixelSizeRatio     CONSTANT)
+
+	// Used to calculate font sizes based on default font size
     Q_PROPERTY(double smallFontPixelSizeRatio   MEMBER _smallFontPixelSizeRatio     CONSTANT)
     Q_PROPERTY(double mediumFontPixelSizeRatio  MEMBER _mediumFontPixelSizeRatio    CONSTANT)
     Q_PROPERTY(double largeFontPixelSizeRatio   MEMBER _largeFontPixelSizeRatio     CONSTANT)
@@ -92,7 +95,7 @@ public:
     static double getQmlDefaultFontPixelSize(void);
 
     static int  defaultFontPixelSize_s()    { return (int)getQmlDefaultFontPixelSize(); }
-    static int  smallFontPixelSize_s()      { return (int)((double)defaultFontPixelSize_s() * _smallFontPixelSizeRatio); }
+	static int  smallFontPixelSize_s()      { return (int)((double)defaultFontPixelSize_s() * _smallFontPixelSizeRatio); }
     static int  mediumFontPixelSize_s()     { return (int)((double)defaultFontPixelSize_s() * _mediumFontPixelSizeRatio); }
     static int  largeFontPixelSize_s()      { return (int)((double)defaultFontPixelSize_s() * _largeFontPixelSizeRatio); }
 
@@ -117,7 +120,8 @@ private slots:
     void _updateCanvas();
 
 private:
-    static const double _smallFontPixelSizeRatio;
+	static const double _defaultFontPixelSizeRatio;
+	static const double _smallFontPixelSizeRatio;
     static const double _mediumFontPixelSizeRatio;
     static const double _largeFontPixelSizeRatio;
     

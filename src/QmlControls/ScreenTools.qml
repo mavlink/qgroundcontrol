@@ -8,7 +8,7 @@ import QGroundControl.ScreenToolsController 1.0
 Item {
     signal repaintRequested
 
-    readonly property real defaultFontPixelSize:    _textMeasure.contentHeight * 0.8
+    readonly property real defaultFontPixelSize:    _textMeasure.contentHeight * ScreenToolsController.defaultFontPixelSizeRatio
     readonly property real defaultFontPixelHeight:  defaultFontPixelSize
     readonly property real defaultFontPixelWidth:   _textMeasure.contentWidth
     readonly property real smallFontPixelSize:      defaultFontPixelSize * ScreenToolsController.smallFontPixelSizeRatio
