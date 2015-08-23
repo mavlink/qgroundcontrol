@@ -56,6 +56,7 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _telemetryRRSSI(0)
     , _telemetryLRSSI(0)
     , _rollDownMessages(0)
+    , _toolbarMessageVisible(false)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("MainToolBar");
@@ -403,4 +404,44 @@ void MainToolBar::_heightChanged(double height)
 {
     setMinimumHeight(height);
     setMaximumHeight(height);
+}
+
+void MainToolBar::showToolBarMessage(const QString& message)
+{
+    _toolbarMessageQueueMutex.lock();
+    
+    if (_toolbarMessageQueue.count() == 0 && !_toolbarMessageVisible) {
+        QTimer::singleShot(500, this, &MainToolBar::_delayedShowToolBarMessage);
+    }
+    
+    _toolbarMessageQueue += message;
+    
+    _toolbarMessageQueueMutex.unlock();
+}
+
+void MainToolBar::_delayedShowToolBarMessage(void)
+{
+    QString messages;
+    
+    if (!_toolbarMessageVisible) {
+        _toolbarMessageQueueMutex.lock();
+        
+        foreach (QString message, _toolbarMessageQueue) {
+            messages += message + "\n";
+        }
+        _toolbarMessageQueue.clear();
+        
+        _toolbarMessageQueueMutex.unlock();
+        
+        if (!messages.isEmpty()) {
+            _toolbarMessageVisible = true;
+            emit showMessage(messages);
+        }
+    }
+}
+
+void MainToolBar::onToolBarMessageClosed(void)
+{
+    _toolbarMessageVisible = false;
+    _delayedShowToolBarMessage();
 }
