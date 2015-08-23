@@ -60,6 +60,7 @@ UASMessageHandler::UASMessageHandler(QObject *parent)
     , _errorCountTotal(0)
     , _warningCount(0)
     , _normalCount(0)
+    , _showErrorsInToolbar(false)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     emit textMessageReceived(NULL);
@@ -184,6 +185,10 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     _mutex.unlock();
     emit textMessageReceived(message);
     emit textMessageCountChanged(count);
+    
+    if (_showErrorsInToolbar && message->severityIsError()) {
+        qgcApp()->showToolBarMessage(message->getText());
+    }
 }
 
 int UASMessageHandler::getErrorCountTotal() {
