@@ -57,7 +57,10 @@ class QGCPalette : public QObject
     /// Standard text color for label text
     Q_PROPERTY(QColor text READ text NOTIFY paletteChanged)
     
-    /// Background color for buttons
+	/// Color for warning text
+	Q_PROPERTY(QColor warningText READ warningText NOTIFY paletteChanged)
+
+	/// Background color for buttons
     Q_PROPERTY(QColor button READ button NOTIFY paletteChanged)
     
     /// Text color for buttons
@@ -105,7 +108,8 @@ public:
     QColor windowShadeDark(void) const { return _windowShadeDark[_theme][_colorGroupEnabled ? 1 : 0]; }
     
     QColor text(void) const { return _text[_theme][_colorGroupEnabled ? 1 : 0]; }
-    
+	QColor warningText(void) const { return _warningText[_theme][_colorGroupEnabled ? 1 : 0]; }
+
     QColor button(void) const { return _button[_theme][_colorGroupEnabled ? 1 : 0]; }
     QColor buttonText(void) const { return _buttonText[_theme][_colorGroupEnabled ? 1 : 0]; }
     QColor buttonHighlight(void) const { return _buttonHighlight[_theme][_colorGroupEnabled ? 1 : 0]; }
@@ -134,7 +138,8 @@ private:
     static QColor _windowShade[_cThemes][_cColorGroups];
     static QColor _windowShadeDark[_cThemes][_cColorGroups];
     
-    static QColor _text[_cThemes][_cColorGroups];
+	static QColor _warningText[_cThemes][_cColorGroups];
+	static QColor _text[_cThemes][_cColorGroups];
     
     static QColor _button[_cThemes][_cColorGroups];
     static QColor _buttonText[_cThemes][_cColorGroups];
