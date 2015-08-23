@@ -51,6 +51,7 @@ public:
 	Q_INVOKABLE void saveToFile(void);
 	Q_INVOKABLE void loadFromFile(void);
 	Q_INVOKABLE void refresh(void);
+    Q_INVOKABLE void resetAllToDefaults(void);
 	Q_INVOKABLE void setRCToParam(const QString& paramName);
 	
 	QList<QObject*> model(void);
