@@ -97,6 +97,15 @@ bool AutoPilotPlugin::setupComplete(void)
 	return _setupComplete;
 }
 
+void AutoPilotPlugin::resetAllParametersToDefaults(void)
+{
+    mavlink_message_t msg;
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _uas->getUASID(), 0, MAV_CMD_PREFLIGHT_STORAGE, 0, 2, -1, 0, 0, 0, 0, 0);
+    _uas->sendMessage(msg);
+}
+
 void AutoPilotPlugin::refreshAllParameters(void)
 {
 	_getParameterLoader()->refreshAllParameters();
