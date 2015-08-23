@@ -807,7 +807,7 @@ void QGCXPlaneLink::readBytes()
     }
 
     // Send updated state
-    if (emitUpdate && (QGC::groundTimeMilliseconds() - simUpdateLast) > 3)
+    if (emitUpdate && (QGC::groundTimeMilliseconds() - simUpdateLast) > 2)
     {
         simUpdateHz = simUpdateHz * 0.9f + 0.1f * (1000.0f / (QGC::groundTimeMilliseconds() - simUpdateLast));
         if (QGC::groundTimeMilliseconds() - simUpdateLastText > 2000) {
