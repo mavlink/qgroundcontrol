@@ -634,12 +634,16 @@ void MainWindow::closeEvent(QCloseEvent *event)
                 tr("There are still active connections to vehicles. Do you want to disconnect these before closing?"),
                 QMessageBox::Yes | QMessageBox::Cancel,
                 QMessageBox::Cancel);
-        if (button == QMessageBox::Yes) {
-            LinkManager::instance()->disconnectAll();
-        } else {
-            event->ignore();
-            return;
-        }
+		if (button == QMessageBox::Yes) {
+			LinkManager::instance()->disconnectAll();
+			// The above disconnect causes a flurry of activity as the vehicle components are removed. This in turn
+			// causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
+			// the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
+			QTimer::singleShot(1500, this, &MainWindow::_closeWindow);
+		}
+
+        event->ignore();
+        return;
     }
 
     // This will process any remaining flight log save dialogs
