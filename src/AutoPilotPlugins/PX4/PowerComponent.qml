@@ -248,7 +248,7 @@ QGCView {
                     spacing:            10
 
                     QGCLabel {
-                        color:  "yellow"
+                        color:  palette.warningText
                         text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</font>"
                     }
 
@@ -279,7 +279,7 @@ QGCView {
                     spacing:            10
 
                     QGCLabel {
-                        color:  "yellow"
+                        color:  palette.warningText
                         text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</font>"
                     }
 
