@@ -759,6 +759,7 @@ void ParameterLoader::_checkInitialLoadComplete(void)
     if (msgHandler->getErrorCountTotal()) {
         QString errors;
         bool firstError = true;
+        bool errorsFound = false;
         
         msgHandler->lockAccess();
         foreach (UASMessage* msg, msgHandler->messages()) {
@@ -769,11 +770,13 @@ void ParameterLoader::_checkInitialLoadComplete(void)
                 errors += " - ";
                 errors += msg->getText();
                 firstError = false;
+                errorsFound = true;
             }
         }
+        msgHandler->showErrorsInToolbar();
         msgHandler->unlockAccess();
         
-        if (!firstError) {
+        if (errorsFound) {
             QString errorMsg = QString("Errors were detected during vehicle startup. You should resolve these prior to flight.\n%1").arg(errors);
             qgcApp()->showToolBarMessage(errorMsg);
         }
