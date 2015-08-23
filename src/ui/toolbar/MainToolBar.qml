@@ -784,6 +784,7 @@ Rectangle {
             id:             toolBarMessage
             anchors.fill:   parent
             wrapMode:       Text.WordWrap
+			color:			qgcPal.warningText
         }
 
         QGCButton {
@@ -792,6 +793,7 @@ Rectangle {
             anchors.topMargin:      verticalMargins
             anchors.top:            parent.top
             anchors.right:          parent.right
+			primary:				true
             text:                   "Close Message"
 
             onClicked: {

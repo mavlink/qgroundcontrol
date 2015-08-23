@@ -58,7 +58,7 @@ Rectangle {
         QGCLabel {
             width:			parent.width
 			wrapMode:		Text.WordWrap
-			color:			setupComplete ? qgcPal.text : "red"
+			color:			setupComplete ? qgcPal.text : qgcPal.warningText
             font.pixelSize: setupComplete ? ScreenTools.defaultFontPixelSize : ScreenTools.mediumFontPixelSize
 			text:           setupComplete ?
                                 "Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component." :
