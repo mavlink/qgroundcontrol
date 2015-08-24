@@ -128,6 +128,12 @@ void ParameterEditorController::refresh(void)
 	_autopilot->refreshAllParameters();
 }
 
+void ParameterEditorController::resetAllToDefaults(void)
+{
+    _autopilot->resetAllParametersToDefaults();
+    refresh();
+}
+
 void ParameterEditorController::setRCToParam(const QString& paramName)
 {
 	Q_ASSERT(_uas);
