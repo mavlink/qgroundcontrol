@@ -62,7 +62,6 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         } else {
             g->imageResource = QString("qrc:/qmlimages/AirframeStandardPlane.png");
         }
-        qDebug() << "IMAGE:" << g->imageResource;
         rgAirframeTypes.insert(group, g);
     } else {
         g = rgAirframeTypes.value(group);
