@@ -110,7 +110,7 @@ public:
 #else
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }
-    bool    isMobile            () { return false; }
+    bool    isMobile            () { return qgcApp()->fakeMobile(); }
 #endif
 
 signals:
