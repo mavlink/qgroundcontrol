@@ -63,6 +63,9 @@ public:
 	Q_PROPERTY(bool setupComplete READ setupComplete NOTIFY setupCompleteChanged)
     
     Q_PROPERTY(bool armed READ armed NOTIFY armedChanged)
+    
+    /// Reset all parameters to their default values
+    Q_INVOKABLE void resetAllParametersToDefaults(void);
 	
     /// Re-request the full set of parameters from the autopilot
 	Q_INVOKABLE void refreshAllParameters(void);
