@@ -160,6 +160,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests(unitTesting)
     , _styleIsDark(true)
     , _pMavManager(NULL)
+	, _fakeMobile(false)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -177,6 +178,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--clear-settings",   &fClearSettingsOptions, QString() },
         { "--full-logging",     &fullLogging,           QString() },
+		{ "--fake-mobile",      &_fakeMobile,           QString() },
         // Add additional command line option flags here
     };
     
