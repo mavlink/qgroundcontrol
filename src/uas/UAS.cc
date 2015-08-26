@@ -285,7 +285,6 @@ void UAS::writeSettings()
     settings.beginGroup(QString("MAV%1").arg(uasId));
     settings.setValue("NAME", this->name);
     settings.setValue("AIRFRAME", this->airframe);
-    settings.setValue("AP_TYPE", this->autopilot);
     settings.setValue("BATTERY_SPECS", getBatterySpecs());
     settings.endGroup();
 }
@@ -300,7 +299,6 @@ void UAS::readSettings()
     settings.beginGroup(QString("MAV%1").arg(uasId));
     this->name = settings.value("NAME", this->name).toString();
     this->airframe = settings.value("AIRFRAME", this->airframe).toInt();
-    this->autopilot = settings.value("AP_TYPE", this->autopilot).toInt();
     if (settings.contains("BATTERY_SPECS"))
     {
         setBatterySpecs(settings.value("BATTERY_SPECS").toString());
@@ -317,7 +315,6 @@ void UAS::deleteSettings()
 {
     this->name = "";
     this->airframe = QGC_AIRFRAME_GENERIC;
-    this->autopilot = -1;
     warnLevelPercent = UAS_DEFAULT_BATTERY_WARNLEVEL;
 }
 
