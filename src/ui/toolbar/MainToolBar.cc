@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include "FlightDisplay.h"
 #include "QGCApplication.h"
 #include "MavManager.h"
+#include "AutoPilotPluginManager.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
     : QGCQmlWidgetHolder(parent)

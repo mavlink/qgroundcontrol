@@ -59,7 +59,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, int id = 0);
+    UAS(MAVLinkProtocol* protocol, int id, MAV_AUTOPILOT autopilotType);
     ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
@@ -73,10 +73,6 @@ public:
     const QString& getShortState() const;
     /** @brief Get short mode */
     const QString& getShortMode() const;
-    /** @brief Translate from mode id to text */
-    QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const;
-    /** @brief Translate from mode id to audio text */
-    QString getAudioModeTextFor(uint8_t base_mode, uint32_t custom_mode) const;
     /** @brief Get the unique system id */
     int getUASID() const;
     /** @brief Get the airframe */

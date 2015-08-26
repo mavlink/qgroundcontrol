@@ -391,7 +391,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
 
                 // Create a new UAS object
-                uas = QGCMAVLinkUASFactory::createUAS(this, link, message.sysid, &heartbeat);
+                uas = QGCMAVLinkUASFactory::createUAS(this, link, message.sysid, (MAV_AUTOPILOT)heartbeat.autopilot);
 
             }
 
