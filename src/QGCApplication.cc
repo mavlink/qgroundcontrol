@@ -645,6 +645,9 @@ void QGCApplication::_destroySingletons(void)
     UASManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
+    FirmwarePluginManager::_deleteSingleton();
+    GenericFirmwarePlugin::_deleteSingleton();
+    PX4FirmwarePlugin::_deleteSingleton();
 }
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)
