@@ -28,7 +28,7 @@
 #define FirmwarePlugin_H
 
 #include "QGCSingleton.h"
-#include "QGCMAVlink.h"
+#include "QGCMAVLink.h"
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
 
