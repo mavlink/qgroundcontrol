@@ -189,7 +189,7 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
         // Send command to start MAVLink
         // XXX hacky but safe
         // Start NSH
-        const char init[] = {0x0d, 0x0d, 0x0d};
+        const char init[] = {0x0d, 0x0d, 0x0d, 0x0d};
         link->writeBytes(init, sizeof(init));
         const char* cmd = "sh /etc/init.d/rc.usb\n";
         link->writeBytes(cmd, strlen(cmd));
