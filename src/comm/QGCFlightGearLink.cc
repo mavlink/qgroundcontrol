@@ -70,6 +70,7 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
     
     // We need a mechanism so show error message from our FGLink thread on the UI thread. This signal connection will do that for us.
     connect(this, &QGCFlightGearLink::showCriticalMessageFromThread, qgcApp(), &QGCApplication::criticalMessageBoxOnMainThread);
+    connect(this, &QGCFlightGearLink::disconnectSim, this, &QGCFlightGearLink::disconnectSimulation);
 }
 
 QGCFlightGearLink::~QGCFlightGearLink()
@@ -496,13 +497,13 @@ bool QGCFlightGearLink::disconnectSimulation()
     if (_fgProcess)
     {
         _fgProcess->close();
-        delete _fgProcess;
+        _fgProcess->deleteLater();
         _fgProcess = NULL;
     }
     if (_udpCommSocket)
     {
         _udpCommSocket->close();
-        delete _udpCommSocket;
+        _udpCommSocket->deleteLater();
         _udpCommSocket = NULL;
     }
 
