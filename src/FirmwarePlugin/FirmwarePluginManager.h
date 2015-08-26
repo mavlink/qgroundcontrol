@@ -24,34 +24,33 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "GenericAutoPilotPlugin.h"
+#ifndef FirmwarePluginManager_H
+#define FirmwarePluginManager_H
 
-GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* parent) :
-    AutoPilotPlugin(uas, parent)
+#include <QObject>
+
+#include "QGCSingleton.h"
+#include "FirmwarePlugin.h"
+#include "QGCMAVLink.h"
+
+/// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
+
+class FirmwarePluginManager : public QGCSingleton
 {
-    Q_ASSERT(uas);
+    Q_OBJECT
     
-    _parameterFacts = new GenericParameterFacts(this, uas, this);
-    Q_CHECK_PTR(_parameterFacts);
+    DECLARE_QGC_SINGLETON(FirmwarePluginManager, FirmwarePluginManager)
+
+public:
+    /// Returns appropriate plugin for autopilot type.
+    ///     @param autopilotType Type of autopilot to return plugin for.
+    /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
+    FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType);
     
-    connect(_parameterFacts, &GenericParameterFacts::parametersReady, this, &GenericAutoPilotPlugin::_parametersReady);
-    connect(_parameterFacts, &GenericParameterFacts::parameterListProgress, this, &GenericAutoPilotPlugin::parameterListProgress);
-}
+private:
+    /// All access to singleton is through FirmwarePluginManager::instance
+    FirmwarePluginManager(QObject* parent = NULL);
+    ~FirmwarePluginManager();
+};
 
-void GenericAutoPilotPlugin::clearStaticData(void)
-{
-    // No Static data yet
-}
-
-const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
-{
-    static QVariantList emptyList;
-    
-    return emptyList;
-}
-
-void GenericAutoPilotPlugin::_parametersReady(void)
-{
-    _pluginReady = true;
-    emit pluginReadyChanged(_pluginReady);
-}
+#endif

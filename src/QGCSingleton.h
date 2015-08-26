@@ -27,6 +27,8 @@
 #ifndef QGCSINGLETON_H
 #define QGCSINGLETON_H
 
+#include "QGCApplication.h"
+
 #include <QObject>
 #include <QMutex>
 
