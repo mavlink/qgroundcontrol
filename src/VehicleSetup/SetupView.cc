@@ -106,6 +106,7 @@ void SetupView::showFirmware(void)
                                              "showFirmwarePanel",
                                              Q_RETURN_ARG(QVariant, returnedValue));
     Q_ASSERT(success);
+    Q_UNUSED(success);
 #endif
 }
 
@@ -116,6 +117,7 @@ void SetupView::showParameters(void)
                                              "showParametersPanel",
                                              Q_RETURN_ARG(QVariant, returnedValue));
     Q_ASSERT(success);
+    Q_UNUSED(success);
 }
 
 void SetupView::showSummary(void)
@@ -125,6 +127,7 @@ void SetupView::showSummary(void)
                                              "showSummaryPanel",
                                              Q_RETURN_ARG(QVariant, returnedValue));
     Q_ASSERT(success);
+    Q_UNUSED(success);
 }
 
 void SetupView::showVehicleComponentSetup(VehicleComponent* vehicleComponent)
@@ -135,6 +138,7 @@ void SetupView::showVehicleComponentSetup(VehicleComponent* vehicleComponent)
                                              Q_RETURN_ARG(QVariant, returnedValue),
                                              Q_ARG(QVariant, QVariant::fromValue((VehicleComponent*)vehicleComponent)));
     Q_ASSERT(success);
+    Q_UNUSED(success);
 }
 #endif
 
