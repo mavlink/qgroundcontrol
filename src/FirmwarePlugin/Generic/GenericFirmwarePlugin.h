@@ -47,7 +47,6 @@ public:
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     GenericFirmwarePlugin(QObject* parent = NULL);
-    GenericFirmwarePlugin();
 };
 
 #endif

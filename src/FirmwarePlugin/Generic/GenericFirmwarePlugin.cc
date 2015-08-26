@@ -36,11 +36,6 @@ GenericFirmwarePlugin::GenericFirmwarePlugin(QObject* parent) :
     
 }
 
-GenericFirmwarePlugin::GenericFirmwarePlugin()
-{
-    
-}
-
 QList<VehicleComponent*> GenericFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {
     Q_UNUSED(vehicle);

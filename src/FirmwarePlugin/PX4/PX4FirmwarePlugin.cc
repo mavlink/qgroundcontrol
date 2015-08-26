@@ -91,11 +91,6 @@ PX4FirmwarePlugin::PX4FirmwarePlugin(QObject* parent) :
     
 }
 
-PX4FirmwarePlugin::PX4FirmwarePlugin()
-{
-    
-}
-
 QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {
     Q_UNUSED(vehicle);
