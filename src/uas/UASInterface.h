@@ -100,8 +100,6 @@ public:
     virtual const QString& getShortState() const = 0;
     /** @brief Get short mode */
     virtual const QString& getShortMode() const = 0;
-    /** @brief Translate mode id into text */
-    virtual QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const = 0;
     //virtual QColor getColor() = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/

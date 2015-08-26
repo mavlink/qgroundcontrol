@@ -51,20 +51,6 @@ public:
     /// to prevent shutdown ordering problems with Qml destruction happening after Facts are destroyed.
     ///     @param uas Uas to get plugin for
     QSharedPointer<AutoPilotPlugin> getInstanceForAutoPilotPlugin(UASInterface* uas);
-    
-    typedef struct {
-        uint8_t baseMode;
-        uint32_t customMode;
-    } FullMode_t;
-
-    /// Returns the list of modes which are available for the specified autopilot type.
-    QList<FullMode_t> getModes(int autopilotType) const;
-    
-    /// @brief Returns a human readable short description for the specified mode.
-    QString getShortModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const;
-
-    /// @brief Returns a human hearable short description for the specified mode.
-    QString getAudioModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const;
 
 private slots:
     void _uasCreated(UASInterface* uas);

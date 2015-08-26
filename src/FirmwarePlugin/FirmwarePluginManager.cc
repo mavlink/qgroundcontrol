@@ -24,34 +24,28 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "GenericAutoPilotPlugin.h"
+#include "FirmwarePluginManager.h"
+#include "Generic/GenericFirmwarePlugin.h"
+#include "PX4/PX4FirmwarePlugin.h"
 
-GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* parent) :
-    AutoPilotPlugin(uas, parent)
+IMPLEMENT_QGC_SINGLETON(FirmwarePluginManager, FirmwarePluginManager)
+
+FirmwarePluginManager::FirmwarePluginManager(QObject* parent) :
+    QGCSingleton(parent)
 {
-    Q_ASSERT(uas);
-    
-    _parameterFacts = new GenericParameterFacts(this, uas, this);
-    Q_CHECK_PTR(_parameterFacts);
-    
-    connect(_parameterFacts, &GenericParameterFacts::parametersReady, this, &GenericAutoPilotPlugin::_parametersReady);
-    connect(_parameterFacts, &GenericParameterFacts::parameterListProgress, this, &GenericAutoPilotPlugin::parameterListProgress);
+
 }
 
-void GenericAutoPilotPlugin::clearStaticData(void)
+FirmwarePluginManager::~FirmwarePluginManager()
 {
-    // No Static data yet
+
 }
 
-const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
+FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType)
 {
-    static QVariantList emptyList;
-    
-    return emptyList;
-}
-
-void GenericAutoPilotPlugin::_parametersReady(void)
-{
-    _pluginReady = true;
-    emit pluginReadyChanged(_pluginReady);
+    if (autopilotType == MAV_AUTOPILOT_PX4) {
+        return PX4FirmwarePlugin::instance();
+    } else {
+        return GenericFirmwarePlugin::instance();
+    }
 }

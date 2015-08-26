@@ -554,14 +554,19 @@ SOURCES += \
 } # MobileBuild
 
 #
-# AutoPilot Plugin Support
+# Firmware Plugin Support
 #
 
 INCLUDEPATH += \
+    src/FirmwarePlugin \
     src/VehicleSetup \
     src/AutoPilotPlugins/PX4 \
 
 HEADERS+= \
+    src/FirmwarePlugin/FirmwarePluginManager.h \
+    src/FirmwarePlugin/FirmwarePlugin.h \
+    src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
+    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
@@ -594,6 +599,9 @@ HEADERS += \
 }
 
 SOURCES += \
+    src/FirmwarePlugin/FirmwarePluginManager.cc \
+    src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
+    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
     src/AutoPilotPlugins/AutoPilotPlugin.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
