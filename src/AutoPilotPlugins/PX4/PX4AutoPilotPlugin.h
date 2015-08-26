@@ -53,9 +53,6 @@ public:
     // Overrides from AutoPilotPlugin
     virtual const QVariantList& vehicleComponents(void);
 
-    static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
-    static QString getAudioModeText(uint8_t baseMode, uint32_t customMode);
-    static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
     static void clearStaticData(void);
     
     // These methods should only be used by objects within the plugin

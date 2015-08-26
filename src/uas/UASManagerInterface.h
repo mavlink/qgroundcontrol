@@ -112,7 +112,6 @@ signals:
     void homePositionChanged(double lat, double lon, double alt);
     
 protected:
-    // FIXME: Do we need this here?
     UASManagerInterface(QObject* parent = NULL) :
         QGCSingleton(parent) { }
 };

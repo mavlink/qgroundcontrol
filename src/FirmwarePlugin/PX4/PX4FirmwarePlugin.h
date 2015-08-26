@@ -24,34 +24,30 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "GenericAutoPilotPlugin.h"
+#ifndef PX4FirmwarePlugin_H
+#define PX4FirmwarePlugin_H
 
-GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* parent) :
-    AutoPilotPlugin(uas, parent)
+#include "FirmwarePlugin.h"
+
+class PX4FirmwarePlugin : public FirmwarePlugin
 {
-    Q_ASSERT(uas);
+    Q_OBJECT
+
+    DECLARE_QGC_SINGLETON(PX4FirmwarePlugin, FirmwarePlugin)
     
-    _parameterFacts = new GenericParameterFacts(this, uas, this);
-    Q_CHECK_PTR(_parameterFacts);
+public:
+    // Overrides from FirmwarePlugin
     
-    connect(_parameterFacts, &GenericParameterFacts::parametersReady, this, &GenericAutoPilotPlugin::_parametersReady);
-    connect(_parameterFacts, &GenericParameterFacts::parameterListProgress, this, &GenericAutoPilotPlugin::parameterListProgress);
-}
-
-void GenericAutoPilotPlugin::clearStaticData(void)
-{
-    // No Static data yet
-}
-
-const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
-{
-    static QVariantList emptyList;
+    virtual bool isCapable(FirmwareCapabilities capabilities) { Q_UNUSED(capabilities); return false; }
+    virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
+    virtual QStringList flightModes(void);
+    virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode);
+    virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
     
-    return emptyList;
-}
+private:
+    /// All access to singleton is through AutoPilotPluginManager::instance
+    PX4FirmwarePlugin(QObject* parent = NULL);
+    PX4FirmwarePlugin();
+};
 
-void GenericAutoPilotPlugin::_parametersReady(void)
-{
-    _pluginReady = true;
-    emit pluginReadyChanged(_pluginReady);
-}
+#endif

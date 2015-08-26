@@ -33,7 +33,7 @@
 #include "SerialLink.h"
 #endif
 #include <Eigen/Geometry>
-#include "AutoPilotPluginManager.h"
+#include "FirmwarePluginManager.h"
 #include "QGCMessageBox.h"
 #include "QGCLoggingCategory.h"
 
@@ -48,7 +48,7 @@ QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 * creating the UAS.
 */
 
-UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
+UAS::UAS(MAVLinkProtocol* protocol, int id, MAV_AUTOPILOT autopilotType) : UASInterface(),
     lipoFull(4.2f),
     lipoEmpty(3.5f),
     uasId(id),
@@ -60,7 +60,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     name(""),
     type(MAV_TYPE_GENERIC),
     airframe(QGC_AIRFRAME_GENERIC),
-    autopilot(-1),
+    autopilot(autopilotType),
     systemIsArmed(false),
     base_mode(0),
     custom_mode(0),
@@ -532,7 +532,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             bool statechanged = false;
             bool modechanged = false;
 
-            QString audiomodeText = getAudioModeTextFor(state.base_mode, state.custom_mode);
+            QString audiomodeText = FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)autopilot)->flightMode(state.base_mode, state.custom_mode);
 
             if ((state.system_status != this->status) && state.system_status != MAV_STATE_UNINIT)
             {
@@ -558,11 +558,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 modechanged = true;
                 this->base_mode = state.base_mode;
                 this->custom_mode = state.custom_mode;
-                shortModeText = getShortModeTextFor(this->base_mode, this->custom_mode);
-
+                shortModeText = FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)autopilot)->flightMode(base_mode, custom_mode);
                 emit modeChanged(this->getUASID(), shortModeText, "");
 
-                modeAudio = " is now in " + audiomodeText;
+                modeAudio = " is now in " + audiomodeText + "flight mode";
             }
 
             // We got the mode
@@ -3291,101 +3290,6 @@ QString UAS::getUASName(void) const
 const QString& UAS::getShortState() const
 {
     return shortStateText;
-}
-
-/**
-* The mode can be autonomous, guided, manual or armed. It will also return if
-* hardware in the loop is being used.
-* @return the audio mode text for the id given.
-*/
-QString UAS::getAudioModeTextFor(uint8_t base_mode, uint32_t custom_mode) const
-{
-    QString mode = AutoPilotPluginManager::instance()->getAudioModeText(base_mode, custom_mode, autopilot);
-
-    if (mode.length() == 0)
-    {
-        // Fall back to generic decoding
-
-        QString mode;
-        uint8_t modeid = base_mode;
-
-        // BASE MODE DECODING
-        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_AUTO)
-        {
-            mode += "autonomous";
-        }
-        else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
-        {
-            mode += "guided";
-        }
-        else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
-        {
-            mode += "stabilized";
-        }
-        else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
-        {
-            mode += "manual";
-        }
-        else
-        {
-            // Nothing else applies, we're in preflight
-            mode += "preflight";
-        }
-
-        if (modeid != 0)
-        {
-            mode += " mode";
-        }
-
-        // ARMED STATE DECODING
-        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_SAFETY)
-        {
-            mode.append(" and armed");
-        }
-
-        // HARDWARE IN THE LOOP DECODING
-        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_HIL)
-        {
-            mode.append(" using hardware in the loop simulation");
-        }
-    }
-
-    return mode;
-}
-
-/**
-* The mode returned depends on the specific autopilot used.
-* @return the short text of the mode for the id given.
-*/
-QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const
-{
-    QString mode = AutoPilotPluginManager::instance()->getShortModeText(base_mode, custom_mode, autopilot);
-
-    if (mode.length() == 0)
-    {
-        mode = "|UNKNOWN";
-        qDebug() << __FILE__ << __LINE__ << " Unknown mode: base_mode=" << base_mode << " custom_mode=" << custom_mode << " autopilot=" << autopilot;
-    }
-
-    // ARMED STATE DECODING
-    if (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)
-    {
-        mode.prepend("A");
-    }
-    else
-    {
-        mode.prepend("D");
-    }
-
-    // HARDWARE IN THE LOOP DECODING
-    if (base_mode & MAV_MODE_FLAG_DECODE_POSITION_HIL)
-    {
-        mode.prepend("HIL:");
-    }
-
-    //qDebug() << "base_mode=" << base_mode << " custom_mode=" << custom_mode << " autopilot=" << autopilot << ": " << mode;
-
-    return mode;
 }
 
 const QString& UAS::getShortMode() const
