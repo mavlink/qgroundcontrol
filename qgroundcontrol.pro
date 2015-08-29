@@ -22,6 +22,8 @@ CONFIG  +=  ordered
 SUBDIRS  =  ./QGCLocationPlugin.pro
 SUBDIRS +=  ./QGCApplication.pro
 
+include(git_version.pri)
+
 QGCApplication.depends = QGCLocationPlugin
 
 message(Qt version $$[QT_VERSION])
@@ -30,3 +32,6 @@ message(Qt version $$[QT_VERSION])
     error("Unsupported Qt version, 5.4+ is required")
 }
 
+message(QGroundControl version $${GIT_DESCRIBE})
+git_ver.commands = $$QGC_GIT_VER
+QMAKE_EXTRA_TARGETS += git_ver

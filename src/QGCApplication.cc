@@ -48,6 +48,7 @@ GST_PLUGIN_STATIC_DECLARE(QTVIDEOSINK_NAME);
 G_END_DECLS
 #endif
 
+#include "git_version.h"
 #include "configuration.h"
 #include "QGC.h"
 #include "QGCApplication.h"
@@ -253,10 +254,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
-    // Version string is build from component parts. Format is:
-    //  vMajor.Minor.BuildNumber BuildType
-    QString versionString("v%1.%2.%3 %4");
-    versionString = versionString.arg(QGC_APPLICATION_VERSION_MAJOR).arg(QGC_APPLICATION_VERSION_MINOR).arg(QGC_APPLICATION_VERSION_BUILDNUMBER).arg(QGC_APPLICATION_VERSION_BUILDTYPE);
+    QString versionString(git_version());
+    // stable versions are on tags (v1.2.3)
+    // development versions are full git describe versions (v1.2.3-18-g879e8b3)
+    if (versionString.length() > 8) {
+        versionString.append(" (Development)");
+    }
     this->setApplicationVersion(versionString);
 
     // Set settings format
