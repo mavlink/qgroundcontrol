@@ -137,7 +137,7 @@ void Mouse6dofInput::_activeVehicleChanged(Vehicle* vehicle)
 void Mouse6dofInput::init()
 {
     // Make sure active UAS is set
-    activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 }
 
 void Mouse6dofInput::run()
