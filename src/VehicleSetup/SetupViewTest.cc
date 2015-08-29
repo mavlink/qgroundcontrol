@@ -71,18 +71,13 @@ void SetupViewTest::_clickThrough_test(void)
     linkMgr->connectLink(link);
     
     // Wait for the Vehicle to get created
-    QSignalSpy spyUas(MultiVehicleManager::instance(), SIGNAL(activeVehicleAvailableChanged(bool)));
-    QCOMPARE(spyUas.wait(5000), true);
-    QVERIFY(MultiVehicleManager::instance()->activeVehicleAvailable());
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+    QCOMPARE(spyVehicle.wait(5000), true);
+    QVERIFY(MultiVehicleManager::instance()->parameterReadyVehicleAvailable());
+    QVERIFY(MultiVehicleManager::instance()->activeVehicle());
 
     AutoPilotPlugin* autopilot = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(autopilot);
-    
-    QSignalSpy spyPlugin(autopilot, SIGNAL(pluginReadyChanged(bool)));
-    if (!autopilot->pluginReady()) {
-        QCOMPARE(spyPlugin.wait(60000), true);
-    }
-    Q_ASSERT(autopilot->pluginReady());
     
     // Switch to the Setup view
     _mainToolBar->onSetupView();

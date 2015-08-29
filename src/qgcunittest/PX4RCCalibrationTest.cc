@@ -153,16 +153,15 @@ void RadioConfigTest::init(void)
     Q_CHECK_PTR(_mockLink);
     LinkManager::instance()->_addLink(_mockLink);
     LinkManager::instance()->connectLink(_mockLink);
-    QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
+    
+    // Wait for the Vehicle to get created
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+    QCOMPARE(spyVehicle.wait(5000), true);
+    QVERIFY(MultiVehicleManager::instance()->parameterReadyVehicleAvailable());
+    QVERIFY(MultiVehicleManager::instance()->activeVehicle());
     
     _autopilot = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_autopilot);
-    
-    QSignalSpy spyPlugin(_autopilot, SIGNAL(pluginReadyChanged(bool)));
-    if (!_autopilot->pluginReady()) {
-        QCOMPARE(spyPlugin.wait(60000), true);
-    }
-    Q_ASSERT(_autopilot->pluginReady());
     
     // This will instatiate the widget with an active uas with ready parameters
     _calWidget = new QGCQmlWidgetHolder();
