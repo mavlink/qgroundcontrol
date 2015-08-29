@@ -85,8 +85,10 @@ G_END_DECLS
 #include "VehicleComponent.h"
 #include "MavManager.h"
 #include "FirmwarePluginManager.h"
+#include "MultiVehicleManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
+#include "Vehicle.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -336,6 +338,7 @@ void QGCApplication::_initCommon(void)
     
     qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Can only reference, cannot create");
     qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Can only reference, cannot create");
+    qmlRegisterUncreatableType<Vehicle>("QGroundControl.Vehicle", 1, 0, "Vehicle", "Can only reference, cannot create");
     
     qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
@@ -376,9 +379,6 @@ void QGCApplication::_initCommon(void)
                                       "Your saved settings have been reset to defaults."));
     }
 
-    _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
-    _loadCurrentStyle();
-
     // Load saved files location and validate
 
     QString savedFilesLocation;
@@ -418,6 +418,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     _createSingletons();
 
+    _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
+    _loadCurrentStyle();
+    
     // Show splash screen
     QPixmap splashImage(":/res/SplashScreen");
     QSplashScreen* splashScreen = new QSplashScreen(splashImage);
@@ -581,6 +584,11 @@ void QGCApplication::_createSingletons(void)
     Q_ASSERT(firmwarePluginManager);
     
     // No dependencies
+    MultiVehicleManager* multiVehicleManager = MultiVehicleManager::_createSingleton();
+    Q_UNUSED(multiVehicleManager);
+    Q_ASSERT(multiVehicleManager);
+    
+    // No dependencies
     GAudioOutput* audio = GAudioOutput::_createSingleton();
     Q_UNUSED(audio);
     Q_ASSERT(audio);
@@ -628,11 +636,6 @@ void QGCApplication::_destroySingletons(void)
         LinkManager::instance()->_shutdown();
     }
 
-    if (UASManager::instance(true /* nullOk */)) {
-        // This will delete all uas from the system
-        UASManager::instance()->_shutdown();
-    }
-
     // Let the signals flow through the main thread
     processEvents(QEventLoop::ExcludeUserInputEvents);
 
@@ -645,6 +648,7 @@ void QGCApplication::_destroySingletons(void)
     UASManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
+    MultiVehicleManager::_deleteSingleton();
     FirmwarePluginManager::_deleteSingleton();
     GenericFirmwarePlugin::_deleteSingleton();
     PX4FirmwarePlugin::_deleteSingleton();

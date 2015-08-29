@@ -27,8 +27,7 @@
 #include "FactSystemTestBase.h"
 #include "LinkManager.h"
 #include "MockLink.h"
-#include "AutoPilotPluginManager.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCMessageBox.h"
 #include "QGCQuickWidget.h"
@@ -45,36 +44,18 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
 {
     UnitTest::init();
     
-    LinkManager* _linkMgr = LinkManager::instance();
-    
     MockLink* link = new MockLink();
     link->setAutopilotType(autopilot);
-    _linkMgr->_addLink(link);
+    LinkManager::instance()->_addLink(link);
     
-    if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        // Connect will pop a warning dialog
-        setExpectedMessageBox(QGCMessageBox::Ok);
-    }
-    _linkMgr->connectLink(link);
+    LinkManager::instance()->connectLink(link);
     
-    // Wait for the uas to work it's way through the various threads
-
-    QSignalSpy spyUas(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)));
+    // Wait for the Vehicle to get created
+    QSignalSpy spyUas(MultiVehicleManager::instance(), SIGNAL(activeVehicleAvailableChanged(bool)));
     QCOMPARE(spyUas.wait(5000), true);
+    QVERIFY(MultiVehicleManager::instance()->activeVehicleAvailable());
     
-    if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        checkExpectedMessageBox();
-    }
-    
-    _uas = UASManager::instance()->getActiveUAS();
-    Q_ASSERT(_uas);
-    
-    // Get the plugin for the uas
-    
-    AutoPilotPluginManager* pluginMgr = AutoPilotPluginManager::instance();
-    Q_ASSERT(pluginMgr);
-    
-    _plugin = pluginMgr->getInstanceForAutoPilotPlugin(_uas).data();
+    _plugin = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_plugin);
 
     // Wait for the plugin to be ready

@@ -26,12 +26,12 @@
 
 #include "GenericAutoPilotPlugin.h"
 
-GenericAutoPilotPlugin::GenericAutoPilotPlugin(UASInterface* uas, QObject* parent) :
-    AutoPilotPlugin(uas, parent)
+GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
+    AutoPilotPlugin(vehicle, parent)
 {
-    Q_ASSERT(uas);
+    Q_ASSERT(vehicle);
     
-    _parameterFacts = new GenericParameterFacts(this, uas, this);
+    _parameterFacts = new GenericParameterFacts(this, vehicle, this);
     Q_CHECK_PTR(_parameterFacts);
     
     connect(_parameterFacts, &GenericParameterFacts::parametersReady, this, &GenericAutoPilotPlugin::_parametersReady);

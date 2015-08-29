@@ -22,7 +22,7 @@
  ======================================================================*/
 
 #include "CustomCommandWidgetController.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "QGCMAVLink.h"
 #include "QGCFileDialog.h"
 
@@ -34,7 +34,7 @@ const char* CustomCommandWidgetController::_settingsKey = "CustomCommand.QmlFile
 CustomCommandWidgetController::CustomCommandWidgetController(void) :
 	_uas(NULL)
 {
-    _uas = UASManager::instance()->getActiveUAS();
+    _uas = MultiVehicleManager::instance()->activeVehicle()->uas();
     Q_ASSERT(_uas);
     
     QSettings settings;

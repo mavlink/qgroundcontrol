@@ -36,9 +36,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QLineEdit>
 #include <QString>
 #include <QPushButton>
-#include <ui_UASControl.h>
-#include <UASInterface.h>
-#include "AutoPilotPluginManager.h"
+
+#include "ui_UASControl.h"
+#include "UASInterface.h"
+#include "Vehicle.h"
 
 /**
  * @brief Widget controlling one MAV
@@ -54,8 +55,6 @@ public:
 public slots:
     /** @brief Update modes list for selected system */
     void updateModesList();
-    /** @brief Set the system this widget controls */
-    void setUAS(UASInterface* uasID);
     /** @brief Trigger next context action */
     void cycleContextButton();
     /** @brief Transmit the operation mode */
@@ -70,9 +69,12 @@ protected slots:
     void setBackgroundColor(QColor color);
 
 protected:
-    int uasID;                                      ///< Reference to the current uas
+    UAS* _uas;
     QStringList _modeList;  ///< Mode list for the current UAS
     bool armed;                                     ///< Engine state
+    
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
 
 private:
     Ui::uasControl ui;

@@ -26,7 +26,6 @@
 
 #include "FlightModesComponentController.h"
 #include "QGCMAVLink.h"
-#include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 
 #include <QVariant>

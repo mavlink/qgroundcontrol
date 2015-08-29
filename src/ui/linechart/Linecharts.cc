@@ -1,7 +1,7 @@
 #include <QShowEvent>
 
 #include "Linecharts.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 
 #include "MainWindow.h"
 
@@ -11,14 +11,12 @@ Linecharts::Linecharts(QWidget *parent) :
     active(true)
 {
     this->setVisible(false);
-    // Get current MAV list
-    QList<UASInterface*> systems = UASManager::instance()->getUASList();
-
-    // Add each of them
-    foreach (UASInterface* sys, systems) {
-        addSystem(sys);
+    
+    // Add each MAV
+    foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles()) {
+        addVehicle(vehicle);
     }
-    connect(UASManager::instance(), &UASManager::UASCreated, this, &Linecharts::addSystem);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &Linecharts::addVehicle);
 }
 
 void Linecharts::showEvent(QShowEvent* event)
@@ -56,8 +54,10 @@ void Linecharts::hideEvent(QHideEvent* event)
     emit visibilityChanged(false);
 }
 
-void Linecharts::addSystem(UASInterface* uas)
+void Linecharts::addVehicle(Vehicle* vehicle)
 {
+    UAS* uas = vehicle->uas();
+    
     // FIXME Add removeSystem() call
 
     // Compatibility hack

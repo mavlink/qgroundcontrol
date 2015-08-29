@@ -29,7 +29,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UAS.h"
 #include "MainWindow.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "Waypoint.h"
 #include "MavManager.h"
 #include "UASMessageHandler.h"
@@ -76,9 +76,9 @@ MavManager::MavManager(QObject *parent)
     , _updateCount(0)
 {
     // Connect with UAS signal
-    _setActiveUAS(UASManager::instance()->getActiveUAS());
-    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)),   this, SLOT(_forgetUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MavManager::_activeVehicleChanged);
+    
     // Refresh timer
     connect(_refreshTimer, SIGNAL(timeout()), this, SLOT(_checkUpdate()));
     _refreshTimer->setInterval(UPDATE_TIMER);
@@ -103,9 +103,10 @@ QString MavManager::loadSetting(const QString &name, const QString& defaultValue
     return settings.value(name, defaultValue).toString();
 }
 
-void MavManager::_forgetUAS(UASInterface* uas)
+void MavManager::_activeVehicleChanged(Vehicle* vehicle)
 {
-    if (_mav != NULL && _mav == uas) {
+    // Disconnect the previous one (if any)
+    if (_mav) {
         // Stop listening for system messages
         disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &MavManager::_handleTextMessage);
         // Disconnect any previously connected active MAV
@@ -139,25 +140,17 @@ void MavManager::_forgetUAS(UASInterface* uas)
         emit mavPresentChanged();
         emit satelliteCountChanged();
     }
-}
-
-void MavManager::_setActiveUAS(UASInterface* uas)
-{
-    if (uas == _mav)
-        return;
-    // Disconnect the previous one (if any)
-    if(_mav) {
-        _forgetUAS(_mav);
-    }
-    if (uas) {
+    
+    _mav = NULL;
+    
+    if (vehicle) {
+        _mav = vehicle->uas();
         // Reset satellite count (no GPS)
         _satelliteCount = -1;
         emit satelliteCountChanged();
         // Reset connection lost (if any)
         _currentHeartbeatTimeout = 0;
         emit heartbeatTimeoutChanged();
-        // Set new UAS
-        _mav = uas;
         // Listen for system messages
         connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged, this, &MavManager::_handleTextMessage);
         // Now connect the new UAS

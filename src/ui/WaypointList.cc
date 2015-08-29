@@ -85,8 +85,6 @@ WaypointList::WaypointList(QWidget *parent, UASWaypointManager* wpm) :
     connect(m_ui->saveButton, SIGNAL(clicked()), this, SLOT(saveWaypoints()));
     connect(m_ui->loadButton, SIGNAL(clicked()), this, SLOT(loadWaypoints()));
 
-    //connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
-
     //VIEW TAB
 
     viewOnlyListLayout = new QVBoxLayout(m_ui->viewOnlyListWidget);

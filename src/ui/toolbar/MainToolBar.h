@@ -114,8 +114,7 @@ signals:
     void showMessage(const QString& message);
 
 private slots:
-    void _forgetUAS                     (UASInterface* uas);
-    void _setActiveUAS                  (UASInterface* uas);
+    void _activeVehicleChanged          (Vehicle* vehicle);
     void _updateConfigurations          ();
     void _linkConnected                 (LinkInterface* link);
     void _linkDisconnected              (LinkInterface* link);
@@ -131,6 +130,7 @@ private:
     void _setToolBarState               (const QString& key, bool value);
 
 private:
+    Vehicle*        _vehicle;
     UASInterface*   _mav;
     QQuickItem*     _toolBar;
     ViewType_t      _currentView;

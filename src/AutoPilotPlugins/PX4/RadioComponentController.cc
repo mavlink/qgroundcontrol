@@ -26,7 +26,6 @@
 ///     @author Don Gagne <don@thegagnes.com
 
 #include "RadioComponentController.h"
-#include "UASManager.h"
 #include "QGCMessageBox.h"
 #include "AutoPilotPluginManager.h"
 

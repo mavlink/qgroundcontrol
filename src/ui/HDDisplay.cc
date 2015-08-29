@@ -19,13 +19,13 @@
 #include <QMenu>
 #include <QSettings>
 #include <qmath.h>
-#include "UASManager.h"
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
 #include "MG.h"
 #include "QGC.h"
 #include "QGCApplication.h"
 #include <QDebug>
+#include "MultiVehicleManager.h"
 
 HDDisplay::HDDisplay(const QStringList &plotList, QString title, QWidget *parent) :
     QGraphicsView(parent),
@@ -126,8 +126,8 @@ HDDisplay::HDDisplay(const QStringList &plotList, QString title, QWidget *parent
     if (font.family() != fontFamilyName) qDebug() << "ERROR! Font not loaded: " << fontFamilyName;
 
     // Connect with UAS
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)), Qt::UniqueConnection);
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &HDDisplay::_activeVehicleChanged);
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 }
 
 HDDisplay::~HDDisplay()
@@ -471,7 +471,7 @@ void HDDisplay::renderOverlay()
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
  */
-void HDDisplay::setActiveUAS(UASInterface* uas)
+void HDDisplay::_activeVehicleChanged(Vehicle* vehicle)
 {
     // Disconnect any previously connected active UAS
     if (this->uas != NULL) {
@@ -479,10 +479,10 @@ void HDDisplay::setActiveUAS(UASInterface* uas)
         this->uas = NULL;
     }
 
-    if (uas) {
+    if (vehicle) {
+        this->uas = vehicle->uas();
         // Now connect the new UAS
         addSource(uas);
-        this->uas = uas;
     }
 }
 

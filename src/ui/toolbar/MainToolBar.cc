@@ -38,10 +38,11 @@ This file is part of the QGROUNDCONTROL project
 #include "FlightDisplay.h"
 #include "QGCApplication.h"
 #include "MavManager.h"
-#include "AutoPilotPluginManager.h"
+#include "MultiVehicleManager.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
     : QGCQmlWidgetHolder(parent)
+    , _vehicle(NULL)
     , _mav(NULL)
     , _toolBar(NULL)
     , _currentView(ViewNone)
@@ -83,17 +84,19 @@ MainToolBar::MainToolBar(QWidget* parent)
     setVisible(true);
     emit configListChanged();
     emit connectionCountChanged(_connectionCount);
-    _setActiveUAS(UASManager::instance()->getActiveUAS());
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    
     // Link signals
     connect(LinkManager::instance(),     &LinkManager::linkConfigurationChanged, this, &MainToolBar::_updateConfigurations);
     connect(LinkManager::instance(),     &LinkManager::linkConnected,            this, &MainToolBar::_linkConnected);
     connect(LinkManager::instance(),     &LinkManager::linkDisconnected,         this, &MainToolBar::_linkDisconnected);
+    
     // RSSI (didn't like standard connection)
     connect(MAVLinkProtocol::instance(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
         SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)),   this, SLOT(_forgetUAS(UASInterface*)));
+    
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBar::_activeVehicleChanged);
     
     connect(this, &MainToolBar::heightChanged, this, &MainToolBar::_heightChanged);
 }
@@ -267,30 +270,23 @@ void MainToolBar::setCurrentView(int currentView)
     }
 }
 
-void MainToolBar::_forgetUAS(UASInterface* uas)
+void MainToolBar::_activeVehicleChanged(Vehicle* vehicle)
 {
-    if (_mav != NULL && _mav == uas) {
-        disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
-        disconnect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav).data(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
-        _mav = NULL;
-    }
-}
-void MainToolBar::_setActiveUAS(UASInterface* active)
-{
-    // Do nothing if system is the same
-    if (_mav == active) {
-        return;
-    }
     // Disconnect the previous one (if any)
-    if(_mav) {
-        _forgetUAS(_mav);
+    if (_vehicle) {
+        disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
+        disconnect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        _mav = NULL;
+        _vehicle = NULL;
     }
+    
     // Connect new system
-    _mav = active;
-    if (_mav)
+    if (vehicle)
     {
+        _vehicle = vehicle;
+        _mav = vehicle->uas();
         connect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
-        connect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav).data(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        connect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
     }
 }
 

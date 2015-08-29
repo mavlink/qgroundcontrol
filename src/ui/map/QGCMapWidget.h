@@ -3,7 +3,9 @@
 
 #include <QMap>
 #include <QTimer>
+
 #include "opmapcontrol.h"
+#include "Vehicle.h"
 
 // Choose one default map type
 //#define MAP_DEFAULT_TYPE_BING
@@ -51,8 +53,6 @@ public slots:
     bool guidedAltActionTriggered();
     /** @brief Action triggered when set home action is selected from the context menu. */
     bool setHomeActionTriggered();
-    /** @brief Add system to map view */
-    void addUAS(UASInterface* uas);
     /** @brief Update the global position of a system */
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
     /** @brief Update the global position of all systems */
@@ -63,8 +63,6 @@ public slots:
     void updateLocalPositionEstimates();
     /** @brief Update the type, size, etc. of this system */
     void updateSystemSpecs(int uas);
-    /** @brief Change current system in focus / editing */
-    void activeUASSet(UASInterface* uas);
     /** @brief Show a dialog to jump to given GPS coordinates */
     void showGoToDialog();
     /** @brief Jump to the home position on the map */
@@ -177,8 +175,11 @@ protected:
     QPoint contextMousePressPos;        ///< Mouse position when context menu activated.
     int defaultGuidedAlt;               ///< Default altitude for guided mode
     bool zoomBlocked;                   ///< Wether zooming is blocked
-    UASInterface *uas;                  ///< Currently selected UAS.
+    UASInterface* _uas;                 ///< Currently selected UAS.
 
+private slots:
+    void _vehicleAdded(Vehicle* vehicle);
+    void _activeVehicleChanged(Vehicle* vehicle);
 };
 
 #endif // QGCMAPWIDGET_H

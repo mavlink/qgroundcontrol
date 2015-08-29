@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ParameterEditorController.h"
-#include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"

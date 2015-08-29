@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QWidget>
 #include "JoystickInput.h"
+#include "Vehicle.h"
 
 namespace Ui {
 class JoystickAxis;
@@ -62,7 +63,7 @@ public slots:
      */
     void setValue(float value);
     /** @brief Specify the UAS that this axis should track for displaying throttle properly. */
-    void setActiveUAS(UASInterface* uas);
+    void activeVehicleChanged(Vehicle* vehicle);
     
 private:
     int id; ///< The ID for this axis. Corresponds to the IDs used by JoystickInput.
@@ -72,7 +73,7 @@ private:
      * @param uas The currently-active UAS.
      * @param axisMapping The new mapping for this axis.
      */
-    void updateUIBasedOnUAS(UASInterface* uas, JoystickInput::JOYSTICK_INPUT_MAPPING axisMapping);
+    void updateUIBasedOnUAS(Vehicle* vehicle, JoystickInput::JOYSTICK_INPUT_MAPPING axisMapping);
 
 private slots:
     /** @brief Handle changes to the mapping dropdown bar. */

@@ -25,7 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FileManagerTest.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 
 //UT_REGISTER_TEST(FileManagerTest)
 
@@ -51,13 +51,13 @@ void FileManagerTest::init(void)
     _fileServer = _mockLink->getFileServer();
     QVERIFY(_fileServer != NULL);
     
-    // Wait or the UAS to show up
-    UASManagerInterface* uasManager = UASManager::instance();
-    QSignalSpy spyUasCreate(uasManager, SIGNAL(UASCreated(UASInterface*)));
-    if (!uasManager->getActiveUAS()) {
-        QCOMPARE(spyUasCreate.wait(10000), true);
+    // Wait or the Vehicle to show up
+    MultiVehicleManager* vehicleManager = MultiVehicleManager::instance();
+    QSignalSpy spyVehicleCreate(vehicleManager, SIGNAL(activeVehicleChanged(Vehicle*)));
+    if (!vehicleManager->activeVehicle()) {
+        QCOMPARE(spyVehicleCreate.wait(10000), true);
     }
-    UASInterface* uas = uasManager->getActiveUAS();
+    UASInterface* uas = vehicleManager->activeVehicle()->uas();
     QVERIFY(uas != NULL);
     
     _fileManager = uas->getFileManager();

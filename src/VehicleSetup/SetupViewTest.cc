@@ -29,7 +29,7 @@
 #include "QGCMessageBox.h"
 #include "SetupView.h"
 #include "UASManager.h"
-#include "AutoPilotPluginManager.h"
+#include "MultiVehicleManager.h"
 
 UT_REGISTER_TEST(SetupViewTest)
 
@@ -69,9 +69,13 @@ void SetupViewTest::_clickThrough_test(void)
     link->setAutopilotType(MAV_AUTOPILOT_PX4);
     LinkManager::instance()->_addLink(link);
     linkMgr->connectLink(link);
-    QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
+    
+    // Wait for the Vehicle to get created
+    QSignalSpy spyUas(MultiVehicleManager::instance(), SIGNAL(activeVehicleAvailableChanged(bool)));
+    QCOMPARE(spyUas.wait(5000), true);
+    QVERIFY(MultiVehicleManager::instance()->activeVehicleAvailable());
 
-    AutoPilotPlugin* autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(UASManager::instance()->getActiveUAS()).data();
+    AutoPilotPlugin* autopilot = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(autopilot);
     
     QSignalSpy spyPlugin(autopilot, SIGNAL(pluginReadyChanged(bool)));

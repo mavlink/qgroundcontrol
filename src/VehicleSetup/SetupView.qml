@@ -25,13 +25,14 @@ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 ///     @brief Setup View
 ///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick 2.3
+import QtQuick          2.3
 import QtQuick.Controls 1.2
 
-import QGroundControl.AutoPilotPlugin 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.AutoPilotPlugin       1.0
+import QGroundControl.Palette               1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.MultiVehicleManager   1.0
 
 Rectangle {
     id:     topLevel
@@ -52,7 +53,7 @@ Rectangle {
 
     function showSummaryPanel()
     {
-        if (controller.autopilot) {
+        if (multiVehicleManager.parameterReadyVehicleAvailable) {
             panelLoader.source = "VehicleSummary.qml";
         } else {
             panelLoader.sourceComponent = disconnectedVehicleSummaryComponent
@@ -61,8 +62,8 @@ Rectangle {
 
     function showFirmwarePanel()
     {
-        if (controller.showFirmware) {
-            if (controller.autopilot && controller.autopilot.armed) {
+        if (!ScreenTools.isMobile) {
+            if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.autopilot.armed) {
                 messagePanelText = armedVehicleText
                 panelLoader.sourceComponent = messagePanelComponent
             } else {
@@ -78,7 +79,7 @@ Rectangle {
 
     function showVehicleComponentPanel(vehicleComponent)
     {
-        if (controller.autopilot.armed) {
+        if (multiVehicleManager.activeVehicle.autopilot.armed) {
             messagePanelText = armedVehicleText
             panelLoader.sourceComponent = messagePanelComponent
         } else {
@@ -91,16 +92,16 @@ Rectangle {
         }
     }
 
-    Connections {
-        target: controller
+    Component.onCompleted: showSummaryPanel()
 
-        onAutopilotChanged: {
+    Connections {
+        target: multiVehicleManager
+
+        onParameterReadyVehicleAvailableChanged: {
             summaryButton.checked = true
             showSummaryPanel()
         }
     }
-
-    Component.onCompleted: showSummaryPanel()
 
     Component {
         id: disconnectedVehicleSummaryComponent
@@ -163,14 +164,14 @@ Rectangle {
             imageResource:  "/qmlimages/FirmwareUpgradeIcon.png"
             setupIndicator: false
             exclusiveGroup: setupButtonGroup
-            visible:        controller.showFirmware
+            visible:        !ScreenTools.isMobile
             text:           "FIRMWARE"
 
             onClicked: showFirmwarePanel()
         }
 
         Repeater {
-            model: controller.autopilot ? controller.autopilot.vehicleComponents : 0
+            model: multiVehicleManager.parameterReadyVehicleAvailable ? multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
 
             SubMenuButton {
                 width:          buttonWidth
@@ -187,7 +188,7 @@ Rectangle {
             width:          buttonWidth
             setupIndicator: false
             exclusiveGroup: setupButtonGroup
-            visible:        controller.autopilot
+            visible:        multiVehicleManager.parameterReadyVehicleAvailable
             text:           "PARAMETERS"
 
             onClicked: showParametersPanel()
@@ -202,7 +203,5 @@ Rectangle {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-
-        property var autopilot: controller.autopilot
     }
 }

@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutex>
 
 #include "QGCSingleton.h"
+#include "Vehicle.h"
 
 class UASInterface;
 class UASMessageHandler;
@@ -127,11 +128,6 @@ public:
     
 public slots:
     /**
-     * @brief Set currently active UAS
-     * @param uas The current active UAS
-     */
-    void setActiveUAS(UASInterface* uas);
-    /**
      * @brief Handle text message from current active UAS
      * @param uasid UAS Id
      * @param componentid Component Id
@@ -151,6 +147,9 @@ signals:
      * @param count The new message count
      */
     void textMessageCountChanged(int count);
+    
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
     
 private:
     // Stores the UAS that we're currently receiving messages from.
