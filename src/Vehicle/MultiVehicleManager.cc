@@ -149,15 +149,17 @@ void MultiVehicleManager::_deleteVehiclePhase2  (void)
 void MultiVehicleManager::setActiveVehicle(Vehicle* vehicle)
 {
     if (vehicle != _activeVehicle) {
-        // The sequence of signals is very important in order to not leave Qml elements connected
-        // to a non-existent vehicle.
-        
-        // First we must signal that there is no active vehicle available. This will disconnect
-        // any existing ui from the currently active vehicle.
-        _activeVehicleAvailable = false;
-        _parameterReadyVehicleAvailable = false;
-        emit activeVehicleAvailableChanged(false);
-        emit parameterReadyVehicleAvailableChanged(false);
+        if (_activeVehicle) {
+            // The sequence of signals is very important in order to not leave Qml elements connected
+            // to a non-existent vehicle.
+            
+            // First we must signal that there is no active vehicle available. This will disconnect
+            // any existing ui from the currently active vehicle.
+            _activeVehicleAvailable = false;
+            _parameterReadyVehicleAvailable = false;
+            emit activeVehicleAvailableChanged(false);
+            emit parameterReadyVehicleAvailableChanged(false);
+        }
         
         // See explanation in _deleteVehiclePhase1
         _vehicleBeingSetActive = vehicle;
