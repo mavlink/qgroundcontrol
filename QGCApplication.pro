@@ -239,6 +239,7 @@ HEADERS += \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
     src/GAudioOutput.h \
+    src/HomePositionManager.h \
     src/LogCompressor.h \
     src/MG.h \
     src/QGC.h \
@@ -262,8 +263,6 @@ HEADERS += \
     src/uas/FileManager.h \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
-    src/uas/UASManager.h \
-    src/uas/UASManagerInterface.h \
     src/uas/UASMessageHandler.h \
     src/uas/UASWaypointManager.h \
     src/ui/flightdisplay/FlightDisplay.h \
@@ -376,6 +375,7 @@ SOURCES += \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
     src/GAudioOutput.cc \
+    src/HomePositionManager.cc \
     src/LogCompressor.cc \
     src/main.cc \
     src/QGC.cc \
@@ -394,7 +394,6 @@ SOURCES += \
     src/QmlControls/ScreenToolsController.cc \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
-    src/uas/UASManager.cc \
     src/uas/UASMessageHandler.cc \
     src/uas/UASWaypointManager.cc \
     src/ui/flightdisplay/FlightDisplay.cc \

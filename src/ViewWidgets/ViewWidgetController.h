@@ -28,7 +28,6 @@
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
-#include "UASManagerInterface.h"
 #include "Vehicle.h"
 
 class ViewWidgetController : public QObject

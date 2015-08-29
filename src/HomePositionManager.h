@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -21,17 +21,9 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/**
- * @file
- *   @brief Definition of class UASManager
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
-
 #ifndef _UASMANAGER_H_
 #define _UASMANAGER_H_
 
-#include "UASManagerInterface.h"
 #include "UASInterface.h"
 
 #include <QList>
@@ -42,17 +34,13 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCGeo.h"
 #include "QGCSingleton.h"
 
-/**
- * @brief Central manager for all connected aerial vehicles
- *
- * This class keeps a list of all connected / configured UASs. It also stores which
- * UAS is currently select with respect to user input or manual controls.
- **/
-class UASManager : public UASManagerInterface
+/// Manages an offline home position as well as performance coordinate transformations
+/// around a home position.
+class HomePositionManager : public QObject
 {
     Q_OBJECT
     
-    DECLARE_QGC_SINGLETON(UASManager, UASManagerInterface)
+    DECLARE_QGC_SINGLETON(HomePositionManager, HomePositionManager)
 
 public:
     /** @brief Get home position latitude */
@@ -85,40 +73,6 @@ public:
     /** @brief Convert x,y,z coordinates to lat / lon / alt coordinates in north-east-down frame */
     void nedToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt);
 
-    void getLocalNEDSafetyLimits(double* x1, double* y1, double* z1, double* x2, double* y2, double* z2)
-    {
-        *x1 = nedSafetyLimitPosition1.x();
-        *y1 = nedSafetyLimitPosition1.y();
-        *z1 = nedSafetyLimitPosition1.z();
-
-        *x2 = nedSafetyLimitPosition2.x();
-        *y2 = nedSafetyLimitPosition2.y();
-        *z2 = nedSafetyLimitPosition2.z();
-    }
-
-    /** @brief Check if a position is in the local NED safety limits */
-    bool isInLocalNEDSafetyLimits(double x, double y, double z)
-    {
-        if (x < nedSafetyLimitPosition1.x() &&
-            y > nedSafetyLimitPosition1.y() &&
-            z < nedSafetyLimitPosition1.z() &&
-            x > nedSafetyLimitPosition2.x() &&
-            y < nedSafetyLimitPosition2.y() &&
-            z > nedSafetyLimitPosition2.z())
-        {
-            // Within limits
-            return true;
-        }
-        else
-        {
-            // Not within limits
-            return false;
-        }
-    }
-
-//    void wgs84ToNed(const double& lat, const double& lon, const double& alt, double* north, double* east, double* down);
-
-
 public slots:
     /** @brief Set the current home position, but do not change it on the UAVs */
     bool setHomePosition(double lat, double lon, double alt);
@@ -126,35 +80,30 @@ public slots:
     /** @brief Set the current home position on all UAVs*/
     bool setHomePositionAndNotify(double lat, double lon, double alt);
 
-    /** @brief Set the safety limits in local position frame */
-    void setLocalNEDSafetyBorders(double x1, double y1, double z1, double x2, double y2, double z2);
-
-    /** @brief Update home position based on the position from one of the UAVs */
-    void uavChangedHomePosition(int uav, double lat, double lon, double alt);
 
     /** @brief Load settings */
     void loadSettings();
     /** @brief Store settings */
     void storeSettings();
 
-
+signals:
+    /** @brief Current home position changed */
+    void homePositionChanged(double lat, double lon, double alt);
+    
 protected:
-    UASWaypointManager *offlineUASWaypointManager;
     double homeLat;
     double homeLon;
     double homeAlt;
     int homeFrame;
     Eigen::Quaterniond ecef_ref_orientation_;
     Eigen::Vector3d ecef_ref_point_;
-    Eigen::Vector3d nedSafetyLimitPosition1;
-    Eigen::Vector3d nedSafetyLimitPosition2;
 
     void initReference(const double & latitude, const double & longitude, const double & altitude);
     
 private:
-    /// @brief All access to UASManager singleton is through UASManager::instance
-    UASManager(QObject* parent = NULL);
-    ~UASManager();
+    /// @brief All access to HomePositionManager singleton is through HomePositionManager::instance
+    HomePositionManager(QObject* parent = NULL);
+    ~HomePositionManager();
 
 public:
     /* Need to align struct pointer to prevent a memory assertion:
