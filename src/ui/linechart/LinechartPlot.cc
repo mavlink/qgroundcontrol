@@ -786,14 +786,9 @@ void TimeSeriesData::setAverageWindowSize(int windowSize)
 void TimeSeriesData::append(quint64 ms, double value)
 {
     dataMutex.lock();
-    // Pre- allocate new space
-    // FIXME Check this for validity
-    if(static_cast<quint64>(size()) < (count + 100)) {
-        this->ms.resize(size() + 10000);
-        this->value.resize(size() + 10000);
-    }
-    this->ms[count] = ms;
-    this->value[count] = value;
+    // Qt will automatically use a smart growth strategy: http://doc.qt.io/qt-5/containers.html#growth-strategies
+    this->ms.append(ms);
+    this->value.append(value);
     this->lastValue = value;
     this->mean = 0;
     //QList<double> medianList = QList<double>();
