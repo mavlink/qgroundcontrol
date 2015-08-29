@@ -63,7 +63,7 @@ G_END_DECLS
 #endif
 #include "QGCSingleton.h"
 #include "LinkManager.h"
-#include "UASManager.h"
+#include "HomePositionManager.h"
 #include "UASMessageHandler.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
@@ -602,21 +602,21 @@ void QGCApplication::_createSingletons(void)
     Q_ASSERT(linkManager);
 
     // Needs LinkManager
-    UASManagerInterface* uasManager = UASManager::_createSingleton();
+    HomePositionManager* uasManager = HomePositionManager::_createSingleton();
     Q_UNUSED(uasManager);
     Q_ASSERT(uasManager);
 
-    // Need UASManager
+    // Need HomePositionManager
     AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::_createSingleton();
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
 
-    // Need UASManager
+    // Need HomePositionManager
     UASMessageHandler* messageHandler = UASMessageHandler::_createSingleton();
     Q_UNUSED(messageHandler);
     Q_ASSERT(messageHandler);
 
-    // Needs UASManager
+    // Needs HomePositionManager
     FactSystem* factSystem = FactSystem::_createSingleton();
     Q_UNUSED(factSystem);
     Q_ASSERT(factSystem);
@@ -648,7 +648,7 @@ void QGCApplication::_destroySingletons(void)
     FactSystem::_deleteSingleton();
     UASMessageHandler::_deleteSingleton();
     AutoPilotPluginManager::_deleteSingleton();
-    UASManager::_deleteSingleton();
+    HomePositionManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
     MultiVehicleManager::_deleteSingleton();

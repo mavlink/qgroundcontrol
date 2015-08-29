@@ -73,6 +73,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCDockWidget.h"
 #include "MultiVehicleManager.h"
 #include "CustomCommandWidget.h"
+#include "HomePositionManager.h"
 
 #ifdef UNITTEST_BUILD
 #include "QmlControls/QmlTestWidget.h"
@@ -655,7 +656,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     
     _storeCurrentViewState();
     storeSettings();
-    UASManager::instance()->storeSettings();
+    HomePositionManager::instance()->storeSettings();
     event->accept();
 }
 

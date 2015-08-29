@@ -26,7 +26,6 @@
 
 #include "SetupView.h"
 
-#include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "VehicleComponent.h"
 #include "QGCQmlWidgetHolder.h"

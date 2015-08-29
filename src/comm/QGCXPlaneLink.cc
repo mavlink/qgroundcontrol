@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 #include "UASInterface.h"
 #include "QGCMessageBox.h"
+#include "HomePositionManager.h"
 
 QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress localHost, quint16 localPort) :
     mav(mav),
