@@ -29,7 +29,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QGCApplication.h"
 #include "UASMessageHandler.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 
 UASMessage::UASMessage(int componentid, int severity, QString text)
 {
@@ -62,7 +62,7 @@ UASMessageHandler::UASMessageHandler(QObject *parent)
     , _normalCount(0)
     , _showErrorsInToolbar(false)
 {
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &UASMessageHandler::_activeVehicleChanged);
     emit textMessageReceived(NULL);
     emit textMessageCountChanged(0);
 }
@@ -86,10 +86,10 @@ void UASMessageHandler::clearMessages()
     emit textMessageCountChanged(0);
 }
 
-void UASMessageHandler::setActiveUAS(UASInterface* uas)
+void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
 {
     // If we were already attached to an autopilot, disconnect it.
-    if (_activeUAS && _activeUAS != uas)
+    if (_activeUAS)
     {
         disconnect(_activeUAS, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(handleTextMessage(int,int,int,QString)));
         _activeUAS = NULL;
@@ -97,8 +97,10 @@ void UASMessageHandler::setActiveUAS(UASInterface* uas)
         emit textMessageReceived(NULL);
     }
     // And now if there's an autopilot to follow, set up the UI.
-    if (uas)
+    if (vehicle)
     {
+        UAS* uas = vehicle->uas();
+        
         // Connect to the new UAS.
         clearMessages();
         _activeUAS = uas;

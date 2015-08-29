@@ -32,6 +32,7 @@
 #include "QGCTemporaryFile.h"
 #include "QGCApplication.h"
 #include "UAS.h"
+#include "MultiVehicleManager.h"
 
 UT_REGISTER_TEST(MavlinkLogTest)
 
@@ -146,12 +147,10 @@ void MavlinkLogTest::_connectLogWorker(bool arm)
     
     // Wait for the uas to work it's way through the various threads
     
-    QSignalSpy spyUas(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)));
-    QCOMPARE(spyUas.wait(5000), true);
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(activeVehicleChanged(Vehicle*)));
+    QCOMPARE(spyVehicle.wait(5000), true);
 
-    UASInterface* uasInterface = UASManager::instance()->getActiveUAS();
-    QVERIFY(uasInterface);
-    UAS* uas = dynamic_cast<UAS*>(uasInterface);
+    UAS* uas = MultiVehicleManager::instance()->activeUas();
     QVERIFY(uas);
     
     QDir logSaveDir;

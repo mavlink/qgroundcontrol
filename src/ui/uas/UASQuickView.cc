@@ -5,6 +5,7 @@
 #include "UASQuickViewTextItem.h"
 #include <QSettings>
 #include <QInputDialog>
+#include "MultiVehicleManager.h"
 UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
     uas(NULL)
 {
@@ -17,12 +18,8 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
     m_verticalLayoutList.append(new QVBoxLayout());
     ui.horizontalLayout->addItem(m_verticalLayoutList[0]);
 
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(setActiveUAS(UASInterface*)));
-    connect(UASManager::instance(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
-    if (UASManager::instance()->getActiveUAS())
-    {
-        addUAS(UASManager::instance()->getActiveUAS());
-    }
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &UASQuickView::_activeVehicleChanged);
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
     loadSettings();
@@ -249,26 +246,13 @@ void UASQuickView::updateTimerTick()
     }
 }
 
-void UASQuickView::addUAS(UASInterface* uas)
+void UASQuickView::_activeVehicleChanged(Vehicle* vehicle)
 {
-    if (uas)
-    {
-        if (!this->uas)
-        {
-            setActiveUAS(uas);
-        }
-    }
-}
-
-void UASQuickView::setActiveUAS(UASInterface* uas)
-{
-    if (!uas)
-    {
+    if (uas) {
         return;
     }
-    this->uas = uas;
+    this->uas = vehicle->uas();
     connect(uas,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
-    //connect(uas,SIGNAL())
 }
 void UASQuickView::addSource(MAVLinkDecoder *decoder)
 {

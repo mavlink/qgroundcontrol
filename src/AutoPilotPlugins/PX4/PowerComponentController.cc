@@ -26,7 +26,6 @@
 
 #include "PowerComponentController.h"
 #include "QGCMAVLink.h"
-#include "UASManager.h"
 #include "QGCMessageBox.h"
 
 #include <QVariant>
@@ -71,7 +70,7 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
     Q_UNUSED(compId);
     Q_UNUSED(severity);
     
-    UASInterface* uas = _autopilot->uas();
+    UASInterface* uas = _autopilot->vehicle()->uas();
     Q_ASSERT(uas);
     if (uasId != uas->getUASID()) {
         return;

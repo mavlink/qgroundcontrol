@@ -25,14 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FactSystemTestGeneric.h"
-#include "LinkManager.h"
-#include "MockLink.h"
-#include "AutoPilotPluginManager.h"
-#include "UASManager.h"
-#include "QGCApplication.h"
-#include "QGCQuickWidget.h"
-
-#include <QQuickItem>
+#include "QGCMAVLink.h"
 
 UT_REGISTER_TEST(FactSystemTestGeneric)
 

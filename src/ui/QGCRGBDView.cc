@@ -3,7 +3,7 @@
 #include <QSettings>
 
 #include "QGCRGBDView.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 
 QGCRGBDView::QGCRGBDView(int width, int height, QWidget *parent) :
     HUD(width, height, parent),
@@ -22,7 +22,8 @@ QGCRGBDView::QGCRGBDView(int width, int height, QWidget *parent) :
     enableDepthAction->setChecked(depthEnabled);
     connect(enableDepthAction, SIGNAL(triggered(bool)), this, SLOT(enableDepth(bool)));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &QGCRGBDView::_activeVehicleChanged);
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 
     clearData();
     loadSettings();
@@ -52,7 +53,7 @@ void QGCRGBDView::loadSettings()
     settings.endGroup();
 }
 
-void QGCRGBDView::setActiveUAS(UASInterface* uas)
+void QGCRGBDView::_activeVehicleChanged(Vehicle* vehicle)
 {
     if (this->uas != NULL)
     {
@@ -62,14 +63,12 @@ void QGCRGBDView::setActiveUAS(UASInterface* uas)
         clearData();
     }
 
-    if (uas)
+    if (vehicle)
     {
         // Now connect the new UAS
         // Setup communication
-        connect(uas, SIGNAL(rgbdImageChanged(UASInterface*)), this, SLOT(updateData(UASInterface*)));
+        connect(vehicle->uas(), SIGNAL(rgbdImageChanged(UASInterface*)), this, SLOT(updateData(UASInterface*)));
     }
-
-    HUD::setActiveUAS(uas);
 }
 
 void QGCRGBDView::clearData(void)

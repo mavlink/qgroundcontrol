@@ -57,11 +57,6 @@ class UASManagerInterface : public QGCSingleton
     Q_OBJECT
     
 public:
-    virtual UASInterface* getActiveUAS() = 0;
-    virtual UASWaypointManager *getActiveUASWaypointManager() = 0;
-    virtual UASInterface* silentGetActiveUAS() = 0;
-    virtual UASInterface* getUASForId(int id) = 0;
-    virtual QList<UASInterface*> getUASList() = 0;
     virtual double getHomeLatitude() const  = 0;
     virtual double getHomeLongitude() const  = 0;
     virtual double getHomeAltitude() const = 0;
@@ -75,39 +70,14 @@ public:
     virtual bool isInLocalNEDSafetyLimits(double x, double y, double z) = 0;
     
 public slots:
-    virtual void addUAS(UASInterface* UAS) = 0;
-    virtual void removeUAS(UASInterface* uas) = 0;
-    virtual void setActiveUAS(UASInterface* UAS) = 0;
-    virtual bool launchActiveUAS() = 0;
-    virtual bool haltActiveUAS() = 0;
-    virtual bool continueActiveUAS() = 0;
-    virtual bool returnActiveUAS() = 0;
-    virtual bool stopActiveUAS() = 0;
-    virtual bool killActiveUAS() = 0;
-    virtual bool shutdownActiveUAS() = 0;
     virtual bool setHomePosition(double lat, double lon, double alt) = 0;
     virtual bool setHomePositionAndNotify(double lat, double lon, double alt) = 0;
     virtual void setLocalNEDSafetyBorders(double x1, double y1, double z1, double x2, double y2, double z2) = 0;
     virtual void uavChangedHomePosition(int uav, double lat, double lon, double alt) = 0;
     virtual void loadSettings() = 0;
     virtual void storeSettings() = 0;
-    virtual void _shutdown(void) = 0;
     
 signals:
-    /** A new system was created */
-    void UASCreated(UASInterface* UAS);
-    /** A system was deleted */
-    void UASDeleted(UASInterface* UAS);
-    /** A system was deleted */
-    void UASDeleted(int systemId);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASSet(UASInterface* UAS);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASSetListIndex(int listIndex);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASStatusChanged(UASInterface* UAS, bool active);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASStatusChanged(int systemId, bool active);
     /** @brief Current home position changed */
     void homePositionChanged(double lat, double lon, double alt);
     

@@ -35,7 +35,7 @@ This file is part of the PIXHAWK project
 #include <QInputDialog>
 
 #include "QGC.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "UASView.h"
 #include "UASWaypointManager.h"
 #include "MainWindow.h"
@@ -45,9 +45,10 @@ This file is part of the PIXHAWK project
 #include <QGCHilFlightGearConfiguration.h>
 #endif
 
-UASView::UASView(UASInterface* uas, QWidget *parent) :
+UASView::UASView(Vehicle* vehicle, QWidget *parent) :
     QWidget(parent),
-    uas(uas),
+    vehicle(vehicle),
+    uas(vehicle->uas()),
     startTime(0),
     timeout(false),
     iconIsRed(true),
@@ -104,10 +105,11 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int,int)));
     connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
-    connect(UASManager::instance(), SIGNAL(activeUASStatusChanged(UASInterface*,bool)), this, SLOT(updateActiveUAS(UASInterface*,bool)));
     connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(showStatusText(int, int, int, QString)));
     connect(uas, SIGNAL(navModeChanged(int, int, QString)), this, SLOT(updateNavMode(int, int, QString)));
 
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &UASView::_activeVehicleChanged);
+    
     // Setup user interaction
     connect(m_ui->liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
     connect(m_ui->haltButton, SIGNAL(clicked()), uas, SLOT(halt()));
@@ -118,9 +120,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(m_ui->shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
 
     // Allow deleting this widget
-    connect(removeAction, SIGNAL(triggered()), this, SLOT(triggerUASDeletion()));
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
-    connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
+    connect(selectAction, &QAction::triggered, this, &UASView::_activateVehicle);
     connect(selectAirframeAction, SIGNAL(triggered()), this, SLOT(selectAirframe()));
     connect(setBatterySpecsAction, SIGNAL(triggered()), this, SLOT(setBatterySpecs()));
 
@@ -155,7 +156,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     heartbeatColor = uas->getColor();
     QString colorstyle("QLabel { background-color: %1; }");
     m_ui->typeLabel->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
-    updateActiveUAS(uas, false);
+    _activeVehicleChanged(vehicle);
 
     // Hide kill and shutdown buttons by default
     m_ui->killButton->hide();
@@ -170,6 +171,11 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 UASView::~UASView()
 {
     delete m_ui;
+}
+
+void UASView::_activateVehicle(void)
+{
+    MultiVehicleManager::instance()->setActiveVehicle(vehicle);
 }
 
 void UASView::heartbeatTimeout(bool timeout, unsigned int ms)
@@ -198,23 +204,26 @@ void UASView::setUASasActive(bool active)
 {
     if (active)
     {
-        UASManager::instance()->setActiveUAS(this->uas);
+        MultiVehicleManager::instance()->setActiveVehicle(vehicle);
     }
 }
 
-void UASView::updateActiveUAS(UASInterface* uas, bool active)
+void UASView::_activeVehicleChanged(Vehicle* vehicle)
 {
-    if (uas == this->uas)
+    bool active = false;
+    
+    if (vehicle) {
+        active = vehicle->uas() == this->uas;
+    }
+    
+    this->isActive = active;
+    if (isActive)
     {
-        this->isActive = active;
-        if (active)
-        {
-            setStyleSheet("UASView { border-width: 3px}");
-        }
-        else
-        {
-            setStyleSheet(QString("UASView { border-color: %1}").arg(heartbeatColor.name()));
-        }
+        setStyleSheet("UASView { border-width: 3px}");
+    }
+    else
+    {
+        setStyleSheet(QString("UASView { border-color: %1}").arg(heartbeatColor.name()));
     }
 }
 
@@ -231,7 +240,7 @@ void UASView::updateMode(int sysId, QString status, QString description)
 void UASView::mouseDoubleClickEvent (QMouseEvent * event)
 {
     Q_UNUSED(event);
-    UASManager::instance()->setActiveUAS(uas);
+    MultiVehicleManager::instance()->setActiveVehicle(vehicle);
 }
 
 void UASView::receiveHeartbeat(UASInterface* uas)
@@ -243,7 +252,7 @@ void UASView::receiveHeartbeat(UASInterface* uas)
     // If we're returning from a disconnection, recolor things properly.
     if (disconnected)
     {
-        updateActiveUAS(this->uas, this->isActive);
+        _activeVehicleChanged(vehicle);
         disconnected = false;
     }
     timeout = false;
@@ -518,12 +527,6 @@ void UASView::selectAirframe()
             uas->setAirframe(airframes.indexOf(item));
         }
     }
-}
-
-void UASView::triggerUASDeletion()
-{
-    refreshTimer->stop();
-    UASManager::instance()->removeUAS(uas);
 }
 
 void UASView::refresh()

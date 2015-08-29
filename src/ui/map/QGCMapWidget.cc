@@ -7,6 +7,7 @@
 #include "Waypoint2DIcon.h"
 #include "UASWaypointManager.h"
 #include "QGCMessageBox.h"
+#include "MultiVehicleManager.h"
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapcontrol::OPMapWidget(parent),
@@ -20,14 +21,18 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapPositionInitialized(false),
     homeAltitude(0),
     zoomBlocked(false),
-    uas(NULL)
+    _uas(NULL)
 {
-    currWPManager = UASManager::instance()->getActiveUASWaypointManager();
+    currWPManager = MultiVehicleManager::instance()->activeWaypointManager();
+    
     waypointLines.insert(0, new QGraphicsItemGroup(map));
+    
     connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
     connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+    
     connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
     connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+    
     offlineMode = true;
     // Widget is inactive until shown
     defaultGuidedAlt = -1;
@@ -56,6 +61,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     guidedaction->setText("Go To Here Alt (Guided Mode)");
     connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedAltActionTriggered()));
     this->addAction(guidedaction);
+    
     // Set home location option
     QAction *sethomeaction = new QAction(this);
     sethomeaction->setText("Set Home Location Here");
@@ -64,7 +70,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
 }
 void QGCMapWidget::guidedActionTriggered()
 {
-    if (!uas)
+    if (!_uas)
     {
         QGCMessageBox::information(tr("Error"), tr("Please connect first"));
         return;
@@ -90,7 +96,7 @@ void QGCMapWidget::guidedActionTriggered()
 }
 bool QGCMapWidget::guidedAltActionTriggered()
 {
-    if (!uas)
+    if (!_uas)
     {
         QGCMessageBox::information(tr("Error"), tr("Please connect first"));
         return false;
@@ -112,7 +118,7 @@ bool QGCMapWidget::guidedAltActionTriggered()
  */
 bool QGCMapWidget::setHomeActionTriggered()
 {
-    if (!uas)
+    if (!_uas)
     {
         QGCMessageBox::information(tr("Error"), tr("Please connect first"));
         return false;
@@ -178,15 +184,14 @@ void QGCMapWidget::showEvent(QShowEvent* event)
     // Connect map updates to the adapter slots
     connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)), Qt::UniqueConnection);
 
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)), Qt::UniqueConnection);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &QGCMapWidget::_vehicleAdded);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &QGCMapWidget::_activeVehicleChanged);
+    
     connect(UASManager::instance(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(updateHomePosition(double,double,double)), Qt::UniqueConnection);
-
-    foreach (UASInterface* uas, UASManager::instance()->getUASList())
-    {
-        addUAS(uas);
+    
+    foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles()) {
+        _vehicleAdded(vehicle);
     }
-
 
     if (!mapInitialized)
     {
@@ -203,7 +208,7 @@ void QGCMapWidget::showEvent(QShowEvent* event)
         setFrameStyle(QFrame::NoFrame);      // no border frame
         setBackgroundBrush(QBrush(Qt::black)); // tile background
 
-        if (!UASManager::instance()->getActiveUAS()) {
+        if (!MultiVehicleManager::instance()->activeVehicle()) {
             SetCurrentPosition(pos_lat_lon);         // set the map position to default
         }
 
@@ -211,7 +216,7 @@ void QGCMapWidget::showEvent(QShowEvent* event)
         updateHomePosition(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
 
         // Set currently selected system
-        activeUASSet(UASManager::instance()->getActiveUAS());
+        _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
         setFocus();
 
         // Start timer
@@ -333,8 +338,10 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
  *
  * @param uas the UAS/MAV to monitor/display with the map widget
  */
-void QGCMapWidget::addUAS(UASInterface* uas)
+void QGCMapWidget::_vehicleAdded(Vehicle* vehicle)
 {
+    UAS* uas = vehicle->uas();
+    
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)),
             this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,double,quint64)), Qt::UniqueConnection);
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)), Qt::UniqueConnection);
@@ -348,10 +355,9 @@ void QGCMapWidget::addUAS(UASInterface* uas)
     }
 }
 
-void QGCMapWidget::activeUASSet(UASInterface* uas)
+void QGCMapWidget::_activeVehicleChanged(Vehicle* vehicle)
 {
-    // Only execute if proper UAS is set
-    this->uas = uas;
+    _uas = NULL;
 
     // Disconnect old MAV manager
     if (currWPManager)
@@ -365,13 +371,15 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
 
     // Attach the new waypoint manager if a new UAS was selected. Otherwise, indicate
     // that no such manager exists.
-    if (uas)
+    if (vehicle)
     {
-        currWPManager = uas->getWaypointManager();
+        _uas = vehicle->uas();
+        
+        currWPManager = _uas->getWaypointManager();
 
-        updateSelectedSystem(uas->getUASID());
-        followUAVID = uas->getUASID();
-        updateWaypointList(uas->getUASID());
+        updateSelectedSystem(vehicle->id());
+        followUAVID = vehicle->id();
+        updateWaypointList(vehicle->id());
 
         // Connect the waypoint manager / data storage to the UI
         connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)), Qt::UniqueConnection);
@@ -380,7 +388,7 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)), Qt::UniqueConnection);
 
         if (!mapPositionInitialized) {
-            internals::PointLatLng pos_lat_lon = internals::PointLatLng(uas->getLatitude(), uas->getLongitude());
+            internals::PointLatLng pos_lat_lon = internals::PointLatLng(_uas->getLatitude(), _uas->getLongitude());
             SetCurrentPosition(pos_lat_lon);
 
             // Zoom in
@@ -449,9 +457,10 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
  */
 void QGCMapWidget::updateGlobalPosition()
 {
-    QList<UASInterface*> systems = UASManager::instance()->getUASList();
-    foreach (UASInterface* system, systems)
+    foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles())
     {
+        UAS* system = vehicle->uas();
+        
         // Get reference to graphic UAV item
         mapcontrol::UAVItem* uav = GetUAV(system->getUASID());
         // Check if reference is valid, else create a new one
@@ -477,9 +486,10 @@ void QGCMapWidget::updateGlobalPosition()
 
 void QGCMapWidget::updateLocalPosition()
 {
-    QList<UASInterface*> systems = UASManager::instance()->getUASList();
-    foreach (UASInterface* system, systems)
+    foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles())
     {
+        UAS* system = vehicle->uas();
+        
         // Get reference to graphic UAV item
         mapcontrol::UAVItem* uav = GetUAV(system->getUASID());
         // Check if reference is valid, else create a new one
@@ -517,7 +527,7 @@ void QGCMapWidget::updateSystemSpecs(int uas)
         if (icon && icon->getUASId() == uas)
         {
             // Set new airframe
-            icon->setAirframe(UASManager::instance()->getUASForId(uas)->getAirframe());
+            icon->setAirframe(MultiVehicleManager::instance()->getVehicleById(uas)->uas()->getAirframe());
             icon->drawIcon();
         }
     }
@@ -664,7 +674,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
     }
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
-    UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+    UASInterface* uasInstance = MultiVehicleManager::instance()->getVehicleById(uas)->uas();
     if (currWPManager)
     {
         // Only accept waypoints in global coordinate frame
@@ -774,7 +784,7 @@ void QGCMapWidget::updateWaypointList(int uas)
     qDebug() << "UPDATE WP LIST IN 2D MAP CALLED FOR UAS" << uas;
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
-    UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+    UASInterface* uasInstance = MultiVehicleManager::instance()->getVehicleById(uas)->uas();
     if (currWPManager)
     {
         // ORDER MATTERS HERE!

@@ -260,7 +260,6 @@ HEADERS += \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
     src/SerialPortIds.h \
-    src/uas/QGCMAVLinkUASFactory.h \
     src/uas/FileManager.h \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
@@ -394,7 +393,6 @@ SOURCES += \
     src/QmlControls/MavManager.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
-    src/uas/QGCMAVLinkUASFactory.cc \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
     src/uas/UASManager.cc \
@@ -559,15 +557,12 @@ SOURCES += \
 #
 
 INCLUDEPATH += \
-    src/FirmwarePlugin \
-    src/VehicleSetup \
     src/AutoPilotPlugins/PX4 \
+    src/FirmwarePlugin \
+    src/Vehicle \
+    src/VehicleSetup \
 
 HEADERS+= \
-    src/FirmwarePlugin/FirmwarePluginManager.h \
-    src/FirmwarePlugin/FirmwarePlugin.h \
-    src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
-    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
@@ -587,6 +582,12 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
+    src/FirmwarePlugin/FirmwarePluginManager.h \
+    src/FirmwarePlugin/FirmwarePlugin.h \
+    src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
+    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
+    src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/Vehicle.h \
     src/VehicleSetup/SetupView.h \
     src/VehicleSetup/VehicleComponent.h \
 
@@ -600,9 +601,6 @@ HEADERS += \
 }
 
 SOURCES += \
-    src/FirmwarePlugin/FirmwarePluginManager.cc \
-    src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
-    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
     src/AutoPilotPlugins/AutoPilotPlugin.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
@@ -622,6 +620,11 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
+    src/FirmwarePlugin/FirmwarePluginManager.cc \
+    src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
+    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
+    src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/Vehicle.cc \
     src/VehicleSetup/SetupView.cc \
     src/VehicleSetup/VehicleComponent.cc \
 

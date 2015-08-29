@@ -21,14 +21,15 @@
 
  ======================================================================*/
 
-import QtQuick 2.2
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
+import QtQuick                  2.2
+import QtQuick.Controls         1.2
+import QtQuick.Controls.Styles  1.2
 
-import QGroundControl.FactSystem 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.FactSystem            1.0
+import QGroundControl.Palette               1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.MultiVehicleManager   1.0
 
 Rectangle {
     width: 600
@@ -64,7 +65,7 @@ Rectangle {
                                 "Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component." :
                                 "WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left."
 
-            property bool setupComplete: autopilot && autopilot.setupComplete
+            property bool setupComplete: multiVehicleManager.activeVehicle.autopilot.setupComplete
         }
 
         Item {
@@ -78,7 +79,8 @@ Rectangle {
             spacing: 10
 
             Repeater {
-                model: autopilot ? autopilot.vehicleComponents : 0
+                model: multiVehicleManager.activeVehicle.autopilot.vehicleComponents
+
 
                 // Outer summary item rectangle
                 Rectangle {

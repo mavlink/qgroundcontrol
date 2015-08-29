@@ -41,7 +41,7 @@ class GenericParameterFacts : public ParameterLoader
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    GenericParameterFacts(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent = NULL);
+    GenericParameterFacts(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent = NULL);
     
     /// Override from ParameterLoader
     virtual QString getDefaultComponentIdParam(void) const { return QString(); }

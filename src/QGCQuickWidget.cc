@@ -24,6 +24,7 @@
 #include "QGCQuickWidget.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
+#include "MultiVehicleManager.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -38,6 +39,7 @@ QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
     QQuickWidget(parent)
 {
     rootContext()->engine()->addImportPath("qrc:/qml");
+    rootContext()->setContextProperty("multiVehicleManager", MultiVehicleManager::instance());
 }
 
 void QGCQuickWidget::setAutoPilot(AutoPilotPlugin* autoPilot)

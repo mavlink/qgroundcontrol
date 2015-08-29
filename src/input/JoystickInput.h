@@ -52,7 +52,7 @@ This file is part of the PIXHAWK project
 #include <SDL/SDL.h>
 #endif
 
-#include "UASInterface.h"
+#include "UAS.h"
 
 struct JoystickSettings {
     QMap<int, bool> axesInverted; ///< Whether each axis should be used inverted from what was reported.
@@ -202,7 +202,7 @@ protected:
     bool done;
 
     SDL_Joystick* joystick;
-    UASInterface* uas; ///< Track the current UAS.
+    UAS* uas; ///< Track the current UAS.
     int autopilotType; ///< Cache the autopilotType
     int systemType; ///< Cache the systemType
     bool uasCanReverse; ///< Track whether the connect UAS can drive a reverse speed.
@@ -303,7 +303,7 @@ signals:
     /** @brief Signal that the UAS has been updated for this JoystickInput
      * Note that any UI updates should NOT query this object for joystick details. That should be done in response to the joystickSettingsChanged signal.
      */
-    void activeUASSet(UASInterface*);
+    void activeVehicleChanged(Vehicle* vehicle);
 
     /** @brief Signals that new joystick-specific settings were changed. Useful for triggering updates that at dependent on the current joystick. */
     void joystickSettingsChanged();
@@ -314,8 +314,6 @@ signals:
 public slots:
     /** @brief Enable or disable emitting the high-level control signals from the joystick. */
     void setEnabled(bool enable);
-    /** @brief Specify the UAS that this input should forward joystickChanged signals and buttonPresses to. */
-    void setActiveUAS(UASInterface* uas);
     /** @brief Switch to a new joystick by ID number. Both buttons and axes are updated with the proper signals emitted. */
     void setActiveJoystick(int id);
     /** @brief Switch calibration mode active */
@@ -372,6 +370,9 @@ public slots:
     {
         mode = (JOYSTICK_MODE)newMode;
     }
+    
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
 };
 
 #endif // _JOYSTICKINPUT_H_

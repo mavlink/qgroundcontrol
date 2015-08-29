@@ -31,10 +31,10 @@
 #include <QMutex>
 
 #include "FactSystem.h"
-#include "UASInterface.h"
 #include "MAVLinkProtocol.h"
 #include "AutoPilotPlugin.h"
 #include "QGCMAVLink.h"
+#include "Vehicle.h"
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -48,7 +48,7 @@ class ParameterLoader : public QObject
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent = NULL);
+    ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent = NULL);
     
     ~ParameterLoader();
     
@@ -123,7 +123,7 @@ private:
     void _checkInitialLoadComplete(void);
     
     AutoPilotPlugin*    _autopilot;
-    UASInterface*       _uas;
+    Vehicle*            _vehicle;
     MAVLinkProtocol*    _mavlink;
     
     /// First mapping is by component id

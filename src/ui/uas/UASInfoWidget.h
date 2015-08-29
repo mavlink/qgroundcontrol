@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UASInterface.h"
 #include "ui_UASInfo.h"
+#include "Vehicle.h"
 
 /**
  * @brief Info indicator for the currently active UAS
@@ -51,10 +52,6 @@ public:
     ~UASInfoWidget();
 
 public slots:
-    void addUAS(UASInterface* uas);
-
-    void setActiveUAS(UASInterface* uas);
-
     void updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void updateCPULoad(UASInterface* uas, double load);
     /** 
@@ -109,6 +106,9 @@ protected:
 
     void showEvent(QShowEvent* event);
     void hideEvent(QHideEvent* event);
+    
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
 
 private:
     Ui::uasInfo ui;

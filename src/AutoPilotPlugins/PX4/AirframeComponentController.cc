@@ -27,7 +27,7 @@
 #include "AirframeComponentController.h"
 #include "AirframeComponentAirframes.h"
 #include "QGCMAVLink.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 #include "QGCMessageBox.h"
@@ -98,7 +98,7 @@ AirframeComponentController::~AirframeComponentController()
 
 void AirframeComponentController::changeAutostart(void)
 {
-	if (UASManager::instance()->getUASList().count() > 1) {
+	if (MultiVehicleManager::instance()->vehicles().count() > 1) {
 		QGCMessageBox::warning("Airframe Config", "You cannot change airframe configuration while connected to multiple vehicles.");
 		return;
 	}

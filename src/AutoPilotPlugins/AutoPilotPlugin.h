@@ -32,11 +32,12 @@
 #include <QString>
 #include <QQmlContext>
 
-#include "UASInterface.h"
 #include "VehicleComponent.h"
 #include "FactSystem.h"
+#include "Vehicle.h"
 
 class ParameterLoader;
+class Vehicle;
 
 /// This is the base class for AutoPilot plugins
 ///
@@ -50,7 +51,7 @@ class AutoPilotPlugin : public QObject
     Q_OBJECT
 
 public:
-    AutoPilotPlugin(UASInterface* uas, QObject* parent);
+    AutoPilotPlugin(Vehicle* vehicle, QObject* parent);
     ~AutoPilotPlugin();
     
 	/// true: plugin is ready for use, plugin should no longer be used
@@ -119,7 +120,7 @@ public:
 	bool setupComplete(void);
     bool armed(void);
 	
-    UASInterface* uas(void) { return _uas; }
+    Vehicle* vehicle(void) { return _vehicle; }
     
 signals:
     void pluginReadyChanged(bool pluginReady);
@@ -134,9 +135,9 @@ protected:
 	/// Returns the ParameterLoader
 	virtual ParameterLoader* _getParameterLoader(void) = 0;
 	
-    UASInterface*   _uas;
-    bool            _pluginReady;
-	bool			_setupComplete;
+    Vehicle*    _vehicle;
+    bool        _pluginReady;
+	bool		_setupComplete;
 	
 private slots:
 	void _uasDisconnected(void);

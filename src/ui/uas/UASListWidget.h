@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASView.h"
 #include "QGCUnconnectedInfoWidget.h"
 #include "ui_UASList.h"
+#include "Vehicle.h"
 
 class UASListWidget : public QWidget
 {
@@ -50,9 +51,6 @@ public:
     ~UASListWidget();
 
 public slots:
-    void addUAS(UASInterface* uas);
-    void activeUAS(UASInterface* uas);
-    void removeUAS(UASInterface* uas);
     void removeLink(LinkInterface* link);
 
 protected:
@@ -65,6 +63,10 @@ protected:
     QGCUnconnectedInfoWidget* uWidget;
     QTimer* updateTimer;
     void changeEvent(QEvent *e);
+    
+private slots:
+    void _vehicleAdded(Vehicle* vehicle);
+    void _vehicleRemoved(Vehicle* vehicle);
 
 private:
     Ui::UASList* m_ui;
