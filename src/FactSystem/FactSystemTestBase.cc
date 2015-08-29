@@ -51,20 +51,13 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     LinkManager::instance()->connectLink(link);
     
     // Wait for the Vehicle to get created
-    QSignalSpy spyUas(MultiVehicleManager::instance(), SIGNAL(activeVehicleAvailableChanged(bool)));
-    QCOMPARE(spyUas.wait(5000), true);
-    QVERIFY(MultiVehicleManager::instance()->activeVehicleAvailable());
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+    QCOMPARE(spyVehicle.wait(5000), true);
+    QVERIFY(MultiVehicleManager::instance()->parameterReadyVehicleAvailable());
+    QVERIFY(MultiVehicleManager::instance()->activeVehicle());
     
     _plugin = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_plugin);
-
-    // Wait for the plugin to be ready
-    
-    QSignalSpy spyPlugin(_plugin, SIGNAL(pluginReadyChanged(bool)));
-    if (!_plugin->pluginReady()) {
-        QCOMPARE(spyPlugin.wait(60000), true);
-    }
-    Q_ASSERT(_plugin->pluginReady());
 }
 
 void FactSystemTestBase::_cleanup(void)
