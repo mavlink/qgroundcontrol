@@ -84,6 +84,11 @@ signals:
     void simulationDisconnected();
 
     /**
+     * @brief Thread safe signal to disconnect simulator from other threads
+     **/
+    void disconnectSim();
+
+    /**
      * @brief This signal is emitted instantly when the link status changes
      **/
     void simulationConnected(bool connected);

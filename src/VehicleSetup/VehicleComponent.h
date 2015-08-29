@@ -49,7 +49,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(QString setupStateDescription READ setupStateDescription STORED false)
     Q_PROPERTY(QString iconResource READ iconResource CONSTANT)
     Q_PROPERTY(QUrl setupSource READ setupSource CONSTANT)
-    Q_PROPERTY(QUrl summaryQmlSource READ summaryQmlSource CONSTANT);
+    Q_PROPERTY(QUrl summaryQmlSource READ summaryQmlSource CONSTANT)
     Q_PROPERTY(QString prerequisiteSetup READ prerequisiteSetup)
     
 public:

@@ -3227,7 +3227,7 @@ void UAS::startHil()
 void UAS::stopHil()
 {
     if (simulation && simulation->isConnected()) {
-        simulation->disconnectSimulation();
+        simulation->disconnectSim();
         setMode(base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to disable.";
     }
