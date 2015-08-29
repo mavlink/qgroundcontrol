@@ -33,7 +33,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QObject>
 #include <QTimer>
 #include <QQmlListProperty>
+
 #include "Waypoint.h"
+#include "Vehicle.h"
 
 class UASInterface;
 class UASWaypointManager;
@@ -172,6 +174,7 @@ signals:
     void waypointsChanged       ();
 
 private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
     void _handleTextMessage                 (int newCount);
     /** @brief Attitude from main autopilot / system state */
     void _updateAttitude                    (UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
@@ -183,8 +186,6 @@ private slots:
     void _updateAltitude                    (UASInterface* uas, double _altitudeAMSL, double _altitudeWGS84, double _altitudeRelative, double _climbRate, quint64 timestamp);
     void _updateNavigationControllerErrors  (UASInterface* uas, double altitudeError, double speedError, double xtrackError);
     void _updateNavigationControllerData    (UASInterface *uas, float navRoll, float navPitch, float navBearing, float targetBearing, float targetDistance);
-    void _forgetUAS                         (UASInterface* uas);
-    void _setActiveUAS                      (UASInterface* uas);
     void _checkUpdate                       ();
     void _updateBatteryRemaining            (UASInterface*, double voltage, double, double percent, int);
     void _updateBatteryConsumedChanged      (UASInterface*, double current_consumed);

@@ -36,21 +36,21 @@ This file is part of the PIXHAWK project
 #include <QPalette>
 
 #include "UASControlWidget.h"
-#include <UASManager.h>
-#include <UAS.h>
+#include "MultiVehicleManager.h"
+#include "UAS.h"
 #include "QGC.h"
 #include "AutoPilotPluginManager.h"
 #include "FirmwarePluginManager.h"
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
-    uasID(-1),
+    _uas(NULL),
     armed(false)
 {
     ui.setupUi(this);
 
-    this->setUAS(UASManager::instance()->getActiveUAS());
-
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &UASControlWidget::_activeVehicleChanged);
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
     ui.liftoffButton->hide();
@@ -62,14 +62,10 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 
 void UASControlWidget::updateModesList()
 {
-    if (this->uasID == 0) {
+    if (!_uas) {
         return;
     }
-    
-    UASInterface*uas = UASManager::instance()->getUASForId(this->uasID);
-    Q_ASSERT(uas);
-    
-    _modeList = FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)uas->getAutopilotType())->flightModes();
+    _modeList = FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)_uas->getAutopilotType())->flightModes();
     
     // Set combobox items
     ui.modeComboBox->clear();
@@ -82,37 +78,32 @@ void UASControlWidget::updateModesList()
     ui.modeComboBox->update();
 }
 
-void UASControlWidget::setUAS(UASInterface* uas)
+void UASControlWidget::_activeVehicleChanged(Vehicle* vehicle)
 {
-    if (this->uasID > 0) {
-        UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uasID);
-        if (oldUAS) {
-            disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(armSystem()));
-            disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
-            disconnect(ui.landButton, SIGNAL(clicked()), oldUAS, SLOT(home()));
-            disconnect(ui.shutdownButton, SIGNAL(clicked()), oldUAS, SLOT(shutdown()));
-            disconnect(oldUAS, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
-        }
+    if (_uas) {
+        disconnect(ui.controlButton, SIGNAL(clicked()), _uas, SLOT(armSystem()));
+        disconnect(ui.liftoffButton, SIGNAL(clicked()), _uas, SLOT(launch()));
+        disconnect(ui.landButton, SIGNAL(clicked()), _uas, SLOT(home()));
+        disconnect(ui.shutdownButton, SIGNAL(clicked()), _uas, SLOT(shutdown()));
+        disconnect(_uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+        _uas = NULL;
     }
 
     // Connect user interface controls
-    if (uas) {
+    if (vehicle) {
+        _uas = vehicle->uas();
         connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
-        connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
-        connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
-        connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-        connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+        connect(ui.liftoffButton, SIGNAL(clicked()), _uas, SLOT(launch()));
+        connect(ui.landButton, SIGNAL(clicked()), _uas, SLOT(home()));
+        connect(ui.shutdownButton, SIGNAL(clicked()), _uas, SLOT(shutdown()));
+        connect(_uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
 
-        ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
+        ui.controlStatusLabel->setText(tr("Connected to ") + _uas->getUASName());
 
-        this->uasID = uas->getUASID();
-        setBackgroundColor(uas->getColor());
+        setBackgroundColor(_uas->getColor());
 
         this->updateModesList();
         this->updateArmText();
-
-    } else {
-        this->uasID = -1;
     }
 }
 
@@ -167,40 +158,37 @@ void UASControlWidget::updateState(int state)
 
 void UASControlWidget::transmitMode()
 {
-    UAS* uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(this->uasID));
-    if (uas) {
+    if (_uas) {
         uint8_t     base_mode;
         uint32_t    custom_mode;
         QString     flightMode = ui.modeComboBox->itemText(ui.modeComboBox->currentIndex());
         
-        if (FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)uas->getAutopilotType())->setFlightMode(flightMode, &base_mode, &custom_mode)) {
+        if (FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)_uas->getAutopilotType())->setFlightMode(flightMode, &base_mode, &custom_mode)) {
             if (armed) {
                 base_mode |= MAV_MODE_FLAG_SAFETY_ARMED;
             }
             
-            if (uas->isHilEnabled() || uas->isHilActive()) {
+            if (_uas->isHilEnabled() || _uas->isHilActive()) {
                 base_mode |= MAV_MODE_FLAG_HIL_ENABLED;
             }
             
-            uas->setMode(base_mode, custom_mode);
+            _uas->setMode(base_mode, custom_mode);
             QString modeText = ui.modeComboBox->currentText();
             
-            ui.lastActionLabel->setText(QString("Sent new mode %1 to %2").arg(flightMode).arg(uas->getUASName()));
+            ui.lastActionLabel->setText(QString("Sent new mode %1 to %2").arg(flightMode).arg(_uas->getUASName()));
         }
     }
 }
 
 void UASControlWidget::cycleContextButton()
 {
-    UAS* uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(this->uasID));
-    if (uas) {
+    if (_uas) {
         if (!armed) {
-            uas->armSystem();
-            ui.lastActionLabel->setText(QString("Arm %1").arg(uas->getUASName()));
+            _uas->armSystem();
+            ui.lastActionLabel->setText(QString("Arm %1").arg(_uas->getUASName()));
         } else {
-            uas->disarmSystem();
-            ui.lastActionLabel->setText(QString("Disarm %1").arg(uas->getUASName()));
+            _uas->disarmSystem();
+            ui.lastActionLabel->setText(QString("Disarm %1").arg(_uas->getUASName()));
         }
     }
 }
-

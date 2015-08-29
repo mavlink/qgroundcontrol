@@ -47,6 +47,8 @@ This file is part of the QGROUNDCONTROL project
 
 Q_DECLARE_LOGGING_CATEGORY(UASLog)
 
+class Vehicle;
+
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
  *
@@ -59,7 +61,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, int id, MAV_AUTOPILOT autopilotType);
+    UAS(MAVLinkProtocol* protocol, Vehicle* vehicle);
     ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
@@ -87,9 +89,6 @@ public:
     quint64 getUptime() const;
     /** @brief Add one measurement and get low-passed voltage */
     float filterVoltage(float value) const;
-    /** @brief Get the links associated with this robot */
-    QList<LinkInterface*> getLinks();
-    bool isLogReplay(void);
 
     Q_PROPERTY(double localX READ getLocalX WRITE setLocalX NOTIFY localXChanged)
     Q_PROPERTY(double localY READ getLocalY WRITE setLocalY NOTIFY localYChanged)
@@ -317,7 +316,6 @@ public:
         return yaw;
     }
 
-    bool getSelected() const;
     QVector3D getNedPosGlobalOffset() const
     {
         return nedPosGlobalOffset;
@@ -392,10 +390,6 @@ protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
     QMap<int, QString> components;///< IDs and names of all detected onboard components
-    
-    /// List of all links associated with this UAS. We keep SharedLinkInterface objects which are QSharedPointer's in order to
-    /// maintain reference counts across threads. This way Link deletion works correctly.
-    QList<SharedLinkInterface> _links;
     
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
@@ -861,24 +855,13 @@ public slots:
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
 #endif
 
-    /** @brief Add a link associated with this robot */
-    void addLink(LinkInterface* link);
-
     /** @brief Receive a message from one of the communication links. */
-    virtual void receiveMessage(LinkInterface* link, mavlink_message_t message);
+    virtual void receiveMessage(mavlink_message_t message);
 
 #ifdef QGC_PROTOBUF_ENABLED
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message);
 #endif
-
-    /** @brief Send a message over this link (to this or to all UAS on this link) */
-    void sendMessage(LinkInterface* link, mavlink_message_t message);
-    /** @brief Send a message over all links this UAS can be reached with (!= all links) */
-    void sendMessage(mavlink_message_t message);
-
-    /** @brief Set this UAS as the system currently in focus, e.g. in the main display widgets */
-    void setSelected();
 
     /** @brief Set current mode of operation, e.g. auto or manual, always uses the current arming status for safety reason */
     void setMode(uint8_t newBaseMode, uint32_t newCustomMode);
@@ -964,8 +947,6 @@ signals:
     void groundSpeedChanged(double val, QString name);
     void airSpeedChanged(double val, QString name);
     void bearingToWaypointChanged(double val,QString name);
-    void _sendMessageOnThread(mavlink_message_t message);
-    void _sendMessageOnThreadLink(LinkInterface* link, mavlink_message_t message);
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
     quint64 getUnixTime(quint64 time=0);
@@ -996,16 +977,9 @@ protected slots:
     void writeSettings();
     /** @brief Read settings from disk */
     void readSettings();
-    /** @brief Send a message over this link (to this or to all UAS on this link) */
-    void _sendMessageLink(LinkInterface* link, mavlink_message_t message);
-    /** @brief Send a message over all links this UAS can be reached with (!= all links) */
-    void _sendMessage(mavlink_message_t message);
-    
-private slots:
-    void _linkDisconnected(LinkInterface* link);
     
 private:
-    bool _containsLink(LinkInterface* link);
+    Vehicle* _vehicle;
 };
 
 

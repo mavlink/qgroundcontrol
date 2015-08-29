@@ -39,8 +39,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QFontDatabase>
 #include <QTimer>
 #include <QVector3D>
+
 #include "UASInterface.h"
 #include "MainWindow.h"
+#include "Vehicle.h"
 
 /**
  * @brief Displays a Head Up Display (HUD)
@@ -61,9 +63,6 @@ public:
 
 public slots:
     void styleChanged(bool styleIsDark);
-
-    /** @brief Set the currently monitored UAS */
-    virtual void setActiveUAS(UASInterface* uas);
 
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
@@ -98,6 +97,7 @@ public slots:
 
 
 protected slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
     void paintRollPitchStrips();
     void paintPitchLines(float pitch, QPainter* painter);
     /** @brief Paint text on top of the image and OpenGL drawings */

@@ -1,7 +1,7 @@
 #include "JoystickAxis.h"
 #include "JoystickInput.h"
 #include "ui_JoystickAxis.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include <QString>
 
 JoystickAxis::JoystickAxis(int id, QWidget *parent) :
@@ -38,7 +38,7 @@ void JoystickAxis::setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING newMapping)
     {
         ui->rangeCheckBox->hide();
     }
-    this->setActiveUAS(UASManager::instance()->getActiveUAS());
+    this->activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 }
 
 void JoystickAxis::setInverted(bool newValue)
@@ -55,7 +55,7 @@ void JoystickAxis::mappingComboBoxChanged(int newMapping)
 {
     JoystickInput::JOYSTICK_INPUT_MAPPING mapping = (JoystickInput::JOYSTICK_INPUT_MAPPING)newMapping;
     emit mappingChanged(id, mapping);
-    updateUIBasedOnUAS(UASManager::instance()->getActiveUAS(), mapping);
+    updateUIBasedOnUAS(MultiVehicleManager::instance()->activeVehicle(), mapping);
 }
 
 void JoystickAxis::inversionCheckBoxChanged(bool inverted)
@@ -68,13 +68,19 @@ void JoystickAxis::rangeCheckBoxChanged(bool limited)
     emit rangeChanged(id, limited);
 }
 
-void JoystickAxis::setActiveUAS(UASInterface* uas)
+void JoystickAxis::activeVehicleChanged(Vehicle* vehicle)
 {
-    updateUIBasedOnUAS(uas, (JoystickInput::JOYSTICK_INPUT_MAPPING)ui->comboBox->currentIndex());
+    updateUIBasedOnUAS(vehicle, (JoystickInput::JOYSTICK_INPUT_MAPPING)ui->comboBox->currentIndex());
 }
 
-void JoystickAxis::updateUIBasedOnUAS(UASInterface* uas, JoystickInput::JOYSTICK_INPUT_MAPPING axisMapping)
+void JoystickAxis::updateUIBasedOnUAS(Vehicle* vehicle, JoystickInput::JOYSTICK_INPUT_MAPPING axisMapping)
 {
+    UAS* uas = NULL;
+    
+    if (vehicle) {
+        uas = vehicle->uas();
+    }
+    
     // Set the throttle display to only positive if:
     // * This is the throttle axis AND
     // * The current UAS can't reverse OR there is no current UAS

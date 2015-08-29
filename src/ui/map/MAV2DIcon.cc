@@ -4,6 +4,7 @@
 #include <qmath.h>
 
 #include "QGC.h"
+#include "MultiVehicleManager.h"
 
 MAV2DIcon::MAV2DIcon(mapcontrol::MapGraphicItem* map,mapcontrol::OPMapWidget* parent, UASInterface* uas, int radius, int type)
     : UAVItem(map,parent),
@@ -12,7 +13,7 @@ MAV2DIcon::MAV2DIcon(mapcontrol::MapGraphicItem* map,mapcontrol::OPMapWidget* pa
     type(type),
     airframe(uas->getAirframe()),
     iconColor(uas->getColor()),
-    selected(uas->getSelected()),
+    selected(MultiVehicleManager::instance()->activeUas() == uas),
     uasid(uas->getUASID())
 {
     size = QSize(radius, radius);

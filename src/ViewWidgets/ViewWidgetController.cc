@@ -23,53 +23,33 @@
 
 #include "ViewWidgetController.h"
 #include "UASManager.h"
-#include "AutoPilotPluginManager.h"
+#include "MultiVehicleManager.h"
 
 ViewWidgetController::ViewWidgetController(void) :
 	_autopilot(NULL),
 	_uas(NULL)
 {
-	_uasManager = UASManager::instance();
-	Q_ASSERT(_uasManager);
-	
-	connect(_uasManager, &UASManagerInterface::activeUASSet, this, &ViewWidgetController::_activeUasChanged);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &ViewWidgetController::_vehicleAvailable);
 }
 
-void ViewWidgetController::_activeUasChanged(UASInterface* currentUas)
+void ViewWidgetController::_vehicleAvailable(bool available)
 {
-	if (currentUas != _uas) {
-		if (_uas) {
-			disconnect(_autopilot, &AutoPilotPlugin::pluginReadyChanged, this, &ViewWidgetController::_pluginReadyChanged);
-			_uas = NULL;
-			_autopilot = NULL;
-			emit pluginDisconnected();
-		}
-		
-		if (currentUas) {
-			_uas = currentUas;
-			_autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(currentUas).data();
-			Q_ASSERT(_autopilot);
-			
-			connect(_autopilot, &AutoPilotPlugin::pluginReadyChanged, this, &ViewWidgetController::_pluginReadyChanged);
-			if (_autopilot->pluginReady()) {
-				_pluginReadyChanged(true);
-			}
-		}
-	}
+    if (_uas) {
+        _uas = NULL;
+        _autopilot = NULL;
+        emit pluginDisconnected();
+    }
+    
+    if (available) {
+        Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
+        
+        _uas = vehicle->uas();
+        _autopilot = vehicle->autopilotPlugin();
+        Q_ASSERT(_autopilot);
+        emit pluginConnected(QVariant::fromValue(_autopilot));
+    }
 }
-
-void ViewWidgetController::_pluginReadyChanged(bool pluginReady)
-{
-	Q_ASSERT(_autopilot);
-	
-	if (pluginReady) {
-		emit pluginConnected(QVariant::fromValue(_autopilot));
-	} else {
-		_activeUasChanged(NULL);
-	}
-}
-
 Q_INVOKABLE void ViewWidgetController::checkForVehicle(void)
 {
-	_activeUasChanged(_uasManager->getActiveUAS());
+    _vehicleAvailable(MultiVehicleManager::instance()->activeVehicle());
 }

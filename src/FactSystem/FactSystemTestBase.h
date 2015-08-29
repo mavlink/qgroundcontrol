@@ -48,9 +48,7 @@ protected:
     void _qml_test(void);
     void _qmlUpdate_test(void);
     
-    UASInterface*                   _uas;
     AutoPilotPlugin*                _plugin;
-    LinkManager*                    _linkMgr;
 };
 
 #endif

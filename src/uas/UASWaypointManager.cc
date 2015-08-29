@@ -34,13 +34,14 @@ This file is part of the QGROUNDCONTROL project
 #include "mavlink_types.h"
 #include "UASManager.h"
 #include "QGCMessageBox.h"
+#include "Vehicle.h"
 
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
 #define PROTOCOL_DELAY_MS 20        ///< minimum delay between sent messages
 #define PROTOCOL_MAX_RETRIES 5      ///< maximum number of send retries (after timeout)
 const float UASWaypointManager::defaultAltitudeHomeOffset   = 30.0f;
-UASWaypointManager::UASWaypointManager(UAS* _uas)
-    : uas(_uas),
+UASWaypointManager::UASWaypointManager(Vehicle* vehicle, UAS* uas)
+    : _vehicle(vehicle),
       current_retries(0),
       current_wp_id(0),
       current_count(0),
@@ -53,9 +54,9 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
 {
     _offlineEditingModeMessage = tr("You are in offline editing mode. Make sure to save your mission to a file before connecting to a system - you will need to load the file into the system, the offline list will be cleared on connect.");
     
-    if (uas)
+    if (_vehicle)
     {
-        uasid = uas->getUASID();
+        uasid = _vehicle->id();
         connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,double,quint64)));
@@ -366,7 +367,7 @@ void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, m
 void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, mavlink_mission_item_reached_t *wpr)
 {
 	Q_UNUSED(compId);
-    if (!uas) return;
+    if (!_vehicle) return;
     if (systemId == uasid) {
         emit updateStatusString(tr("Reached waypoint %1").arg(wpr->seq));
     }
@@ -375,7 +376,7 @@ void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, m
 void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_mission_current_t *wpc)
 {
     Q_UNUSED(compId);
-    if (!uas) return;
+    if (!_vehicle) return;
     if (systemId == uasid) {
         // FIXME Petri
         if (current_state == WP_SETCURRENT) {
@@ -485,7 +486,7 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
     if (wp)
     {
         // Check if this is the first waypoint in an offline list
-        if (waypointsEditable.count() == 0 && uas == NULL) {
+        if (waypointsEditable.count() == 0 && _vehicle == NULL) {
             QGCMessageBox::critical(tr("Waypoint Manager"),  _offlineEditingModeMessage);
         }
 
@@ -509,7 +510,7 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
 Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 {
     // Check if this is the first waypoint in an offline list
-    if (waypointsEditable.count() == 0 && uas == NULL) {
+    if (waypointsEditable.count() == 0 && _vehicle == NULL) {
         QGCMessageBox::critical(tr("Waypoint Manager"),  _offlineEditingModeMessage);
     }
 
@@ -934,13 +935,13 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
 }
 bool UASWaypointManager::guidedModeSupported()
 {
-    return (uas->getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA);
+    return (_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA);
 }
 
 void UASWaypointManager::goToWaypoint(Waypoint *wp)
 {
     //Don't try to send a guided mode message to an AP that does not support it.
-    if (uas->getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
+    if (_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
     {
         mavlink_mission_item_t mission;
         memset(&mission, 0, sizeof(mavlink_mission_item_t));   //initialize with zeros
@@ -961,8 +962,8 @@ void UASWaypointManager::goToWaypoint(Waypoint *wp)
         mavlink_message_t message;
         mission.target_system = uasid;
         mission.target_component = MAV_COMP_ID_MISSIONPLANNER;
-        mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &mission);
-        uas->sendMessage(message);
+        mavlink_msg_mission_item_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &mission);
+        _vehicle->sendMessage(message);
         QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
     }
 }
@@ -1037,13 +1038,13 @@ void UASWaypointManager::writeWaypoints()
 
 void UASWaypointManager::sendWaypointClearAll()
 {
-    if (!uas) return;
+    if (!_vehicle) return;
 
     // Send the message.
     mavlink_message_t message;
     mavlink_mission_clear_all_t wpca = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
-    mavlink_msg_mission_clear_all_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpca);
-    uas->sendMessage(message);
+    mavlink_msg_mission_clear_all_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &wpca);
+    _vehicle->sendMessage(message);
 
     // And update the UI.
     emit updateStatusString(tr("Clearing waypoint list..."));
@@ -1053,13 +1054,13 @@ void UASWaypointManager::sendWaypointClearAll()
 
 void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 {
-    if (!uas) return;
+    if (!_vehicle) return;
 
     // Send the message.
     mavlink_message_t message;
     mavlink_mission_set_current_t wpsc = {seq, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
-    mavlink_msg_mission_set_current_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpsc);
-    uas->sendMessage(message);
+    mavlink_msg_mission_set_current_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &wpsc);
+    _vehicle->sendMessage(message);
 
     // And update the UI.
     emit updateStatusString(tr("Updating target waypoint..."));
@@ -1069,14 +1070,14 @@ void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 
 void UASWaypointManager::sendWaypointCount()
 {
-    if (!uas) return;
+    if (!_vehicle) return;
 
 
     // Tell the UAS how many missions we'll sending.
     mavlink_message_t message;
     mavlink_mission_count_t wpc = {current_count, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
-    mavlink_msg_mission_count_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpc);
-    uas->sendMessage(message);
+    mavlink_msg_mission_count_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &wpc);
+    _vehicle->sendMessage(message);
 
     // And update the UI.
     emit updateStatusString(tr("Starting to transmit waypoints..."));
@@ -1086,13 +1087,13 @@ void UASWaypointManager::sendWaypointCount()
 
 void UASWaypointManager::sendWaypointRequestList()
 {
-    if (!uas) return;
+    if (!_vehicle) return;
 
     // Send a MISSION_REQUEST message to the uas for this mission manager, using the MISSIONPLANNER component.
     mavlink_message_t message;
     mavlink_mission_request_list_t wprl = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
-    mavlink_msg_mission_request_list_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wprl);
-    uas->sendMessage(message);
+    mavlink_msg_mission_request_list_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &wprl);
+    _vehicle->sendMessage(message);
 
     // And update the UI.
     QString statusMsg(tr("Requesting waypoint list..."));
@@ -1104,13 +1105,13 @@ void UASWaypointManager::sendWaypointRequestList()
 
 void UASWaypointManager::sendWaypointRequest(quint16 seq)
 {
-    if (!uas) return;
+    if (!_vehicle) return;
 
     // Send a MISSION_REQUEST message to the UAS's MISSIONPLANNER component.
     mavlink_message_t message;
     mavlink_mission_request_t wpr = {seq, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
-    mavlink_msg_mission_request_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpr);
-    uas->sendMessage(message);
+    mavlink_msg_mission_request_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &wpr);
+    _vehicle->sendMessage(message);
 
     // And update the UI.
     emit updateStatusString(tr("Retrieving waypoint ID %1 of %2").arg(wpr.seq).arg(current_count));
@@ -1120,7 +1121,7 @@ void UASWaypointManager::sendWaypointRequest(quint16 seq)
 
 void UASWaypointManager::sendWaypoint(quint16 seq)
 {
-    if (!uas) return;
+    if (!_vehicle) return;
     mavlink_message_t message;
 
     if (seq < waypoint_buffer.count()) {
@@ -1131,8 +1132,8 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
         wp->target_component = MAV_COMP_ID_MISSIONPLANNER;
 
         // Transmit the new mission
-        mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, wp);
-        uas->sendMessage(message);
+        mavlink_msg_mission_item_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, wp);
+        _vehicle->sendMessage(message);
 
         // And update the UI.
         emit updateStatusString(tr("Sending waypoint ID %1 of %2 total").arg(wp->seq).arg(current_count));
@@ -1143,19 +1144,19 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 
 void UASWaypointManager::sendWaypointAck(quint8 type)
 {
-    if (!uas) return;
+    if (!_vehicle) return;
 
     // Send the message.
     mavlink_message_t message;
     mavlink_mission_ack_t wpa = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER, type};
-    mavlink_msg_mission_ack_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpa);
-    uas->sendMessage(message);
+    mavlink_msg_mission_ack_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &wpa);
+    _vehicle->sendMessage(message);
 
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 UAS* UASWaypointManager::getUAS() {
-    return this->uas;    ///< Returns the owning UAS
+    return _vehicle ? _vehicle->uas() : NULL;    ///< Returns the owning UAS
 }
 
 float UASWaypointManager::getAltitudeRecommendation()
@@ -1185,11 +1186,11 @@ float UASWaypointManager::getAcceptanceRadiusRecommendation()
     else
     {
         // Default to rotary wing waypoint radius for offline editing
-        if (!uas || uas->isRotaryWing())
+        if (!_vehicle || _vehicle->uas()->isRotaryWing())
         {
             return UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING;
         }
-        else if (uas->isFixedWing())
+        else if (_vehicle->uas()->isFixedWing())
         {
             return UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING;
         }

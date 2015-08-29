@@ -1,6 +1,6 @@
 #include "QGCWaypointListMulti.h"
 #include "ui_QGCWaypointListMulti.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 
 void* QGCWaypointListMulti::_offlineUAS = NULL;
 
@@ -11,18 +11,18 @@ QGCWaypointListMulti::QGCWaypointListMulti(QWidget *parent) :
     _ui->setupUi(this);
     setMinimumSize(600, 80);
     
-    connect(UASManager::instance(), &UASManager::UASCreated, this, &QGCWaypointListMulti::_systemCreated);
-    connect(UASManager::instance(), &UASManager::activeUASSet, this, &QGCWaypointListMulti::_systemSetActive);
-
-    WaypointList* list = new WaypointList(_ui->stackedWidget, UASManager::instance()->getActiveUASWaypointManager());
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &QGCWaypointListMulti::_vehicleAdded);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &QGCWaypointListMulti::_vehicleRemoved);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &QGCWaypointListMulti::_activeVehicleChanged);
+    
+    WaypointList* list = new WaypointList(_ui->stackedWidget, MultiVehicleManager::instance()->activeWaypointManager());
     _lists.insert(_offlineUAS, list);
     _ui->stackedWidget->addWidget(list);
 
-    if (UASManager::instance()->getActiveUAS()) {
-        _systemCreated(UASManager::instance()->getActiveUAS());
-        _systemSetActive(UASManager::instance()->getActiveUAS());
+    if (MultiVehicleManager::instance()->activeVehicle()) {
+        _vehicleAdded(MultiVehicleManager::instance()->activeVehicle());
+        _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
     }
-
 }
 
 QGCWaypointListMulti::~QGCWaypointListMulti()
@@ -30,12 +30,14 @@ QGCWaypointListMulti::~QGCWaypointListMulti()
     delete _ui;
 }
 
-void QGCWaypointListMulti::_systemDeleted(QObject* uas)
+void QGCWaypointListMulti::_vehicleRemoved(Vehicle* vehicle)
 {
     // Do not dynamic cast or de-reference QObject, since object is either in destructor or may have already
     // been destroyed.
 
-    if (uas) {
+    if (vehicle) {
+        UAS* uas = vehicle->uas();
+        
         WaypointList* list = _lists.value(uas, NULL);
         if (list) {
             delete list;
@@ -44,20 +46,24 @@ void QGCWaypointListMulti::_systemDeleted(QObject* uas)
     }
 }
 
-void QGCWaypointListMulti::_systemCreated(UASInterface* uas)
+void QGCWaypointListMulti::_vehicleAdded(Vehicle* vehicle)
 {
+    UAS* uas = vehicle->uas();
+    
     WaypointList* list = new WaypointList(_ui->stackedWidget, uas->getWaypointManager());
     _lists.insert(uas, list);
     _ui->stackedWidget->addWidget(list);
-    // Ensure widget is deleted when system is deleted
-    connect(uas, &QObject::destroyed, this, &QGCWaypointListMulti::_systemDeleted);
 }
 
-void QGCWaypointListMulti::_systemSetActive(UASInterface* uas)
+void QGCWaypointListMulti::_activeVehicleChanged(Vehicle* vehicle)
 {
-    WaypointList* list = _lists.value(uas, NULL);
-    if (list) {
-        _ui->stackedWidget->setCurrentWidget(list);
+    if (vehicle) {
+        UAS* uas = vehicle->uas();
+        
+        WaypointList* list = _lists.value(uas, NULL);
+        if (list) {
+            _ui->stackedWidget->setCurrentWidget(list);
+        }
     }
 }
 

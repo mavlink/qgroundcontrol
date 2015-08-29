@@ -25,8 +25,6 @@
 #define PX4AUTOPILOT_H
 
 #include "AutoPilotPlugin.h"
-#include "AutoPilotPluginManager.h"
-#include "UASInterface.h"
 #include "PX4ParameterLoader.h"
 #include "PX4AirframeLoader.h"
 #include "AirframeComponent.h"
@@ -35,6 +33,7 @@
 #include "SensorsComponent.h"
 #include "SafetyComponent.h"
 #include "PowerComponent.h"
+#include "Vehicle.h"
 
 #include <QImage>
 
@@ -47,7 +46,7 @@ class PX4AutoPilotPlugin : public AutoPilotPlugin
     Q_OBJECT
 
 public:
-    PX4AutoPilotPlugin(UASInterface* uas, QObject* parent);
+    PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent);
     ~PX4AutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin

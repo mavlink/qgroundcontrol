@@ -23,8 +23,7 @@
 
 #include "PX4RCCalibrationTest.h"
 #include "RadioComponentController.h"
-#include "UASManager.h"
-#include "AutoPilotPluginManager.h"
+#include "MultiVehicleManager.h"
 
 /// @file
 ///     @brief QRadioComponentController Widget unit test
@@ -156,7 +155,7 @@ void RadioConfigTest::init(void)
     LinkManager::instance()->connectLink(_mockLink);
     QTest::qWait(5000); // Give enough time for UI to settle and heartbeats to go through
     
-    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(UASManager::instance()->getActiveUAS()).data();
+    _autopilot = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_autopilot);
     
     QSignalSpy spyPlugin(_autopilot, SIGNAL(pluginReadyChanged(bool)));

@@ -2,7 +2,7 @@
 
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkInspector.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "ui_QGCMAVLinkInspector.h"
 
 #include <QDebug>
@@ -50,7 +50,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clearView()));
 
     // Connect external connections
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &QGCMAVLinkInspector::_vehicleAdded);
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 
     // Attach the UI's refresh rate to a timer.
@@ -58,12 +58,12 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     updateTimer.start(updateInterval);
 }
 
-void QGCMAVLinkInspector::addSystem(UASInterface* uas)
+void QGCMAVLinkInspector::_vehicleAdded(Vehicle* vehicle)
 {
-    ui->systemComboBox->addItem(uas->getUASName(), uas->getUASID());
+    ui->systemComboBox->addItem(vehicle->uas()->getUASName(), vehicle->id());
 
     // Add a tree for a new UAS
-    addUAStoTree(uas->getUASID());
+    addUAStoTree(vehicle->id());
 }
 
 void QGCMAVLinkInspector::selectDropDownMenuSystem(int dropdownid)
@@ -97,9 +97,10 @@ void QGCMAVLinkInspector::rebuildComponentList()
     ui->componentComboBox->addItem(tr("All"), 0);
 
     // Fill
-    UASInterface* uas = UASManager::instance()->getUASForId(selectedSystemID);
-    if (uas)
+    Vehicle* vehicle = MultiVehicleManager::instance()->getVehicleById(selectedSystemID);
+    if (vehicle)
     {
+        UASInterface* uas = vehicle->uas();
         QMap<int, QString> components = uas->getComponents();
         foreach (int id, components.keys())
         {
@@ -329,10 +330,10 @@ void QGCMAVLinkInspector::addUAStoTree(int sysId)
     if(!uasTreeWidgetItems.contains(sysId))
     {
         // Add the UAS to the main tree after it has been created
-        UASInterface* uas = UASManager::instance()->getUASForId(sysId);
-
-        if (uas)
+        Vehicle* vehicle = MultiVehicleManager::instance()->getVehicleById(sysId);
+        if (vehicle)
         {
+            UASInterface* uas = vehicle->uas();
             QStringList idstring;
             if (uas->getUASName() == "")
             {

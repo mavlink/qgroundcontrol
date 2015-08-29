@@ -6,6 +6,7 @@
 #include <QTimer>
 
 #include "MAVLinkProtocol.h"
+#include "Vehicle.h"
 
 namespace Ui {
     class QGCMAVLinkInspector;
@@ -28,8 +29,6 @@ public slots:
     void clearView();
     /** @brief Update view */
     void refreshView();
-    /** @brief Add system to the list */
-    void addSystem(UASInterface* uas);
     /** @brief Add component to the list */
     void addComponent(int uas, int component, const QString& name);
     /** @Brief Select a system through the drop down menu */
@@ -71,6 +70,9 @@ protected:
 
     static const unsigned int updateInterval; ///< The update interval of the refresh function
     static const float updateHzLowpass; ///< The low-pass filter value for the frequency of each message
+    
+private slots:
+    void _vehicleAdded(Vehicle* vehicle);
 
 private:
     Ui::QGCMAVLinkInspector *ui;

@@ -37,7 +37,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "ScreenToolsController.h"
 #include "FlightDisplay.h"
-#include "UASManager.h"
 
 const char* kMainFlightDisplayGroup = "MainFlightDisplay";
 

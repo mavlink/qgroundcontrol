@@ -23,7 +23,6 @@
 
 #include "PX4AutoPilotPlugin.h"
 #include "AutoPilotPluginManager.h"
-#include "UASManager.h"
 #include "PX4ParameterLoader.h"
 #include "PX4AirframeLoader.h"
 #include "FlightModesComponentController.h"
@@ -64,8 +63,8 @@ union px4_custom_mode {
     float data_float;
 };
 
-PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
-    AutoPilotPlugin(uas, parent),
+PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
+    AutoPilotPlugin(vehicle, parent),
     _parameterFacts(NULL),
     _airframeComponent(NULL),
     _radioComponent(NULL),
@@ -75,15 +74,15 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(UASInterface* uas, QObject* parent) :
     _powerComponent(NULL),
     _incorrectParameterVersion(false)
 {
-    Q_ASSERT(uas);
+    Q_ASSERT(vehicle);
     
-    _parameterFacts = new PX4ParameterLoader(this, uas, this);
+    _parameterFacts = new PX4ParameterLoader(this, vehicle, this);
     Q_CHECK_PTR(_parameterFacts);
     
     connect(_parameterFacts, &PX4ParameterLoader::parametersReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
     connect(_parameterFacts, &PX4ParameterLoader::parameterListProgress, this, &PX4AutoPilotPlugin::parameterListProgress);
 
-    _airframeFacts = new PX4AirframeLoader(this, uas, this);
+    _airframeFacts = new PX4AirframeLoader(this, _vehicle->uas(), this);
     Q_CHECK_PTR(_airframeFacts);
     
     PX4ParameterLoader::loadParameterFactMetaData();
@@ -105,7 +104,7 @@ void PX4AutoPilotPlugin::clearStaticData(void)
 const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
-        Q_ASSERT(_uas);
+        Q_ASSERT(_vehicle);
         
         if (pluginReady()) {
             bool noRCTransmitter = false;
@@ -114,34 +113,34 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 noRCTransmitter = rcFact->value().toInt() == 1;
             }
 
-            _airframeComponent = new AirframeComponent(_uas, this);
+            _airframeComponent = new AirframeComponent(_vehicle->uas(), this);
             Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
             
             if (!noRCTransmitter) {
-                _radioComponent = new RadioComponent(_uas, this);
+                _radioComponent = new RadioComponent(_vehicle->uas(), this);
                 Q_CHECK_PTR(_radioComponent);
                 _radioComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
                 
-                _flightModesComponent = new FlightModesComponent(_uas, this);
+                _flightModesComponent = new FlightModesComponent(_vehicle->uas(), this);
                 Q_CHECK_PTR(_flightModesComponent);
                 _flightModesComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
             }
             
-            _sensorsComponent = new SensorsComponent(_uas, this);
+            _sensorsComponent = new SensorsComponent(_vehicle->uas(), this);
             Q_CHECK_PTR(_sensorsComponent);
             _sensorsComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
             
-            _powerComponent = new PowerComponent(_uas, this);
+            _powerComponent = new PowerComponent(_vehicle->uas(), this);
             Q_CHECK_PTR(_powerComponent);
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
             
-            _safetyComponent = new SafetyComponent(_uas, this);
+            _safetyComponent = new SafetyComponent(_vehicle->uas(), this);
             Q_CHECK_PTR(_safetyComponent);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));

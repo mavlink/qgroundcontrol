@@ -26,7 +26,6 @@
 
 #include "SensorsComponentController.h"
 #include "QGCMAVLink.h"
-#include "UASManager.h"
 #include "QGCMessageBox.h"
 
 #include <QVariant>
@@ -208,7 +207,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     Q_UNUSED(compId);
     Q_UNUSED(severity);
     
-    UASInterface* uas = _autopilot->uas();
+    UASInterface* uas = _autopilot->vehicle()->uas();
     Q_ASSERT(uas);
     if (uasId != uas->getUASID()) {
         return;
@@ -427,7 +426,7 @@ void SensorsComponentController::_refreshParams(void)
 
 bool SensorsComponentController::fixedWing(void)
 {
-    UASInterface* uas = _autopilot->uas();
+    UASInterface* uas = _autopilot->vehicle()->uas();
     Q_ASSERT(uas);
     return uas->getSystemType() == MAV_TYPE_FIXED_WING ||
             uas->getSystemType() == MAV_TYPE_VTOL_DUOROTOR ||
