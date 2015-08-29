@@ -194,13 +194,9 @@ void MultiVehicleManager::_autopilotPluginReadyChanged(bool pluginReady)
         return;
     }
     
-    if (_activeVehicle) {
-        if (_activeVehicle->autopilotPlugin() == autopilot) {
-            _parameterReadyVehicleAvailable = pluginReady;
-            emit parameterReadyVehicleAvailableChanged(pluginReady);
-        }
-    } else {
-        qWarning() << "Why no active vehicle?";
+    if (autopilot->vehicle() == _activeVehicle) {
+        _parameterReadyVehicleAvailable = pluginReady;
+        emit parameterReadyVehicleAvailableChanged(pluginReady);
     }
 }
 
