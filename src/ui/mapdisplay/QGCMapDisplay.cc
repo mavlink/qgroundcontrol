@@ -33,7 +33,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "ScreenToolsController.h"
 #include "QGCMapDisplay.h"
-#include "UASManager.h"
 
 const char* kMainMapDisplayGroup = "MainMapDisplay";
 

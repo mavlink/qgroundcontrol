@@ -20,16 +20,15 @@
 
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
-#include "UASManager.h"
 #include "UASInterface.h"
 #include "UAS.h"
 #include "configuration.h"
 #include "LinkManager.h"
 #include "QGCMAVLink.h"
-#include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "MultiVehicleManager.h"
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 IMPLEMENT_QGC_SINGLETON(MAVLinkProtocol, MAVLinkProtocol)
@@ -342,57 +341,13 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
             }
 
-            // ORDER MATTERS HERE!
-            // If the matching UAS object does not yet exist, it has to be created
-            // before emitting the packetReceived signal
-
-            UASInterface* uas = UASManager::instance()->getUASForId(message.sysid);
-
-            // Check and (if necessary) create UAS object
-            if (uas == NULL && message.msgid == MAVLINK_MSG_ID_HEARTBEAT)
-            {
-                // ORDER MATTERS HERE!
-                // The UAS object has first to be created and connected,
-                // only then the rest of the application can be made aware
-                // of its existence, as it only then can send and receive
-                // it's first messages.
-
-                // Check if the UAS has the same id like this system
-                if (message.sysid == getSystemId())
-                {
-                    emit protocolStatusMessage(tr("MAVLink Protocol"), tr("Warning: A second system is using the same system id (%1)").arg(getSystemId()));
-                }
-
-                // Create a new UAS based on the heartbeat received
-                // Todo dynamically load plugin at run-time for MAV
-                // WIKISEARCH:AUTOPILOT_TYPE_INSTANTIATION
-
-                // First create new UAS object
-                // Decode heartbeat message
+            if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                // Notify the vehicle manager of the heartbeat. This will create/update vehicles as needed.
                 mavlink_heartbeat_t heartbeat;
-                // Reset version field to 0
-                heartbeat.mavlink_version = 0;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
-
-                // Check if the UAS has a different protocol version
-                if (m_enable_version_check && (heartbeat.mavlink_version != MAVLINK_VERSION))
-                {
-                    // Bring up dialog to inform user
-                    if (!versionMismatchIgnore)
-                    {
-                        emit protocolStatusMessage(tr("MAVLink Protocol"), tr("The MAVLink protocol version on the MAV and QGroundControl mismatch! "
-                                                                              "It is unsafe to use different MAVLink versions. "
-                                                                              "QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
-                        versionMismatchIgnore = true;
-                    }
-
-                    // Ignore this message and continue gracefully
+                if (!MultiVehicleManager::instance()->notifyHeartbeatInfo(link, message.sysid, heartbeat)) {
                     continue;
                 }
-
-                // Create a new UAS object
-                uas = QGCMAVLinkUASFactory::createUAS(this, link, message.sysid, (MAV_AUTOPILOT)heartbeat.autopilot);
-
             }
 
             // Increase receive counter

@@ -5,7 +5,7 @@
 #include <QMap>
 
 #include "WaypointList.h"
-#include "UASInterface.h"
+#include "MultiVehicleManager.h"
 
 namespace Ui
 {
@@ -25,9 +25,9 @@ protected:
     virtual void changeEvent(QEvent *e);
     
 private slots:
-    void _systemDeleted(QObject* uas);
-    void _systemCreated(UASInterface* uas);
-    void _systemSetActive(UASInterface* uas);
+    void _vehicleRemoved(Vehicle* vehicle);
+    void _vehicleAdded(Vehicle* vehicle);
+    void _activeVehicleChanged(Vehicle* vehicle);
 
 private:
     

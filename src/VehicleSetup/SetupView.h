@@ -43,31 +43,12 @@ public:
     explicit SetupView(QWidget* parent = 0);
     ~SetupView();
     
-    Q_PROPERTY(AutoPilotPlugin* autopilot READ autopilot NOTIFY autopilotChanged)
-    Q_PROPERTY (bool showFirmware MEMBER _showFirmware CONSTANT)
-    
 #ifdef UNITTEST_BUILD
     void showFirmware(void);
     void showParameters(void);
     void showSummary(void);
     void showVehicleComponentSetup(VehicleComponent* vehicleComponent);
 #endif
-    
-    AutoPilotPlugin* autopilot(void);
-    
-signals:
-    void autopilotChanged(AutoPilotPlugin* autopilot);
-    
-private slots:
-    void _setActiveUAS(UASInterface* uas);
-    void _pluginReadyChanged(bool pluginReady);
-
-private:
-    UASInterface*                   _uasCurrent;
-    bool                            _initComplete;      ///< true: parameters are ready and ui has been setup
-    QSharedPointer<AutoPilotPlugin> _autopilot;         // Shared pointer to prevent shutdown ordering problems
-    AutoPilotPlugin*                _readyAutopilot;    // NULL if autopilot is not yet read
-    bool                            _showFirmware;
 };
 
 #endif

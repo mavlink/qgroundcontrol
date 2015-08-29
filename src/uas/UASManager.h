@@ -55,31 +55,6 @@ class UASManager : public UASManagerInterface
     DECLARE_QGC_SINGLETON(UASManager, UASManagerInterface)
 
 public:
-    /**
-     * @brief Get the currently selected UAS
-     *
-     * @return NULL pointer if no UAS exists, active UAS else
-     **/
-    UASInterface* getActiveUAS();
-    /**
-     * @brief getActiveUASWaypointManager
-     * @return uas->getUASWaypointManager(), or if not connected, a singleton instance of a UASWaypointManager.
-     */
-    UASWaypointManager *getActiveUASWaypointManager();
-
-    UASInterface* silentGetActiveUAS();
-    /**
-     * @brief Get the UAS with this id
-     *
-     * Although not enforced by this implementation, the IDs are constrained to be
-     * in the range of 1 - 127 by the MAVLINK protocol.
-     *
-     * @param id unique system / aircraft id
-     * @return UAS with the given ID, NULL pointer else
-     **/
-    UASInterface* getUASForId(int id);
-
-    QList<UASInterface*> getUASList();
     /** @brief Get home position latitude */
     double getHomeLatitude() const {
         return homeLat;
@@ -145,88 +120,6 @@ public:
 
 
 public slots:
-
-    /**
-     * @brief Add a new UAS to the list
-     *
-     * This command will only be executed if this UAS does not yet exist.
-     * @param UAS unmanned air system to add
-     **/
-    void addUAS(UASInterface* UAS);
-
-    /** @brief Remove a system from the list. If this is the active UAS, it switches to another one calling setActiveUAS. Also triggers the UAS to kill itself. */
-    void removeUAS(UASInterface* uas);
-
-
-    /**
-      * @brief Set a UAS as currently selected. NULL is a valid value for when no other valid UAS's are available.
-      *
-      * @param UAS Unmanned Air System to set
-      **/
-    void setActiveUAS(UASInterface* UAS);
-
-
-    /**
-     * @brief Launch the active UAS
-     *
-     * The groundstation has always one Unmanned Air System selected.
-     * All commands are executed on the UAS in focus. This command starts
-     * the launch sequence.
-     *
-     * @return True if the UAS could be launched, false else
-     */
-    bool launchActiveUAS();
-
-    bool haltActiveUAS();
-
-    bool continueActiveUAS();
-
-    /**
-     * @brief Land the active UAS
-     *
-     * The groundstation has always one Unmanned Air System selected.
-     * All commands are executed on the UAS in focus. This command starts
-     * the land sequence. Depending on the onboard control, this could mean
-     * returning to the landing spot as well as descending on the current
-     * position.
-     *
-     * @return True if the UAS could be landed, false else
-     */
-    bool returnActiveUAS();
-
-
-    /**
-     * @brief EMERGENCY: Stop active UAS
-     *
-     * The groundstation has always one Unmanned Air System selected.
-     * All commands are executed on the UAS in focus. This command
-     * starts an emergency landing. Depending on the onboard control,
-     * this usually means descending rapidly on the current position.
-     *
-     * @warning This command can severely damage the UAS!
-     *
-     * @return True if the UAS could be landed, false else
-     */
-    bool stopActiveUAS();
-
-    /**
-     * @brief EMERGENCY: Kill active UAS
-     *
-     * The groundstation has always one Unmanned Air System selected.
-     * All commands are executed on the UAS in focus. This command
-     * shuts off all onboard motors immediately. This leads to a
-     * system crash, but might prevent external damage, e.g. to people.
-     * This command is secured by an additional popup message window.
-     *
-     * @warning THIS COMMAND RESULTS IN THE LOSS OF THE SYSTEM!
-     *
-     * @return True if the UAS could be landed, false else
-     */
-    bool killActiveUAS();
-
-    /** @brief Shut down the onboard operating system down */
-    bool shutdownActiveUAS();
-
     /** @brief Set the current home position, but do not change it on the UAVs */
     bool setHomePosition(double lat, double lon, double alt);
 
@@ -243,15 +136,10 @@ public slots:
     void loadSettings();
     /** @brief Store settings */
     void storeSettings();
-    
-    void _shutdown(void);
 
 
 protected:
-    QList<UASInterface*> systems;
-    UASInterface* activeUAS;
     UASWaypointManager *offlineUASWaypointManager;
-    QMutex activeUASMutex;
     double homeLat;
     double homeLon;
     double homeAlt;

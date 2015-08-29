@@ -16,7 +16,7 @@
 #include <QDebug>
 #include <limits.h>
 #include "UAS.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "QGC.h"
 #include <QMutexLocker>
 #include <QSettings>
@@ -49,7 +49,7 @@ JoystickInput::JoystickInput() :
 {
 
     // Make sure we initialize with the correct UAS.
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 
     // Start this thread. This allows the Joystick Settings window to work correctly even w/o any UASes connected.
     start();
@@ -304,25 +304,14 @@ void JoystickInput::storeJoystickSettings() const
     settings.endGroup();
 }
 
-void JoystickInput::setActiveUAS(UASInterface* uas)
+void JoystickInput::_activeVehicleChanged(Vehicle* vehicle)
 {
-    // Do nothing if the UAS hasn't changed.
-    if (uas == this->uas)
-    {
-        return;
-    }
-
-    // Only connect / disconnect is the UAS is of a controllable UAS class
-    UAS* tmp = 0;
     if (this->uas)
     {
-        tmp = dynamic_cast<UAS*>(this->uas);
-        if(tmp)
-        {
-            disconnect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,quint8)), tmp, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16,quint8)));
-            disconnect(this, SIGNAL(actionTriggered(int)), tmp, SLOT(triggerAction(int)));
-        }
+        disconnect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,quint8)), uas, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16,quint8)));
+        disconnect(this, SIGNAL(actionTriggered(int)), uas, SLOT(triggerAction(int)));
         uasCanReverse = false;
+        uas = NULL;
     }
 
     // Save any settings for the last UAS
@@ -331,23 +320,22 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
         storeJoystickSettings();
     }
 
-    this->uas = uas;
-
-    if (this->uas && (tmp = dynamic_cast<UAS*>(this->uas)))
+    if (vehicle)
     {
-        connect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,quint8)), tmp, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16,quint8)));
+        uas = vehicle->uas();
+        connect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,quint8)), uas, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16,quint8)));
         qDebug() << "connected joystick";
-        connect(this, SIGNAL(actionTriggered(int)), tmp, SLOT(triggerAction(int)));
-        uasCanReverse = tmp->systemCanReverse();
+        connect(this, SIGNAL(actionTriggered(int)), uas, SLOT(triggerAction(int)));
+        uasCanReverse = uas->systemCanReverse();
 
         // Update the joystick settings for a new UAS.
         autopilotType = uas->getAutopilotType();
         systemType = uas->getSystemType();
     }
 
-    // Make sure any UI elements know we've updated the UAS. The UASManager signal is re-emitted here so that UI elements know to
+    // Make sure any UI elements know we've updated the UAS. The signal is re-emitted here so that UI elements know to
     // update their UAS-specific UI.
-    emit activeUASSet(uas);
+    emit activeVehicleChanged(vehicle);
 
     // Load any joystick-specific settings now that the UAS has changed.
     if (joystickID > -1)
@@ -412,8 +400,8 @@ void JoystickInput::init()
     setActiveJoystick(activeJoystick);
 
     // Now make sure we know what the current UAS is and track changes to it.
-    setActiveUAS(UASManager::instance()->getActiveUAS());
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &JoystickInput::_activeVehicleChanged);
 }
 
 void JoystickInput::shutdown()

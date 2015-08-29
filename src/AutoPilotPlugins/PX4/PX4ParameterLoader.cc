@@ -38,10 +38,10 @@ QGC_LOGGING_CATEGORY(PX4ParameterLoaderLog, "PX4ParameterLoaderLog")
 bool PX4ParameterLoader::_parameterMetaDataLoaded = false;
 QMap<QString, FactMetaData*> PX4ParameterLoader::_mapParameterName2FactMetaData;
 
-PX4ParameterLoader::PX4ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent) :
-    ParameterLoader(autopilot, uas, parent)
+PX4ParameterLoader::PX4ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent) :
+    ParameterLoader(autopilot, vehicle, parent)
 {
-    Q_ASSERT(uas);
+    Q_ASSERT(vehicle);
 }
 
 /// Converts a string to a typed QVariant

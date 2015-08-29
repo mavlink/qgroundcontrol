@@ -38,8 +38,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QPointer>
 #include "Waypoint.h"
 #include "QGCMAVLink.h"
+
 class UAS;
 class UASInterface;
+class Vehicle;
 
 /**
  * @brief Implementation of the MAVLINK waypoint protocol
@@ -65,7 +67,7 @@ private:
     }; ///< The possible states for the waypoint protocol
 
 public:
-    UASWaypointManager(UAS* uas=NULL);   ///< Standard constructor
+    UASWaypointManager(Vehicle* vehicle, UAS* uas);   ///< Standard constructor
     ~UASWaypointManager();
     bool guidedModeSupported();
 
@@ -171,7 +173,7 @@ private slots:
     void _updateWPonTimer(void);                               ///< Starts requesting WP on timer timeout
 
 private:
-    UAS* uas;                                       ///< Reference to the corresponding UAS
+    Vehicle* _vehicle;
     quint32 current_retries;                        ///< The current number of retries left
     quint16 current_wp_id;                          ///< The last used waypoint ID in the current protocol transaction
     quint16 current_count;                          ///< The number of waypoints in the current protocol transaction

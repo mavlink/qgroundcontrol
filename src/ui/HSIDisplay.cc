@@ -37,6 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDoubleSpinBox>
 #include <QDebug>
 
+#include "MultiVehicleManager.h"
 #include "UASManager.h"
 #include "HSIDisplay.h"
 #include "QGC.h"
@@ -178,16 +179,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     // XXX this looks a potential recursive issue
     //connect(&statusClearTimer, SIGNAL(timeout()), this, SLOT(clearStatusMessage()));
 
-    if (UASManager::instance()->getActiveUAS())
-    {
-        setActiveUAS(UASManager::instance()->getActiveUAS());
-    }
-
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-            this, SLOT(setActiveUAS(UASInterface*)));
-
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-            this, SLOT(setActiveUAS(UASInterface*)));
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &HSIDisplay::_activeVehicleChanged);
+    
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 
     setFocusPolicy(Qt::StrongFocus);
 }
@@ -918,7 +912,7 @@ void HSIDisplay::setMetricWidth(double width)
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
  */
-void HSIDisplay::setActiveUAS(UASInterface* uas)
+void HSIDisplay::_activeVehicleChanged(Vehicle* vehicle)
 {
     if (this->uas != NULL) {
         disconnect(this->uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
@@ -953,9 +947,12 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, &UASInterface::navigationControllerErrorsChanged,
                    this, &HSIDisplay::UpdateNavErrors);
     }
+    
+    this->uas = NULL;
 
-    if (uas)
+    if (vehicle)
     {
+        this->uas = vehicle->uas();
         connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)),
                 this, SLOT(updateSatellite(int,int,float,float,float,bool)));
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),
@@ -1018,8 +1015,6 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     {
         statusClearTimer.stop();
     }
-
-    this->uas = uas;
 
     resetMAVState();
 }

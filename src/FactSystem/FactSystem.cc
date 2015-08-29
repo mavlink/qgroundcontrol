@@ -25,8 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FactSystem.h"
-#include "UASManager.h"
-#include "QGCApplication.h"
 #include "FactPanelController.h"
 
 #include <QtQml>

@@ -1,6 +1,6 @@
 #include "JoystickButton.h"
 #include "ui_JoystickButton.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 
 JoystickButton::JoystickButton(int id, QWidget *parent) :
     QWidget(parent),
@@ -9,7 +9,7 @@ JoystickButton::JoystickButton(int id, QWidget *parent) :
 {
     m_ui->setupUi(this);
     m_ui->joystickButtonLabel->setText(QString::number(id));
-    this->setActiveUAS(UASManager::instance()->getActiveUAS());
+    this->activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
     connect(m_ui->joystickAction, SIGNAL(currentIndexChanged(int)), this, SLOT(actionComboBoxChanged(int)));
 }
 
@@ -18,12 +18,14 @@ JoystickButton::~JoystickButton()
     delete m_ui;
 }
 
-void JoystickButton::setActiveUAS(UASInterface* uas)
+void JoystickButton::activeVehicleChanged(Vehicle* vehicle)
 {
     // Disable signals so that changes to joystickAction don't trigger JoystickInput updates.
     disconnect(m_ui->joystickAction, SIGNAL(currentIndexChanged(int)), this, SLOT(actionComboBoxChanged(int)));
-    if (uas)
+    if (vehicle)
     {
+        UAS* uas = vehicle->uas();
+        
         m_ui->joystickAction->setEnabled(true);
         m_ui->joystickAction->clear();
         m_ui->joystickAction->addItem("--");

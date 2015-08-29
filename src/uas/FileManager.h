@@ -32,12 +32,14 @@
 
 Q_DECLARE_LOGGING_CATEGORY(FileManagerLog)
 
+class Vehicle;
+
 class FileManager : public QObject
 {
     Q_OBJECT
     
 public:
-    FileManager(QObject* parent, UASInterface* uas);
+    FileManager(QObject* parent, Vehicle* vehicle);
     
     /// These methods are only used for testing purposes.
     bool _sendCmdTestAck(void) { return _sendOpcodeOnlyCmd(kCmdNone, kCOAck); };
@@ -200,7 +202,7 @@ private:
     OperationState  _currentOperation;              ///< Current operation of state machine
     QTimer          _ackTimer;                      ///< Used to signal a timeout waiting for an ack
     
-    UASInterface* _mav;
+    Vehicle* _vehicle;
     
     uint16_t _lastOutgoingSeqNumber; ///< Sequence number sent in last outgoing packet
 

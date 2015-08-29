@@ -42,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include <cmath>
 
 #include "UASInterface.h"
+#include "Vehicle.h"
 
 namespace Ui
 {
@@ -66,8 +67,6 @@ public:
 public slots:
     /** @brief Update the HDD with new data */
     void updateValue(const int uasId, const QString& name, const QString& unit, const QVariant &value, const quint64 msec);
-	
-    virtual void setActiveUAS(UASInterface* uas);
 	
 	/** @brief Connects a source to the updateValue() signals */
     void addSource(QObject* obj);
@@ -197,6 +196,9 @@ protected:
     QAction* setTitleAction;   ///< Action setting the title
     QAction* setColumnsAction; ///< Action setting the number of columns
     bool valuesChanged;
+    
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
 
 private:
     Ui::HDDisplay *m_ui;

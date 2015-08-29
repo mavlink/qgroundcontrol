@@ -6,7 +6,7 @@
 #include <QVector>
 
 #include "LinechartWidget.h"
-#include "UASInterface.h"
+#include "Vehicle.h"
 
 class Linecharts : public QStackedWidget
 {
@@ -21,7 +21,7 @@ signals:
 
 public slots:
     /** @brief Add a new system to the list of plots */
-    void addSystem(UASInterface* uas);
+    void addVehicle(Vehicle* vehicle);
     /** @brief Add a new generic message source (not a system) */
     void addSource(QObject* obj);
 

@@ -42,59 +42,14 @@
 #include <QDebug>
 
 SetupView::SetupView(QWidget* parent) :
-    QGCQmlWidgetHolder(parent),
-    _uasCurrent(NULL),
-    _initComplete(false),
-    _readyAutopilot(NULL)
+    QGCQmlWidgetHolder(parent)
 {
-#ifdef __mobile__
-    _showFirmware = false;
-#else
-    _showFirmware = true;
-#endif
-
-    connect(UASManager::instance(), &UASManager::activeUASSet, this, &SetupView::_setActiveUAS);
-
-    getRootContext()->setContextProperty("controller", this);
     setSource(QUrl::fromUserInput("qrc:/qml/SetupView.qml"));
-
-    _setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
 SetupView::~SetupView()
 {
 
-}
-
-void SetupView::_setActiveUAS(UASInterface* uas)
-{
-    if (_uasCurrent) {
-        disconnect(_autopilot.data(), &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
-    }
-
-    _pluginReadyChanged(false);
-
-    _uasCurrent = uas;
-
-    if (_uasCurrent) {
-        _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uasCurrent);
-        if (_autopilot.data()->pluginReady()) {
-            _pluginReadyChanged(_autopilot.data()->pluginReady());
-        }
-        connect(_autopilot.data(), &AutoPilotPlugin::pluginReadyChanged, this, &SetupView::_pluginReadyChanged);
-    }
-}
-
-void SetupView::_pluginReadyChanged(bool pluginReady)
-{
-    if (pluginReady) {
-        _readyAutopilot = _autopilot.data();
-        emit autopilotChanged(_readyAutopilot);
-    } else {
-        _readyAutopilot = NULL;
-        emit autopilotChanged(NULL);
-        _autopilot.clear();
-    }
 }
 
 #ifdef UNITTEST_BUILD
@@ -141,8 +96,3 @@ void SetupView::showVehicleComponentSetup(VehicleComponent* vehicleComponent)
     Q_UNUSED(success);
 }
 #endif
-
-AutoPilotPlugin* SetupView::autopilot(void)
-{
-    return _readyAutopilot;
-}
