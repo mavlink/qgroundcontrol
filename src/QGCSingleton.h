@@ -36,7 +36,6 @@
 /// Include this macro in your Derived Class definition
 ///     @param className Derived Class name
 ///     @param interfaceName If your class is accessed through an interface specify that, if not specify Derived class name.
-///             For example DECLARE_QGC_SINGLETON(UASManager, UASManagerInterface)
 #define DECLARE_QGC_SINGLETON(className, interfaceName) \
     public: \
         static interfaceName* instance(bool nullOk = false); \
@@ -54,7 +53,6 @@
 /// Include this macro in your Derived Class implementation
 ///     @param className Derived Class name
 ///     @param interfaceName If your class is accessed through an interface specify that, if not specify Derived class name.
-///             For example DECLARE_QGC_SINGLETON(UASManager, UASManagerInterface)
 #define IMPLEMENT_QGC_SINGLETON(className, interfaceName) \
     interfaceName* className::_instance = NULL; \
     interfaceName* className::_mockInstance = NULL; \
@@ -114,7 +112,7 @@ class UnitTest;
 /// This is done in order to make sure they are all created on the main thread. As such no other code other than Unit Test
 /// code has access to the constructor/destructor. QGCSingleton supports replacing singletons with a mock implementation.
 /// In this case your object must derive from an interface which in turn derives from QGCSingleton. Youu can then use
-/// the setMock method to add and remove you mock implementation. See UASManager example usage. In order to provide the
+/// the setMock method to add and remove you mock implementation. See HomePositionManager example usage. In order to provide the
 /// appropriate methods to make all this work you need to use the DECLARE_QGC_SINGLETON and IMPLEMENT_QGC_SINGLETON
 /// macros as follows:
 /// @code{.unparsed}

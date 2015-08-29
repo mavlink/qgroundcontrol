@@ -22,7 +22,6 @@
  ======================================================================*/
 
 #include "ViewWidgetController.h"
-#include "UASManager.h"
 #include "MultiVehicleManager.h"
 
 ViewWidgetController::ViewWidgetController(void) :

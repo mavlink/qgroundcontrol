@@ -23,7 +23,7 @@
 
 #include "UAS.h"
 #include "LinkInterface.h"
-#include "UASManager.h"
+#include "HomePositionManager.h"
 #include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
@@ -2672,10 +2672,10 @@ void UAS::home()
 {
     mavlink_message_t msg;
 
-    double latitude = UASManager::instance()->getHomeLatitude();
-    double longitude = UASManager::instance()->getHomeLongitude();
-    double altitude = UASManager::instance()->getHomeAltitude();
-    int frame = UASManager::instance()->getHomeFrame();
+    double latitude = HomePositionManager::instance()->getHomeLatitude();
+    double longitude = HomePositionManager::instance()->getHomeLongitude();
+    double altitude = HomePositionManager::instance()->getHomeAltitude();
+    int frame = HomePositionManager::instance()->getHomeFrame();
 
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_CONTINUE, MAV_GOTO_HOLD_AT_CURRENT_POSITION, frame, 0, latitude, longitude, altitude);
     _vehicle->sendMessage(msg);

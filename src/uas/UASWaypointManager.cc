@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASWaypointManager.h"
 #include "UAS.h"
 #include "mavlink_types.h"
-#include "UASManager.h"
+#include "HomePositionManager.h"
 #include "QGCMessageBox.h"
 #include "Vehicle.h"
 
@@ -1164,7 +1164,7 @@ float UASWaypointManager::getAltitudeRecommendation()
     if (waypointsEditable.count() > 0) {
         return waypointsEditable.last()->getAltitude();
     } else {
-        return UASManager::instance()->getHomeAltitude() + getHomeAltitudeOffsetDefault();
+        return HomePositionManager::instance()->getHomeAltitude() + getHomeAltitudeOffsetDefault();
     }
 }
 
