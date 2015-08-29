@@ -1,12 +1,25 @@
-/*==================================================================
-======================================================================*/
-
-/**
- * @file
- *   @brief Implementation of class UASManager
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 #include <QList>
 #include <QApplication>
@@ -15,7 +28,7 @@
 
 #include "UAS.h"
 #include "UASInterface.h"
-#include "UASManager.h"
+#include "HomePositionManager.h"
 #include "QGC.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
@@ -25,26 +38,24 @@
 #define MEAN_EARTH_DIAMETER	12756274.0
 #define UMR	0.017453292519943295769236907684886
 
-IMPLEMENT_QGC_SINGLETON(UASManager, UASManagerInterface)
+IMPLEMENT_QGC_SINGLETON(HomePositionManager, HomePositionManager)
 
-UASManager::UASManager(QObject* parent) :
-    UASManagerInterface(parent),
-    offlineUASWaypointManager(NULL),
+HomePositionManager::HomePositionManager(QObject* parent) :
+    QObject(parent),
     homeLat(47.3769),
     homeLon(8.549444),
     homeAlt(470.0),
     homeFrame(MAV_FRAME_GLOBAL)
 {
     loadSettings();
-    setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
 }
 
-UASManager::~UASManager()
+HomePositionManager::~HomePositionManager()
 {
     storeSettings();
 }
 
-void UASManager::storeSettings()
+void HomePositionManager::storeSettings()
 {
     QSettings settings;
     settings.beginGroup("QGC_UASMANAGER");
@@ -54,7 +65,7 @@ void UASManager::storeSettings()
     settings.endGroup();
 }
 
-void UASManager::loadSettings()
+void HomePositionManager::loadSettings()
 {
     QSettings settings;
     settings.beginGroup("QGC_UASMANAGER");
@@ -72,7 +83,7 @@ void UASManager::loadSettings()
     settings.endGroup();
 }
 
-bool UASManager::setHomePosition(double lat, double lon, double alt)
+bool HomePositionManager::setHomePosition(double lat, double lon, double alt)
 {
     // Checking for NaN and infitiny
     // and checking for borders
@@ -101,7 +112,7 @@ bool UASManager::setHomePosition(double lat, double lon, double alt)
     return changed;
 }
 
-bool UASManager::setHomePositionAndNotify(double lat, double lon, double alt)
+bool HomePositionManager::setHomePositionAndNotify(double lat, double lon, double alt)
 {
     // Checking for NaN and infitiny
     // and checking for borders
@@ -114,28 +125,7 @@ bool UASManager::setHomePositionAndNotify(double lat, double lon, double alt)
 	return changed;
 }
 
-/**
- * @param x1 Point 1 coordinate in x dimension
- * @param y1 Point 1 coordinate in y dimension
- * @param z1 Point 1 coordinate in z dimension
- *
- * @param x2 Point 2 coordinate in x dimension
- * @param y2 Point 2 coordinate in y dimension
- * @param z2 Point 2 coordinate in z dimension
- */
-void UASManager::setLocalNEDSafetyBorders(double x1, double y1, double z1, double x2, double y2, double z2)
-{
-    nedSafetyLimitPosition1.x() = x1;
-    nedSafetyLimitPosition1.y() = y1;
-    nedSafetyLimitPosition1.z() = z1;
-
-    nedSafetyLimitPosition2.x() = x2;
-    nedSafetyLimitPosition2.y() = y2;
-    nedSafetyLimitPosition2.z() = z2;
-}
-
-
-void UASManager::initReference(const double & latitude, const double & longitude, const double & altitude)
+void HomePositionManager::initReference(const double & latitude, const double & longitude, const double & altitude)
 {
     Eigen::Matrix3d R;
     double s_long, s_lat, c_long, c_lat;
@@ -159,7 +149,7 @@ void UASManager::initReference(const double & latitude, const double & longitude
     ecef_ref_point_ = wgs84ToEcef(latitude, longitude, altitude);
 }
 
-Eigen::Vector3d UASManager::wgs84ToEcef(const double & latitude, const double & longitude, const double & altitude)
+Eigen::Vector3d HomePositionManager::wgs84ToEcef(const double & latitude, const double & longitude, const double & altitude)
 {
     const double a = 6378137.0; // semi-major axis
     const double e_sq = 6.69437999014e-3; // first eccentricity squared
@@ -179,12 +169,12 @@ Eigen::Vector3d UASManager::wgs84ToEcef(const double & latitude, const double & 
     return ecef;
 }
 
-Eigen::Vector3d UASManager::ecefToEnu(const Eigen::Vector3d & ecef)
+Eigen::Vector3d HomePositionManager::ecefToEnu(const Eigen::Vector3d & ecef)
 {
     return ecef_ref_orientation_ * (ecef - ecef_ref_point_);
 }
 
-void UASManager::wgs84ToEnu(const double& lat, const double& lon, const double& alt, double* east, double* north, double* up)
+void HomePositionManager::wgs84ToEnu(const double& lat, const double& lon, const double& alt, double* east, double* north, double* up)
 {
     Eigen::Vector3d ecef = wgs84ToEcef(lat, lon, alt);
     Eigen::Vector3d enu = ecefToEnu(ecef);
@@ -193,49 +183,17 @@ void UASManager::wgs84ToEnu(const double& lat, const double& lon, const double& 
     *up = enu.z();
 }
 
-//void UASManager::wgs84ToNed(const double& lat, const double& lon, const double& alt, double* north, double* east, double* down)
-//{
-
-//}
-
-
-
-void UASManager::enuToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt)
+void HomePositionManager::enuToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt)
 {
     *lat=homeLat+y/MEAN_EARTH_DIAMETER*360./PI;
     *lon=homeLon+x/MEAN_EARTH_DIAMETER*360./PI/cos(homeLat*UMR);
     *alt=homeAlt+z;
 }
 
-void UASManager::nedToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt)
+void HomePositionManager::nedToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt)
 {
     *lat=homeLat+x/MEAN_EARTH_DIAMETER*360./PI;
     *lon=homeLon+y/MEAN_EARTH_DIAMETER*360./PI/cos(homeLat*UMR);
     *alt=homeAlt-z;
 }
 
-
-/**
- * This function will change QGC's home position on a number of conditions only
- */
-void UASManager::uavChangedHomePosition(int uav, double lat, double lon, double alt)
-{
-    // Accept home position changes from the active UAS
-    if (uav == MultiVehicleManager::instance()->activeVehicle()->id())
-    {
-        if (setHomePosition(lat, lon, alt))
-        {
-            // XXX DO NOT UPDATE THE WHOLE FLEET
-
-
-//            foreach (UASInterface* mav, systems)
-//            {
-//                // Only update the other systems, not the original source
-//                if (mav->getUASID() != uav)
-//                {
-//                    mav->setHomePosition(homeLat, homeLon, homeAlt);
-//                }
-//            }
-        }
-    }
-}

@@ -1,5 +1,4 @@
 #include "MAVLinkDecoder.h"
-#include "UASManager.h"
 
 #include <QDebug>
 

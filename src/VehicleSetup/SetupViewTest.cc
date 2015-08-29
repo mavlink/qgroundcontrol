@@ -28,7 +28,6 @@
 #include "MockLink.h"
 #include "QGCMessageBox.h"
 #include "SetupView.h"
-#include "UASManager.h"
 #include "MultiVehicleManager.h"
 
 UT_REGISTER_TEST(SetupViewTest)

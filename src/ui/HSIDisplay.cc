@@ -38,7 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 #include "MultiVehicleManager.h"
-#include "UASManager.h"
+#include "HomePositionManager.h"
 #include "HSIDisplay.h"
 #include "QGC.h"
 #include "Waypoint.h"
@@ -434,11 +434,6 @@ void HSIDisplay::renderOverlay()
         paintText(tr("GPS"), labelColor, 2.6f, 2, vheight- 4.0f, &painter);
         paintText(str, valueColor, 2.6f, 10, vheight - 4.0f, &painter);
     }
-
-    // Draw Safety
-    double x1, y1, z1, x2, y2, z2;
-    UASManager::instance()->getLocalNEDSafetyLimits(&x1, &y1, &z1, &x2, &y2, &z2);
-    //    drawSafetyArea(QPointF(x1, y1), QPointF(x2, y2), QGC::colorYellow, painter);
 
     // Draw status message
     paintText(statusMessage, statusColor, 2.8f, 8, 15, &painter);
@@ -1372,7 +1367,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
 
                 // Transform the lat/lon for this waypoint into the local frame
                 double e, n, u;
-                UASManager::instance()->wgs84ToEnu(w->getX(), w->getY(),w->getZ(), &e, &n, &u);
+                HomePositionManager::instance()->wgs84ToEnu(w->getX(), w->getY(),w->getZ(), &e, &n, &u);
                 in = QPointF(n, e);
             }
             // Otherwise we don't process this waypoint.

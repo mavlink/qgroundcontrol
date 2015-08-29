@@ -2,7 +2,7 @@
 #include "QGCMapWidget.h"
 #include "QGCMapToolBar.h"
 #include "UASInterface.h"
-#include "UASManager.h"
+#include "HomePositionManager.h"
 #include "MAV2DIcon.h"
 #include "Waypoint2DIcon.h"
 #include "UASWaypointManager.h"
@@ -123,7 +123,7 @@ bool QGCMapWidget::setHomeActionTriggered()
         QGCMessageBox::information(tr("Error"), tr("Please connect first"));
         return false;
     }
-    UASManagerInterface *uasManager = UASManager::instance();
+    HomePositionManager *uasManager = HomePositionManager::instance();
     if (!uasManager) { return false; }
 
     // Enter an altitude
@@ -187,7 +187,7 @@ void QGCMapWidget::showEvent(QShowEvent* event)
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &QGCMapWidget::_vehicleAdded);
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &QGCMapWidget::_activeVehicleChanged);
     
-    connect(UASManager::instance(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(updateHomePosition(double,double,double)), Qt::UniqueConnection);
+    connect(HomePositionManager::instance(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(updateHomePosition(double,double,double)), Qt::UniqueConnection);
     
     foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles()) {
         _vehicleAdded(vehicle);
@@ -213,7 +213,7 @@ void QGCMapWidget::showEvent(QShowEvent* event)
         }
 
         // Set home
-        updateHomePosition(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
+        updateHomePosition(HomePositionManager::instance()->getHomeLatitude(), HomePositionManager::instance()->getHomeLongitude(), HomePositionManager::instance()->getHomeAltitude());
 
         // Set currently selected system
         _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());

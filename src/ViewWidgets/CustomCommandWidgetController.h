@@ -28,7 +28,6 @@
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
-#include "UASManagerInterface.h"
 #include "FactPanelController.h"
 
 class CustomCommandWidgetController : public FactPanelController
