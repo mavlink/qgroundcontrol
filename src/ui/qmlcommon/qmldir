@@ -17,3 +17,4 @@ QGCSpeedWidget          1.0 QGCSpeedWidget.qml
 QGCVideoBackground      1.0 QGCVideoBackground.qml
 QGCWaypoint             1.0 QGCWaypoint.qml
 QGCWaypointEditor       1.0 QGCWaypointEditor.qml
+VehicleMapItem          1.0 VehicleMapItem.qml

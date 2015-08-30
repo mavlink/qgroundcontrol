@@ -42,6 +42,7 @@ public:
     Q_PROPERTY(bool activeVehicleAvailable          READ activeVehicleAvailable                         NOTIFY activeVehicleAvailableChanged)
     Q_PROPERTY(bool parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                 NOTIFY parameterReadyVehicleAvailableChanged)
     Q_PROPERTY(Vehicle* activeVehicle               READ activeVehicle          WRITE setActiveVehicle  NOTIFY activeVehicleChanged)
+    Q_PROPERTY(QVariantList vehicles                READ vehiclesAsVariants                                    CONSTANT)
     
     // Property accessors
     bool activeVehicleAvailable(void) { return _activeVehicleAvailable; }
@@ -64,6 +65,7 @@ public:
     UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
     
     QList<Vehicle*> vehicles(void);
+    QVariantList vehiclesAsVariants(void);
     
     UASWaypointManager* activeWaypointManager(void);
 
