@@ -298,7 +298,6 @@ void UAS::readSettings()
     QSettings settings;
     settings.beginGroup(QString("MAV%1").arg(uasId));
     this->name = settings.value("NAME", this->name).toString();
-    qDebug() << "Name" << name;
     this->airframe = settings.value("AIRFRAME", this->airframe).toInt();
     if (settings.contains("BATTERY_SPECS"))
     {
