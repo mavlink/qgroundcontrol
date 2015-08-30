@@ -57,7 +57,7 @@ Item {
     property real roll:             activeVehicle ? (isNaN(activeVehicle.roll) ? defaultRoll : activeVehicle.roll) : defaultRoll
     property real pitch:            activeVehicle ? (isNaN(activeVehicle.pitch) ? defaultPitch : activeVehicle.pitch) : defaultPitch
     property real latitude:         activeVehicle ? ((activeVehicle.latitude  === 0) ? defaultLatitude : activeVehicle.latitude) : defaultLatitude
-    property real longitude:        activeVehicle ? ((activeVehicle.longitude === 0) ? defaultlongitude : activeVehicle.longitude) : defaultLongitude
+    property real longitude:        activeVehicle ? ((activeVehicle.longitude === 0) ? defaultLongitude : activeVehicle.longitude) : defaultLongitude
     property real heading:          activeVehicle ? (isNaN(activeVehicle.heading) ? defaultHeading : activeVehicle.heading) : defaultHeading
     property real altitudeWGS84:    activeVehicle ? activeVehicle.altitudeWGS84 : defaultAltitudeWGS84
     property real groundSpeed:      activeVehicle ? activeVehicle.groundSpeed : defaultGroundSpeed
