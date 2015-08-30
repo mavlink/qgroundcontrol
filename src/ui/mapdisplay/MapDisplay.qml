@@ -34,7 +34,7 @@ import QtQuick.Layouts 1.1
 
 import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
-import QGroundControl.FlightControls 1.0
+import QGroundControl.FlightMap 1.0
 
 Rectangle {
     QGCPalette { id: __palette; colorGroupEnabled: true }
@@ -60,7 +60,7 @@ Rectangle {
 
         //----------------------------------------------------------------------------------------
         // Map View
-        QGCMapBackground {
+        FlightMap {
             id:                     mapBackground
             Layout.fillWidth:       true
             Layout.minimumWidth:    300
