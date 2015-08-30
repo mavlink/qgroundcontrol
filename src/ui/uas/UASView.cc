@@ -364,7 +364,7 @@ void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double 
     localFrame = true;
 }
 
-void UASView::updateGlobalPosition(UASInterface* uas, double lon, double lat, double altAMSL, double altWGS84, quint64 usec)
+void UASView::updateGlobalPosition(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec)
 {
     Q_UNUSED(uas);
     Q_UNUSED(usec);
@@ -579,7 +579,7 @@ void UASView::refresh()
                 lonIndicator = "W";
             }
 
-            globalPosition = globalPosition.sprintf("%05.1f%s %05.1f%s %06.1f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
+            globalPosition = globalPosition.sprintf("%6.2f%s %6.2f%s %6.1f m", fabs(lon), lonIndicator.toStdString().c_str(), fabs(lat), latIndicator.toStdString().c_str(), alt);
             m_ui->positionLabel->setText(globalPosition);
         }
 
