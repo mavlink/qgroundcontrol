@@ -32,7 +32,7 @@ import QtQuick.Controls 1.3
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Dialogs 1.2
 
-import QGroundControl.FlightControls 1.0
+import QGroundControl.FlightMap 1.0
 import QGroundControl.MavManager 1.0
 import QGroundControl.ScreenTools 1.0
 import QGroundControl.Controls 1.0
@@ -336,7 +336,7 @@ Item {
         z:                  10
     }
 
-    QGCMapBackground {
+    FlightMap {
         id:                 mapBackground
         anchors.fill:       parent
         mapName:            'MainFlightDisplay'
