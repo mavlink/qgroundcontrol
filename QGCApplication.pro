@@ -256,7 +256,6 @@ HEADERS += \
     src/QGCQuickWidget.h \
     src/QGCSingleton.h \
     src/QGCTemporaryFile.h \
-    src/QmlControls/MavManager.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
     src/SerialPortIds.h \
@@ -389,7 +388,6 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCSingleton.cc \
     src/QGCTemporaryFile.cc \
-    src/QmlControls/MavManager.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
     src/uas/FileManager.cc \

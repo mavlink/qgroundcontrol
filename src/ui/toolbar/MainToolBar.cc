@@ -37,7 +37,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASMessageHandler.h"
 #include "FlightDisplay.h"
 #include "QGCApplication.h"
-#include "MavManager.h"
 #include "MultiVehicleManager.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
@@ -220,8 +219,8 @@ void MainToolBar::onEnterMessageArea(int x, int y)
     // If not already there and messages are actually present
     if(!_rollDownMessages && UASMessageHandler::instance()->messages().count())
     {
-        if(qgcApp()->getMavManager())
-            qgcApp()->getMavManager()->resetMessages();
+        if (MultiVehicleManager::instance()->activeVehicle())
+            MultiVehicleManager::instance()->activeVehicle()->resetMessages();
         // Show messages
         int dialogWidth = 400;
         x = x - (dialogWidth >> 1);
