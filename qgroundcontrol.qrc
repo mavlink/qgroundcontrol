@@ -132,7 +132,6 @@
         <file alias="QGroundControl/FlightMap/QGCCompassHUD.qml">src/FlightMap/Widgets/QGCCompassHUD.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCurrentAltitude.qml">src/FlightMap/Widgets/QGCCurrentAltitude.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCurrentSpeed.qml">src/FlightMap/Widgets/QGCCurrentSpeed.qml</file>
-        <file alias="QGroundControl/FlightMap/QGCHudMessage.qml">src/FlightMap/Widgets/QGCHudMessage.qml</file>
         <file alias="QGroundControl/FlightMap/QGCMapToolButton.qml">src/FlightMap/Widgets/QGCMapToolButton.qml</file>
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/QGCSlider.qml">src/FlightMap/Widgets/QGCSlider.qml</file>

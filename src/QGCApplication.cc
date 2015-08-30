@@ -83,7 +83,6 @@ G_END_DECLS
 #endif
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
-#include "MavManager.h"
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
@@ -122,19 +121,6 @@ static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
     return screenToolsController;
 }
 
-/**
- * @brief MavManager creation callback
- *
- * This is called by the QtQuick engine for creating the singleton
-**/
-
-static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    MavManager* mavManager = new MavManager;
-    qgcApp()->setMavManager(mavManager);
-    return mavManager;
-}
-
 #if defined(QGC_GST_STREAMING)
 #ifdef Q_OS_MAC
 #ifndef __ios__
@@ -163,7 +149,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     : QApplication(argc, argv)
     , _runningUnitTests(unitTesting)
     , _styleIsDark(true)
-    , _pMavManager(NULL)
 	, _fakeMobile(false)
 {
     Q_ASSERT(_app == NULL);
@@ -356,7 +341,6 @@ void QGCApplication::_initCommon(void)
     
     //-- Create QML Singleton Interfaces
     qmlRegisterSingletonType<ScreenToolsController>("QGroundControl.ScreenToolsController", 1, 0, "ScreenToolsController", screenToolsControllerSingletonFactory);
-    qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
     
     //-- Register Waypoint Interface
     qmlRegisterInterface<Waypoint>("Waypoint");
@@ -786,17 +770,6 @@ void QGCApplication::_missingParamsDisplay(void)
         "Missing Parameters",
         QString("Parameters missing from firmware: %1.\n\n"
                 "You should quit QGroundControl immediately and update your firmware.").arg(params));
-}
-
-void QGCApplication::setMavManager(MavManager* pMgr)
-{
-    if(!_pMavManager)
-        _pMavManager = pMgr;
-}
-
-MavManager* QGCApplication::getMavManager()
-{
-    return _pMavManager;
 }
 
 void QGCApplication::showToolBarMessage(const QString& message)

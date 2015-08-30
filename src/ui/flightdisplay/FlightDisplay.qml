@@ -33,7 +33,6 @@ import QtQuick.Controls.Styles 1.2
 import QtQuick.Dialogs 1.2
 
 import QGroundControl.FlightMap 1.0
-import QGroundControl.MavManager 1.0
 import QGroundControl.ScreenTools 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.Palette 1.0
@@ -43,8 +42,27 @@ Item {
 
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
-    property real roll:    isNaN(MavManager.roll)    ? 0 : MavManager.roll
-    property real pitch:   isNaN(MavManager.pitch)   ? 0 : MavManager.pitch
+    property var activeVehicle: multiVehicleManager.activeVehicle
+
+    readonly property real defaultLatitude:         37.803784
+    readonly property real defaultLongitude:        -122.462276
+    readonly property real defaultRoll:             0
+    readonly property real defaultPitch:            0
+    readonly property real defaultHeading:          0
+    readonly property real defaultAltitudeWGS84:    0
+    readonly property real defaultGroundSpeed:      0
+    readonly property real defaultAirSpeed:         0
+    readonly property real defaultClimbRate:        0
+
+    property real roll:             activeVehicle ? (isNaN(activeVehicle.roll) ? defaultRoll : activeVehicle.roll) : defaultRoll
+    property real pitch:            activeVehicle ? (isNaN(activeVehicle.pitch) ? defaultPitch : activeVehicle.pitch) : defaultPitch
+    property real latitude:         activeVehicle ? ((activeVehicle.latitude  === 0) ? defaultLatitude : activeVehicle.latitude) : defaultLatitude
+    property real longitude:        activeVehicle ? ((activeVehicle.longitude === 0) ? defaultlongitude : activeVehicle.longitude) : defaultLongitude
+    property real heading:          activeVehicle ? (isNaN(activeVehicle.heading) ? defaultHeading : activeVehicle.heading) : defaultHeading
+    property real altitudeWGS84:    activeVehicle ? activeVehicle.altitudeWGS84 : defaultAltitudeWGS84
+    property real groundSpeed:      activeVehicle ? activeVehicle.groundSpeed : defaultGroundSpeed
+    property real airSpeed:         activeVehicle ? activeVehicle.airSpeed : defaultAirSpeed
+    property real climbRate:        activeVehicle ? activeVehicle.climbRate : defaultClimbRate
 
     property bool showPitchIndicator:       true
 
@@ -73,7 +91,6 @@ Item {
     Component.onCompleted:
     {
         mapBackground.visible               = getBool(flightDisplay.loadSetting("showMapBackground",        "0"));
-        mapBackground.showWaypoints         = getBool(flightDisplay.loadSetting("mapShowWaypoints",         "0"));
         mapBackground.alwaysNorth           = getBool(flightDisplay.loadSetting("mapAlwaysPointsNorth",     "0"));
         videoBackground.visible             = getBool(flightDisplay.loadSetting("showVideoBackground",      "0"));
         showPitchIndicator                  = getBool(flightDisplay.loadSetting("showPitchIndicator",       "1"));
@@ -123,18 +140,6 @@ Item {
             onTriggered:
             {
                 enforceExclusiveOption(mapBackground, videoBackground, "showMapBackground", "showVideoBackground");
-            }
-        }
-
-        MenuItem {
-            text: "Map Show Waypoints"
-            checkable: true
-            checked: mapBackground.showWaypoints
-            enabled: mapBackground.visible
-            onTriggered:
-            {
-                mapBackground.showWaypoints = !mapBackground.showWaypoints;
-                flightDisplay.saveSetting("mapShowWaypoints", setBool(mapBackground.showWaypoints));
             }
         }
 
@@ -340,21 +345,10 @@ Item {
         id:                 mapBackground
         anchors.fill:       parent
         mapName:            'MainFlightDisplay'
-        heading:            0 // isNaN(MavManager.heading) ? 0 : MavManager.heading
-        latitude:           mapBackground.visible ? ((MavManager.latitude  === 0) ?   37.803784 : MavManager.latitude)  :   37.803784
-        longitude:          mapBackground.visible ? ((MavManager.longitude === 0) ? -122.462276 : MavManager.longitude) : -122.462276
+        latitude:           mapBackground.visible ? root.latitude : root.defaultLatitude
+        longitude:          mapBackground.visible ? root.longitude : root.defaultLongitude
         readOnly:           true
-      //interactive:        !MavManager.mavPresent
         z:                  10
-    }
-
-    QGCHudMessage {
-        id:                 hudMessage
-        y:                  ScreenTools.defaultFontPizelSize * (0.42)
-        width:              (parent.width - 520 > 200) ? parent.width - 520 : 200
-        height:             ScreenTools.defaultFontPizelSize * (2.5)
-        anchors.horizontalCenter: parent.horizontalCenter
-        z:                  mapBackground.z + 1
     }
 
     // Floating (Top Left) Compass Widget
@@ -364,7 +358,7 @@ Item {
         y:                  ScreenTools.defaultFontPixelSize * (0.42)
         x:                  ScreenTools.defaultFontPixelSize * (7.1)
         size:               ScreenTools.defaultFontPixelSize * (13.3)
-        heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
+        heading:            root.heading
         z:                  mapBackground.z + 2
         onResetRequested: {
             y               = ScreenTools.defaultFontPixelSize * (0.42)
@@ -383,7 +377,7 @@ Item {
         x:                  root.width  * 0.5 - ScreenTools.defaultFontPixelSize * (5)
         width:              ScreenTools.defaultFontPixelSize * (10)
         height:             ScreenTools.defaultFontPixelSize * (10)
-        heading:            isNaN(MavManager.heading) ? 0 : MavManager.heading
+        heading:            root.heading
         z:                  70
     }
 
@@ -436,7 +430,7 @@ Item {
         anchors.right:      parent.right
         width:              ScreenTools.defaultFontPixelSize * (5)
         height:             parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
-        altitude:           MavManager.altitudeWGS84
+        altitude:           root.altitudeWGS84
         z:                  30
     }
 
@@ -445,7 +439,7 @@ Item {
         anchors.left:       parent.left
         width:              ScreenTools.defaultFontPixelSize * (5)
         height:             parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
-        speed:              MavManager.groundSpeed
+        speed:              root.groundSpeed
         z:                  40
     }
 
@@ -453,8 +447,8 @@ Item {
         id: currentSpeed
         anchors.left:       parent.left
         width:              ScreenTools.defaultFontPixelSize * (6.25)
-        airspeed:           MavManager.airSpeed
-        groundspeed:        MavManager.groundSpeed
+        airspeed:           root.airSpeed
+        groundspeed:        root.groundSpeed
         showAirSpeed:       true
         showGroundSpeed:    true
         visible:            (currentSpeed.showGroundSpeed || currentSpeed.showAirSpeed)
@@ -465,8 +459,8 @@ Item {
         id: currentAltitude
         anchors.right:      parent.right
         width:              ScreenTools.defaultFontPixelSize * (6.25)
-        altitude:           MavManager.altitudeWGS84
-        vertZ:              MavManager.climbRate
+        altitude:           root.altitudeWGS84
+        vertZ:              root.climbRate
         showAltitude:       true
         showClimbRate:      true
         visible:            (currentAltitude.showAltitude || currentAltitude.showClimbRate)

@@ -240,3 +240,15 @@ QVariantList MultiVehicleManager::vehiclesAsVariants(void)
     
     return list;
 }
+
+void MultiVehicleManager::saveSetting(const QString &name, const QString& value)
+{
+    QSettings settings;
+    settings.setValue(name, value);
+}
+
+QString MultiVehicleManager::loadSetting(const QString &name, const QString& defaultValue)
+{
+    QSettings settings;
+    return settings.value(name, defaultValue).toString();
+}

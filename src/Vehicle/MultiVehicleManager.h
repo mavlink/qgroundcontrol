@@ -39,6 +39,9 @@ class MultiVehicleManager : public QGCSingleton
     DECLARE_QGC_SINGLETON(MultiVehicleManager, MultiVehicleManager)
 
 public:
+    Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
+    Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);
+    
     Q_PROPERTY(bool activeVehicleAvailable          READ activeVehicleAvailable                         NOTIFY activeVehicleAvailableChanged)
     Q_PROPERTY(bool parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                 NOTIFY parameterReadyVehicleAvailableChanged)
     Q_PROPERTY(Vehicle* activeVehicle               READ activeVehicle          WRITE setActiveVehicle  NOTIFY activeVehicleChanged)
