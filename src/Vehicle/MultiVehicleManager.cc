@@ -229,3 +229,14 @@ QList<Vehicle*> MultiVehicleManager::vehicles(void)
     
     return list;
 }
+
+QVariantList MultiVehicleManager::vehiclesAsVariants(void)
+{
+    QVariantList list;
+    
+    foreach (Vehicle* vehicle, _vehicleMap) {
+        list += QVariant::fromValue(vehicle);
+    }
+    
+    return list;
+}
