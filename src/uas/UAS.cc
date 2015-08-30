@@ -147,22 +147,20 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle) : UASInterface(),
     blockHomePositionChanges(false),
     receivedMode(false),
 
-    // Initialize HIL sensor noise variances to 0.  If user wants corrupted sensor values they will need to set them
-    // Note variances calculated from flight case from this log: http://dash.oznet.ch/view/MRjW8NUNYQSuSZkbn8dEjY
-    // TODO: calibrate stand-still pixhawk variances
-    xacc_var(1.2914f),
-    yacc_var(0.7048f),
-    zacc_var(1.9577f),
-    rollspeed_var(0.8126f),
-    pitchspeed_var(0.6145f),
-    yawspeed_var(0.5852f),
-    xmag_var(0.4786f),
-    ymag_var(0.4566f),
-    zmag_var(0.3333f),
-    abs_pressure_var(1.1604f),
-    diff_pressure_var(1.1604f),
-    pressure_alt_var(1.1604f),
-    temperature_var(1.4290f),
+    // measured pixhawk sensor noise variances
+    xacc_var(1e-4),
+    yacc_var(1e-4),
+    zacc_var(2e-4),
+    rollspeed_var(2.5e-7),	// mpu6000 gyro total RMS noise spec: 2.5e-3 deg/sec = 8.7e-4 rad/sec => variance 7.6e-7
+    pitchspeed_var(2.5e-7),
+    yawspeed_var(2.5e-7),
+    xmag_var(4e-6),
+    ymag_var(4e-6),
+    zmag_var(3e-6),
+    abs_pressure_var(5e-4),
+    diff_pressure_var(1.0f),
+    pressure_alt_var(5e-2),
+    temperature_var(1e-4),
 
 #ifndef __mobile__
     simulation(0),
@@ -2827,21 +2825,6 @@ void UAS::enableHilXPlane(bool enable)
         }
         qDebug() << "CREATED NEW XPLANE LINK";
         simulation = new QGCXPlaneLink(this);
-
-        float noise_scaler = 0.1f;
-        xacc_var = noise_scaler * 1.2914f;
-        yacc_var = noise_scaler * 0.7048f;
-        zacc_var = noise_scaler * 1.9577f;
-        rollspeed_var = noise_scaler * 0.8126f;
-        pitchspeed_var = noise_scaler * 0.6145f;
-        yawspeed_var = noise_scaler * 0.5852f;
-        xmag_var = noise_scaler * 0.4786f;
-        ymag_var = noise_scaler * 0.4566f;
-        zmag_var = noise_scaler * 0.3333f;
-        abs_pressure_var = noise_scaler * 1.1604f;
-        diff_pressure_var = noise_scaler * 0.6604f;
-        pressure_alt_var = noise_scaler * 1.1604f;
-        temperature_var = noise_scaler * 2.4290f;
     }
     // Connect X-Plane Link
     if (enable)
@@ -2986,9 +2969,9 @@ float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
     
     //TODO add bias term that changes randomly to simulate accelerometer and gyro bias the exf should handle these
     //as well
-    float noise = z0 * (noise_var*noise_var); //calculate normally distributed variable with mu = 0, std = var^2  
+    float noise = z0 * sqrtf(noise_var); //calculate normally distributed variable with mu = 0, std = sqrt(var)
     
-    //Finally gaurd against any case where the noise is not real
+    //Finally guard against any case where the noise is not real
     if(std::isfinite(noise)){
             return truth_meas + noise;
     }
