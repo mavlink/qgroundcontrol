@@ -248,11 +248,11 @@ void UASQuickView::updateTimerTick()
 
 void UASQuickView::_activeVehicleChanged(Vehicle* vehicle)
 {
-    if (uas) {
+    if (uas || !vehicle) {
         return;
     }
     this->uas = vehicle->uas();
-    connect(uas,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
+    connect(uas, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
 }
 void UASQuickView::addSource(MAVLinkDecoder *decoder)
 {
