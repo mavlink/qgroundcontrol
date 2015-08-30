@@ -28,6 +28,7 @@
 #define Vehicle_H
 
 #include <QObject>
+#include <QGeoCoordinate>
 
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
@@ -47,7 +48,11 @@ public:
     
     Q_PROPERTY(int id READ id CONSTANT)
     Q_PROPERTY(AutoPilotPlugin* autopilot MEMBER _autopilotPlugin CONSTANT)
-
+    
+    Q_PROPERTY(QGeoCoordinate coordinate MEMBER _geoCoordinate NOTIFY coordinateChanged)
+    
+    Q_PROPERTY(double heading MEMBER _heading NOTIFY headingChanged)
+    
     // Property accesors
     int id(void) { return _id; }
     MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
@@ -63,8 +68,14 @@ public:
     
     QList<LinkInterface*> links(void);
     
+public slots:
+    void setLatitude(double latitude);
+    void setLongitude(double longitude);
+    
 signals:
     void allLinksDisconnected(void);
+    void coordinateChanged(QGeoCoordinate coordinate);
+    void headingChanged(double heading);
     
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
@@ -73,6 +84,7 @@ private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
     void _linkDisconnected(LinkInterface* link);
     void _sendMessage(mavlink_message_t message);
+    void _setYaw(double yaw);
     
 private:
     bool _containsLink(LinkInterface* link);
@@ -90,6 +102,10 @@ private:
     QList<SharedLinkInterface> _links;
     
     UAS* _uas;
+    
+    QGeoCoordinate  _geoCoordinate;
+    
+    double _heading;
 };
 
 #endif

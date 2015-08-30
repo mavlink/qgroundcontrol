@@ -32,10 +32,12 @@ import QtQuick.Controls 1.3
 import QtLocation 5.3
 import QtPositioning 5.3
 
-import QGroundControl.Controls 1.0
-import QGroundControl.FlightControls 1.0
-import QGroundControl.ScreenTools 1.0
-import QGroundControl.MavManager 1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.FlightControls        1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.MavManager            1.0
+import QGroundControl.MultiVehicleManager   1.0
+import QGroundControl.Vehicle               1.0
 
 Item {
     id:     root
@@ -47,6 +49,7 @@ Item {
     property real   heading:            0
     property bool   alwaysNorth:        true
     property bool   interactive:        true
+    property bool   showVehicles:       true
     property bool   showWaypoints:      false
     property string mapName:            'defaultMap'
     property alias  mapItem:            map
@@ -58,6 +61,9 @@ Item {
         map.zoomLevel   = 18
         map.markers     = []
         mapTypeMenu.update();
+        if (showVehicles) {
+            addExistingVehicles()
+        }
     }
 
     //-- Menu to select supported map types
@@ -153,6 +159,44 @@ Item {
         }
     }
 
+    property var vehicles: []           ///< List of known vehicles
+    property var vehicleMapItems: []    ///< List of know vehicle map items
+
+    function addVehicle(vehicle) {
+            var qmlItemTemplate = "VehicleMapItem { " +
+                                        "coordinate:    vehicles[%1].coordinate; " +
+                                        "heading:       vehicles[%1].heading " +
+                                    "}"
+
+            var i = vehicles.length
+            qmlItemTemplate = qmlItemTemplate.replace("%1", i)
+            qmlItemTemplate = qmlItemTemplate.replace("%1", i)
+
+            vehicles.push(vehicle)
+            var mapItem = Qt.createQmlObject (qmlItemTemplate, map)
+            vehicleMapItems.push(mapItem)
+
+            mapItem.z = map.z + 1
+            map.addMapItem(mapItem)
+    }
+
+    function removeVehicle(vehicle) {
+            for (var i=0; i<vehicles.length; i++) {
+                if (vehicles[i] == vehicle) {
+                    vehicle[i] = undefined
+                    map.removeMapItem(vehicleMapItems[i])
+                    vehicleMapItems[i] = undefined
+                    break
+                }
+            }
+    }
+
+    function addExistingVehicles() {
+        for (var i=0; i<multiVehicleManager.vehicles.length; i++) {
+            addVehicle(multiVehicleManager.vehicles[i])
+        }
+    }
+
     Plugin {
         id:   mapPlugin
         name: "QGroundControl"
@@ -163,6 +207,13 @@ Item {
         onWaypointsChanged: {
             root.updateWaypoints();
         }
+    }
+
+    Connections {
+        target: multiVehicleManager
+
+        onVehicleAdded: addVehicle(vehicle)
+        onVehicleRemoved: removeVehicle(vehicle)
     }
 
     onShowWaypointsChanged: {
