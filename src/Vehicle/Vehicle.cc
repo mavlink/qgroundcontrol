@@ -45,6 +45,14 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     
     _uas = new UAS(MAVLinkProtocol::instance(), this);
     
+    setLatitude(_uas->getLatitude());
+    setLongitude(_uas->getLongitude());
+    _setYaw(_uas->getYaw());
+    
+    connect(_uas, &UAS::latitudeChanged, this, &Vehicle::setLatitude);
+    connect(_uas, &UAS::longitudeChanged, this, &Vehicle::setLongitude);
+    connect(_uas, &UAS::yawChanged, this, &Vehicle::_setYaw);
+    
     _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(firmwareType);
     _autopilotPlugin = AutoPilotPluginManager::instance()->newAutopilotPluginForVehicle(this);
 }
@@ -138,4 +146,21 @@ QList<LinkInterface*> Vehicle::links(void)
     }
     
     return list;
+}
+
+void Vehicle::setLatitude(double latitude)
+{
+    _geoCoordinate.setLatitude(latitude);
+    emit coordinateChanged(_geoCoordinate);
+}
+
+void Vehicle::setLongitude(double longitude){
+    _geoCoordinate.setLongitude(longitude);
+    emit coordinateChanged(_geoCoordinate);
+}
+
+void Vehicle::_setYaw(double yaw)
+{
+    _heading = yaw * (180.0 / M_PI);
+    emit headingChanged(_heading);
 }
