@@ -33,7 +33,7 @@ import QtLocation 5.3
 import QtPositioning 5.3
 
 import QGroundControl.Controls              1.0
-import QGroundControl.FlightControls        1.0
+import QGroundControl.FlightMap        1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MavManager            1.0
 import QGroundControl.MultiVehicleManager   1.0
