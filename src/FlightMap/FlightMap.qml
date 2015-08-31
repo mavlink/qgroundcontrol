@@ -33,7 +33,7 @@ import QtLocation 5.3
 import QtPositioning 5.3
 
 import QGroundControl.Controls              1.0
-import QGroundControl.FlightMap        1.0
+import QGroundControl.FlightMap             1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Vehicle               1.0
@@ -46,7 +46,6 @@ Item {
     property real   longitude:          0
     property real   zoomLevel:          18
     property real   heading:            0
-    property bool   alwaysNorth:        true
     property bool   interactive:        true
     property bool   showVehicles:       true
     property string mapName:            'defaultMap'
@@ -206,18 +205,6 @@ Item {
         gesture.flickDeceleration: 3000
         gesture.enabled: root.interactive
 
-        /*
-        // There is a bug currently in Qt where it fails to render a map taller than 6 tiles high. Until
-        // that's fixed, we can't rotate the map as it would require a larger map, which can easily grow
-        // larger than 6 tiles high.
-        // https://bugreports.qt.io/browse/QTBUG-45508
-        transform: Rotation {
-            origin.x: map.width  / 2
-            origin.y: map.height / 2
-            angle: map.visible ? (alwaysNorth ? 0 : -heading) : 0
-        }
-        */
-
         onWidthChanged: {
             scaleTimer.restart()
         }
@@ -347,10 +334,6 @@ Item {
     }
 
     onVisibleChanged: {
-        adjustSize();
-    }
-
-    onAlwaysNorthChanged: {
         adjustSize();
     }
 

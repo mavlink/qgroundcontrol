@@ -59,7 +59,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainToolBar.h"
 #include "LogCompressor.h"
 
-#include "FlightDisplay.h"
+#include "FlightDisplayView.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
@@ -74,7 +74,6 @@ class QGCStatusBar;
 class Linecharts;
 class QGCDataPlot2D;
 class QGCUASFileViewMulti;
-class FlightDisplay;
 
 /**
  * @brief Main Application Window
@@ -126,7 +125,7 @@ public:
     MainToolBar* getMainToolBar(void) { return _mainToolBar; }
 
     /// @brief Gets a pointer to the Main Flight Display
-    FlightDisplay* getFlightDisplay() { return dynamic_cast<FlightDisplay*>(_flightView.data()); }
+    FlightDisplayView* getFlightDisplay() { return dynamic_cast<FlightDisplayView*>(_flightView.data()); }
     
     QWidget* getCurrentViewWidget(void) { return _currentViewWidget; }
 

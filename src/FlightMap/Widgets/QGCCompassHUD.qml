@@ -33,40 +33,52 @@ import QGroundControl.ScreenTools 1.0
 
 Item {
     id:    root
-    property real heading : 0
+
+    property bool active:   false  ///< true: actively connected to data provider, false: show inactive control
+    property real heading:  _defaultHeading
+
+    readonly property real _defaultHeading:   0
+
+    property real _heading: active ? heading : _defaultHeading
+
     Image {
-        id: compass
-        anchors.centerIn: parent
-        source: "/qmlimages/compass.svg"
-        mipmap: true
-        width: root.width
-        fillMode: Image.PreserveAspectFit
+        id:                 compass
+        anchors.centerIn:   parent
+        source:             "/qmlimages/compass.svg"
+        mipmap:             true
+        width:              root.width
+        fillMode:           Image.PreserveAspectFit
+
         transform: Rotation {
-            origin.x: compass.width  / 2
-            origin.y: compass.height / 2
-            angle: -heading
+            origin.x:   compass.width  / 2
+            origin.y:   compass.height / 2
+            angle:      -_heading
         }
     }
+
     Image {
-        id: pointer
-        anchors.bottom: compass.top
-        anchors.horizontalCenter: root.horizontalCenter
-        source: "/qmlimages/compassNeedle.svg"
-        smooth:   true
-        width:    compass.width * 0.1
-        fillMode: Image.PreserveAspectFit
+        id:                         pointer
+        anchors.bottom:             compass.top
+        anchors.horizontalCenter:   root.horizontalCenter
+        source:                     "/qmlimages/compassNeedle.svg"
+        smooth:                     true
+        width:                      compass.width * 0.1
+        fillMode:                   Image.PreserveAspectFit
     }
+
     Rectangle {
-        anchors.centerIn: compass
-        width:  ScreenTools.defaultFontPixelSize * (3.33)
-        height: ScreenTools.defaultFontPixelSize * (2.08)
-        border.color: Qt.rgba(1,1,1,0.15)
-        color: Qt.rgba(0,0,0,0.25)
+        anchors.centerIn:   compass
+        width:              ScreenTools.defaultFontPixelSize * (3.33)
+        height:             ScreenTools.defaultFontPixelSize * (2.08)
+        border.color:       Qt.rgba(1,1,1,0.15)
+        color:              Qt.rgba(0,0,0,0.25)
+        visible:            active
+
         QGCLabel {
-            text: heading.toFixed(0)
-            font.weight: Font.DemiBold
-            color: "white"
-            anchors.centerIn: parent
+            text:               _heading.toFixed(0)
+            font.weight:        Font.DemiBold
+            color:              "white"
+            anchors.centerIn:   parent
         }
     }
 }

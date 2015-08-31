@@ -21,22 +21,17 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/**
- * @file
- *   @brief QGC Main Flight Display
- *   @author Gus Grubba <mavlink@grubba.com>
- */
+import QtQuick                  2.4
+import QtQuick.Controls         1.3
+import QtQuick.Controls.Styles  1.2
+import QtQuick.Dialogs          1.2
 
-import QtQuick 2.4
-import QtQuick.Controls 1.3
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Dialogs 1.2
+import QGroundControl.FlightMap     1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
 
-import QGroundControl.FlightMap 1.0
-import QGroundControl.ScreenTools 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
-
+/// Flight Display Widget
 Item {
     id: root
 
@@ -91,35 +86,21 @@ Item {
     Component.onCompleted:
     {
         mapBackground.visible               = getBool(flightDisplay.loadSetting("showMapBackground",        "0"));
-        mapBackground.alwaysNorth           = getBool(flightDisplay.loadSetting("mapAlwaysPointsNorth",     "0"));
         videoBackground.visible             = getBool(flightDisplay.loadSetting("showVideoBackground",      "0"));
         showPitchIndicator                  = getBool(flightDisplay.loadSetting("showPitchIndicator",       "1"));
-        compassWidget.visible               = getBool(flightDisplay.loadSetting("showCompassWidget",        "0"));
-        compassHUD.visible                  = getBool(flightDisplay.loadSetting("showCompassHUD",           "1"));
-        attitudeWidget.visible              = getBool(flightDisplay.loadSetting("showAttitudeWidget",       "0"));
-        attitudeHUD.visible                 = getBool(flightDisplay.loadSetting("showAttitudeHUD",          "1"));
         altitudeWidget.visible              = getBool(flightDisplay.loadSetting("showAltitudeWidget",       "1"));
         speedWidget.visible                 = getBool(flightDisplay.loadSetting("showSpeedWidget",          "1"));
         currentSpeed.showAirSpeed           = getBool(flightDisplay.loadSetting("showCurrentAirSpeed",      "1"));
         currentSpeed.showGroundSpeed        = getBool(flightDisplay.loadSetting("showCurrentGroundSpeed",   "1"));
         currentAltitude.showClimbRate       = getBool(flightDisplay.loadSetting("showCurrentClimbRate",     "1"));
         currentAltitude.showAltitude        = getBool(flightDisplay.loadSetting("showCurrentAltitude",      "1"));
+
         // Insert Map Type menu before separator
         contextMenu.insertItem(2, mapBackground.mapMenu);
         // Video or Map. Not both:
         if(mapBackground.visible && videoBackground.visible) {
             videoBackground.visible = false;
             flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
-        }
-        // Compass HUD or Widget. Not both:
-        if(compassWidget.visible && compassHUD.visible) {
-            compassWidget.visible = false;
-            flightDisplay.saveSetting("showCompassWidget", setBool(compassWidget.visible));
-        }
-        // Attitude HUD or Widget. Not both:
-        if(attitudeWidget.visible && attitudeHUD.visible) {
-            attitudeWidget.visible = false;
-            flightDisplay.saveSetting("showAttitudeWidget", setBool(attitudeWidget.visible));
         }
         // Disable video if we don't have support for it
         if(!flightDisplay.hasVideo) {
@@ -143,20 +124,6 @@ Item {
             }
         }
 
-        /*
-        //-- Off until Qt 5.5.x, which fixes bug in 5.4.x
-        MenuItem {
-            text: "Map Always Points North"
-            checkable: true
-            checked: mapBackground.alwaysNorth
-            onTriggered:
-            {
-                mapBackground.alwaysNorth = !mapBackground.alwaysNorth;
-                flightDisplay.saveSetting("mapAlwaysPointsNorth", setBool(mapBackground.alwaysNorth));
-            }
-        }
-        */
-
         MenuSeparator {}
 
         MenuItem {
@@ -173,26 +140,6 @@ Item {
         MenuSeparator {}
 
         MenuItem {
-            text: "Attitude Widget"
-            checkable:  true
-            checked:    attitudeWidget.visible
-            onTriggered:
-            {
-                enforceExclusiveOption(attitudeWidget, attitudeHUD, "showAttitudeWidget", "showAttitudeHUD");
-            }
-        }
-
-        MenuItem {
-            text: "Attitude HUD"
-            checkable:  true
-            checked:    attitudeHUD.visible
-            onTriggered:
-            {
-                enforceExclusiveOption(attitudeHUD, attitudeWidget, "showAttitudeHUD", "showAttitudeWidget");
-            }
-        }
-
-        MenuItem {
             text: "Pitch Indicator"
             checkable:  true
             checked:    showPitchIndicator
@@ -201,26 +148,6 @@ Item {
             {
                 showPitchIndicator = !showPitchIndicator;
                 flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
-            }
-        }
-
-        MenuItem {
-            text: "Compass Widget"
-            checkable: true
-            checked: compassWidget.visible
-            onTriggered:
-            {
-                enforceExclusiveOption(compassWidget, compassHUD, "showCompassWidget", "showCompassHUD");
-            }
-        }
-
-        MenuItem {
-            text: "Compass HUD"
-            checkable: true
-            checked: compassHUD.visible
-            onTriggered:
-            {
-                enforceExclusiveOption(compassHUD, compassWidget, "showCompassHUD", "showCompassWidget");
             }
         }
 
@@ -300,12 +227,8 @@ Item {
                 flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
                 attitudeWidget.visible = false;
                 flightDisplay.saveSetting("showAttitudeWidget", setBool(attitudeWidget.visible));
-                attitudeHUD.visible = true;
-                flightDisplay.saveSetting("showAttitudeHUD", setBool(attitudeHUD.visible));
                 compassWidget.visible = false
                 flightDisplay.saveSetting("showCompassWidget", setBool(compassWidget.visible));
-                compassHUD.visible = true
-                flightDisplay.saveSetting("showCompassHUD", setBool(compassHUD.visible));
                 altitudeWidget.visible = true;
                 flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
                 currentAltitude.showAltitude = true;
@@ -320,10 +243,6 @@ Item {
                 flightDisplay.saveSetting("showCurrentGroundSpeed", setBool(currentSpeed.showGroundSpeed));
                 mapBackground.visible = false;
                 flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
-                mapBackground.alwaysNorth = false;
-                flightDisplay.saveSetting("mapAlwaysPointsNorth", setBool(mapBackground.alwaysNorth));
-                mapBackground.showWaypoints = false
-                flightDisplay.saveSetting("mapShowWaypoints", setBool(mapBackground.showWaypoints));
                 videoBackground.visible = false;
                 flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
             }
@@ -344,29 +263,11 @@ Item {
     FlightMap {
         id:                 mapBackground
         anchors.fill:       parent
-        mapName:            'MainFlightDisplay'
+        mapName:            'FlightDisplayWidget'
         latitude:           mapBackground.visible ? root.latitude : root.defaultLatitude
         longitude:          mapBackground.visible ? root.longitude : root.defaultLongitude
         readOnly:           true
         z:                  10
-    }
-
-    // Floating (Top Left) Compass Widget
-
-    QGCCompassWidget {
-        id:                 compassWidget
-        y:                  ScreenTools.defaultFontPixelSize * (0.42)
-        x:                  ScreenTools.defaultFontPixelSize * (7.1)
-        size:               ScreenTools.defaultFontPixelSize * (13.3)
-        heading:            root.heading
-        z:                  mapBackground.z + 2
-        onResetRequested: {
-            y               = ScreenTools.defaultFontPixelSize * (0.42)
-            x               = ScreenTools.defaultFontPixelSize * (7.1)
-            size            = ScreenTools.defaultFontPixelSize * (13.3)
-            tForm.xScale    = 1
-            tForm.yScale    = 1
-        }
     }
 
     // HUD (lower middle) Compass
@@ -378,6 +279,7 @@ Item {
         width:              ScreenTools.defaultFontPixelSize * (10)
         height:             ScreenTools.defaultFontPixelSize * (10)
         heading:            root.heading
+        active:             multiVehicleManager.activeVehicleAvailable
         z:                  70
     }
 
@@ -391,28 +293,6 @@ Item {
         visible:            !videoBackground.visible && !mapBackground.visible
     }
 
-    // Floating (Top Right) Attitude Widget
-
-    QGCAttitudeWidget {
-        id:                 attitudeWidget
-        y:                  ScreenTools.defaultFontPixelSize * (0.42)
-        size:               ScreenTools.defaultFontPixelSize * (13.3)
-        rollAngle:          roll
-        pitchAngle:         pitch
-        showPitch:          showPitchIndicator
-        anchors.right:      root.right
-        anchors.rightMargin: ScreenTools.defaultFontPixelSize * (7.1)
-        z:                  mapBackground.z + 2
-        onResetRequested: {
-            y                   = ScreenTools.defaultFontPixelSize * (0.42)
-            anchors.right       = root.right
-            anchors.rightMargin = ScreenTools.defaultFontPixelSize * (7.1)
-            size                = ScreenTools.defaultFontPixelSize * (13.3)
-            tForm.xScale        = 1
-            tForm.yScale        = 1
-        }
-    }
-
     // HUD (center) Attitude Indicator
 
     QGCAttitudeHUD {
@@ -422,6 +302,7 @@ Item {
         showPitch:          showPitchIndicator
         width:              ScreenTools.defaultFontPixelSize * (30)
         height:             ScreenTools.defaultFontPixelSize * (30)
+        active:             multiVehicleManager.activeVehicleAvailable
         z:                  20
     }
 
@@ -449,6 +330,7 @@ Item {
         width:              ScreenTools.defaultFontPixelSize * (6.25)
         airspeed:           root.airSpeed
         groundspeed:        root.groundSpeed
+        active:             multiVehicleManager.activeVehicleAvailable
         showAirSpeed:       true
         showGroundSpeed:    true
         visible:            (currentSpeed.showGroundSpeed || currentSpeed.showAirSpeed)
@@ -463,6 +345,7 @@ Item {
         vertZ:              root.climbRate
         showAltitude:       true
         showClimbRate:      true
+        active:             multiVehicleManager.activeVehicleAvailable
         visible:            (currentAltitude.showAltitude || currentAltitude.showClimbRate)
         z:                  60
     }

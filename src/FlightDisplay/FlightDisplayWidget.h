@@ -21,25 +21,17 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/**
- * @file
- *   @brief QGC Main Flight Display
- *   @author Gus Grubba <mavlink@grubba.com>
- */
-
-#ifndef QGCFLIGHTDISPLAY_H
-#define QGCFLIGHTDISPLAY_H
+#ifndef FlightDisplayWidget_H
+#define FlightDisplayWidget_H
 
 #include "QGCQmlWidgetHolder.h"
 
-class UASInterface;
-
-class FlightDisplay : public QGCQmlWidgetHolder
+class FlightDisplayWidget : public QGCQmlWidgetHolder
 {
     Q_OBJECT
 public:
-    FlightDisplay(QWidget* parent = NULL);
-    ~FlightDisplay();
+    FlightDisplayWidget(QWidget* parent = NULL);
+    ~FlightDisplayWidget();
 
     /// @brief Invokes the Flight Display Options menu
     void showOptionsMenu() { emit showOptionsMenuChanged(); }
@@ -60,4 +52,4 @@ signals:
 
 };
 
-#endif // QGCFLIGHTDISPLAY_H
+#endif
