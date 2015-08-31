@@ -175,7 +175,7 @@ Item {
     function removeVehicle(vehicle) {
         for (var i=0; i<_vehicles.length; i++) {
             if (_vehicles[i] == vehicle) {
-                _vehicle[i] = undefined
+                _vehicles[i] = undefined
                 map.removeMapItem(_vehicleMapItems[i])
                 _vehicleMapItems[i] = undefined
                 break
