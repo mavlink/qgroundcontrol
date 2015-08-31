@@ -5,7 +5,7 @@ git:
 
 os:
   - linux
-  - osx
+#  - osx
 
 cache:
   apt: true
