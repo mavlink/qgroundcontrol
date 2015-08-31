@@ -50,12 +50,15 @@ Item {
     property string mapName:            'defaultMap'
     property alias  mapItem:            map
     property alias  mapMenu:            mapTypeMenu
-    property bool showVehicles:         false
+    property bool   showVehicles:       false
+    property bool   showMissionItems:   false
 
     Component.onCompleted: {
         map.zoomLevel   = 18
         mapTypeMenu.update();
         addExistingVehicles()
+        updateMissionItemsConnections()
+        updateMissionItems()
     }
 
     //-- Menu to select supported map types
@@ -143,7 +146,6 @@ Item {
     //          we need to keep a separate array of Vehicles which must be at the top level of the object
     //          hierarchy in order for the dynamically added object to see it.
 
-
     property var _vehicles: []          ///< List of known vehicles
     property var _vehicleMapItems: []   ///< List of known vehicle map items
 
@@ -155,6 +157,10 @@ Item {
     }
 
     function addVehicle(vehicle) {
+        if (!showVehicles) {
+            return
+        }
+        
         var qmlItemTemplate = "VehicleMapItem { " +
                                     "coordinate:    _vehicles[%1].coordinate; " +
                                     "heading:       _vehicles[%1].heading " +
@@ -173,6 +179,10 @@ Item {
     }
 
     function removeVehicle(vehicle) {
+        if (!showVehicles) {
+            return
+        }
+        
         for (var i=0; i<_vehicles.length; i++) {
             if (_vehicles[i] == vehicle) {
                 _vehicles[i] = undefined
@@ -184,12 +194,103 @@ Item {
     }
 
     function addExistingVehicles() {
+        if (!showVehicles) {
+            return
+        }
+        
         for (var i=0; i<multiVehicleManager.vehicles.length; i++) {
             addVehicle(multiVehicleManager.vehicles[i])
         }
     }
 
+    // The following code is used to show mission items on the FlightMap
+    
+    property var _missionItems: []      ///< List of known vehicles
+    property var _missionMapItems: []   ///< List of known vehicle map items
+    
+    Connections {
+        target: multiVehicleManager
 
+        onActiveVehicleAvailableChanged: updateMissionItemsConnections()
+    }
+    
+    function updateMissionItemsConnections() {
+        if (multiVehicleManager.activeVehicleAvailable) {
+            multiVehicleManager.activeVehicle.missionItemsChanged.connect(updateMissionItems)
+        } else {
+            // Previously active vehicle is about to go away, disconnect signals
+            if (multiVehicleManager.activeVehicle) {
+                multiVehicleManager.activeVehicle.missionItemsChanged.disconnect(updateMissionItems)
+            }
+        }
+    }
+    
+    function addMissionItem(missionItem, index) {
+        if (!showMissionItems) {
+            console.warning("Shouldn't be called with showMissionItems=false")
+            return
+        }
+        
+        var qmlItemTemplate = "MissionMapItem { " +
+                                    "coordinate:    _missionItems[%1].coordinate; " +
+                                    "index:         %2" +
+                                "}"
+        
+        var i = _missionItems.length
+        qmlItemTemplate = qmlItemTemplate.replace("%1", i)
+        qmlItemTemplate = qmlItemTemplate.replace("%2", index + 1)
+        
+        _missionItems.push(missionItem)
+        var mapItem = Qt.createQmlObject (qmlItemTemplate, map)
+        _missionMapItems.push(mapItem)
+        
+        mapItem.z = map.z + 1
+        map.addMapItem(mapItem)
+    }
+    
+    function removeMissionItem(missionItem) {
+        if (!showMissionItems) {
+            console.warning("Shouldn't be called with showMissionItems=false")
+            return
+        }
+        
+        for (var i=0; i<_missionItems.length; i++) {
+            if (_missionItems[i] == missionItem) {
+                // Qml has an annoying habit of not destroying remove Qml item until it hits the main loop.
+                // Because of that we need to leave the the mission item references even though we have
+                // removed the items, otherwise we'll get references to undefined errors until we hit the main
+                // loop again.
+                //_missionItems[i] = undefined
+                map.removeMapItem(_missionMapItems[i])
+                _missionMapItems[i] = undefined
+                break
+            }
+        }
+    }
+    
+    function updateMissionItems() {
+        if (!showMissionItems) {
+            return
+        }
+        
+        var vehicle = multiVehicleManager.activeVehicle
+        if (!vehicle) {
+            console.warning("Why no active vehicle?")
+            return
+        }
+        
+        // Remove previous items
+        for (var i=0; i<_missionItems.length; i++) {
+            removeMissionItem(_missionItems[i])
+        }
+        _missionMapItems = []
+        
+        // Add new items
+        for (var i=0; i<vehicle.missionItems.length; i++) {
+            addMissionItem(vehicle.missionItems[i], i)
+        }
+    }
+    
     Plugin {
         id:   mapPlugin
         name: "QGroundControl"
@@ -267,8 +368,28 @@ Item {
         }
 */
     }
+    
+    /// Mission item list
+    Row {
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.left:       parent.left
+        anchors.right:      controlWidgets.left
+        anchors.bottom:     parent.bottom
+        spacing:            ScreenTools.defaultFontPixelWidth
+        
+        Repeater {
+            model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
+            
+            MissionItemSummary {
+                missionItem:        modelData
+                missionItemIndex:   index + 1
+            }
+        }
+    }
 
+    /// Map control widgets
     Column {
+        id:                 controlWidgets
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         anchors.right:      parent.right
         anchors.bottom:     parent.bottom
@@ -279,23 +400,60 @@ Item {
             text:   "Options"
             menu:   mapTypeMenu
         }
-
+        
         Row {
             layoutDirection:    Qt.RightToLeft
             spacing:            ScreenTools.defaultFontPixelWidth / 2
 
-            property real zoomIncrement: 1.0
-            property real buttonWidth: (optionsButton.width - spacing) / 2
+            readonly property real _zoomIncrement: 1.0
+            property real _buttonWidth: (optionsButton.width - spacing) / 2
+            
+            NumberAnimation {
+                id: animateZoom
+                
+                property real startZoom
+                property real endZoom
+                
+                target:     map
+                properties: "zoomLevel"
+                from:       startZoom
+                to:         endZoom
+                duration:   500
+                
+                easing {
+                    type: Easing.OutExpo
+                }
+            }
+
 
             QGCButton {
-                width:  parent.buttonWidth
+                width:  parent._buttonWidth
                 text:   "+"
-                onClicked: map.zoomLevel = map.zoomLevel + parent.zoomIncrement
+                
+                onClicked: {
+                    var endZoomLevel = map.zoomLevel + parent._zoomIncrement
+                    if (endZoomLevel > map.maximumZoomLevel) {
+                        endZoomLevel = map.maximumZoomLevel
+                    }
+                    animateZoom.startZoom = map.zoomLevel
+                    animateZoom.endZoom = endZoomLevel
+                    animateZoom.start()
+                }
             }
+            
             QGCButton {
-                width:  parent.buttonWidth
+                width:  parent._buttonWidth
                 text:   "-"
-                onClicked: map.zoomLevel = map.zoomLevel - parent.zoomIncrement
+                
+                onClicked: {
+                    var endZoomLevel = map.zoomLevel - parent._zoomIncrement
+                    if (endZoomLevel < map.minimumZoomLevel) {
+                        endZoomLevel = map.minimumZoomLevel
+                    }
+                    animateZoom.startZoom = map.zoomLevel
+                    animateZoom.endZoom = endZoomLevel
+                    animateZoom.start()
+                }
             }
         }
     }

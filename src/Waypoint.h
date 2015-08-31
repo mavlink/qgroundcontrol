@@ -37,6 +37,8 @@ This file is part of the PIXHAWK project
 #include <QString>
 #include <QtQml>
 #include <QTextStream>
+#include <QGeoCoordinate>
+
 #include "QGCMAVLink.h"
 #include "QGC.h"
 
@@ -65,6 +67,9 @@ public:
 
     const Waypoint& operator=(const Waypoint& other);
 
+    Q_PROPERTY(QGeoCoordinate coordinate READ coordinate NOTIFY coordinateChanged)
+    Q_PROPERTY(QString type READ type NOTIFY typeChanged)
+    
     Q_PROPERTY(double  longitude READ longitude  NOTIFY longitudeChanged)
     Q_PROPERTY(double  latitude  READ latitude   NOTIFY latitudeChanged)
     Q_PROPERTY(double  altitude  READ altitude   NOTIFY altitudeChanged)
@@ -161,7 +166,9 @@ public:
 
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);
-
+    
+    QGeoCoordinate coordinate(void);
+    QString type(void);
 
 protected:
     quint16 _id;
@@ -227,7 +234,8 @@ signals:
     void latitudeChanged    ();
     void longitudeChanged   ();
     void altitudeChanged    ();
-
+    void coordinateChanged(void);
+    void typeChanged(QString type);
 };
 
 QML_DECLARE_TYPE(Waypoint)
