@@ -33,10 +33,13 @@ import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     id: root
+
+    property bool active:           false  ///< true: actively connected to data provider, false: show inactive control
     property real airspeed:         0
     property real groundspeed:      0
     property bool showAirSpeed:     true
     property bool showGroundSpeed:  true
+
     anchors.verticalCenter: parent.verticalCenter
     width:  parent.width
     height: (showAirSpeed && showGroundSpeed) ? ScreenTools.defaultFontPixelSize * (4.16) : ScreenTools.defaultFontPixelSize * (2.08)
@@ -47,14 +50,14 @@ Rectangle {
         anchors.centerIn: parent
         spacing: ScreenTools.defaultFontPixelSize * (0.33)
         QGCLabel {
-            text: 'GS: ' + groundspeed.toFixed(0)
+            text: 'GS: ' + (active ? groundspeed.toFixed(0) : "")
             font.weight: Font.DemiBold
             color: "white"
             anchors.right: parent.right
             visible: showGroundSpeed
         }
         QGCLabel {
-            text: 'AS: ' + airspeed.toFixed(0)
+            text: 'AS: ' + (active ? airspeed.toFixed(0) : "")
             color: "white"
             anchors.right: parent.right
             font.weight: showAirSpeed ? Font.Normal : Font.DemiBold

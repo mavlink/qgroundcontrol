@@ -21,12 +21,6 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/**
- * @file
- *   @brief QGC Main Flight Display
- *   @author Gus Grubba <mavlink@grubba.com>
- */
-
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QSettings>
@@ -36,15 +30,15 @@ This file is part of the QGROUNDCONTROL project
 #include "VideoReceiver.h"
 
 #include "ScreenToolsController.h"
-#include "FlightDisplay.h"
+#include "FlightDisplayView.h"
 
-const char* kMainFlightDisplayGroup = "MainFlightDisplay";
+const char* kMainFlightDisplayViewGroup = "FlightDisplayView";
 
-FlightDisplay::FlightDisplay(QWidget *parent)
+FlightDisplayView::FlightDisplayView(QWidget *parent)
     : QGCQmlWidgetHolder(parent)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-    setObjectName("MainFlightDisplay");
+    setObjectName("FlightDisplayView");
     // Get rid of layout default margins
     QLayout* pl = layout();
     if(pl) {
@@ -90,26 +84,26 @@ FlightDisplay::FlightDisplay(QWidget *parent)
 #endif
     setContextPropertyObject("videoReceiver", pReceiver);
 
-    setSource(QUrl::fromUserInput("qrc:/qml/FlightDisplay.qml"));
+    setSource(QUrl::fromUserInput("qrc:/qml/FlightDisplayView.qml"));
     setVisible(true);
 }
 
-FlightDisplay::~FlightDisplay()
+FlightDisplayView::~FlightDisplayView()
 {
 }
 
-void FlightDisplay::saveSetting(const QString &name, const QString& value)
+void FlightDisplayView::saveSetting(const QString &name, const QString& value)
 {
     QSettings settings;
-    QString key(kMainFlightDisplayGroup);
+    QString key(kMainFlightDisplayViewGroup);
     key += "/" + name;
     settings.setValue(key, value);
 }
 
-QString FlightDisplay::loadSetting(const QString &name, const QString& defaultValue)
+QString FlightDisplayView::loadSetting(const QString &name, const QString& defaultValue)
 {
     QSettings settings;
-    QString key(kMainFlightDisplayGroup);
+    QString key(kMainFlightDisplayViewGroup);
     key += "/" + name;
     return settings.value(key, defaultValue).toString();
 }

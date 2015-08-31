@@ -33,9 +33,16 @@ import QGroundControl.ScreenTools 1.0
 
 QGCMovableItem {
     id:                     root
-    property real heading:  0
+
+    property bool active:   false  ///< true: actively connected to data provider, false: show inactive control
+    property real heading:  _defaultHeading
     property real size:     ScreenTools.defaultFontPixelSize * (10)
     property int _fontSize: ScreenTools.defaultFontPixelSize
+
+    readonly property real _defaultHeading:   0
+
+    property real _heading: active ? heading : _defaultHeading
+
     width:                  size
     height:                 size
     Rectangle {
@@ -53,7 +60,7 @@ QGCMovableItem {
         transform: Rotation {
             origin.x:   pointer.width  / 2
             origin.y:   pointer.height / 2
-            angle:      heading
+            angle:      _heading
         }
     }
     Image {
@@ -69,14 +76,14 @@ QGCMovableItem {
         height:             size * 0.2
         border.color:       Qt.rgba(1,1,1,0.15)
         color:              Qt.rgba(0,0,0,0.65)
+
         QGCLabel {
-            text:           heading.toFixed(0)
+            text:           _heading.toFixed(0)
             font.weight:    Font.DemiBold
             font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
             color: "white"
             anchors.centerIn: parent
+            visible:        active
         }
     }
 }
-
-
