@@ -33,10 +33,13 @@ import QGroundControl.ScreenTools 1.0
 
 Rectangle {
     id: root
-    property real altitude: 0
-    property real vertZ:    0
-    property bool showAltitude: true
-    property bool showClimbRate: true
+
+    property bool active:           false  ///< true: actively connected to data provider, false: show inactive control
+    property real altitude:         0
+    property real vertZ:            0
+    property bool showAltitude:     true
+    property bool showClimbRate:    true
+
     anchors.verticalCenter: parent.verticalCenter
     width:  parent.width
     height: (showAltitude && showClimbRate) ? ScreenTools.defaultFontPixelSize * (4.16) : ScreenTools.defaultFontPixelSize * (2.08)
@@ -47,14 +50,14 @@ Rectangle {
         anchors.centerIn: parent
         spacing: ScreenTools.defaultFontPixelSize * (0.33)
         QGCLabel {
-            text: 'h: ' + altitude.toFixed(0)
+            text: 'h: ' + (active ? altitude.toFixed(0) : "")
             font.weight: Font.DemiBold
             color: "white"
             anchors.right: parent.right
             visible: showAltitude
         }
         QGCLabel {
-            text: 'vZ: ' + vertZ.toFixed(0)
+            text: 'vZ: ' + (active ? vertZ.toFixed(0) : "")
             color: "white"
             font.weight: showAltitude ? Font.Normal : Font.DemiBold
             anchors.right: parent.right

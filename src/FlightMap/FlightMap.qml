@@ -33,7 +33,7 @@ import QtLocation 5.3
 import QtPositioning 5.3
 
 import QGroundControl.Controls              1.0
-import QGroundControl.FlightMap        1.0
+import QGroundControl.FlightMap             1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Vehicle               1.0
@@ -46,20 +46,14 @@ Item {
     property real   longitude:          0
     property real   zoomLevel:          18
     property real   heading:            0
-    property bool   alwaysNorth:        true
     property bool   interactive:        true
-    property bool   showVehicles:       true
     property string mapName:            'defaultMap'
     property alias  mapItem:            map
     property alias  mapMenu:            mapTypeMenu
-    property alias  readOnly:           map.readOnly
 
     Component.onCompleted: {
         map.zoomLevel   = 18
         mapTypeMenu.update();
-        if (showVehicles) {
-            addExistingVehicles()
-        }
     }
 
     //-- Menu to select supported map types
@@ -135,54 +129,9 @@ Item {
         return dist
     }
 
-    property var vehicles: []           ///< List of known vehicles
-    property var vehicleMapItems: []    ///< List of know vehicle map items
-
-    function addVehicle(vehicle) {
-            var qmlItemTemplate = "VehicleMapItem { " +
-                                        "coordinate:    vehicles[%1].coordinate; " +
-                                        "heading:       vehicles[%1].heading " +
-                                    "}"
-
-            var i = vehicles.length
-            qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-            qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-
-            vehicles.push(vehicle)
-            var mapItem = Qt.createQmlObject (qmlItemTemplate, map)
-            vehicleMapItems.push(mapItem)
-
-            mapItem.z = map.z + 1
-            map.addMapItem(mapItem)
-    }
-
-    function removeVehicle(vehicle) {
-            for (var i=0; i<vehicles.length; i++) {
-                if (vehicles[i] == vehicle) {
-                    vehicle[i] = undefined
-                    map.removeMapItem(vehicleMapItems[i])
-                    vehicleMapItems[i] = undefined
-                    break
-                }
-            }
-    }
-
-    function addExistingVehicles() {
-        for (var i=0; i<multiVehicleManager.vehicles.length; i++) {
-            addVehicle(multiVehicleManager.vehicles[i])
-        }
-    }
-
     Plugin {
         id:   mapPlugin
         name: "QGroundControl"
-    }
-
-    Connections {
-        target: multiVehicleManager
-
-        onVehicleAdded: addVehicle(vehicle)
-        onVehicleRemoved: removeVehicle(vehicle)
     }
 
     Map {
@@ -194,7 +143,6 @@ Item {
         property int    pressX : -1
         property int    pressY : -1
         property bool   changed:  false
-        property bool   readOnly: false
         property variant scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
 
         plugin:     mapPlugin
@@ -206,18 +154,7 @@ Item {
         gesture.flickDeceleration: 3000
         gesture.enabled: root.interactive
 
-        /*
-        // There is a bug currently in Qt where it fails to render a map taller than 6 tiles high. Until
-        // that's fixed, we can't rotate the map as it would require a larger map, which can easily grow
-        // larger than 6 tiles high.
-        // https://bugreports.qt.io/browse/QTBUG-45508
-        transform: Rotation {
-            origin.x: map.width  / 2
-            origin.y: map.height / 2
-            angle: map.visible ? (alwaysNorth ? 0 : -heading) : 0
-        }
-        */
-
+/*
         onWidthChanged: {
             scaleTimer.restart()
         }
@@ -229,6 +166,7 @@ Item {
         onZoomLevelChanged:{
             scaleTimer.restart()
         }
+*/
 
         MouseArea {
             anchors.fill: parent
@@ -240,6 +178,7 @@ Item {
             }
         }
 
+/*
         function calculateScale() {
             var coord1, coord2, dist, text, f
             f = 0
@@ -265,7 +204,45 @@ Item {
             scaleImage.width = (scaleImage.sourceSize.width * f) - 2 * scaleImageLeft.sourceSize.width
             scaleText.text = text
         }
+*/
     }
+
+    Column {
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.right:      parent.right
+        anchors.bottom:     parent.bottom
+        spacing:            ScreenTools.defaultFontPixelWidth / 2
+
+        QGCButton {
+            id:     optionsButton
+            text:   "Options"
+            menu:   mapTypeMenu
+        }
+
+        Row {
+            layoutDirection:    Qt.RightToLeft
+            spacing:            ScreenTools.defaultFontPixelWidth / 2
+
+            property real zoomIncrement: 1.0
+            property real buttonWidth: (optionsButton.width - spacing) / 2
+
+            QGCButton {
+                width:  parent.buttonWidth
+                text:   "+"
+                onClicked: map.zoomLevel = map.zoomLevel + parent.zoomIncrement
+            }
+            QGCButton {
+                width:  parent.buttonWidth
+                text:   "-"
+                onClicked: map.zoomLevel = map.zoomLevel - parent.zoomIncrement
+            }
+        }
+    }
+
+/*
+
+The slider and scale display are commented out for now to try to save real estate - DonLakeFlyer
+Not sure if I'll bring them back or not. Need room for waypoint list at bottom
 
     QGCSlider {
         id: zoomSlider;
@@ -345,12 +322,9 @@ Item {
             map.calculateScale()
         }
     }
+*/
 
     onVisibleChanged: {
-        adjustSize();
-    }
-
-    onAlwaysNorthChanged: {
         adjustSize();
     }
 
