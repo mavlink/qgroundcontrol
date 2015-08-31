@@ -47,7 +47,6 @@ Item {
     property real   zoomLevel:          18
     property real   heading:            0
     property bool   interactive:        true
-    property bool   showVehicles:       true
     property string mapName:            'defaultMap'
     property alias  mapItem:            map
     property alias  mapMenu:            mapTypeMenu
@@ -56,9 +55,6 @@ Item {
     Component.onCompleted: {
         map.zoomLevel   = 18
         mapTypeMenu.update();
-        if (showVehicles) {
-            addExistingVehicles()
-        }
     }
 
     //-- Menu to select supported map types
@@ -134,54 +130,9 @@ Item {
         return dist
     }
 
-    property var vehicles: []           ///< List of known vehicles
-    property var vehicleMapItems: []    ///< List of know vehicle map items
-
-    function addVehicle(vehicle) {
-            var qmlItemTemplate = "VehicleMapItem { " +
-                                        "coordinate:    vehicles[%1].coordinate; " +
-                                        "heading:       vehicles[%1].heading " +
-                                    "}"
-
-            var i = vehicles.length
-            qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-            qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-
-            vehicles.push(vehicle)
-            var mapItem = Qt.createQmlObject (qmlItemTemplate, map)
-            vehicleMapItems.push(mapItem)
-
-            mapItem.z = map.z + 1
-            map.addMapItem(mapItem)
-    }
-
-    function removeVehicle(vehicle) {
-            for (var i=0; i<vehicles.length; i++) {
-                if (vehicles[i] == vehicle) {
-                    vehicle[i] = undefined
-                    map.removeMapItem(vehicleMapItems[i])
-                    vehicleMapItems[i] = undefined
-                    break
-                }
-            }
-    }
-
-    function addExistingVehicles() {
-        for (var i=0; i<multiVehicleManager.vehicles.length; i++) {
-            addVehicle(multiVehicleManager.vehicles[i])
-        }
-    }
-
     Plugin {
         id:   mapPlugin
         name: "QGroundControl"
-    }
-
-    Connections {
-        target: multiVehicleManager
-
-        onVehicleAdded: addVehicle(vehicle)
-        onVehicleRemoved: removeVehicle(vehicle)
     }
 
     Map {

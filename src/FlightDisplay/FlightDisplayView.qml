@@ -68,6 +68,10 @@ Item {
         return value ? "1" : "0";
     }
 
+    VehicleTracker {
+        map: mapBackground
+    }
+
     FlightMap {
         id:                 mapBackground
         anchors.fill:       parent

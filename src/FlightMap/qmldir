@@ -18,6 +18,7 @@ QGCPitchIndicator       1.0 QGCPitchIndicator.qml
 QGCSlider               1.0 QGCSlider.qml
 QGCSpeedWidget          1.0 QGCSpeedWidget.qml
 QGCWaypointEditor       1.0 QGCWaypointEditor.qml
+VehicleTracker          1.0 VehicleTracker.qml
 
 # MapQuickItems
 VehicleMapItem          1.0 VehicleMapItem.qml

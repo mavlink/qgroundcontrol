@@ -138,6 +138,7 @@
         <file alias="QGroundControl/FlightMap/QGCSlider.qml">src/FlightMap/Widgets/QGCSlider.qml</file>
         <file alias="QGroundControl/FlightMap/QGCSpeedWidget.qml">src/FlightMap/Widgets/QGCSpeedWidget.qml</file>
         <file alias="QGroundControl/FlightMap/QGCWaypointEditor.qml">src/FlightMap/Widgets/QGCWaypointEditor.qml</file>
+        <file alias="QGroundControl/FlightMap/VehicleTracker.qml">src/FlightMap/Widgets/VehicleTracker.qml</file>
         <file alias="QGroundControl/FlightMap/QGCWaypoint.qml">src/FlightMap/MapItems/QGCWaypoint.qml</file>
         <file alias="QGroundControl/FlightMap/VehicleMapItem.qml">src/FlightMap/MapItems/VehicleMapItem.qml</file>
     </qresource>
