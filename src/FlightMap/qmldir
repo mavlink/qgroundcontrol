@@ -1,7 +1,7 @@
 Module QGroundControl.FlightMap
 
 # Main view controls
-FlightMap        1.0 FlightMap.qml
+FlightMap               1.0 FlightMap.qml
 QGCVideoBackground      1.0 QGCVideoBackground.qml
 
 # Widgets
@@ -21,4 +21,4 @@ QGCWaypointEditor       1.0 QGCWaypointEditor.qml
 
 # MapQuickItems
 VehicleMapItem          1.0 VehicleMapItem.qml
-QGCWaypoint             1.0 QGCWaypoint.qml
+MissioMapItem           1.0 MissionMapItem.qml

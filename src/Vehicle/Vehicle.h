@@ -87,8 +87,9 @@ public:
     Q_PROPERTY(double       waypointDistance    READ waypointDistance   NOTIFY waypointDistanceChanged)
     Q_PROPERTY(uint16_t     currentWaypoint     READ currentWaypoint    NOTIFY currentWaypointChanged)
     Q_PROPERTY(unsigned int heartbeatTimeout    READ heartbeatTimeout   NOTIFY heartbeatTimeoutChanged)
+    
     //-- Waypoint management
-    Q_PROPERTY(QQmlListProperty<Waypoint> waypoints READ waypoints NOTIFY waypointsChanged)
+    Q_PROPERTY(QQmlListProperty<Waypoint> missionItems READ missionItems NOTIFY missionItemsChanged)
     
     // Property accesors
     int id(void) { return _id; }
@@ -161,7 +162,7 @@ public:
     uint16_t        currentWaypoint     () { return _currentWaypoint; }
     unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
     
-    QQmlListProperty<Waypoint> waypoints() {return QQmlListProperty<Waypoint>(this, _waypoints); }
+    QQmlListProperty<Waypoint> missionItems() {return QQmlListProperty<Waypoint>(this, _waypoints); }
     
 public slots:
     void setLatitude(double latitude);
@@ -203,7 +204,7 @@ signals:
     void satelliteLockChanged   ();
     void waypointDistanceChanged();
     void currentWaypointChanged ();
-    void waypointsChanged       ();
+    void missionItemsChanged    ();
     
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);

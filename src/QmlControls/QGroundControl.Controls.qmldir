@@ -1,28 +1,31 @@
 Module QGroundControl.Controls
 
-QGCLabel 1.0 QGCLabel.qml
-QGCButton 1.0 QGCButton.qml
-QGCRadioButton 1.0 QGCRadioButton.qml
-QGCCheckBox 1.0 QGCCheckBox.qml
-QGCTextField 1.0 QGCTextField.qml
-QGCComboBox 1.0 QGCComboBox.qml
-QGCColoredImage 1.0 QGCColoredImage.qml
-QGCToolBarButton 1.0 QGCToolBarButton.qml
-QGCMovableItem 1.0 QGCMovableItem.qml
+QGCLabel            1.0 QGCLabel.qml
+QGCButton           1.0 QGCButton.qml
+QGCRadioButton      1.0 QGCRadioButton.qml
+QGCCheckBox         1.0 QGCCheckBox.qml
+QGCTextField        1.0 QGCTextField.qml
+QGCComboBox         1.0 QGCComboBox.qml
+QGCColoredImage     1.0 QGCColoredImage.qml
+QGCToolBarButton    1.0 QGCToolBarButton.qml
+QGCMovableItem      1.0 QGCMovableItem.qml
 
-SubMenuButton 1.0 SubMenuButton.qml
-IndicatorButton 1.0 IndicatorButton.qml
-VehicleRotationCal 1.0 VehicleRotationCal.qml
-VehicleSummaryRow 1.0 VehicleSummaryRow.qml
-ViewWidget 1.0 ViewWidget.qml
+SubMenuButton       1.0 SubMenuButton.qml
+IndicatorButton     1.0 IndicatorButton.qml
+VehicleRotationCal  1.0 VehicleRotationCal.qml
+VehicleSummaryRow   1.0 VehicleSummaryRow.qml
+ViewWidget          1.0 ViewWidget.qml
 
-ParameterEditor 1.0 ParameterEditor.qml
-ParameterEditorDialog 1.0 ParameterEditorDialog.qml
+ParameterEditor         1.0 ParameterEditor.qml
+ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 
 ModeSwitchDisplay 1.0 ModeSwitchDisplay.qml
 
-QGCView 1.0 QGCView.qml
-QGCViewPanel 1.0 QGCViewPanel.qml
-QGCViewDialog 1.0 QGCViewDialog.qml
-QGCViewMessage 1.0 QGCViewMessage.qml
+QGCView         1.0 QGCView.qml
+QGCViewPanel    1.0 QGCViewPanel.qml
+QGCViewDialog   1.0 QGCViewDialog.qml
+QGCViewMessage  1.0 QGCViewMessage.qml
+
+MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
+MissionItemSummary      1.0 MissionItemSummary.qml
 

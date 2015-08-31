@@ -714,7 +714,7 @@ void Vehicle::_waypointViewOnlyListChanged()
             Waypoint* wp = waypoints[i];
             _waypoints.append(new Waypoint(*wp));
         }
-        emit waypointsChanged();
+        emit missionItemsChanged();
         /*
          if(_longitude == DEFAULT_LON && _latitude == DEFAULT_LAT && _waypoints.length()) {
          _longitude = _waypoints[0]->getLongitude();
