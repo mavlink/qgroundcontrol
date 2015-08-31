@@ -32,10 +32,18 @@ import QGroundControl.Controls 1.0
 
 QGCMovableItem {
     id: root
-    property real rollAngle:    0
-    property real pitchAngle:   0
+
+    property bool active:       false  ///< true: actively connected to data provider, false: show inactive control
+    property real rollAngle :   _defaultRollAngle
+    property real pitchAngle:   _defaultPitchAngle
     property bool showPitch:    true
     property real size
+
+    readonly property real _defaultRollAngle:   0
+    readonly property real _defaultPitchAngle:  0
+
+    property real _rollAngle:   active ? rollAngle : _defaultRollAngle
+    property real _pitchAngle:  active ? pitchAngle : _defaultPitchAngle
 
     width:  size
     height: size
@@ -43,8 +51,8 @@ QGCMovableItem {
     //----------------------------------------------------
     //-- Artificial Horizon
     QGCArtificialHorizon {
-        rollAngle:      root.rollAngle
-        pitchAngle:     root.pitchAngle
+        rollAngle:      _rollAngle
+        pitchAngle:     _pitchAngle
         anchors.fill:   parent
     }
     //----------------------------------------------------
@@ -67,7 +75,7 @@ QGCMovableItem {
         transform: Rotation {
             origin.x: root.width  / 2
             origin.y: root.height / 2
-            angle: -rollAngle
+            angle: -_rollAngle
         }
     }
     //----------------------------------------------------
@@ -77,8 +85,8 @@ QGCMovableItem {
         visible:            root.showPitch
         size:               root.size * 0.65
         anchors.verticalCenter: parent.verticalCenter
-        pitchAngle:         root.pitchAngle
-        rollAngle:          root.rollAngle
+        pitchAngle:         _pitchAngle
+        rollAngle:          _rollAngle
         color:              Qt.rgba(0,0,0,0)
     }
     //----------------------------------------------------
