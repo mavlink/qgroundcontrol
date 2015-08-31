@@ -76,15 +76,14 @@ QGCMovableItem {
         height:             size * 0.2
         border.color:       Qt.rgba(1,1,1,0.15)
         color:              Qt.rgba(0,0,0,0.65)
-        visible:            active
+
         QGCLabel {
             text:           _heading.toFixed(0)
             font.weight:    Font.DemiBold
             font.pixelSize: _fontSize < 1 ? 1 : _fontSize;
             color: "white"
             anchors.centerIn: parent
+            visible:        active
         }
     }
 }
-
-

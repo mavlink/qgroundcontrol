@@ -72,13 +72,13 @@ Item {
         height:             ScreenTools.defaultFontPixelSize * (2.08)
         border.color:       Qt.rgba(1,1,1,0.15)
         color:              Qt.rgba(0,0,0,0.25)
-        visible:            active
 
         QGCLabel {
             text:               _heading.toFixed(0)
             font.weight:        Font.DemiBold
             color:              "white"
             anchors.centerIn:   parent
+            visible:            active
         }
     }
 }
