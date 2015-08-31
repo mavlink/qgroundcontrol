@@ -50,7 +50,6 @@ Item {
     property string mapName:            'defaultMap'
     property alias  mapItem:            map
     property alias  mapMenu:            mapTypeMenu
-    property alias  readOnly:           map.readOnly
 
     Component.onCompleted: {
         map.zoomLevel   = 18
@@ -144,7 +143,6 @@ Item {
         property int    pressX : -1
         property int    pressY : -1
         property bool   changed:  false
-        property bool   readOnly: false
         property variant scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
 
         plugin:     mapPlugin
@@ -156,6 +154,7 @@ Item {
         gesture.flickDeceleration: 3000
         gesture.enabled: root.interactive
 
+/*
         onWidthChanged: {
             scaleTimer.restart()
         }
@@ -167,6 +166,7 @@ Item {
         onZoomLevelChanged:{
             scaleTimer.restart()
         }
+*/
 
         MouseArea {
             anchors.fill: parent
@@ -178,6 +178,7 @@ Item {
             }
         }
 
+/*
         function calculateScale() {
             var coord1, coord2, dist, text, f
             f = 0
@@ -203,7 +204,45 @@ Item {
             scaleImage.width = (scaleImage.sourceSize.width * f) - 2 * scaleImageLeft.sourceSize.width
             scaleText.text = text
         }
+*/
     }
+
+    Column {
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.right:      parent.right
+        anchors.bottom:     parent.bottom
+        spacing:            ScreenTools.defaultFontPixelWidth / 2
+
+        QGCButton {
+            id:     optionsButton
+            text:   "Options"
+            menu:   mapTypeMenu
+        }
+
+        Row {
+            layoutDirection:    Qt.RightToLeft
+            spacing:            ScreenTools.defaultFontPixelWidth / 2
+
+            property real zoomIncrement: 1.0
+            property real buttonWidth: (optionsButton.width - spacing) / 2
+
+            QGCButton {
+                width:  parent.buttonWidth
+                text:   "+"
+                onClicked: map.zoomLevel = map.zoomLevel + parent.zoomIncrement
+            }
+            QGCButton {
+                width:  parent.buttonWidth
+                text:   "-"
+                onClicked: map.zoomLevel = map.zoomLevel - parent.zoomIncrement
+            }
+        }
+    }
+
+/*
+
+The slider and scale display are commented out for now to try to save real estate - DonLakeFlyer
+Not sure if I'll bring them back or not. Need room for waypoint list at bottom
 
     QGCSlider {
         id: zoomSlider;
@@ -283,6 +322,7 @@ Item {
             map.calculateScale()
         }
     }
+*/
 
     onVisibleChanged: {
         adjustSize();

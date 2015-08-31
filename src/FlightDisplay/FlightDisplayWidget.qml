@@ -266,7 +266,6 @@ Item {
         mapName:            'FlightDisplayWidget'
         latitude:           mapBackground.visible ? root.latitude : root.defaultLatitude
         longitude:          mapBackground.visible ? root.longitude : root.defaultLongitude
-        readOnly:           true
         z:                  10
     }
 

@@ -38,27 +38,27 @@ Item {
 
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
-    property var activeVehicle: multiVehicleManager.activeVehicle
+    property var _activeVehicle: multiVehicleManager.activeVehicle
 
-    readonly property real defaultLatitude:         37.803784
-    readonly property real defaultLongitude:        -122.462276
-    readonly property real defaultRoll:             0
-    readonly property real defaultPitch:            0
-    readonly property real defaultHeading:          0
-    readonly property real defaultAltitudeWGS84:    0
-    readonly property real defaultGroundSpeed:      0
-    readonly property real defaultAirSpeed:         0
-    readonly property real defaultClimbRate:        0
+    readonly property real _defaultLatitude:        37.803784
+    readonly property real _defaultLongitude:       -122.462276
+    readonly property real _defaultRoll:            0
+    readonly property real _defaultPitch:           0
+    readonly property real _defaultHeading:         0
+    readonly property real _defaultAltitudeWGS84:   0
+    readonly property real _defaultGroundSpeed:     0
+    readonly property real _defaultAirSpeed:        0
+    readonly property real _defaultClimbRate:       0
 
-    property real roll:             activeVehicle ? (isNaN(activeVehicle.roll) ? defaultRoll : activeVehicle.roll) : defaultRoll
-    property real pitch:            activeVehicle ? (isNaN(activeVehicle.pitch) ? defaultPitch : activeVehicle.pitch) : defaultPitch
-    property real latitude:         activeVehicle ? ((activeVehicle.latitude  === 0) ? defaultLatitude : activeVehicle.latitude) : defaultLatitude
-    property real longitude:        activeVehicle ? ((activeVehicle.longitude === 0) ? defaultLongitude : activeVehicle.longitude) : defaultLongitude
-    property real heading:          activeVehicle ? (isNaN(activeVehicle.heading) ? defaultHeading : activeVehicle.heading) : defaultHeading
-    property real altitudeWGS84:    activeVehicle ? activeVehicle.altitudeWGS84 : defaultAltitudeWGS84
-    property real groundSpeed:      activeVehicle ? activeVehicle.groundSpeed : defaultGroundSpeed
-    property real airSpeed:         activeVehicle ? activeVehicle.airSpeed : defaultAirSpeed
-    property real climbRate:        activeVehicle ? activeVehicle.climbRate : defaultClimbRate
+    property real _roll:            _activeVehicle ? (isNaN(_activeVehicle.roll) ? _defaultRoll : _activeVehicle.roll) : _defaultRoll
+    property real _pitch:           _activeVehicle ? (isNaN(_activeVehicle.pitch) ? _defaultPitch : _activeVehicle.pitch) : _defaultPitch
+    property real _latitude:        _activeVehicle ? ((_activeVehicle.latitude  === 0) ? _defaultLatitude : _activeVehicle.latitude) : _defaultLatitude
+    property real _longitude:       _activeVehicle ? ((_activeVehicle.longitude === 0) ? _defaultLongitude : _activeVehicle.longitude) : _defaultLongitude
+    property real _heading:         _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
+    property real _altitudeWGS84:   _activeVehicle ? _activeVehicle.altitudeWGS84 : _defaultAltitudeWGS84
+    property real _groundSpeed:     _activeVehicle ? _activeVehicle.groundSpeed : _defaultGroundSpeed
+    property real _airSpeed:        _activeVehicle ? _activeVehicle.airSpeed : _defaultAirSpeed
+    property real _climbRate:       _activeVehicle ? _activeVehicle.climbRate : _defaultClimbRate
 
     function getBool(value) {
         return value === '0' ? false : true;
@@ -68,100 +68,69 @@ Item {
         return value ? "1" : "0";
     }
 
-    VehicleTracker {
-        map: mapBackground
-    }
-
     FlightMap {
-        id:                 mapBackground
-        anchors.fill:       parent
-        mapName:            'FlightDisplayView'
-        latitude:           root.latitude
-        longitude:          root.longitude
-        readOnly:           true
-        z:                  10
+        id:             flightMap
+        anchors.fill:   parent
+        mapName:        "FlightDisplayView"
+        latitude:       _latitude
+        longitude:      _longitude
+        z:              10
     }
 
-    // Floating (Top Left) Compass Widget
+    VehicleTracker {
+        map: flightMap
+    }
 
     QGCCompassWidget {
-        id:                 compassWidget
-        y:                  ScreenTools.defaultFontPixelSize * (0.42)
-        x:                  ScreenTools.defaultFontPixelSize * (7.1)
-        size:               ScreenTools.defaultFontPixelSize * (13.3)
-        heading:            root.heading
-        active:             multiVehicleManager.activeVehicleAvailable
-        z:                  mapBackground.z + 2
-        onResetRequested: {
-            y               = ScreenTools.defaultFontPixelSize * (0.42)
-            x               = ScreenTools.defaultFontPixelSize * (7.1)
-            size            = ScreenTools.defaultFontPixelSize * (13.3)
-            tForm.xScale    = 1
-            tForm.yScale    = 1
-        }
+        x:          ScreenTools.defaultFontPixelSize * (7.1)
+        y:          ScreenTools.defaultFontPixelSize * (0.42)
+        size:       ScreenTools.defaultFontPixelSize * (13.3)
+        heading:    _heading
+        active:     multiVehicleManager.activeVehicleAvailable
+        z:          flightMap.z + 2
     }
 
-    // Floating (Top Right) Attitude Widget
-
     QGCAttitudeWidget {
-        id:                 attitudeWidget
-        y:                  ScreenTools.defaultFontPixelSize * (0.42)
-        size:               ScreenTools.defaultFontPixelSize * (13.3)
-        rollAngle:          roll
-        pitchAngle:         pitch
-        showPitch:          true
-        anchors.right:      root.right
-        anchors.rightMargin: ScreenTools.defaultFontPixelSize * (7.1)
-        active:             multiVehicleManager.activeVehicleAvailable
-        z:                  mapBackground.z + 2
-        onResetRequested: {
-            y                   = ScreenTools.defaultFontPixelSize * (0.42)
-            anchors.right       = root.right
-            anchors.rightMargin = ScreenTools.defaultFontPixelSize * (7.1)
-            size                = ScreenTools.defaultFontPixelSize * (13.3)
-            tForm.xScale        = 1
-            tForm.yScale        = 1
-        }
+        anchors.rightMargin:    ScreenTools.defaultFontPixelSize * (7.1)
+        anchors.right:          parent.right
+        y:                      ScreenTools.defaultFontPixelSize * (0.42)
+        size:                   ScreenTools.defaultFontPixelSize * (13.3)
+        rollAngle:              _roll
+        pitchAngle:             _pitch
+        active:                 multiVehicleManager.activeVehicleAvailable
+        z:                      flightMap.z + 2
     }
 
     QGCAltitudeWidget {
-        id:                 altitudeWidget
-        anchors.right:      parent.right
-        width:              ScreenTools.defaultFontPixelSize * (5)
-        height:             parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
-        altitude:           root.altitudeWGS84
-        z:                  30
+        anchors.right:  parent.right
+        height:         parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
+        width:          ScreenTools.defaultFontPixelSize * (5)
+        altitude:       _altitudeWGS84
+        z:              30
     }
 
     QGCSpeedWidget {
-        id:                 speedWidget
-        anchors.left:       parent.left
-        width:              ScreenTools.defaultFontPixelSize * (5)
-        height:             parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
-        speed:              root.groundSpeed
-        z:                  40
+        anchors.left:   parent.left
+        width:          ScreenTools.defaultFontPixelSize * (5)
+        height:         parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
+        speed:          _groundSpeed
+        z:              40
     }
 
     QGCCurrentSpeed {
-        id: currentSpeed
         anchors.left:       parent.left
         width:              ScreenTools.defaultFontPixelSize * (6.25)
-        airspeed:           root.airSpeed
-        groundspeed:        root.groundSpeed
+        airspeed:           _airSpeed
+        groundspeed:        _groundSpeed
         active:             multiVehicleManager.activeVehicleAvailable
-        showAirSpeed:       true
-        showGroundSpeed:    true
         z:                  50
     }
 
     QGCCurrentAltitude {
-        id: currentAltitude
         anchors.right:      parent.right
         width:              ScreenTools.defaultFontPixelSize * (6.25)
-        altitude:           root.altitudeWGS84
-        vertZ:              root.climbRate
-        showAltitude:       true
-        showClimbRate:      true
+        altitude:           _altitudeWGS84
+        vertZ:              _climbRate
         active:             multiVehicleManager.activeVehicleAvailable
         z:                  60
     }
