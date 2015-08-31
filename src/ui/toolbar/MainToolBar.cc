@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "UASMessageView.h"
 #include "UASMessageHandler.h"
-#include "FlightDisplay.h"
+#include "FlightDisplayView.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 
@@ -154,7 +154,7 @@ void MainToolBar::onFlyView()
 
 void MainToolBar::onFlyViewMenu()
 {
-    FlightDisplay* fdsp = MainWindow::instance()->getFlightDisplay();
+    FlightDisplayView* fdsp = MainWindow::instance()->getFlightDisplay();
     if(fdsp) {
         fdsp->showOptionsMenu();
     }

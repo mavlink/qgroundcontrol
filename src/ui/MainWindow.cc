@@ -64,7 +64,8 @@ This file is part of the QGROUNDCONTROL project
 #include "Linecharts.h"
 #include "QGCTabbedInfoView.h"
 #include "UASRawStatusView.h"
-#include "FlightDisplay.h"
+#include "FlightDisplayView.h"
+#include "FlightDisplayWidget.h"
 #include "SetupView.h"
 #include "QGCUASFileViewMulti.h"
 #include "QGCApplication.h"
@@ -451,7 +452,7 @@ void MainWindow::_buildExperimentalPlanView(void)
 void MainWindow::_buildFlightView(void)
 {
     if (!_flightView) {
-        _flightView = new FlightDisplay(this);
+        _flightView = new FlightDisplayView(this);
         _flightView->setVisible(false);
     }
 }
@@ -549,7 +550,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
 
         widget = hddisplay;
     } else if (widgetName == _pfdDockWidgetName) {
-        widget = new FlightDisplay(this);
+        widget = new FlightDisplayWidget(this);
     } else if (widgetName == _hudDockWidgetName) {
         widget = new HUD(320,240,this);
     } else if (widgetName == _uasInfoViewDockWidgetName) {

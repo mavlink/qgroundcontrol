@@ -116,7 +116,8 @@
         <file alias="AirframeComponentSummary.qml">src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
         <file alias="AirframeComponent.qml">src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
-        <file alias="FlightDisplay.qml">src/ui/flightdisplay/FlightDisplay.qml</file>
+        <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
+        <file alias="FlightDisplayWidget.qml">src/FlightDisplay/FlightDisplayWidget.qml</file>
         <file alias="MapDisplay.qml">src/ui/mapdisplay/MapDisplay.qml</file>
 
         <!-- FlightMap module -->
