@@ -32,10 +32,19 @@ import QGroundControl.ScreenTools 1.0
 
 Item {
     id: root
-    anchors.centerIn: parent
-    property real rollAngle :   0
-    property real pitchAngle:   0
+
+    property bool active:       false  ///< true: actively connected to data provider, false: show inactive control
+    property real rollAngle :   _defaultRollAngle
+    property real pitchAngle:   _defaultPitchAngle
     property bool showPitch:    true
+
+    readonly property real _defaultRollAngle:   0
+    readonly property real _defaultPitchAngle:  0
+
+    property real _rollAngle:   active ? rollAngle : _defaultRollAngle
+    property real _pitchAngle:  active ? pitchAngle : _defaultPitchAngle
+
+    anchors.centerIn: parent
 
     Image {
         id: rollDial
@@ -47,7 +56,7 @@ Item {
         transform: Rotation {
             origin.x: rollDial.width / 2
             origin.y: rollDial.height
-            angle:   -rollAngle
+            angle:   -_rollAngle
         }
     }
 
@@ -72,9 +81,9 @@ Item {
     QGCPitchIndicator {
         id:                 pitchIndicator
         anchors.verticalCenter: parent.verticalCenter
-        visible:            root.showPitch
-        pitchAngle:         root.pitchAngle
-        rollAngle:          root.rollAngle
+        visible:            showPitch
+        pitchAngle:         _pitchAngle
+        rollAngle:          _rollAngle
         color:              Qt.rgba(0,0,0,0)
         size:               ScreenTools.defaultFontPixelSize * (10)
     }
