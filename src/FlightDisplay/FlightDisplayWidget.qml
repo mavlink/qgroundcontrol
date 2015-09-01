@@ -85,23 +85,8 @@ Item {
 
     Component.onCompleted:
     {
-        mapBackground.visible               = getBool(flightDisplay.loadSetting("showMapBackground",        "0"));
-        videoBackground.visible             = getBool(flightDisplay.loadSetting("showVideoBackground",      "0"));
-        showPitchIndicator                  = getBool(flightDisplay.loadSetting("showPitchIndicator",       "1"));
-        altitudeWidget.visible              = getBool(flightDisplay.loadSetting("showAltitudeWidget",       "1"));
-        speedWidget.visible                 = getBool(flightDisplay.loadSetting("showSpeedWidget",          "1"));
-        currentSpeed.showAirSpeed           = getBool(flightDisplay.loadSetting("showCurrentAirSpeed",      "1"));
-        currentSpeed.showGroundSpeed        = getBool(flightDisplay.loadSetting("showCurrentGroundSpeed",   "1"));
-        currentAltitude.showClimbRate       = getBool(flightDisplay.loadSetting("showCurrentClimbRate",     "1"));
-        currentAltitude.showAltitude        = getBool(flightDisplay.loadSetting("showCurrentAltitude",      "1"));
+        videoBackground.visible = getBool(flightDisplay.loadSetting("showVideoBackground", "0"));
 
-        // Insert Map Type menu before separator
-        contextMenu.insertItem(2, mapBackground.mapMenu);
-        // Video or Map. Not both:
-        if(mapBackground.visible && videoBackground.visible) {
-            videoBackground.visible = false;
-            flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
-        }
         // Disable video if we don't have support for it
         if(!flightDisplay.hasVideo) {
             videoBackground.visible = false;
@@ -115,139 +100,12 @@ Item {
         id: contextMenu
 
         MenuItem {
-            text: "Map Background"
-            checkable: true
-            checked: mapBackground.visible
-            onTriggered:
-            {
-                enforceExclusiveOption(mapBackground, videoBackground, "showMapBackground", "showVideoBackground");
-            }
-        }
-
-        MenuSeparator {}
-
-        MenuItem {
             id: videoMenu
             text: "Video Background"
             checkable: true
             checked: videoBackground.visible
-            onTriggered:
-            {
-                enforceExclusiveOption(videoBackground, mapBackground, "showVideoBackground", "showMapBackground");
-            }
+            onToggled: videoBackground.visible = checked
         }
-
-        MenuSeparator {}
-
-        MenuItem {
-            text: "Pitch Indicator"
-            checkable:  true
-            checked:    showPitchIndicator
-            enabled:    attitudeHUD.visible || attitudeWidget.visible
-            onTriggered:
-            {
-                showPitchIndicator = !showPitchIndicator;
-                flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
-            }
-        }
-
-        MenuItem {
-            text: "Altitude Indicator"
-            checkable: true
-            checked: altitudeWidget.visible
-            onTriggered:
-            {
-                altitudeWidget.visible = !altitudeWidget.visible;
-                flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
-            }
-        }
-
-        MenuItem {
-            text: "Current Altitude"
-            checkable: true
-            checked: currentAltitude.showAltitude
-            onTriggered:
-            {
-                currentAltitude.showAltitude = !currentAltitude.showAltitude;
-                flightDisplay.saveSetting("showCurrentAltitude", setBool(currentAltitude.showAltitude));
-            }
-        }
-
-        MenuItem {
-            text: "Current Climb Rate"
-            checkable: true
-            checked: currentAltitude.showClimbRate
-            onTriggered:
-            {
-                currentAltitude.showClimbRate = !currentAltitude.showClimbRate;
-                flightDisplay.saveSetting("showCurrentClimbRate", setBool(currentAltitude.showClimbRate));
-            }
-        }
-
-        MenuItem {
-            text: "Speed Indicator"
-            checkable: true
-            checked: speedWidget.visible
-            onTriggered:
-            {
-                speedWidget.visible = !speedWidget.visible;
-                flightDisplay.saveSetting("showSpeedWidget", setBool(speedWidget.visible));
-            }
-        }
-
-        MenuItem {
-            text: "Current Air Speed"
-            checkable: true
-            checked: currentSpeed.showAirSpeed
-            onTriggered:
-            {
-                currentSpeed.showAirSpeed = !currentSpeed.showAirSpeed;
-                flightDisplay.saveSetting("showCurrentAirSpeed", setBool(currentSpeed.showAirSpeed));
-            }
-        }
-
-        MenuItem {
-            text: "Current Ground Speed"
-            checkable: true
-            checked: currentSpeed.showGroundSpeed
-            onTriggered:
-            {
-                currentSpeed.showGroundSpeed = !currentSpeed.showGroundSpeed;
-                flightDisplay.saveSetting("showCurrentGroundSpeed", setBool(currentSpeed.showGroundSpeed));
-            }
-        }
-
-        MenuSeparator {}
-
-        MenuItem {
-            text: "Restore Defaults"
-            onTriggered:
-            {
-                showPitchIndicator = true;
-                flightDisplay.saveSetting("showPitchIndicator", setBool(showPitchIndicator));
-                attitudeWidget.visible = false;
-                flightDisplay.saveSetting("showAttitudeWidget", setBool(attitudeWidget.visible));
-                compassWidget.visible = false
-                flightDisplay.saveSetting("showCompassWidget", setBool(compassWidget.visible));
-                altitudeWidget.visible = true;
-                flightDisplay.saveSetting("showAltitudeWidget", setBool(altitudeWidget.visible));
-                currentAltitude.showAltitude = true;
-                flightDisplay.saveSetting("showCurrentAltitude", setBool(currentAltitude.showAltitude));
-                currentAltitude.showClimbRate = true;
-                flightDisplay.saveSetting("showCurrentClimbRate", setBool(currentAltitude.showClimbRate));
-                speedWidget.visible = true;
-                flightDisplay.saveSetting("showSpeedWidget", setBool(speedWidget.visible));
-                currentSpeed.showAirSpeed = true;
-                flightDisplay.saveSetting("showCurrentAirSpeed", setBool(currentSpeed.showAirSpeed));
-                currentSpeed.showGroundSpeed = true;
-                flightDisplay.saveSetting("showCurrentGroundSpeed", setBool(currentSpeed.showGroundSpeed));
-                mapBackground.visible = false;
-                flightDisplay.saveSetting("showMapBackground", setBool(mapBackground.visible));
-                videoBackground.visible = false;
-                flightDisplay.saveSetting("showVideoBackground", setBool(videoBackground.visible));
-            }
-        }
-
     }
 
     // Video and Map backgrounds are exclusive. If one is enabled the other is disabled.
@@ -257,15 +115,6 @@ Item {
         anchors.fill:       parent
         display:            videoDisplay
         receiver:           videoReceiver
-        z:                  10
-    }
-
-    FlightMap {
-        id:                 mapBackground
-        anchors.fill:       parent
-        mapName:            'FlightDisplayWidget'
-        latitude:           mapBackground.visible ? root.latitude : root.defaultLatitude
-        longitude:          mapBackground.visible ? root.longitude : root.defaultLongitude
         z:                  10
     }
 
@@ -289,7 +138,7 @@ Item {
         anchors.fill:       parent
         rollAngle:          roll
         pitchAngle:         pitch
-        visible:            !videoBackground.visible && !mapBackground.visible
+        visible:            !videoBackground.visible
     }
 
     // HUD (center) Attitude Indicator
@@ -349,16 +198,11 @@ Item {
         z:                  60
     }
 
-    //- Context Menu
-    MouseArea {
-        anchors.fill: parent
-        z: 1000
-        acceptedButtons: Qt.RightButton
-        onClicked: {
-            if (mouse.button == Qt.RightButton)
-            {
-                contextMenu.popup();
-            }
-        }
+    QGCButton {
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.right:      parent.right
+        anchors.bottom:     parent.bottom
+        text:               "Options"
+        menu:               contextMenu
     }
 }
