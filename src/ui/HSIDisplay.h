@@ -200,7 +200,7 @@ protected slots:
     /** @brief Draw waypoints of this system */
     void drawWaypoints(QPainter& painter);
     /** @brief Draw one waypoint */
-    void drawWaypoint(QPainter& painter, const QColor& color, float width, const Waypoint *w, const QPointF& p);
+    void drawWaypoint(QPainter& painter, const QColor& color, float width, const MissionItem *w, const QPointF& p);
     /** @brief Draw the limiting safety area */
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
     /** @brief Receive mouse clicks */

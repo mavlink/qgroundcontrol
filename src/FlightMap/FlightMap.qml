@@ -37,6 +37,7 @@ import QGroundControl.FlightMap             1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Vehicle               1.0
+import QGroundControl.Mavlink               1.0
 
 Item {
     id:     root
@@ -227,7 +228,12 @@ Item {
     
     function addMissionItem(missionItem, index) {
         if (!showMissionItems) {
-            console.warning("Shouldn't be called with showMissionItems=false")
+            console.warn("Shouldn't be called with showMissionItems=false")
+            return
+        }
+        
+        if (!missionItem.hasCoordinate) {
+            // Item has no map position associated with it
             return
         }
         
@@ -250,7 +256,7 @@ Item {
     
     function removeMissionItem(missionItem) {
         if (!showMissionItems) {
-            console.warning("Shouldn't be called with showMissionItems=false")
+            console.warn("Shouldn't be called with showMissionItems=false")
             return
         }
         
@@ -275,7 +281,6 @@ Item {
         
         var vehicle = multiVehicleManager.activeVehicle
         if (!vehicle) {
-            console.warning("Why no active vehicle?")
             return
         }
         
@@ -382,7 +387,6 @@ Item {
             
             MissionItemSummary {
                 missionItem:        modelData
-                missionItemIndex:   index + 1
             }
         }
     }

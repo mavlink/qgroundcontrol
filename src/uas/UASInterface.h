@@ -265,7 +265,7 @@ public slots:
     /** @brief Launches the system/Liftof **/
     virtual void launch() = 0;
     /** @brief Set a new waypoint **/
-    //virtual void setWaypoint(Waypoint* wp) = 0;
+    //virtual void setWaypoint(MissionItem* wp) = 0;
     /** @brief Set this waypoint as next waypoint to fly to */
     //virtual void setWaypointActive(int wp) = 0;
     /** @brief Order the robot to return home / to land on the runway **/

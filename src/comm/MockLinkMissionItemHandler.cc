@@ -832,7 +832,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
         mavlink_command_long_t action;
         mavlink_msg_command_long_decode(msg, &action);
         if(action.target_system == systemid) {
-            if (verbose) qDebug("Waypoint: received message with action %d\n", action.command);
+            if (verbose) qDebug("MissionItem: received message with action %d\n", action.command);
 //            switch (action.action) {
 //				case MAV_ACTION_LAUNCH:
 //					if (verbose) std::cerr << "Launch received" << std::endl;
@@ -1129,7 +1129,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
     }
 
     default: {
-        if (debug) qDebug("Waypoint: received message of unknown type\n");
+        if (debug) qDebug("MissionItem: received message of unknown type\n");
         break;
     }
     }

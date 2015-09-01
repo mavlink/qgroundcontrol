@@ -88,8 +88,8 @@ public:
     Q_PROPERTY(uint16_t     currentWaypoint     READ currentWaypoint    NOTIFY currentWaypointChanged)
     Q_PROPERTY(unsigned int heartbeatTimeout    READ heartbeatTimeout   NOTIFY heartbeatTimeoutChanged)
     
-    //-- Waypoint management
-    Q_PROPERTY(QQmlListProperty<Waypoint> missionItems READ missionItems NOTIFY missionItemsChanged)
+    //-- MissionItem management
+    Q_PROPERTY(QQmlListProperty<MissionItem> missionItems READ missionItems NOTIFY missionItemsChanged)
     
     // Property accesors
     int id(void) { return _id; }
@@ -162,7 +162,7 @@ public:
     uint16_t        currentWaypoint     () { return _currentWaypoint; }
     unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
     
-    QQmlListProperty<Waypoint> missionItems() {return QQmlListProperty<Waypoint>(this, _waypoints); }
+    QQmlListProperty<MissionItem> missionItems() {return QQmlListProperty<MissionItem>(this, _waypoints); }
     
 public slots:
     void setLatitude(double latitude);
@@ -235,7 +235,7 @@ private slots:
     void _updateWaypointDistance            (double distance);
     void _setSatelliteCount                 (double val, QString name);
     void _setSatLoc                         (UASInterface* uas, int fix);
-    void _updateWaypointViewOnly            (int uas, Waypoint* wp);
+    void _updateWaypointViewOnly            (int uas, MissionItem* wp);
     void _waypointViewOnlyListChanged       ();
 
 private:
@@ -301,6 +301,6 @@ private:
     int             _satelliteLock;
     UASWaypointManager* _wpm;
     int             _updateCount;
-    QList<Waypoint*>_waypoints;
+    QList<MissionItem*>_waypoints;
 };
 #endif
