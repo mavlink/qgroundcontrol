@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HomePositionManager.h"
 #include "HSIDisplay.h"
 #include "QGC.h"
-#include "Waypoint.h"
+#include "MissionItem.h"
 #include "UASWaypointManager.h"
 #include <qmath.h>
 #include "MAV2DIcon.h"
@@ -1291,7 +1291,7 @@ void HSIDisplay::drawSetpointXYZYaw(float x, float y, float z, float yaw, const 
     }
 }
 
-void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float width, const Waypoint *w, const QPointF& p)
+void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float width, const MissionItem *w, const QPointF& p)
 {
     painter.setBrush(Qt::NoBrush);
 
@@ -1334,7 +1334,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
     if (uas)
     {
         // Grab all waypoints.
-        const QList<Waypoint*>& list = uas->getWaypointManager()->getWaypointEditableList();
+        const QList<MissionItem*>& list = uas->getWaypointManager()->getWaypointEditableList();
         const int numWaypoints = list.size();
 
         // Do not work on empty lists
@@ -1349,7 +1349,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
         QPointF lastWaypoint;
         for (int i = 0; i < numWaypoints; i++)
         {
-            const Waypoint *w = list.at(i);
+            const MissionItem *w = list.at(i);
             QPointF in;
             // Use local coordinates as-is.
             int frameRef = w->getFrame();

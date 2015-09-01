@@ -2,7 +2,7 @@
 #define WAYPOINTVIEWONLYVIEW_H
 
 #include <QWidget>
-#include "Waypoint.h"
+#include "MissionItem.h"
 #include <iostream>
 
 namespace Ui {
@@ -14,7 +14,7 @@ class WaypointViewOnlyView : public QWidget
     Q_OBJECT
 
 public:
-    explicit WaypointViewOnlyView(Waypoint* wp, QWidget *parent = 0);
+    explicit WaypointViewOnlyView(MissionItem* wp, QWidget *parent = 0);
     ~WaypointViewOnlyView();
 
 public slots:
@@ -28,7 +28,7 @@ signals:
     void changeAutoContinue(quint16, bool);
 
 protected:
-    Waypoint* wp;
+    MissionItem* wp;
     virtual void changeEvent(QEvent *e);
     virtual void paintEvent(QPaintEvent *);
 

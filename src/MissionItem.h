@@ -1,37 +1,28 @@
 /*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-
-(c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
-
-This file is part of the PIXHAWK project
-
-    PIXHAWK is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    PIXHAWK is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
-
-/**
- * @file
- *   @brief Waypoint class
- *
- *   @author Benjamin Knecht <mavteam@student.ethz.ch>
- *   @author Petri Tanskanen <mavteam@student.ethz.ch>
- *
- */
-
-#ifndef WAYPOINT_H
-#define WAYPOINT_H
+#ifndef MissionItem_H
+#define MissionItem_H
 
 #include <QObject>
 #include <QString>
@@ -41,12 +32,13 @@ This file is part of the PIXHAWK project
 
 #include "QGCMAVLink.h"
 #include "QGC.h"
+#include "MavlinkQmlSingleton.h"
 
-class Waypoint : public QObject
+class MissionItem : public QObject
 {
     Q_OBJECT
 public:
-    Waypoint(
+    MissionItem(
         QObject *parent = 0,
         quint16 id = 0,
         double  x = 0.0,
@@ -62,18 +54,24 @@ public:
         int     action = MAV_CMD_NAV_WAYPOINT,
         const QString& description=QString(""));
 
-    Waypoint(const Waypoint& other);
-    ~Waypoint();
+    MissionItem(const MissionItem& other);
+    ~MissionItem();
 
-    const Waypoint& operator=(const Waypoint& other);
+    const MissionItem& operator=(const MissionItem& other);
 
+    Q_PROPERTY(bool hasCoordinate READ hasCoordinate NOTIFY hasCoordinateChanged)
     Q_PROPERTY(QGeoCoordinate coordinate READ coordinate NOTIFY coordinateChanged)
-    Q_PROPERTY(QString type READ type NOTIFY typeChanged)
+    
+    Q_PROPERTY(QString commandName READ commandName NOTIFY commandNameChanged)
+    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command WRITE setCommand NOTIFY commandChanged)
     
     Q_PROPERTY(double  longitude READ longitude  NOTIFY longitudeChanged)
     Q_PROPERTY(double  latitude  READ latitude   NOTIFY latitudeChanged)
     Q_PROPERTY(double  altitude  READ altitude   NOTIFY altitudeChanged)
     Q_PROPERTY(quint16 id        READ id         CONSTANT)
+    
+    Q_PROPERTY(QStringList valueLabels READ valueLabels NOTIFY commandChanged)
+    Q_PROPERTY(QStringList valueStrings READ valueStrings NOTIFY valueStringsChanged)
 
     double  latitude()  { return _x; }
     double  longitude() { return _y; }
@@ -167,9 +165,17 @@ public:
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);
     
+    bool hasCoordinate(void);
     QGeoCoordinate coordinate(void);
-    QString type(void);
+    
+    QString commandName(void);
 
+    MavlinkQmlSingleton::Qml_MAV_CMD command(void) { return (MavlinkQmlSingleton::Qml_MAV_CMD)getAction(); };
+    void setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command) { setAction(command); }
+    
+    QStringList valueLabels(void);
+    QStringList valueStrings(void);
+    
 protected:
     quint16 _id;
     double  _x;
@@ -229,15 +235,22 @@ public:
 
 signals:
     /** @brief Announces a change to the waypoint data */
-    void changed(Waypoint* wp);
+    void changed(MissionItem* wp);
 
     void latitudeChanged    ();
     void longitudeChanged   ();
     void altitudeChanged    ();
+    void hasCoordinateChanged(bool hasCoordinate);
     void coordinateChanged(void);
-    void typeChanged(QString type);
+    void commandNameChanged(QString type);
+    void commandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
+    void valueLabelsChanged(QStringList valueLabels);
+    void valueStringsChanged(QStringList valueStrings);
+    
+private:
+    QString _oneDecimalString(double value);
 };
 
-QML_DECLARE_TYPE(Waypoint)
+QML_DECLARE_TYPE(MissionItem)
 
-#endif // WAYPOINT_H
+#endif

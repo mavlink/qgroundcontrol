@@ -126,7 +126,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
         connect(_wpm, &UASWaypointManager::currentWaypointChanged,   this, &Vehicle::_updateCurrentWaypoint);
         connect(_wpm, &UASWaypointManager::waypointDistanceChanged,  this, &Vehicle::_updateWaypointDistance);
         connect(_wpm, SIGNAL(waypointViewOnlyListChanged(void)),     this, SLOT(_waypointViewOnlyListChanged(void)));
-        connect(_wpm, SIGNAL(waypointViewOnlyChanged(int,Waypoint*)),this, SLOT(_updateWaypointViewOnly(int,Waypoint*)));
+        connect(_wpm, SIGNAL(waypointViewOnlyChanged(int,MissionItem*)),this, SLOT(_updateWaypointViewOnly(int,MissionItem*)));
         _wpm->readWaypoints(true);
     }
     UAS* pUas = dynamic_cast<UAS*>(_mav);
@@ -162,7 +162,7 @@ Vehicle::~Vehicle()
         disconnect(_wpm, &UASWaypointManager::currentWaypointChanged,    this, &Vehicle::_updateCurrentWaypoint);
         disconnect(_wpm, &UASWaypointManager::waypointDistanceChanged,   this, &Vehicle::_updateWaypointDistance);
         disconnect(_wpm, SIGNAL(waypointViewOnlyListChanged(void)),      this, SLOT(_waypointViewOnlyListChanged(void)));
-        disconnect(_wpm, SIGNAL(waypointViewOnlyChanged(int,Waypoint*)), this, SLOT(_updateWaypointViewOnly(int,Waypoint*)));
+        disconnect(_wpm, SIGNAL(waypointViewOnlyChanged(int,MissionItem*)), this, SLOT(_updateWaypointViewOnly(int,MissionItem*)));
     }
     UAS* pUas = dynamic_cast<UAS*>(_mav);
     if(pUas) {
@@ -688,7 +688,7 @@ void Vehicle::_updateCurrentWaypoint(quint16 id)
     }
 }
 
-void Vehicle::_updateWaypointViewOnly(int, Waypoint* /*wp*/)
+void Vehicle::_updateWaypointViewOnly(int, MissionItem* /*wp*/)
 {
     /*
      bool changed = false;
@@ -708,11 +708,11 @@ void Vehicle::_updateWaypointViewOnly(int, Waypoint* /*wp*/)
 void Vehicle::_waypointViewOnlyListChanged()
 {
     if(_wpm) {
-        const QList<Waypoint*> &waypoints = _wpm->getWaypointViewOnlyList();
+        const QList<MissionItem*> &waypoints = _wpm->getWaypointViewOnlyList();
         _waypoints.clear();
         for(int i = 0; i < waypoints.count(); i++) {
-            Waypoint* wp = waypoints[i];
-            _waypoints.append(new Waypoint(*wp));
+            MissionItem* wp = waypoints[i];
+            _waypoints.append(new MissionItem(*wp));
         }
         emit missionItemsChanged();
         /*

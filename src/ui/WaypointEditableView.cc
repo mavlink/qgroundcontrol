@@ -36,7 +36,7 @@
 #include "mission/QGCMissionOther.h"
 
 
-WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
+WaypointEditableView::WaypointEditableView(MissionItem* wp, QWidget* parent) :
     QWidget(parent),
     wp(wp),
     viewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_DEFAULT),
@@ -67,7 +67,7 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
 
 
     // add actions
-    m_ui->comboBox_action->addItem(tr("NAV: Waypoint"),MAV_CMD_NAV_WAYPOINT);
+    m_ui->comboBox_action->addItem(tr("NAV: MissionItem"),MAV_CMD_NAV_WAYPOINT);
     m_ui->comboBox_action->addItem(tr("NAV: TakeOff"),MAV_CMD_NAV_TAKEOFF);
     m_ui->comboBox_action->addItem(tr("NAV: Loiter Unlim."),MAV_CMD_NAV_LOITER_UNLIM);
     m_ui->comboBox_action->addItem(tr("NAV: Loiter Time"),MAV_CMD_NAV_LOITER_TIME);

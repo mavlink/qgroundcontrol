@@ -38,7 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMap>
 #include <QVBoxLayout>
 #include <QTimer>
-#include "Waypoint.h"
+#include "MissionItem.h"
 #include "UASInterface.h"
 #include "WaypointEditableView.h"
 #include "WaypointViewOnlyView.h"
@@ -62,7 +62,7 @@ public slots:
 
     void setUAS(UASInterface* uas);
 
-    //Waypoint list operations
+    //MissionItem list operations
     /** @brief Save the local waypoint list to a file */
     void saveWaypoints();
     /** @brief Load a waypoint list from a file */
@@ -91,9 +91,9 @@ public slots:
     /** @brief Current waypoint on UAV was changed, update view-tab  */
     void currentWaypointViewOnlyChanged(quint16 seq);
     /** @brief The waypoint manager informs that one editable waypoint was changed */
-    void updateWaypointEditable(int uas, Waypoint* wp);
+    void updateWaypointEditable(int uas, MissionItem* wp);
     /** @brief The waypoint manager informs that one viewonly waypoint was changed */
-    void updateWaypointViewOnly(int uas, Waypoint* wp);
+    void updateWaypointViewOnly(int uas, MissionItem* wp);
     /** @brief The waypoint manager informs that the editable waypoint list was changed */
     void waypointEditableListChanged(void);
     /** @brief The waypoint manager informs that the waypoint list on the MAV was changed */
@@ -104,12 +104,12 @@ public slots:
 
     void clearWPWidget();
 
-    //void changeWPPositionBySpinBox(Waypoint* wp);
+    //void changeWPPositionBySpinBox(MissionItem* wp);
 
-    // Waypoint operations
-    void moveUp(Waypoint* wp);
-    void moveDown(Waypoint* wp);
-    void removeWaypoint(Waypoint* wp);
+    // MissionItem operations
+    void moveUp(MissionItem* wp);
+    void moveDown(MissionItem* wp);
+    void removeWaypoint(MissionItem* wp);
 
 //    void setIsLoadFileWP();
 //    void setIsReadGlobalWP(bool value);
@@ -125,8 +125,8 @@ protected:
     virtual void changeEvent(QEvent *e);
 
 protected:
-    QMap<Waypoint*, WaypointEditableView*> wpEditableViews;
-    QMap<Waypoint*, WaypointViewOnlyView*> wpViewOnlyViews;
+    QMap<MissionItem*, WaypointEditableView*> wpEditableViews;
+    QMap<MissionItem*, WaypointViewOnlyView*> wpViewOnlyViews;
     QVBoxLayout* viewOnlyListLayout;
     QVBoxLayout* editableListLayout;
     UASInterface* uas;

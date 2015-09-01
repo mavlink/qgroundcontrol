@@ -88,6 +88,7 @@ G_END_DECLS
 #include "Generic/GenericFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
+#include "MavlinkQmlSingleton.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -109,16 +110,18 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
 const char* QGCApplication::_darkStyleFile = ":/res/styles/style-dark.css";
 const char* QGCApplication::_lightStyleFile = ":/res/styles/style-light.css";
 
-/**
- * @brief ScreenTools creation callback
- *
- * This is called by the QtQuick engine for creating the singleton
- **/
+
+// Qml Singleton factories
 
 static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     ScreenToolsController* screenToolsController = new ScreenToolsController;
     return screenToolsController;
+}
+
+static QObject* mavlinkQmlSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    return new MavlinkQmlSingleton;
 }
 
 #if defined(QGC_GST_STREAMING)
@@ -339,11 +342,12 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
 #endif
     
-    //-- Create QML Singleton Interfaces
-    qmlRegisterSingletonType<ScreenToolsController>("QGroundControl.ScreenToolsController", 1, 0, "ScreenToolsController", screenToolsControllerSingletonFactory);
+    // Register Qml Singletons
+    qmlRegisterSingletonType<ScreenToolsController> ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
+    qmlRegisterSingletonType<MavlinkQmlSingleton>   ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
     
-    //-- Register Waypoint Interface
-    qmlRegisterInterface<Waypoint>("Waypoint");
+    //-- Register MissionItem Interface
+    qmlRegisterInterface<MissionItem>("MissionItem");
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
     if (settings.contains(_settingsVersionKey)) {

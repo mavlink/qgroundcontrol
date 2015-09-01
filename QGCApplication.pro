@@ -258,6 +258,7 @@ HEADERS += \
     src/QGCQuickWidget.h \
     src/QGCSingleton.h \
     src/QGCTemporaryFile.h \
+    src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
     src/SerialPortIds.h \
@@ -336,7 +337,7 @@ HEADERS += \
     src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/ParameterEditorWidget.h \
     src/ViewWidgets/ViewWidgetController.h \
-    src/Waypoint.h \
+    src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
 
 !iOSBuild {
@@ -467,7 +468,7 @@ SOURCES += \
     src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/ParameterEditorWidget.cc \
     src/ViewWidgets/ViewWidgetController.cc \
-    src/Waypoint.cc \
+    src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc
 
 !iOSBuild {
