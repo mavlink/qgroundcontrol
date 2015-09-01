@@ -101,7 +101,7 @@ Rectangle {
             }
         }
         //----------------------------------------------------------------------------------------
-        // Waypoint Editor
+        // MissionItem Editor
         QGCWaypointEditor {
             id:                  waypointEditor
             Layout.minimumWidth: 200

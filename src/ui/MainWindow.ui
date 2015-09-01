@@ -243,11 +243,6 @@
     <string>Show Status Bar</string>
    </property>
   </action>
-  <action name="actionExperimentalPlanView">
-   <property name="text">
-    <string>Experimental Plan View</string>
-   </property>
-  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>

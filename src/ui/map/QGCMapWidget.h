@@ -14,7 +14,7 @@
 
 class UASInterface;
 class UASWaypointManager;
-class Waypoint;
+class MissionItem;
 typedef mapcontrol::WayPointItem WayPointItem;
 
 /**
@@ -43,8 +43,8 @@ public:
 signals:
     void homePositionChanged(double latitude, double longitude, double altitude);
     /** @brief Signal for newly created map waypoints */
-    void waypointCreated(Waypoint* wp);
-    void waypointChanged(Waypoint* wp);
+    void waypointCreated(MissionItem* wp);
+    void waypointChanged(MissionItem* wp);
 
 public slots:
     /** @brief Action triggered when guided action is selected from the context menu */
@@ -68,7 +68,7 @@ public slots:
     /** @brief Jump to the home position on the map */
     void goHome();
     /** @brief Update this waypoint for this UAS */
-    void updateWaypoint(int uas, Waypoint* wp);
+    void updateWaypoint(int uas, MissionItem* wp);
     /** @brief Update the whole waypoint */
     void updateWaypointList(int uas);
     /** @brief Update the home position on the map */
@@ -149,9 +149,9 @@ protected:
 
     UASWaypointManager* currWPManager; ///< The current waypoint manager
     bool offlineMode;
-    QMap<Waypoint* , mapcontrol::WayPointItem*> waypointsToIcons;
-    QMap<mapcontrol::WayPointItem*, Waypoint*> iconsToWaypoints;
-    Waypoint* firingWaypointChange;
+    QMap<MissionItem* , mapcontrol::WayPointItem*> waypointsToIcons;
+    QMap<mapcontrol::WayPointItem*, MissionItem*> iconsToWaypoints;
+    MissionItem* firingWaypointChange;
     QTimer updateTimer;
     float maxUpdateInterval;
     enum editMode {

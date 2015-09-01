@@ -149,7 +149,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
         //Clear the old edit-list before receiving the new one
         if (read_to_edit == true){
             while(waypointsEditable.count()>0) {
-                Waypoint *t = waypointsEditable[0];
+                MissionItem *t = waypointsEditable[0];
                 waypointsEditable.removeAt(0);
                 delete t;
             }
@@ -196,7 +196,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id) {
 
-            Waypoint *lwp_vo = new Waypoint(
+            MissionItem *lwp_vo = new MissionItem(
                 NULL,
                 wp->seq, wp->x,
                 wp->y,
@@ -213,7 +213,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
             addWaypointViewOnly(lwp_vo);
 
             if (read_to_edit == true) {
-                Waypoint *lwp_ed = new Waypoint(
+                MissionItem *lwp_ed = new MissionItem(
                     NULL,
                     wp->seq,
                     wp->x,
@@ -252,13 +252,13 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
             }
         } else {
-            emit updateStatusString(tr("Waypoint ID mismatch, rejecting waypoint"));
+            emit updateStatusString(tr("MissionItem ID mismatch, rejecting waypoint"));
         }
     } else if (systemId == current_partner_systemid
             && wp->seq < waypointsViewOnly.size() && waypointsViewOnly[wp->seq]->getAction()) {
         // accept single sent waypoints because they can contain updates about remaining DO_JUMP repetitions
         // but only update view only side
-        Waypoint *lwp_vo = new Waypoint(
+        MissionItem *lwp_vo = new MissionItem(
             NULL,
             wp->seq,
             wp->x,
@@ -400,7 +400,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
     }
 }
 
-void UASWaypointManager::notifyOfChangeEditable(Waypoint* wp)
+void UASWaypointManager::notifyOfChangeEditable(MissionItem* wp)
 {
     // If only one waypoint was changed, emit only WP signal
     if (wp != NULL) {
@@ -411,7 +411,7 @@ void UASWaypointManager::notifyOfChangeEditable(Waypoint* wp)
     }
 }
 
-void UASWaypointManager::notifyOfChangeViewOnly(Waypoint* wp)
+void UASWaypointManager::notifyOfChangeViewOnly(MissionItem* wp)
 {
     if (wp != NULL) {
         emit waypointViewOnlyChanged(uasid, wp);
@@ -463,12 +463,12 @@ int UASWaypointManager::setCurrentEditable(quint16 seq)
     return -1;
 }
 
-void UASWaypointManager::addWaypointViewOnly(Waypoint *wp)
+void UASWaypointManager::addWaypointViewOnly(MissionItem *wp)
 {
     if (wp)
     {
         waypointsViewOnly.insert(waypointsViewOnly.size(), wp);
-        connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeViewOnly(Waypoint*)));
+        connect(wp, SIGNAL(changed(MissionItem*)), this, SLOT(notifyOfChangeViewOnly(MissionItem*)));
 
         emit waypointViewOnlyListChanged();
         emit waypointViewOnlyListChanged(uasid);
@@ -481,13 +481,13 @@ void UASWaypointManager::addWaypointViewOnly(Waypoint *wp)
  * @param enforceFirstActive Enforces that the first waypoint is set as active
  * @see createWaypoint() is more suitable for most use cases
  */
-void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActive)
+void UASWaypointManager::addWaypointEditable(MissionItem *wp, bool enforceFirstActive)
 {
     if (wp)
     {
         // Check if this is the first waypoint in an offline list
         if (waypointsEditable.count() == 0 && _vehicle == NULL) {
-            QGCMessageBox::critical(tr("Waypoint Manager"),  _offlineEditingModeMessage);
+            QGCMessageBox::critical(tr("MissionItem Manager"),  _offlineEditingModeMessage);
         }
 
         wp->setId(waypointsEditable.count());
@@ -497,7 +497,7 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
             currentWaypointEditable = wp;
         }
         waypointsEditable.insert(waypointsEditable.count(), wp);
-        connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeEditable(Waypoint*)));
+        connect(wp, SIGNAL(changed(MissionItem*)), this, SLOT(notifyOfChangeEditable(MissionItem*)));
 
         emit waypointEditableListChanged();
         emit waypointEditableListChanged(uasid);
@@ -507,14 +507,14 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
 /**
  * @param enforceFirstActive Enforces that the first waypoint is set as active
  */
-Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
+MissionItem* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 {
     // Check if this is the first waypoint in an offline list
     if (waypointsEditable.count() == 0 && _vehicle == NULL) {
-        QGCMessageBox::critical(tr("Waypoint Manager"),  _offlineEditingModeMessage);
+        QGCMessageBox::critical(tr("MissionItem Manager"),  _offlineEditingModeMessage);
     }
 
-    Waypoint* wp = new Waypoint();
+    MissionItem* wp = new MissionItem();
     wp->setId(waypointsEditable.count());
     wp->setFrame((MAV_FRAME)getFrameRecommendation());
     wp->setAltitude(getAltitudeRecommendation());
@@ -525,7 +525,7 @@ Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
         currentWaypointEditable = wp;
     }
     waypointsEditable.append(wp);
-    connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeEditable(Waypoint*)));
+    connect(wp, SIGNAL(changed(MissionItem*)), this, SLOT(notifyOfChangeEditable(MissionItem*)));
 
     emit waypointEditableListChanged();
     emit waypointEditableListChanged(uasid);
@@ -536,7 +536,7 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
 {
     if (seq < waypointsEditable.count())
     {
-        Waypoint *t = waypointsEditable[seq];
+        MissionItem *t = waypointsEditable[seq];
 
         if (t->getCurrent() == true) //trying to remove the current waypoint
         {
@@ -570,7 +570,7 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
 {
     if (cur_seq != new_seq && cur_seq < waypointsEditable.count() && new_seq < waypointsEditable.count())
     {
-        Waypoint *t = waypointsEditable[cur_seq];
+        MissionItem *t = waypointsEditable[cur_seq];
         if (cur_seq < new_seq) {
             for (int i = cur_seq; i < new_seq; i++)
             {
@@ -620,7 +620,7 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
         return;
 
     while(waypointsEditable.count()>0) {
-        Waypoint *t = waypointsEditable[0];
+        MissionItem *t = waypointsEditable[0];
         waypointsEditable.removeAt(0);
         delete t;
     }
@@ -637,7 +637,7 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
     {
         while (!in.atEnd())
         {
-            Waypoint *t = new Waypoint();
+            MissionItem *t = new MissionItem();
             if(t->load(in))
             {
               //Use the existing function to add waypoints to the map instead of doing it manually
@@ -677,13 +677,13 @@ void UASWaypointManager::clearWaypointList()
     }
 }
 
-const QList<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
+const QList<MissionItem *> UASWaypointManager::getGlobalFrameWaypointList()
 {
     // TODO Keep this global frame list up to date
     // with complete waypoint list
     // instead of filtering on each request
-    QList<Waypoint*> wps;
-    foreach (Waypoint* wp, waypointsEditable)
+    QList<MissionItem*> wps;
+    foreach (MissionItem* wp, waypointsEditable)
     {
         if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
@@ -693,13 +693,13 @@ const QList<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
     return wps;
 }
 
-const QList<Waypoint *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointList()
+const QList<MissionItem *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointList()
 {
     // TODO Keep this global frame list up to date
     // with complete waypoint list
     // instead of filtering on each request
-    QList<Waypoint*> wps;
-    foreach (Waypoint* wp, waypointsEditable)
+    QList<MissionItem*> wps;
+    foreach (MissionItem* wp, waypointsEditable)
     {
         if ((wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && wp->isNavigationType())
         {
@@ -709,13 +709,13 @@ const QList<Waypoint *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointList
     return wps;
 }
 
-const QList<Waypoint *> UASWaypointManager::getNavTypeWaypointList()
+const QList<MissionItem *> UASWaypointManager::getNavTypeWaypointList()
 {
     // TODO Keep this global frame list up to date
     // with complete waypoint list
     // instead of filtering on each request
-    QList<Waypoint*> wps;
-    foreach (Waypoint* wp, waypointsEditable)
+    QList<MissionItem*> wps;
+    foreach (MissionItem* wp, waypointsEditable)
     {
         if (wp->isNavigationType())
         {
@@ -725,17 +725,17 @@ const QList<Waypoint *> UASWaypointManager::getNavTypeWaypointList()
     return wps;
 }
 
-int UASWaypointManager::getIndexOf(Waypoint* wp)
+int UASWaypointManager::getIndexOf(MissionItem* wp)
 {
     return waypointsEditable.indexOf(wp);
 }
 
-int UASWaypointManager::getGlobalFrameIndexOf(Waypoint* wp)
+int UASWaypointManager::getGlobalFrameIndexOf(MissionItem* wp)
 {
     // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable) {
+    foreach (MissionItem* p, waypointsEditable) {
         if (p->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
             if (p == wp)
@@ -749,12 +749,12 @@ int UASWaypointManager::getGlobalFrameIndexOf(Waypoint* wp)
     return -1;
 }
 
-int UASWaypointManager::getGlobalFrameAndNavTypeIndexOf(Waypoint* wp)
+int UASWaypointManager::getGlobalFrameAndNavTypeIndexOf(MissionItem* wp)
 {
     // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable) {
+    foreach (MissionItem* p, waypointsEditable) {
         if ((p->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
         {
             if (p == wp)
@@ -768,12 +768,12 @@ int UASWaypointManager::getGlobalFrameAndNavTypeIndexOf(Waypoint* wp)
     return -1;
 }
 
-int UASWaypointManager::getNavTypeIndexOf(Waypoint* wp)
+int UASWaypointManager::getNavTypeIndexOf(MissionItem* wp)
 {
     // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable)
+    foreach (MissionItem* p, waypointsEditable)
     {
         if (p->isNavigationType())
         {
@@ -793,7 +793,7 @@ int UASWaypointManager::getGlobalFrameCount()
     // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable)
+    foreach (MissionItem* p, waypointsEditable)
     {
         if (p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
@@ -809,7 +809,7 @@ int UASWaypointManager::getGlobalFrameAndNavTypeCount()
     // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable) {
+    foreach (MissionItem* p, waypointsEditable) {
         if ((p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
         {
             i++;
@@ -824,7 +824,7 @@ int UASWaypointManager::getNavTypeCount()
     // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable) {
+    foreach (MissionItem* p, waypointsEditable) {
         if (p->isNavigationType()) {
             i++;
         }
@@ -838,7 +838,7 @@ int UASWaypointManager::getLocalFrameCount()
     // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable)
+    foreach (MissionItem* p, waypointsEditable)
     {
         if (p->getFrame() == MAV_FRAME_LOCAL_NED || p->getFrame() == MAV_FRAME_LOCAL_ENU)
         {
@@ -849,12 +849,12 @@ int UASWaypointManager::getLocalFrameCount()
     return i;
 }
 
-int UASWaypointManager::getLocalFrameIndexOf(Waypoint* wp)
+int UASWaypointManager::getLocalFrameIndexOf(MissionItem* wp)
 {
     // Search through all waypointsEditable,
     // counting only those in local frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable)
+    foreach (MissionItem* p, waypointsEditable)
     {
         if (p->getFrame() == MAV_FRAME_LOCAL_NED || p->getFrame() == MAV_FRAME_LOCAL_ENU)
         {
@@ -869,12 +869,12 @@ int UASWaypointManager::getLocalFrameIndexOf(Waypoint* wp)
     return -1;
 }
 
-int UASWaypointManager::getMissionFrameIndexOf(Waypoint* wp)
+int UASWaypointManager::getMissionFrameIndexOf(MissionItem* wp)
 {
     // Search through all waypointsEditable,
     // counting only those in mission frame
     int i = 0;
-    foreach (Waypoint* p, waypointsEditable)
+    foreach (MissionItem* p, waypointsEditable)
     {
         if (p->getFrame() == MAV_FRAME_MISSION)
         {
@@ -902,7 +902,7 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
 
         //Clear the old view-list before receiving the new one
         while(waypointsViewOnly.size()>0) {
-            Waypoint *t = waypointsViewOnly[0];
+            MissionItem *t = waypointsViewOnly[0];
             waypointsViewOnly.removeAt(0);
             delete t;
         }
@@ -911,7 +911,7 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
         //Clear the old edit-list before receiving the new one
         if (read_to_edit == true){
             while(waypointsEditable.count()>0) {
-                Waypoint *t = waypointsEditable[0];
+                MissionItem *t = waypointsEditable[0];
                 waypointsEditable.remove(0);
                 delete t;
             }
@@ -938,14 +938,14 @@ bool UASWaypointManager::guidedModeSupported()
     return (_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA);
 }
 
-void UASWaypointManager::goToWaypoint(Waypoint *wp)
+void UASWaypointManager::goToWaypoint(MissionItem *wp)
 {
     //Don't try to send a guided mode message to an AP that does not support it.
     if (_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
     {
         mavlink_mission_item_t mission;
         memset(&mission, 0, sizeof(mavlink_mission_item_t));   //initialize with zeros
-        //const Waypoint *cur_s = waypointsEditable.at(i);
+        //const MissionItem *cur_s = waypointsEditable.at(i);
 
         mission.autocontinue = 0;
         mission.current = 2; //2 for guided mode
@@ -998,7 +998,7 @@ void UASWaypointManager::writeWaypoints()
                 waypoint_buffer.push_back(new mavlink_mission_item_t);
                 mavlink_mission_item_t *cur_d = waypoint_buffer.back();
                 memset(cur_d, 0, sizeof(mavlink_mission_item_t));   //initialize with zeros
-                const Waypoint *cur_s = waypointsEditable.at(i);
+                const MissionItem *cur_s = waypointsEditable.at(i);
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
