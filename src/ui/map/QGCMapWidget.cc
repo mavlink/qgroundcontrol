@@ -28,10 +28,10 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     waypointLines.insert(0, new QGraphicsItemGroup(map));
     
     connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
-    connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+    connect(currWPManager, SIGNAL(waypointEditableChanged(int, MissionItem*)), this, SLOT(updateWaypoint(int,MissionItem*)));
     
-    connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
-    connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+    connect(this, SIGNAL(waypointCreated(MissionItem*)), currWPManager, SLOT(addWaypointEditable(MissionItem*)));
+    connect(this, SIGNAL(waypointChanged(MissionItem*)), currWPManager, SLOT(notifyOfChangeEditable(MissionItem*)));
     
     offlineMode = true;
     // Widget is inactive until shown
@@ -87,7 +87,7 @@ void QGCMapWidget::guidedActionTriggered()
         // Create new waypoint and send it to the WPManager to send out.
         internals::PointLatLng pos = map->FromLocalToLatLng(contextMousePressPos.x(), contextMousePressPos.y());
         qDebug() << "Guided action requested. Lat:" << pos.Lat() << "Lon:" << pos.Lng();
-        Waypoint wp;
+        MissionItem wp;
         wp.setLatitude(pos.Lat());
         wp.setLongitude(pos.Lng());
         wp.setAltitude(defaultGuidedAlt);
@@ -323,7 +323,7 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
     {
         // Create new waypoint
         internals::PointLatLng pos = map->FromLocalToLatLng(event->pos().x(), event->pos().y());
-        Waypoint* wp = currWPManager->createWaypoint();
+        MissionItem* wp = currWPManager->createWaypoint();
         wp->setLatitude(pos.Lat());
         wp->setLongitude(pos.Lng());
         wp->setFrame((MAV_FRAME)currWPManager->getFrameRecommendation());
@@ -364,9 +364,9 @@ void QGCMapWidget::_activeVehicleChanged(Vehicle* vehicle)
     {
         // Disconnect the waypoint manager / data storage from the UI
         disconnect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
-        disconnect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
-        disconnect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
-        disconnect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+        disconnect(currWPManager, SIGNAL(waypointEditableChanged(int, MissionItem*)), this, SLOT(updateWaypoint(int,MissionItem*)));
+        disconnect(this, SIGNAL(waypointCreated(MissionItem*)), currWPManager, SLOT(addWaypointEditable(MissionItem*)));
+        disconnect(this, SIGNAL(waypointChanged(MissionItem*)), currWPManager, SLOT(notifyOfChangeEditable(MissionItem*)));
     }
 
     // Attach the new waypoint manager if a new UAS was selected. Otherwise, indicate
@@ -383,9 +383,9 @@ void QGCMapWidget::_activeVehicleChanged(Vehicle* vehicle)
 
         // Connect the waypoint manager / data storage to the UI
         connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)), Qt::UniqueConnection);
-        connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)), Qt::UniqueConnection);
-        connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)), Qt::UniqueConnection);
-        connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)), Qt::UniqueConnection);
+        connect(currWPManager, SIGNAL(waypointEditableChanged(int, MissionItem*)), this, SLOT(updateWaypoint(int,MissionItem*)), Qt::UniqueConnection);
+        connect(this, SIGNAL(waypointCreated(MissionItem*)), currWPManager, SLOT(addWaypointEditable(MissionItem*)), Qt::UniqueConnection);
+        connect(this, SIGNAL(waypointChanged(MissionItem*)), currWPManager, SLOT(notifyOfChangeEditable(MissionItem*)), Qt::UniqueConnection);
 
         if (!mapPositionInitialized) {
             internals::PointLatLng pos_lat_lon = internals::PointLatLng(_uas->getLatitude(), _uas->getLongitude());
@@ -627,7 +627,7 @@ void QGCMapWidget::cacheVisibleRegion()
 void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
 {
     // Block circle updates
-    Waypoint* wp = iconsToWaypoints.value(waypoint, NULL);
+    MissionItem* wp = iconsToWaypoints.value(waypoint, NULL);
 
     // Delete UI element if wp doesn't exist
     if (!wp)
@@ -665,7 +665,7 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
  * This function is called if a a single waypoint is updated and
  * also if the whole list changes.
  */
-void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
+void QGCMapWidget::updateWaypoint(int uas, MissionItem* wp)
 {
     //qDebug() << __FILE__ << __LINE__ << "UPDATING WP FUNCTION CALLED";
     // Source of the event was in this widget, do nothing
@@ -710,8 +710,8 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                 if (wpindex > 0)
                 {
                     // Get predecessor of this WP
-                    QList<Waypoint* > wps = currWPManager->getGlobalFrameAndNavTypeWaypointList();
-                    Waypoint* wp1 = wps.at(wpindex-1);
+                    QList<MissionItem* > wps = currWPManager->getGlobalFrameAndNavTypeWaypointList();
+                    MissionItem* wp1 = wps.at(wpindex-1);
                     mapcontrol::WayPointItem* prevIcon = waypointsToIcons.value(wp1, NULL);
                     // If we got a valid graphics item, continue
                     if (prevIcon)
@@ -729,7 +729,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
             }
             else
             {
-                // Waypoint exists, block it's signals and update it
+                // MissionItem exists, block it's signals and update it
                 mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
                 // Make sure we don't die on a null pointer
                 // this should never happen, just a precaution
@@ -747,7 +747,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                 }
                 else
                 {
-                    // Use safe standard interfaces for non Waypoint-class based wps
+                    // Use safe standard interfaces for non MissionItem-class based wps
                     icon->SetCoord(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()));
                     icon->SetAltitude(wp->getAltitude());
                     icon->SetHeading(wp->getYaw());
@@ -804,8 +804,8 @@ void QGCMapWidget::updateWaypointList(int uas)
 
         // Delete first all old waypoints
         // this is suboptimal (quadratic, but wps should stay in the sub-100 range anyway)
-        QList<Waypoint* > wps = currWPManager->getGlobalFrameAndNavTypeWaypointList();
-        foreach (Waypoint* wp, waypointsToIcons.keys())
+        QList<MissionItem* > wps = currWPManager->getGlobalFrameAndNavTypeWaypointList();
+        foreach (MissionItem* wp, waypointsToIcons.keys())
         {
             if (!wps.contains(wp))
             {
@@ -818,14 +818,14 @@ void QGCMapWidget::updateWaypointList(int uas)
         }
 
         // Update all existing waypoints
-        foreach (Waypoint* wp, waypointsToIcons.keys())
+        foreach (MissionItem* wp, waypointsToIcons.keys())
         {
             // Update remaining waypoints
             updateWaypoint(uas, wp);
         }
 
         // Update all potentially new waypoints
-        foreach (Waypoint* wp, wps)
+        foreach (MissionItem* wp, wps)
         {
             qDebug() << "UPDATING NEW WP" << wp->getId();
             // Update / add only if new
@@ -834,7 +834,7 @@ void QGCMapWidget::updateWaypointList(int uas)
 
         // Add line element if this is NOT the first waypoint
         mapcontrol::WayPointItem* prevIcon = NULL;
-        foreach (Waypoint* wp, wps)
+        foreach (MissionItem* wp, wps)
         {
             mapcontrol::WayPointItem* currIcon = waypointsToIcons.value(wp, NULL);
             // Do not work on first waypoint, but only increment counter

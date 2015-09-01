@@ -3,7 +3,7 @@
 
 #include <QGraphicsItem>
 
-#include "Waypoint.h"
+#include "MissionItem.h"
 #include "opmapcontrol.h"
 
 class Waypoint2DIcon : public mapcontrol::WayPointItem
@@ -19,10 +19,10 @@ public:
 
     /**
      *
-     * @param wp Waypoint
+     * @param wp MissionItem
      * @param radius the radius of the circle
      */
-    Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, Waypoint* wp, const QColor& color, int listindex, int radius = 31);
+    Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, MissionItem* wp, const QColor& color, int listindex, int radius = 31);
 
     virtual ~Waypoint2DIcon();
 
@@ -42,7 +42,7 @@ public:
 
 protected:
     mapcontrol::OPMapWidget* parent; ///< Parent widget
-    QPointer<Waypoint> waypoint;   ///< Waypoint data container this icon represents
+    QPointer<MissionItem> waypoint;   ///< MissionItem data container this icon represents
     int radius;           ///< Radius / diameter of the icon in pixels
     bool showAcceptanceRadius;
     bool showOrbit;

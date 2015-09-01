@@ -751,7 +751,7 @@ public slots:
     /** @brief Launches the system **/
     void launch();
     /** @brief Write this waypoint to the list of waypoints */
-    //void setWaypoint(Waypoint* wp); FIXME tbd
+    //void setWaypoint(MissionItem* wp); FIXME tbd
     /** @brief Set currently active waypoint */
     //void setWaypointActive(int id); FIXME tbd
     /** @brief Order the robot to return home **/
