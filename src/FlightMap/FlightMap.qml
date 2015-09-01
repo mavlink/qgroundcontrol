@@ -374,20 +374,46 @@ Item {
 */
     }
     
-    /// Mission item list
-    Row {
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
-        anchors.left:       parent.left
-        anchors.right:      controlWidgets.left
-        anchors.bottom:     parent.bottom
-        spacing:            ScreenTools.defaultFontPixelWidth
+    // Mission item list
+    ScrollView {
+        id:                         missionItemScroll
+        anchors.margins:            ScreenTools.defaultFontPixelWidth
+        anchors.left:               parent.left
+        anchors.right:              controlWidgets.left
+        anchors.bottom:             parent.bottom
+        height:                     missionItemRow.height + _scrollBarHeightAdjust
+        verticalScrollBarPolicy:    Qt.ScrollBarAlwaysOff
+        opacity:                    0.75
         
-        Repeater {
-            model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
+        property bool _scrollBarShown: missionItemRow.width > missionItemScroll.width
+        property real _scrollBarHeightAdjust: _scrollBarShown ? (scrollBarHeight.height - scrollBarHeight.viewport.height) + 5 : 0
+        
+        Row {
+            id:         missionItemRow
+            spacing:    ScreenTools.defaultFontPixelWidth
             
-            MissionItemSummary {
-                missionItem:        modelData
+            Repeater {
+                model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
+                
+                MissionItemSummary {
+                    opacity:        0.75
+                    missionItem:    modelData
+                }
             }
+        }
+    }
+    
+    // This is used to determine the height of a horizontal scroll bar
+    ScrollView {
+        id:     scrollBarHeight
+        x:      10000
+        y:      10000
+        width:  100
+        height: 100
+        
+        Rectangle {
+            height: 50
+            width:  200
         }
     }
 

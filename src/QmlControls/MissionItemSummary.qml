@@ -13,7 +13,6 @@ Rectangle {
     border.width:   2
     border.color:   "white"
     color:          "white"
-    opacity:        0.75
     radius:         ScreenTools.defaultFontPixelWidth
 
     MissionItemIndexLabel {
