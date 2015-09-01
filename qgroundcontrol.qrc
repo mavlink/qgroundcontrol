@@ -59,6 +59,8 @@
         <file alias="rollPointerWhite.svg">src/FlightMap/Images/rollPointerWhite.svg</file>
         <file alias="scale.png">src/FlightMap/Images/scale.png</file>
         <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>
+        <file alias="airplaneOutline.svg">src/FlightMap/Images/airplaneOutline.svg</file>
+        <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
     </qresource>
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>

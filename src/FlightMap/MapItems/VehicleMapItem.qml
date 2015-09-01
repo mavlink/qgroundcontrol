@@ -32,15 +32,16 @@ import QGroundControl.ScreenTools 1.0
 /// Marker for displaying a vehicle location on the map
 MapQuickItem {
     property real heading: 0
+    property bool isSatellite: false
 
     anchorPoint.x: vehicleIcon.width  / 2
     anchorPoint.y: vehicleIcon.height / 2
 
     sourceItem: Image {
         id:         vehicleIcon
-        source:     "/qmlimages/compassInstrumentAirplane.svg"
+        source:     isSatellite ? "/qmlimages/airplaneOpaque.svg" : "/qmlimages/airplaneOutline.svg"
         mipmap:     true
-        width:      ScreenTools.defaultFontPixelHeight * 4
+        width:      ScreenTools.defaultFontPixelHeight * 5
         fillMode:   Image.PreserveAspectFit
 
         transform: Rotation {

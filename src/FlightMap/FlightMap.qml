@@ -53,6 +53,7 @@ Item {
     property alias  mapMenu:            mapTypeMenu
     property bool   showVehicles:       false
     property bool   showMissionItems:   false
+    property bool   isSatelliteMap:     false
 
     Component.onCompleted: {
         map.zoomLevel   = 18
@@ -60,6 +61,15 @@ Item {
         addExistingVehicles()
         updateMissionItemsConnections()
         updateMissionItems()
+    }
+
+    function updateMapType(type) {
+        var isSatellite = (type === MapType.SatelliteMapDay || type === MapType.SatelliteMapNight)
+        if(isSatelliteMap !== isSatellite) {
+            isSatelliteMap = isSatellite;
+            removeAllVehicles()
+            addExistingVehicles()
+        }
     }
 
     //-- Menu to select supported map types
@@ -72,6 +82,7 @@ Item {
             for (var i = 0; i < map.supportedMapTypes.length; i++) {
                 if (mapID === map.supportedMapTypes[i].name) {
                     map.activeMapType = map.supportedMapTypes[i]
+                    updateMapType(map.supportedMapTypes[i].style)
                     multiVehicleManager.saveSetting(root.mapName + "/currentMapType", mapID);
                     return;
                 }
@@ -164,7 +175,8 @@ Item {
         
         var qmlItemTemplate = "VehicleMapItem { " +
                                     "coordinate:    _vehicles[%1].coordinate; " +
-                                    "heading:       _vehicles[%1].heading " +
+                                    "heading:       _vehicles[%1].heading; " +
+                                    "isSatellite:   root.isSatelliteMap; " +
                                 "}"
 
         var i = _vehicles.length
@@ -191,6 +203,18 @@ Item {
                 _vehicleMapItems[i] = undefined
                 break
             }
+        }
+    }
+
+    function removeAllVehicles() {
+        if (!showVehicles) {
+            return
+        }
+
+        for (var i=0; i<_vehicles.length; i++) {
+            _vehicles[i] = undefined
+            map.removeMapItem(_vehicleMapItems[i])
+            _vehicleMapItems[i] = undefined
         }
     }
 
