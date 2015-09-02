@@ -42,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "HDDisplay.h"
 #include "MG.h"
+#include "Vehicle.h"
 
 class HSIDisplay : public HDDisplay
 {
@@ -51,7 +52,6 @@ public:
     ~HSIDisplay();
 
 public slots:
-    void setActiveUAS(UASInterface* uas);
     /** @brief Set the width in meters this widget shows from top */
     void setMetricWidth(double width);
     void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
@@ -200,7 +200,7 @@ protected slots:
     /** @brief Draw waypoints of this system */
     void drawWaypoints(QPainter& painter);
     /** @brief Draw one waypoint */
-    void drawWaypoint(QPainter& painter, const QColor& color, float width, const Waypoint *w, const QPointF& p);
+    void drawWaypoint(QPainter& painter, const QColor& color, float width, const MissionItem *w, const QPointF& p);
     /** @brief Draw the limiting safety area */
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
     /** @brief Receive mouse clicks */
@@ -422,7 +422,8 @@ protected:
     bool userZSetPointSet;   ///< User set the Z position already
     bool userYawSetPointSet;   ///< User set the YAW position already
 
-private:
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
 };
 
 #endif // HSIDISPLAY_H

@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ParameterEditorController.h"
-#include "UASManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
@@ -126,6 +125,12 @@ void ParameterEditorController::loadFromFile(void)
 void ParameterEditorController::refresh(void)
 {
 	_autopilot->refreshAllParameters();
+}
+
+void ParameterEditorController::resetAllToDefaults(void)
+{
+    _autopilot->resetAllParametersToDefaults();
+    refresh();
 }
 
 void ParameterEditorController::setRCToParam(const QString& paramName)

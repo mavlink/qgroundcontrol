@@ -25,7 +25,6 @@
 #define GENERICAUTOPILOT_H
 
 #include "AutoPilotPlugin.h"
-#include "AutoPilotPluginManager.h"
 #include "GenericParameterFacts.h"
 
 /// @file
@@ -38,14 +37,11 @@ class GenericAutoPilotPlugin : public AutoPilotPlugin
     Q_OBJECT
 
 public:
-    GenericAutoPilotPlugin(UASInterface* uas, QObject* parent = NULL);
+    GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent = NULL);
     
     // Overrides from AutoPilotPlugin
     virtual const QVariantList& vehicleComponents(void);
 
-    static QList<AutoPilotPluginManager::FullMode_t> getModes(void);
-    static QString getAudioModeText(uint8_t baseMode, uint32_t customMode);
-    static QString getShortModeText(uint8_t baseMode, uint32_t customMode);
     static void clearStaticData(void);
     
 private slots:

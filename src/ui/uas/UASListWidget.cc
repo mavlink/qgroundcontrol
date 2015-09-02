@@ -36,7 +36,7 @@ This file is part of the PIXHAWK project
 
 #include "MG.h"
 #include "UASListWidget.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "UAS.h"
 #include "UASView.h"
 #include "QGCUnconnectedInfoWidget.h"
@@ -64,17 +64,13 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
 
     connect(LinkManager::instance(), SIGNAL(linkDeleted(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
 
-    // Listen for when UASes are added or removed. This does not manage the UASView
-    // widgets that are displayed within this widget.
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
-            this, SLOT(addUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)),
-            this, SLOT(removeUAS(UASInterface*)));
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &UASListWidget::_vehicleAdded);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &UASListWidget::_vehicleRemoved);
 
     // Get a list of all existing UAS
-    foreach (UASInterface* uas, UASManager::instance()->getUASList())
+    foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles())
     {
-        addUAS(uas);
+        _vehicleAdded(vehicle);
     }
 }
 
@@ -149,8 +145,10 @@ void UASListWidget::updateStatus()
     }
 }
 
-void UASListWidget::addUAS(UASInterface* uas)
+void UASListWidget::_vehicleAdded(Vehicle* vehicle)
 {
+    UAS* uas = vehicle->uas();
+    
     // If the list was empty, remove the unconnected widget and start the update timer.
     if (uasViews.isEmpty())
     {
@@ -163,10 +161,11 @@ void UASListWidget::addUAS(UASInterface* uas)
             uWidget = NULL;
         }
     }
+    
     if (!uasViews.contains(uas))
     {
         // Only display the UAS in a single link.
-        QList<LinkInterface*> x = uas->getLinks();
+        QList<LinkInterface*> x = vehicle->links();
         if (x.size())
         {
             LinkInterface* li = x.first();
@@ -189,16 +188,13 @@ void UASListWidget::addUAS(UASInterface* uas)
             }
 
             // And add the new UAS to the UASList
-            UASView* newView = new UASView(uas, newBox);
+            UASView* newView = new UASView(vehicle, newBox);
             uasViews.insert(uas, newView);
             uasToBoxMapping[uas] = newBox;
             newBox->layout()->addWidget(newView);
         }
     }
-}
-
-void UASListWidget::activeUAS(UASInterface* uas)
-{
+    
     UASView* view = uasViews.value(uas, NULL);
     if (view) {
         view->setUASasActive(true);
@@ -209,8 +205,10 @@ void UASListWidget::activeUAS(UASInterface* uas)
  * If the UAS was removed, check to see if it was the last one in the QGroupBox and delete
  * the QGroupBox if so.
  */
-void UASListWidget::removeUAS(UASInterface* uas)
+void UASListWidget::_vehicleRemoved(Vehicle* vehicle)
 {
+    UAS* uas = vehicle->uas();
+
     // Remove the UASView and check if its parent GroupBox has any other children,
     // delete it if it doesn't.
     QGroupBox* box = uasToBoxMapping[uas];

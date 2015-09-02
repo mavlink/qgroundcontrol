@@ -31,17 +31,19 @@ import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
-import QGroundControl.Controls 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.MainToolBar 1.0
-import QGroundControl.MavManager 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.FactControls          1.0
+import QGroundControl.Palette               1.0
+import QGroundControl.MainToolBar           1.0
+import QGroundControl.MultiVehicleManager   1.0
+import QGroundControl.ScreenTools           1.0
 
 Rectangle {
     id: toolBarHolder
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
+
+    property var activeVehicle: multiVehicleManager.activeVehicle
 
     readonly property real toolBarHeight:   ScreenTools.defaultFontPixelHeight * 3
     property int cellSpacerSize:            ScreenTools.isMobile ? getProportionalDimmension(6) : getProportionalDimmension(4)
@@ -68,7 +70,11 @@ Rectangle {
 
         onShowMessage: {
             toolBarMessage.text = message
-            mainToolBar.height = toolBarHeight + toolBarMessage.contentHeight + verticalMargins
+            if (toolBarMessage.contentHeight > toolBarMessageCloseButton.height) {
+                mainToolBar.height = toolBarHeight + toolBarMessage.contentHeight + (verticalMargins * 2)
+            } else {
+                mainToolBar.height = toolBarHeight + toolBarMessageCloseButton.height + (verticalMargins * 2)
+            }
             toolBarMessageArea.visible = true
         }
     }
@@ -78,44 +84,44 @@ Rectangle {
     }
 
     function getMessageColor() {
-        if(MavManager.messageType === MavManager.MessageNone)
+        if (activeVehicle.messageTypeNone)
             return qgcPal.button;
-        if(MavManager.messageType === MavManager.MessageNormal)
+        if (activeVehicle.messageTypeNorma)
             return colorBlue;
-        if(MavManager.messageType === MavManager.MessageWarning)
+        if (activeVehicle.messageTypeWarning)
             return colorOrange;
-        if(MavManager.messageType === MavManager.MessageError)
+        if (activeVehicle.messageTypeError)
             return colorRed;
         // Cannot be so make make it obnoxious to show error
         return "purple";
     }
 
     function getMessageIcon() {
-        if(MavManager.messageType === MavManager.MessageNormal || MavManager.messageType === MavManager.MessageNone)
+        if (activeVehicle.messageTypeNormal || activeVehicle.messageTypeNone)
             return "qrc:/res/Megaphone";
         else
             return "qrc:/res/Yield";
     }
 
     function getBatteryIcon() {
-        if(MavManager.batteryPercent < 20.0)
+        if(activeVehicle.batteryPercent < 20.0)
             return "qrc:/res/Battery_0";
-        else if(MavManager.batteryPercent < 40.0)
+        else if(activeVehicle.batteryPercent < 40.0)
             return "qrc:/res/Battery_20";
-        else if(MavManager.batteryPercent < 60.0)
+        else if(activeVehicle.batteryPercent < 60.0)
             return "qrc:/res/Battery_40";
-        else if(MavManager.batteryPercent < 80.0)
+        else if(activeVehicle.batteryPercent < 80.0)
             return "qrc:/res/Battery_60";
-        else if(MavManager.batteryPercent < 90.0)
+        else if(activeVehicle.batteryPercent < 90.0)
             return "qrc:/res/Battery_80";
         else
             return "qrc:/res/Battery_100";
     }
 
     function getBatteryColor() {
-        if (MavManager.batteryPercent > 40.0)
+        if (activeVehicle.batteryPercent > 40.0)
             return colorGreen;
-        if(MavManager.batteryPercent > 0.01)
+        if(activeVehicle.batteryPercent > 0.01)
             return colorRed;
         // This means there is no battery level data
         return colorBlue;
@@ -123,13 +129,13 @@ Rectangle {
 
     function getSatelliteColor() {
         // No GPS data
-        if (MavManager.satelliteCount < 0)
+        if (activeVehicle.satelliteCount < 0)
             return qgcPal.button
         // No Lock
-        if(MavManager.satelliteLock < 2)
+        if(activeVehicle.satelliteLock < 2)
             return colorRed;
         // 2D Lock
-        if(MavManager.satelliteLock === 2)
+        if(activeVehicle.satelliteLock === 2)
             return colorBlue;
         // Lock is 3D or more
         return colorGreen;
@@ -144,7 +150,7 @@ Rectangle {
     }
 
     function showMavStatus() {
-         return (MavManager.mavPresent && MavManager.heartbeatTimeout === 0 && mainToolBar.connectionCount > 0);
+         return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0 && mainToolBar.connectionCount > 0);
     }
 
     //-------------------------------------------------------------------------
@@ -192,6 +198,351 @@ Rectangle {
             }
         }
     } // Menu
+
+    Component {
+        id: activeVehicleComponent
+
+        Row {
+            height:     cellHeight
+            spacing:    cellSpacerSize
+
+            Rectangle {
+                id: messages
+                width: (activeVehicle.messageCount > 99) ? getProportionalDimmension(65) : getProportionalDimmension(60)
+                height: cellHeight
+                visible: mainToolBar.showMessages
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getMessageColor()
+                border.color: "#00000000"
+                border.width: 0
+                property bool showTriangle: false
+
+                Image {
+                    id: messageIcon
+                    source: getMessageIcon();
+                    height: getProportionalDimmension(16)
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(8)
+                }
+
+                Item {
+                    id: messageTextRect
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    width: messages.width - messageIcon.width
+                    QGCLabel {
+                        id: messageText
+                        text: (activeVehicle.messageCount > 0) ? activeVehicle.messageCount : ''
+                        font.pixelSize: ScreenTools.smallFontPixelSize
+                        font.weight: Font.DemiBold
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        horizontalAlignment: Text.AlignHCenter
+                        color: colorWhite
+                    }
+                }
+
+                Image {
+                    id: dropDown
+                    source: "/qmlimages/arrow-down.png"
+                    visible: (messages.showTriangle) && (activeVehicle.messageCount > 0)
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.bottomMargin: getProportionalDimmension(3)
+                    anchors.rightMargin:  getProportionalDimmension(3)
+                }
+
+                Timer {
+                    id: mouseOffTimer
+                    interval: 2000;
+                    running: false;
+                    repeat: false
+                    onTriggered: {
+                        messages.showTriangle = false;
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: {
+                        messages.showTriangle = true;
+                        mouseOffTimer.start();
+                    }
+                    onClicked: {
+                        var p = mapToItem(toolBarHolder, mouseX, mouseY);
+                        mainToolBar.onEnterMessageArea(p.x, p.y);
+                    }
+                }
+
+            }
+
+            Rectangle {
+                id: mavIcon
+                width: cellHeight
+                height: cellHeight
+                visible: mainToolBar.showMav
+                anchors.verticalCenter: parent.verticalCenter
+                color: colorBlue
+                border.color: "#00000000"
+                border.width: 0
+                Image {
+                    source: activeVehicle.systemPixmap
+                    height: cellHeight * 0.75
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Rectangle {
+                id: satelitte
+                width:  getProportionalDimmension(55)
+                height: cellHeight
+                visible: mainToolBar.showGPS
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getSatelliteColor();
+                border.color: "#00000000"
+                border.width: 0
+
+                Image {
+                    source: "qrc:/res/Gps";
+                    height: getProportionalDimmension(24)
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(6)
+                    mipmap: true
+                    smooth: true
+                }
+
+                QGCLabel {
+                    id: satelitteText
+                    text: activeVehicle.satelliteCount >= 0 ? activeVehicle.satelliteCount : 'NA'
+                    font.pixelSize: activeVehicle.satelliteCount >= 0 ? ScreenTools.defaultFontPixelSize : ScreenTools.smallFontPixelSize
+                    font.weight: Font.DemiBold
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: getProportionalDimmension(6)
+                    horizontalAlignment: Text.AlignRight
+                    color: colorWhite
+                }
+            }
+
+            Rectangle {
+                id: rssiRC
+                width:  getProportionalDimmension(55)
+                height: cellHeight
+                visible: mainToolBar.showRSSI && mainToolBar.remoteRSSI <= 100
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getRSSIColor(mainToolBar.remoteRSSI);
+                border.color: "#00000000"
+                border.width: 0
+                Image {
+                    source: "qrc:/res/AntennaRC";
+                    width: cellHeight * 0.7
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(6)
+                    mipmap: true
+                    smooth: true
+                }
+                QGCLabel {
+                    text: mainToolBar.remoteRSSI
+                    anchors.right: parent.right
+                    anchors.rightMargin: getProportionalDimmension(6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    font.pixelSize: ScreenTools.smallFontPixelSize
+                    font.weight: Font.DemiBold
+                    color: colorWhite
+                }
+            }
+
+            Rectangle {
+                id: rssiTelemetry
+                width:  getProportionalDimmension(80)
+                height: cellHeight
+                visible: mainToolBar.showRSSI && (mainToolBar.telemetryRRSSI > 0) && (mainToolBar.telemetryLRSSI > 0)
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getRSSIColor(Math.min(mainToolBar.telemetryRRSSI,mainToolBar.telemetryLRSSI));
+                border.color: "#00000000"
+                border.width: 0
+                Image {
+                    source: "qrc:/res/AntennaT";
+                    width: cellHeight * 0.7
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(6)
+                    mipmap: true
+                    smooth: true
+                }
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    getProportionalDimmension(6)
+                    Row {
+                        anchors.right: parent.right
+                        QGCLabel {
+                            text: 'R '
+                            font.pixelSize: ScreenTools.smallFontPixelSize
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                        QGCLabel {
+                            text: mainToolBar.telemetryRRSSI + 'dB'
+                            width: getProportionalDimmension(30)
+                            horizontalAlignment: Text.AlignRight
+                            font.pixelSize: ScreenTools.smallFontPixelSize
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                    }
+                    Row {
+                        anchors.right: parent.right
+                        QGCLabel {
+                            text: 'L '
+                            font.pixelSize: ScreenTools.smallFontPixelSize
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                        QGCLabel {
+                            text: mainToolBar.telemetryLRSSI + 'dB'
+                            width: getProportionalDimmension(30)
+                            horizontalAlignment: Text.AlignRight
+                            font.pixelSize: ScreenTools.smallFontPixelSize
+                            font.weight: Font.DemiBold
+                            color: colorWhite
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                id: batteryStatus
+                width:  activeVehicle.batteryConsumed < 0.0 ? getProportionalDimmension(60) : getProportionalDimmension(80)
+                height: cellHeight
+                visible: mainToolBar.showBattery
+                anchors.verticalCenter: parent.verticalCenter
+                color:  getBatteryColor();
+                border.color: "#00000000"
+                border.width: 0
+                Image {
+                    source: getBatteryIcon();
+                    height: getProportionalDimmension(20)
+                    fillMode: Image.PreserveAspectFit
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: getProportionalDimmension(6)
+                    mipmap: true
+                    smooth: true
+                }
+
+                QGCLabel {
+                    visible: batteryStatus.visible && activeVehicle.batteryConsumed < 0.0
+                    text: activeVehicle.batteryVoltage.toFixed(1) + 'V';
+                    font.pixelSize: ScreenTools.smallFontPixelSize
+                    font.weight: Font.DemiBold
+                    anchors.right: parent.right
+                    anchors.rightMargin: getProportionalDimmension(6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    color: colorWhite
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    getProportionalDimmension(6)
+                    visible: batteryStatus.visible && activeVehicle.batteryConsumed >= 0.0
+                    QGCLabel {
+                        text: activeVehicle.batteryVoltage.toFixed(1) + 'V';
+                        width: getProportionalDimmension(30)
+                        horizontalAlignment: Text.AlignRight
+                        font.pixelSize: ScreenTools.smallFontPixelSize
+                        font.weight: Font.DemiBold
+                        color: colorWhite
+                    }
+                    QGCLabel {
+                        text: activeVehicle.batteryConsumed.toFixed(0) + 'mAh';
+                        width: getProportionalDimmension(30)
+                        horizontalAlignment: Text.AlignRight
+                        font.pixelSize: ScreenTools.smallFontPixelSize
+                        font.weight: Font.DemiBold
+                        color: colorWhite
+                    }
+                }
+            }
+
+            Column {
+                height:  cellHeight * 0.85
+                width:   getProportionalDimmension(80)
+                anchors.verticalCenter: parent.verticalCenter
+
+                Rectangle {
+                    id: armedStatus
+                    width: parent.width
+                    height: parent.height / 2
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    color: "#00000000"
+                    border.color: "#00000000"
+                    border.width: 0
+
+                    QGCLabel {
+                        id: armedStatusText
+                        text: (activeVehicle.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
+                        font.pixelSize: ScreenTools.smallFontPixelSize
+                        font.weight: Font.DemiBold
+                        anchors.centerIn: parent
+                        color: (activeVehicle.systemArmed) ? colorOrangeText : colorGreenText
+                    }
+                }
+
+                Rectangle {
+                    id: stateStatus
+                    width: parent.width
+                    height: parent.height / 2
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    color: "#00000000"
+                    border.color: "#00000000"
+                    border.width: 0
+
+                    QGCLabel {
+                        id: stateStatusText
+                        text: activeVehicle.currentState
+                        font.pixelSize: ScreenTools.smallFontPixelSize
+                        font.weight: Font.DemiBold
+                        anchors.centerIn: parent
+                        color: (activeVehicle.currentState === "STANDBY") ? colorGreenText : colorRedText
+                    }
+                }
+
+            }
+
+            Rectangle {
+                id: modeStatus
+                width: getProportionalDimmension(90)
+                height: cellHeight
+                color: "#00000000"
+                border.color: "#00000000"
+                border.width: 0
+
+                QGCLabel {
+                    id: modeStatusText
+                    text: activeVehicle.currentMode
+                    font.pixelSize: ScreenTools.smallFontPixelSize
+                    font.weight: Font.DemiBold
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: colorWhiteText
+                }
+            }
+        } // Row
+    } // Component - activeVehicleComponent
 
     Row {
         id:         toolRow
@@ -318,349 +669,20 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            Rectangle {
-                id: messages
-                width: (MavManager.messageCount > 99) ? getProportionalDimmension(65) : getProportionalDimmension(60)
-                height: cellHeight
-                visible: (mainToolBar.connectionCount > 0) && (mainToolBar.showMessages)
-                anchors.verticalCenter: parent.verticalCenter
-                color:  getMessageColor()
-                border.color: "#00000000"
-                border.width: 0
-                property bool showTriangle: false
+            Loader {
+                id:                 activeVehicleLoader
+                visible:            showMavStatus()
+                sourceComponent:    multiVehicleManager.activeVehicleAvailable ? activeVehicleComponent : undefined
 
-                Image {
-                    id: messageIcon
-                    source: getMessageIcon();
-                    height: getProportionalDimmension(16)
-                    fillMode: Image.PreserveAspectFit
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(8)
-                }
-
-                Item {
-                    id: messageTextRect
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    width: messages.width - messageIcon.width
-                    QGCLabel {
-                        id: messageText
-                        text: (MavManager.messageCount > 0) ? MavManager.messageCount : ''
-                        font.pixelSize: ScreenTools.smallFontPixelSize
-                        font.weight: Font.DemiBold
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        horizontalAlignment: Text.AlignHCenter
-                        color: colorWhite
-                    }
-                }
-
-                Image {
-                    id: dropDown
-                    source: "/qmlimages/arrow-down.png"
-                    visible: (messages.showTriangle) && (MavManager.messageCount > 0)
-                    anchors.bottom: parent.bottom
-                    anchors.right: parent.right
-                    anchors.bottomMargin: getProportionalDimmension(3)
-                    anchors.rightMargin:  getProportionalDimmension(3)
-                }
-
-                Timer {
-                    id: mouseOffTimer
-                    interval: 2000;
-                    running: false;
-                    repeat: false
-                    onTriggered: {
-                        messages.showTriangle = false;
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: {
-                        messages.showTriangle = true;
-                        mouseOffTimer.start();
-                    }
-                    onClicked: {
-                        var p = mapToItem(toolBarHolder, mouseX, mouseY);
-                        mainToolBar.onEnterMessageArea(p.x, p.y);
-                    }
-                }
-
-            }
-
-            Rectangle {
-                id: mavIcon
-                width: cellHeight
-                height: cellHeight
-                visible: showMavStatus() &&  (mainToolBar.showMav)
-                anchors.verticalCenter: parent.verticalCenter
-                color: colorBlue
-                border.color: "#00000000"
-                border.width: 0
-                Image {
-                    source: MavManager.systemPixmap
-                    height: cellHeight * 0.75
-                    fillMode: Image.PreserveAspectFit
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-            }
-
-            Rectangle {
-                id: satelitte
-                width:  getProportionalDimmension(55)
-                height: cellHeight
-                visible: showMavStatus() && (mainToolBar.showGPS)
-                anchors.verticalCenter: parent.verticalCenter
-                color:  getSatelliteColor();
-                border.color: "#00000000"
-                border.width: 0
-
-                Image {
-                    source: "qrc:/res/Gps";
-                    height: getProportionalDimmension(24)
-                    fillMode: Image.PreserveAspectFit
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(6)
-                    mipmap: true
-                    smooth: true
-                }
-
-                QGCLabel {
-                    id: satelitteText
-                    text: MavManager.satelliteCount >= 0 ? MavManager.satelliteCount : 'NA'
-                    font.pixelSize: MavManager.satelliteCount >= 0 ? ScreenTools.defaultFontPixelSize : ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(6)
-                    horizontalAlignment: Text.AlignRight
-                    color: colorWhite
-                }
-            }
-
-            Rectangle {
-                id: rssiRC
-                width:  getProportionalDimmension(55)
-                height: cellHeight
-                visible: showMavStatus() && mainToolBar.showRSSI && mainToolBar.remoteRSSI <= 100
-                anchors.verticalCenter: parent.verticalCenter
-                color:  getRSSIColor(mainToolBar.remoteRSSI);
-                border.color: "#00000000"
-                border.width: 0
-                Image {
-                    source: "qrc:/res/AntennaRC";
-                    width: cellHeight * 0.7
-                    fillMode: Image.PreserveAspectFit
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(6)
-                    mipmap: true
-                    smooth: true
-                }
-                QGCLabel {
-                    text: mainToolBar.remoteRSSI
-                    anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(6)
-                    anchors.verticalCenter: parent.verticalCenter
-                    horizontalAlignment: Text.AlignRight
-                    font.pixelSize: ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
-                    color: colorWhite
-                }
-            }
-
-            Rectangle {
-                id: rssiTelemetry
-                width:  getProportionalDimmension(80)
-                height: cellHeight
-                visible: showMavStatus() && (mainToolBar.showRSSI) && ((mainToolBar.telemetryRRSSI > 0) && (mainToolBar.telemetryLRSSI > 0))
-                anchors.verticalCenter: parent.verticalCenter
-                color:  getRSSIColor(Math.min(mainToolBar.telemetryRRSSI,mainToolBar.telemetryLRSSI));
-                border.color: "#00000000"
-                border.width: 0
-                Image {
-                    source: "qrc:/res/AntennaT";
-                    width: cellHeight * 0.7
-                    fillMode: Image.PreserveAspectFit
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(6)
-                    mipmap: true
-                    smooth: true
-                }
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right:          parent.right
-                    anchors.rightMargin:    getProportionalDimmension(6)
-                    Row {
-                        anchors.right: parent.right
-                        QGCLabel {
-                            text: 'R '
-                            font.pixelSize: ScreenTools.smallFontPixelSize
-                            font.weight: Font.DemiBold
-                            color: colorWhite
-                        }
-                        QGCLabel {
-                            text: mainToolBar.telemetryRRSSI + 'dB'
-                            width: getProportionalDimmension(30)
-                            horizontalAlignment: Text.AlignRight
-                            font.pixelSize: ScreenTools.smallFontPixelSize
-                            font.weight: Font.DemiBold
-                            color: colorWhite
-                        }
-                    }
-                    Row {
-                        anchors.right: parent.right
-                        QGCLabel {
-                            text: 'L '
-                            font.pixelSize: ScreenTools.smallFontPixelSize
-                            font.weight: Font.DemiBold
-                            color: colorWhite
-                        }
-                        QGCLabel {
-                            text: mainToolBar.telemetryLRSSI + 'dB'
-                            width: getProportionalDimmension(30)
-                            horizontalAlignment: Text.AlignRight
-                            font.pixelSize: ScreenTools.smallFontPixelSize
-                            font.weight: Font.DemiBold
-                            color: colorWhite
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                id: batteryStatus
-                width:  MavManager.batteryConsumed < 0.0 ? getProportionalDimmension(60) : getProportionalDimmension(80)
-                height: cellHeight
-                visible: showMavStatus() && (mainToolBar.showBattery)
-                anchors.verticalCenter: parent.verticalCenter
-                color:  getBatteryColor();
-                border.color: "#00000000"
-                border.width: 0
-                Image {
-                    source: getBatteryIcon();
-                    height: getProportionalDimmension(20)
-                    fillMode: Image.PreserveAspectFit
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: getProportionalDimmension(6)
-                    mipmap: true
-                    smooth: true
-                }
-
-                QGCLabel {
-                    visible: batteryStatus.visible && MavManager.batteryConsumed < 0.0
-                    text: MavManager.batteryVoltage.toFixed(1) + 'V';
-                    font.pixelSize: ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
-                    anchors.right: parent.right
-                    anchors.rightMargin: getProportionalDimmension(6)
-                    anchors.verticalCenter: parent.verticalCenter
-                    horizontalAlignment: Text.AlignRight
-                    color: colorWhite
-                }
-
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right:          parent.right
-                    anchors.rightMargin:    getProportionalDimmension(6)
-                    visible: batteryStatus.visible && MavManager.batteryConsumed >= 0.0
-                    QGCLabel {
-                        text: MavManager.batteryVoltage.toFixed(1) + 'V';
-                        width: getProportionalDimmension(30)
-                        horizontalAlignment: Text.AlignRight
-                        font.pixelSize: ScreenTools.smallFontPixelSize
-                        font.weight: Font.DemiBold
-                        color: colorWhite
-                    }
-                    QGCLabel {
-                        text: MavManager.batteryConsumed.toFixed(0) + 'mAh';
-                        width: getProportionalDimmension(30)
-                        horizontalAlignment: Text.AlignRight
-                        font.pixelSize: ScreenTools.smallFontPixelSize
-                        font.weight: Font.DemiBold
-                        color: colorWhite
-                    }
-                }
-            }
-
-            Column {
-                visible: showMavStatus()
-                height:  cellHeight * 0.85
-                width:   getProportionalDimmension(80)
-                anchors.verticalCenter: parent.verticalCenter
-
-                Rectangle {
-                    id: armedStatus
-                    width: parent.width
-                    height: parent.height / 2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: "#00000000"
-                    border.color: "#00000000"
-                    border.width: 0
-
-                    QGCLabel {
-                        id: armedStatusText
-                        text: (MavManager.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
-                        font.pixelSize: ScreenTools.smallFontPixelSize
-                        font.weight: Font.DemiBold
-                        anchors.centerIn: parent
-                        color: (MavManager.systemArmed) ? colorOrangeText : colorGreenText
-                    }
-                }
-
-                Rectangle {
-                    id: stateStatus
-                    width: parent.width
-                    height: parent.height / 2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: "#00000000"
-                    border.color: "#00000000"
-                    border.width: 0
-
-                    QGCLabel {
-                        id: stateStatusText
-                        text: MavManager.currentState
-                        font.pixelSize: ScreenTools.smallFontPixelSize
-                        font.weight: Font.DemiBold
-                        anchors.centerIn: parent
-                        color: (MavManager.currentState === "STANDBY") ? colorGreenText : colorRedText
-                    }
-                }
-
-            }
-
-            Rectangle {
-                id: modeStatus
-                width: getProportionalDimmension(90)
-                height: cellHeight
-                visible: showMavStatus()
-                color: "#00000000"
-                border.color: "#00000000"
-                border.width: 0
-
-                QGCLabel {
-                    id: modeStatusText
-                    text: MavManager.currentMode
-                    font.pixelSize: ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: colorWhiteText
-                }
+                property real cellHeight:       toolBarHolder.cellHeight
+                property real cellSpacerSize:   toolBarHolder.cellSpacerSize
             }
 
             Rectangle {
                 id: connectionStatus
                 width: getProportionalDimmension(160)
                 height: cellHeight
-                visible: (mainToolBar.connectionCount > 0 && MavManager.mavPresent && MavManager.heartbeatTimeout != 0)
+                visible: (mainToolBar.connectionCount > 0 && multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout != 0)
                 anchors.verticalCenter: parent.verticalCenter
                 color: "#00000000"
                 border.color: "#00000000"
@@ -771,32 +793,37 @@ Rectangle {
 
     // Toolbar message area
     Rectangle {
-        id:                 toolBarMessageArea
-        anchors.margins:    horizontalMargins
-        anchors.top:        progressBar.bottom
-        anchors.bottom:     parent.bottom
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        color:              qgcPal.windowShadeDark
-        visible:            false
+        id:                     toolBarMessageArea
+        anchors.leftMargin:     horizontalMargins
+        anchors.rightMargin:    horizontalMargins
+        anchors.topMargin:      verticalMargins
+        anchors.bottomMargin:   verticalMargins
+        anchors.top:            progressBar.bottom
+        anchors.bottom:         parent.bottom
+        anchors.left:           parent.left
+        anchors.right:          parent.right
+        color:                  qgcPal.windowShadeDark
+        visible:                false
 
         QGCLabel {
             id:             toolBarMessage
             anchors.fill:   parent
             wrapMode:       Text.WordWrap
+			color:			qgcPal.warningText
         }
 
         QGCButton {
             id:                     toolBarMessageCloseButton
             anchors.rightMargin:    horizontalMargins
-            anchors.topMargin:      verticalMargins
             anchors.top:            parent.top
             anchors.right:          parent.right
+			primary:				true
             text:                   "Close Message"
 
             onClicked: {
                 parent.visible = false
                 mainToolBar.height = toolBarHeight
+                mainToolBar.onToolBarMessageClosed()
             }
         }
     }

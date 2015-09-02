@@ -4,7 +4,7 @@
 #include "WaypointViewOnlyView.h"
 #include "ui_WaypointViewOnlyView.h"
 
-WaypointViewOnlyView::WaypointViewOnlyView(Waypoint* wp, QWidget *parent) :
+WaypointViewOnlyView::WaypointViewOnlyView(MissionItem* wp, QWidget *parent) :
     QWidget(parent),
     wp(wp),
     m_ui(new Ui::WaypointViewOnlyView)

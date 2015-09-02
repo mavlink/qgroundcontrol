@@ -26,7 +26,6 @@
 
 #include "PowerComponentController.h"
 #include "QGCMAVLink.h"
-#include "UASManager.h"
 #include "QGCMessageBox.h"
 
 #include <QVariant>
@@ -49,9 +48,21 @@ void PowerComponentController::calibrateEsc(void)
     _uas->startCalibration(UASInterface::StartCalibrationEsc);
 }
 
+void PowerComponentController::busConfigureActuators(void)
+{
+    _warningMessages.clear();
+    connect(_uas, &UASInterface::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
+    _uas->startBusConfig(UASInterface::StartBusConfigActuators);
+}
+
 void PowerComponentController::_stopCalibration(void)
 {
     disconnect(_uas, &UASInterface::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
+}
+
+void PowerComponentController::_stopBusConfig(void)
+{
+    _stopCalibration();
 }
 
 void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
@@ -59,7 +70,7 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
     Q_UNUSED(compId);
     Q_UNUSED(severity);
     
-    UASInterface* uas = _autopilot->uas();
+    UASInterface* uas = _autopilot->vehicle()->uas();
     Q_ASSERT(uas);
     if (uasId != uas->getUASID()) {
         return;
@@ -130,8 +141,28 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
         return;
     }
     
-    QString warningPrefix("calibration warning: ");
+    QString warningPrefix("config warning: ");
     if (text.startsWith(warningPrefix)) {
+        _warningMessages << text.right(text.length() - warningPrefix.length());
+    }
+
+    QString busFailedPrefix("bus conf fail:");
+    if (text.startsWith(busFailedPrefix)) {
+
+        _stopBusConfig();
+        emit calibrationFailed(text.right(text.length() - failedPrefix.length()));
+        return;
+    }
+
+    QString busCompletePrefix("bus conf done:");
+    if (text.startsWith(calCompletePrefix)) {
+        _stopBusConfig();
+        emit calibrationSuccess(_warningMessages);
+        return;
+    }
+
+    QString busWarningPrefix("bus conf warn: ");
+    if (text.startsWith(busWarningPrefix)) {
         _warningMessages << text.right(text.length() - warningPrefix.length());
     }
 }

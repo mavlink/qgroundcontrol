@@ -35,12 +35,13 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "UASMessageView.h"
 #include "UASMessageHandler.h"
-#include "FlightDisplay.h"
+#include "FlightDisplayView.h"
 #include "QGCApplication.h"
-#include "MavManager.h"
+#include "MultiVehicleManager.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
     : QGCQmlWidgetHolder(parent)
+    , _vehicle(NULL)
     , _mav(NULL)
     , _toolBar(NULL)
     , _currentView(ViewNone)
@@ -56,6 +57,7 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _telemetryRRSSI(0)
     , _telemetryLRSSI(0)
     , _rollDownMessages(0)
+    , _toolbarMessageVisible(false)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("MainToolBar");
@@ -81,17 +83,19 @@ MainToolBar::MainToolBar(QWidget* parent)
     setVisible(true);
     emit configListChanged();
     emit connectionCountChanged(_connectionCount);
-    _setActiveUAS(UASManager::instance()->getActiveUAS());
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    
     // Link signals
     connect(LinkManager::instance(),     &LinkManager::linkConfigurationChanged, this, &MainToolBar::_updateConfigurations);
     connect(LinkManager::instance(),     &LinkManager::linkConnected,            this, &MainToolBar::_linkConnected);
     connect(LinkManager::instance(),     &LinkManager::linkDisconnected,         this, &MainToolBar::_linkDisconnected);
+    
     // RSSI (didn't like standard connection)
     connect(MAVLinkProtocol::instance(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
         SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(_setActiveUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)),   this, SLOT(_forgetUAS(UASInterface*)));
+    
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBar::_activeVehicleChanged);
     
     connect(this, &MainToolBar::heightChanged, this, &MainToolBar::_heightChanged);
 }
@@ -150,7 +154,7 @@ void MainToolBar::onFlyView()
 
 void MainToolBar::onFlyViewMenu()
 {
-    FlightDisplay* fdsp = MainWindow::instance()->getFlightDisplay();
+    FlightDisplayView* fdsp = MainWindow::instance()->getFlightDisplay();
     if(fdsp) {
         fdsp->showOptionsMenu();
     }
@@ -215,8 +219,8 @@ void MainToolBar::onEnterMessageArea(int x, int y)
     // If not already there and messages are actually present
     if(!_rollDownMessages && UASMessageHandler::instance()->messages().count())
     {
-        if(qgcApp()->getMavManager())
-            qgcApp()->getMavManager()->resetMessages();
+        if (MultiVehicleManager::instance()->activeVehicle())
+            MultiVehicleManager::instance()->activeVehicle()->resetMessages();
         // Show messages
         int dialogWidth = 400;
         x = x - (dialogWidth >> 1);
@@ -265,30 +269,23 @@ void MainToolBar::setCurrentView(int currentView)
     }
 }
 
-void MainToolBar::_forgetUAS(UASInterface* uas)
+void MainToolBar::_activeVehicleChanged(Vehicle* vehicle)
 {
-    if (_mav != NULL && _mav == uas) {
-        disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
-        disconnect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav).data(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
-        _mav = NULL;
-    }
-}
-void MainToolBar::_setActiveUAS(UASInterface* active)
-{
-    // Do nothing if system is the same
-    if (_mav == active) {
-        return;
-    }
     // Disconnect the previous one (if any)
-    if(_mav) {
-        _forgetUAS(_mav);
+    if (_vehicle) {
+        disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
+        disconnect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        _mav = NULL;
+        _vehicle = NULL;
     }
+    
     // Connect new system
-    _mav = active;
-    if (_mav)
+    if (vehicle)
     {
+        _vehicle = vehicle;
+        _mav = vehicle->uas();
         connect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
-        connect(AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_mav).data(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        connect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
     }
 }
 
@@ -403,4 +400,44 @@ void MainToolBar::_heightChanged(double height)
 {
     setMinimumHeight(height);
     setMaximumHeight(height);
+}
+
+void MainToolBar::showToolBarMessage(const QString& message)
+{
+    _toolbarMessageQueueMutex.lock();
+    
+    if (_toolbarMessageQueue.count() == 0 && !_toolbarMessageVisible) {
+        QTimer::singleShot(500, this, &MainToolBar::_delayedShowToolBarMessage);
+    }
+    
+    _toolbarMessageQueue += message;
+    
+    _toolbarMessageQueueMutex.unlock();
+}
+
+void MainToolBar::_delayedShowToolBarMessage(void)
+{
+    QString messages;
+    
+    if (!_toolbarMessageVisible) {
+        _toolbarMessageQueueMutex.lock();
+        
+        foreach (QString message, _toolbarMessageQueue) {
+            messages += message + "\n";
+        }
+        _toolbarMessageQueue.clear();
+        
+        _toolbarMessageQueueMutex.unlock();
+        
+        if (!messages.isEmpty()) {
+            _toolbarMessageVisible = true;
+            emit showMessage(messages);
+        }
+    }
+}
+
+void MainToolBar::onToolBarMessageClosed(void)
+{
+    _toolbarMessageVisible = false;
+    _delayedShowToolBarMessage();
 }

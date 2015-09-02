@@ -36,22 +36,21 @@ This file is part of the PIXHAWK project
 #include <QPalette>
 
 #include "UASControlWidget.h"
-#include <UASManager.h>
-#include <UAS.h>
+#include "MultiVehicleManager.h"
+#include "UAS.h"
 #include "QGC.h"
 #include "AutoPilotPluginManager.h"
+#include "FirmwarePluginManager.h"
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
-    uasID(-1),
-    modeIdx(0),
+    _uas(NULL),
     armed(false)
 {
     ui.setupUi(this);
 
-    this->setUAS(UASManager::instance()->getActiveUAS());
-
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
-    connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &UASControlWidget::_activeVehicleChanged);
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
     ui.liftoffButton->hide();
@@ -63,62 +62,48 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 
 void UASControlWidget::updateModesList()
 {
-    if (this->uasID == 0) {
+    if (!_uas) {
         return;
     }
+    _modeList = FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)_uas->getAutopilotType())->flightModes();
     
-    UASInterface*uas = UASManager::instance()->getUASForId(this->uasID);
-    Q_ASSERT(uas);
-    
-    _modeList = AutoPilotPluginManager::instance()->getModes(uas->getAutopilotType());
-
     // Set combobox items
     ui.modeComboBox->clear();
-    foreach (AutoPilotPluginManager::FullMode_t fullMode, _modeList) {
-        ui.modeComboBox->addItem(uas->getShortModeTextFor(fullMode.baseMode, fullMode.customMode).remove(0, 2));
+    foreach (QString flightMode, _modeList) {
+        ui.modeComboBox->addItem(flightMode);
     }
 
     // Select first mode in list
-    modeIdx = 0;
-    ui.modeComboBox->setCurrentIndex(modeIdx);
+    ui.modeComboBox->setCurrentIndex(0);
     ui.modeComboBox->update();
 }
 
-void UASControlWidget::setUAS(UASInterface* uas)
+void UASControlWidget::_activeVehicleChanged(Vehicle* vehicle)
 {
-    if (this->uasID > 0) {
-        UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uasID);
-        if (oldUAS) {
-            disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(armSystem()));
-            disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
-            disconnect(ui.landButton, SIGNAL(clicked()), oldUAS, SLOT(home()));
-            disconnect(ui.shutdownButton, SIGNAL(clicked()), oldUAS, SLOT(shutdown()));
-            //connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
-            disconnect(oldUAS, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int, QString, QString)));
-            disconnect(oldUAS, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
-        }
+    if (_uas) {
+        disconnect(ui.controlButton, SIGNAL(clicked()), _uas, SLOT(armSystem()));
+        disconnect(ui.liftoffButton, SIGNAL(clicked()), _uas, SLOT(launch()));
+        disconnect(ui.landButton, SIGNAL(clicked()), _uas, SLOT(home()));
+        disconnect(ui.shutdownButton, SIGNAL(clicked()), _uas, SLOT(shutdown()));
+        disconnect(_uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+        _uas = NULL;
     }
 
     // Connect user interface controls
-    if (uas) {
+    if (vehicle) {
+        _uas = vehicle->uas();
         connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
-        connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
-        connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
-        connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-        //connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
-        connect(uas, SIGNAL(modeChanged(int, QString, QString)), this, SLOT(updateMode(int, QString, QString)));
-        connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+        connect(ui.liftoffButton, SIGNAL(clicked()), _uas, SLOT(launch()));
+        connect(ui.landButton, SIGNAL(clicked()), _uas, SLOT(home()));
+        connect(ui.shutdownButton, SIGNAL(clicked()), _uas, SLOT(shutdown()));
+        connect(_uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
 
-        ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
+        ui.controlStatusLabel->setText(tr("Connected to ") + _uas->getUASName());
 
-        this->uasID = uas->getUASID();
-        setBackgroundColor(uas->getColor());
+        setBackgroundColor(_uas->getColor());
 
         this->updateModesList();
         this->updateArmText();
-
-    } else {
-        this->uasID = -1;
     }
 }
 
@@ -158,13 +143,6 @@ void UASControlWidget::setBackgroundColor(QColor color)
 }
 
 
-void UASControlWidget::updateMode(int uas, QString mode, QString description)
-{
-    Q_UNUSED(uas);
-    Q_UNUSED(mode);
-    Q_UNUSED(description);
-}
-
 void UASControlWidget::updateState(int state)
 {
     switch (state) {
@@ -178,60 +156,39 @@ void UASControlWidget::updateState(int state)
     this->updateArmText();
 }
 
-/**
- * Called by the button
- */
-void UASControlWidget::setMode(int mode)
-{
-    // Adapt context button mode
-    modeIdx = mode;
-    ui.modeComboBox->blockSignals(true);
-    ui.modeComboBox->setCurrentIndex(mode);
-    ui.modeComboBox->blockSignals(false);
-
-    emit changedMode(mode);
-}
-
 void UASControlWidget::transmitMode()
 {
-    UASInterface* uas_iface = UASManager::instance()->getUASForId(this->uasID);
-    if (uas_iface) {
-        if (modeIdx >= 0 && modeIdx < _modeList.count()) {
-            AutoPilotPluginManager::FullMode_t fullMode = _modeList[modeIdx];
-            // include armed state
+    if (_uas) {
+        uint8_t     base_mode;
+        uint32_t    custom_mode;
+        QString     flightMode = ui.modeComboBox->itemText(ui.modeComboBox->currentIndex());
+        
+        if (FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)_uas->getAutopilotType())->setFlightMode(flightMode, &base_mode, &custom_mode)) {
             if (armed) {
-                fullMode.baseMode |= MAV_MODE_FLAG_SAFETY_ARMED;
-            } else {
-                fullMode.baseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+                base_mode |= MAV_MODE_FLAG_SAFETY_ARMED;
             }
-
-            UAS* uas = dynamic_cast<UAS*>(uas_iface);
-
-            if (uas->isHilEnabled() || uas->isHilActive()) {
-                fullMode.baseMode |= MAV_MODE_FLAG_HIL_ENABLED;
-            } else {
-                fullMode.baseMode &= ~MAV_MODE_FLAG_HIL_ENABLED;
+            
+            if (_uas->isHilEnabled() || _uas->isHilActive()) {
+                base_mode |= MAV_MODE_FLAG_HIL_ENABLED;
             }
-
-            uas->setMode(fullMode.baseMode, fullMode.customMode);
+            
+            _uas->setMode(base_mode, custom_mode);
             QString modeText = ui.modeComboBox->currentText();
-
-            ui.lastActionLabel->setText(QString("Sent new mode %1 to %2").arg(modeText).arg(uas->getUASName()));
+            
+            ui.lastActionLabel->setText(QString("Sent new mode %1 to %2").arg(flightMode).arg(_uas->getUASName()));
         }
     }
 }
 
 void UASControlWidget::cycleContextButton()
 {
-    UAS* uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(this->uasID));
-    if (uas) {
+    if (_uas) {
         if (!armed) {
-            uas->armSystem();
-            ui.lastActionLabel->setText(QString("Arm %1").arg(uas->getUASName()));
+            _uas->armSystem();
+            ui.lastActionLabel->setText(QString("Arm %1").arg(_uas->getUASName()));
         } else {
-            uas->disarmSystem();
-            ui.lastActionLabel->setText(QString("Disarm %1").arg(uas->getUASName()));
+            _uas->disarmSystem();
+            ui.lastActionLabel->setText(QString("Disarm %1").arg(_uas->getUASName()));
         }
     }
 }
-

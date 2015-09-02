@@ -3,7 +3,9 @@
 
 #include <QMap>
 #include <QTimer>
+
 #include "opmapcontrol.h"
+#include "Vehicle.h"
 
 // Choose one default map type
 //#define MAP_DEFAULT_TYPE_BING
@@ -12,7 +14,7 @@
 
 class UASInterface;
 class UASWaypointManager;
-class Waypoint;
+class MissionItem;
 typedef mapcontrol::WayPointItem WayPointItem;
 
 /**
@@ -41,8 +43,8 @@ public:
 signals:
     void homePositionChanged(double latitude, double longitude, double altitude);
     /** @brief Signal for newly created map waypoints */
-    void waypointCreated(Waypoint* wp);
-    void waypointChanged(Waypoint* wp);
+    void waypointCreated(MissionItem* wp);
+    void waypointChanged(MissionItem* wp);
 
 public slots:
     /** @brief Action triggered when guided action is selected from the context menu */
@@ -51,8 +53,6 @@ public slots:
     bool guidedAltActionTriggered();
     /** @brief Action triggered when set home action is selected from the context menu. */
     bool setHomeActionTriggered();
-    /** @brief Add system to map view */
-    void addUAS(UASInterface* uas);
     /** @brief Update the global position of a system */
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
     /** @brief Update the global position of all systems */
@@ -63,14 +63,12 @@ public slots:
     void updateLocalPositionEstimates();
     /** @brief Update the type, size, etc. of this system */
     void updateSystemSpecs(int uas);
-    /** @brief Change current system in focus / editing */
-    void activeUASSet(UASInterface* uas);
     /** @brief Show a dialog to jump to given GPS coordinates */
     void showGoToDialog();
     /** @brief Jump to the home position on the map */
     void goHome();
     /** @brief Update this waypoint for this UAS */
-    void updateWaypoint(int uas, Waypoint* wp);
+    void updateWaypoint(int uas, MissionItem* wp);
     /** @brief Update the whole waypoint */
     void updateWaypointList(int uas);
     /** @brief Update the home position on the map */
@@ -151,9 +149,9 @@ protected:
 
     UASWaypointManager* currWPManager; ///< The current waypoint manager
     bool offlineMode;
-    QMap<Waypoint* , mapcontrol::WayPointItem*> waypointsToIcons;
-    QMap<mapcontrol::WayPointItem*, Waypoint*> iconsToWaypoints;
-    Waypoint* firingWaypointChange;
+    QMap<MissionItem* , mapcontrol::WayPointItem*> waypointsToIcons;
+    QMap<mapcontrol::WayPointItem*, MissionItem*> iconsToWaypoints;
+    MissionItem* firingWaypointChange;
     QTimer updateTimer;
     float maxUpdateInterval;
     enum editMode {
@@ -177,8 +175,11 @@ protected:
     QPoint contextMousePressPos;        ///< Mouse position when context menu activated.
     int defaultGuidedAlt;               ///< Default altitude for guided mode
     bool zoomBlocked;                   ///< Wether zooming is blocked
-    UASInterface *uas;                  ///< Currently selected UAS.
+    UASInterface* _uas;                 ///< Currently selected UAS.
 
+private slots:
+    void _vehicleAdded(Vehicle* vehicle);
+    void _activeVehicleChanged(Vehicle* vehicle);
 };
 
 #endif // QGCMAPWIDGET_H

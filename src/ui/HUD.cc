@@ -40,12 +40,12 @@ This file is part of the QGROUNDCONTROL project
 #include <qmath.h>
 #include <limits>
 
-#include "UASManager.h"
 #include "UAS.h"
 #include "HUD.h"
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "QGCFileDialog.h"
+#include "MultiVehicleManager.h"
 
 /**
  * @warning The HUD widget will not start painting its content automatically
@@ -159,11 +159,11 @@ HUD::HUD(int width, int height, QWidget* parent)
     connect(qgcApp(), &QGCApplication::styleChanged, this, &HUD::styleChanged);
 
     // Connect with UAS
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &HUD::_activeVehicleChanged);
 
     createActions();
-
-    if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
+    
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 }
 
 HUD::~HUD()
@@ -265,7 +265,7 @@ void HUD::createActions()
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
  */
-void HUD::setActiveUAS(UASInterface* uas)
+void HUD::_activeVehicleChanged(Vehicle* vehicle)
 {
     if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
@@ -288,7 +288,10 @@ void HUD::setActiveUAS(UASInterface* uas)
         }
     }
 
-    if (uas) {
+    this->uas = NULL;
+    
+    if (vehicle) {
+        this->uas = vehicle->uas();
         // Now connect the new UAS
         // Setup communication
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
@@ -310,8 +313,6 @@ void HUD::setActiveUAS(UASInterface* uas)
         }
     }
 
-    // Set new UAS
-    this->uas = uas;
 }
 
 //void HUD::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)

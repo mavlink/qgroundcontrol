@@ -187,7 +187,7 @@ void JoystickWidget::createUIForJoystick()
             JoystickButton* button = new JoystickButton(i, m_ui->buttonBox);
             button->setAction(joystick->getActionForButton(i));
             connect(button, SIGNAL(actionChanged(int,int)), this->joystick, SLOT(setButtonAction(int,int)));
-            connect(this->joystick, SIGNAL(activeUASSet(UASInterface*)), button, SLOT(setActiveUAS(UASInterface*)));
+            connect(this->joystick, &JoystickInput::activeVehicleChanged, button, &JoystickButton::activeVehicleChanged);
             m_ui->buttonLayout->addWidget(button);
             buttons.append(button);
         }
@@ -230,7 +230,7 @@ void JoystickWidget::createUIForJoystick()
             connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
             connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
             connect(axis, SIGNAL(rangeChanged(int,bool)), this->joystick, SLOT(setAxisRangeLimit(int,bool)));
-            connect(this->joystick, SIGNAL(activeUASSet(UASInterface*)), axis, SLOT(setActiveUAS(UASInterface*)));
+            connect(this->joystick, &JoystickInput::activeVehicleChanged, axis, &JoystickAxis::activeVehicleChanged);
             m_ui->axesLayout->addWidget(axis);
             axes.append(axis);
         }

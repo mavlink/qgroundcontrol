@@ -2,6 +2,7 @@
 #define QGCRGBDVIEW_H
 
 #include "HUD.h"
+#include "Vehicle.h"
 
 class QGCRGBDView : public HUD
 {
@@ -13,8 +14,6 @@ public:
 signals:
 
 public slots:
-    void setActiveUAS(UASInterface* uas);
-
     void clearData(void);
     void enableRGB(bool enabled);
     void enableDepth(bool enabled);
@@ -31,6 +30,9 @@ protected:
     void storeSettings();
     /** @brief Load configuration of widget */
     void loadSettings();
+    
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
 };
 
 #endif // QGCRGBDVIEW_H

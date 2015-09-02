@@ -29,6 +29,7 @@
 #include "MainWindowTest.h"
 #include "MockLink.h"
 #include "QGCMessageBox.h"
+#include "MultiVehicleManager.h"
 
 UT_REGISTER_TEST(MainWindowTest)
 
@@ -68,20 +69,12 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     link->setAutopilotType(autopilot);
     LinkManager::instance()->_addLink(link);
     
-    if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        // Connect will pop a warning dialog
-        setExpectedMessageBox(QGCMessageBox::Ok);
-    }
     linkMgr->connectLink(link);
     
-    // Wait for the uas to work it's way through the various threads
+    // Wait for the Vehicle to work it's way through the various threads
     
-    QSignalSpy spyUas(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)));
-    QCOMPARE(spyUas.wait(5000), true);
-    
-    if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        checkExpectedMessageBox();
-    }
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(activeVehicleChanged(Vehicle*)));
+    QCOMPARE(spyVehicle.wait(5000), true);
     
     // Cycle through all the top level views
     

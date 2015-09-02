@@ -8,7 +8,7 @@
 
 #include "Mouse6dofInput.h"
 #include "UAS.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "QGCMessageBox.h"
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
@@ -38,7 +38,8 @@ Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
     bValue(0.0),
     cValue(0.0)
 {
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Mouse6dofInput::_activeVehicleChanged);
+    
     // Connect 3DxWare SDK MotionEvent
     connect(mouseInput, SIGNAL(Move3d(std::vector<float>&)), this, SLOT(motion3DMouse(std::vector<float>&)));
     connect(mouseInput, SIGNAL(On3dmouseKeyDown(int)), this, SLOT(button3DMouseDown(int)));
@@ -62,7 +63,7 @@ Mouse6dofInput::Mouse6dofInput(QWidget* parent) :
     bValue(0.0),
     cValue(0.0)
 {
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Mouse6dofInput::_activeVehicleChanged);
 
     if (!mouseActive)
     {
@@ -111,27 +112,22 @@ Mouse6dofInput::~Mouse6dofInput()
     done = true;
 }
 
-void Mouse6dofInput::setActiveUAS(UASInterface* uas)
+void Mouse6dofInput::_activeVehicleChanged(Vehicle* vehicle)
 {
-    // Only connect / disconnect is the UAS is of a controllable UAS class
-    UAS* tmp = 0;
     if (this->uas)
     {
-        tmp = dynamic_cast<UAS*>(this->uas);
-        if(tmp)
-        {
-            disconnect(this, SIGNAL(mouse6dofChanged(double,double,double,double,double,double)), tmp, SLOT(setManual6DOFControlCommands(double,double,double,double,double,double)));
-            // Todo: disconnect button mapping
-        }
+        disconnect(this, SIGNAL(mouse6dofChanged(double,double,double,double,double,double)), uas, SLOT(setManual6DOFControlCommands(double,double,double,double,double,double)));
+        // Todo: disconnect button mapping
+        uas = NULL;
     }
 
-    this->uas = uas;
-
-    tmp = dynamic_cast<UAS*>(this->uas);
-    if(tmp) {
-                connect(this, SIGNAL(mouse6dofChanged(double,double,double,double,double,double)), tmp, SLOT(setManual6DOFControlCommands(double,double,double,double,double,double)));
-                // Todo: connect button mapping
+    if (vehicle) {
+        uas = vehicle->uas();
+        
+        connect(this, SIGNAL(mouse6dofChanged(double,double,double,double,double,double)), uas, SLOT(setManual6DOFControlCommands(double,double,double,double,double,double)));
+            // Todo: connect button mapping
     }
+    
     if (!isRunning())
     {
         start();
@@ -141,7 +137,7 @@ void Mouse6dofInput::setActiveUAS(UASInterface* uas)
 void Mouse6dofInput::init()
 {
     // Make sure active UAS is set
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 }
 
 void Mouse6dofInput::run()

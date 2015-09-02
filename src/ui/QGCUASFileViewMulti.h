@@ -5,7 +5,7 @@
 #include <QMap>
 
 #include "QGCUASFileView.h"
-#include "UASInterface.h"
+#include "UAS.h"
 
 namespace Ui
 {
@@ -20,14 +20,14 @@ public:
     explicit QGCUASFileViewMulti(QWidget *parent = 0);
     ~QGCUASFileViewMulti();
 
-public slots:
-    void systemDeleted(QObject* uas);
-    void systemCreated(UASInterface* uas);
-    void systemSetActive(UASInterface* uas);
-
 protected:
     void changeEvent(QEvent *e);
-    QMap<UASInterface*, QGCUASFileView*> lists;
+    QMap<UAS*, QGCUASFileView*> lists;
+    
+private slots:
+    void _vehicleAdded(Vehicle* vehicle);
+    void _vehicleRemoved(Vehicle* vehicle);
+    void _activeVehicleChanged(Vehicle* vehicle);
 
 private:
     Ui::QGCUASFileViewMulti *ui;

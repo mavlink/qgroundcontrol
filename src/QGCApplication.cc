@@ -62,7 +62,7 @@ G_END_DECLS
 #endif
 #include "QGCSingleton.h"
 #include "LinkManager.h"
-#include "UASManager.h"
+#include "HomePositionManager.h"
 #include "UASMessageHandler.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
@@ -83,8 +83,12 @@ G_END_DECLS
 #endif
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
-
-#include "MavManager.h"
+#include "FirmwarePluginManager.h"
+#include "MultiVehicleManager.h"
+#include "Generic/GenericFirmwarePlugin.h"
+#include "PX4/PX4FirmwarePlugin.h"
+#include "Vehicle.h"
+#include "MavlinkQmlSingleton.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -106,11 +110,8 @@ const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters"
 const char* QGCApplication::_darkStyleFile = ":/res/styles/style-dark.css";
 const char* QGCApplication::_lightStyleFile = ":/res/styles/style-light.css";
 
-/**
- * @brief ScreenTools creation callback
- *
- * This is called by the QtQuick engine for creating the singleton
- **/
+
+// Qml Singleton factories
 
 static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
 {
@@ -118,17 +119,9 @@ static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
     return screenToolsController;
 }
 
-/**
- * @brief MavManager creation callback
- *
- * This is called by the QtQuick engine for creating the singleton
-**/
-
-static QObject* mavManagerSingletonFactory(QQmlEngine*, QJSEngine*)
+static QObject* mavlinkQmlSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    MavManager* mavManager = new MavManager;
-    qgcApp()->setMavManager(mavManager);
-    return mavManager;
+    return new MavlinkQmlSingleton;
 }
 
 #if defined(QGC_GST_STREAMING)
@@ -159,7 +152,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     : QApplication(argc, argv)
     , _runningUnitTests(unitTesting)
     , _styleIsDark(true)
-    , _pMavManager(NULL)
+	, _fakeMobile(false)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -177,6 +170,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--clear-settings",   &fClearSettingsOptions, QString() },
         { "--full-logging",     &fullLogging,           QString() },
+		{ "--fake-mobile",      &_fakeMobile,           QString() },
         // Add additional command line option flags here
     };
     
@@ -332,6 +326,7 @@ void QGCApplication::_initCommon(void)
     
     qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Can only reference, cannot create");
     qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Can only reference, cannot create");
+    qmlRegisterUncreatableType<Vehicle>("QGroundControl.Vehicle", 1, 0, "Vehicle", "Can only reference, cannot create");
     
     qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
@@ -347,12 +342,12 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
 #endif
     
-    //-- Create QML Singleton Interfaces
-    qmlRegisterSingletonType<ScreenToolsController>("QGroundControl.ScreenToolsController", 1, 0, "ScreenToolsController", screenToolsControllerSingletonFactory);
-    qmlRegisterSingletonType<MavManager>("QGroundControl.MavManager", 1, 0, "MavManager", mavManagerSingletonFactory);
+    // Register Qml Singletons
+    qmlRegisterSingletonType<ScreenToolsController> ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
+    qmlRegisterSingletonType<MavlinkQmlSingleton>   ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
     
-    //-- Register Waypoint Interface
-    qmlRegisterInterface<Waypoint>("Waypoint");
+    //-- Register MissionItem Interface
+    qmlRegisterInterface<MissionItem>("MissionItem");
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
     if (settings.contains(_settingsVersionKey)) {
@@ -371,9 +366,6 @@ void QGCApplication::_initCommon(void)
                                    tr("The format for QGroundControl saved settings has been modified. "
                                       "Your saved settings have been reset to defaults."));
     }
-
-    _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
-    _loadCurrentStyle();
 
     // Load saved files location and validate
 
@@ -414,6 +406,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     _createSingletons();
 
+    _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
+    _loadCurrentStyle();
+    
     // Show splash screen
     QPixmap splashImage(":/res/SplashScreen");
     QSplashScreen* splashScreen = new QSplashScreen(splashImage);
@@ -563,30 +558,50 @@ void QGCApplication::_createSingletons(void)
 {
     // The order here is important since the singletons reference each other
 
+    // No dependencies
+    FirmwarePlugin* firmwarePlugin = GenericFirmwarePlugin::_createSingleton();
+    Q_UNUSED(firmwarePlugin);
+    Q_ASSERT(firmwarePlugin);
+    
+    // No dependencies
+    firmwarePlugin = PX4FirmwarePlugin::_createSingleton();
+    
+    // No dependencies
+    FirmwarePluginManager* firmwarePluginManager = FirmwarePluginManager::_createSingleton();
+    Q_UNUSED(firmwarePluginManager);
+    Q_ASSERT(firmwarePluginManager);
+    
+    // No dependencies
+    MultiVehicleManager* multiVehicleManager = MultiVehicleManager::_createSingleton();
+    Q_UNUSED(multiVehicleManager);
+    Q_ASSERT(multiVehicleManager);
+    
+    // No dependencies
     GAudioOutput* audio = GAudioOutput::_createSingleton();
     Q_UNUSED(audio);
     Q_ASSERT(audio);
 
+    // No dependencies
     LinkManager* linkManager = LinkManager::_createSingleton();
     Q_UNUSED(linkManager);
     Q_ASSERT(linkManager);
 
     // Needs LinkManager
-    UASManagerInterface* uasManager = UASManager::_createSingleton();
+    HomePositionManager* uasManager = HomePositionManager::_createSingleton();
     Q_UNUSED(uasManager);
     Q_ASSERT(uasManager);
 
-    // Need UASManager
+    // Need HomePositionManager
     AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::_createSingleton();
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
 
-    // Need UASManager
+    // Need HomePositionManager
     UASMessageHandler* messageHandler = UASMessageHandler::_createSingleton();
     Q_UNUSED(messageHandler);
     Q_ASSERT(messageHandler);
 
-    // Needs UASManager
+    // Needs HomePositionManager
     FactSystem* factSystem = FactSystem::_createSingleton();
     Q_UNUSED(factSystem);
     Q_ASSERT(factSystem);
@@ -609,11 +624,6 @@ void QGCApplication::_destroySingletons(void)
         LinkManager::instance()->_shutdown();
     }
 
-    if (UASManager::instance(true /* nullOk */)) {
-        // This will delete all uas from the system
-        UASManager::instance()->_shutdown();
-    }
-
     // Let the signals flow through the main thread
     processEvents(QEventLoop::ExcludeUserInputEvents);
 
@@ -623,9 +633,13 @@ void QGCApplication::_destroySingletons(void)
     FactSystem::_deleteSingleton();
     UASMessageHandler::_deleteSingleton();
     AutoPilotPluginManager::_deleteSingleton();
-    UASManager::_deleteSingleton();
+    HomePositionManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
+    MultiVehicleManager::_deleteSingleton();
+    FirmwarePluginManager::_deleteSingleton();
+    GenericFirmwarePlugin::_deleteSingleton();
+    PX4FirmwarePlugin::_deleteSingleton();
 }
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)
@@ -760,17 +774,6 @@ void QGCApplication::_missingParamsDisplay(void)
         "Missing Parameters",
         QString("Parameters missing from firmware: %1.\n\n"
                 "You should quit QGroundControl immediately and update your firmware.").arg(params));
-}
-
-void QGCApplication::setMavManager(MavManager* pMgr)
-{
-    if(!_pMavManager)
-        _pMavManager = pMgr;
-}
-
-MavManager* QGCApplication::getMavManager()
-{
-    return _pMavManager;
 }
 
 void QGCApplication::showToolBarMessage(const QString& message)

@@ -117,52 +117,6 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionLiftoff">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/res/Launch</normaloff>
-     <normalon>:/res/Launch</normalon>:/res/Launch</iconset>
-   </property>
-   <property name="text">
-    <string>Liftoff</string>
-   </property>
-  </action>
-  <action name="actionLand">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/res/Land</normaloff>:/res/Land</iconset>
-   </property>
-   <property name="text">
-    <string>Land</string>
-   </property>
-  </action>
-  <action name="actionEmergency_Land">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/res/Kill</normaloff>:/res/Kill</iconset>
-   </property>
-   <property name="text">
-    <string>Emergency Land</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+L</string>
-   </property>
-  </action>
-  <action name="actionEmergency_Kill">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/res/Kill</normaloff>:/res/Kill</iconset>
-   </property>
-   <property name="text">
-    <string>Kill UAS</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+K</string>
-   </property>
-  </action>
   <action name="actionAdd_Link">
    <property name="text">
     <string>Manage Communication Links</string>
@@ -213,21 +167,6 @@
    </property>
    <property name="text">
     <string>Mute Audio Output</string>
-   </property>
-  </action>
-  <action name="actionShutdownMAV">
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/res/Shutdown</normaloff>:/res/Shutdown</iconset>
-   </property>
-   <property name="text">
-    <string>Shutdown MAV</string>
-   </property>
-   <property name="toolTip">
-    <string>Shutdown the onboard computer - works not during flight</string>
-   </property>
-   <property name="statusTip">
-    <string>Shutdown the onboard computer - works not during flight</string>
    </property>
   </action>
   <action name="actionSettings">
@@ -302,11 +241,6 @@
    </property>
    <property name="text">
     <string>Show Status Bar</string>
-   </property>
-  </action>
-  <action name="actionExperimentalPlanView">
-   <property name="text">
-    <string>Experimental Plan View</string>
    </property>
   </action>
  </widget>

@@ -68,6 +68,7 @@ public:
     Q_INVOKABLE void    onConnect(QString conf);
     Q_INVOKABLE void    onDisconnect(QString conf);
     Q_INVOKABLE void    onEnterMessageArea(int x, int y);
+    Q_INVOKABLE void    onToolBarMessageClosed(void);
 
     Q_PROPERTY(double       height              MEMBER _toolbarHeight           NOTIFY heightChanged)
     Q_PROPERTY(ViewType_t   currentView         MEMBER _currentView             NOTIFY currentViewChanged)
@@ -91,7 +92,7 @@ public:
     int         telemetryLRSSI          () { return _telemetryLRSSI; }
     int         connectionCount         () { return _connectionCount; }
     
-    void showToolBarMessage(const QString& message) { emit showMessage(message); }
+    void showToolBarMessage(const QString& message);
     
 signals:
     void connectionCountChanged         (int count);
@@ -113,8 +114,7 @@ signals:
     void showMessage(const QString& message);
 
 private slots:
-    void _forgetUAS                     (UASInterface* uas);
-    void _setActiveUAS                  (UASInterface* uas);
+    void _activeVehicleChanged          (Vehicle* vehicle);
     void _updateConfigurations          ();
     void _linkConnected                 (LinkInterface* link);
     void _linkDisconnected              (LinkInterface* link);
@@ -123,12 +123,14 @@ private slots:
     void _remoteControlRSSIChanged      (uint8_t rssi);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
     void _heightChanged                 (double height);
+    void _delayedShowToolBarMessage     (void);
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
     void _setToolBarState               (const QString& key, bool value);
 
 private:
+    Vehicle*        _vehicle;
     UASInterface*   _mav;
     QQuickItem*     _toolBar;
     ViewType_t      _currentView;
@@ -148,6 +150,10 @@ private:
     double          _toolbarHeight;
 
     UASMessageViewRollDown* _rollDownMessages;
+    
+    bool            _toolbarMessageVisible;
+    QStringList     _toolbarMessageQueue;
+    QMutex          _toolbarMessageQueueMutex;
 };
 
 #endif // MAINTOOLBAR_H

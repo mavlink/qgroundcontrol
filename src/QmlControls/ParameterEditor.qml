@@ -152,7 +152,7 @@ QGCView {
 
             Item {
                 width:  parent.width
-                height: firstButton.height
+                height: toolsButton.height
 
                 QGCLabel {
                     font.pixelSize: ScreenTools.largeFontPixelSize
@@ -160,29 +160,36 @@ QGCView {
                     text:           "PARAMETER EDITOR"
                 }
 
-                Row {
-                    spacing:            10
-                    layoutDirection:    Qt.RightToLeft
-                    width:              parent.width
+                QGCButton {
+                    id:             toolsButton
+                    anchors.right:  parent.right
+                    text:           "Tools"
 
-                    QGCButton {
-                        text:		"Clear RC to Param"
-                        onClicked:	controller.clearRCToParam()
-                    }
-                    QGCButton {
-                        text:		"Save to file"
-                        visible:	fullMode
-                        onClicked:	controller.saveToFile()
-                    }
-                    QGCButton {
-                        text:		"Load from file"
-                        visible:	fullMode
-                        onClicked:	controller.loadFromFile()
-                    }
-                    QGCButton {
-                        id:			firstButton
-                        text:		"Refresh"
-                        onClicked:	controller.refresh()
+                    menu: Menu {
+                        MenuItem {
+                            text:           "Refresh"
+                            onTriggered:	controller.refresh()
+                        }
+                        MenuItem {
+                            text:           "Reset all to defaults"
+                            onTriggered:	controller.resetAllToDefaults()
+                        }
+                        MenuSeparator { }
+                        MenuItem {
+                            text:           "Load from file"
+                            visible:        fullMode
+                            onTriggered:	controller.loadFromFile()
+                        }
+                        MenuItem {
+                            text:           "Save to file"
+                            visible:        fullMode
+                            onTriggered:	controller.saveToFile()
+                        }
+                        MenuSeparator { }
+                        MenuItem {
+                            text:           "Clear RC to Param"
+                            onTriggered:	controller.clearRCToParam()
+                        }
                     }
                 }
             }

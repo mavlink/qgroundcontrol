@@ -38,10 +38,10 @@ QGC_LOGGING_CATEGORY(ParameterLoaderLog, "ParameterLoaderLog")
 
 Fact ParameterLoader::_defaultFact;
 
-ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent) :
+ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent) :
     QObject(parent),
     _autopilot(autopilot),
-    _uas(uas),
+    _vehicle(vehicle),
     _mavlink(MAVLinkProtocol::instance()),
     _parametersReady(false),
     _initialLoadComplete(false),
@@ -49,7 +49,7 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, 
     _totalParamCount(0)
 {
     Q_ASSERT(_autopilot);
-    Q_ASSERT(_uas);
+    Q_ASSERT(_vehicle);
     Q_ASSERT(_mavlink);
     
     // We signal this to ouselves in order to start timer on our thread
@@ -60,7 +60,7 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, UASInterface* uas, 
     connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_waitingParamTimeout);
     
     // FIXME: Why not direct connect?
-    connect(_uas, SIGNAL(parameterUpdate(int, int, QString, int, int, int, QVariant)), this, SLOT(_parameterUpdate(int, int, QString, int, int, int, QVariant)));
+    connect(_vehicle->uas(), SIGNAL(parameterUpdate(int, int, QString, int, int, int, QVariant)), this, SLOT(_parameterUpdate(int, int, QString, int, int, int, QVariant)));
     
     // Request full param list
     refreshAllParameters();
@@ -77,7 +77,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     bool setMetaData = false;
     
     // Is this for our uas?
-    if (uasId != _uas->getUASID()) {
+    if (uasId != _vehicle->id()) {
         return;
     }
     
@@ -297,8 +297,8 @@ void ParameterLoader::refreshAllParameters(void)
     Q_ASSERT(mavlink);
     
     mavlink_message_t msg;
-    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _uas->getUASID(), MAV_COMP_ID_ALL);
-    _uas->sendMessage(msg);
+    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->id(), MAV_COMP_ID_ALL);
+    _vehicle->sendMessage(msg);
     
     qCDebug(ParameterLoaderLog) << "Request to refresh all parameters";
 }
@@ -490,16 +490,16 @@ void ParameterLoader::_readParameterRaw(int componentId, const QString& paramNam
     mavlink_msg_param_request_read_pack(_mavlink->getSystemId(),    // Our system id
                                         _mavlink->getComponentId(), // Our component id
                                         &msg,                       // Pack into this mavlink_message_t
-                                        _uas->getUASID(),           // Target system id
+                                        _vehicle->id(),             // Target system id
                                         componentId,                // Target component id
                                         fixedParamName,             // Named parameter being requested
                                         paramIndex);                // Parameter index being requested, -1 for named
-    _uas->sendMessage(msg);
+    _vehicle->sendMessage(msg);
 }
 
 void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
 {
-    bool floatHack = _uas->getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA;
+    bool floatHack = _vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA;
 
     mavlink_param_set_t     p;
     mavlink_param_union_t   union_value;
@@ -566,21 +566,21 @@ void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramNa
     }
     
     p.param_value = union_value.param_float;
-    p.target_system = (uint8_t)_uas->getUASID();
+    p.target_system = (uint8_t)_vehicle->id();
     p.target_component = (uint8_t)componentId;
         
     strncpy(p.param_id, paramName.toStdString().c_str(), sizeof(p.param_id));
     
     mavlink_message_t msg;
     mavlink_msg_param_set_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &p);
-    _uas->sendMessage(msg);
+    _vehicle->sendMessage(msg);
 }
 
 void ParameterLoader::_saveToEEPROM(void)
 {
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _uas->getUASID(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
-    _uas->sendMessage(msg);
+    mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
+    _vehicle->sendMessage(msg);
     qCDebug(ParameterLoaderLog) << "_saveToEEPROM";
 }
 
@@ -595,11 +595,11 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
             QStringList wpParams = line.split("\t");
             int lineMavId = wpParams.at(0).toInt();
             if (wpParams.size() == 5) {
-                if (!userWarned && (_uas->getUASID() != lineMavId)) {
+                if (!userWarned && (_vehicle->id() != lineMavId)) {
                     userWarned = true;
                     QString msg("The parameters in the stream have been saved from System Id %1, but the current vehicle has the System Id %2.");
                     QGCMessageBox::StandardButton button = QGCMessageBox::warning("Parameter Load",
-                                                                                  msg.arg(lineMavId).arg(_uas->getUASID()),
+                                                                                  msg.arg(lineMavId).arg(_vehicle->id()),
                                                                                   QGCMessageBox::Ok | QGCMessageBox::Cancel,
                                                                                   QGCMessageBox::Cancel);
                     if (button == QGCMessageBox::Cancel) {
@@ -649,7 +649,7 @@ void ParameterLoader::writeParametersToStream(QTextStream &stream, const QString
             Fact* fact = _mapParameterName2Variant[componentId][paramName].value<Fact*>();
             Q_ASSERT(fact);
             
-            stream << _uas->getUASID() << "\t" << componentId << "\t" << paramName << "\t" << fact->valueString() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
+            stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->valueString() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
         }
     }
     
@@ -759,6 +759,7 @@ void ParameterLoader::_checkInitialLoadComplete(void)
     if (msgHandler->getErrorCountTotal()) {
         QString errors;
         bool firstError = true;
+        bool errorsFound = false;
         
         msgHandler->lockAccess();
         foreach (UASMessage* msg, msgHandler->messages()) {
@@ -769,11 +770,13 @@ void ParameterLoader::_checkInitialLoadComplete(void)
                 errors += " - ";
                 errors += msg->getText();
                 firstError = false;
+                errorsFound = true;
             }
         }
+        msgHandler->showErrorsInToolbar();
         msgHandler->unlockAccess();
         
-        if (!firstError) {
+        if (errorsFound) {
             QString errorMsg = QString("Errors were detected during vehicle startup. You should resolve these prior to flight.\n%1").arg(errors);
             qgcApp()->showToolBarMessage(errorMsg);
         }

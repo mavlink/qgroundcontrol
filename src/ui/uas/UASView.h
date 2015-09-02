@@ -36,7 +36,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QString>
 #include <QTimer>
 #include <QMouseEvent>
-#include <UASInterface.h>
+
+#include "Vehicle.h"
+#include "UASInterface.h"
 
 namespace Ui
 {
@@ -47,8 +49,9 @@ class UASView : public QWidget
 {
     Q_OBJECT
 public:
-    UASView(UASInterface* uas, QWidget *parent = 0);
+    UASView(Vehicle* vehicle, QWidget *parent = 0);
     ~UASView();
+    Vehicle* vehicle;
     UASInterface* uas;
 
 public slots:
@@ -58,18 +61,13 @@ public slots:
     void updateThrust(UASInterface* uas, double thrust);
     void updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
-    void updateGlobalPosition(UASInterface*, double lon, double lat, double altAMSL, double altWGS84, quint64 usec);
+    void updateGlobalPosition(UASInterface*, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
     void updateSpeed(UASInterface*, double x, double y, double z, quint64 usec);
     void updateState(UASInterface*, QString uasState, QString stateDescription);
     /** @brief Update the MAV mode */
     void updateMode(int sysId, QString status, QString description);
     void updateLoad(UASInterface* uas, double load);
     //void receiveValue(int uasid, QString id, double value, quint64 time);
-    /**
-     * Request that the UASManager deletes this UAS. This doesn't delete this widget
-     * yet, it waits for the approprait uasDeleted signal.
-     */
-    void triggerUASDeletion();
     void refresh();
     /** @brief Receive new waypoint information */
     void setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current);
@@ -81,8 +79,6 @@ public slots:
     void setSystemType(UASInterface* uas, unsigned int systemType);
     /** @brief Set the current UAS as the globally active system */
     void setUASasActive(bool);
-    /** @brief Update the view if an UAS has been set to active */
-    void updateActiveUAS(UASInterface* uas, bool active);
     /** @brief Set the widget into critical mode */
     void heartbeatTimeout(bool timeout, unsigned int ms);
     /** @brief Bring up the dialog to rename the system */
@@ -143,6 +139,10 @@ protected:
      * with the UAS.
      */
     void contextMenuEvent(QContextMenuEvent *event);
+    
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
+    void _activateVehicle(void);
 
 private:
     Ui::UASView *m_ui;

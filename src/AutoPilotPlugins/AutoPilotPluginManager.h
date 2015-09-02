@@ -31,12 +31,9 @@
 #include <QList>
 #include <QString>
 
-#include "UASInterface.h"
-#include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
 #include "QGCSingleton.h"
-#include "QGCMAVLink.h"
-
+#include "Vehicle.h"
 
 /// AutoPilotPlugin manager is a singleton which maintains the list of AutoPilotPlugin objects.
 
@@ -47,37 +44,12 @@ class AutoPilotPluginManager : public QGCSingleton
     DECLARE_QGC_SINGLETON(AutoPilotPluginManager, AutoPilotPluginManager)
 
 public:
-    /// Returns the singleton AutoPilotPlugin instance for the specified uas. Returned as QSharedPointer
-    /// to prevent shutdown ordering problems with Qml destruction happening after Facts are destroyed.
-    ///     @param uas Uas to get plugin for
-    QSharedPointer<AutoPilotPlugin> getInstanceForAutoPilotPlugin(UASInterface* uas);
+    AutoPilotPlugin* newAutopilotPluginForVehicle(Vehicle* vehicle);
     
-    typedef struct {
-        uint8_t baseMode;
-        uint32_t customMode;
-    } FullMode_t;
-
-    /// Returns the list of modes which are available for the specified autopilot type.
-    QList<FullMode_t> getModes(int autopilotType) const;
-    
-    /// @brief Returns a human readable short description for the specified mode.
-    QString getShortModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const;
-
-    /// @brief Returns a human hearable short description for the specified mode.
-    QString getAudioModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const;
-
-private slots:
-    void _uasCreated(UASInterface* uas);
-    void _uasDeleted(UASInterface* uas);
-
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     AutoPilotPluginManager(QObject* parent = NULL);
     ~AutoPilotPluginManager();
-    
-    MAV_AUTOPILOT _installedAutopilotType(MAV_AUTOPILOT autopilot);
-    
-    QMap<MAV_AUTOPILOT, QMap<int, QSharedPointer<AutoPilotPlugin> > > _pluginMap; ///< Map of AutoPilot plugins _pluginMap[MAV_TYPE][UASid]
 };
 
 #endif

@@ -248,7 +248,7 @@ QGCView {
                     spacing:            10
 
                     QGCLabel {
-                        color:  "yellow"
+                        color:  palette.warningText
                         text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</font>"
                     }
 
@@ -259,6 +259,37 @@ QGCView {
                     QGCButton {
                         text:       "Calibrate"
                         onClicked:  controller.calibrateEsc()
+                    }
+                }
+            }
+
+            QGCLabel {
+                text:           "UAVCAN ESC Configuration"
+                font.pixelSize: ScreenTools.mediumFontPixelSize
+            }
+
+            Rectangle {
+                width:              parent.width
+                height:             140
+                color:              palette.windowShade
+
+                Column {
+                    anchors.margins:    10
+                    anchors.fill:       parent
+                    spacing:            10
+
+                    QGCLabel {
+                        color:  palette.warningText
+                        text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</font>"
+                    }
+
+                    QGCLabel {
+                        text: "You must use USB connection for this operation."
+                    }
+
+                    QGCButton {
+                        text:       "Configure"
+                        onClicked:  controller.busConfigureActuators()
                     }
                 }
             }

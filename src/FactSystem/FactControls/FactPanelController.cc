@@ -22,8 +22,7 @@
  ======================================================================*/
 
 #include "FactPanelController.h"
-#include "UASManager.h"
-#include "AutoPilotPluginManager.h"
+#include "MultiVehicleManager.h"
 #include "QGCMessageBox.h"
 
 #include <QQmlEngine>
@@ -34,15 +33,15 @@
 QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
 
 FactPanelController::FactPanelController(void) :
-	_autopilot(NULL),
     _factPanel(NULL)
 {
-    // FIXME: Get rid of these asserts
+    _vehicle = MultiVehicleManager::instance()->activeVehicle();
+    Q_ASSERT(_vehicle);
     
-    _uas = UASManager::instance()->getActiveUAS();
+    _uas = _vehicle->uas();
     Q_ASSERT(_uas);
     
-    _autopilot = AutoPilotPluginManager::instance()->getInstanceForAutoPilotPlugin(_uas);
+    _autopilot = _vehicle->autopilotPlugin();
     Q_ASSERT(_autopilot);
     Q_ASSERT(_autopilot->pluginReady());
     

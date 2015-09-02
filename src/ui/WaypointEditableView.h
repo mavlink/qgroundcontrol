@@ -34,7 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #define WAYPOINTEDITABLEVIEW_H
 
 #include <QWidget>
-#include "Waypoint.h"
+#include "MissionItem.h"
 #include <iostream>
 
 enum QGC_WAYPOINTEDITABLEVIEW_MODE {
@@ -65,7 +65,7 @@ class WaypointEditableView : public QWidget
     Q_OBJECT
     Q_DISABLE_COPY(WaypointEditableView)
 public:
-    explicit WaypointEditableView(Waypoint* wp, QWidget* parent);
+    explicit WaypointEditableView(MissionItem* wp, QWidget* parent);
     virtual ~WaypointEditableView();
 
 public:
@@ -75,7 +75,7 @@ public slots:
     void moveUp();
     void moveDown();
     void remove();
-    /** @brief Waypoint matching this widget has been deleted */
+    /** @brief MissionItem matching this widget has been deleted */
     void deleted(QObject* waypoint);
     void changedAutoContinue(int);
     void changedFrame(int state);
@@ -99,7 +99,7 @@ protected slots:
 protected:
     virtual void changeEvent(QEvent *e);
     virtual void paintEvent(QPaintEvent *);
-    Waypoint* wp;
+    MissionItem* wp;
     QGC_WAYPOINTEDITABLEVIEW_MODE viewMode;
     // Widgets for every mission element
     QGCMissionNavWaypoint* MissionNavWaypointWidget;
@@ -121,9 +121,9 @@ private:
     Ui::WaypointEditableView *m_ui;
 
 signals:
-    void moveUpWaypoint(Waypoint*);
-    void moveDownWaypoint(Waypoint*);
-    void removeWaypoint(Waypoint*);
+    void moveUpWaypoint(MissionItem*);
+    void moveDownWaypoint(MissionItem*);
+    void removeWaypoint(MissionItem*);
     void changeCurrentWaypoint(quint16);
     void setYaw(double);
 

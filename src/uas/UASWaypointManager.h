@@ -36,10 +36,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QTimer>
 #include <QPointer>
-#include "Waypoint.h"
+#include "MissionItem.h"
 #include "QGCMAVLink.h"
+
 class UAS;
 class UASInterface;
+class Vehicle;
 
 /**
  * @brief Implementation of the MAVLINK waypoint protocol
@@ -65,11 +67,11 @@ private:
     }; ///< The possible states for the waypoint protocol
 
 public:
-    UASWaypointManager(UAS* uas=NULL);   ///< Standard constructor
+    UASWaypointManager(Vehicle* vehicle, UAS* uas);   ///< Standard constructor
     ~UASWaypointManager();
     bool guidedModeSupported();
 
-    void goToWaypoint(Waypoint *wp);
+    void goToWaypoint(MissionItem *wp);
     /** @name Received message handlers */
     /*@{*/
     void handleWaypointCount(quint8 systemId, quint8 compId, quint16 count);                            ///< Handles received waypoint count messages
@@ -90,23 +92,23 @@ public:
     int setCurrentEditable(quint16 seq);          ///< Changes the current waypoint in edit tab
     /*@}*/
 
-    /** @name Waypoint list operations */
+    /** @name MissionItem list operations */
     /*@{*/
-    const QList<Waypoint *> &getWaypointEditableList(void) {
+    const QList<MissionItem *> &getWaypointEditableList(void) {
         return waypointsEditable;    ///< Returns a const reference to the waypoint list.
     }
-    const QList<Waypoint *> &getWaypointViewOnlyList(void) {
+    const QList<MissionItem *> &getWaypointViewOnlyList(void) {
         return waypointsViewOnly;    ///< Returns a const reference to the waypoint list.
     }
-    const QList<Waypoint *> getGlobalFrameWaypointList();  ///< Returns a global waypoint list
-    const QList<Waypoint *> getGlobalFrameAndNavTypeWaypointList(); ///< Returns a global waypoint list containing only waypoints suitable for navigation. Actions and other mission items are filtered out.
-    const QList<Waypoint *> getNavTypeWaypointList(); ///< Returns a waypoint list containing only waypoints suitable for navigation. Actions and other mission items are filtered out.
-    int getIndexOf(Waypoint* wp);                   ///< Get the index of a waypoint in the list
-    int getGlobalFrameIndexOf(Waypoint* wp);    ///< Get the index of a waypoint in the list, counting only global waypoints
-    int getGlobalFrameAndNavTypeIndexOf(Waypoint* wp); ///< Get the index of a waypoint in the list, counting only global AND navigation mode waypoints
-    int getNavTypeIndexOf(Waypoint* wp); ///< Get the index of a waypoint in the list, counting only navigation mode waypoints
-    int getLocalFrameIndexOf(Waypoint* wp);     ///< Get the index of a waypoint in the list, counting only local waypoints
-    int getMissionFrameIndexOf(Waypoint* wp);   ///< Get the index of a waypoint in the list, counting only mission waypoints
+    const QList<MissionItem *> getGlobalFrameWaypointList();  ///< Returns a global waypoint list
+    const QList<MissionItem *> getGlobalFrameAndNavTypeWaypointList(); ///< Returns a global waypoint list containing only waypoints suitable for navigation. Actions and other mission items are filtered out.
+    const QList<MissionItem *> getNavTypeWaypointList(); ///< Returns a waypoint list containing only waypoints suitable for navigation. Actions and other mission items are filtered out.
+    int getIndexOf(MissionItem* wp);                   ///< Get the index of a waypoint in the list
+    int getGlobalFrameIndexOf(MissionItem* wp);    ///< Get the index of a waypoint in the list, counting only global waypoints
+    int getGlobalFrameAndNavTypeIndexOf(MissionItem* wp); ///< Get the index of a waypoint in the list, counting only global AND navigation mode waypoints
+    int getNavTypeIndexOf(MissionItem* wp); ///< Get the index of a waypoint in the list, counting only navigation mode waypoints
+    int getLocalFrameIndexOf(MissionItem* wp);     ///< Get the index of a waypoint in the list, counting only local waypoints
+    int getMissionFrameIndexOf(MissionItem* wp);   ///< Get the index of a waypoint in the list, counting only mission waypoints
     int getGlobalFrameCount(); ///< Get the count of global waypoints in the list
     int getGlobalFrameAndNavTypeCount(); ///< Get the count of global waypoints in navigation mode in the list
     int getNavTypeCount(); ///< Get the count of global waypoints in navigation mode in the list
@@ -133,17 +135,17 @@ private:
 
 public slots:
     void timeout();                                 ///< Called by the timer if a response times out. Handles send retries.
-    /** @name Waypoint list operations */
+    /** @name MissionItem list operations */
     /*@{*/
-    void addWaypointEditable(Waypoint *wp, bool enforceFirstActive=true);                 ///< adds a new waypoint to the end of the editable list and changes its sequence number accordingly
-    void addWaypointViewOnly(Waypoint *wp);                                               ///< adds a new waypoint to the end of the view-only list and changes its sequence number accordingly
-    Waypoint* createWaypoint(bool enforceFirstActive=true);     ///< Creates a waypoint
+    void addWaypointEditable(MissionItem *wp, bool enforceFirstActive=true);                 ///< adds a new waypoint to the end of the editable list and changes its sequence number accordingly
+    void addWaypointViewOnly(MissionItem *wp);                                               ///< adds a new waypoint to the end of the view-only list and changes its sequence number accordingly
+    MissionItem* createWaypoint(bool enforceFirstActive=true);     ///< Creates a waypoint
     int removeWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
     void moveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
     void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
     void loadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
-    void notifyOfChangeEditable(Waypoint* wp);             ///< Notifies manager to changes to an editable waypoint
-    void notifyOfChangeViewOnly(Waypoint* wp);             ///< Notifies manager to changes to a viewonly waypoint, e.g. some widget wants to change "current"
+    void notifyOfChangeEditable(MissionItem* wp);             ///< Notifies manager to changes to an editable waypoint
+    void notifyOfChangeViewOnly(MissionItem* wp);             ///< Notifies manager to changes to a viewonly waypoint, e.g. some widget wants to change "current"
     /*@}*/
     void handleLocalPositionChanged(UASInterface* mav, double x, double y, double z, quint64 time);
     void handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double altAMSL, double altWGS84, quint64 time);
@@ -151,10 +153,10 @@ public slots:
 signals:
     void waypointEditableListChanged(void);                 ///< emits signal that the list of editable waypoints has been changed
     void waypointEditableListChanged(int uasid);            ///< emits signal that the list of editable waypoints has been changed
-    void waypointEditableChanged(int uasid, Waypoint* wp);  ///< emits signal that a single editable waypoint has been changed
+    void waypointEditableChanged(int uasid, MissionItem* wp);  ///< emits signal that a single editable waypoint has been changed
     void waypointViewOnlyListChanged(void);                 ///< emits signal that the list of editable waypoints has been changed
     void waypointViewOnlyListChanged(int uasid);            ///< emits signal that the list of editable waypoints has been changed
-    void waypointViewOnlyChanged(int uasid, Waypoint* wp);  ///< emits signal that a single editable waypoint has been changed
+    void waypointViewOnlyChanged(int uasid, MissionItem* wp);  ///< emits signal that a single editable waypoint has been changed
     void currentWaypointChanged(quint16);           ///< emits the new current waypoint sequence number
     void updateStatusString(const QString &);       ///< emits the current status string
     void waypointDistanceChanged(double distance);   ///< Distance to next waypoint changed (in meters)
@@ -171,7 +173,7 @@ private slots:
     void _updateWPonTimer(void);                               ///< Starts requesting WP on timer timeout
 
 private:
-    UAS* uas;                                       ///< Reference to the corresponding UAS
+    Vehicle* _vehicle;
     quint32 current_retries;                        ///< The current number of retries left
     quint16 current_wp_id;                          ///< The last used waypoint ID in the current protocol transaction
     quint16 current_count;                          ///< The number of waypoints in the current protocol transaction
@@ -180,9 +182,9 @@ private:
     quint8 current_partner_compid;                  ///< The current protocol communication target component
     bool read_to_edit;                              ///< If true, after readWaypoints() incoming waypoints will be copied both to "edit"-tab and "view"-tab. Otherwise, only to "view"-tab.
 
-    QList<Waypoint *> waypointsViewOnly;                  ///< local copy of current waypoint list on MAV
-    QList<Waypoint *> waypointsEditable;                  ///< local editable waypoint list
-    QPointer<Waypoint> currentWaypointEditable;                      ///< The currently used waypoint
+    QList<MissionItem *> waypointsViewOnly;                  ///< local copy of current waypoint list on MAV
+    QList<MissionItem *> waypointsEditable;                  ///< local editable waypoint list
+    QPointer<MissionItem> currentWaypointEditable;                      ///< The currently used waypoint
     QList<mavlink_mission_item_t *> waypoint_buffer;  ///< buffer for waypoints during communication
     QTimer protocol_timer;                          ///< Timer to catch timeouts
     QTimer _updateWPlist_timer;                     ///< update WP list if modified by another instance onboard

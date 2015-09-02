@@ -27,131 +27,26 @@
 #include "AutoPilotPluginManager.h"
 #include "PX4/PX4AutoPilotPlugin.h"
 #include "Generic/GenericAutoPilotPlugin.h"
-#include "QGCApplication.h"
-#include "QGCMessageBox.h"
-#include "UASManager.h"
 
 IMPLEMENT_QGC_SINGLETON(AutoPilotPluginManager, AutoPilotPluginManager)
 
 AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
     QGCSingleton(parent)
 {
-    UASManagerInterface* uasMgr = UASManager::instance();
-    Q_ASSERT(uasMgr);
-    
-    // We need to track uas coming and going so that we can instantiate plugins for each uas
-    connect(uasMgr, &UASManagerInterface::UASCreated, this, &AutoPilotPluginManager::_uasCreated);
-    connect(uasMgr, SIGNAL(UASDeleted(UASInterface*)), this, SLOT(_uasDeleted(UASInterface*)));
+
 }
 
 AutoPilotPluginManager::~AutoPilotPluginManager()
 {
-#ifdef QT_DEBUG
-    foreach(MAV_AUTOPILOT mavType, _pluginMap.keys()) {
-        Q_ASSERT_X(_pluginMap[mavType].count() == 0, "AutoPilotPluginManager", "LinkManager::_shutdown should have already closed all uas");
-    }
-#endif
-    _pluginMap.clear();
-    
     PX4AutoPilotPlugin::clearStaticData();
     GenericAutoPilotPlugin::clearStaticData();
 }
 
-/// Create the plugin for this uas
-void AutoPilotPluginManager::_uasCreated(UASInterface* uas)
+AutoPilotPlugin* AutoPilotPluginManager::newAutopilotPluginForVehicle(Vehicle* vehicle)
 {
-    Q_ASSERT(uas);
-    
-    MAV_AUTOPILOT autopilotType = static_cast<MAV_AUTOPILOT>(uas->getAutopilotType());
-    int uasId = uas->getUASID();
-    Q_ASSERT(uasId != 0);
-    
-    if (_pluginMap.contains(autopilotType)) {
-        Q_ASSERT_X(!_pluginMap[autopilotType].contains(uasId), "AutoPilotPluginManager", "Either we have duplicate UAS ids, or a UAS was not removed correctly.");
+    if (vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
+        return new PX4AutoPilotPlugin(vehicle, vehicle);
+    } else {
+        return new GenericAutoPilotPlugin(vehicle, vehicle);
     }
-
-    AutoPilotPlugin* plugin;
-    switch (autopilotType) {
-        case MAV_AUTOPILOT_PX4:
-            plugin = new PX4AutoPilotPlugin(uas, this);
-            Q_CHECK_PTR(plugin);
-            _pluginMap[MAV_AUTOPILOT_PX4][uasId] = QSharedPointer<AutoPilotPlugin>(plugin);
-            break;
-        case MAV_AUTOPILOT_GENERIC:
-        default:
-            plugin = new GenericAutoPilotPlugin(uas, this);
-            Q_CHECK_PTR(plugin);
-            _pluginMap[MAV_AUTOPILOT_GENERIC][uasId] = QSharedPointer<AutoPilotPlugin>(plugin);
-            QGCMessageBox::warning("Partial Support AutoPilot",
-                                   "Warning: You have connected QGroundControl to a firmware flight stack which is only partially supported. "
-                                   "If you are using the APM Flight Stack it is currently recommended to use Mission Planner, APM Planner or Tower as your ground control station.");
-    }
-}
-
-/// Destroy the plugin associated with this uas
-void AutoPilotPluginManager::_uasDeleted(UASInterface* uas)
-{
-    Q_ASSERT(uas);
-    
-    MAV_AUTOPILOT autopilotType = _installedAutopilotType(static_cast<MAV_AUTOPILOT>(uas->getAutopilotType()));
-    int uasId = uas->getUASID();
-    Q_ASSERT(uasId != 0);
-    
-    if (_pluginMap.contains(autopilotType) && _pluginMap[autopilotType].contains(uasId)) {
-        _pluginMap[autopilotType][uasId].clear();
-        _pluginMap[autopilotType].remove(uasId);
-    }
-}
-
-QSharedPointer<AutoPilotPlugin> AutoPilotPluginManager::getInstanceForAutoPilotPlugin(UASInterface* uas)
-{
-    Q_ASSERT(uas);
-    
-    MAV_AUTOPILOT autopilotType = _installedAutopilotType(static_cast<MAV_AUTOPILOT>(uas->getAutopilotType()));
-    int uasId = uas->getUASID();
-    Q_ASSERT(uasId != 0);
-    
-    Q_ASSERT(_pluginMap.contains(autopilotType));
-    Q_ASSERT(_pluginMap[autopilotType].contains(uasId));
-    
-    return _pluginMap[autopilotType][uasId];
-}
-
-QList<AutoPilotPluginManager::FullMode_t> AutoPilotPluginManager::getModes(int autopilotType) const
-{
-    switch (autopilotType) {
-        case MAV_AUTOPILOT_PX4:
-            return PX4AutoPilotPlugin::getModes();
-        case MAV_AUTOPILOT_GENERIC:
-        default:
-            return GenericAutoPilotPlugin::getModes();
-    }
-}
-
-QString AutoPilotPluginManager::getAudioModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const
-{
-    switch (autopilotType) {
-        case MAV_AUTOPILOT_PX4:
-            return PX4AutoPilotPlugin::getAudioModeText(baseMode, customMode);
-        case MAV_AUTOPILOT_GENERIC:
-        default:
-            return GenericAutoPilotPlugin::getAudioModeText(baseMode, customMode);
-    }
-}
-
-QString AutoPilotPluginManager::getShortModeText(uint8_t baseMode, uint32_t customMode, int autopilotType) const
-{
-    switch (autopilotType) {
-        case MAV_AUTOPILOT_PX4:
-            return PX4AutoPilotPlugin::getShortModeText(baseMode, customMode);
-        case MAV_AUTOPILOT_GENERIC:
-        default:
-            return GenericAutoPilotPlugin::getShortModeText(baseMode, customMode);
-    }
-}
-
-/// If autopilot is not an installed plugin, returns MAV_AUTOPILOT_GENERIC
-MAV_AUTOPILOT AutoPilotPluginManager::_installedAutopilotType(MAV_AUTOPILOT autopilot)
-{
-    return _pluginMap.contains(autopilot) ? autopilot : MAV_AUTOPILOT_GENERIC;
 }

@@ -100,8 +100,6 @@ public:
     virtual const QString& getShortState() const = 0;
     /** @brief Get short mode */
     virtual const QString& getShortMode() const = 0;
-    /** @brief Translate mode id into text */
-    virtual QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode) const = 0;
     //virtual QColor getColor() = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
@@ -122,8 +120,6 @@ public:
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
 
-    virtual bool getSelected() const = 0;
-
     virtual bool isArmed() const = 0;
 
     /** @brief Set the airframe of this MAV */
@@ -133,11 +129,6 @@ public:
     virtual UASWaypointManager* getWaypointManager(void) = 0;
 
     virtual FileManager* getFileManager() = 0;
-
-    /** @brief Send a message over this link (to this or to all UAS on this link) */
-    virtual void sendMessage(LinkInterface* link, mavlink_message_t message) = 0;
-    /** @brief Send a message over all links this UAS can be reached with (!= all links) */
-    virtual void sendMessage(mavlink_message_t message) = 0;
 
     enum Airframe {
         QGC_AIRFRAME_GENERIC = 0,
@@ -157,18 +148,6 @@ public:
         QGC_AIRFRAME_CAMFLYER_Q,
         QGC_AIRFRAME_END_OF_ENUM
     };
-
-    /**
-         * @brief Get the links associated with this robot
-         *
-         * @return List with all links this robot is associated with. Association is usually
-         *         based on the fact that a message for this robot has been received through that
-         *         interface. The LinkInterface can support multiple protocols.
-         **/
-    virtual QList<LinkInterface*> getLinks() = 0;
-    
-    /// @returns true: UAS is connected to log replay link
-    virtual bool isLogReplay(void) = 0;
 
     /**
      * @brief Get the color for this UAS
@@ -249,7 +228,12 @@ public:
         StartCalibrationAccel,
         StartCalibrationLevel,
         StartCalibrationEsc,
-        StartCalibrationCopyTrims
+        StartCalibrationCopyTrims,
+        StartCalibrationUavcanEsc
+    };
+
+    enum StartBusConfigType {
+        StartBusConfigActuators
     };
     
     /// Starts the specified calibration
@@ -257,6 +241,12 @@ public:
     
     /// Ends any current calibration
     virtual void stopCalibration(void) = 0;
+
+    /// Starts the specified bus configuration
+    virtual void startBusConfig(StartBusConfigType calType) = 0;
+
+    /// Ends any current bus configuration
+    virtual void stopBusConfig(void) = 0;
 
 public slots:
 
@@ -275,7 +265,7 @@ public slots:
     /** @brief Launches the system/Liftof **/
     virtual void launch() = 0;
     /** @brief Set a new waypoint **/
-    //virtual void setWaypoint(Waypoint* wp) = 0;
+    //virtual void setWaypoint(MissionItem* wp) = 0;
     /** @brief Set this waypoint as next waypoint to fly to */
     //virtual void setWaypointActive(int wp) = 0;
     /** @brief Order the robot to return home / to land on the runway **/
@@ -315,22 +305,6 @@ public slots:
     virtual void setLocalOriginAtCurrentGPSPosition() = 0;
     /** @brief Set world frame origin / home position at this GPS position */
     virtual void setHomePosition(double lat, double lon, double alt) = 0;
-
-    /**
-     * @brief Add a link to the list of current links
-     *
-     * Adding the link to the robot's internal link list will allow him so send its own messages
-     * over all registered links. Usually a link is added once a message for this particular robot
-     * has been received over a link, but adding could also be done manually.
-     * @warning Not all links should be added to all robots by default, because else all robots will
-     *          attempt to send over all links, typically choking wireless serial links.
-     */
-    virtual void addLink(LinkInterface* link) = 0;
-
-    /**
-     * @brief Set the current robot as focused in the user interface
-     */
-    virtual void setSelected() = 0;
 
     virtual void enableAllDataTransmission(int rate) = 0;
     virtual void enableRawSensorDataTransmission(int rate) = 0;
@@ -408,11 +382,6 @@ signals:
 
     void poiFound(UASInterface* uas, int type, int colorIndex, QString message, float x, float y, float z);
     void poiConnectionFound(UASInterface* uas, int type, int colorIndex, QString message, float x1, float y1, float z1, float x2, float y2, float z2);
-
-    /**
-     * @brief A misconfiguration has been detected by the UAS
-     */
-    void misconfigurationDetected(UASInterface* uas);
 
     /** @brief A text message from the system has been received */
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
@@ -592,8 +561,6 @@ signals:
     void heartbeatTimeout(bool timeout, unsigned int ms);
     /** @brief Name of system changed */
     void nameChanged(QString newName);
-    /** @brief System has been selected as focused system */
-    void systemSelected(bool selected);
     /** @brief Core specifications have changed */
     void systemSpecsChanged(int uasId);
 

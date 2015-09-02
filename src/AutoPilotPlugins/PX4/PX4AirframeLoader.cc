@@ -56,7 +56,6 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
     }
 
     qCDebug(PX4AirframeLoaderLog) << "Loading PX4 airframe fact meta data";
-    qDebug() << "LOADING META DATA";
 
     Q_ASSERT(AirframeComponentAirframes::get().count() == 0);
 
@@ -83,14 +82,14 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
     Q_ASSERT(success);
 
     if (!success) {
-        qWarning() << "Failed opening airframe XML";
+        qCWarning(PX4AirframeLoaderLog) << "Failed opening airframe XML";
         return;
     }
 
     QXmlStreamReader xml(xmlFile.readAll());
     xmlFile.close();
     if (xml.hasError()) {
-        qWarning() << "Badly formed XML" << xml.errorString();
+        qCWarning(PX4AirframeLoaderLog) << "Badly formed XML" << xml.errorString();
         return;
     }
 
@@ -98,7 +97,6 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
     QString         image;
     QString         errorString;
     int             xmlState = XmlStateNone;
-    bool            badMetaData = true;
 
     while (!xml.atEnd()) {
         if (xml.isStartElement()) {
@@ -106,14 +104,14 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
 
             if (elementName == "airframes") {
                 if (xmlState != XmlStateNone) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4AirframeLoaderLog) << "Badly formed XML";
                     return;
                 }
                 xmlState = XmlStateFoundAirframes;
 
             } else if (elementName == "version") {
                 if (xmlState != XmlStateFoundAirframes) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4AirframeLoaderLog) << "Badly formed XML";
                     return;
                 }
                 xmlState = XmlStateFoundVersion;
@@ -122,7 +120,7 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
                 QString strVersion = xml.readElementText();
                 int intVersion = strVersion.toInt(&convertOk);
                 if (!convertOk) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4AirframeLoaderLog) << "Badly formed XML";
                     return;
                 }
                 if (intVersion < 1) {
@@ -141,7 +139,7 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
                 xmlState = XmlStateFoundGroup;
 
                 if (!xml.attributes().hasAttribute("name") || !xml.attributes().hasAttribute("image")) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4AirframeLoaderLog) << "Badly formed XML";
                     return;
                 }
                 airframeGroup = xml.attributes().value("name").toString();
@@ -150,13 +148,13 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
 
             } else if (elementName == "airframe") {
                 if (xmlState != XmlStateFoundGroup) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4AirframeLoaderLog) << "Badly formed XML";
                     return;
                 }
                 xmlState = XmlStateFoundAirframe;
 
                 if (!xml.attributes().hasAttribute("name") || !xml.attributes().hasAttribute("id")) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4AirframeLoaderLog) << "Badly formed XML";
                     return;
                 }
 
@@ -171,70 +169,15 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
             } else {
                 // We should be getting meta data now
                 if (xmlState != XmlStateFoundAirframe) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4AirframeLoaderLog) << "Badly formed XML";
                     return;
-                }
-
-                if (!badMetaData) {
-
-                    // We eventually want this, just not yet now
-//                    if (elementName == "short_desc") {
-//                        Q_ASSERT(metaData);
-//                        QString text = xml.readElementText();
-//                        text = text.replace("\n", " ");
-//                        qCDebug(PX4AirframeLoaderLog) << "Short description:" << text;
-//                        metaData->setShortDescription(text);
-
-//                    } else if (elementName == "long_desc") {
-//                        Q_ASSERT(metaData);
-//                        QString text = xml.readElementText();
-//                        text = text.replace("\n", " ");
-//                        qCDebug(PX4AirframeLoaderLog) << "Long description:" << text;
-//                        metaData->setLongDescription(text);
-
-//                    } else if (elementName == "min") {
-//                        Q_ASSERT(metaData);
-//                        QString text = xml.readElementText();
-//                        qCDebug(PX4AirframeLoaderLog) << "Min:" << text;
-
-//                        QVariant varMin;
-//                        if (metaData->convertAndValidate(text, true /* convertOnly */, varMin, errorString)) {
-//                            metaData->setMin(varMin);
-//                        } else {
-//                            qCWarning(PX4AirframeLoaderLog) << "Invalid min value, name:" << metaData->name() << " type:" << metaData->type() << " min:" << text << " error:" << errorString;
-//                        }
-
-//                    } else if (elementName == "max") {
-//                        Q_ASSERT(metaData);
-//                        QString text = xml.readElementText();
-//                        qCDebug(PX4AirframeLoaderLog) << "Max:" << text;
-
-//                        QVariant varMax;
-//                        if (metaData->convertAndValidate(text, true /* convertOnly */, varMax, errorString)) {
-//                            metaData->setMax(varMax);
-//                        } else {
-//                            qCWarning(PX4AirframeLoaderLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
-//                        }
-
-//                    } else if (elementName == "unit") {
-//                        Q_ASSERT(metaData);
-//                        QString text = xml.readElementText();
-//                        qCDebug(PX4AirframeLoaderLog) << "Unit:" << text;
-//                        metaData->setUnits(text);
-
-//                    } else {
-                        qDebug() << "Unknown element in XML: " << elementName;
-//                    }
                 }
             }
         } else if (xml.isEndElement()) {
             QString elementName = xml.name().toString();
 
             if (elementName == "airframe") {
-                // Done loading this airframe, validate
-
                 // Reset for next airframe
-                badMetaData = false;
                 xmlState = XmlStateFoundGroup;
             } else if (elementName == "airframe_group") {
                 xmlState = XmlStateFoundVersion;

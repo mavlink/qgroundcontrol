@@ -4,12 +4,12 @@
 #include <QWidget>
 #include <QTimer>
 #include <QLabel>
-#include "uas/UASManager.h"
 #include "uas/UASInterface.h"
 #include "ui_UASQuickView.h"
 #include "UASQuickViewItem.h"
 #include "MAVLinkDecoder.h"
 #include "UASQuickViewItemSelect.h"
+#include "Vehicle.h"
 class UASQuickView : public QWidget
 {
     Q_OBJECT
@@ -63,12 +63,13 @@ public slots:
     void actionTriggered(bool checked);
     void actionTriggered();
     void updateTimerTick();
-    void addUAS(UASInterface* uas);
-    void setActiveUAS(UASInterface* uas);
     void selectDialogClosed();
     void valueEnabled(QString value);
     void valueDisabled(QString value);
     void columnActionTriggered();
+    
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
 };
 
 #endif // UASQUICKVIEW_H

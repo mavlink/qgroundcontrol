@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 #include "UASInterface.h"
 #include "QGCMessageBox.h"
+#include "HomePositionManager.h"
 
 QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress localHost, quint16 localPort) :
     mav(mav),
@@ -807,7 +808,7 @@ void QGCXPlaneLink::readBytes()
     }
 
     // Send updated state
-    if (emitUpdate && (QGC::groundTimeMilliseconds() - simUpdateLast) > 3)
+    if (emitUpdate && (QGC::groundTimeMilliseconds() - simUpdateLast) > 2)
     {
         simUpdateHz = simUpdateHz * 0.9f + 0.1f * (1000.0f / (QGC::groundTimeMilliseconds() - simUpdateLast));
         if (QGC::groundTimeMilliseconds() - simUpdateLastText > 2000) {

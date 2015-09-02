@@ -25,6 +25,7 @@
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
+#include "Vehicle.h"
 
 #include <QFile>
 #include <QDir>
@@ -32,17 +33,17 @@
 
 QGC_LOGGING_CATEGORY(FileManagerLog, "FileManagerLog")
 
-FileManager::FileManager(QObject* parent, UASInterface* uas) :
+FileManager::FileManager(QObject* parent, Vehicle* vehicle) :
     QObject(parent),
     _currentOperation(kCOIdle),
-    _mav(uas),
+    _vehicle(vehicle),
     _lastOutgoingSeqNumber(0),
     _activeSession(0),
     _systemIdQGC(0)
 {
     connect(&_ackTimer, &QTimer::timeout, this, &FileManager::_ackTimeout);
     
-    _systemIdServer = _mav->getUASID();
+    _systemIdServer = _vehicle->id();
     
     // Make sure we don't have bad structure packing
     Q_ASSERT(sizeof(RequestHeader) == 12);
@@ -720,7 +721,7 @@ void FileManager::_sendRequest(Request* request)
         _systemIdQGC = MAVLinkProtocol::instance()->getSystemId();
     }
     
-    Q_ASSERT(_mav);
+    Q_ASSERT(_vehicle);
     mavlink_msg_file_transfer_protocol_pack(_systemIdQGC,       // QGC System ID
                                             0,                  // QGC Component ID
                                             &message,           // Mavlink Message to pack into
@@ -729,5 +730,5 @@ void FileManager::_sendRequest(Request* request)
                                             0,                  // Target component
                                             (uint8_t*)request); // Payload
     
-    _mav->sendMessage(message);
+    _vehicle->sendMessage(message);
 }

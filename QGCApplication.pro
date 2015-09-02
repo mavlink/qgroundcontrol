@@ -140,12 +140,12 @@ INCLUDEPATH += \
     src/audio \
     src/AutoPilotPlugins \
     src/comm \
+    src/FlightDisplay \
     src/input \
     src/lib/qmapcontrol \
     src/QmlControls \
     src/uas \
     src/ui \
-    src/ui/flightdisplay \
     src/ui/linechart \
     src/ui/map \
     src/ui/mapdisplay \
@@ -238,7 +238,10 @@ HEADERS += \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
+    src/FlightDisplay/FlightDisplayWidget.h \
+    src/FlightDisplay/FlightDisplayView.h \
     src/GAudioOutput.h \
+    src/HomePositionManager.h \
     src/LogCompressor.h \
     src/MG.h \
     src/QGC.h \
@@ -255,19 +258,15 @@ HEADERS += \
     src/QGCQuickWidget.h \
     src/QGCSingleton.h \
     src/QGCTemporaryFile.h \
-    src/QmlControls/MavManager.h \
+    src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
     src/SerialPortIds.h \
-    src/uas/QGCMAVLinkUASFactory.h \
     src/uas/FileManager.h \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
-    src/uas/UASManager.h \
-    src/uas/UASManagerInterface.h \
     src/uas/UASMessageHandler.h \
     src/uas/UASWaypointManager.h \
-    src/ui/flightdisplay/FlightDisplay.h \
     src/ui/HDDisplay.h \
     src/ui/HSIDisplay.h \
     src/ui/HUD.h \
@@ -338,7 +337,7 @@ HEADERS += \
     src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/ParameterEditorWidget.h \
     src/ViewWidgets/ViewWidgetController.h \
-    src/Waypoint.h \
+    src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
 
 !iOSBuild {
@@ -376,7 +375,10 @@ SOURCES += \
     src/comm/MockLinkMissionItemHandler.cc \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
+    src/FlightDisplay/FlightDisplayWidget.cc \
+    src/FlightDisplay/FlightDisplayView.cc \
     src/GAudioOutput.cc \
+    src/HomePositionManager.cc \
     src/LogCompressor.cc \
     src/main.cc \
     src/QGC.cc \
@@ -390,16 +392,12 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCSingleton.cc \
     src/QGCTemporaryFile.cc \
-    src/QmlControls/MavManager.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
-    src/uas/QGCMAVLinkUASFactory.cc \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
-    src/uas/UASManager.cc \
     src/uas/UASMessageHandler.cc \
     src/uas/UASWaypointManager.cc \
-    src/ui/flightdisplay/FlightDisplay.cc \
     src/ui/HDDisplay.cc \
     src/ui/HSIDisplay.cc \
     src/ui/HUD.cc \
@@ -470,7 +468,7 @@ SOURCES += \
     src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/ParameterEditorWidget.cc \
     src/ViewWidgets/ViewWidgetController.cc \
-    src/Waypoint.cc \
+    src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc
 
 !iOSBuild {
@@ -554,12 +552,14 @@ SOURCES += \
 } # MobileBuild
 
 #
-# AutoPilot Plugin Support
+# Firmware Plugin Support
 #
 
 INCLUDEPATH += \
-    src/VehicleSetup \
     src/AutoPilotPlugins/PX4 \
+    src/FirmwarePlugin \
+    src/Vehicle \
+    src/VehicleSetup \
 
 HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
@@ -581,6 +581,12 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
+    src/FirmwarePlugin/FirmwarePluginManager.h \
+    src/FirmwarePlugin/FirmwarePlugin.h \
+    src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
+    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
+    src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/Vehicle.h \
     src/VehicleSetup/SetupView.h \
     src/VehicleSetup/VehicleComponent.h \
 
@@ -613,6 +619,11 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
+    src/FirmwarePlugin/FirmwarePluginManager.cc \
+    src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
+    src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
+    src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/Vehicle.cc \
     src/VehicleSetup/SetupView.cc \
     src/VehicleSetup/VehicleComponent.cc \
 

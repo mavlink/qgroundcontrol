@@ -30,16 +30,16 @@
 #include "MainWindow.h"
 #include "ParameterLoader.h"
 
-AutoPilotPlugin::AutoPilotPlugin(UASInterface* uas, QObject* parent) :
+AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     QObject(parent),
-    _uas(uas),
+    _vehicle(vehicle),
     _pluginReady(false),
 	_setupComplete(false)
 {
-    Q_ASSERT(_uas);
+    Q_ASSERT(vehicle);
 	
-	connect(_uas, &UASInterface::disconnected, this, &AutoPilotPlugin::_uasDisconnected);
-    connect(_uas, &UASInterface::armingChanged, this, &AutoPilotPlugin::armedChanged);
+	connect(_vehicle->uas(), &UASInterface::disconnected, this, &AutoPilotPlugin::_uasDisconnected);
+    connect(_vehicle->uas(), &UASInterface::armingChanged, this, &AutoPilotPlugin::armedChanged);
 
 	connect(this, &AutoPilotPlugin::pluginReadyChanged, this, &AutoPilotPlugin::_pluginReadyChanged);
 }
@@ -95,6 +95,15 @@ bool AutoPilotPlugin::setupComplete(void)
 {
 	Q_ASSERT(_pluginReady);
 	return _setupComplete;
+}
+
+void AutoPilotPlugin::resetAllParametersToDefaults(void)
+{
+    mavlink_message_t msg;
+    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->uas()->getUASID(), 0, MAV_CMD_PREFLIGHT_STORAGE, 0, 2, -1, 0, 0, 0, 0, 0);
+    _vehicle->sendMessage(msg);
 }
 
 void AutoPilotPlugin::refreshAllParameters(void)
@@ -160,7 +169,7 @@ const QMap<int, QMap<QString, QStringList> >& AutoPilotPlugin::getGroupMap(void)
 
 void AutoPilotPlugin::writeParametersToStream(QTextStream &stream)
 {
-	_getParameterLoader()->writeParametersToStream(stream, _uas->getUASName());
+	_getParameterLoader()->writeParametersToStream(stream, _vehicle->uas()->getUASName());
 }
 
 QString AutoPilotPlugin::readParametersFromStream(QTextStream &stream)
@@ -170,5 +179,5 @@ QString AutoPilotPlugin::readParametersFromStream(QTextStream &stream)
 
 bool AutoPilotPlugin::armed(void)
 {
-    return _uas->isArmed();
+    return _vehicle->uas()->isArmed();
 }

@@ -30,7 +30,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QWidget>
 
-#include "UASInterface.h"
+#include "Vehicle.h"
 
 namespace Ui
 {
@@ -47,7 +47,7 @@ public:
 
 public slots:
     /** @brief Specify the UAS that this axis should track for displaying throttle properly. */
-    void setActiveUAS(UASInterface* uas);
+    void activeVehicleChanged(Vehicle* vehicle);
     /** @brieft Specify which action this button should correspond to.
      * Values 0 and higher indicate a specific action, while -1 indicates no action. */
     void setAction(int index);
