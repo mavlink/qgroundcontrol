@@ -39,7 +39,7 @@ clc
 system('g++ gaussian_noise.cpp -o generate_noise_csv');
 mu_des = 0.0;
 std_des = 0.02;
-var_des = 0.2;%sqrt(std_des);
+var_des = std_des^2;
 num_samples = 10000;
 num_runs = 100;
 if exist('generated_noise.csv','file')
