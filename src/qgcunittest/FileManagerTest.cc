@@ -26,6 +26,7 @@
 
 #include "FileManagerTest.h"
 #include "MultiVehicleManager.h"
+#include "UAS.h"
 
 //UT_REGISTER_TEST(FileManagerTest)
 

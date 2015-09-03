@@ -76,6 +76,12 @@ public:
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) = 0;
     
+    /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
+    /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
+    /// The remainder can be assigned to Vehicle actions.
+    /// @return -1: reserver all buttons, >0 number of buttons to reserve
+    virtual int manualControlReservedButtonCount(void) = 0;
+    
 protected:
     FirmwarePlugin(QObject* parent = NULL) : QGCSingleton(parent) { }
 };

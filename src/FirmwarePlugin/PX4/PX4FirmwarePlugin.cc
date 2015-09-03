@@ -176,3 +176,8 @@ bool PX4FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
     
     return found;
 }
+
+int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
+{
+    return 8;   // 8 buttons reserved for rc switch simulation
+}

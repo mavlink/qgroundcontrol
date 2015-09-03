@@ -1,6 +1,8 @@
 #include "QGCWaypointListMulti.h"
-#include "ui_QGCWaypointListMulti.h"
 #include "MultiVehicleManager.h"
+#include "UAS.h"
+
+#include "ui_QGCWaypointListMulti.h"
 
 void* QGCWaypointListMulti::_offlineUAS = NULL;
 
