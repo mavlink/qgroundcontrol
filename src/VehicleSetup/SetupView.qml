@@ -198,6 +198,7 @@ Rectangle {
             SubMenuButton {
                 width:          buttonWidth
                 imageResource:  modelData.iconResource
+                setupIndicator: modelData.requiresSetup
                 setupComplete:  modelData.setupComplete
                 exclusiveGroup: setupButtonGroup
                 text:           modelData.name.toUpperCase()

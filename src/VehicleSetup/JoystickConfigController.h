@@ -126,6 +126,7 @@ signals:
     void nextButtonMessageBoxDisplayed(void);
 
 private slots:
+    void _activeJoystickChanged(Joystick* joystick);
     void _axisValueChanged(int axis, int value);
    
 private:
@@ -160,6 +161,8 @@ private:
         int                         axisMax;    ///< Maximum axis value
         int                         axisTrim;   ///< Trim position
     };
+    
+    Joystick* _activeJoystick;
     
     int _currentStep;  ///< Current step of state machine
     
