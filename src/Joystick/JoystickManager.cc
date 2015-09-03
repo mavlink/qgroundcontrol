@@ -25,10 +25,12 @@
 
 #include <QQmlEngine>
 
-#ifdef Q_OS_MAC
-    #include <SDL.h>
-#else
-    #include <SDL/SDL.h>
+#ifndef __mobile__
+    #ifdef Q_OS_MAC
+        #include <SDL.h>
+    #else
+        #include <SDL/SDL.h>
+    #endif
 #endif
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
@@ -44,6 +46,7 @@ JoystickManager::JoystickManager(QObject* parent)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     
+#ifndef __mobile__
     if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
         qWarning() << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();
         return;
@@ -70,6 +73,7 @@ JoystickManager::JoystickManager(QObject* parent)
             qCDebug(JoystickManagerLog) << "\tSkipping duplicate" << name;
         }
     }
+#endif
     
     if (!_name2JoystickMap.count()) {
         qCDebug(JoystickManagerLog) << "\tnone found";
@@ -86,6 +90,7 @@ JoystickManager::~JoystickManager()
 
 void JoystickManager::_setActiveJoystickFromSettings(void)
 {
+#ifndef __mobile__
     QSettings settings;
     
     settings.beginGroup(_settingsGroup);
@@ -97,6 +102,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     
     setActiveJoystick(_name2JoystickMap.value(name, _name2JoystickMap.first()));
     settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
+#endif
 }
 
 Joystick* JoystickManager::activeJoystick(void)
@@ -106,6 +112,9 @@ Joystick* JoystickManager::activeJoystick(void)
 
 void JoystickManager::setActiveJoystick(Joystick* joystick)
 {
+#ifdef __mobile__
+    Q_UNUSED(joystick)
+#else
     QSettings settings;
     
     if (!_name2JoystickMap.contains(joystick->name())) {
@@ -124,6 +133,7 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
     
     emit activeJoystickChanged(_activeJoystick);
     emit activeJoystickNameChanged(_activeJoystick->name());
+#endif
 }
 
 QVariantList JoystickManager::joysticks(void)
@@ -144,7 +154,11 @@ QStringList JoystickManager::joystickNames(void)
 
 QString JoystickManager::activeJoystickName(void)
 {
+#ifdef __mobile__
+    return QString();
+#else
     return _activeJoystick ? _activeJoystick->name() : QString();
+#endif
 }
 
 void JoystickManager::setActiveJoystickName(const QString& name)

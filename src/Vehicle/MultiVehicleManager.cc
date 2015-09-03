@@ -113,11 +113,13 @@ void MultiVehicleManager::_deleteVehiclePhase1(void)
     // Disconnect the vehicle from the uas
     vehicle->uas()->clearVehicle();
     
+#ifndef __mobile__
     // Disconnect joystick
     Joystick* joystick = JoystickManager::instance()->activeJoystick();
     if (joystick) {
         joystick->stopPolling();
     }
+#endif
     
     // First we must signal that a vehicle is no longer available.
     _activeVehicleAvailable = false;
@@ -162,11 +164,13 @@ void MultiVehicleManager::setActiveVehicle(Vehicle* vehicle)
 {
     if (vehicle != _activeVehicle) {
         if (_activeVehicle) {
+#ifndef __mobile__
             // Disconnect joystick
             Joystick* joystick = JoystickManager::instance()->activeJoystick();
             if (joystick) {
                 joystick->stopPolling();
             }
+#endif
                 
             // The sequence of signals is very important in order to not leave Qml elements connected
             // to a non-existent vehicle.
@@ -213,11 +217,13 @@ void MultiVehicleManager::_autopilotPluginReadyChanged(bool pluginReady)
     }
     
     if (autopilot->vehicle() == _activeVehicle) {
+#ifndef __mobile__
         // Connect joystick
         Joystick* joystick = JoystickManager::instance()->activeJoystick();
         if (joystick && joystick->enabled()) {
             joystick->startPolling();
         }
+#endif
         
         _parameterReadyVehicleAvailable = pluginReady;
         emit parameterReadyVehicleAvailableChanged(pluginReady);
