@@ -57,9 +57,6 @@ G_END_DECLS
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "UDPLink.h"
-#ifndef __ios__
-#include "SerialLink.h"
-#endif
 #include "QGCSingleton.h"
 #include "LinkManager.h"
 #include "HomePositionManager.h"
@@ -78,9 +75,6 @@ G_END_DECLS
 #include "PowerComponentController.h"
 #include "RadioComponentController.h"
 #include "ScreenToolsController.h"
-#ifndef __mobile__
-#include "FirmwareUpgradeController.h"
-#endif
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
 #include "FirmwarePluginManager.h"
@@ -89,9 +83,19 @@ G_END_DECLS
 #include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
+#include "JoystickManager.h"
+
+#ifndef __ios__
+    #include "SerialLink.h"
+#endif
+
+#ifndef __mobile__
+    #include "FirmwareUpgradeController.h"
+    #include "JoystickConfigController.h"
+#endif
 
 #ifdef QGC_RTLAB_ENABLED
-#include "OpalLink.h"
+    #include "OpalLink.h"
 #endif
 
 
@@ -327,19 +331,22 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Can only reference, cannot create");
     qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Can only reference, cannot create");
     qmlRegisterUncreatableType<Vehicle>("QGroundControl.Vehicle", 1, 0, "Vehicle", "Can only reference, cannot create");
+    qmlRegisterUncreatableType<JoystickManager> ("QGroundControl.JoystickManager", 1, 0, "JoystickManager", "Reference only");
+    qmlRegisterUncreatableType<Joystick>        ("QGroundControl.JoystickManager", 1, 0, "Joystick",        "Reference only");
     
-    qmlRegisterType<ViewWidgetController>("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
-    qmlRegisterType<ParameterEditorController>("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
-    qmlRegisterType<CustomCommandWidgetController>("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
-    qmlRegisterType<FlightModesComponentController>("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
-    qmlRegisterType<AirframeComponentController>("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
-    qmlRegisterType<SensorsComponentController>("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
-    qmlRegisterType<PowerComponentController>("QGroundControl.Controllers", 1, 0, "PowerComponentController");
-    qmlRegisterType<RadioComponentController>("QGroundControl.Controllers", 1, 0, "RadioComponentController");
-    qmlRegisterType<ScreenToolsController>("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
+    qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
+    qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
+    qmlRegisterType<FlightModesComponentController> ("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
+    qmlRegisterType<AirframeComponentController>    ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
+    qmlRegisterType<SensorsComponentController>     ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
+    qmlRegisterType<PowerComponentController>       ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
+    qmlRegisterType<RadioComponentController>       ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+    qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     
 #ifndef __mobile__
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+    qmlRegisterType<JoystickConfigController>       ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
 #endif
     
     // Register Qml Singletons
@@ -577,6 +584,11 @@ void QGCApplication::_createSingletons(void)
     Q_ASSERT(multiVehicleManager);
     
     // No dependencies
+    JoystickManager* joystickManager = JoystickManager::_createSingleton();
+    Q_UNUSED(joystickManager);
+    Q_ASSERT(joystickManager);
+    
+    // No dependencies
     GAudioOutput* audio = GAudioOutput::_createSingleton();
     Q_UNUSED(audio);
     Q_ASSERT(audio);
@@ -636,6 +648,7 @@ void QGCApplication::_destroySingletons(void)
     HomePositionManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
+    JoystickManager::_deleteSingleton();
     MultiVehicleManager::_deleteSingleton();
     FirmwarePluginManager::_deleteSingleton();
     GenericFirmwarePlugin::_deleteSingleton();

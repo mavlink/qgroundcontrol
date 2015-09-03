@@ -43,6 +43,7 @@ public:
     virtual QStringList flightModes(void);
     virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode);
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
+    virtual int manualControlReservedButtonCount(void);
     
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance

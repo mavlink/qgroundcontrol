@@ -89,3 +89,10 @@ bool GenericFirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* ba
     
     return false;
 }
+
+int GenericFirmwarePlugin::manualControlReservedButtonCount(void)
+{
+    // We don't know whether the firmware is going to used any of these buttons.
+    // So reserve them all.
+    return -1;
+}

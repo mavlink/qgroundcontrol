@@ -5,6 +5,7 @@
 
 #include "QGC.h"
 #include "MultiVehicleManager.h"
+#include "UAS.h"
 
 MAV2DIcon::MAV2DIcon(mapcontrol::MapGraphicItem* map,mapcontrol::OPMapWidget* parent, UASInterface* uas, int radius, int type)
     : UAVItem(map,parent),

@@ -30,17 +30,18 @@ This file is part of the PIXHAWK project
  */
 
 #include <QtGlobal>
-
-#include <float.h>
-#include <UASInfoWidget.h>
-#include <MultiVehicleManager.h>
-#include <QGC.h>
 #include <QTimer>
 #include <QDir>
+#include <QDebug>
+
+#include <float.h>
 #include <cstdlib>
 #include <cmath>
 
-#include <QDebug>
+#include "UASInfoWidget.h"
+#include "MultiVehicleManager.h"
+#include "QGC.h"
+#include "UAS.h"
 
 UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
 {

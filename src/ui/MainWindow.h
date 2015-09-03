@@ -46,9 +46,6 @@ This file is part of the QGROUNDCONTROL project
 #include "WaypointList.h"
 #include "CameraView.h"
 #include "UASListWidget.h"
-#ifndef __mobile__
-#include "input/JoystickInput.h"
-#endif
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
@@ -240,10 +237,6 @@ protected:
     QGCMAVLinkLogPlayer* logPlayer;
 
     QPointer<QGCUASFileViewMulti> fileWidget;
-
-#ifndef __mobile__
-    JoystickInput* joystick; ///< The joystick manager for QGC
-#endif
 
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
