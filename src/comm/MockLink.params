@@ -101,6 +101,7 @@
 1	50	COM_EF_C2T	                        5	9
 1	50	COM_EF_THROT	                      0.5	9
 1	50	COM_EF_TIME	                       10	9
+1	50	COM_RC_IN_MODE	                      0	6
 1	50	COM_RC_LOSS_T	                      0.5	9
 1	50	EKF_ATT_V3_Q0	                   0.0001	9
 1	50	EKF_ATT_V3_Q1	                     0.08	9
