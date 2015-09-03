@@ -184,7 +184,7 @@ Rectangle {
             id:             joystickButton
             width:          buttonWidth
             setupIndicator: true
-            setupComplete:  joystickManager.activeJoystick.calibrated
+            setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
             exclusiveGroup: setupButtonGroup
             visible:        multiVehicleManager.parameterReadyVehicleAvailable && joystickManager.joysticks.length != 0
             text:           "JOYSTICK"
