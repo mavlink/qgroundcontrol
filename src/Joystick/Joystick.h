@@ -151,7 +151,7 @@ private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
     
     static const int    _cButtons = 12;
-    int                 _rgButtonValues[_cButtons];
+    bool                _rgButtonValues[_cButtons];
     int                 _rgButtonActions[_cButtons];
     quint16             _lastButtonBits;
     
