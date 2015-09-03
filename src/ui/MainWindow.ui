@@ -97,7 +97,6 @@
      </property>
      <addaction name="separator"/>
     </widget>
-    <addaction name="actionExperimentalPlanView"/>
     <addaction name="actionSimulationView"/>
     <addaction name="separator"/>
     <addaction name="separator"/>
