@@ -28,6 +28,7 @@
 #include "FirmwarePlugin.h"
 #include "AutoPilotPluginManager.h"
 #include "UASMessageHandler.h"
+#include "UAS.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -35,9 +36,15 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define DEFAULT_LAT  38.965767f
 #define DEFAULT_LON -120.083923f
 
+const char* Vehicle::_settingsGroup =           "Vehicle%1";   // %1 replace with mavlink system id
+const char* Vehicle::_joystickModeSettingsKey = "JoystickMode";
+
 Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     : _id(vehicleId)
     , _firmwareType(firmwareType)
+    , _firmwarePlugin(NULL)
+    , _autopilotPlugin(NULL)
+    , _joystickMode(JoystickModeRC)
     , _uas(NULL)
     , _mav(NULL)
     , _currentMessageCount(0)
@@ -74,6 +81,8 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     , _wpm(NULL)
     , _updateCount(0)
 {
+    _loadSettings();
+    
     _addLink(link);
     
     connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &Vehicle::_mavlinkMessageReceived);
@@ -808,4 +817,58 @@ void Vehicle::resetMessages()
     if(type != _currentMessageType) {
         emit messageTypeChanged();
     }
+}
+
+int Vehicle::manualControlReservedButtonCount(void)
+{
+    return _firmwarePlugin->manualControlReservedButtonCount();
+}
+
+void Vehicle::_loadSettings(void)
+{
+    QSettings settings;
+    
+    settings.beginGroup(QString(_settingsGroup).arg(_id));
+    
+    bool convertOk;
+    
+    _joystickMode = (JoystickMode_t)settings.value(_joystickModeSettingsKey, JoystickModeRC).toInt(&convertOk);
+    if (!convertOk) {
+        _joystickMode = JoystickModeRC;
+    }
+}
+
+void Vehicle::_saveSettings(void)
+{
+    QSettings settings;
+    
+    settings.beginGroup(QString(_settingsGroup).arg(_id));
+    
+    settings.setValue(_joystickModeSettingsKey, _joystickMode);
+}
+
+int Vehicle::joystickMode(void)
+{
+    return _joystickMode;
+}
+
+void Vehicle::setJoystickMode(int mode)
+{
+    if (mode < 0 || mode >= JoystickModeMax) {
+        qCWarning(VehicleLog) << "Invalid joystick mode" << mode;
+        return;
+    }
+    
+    _joystickMode = (JoystickMode_t)mode;
+    _saveSettings();
+    emit joystickModeChanged(mode);
+}
+
+QStringList Vehicle::joystickModes(void)
+{
+    QStringList list;
+    
+    list << "Simulate RC" << "Attitude" << "Position" << "Force" << "Velocity";
+    
+    return list;
 }

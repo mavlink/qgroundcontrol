@@ -72,6 +72,16 @@ Rectangle {
         }
     }
 
+    function showJoystickPanel()
+    {
+        if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.autopilot.armed) {
+            messagePanelText = armedVehicleText
+            panelLoader.sourceComponent = messagePanelComponent
+        } else {
+            panelLoader.source = "JoystickConfig.qml";
+        }
+    }
+
     function showParametersPanel()
     {
         panelLoader.source = "SetupParameterEditor.qml";
@@ -168,6 +178,18 @@ Rectangle {
             text:           "FIRMWARE"
 
             onClicked: showFirmwarePanel()
+        }
+
+        SubMenuButton {
+            id:             joystickButton
+            width:          buttonWidth
+            setupIndicator: true
+            setupComplete:  joystickManager.activeJoystick.calibrated
+            exclusiveGroup: setupButtonGroup
+            visible:        multiVehicleManager.parameterReadyVehicleAvailable && joystickManager.joysticks.length != 0
+            text:           "JOYSTICK"
+
+            onClicked: showJoystickPanel()
         }
 
         Repeater {

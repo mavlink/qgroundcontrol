@@ -18,14 +18,17 @@
 #include <QMouseEvent>
 #include <QMenu>
 #include <QSettings>
+#include <QDebug>
+
 #include <qmath.h>
+
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
 #include "MG.h"
 #include "QGC.h"
 #include "QGCApplication.h"
-#include <QDebug>
 #include "MultiVehicleManager.h"
+#include "UAS.h"
 
 HDDisplay::HDDisplay(const QStringList &plotList, QString title, QWidget *parent) :
     QGraphicsView(parent),

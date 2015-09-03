@@ -25,6 +25,7 @@
 #include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
+#include "JoystickManager.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -40,6 +41,7 @@ QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
 {
     rootContext()->engine()->addImportPath("qrc:/qml");
     rootContext()->setContextProperty("multiVehicleManager", MultiVehicleManager::instance());
+    rootContext()->setContextProperty("joystickManager", JoystickManager::instance());
 }
 
 void QGCQuickWidget::setAutoPilot(AutoPilotPlugin* autoPilot)

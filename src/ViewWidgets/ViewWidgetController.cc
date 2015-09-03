@@ -23,6 +23,7 @@
 
 #include "ViewWidgetController.h"
 #include "MultiVehicleManager.h"
+#include "UAS.h"
 
 ViewWidgetController::ViewWidgetController(void) :
 	_autopilot(NULL),

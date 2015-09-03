@@ -3,6 +3,8 @@
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkInspector.h"
 #include "MultiVehicleManager.h"
+#include "UAS.h"
+
 #include "ui_QGCMAVLinkInspector.h"
 
 #include <QDebug>

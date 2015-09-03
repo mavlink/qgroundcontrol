@@ -142,6 +142,7 @@ INCLUDEPATH += \
     src/comm \
     src/FlightDisplay \
     src/input \
+    src/Joystick \
     src/lib/qmapcontrol \
     src/QmlControls \
     src/uas \
@@ -214,9 +215,6 @@ FORMS += \
 
 !MobileBuild {
 FORMS += \
-    src/ui/JoystickButton.ui \
-    src/ui/JoystickAxis.ui \
-    src/ui/JoystickWidget.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
@@ -242,6 +240,8 @@ HEADERS += \
     src/FlightDisplay/FlightDisplayView.h \
     src/GAudioOutput.h \
     src/HomePositionManager.h \
+    src/Joystick/Joystick.h \
+    src/Joystick/JoystickManager.h \
     src/LogCompressor.h \
     src/MG.h \
     src/QGC.h \
@@ -352,15 +352,12 @@ HEADERS += \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
-    src/input/JoystickInput.h \
     src/ui/CameraView.h \
-    src/ui/JoystickAxis.h \
-    src/ui/JoystickButton.h \
-    src/ui/JoystickWidget.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilJSBSimConfiguration.h \
     src/ui/QGCHilXPlaneConfiguration.h \
+    src/VehicleSetup/JoystickConfigController.h \
 }
 
 SOURCES += \
@@ -379,6 +376,8 @@ SOURCES += \
     src/FlightDisplay/FlightDisplayView.cc \
     src/GAudioOutput.cc \
     src/HomePositionManager.cc \
+    src/Joystick/Joystick.cc \
+    src/Joystick/JoystickManager.cc \
     src/LogCompressor.cc \
     src/main.cc \
     src/QGC.cc \
@@ -482,15 +481,12 @@ SOURCES += \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
-    src/input/JoystickInput.cc \
     src/ui/CameraView.cc \
-    src/ui/JoystickAxis.cc \
-    src/ui/JoystickButton.cc \
-    src/ui/JoystickWidget.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
     src/ui/QGCHilXPlaneConfiguration.cc \
+    src/VehicleSetup/JoystickConfigController.cc \
 }
 
 #
