@@ -29,6 +29,7 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
+import QGroundControl.FactSystem    1.0
 
 /// Joystick Config
 QGCView {
@@ -45,17 +46,6 @@ QGCView {
     property var _activeVehicle:    multiVehicleManager.activeVehicle
     property var _activeJoystick:   joystickManager.activeJoystick
 
-    function updateAxisCount()
-    {
-        if (controllerAndViewReady) {
-            if (controller.axisCount < controller.minAxisCount) {
-                showDialog(axisCountDialogComponent, dialogTitle, 50, 0)
-            } else {
-                hideDialog()
-            }
-        }
-    }
-
     JoystickConfigController {
         id:             controller
         factPanel:      panel
@@ -64,14 +54,11 @@ QGCView {
         nextButton:     nextButton
         skipButton:     skipButton
 
-        onAxisCountChanged: updateAxisCount()
-
         Component.onCompleted: {
             controllerCompleted = true
             if (rootQGCView.completedSignalled) {
                 controllerAndViewReady = true
                 controller.start()
-                updateAxisCount()
             }
         }
     }
@@ -87,14 +74,6 @@ QGCView {
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
-
-        Component {
-            id: axisCountDialogComponent
-
-            QGCViewMessage {
-                message: controller.axisCount == 0 ? "No joystick axes deteced." : controller.minAxisCount + " joystick axes or more are needed to fly."
-            }
-        }
 
         // Live axis monitor control component
         Component {
@@ -375,6 +354,18 @@ QGCView {
                         width:      parent.width
                         spacing:    ScreenTools.defaultFontPixelHeight
 
+
+                        QGCCheckBox {
+                            enabled:    allowEnableDisable
+                            text:       _activeJoystick.calibrated ? (rcInMode.value < 2 ? "Enable joystick input, disable RC input" : "Enable/Disable not allowed (COM_RC_IN_MODE=2)") : "Enable/Disable not allowed (Calibrate First)"
+                            checked:    _activeVehicle.joystickEnabled
+
+                            property bool allowEnableDisable:   _activeJoystick.calibrated && rcInMode.value < 2
+                            property Fact rcInMode:             controller.getParameterFact(-1, "COM_RC_IN_MODE")
+
+                            onClicked:  _activeVehicle.joystickEnabled = checked
+                        }
+
                         Row {
                             width:      parent.width
                             spacing:    ScreenTools.defaultFontPixelWidth
@@ -392,16 +383,6 @@ QGCView {
 
                                 onActivated: _activeJoystick.setActiveJoystickName(textAt(index))
                             }
-                        }
-
-                        QGCCheckBox {
-                            enabled:    calibrated
-                            text:       calibrated ? "Enable joystick input, disable RC input" : "Enable joystick input (Calibrate First)"
-                            checked:    _activeJoystick.enabled
-
-                            property bool calibrated: _activeJoystick.calibrated
-
-                            onClicked:  _activeJoystick.enabled = checked
                         }
 
                         Column {
