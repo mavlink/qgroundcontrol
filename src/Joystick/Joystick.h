@@ -31,6 +31,7 @@
 #include "Vehicle.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
+Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
 class Joystick : public QThread
 {
