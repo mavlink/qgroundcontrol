@@ -64,6 +64,7 @@ public:
 #ifndef __mobile__
     Q_PROPERTY(QString name READ name CONSTANT)
     
+    Q_PROPERTY(bool calibrated MEMBER _calibrated NOTIFY calibratedChanged)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     
     Q_PROPERTY(int buttonCount MEMBER _buttonCount CONSTANT)
