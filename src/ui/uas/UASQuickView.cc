@@ -1,11 +1,14 @@
 #include "UASQuickView.h"
-#include <QMetaMethod>
-#include <QDebug>
 #include "UASQuickViewItemSelect.h"
 #include "UASQuickViewTextItem.h"
+#include "MultiVehicleManager.h"
+#include "UAS.h"
+
+#include <QMetaMethod>
+#include <QDebug>
 #include <QSettings>
 #include <QInputDialog>
-#include "MultiVehicleManager.h"
+
 UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
     uas(NULL)
 {

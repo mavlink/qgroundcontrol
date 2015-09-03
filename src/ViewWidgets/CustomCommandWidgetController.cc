@@ -25,6 +25,7 @@
 #include "MultiVehicleManager.h"
 #include "QGCMAVLink.h"
 #include "QGCFileDialog.h"
+#include "UAS.h"
 
 #include <QSettings>
 #include <QUrl>
