@@ -57,9 +57,6 @@ G_END_DECLS
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "UDPLink.h"
-#ifndef __ios__
-#include "SerialLink.h"
-#endif
 #include "QGCSingleton.h"
 #include "LinkManager.h"
 #include "HomePositionManager.h"
@@ -78,9 +75,6 @@ G_END_DECLS
 #include "PowerComponentController.h"
 #include "RadioComponentController.h"
 #include "ScreenToolsController.h"
-#ifndef __mobile__
-#include "FirmwareUpgradeController.h"
-#endif
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
 #include "FirmwarePluginManager.h"
@@ -90,10 +84,18 @@ G_END_DECLS
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
 #include "JoystickManager.h"
-#include "JoystickConfigController.h"
+
+#ifndef __ios__
+    #include "SerialLink.h"
+#endif
+
+#ifndef __mobile__
+    #include "FirmwareUpgradeController.h"
+    #include "JoystickConfigController.h"
+#endif
 
 #ifdef QGC_RTLAB_ENABLED
-#include "OpalLink.h"
+    #include "OpalLink.h"
 #endif
 
 
@@ -341,10 +343,10 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<PowerComponentController>       ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
     qmlRegisterType<RadioComponentController>       ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
     qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
-    qmlRegisterType<JoystickConfigController>       ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
     
 #ifndef __mobile__
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+    qmlRegisterType<JoystickConfigController>       ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
 #endif
     
     // Register Qml Singletons

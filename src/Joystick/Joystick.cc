@@ -29,10 +29,12 @@
 
 #include <QSettings>
 
-#ifdef Q_OS_MAC
-    #include <SDL.h>
-#else
-    #include <SDL/SDL.h>
+#ifndef __mobile__
+    #ifdef Q_OS_MAC
+        #include <SDL.h>
+    #else
+        #include <SDL/SDL.h>
+    #endif
 #endif
 
 QGC_LOGGING_CATEGORY(JoystickLog, "JoystickLog")
@@ -51,6 +53,7 @@ const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
 };
 
 Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex)
+#ifndef __mobile__
     : _sdlIndex(sdlIndex)
     , _exitThread(false)
     , _name(name)
@@ -61,7 +64,14 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     , _buttonCount(buttonCount)
     , _lastButtonBits(0)
     , _throttleMode(ThrottleModeCenterZero)
+#endif // __mobile__
 {
+#ifdef __mobile__
+    Q_UNUSED(name)
+    Q_UNUSED(axisCount)
+    Q_UNUSED(buttonCount)
+    Q_UNUSED(sdlIndex)
+#else
     for (int i=0; i<_cAxes; i++) {
         _rgAxisValues[i] = 0;
     }
@@ -71,12 +81,15 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     }
     
     _loadSettings();
+#endif // __mobile __
 }
 
 Joystick::~Joystick()
 {
     
 }
+
+#ifndef __mobile__
 
 void Joystick::_loadSettings(void)
 {
@@ -504,3 +517,5 @@ void Joystick::setEnabled(bool enabled)
         stopPolling();
     }
 }
+
+#endif // __mobile__

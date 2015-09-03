@@ -61,9 +61,9 @@ public:
         ThrottleModeMax
     } ThrottleMode_t;
     
+#ifndef __mobile__
     Q_PROPERTY(QString name READ name CONSTANT)
     
-    Q_PROPERTY(bool calibrated MEMBER _calibrated NOTIFY calibratedChanged)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     
     Q_PROPERTY(int buttonCount MEMBER _buttonCount CONSTANT)
@@ -148,7 +148,6 @@ private:
     int                 _rgAxisValues[_cAxes];
     Calibration_t       _rgCalibration[_cAxes];
     int                 _rgFunctionAxis[maxFunction];
-    static const char*  _rgFunctionSettingsKey[maxFunction];
     
     static const int    _cButtons = 12;
     bool                _rgButtonValues[_cButtons];
@@ -156,7 +155,11 @@ private:
     quint16             _lastButtonBits;
     
     ThrottleMode_t      _throttleMode;
+#endif // __mobile__
     
+private:
+    static const char*  _rgFunctionSettingsKey[maxFunction];
+
     static const char* _settingsGroup;
     static const char* _calibratedSettingsKey;
     static const char* _buttonActionSettingsKey;
