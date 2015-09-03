@@ -38,6 +38,7 @@
 #endif
 
 QGC_LOGGING_CATEGORY(JoystickLog, "JoystickLog")
+QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
 const char* Joystick::_settingsGroup =              "Joysticks";
 const char* Joystick::_calibratedSettingsKey =      "Calibrated";
@@ -298,7 +299,6 @@ void Joystick::run(void)
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero) {
                 throttle =  std::max(0.0f, throttle);
-                throttle = (throttle * 2.0f) - 1.0f;
             } else {                
                 throttle = (throttle + 1.0f) / 2.0f;
             }
@@ -344,6 +344,8 @@ void Joystick::run(void)
             }
             
             _lastButtonBits = newButtonBits;
+            
+            qCDebug(JoystickValuesLog) << "roll:pitch:yaw:throttle" << roll << -pitch << yaw << throttle;
             
             emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, activeVehicle->joystickMode());
         }
