@@ -891,7 +891,10 @@ void Vehicle::setJoystickEnabled(bool enabled)
     if (!fact) {
         qCWarning(JoystickLog) << "Missing COM_RC_IN_MODE parameter";
     }
-    fact->setValue(enabled ? 1 : 0);
+    
+    if (fact->value().toInt() != 2) {
+        fact->setValue(enabled ? 1 : 0);
+    }
     
     _joystickEnabled = enabled;
     _startJoystick(_joystickEnabled);
