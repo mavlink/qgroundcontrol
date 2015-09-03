@@ -42,6 +42,9 @@ QGCView {
 
     // User visible strings
 
+    readonly property string title:                     "FLIGHT MODES CONFIG"
+
+
     property string topHelpText:                        "Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. " +
                                                         "You can assign multiple flight modes to a single channel. " +
                                                         "Turn your radio control on to test switch settings. " +
@@ -117,6 +120,8 @@ QGCView {
 
     readonly property real modeSpacing: ScreenTools.defaultFontPixelHeight / 3
 
+    property Fact rcInMode: controller.getParameterFact(-1, "COM_RC_IN_MODE")
+
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     FlightModesComponentController {
@@ -130,7 +135,13 @@ QGCView {
         interval:   200
         running:    true
 
-        onTriggered: recalcModePositions()
+        onTriggered: {
+            if (rcInMode.value == 1) {
+                showDialog(joystickEnabledDialogComponent, title, 50, 0)
+            } else {
+                recalcModePositions()
+            }
+        }
     }
 
     function recalcModePositions() {
@@ -188,6 +199,14 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
+        Component {
+            id: joystickEnabledDialogComponent
+
+            QGCViewMessage {
+                message: "Flight Mode Config is disabled since you have a Joystick enabled."
+            }
+        }
+
         ScrollView {
             id:                         scroll
             anchors.fill:               parent
@@ -201,7 +220,7 @@ QGCView {
                     id:             header
                     width:          parent.width
                     font.pixelSize: ScreenTools.largeFontPixelSize
-                    text:           "FLIGHT MODES CONFIG"
+                    text:           title
                 }
 
                 Item {

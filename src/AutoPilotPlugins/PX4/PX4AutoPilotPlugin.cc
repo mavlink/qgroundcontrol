@@ -107,28 +107,20 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
         Q_ASSERT(_vehicle);
         
         if (pluginReady()) {
-            bool noRCTransmitter = false;
-            if (parameterExists(FactSystem::defaultComponentId, "COM_RC_IN_MODE")) {
-                Fact* rcFact = getParameterFact(FactSystem::defaultComponentId, "COM_RC_IN_MODE");
-                noRCTransmitter = rcFact->value().toInt() == 1;
-            }
-
             _airframeComponent = new AirframeComponent(_vehicle->uas(), this);
             Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
             
-            if (!noRCTransmitter) {
-                _radioComponent = new RadioComponent(_vehicle->uas(), this);
-                Q_CHECK_PTR(_radioComponent);
-                _radioComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
-                
-                _flightModesComponent = new FlightModesComponent(_vehicle->uas(), this);
-                Q_CHECK_PTR(_flightModesComponent);
-                _flightModesComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
-            }
+            _radioComponent = new RadioComponent(_vehicle->uas(), this);
+            Q_CHECK_PTR(_radioComponent);
+            _radioComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
+            
+            _flightModesComponent = new FlightModesComponent(_vehicle->uas(), this);
+            Q_CHECK_PTR(_flightModesComponent);
+            _flightModesComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
             
             _sensorsComponent = new SensorsComponent(_vehicle->uas(), this);
             Q_CHECK_PTR(_sensorsComponent);
