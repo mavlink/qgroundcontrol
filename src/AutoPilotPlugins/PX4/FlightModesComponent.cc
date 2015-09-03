@@ -68,12 +68,13 @@ QString FlightModesComponent::iconResource(void) const
 
 bool FlightModesComponent::requiresSetup(void) const
 {
-    return true;
+    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->value().toInt() == 1 ? false : true;
 }
 
 bool FlightModesComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->value().toInt() != 0;
+    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->value().toInt() == 1 ||
+            _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->value().toInt() != 0;
 }
 
 QString FlightModesComponent::setupStateDescription(void) const
@@ -116,13 +117,18 @@ QUrl FlightModesComponent::summaryQmlSource(void) const
 
 QString FlightModesComponent::prerequisiteSetup(void) const
 {
-    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
+    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->value().toInt() == 1) {
+        // No RC input
+        return QString();
+    } else {
+        PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
+        Q_ASSERT(plugin);
 
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    } else if (!plugin->radioComponent()->setupComplete()) {
-        return plugin->radioComponent()->name();
+        if (!plugin->airframeComponent()->setupComplete()) {
+            return plugin->airframeComponent()->name();
+        } else if (!plugin->radioComponent()->setupComplete()) {
+            return plugin->radioComponent()->name();
+        }
     }
     
     return QString();
