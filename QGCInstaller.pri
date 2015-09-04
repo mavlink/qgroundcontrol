@@ -49,5 +49,6 @@ installer {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$quote("\"C:\\Program Files \(x86\)\\NSIS\\makensis.exe\"" /NOCD "\"/XOutFile $${DESTDIR_WIN}\\qgroundcontrol-installer-win32.exe\"" "$$BASEDIR_WIN\\deploy\\qgroundcontrol_installer.nsi")
 		#QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY qgroundcontrol.pdb $${DESTDIR_WIN}
 		#QMAKE_POST_LINK += $$escape_expand(\\n) del qgroundcontrol.pdb
+        OTHER_FILES += deploy/qgroundcontrol_installer.nsi
     }
 }
