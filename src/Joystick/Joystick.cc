@@ -57,10 +57,9 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     : _sdlIndex(sdlIndex)
     , _exitThread(false)
     , _name(name)
-    , _calibrated(false)
-    , _calibrating(false)
     , _axisCount(axisCount)
     , _buttonCount(buttonCount)
+    , _calibrationMode(CalibrationModeOff)
     , _lastButtonBits(0)
     , _throttleMode(ThrottleModeCenterZero)
     , _activeVehicle(NULL)
@@ -273,7 +272,7 @@ void Joystick::run(void)
             }
         }
         
-        if (_calibrated && !_calibrating) {
+        if (_calibrationMode != CalibrationModeCalibrating) {
             int     axis = _rgFunctionAxis[rollFunction];
             float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
             
@@ -355,8 +354,14 @@ void Joystick::run(void)
 void Joystick::startPolling(Vehicle* vehicle)
 {
     if (isRunning()) {
-        if (_calibrating && vehicle != _activeVehicle) {
+        if (vehicle != _activeVehicle) {
             // Joystick was previously disabled, but now enabled from config screen
+            
+            if (_calibrationMode == CalibrationModeOff) {
+                qWarning() << "Incorrect usage pattern";
+                return;
+            }
+            
             _activeVehicle = vehicle;
             _pollingStartedForCalibration = false;
         }
@@ -489,9 +494,14 @@ void Joystick::setThrottleMode(int mode)
     emit throttleModeChanged(_throttleMode);
 }
 
-void Joystick::startCalibration(void)
+void Joystick::startCalibrationMode(CalibrationMode_t mode)
 {
-    _calibrating = true;
+    if (mode == CalibrationModeOff) {
+        qWarning() << "Incorrect mode CalibrationModeOff";
+        return;
+    }
+    
+    _calibrationMode = mode;
     
     if (!isRunning()) {
         _pollingStartedForCalibration = true;
@@ -499,11 +509,20 @@ void Joystick::startCalibration(void)
     }
 }
 
-void Joystick::stopCalibration(void)
+void Joystick::stopCalibrationMode(CalibrationMode_t mode)
 {
-    if (_calibrating) {
-        _calibrating = false;
-        
+    if (mode == CalibrationModeOff) {
+        qWarning() << "Incorrect mode: CalibrationModeOff";
+        return;
+    } else if (mode != _calibrationMode) {
+        qWarning() << "Incorrect mode sequence request:active" << mode << _calibrationMode;
+        return;
+    }
+    
+    if (mode == CalibrationModeCalibrating) {
+        _calibrationMode = CalibrationModeMonitor;
+    } else {
+        _calibrationMode = CalibrationModeOff;
         if (_pollingStartedForCalibration) {
             stopPolling();
         }

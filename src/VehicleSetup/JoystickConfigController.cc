@@ -73,7 +73,7 @@ JoystickConfigController::JoystickConfigController(void)
     _activeJoystickChanged(joystickManager->activeJoystick());
     _loadSettings();
     _resetInternalCalibrationValues();
-    _activeJoystick->startCalibration();
+    _activeJoystick->startCalibrationMode(Joystick::CalibrationModeMonitor);
 }
 
 void JoystickConfigController::start(void)
@@ -84,7 +84,7 @@ void JoystickConfigController::start(void)
 
 JoystickConfigController::~JoystickConfigController()
 {
-    _activeJoystick->stopCalibration();
+    _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeMonitor);
     _storeSettings();
 }
 
@@ -548,6 +548,7 @@ void JoystickConfigController::_startCalibration(void)
 {
     Q_ASSERT(_axisCount >= _axisMinimum);
     
+    _activeJoystick->startCalibrationMode(Joystick::CalibrationModeCalibrating);
     _resetInternalCalibrationValues();
     
     _nextButton->setProperty("text", "Next");
@@ -562,6 +563,7 @@ void JoystickConfigController::_stopCalibration(void)
 {
     _currentStep = -1;
     
+    _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeCalibrating);
     _setInternalCalibrationValuesFromSettings();
     
     _statusText->setProperty("text", "");
