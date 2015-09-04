@@ -285,10 +285,11 @@ void Joystick::run(void)
                     axis = _rgFunctionAxis[throttleFunction];
             float   throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
 
-            roll =      std::max(-1.0f, std::min(roll, 1.0f));
-            pitch =     std::max(-1.0f, std::min(pitch, 1.0f));
-            yaw =       std::max(-1.0f, std::min(yaw, 1.0f));
-            throttle =  std::max(-1.0f, std::min(throttle, 1.0f));
+            // Map from unit circle to linear range and limit
+            roll =      std::max(-1.0f, std::min(tanf(asinf(roll)), 1.0f));
+            pitch =     std::max(-1.0f, std::min(tanf(asinf(pitch)), 1.0f));
+            yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw)), 1.0f));
+            throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle)), 1.0f));
             
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero) {
