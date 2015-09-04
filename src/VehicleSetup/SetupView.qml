@@ -72,6 +72,16 @@ Rectangle {
         }
     }
 
+    function showJoystickPanel()
+    {
+        if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.autopilot.armed) {
+            messagePanelText = armedVehicleText
+            panelLoader.sourceComponent = messagePanelComponent
+        } else {
+            panelLoader.source = "JoystickConfig.qml";
+        }
+    }
+
     function showParametersPanel()
     {
         panelLoader.source = "SetupParameterEditor.qml";
@@ -170,12 +180,25 @@ Rectangle {
             onClicked: showFirmwarePanel()
         }
 
+        SubMenuButton {
+            id:             joystickButton
+            width:          buttonWidth
+            setupIndicator: true
+            setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
+            exclusiveGroup: setupButtonGroup
+            visible:        multiVehicleManager.parameterReadyVehicleAvailable && joystickManager.joysticks.length != 0
+            text:           "JOYSTICK"
+
+            onClicked: showJoystickPanel()
+        }
+
         Repeater {
             model: multiVehicleManager.parameterReadyVehicleAvailable ? multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
 
             SubMenuButton {
                 width:          buttonWidth
                 imageResource:  modelData.iconResource
+                setupIndicator: modelData.requiresSetup
                 setupComplete:  modelData.setupComplete
                 exclusiveGroup: setupButtonGroup
                 text:           modelData.name.toUpperCase()

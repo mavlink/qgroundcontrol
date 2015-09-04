@@ -37,8 +37,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QVector3D>
 #include "QGCMAVLink.h"
 #include "FileManager.h"
+#include "Vehicle.h"
+
 #ifndef __mobile__
-#include "JoystickInput.h"
 #include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
@@ -110,6 +111,8 @@ public:
     Q_PROPERTY(double altitudeWGS84 READ getAltitudeWGS84 WRITE setAltitudeWGS84 NOTIFY altitudeWGS84Changed)
     Q_PROPERTY(double altitudeRelative READ getAltitudeRelative WRITE setAltitudeRelative NOTIFY altitudeRelativeChanged)
 
+    void clearVehicle(void) { _vehicle = NULL; }
+    
     void setGroundSpeed(double val)
     {
         groundSpeed = val;
@@ -847,7 +850,7 @@ public slots:
 
     /** @brief Set the values for the manual control of the vehicle */
 #ifndef __mobile__
-    void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, quint8);
+    void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode);
 #endif
 
     /** @brief Set the values for the 6dof manual control of the vehicle */

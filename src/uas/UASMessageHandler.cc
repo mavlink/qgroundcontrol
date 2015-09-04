@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 #include "UASMessageHandler.h"
 #include "MultiVehicleManager.h"
+#include "UAS.h"
 
 UASMessage::UASMessage(int componentid, int severity, QString text)
 {

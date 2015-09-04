@@ -82,7 +82,7 @@ signals:
     void _deleteVehiclePhase2Signal(void);
     
 private slots:
-    void _deleteVehiclePhase1(void);
+    void _deleteVehiclePhase1(Vehicle* vehicle);
     void _deleteVehiclePhase2(void);
     void _setActiveVehiclePhase2(void);
     void _autopilotPluginReadyChanged(bool pluginReady);

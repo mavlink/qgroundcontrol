@@ -28,6 +28,8 @@
 #include "FirmwarePlugin.h"
 #include "AutoPilotPluginManager.h"
 #include "UASMessageHandler.h"
+#include "UAS.h"
+#include "JoystickManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -35,9 +37,18 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define DEFAULT_LAT  38.965767f
 #define DEFAULT_LON -120.083923f
 
+const char* Vehicle::_settingsGroup =               "Vehicle%1";        // %1 replaced with mavlink system id
+const char* Vehicle::_joystickModeSettingsKey =     "JoystickMode";
+const char* Vehicle::_joystickEnabledSettingsKey =  "JoystickEnabled";
+
 Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     : _id(vehicleId)
+    , _active(false)
     , _firmwareType(firmwareType)
+    , _firmwarePlugin(NULL)
+    , _autopilotPlugin(NULL)
+    , _joystickMode(JoystickModeRC)
+    , _joystickEnabled(false)
     , _uas(NULL)
     , _mav(NULL)
     , _currentMessageCount(0)
@@ -87,9 +98,9 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     connect(_uas, &UAS::latitudeChanged, this, &Vehicle::setLatitude);
     connect(_uas, &UAS::longitudeChanged, this, &Vehicle::setLongitude);
     
-    _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(firmwareType);
+    _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(firmwareType);    
     _autopilotPlugin = AutoPilotPluginManager::instance()->newAutopilotPluginForVehicle(this);
-    
+
     // Refresh timer
     connect(_refreshTimer, SIGNAL(timeout()), this, SLOT(_checkUpdate()));
     _refreshTimer->setInterval(UPDATE_TIMER);
@@ -136,6 +147,8 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     }
     _setSystemType(_mav, _mav->getSystemType());
     _updateArmingState(_mav->isArmed());
+    
+    _loadSettings();
 }
 
 Vehicle::~Vehicle()
@@ -216,7 +229,7 @@ void Vehicle::_linkDisconnected(LinkInterface* link)
     }
     
     if (_links.count() == 0) {
-        emit allLinksDisconnected();
+        emit allLinksDisconnected(this);
     }
 }
 
@@ -808,4 +821,111 @@ void Vehicle::resetMessages()
     if(type != _currentMessageType) {
         emit messageTypeChanged();
     }
+}
+
+int Vehicle::manualControlReservedButtonCount(void)
+{
+    return _firmwarePlugin->manualControlReservedButtonCount();
+}
+
+void Vehicle::_loadSettings(void)
+{
+    QSettings settings;
+    
+    settings.beginGroup(QString(_settingsGroup).arg(_id));
+    
+    bool convertOk;
+    
+    _joystickMode = (JoystickMode_t)settings.value(_joystickModeSettingsKey, JoystickModeRC).toInt(&convertOk);
+    if (!convertOk) {
+        _joystickMode = JoystickModeRC;
+    }
+    
+    _joystickEnabled = settings.value(_joystickEnabledSettingsKey, false).toBool();
+}
+
+void Vehicle::_saveSettings(void)
+{
+    QSettings settings;
+    
+    settings.beginGroup(QString(_settingsGroup).arg(_id));
+    
+    settings.setValue(_joystickModeSettingsKey, _joystickMode);
+    settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
+}
+
+int Vehicle::joystickMode(void)
+{
+    return _joystickMode;
+}
+
+void Vehicle::setJoystickMode(int mode)
+{
+    if (mode < 0 || mode >= JoystickModeMax) {
+        qCWarning(VehicleLog) << "Invalid joystick mode" << mode;
+        return;
+    }
+    
+    _joystickMode = (JoystickMode_t)mode;
+    _saveSettings();
+    emit joystickModeChanged(mode);
+}
+
+QStringList Vehicle::joystickModes(void)
+{
+    QStringList list;
+    
+    list << "Normal" << "Attitude" << "Position" << "Force" << "Velocity";
+    
+    return list;
+}
+
+bool Vehicle::joystickEnabled(void)
+{
+    return _joystickEnabled;
+}
+
+void Vehicle::setJoystickEnabled(bool enabled)
+{
+    Fact* fact = _autopilotPlugin->getParameterFact(FactSystem::defaultComponentId, "COM_RC_IN_MODE");
+    if (!fact) {
+        qCWarning(JoystickLog) << "Missing COM_RC_IN_MODE parameter";
+    }
+    
+    if (fact->value().toInt() != 2) {
+        fact->setValue(enabled ? 1 : 0);
+    }
+    
+    _joystickEnabled = enabled;
+    _startJoystick(_joystickEnabled);
+    _saveSettings();
+}
+
+void Vehicle::_startJoystick(bool start)
+{
+    Joystick* joystick = JoystickManager::instance()->activeJoystick();
+    
+    if (joystick) {
+#ifndef __mobile__
+        if (start) {
+            if (_joystickEnabled) {
+                joystick->startPolling(this);
+            }
+        } else {
+            joystick->stopPolling();
+        }
+#endif
+    }
+}
+
+bool Vehicle::active(void)
+{
+    return _active;
+}
+
+void Vehicle::setActive(bool active)
+{
+    _active = active;
+    
+    _startJoystick(_active);
 }

@@ -37,6 +37,7 @@
 #include "QGCMessageBox.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "Joystick.h"
 
 QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 
@@ -1388,7 +1389,7 @@ void UAS::receiveMessage(mavlink_message_t message)
 */
 void UAS::setHomePosition(double lat, double lon, double alt)
 {
-    if (blockHomePositionChanges)
+    if (!_vehicle || blockHomePositionChanges)
         return;
 
     QString uasName = (getUASName() == "")?
@@ -1425,6 +1426,10 @@ void UAS::setHomePosition(double lat, double lon, double alt)
 **/
 void UAS::setLocalOriginAtCurrentGPSPosition()
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     QMessageBox::StandardButton button = QGCMessageBox::question(tr("Set the home position at the current GPS position?"),
                                                                  tr("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location"),
                                                                  QMessageBox::Yes | QMessageBox::Cancel,
@@ -1469,6 +1474,10 @@ void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 
 void UAS::startCalibration(UASInterface::StartCalibrationType calType)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     int gyroCal = 0;
     int magCal = 0;
     int airspeedCal = 0;
@@ -1526,6 +1535,10 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
 
 void UAS::stopCalibration(void)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(),
                                   mavlink->getComponentId(),
@@ -1546,7 +1559,11 @@ void UAS::stopCalibration(void)
 
 void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
 {
-    int actuatorCal = 0;
+    if (!_vehicle) {
+        return;
+    }
+    
+   int actuatorCal = 0;
 
     switch (calType) {
         case StartBusConfigActuators:
@@ -1574,6 +1591,10 @@ void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
 
 void UAS::stopBusConfig(void)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(),
                                   mavlink->getComponentId(),
@@ -1594,6 +1615,10 @@ void UAS::stopBusConfig(void)
 
 void UAS::startDataRecording()
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 2, 0, 0, 0);
     _vehicle->sendMessage(msg);
@@ -1601,7 +1626,11 @@ void UAS::startDataRecording()
 
 void UAS::stopDataRecording()
 {
-    mavlink_message_t msg;
+    if (!_vehicle) {
+        return;
+    }
+    
+   mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 0, 0, 0, 0);
     _vehicle->sendMessage(msg);
 }
@@ -1768,7 +1797,11 @@ void UAS::setMode(uint8_t newBaseMode, uint32_t newCustomMode)
 */
 void UAS::setModeArm(uint8_t newBaseMode, uint32_t newCustomMode)
 {
-    if (receivedMode)
+    if (!_vehicle) {
+        return;
+    }
+    
+   if (receivedMode)
     {
         mavlink_message_t msg;
         mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, newBaseMode, newCustomMode);
@@ -1898,7 +1931,11 @@ QImage UAS::getImage()
 
 void UAS::requestImage()
 {
-    qDebug() << "trying to get an image from the uas...";
+    if (!_vehicle) {
+        return;
+    }
+    
+   qDebug() << "trying to get an image from the uas...";
 
     // check if there is already an image transmission going on
     if (imagePacketsArrived == 0)
@@ -1960,6 +1997,10 @@ bool UAS::isFixedWing()
 */
 void UAS::enableAllDataTransmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -1988,6 +2029,10 @@ void UAS::enableAllDataTransmission(int rate)
 */
 void UAS::enableRawSensorDataTransmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -2012,6 +2057,10 @@ void UAS::enableRawSensorDataTransmission(int rate)
 */
 void UAS::enableExtendedSystemStatusTransmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -2036,6 +2085,10 @@ void UAS::enableExtendedSystemStatusTransmission(int rate)
 */
 void UAS::enableRCChannelDataTransmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
 #if defined(MAVLINK_ENABLED_UALBERTA_MESSAGES)
     mavlink_message_t msg;
     mavlink_msg_request_rc_channels_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, enabled);
@@ -2065,6 +2118,10 @@ void UAS::enableRCChannelDataTransmission(int rate)
 */
 void UAS::enableRawControllerDataTransmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -2111,6 +2168,10 @@ void UAS::enableRawControllerDataTransmission(int rate)
 */
 void UAS::enablePositionTransmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -2135,6 +2196,10 @@ void UAS::enablePositionTransmission(int rate)
 */
 void UAS::enableExtra1Transmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -2160,6 +2225,10 @@ void UAS::enableExtra1Transmission(int rate)
 */
 void UAS::enableExtra2Transmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -2185,6 +2254,10 @@ void UAS::enableExtra2Transmission(int rate)
 */
 void UAS::enableExtra3Transmission(int rate)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -2319,6 +2392,10 @@ void UAS::setUASName(const QString& name)
 
 void UAS::executeCommand(MAV_CMD command)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
     mavlink_command_long_t cmd;
     cmd.command = (uint16_t)command;
@@ -2337,6 +2414,10 @@ void UAS::executeCommand(MAV_CMD command)
 }
 void UAS::executeCommandAck(int num, bool success)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
     mavlink_command_ack_t ack;
     ack.command = num;
@@ -2347,6 +2428,10 @@ void UAS::executeCommandAck(int num, bool success)
 
 void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
     mavlink_command_long_t cmd;
     cmd.command = (uint16_t)command;
@@ -2370,6 +2455,10 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
  */
 void UAS::launch()
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_NAV_TAKEOFF, 1, 0, 0, 0, 0, 0, 0, 0);
     _vehicle->sendMessage(msg);
@@ -2421,11 +2510,12 @@ void UAS::toggleAutonomy()
 * This can only be done if the system has manual inputs enabled and is armed.
 */
 #ifndef __mobile__
-void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, quint8 joystickMode)
+void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode)
 {
-    Q_UNUSED(xHat);
-    Q_UNUSED(yHat);
-
+    if (!_vehicle) {
+        return;
+    }
+    
     // Store the previous manual commands
     static float manualRollAngle = 0.0;
     static float manualPitchAngle = 0.0;
@@ -2463,7 +2553,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
 
         mavlink_message_t message;
 
-        if (joystickMode == JoystickInput::JOYSTICK_MODE_ATTITUDE) {
+        if (joystickMode == Vehicle::JoystickModeAttitude) {
             // send an external attitude setpoint command (rate control disabled)
             float attitudeQuaternion[4];
             mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
@@ -2481,7 +2571,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                 0,
                 thrust
                 );
-        } else if (joystickMode == JoystickInput::JOYSTICK_MODE_POSITION) {
+        } else if (joystickMode == Vehicle::JoystickModePosition) {
             // Send the the local position setpoint (local pos sp external message)
             static float px = 0;
             static float py = 0;
@@ -2511,7 +2601,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                     yaw,
                     0
                     );
-        } else if (joystickMode == JoystickInput::JOYSTICK_MODE_FORCE) {
+        } else if (joystickMode == Vehicle::JoystickModeForce) {
             // Send the the force setpoint (local pos sp external message)
             float dcm[3][3];
             mavlink_euler_to_dcm(roll, pitch, yaw, dcm);
@@ -2539,7 +2629,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                     0,
                     0
                     );
-        } else if (joystickMode == JoystickInput::JOYSTICK_MODE_VELOCITY) {
+        } else if (joystickMode == Vehicle::JoystickModeVelocity) {
             // Send the the local velocity setpoint (local pos sp external message)
             static float vx = 0;
             static float vy = 0;
@@ -2571,7 +2661,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                     0,
                     yawrate
                     );
-        } else if (joystickMode == JoystickInput::JOYSTICK_MODE_MANUAL) {
+        } else if (joystickMode == Vehicle::JoystickModeRC) {
 
             // Save the new manual control inputs
             manualRollAngle = roll;
@@ -2582,7 +2672,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
 
             // Store scaling values for all 3 axes
             const float axesScaling = 1.0 * 1000.0;
-
+            
             // Calculate the new commands for roll, pitch, yaw, and thrust
             const float newRollCommand = roll * axesScaling;
             // negate pitch value because pitch is negative for pitching forward but mavlink message argument is positive for forward
@@ -2590,6 +2680,8 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             const float newYawCommand = yaw * axesScaling;
             const float newThrustCommand = thrust * axesScaling;
 
+            //qDebug() << newRollCommand << newPitchCommand << newYawCommand << newThrustCommand;
+            
             // Send the MANUAL_COMMAND message
             mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
         }
@@ -2604,7 +2696,11 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
 #ifndef __mobile__
 void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw)
 {
-    // If system has manual inputs enabled and is armed
+    if (!_vehicle) {
+        return;
+    }
+    
+   // If system has manual inputs enabled and is armed
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
         mavlink_message_t message;
@@ -2665,7 +2761,11 @@ bool UAS::isAirplane()
 */
 void UAS::halt()
 {
-    mavlink_message_t msg;
+    if (!_vehicle) {
+        return;
+    }
+    
+   mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_HOLD, MAV_GOTO_HOLD_AT_CURRENT_POSITION, 0, 0, 0, 0, 0);
     _vehicle->sendMessage(msg);
 }
@@ -2675,7 +2775,11 @@ void UAS::halt()
 */
 void UAS::go()
 {
-    mavlink_message_t msg;
+    if (!_vehicle) {
+        return;
+    }
+    
+   mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_CONTINUE, MAV_GOTO_HOLD_AT_CURRENT_POSITION, 0, 0, 0, 0, 0);
     _vehicle->sendMessage(msg);
 }
@@ -2685,6 +2789,10 @@ void UAS::go()
 */
 void UAS::home()
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
 
     double latitude = HomePositionManager::instance()->getHomeLatitude();
@@ -2701,7 +2809,11 @@ void UAS::home()
 */
 void UAS::land()
 {
-    mavlink_message_t msg;
+    if (!_vehicle) {
+        return;
+    }
+    
+   mavlink_message_t msg;
 
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_LAND, 1, 0, 0, 0, 0, 0, 0, 0);
     _vehicle->sendMessage(msg);
@@ -2712,6 +2824,10 @@ void UAS::land()
 */
 void UAS::pairRX(int rxType, int rxSubType)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
 
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_START_RX_PAIR, 0, rxType, rxSubType, 0, 0, 0, 0, 0);
@@ -2944,6 +3060,10 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
         float q[4];
@@ -3022,6 +3142,10 @@ float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
 void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
                                     float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
         float xacc_corrupt = addZeroMeanNoise(xacc, xacc_var);
@@ -3059,6 +3183,10 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
 void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
                     float flow_comp_m_y, quint8 quality, float ground_distance)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // FIXME: This needs to be updated for new mavlink_msg_hil_optical_flow_pack api
 
     Q_UNUSED(time_us);
@@ -3093,6 +3221,10 @@ void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, floa
 #ifndef __mobile__
 void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     // Only send at 10 Hz max rate
     if (QGC::groundTimeMilliseconds() - lastSendTimeGPS < 100)
         return;
@@ -3155,6 +3287,10 @@ void UAS::stopHil()
 
 void UAS::shutdown()
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     QMessageBox::StandardButton button = QGCMessageBox::question(tr("Shutting down the UAS"),
                                                                  tr("Do you want to shut down the onboard computer?"),
                                                                  QMessageBox::Yes | QMessageBox::Cancel,
@@ -3176,6 +3312,10 @@ void UAS::shutdown()
 */
 void UAS::setTargetPosition(float x, float y, float z, float yaw)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_PATHPLANNING, 1, 1, 1, 0, yaw, x, y, z);
     _vehicle->sendMessage(msg);
@@ -3284,6 +3424,10 @@ void UAS::stopLowBattAlarm()
 
 void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax)
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     mavlink_message_t message;
 
     char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
@@ -3314,6 +3458,10 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 p
 
 void UAS::unsetRCToParameterMap()
 {
+    if (!_vehicle) {
+        return;
+    }
+    
     char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
 
     for (int i = 0; i < 3; i++) {

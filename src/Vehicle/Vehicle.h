@@ -29,13 +29,17 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
+#include <QQmlListProperty>
 
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
-#include "UAS.h"
+#include "MissionItem.h"
 
+class UAS;
+class UASInterface;
 class FirmwarePlugin;
 class AutoPilotPlugin;
+class UASWaypointManager;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -91,6 +95,40 @@ public:
     //-- MissionItem management
     Q_PROPERTY(QQmlListProperty<MissionItem> missionItems READ missionItems NOTIFY missionItemsChanged)
     
+    /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
+    /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
+    /// The remainder can be assigned to Vehicle actions.
+    /// @return -1: reserver all buttons, >0 number of buttons to reserve
+    Q_PROPERTY(int manualControlReservedButtonCount READ manualControlReservedButtonCount CONSTANT)
+    
+    typedef enum {
+        JoystickModeRC,         ///< Joystick emulates an RC Transmitter
+        JoystickModeAttitude,
+        JoystickModePosition,
+        JoystickModeForce,
+        JoystickModeVelocity,
+        JoystickModeMax
+    } JoystickMode_t;
+    
+    /// The joystick mode associated with this vehicle. Joystick modes are stored keyed by mavlink system id.
+    Q_PROPERTY(int joystickMode READ joystickMode WRITE setJoystickMode NOTIFY joystickModeChanged)
+    int joystickMode(void);
+    void setJoystickMode(int mode);
+    
+    /// List of joystick mode names
+    Q_PROPERTY(QStringList joystickModes READ joystickModes CONSTANT)
+    QStringList joystickModes(void);
+    
+    // Enable/Disable joystick for this vehicle
+    Q_PROPERTY(bool joystickEnabled READ joystickEnabled WRITE setJoystickEnabled NOTIFY joystickEnabledChanged)
+    bool joystickEnabled(void);
+    void setJoystickEnabled(bool enabled);
+    
+    // Is vehicle active with respect to current active vehicle in QGC
+    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
+    bool active(void);
+    void setActive(bool active);
+    
     // Property accesors
     int id(void) { return _id; }
     MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
@@ -105,6 +143,8 @@ public:
     AutoPilotPlugin* autopilotPlugin(void) { return _autopilotPlugin; }
     
     QList<LinkInterface*> links(void);
+    
+    int manualControlReservedButtonCount(void);
     
     typedef enum {
         MessageNone,
@@ -169,8 +209,11 @@ public slots:
     void setLongitude(double longitude);
     
 signals:
-    void allLinksDisconnected(void);
+    void allLinksDisconnected(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
+    void joystickModeChanged(int mode);
+    void joystickEnabledChanged(bool enabled);
+    void activeChanged(bool active);
     
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
@@ -241,14 +284,19 @@ private slots:
 private:
     bool _containsLink(LinkInterface* link);
     void _addLink(LinkInterface* link);
+    void _loadSettings(void);
+    void _saveSettings(void);
+    void _startJoystick(bool start);
+    
     bool    _isAirplane                     ();
     void    _addChange                      (int id);
     float   _oneDecimal                     (float value);
 
 private:
-    int             _id;            ///< Mavlink system id
-    MAV_AUTOPILOT   _firmwareType;
+    int     _id;            ///< Mavlink system id
+    bool    _active;
     
+    MAV_AUTOPILOT       _firmwareType;
     FirmwarePlugin*     _firmwarePlugin;
     AutoPilotPlugin*    _autopilotPlugin;
     
@@ -256,6 +304,9 @@ private:
     /// which are QSharedPointer's in order to maintain reference counts across threads.
     /// This way Link deletion works correctly.
     QList<SharedLinkInterface> _links;
+    
+    JoystickMode_t  _joystickMode;
+    bool            _joystickEnabled;
     
     UAS* _uas;
     
@@ -302,5 +353,9 @@ private:
     UASWaypointManager* _wpm;
     int             _updateCount;
     QList<MissionItem*>_waypoints;
+    
+    static const char* _settingsGroup;
+    static const char* _joystickModeSettingsKey;
+    static const char* _joystickEnabledSettingsKey;
 };
 #endif

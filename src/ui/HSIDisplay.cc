@@ -46,6 +46,7 @@ This file is part of the QGROUNDCONTROL project
 #include <qmath.h>
 #include "MAV2DIcon.h"
 #include "QGCApplication.h"
+#include "UAS.h"
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
     HDDisplay(QStringList(), "HSI", parent),

@@ -45,11 +45,7 @@ public:
         ShowMavlink
     };
 
-#ifdef __mobile__
     SettingsDialog(QWidget *parent = 0, int showTab = ShowDefault, Qt::WindowFlags flags = Qt::Sheet);
-#else
-    SettingsDialog(JoystickInput *joystick, QWidget *parent = 0, int showTab = ShowDefault, Qt::WindowFlags flags = Qt::Sheet);
-#endif
     ~SettingsDialog();
 
 public slots:
