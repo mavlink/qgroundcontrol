@@ -102,7 +102,7 @@ public:
     Q_PROPERTY(int manualControlReservedButtonCount READ manualControlReservedButtonCount CONSTANT)
     
     typedef enum {
-        JoystickModeRC,         ///< Joystick emulates am RC Transmitter
+        JoystickModeRC,         ///< Joystick emulates an RC Transmitter
         JoystickModeAttitude,
         JoystickModePosition,
         JoystickModeForce,
@@ -118,6 +118,16 @@ public:
     /// List of joystick mode names
     Q_PROPERTY(QStringList joystickModes READ joystickModes CONSTANT)
     QStringList joystickModes(void);
+    
+    // Enable/Disable joystick for this vehicle
+    Q_PROPERTY(bool joystickEnabled READ joystickEnabled WRITE setJoystickEnabled NOTIFY joystickEnabledChanged)
+    bool joystickEnabled(void);
+    void setJoystickEnabled(bool enabled);
+    
+    // Is vehicle active with respect to current active vehicle in QGC
+    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
+    bool active(void);
+    void setActive(bool active);
     
     // Property accesors
     int id(void) { return _id; }
@@ -199,9 +209,11 @@ public slots:
     void setLongitude(double longitude);
     
 signals:
-    void allLinksDisconnected(void);
+    void allLinksDisconnected(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
     void joystickModeChanged(int mode);
+    void joystickEnabledChanged(bool enabled);
+    void activeChanged(bool active);
     
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
@@ -274,15 +286,17 @@ private:
     void _addLink(LinkInterface* link);
     void _loadSettings(void);
     void _saveSettings(void);
+    void _startJoystick(bool start);
     
     bool    _isAirplane                     ();
     void    _addChange                      (int id);
     float   _oneDecimal                     (float value);
 
 private:
-    int             _id;            ///< Mavlink system id
-    MAV_AUTOPILOT   _firmwareType;
+    int     _id;            ///< Mavlink system id
+    bool    _active;
     
+    MAV_AUTOPILOT       _firmwareType;
     FirmwarePlugin*     _firmwarePlugin;
     AutoPilotPlugin*    _autopilotPlugin;
     
@@ -292,6 +306,7 @@ private:
     QList<SharedLinkInterface> _links;
     
     JoystickMode_t  _joystickMode;
+    bool            _joystickEnabled;
     
     UAS* _uas;
     
@@ -341,5 +356,6 @@ private:
     
     static const char* _settingsGroup;
     static const char* _joystickModeSettingsKey;
+    static const char* _joystickEnabledSettingsKey;
 };
 #endif

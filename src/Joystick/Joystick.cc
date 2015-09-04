@@ -44,7 +44,6 @@ const char* Joystick::_settingsGroup =              "Joysticks";
 const char* Joystick::_calibratedSettingsKey =      "Calibrated";
 const char* Joystick::_buttonActionSettingsKey =    "ButtonAction%1";
 const char* Joystick::_throttleModeSettingsKey =    "ThrottleMode";
-const char* Joystick::_enabledSettingsKey =         "Enabled";
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -58,13 +57,14 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     : _sdlIndex(sdlIndex)
     , _exitThread(false)
     , _name(name)
-    , _enabled(false)
     , _calibrated(false)
     , _calibrating(false)
     , _axisCount(axisCount)
     , _buttonCount(buttonCount)
     , _lastButtonBits(0)
     , _throttleMode(ThrottleModeCenterZero)
+    , _activeVehicle(NULL)
+    , _pollingStartedForCalibration(false)
 #endif // __mobile__
 {
 #ifdef __mobile__
@@ -105,12 +105,11 @@ void Joystick::_loadSettings(void)
     qCDebug(JoystickLog) << "_loadSettings " << _name;
     
     _calibrated = settings.value(_calibratedSettingsKey, false).toBool();
-    _enabled = settings.value(_enabledSettingsKey, false).toBool();
     
     _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeCenterZero).toInt(&convertOk);
     badSettings |= !convertOk;
     
-    qCDebug(JoystickLog) << "_loadSettings calibrated:enabled:throttlemode:badsettings" << _calibrated << _enabled << _throttleMode << badSettings;
+    qCDebug(JoystickLog) << "_loadSettings calibrated:throttlemode:badsettings" << _calibrated << _throttleMode << badSettings;
     
     QString minTpl  ("Axis%1Min");
     QString maxTpl  ("Axis%1Max");
@@ -154,8 +153,6 @@ void Joystick::_loadSettings(void)
     
     if (badSettings) {
         _calibrated = false;
-        _enabled = false;
-        settings.setValue(_calibratedSettingsKey, false);
         settings.setValue(_calibratedSettingsKey, false);
     }
 }
@@ -168,10 +165,9 @@ void Joystick::_saveSettings(void)
     settings.beginGroup(_name);
     
     settings.setValue(_calibratedSettingsKey, _calibrated);
-    settings.setValue(_enabledSettingsKey, _enabled && _calibrated);
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
     
-    qCDebug(JoystickLog) << "_saveSettings calibrated:enabled:throttlemode" << _calibrated << _enabled << _throttleMode;
+    qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode" << _calibrated << _throttleMode;
 
     QString minTpl  ("Axis%1Min");
     QString maxTpl  ("Axis%1Max");
@@ -251,7 +247,6 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
 void Joystick::run(void)
 {
     SDL_Joystick* sdlJoystick = SDL_JoystickOpen(_sdlIndex);
-    Vehicle * activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     
     if (!sdlJoystick) {
         qCWarning(JoystickLog) << "SDL_JoystickOpen failed:" << SDL_GetError();
@@ -278,7 +273,7 @@ void Joystick::run(void)
             }
         }
         
-        if (_calibrated && _enabled && !_calibrating) {
+        if (_calibrated && !_calibrating) {
             int     axis = _rgFunctionAxis[rollFunction];
             float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
             
@@ -306,7 +301,7 @@ void Joystick::run(void)
             // Set up button pressed information
             
             // We only send the buttons the firmwware has reserved
-            int reservedButtonCount = activeVehicle->manualControlReservedButtonCount();
+            int reservedButtonCount = _activeVehicle->manualControlReservedButtonCount();
             if (reservedButtonCount == -1) {
                 reservedButtonCount = _buttonCount;
             }
@@ -347,7 +342,7 @@ void Joystick::run(void)
             
             qCDebug(JoystickValuesLog) << "roll:pitch:yaw:throttle" << roll << -pitch << yaw << throttle;
             
-            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, activeVehicle->joystickMode());
+            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
         }
         
         // Sleep, update rate of joystick is approx. 25 Hz (1000 ms / 25 = 40 ms)
@@ -357,27 +352,37 @@ void Joystick::run(void)
     SDL_JoystickClose(sdlJoystick);
 }
 
-void Joystick::startPolling(void)
+void Joystick::startPolling(Vehicle* vehicle)
 {
-    if (enabled()) {
-        UAS* uas = MultiVehicleManager::instance()->activeVehicle()->uas();
+    if (isRunning()) {
+        if (_calibrating && vehicle != _activeVehicle) {
+            // Joystick was previously disabled, but now enabled from config screen
+            _activeVehicle = vehicle;
+            _pollingStartedForCalibration = false;
+        }
+    } else {
+        _activeVehicle = vehicle;
+        
+        UAS* uas = _activeVehicle->uas();
         
         connect(this, &Joystick::manualControl,         uas, &UAS::setExternalControlSetpoint);
         connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
+        
+        _exitThread = false;
+        start();
     }
-    
-    _exitThread = false;
-    start();
 }
 
 void Joystick::stopPolling(void)
 {
-    UAS* uas = MultiVehicleManager::instance()->activeVehicle()->uas();
-    
-    disconnect(this, &Joystick::manualControl,          uas, &UAS::setExternalControlSetpoint);
-    disconnect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
-    
-    _exitThread = true;
+    if (isRunning()) {
+        UAS* uas = _activeVehicle->uas();
+        
+        disconnect(this, &Joystick::manualControl,          uas, &UAS::setExternalControlSetpoint);
+        disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
+        
+        _exitThread = true;
+        }
 }
 
 void Joystick::setCalibration(int axis, Calibration_t& calibration)
@@ -484,39 +489,24 @@ void Joystick::setThrottleMode(int mode)
     emit throttleModeChanged(_throttleMode);
 }
 
-bool Joystick::enabled(void)
+void Joystick::startCalibration(void)
 {
-    Fact* fact = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin()->getParameterFact(FactSystem::defaultComponentId, "COM_RC_IN_MODE");
-    if (!fact) {
-        qCWarning(JoystickLog) << "Missing COM_RC_IN_MODE parameter";
-        return false;
-    }
+    _calibrating = true;
     
-    return _enabled && _calibrated && (fact->value().toInt() == 2);
+    if (!isRunning()) {
+        _pollingStartedForCalibration = true;
+        startPolling(MultiVehicleManager::instance()->activeVehicle());
+    }
 }
 
-void Joystick::setEnabled(bool enabled)
+void Joystick::stopCalibration(void)
 {
-    if (!_calibrated) {
-        return;
-    }
-    
-    Fact* fact = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin()->getParameterFact(FactSystem::defaultComponentId, "COM_RC_IN_MODE");
-    if (!fact) {
-        qCWarning(JoystickLog) << "Missing COM_RC_IN_MODE parameter";
-        return;
-    }
-    
-    _enabled = enabled;
-    fact->setValue(enabled ? 2 : 0);
-    
-    _saveSettings();
-    emit enabledChanged(_enabled);
-    
-    if (_enabled) {
-        startPolling();
-    } else {
-        stopPolling();
+    if (_calibrating) {
+        _calibrating = false;
+        
+        if (_pollingStartedForCalibration) {
+            stopPolling();
+        }
     }
 }
 
