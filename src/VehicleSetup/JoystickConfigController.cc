@@ -56,21 +56,24 @@ const char*  JoystickConfigController::_imagePitchDown =    "joystickPitchDown.p
 
 const char* JoystickConfigController::_settingsGroup = "Joysticks";
 
-JoystickConfigController::JoystickConfigController(void) :
-    _currentStep(-1),
-    _axisCount(0),
-    _calState(calStateAxisWait),
-    _statusText(NULL),
-    _cancelButton(NULL),
-    _nextButton(NULL),
-    _skipButton(NULL)
+JoystickConfigController::JoystickConfigController(void)
+    : _activeJoystick(NULL)
+    , _currentStep(-1)
+    , _axisCount(0)
+    , _calState(calStateAxisWait)
+    , _statusText(NULL)
+    , _cancelButton(NULL)
+    , _nextButton(NULL)
+    , _skipButton(NULL)
 {
-    // FIXME: Needs to handle active joystick change
-    connect(JoystickManager::instance()->activeJoystick(), &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
-    JoystickManager::instance()->activeJoystick()->startPolling();
-    _loadSettings();
+    JoystickManager* joystickManager = JoystickManager::instance();
     
+    connect(joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
+    
+    _activeJoystickChanged(joystickManager->activeJoystick());
+    _loadSettings();
     _resetInternalCalibrationValues();
+    _activeJoystick->startCalibration();
 }
 
 void JoystickConfigController::start(void)
@@ -81,6 +84,7 @@ void JoystickConfigController::start(void)
 
 JoystickConfigController::~JoystickConfigController()
 {
+    _activeJoystick->stopCalibration();
     _storeSettings();
 }
 
@@ -551,8 +555,6 @@ void JoystickConfigController::_startCalibration(void)
     
     _currentStep = 0;
     _setupCurrentState();
-    
-    JoystickManager::instance()->activeJoystick()->setCalibrating(true);
 }
 
 /// @brief Cancels the calibration process, setting things back to initial state.
@@ -570,8 +572,6 @@ void JoystickConfigController::_stopCalibration(void)
     _skipButton->setEnabled(false);
     
     _setHelpImage(_imageCenter);
-    
-    JoystickManager::instance()->activeJoystick()->setCalibrating(false);
 }
 
 /// @brief Saves the current axis values, so that we can detect when the use moves an input.
@@ -736,4 +736,17 @@ void JoystickConfigController::_signalAllAttiudeValueChanges(void)
     emit pitchAxisReversedChanged(pitchAxisReversed());
     emit yawAxisReversedChanged(yawAxisReversed());
     emit throttleAxisReversedChanged(throttleAxisReversed());
+}
+
+void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
+{
+    if (_activeJoystick) {
+        disconnect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
+        _activeJoystick = NULL;
+    }
+    
+    if (joystick) {
+        _activeJoystick = joystick;
+        connect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
+    }
 }

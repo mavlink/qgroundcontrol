@@ -47,10 +47,12 @@ QGCView {
     property bool controllerCompleted: false
     property bool controllerAndViewReady: false
 
+    property Fact rcInMode: controller.getParameterFact(-1, "COM_RC_IN_MODE")
+
     function updateChannelCount()
     {
         if (controllerAndViewReady) {
-            if (joystickManager.activeJoystick && joystickManager.activeJoystick.enabled) {
+            if (rcInMode.value == 1) {
                 showDialog(joystickEnabledDialogComponent, dialogTitle, 50, 0)
             }
 /*
