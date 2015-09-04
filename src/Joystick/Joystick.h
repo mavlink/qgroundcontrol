@@ -96,11 +96,17 @@ public:
     int throttleMode(void);
     void setThrottleMode(int mode);
     
-    /// Calibration is about to start
-    void startCalibration(void);
+    typedef enum {
+        CalibrationModeOff,         // Not calibrating
+        CalibrationModeMonitor,     // Monitors are active, continue to send to vehicle if already polling
+        CalibrationModeCalibrating, // Calibrating, stop sending joystick to vehicle
+    } CalibrationMode_t;
     
-    /// Calibration has ended
-    void stopCalibration(void);
+    /// Set the current calibration mode
+    void startCalibrationMode(CalibrationMode_t mode);
+    
+    /// Clear the current calibration mode
+    void stopCalibrationMode(CalibrationMode_t mode);
     
 signals:
     void calibratedChanged(bool calibrated);
@@ -140,9 +146,10 @@ private:
     
     QString _name;
     bool    _calibrated;
-    bool    _calibrating;
     int     _axisCount;
     int     _buttonCount;
+    
+    CalibrationMode_t   _calibrationMode;
     
     static const int    _cAxes = 4;
     int                 _rgAxisValues[_cAxes];
