@@ -170,6 +170,10 @@ WindowsBuild {
         $$BASEDIR\\libs\\lib\\sdl\\win32\\SDL.dll \
         $$BASEDIR\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll \
         $$DLL_DIR\\icu*.dll \
+        $$DLL_DIR\\d3dcompiler*.dll \
+        $$DLL_DIR\\libEGL$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\libGLESv2$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\opengl32sw.dll \
         $$DLL_DIR\\Qt5Core$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Gui$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Location$${DLL_QT_DEBUGCHAR}.dll \
@@ -198,7 +202,7 @@ WindowsBuild {
     # Copy platform plugins
     P_DIR = $$[QT_INSTALL_PLUGINS]
     PLUGINS_DIR_WIN = $$replace(P_DIR, "/", "\\")
-    QMAKE_POST_LINK += $$escape_expand(\\n) mkdir "$$DESTDIR_WIN\\platforms"
+    QMAKE_POST_LINK += $$escape_expand(\\n) mkdir -p "$$DESTDIR_WIN\\platforms"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY     \"$$PLUGINS_DIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\" \"$$DESTDIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\imageformats\" \"$$DESTDIR_WIN\\imageformats\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\sqldrivers\" \"$$DESTDIR_WIN\\sqldrivers\"
