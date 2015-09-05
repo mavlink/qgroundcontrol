@@ -206,7 +206,7 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareType_t firmwareType)
     // Select the firmware set based on board type
     
     const DownloadLocationByFirmwareType_t* prgFirmware;
-    size_t crgFirmware;
+    size_t crgFirmware = 0;
     
     switch (_bootloaderBoardID) {
         case Bootloader::boardIDPX4FMUV1:
