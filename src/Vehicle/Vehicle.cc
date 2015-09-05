@@ -291,7 +291,7 @@ void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double y
         _roll = std::numeric_limits<double>::quiet_NaN();
     } else {
         float rolldeg = _oneDecimal(roll * (180.0 / M_PI));
-        if (fabs(roll - rolldeg) > 1.0) {
+        if (fabs(roll - rolldeg) > 0.25) {
             _roll = rolldeg;
             if(_refreshTimer->isActive()) {
                 emit rollChanged();
@@ -306,7 +306,7 @@ void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double y
         _pitch = std::numeric_limits<double>::quiet_NaN();
     } else {
         float pitchdeg = _oneDecimal(pitch * (180.0 / M_PI));
-        if (fabs(pitch - pitchdeg) > 1.0) {
+        if (fabs(pitch - pitchdeg) > 0.25) {
             _pitch = pitchdeg;
             if(_refreshTimer->isActive()) {
                 emit pitchChanged();
@@ -322,7 +322,7 @@ void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double y
     } else {
         yaw = _oneDecimal(yaw * (180.0 / M_PI));
         if (yaw < 0) yaw += 360;
-        if (fabs(_heading - yaw) > 1.0) {
+        if (fabs(_heading - yaw) > 0.25) {
             _heading = yaw;
             if(_refreshTimer->isActive()) {
                 emit headingChanged();
@@ -350,7 +350,7 @@ void Vehicle::_updateSpeed(UASInterface*, double groundSpeed, double airSpeed, q
         }
     }
     airSpeed = _oneDecimal(airSpeed);
-    if (fabs(_airSpeed - airSpeed) > 1.0) {
+    if (fabs(_airSpeed - airSpeed) > 0.5) {
         _airSpeed = airSpeed;
         if(_refreshTimer->isActive()) {
             emit airSpeedChanged();
