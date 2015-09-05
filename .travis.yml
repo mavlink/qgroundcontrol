@@ -10,13 +10,13 @@ matrix:
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=debug
         - os: linux
-          env: SPEC=linux-g++-64 CONFIG=release
+          env: SPEC=linux-g++-64 CONFIG=installer
         - os: osx
           osx_image: beta-xcode6.3
           env: SPEC=macx-clang CONFIG=debug
         - os: osx
           osx_image: beta-xcode6.3
-          env: SPEC=macx-clang CONFIG=release
+          env: SPEC=macx-clang CONFIG=installer
 
 cache:
   - apt
@@ -58,15 +58,15 @@ script:
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
   - echo -en 'travis_fold:end:script.2\\r'
 
-#deploy:
-#  provider: releases
-#  api-key:
-#    secure: ""
-#  file: "release/qgroundcontrol"
-#  skip_cleanup: true
-#  on:
-#    tags: true
-#    all_branches: true
+deploy:
+  provider: releases
+  api-key:
+    secure: ""
+  file: "release/qgroundcontrol.dmg"
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
 
 notifications:
   webhooks:
