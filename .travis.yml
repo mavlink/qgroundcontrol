@@ -23,9 +23,7 @@ cache:
 
 before_install:
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p $HOME/Library/Preferences/QtProject/ && echo "[Rules]\n *Log.debug=false" >> $HOME/Library/Preferences/QtProject/qtlogging.ini; fi
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/; fi
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p $HOME/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
 
 install:
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
