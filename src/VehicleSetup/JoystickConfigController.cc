@@ -411,7 +411,7 @@ void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t functio
 void JoystickConfigController::_resetInternalCalibrationValues(void)
 {
     // Set all raw axiss to not reversed and center point values
-    for (size_t i=0; i<_axisMax; i++) {
+    for (int i=0; i<_axisMax; i++) {
         struct AxisInfo* info = &_rgAxisInfo[i];
         info->function = Joystick::maxFunction;
         info->reversed = false;
@@ -435,7 +435,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
     
     // Initialize all function mappings to not set
     
-    for (size_t i=0; i<_axisMax; i++) {
+    for (int i=0; i<_axisMax; i++) {
         struct AxisInfo* info = &_rgAxisInfo[i];
         info->function = Joystick::maxFunction;
     }
@@ -580,7 +580,7 @@ void JoystickConfigController::_stopCalibration(void)
 void JoystickConfigController::_calSaveCurrentValues(void)
 {
 	qCDebug(JoystickConfigControllerLog) << "_calSaveCurrentValues";
-    for (unsigned i = 0; i < _axisMax; i++) {
+    for (int i = 0; i < _axisMax; i++) {
         _axisValueSave[i] = _axisRawValue[i];
     }
 }
