@@ -8,15 +8,15 @@ git:
 matrix:
     include:
         - os: linux
-          env: CONFIG=release
+          env: SPEC=linux-g++-64 CONFIG=debug
         - os: linux
-          env: CONFIG=debug
+          env: SPEC=linux-g++-64 CONFIG=release
         - os: osx
           osx_image: beta-xcode6.3
-          env: CONFIG=release
+          env: SPEC=macx-clang CONFIG=debug
         - os: osx
           osx_image: beta-xcode6.3
-          env: CONFIG=debug
+          env: SPEC=macx-clang CONFIG=release
 
 cache:
   - apt
@@ -50,7 +50,7 @@ install:
     fi
 
 
-before_script: qmake CONFIG+=${CONFIG} -r qgroundcontrol.pro
+before_script: qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} -spec ${SPEC}
 script:
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
   - make -j4
