@@ -50,7 +50,7 @@ install:
     fi
 
 
-before_script: qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} -spec ${SPEC}
+before_script: qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
 script:
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
   - make -j4
