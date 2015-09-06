@@ -17,5 +17,5 @@ build_script:
    - jom -j 2
 
 test_script:
-  - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
+#  - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
 
