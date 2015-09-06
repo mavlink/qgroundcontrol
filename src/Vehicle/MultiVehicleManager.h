@@ -31,6 +31,7 @@
 #include "Vehicle.h"
 #include "QGCMAVLink.h"
 #include "UASWaypointManager.h"
+#include "QmlObjectListModel.h"
 
 class MultiVehicleManager : public QGCSingleton
 {
@@ -42,16 +43,12 @@ public:
     Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
     Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);
     
-    Q_PROPERTY(bool activeVehicleAvailable          READ activeVehicleAvailable                         NOTIFY activeVehicleAvailableChanged)
-    Q_PROPERTY(bool parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                 NOTIFY parameterReadyVehicleAvailableChanged)
-    Q_PROPERTY(Vehicle* activeVehicle               READ activeVehicle          WRITE setActiveVehicle  NOTIFY activeVehicleChanged)
-    Q_PROPERTY(QVariantList vehicles                READ vehiclesAsVariants                                    CONSTANT)
+    Q_PROPERTY(bool                 activeVehicleAvailable          READ activeVehicleAvailable                                 NOTIFY activeVehicleAvailableChanged)
+    Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                         NOTIFY parameterReadyVehicleAvailableChanged)
+    Q_PROPERTY(Vehicle*             activeVehicle                   READ activeVehicle                  WRITE setActiveVehicle  NOTIFY activeVehicleChanged)
+    Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehiclesModel                                          CONSTANT)
     
-    // Property accessors
-    bool activeVehicleAvailable(void) { return _activeVehicleAvailable; }
-    bool parameterReadyVehicleAvailable(void) { return _parameterReadyVehicleAvailable; }
-    Vehicle* activeVehicle(void) { return _activeVehicle; }
-    void setActiveVehicle(Vehicle* vehicle);
+    // Methods
     
     /// Called to notify that a heartbeat was received with the specified information. MultiVehicleManager
     /// will create/update Vehicles as necessary.
@@ -61,17 +58,27 @@ public:
     /// @return true: continue further processing of this message, false: disregard this message
     bool notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat);
     
-    Vehicle* getVehicleById(int vehicleId) { return _vehicleMap[vehicleId]; }
+    Vehicle* getVehicleById(int vehicleId);
     
     void setHomePositionForAllVehicles(double lat, double lon, double alt);
     
     UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
     
-    QList<Vehicle*> vehicles(void);
-    QVariantList vehiclesAsVariants(void);
-    
     UASWaypointManager* activeWaypointManager(void);
+    
+    QList<Vehicle*> vehicles(void);
 
+    // Property accessors
+    
+    bool activeVehicleAvailable(void) { return _activeVehicleAvailable; }
+    
+    bool parameterReadyVehicleAvailable(void) { return _parameterReadyVehicleAvailable; }
+    
+    Vehicle* activeVehicle(void) { return _activeVehicle; }
+    void setActiveVehicle(Vehicle* vehicle);
+    
+    QmlObjectListModel* vehiclesModel(void) { return &_vehicles; }
+    
 signals:
     void vehicleAdded(Vehicle* vehicle);
     void vehicleRemoved(Vehicle* vehicle);
@@ -103,7 +110,7 @@ private:
     
     QList<int>  _ignoreVehicleIds;          ///< List of vehicle id for which we ignore further communication
     
-    QMap<int, Vehicle*> _vehicleMap;        ///< Map of vehicles keyed by id
+    QmlObjectListModel  _vehicles;
     
     UASWaypointManager* _offlineWaypointManager;
 };

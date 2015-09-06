@@ -27,10 +27,10 @@ This file is part of the QGROUNDCONTROL project
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
+import QtQuick          2.4
 import QtQuick.Controls 1.3
-import QtLocation 5.3
-import QtPositioning 5.3
+import QtLocation       5.3
+import QtPositioning    5.3
 
 import QGroundControl.Controls              1.0
 import QGroundControl.FlightMap             1.0
@@ -58,18 +58,6 @@ Item {
     Component.onCompleted: {
         map.zoomLevel   = 18
         mapTypeMenu.update();
-        addExistingVehicles()
-        updateMissionItemsConnections()
-        updateMissionItems()
-    }
-
-    function updateMapType(type) {
-        var isSatellite = (type === MapType.SatelliteMapDay || type === MapType.SatelliteMapNight)
-        if(isSatelliteMap !== isSatellite) {
-            isSatelliteMap = isSatellite;
-            removeAllVehicles()
-            addExistingVehicles()
-        }
     }
 
     //-- Menu to select supported map types
@@ -82,7 +70,6 @@ Item {
             for (var i = 0; i < map.supportedMapTypes.length; i++) {
                 if (mapID === map.supportedMapTypes[i].name) {
                     map.activeMapType = map.supportedMapTypes[i]
-                    updateMapType(map.supportedMapTypes[i].style)
                     multiVehicleManager.saveSetting(root.mapName + "/currentMapType", mapID);
                     return;
                 }
@@ -148,178 +135,6 @@ Item {
     }
 */
 
-    // The following code is used to add and remove Vehicle markers from the map. Due to the following
-    // problems this code must be here is the base FlightMap control:
-    //      - If you pass a reference to the Map control into another object and then try to call
-    //          functions such as addMapItem on it, it will fail telling you addMapItem is not a function
-    //          on that object
-    //      - Due to the fact that you need to dynamically add the MapQuickItems, they need to be able
-    //          to reference the Vehicle they are associated with in some way. In order to do that
-    //          we need to keep a separate array of Vehicles which must be at the top level of the object
-    //          hierarchy in order for the dynamically added object to see it.
-
-    property var _vehicles: []          ///< List of known vehicles
-    property var _vehicleMapItems: []   ///< List of known vehicle map items
-
-    Connections {
-        target: multiVehicleManager
-
-        onVehicleAdded:     addVehicle(vehicle)
-        onVehicleRemoved:   removeVehicle(vehicle)
-    }
-
-    function addVehicle(vehicle) {
-        if (!showVehicles) {
-            return
-        }
-        
-        var qmlItemTemplate = "VehicleMapItem { " +
-                                    "coordinate:    _vehicles[%1].coordinate; " +
-                                    "heading:       _vehicles[%1].heading; " +
-                                    "isSatellite:   root.isSatelliteMap; " +
-                                "}"
-
-        var i = _vehicles.length
-        qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-        qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-
-        _vehicles.push(vehicle)
-        var mapItem = Qt.createQmlObject (qmlItemTemplate, map)
-        _vehicleMapItems.push(mapItem)
-
-        mapItem.z = map.z + 1
-        map.addMapItem(mapItem)
-    }
-
-    function removeVehicle(vehicle) {
-        if (!showVehicles) {
-            return
-        }
-        
-        for (var i=0; i<_vehicles.length; i++) {
-            if (_vehicles[i] == vehicle) {
-                _vehicles[i] = undefined
-                map.removeMapItem(_vehicleMapItems[i])
-                _vehicleMapItems[i] = undefined
-                break
-            }
-        }
-    }
-
-    function removeAllVehicles() {
-        if (!showVehicles) {
-            return
-        }
-
-        for (var i=0; i<_vehicles.length; i++) {
-            _vehicles[i] = undefined
-            map.removeMapItem(_vehicleMapItems[i])
-            _vehicleMapItems[i] = undefined
-        }
-    }
-
-    function addExistingVehicles() {
-        if (!showVehicles) {
-            return
-        }
-        
-        for (var i=0; i<multiVehicleManager.vehicles.length; i++) {
-            addVehicle(multiVehicleManager.vehicles[i])
-        }
-    }
-
-    // The following code is used to show mission items on the FlightMap
-    
-    property var _missionItems: []      ///< List of known vehicles
-    property var _missionMapItems: []   ///< List of known vehicle map items
-    
-    Connections {
-        target: multiVehicleManager
-
-        onActiveVehicleAvailableChanged: updateMissionItemsConnections()
-    }
-    
-    function updateMissionItemsConnections() {
-        if (multiVehicleManager.activeVehicleAvailable) {
-            multiVehicleManager.activeVehicle.missionItemsChanged.connect(updateMissionItems)
-        } else {
-            // Previously active vehicle is about to go away, disconnect signals
-            if (multiVehicleManager.activeVehicle) {
-                multiVehicleManager.activeVehicle.missionItemsChanged.disconnect(updateMissionItems)
-            }
-        }
-    }
-    
-    function addMissionItem(missionItem, index) {
-        if (!showMissionItems) {
-            console.warn("Shouldn't be called with showMissionItems=false")
-            return
-        }
-        
-        if (!missionItem.hasCoordinate) {
-            // Item has no map position associated with it
-            return
-        }
-        
-        var qmlItemTemplate = "MissionMapItem { " +
-                                    "coordinate:    _missionItems[%1].coordinate; " +
-                                    "index:         %2" +
-                                "}"
-        
-        var i = _missionItems.length
-        qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-        qmlItemTemplate = qmlItemTemplate.replace("%2", index + 1)
-        
-        _missionItems.push(missionItem)
-        var mapItem = Qt.createQmlObject (qmlItemTemplate, map)
-        _missionMapItems.push(mapItem)
-        
-        mapItem.z = map.z + 1
-        map.addMapItem(mapItem)
-    }
-    
-    function removeMissionItem(missionItem) {
-        if (!showMissionItems) {
-            console.warn("Shouldn't be called with showMissionItems=false")
-            return
-        }
-        
-        for (var i=0; i<_missionItems.length; i++) {
-            if (_missionItems[i] == missionItem) {
-                // Qml has an annoying habit of not destroying remove Qml item until it hits the main loop.
-                // Because of that we need to leave the the mission item references even though we have
-                // removed the items, otherwise we'll get references to undefined errors until we hit the main
-                // loop again.
-                //_missionItems[i] = undefined
-                map.removeMapItem(_missionMapItems[i])
-                _missionMapItems[i] = undefined
-                break
-            }
-        }
-    }
-    
-    function updateMissionItems() {
-        if (!showMissionItems) {
-            return
-        }
-        
-        var vehicle = multiVehicleManager.activeVehicle
-        if (!vehicle) {
-            return
-        }
-        
-        // Remove previous items
-        for (var i=0; i<_missionItems.length; i++) {
-            removeMissionItem(_missionItems[i])
-        }
-        _missionMapItems = []
-        
-        // Add new items
-        for (var i=0; i<vehicle.missionItems.length; i++) {
-            addMissionItem(vehicle.missionItems[i], i)
-        }
-    }
-    
     Plugin {
         id:   mapPlugin
         name: "QGroundControl"
@@ -344,6 +159,29 @@ Item {
         center:     QtPositioning.coordinate(lat, lon)
         gesture.flickDeceleration: 3000
         gesture.enabled: root.interactive
+
+        // Add the vehicles to the map
+        MapItemView {
+            model: showVehicles ? multiVehicleManager.vehicles : 0
+            
+            delegate:
+                VehicleMapItem {
+                        coordinate:     object.coordinate
+                        heading:        object.heading
+                        isSatellite:    root.isSatelliteMap
+                }
+        }
+
+        // Add the mission items to the map
+        MapItemView {
+            model: showMissionItems ? (multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0) : 0
+            
+            delegate:
+                MissionMapItem {
+                    missionItem: object
+                }
+        }
+
 
 /*
         onWidthChanged: {
@@ -399,32 +237,25 @@ Item {
     }
     
     // Mission item list
-    ScrollView {
-        id:                         missionItemScroll
-        anchors.margins:            ScreenTools.defaultFontPixelWidth
-        anchors.left:               parent.left
-        anchors.right:              controlWidgets.left
-        anchors.bottom:             parent.bottom
-        height:                     missionItemRow.height + _scrollBarHeightAdjust
-        verticalScrollBarPolicy:    Qt.ScrollBarAlwaysOff
-        opacity:                    0.75
-        
-        property bool _scrollBarShown: missionItemRow.width > missionItemScroll.width
-        property real _scrollBarHeightAdjust: _scrollBarShown ? (scrollBarHeight.height - scrollBarHeight.viewport.height) + 5 : 0
-        
-        Row {
-            id:         missionItemRow
-            spacing:    ScreenTools.defaultFontPixelWidth
-            
-            Repeater {
-                model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
-                
-                MissionItemSummary {
-                    opacity:        0.75
-                    missionItem:    modelData
-                }
+    ListView {
+        id:                 missionItemSummaryList
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.left:       parent.left
+        anchors.right:      controlWidgets.left
+        anchors.bottom:     parent.bottom
+        height:             ScreenTools.defaultFontPixelHeight * 7
+        spacing:            ScreenTools.defaultFontPixelWidth / 2
+        opacity:            0.75
+        orientation:        ListView.Horizontal
+        model:              multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
+
+        property real _maxItemHeight: 0
+
+        delegate:
+            MissionItemSummary {
+                opacity:        0.75
+                missionItem:    object
             }
-        }
     }
     
     // This is used to determine the height of a horizontal scroll bar

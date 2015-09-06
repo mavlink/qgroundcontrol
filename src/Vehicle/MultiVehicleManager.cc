@@ -49,7 +49,7 @@ MultiVehicleManager::~MultiVehicleManager()
 
 bool MultiVehicleManager::notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat)
 {
-    if (!_vehicleMap.contains(vehicleId) && !_ignoreVehicleIds.contains(vehicleId)) {
+    if (!getVehicleById(vehicleId) && !_ignoreVehicleIds.contains(vehicleId)) {
         if (vehicleId == MAVLinkProtocol::instance()->getSystemId()) {
             qgcApp()->showToolBarMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
         }
@@ -74,7 +74,7 @@ bool MultiVehicleManager::notifyHeartbeatInfo(LinkInterface* link, int vehicleId
         connect(vehicle, &Vehicle::allLinksDisconnected, this, &MultiVehicleManager::_deleteVehiclePhase1);
         connect(vehicle->autopilotPlugin(), &AutoPilotPlugin::pluginReadyChanged, this, &MultiVehicleManager::_autopilotPluginReadyChanged);
 
-        _vehicleMap[vehicleId] = vehicle;
+        _vehicles.append(vehicle);
         
         emit vehicleAdded(vehicle);
         
@@ -91,10 +91,10 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     _vehicleBeingDeleted = vehicle;
 
     // Remove from map
-    bool found;
-    foreach(int id, _vehicleMap.keys()) {
-        if (_vehicleMap[id] == _vehicleBeingDeleted) {
-            _vehicleMap.remove(id);
+    bool found = false;
+    for (int i=0; i<_vehicles.count(); i++) {
+        if (_vehicles[i] == _vehicleBeingDeleted) {
+            _vehicles.removeAt(i);
             found = true;
             break;
         }
@@ -128,8 +128,8 @@ void MultiVehicleManager::_deleteVehiclePhase2  (void)
     /// This means we can now clear the active vehicle property and delete the Vehicle for real.
     
     Vehicle* newActiveVehicle = NULL;
-    if (_vehicleMap.count()) {
-        newActiveVehicle = _vehicleMap.first();
+    if (_vehicles.count()) {
+        newActiveVehicle = qobject_cast<Vehicle*>(_vehicles[0]);
     }
     
     _activeVehicle = newActiveVehicle;
@@ -205,8 +205,8 @@ void MultiVehicleManager::_autopilotPluginReadyChanged(bool pluginReady)
 
 void MultiVehicleManager::setHomePositionForAllVehicles(double lat, double lon, double alt)
 {
-    foreach (Vehicle* vehicle, _vehicleMap) {
-        vehicle->uas()->setHomePosition(lat, lon, alt);
+    for (int i=0; i< _vehicles.count(); i++) {
+        qobject_cast<Vehicle*>(_vehicles[i])->uas()->setHomePosition(lat, lon, alt);
     }
 }
 
@@ -222,28 +222,6 @@ UASWaypointManager* MultiVehicleManager::activeWaypointManager(void)
     return _offlineWaypointManager;
 }
 
-QList<Vehicle*> MultiVehicleManager::vehicles(void)
-{
-    QList<Vehicle*> list;
-    
-    foreach (Vehicle* vehicle, _vehicleMap) {
-        list += vehicle;
-    }
-    
-    return list;
-}
-
-QVariantList MultiVehicleManager::vehiclesAsVariants(void)
-{
-    QVariantList list;
-    
-    foreach (Vehicle* vehicle, _vehicleMap) {
-        list += QVariant::fromValue(vehicle);
-    }
-    
-    return list;
-}
-
 void MultiVehicleManager::saveSetting(const QString &name, const QString& value)
 {
     QSettings settings;
@@ -254,4 +232,27 @@ QString MultiVehicleManager::loadSetting(const QString &name, const QString& def
 {
     QSettings settings;
     return settings.value(name, defaultValue).toString();
+}
+
+Vehicle* MultiVehicleManager::getVehicleById(int vehicleId)
+{
+    for (int i=0; i< _vehicles.count(); i++) {
+        Vehicle* vehicle = qobject_cast<Vehicle*>(_vehicles[i]);
+        if (vehicle->id() == vehicleId) {
+            return vehicle;
+        }
+    }
+
+    return NULL;
+}
+
+QList<Vehicle*> MultiVehicleManager::vehicles(void)
+{
+    QList<Vehicle*> list;
+    
+    for (int i=0; i< _vehicles.count(); i++) {
+        list += qobject_cast<Vehicle*>(_vehicles[i]);
+    }
+    
+    return list;
 }
