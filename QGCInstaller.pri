@@ -50,4 +50,7 @@ installer {
 		#QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY qgroundcontrol.pdb $${DESTDIR_WIN}
 		#QMAKE_POST_LINK += $$escape_expand(\\n) del qgroundcontrol.pdb
     }
+    LinuxBuild {
+        QMAKE_POST_LINK += && tar -cjf qgroundcontrol.tar.bz2 release --transform 's/release/qgroundcontrol/'
+    }
 }

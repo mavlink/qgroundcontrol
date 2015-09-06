@@ -27,7 +27,7 @@ before_install:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
 
 install:
-  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" || "${TRAVIS_OS_NAME}" = "android" ]]; then
          sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
       && sudo apt-add-repository -y ppa:beineri/opt-qt541
       && sudo apt-get -qq update
@@ -38,7 +38,7 @@ install:
       && export DISPLAY=:99.0
       && sh -e /etc/init.d/xvfb start
       ;
-    else
+    elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
          brew tap PX4/homebrew-px4
       && brew update
       && brew install qt54
