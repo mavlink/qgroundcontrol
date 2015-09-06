@@ -34,6 +34,7 @@
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
 #include "MissionItem.h"
+#include "QmlObjectListModel.h"
 
 class UAS;
 class UASInterface;
@@ -92,8 +93,8 @@ public:
     Q_PROPERTY(uint16_t     currentWaypoint     READ currentWaypoint    NOTIFY currentWaypointChanged)
     Q_PROPERTY(unsigned int heartbeatTimeout    READ heartbeatTimeout   NOTIFY heartbeatTimeoutChanged)
     
-    //-- MissionItem management
-    Q_PROPERTY(QQmlListProperty<MissionItem> missionItems READ missionItems NOTIFY missionItemsChanged)
+    Q_PROPERTY(QmlObjectListModel* missionItems READ missionItemsModel CONSTANT)
+    QmlObjectListModel* missionItemsModel(void);
     
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
@@ -202,8 +203,6 @@ public:
     uint16_t        currentWaypoint     () { return _currentWaypoint; }
     unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
     
-    QQmlListProperty<MissionItem> missionItems() {return QQmlListProperty<MissionItem>(this, _waypoints); }
-    
 public slots:
     void setLatitude(double latitude);
     void setLongitude(double longitude);
@@ -247,7 +246,6 @@ signals:
     void satelliteLockChanged   ();
     void waypointDistanceChanged();
     void currentWaypointChanged ();
-    void missionItemsChanged    ();
     
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
@@ -352,7 +350,8 @@ private:
     int             _satelliteLock;
     UASWaypointManager* _wpm;
     int             _updateCount;
-    QList<MissionItem*>_waypoints;
+    
+    QmlObjectListModel  _missionItems;
     
     static const char* _settingsGroup;
     static const char* _joystickModeSettingsKey;

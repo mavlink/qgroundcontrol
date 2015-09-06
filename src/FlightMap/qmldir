@@ -21,4 +21,4 @@ QGCWaypointEditor       1.0 QGCWaypointEditor.qml
 
 # MapQuickItems
 VehicleMapItem          1.0 VehicleMapItem.qml
-MissioMapItem           1.0 MissionMapItem.qml
+MissionMapItem          1.0 MissionMapItem.qml
