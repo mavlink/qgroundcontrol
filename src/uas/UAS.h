@@ -982,6 +982,9 @@ protected slots:
     void readSettings();
     
 private:
+    void _say(const QString& text, int severity = 6);
+    
+private:
     Vehicle* _vehicle;
 };
 
