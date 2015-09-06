@@ -55,7 +55,6 @@ GAudioOutput::GAudioOutput(QObject *parent) :
     
     worker->moveToThread(thread);
     connect(this, &GAudioOutput::textToSpeak, worker, &QGCAudioWorker::say);
-    connect(this, &GAudioOutput::beepOnce, worker, &QGCAudioWorker::beep);
     connect(thread, &QThread::finished, thread, &QObject::deleteLater);
     connect(thread, &QThread::finished, worker, &QObject::deleteLater);
     thread->start();
@@ -82,28 +81,10 @@ bool GAudioOutput::isMuted()
     return muted;
 }
 
-bool GAudioOutput::say(QString text, int severity)
+bool GAudioOutput::say(const QString& text, int severity)
 {
     if (!muted) {
         emit textToSpeak(text, severity);
     }
     return true;
-}
-
-/**
- * @param text This message will be played after the alert beep
- */
-bool GAudioOutput::alert(QString text)
-{
-    if (!muted) {
-        emit textToSpeak(text, 1);
-    }
-    return true;
-}
-
-void GAudioOutput::beep()
-{
-    if (!muted) {
-        emit beepOnce();
-    }
 }

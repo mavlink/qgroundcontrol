@@ -77,11 +77,7 @@ public:
 
 public slots:
     /** @brief Say this text if current output priority matches */
-    bool say(QString text, int severity = 6);
-    /** @brief Play alert sound and say notification message */
-    bool alert(QString text);
-    /** @brief Play emergency sound once */
-    void beep();
+    bool say(const QString& text, int severity = 6);
     /** @brief Mute/unmute sound */
     void mute(bool mute);
 
