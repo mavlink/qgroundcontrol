@@ -68,3 +68,7 @@ ui_*
 *.so*
 *.moc
 *.prl
+
+# android
+android/local.properties
+android/gradle.properties
