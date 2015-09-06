@@ -94,15 +94,18 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
             _foundBoardType = "Pixhawk";
             _startFlashWhenBootloaderFound = false;
             break;
-	case FoundBoardAeroCore:
+        case FoundBoardAeroCore:
             _foundBoardType = "AeroCore";
             _startFlashWhenBootloaderFound = false;
             break;
         case FoundBoardPX4Flow:
+            _foundBoardType = "PX4 Flow";
+            _startFlashWhenBootloaderFound = false;
+            break;
         case FoundBoard3drRadio:
-            _foundBoardType = type == FoundBoardPX4Flow ? "PX4 Flow" : "3DR Radio";
+            _foundBoardType = "3DR Radio";
             if (!firstAttempt) {
-                // PX4 Flow and Radio always flash stable firmware, so we can start right away without
+                // Radio always flashes stable firmware, so we can start right away without
                 // any further user input.
                 _startFlashWhenBootloaderFound = true;
                 _startFlashWhenBootloaderFoundFirmwareType = PX4StableFirmware;
