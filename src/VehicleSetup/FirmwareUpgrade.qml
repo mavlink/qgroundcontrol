@@ -96,7 +96,7 @@ QGCView {
             } else {
                 // We end up here when we detect a board plugged in after we've started upgrade
                 statusTextArea.append(highlightPrefix + "Found device" + highlightSuffix + ": " + controller.boardType)
-                if (controller.boardType == "Pixhawk" || controller.boardType == "AeroCore") {
+                if (controller.boardType == "Pixhawk" || controller.boardType == "AeroCore" || controller.boardType == "PX4 Flow") {
                     showDialog(pixhawkFirmwareSelectDialog, title, 50, StandardButton.Ok | StandardButton.Cancel)
                  }
              }
@@ -140,6 +140,7 @@ QGCView {
             anchors.fill: parent
  
             property bool showVersionSelection: apmFlightStack.checked || advancedMode.checked
+            property bool px4Flow:              controller.boardType == "PX4 Flow"
 
             function accept() {
                 hideDialog()
@@ -159,20 +160,20 @@ QGCView {
                 id: px4FirmwareTypeList
 
                 ListElement {
-                    text: qsTr("Standard Version (stable)");
-                    firmwareType: FirmwareUpgradeController.PX4StableFirmware
+                    text:           "Standard Version (stable)";
+                    firmwareType:   FirmwareUpgradeController.PX4StableFirmware
                 }
                 ListElement {
-                    text: qsTr("Beta Testing (beta)");
-                    firmwareType: FirmwareUpgradeController.PX4BetaFirmware
+                    text:           "Beta Testing (beta)";
+                    firmwareType:   FirmwareUpgradeController.PX4BetaFirmware
                 }
                 ListElement {
-                    text: qsTr("Developer Build (master)");
-                    firmwareType: FirmwareUpgradeController.PX4DeveloperFirmware
+                    text:           "Developer Build (master)";
+                    firmwareType:   FirmwareUpgradeController.PX4DeveloperFirmware
                 }
                 ListElement {
-                    text: qsTr("Custom firmware file...");
-                    firmwareType: FirmwareUpgradeController.PX4CustomFirmware
+                    text:           "Custom firmware file...";
+                    firmwareType:   FirmwareUpgradeController.PX4CustomFirmware
                  }
             }
  
@@ -217,6 +218,19 @@ QGCView {
                 }
             }
 
+            ListModel {
+                id: px4FlowTypeList
+
+                ListElement {
+                    text:           "Standard Version (stable)";
+                    firmwareType:   FirmwareUpgradeController.PX4StableFirmware
+                }
+                ListElement {
+                    text:           "Custom firmware file...";
+                    firmwareType:   FirmwareUpgradeController.PX4CustomFirmware
+                 }
+            }
+ 
             Column {
                 anchors.fill:   parent
                 spacing:        defaultTextHeight
@@ -224,7 +238,7 @@ QGCView {
                 QGCLabel {
                     width:      parent.width
                     wrapMode:   Text.WordWrap
-                    text:       "Detected Pixhawk board. You can select from the following flight stacks:"
+                    text:       px4Flow ? "Detected PX4 Flow board. You can select from the following firmware:" : "Detected Pixhawk board. You can select from the following flight stacks:"
                 }
 
                 function firmwareVersionChanged(model) {
@@ -243,6 +257,7 @@ QGCView {
                     checked:        true
                     exclusiveGroup: firmwareGroup
                     text:           "PX4 Flight Stack (full QGC support)"
+                    visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(px4FirmwareTypeList)
                 }
@@ -251,6 +266,7 @@ QGCView {
                     id:             apmFlightStack
                     exclusiveGroup: firmwareGroup
                     text:           "APM Flight Stack (partial QGC support)"
+                    visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(apmFirmwareTypeList)
                 }
@@ -259,14 +275,14 @@ QGCView {
                     width:      parent.width
                     wrapMode:   Text.WordWrap
                     visible:    showVersionSelection
-                    text:       "Select which version of the above flight stack you would like to install:"
+                    text:       px4Flow ? "Select which version of the firmware you would like to install:" : "Select which version of the above flight stack you would like to install:"
                 }
- 
+
                 QGCComboBox {
                     id:         firmwareVersionCombo
                     width:      200
                     visible:    showVersionSelection
-                    model:      px4FirmwareTypeList
+                    model:      px4Flow ? px4FlowTypeList : px4FirmwareTypeList
 
                     onActivated: {
                         if (model.get(index).firmwareType == FirmwareUpgradeController.PX4BetaFirmware) {
@@ -301,6 +317,8 @@ QGCView {
                 id:             advancedMode
                 anchors.bottom: parent.bottom
                 text:           "Advanced mode"
+                checked:        px4Flow ? true : false
+                visible:        !px4Flow
 
                 onClicked: {
                     firmwareVersionCombo.currentIndex = 0
@@ -314,6 +332,7 @@ QGCView {
                 anchors.bottom:     parent.bottom
                 text:               "Help me pick a flight stack"
                 onClicked:          Qt.openUrlExternally("http://pixhawk.org/choice")
+                visible:            !px4Flow
             }
         } // QGCViewDialog
     } // Component - pixhawkFirmwareSelectDialog
