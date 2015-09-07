@@ -25,12 +25,13 @@ import QtQuick                  2.4
 import QtQuick.Controls         1.3
 import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.2
+import QtLocation               5.3
 
 import QGroundControl.FlightMap     1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
-
+import QGroundControl.Vehicle       1.0
 
 /// Flight Display View
 Item {
@@ -76,9 +77,51 @@ Item {
         mapName:            "FlightDisplayView"
         latitude:           parent._latitude
         longitude:          parent._longitude
-        z:                  10
-        showVehicles:       true
-        showMissionItems:   true
+
+        // Add the vehicles to the map
+        MapItemView {
+            model: multiVehicleManager.vehicles
+            
+            delegate:
+                VehicleMapItem {
+                        coordinate:     object.coordinate
+                        heading:        object.heading
+                        isSatellite:    isSatelliteMap
+                }
+        }
+
+        // Add the mission items to the map
+        MapItemView {
+            model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
+            
+            delegate:
+                MissionMapItem {
+                    missionItem: object
+                }
+        }
+
+        // Mission item list
+        ListView {
+            id:                 missionItemSummaryList
+            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            anchors.left:       parent.left
+            anchors.right:      mapWidgets.left
+            anchors.bottom:     parent.bottom
+            height:             ScreenTools.defaultFontPixelHeight * 7
+            spacing:            ScreenTools.defaultFontPixelWidth / 2
+            opacity:            0.75
+            orientation:        ListView.Horizontal
+            model:              multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
+
+            property real _maxItemHeight: 0
+
+            delegate:
+                MissionItemSummary {
+                    opacity:        0.75
+                    missionItem:    object
+                }
+        } // ListView - Mission item list
+
     }
 
     QGCCompassWidget {
