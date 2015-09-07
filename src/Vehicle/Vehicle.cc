@@ -729,6 +729,7 @@ void Vehicle::_waypointViewOnlyListChanged()
         for(int i = 0; i < newMisionItems.count(); i++) {
             MissionItem* itemToCopy = newMisionItems[i];
             MissionItem* item = new MissionItem(*itemToCopy);
+            item->setParent(this);
             _missionItems.append(item);
         }
     }
