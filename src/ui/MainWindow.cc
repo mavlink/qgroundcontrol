@@ -72,6 +72,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MultiVehicleManager.h"
 #include "CustomCommandWidget.h"
 #include "HomePositionManager.h"
+#include "MissionEditor.h"
 
 #ifdef UNITTEST_BUILD
 #include "QmlControls/QmlTestWidget.h"
@@ -425,6 +426,14 @@ void MainWindow::_buildPlanView(void)
     }
 }
 
+void MainWindow::_buildMissionEditorView(void)
+{
+    if (!_missionEditorView) {
+        _missionEditorView = new MissionEditor(this);
+        _missionEditorView->setVisible(false);
+    }
+}
+
 void MainWindow::_buildFlightView(void)
 {
     if (!_flightView) {
@@ -700,6 +709,7 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(_ui.actionFlight);
     perspectives->addAction(_ui.actionSimulationView);
     perspectives->addAction(_ui.actionPlan);
+    perspectives->addAction(_ui.actionMissionEditor);
     perspectives->addAction(_ui.actionSetup);
     perspectives->setExclusive(true);
 
@@ -724,6 +734,11 @@ void MainWindow::connectCommonActions()
         _ui.actionPlan->setChecked(true);
         _ui.actionPlan->activate(QAction::Trigger);
     }
+    if (_currentView == VIEW_MISSIONEDITOR)
+    {
+        _ui.actionMissionEditor->setChecked(true);
+        _ui.actionMissionEditor->activate(QAction::Trigger);
+    }
     if (_currentView == VIEW_SETUP)
     {
         _ui.actionSetup->setChecked(true);
@@ -738,11 +753,12 @@ void MainWindow::connectCommonActions()
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &MainWindow::_vehicleRemoved);
 
     // Views actions
-    connect(_ui.actionFlight, SIGNAL(triggered()), this, SLOT(loadFlightView()));
-    connect(_ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
-    connect(_ui.actionAnalyze, SIGNAL(triggered()), this, SLOT(loadAnalyzeView()));
-    connect(_ui.actionPlan, SIGNAL(triggered()), this, SLOT(loadPlanView()));
-
+    connect(_ui.actionFlight,           SIGNAL(triggered()), this, SLOT(loadFlightView()));
+    connect(_ui.actionSimulationView,   SIGNAL(triggered()), this, SLOT(loadSimulationView()));
+    connect(_ui.actionAnalyze,          SIGNAL(triggered()), this, SLOT(loadAnalyzeView()));
+    connect(_ui.actionPlan,             SIGNAL(triggered()), this, SLOT(loadPlanView()));
+    connect(_ui.actionMissionEditor,    SIGNAL(triggered()), this, SLOT(loadMissionEditorView()));
+    
     // Help Actions
     connect(_ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(_ui.actionDeveloper_Credits, SIGNAL(triggered()), this, SLOT(showCredits()));
@@ -891,6 +907,11 @@ void MainWindow::_loadCurrentViewState(void)
             defaultWidgets = "WAYPOINT_LIST_DOCKWIDGET";
             break;
 
+        case VIEW_MISSIONEDITOR:
+            _buildMissionEditorView();
+            centerView = _missionEditorView;
+            break;
+
         case VIEW_SIMULATION:
             _buildSimView();
             centerView = _simView;
@@ -989,6 +1010,17 @@ void MainWindow::loadPlanView()
         _storeCurrentViewState();
         _currentView = VIEW_PLAN;
         _ui.actionPlan->setChecked(true);
+        _loadCurrentViewState();
+    }
+}
+
+void MainWindow::loadMissionEditorView()
+{
+    if (_currentView != VIEW_MISSIONEDITOR)
+    {
+        _storeCurrentViewState();
+        _currentView = VIEW_MISSIONEDITOR;
+        _ui.actionMissionEditor->setChecked(true);
         _loadCurrentViewState();
     }
 }

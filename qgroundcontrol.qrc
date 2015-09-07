@@ -128,6 +128,7 @@
         <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
         <file alias="FlightDisplayWidget.qml">src/FlightDisplay/FlightDisplayWidget.qml</file>
         <file alias="MapDisplay.qml">src/ui/mapdisplay/MapDisplay.qml</file>
+        <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
 
         <!-- FlightMap module -->
         <file alias="QGroundControl/FlightMap/qmldir">src/FlightMap/qmldir</file>
