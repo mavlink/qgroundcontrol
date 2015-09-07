@@ -30,14 +30,14 @@ import QGroundControl.Vehicle       1.0
 
 /// Marker for displaying a mission item on the map
 MapQuickItem {
-    property var missionItem        ///< Mission Item object
+    property alias  label:          _label.label
+    property alias  isCurrentItem:  _label.isCurrentItem
 
     anchorPoint.x:  sourceItem.width  / 2
     anchorPoint.y:  sourceItem.height / 2
-    coordinate:     missionItem.coordinate
 
     sourceItem:
         MissionItemIndexLabel {
-            missionItemIndex: missionItem.id
+            id: _label
         }
 }

@@ -7,7 +7,7 @@ import QGroundControl.Vehicle       1.0
 
 /// Mission item summary display control
 Rectangle {
-    property var missionItem        ///< Mission Item object
+    property var    missionItem                         ///< Mission Item object
 
     width:          ScreenTools.defaultFontPixelWidth * 15
     height:         valueColumn.height + radius
@@ -17,9 +17,11 @@ Rectangle {
     radius:         ScreenTools.defaultFontPixelWidth
 
     MissionItemIndexLabel {
+        id:                 _indexLabel
         anchors.top:        parent.top
         anchors.right:      parent.right
-        missionItemIndex:   missionItem.id
+        isCurrentItem:      missionItem.isCurrentItem
+        label:              missionItem.sequenceNumber
     }
 
     Column {

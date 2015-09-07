@@ -1313,7 +1313,7 @@ void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float widt
 
     float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
     float acceptRadius = w->getAcceptanceRadius();
-    double yawDiff = w->getYaw()/180.0*M_PI-yaw;
+    double yawDiff = w->yaw()/180.0*M_PI-yaw;
 
     // Draw background
     pen.setColor(Qt::black);
@@ -1356,11 +1356,11 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             int frameRef = w->getFrame();
             if (frameRef == MAV_FRAME_LOCAL_NED)
             {
-                in = QPointF(w->getX(), w->getY());
+                in = QPointF(w->x(), w->y());
             }
             else if (frameRef == MAV_FRAME_LOCAL_ENU)
             {
-                in = QPointF(w->getY(), w->getX());
+                in = QPointF(w->y(), w->x());
             }
             // Convert global coordinates into the local ENU frame, then display them.
             else if (frameRef == MAV_FRAME_GLOBAL || frameRef == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
@@ -1368,7 +1368,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
 
                 // Transform the lat/lon for this waypoint into the local frame
                 double e, n, u;
-                HomePositionManager::instance()->wgs84ToEnu(w->getX(), w->getY(),w->getZ(), &e, &n, &u);
+                HomePositionManager::instance()->wgs84ToEnu(w->x(), w->y(),w->z(), &e, &n, &u);
                 in = QPointF(n, e);
             }
             // Otherwise we don't process this waypoint.
@@ -1383,7 +1383,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             QPointF p = metricBodyToRef(in);
 
             // Select color based on if this is the current waypoint.
-            if (w->getCurrent())
+            if (w->isCurrentItem())
             {
                 drawWaypoint(painter, QGC::colorYellow, refLineWidthToPen(0.8f), w, p);
             }
