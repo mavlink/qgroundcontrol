@@ -26,16 +26,18 @@ import QtLocation   5.3
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.Vehicle       1.0
 
 /// Marker for displaying a mission item on the map
 MapQuickItem {
-    property int index
+    property var missionItem        ///< Mission Item object
 
-    anchorPoint.x: sourceItem.width  / 2
-    anchorPoint.y: sourceItem.height / 2
+    anchorPoint.x:  sourceItem.width  / 2
+    anchorPoint.y:  sourceItem.height / 2
+    coordinate:     missionItem.coordinate
 
     sourceItem:
         MissionItemIndexLabel {
-            missionItemIndex: index
+            missionItemIndex: missionItem.id
         }
 }

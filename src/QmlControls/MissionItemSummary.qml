@@ -2,7 +2,8 @@ import QtQuick                  2.2
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
 
 /// Mission item summary display control
 Rectangle {
@@ -18,7 +19,7 @@ Rectangle {
     MissionItemIndexLabel {
         anchors.top:        parent.top
         anchors.right:      parent.right
-        missionItemIndex:   missionItem.id + 1
+        missionItemIndex:   missionItem.id
     }
 
     Column {

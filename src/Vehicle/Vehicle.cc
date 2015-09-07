@@ -148,6 +148,8 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     _setSystemType(_mav, _mav->getSystemType());
     _updateArmingState(_mav->isArmed());
     
+    _waypointViewOnlyListChanged();
+    
     _loadSettings();
 }
 
@@ -721,21 +723,14 @@ void Vehicle::_updateWaypointViewOnly(int, MissionItem* /*wp*/)
 void Vehicle::_waypointViewOnlyListChanged()
 {
     if(_wpm) {
-        const QList<MissionItem*> &waypoints = _wpm->getWaypointViewOnlyList();
-        _waypoints.clear();
-        for(int i = 0; i < waypoints.count(); i++) {
-            MissionItem* wp = waypoints[i];
-            _waypoints.append(new MissionItem(*wp));
+        const QList<MissionItem*>& newMisionItems = _wpm->getWaypointViewOnlyList();
+        _missionItems.clear();
+        qCDebug(VehicleLog) << QString("Loading %1 mission items").arg(newMisionItems.count());
+        for(int i = 0; i < newMisionItems.count(); i++) {
+            MissionItem* itemToCopy = newMisionItems[i];
+            MissionItem* item = new MissionItem(*itemToCopy);
+            _missionItems.append(item);
         }
-        emit missionItemsChanged();
-        /*
-         if(_longitude == DEFAULT_LON && _latitude == DEFAULT_LAT && _waypoints.length()) {
-         _longitude = _waypoints[0]->getLongitude();
-         _latitude  = _waypoints[0]->getLatitude();
-         emit longitudeChanged();
-         emit latitudeChanged();
-         }
-         */
     }
 }
 
@@ -928,4 +923,9 @@ void Vehicle::setActive(bool active)
     _active = active;
     
     _startJoystick(_active);
+}
+
+QmlObjectListModel* Vehicle::missionItemsModel(void)
+{
+    return &_missionItems;
 }

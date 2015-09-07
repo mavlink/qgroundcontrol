@@ -37,6 +37,7 @@
 class MissionItem : public QObject
 {
     Q_OBJECT
+    
 public:
     MissionItem(
         QObject *parent = 0,
@@ -250,7 +251,5 @@ signals:
 private:
     QString _oneDecimalString(double value);
 };
-
-QML_DECLARE_TYPE(MissionItem)
 
 #endif
