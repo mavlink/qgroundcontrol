@@ -391,7 +391,9 @@ void QGCApplication::_initCommon(void)
         QString documentsLocation = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 
         QDir documentsDir(documentsLocation);
-        Q_ASSERT(documentsDir.exists());
+        if (!documentsDir.exists()) {
+            qWarning() << "Documents directory doesn't exist" << documentsDir.absolutePath();
+        }
 
         bool pathCreated = documentsDir.mkpath(_defaultSavedFileDirectoryName);
         Q_UNUSED(pathCreated);

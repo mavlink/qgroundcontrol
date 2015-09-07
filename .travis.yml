@@ -23,13 +23,13 @@ cache:
 
 before_install:
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p $HOME/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/; fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
 
 install:
-  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-         mkdir -p $HOME/.config/QtProject $HOME/.config/QGroundControl.org $HOME/QGroundControl
-      && sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
-      && sudo apt-add-repository -y ppa:beineri/opt-qt541
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" || "${TRAVIS_OS_NAME}" = "android" ]]; then
+         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
+      && sudo apt-add-repository -y ppa:beineri/opt-qt542
       && sudo apt-get -qq update
       && sudo apt-get -qq install g++-4.8 libc6-i386 qt54tools qt54base qt54declarative qt54serialport qt54svg qt54webkit qt54quickcontrols qt54xmlpatterns qt54x11extras qt54websockets qt54sensors qt54script qt54quick1 qt54multimedia qt54location qt54imageformats qt54graphicaleffects qt54connectivity espeak libespeak-dev libopenscenegraph-dev libsdl1.2-dev libudev-dev
       && export PATH=/opt/qt54/bin:$PATH
@@ -38,7 +38,7 @@ install:
       && export DISPLAY=:99.0
       && sh -e /etc/init.d/xvfb start
       ;
-    else
+    elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
          brew tap PX4/homebrew-px4
       && brew update
       && brew install qt54
@@ -54,7 +54,7 @@ script:
   - make -j4
   - echo -en 'travis_fold:end:script.1\\r'
   - echo 'Running unittests' && echo -en 'travis_fold:start:script.2\\r'
-#  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ls -ls ~; ls -ls ~/.config; ./debug/qgroundcontrol --unittest; fi
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol --unittest; fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
   - echo -en 'travis_fold:end:script.2\\r'
 
