@@ -84,9 +84,9 @@ Item {
             
             delegate:
                 VehicleMapItem {
+                        vehicle:        object
                         coordinate:     object.coordinate
-                        heading:        object.heading
-                        isSatellite:    isSatelliteMap
+                        isSatellite:    flightMap.isSatelliteMap
                 }
         }
 
@@ -124,7 +124,7 @@ Item {
             id:                 missionItemSummaryList
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             anchors.left:       parent.left
-            anchors.right:      mapWidgets.left
+            anchors.right:      flightMap.mapWidgets.left
             anchors.bottom:     parent.bottom
             height:             ScreenTools.defaultFontPixelHeight * 7
             spacing:            ScreenTools.defaultFontPixelWidth / 2
