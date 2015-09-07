@@ -29,7 +29,7 @@ before_install:
 install:
   - if [[ "${TRAVIS_OS_NAME}" = "linux" || "${TRAVIS_OS_NAME}" = "android" ]]; then
          sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
-      && sudo apt-add-repository -y ppa:beineri/opt-qt541
+      && sudo apt-add-repository -y ppa:beineri/opt-qt542
       && sudo apt-get -qq update
       && sudo apt-get -qq install g++-4.8 libc6-i386 qt54tools qt54base qt54declarative qt54serialport qt54svg qt54webkit qt54quickcontrols qt54xmlpatterns qt54x11extras qt54websockets qt54sensors qt54script qt54quick1 qt54multimedia qt54location qt54imageformats qt54graphicaleffects qt54connectivity espeak libespeak-dev libopenscenegraph-dev libsdl1.2-dev libudev-dev
       && export PATH=/opt/qt54/bin:$PATH
