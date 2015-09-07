@@ -27,15 +27,18 @@ This file is part of the QGROUNDCONTROL project
 import QtQuick      2.4
 import QtLocation   5.3
 
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
 
 /// Marker for displaying a vehicle location on the map
 MapQuickItem {
-    property real heading: 0
-    property bool isSatellite: false
+    property var    vehicle             ///< Vehicle object
+    property bool   isSatellite: false  ///< true: satellite map is showing
 
-    anchorPoint.x: vehicleIcon.width  / 2
-    anchorPoint.y: vehicleIcon.height / 2
+    anchorPoint.x:  vehicleIcon.width  / 2
+    anchorPoint.y:  vehicleIcon.height / 2
+    coordinate:     vehicle.coordinate
+    visible:        vehicle.satelliteLock >= 2  // 2D lock
 
     sourceItem: Image {
         id:         vehicleIcon
@@ -47,7 +50,7 @@ MapQuickItem {
         transform: Rotation {
             origin.x:   vehicleIcon.width  / 2
             origin.y:   vehicleIcon.height / 2
-            angle:      heading
+            angle:      vehicle.heading
         }
     }
 }

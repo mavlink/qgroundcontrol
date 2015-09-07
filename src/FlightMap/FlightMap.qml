@@ -166,8 +166,7 @@ Item {
             
             delegate:
                 VehicleMapItem {
-                        coordinate:     object.coordinate
-                        heading:        object.heading
+                        vehicle:        object
                         isSatellite:    root.isSatelliteMap
                 }
         }
@@ -234,6 +233,25 @@ Item {
             scaleText.text = text
         }
 */
+    }
+    
+    // Vehicle GPS lock display
+    Column {
+        id:     gpsLockColumn
+        y:      (parent.height - height) / 2
+        width:  parent.width
+
+        Repeater {
+            model: multiVehicleManager.vehicles
+            
+            delegate:
+                QGCLabel {
+                    width:                  gpsLockColumn.width
+                    horizontalAlignment:    Text.AlignHCenter
+                    visible:                object.satelliteLock < 2
+                    text:                   "No GPS Lock for Vehicle #" + object.id
+                }
+        }
     }
     
     // Mission item list
