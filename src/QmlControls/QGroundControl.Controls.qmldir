@@ -28,4 +28,5 @@ QGCViewMessage  1.0 QGCViewMessage.qml
 
 MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
 MissionItemSummary      1.0 MissionItemSummary.qml
+MissionItemEditor       1.0 MissionItemEditor.qml
 

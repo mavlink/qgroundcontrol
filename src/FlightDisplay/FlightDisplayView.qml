@@ -95,8 +95,10 @@ Item {
             model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
             
             delegate:
-                MissionMapItem {
-                    missionItem: object
+                MissionItemIndicator {
+                    label:          object.sequenceNumber
+                    isCurrentItem:  object.isCurrentItem
+                    coordinate:     object.coordinate
                 }
         }
 

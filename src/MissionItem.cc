@@ -34,41 +34,43 @@ This file is part of the QGROUNDCONTROL project
 
 #include "MissionItem.h"
 
-MissionItem::MissionItem(
-    QObject *parent,
-    quint16 id,
-    double  x,
-    double  y,
-    double  z,
-    double  param1,
-    double  param2,
-    double  param3,
-    double  param4,
-    bool    autocontinue,
-    bool    current,
-    int     frame,
-    int     action,
-    const QString& description
-    )
+const MissionItem::MavCmd2Name_t  MissionItem::_rgMavCmd2Name[_cMavCmd2Name] = {
+    { MAV_CMD_NAV_WAYPOINT,         "Waypoint" },
+    { MAV_CMD_NAV_LOITER_UNLIM,     "Loiter" },
+    { MAV_CMD_NAV_LOITER_TURNS,     "Loiter (turns)" },
+    { MAV_CMD_NAV_LOITER_TIME,      "Loiter (unlimited)" },
+    { MAV_CMD_NAV_RETURN_TO_LAUNCH, "Return Home" },
+    { MAV_CMD_NAV_LAND,             "Land" },
+    { MAV_CMD_NAV_TAKEOFF,          "Takeoff" },
+    { MAV_CMD_CONDITION_DELAY,      "Delay" },
+    { MAV_CMD_DO_JUMP,              "Jump To Command" },
+};
+
+MissionItem::MissionItem(QObject*       parent,
+                         int            sequenceNumber,
+                         QGeoCoordinate coordinate,
+                         double         param1,
+                         double         param2,
+                         double         param3,
+                         double         param4,
+                         bool           autocontinue,
+                         bool           isCurrentItem,
+                         int            frame,
+                         int            action)
     : QObject(parent)
-    , _id(id)
-    , _x(x)
-    , _y(y)
-    , _z(z)
+    , _sequenceNumber(sequenceNumber)
+    , _coordinate(coordinate)
     , _yaw(param4)
     , _frame(frame)
     , _action(action)
     , _autocontinue(autocontinue)
-    , _current(current)
+    , _isCurrentItem(isCurrentItem)
     , _orbit(param3)
     , _param1(param1)
     , _param2(param2)
-    , _name(QString("WP%1").arg(id, 2, 10, QChar('0')))
-    , _description(description)
     , _reachedTime(0)
 {
-    connect(this, &MissionItem::latitudeChanged, this, &MissionItem::coordinateChanged);
-    connect(this, &MissionItem::longitudeChanged, this, &MissionItem::coordinateChanged);
+
 }
 
 MissionItem::MissionItem(const MissionItem& other)
@@ -83,21 +85,18 @@ MissionItem::~MissionItem()
 
 const MissionItem& MissionItem::operator=(const MissionItem& other)
 {
-    _id              = other.getId();
-    _x               = other.getX();
-    _y               = other.getY();
-    _z               = other.getZ();
-    _yaw             = other.getYaw();
-    _frame           = other.getFrame();
-    _action          = other.getAction();
-    _autocontinue    = other.getAutoContinue();
-    _current         = other.getCurrent();
-    _orbit           = other.getParam3();
-    _param1          = other.getParam1();
-    _param2          = other.getParam2();
-    _name            = other.getName();
-    _description     = other.getDescription();
-    _reachedTime     = other.getReachedTime();
+    _sequenceNumber = other._sequenceNumber;
+    _isCurrentItem  = other._isCurrentItem;
+    _coordinate     = other._coordinate;
+    _yaw            = other._yaw;
+    _frame          = other._frame;
+    _action         = other._action;
+    _autocontinue   = other._autocontinue;
+    _orbit          = other._orbit;
+    _param1         = other._param1;
+    _param2         = other._param2;
+    _reachedTime    = other._reachedTime;
+    
     return *this;
 }
 
@@ -109,43 +108,42 @@ bool MissionItem::isNavigationType()
 void MissionItem::save(QTextStream &saveStream)
 {
     QString position("%1\t%2\t%3");
-    position = position.arg(_x, 0, 'g', 18);
-    position = position.arg(_y, 0, 'g', 18);
-    position = position.arg(_z, 0, 'g', 18);
+    position = position.arg(x(), 0, 'g', 18);
+    position = position.arg(y(), 0, 'g', 18);
+    position = position.arg(z(), 0, 'g', 18);
     QString parameters("%1\t%2\t%3\t%4");
     parameters = parameters.arg(_param1, 0, 'g', 18).arg(_param2, 0, 'g', 18).arg(_orbit, 0, 'g', 18).arg(_yaw, 0, 'g', 18);
     // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE> <DESCRIPTION>
     // as documented here: http://qgroundcontrol.org/waypoint_protocol
-    saveStream << this->getId() << "\t" << this->getCurrent() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
+    saveStream << this->sequenceNumber() << "\t" << this->isCurrentItem() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
 }
 
 bool MissionItem::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
     if (wpParams.size() == 12) {
-        _id = wpParams[0].toInt();
-        _current = (wpParams[1].toInt() == 1 ? true : false);
+        setSequenceNumber(wpParams[0].toInt());
+        setIsCurrentItem(wpParams[1].toInt() == 1 ? true : false);
         _frame = (MAV_FRAME) wpParams[2].toInt();
         _action = (MAV_CMD) wpParams[3].toInt();
         _param1 = wpParams[4].toDouble();
         _param2 = wpParams[5].toDouble();
         _orbit = wpParams[6].toDouble();
-        _yaw = wpParams[7].toDouble();
-        _x = wpParams[8].toDouble();
-        _y = wpParams[9].toDouble();
-        _z = wpParams[10].toDouble();
+        setYaw(wpParams[7].toDouble());
+        setLatitude(wpParams[8].toDouble());
+        setLongitude(wpParams[9].toDouble());
+        setAltitude(wpParams[10].toDouble());
         _autocontinue = (wpParams[11].toInt() == 1 ? true : false);
-        //_description = wpParams[12];
         return true;
     }
     return false;
 }
 
 
-void MissionItem::setId(quint16 id)
+void MissionItem::setSequenceNumber(int sequenceNumber)
 {
-    _id = id;
-    _name = QString("WP%1").arg(id, 2, 10, QChar('0'));
+    _sequenceNumber = sequenceNumber;
+    emit sequenceNumberChanged(_sequenceNumber);
     emit changed(this);
 }
 
@@ -153,8 +151,7 @@ void MissionItem::setX(double x)
 {
     if (!isinf(x) && !isnan(x) && ((_frame == MAV_FRAME_LOCAL_NED) || (_frame == MAV_FRAME_LOCAL_ENU)))
     {
-        _x = x;
-        emit changed(this);
+        setLatitude(x);
     }
 }
 
@@ -162,8 +159,7 @@ void MissionItem::setY(double y)
 {
     if (!isinf(y) && !isnan(y) && ((_frame == MAV_FRAME_LOCAL_NED) || (_frame == MAV_FRAME_LOCAL_ENU)))
     {
-        _y = y;
-        emit changed(this);
+        setLongitude(y);
     }
 }
 
@@ -171,49 +167,38 @@ void MissionItem::setZ(double z)
 {
     if (!isinf(z) && !isnan(z) && ((_frame == MAV_FRAME_LOCAL_NED) || (_frame == MAV_FRAME_LOCAL_ENU)))
     {
-        _z = z;
-        emit changed(this);
+        setAltitude(z);
     }
 }
 
 void MissionItem::setLatitude(double lat)
 {
-    if (_x != lat && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_coordinate.latitude() != lat && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        _x = lat;
+        _coordinate.setLatitude(lat);
         emit changed(this);
-        emit coordinateChanged();
+        emit coordinateChanged(coordinate());
     }
 }
 
 void MissionItem::setLongitude(double lon)
 {
-    if (_y != lon && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_coordinate.longitude() != lon && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        _y = lon;
+        _coordinate.setLongitude(lon);
         emit changed(this);
-        emit coordinateChanged();
+        emit coordinateChanged(coordinate());
     }
 }
 
 void MissionItem::setAltitude(double altitude)
 {
-    if (_z != altitude && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_coordinate.altitude() != altitude && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        _z = altitude;
+        _coordinate.setAltitude(altitude);
         emit changed(this);
         emit valueStringsChanged(valueStrings());
-        emit coordinateChanged();
-    }
-}
-
-void MissionItem::setYaw(int yaw)
-{
-    if (_yaw != yaw)
-    {
-        _yaw = yaw;
-        emit changed(this);
-        emit valueStringsChanged(valueStrings());
+        emit coordinateChanged(coordinate());
     }
 }
 
@@ -222,6 +207,7 @@ void MissionItem::setYaw(double yaw)
     if (_yaw != yaw)
     {
         _yaw = yaw;
+        emit yawChanged(yaw);
         emit changed(this);
         emit valueStringsChanged(valueStrings());
     }
@@ -242,7 +228,7 @@ void MissionItem::setAction(int /*MAV_CMD*/ action)
         emit changed(this);
         emit commandNameChanged(commandName());
         emit commandChanged((MavlinkQmlSingleton::Qml_MAV_CMD)_action);
-        emit hasCoordinateChanged(hasCoordinate());
+        emit specifiesCoordinateChanged(specifiesCoordinate());
         emit valueLabelsChanged(valueLabels());
         emit valueStringsChanged(valueStrings());
     }
@@ -264,13 +250,11 @@ void MissionItem::setAutocontinue(bool autoContinue)
     }
 }
 
-void MissionItem::setCurrent(bool current)
+void MissionItem::setIsCurrentItem(bool isCurrentItem)
 {
-    if (_current != current)
-    {
-        _current = current;
-        // The current waypoint index is handled by the list
-        // and not part of the individual waypoint update state
+    if (_isCurrentItem != isCurrentItem) {
+        _isCurrentItem = isCurrentItem;
+        emit isCurrentItemChanged(isCurrentItem);
     }
 }
 
@@ -326,8 +310,8 @@ void MissionItem::setParam4(double param4)
 
 void MissionItem::setParam5(double param5)
 {
-    if (_x != param5) {
-        _x = param5;
+    if (_coordinate.latitude() != param5) {
+        _coordinate.setLatitude(param5);
         emit changed(this);
         emit valueStringsChanged(valueStrings());
     }
@@ -335,8 +319,8 @@ void MissionItem::setParam5(double param5)
 
 void MissionItem::setParam6(double param6)
 {
-    if (_y != param6) {
-        _y = param6;
+    if (_coordinate.longitude() != param6) {
+        _coordinate.setLongitude(param6);
         emit changed(this);
         emit valueStringsChanged(valueStrings());
     }
@@ -344,8 +328,8 @@ void MissionItem::setParam6(double param6)
 
 void MissionItem::setParam7(double param7)
 {
-    if (_z != param7) {
-        _z = param7;
+    if (_coordinate.altitude() != param7) {
+        _coordinate.setAltitude(param7);
         emit valueStringsChanged(valueStrings());
         emit changed(this);
     }
@@ -387,7 +371,7 @@ void MissionItem::setTurns(int turns)
     }
 }
 
-bool MissionItem::hasCoordinate(void)
+bool MissionItem::specifiesCoordinate(void) const
 {
     switch (_action) {
         case MAV_CMD_NAV_WAYPOINT:
@@ -400,11 +384,6 @@ bool MissionItem::hasCoordinate(void)
         default:
             return false;
     }
-}
-
-QGeoCoordinate MissionItem::coordinate(void)
-{
-    return QGeoCoordinate(_x, _y);
 }
 
 QString MissionItem::commandName(void)
@@ -507,7 +486,7 @@ QStringList MissionItem::valueStrings(void)
     
     switch (_action) {
         case MAV_CMD_NAV_WAYPOINT:
-            list << _oneDecimalString(_z) << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_param2) << _oneDecimalString(_param1);
+            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_param2) << _oneDecimalString(_param1);
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
             list << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_orbit);
@@ -521,10 +500,10 @@ QStringList MissionItem::valueStrings(void)
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
             break;
         case MAV_CMD_NAV_LAND:
-            list << _oneDecimalString(_z) << _oneDecimalString(_yaw * (180.0 / M_PI));
+            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yaw * (180.0 / M_PI));
             break;
         case MAV_CMD_NAV_TAKEOFF:
-            list << _oneDecimalString(_z) << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_param1);
+            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_param1);
             break;
         case MAV_CMD_CONDITION_DELAY:
             list << _oneDecimalString(_param1);
@@ -537,4 +516,42 @@ QStringList MissionItem::valueStrings(void)
     }
     
     return list;
+}
+
+void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    _coordinate = coordinate;
+    emit coordinateChanged(coordinate);
+    emit changed(this);
+}
+
+QStringList MissionItem::commandNames(void) {
+    QStringList list;
+    
+    for (int i=0; i<_cMavCmd2Name; i++) {
+        list += _rgMavCmd2Name[i].name;
+    }
+    
+    return list;
+}
+
+int MissionItem::commandByIndex(void)
+{
+    for (int i=0; i<_cMavCmd2Name; i++) {
+        if (_rgMavCmd2Name[i].command == _action) {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+void MissionItem::setCommandByIndex(int index)
+{
+    if (index < 0 || index >= _cMavCmd2Name) {
+        qWarning() << "Invalid index" << index;
+        return;
+    }
+    
+    setCommand((MavlinkQmlSingleton::Qml_MAV_CMD)_rgMavCmd2Name[index].command);
 }

@@ -76,13 +76,13 @@ Map {
         Menu {
             id: mapTypeMenu
             title: "Map Type..."
-            enabled: root.visible
+            enabled: _map.visible
             ExclusiveGroup { id: currMapType }
             function setCurrentMap(mapID) {
                 for (var i = 0; i < _map.supportedMapTypes.length; i++) {
                     if (mapID === _map.supportedMapTypes[i].name) {
                         _map.activeMapType = _map.supportedMapTypes[i]
-                        multiVehicleManager.saveSetting(root.mapName + "/currentMapType", mapID);
+                        multiVehicleManager.saveSetting(_map.mapName + "/currentMapType", mapID);
                         return;
                     }
                 }
@@ -100,7 +100,7 @@ Map {
                 var mapID = ''
                 if (_map.supportedMapTypes.length > 0)
                     mapID = _map.activeMapType.name;
-                mapID = multiVehicleManager.loadSetting(root.mapName + "/currentMapType", mapID);
+                mapID = multiVehicleManager.loadSetting(_map.mapName + "/currentMapType", mapID);
                 for (var i = 0; i < _map.supportedMapTypes.length; i++) {
                     var name = _map.supportedMapTypes[i].name;
                     addMap(name, mapID === name);

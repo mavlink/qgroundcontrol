@@ -73,6 +73,10 @@ QString MissionEditor::loadSetting(const QString &name, const QString& defaultVa
 
 void MissionEditor::addMissionItem(QGeoCoordinate coordinate)
 {
-    MissionItem * newItem = new MissionItem(this, _missionItems.count(), coordinate.longitude(), coordinate.latitude());
+    MissionItem * newItem = new MissionItem(this, _missionItems.count(), coordinate);
+    if (_missionItems.count() == 0) {
+        newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
+    }
+    qDebug() << "MissionItem" << newItem->coordinate();
     _missionItems.append(newItem);
 }

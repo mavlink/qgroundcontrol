@@ -116,9 +116,9 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
     Q_UNUSED(time);
     if (waypointsEditable.count() > 0 && !currentWaypointEditable.isNull() && (currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_NED || currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_ENU))
     {
-        double xdiff = x-currentWaypointEditable->getX();
-        double ydiff = y-currentWaypointEditable->getY();
-        double zdiff = z-currentWaypointEditable->getZ();
+        double xdiff = x-currentWaypointEditable->x();
+        double ydiff = y-currentWaypointEditable->y();
+        double zdiff = z-currentWaypointEditable->z();
         double dist = sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
         emit waypointDistanceChanged(dist);
     }
@@ -196,37 +196,32 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id) {
 
-            MissionItem *lwp_vo = new MissionItem(
-                NULL,
-                wp->seq, wp->x,
-                wp->y,
-                wp->z,
-                wp->param1,
-                wp->param2,
-                wp->param3,
-                wp->param4,
-                wp->autocontinue,
-                wp->current,
-                (MAV_FRAME) wp->frame,
-                (MAV_CMD) wp->command);
+            MissionItem *lwp_vo = new MissionItem(NULL,
+                                                  wp->seq,
+                                                  QGeoCoordinate(wp->x, wp->y, wp->z),
+                                                  wp->param1,
+                                                  wp->param2,
+                                                  wp->param3,
+                                                  wp->param4,
+                                                  wp->autocontinue,
+                                                  wp->current,
+                                                  (MAV_FRAME) wp->frame,
+                                                  (MAV_CMD) wp->command);
 
             addWaypointViewOnly(lwp_vo);
 
             if (read_to_edit == true) {
-                MissionItem *lwp_ed = new MissionItem(
-                    NULL,
-                    wp->seq,
-                    wp->x,
-                    wp->y,
-                    wp->z,
-                    wp->param1,
-                    wp->param2,
-                    wp->param3,
-                    wp->param4,
-                    wp->autocontinue,
-                    wp->current,
-                    (MAV_FRAME) wp->frame,
-                    (MAV_CMD) wp->command);
+                MissionItem *lwp_ed = new MissionItem(NULL,
+                                                      wp->seq,
+                                                      QGeoCoordinate(wp->x, wp->y, wp->z),
+                                                      wp->param1,
+                                                      wp->param2,
+                                                      wp->param3,
+                                                      wp->param4,
+                                                      wp->autocontinue,
+                                                      wp->current,
+                                                      (MAV_FRAME) wp->frame,
+                                                      (MAV_CMD) wp->command);
                 addWaypointEditable(lwp_ed, false);
                 if (wp->current == 1) currentWaypointEditable = lwp_ed;
             }
@@ -258,20 +253,17 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
             && wp->seq < waypointsViewOnly.size() && waypointsViewOnly[wp->seq]->getAction()) {
         // accept single sent waypoints because they can contain updates about remaining DO_JUMP repetitions
         // but only update view only side
-        MissionItem *lwp_vo = new MissionItem(
-            NULL,
-            wp->seq,
-            wp->x,
-            wp->y,
-            wp->z,
-            wp->param1,
-            wp->param2,
-            wp->param3,
-            wp->param4,
-            wp->autocontinue,
-            wp->current,
-            (MAV_FRAME) wp->frame,
-            (MAV_CMD) wp->command);
+        MissionItem *lwp_vo = new MissionItem(NULL,
+                                              wp->seq,
+                                              QGeoCoordinate(wp->x, wp->y, wp->z),
+                                              wp->param1,
+                                              wp->param2,
+                                              wp->param3,
+                                              wp->param4,
+                                              wp->autocontinue,
+                                              wp->current,
+                                              (MAV_FRAME) wp->frame,
+                                              (MAV_CMD) wp->command);
 
         waypointsViewOnly.replace(wp->seq, lwp_vo);
         emit waypointViewOnlyListChanged();
@@ -386,10 +378,10 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
             // update the local main storage
             if (wpc->seq < waypointsViewOnly.size()) {
                 for(int i = 0; i < waypointsViewOnly.size(); i++) {
-                    if (waypointsViewOnly[i]->getId() == wpc->seq) {
-                        waypointsViewOnly[i]->setCurrent(true);
+                    if (waypointsViewOnly[i]->sequenceNumber() == wpc->seq) {
+                        waypointsViewOnly[i]->setIsCurrentItem(true);
                     } else {
-                        waypointsViewOnly[i]->setCurrent(false);
+                        waypointsViewOnly[i]->setIsCurrentItem(false);
                     }
                 }
             }
@@ -450,10 +442,10 @@ int UASWaypointManager::setCurrentEditable(quint16 seq)
         if(current_state == WP_IDLE) {
             //update local main storage
             for (int i = 0; i < waypointsEditable.count(); i++) {
-                if (waypointsEditable[i]->getId() == seq) {
-                    waypointsEditable[i]->setCurrent(true);
+                if (waypointsEditable[i]->sequenceNumber() == seq) {
+                    waypointsEditable[i]->setIsCurrentItem(true);
                 } else {
-                    waypointsEditable[i]->setCurrent(false);
+                    waypointsEditable[i]->setIsCurrentItem(false);
                 }
             }
 
@@ -490,10 +482,10 @@ void UASWaypointManager::addWaypointEditable(MissionItem *wp, bool enforceFirstA
             QGCMessageBox::critical(tr("MissionItem Manager"),  _offlineEditingModeMessage);
         }
 
-        wp->setId(waypointsEditable.count());
+        wp->setSequenceNumber(waypointsEditable.count());
         if (enforceFirstActive && waypointsEditable.count() == 0)
         {
-            wp->setCurrent(true);
+            wp->setIsCurrentItem(true);
             currentWaypointEditable = wp;
         }
         waypointsEditable.insert(waypointsEditable.count(), wp);
@@ -515,13 +507,13 @@ MissionItem* UASWaypointManager::createWaypoint(bool enforceFirstActive)
     }
 
     MissionItem* wp = new MissionItem();
-    wp->setId(waypointsEditable.count());
+    wp->setSequenceNumber(waypointsEditable.count());
     wp->setFrame((MAV_FRAME)getFrameRecommendation());
     wp->setAltitude(getAltitudeRecommendation());
     wp->setAcceptanceRadius(getAcceptanceRadiusRecommendation());
     if (enforceFirstActive && waypointsEditable.count() == 0)
     {
-        wp->setCurrent(true);
+        wp->setIsCurrentItem(true);
         currentWaypointEditable = wp;
     }
     waypointsEditable.append(wp);
@@ -538,15 +530,15 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
     {
         MissionItem *t = waypointsEditable[seq];
 
-        if (t->getCurrent() == true) //trying to remove the current waypoint
+        if (t->isCurrentItem() == true) //trying to remove the current waypoint
         {
             if (seq+1 < waypointsEditable.count()) // setting the next waypoint as current
             {
-                waypointsEditable[seq+1]->setCurrent(true);
+                waypointsEditable[seq+1]->setIsCurrentItem(true);
             }
             else if (seq-1 >= 0) // if deleting the last on the list, then setting the previous waypoint as current
             {
-                waypointsEditable[seq-1]->setCurrent(true);
+                waypointsEditable[seq-1]->setIsCurrentItem(true);
             }
         }
 
@@ -556,7 +548,7 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
 
         for(int i = seq; i < waypointsEditable.count(); i++)
         {
-            waypointsEditable[i]->setId(i);
+            waypointsEditable[i]->setSequenceNumber(i);
         }
 
         emit waypointEditableListChanged();
@@ -575,7 +567,7 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
             for (int i = cur_seq; i < new_seq; i++)
             {
                 waypointsEditable[i] = waypointsEditable[i+1];
-                waypointsEditable[i]->setId(i);
+                waypointsEditable[i]->setSequenceNumber(i);
             }
         }
         else
@@ -583,11 +575,11 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
             for (int i = cur_seq; i > new_seq; i--)
             {
                 waypointsEditable[i] = waypointsEditable[i-1];
-                waypointsEditable[i]->setId(i);
+                waypointsEditable[i]->setSequenceNumber(i);
             }
         }
         waypointsEditable[new_seq] = t;
-        waypointsEditable[new_seq]->setId(new_seq);
+        waypointsEditable[new_seq]->setSequenceNumber(new_seq);
 
         emit waypointEditableListChanged();
         emit waypointEditableListChanged(uasid);
@@ -607,7 +599,7 @@ void UASWaypointManager::saveWaypoints(const QString &saveFile)
 
     for (int i = 0; i < waypointsEditable.count(); i++)
     {
-        waypointsEditable[i]->setId(i);
+        waypointsEditable[i]->setSequenceNumber(i);
         waypointsEditable[i]->save(out);
     }
     file.close();
@@ -642,7 +634,7 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
             {
               //Use the existing function to add waypoints to the map instead of doing it manually
               //Indeed, we should connect our waypoints to the map in order to synchronize them
-              //t->setId(waypointsEditable.count());
+              //t->setSequenceNumber(waypointsEditable.count());
               // waypointsEditable.insert(waypointsEditable.count(), t);
               addWaypointEditable(t, false);
             }
@@ -956,9 +948,9 @@ void UASWaypointManager::goToWaypoint(MissionItem *wp)
         mission.frame = wp->getFrame();
         mission.command = wp->getAction();
         mission.seq = 0;     // don't read out the sequence number of the waypoint class
-        mission.x = wp->getX();
-        mission.y = wp->getY();
-        mission.z = wp->getZ();
+        mission.x = wp->x();
+        mission.y = wp->y();
+        mission.z = wp->z();
         mavlink_message_t message;
         mission.target_system = uasid;
         mission.target_component = MAV_COMP_ID_MISSIONPLANNER;
@@ -1001,7 +993,7 @@ void UASWaypointManager::writeWaypoints()
                 const MissionItem *cur_s = waypointsEditable.at(i);
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
-                cur_d->current = cur_s->getCurrent() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
+                cur_d->current = cur_s->isCurrentItem() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
                 cur_d->param1 = cur_s->getParam1();
                 cur_d->param2 = cur_s->getParam2();
                 cur_d->param3 = cur_s->getParam3();
@@ -1009,11 +1001,11 @@ void UASWaypointManager::writeWaypoints()
                 cur_d->frame = cur_s->getFrame();
                 cur_d->command = cur_s->getAction();
                 cur_d->seq = i;     // don't read out the sequence number of the waypoint class
-                cur_d->x = cur_s->getX();
-                cur_d->y = cur_s->getY();
-                cur_d->z = cur_s->getZ();
+                cur_d->x = cur_s->x();
+                cur_d->y = cur_s->y();
+                cur_d->z = cur_s->z();
 
-                if (cur_s->getCurrent() && noCurrent)
+                if (cur_s->isCurrentItem() && noCurrent)
                     noCurrent = false;
                 if (i == (current_count - 1) && noCurrent == true) //not a single waypoint was set as "current"
                     cur_d->current = true; // set the last waypoint as current. Or should it better be the first waypoint ?
@@ -1162,7 +1154,7 @@ UAS* UASWaypointManager::getUAS() {
 float UASWaypointManager::getAltitudeRecommendation()
 {
     if (waypointsEditable.count() > 0) {
-        return waypointsEditable.last()->getAltitude();
+        return waypointsEditable.last()->altitude();
     } else {
         return HomePositionManager::instance()->getHomeAltitude() + getHomeAltitudeOffsetDefault();
     }
