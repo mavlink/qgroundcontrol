@@ -24,8 +24,9 @@ This file is part of the QGROUNDCONTROL project
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick      2.4
-import QtLocation   5.3
+import QtQuick          2.4
+import QtLocation       5.3
+import QtPositioning    5.3
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
@@ -37,7 +38,6 @@ MapQuickItem {
 
     anchorPoint.x:  vehicleIcon.width  / 2
     anchorPoint.y:  vehicleIcon.height / 2
-    coordinate:     vehicle.coordinate
     visible:        vehicle.satelliteLock >= 2  // 2D lock
 
     sourceItem: Image {
