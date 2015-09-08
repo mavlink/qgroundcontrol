@@ -144,6 +144,7 @@ INCLUDEPATH += \
     src/input \
     src/Joystick \
     src/lib/qmapcontrol \
+    src/MissionEditor \
     src/QmlControls \
     src/uas \
     src/ui \
@@ -244,6 +245,7 @@ HEADERS += \
     src/Joystick/JoystickManager.h \
     src/LogCompressor.h \
     src/MG.h \
+    src/MissionEditor/MissionEditor.h \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
@@ -381,6 +383,7 @@ SOURCES += \
     src/Joystick/JoystickManager.cc \
     src/LogCompressor.cc \
     src/main.cc \
+    src/MissionEditor/MissionEditor.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \

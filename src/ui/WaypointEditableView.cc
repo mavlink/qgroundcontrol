@@ -320,7 +320,7 @@ void WaypointEditableView::changedCurrent(int state)
 {
     if (state == 0)
     {
-        if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current
+        if (wp->isCurrentItem() == true) //User clicked on the waypoint, that is already current
         {
             m_ui->selectedBox->setChecked(true);
             m_ui->selectedBox->setCheckState(Qt::Checked);
@@ -333,10 +333,10 @@ void WaypointEditableView::changedCurrent(int state)
     }
     else
     {
-        wp->setCurrent(true);
+        wp->setIsCurrentItem(true);
         // At this point we do not consider this signal
         // to be valid / the edit check boxes should not change the view state
-        //emit changeCurrentWaypoint(wp->getId());
+        //emit changeCurrentWaypoint(wp->sequenceNumber());
         //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
     }
 }
@@ -451,11 +451,11 @@ void WaypointEditableView::updateValues()
     emit param7Broadcast(wp->getParam7());
 
 
-    if (m_ui->selectedBox->isChecked() != wp->getCurrent())
+    if (m_ui->selectedBox->isChecked() != wp->isCurrentItem())
     {
         // This is never a reason to emit a changed signal
         m_ui->selectedBox->blockSignals(true);
-        m_ui->selectedBox->setChecked(wp->getCurrent());
+        m_ui->selectedBox->setChecked(wp->isCurrentItem());
         m_ui->selectedBox->blockSignals(false);
     }
     if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
@@ -463,11 +463,11 @@ void WaypointEditableView::updateValues()
         m_ui->autoContinue->setChecked(wp->getAutoContinue());
     }
 
-    m_ui->idLabel->setText(QString::number(wp->getId()));
+    m_ui->idLabel->setText(QString::number(wp->sequenceNumber()));
 
     // Style alternating rows of Missions as lighter/darker.
     static int lastId = -1;
-    int currId = wp->getId() % 2;
+    int currId = wp->sequenceNumber() % 2;
     if (currId != lastId)
     {
         if (currId == 1)
