@@ -33,7 +33,7 @@ Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMa
     showOrbit(false),
     color(color)
 {
-    SetHeading(wp->yaw());
+    SetHeading(wp->yawRadians());
     SetNumber(listindex);
     this->setFlag(QGraphicsItem::ItemIgnoresTransformations,true);
     picture = QPixmap(radius+1, radius+1);
@@ -59,7 +59,7 @@ void Waypoint2DIcon::updateWaypoint()
         // Store old size
         static QRectF oldSize;
 
-        SetHeading(waypoint->yaw());
+        SetHeading(waypoint->yawRadians());
         SetCoord(internals::PointLatLng(waypoint->latitude(), waypoint->longitude()));
 
         // qDebug() << "UPDATING WP:" << waypoint->sequenceNumber() << "LAT:" << waypoint->latitude() << "LON:" << waypoint->longitude();
