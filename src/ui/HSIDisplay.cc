@@ -1313,7 +1313,7 @@ void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float widt
 
     float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
     float acceptRadius = w->getAcceptanceRadius();
-    double yawDiff = w->yaw()/180.0*M_PI-yaw;
+    double yawDiff = w->yawRadians()/180.0*M_PI-yaw;
 
     // Draw background
     pen.setColor(Qt::black);

@@ -750,7 +750,7 @@ void QGCMapWidget::updateWaypoint(int uas, MissionItem* wp)
                     // Use safe standard interfaces for non MissionItem-class based wps
                     icon->SetCoord(internals::PointLatLng(wp->latitude(), wp->longitude()));
                     icon->SetAltitude(wp->altitude());
-                    icon->SetHeading(wp->yaw());
+                    icon->SetHeading(wp->yawRadians());
                     icon->SetNumber(wpindex);
                 }
                 // Re-enable signals again
