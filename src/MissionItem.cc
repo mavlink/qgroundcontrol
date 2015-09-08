@@ -38,7 +38,7 @@ const MissionItem::MavCmd2Name_t  MissionItem::_rgMavCmd2Name[_cMavCmd2Name] = {
     { MAV_CMD_NAV_WAYPOINT,         "Waypoint" },
     { MAV_CMD_NAV_LOITER_UNLIM,     "Loiter" },
     { MAV_CMD_NAV_LOITER_TURNS,     "Loiter (turns)" },
-    { MAV_CMD_NAV_LOITER_TIME,      "Loiter (unlimited)" },
+    { MAV_CMD_NAV_LOITER_TIME,      "Loiter (seconds)" },
     { MAV_CMD_NAV_RETURN_TO_LAUNCH, "Return Home" },
     { MAV_CMD_NAV_LAND,             "Land" },
     { MAV_CMD_NAV_TAKEOFF,          "Takeoff" },
@@ -60,7 +60,7 @@ MissionItem::MissionItem(QObject*       parent,
     : QObject(parent)
     , _sequenceNumber(sequenceNumber)
     , _coordinate(coordinate)
-    , _yaw(param4)
+    , _yawRadians(param4)
     , _frame(frame)
     , _action(action)
     , _autocontinue(autocontinue)
@@ -69,8 +69,50 @@ MissionItem::MissionItem(QObject*       parent,
     , _param1(param1)
     , _param2(param2)
     , _reachedTime(0)
+    , _yawFact(NULL)
 {
 
+    _yawFact =          new Fact(0, "Heading:", FactMetaData::valueTypeDouble, this);
+    _pitchFact =        new Fact(0, "Pitch:",   FactMetaData::valueTypeDouble, this);
+    _loiterRadiusFact = new Fact(0, "Radius:",  FactMetaData::valueTypeDouble, this);
+    _param1Fact =       new Fact(0, QString(),  FactMetaData::valueTypeDouble, this);
+    _param2Fact =       new Fact(0, QString(),  FactMetaData::valueTypeDouble, this);
+    
+    // FIXME: Need to fill out more meta data
+    
+    _yawMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
+    _yawMetaData->setUnits("degrees");
+    
+    _pitchMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
+    _pitchMetaData->setUnits("degrees");
+    
+    _acceptanceRadiusMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
+    _acceptanceRadiusMetaData->setUnits("meters");
+    
+    _holdTimeMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
+    _holdTimeMetaData->setUnits("seconds");
+    
+    _loiterRadiusMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
+    _loiterRadiusMetaData->setUnits("meters");
+    
+    _loiterTurnsMetaData = new FactMetaData(FactMetaData::valueTypeInt32, this);
+    _loiterTurnsMetaData->setUnits("count");
+    
+    _loiterSecondsMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
+    _loiterSecondsMetaData->setUnits("seconds");
+    
+    _delaySecondsMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
+    _delaySecondsMetaData->setUnits("seconds");
+    
+    _jumpSequenceMetaData = new FactMetaData(FactMetaData::valueTypeInt32, this);
+    _jumpSequenceMetaData->setUnits("#");
+    
+    _jumpRepeatMetaData = new FactMetaData(FactMetaData::valueTypeInt32, this);
+    _jumpRepeatMetaData->setUnits("count");
+    
+    _yawFact->setMetaData(_yawMetaData);
+    _pitchFact->setMetaData(_pitchMetaData);
+    _loiterRadiusFact->setMetaData(_loiterRadiusMetaData);
 }
 
 MissionItem::MissionItem(const MissionItem& other)
@@ -88,7 +130,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     _sequenceNumber = other._sequenceNumber;
     _isCurrentItem  = other._isCurrentItem;
     _coordinate     = other._coordinate;
-    _yaw            = other._yaw;
+    _yawRadians            = other._yawRadians;
     _frame          = other._frame;
     _action         = other._action;
     _autocontinue   = other._autocontinue;
@@ -112,7 +154,7 @@ void MissionItem::save(QTextStream &saveStream)
     position = position.arg(y(), 0, 'g', 18);
     position = position.arg(z(), 0, 'g', 18);
     QString parameters("%1\t%2\t%3\t%4");
-    parameters = parameters.arg(_param1, 0, 'g', 18).arg(_param2, 0, 'g', 18).arg(_orbit, 0, 'g', 18).arg(_yaw, 0, 'g', 18);
+    parameters = parameters.arg(_param1, 0, 'g', 18).arg(_param2, 0, 'g', 18).arg(_orbit, 0, 'g', 18).arg(_yawRadians, 0, 'g', 18);
     // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE> <DESCRIPTION>
     // as documented here: http://qgroundcontrol.org/waypoint_protocol
     saveStream << this->sequenceNumber() << "\t" << this->isCurrentItem() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
@@ -129,7 +171,7 @@ bool MissionItem::load(QTextStream &loadStream)
         _param1 = wpParams[4].toDouble();
         _param2 = wpParams[5].toDouble();
         _orbit = wpParams[6].toDouble();
-        setYaw(wpParams[7].toDouble());
+        setYawRadians(wpParams[7].toDouble());
         setLatitude(wpParams[8].toDouble());
         setLongitude(wpParams[9].toDouble());
         setAltitude(wpParams[10].toDouble());
@@ -199,17 +241,6 @@ void MissionItem::setAltitude(double altitude)
         emit changed(this);
         emit valueStringsChanged(valueStrings());
         emit coordinateChanged(coordinate());
-    }
-}
-
-void MissionItem::setYaw(double yaw)
-{
-    if (_yaw != yaw)
-    {
-        _yaw = yaw;
-        emit yawChanged(yaw);
-        emit changed(this);
-        emit valueStringsChanged(valueStrings());
     }
 }
 
@@ -301,8 +332,8 @@ void MissionItem::setParam3(double param3)
 
 void MissionItem::setParam4(double param4)
 {
-    if (_yaw != param4) {
-        _yaw = param4;
+    if (_yawRadians != param4) {
+        _yawRadians = param4;
         emit changed(this);
         emit valueStringsChanged(valueStrings());
     }
@@ -357,15 +388,6 @@ void MissionItem::setHoldTime(double holdTime)
 {
     if (_param1 != holdTime) {
         _param1 = holdTime;
-        emit changed(this);
-        emit valueStringsChanged(valueStrings());
-    }
-}
-
-void MissionItem::setTurns(int turns)
-{
-    if (_param1 != turns) {
-        _param1 = turns;
         emit changed(this);
         emit valueStringsChanged(valueStrings());
     }
@@ -486,24 +508,24 @@ QStringList MissionItem::valueStrings(void)
     
     switch (_action) {
         case MAV_CMD_NAV_WAYPOINT:
-            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_param2) << _oneDecimalString(_param1);
+            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yawRadians * (180.0 / M_PI)) << _oneDecimalString(_param2) << _oneDecimalString(_param1);
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
-            list << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_orbit);
+            list << _oneDecimalString(_yawRadians * (180.0 / M_PI)) << _oneDecimalString(_orbit);
             break;
         case MAV_CMD_NAV_LOITER_TURNS:
-            list << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_orbit) << _oneDecimalString(_turns);
+            list << _oneDecimalString(_yawRadians * (180.0 / M_PI)) << _oneDecimalString(_orbit) << _oneDecimalString(_param1);
             break;
         case MAV_CMD_NAV_LOITER_TIME:
-            list << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_orbit) << _oneDecimalString(_param1);
+            list << _oneDecimalString(_yawRadians * (180.0 / M_PI)) << _oneDecimalString(_orbit) << _oneDecimalString(_param1);
             break;
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
             break;
         case MAV_CMD_NAV_LAND:
-            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yaw * (180.0 / M_PI));
+            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yawRadians * (180.0 / M_PI));
             break;
         case MAV_CMD_NAV_TAKEOFF:
-            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yaw * (180.0 / M_PI)) << _oneDecimalString(_param1);
+            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(_yawRadians * (180.0 / M_PI)) << _oneDecimalString(_param1);
             break;
         case MAV_CMD_CONDITION_DELAY:
             list << _oneDecimalString(_param1);
@@ -555,3 +577,90 @@ void MissionItem::setCommandByIndex(int index)
     
     setCommand((MavlinkQmlSingleton::Qml_MAV_CMD)_rgMavCmd2Name[index].command);
 }
+
+QmlObjectListModel* MissionItem::facts(void)
+{
+    QmlObjectListModel* model = new QmlObjectListModel(this);
+    
+    switch (_action) {
+        case MAV_CMD_NAV_WAYPOINT:
+            _param2Fact->_setName("Radius:");
+            _param2Fact->setMetaData(_acceptanceRadiusMetaData);
+            _param1Fact->_setName("Hold:");
+            _param1Fact->setMetaData(_holdTimeMetaData);
+            model->append(_yawFact);
+            model->append(_param2Fact);
+            model->append(_param1Fact);
+            break;
+        case MAV_CMD_NAV_LOITER_UNLIM:
+            model->append(_yawFact);
+            model->append(_loiterRadiusFact);
+            break;
+        case MAV_CMD_NAV_LOITER_TURNS:
+            _param1Fact->_setName("Turns:");
+            _param1Fact->setMetaData(_loiterTurnsMetaData);
+            model->append(_yawFact);
+            model->append(_loiterRadiusFact);
+            model->append(_param1Fact);
+            break;
+        case MAV_CMD_NAV_LOITER_TIME:
+            _param1Fact->_setName("Seconds:");
+            _param1Fact->setMetaData(_loiterSecondsMetaData);
+            model->append(_yawFact);
+            model->append(_loiterRadiusFact);
+            model->append(_param1Fact);
+            break;
+        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+            break;
+        case MAV_CMD_NAV_LAND:
+            model->append(_yawFact);
+            break;
+        case MAV_CMD_NAV_TAKEOFF:
+            model->append(_yawFact);
+            model->append(_pitchFact);
+            break;
+        case MAV_CMD_CONDITION_DELAY:
+            _param1Fact->_setName("Seconds:");
+            _param1Fact->setMetaData(_delaySecondsMetaData);
+            model->append(_param1Fact);
+            break;
+        case MAV_CMD_DO_JUMP:
+            _param1Fact->_setName("Seq #:");
+            _param1Fact->setMetaData(_jumpSequenceMetaData);
+            _param2Fact->_setName("Repeat:");
+            _param2Fact->setMetaData(_jumpRepeatMetaData);
+            model->append(_param1Fact);
+            model->append(_param2Fact);
+            break;
+    }
+    
+    return model;
+}
+
+double MissionItem::yawRadians(void) const
+{
+    return _yawRadians;
+}
+
+void MissionItem::setYawRadians(double yaw)
+{
+    if (_yawRadians != yaw)
+    {
+        _yawRadians = yaw;
+        emit yawChanged(yaw);
+        emit changed(this);
+        emit valueStringsChanged(valueStrings());
+    }
+}
+
+
+double MissionItem::yawDegrees(void) const
+{
+    return _yawRadians * (180.0 / M_PI);
+}
+
+void MissionItem::setYawDegrees(double yaw)
+{
+    setYawRadians(yaw * (M_PI / 180.0));
+}
+
