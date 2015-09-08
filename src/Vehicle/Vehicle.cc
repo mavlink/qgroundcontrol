@@ -903,10 +903,9 @@ void Vehicle::setJoystickEnabled(bool enabled)
 
 void Vehicle::_startJoystick(bool start)
 {
-    Joystick* joystick = JoystickManager::instance()->activeJoystick();
-    
-    if (joystick) {
 #ifndef __mobile__
+    Joystick* joystick = JoystickManager::instance()->activeJoystick();
+    if (joystick) {
         if (start) {
             if (_joystickEnabled) {
                 joystick->startPolling(this);
@@ -914,8 +913,10 @@ void Vehicle::_startJoystick(bool start)
         } else {
             joystick->stopPolling();
         }
-#endif
     }
+#else
+    Q_UNUSED(start);
+#endif
 }
 
 bool Vehicle::active(void)
