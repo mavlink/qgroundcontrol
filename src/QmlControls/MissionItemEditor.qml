@@ -4,6 +4,8 @@ import QtQuick.Controls.Styles  1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.FactControls  1.0
 
 /// Mission item edit control
 Rectangle {
@@ -117,32 +119,29 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        missionItem.specifiesCoordinate ? _altitudeField.bottom : _commandCombo.bottom
+        spacing:            parent.radius / 2
 
         Repeater {
-            model: missionItem.valueLabels
+            model: missionItem.facts
 
-            QGCLabel {
-                color:  "black"
-                text:   modelData
+            Item {
+                width:  _valueColumn.width
+                height: textField.height
+
+                QGCLabel {
+                    anchors.baseline:   textField.baseline
+                    color:              "black"
+                    text:               object.name
+                }
+
+                FactTextField {
+                    id:             textField
+                    anchors.right:  parent.right
+                    width:          _editFieldWidth
+                    showUnits:      true
+                    fact:           object
+                }
             }
         }
-    }
-
-    Column {
-        anchors.margins:    parent.radius / 2
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        _valueColumn.top
-
-        Repeater {
-            model: missionItem.valueStrings
-
-            QGCLabel {
-                width:                  _valueColumn.width
-                color:                  "black"
-                text:                   modelData
-                horizontalAlignment:    Text.AlignRight
-            }
-        }
-    }
-}
+    } // Column - Values column
+} // Rectangle

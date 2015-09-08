@@ -92,6 +92,9 @@ public:
     
     void _containerSetValue(const QVariant& value);
     
+    /// Generally you should not change the name of a fact. But if you know what you are doing, you can.
+    void _setName(const QString& name) { _name = name; }
+    
 signals:
     /// QObject Property System signal for value property changes
     ///
