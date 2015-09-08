@@ -158,6 +158,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests(unitTesting)
     , _styleIsDark(true)
 	, _fakeMobile(false)
+    , _useNewMissionEditor(false)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -418,6 +419,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
     _loadCurrentStyle();
+    
+    // Temp hack for new mission editor
+    _useNewMissionEditor = settings.value("UseNewMissionEditor", false).toBool();
     
     // Show splash screen
     QPixmap splashImage(":/res/SplashScreen");
@@ -800,4 +804,12 @@ void QGCApplication::showToolBarMessage(const QString& message)
     } else {
         QGCMessageBox::information("", message);
     }
+}
+
+void QGCApplication::setUseNewMissionEditor(bool use)
+{
+    // Temp hack for new mission editor
+    QSettings settings;
+    
+    settings.setValue("UseNewMissionEditor", use);
 }

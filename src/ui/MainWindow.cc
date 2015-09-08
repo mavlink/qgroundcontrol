@@ -709,7 +709,6 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(_ui.actionFlight);
     perspectives->addAction(_ui.actionSimulationView);
     perspectives->addAction(_ui.actionPlan);
-    perspectives->addAction(_ui.actionMissionEditor);
     perspectives->addAction(_ui.actionSetup);
     perspectives->setExclusive(true);
 
@@ -729,15 +728,10 @@ void MainWindow::connectCommonActions()
         _ui.actionSimulationView->setChecked(true);
         _ui.actionSimulationView->activate(QAction::Trigger);
     }
-    if (_currentView == VIEW_PLAN)
+    if (_currentView == VIEW_PLAN || _currentView == VIEW_MISSIONEDITOR)
     {
         _ui.actionPlan->setChecked(true);
         _ui.actionPlan->activate(QAction::Trigger);
-    }
-    if (_currentView == VIEW_MISSIONEDITOR)
-    {
-        _ui.actionMissionEditor->setChecked(true);
-        _ui.actionMissionEditor->activate(QAction::Trigger);
     }
     if (_currentView == VIEW_SETUP)
     {
@@ -757,7 +751,9 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionSimulationView,   SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(_ui.actionAnalyze,          SIGNAL(triggered()), this, SLOT(loadAnalyzeView()));
     connect(_ui.actionPlan,             SIGNAL(triggered()), this, SLOT(loadPlanView()));
-    connect(_ui.actionMissionEditor,    SIGNAL(triggered()), this, SLOT(loadMissionEditorView()));
+    
+    _ui.actionUseMissionEditor->setChecked(qgcApp()->useNewMissionEditor());
+    connect(_ui.actionUseMissionEditor, &QAction::triggered, this, &MainWindow::_setUseMissionEditor);
     
     // Help Actions
     connect(_ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
@@ -1005,23 +1001,22 @@ void MainWindow::loadAnalyzeView()
 
 void MainWindow::loadPlanView()
 {
-    if (_currentView != VIEW_PLAN)
-    {
-        _storeCurrentViewState();
-        _currentView = VIEW_PLAN;
-        _ui.actionPlan->setChecked(true);
-        _loadCurrentViewState();
-    }
-}
-
-void MainWindow::loadMissionEditorView()
-{
-    if (_currentView != VIEW_MISSIONEDITOR)
-    {
-        _storeCurrentViewState();
-        _currentView = VIEW_MISSIONEDITOR;
-        _ui.actionMissionEditor->setChecked(true);
-        _loadCurrentViewState();
+    if (qgcApp()->useNewMissionEditor()) {
+        if (_currentView != VIEW_MISSIONEDITOR)
+        {
+            _storeCurrentViewState();
+            _currentView = VIEW_MISSIONEDITOR;
+            _ui.actionPlan->setChecked(true);
+            _loadCurrentViewState();
+        }
+    } else {
+        if (_currentView != VIEW_PLAN)
+        {
+            _storeCurrentViewState();
+            _currentView = VIEW_PLAN;
+            _ui.actionPlan->setChecked(true);
+            _loadCurrentViewState();
+        }
     }
 }
 
@@ -1118,3 +1113,8 @@ void MainWindow::_showQmlTestWidget(void)
     new QmlTestWidget();
 }
 #endif
+
+void MainWindow::_setUseMissionEditor(bool checked)
+{
+    qgcApp()->setUseNewMissionEditor(checked);
+}
