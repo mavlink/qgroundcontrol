@@ -100,6 +100,7 @@
         <file alias="QGroundControl/Controls/ModeSwitchDisplay.qml">src/QmlControls/ModeSwitchDisplay.qml</file>
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">src/QmlControls/MissionItemIndexLabel.qml</file>
         <file alias="QGroundControl/Controls/MissionItemSummary.qml">src/QmlControls/MissionItemSummary.qml</file>
+        <file alias="QGroundControl/Controls/MissionItemEditor.qml">src/QmlControls/MissionItemEditor.qml</file>
 
         <!-- Vehicle Setup -->
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
@@ -128,6 +129,7 @@
         <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
         <file alias="FlightDisplayWidget.qml">src/FlightDisplay/FlightDisplayWidget.qml</file>
         <file alias="MapDisplay.qml">src/ui/mapdisplay/MapDisplay.qml</file>
+        <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
 
         <!-- FlightMap module -->
         <file alias="QGroundControl/FlightMap/qmldir">src/FlightMap/qmldir</file>
@@ -150,7 +152,7 @@
         <file alias="QGroundControl/FlightMap/QGCWaypointEditor.qml">src/FlightMap/Widgets/QGCWaypointEditor.qml</file>
 
         <!-- FlightMap MapQuickItems -->
-        <file alias="QGroundControl/FlightMap/MissionMapItem.qml">src/FlightMap/MapItems/MissionMapItem.qml</file>
+        <file alias="QGroundControl/FlightMap/MissionItemIndicator.qml">src/FlightMap/MapItems/MissionItemIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/VehicleMapItem.qml">src/FlightMap/MapItems/VehicleMapItem.qml</file>
 
     </qresource>

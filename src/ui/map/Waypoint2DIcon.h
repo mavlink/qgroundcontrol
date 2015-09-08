@@ -15,7 +15,7 @@ public:
      * @param longitude
      * @param name name of the circle point
      */
-    Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal latitude, qreal longitude, qreal altitude, int listindex, QString name = QString(), QString description = QString(), int radius=30);
+    Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal latitude, qreal longitude, qreal altitude, int listindex, QString name = QString(), int radius=30);
 
     /**
      *

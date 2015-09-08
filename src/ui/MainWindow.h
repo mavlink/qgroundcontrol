@@ -130,17 +130,13 @@ public slots:
     /** @brief Show the application settings */
     void showSettings();
 
-    /** @brief Load configuration views */
     void loadSetupView();
-    /** @brief Load view for pilot */
     void loadFlightView();
-    /** @brief Load view for simulation */
     void loadSimulationView();
-    /** @brief Load view for engineer */
     void loadAnalyzeView();
-    /** @brief Load New (QtQuick) Map View (Mission) */
     void loadPlanView();
-    /** @brief Manage Links */
+    void loadMissionEditorView();
+    
     void manageLinks();
 
     /** @brief Show the online help for users */
@@ -204,12 +200,13 @@ protected:
     typedef enum _VIEW_SECTIONS
     {
         VIEW_ANALYZE,           // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
-        VIEW_PLAN,              // New (QtQuick) Mission/Map/Plan view mode. Used for setting mission waypoints and high-level system commands.
+        VIEW_PLAN,              // Old mission editor
         VIEW_FLIGHT,            // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
         VIEW_SIMULATION,        // HIL Simulation view. Useful overview of the entire system when doing hardware-in-the-loop simulations.
         VIEW_SETUP,             // Setup view. Used for initializing the system for operation. Includes UI for calibration, firmware updating/checking, and parameter modifcation.
         VIEW_UNUSED1,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_UNUSED2,           // Unused (don't remove, or it will screw up saved settigns indices)
+        VIEW_MISSIONEDITOR,     // New mission editor
     } VIEW_SECTIONS;
 
     /** @brief Catch window resize events */
@@ -288,6 +285,7 @@ private:
     QPointer<QWidget> _analyzeView;
     QPointer<QWidget> _simView;
     QPointer<QWidget> _terminalView;
+    QPointer<QWidget> _missionEditorView;
 
     // Dock widget names
     static const char* _uasControlDockWidgetName;
@@ -316,6 +314,7 @@ private:
     void _buildAnalyzeView(void);
     void _buildSimView(void);
     void _buildTerminalView(void);
+    void _buildMissionEditorView(void);
 
     void _storeCurrentViewState(void);
     void _loadCurrentViewState(void);
@@ -344,7 +343,6 @@ private:
 
     QString _getWindowStateKey();
     QString _getWindowGeometryKey();
-
 };
 
 #endif /* _MAINWINDOW_H_ */
