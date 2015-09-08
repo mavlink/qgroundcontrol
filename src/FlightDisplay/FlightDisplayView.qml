@@ -63,6 +63,8 @@ Item {
     property real _airSpeed:        _activeVehicle ? _activeVehicle.airSpeed : _defaultAirSpeed
     property real _climbRate:       _activeVehicle ? _activeVehicle.climbRate : _defaultClimbRate
 
+    property bool _showMap: true
+
     function getBool(value) {
         return value === '0' ? false : true;
     }
@@ -72,11 +74,12 @@ Item {
     }
 
     FlightMap {
-        id:                 flightMap
-        anchors.fill:       parent
-        mapName:            "FlightDisplayView"
-        latitude:           parent._latitude
-        longitude:          parent._longitude
+        id:             flightMap
+        anchors.fill:   parent
+        mapName:        "FlightDisplayView"
+        latitude:       parent._latitude
+        longitude:      parent._longitude
+        visible:        _showMap
 
         // Add the vehicles to the map
         MapItemView {
@@ -120,56 +123,60 @@ Item {
                     }
             }
         }
-    
-        // Mission item list
-        ListView {
-            id:                 missionItemSummaryList
-            anchors.margins:    ScreenTools.defaultFontPixelWidth
-            anchors.left:       parent.left
-            anchors.right:      flightMap.mapWidgets.left
-            anchors.bottom:     parent.bottom
-            height:             ScreenTools.defaultFontPixelHeight * 7
-            spacing:            ScreenTools.defaultFontPixelWidth / 2
-            opacity:            0.75
-            orientation:        ListView.Horizontal
-            model:              multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
 
-            property real _maxItemHeight: 0
+        QGCCompassWidget {
+            x:          ScreenTools.defaultFontPixelSize * (7.1)
+            y:          ScreenTools.defaultFontPixelSize * (0.42)
+            size:       ScreenTools.defaultFontPixelSize * (13.3)
+            heading:    _heading
+            active:     multiVehicleManager.activeVehicleAvailable
+            z:          flightMap.z + 2
+        }
 
-            delegate:
-                MissionItemSummary {
-                    opacity:        0.75
-                    missionItem:    object
-                }
-        } // ListView - Mission item list
+        QGCAttitudeWidget {
+            anchors.rightMargin:    ScreenTools.defaultFontPixelSize * (7.1)
+            anchors.right:          parent.right
+            y:                      ScreenTools.defaultFontPixelSize * (0.42)
+            size:                   ScreenTools.defaultFontPixelSize * (13.3)
+            rollAngle:              _roll
+            pitchAngle:             _pitch
+            active:                 multiVehicleManager.activeVehicleAvailable
+            z:                      flightMap.z + 2
+        }
+    } // Flight Map
 
-    }
+    QGCVideoBackground {
+        anchors.fill:   parent
+        display:        videoDisplay
+        receiver:       videoReceiver
+        visible:        !_showMap
 
-    QGCCompassWidget {
-        x:          ScreenTools.defaultFontPixelSize * (7.1)
-        y:          ScreenTools.defaultFontPixelSize * (0.42)
-        size:       ScreenTools.defaultFontPixelSize * (13.3)
-        heading:    parent._heading
-        active:     multiVehicleManager.activeVehicleAvailable
-        z:          flightMap.z + 2
-    }
+        QGCCompassHUD {
+            id:                 compassHUD
+            y:                  root.height * 0.7
+            x:                  root.width  * 0.5 - ScreenTools.defaultFontPixelSize * (5)
+            width:              ScreenTools.defaultFontPixelSize * (10)
+            height:             ScreenTools.defaultFontPixelSize * (10)
+            heading:            root.heading
+            active:             multiVehicleManager.activeVehicleAvailable
+            z:                  70
+        }
 
-    QGCAttitudeWidget {
-        anchors.rightMargin:    ScreenTools.defaultFontPixelSize * (7.1)
-        anchors.right:          parent.right
-        y:                      ScreenTools.defaultFontPixelSize * (0.42)
-        size:                   ScreenTools.defaultFontPixelSize * (13.3)
-        rollAngle:              parent._roll
-        pitchAngle:             parent._pitch
-        active:                 multiVehicleManager.activeVehicleAvailable
-        z:                      flightMap.z + 2
+        QGCAttitudeHUD {
+            id:                 attitudeHUD
+            rollAngle:          _roll
+            pitchAngle:         _pitch
+            width:              ScreenTools.defaultFontPixelSize * (30)
+            height:             ScreenTools.defaultFontPixelSize * (30)
+            active:             multiVehicleManager.activeVehicleAvailable
+        }
     }
 
     QGCAltitudeWidget {
         anchors.right:  parent.right
         height:         parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
         width:          ScreenTools.defaultFontPixelSize * (5)
-        altitude:       parent._altitudeWGS84
+        altitude:       _altitudeWGS84
         z:              30
     }
 
@@ -177,15 +184,15 @@ Item {
         anchors.left:   parent.left
         width:          ScreenTools.defaultFontPixelSize * (5)
         height:         parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
-        speed:          parent._groundSpeed
+        speed:          _groundSpeed
         z:              40
     }
 
     QGCCurrentSpeed {
         anchors.left:       parent.left
         width:              ScreenTools.defaultFontPixelSize * (6.25)
-        airspeed:           parent._airSpeed
-        groundspeed:        parent._groundSpeed
+        airspeed:           _airSpeed
+        groundspeed:        _groundSpeed
         active:             multiVehicleManager.activeVehicleAvailable
         z:                  50
     }
@@ -193,9 +200,73 @@ Item {
     QGCCurrentAltitude {
         anchors.right:      parent.right
         width:              ScreenTools.defaultFontPixelSize * (6.25)
-        altitude:           parent._altitudeWGS84
-        vertZ:              parent._climbRate
+        altitude:           _altitudeWGS84
+        vertZ:              _climbRate
         active:             multiVehicleManager.activeVehicleAvailable
         z:                  60
+    }
+
+    // Mission item list
+    ListView {
+        id:                 missionItemSummaryList
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.left:       parent.left
+        anchors.right:      optionsButton.left
+        anchors.bottom:     parent.bottom
+        height:             ScreenTools.defaultFontPixelHeight * 7
+        spacing:            ScreenTools.defaultFontPixelWidth / 2
+        opacity:            0.75
+        orientation:        ListView.Horizontal
+        model:              multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
+
+        property real _maxItemHeight: 0
+
+        delegate:
+            MissionItemSummary {
+                opacity:        0.75
+                missionItem:    object
+            }
+    } // ListView - Mission item list
+
+
+    QGCButton {
+        id:     optionsButton
+        x:      flightMap.mapWidgets.x
+        y:      flightMap.mapWidgets.y - height - (ScreenTools.defaultFontPixelHeight / 2)
+        width:  flightMap.mapWidgets.width
+        text:   "Options"
+        menu:   optionsMenu
+
+        ExclusiveGroup {
+            id: backgroundTypeGroup
+        }
+
+        Menu {
+            id: optionsMenu
+
+            MenuItem {
+                id:             mapBackgroundMenuItem
+                exclusiveGroup: backgroundTypeGroup
+                checkable:      true
+                checked:        _showMap
+                text:           "Show map as background"
+
+                onTriggered:    _showMap = true
+            }
+
+            MenuItem {
+                id:             videoBackgroundMenuItem
+                exclusiveGroup: backgroundTypeGroup
+                checkable:      true
+                checked:        !_showMap
+                text:           "Show video as background"
+
+                onTriggered:    _showMap = false
+            }
+
+            MenuSeparator { }
+
+            Component.onCompleted: flightMap.addMapMenuItems(optionsMenu)
+        }
     }
 }
