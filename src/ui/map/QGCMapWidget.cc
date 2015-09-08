@@ -646,7 +646,7 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
 //    internals::PointLatLng coord = waypoint->Coord();
 //    QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
 //    qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
-//    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
+//    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->longitude(), 'f', 6);
 //    qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
 
     // Protect from vicious double update cycle
@@ -748,9 +748,9 @@ void QGCMapWidget::updateWaypoint(int uas, MissionItem* wp)
                 else
                 {
                     // Use safe standard interfaces for non MissionItem-class based wps
-                    icon->SetCoord(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()));
-                    icon->SetAltitude(wp->getAltitude());
-                    icon->SetHeading(wp->getYaw());
+                    icon->SetCoord(internals::PointLatLng(wp->latitude(), wp->longitude()));
+                    icon->SetAltitude(wp->altitude());
+                    icon->SetHeading(wp->yaw());
                     icon->SetNumber(wpindex);
                 }
                 // Re-enable signals again
@@ -827,7 +827,7 @@ void QGCMapWidget::updateWaypointList(int uas)
         // Update all potentially new waypoints
         foreach (MissionItem* wp, wps)
         {
-            qDebug() << "UPDATING NEW WP" << wp->getId();
+            qDebug() << "UPDATING NEW WP" << wp->sequenceNumber();
             // Update / add only if new
             if (!waypointsToIcons.contains(wp)) updateWaypoint(uas, wp);
         }

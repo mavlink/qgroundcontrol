@@ -21,21 +21,35 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-import QtQuick      2.4
-import QtLocation   5.3
+#ifndef MissionEditor_H
+#define MissionEditor_H
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
+#include "QGCQmlWidgetHolder.h"
+#include "QmlObjectListModel.h"
 
-/// Marker for displaying a mission item on the map
-MapQuickItem {
-    property int index
+class MissionEditor : public QGCQmlWidgetHolder
+{
+    Q_OBJECT
+    
+public:
+    MissionEditor(QWidget* parent = NULL);
+    ~MissionEditor();
 
-    anchorPoint.x: sourceItem.width  / 2
-    anchorPoint.y: sourceItem.height / 2
+    Q_PROPERTY(QmlObjectListModel* missionItems READ missionItemsModel CONSTANT)
+    
+    Q_INVOKABLE void addMissionItem(QGeoCoordinate coordinate);
+    
+    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
+    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
 
-    sourceItem:
-        MissionItemIndexLabel {
-            missionItemIndex: index
-        }
-}
+    // Property accessors
+    
+    QmlObjectListModel* missionItemsModel(void) { return &_missionItems; }
+    
+private:
+    QmlObjectListModel  _missionItems;
+    
+    static const char* _settingsGroup;
+};
+
+#endif

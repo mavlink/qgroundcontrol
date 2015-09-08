@@ -79,6 +79,7 @@
     </property>
     <addaction name="actionSetup"/>
     <addaction name="actionPlan"/>
+    <addaction name="actionMissionEditor"/>
     <addaction name="actionFlight"/>
     <addaction name="actionAnalyze"/>
     <addaction name="separator"/>
@@ -240,6 +241,17 @@
    </property>
    <property name="text">
     <string>Show Status Bar</string>
+   </property>
+  </action>
+  <action name="actionMissionEditor">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>New Mission Editor</string>
+   </property>
+   <property name="toolTip">
+    <string>Mission Editor</string>
    </property>
   </action>
  </widget>

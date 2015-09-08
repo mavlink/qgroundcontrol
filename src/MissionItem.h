@@ -37,76 +37,85 @@
 class MissionItem : public QObject
 {
     Q_OBJECT
+    
 public:
-    MissionItem(
-        QObject *parent = 0,
-        quint16 id = 0,
-        double  x = 0.0,
-        double  y = 0.0,
-        double  z = 0.0,
-        double  param1 = 0.0,
-        double  param2 = 0.0,
-        double  param3 = 0.0,
-        double  param4 = 0.0,
-        bool    autocontinue = true,
-        bool    current = false,
-        int     frame = MAV_FRAME_GLOBAL,
-        int     action = MAV_CMD_NAV_WAYPOINT,
-        const QString& description=QString(""));
+    MissionItem(QObject         *parent = 0,
+                int             sequenceNumber = 0,
+                QGeoCoordinate  coordiante = QGeoCoordinate(),
+                double          param1 = 0.0,
+                double          param2 = 0.0,
+                double          param3 = 0.0,
+                double          param4 = 0.0,
+                bool            autocontinue = true,
+                bool            isCurrentItem = false,
+                int             frame = MAV_FRAME_GLOBAL,
+                int             action = MAV_CMD_NAV_WAYPOINT);
 
     MissionItem(const MissionItem& other);
     ~MissionItem();
 
     const MissionItem& operator=(const MissionItem& other);
-
-    Q_PROPERTY(bool hasCoordinate READ hasCoordinate NOTIFY hasCoordinateChanged)
-    Q_PROPERTY(QGeoCoordinate coordinate READ coordinate NOTIFY coordinateChanged)
     
-    Q_PROPERTY(QString commandName READ commandName NOTIFY commandNameChanged)
-    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command WRITE setCommand NOTIFY commandChanged)
+    Q_PROPERTY(int              sequenceNumber      READ sequenceNumber         WRITE setSequenceNumber NOTIFY sequenceNumberChanged)
+    Q_PROPERTY(bool             isCurrentItem       READ isCurrentItem          WRITE setIsCurrentItem  NOTIFY isCurrentItemChanged)
+    Q_PROPERTY(bool             specifiesCoordinate READ specifiesCoordinate                            NOTIFY specifiesCoordinateChanged)
+    Q_PROPERTY(QGeoCoordinate   coordinate          READ coordinate             WRITE setCoordinate     NOTIFY coordinateChanged)
+    Q_PROPERTY(double           yaw                 READ yaw                    WRITE setYaw            NOTIFY yawChanged)
+    Q_PROPERTY(QStringList      commandNames        READ commandNames                                   CONSTANT)
+    Q_PROPERTY(QString          commandName         READ commandName                                    NOTIFY commandChanged)
+    Q_PROPERTY(QStringList      valueLabels         READ valueLabels                                    NOTIFY commandChanged)
+    Q_PROPERTY(QStringList      valueStrings        READ valueStrings                                   NOTIFY valueStringsChanged)
+    Q_PROPERTY(int              commandByIndex      READ commandByIndex         WRITE setCommandByIndex NOTIFY commandChanged)
+    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command            WRITE setCommand        NOTIFY commandChanged)
     
-    Q_PROPERTY(double  longitude READ longitude  NOTIFY longitudeChanged)
-    Q_PROPERTY(double  latitude  READ latitude   NOTIFY latitudeChanged)
-    Q_PROPERTY(double  altitude  READ altitude   NOTIFY altitudeChanged)
-    Q_PROPERTY(quint16 id        READ id         CONSTANT)
+    // Property accesors
     
-    Q_PROPERTY(QStringList valueLabels READ valueLabels NOTIFY commandChanged)
-    Q_PROPERTY(QStringList valueStrings READ valueStrings NOTIFY valueStringsChanged)
+    int sequenceNumber(void) const { return _sequenceNumber; }
+    void setSequenceNumber(int sequenceNumber);
+    
+    bool isCurrentItem(void) const { return _isCurrentItem; }
+    void setIsCurrentItem(bool isCurrentItem);
+    
+    bool specifiesCoordinate(void) const;
+    
+    QGeoCoordinate coordinate(void) const { return _coordinate; }
+    void setCoordinate(const QGeoCoordinate& coordinate);
+    
+    QStringList commandNames(void);
+    QString commandName(void);
 
-    double  latitude()  { return _x; }
-    double  longitude() { return _y; }
-    double  altitude()  { return _z; }
-    quint16 id()        { return _id; }
+    int commandByIndex(void);
+    void setCommandByIndex(int index);
+    
+    MavlinkQmlSingleton::Qml_MAV_CMD command(void) { return (MavlinkQmlSingleton::Qml_MAV_CMD)getAction(); };
+    void setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command) { setAction(command); }
+    
+    QStringList valueLabels(void);
+    QStringList valueStrings(void);
+    
+    // C++ only methods
 
-    quint16 getId() const {
-        return _id;
-    }
-    double getX() const {
-        return _x;
-    }
-    double getY() const {
-        return _y;
-    }
-    double getZ() const {
-        return _z;
-    }
-    double getLatitude() const {
-        return _x;
-    }
-    double getLongitude() const {
-        return _y;
-    }
-    double getAltitude() const {
-        return _z;
-    }
-    double getYaw() const {
-        return _yaw;
-    }
+    double latitude(void)  const { return _coordinate.latitude(); }
+    double longitude(void) const { return _coordinate.longitude(); }
+    double altitude(void)  const { return _coordinate.altitude(); }
+    
+    void setLatitude(double latitude);
+    void setLongitude(double longitude);
+    void setAltitude(double altitude);
+    
+    double x(void) const { return latitude(); }
+    double y(void) const { return longitude(); }
+    double z(void) const { return altitude(); }
+    
+    void setX(double x);
+    void setY(double y);
+    void setZ(double z);
+    
+    double yaw(void) const { return _yaw; }
+    void setYaw(double yaw);
+    
     bool getAutoContinue() const {
         return _autocontinue;
-    }
-    bool getCurrent() const {
-        return _current;
     }
     double getLoiterOrbit() const {
         return _orbit;
@@ -127,16 +136,16 @@ public:
         return _orbit;
     }
     double getParam4() const {
-        return _yaw;
+        return yaw();
     }
     double getParam5() const {
-        return _x;
+        return latitude();
     }
     double getParam6() const {
-        return _y;
+        return longitude();
     }
     double getParam7() const {
-        return _z;
+        return altitude();
     }
     int getTurns() const {
         return _param1;
@@ -149,13 +158,6 @@ public:
     int getAction() const {
         return _action;
     }
-    const QString& getName() const {
-        return _name;
-    }
-    const QString& getDescription() const {
-        return _description;
-    }
-
     /** @brief Returns true if x, y, z contain reasonable navigation data */
     bool isNavigationType();
 
@@ -165,47 +167,24 @@ public:
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);
     
-    bool hasCoordinate(void);
-    QGeoCoordinate coordinate(void);
     
-    QString commandName(void);
+signals:
+    void sequenceNumberChanged(int sequenceNumber);
+    void specifiesCoordinateChanged(bool specifiesCoordinate);
+    void isCurrentItemChanged(bool isCurrentItem);
+    void coordinateChanged(const QGeoCoordinate& coordinate);
+    void yawChanged(double yaw);
 
-    MavlinkQmlSingleton::Qml_MAV_CMD command(void) { return (MavlinkQmlSingleton::Qml_MAV_CMD)getAction(); };
-    void setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command) { setAction(command); }
-    
-    QStringList valueLabels(void);
-    QStringList valueStrings(void);
-    
-protected:
-    quint16 _id;
-    double  _x;
-    double  _y;
-    double  _z;
-    double  _yaw;
-    int     _frame;
-    int     _action;
-    bool    _autocontinue;
-    bool    _current;
-    double  _orbit;
-    double  _param1;
-    double  _param2;
-    int     _turns;
-    QString _name;
-    QString _description;
-    quint64 _reachedTime;
+    /** @brief Announces a change to the waypoint data */
+    void changed(MissionItem* wp);
 
+    
+    void commandNameChanged(QString type);
+    void commandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
+    void valueLabelsChanged(QStringList valueLabels);
+    void valueStringsChanged(QStringList valueStrings);
+    
 public:
-    void setId          (quint16 _id);
-    void setX           (double _x);
-    void setY           (double _y);
-    void setZ           (double _z);
-    void setLatitude    (double lat);
-    void setLongitude   (double lon);
-    void setAltitude    (double alt);
-    /** @brief Yaw angle in COMPASS DEGREES: 0-360 */
-    void setYaw         (int _yaw);
-    /** @brief Yaw angle in COMPASS DEGREES: 0-360 */
-    void setYaw         (double _yaw);
     /** @brief Set the waypoint action */
     void setAction      (int _action);
     void setFrame       (int _frame);
@@ -233,24 +212,30 @@ public:
         emit changed(this);
     }
 
-signals:
-    /** @brief Announces a change to the waypoint data */
-    void changed(MissionItem* wp);
-
-    void latitudeChanged    ();
-    void longitudeChanged   ();
-    void altitudeChanged    ();
-    void hasCoordinateChanged(bool hasCoordinate);
-    void coordinateChanged(void);
-    void commandNameChanged(QString type);
-    void commandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
-    void valueLabelsChanged(QStringList valueLabels);
-    void valueStringsChanged(QStringList valueStrings);
-    
 private:
     QString _oneDecimalString(double value);
-};
 
-QML_DECLARE_TYPE(MissionItem)
+private:
+    typedef struct {
+        MAV_CMD     command;
+        const char* name;
+    } MavCmd2Name_t;
+    
+    int             _sequenceNumber;
+    QGeoCoordinate  _coordinate;
+    double          _yaw;
+    int             _frame;
+    int             _action;
+    bool            _autocontinue;
+    bool            _isCurrentItem;
+    double          _orbit;
+    double          _param1;
+    double          _param2;
+    int             _turns;
+    quint64         _reachedTime;
+    
+    static const int            _cMavCmd2Name = 9;
+    static const MavCmd2Name_t  _rgMavCmd2Name[_cMavCmd2Name];
+};
 
 #endif

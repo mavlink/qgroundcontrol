@@ -8,30 +8,28 @@ git:
 matrix:
     include:
         - os: linux
-          env: CONFIG=release
+          env: SPEC=linux-g++-64 CONFIG=debug
         - os: linux
-          env: CONFIG=debug
+          env: SPEC=linux-g++-64 CONFIG=installer
         - os: osx
           osx_image: beta-xcode6.3
-          env: CONFIG=release
+          env: SPEC=macx-clang CONFIG=debug
         - os: osx
           osx_image: beta-xcode6.3
-          env: CONFIG=debug
+          env: SPEC=macx-clang CONFIG=installer
 
 cache:
   - apt
 
 before_install:
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p $HOME/Library/Preferences/QtProject/ && echo "[Rules]\n *Log.debug=false" >> $HOME/Library/Preferences/QtProject/qtlogging.ini; fi
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/; fi
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/; fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
 
 install:
-  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-         mkdir -p $HOME/.config/QtProject $HOME/.config/QGroundControl.org $HOME/QGroundControl
-      && sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
-      && sudo apt-add-repository -y ppa:beineri/opt-qt541
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" || "${TRAVIS_OS_NAME}" = "android" ]]; then
+         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
+      && sudo apt-add-repository -y ppa:beineri/opt-qt542
       && sudo apt-get -qq update
       && sudo apt-get -qq install g++-4.8 libc6-i386 qt54tools qt54base qt54declarative qt54serialport qt54svg qt54webkit qt54quickcontrols qt54xmlpatterns qt54x11extras qt54websockets qt54sensors qt54script qt54quick1 qt54multimedia qt54location qt54imageformats qt54graphicaleffects qt54connectivity espeak libespeak-dev libopenscenegraph-dev libsdl1.2-dev libudev-dev
       && export PATH=/opt/qt54/bin:$PATH
@@ -40,7 +38,7 @@ install:
       && export DISPLAY=:99.0
       && sh -e /etc/init.d/xvfb start
       ;
-    else
+    elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
          brew tap PX4/homebrew-px4
       && brew update
       && brew install qt54
@@ -50,25 +48,25 @@ install:
     fi
 
 
-before_script: qmake CONFIG+=${CONFIG} -r qgroundcontrol.pro
+before_script: qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
 script:
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
   - make -j4
   - echo -en 'travis_fold:end:script.1\\r'
   - echo 'Running unittests' && echo -en 'travis_fold:start:script.2\\r'
-#  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ls -ls ~; ls -ls ~/.config; ./debug/qgroundcontrol --unittest; fi
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol --unittest; fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
   - echo -en 'travis_fold:end:script.2\\r'
 
-#deploy:
-#  provider: releases
-#  api-key:
-#    secure: ""
-#  file: "release/qgroundcontrol"
-#  skip_cleanup: true
-#  on:
-#    tags: true
-#    all_branches: true
+deploy:
+  provider: releases
+  api-key:
+    secure: ""
+  file: "release/qgroundcontrol.dmg"
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
 
 notifications:
   webhooks:

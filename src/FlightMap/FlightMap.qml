@@ -27,10 +27,10 @@ This file is part of the QGROUNDCONTROL project
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
+import QtQuick          2.4
 import QtQuick.Controls 1.3
-import QtLocation 5.3
-import QtPositioning 5.3
+import QtLocation       5.3
+import QtPositioning    5.3
 
 import QGroundControl.Controls              1.0
 import QGroundControl.FlightMap             1.0
@@ -39,95 +39,146 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Vehicle               1.0
 import QGroundControl.Mavlink               1.0
 
-Item {
-    id:     root
-    clip:   true
+Map {
+    id: _map
 
     property real   latitude:           0
     property real   longitude:          0
-    property real   zoomLevel:          18
     property real   heading:            0
     property bool   interactive:        true
     property string mapName:            'defaultMap'
-    property alias  mapItem:            map
     property alias  mapMenu:            mapTypeMenu
-    property bool   showVehicles:       false
-    property bool   showMissionItems:   false
+    property alias  mapWidgets:         controlWidgets
     property bool   isSatelliteMap:     false
+        
+    property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
+    property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
 
-    Component.onCompleted: {
-        map.zoomLevel   = 18
-        mapTypeMenu.update();
-        addExistingVehicles()
-        updateMissionItemsConnections()
-        updateMissionItems()
-    }
+    anchors.fill: parent
+    zoomLevel:  18
+    center:     QtPositioning.coordinate(lat, lon)
+    gesture.flickDeceleration: 3000
+    gesture.enabled: interactive
 
-    function updateMapType(type) {
-        var isSatellite = (type === MapType.SatelliteMapDay || type === MapType.SatelliteMapNight)
-        if(isSatelliteMap !== isSatellite) {
-            isSatelliteMap = isSatellite;
-            removeAllVehicles()
-            addExistingVehicles()
-        }
-    }
+    plugin: Plugin { name: "QGroundControl" }
 
-    //-- Menu to select supported map types
-    Menu {
-        id: mapTypeMenu
-        title: "Map Type..."
-        enabled: root.visible
-        ExclusiveGroup { id: currMapType }
-        function setCurrentMap(mapID) {
-            for (var i = 0; i < map.supportedMapTypes.length; i++) {
-                if (mapID === map.supportedMapTypes[i].name) {
-                    map.activeMapType = map.supportedMapTypes[i]
-                    updateMapType(map.supportedMapTypes[i].style)
-                    multiVehicleManager.saveSetting(root.mapName + "/currentMapType", mapID);
-                    return;
+    Component.onCompleted: mapTypeMenu.update()
+
+    /// Map control widgets
+    Column {
+        id:                 controlWidgets
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.right:      parent.right
+        anchors.bottom:     parent.bottom
+        spacing:            ScreenTools.defaultFontPixelWidth / 2
+
+        //-- Menu to select supported map types
+        Menu {
+            id: mapTypeMenu
+            title: "Map Type..."
+            enabled: _map.visible
+            ExclusiveGroup { id: currMapType }
+            function setCurrentMap(mapID) {
+                for (var i = 0; i < _map.supportedMapTypes.length; i++) {
+                    if (mapID === _map.supportedMapTypes[i].name) {
+                        _map.activeMapType = _map.supportedMapTypes[i]
+                        multiVehicleManager.saveSetting(_map.mapName + "/currentMapType", mapID);
+                        return;
+                    }
                 }
             }
-        }
-        function addMap(mapID, checked) {
-            var mItem = mapTypeMenu.addItem(mapID);
-            mItem.checkable = true
-            mItem.checked   = checked
-            mItem.exclusiveGroup = currMapType
-            var menuSlot = function() {setCurrentMap(mapID);};
-            mItem.triggered.connect(menuSlot);
-        }
-        function update() {
-            clear()
-            var mapID = ''
-            if (map.supportedMapTypes.length > 0)
-                mapID = map.activeMapType.name;
-            mapID = multiVehicleManager.loadSetting(root.mapName + "/currentMapType", mapID);
-            for (var i = 0; i < map.supportedMapTypes.length; i++) {
-                var name = map.supportedMapTypes[i].name;
-                addMap(name, mapID === name);
+            function addMap(mapID, checked) {
+                var mItem = mapTypeMenu.addItem(mapID);
+                mItem.checkable = true
+                mItem.checked   = checked
+                mItem.exclusiveGroup = currMapType
+                var menuSlot = function() {setCurrentMap(mapID);};
+                mItem.triggered.connect(menuSlot);
             }
-            if(mapID != '')
-                setCurrentMap(mapID);
+            function update() {
+                clear()
+                var mapID = ''
+                if (_map.supportedMapTypes.length > 0)
+                    mapID = _map.activeMapType.name;
+                mapID = multiVehicleManager.loadSetting(_map.mapName + "/currentMapType", mapID);
+                for (var i = 0; i < _map.supportedMapTypes.length; i++) {
+                    var name = _map.supportedMapTypes[i].name;
+                    addMap(name, mapID === name);
+                }
+                if(mapID != '')
+                    setCurrentMap(mapID);
+            }
         }
-    }
 
-    function adjustSize() {
-        if(root.visible) {
-            if(true /*alwaysNorth*/) {
-                map.width  = root.width;
-                map.height = root.height;
-            } else {
-                var diag = Math.ceil(Math.sqrt((root.width * root.width) + (root.height * root.height)));
-                map.width  = diag;
-                map.height = diag;
-            }
-        } else {
-            map.width  = 1;
-            map.height = 1;
+        QGCButton {
+            id:     optionsButton
+            text:   "Options"
+            menu:   mapTypeMenu
         }
-    }
+        
+        Row {
+            layoutDirection:    Qt.RightToLeft
+            spacing:            ScreenTools.defaultFontPixelWidth / 2
+
+            readonly property real _zoomIncrement: 1.0
+            property real _buttonWidth: (optionsButton.width - spacing) / 2
+            
+            NumberAnimation {
+                id: animateZoom
+                
+                property real startZoom
+                property real endZoom
+                
+                target:     _map
+                properties: "zoomLevel"
+                from:       startZoom
+                to:         endZoom
+                duration:   500
+                
+                easing {
+                    type: Easing.OutExpo
+                }
+            }
+
+
+            QGCButton {
+                width:  parent._buttonWidth
+                text:   "+"
+                
+                onClicked: {
+                    var endZoomLevel = _map.zoomLevel + parent._zoomIncrement
+                    if (endZoomLevel > _map.maximumZoomLevel) {
+                        endZoomLevel = _map.maximumZoomLevel
+                    }
+                    animateZoom.startZoom = _map.zoomLevel
+                    animateZoom.endZoom = endZoomLevel
+                    animateZoom.start()
+                }
+            }
+            
+            QGCButton {
+                width:  parent._buttonWidth
+                text:   "-"
+                
+                onClicked: {
+                    var endZoomLevel = _map.zoomLevel - parent._zoomIncrement
+                    if (endZoomLevel < _map.minimumZoomLevel) {
+                        endZoomLevel = _map.minimumZoomLevel
+                    }
+                    animateZoom.startZoom = _map.zoomLevel
+                    animateZoom.endZoom = endZoomLevel
+                    animateZoom.start()
+                }
+            }
+        } // Row - +/- buttons
+    } // Column - Map control widgets
 
 /*
+ The slider and scale display are commented out for now to try to save real estate - DonLakeFlyer
+ Not sure if I'll bring them back or not. Need room for waypoint list at bottom
+ 
+ property variant scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
+ 
     function formatDistance(meters)
     {
         var dist = Math.round(meters)
@@ -146,206 +197,7 @@ Item {
         }
         return dist
     }
-*/
 
-    // The following code is used to add and remove Vehicle markers from the map. Due to the following
-    // problems this code must be here is the base FlightMap control:
-    //      - If you pass a reference to the Map control into another object and then try to call
-    //          functions such as addMapItem on it, it will fail telling you addMapItem is not a function
-    //          on that object
-    //      - Due to the fact that you need to dynamically add the MapQuickItems, they need to be able
-    //          to reference the Vehicle they are associated with in some way. In order to do that
-    //          we need to keep a separate array of Vehicles which must be at the top level of the object
-    //          hierarchy in order for the dynamically added object to see it.
-
-    property var _vehicles: []          ///< List of known vehicles
-    property var _vehicleMapItems: []   ///< List of known vehicle map items
-
-    Connections {
-        target: multiVehicleManager
-
-        onVehicleAdded:     addVehicle(vehicle)
-        onVehicleRemoved:   removeVehicle(vehicle)
-    }
-
-    function addVehicle(vehicle) {
-        if (!showVehicles) {
-            return
-        }
-        
-        var qmlItemTemplate = "VehicleMapItem { " +
-                                    "coordinate:    _vehicles[%1].coordinate; " +
-                                    "heading:       _vehicles[%1].heading; " +
-                                    "isSatellite:   root.isSatelliteMap; " +
-                                "}"
-
-        var i = _vehicles.length
-        qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-        qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-
-        _vehicles.push(vehicle)
-        var mapItem = Qt.createQmlObject (qmlItemTemplate, map)
-        _vehicleMapItems.push(mapItem)
-
-        mapItem.z = map.z + 1
-        map.addMapItem(mapItem)
-    }
-
-    function removeVehicle(vehicle) {
-        if (!showVehicles) {
-            return
-        }
-        
-        for (var i=0; i<_vehicles.length; i++) {
-            if (_vehicles[i] == vehicle) {
-                _vehicles[i] = undefined
-                map.removeMapItem(_vehicleMapItems[i])
-                _vehicleMapItems[i] = undefined
-                break
-            }
-        }
-    }
-
-    function removeAllVehicles() {
-        if (!showVehicles) {
-            return
-        }
-
-        for (var i=0; i<_vehicles.length; i++) {
-            _vehicles[i] = undefined
-            map.removeMapItem(_vehicleMapItems[i])
-            _vehicleMapItems[i] = undefined
-        }
-    }
-
-    function addExistingVehicles() {
-        if (!showVehicles) {
-            return
-        }
-        
-        for (var i=0; i<multiVehicleManager.vehicles.length; i++) {
-            addVehicle(multiVehicleManager.vehicles[i])
-        }
-    }
-
-    // The following code is used to show mission items on the FlightMap
-    
-    property var _missionItems: []      ///< List of known vehicles
-    property var _missionMapItems: []   ///< List of known vehicle map items
-    
-    Connections {
-        target: multiVehicleManager
-
-        onActiveVehicleAvailableChanged: updateMissionItemsConnections()
-    }
-    
-    function updateMissionItemsConnections() {
-        if (multiVehicleManager.activeVehicleAvailable) {
-            multiVehicleManager.activeVehicle.missionItemsChanged.connect(updateMissionItems)
-        } else {
-            // Previously active vehicle is about to go away, disconnect signals
-            if (multiVehicleManager.activeVehicle) {
-                multiVehicleManager.activeVehicle.missionItemsChanged.disconnect(updateMissionItems)
-            }
-        }
-    }
-    
-    function addMissionItem(missionItem, index) {
-        if (!showMissionItems) {
-            console.warn("Shouldn't be called with showMissionItems=false")
-            return
-        }
-        
-        if (!missionItem.hasCoordinate) {
-            // Item has no map position associated with it
-            return
-        }
-        
-        var qmlItemTemplate = "MissionMapItem { " +
-                                    "coordinate:    _missionItems[%1].coordinate; " +
-                                    "index:         %2" +
-                                "}"
-        
-        var i = _missionItems.length
-        qmlItemTemplate = qmlItemTemplate.replace("%1", i)
-        qmlItemTemplate = qmlItemTemplate.replace("%2", index + 1)
-        
-        _missionItems.push(missionItem)
-        var mapItem = Qt.createQmlObject (qmlItemTemplate, map)
-        _missionMapItems.push(mapItem)
-        
-        mapItem.z = map.z + 1
-        map.addMapItem(mapItem)
-    }
-    
-    function removeMissionItem(missionItem) {
-        if (!showMissionItems) {
-            console.warn("Shouldn't be called with showMissionItems=false")
-            return
-        }
-        
-        for (var i=0; i<_missionItems.length; i++) {
-            if (_missionItems[i] == missionItem) {
-                // Qml has an annoying habit of not destroying remove Qml item until it hits the main loop.
-                // Because of that we need to leave the the mission item references even though we have
-                // removed the items, otherwise we'll get references to undefined errors until we hit the main
-                // loop again.
-                //_missionItems[i] = undefined
-                map.removeMapItem(_missionMapItems[i])
-                _missionMapItems[i] = undefined
-                break
-            }
-        }
-    }
-    
-    function updateMissionItems() {
-        if (!showMissionItems) {
-            return
-        }
-        
-        var vehicle = multiVehicleManager.activeVehicle
-        if (!vehicle) {
-            return
-        }
-        
-        // Remove previous items
-        for (var i=0; i<_missionItems.length; i++) {
-            removeMissionItem(_missionItems[i])
-        }
-        _missionMapItems = []
-        
-        // Add new items
-        for (var i=0; i<vehicle.missionItems.length; i++) {
-            addMissionItem(vehicle.missionItems[i], i)
-        }
-    }
-    
-    Plugin {
-        id:   mapPlugin
-        name: "QGroundControl"
-    }
-
-    Map {
-        id: map
-
-        property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
-        property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
-        property int    currentMarker
-        property int    pressX : -1
-        property int    pressY : -1
-        property bool   changed:  false
-        property variant scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
-
-        plugin:     mapPlugin
-        width:      1
-        height:     1
-        zoomLevel:  root.zoomLevel
-        anchors.centerIn: parent
-        center:     QtPositioning.coordinate(lat, lon)
-        gesture.flickDeceleration: 3000
-        gesture.enabled: root.interactive
-
-/*
         onWidthChanged: {
             scaleTimer.restart()
         }
@@ -357,19 +209,7 @@ Item {
         onZoomLevelChanged:{
             scaleTimer.restart()
         }
-*/
-
-        MouseArea {
-            anchors.fill: parent
-            onDoubleClicked: {
-                var coord = map.toCoordinate(Qt.point(mouse.x, mouse.y));
-                map.addMarker(coord, polyLine.path.length);
-                polyLine.addCoordinate(coord);
-                map.changed = true;
-            }
-        }
-
-/*
+ 
         function calculateScale() {
             var coord1, coord2, dist, text, f
             f = 0
@@ -395,127 +235,6 @@ Item {
             scaleImage.width = (scaleImage.sourceSize.width * f) - 2 * scaleImageLeft.sourceSize.width
             scaleText.text = text
         }
-*/
-    }
-    
-    // Mission item list
-    ScrollView {
-        id:                         missionItemScroll
-        anchors.margins:            ScreenTools.defaultFontPixelWidth
-        anchors.left:               parent.left
-        anchors.right:              controlWidgets.left
-        anchors.bottom:             parent.bottom
-        height:                     missionItemRow.height + _scrollBarHeightAdjust
-        verticalScrollBarPolicy:    Qt.ScrollBarAlwaysOff
-        opacity:                    0.75
-        
-        property bool _scrollBarShown: missionItemRow.width > missionItemScroll.width
-        property real _scrollBarHeightAdjust: _scrollBarShown ? (scrollBarHeight.height - scrollBarHeight.viewport.height) + 5 : 0
-        
-        Row {
-            id:         missionItemRow
-            spacing:    ScreenTools.defaultFontPixelWidth
-            
-            Repeater {
-                model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
-                
-                MissionItemSummary {
-                    opacity:        0.75
-                    missionItem:    modelData
-                }
-            }
-        }
-    }
-    
-    // This is used to determine the height of a horizontal scroll bar
-    ScrollView {
-        id:     scrollBarHeight
-        x:      10000
-        y:      10000
-        width:  100
-        height: 100
-        
-        Rectangle {
-            height: 50
-            width:  200
-        }
-    }
-
-    /// Map control widgets
-    Column {
-        id:                 controlWidgets
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
-        anchors.right:      parent.right
-        anchors.bottom:     parent.bottom
-        spacing:            ScreenTools.defaultFontPixelWidth / 2
-
-        QGCButton {
-            id:     optionsButton
-            text:   "Options"
-            menu:   mapTypeMenu
-        }
-        
-        Row {
-            layoutDirection:    Qt.RightToLeft
-            spacing:            ScreenTools.defaultFontPixelWidth / 2
-
-            readonly property real _zoomIncrement: 1.0
-            property real _buttonWidth: (optionsButton.width - spacing) / 2
-            
-            NumberAnimation {
-                id: animateZoom
-                
-                property real startZoom
-                property real endZoom
-                
-                target:     map
-                properties: "zoomLevel"
-                from:       startZoom
-                to:         endZoom
-                duration:   500
-                
-                easing {
-                    type: Easing.OutExpo
-                }
-            }
-
-
-            QGCButton {
-                width:  parent._buttonWidth
-                text:   "+"
-                
-                onClicked: {
-                    var endZoomLevel = map.zoomLevel + parent._zoomIncrement
-                    if (endZoomLevel > map.maximumZoomLevel) {
-                        endZoomLevel = map.maximumZoomLevel
-                    }
-                    animateZoom.startZoom = map.zoomLevel
-                    animateZoom.endZoom = endZoomLevel
-                    animateZoom.start()
-                }
-            }
-            
-            QGCButton {
-                width:  parent._buttonWidth
-                text:   "-"
-                
-                onClicked: {
-                    var endZoomLevel = map.zoomLevel - parent._zoomIncrement
-                    if (endZoomLevel < map.minimumZoomLevel) {
-                        endZoomLevel = map.minimumZoomLevel
-                    }
-                    animateZoom.startZoom = map.zoomLevel
-                    animateZoom.endZoom = endZoomLevel
-                    animateZoom.start()
-                }
-            }
-        }
-    }
-
-/*
-
-The slider and scale display are commented out for now to try to save real estate - DonLakeFlyer
-Not sure if I'll bring them back or not. Need room for waypoint list at bottom
 
     QGCSlider {
         id: zoomSlider;
@@ -596,16 +315,4 @@ Not sure if I'll bring them back or not. Need room for waypoint list at bottom
         }
     }
 */
-
-    onVisibleChanged: {
-        adjustSize();
-    }
-
-    onWidthChanged: {
-        adjustSize();
-    }
-
-    onHeightChanged: {
-        adjustSize();
-    }
-}
+} // Map

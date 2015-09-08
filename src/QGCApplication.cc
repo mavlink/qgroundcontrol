@@ -84,6 +84,7 @@ G_END_DECLS
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
 #include "JoystickManager.h"
+#include "QmlObjectListModel.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -328,11 +329,13 @@ void QGCApplication::_initCommon(void)
     
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
     
-    qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Can only reference, cannot create");
-    qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Can only reference, cannot create");
-    qmlRegisterUncreatableType<Vehicle>("QGroundControl.Vehicle", 1, 0, "Vehicle", "Can only reference, cannot create");
-    qmlRegisterUncreatableType<JoystickManager> ("QGroundControl.JoystickManager", 1, 0, "JoystickManager", "Reference only");
-    qmlRegisterUncreatableType<Joystick>        ("QGroundControl.JoystickManager", 1, 0, "Joystick",        "Reference only");
+    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",    "Can only reference, cannot create");
+    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",   "Can only reference, cannot create");
+    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",            "Can only reference, cannot create");
+    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",        "Can only reference, cannot create");
+    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",    "Reference only");
+    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",           "Reference only");
+    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel", "Reference only");
     
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
@@ -353,8 +356,6 @@ void QGCApplication::_initCommon(void)
     qmlRegisterSingletonType<ScreenToolsController> ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
     qmlRegisterSingletonType<MavlinkQmlSingleton>   ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
     
-    //-- Register MissionItem Interface
-    qmlRegisterInterface<MissionItem>("MissionItem");
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
     if (settings.contains(_settingsVersionKey)) {
@@ -390,7 +391,9 @@ void QGCApplication::_initCommon(void)
         QString documentsLocation = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 
         QDir documentsDir(documentsLocation);
-        Q_ASSERT(documentsDir.exists());
+        if (!documentsDir.exists()) {
+            qWarning() << "Documents directory doesn't exist" << documentsDir.absolutePath();
+        }
 
         bool pathCreated = documentsDir.mkpath(_defaultSavedFileDirectoryName);
         Q_UNUSED(pathCreated);

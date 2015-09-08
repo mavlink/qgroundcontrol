@@ -3,8 +3,8 @@
 #include "opmapcontrol.h"
 #include "QGC.h"
 
-Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal latitude, qreal longitude, qreal altitude, int listindex, QString name, QString description, int radius)
-    : mapcontrol::WayPointItem(internals::PointLatLng(latitude, longitude), altitude, description, map),
+Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal latitude, qreal longitude, qreal altitude, int listindex, QString name, int radius)
+    : mapcontrol::WayPointItem(internals::PointLatLng(latitude, longitude), altitude, QString(), map),
     parent(parent),
     waypoint(),
     radius(radius),
@@ -25,7 +25,7 @@ Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMa
 }
 
 Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, MissionItem* wp, const QColor& color, int listindex, int radius)
-    : mapcontrol::WayPointItem(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()), wp->getAltitude(), wp->getDescription(), map),
+    : mapcontrol::WayPointItem(internals::PointLatLng(wp->latitude(), wp->longitude()), wp->altitude(), QString(), map),
     parent(parent),
     waypoint(wp),
     radius(radius),
@@ -33,7 +33,7 @@ Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMa
     showOrbit(false),
     color(color)
 {
-    SetHeading(wp->getYaw());
+    SetHeading(wp->yaw());
     SetNumber(listindex);
     this->setFlag(QGraphicsItem::ItemIgnoresTransformations,true);
     picture = QPixmap(radius+1, radius+1);
@@ -59,13 +59,12 @@ void Waypoint2DIcon::updateWaypoint()
         // Store old size
         static QRectF oldSize;
 
-        SetHeading(waypoint->getYaw());
-        SetCoord(internals::PointLatLng(waypoint->getLatitude(), waypoint->getLongitude()));
+        SetHeading(waypoint->yaw());
+        SetCoord(internals::PointLatLng(waypoint->latitude(), waypoint->longitude()));
 
-        // qDebug() << "UPDATING WP:" << waypoint->getId() << "LAT:" << waypoint->getLatitude() << "LON:" << waypoint->getLongitude();
+        // qDebug() << "UPDATING WP:" << waypoint->sequenceNumber() << "LAT:" << waypoint->latitude() << "LON:" << waypoint->longitude();
 
-        SetDescription(waypoint->getDescription());
-        SetAltitude(waypoint->getAltitude());
+        SetAltitude(waypoint->altitude());
         // FIXME Add SetNumber (currently needs a separate call)
         drawIcon();
         QRectF newSize = boundingRect();

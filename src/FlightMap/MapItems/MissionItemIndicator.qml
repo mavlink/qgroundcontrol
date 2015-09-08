@@ -21,36 +21,23 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-import QtQuick          2.4
-import QtLocation       5.3
-import QtPositioning    5.3
+import QtQuick      2.4
+import QtLocation   5.3
 
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controls      1.0
 import QGroundControl.Vehicle       1.0
 
-/// Marker for displaying a vehicle location on the map
+/// Marker for displaying a mission item on the map
 MapQuickItem {
-    property var    vehicle             ///< Vehicle object
-    property bool   isSatellite: false  ///< true: satellite map is showing
+    property alias  label:          _label.label
+    property alias  isCurrentItem:  _label.isCurrentItem
 
-    anchorPoint.x:  vehicleIcon.width  / 2
-    anchorPoint.y:  vehicleIcon.height / 2
-    visible:        vehicle.satelliteLock >= 2  // 2D lock
+    anchorPoint.x:  sourceItem.width  / 2
+    anchorPoint.y:  sourceItem.height / 2
 
-    sourceItem: Image {
-        id:         vehicleIcon
-        source:     isSatellite ? "/qmlimages/airplaneOpaque.svg" : "/qmlimages/airplaneOutline.svg"
-        mipmap:     true
-        width:      ScreenTools.defaultFontPixelHeight * 5
-        fillMode:   Image.PreserveAspectFit
-
-        transform: Rotation {
-            origin.x:   vehicleIcon.width  / 2
-            origin.y:   vehicleIcon.height / 2
-            angle:      vehicle.heading
+    sourceItem:
+        MissionItemIndexLabel {
+            id: _label
         }
-    }
 }

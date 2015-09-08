@@ -148,6 +148,8 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     _setSystemType(_mav, _mav->getSystemType());
     _updateArmingState(_mav->isArmed());
     
+    _waypointViewOnlyListChanged();
+    
     _loadSettings();
 }
 
@@ -291,7 +293,7 @@ void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double y
         _roll = std::numeric_limits<double>::quiet_NaN();
     } else {
         float rolldeg = _oneDecimal(roll * (180.0 / M_PI));
-        if (fabs(roll - rolldeg) > 1.0) {
+        if (fabs(roll - rolldeg) > 0.25) {
             _roll = rolldeg;
             if(_refreshTimer->isActive()) {
                 emit rollChanged();
@@ -306,7 +308,7 @@ void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double y
         _pitch = std::numeric_limits<double>::quiet_NaN();
     } else {
         float pitchdeg = _oneDecimal(pitch * (180.0 / M_PI));
-        if (fabs(pitch - pitchdeg) > 1.0) {
+        if (fabs(pitch - pitchdeg) > 0.25) {
             _pitch = pitchdeg;
             if(_refreshTimer->isActive()) {
                 emit pitchChanged();
@@ -322,7 +324,7 @@ void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double y
     } else {
         yaw = _oneDecimal(yaw * (180.0 / M_PI));
         if (yaw < 0) yaw += 360;
-        if (fabs(_heading - yaw) > 1.0) {
+        if (fabs(_heading - yaw) > 0.25) {
             _heading = yaw;
             if(_refreshTimer->isActive()) {
                 emit headingChanged();
@@ -350,7 +352,7 @@ void Vehicle::_updateSpeed(UASInterface*, double groundSpeed, double airSpeed, q
         }
     }
     airSpeed = _oneDecimal(airSpeed);
-    if (fabs(_airSpeed - airSpeed) > 1.0) {
+    if (fabs(_airSpeed - airSpeed) > 0.5) {
         _airSpeed = airSpeed;
         if(_refreshTimer->isActive()) {
             emit airSpeedChanged();
@@ -706,7 +708,7 @@ void Vehicle::_updateWaypointViewOnly(int, MissionItem* /*wp*/)
     /*
      bool changed = false;
      for(int i = 0; i < _waypoints.count(); i++) {
-     if(_waypoints[i].getId() == wp->getId()) {
+     if(_waypoints[i].sequenceNumber() == wp->sequenceNumber()) {
      _waypoints[i] = *wp;
      changed = true;
      break;
@@ -721,21 +723,15 @@ void Vehicle::_updateWaypointViewOnly(int, MissionItem* /*wp*/)
 void Vehicle::_waypointViewOnlyListChanged()
 {
     if(_wpm) {
-        const QList<MissionItem*> &waypoints = _wpm->getWaypointViewOnlyList();
-        _waypoints.clear();
-        for(int i = 0; i < waypoints.count(); i++) {
-            MissionItem* wp = waypoints[i];
-            _waypoints.append(new MissionItem(*wp));
+        const QList<MissionItem*>& newMisionItems = _wpm->getWaypointViewOnlyList();
+        _missionItems.clear();
+        qCDebug(VehicleLog) << QString("Loading %1 mission items").arg(newMisionItems.count());
+        for(int i = 0; i < newMisionItems.count(); i++) {
+            MissionItem* itemToCopy = newMisionItems[i];
+            MissionItem* item = new MissionItem(*itemToCopy);
+            item->setParent(this);
+            _missionItems.append(item);
         }
-        emit missionItemsChanged();
-        /*
-         if(_longitude == DEFAULT_LON && _latitude == DEFAULT_LAT && _waypoints.length()) {
-         _longitude = _waypoints[0]->getLongitude();
-         _latitude  = _waypoints[0]->getLatitude();
-         emit longitudeChanged();
-         emit latitudeChanged();
-         }
-         */
     }
 }
 
@@ -928,4 +924,9 @@ void Vehicle::setActive(bool active)
     _active = active;
     
     _startJoystick(_active);
+}
+
+QmlObjectListModel* Vehicle::missionItemsModel(void)
+{
+    return &_missionItems;
 }

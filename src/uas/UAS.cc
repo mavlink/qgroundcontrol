@@ -364,7 +364,7 @@ void UAS::updateState()
         connectionLost = true;
         receivedMode = false;
         QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
-        GAudioOutput::instance()->say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_ALERT);
+        _say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_ALERT);
     }
 
     // Update connection loss time on each iteration
@@ -378,7 +378,7 @@ void UAS::updateState()
     if (connectionLost && (heartbeatInterval < timeoutIntervalHeartbeat))
     {
         QString audiostring = QString("Link regained to system %1").arg(this->getUASID());
-        GAudioOutput::instance()->say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_NOTICE);
+        _say(audiostring.toLower(), GAudioOutput::AUDIO_SEVERITY_NOTICE);
         connectionLost = false;
         connectionLossTime = 0;
         emit heartbeatTimeout(false, 0);
@@ -569,12 +569,12 @@ void UAS::receiveMessage(mavlink_message_t message)
 
             if (statechanged && ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY))
             {
-                GAudioOutput::instance()->say(QString("Emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
+                _say(QString("Emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
                 QTimer::singleShot(3000, GAudioOutput::instance(), SLOT(startEmergency()));
             }
             else if (modechanged || statechanged)
             {
-                GAudioOutput::instance()->say(audiostring.toLower());
+                _say(audiostring.toLower());
             }
         }
 
@@ -637,7 +637,7 @@ void UAS::receiveMessage(mavlink_message_t message)
                     /* warn only every 12 seconds */
                     && (QGC::groundTimeUsecs() - lastVoltageWarning) > 12000000)
             {
-                GAudioOutput::instance()->say(QString("Voltage warning for system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
+                _say(QString("Voltage warning for system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
                 lastVoltageWarning = QGC::groundTimeUsecs();
                 lastTickVoltageValue = tickLowpassVoltage;
             }
@@ -1214,7 +1214,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             mavlink_msg_mission_item_reached_decode(&message, &wpr);
             waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
             QString text = QString("System %1 reached waypoint %2").arg(getUASID()).arg(wpr.seq);
-            GAudioOutput::instance()->say(text);
+            _say(text);
             emit textMessageReceived(message.sysid, message.compid, MAV_SEVERITY_INFO, text);
         }
             break;
@@ -1263,7 +1263,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             {
                 text.remove("#");
                 emit textMessageReceived(uasId, message.compid, severity, text);
-                GAudioOutput::instance()->say(text.toLower(), severity);
+                _say(text.toLower(), severity);
             }
             else
             {
@@ -3409,7 +3409,7 @@ void UAS::startLowBattAlarm()
 {
     if (!lowBattAlarm)
     {
-        GAudioOutput::instance()->alert(tr("System %1 has low battery").arg(getUASID()));
+        _say(tr("System %1 has low battery").arg(getUASID()));
         lowBattAlarm = true;
     }
 }
@@ -3480,4 +3480,14 @@ void UAS::unsetRCToParameterMap()
                                       0.0f);
         _vehicle->sendMessage(message);
     }
+}
+
+void UAS::_say(const QString& text, int severity)
+{
+#ifndef UNITTEST_BUILD    
+    GAudioOutput::instance()->say(text, severity);
+#else
+    Q_UNUSED(text)
+    Q_UNUSED(severity)
+#endif
 }

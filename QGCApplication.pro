@@ -144,6 +144,7 @@ INCLUDEPATH += \
     src/input \
     src/Joystick \
     src/lib/qmapcontrol \
+    src/MissionEditor \
     src/QmlControls \
     src/uas \
     src/ui \
@@ -244,6 +245,7 @@ HEADERS += \
     src/Joystick/JoystickManager.h \
     src/LogCompressor.h \
     src/MG.h \
+    src/MissionEditor/MissionEditor.h \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
@@ -261,6 +263,7 @@ HEADERS += \
     src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
+    src/QmlControls/QmlObjectListModel.h \
     src/SerialPortIds.h \
     src/uas/FileManager.h \
     src/uas/UAS.h \
@@ -380,6 +383,7 @@ SOURCES += \
     src/Joystick/JoystickManager.cc \
     src/LogCompressor.cc \
     src/main.cc \
+    src/MissionEditor/MissionEditor.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
@@ -393,6 +397,7 @@ SOURCES += \
     src/QGCTemporaryFile.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
+    src/QmlControls/QmlObjectListModel.cc \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
