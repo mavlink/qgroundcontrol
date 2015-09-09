@@ -40,13 +40,7 @@
 
 #include <QDebug>
 
-#include <VideoItem.h>
-#include <VideoSurface.h>
-#if defined(QGC_GST_STREAMING)
-G_BEGIN_DECLS
-GST_PLUGIN_STATIC_DECLARE(QTVIDEOSINK_NAME);
-G_END_DECLS
-#endif
+#include "VideoStreaming.h"
 
 #include "configuration.h"
 #include "QGC.h"
@@ -277,49 +271,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
 
-    //----------------------------------------------------------------
-    //-- Video Streaming
-#if defined(QGC_GST_STREAMING)
-#ifdef Q_OS_MAC
-#ifndef __ios__
-#ifdef QGC_INSTALL_RELEASE
-    QString currentDir = QCoreApplication::applicationDirPath();
-    qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/gst-plugin-scanner");
-    qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
-    qgcputenv("GIO_EXTRA_MODULES",            currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gio/modules");
-    qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0",   currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_SYSTEM_PATH",       currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-//    QStringList env = QProcessEnvironment::systemEnvironment().keys();
-//    foreach(QString key, env) {
-//        qDebug() << key << QProcessEnvironment::systemEnvironment().value(key);
-//    }
-#endif
-#endif
-#endif
-#endif
-
-    qmlRegisterType<VideoItem>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
-    qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QLatin1String("VideoSurface from QML is not supported"));
-
-#if defined(QGC_GST_STREAMING)
-    GError* error = NULL;
-    if (!gst_init_check(&argc, &argv, &error)) {
-        qCritical() << "gst_init_check() failed: " << error->message;
-        g_error_free(error);
-    }
-    GST_PLUGIN_STATIC_REGISTER(QTVIDEOSINK_NAME);
-#endif
+    // Initialize Video Streaming
+    initializeVideoStreaming(argc, argv);
 
 }
 
 QGCApplication::~QGCApplication()
 {
     _destroySingletons();
-#if defined(QGC_GST_STREAMING)
-    gst_deinit();
-#endif
+    shutdownVideoStreaming();
 }
 
 void QGCApplication::_initCommon(void)
@@ -349,7 +309,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     
 #ifndef __mobile__
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+    qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
     qmlRegisterType<JoystickConfigController>       ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
 #endif
     

@@ -668,12 +668,14 @@ INCLUDEPATH += \
 HEADERS += \
     src/VideoStreaming/VideoItem.h \
     src/VideoStreaming/VideoReceiver.h \
+    src/VideoStreaming/VideoStreaming.h \
     src/VideoStreaming/VideoSurface.h \
     src/VideoStreaming/VideoSurface_p.h \
 
 SOURCES += \
     src/VideoStreaming/VideoItem.cc \
     src/VideoStreaming/VideoReceiver.cc \
+    src/VideoStreaming/VideoStreaming.cc \
     src/VideoStreaming/VideoSurface.cc \
 
 contains (DEFINES, DISABLE_VIDEOSTREAMING) {
