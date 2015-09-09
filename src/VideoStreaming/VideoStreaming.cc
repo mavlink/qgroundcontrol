@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
     // Our own plugin
-    GST_PLUGIN_STATIC_DECLARE(QTVIDEOSINK_NAME);
+    GST_PLUGIN_STATIC_DECLARE(QGC_VIDEOSINK_PLUGIN);
     // The static plugins we use
 #if defined(__mobile__)
     GST_PLUGIN_STATIC_DECLARE(coreelements);
@@ -64,7 +64,7 @@ void initializeVideoStreaming(int &argc, char* argv[])
         g_error_free(error);
     }
     // Our own plugin
-    GST_PLUGIN_STATIC_REGISTER(QTVIDEOSINK_NAME);
+    GST_PLUGIN_STATIC_REGISTER(QGC_VIDEOSINK_PLUGIN);
     // The static plugins we use
 #if defined(__mobile__)
     GST_PLUGIN_STATIC_REGISTER(coreelements);
@@ -94,10 +94,12 @@ void initializeVideoStreaming(int &argc, char* argv[])
 #endif
 #endif
 
+#else
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+#endif
     qmlRegisterType<VideoItem>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
     qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QLatin1String("VideoSurface from QML is not supported"));
-
-#endif
 }
 
 void shutdownVideoStreaming()

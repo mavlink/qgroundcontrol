@@ -102,7 +102,7 @@ VideoEnabled {
         QGC_GST_STREAMING \
         GST_PLUGIN_BUILD_STATIC \
         QTGLVIDEOSINK_NAME=qt5glvideosink \
-        QTVIDEOSINK_NAME=qt5videosink
+        QGC_VIDEOSINK_PLUGIN=qt5videosink
 
     INCLUDEPATH += \
         $$PWD/gstqtvideosink \
