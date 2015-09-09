@@ -63,48 +63,41 @@ Map {
 
     ExclusiveGroup { id: mapTypeGroup }
     
-    /*
-    function setCurrentMap(mapID) {
+    // Map type selection MenuItem
+    Component {
+        id: menuItemComponent
+        
+        MenuItem {
+            checkable:      true
+            checked:        text == _map.activeMapType.name
+            exclusiveGroup: mapTypeGroup
+            visible:        _map.visible
+            
+            onTriggered: setCurrentMap(text)
+        }
+    }
+    
+    // Set the current map type to the specified type name
+    function setCurrentMap(name) {
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            if (mapID === _map.supportedMapTypes[i].name) {
+            if (name === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
-                multiVehicleManager.saveSetting(_map.mapName + "/currentMapType", mapID);
+                multiVehicleManager.saveSetting(_map.mapName + "/currentMapType", name);
                 return;
             }
         }
     }
     
-    function addMap(mapID, checked) {
-        var mItem = mapTypeMenu.addItem(mapID);
-        mItem.checkable = true
-        mItem.checked   = checked
-        mItem.exclusiveGroup = currMapType
-        var menuSlot = function() {setCurrentMap(mapID);};
-        mItem.triggered.connect(menuSlot);
-    }
-    
+    // Add menu map types to the specified menu and sets the current map type from settings
     function addMapMenuItems(menu) {
-        var mapID = ''
-        if (_map.supportedMapTypes.length > 0)
-            mapID = _map.activeMapType.name;
-        mapID = multiVehicleManager.loadSetting(_map.mapName + "/currentMapType", mapID);
+        var savedMapName = multiVehicleManager.loadSetting(_map.mapName + "/currentMapType", "")
+        
+        setCurrentMap(savedMapName)
+        
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            var name = _map.supportedMapTypes[i].name;
-            addMap(name, mapID === name);
-        }
-        if(mapID != '')
-            setCurrentMap(mapID);
-    }
-     */
-    
-    function addMapMenuItems(menu) {
-        for (var i= 0; i < _map.supportedMapTypes.length; i++) {
-            var name = _map.supportedMapTypes[i].name;
-            var mItem = menu.addItem(name);
-            mItem.checkable = true
-            mItem.exclusiveGroup = mapTypeGroup
-            //var menuSlot = function() {setCurrentMap(mapID);};
-            //mItem.triggered.connect(menuSlot);
+            var menuItem = menuItemComponent.createObject()
+            menuItem.text = _map.supportedMapTypes[i].name
+            menu.insertItem(menu.items.length, menuItem)
         }
     }
     
