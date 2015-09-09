@@ -135,7 +135,6 @@ public slots:
     void loadSimulationView();
     void loadAnalyzeView();
     void loadPlanView();
-    void loadMissionEditorView();
     
     void manageLinks();
 
@@ -176,6 +175,8 @@ protected slots:
      * @brief Enable/Disable Status Bar
      */
     void showStatusBarCallback(bool checked);
+    
+    void _setUseMissionEditor(bool checked);
 
 signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
