@@ -59,8 +59,8 @@ TODO: Binaries found in http://gstreamer.freedesktop.org/data/pkg/ios
 
 ### Android
 
-TODO: Binaries found in http://gstreamer.freedesktop.org/data/pkg/android
-(work in progress)
+Binaries found in http://gstreamer.freedesktop.org/data/pkg/android
+Download the [gstreamer-1.0-android-armv7-1.5.2.tar.bz2](http://gstreamer.freedesktop.org/data/pkg/android/1.5.2/gstreamer-1.0-android-armv7-1.5.2.tar.bz2) archive (assuming you want the ARM V7 platform) and extract it to the root qgroundcontrol directory (the same directory qgroundcontrol.pro is located). That's where the build system will look for it.
 
 ### Windows
 
