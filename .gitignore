@@ -55,6 +55,7 @@ thirdParty/qserialport/bin/
 thirdParty/qserialport/lib/
 libs/thirdParty/libxbee/lib/
 GeneratedFiles/
+gstreamer-1.0-android*
 
 *.autosave
 .settings/
