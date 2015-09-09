@@ -53,7 +53,7 @@ public:
                 int             frame = MAV_FRAME_GLOBAL,
                 int             action = MAV_CMD_NAV_WAYPOINT);
 
-    MissionItem(const MissionItem& other);
+    MissionItem(const MissionItem& other, QObject* parent = NULL);
     ~MissionItem();
 
     const MissionItem& operator=(const MissionItem& other);
@@ -125,23 +125,23 @@ public:
     bool getAutoContinue() const {
         return _autocontinue;
     }
-    double getLoiterOrbit() const {
-        return _orbit;
+    double loiterOrbitRadius() const {
+        return _loiterOrbitRadiusFact->value().toDouble();
     }
     double getAcceptanceRadius() const {
-        return _param2;
+        return getParam2();
     }
     double getHoldTime() const {
-        return _param1;
+        return getParam1();
     }
     double getParam1() const {
-        return _param1;
+        return _param1Fact->value().toDouble();
     }
     double getParam2() const {
-        return _param2;
+        return _param2Fact->value().toDouble();
     }
     double getParam3() const {
-        return _orbit;
+        return loiterOrbitRadius();
     }
     double getParam4() const {
         return yawRadians();
@@ -195,7 +195,7 @@ public:
     void setFrame       (int _frame);
     void setAutocontinue(bool autoContinue);
     void setCurrent     (bool _current);
-    void setLoiterOrbit (double _orbit);
+    void setLoiterOrbitRadius (double radius);
     void setParam1      (double _param1);
     void setParam2      (double _param2);
     void setParam3      (double param3);
@@ -226,27 +226,20 @@ private:
     
     int             _sequenceNumber;
     QGeoCoordinate  _coordinate;
-    double          _yawRadians;
     int             _frame;
     int             _action;
     bool            _autocontinue;
     bool            _isCurrentItem;
-    double          _orbit;
-    double          _param1;
-    double          _param2;
     quint64         _reachedTime;
     
-    Fact*           _yawFact;
-    Fact*           _pitchFact;
-    Fact*           _loiterRadiusFact;
+    Fact*           _yawRadiansFact;
+    Fact*           _loiterOrbitRadiusFact;
     Fact*           _param1Fact;
     Fact*           _param2Fact;
     
-    FactMetaData*   _yawMetaData;
     FactMetaData*   _pitchMetaData;
     FactMetaData*   _acceptanceRadiusMetaData;
     FactMetaData*   _holdTimeMetaData;
-    FactMetaData*   _loiterRadiusMetaData;
     FactMetaData*   _loiterTurnsMetaData;
     FactMetaData*   _loiterSecondsMetaData;
     FactMetaData*   _delaySecondsMetaData;
