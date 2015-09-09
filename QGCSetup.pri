@@ -19,10 +19,6 @@
 
 QMAKE_POST_LINK += echo "Copying files"
 
-AndroidBuild {
-    INSTALLS += $$DESTDIR
-}
-
 #
 # Copy the application resources to the associated place alongside the application
 #
