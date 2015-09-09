@@ -106,6 +106,9 @@ public:
 	/// @return true: Fake ui into showing mobile interface
 	bool fakeMobile(void) { return _fakeMobile; }
     
+    bool useNewMissionEditor(void) { return _useNewMissionEditor; }
+    void setUseNewMissionEditor(bool use);
+    
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -174,6 +177,8 @@ private:
     QStringList         _missingParams;                                  ///< List of missing facts to be displayed
 
 	bool				_fakeMobile;	///< true: Fake ui into displaying mobile interface
+
+    bool _useNewMissionEditor;  ///< true: Use new Mission Editor
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
