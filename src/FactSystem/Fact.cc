@@ -28,25 +28,49 @@
 
 #include <QtQml>
 
-Fact::Fact(void) :
-    _componentId(-1),
-    _value(0),
-    _type(FactMetaData::valueTypeInt32),
-    _metaData(NULL)
+Fact::Fact(QObject* parent)
+    : QObject(parent)
+    , _componentId(-1)
+    , _value(0)
+    , _type(FactMetaData::valueTypeInt32)
+    , _metaData(NULL)
 {    
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
 }
 
-Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent) :
-    QObject(parent),
-    _name(name),
-    _componentId(componentId),
-    _value(0),
-    _type(type),
-    _metaData(NULL)
+Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent)
+    : QObject(parent)
+    , _name(name)
+    , _componentId(componentId)
+    , _value(0)
+    , _type(type)
+    , _metaData(NULL)
 {
+    FactMetaData* metaData = new FactMetaData(_type, this);
+    setMetaData(metaData);
+}
 
+Fact::Fact(const Fact& other, QObject* parent)
+    : QObject(parent)
+{
+    *this = other;
+}
+
+const Fact& Fact::operator=(const Fact& other)
+{
+    _name           = other._name;
+    _componentId    = other._componentId;
+    _value          = other._value;
+    _type           = other._type;
+    
+    if (_metaData && other._metaData) {
+        *_metaData = *other._metaData;
+    } else {
+        _metaData = NULL;
+    }
+    
+    return *this;
 }
 
 void Fact::forceSetValue(const QVariant& value)
