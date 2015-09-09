@@ -51,6 +51,9 @@ Item {
     readonly property real _defaultAirSpeed:        0
     readonly property real _defaultClimbRate:       0
 
+    readonly property string _mapName:              "FlightDisplayView"
+    readonly property string _showMapBackgroundKey: "/showMapBackground"
+
     property real _roll:            _activeVehicle ? (isNaN(_activeVehicle.roll) ? _defaultRoll : _activeVehicle.roll) : _defaultRoll
     property real _pitch:           _activeVehicle ? (isNaN(_activeVehicle.pitch) ? _defaultPitch : _activeVehicle.pitch) : _defaultPitch
     property real _heading:         _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
@@ -63,7 +66,10 @@ Item {
     property real _airSpeed:        _activeVehicle ? _activeVehicle.airSpeed : _defaultAirSpeed
     property real _climbRate:       _activeVehicle ? _activeVehicle.climbRate : _defaultClimbRate
 
-    property bool _showMap: true
+    property bool _showMap: getBool(multiVehicleManager.loadSetting(_mapName + _showMapBackgroundKey, "1"))
+
+    // Validate _showMap setting
+    Component.onCompleted: _setShowMap(_showMap)
 
     function getBool(value) {
         return value === '0' ? false : true;
@@ -73,10 +79,15 @@ Item {
         return value ? "1" : "0";
     }
 
+    function _setShowMap(showMap) {
+        _showMap = flightDisplay.hasVideo ? showMap : true
+        multiVehicleManager.saveSetting(_mapName + _showMapBackgroundKey, setBool(_showMap))
+    }
+
     FlightMap {
         id:             flightMap
         anchors.fill:   parent
-        mapName:        "FlightDisplayView"
+        mapName:        _mapName
         latitude:       parent._latitude
         longitude:      parent._longitude
         visible:        _showMap
@@ -157,7 +168,7 @@ Item {
             x:                  root.width  * 0.5 - ScreenTools.defaultFontPixelSize * (5)
             width:              ScreenTools.defaultFontPixelSize * (10)
             height:             ScreenTools.defaultFontPixelSize * (10)
-            heading:            root.heading
+            heading:            _heading
             active:             multiVehicleManager.activeVehicleAvailable
             z:                  70
         }
@@ -250,8 +261,9 @@ Item {
                 checkable:      true
                 checked:        _showMap
                 text:           "Show map as background"
+                visible:        flightDisplay.hasVideo
 
-                onTriggered:    _showMap = true
+                onTriggered:    _setShowMap(true)
             }
 
             MenuItem {
@@ -260,11 +272,14 @@ Item {
                 checkable:      true
                 checked:        !_showMap
                 text:           "Show video as background"
+                visible:        flightDisplay.hasVideo
 
-                onTriggered:    _showMap = false
+                onTriggered:    _setShowMap(false)
             }
 
-            MenuSeparator { }
+            MenuSeparator {
+                visible: flightDisplay.hasVideo && _showMap
+            }
 
             Component.onCompleted: flightMap.addMapMenuItems(optionsMenu)
         }
