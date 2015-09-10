@@ -34,82 +34,147 @@ import QGroundControl.Palette       1.0
 
 /// Mission Editor
 
-Item {
-    // For some reason we can't have FlightMap as the top level control. If you do that it doesn't draw.
-    // So we have an Item at the top to work around that.
+QGCView {
+    viewPanel: panel
 
     readonly property real  _defaultLatitude:   37.803784
     readonly property real  _defaultLongitude:  -122.462276
     readonly property int   _decimalPlaces:     7
+    readonly property real  _horizontalMargin:   ScreenTools.defaultFontPixelWidth / 2
+    readonly property real  _verticalMargin:     ScreenTools.defaultFontPixelHeight / 2
+    readonly property var   _activeVehicle:     multiVehicleManager.activeVehicle
 
-    FlightMap {
-        id:             editorMap
+    QGCPalette { id: _qgcPal; colorGroupEnabled: enabled }
+
+    QGCViewPanel {
+        id:             panel
         anchors.fill:   parent
-        mapName:        "MissionEditor"
-        latitude:       _defaultLatitude
-        longitude:      _defaultLongitude
 
-        QGCLabel { text: "WIP: Non functional"; font.pixelSize: ScreenTools.largeFontPixelSize }
-
-
-        MouseArea {
+        Item {
             anchors.fill: parent
 
-            onClicked: {
-                var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y))
-                coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
-                coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
-                coordinate.altitude = 0
-                controller.addMissionItem(coordinate)
-            }
-        }
+            FlightMap {
+                id:             editorMap
+                anchors.left:   parent.left
+                anchors.right:  missionItemView.left
+                anchors.top:    parent.top
+                anchors.bottom: parent.bottom
+                mapName:        "MissionEditor"
+                latitude:       _defaultLatitude
+                longitude:      _defaultLongitude
 
-        // Add the mission items to the map
-        MapItemView {
-            model: controller.missionItems
-            
-            delegate:
-                MissionItemIndicator {
-                    label:          object.sequenceNumber
-                    isCurrentItem:  object.isCurrentItem
-                    coordinate:     object.coordinate
+                QGCLabel {
+                    anchors.right: parent.right
+                    text: "WIP: Danger, do not fly with this!"; font.pixelSize: ScreenTools.largeFontPixelSize }
 
-                    Component.onCompleted: console.log("Indicator", object.coordinate)
+
+                MouseArea {
+                    anchors.fill: parent
+
+                    onClicked: {
+                        var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+                        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+                        coordinate.altitude = 0
+                        controller.addMissionItem(coordinate)
+                    }
                 }
-        }
 
-        // Mission item list
-        ListView {
-            id:                 missionItemSummaryList
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
-            anchors.top:        parent.top
-            anchors.bottom:     editorMap.mapWidgets.top
-            anchors.right:      parent.right
-            width:              ScreenTools.defaultFontPixelWidth * 30
-            spacing:            ScreenTools.defaultFontPixelHeight / 2
-            orientation:        ListView.Vertical
-            model:              controller.missionItems
+                // Add the mission items to the map
+                MapItemView {
+                    model: controller.missionItems
+                    
+                    delegate:
+                        MissionItemIndicator {
+                            label:          object.sequenceNumber
+                            isCurrentItem:  object.isCurrentItem
+                            coordinate:     object.coordinate
 
-            property real _maxItemHeight: 0
-
-            delegate:
-                MissionItemEditor {
-                    missionItem:    object
+                            Component.onCompleted: console.log("Indicator", object.coordinate)
+                        }
                 }
-        }
 
-        Column {
-            id:                 controlWidgets
-            anchors.margins:    ScreenTools.defaultFontPixelWidth
-            anchors.right:      parent.left
-            anchors.bottom:     parent.top
-            spacing:            ScreenTools.defaultFontPixelWidth / 2
+                Column {
+                    id:                 controlWidgets
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
+                    anchors.right:      parent.left
+                    anchors.bottom:     parent.top
+                    spacing:            ScreenTools.defaultFontPixelWidth / 2
 
-            QGCButton {
-                id:         addMode
-                text:       "+"
-                checkable:  true
-            }
-        }
-    }
-}
+                    QGCButton {
+                        id:         addMode
+                        text:       "+"
+                        checkable:  true
+                    }
+                }
+            } // FlightMap
+
+            Rectangle {
+                id:                 missionItemView
+                anchors.right:      parent.right
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                width:              ScreenTools.defaultFontPixelWidth * 30
+                color: _qgcPal.window
+
+                Item {
+                    anchors.margins:    _verticalMargin
+                    anchors.fill:       parent
+
+                    QGCButton {
+                        id:     toolsButton
+                        text:   "Tools"
+                        menu :  toolMenu
+
+                        Menu {
+                            id: toolMenu
+
+                            MenuItem {
+                                text:       "Get mission items from vehicle"
+                                enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
+
+                                onTriggered: controller.getMissionItems()
+                            }
+
+                            MenuItem {
+                                text:       "Send mission items to vehicle"
+                                enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
+
+                                onTriggered: controller.setMissionItems()
+                            }
+
+                            MenuItem {
+                                text: "Load mission items from disk"
+                            }
+
+                            MenuItem {
+                                text: "Save mission items to disk"
+                            }
+                        }
+                    }
+
+                    // Mission item list
+                    ListView {
+                        id:                 missionItemSummaryList
+                        anchors.topMargin:  _verticalMargin
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        anchors.top:        toolsButton.bottom
+                        anchors.bottom:     parent.bottom
+                        spacing:            _verticalMargin
+                        orientation:        ListView.Vertical
+                        model:              controller.missionItems
+
+                        property real _maxItemHeight: 0
+
+                        delegate:
+                            MissionItemEditor {
+                                missionItem:    object
+                                width:          parent.width
+                            }
+                    } // ListView
+                } // Item
+            } // Rectangle - mission item list
+        } // Item - split view container
+    } // QGCViewPanel
+} // QGCVIew
