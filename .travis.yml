@@ -91,14 +91,21 @@ script:
   - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "release" && "${TRAVIS_SECURE_ENV_VARS}" = "true" ]]; then androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output release/android-build --deployment bundled --gradle --sign android/android_release.keystore dagar --storepass ${ANDROID_STOREPASS}; fi
 
 deploy:
-  provider: releases
-  api-key:
-    secure: ""
+  provider: s3
+  access_key_id: AKIAIVORNALE7NHD3T6Q
+  secret_access_key:
+    secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
+  file: "release/android-build/build/outputs/apk/android-build-release-signed.apk"
   file: "release/qgroundcontrol.dmg"
+  file: "release/qgroundcontrol.tar.bz2"
+  bucket: qgroundcontrol
+  upload-dir: ${TRAVIS_BRANCH}
+  acl: public_read
   skip_cleanup: true
   on:
     tags: true
     all_branches: true
+    condition: "$CONFIG = release"
 
 notifications:
   webhooks:
