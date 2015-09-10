@@ -92,14 +92,29 @@ script:
   - echo -en 'travis_fold:end:script.2\\r'
 
 deploy:
-  provider: releases
-  api-key:
-    secure: ""
-  file: "release/qgroundcontrol.dmg"
-  skip_cleanup: true
-  on:
-    tags: true
-    all_branches: true
+  - provider: s3
+    access_key_id: AKIAIVORNALE7NHD3T6Q
+    secret_access_key:
+      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
+    bucket: qgroundcontrol
+    local_dir: release/package
+    upload-dir: ${TRAVIS_BRANCH}
+    acl: public_read
+    skip_cleanup: true
+    on:
+      all_branches: true
+      condition: $CONFIG = installer
+  - provider: releases
+    api-key:
+      secure: K/Zqr/FCC7QvzFxYvBtCinPkacQq2ubJ2qm982+38Zf/KjibVOF1dEbVdrGZmII6Tg5DaQzNXGYkg5PvYmJgT9xRsqeQjeYIUYqYZpAt+HYWA38AVfMU8jip/1P1wmwqD469nzJOBBa8yfsMs6Ca7tBaNl/zTxCRGnAgEzqtkdQ=
+    file:
+      - release/package/qgroundcontrol.apk
+      - release/package/qgroundcontrol.dmg
+      - release/package/qgroundcontrol.tar.bz2
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: $CONFIG = installer
 
 notifications:
   webhooks:
