@@ -40,9 +40,12 @@ class Fact : public QObject
     Q_OBJECT
     
 public:
-    Fact(void);
+    Fact(QObject* parent = NULL);
     Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = NULL);
-    
+    Fact(const Fact& other, QObject* parent = NULL);
+
+    const Fact& operator=(const Fact& other);
+
     Q_PROPERTY(int componentId READ componentId CONSTANT)
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
