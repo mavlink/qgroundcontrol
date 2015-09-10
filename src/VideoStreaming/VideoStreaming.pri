@@ -56,7 +56,40 @@ LinuxBuild {
         INCLUDEPATH += \
             $$GST_ROOT/include/gstreamer-1.0 \
             $$GST_ROOT/include/glib-2.0 \
-            $$GST_ROOT/lib/gstreamer-1.0\include \
+            $$GST_ROOT/lib/gstreamer-1.0/include \
+            $$GST_ROOT/lib/glib-2.0/include
+    }
+} else:AndroidBuild {
+    #- gstreamer assumed to be installed in $$PWD/../../android/gstreamer-1.0-android-armv7-1.5.2
+    GST_ROOT = $$PWD/../../gstreamer-1.0-android-armv7-1.5.2
+    exists($$GST_ROOT) {
+        QMAKE_CXXFLAGS  += -pthread
+        CONFIG          += VideoEnabled
+
+        # We want to link these plugins statically
+        LIBS += -L$$GST_ROOT/lib/gstreamer-1.0/static \
+            -lgstvideo-1.0 \
+            -lgstcoreelements \
+            -lgstudp \
+            -lgstrtp \
+            -lgstx264 \
+            -lgstlibav \
+            -lgstvideoparsersbad
+
+        # Rest of GStreamer dependencies
+        LIBS += -L$$GST_ROOT/lib \
+            -lgstfft-1.0 -lm  \
+            -lgstnet-1.0 -lgio-2.0 \
+            -lgstaudio-1.0 -lgstcodecparsers-1.0 -lgstbase-1.0 \
+            -lgstreamer-1.0 -lgsttag-1.0 -lgstrtp-1.0 -lgstpbutils-1.0 \
+            -lgstvideo-1.0 -lavformat -lavcodec -lavresample -lavutil -lx264 \
+            -lbz2 -lgobject-2.0 \
+            -Wl,--export-dynamic -lgmodule-2.0 -pthread -lglib-2.0 -lorc-0.4 -liconv -lffi -lintl
+
+        INCLUDEPATH += \
+            $$GST_ROOT/include/gstreamer-1.0 \
+            $$GST_ROOT/lib/gstreamer-1.0/include \
+            $$GST_ROOT/include/glib-2.0 \
             $$GST_ROOT/lib/glib-2.0/include
     }
 }
@@ -69,7 +102,7 @@ VideoEnabled {
         QGC_GST_STREAMING \
         GST_PLUGIN_BUILD_STATIC \
         QTGLVIDEOSINK_NAME=qt5glvideosink \
-        QTVIDEOSINK_NAME=qt5videosink
+        QGC_VIDEOSINK_PLUGIN=qt5videosink
 
     INCLUDEPATH += \
         $$PWD/gstqtvideosink \
@@ -137,6 +170,10 @@ VideoEnabled {
             message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/windows/")
             message("  Select the devel AND runtime packages and install them (x86, not the 64-Bit)")
             message("  It will be installed in C:/gstreamer. You need to update you PATH to point to the bin directory.")
+        }
+        AndroidBuild {
+            message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/android/")
+            message("  Uncompress the archive into the qgc root source directory (same directory where qgroundcontrol.pro is found.")
         }
     } else {
         message("Skipping support for video streaming (Unsupported platform)")
