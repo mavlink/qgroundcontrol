@@ -166,10 +166,6 @@ WindowsBuild {
         $$BASEDIR\\libs\\lib\\sdl\\win32\\SDL.dll \
         $$BASEDIR\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll \
         $$DLL_DIR\\icu*.dll \
-        $$DLL_DIR\\d3dcompiler*.dll \
-        $$DLL_DIR\\libEGL$${DLL_QT_DEBUGCHAR}.dll \
-        $$DLL_DIR\\libGLESv2$${DLL_QT_DEBUGCHAR}.dll \
-        $$DLL_DIR\\opengl32sw.dll \
         $$DLL_DIR\\Qt5Core$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Gui$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Location$${DLL_QT_DEBUGCHAR}.dll \
@@ -191,6 +187,11 @@ WindowsBuild {
         $$DLL_DIR\\Qt5WebKitWidgets$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Widgets$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Xml$${DLL_QT_DEBUGCHAR}.dll
+# readd this with Qt 5.5
+#        $$DLL_DIR\\d3dcompiler*.dll \
+#        $$DLL_DIR\\libEGL$${DLL_QT_DEBUGCHAR}.dll \
+#        $$DLL_DIR\\libGLESv2$${DLL_QT_DEBUGCHAR}.dll \
+#        $$DLL_DIR\\opengl32sw.dll \
     for(COPY_FILE, COPY_FILE_LIST) {
 		QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
     }
