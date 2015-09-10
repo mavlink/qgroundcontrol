@@ -79,6 +79,7 @@
 #include "MavlinkQmlSingleton.h"
 #include "JoystickManager.h"
 #include "QmlObjectListModel.h"
+#include "MissionManager.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -294,6 +295,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",   "Can only reference, cannot create");
     qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",            "Can only reference, cannot create");
     qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",        "Can only reference, cannot create");
+    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",     "Can only reference, cannot create");
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",    "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",           "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel", "Reference only");

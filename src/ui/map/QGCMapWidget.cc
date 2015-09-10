@@ -678,7 +678,7 @@ void QGCMapWidget::updateWaypoint(int uas, MissionItem* wp)
     if (currWPManager)
     {
         // Only accept waypoints in global coordinate frame
-        if (((wp->getFrame() == MAV_FRAME_GLOBAL) || (wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)) && wp->isNavigationType())
+        if (((wp->frame() == MAV_FRAME_GLOBAL) || (wp->frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)) && wp->isNavigationType())
         {
             // We're good, this is a global waypoint
 

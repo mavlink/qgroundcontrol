@@ -114,7 +114,7 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
 {
     Q_UNUSED(mav);
     Q_UNUSED(time);
-    if (waypointsEditable.count() > 0 && !currentWaypointEditable.isNull() && (currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_NED || currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_ENU))
+    if (waypointsEditable.count() > 0 && !currentWaypointEditable.isNull() && (currentWaypointEditable->frame() == MAV_FRAME_LOCAL_NED || currentWaypointEditable->frame() == MAV_FRAME_LOCAL_ENU))
     {
         double xdiff = x-currentWaypointEditable->x();
         double ydiff = y-currentWaypointEditable->y();
@@ -132,7 +132,7 @@ void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double l
     Q_UNUSED(altWGS84);
 	Q_UNUSED(lon);
 	Q_UNUSED(lat);
-    if (waypointsEditable.count() > 0 && !currentWaypointEditable.isNull() && (currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL || currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT))
+    if (waypointsEditable.count() > 0 && !currentWaypointEditable.isNull() && (currentWaypointEditable->frame() == MAV_FRAME_GLOBAL || currentWaypointEditable->frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT))
     {
         // TODO FIXME Calculate distance
         double dist = 0;
@@ -250,7 +250,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
             emit updateStatusString(tr("MissionItem ID mismatch, rejecting waypoint"));
         }
     } else if (systemId == current_partner_systemid
-            && wp->seq < waypointsViewOnly.size() && waypointsViewOnly[wp->seq]->getAction()) {
+            && wp->seq < waypointsViewOnly.size() && waypointsViewOnly[wp->seq]->command()) {
         // accept single sent waypoints because they can contain updates about remaining DO_JUMP repetitions
         // but only update view only side
         MissionItem *lwp_vo = new MissionItem(NULL,
@@ -677,7 +677,7 @@ const QList<MissionItem *> UASWaypointManager::getGlobalFrameWaypointList()
     QList<MissionItem*> wps;
     foreach (MissionItem* wp, waypointsEditable)
     {
-        if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
+        if (wp->frame() == MAV_FRAME_GLOBAL || wp->frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
             wps.append(wp);
         }
@@ -693,7 +693,7 @@ const QList<MissionItem *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointL
     QList<MissionItem*> wps;
     foreach (MissionItem* wp, waypointsEditable)
     {
-        if ((wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && wp->isNavigationType())
+        if ((wp->frame() == MAV_FRAME_GLOBAL || wp->frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && wp->isNavigationType())
         {
             wps.append(wp);
         }
@@ -728,7 +728,7 @@ int UASWaypointManager::getGlobalFrameIndexOf(MissionItem* wp)
     // counting only those in global frame
     int i = 0;
     foreach (MissionItem* p, waypointsEditable) {
-        if (p->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
+        if (p->frame() == MAV_FRAME_GLOBAL || wp->frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
             if (p == wp)
             {
@@ -747,7 +747,7 @@ int UASWaypointManager::getGlobalFrameAndNavTypeIndexOf(MissionItem* wp)
     // counting only those in global frame
     int i = 0;
     foreach (MissionItem* p, waypointsEditable) {
-        if ((p->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
+        if ((p->frame() == MAV_FRAME_GLOBAL || wp->frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
         {
             if (p == wp)
             {
@@ -787,7 +787,7 @@ int UASWaypointManager::getGlobalFrameCount()
     int i = 0;
     foreach (MissionItem* p, waypointsEditable)
     {
-        if (p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
+        if (p->frame() == MAV_FRAME_GLOBAL || p->frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
             i++;
         }
@@ -802,7 +802,7 @@ int UASWaypointManager::getGlobalFrameAndNavTypeCount()
     // counting only those in global frame
     int i = 0;
     foreach (MissionItem* p, waypointsEditable) {
-        if ((p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
+        if ((p->frame() == MAV_FRAME_GLOBAL || p->frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
         {
             i++;
         }
@@ -832,7 +832,7 @@ int UASWaypointManager::getLocalFrameCount()
     int i = 0;
     foreach (MissionItem* p, waypointsEditable)
     {
-        if (p->getFrame() == MAV_FRAME_LOCAL_NED || p->getFrame() == MAV_FRAME_LOCAL_ENU)
+        if (p->frame() == MAV_FRAME_LOCAL_NED || p->frame() == MAV_FRAME_LOCAL_ENU)
         {
             i++;
         }
@@ -848,7 +848,7 @@ int UASWaypointManager::getLocalFrameIndexOf(MissionItem* wp)
     int i = 0;
     foreach (MissionItem* p, waypointsEditable)
     {
-        if (p->getFrame() == MAV_FRAME_LOCAL_NED || p->getFrame() == MAV_FRAME_LOCAL_ENU)
+        if (p->frame() == MAV_FRAME_LOCAL_NED || p->frame() == MAV_FRAME_LOCAL_ENU)
         {
             if (p == wp)
             {
@@ -868,7 +868,7 @@ int UASWaypointManager::getMissionFrameIndexOf(MissionItem* wp)
     int i = 0;
     foreach (MissionItem* p, waypointsEditable)
     {
-        if (p->getFrame() == MAV_FRAME_MISSION)
+        if (p->frame() == MAV_FRAME_MISSION)
         {
             if (p == wp)
             {
@@ -941,12 +941,12 @@ void UASWaypointManager::goToWaypoint(MissionItem *wp)
 
         mission.autocontinue = 0;
         mission.current = 2; //2 for guided mode
-        mission.param1 = wp->getParam1();
-        mission.param2 = wp->getParam2();
-        mission.param3 = wp->getParam3();
-        mission.param4 = wp->getParam4();
-        mission.frame = wp->getFrame();
-        mission.command = wp->getAction();
+        mission.param1 = wp->param1();
+        mission.param2 = wp->param2();
+        mission.param3 = wp->param3();
+        mission.param4 = wp->param4();
+        mission.frame = wp->frame();
+        mission.command = wp->command();
         mission.seq = 0;     // don't read out the sequence number of the waypoint class
         mission.x = wp->x();
         mission.y = wp->y();
@@ -992,14 +992,14 @@ void UASWaypointManager::writeWaypoints()
                 memset(cur_d, 0, sizeof(mavlink_mission_item_t));   //initialize with zeros
                 const MissionItem *cur_s = waypointsEditable.at(i);
 
-                cur_d->autocontinue = cur_s->getAutoContinue();
+                cur_d->autocontinue = cur_s->autoContinue();
                 cur_d->current = cur_s->isCurrentItem() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
-                cur_d->param1 = cur_s->getParam1();
-                cur_d->param2 = cur_s->getParam2();
-                cur_d->param3 = cur_s->getParam3();
-                cur_d->param4 = cur_s->getParam4();
-                cur_d->frame = cur_s->getFrame();
-                cur_d->command = cur_s->getAction();
+                cur_d->param1 = cur_s->param1();
+                cur_d->param2 = cur_s->param2();
+                cur_d->param3 = cur_s->param3();
+                cur_d->param4 = cur_s->param4();
+                cur_d->frame = cur_s->frame();
+                cur_d->command = cur_s->command();
                 cur_d->seq = i;     // don't read out the sequence number of the waypoint class
                 cur_d->x = cur_s->x();
                 cur_d->y = cur_s->y();
@@ -1163,7 +1163,7 @@ float UASWaypointManager::getAltitudeRecommendation()
 int UASWaypointManager::getFrameRecommendation()
 {
     if (waypointsEditable.count() > 0) {
-        return static_cast<int>(waypointsEditable.last()->getFrame());
+        return static_cast<int>(waypointsEditable.last()->frame());
     } else {
         return MAV_FRAME_GLOBAL;
     }
@@ -1173,7 +1173,7 @@ float UASWaypointManager::getAcceptanceRadiusRecommendation()
 {
     if (waypointsEditable.count() > 0)
     {
-        return waypointsEditable.last()->getAcceptanceRadius();
+        return waypointsEditable.last()->acceptanceRadius();
     }
     else
     {
