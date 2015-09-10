@@ -19,3 +19,12 @@ build_script:
 test_script:
 #  - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
 
+deploy:
+  provider: S3
+  access_key_id: AKIAIVORNALE7NHD3T6Q
+  secret_access_key:
+    secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
+  bucket: qgrondcontrol
+  set_public: true
+  folder: "%APPVEYOR_REPO_BRANCH%"
+  artifact: release/qgroundcontrol.exe
