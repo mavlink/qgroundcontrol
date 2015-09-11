@@ -53,7 +53,6 @@ Map {
     property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
     property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
 
-    anchors.fill: parent
     zoomLevel:  18
     center:     QtPositioning.coordinate(lat, lon)
     gesture.flickDeceleration: 3000

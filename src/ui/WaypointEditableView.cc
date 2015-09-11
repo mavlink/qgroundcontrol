@@ -93,13 +93,13 @@ WaypointEditableView::WaypointEditableView(MissionItem* wp, QWidget* parent) :
     connect(m_ui->selectedBox, SIGNAL(stateChanged(int)), this, SLOT(changedCurrent(int)));
 
     // Initialize view correctly
-    int actionID = wp->getAction();
+    int actionID = wp->command();
     initializeActionView(actionID);
     updateValues();
     updateActionView(actionID);
 
     // Check for mission frame
-    if (wp->getFrame() == MAV_FRAME_MISSION)
+    if (wp->frame() == MAV_FRAME_MISSION)
     {
         m_ui->comboBox_action->setCurrentIndex(m_ui->comboBox_action->count()-1);
     }
@@ -417,14 +417,14 @@ void WaypointEditableView::updateValues()
 
 
     // update frame
-    MAV_FRAME frame = (MAV_FRAME)wp->getFrame();
+    MAV_FRAME frame = (MAV_FRAME)wp->frame();
     int frame_index = m_ui->comboBox_frame->findData(frame);
     if (m_ui->comboBox_frame->currentIndex() != frame_index) {
         m_ui->comboBox_frame->setCurrentIndex(frame_index);
     }
 
     // Update action
-    MAV_CMD action = (MAV_CMD)wp->getAction();
+    MAV_CMD action = (MAV_CMD)wp->command();
     int action_index = m_ui->comboBox_action->findData(action);
     if (m_ui->comboBox_action->currentIndex() != action_index)
     {
@@ -440,15 +440,15 @@ void WaypointEditableView::updateValues()
         }
     }
 
-    emit commandBroadcast(wp->getAction());
-    emit frameBroadcast((MAV_FRAME)wp->getFrame());
-    emit param1Broadcast(wp->getParam1());
-    emit param2Broadcast(wp->getParam2());
-    emit param3Broadcast(wp->getParam3());
-    emit param4Broadcast(wp->getParam4());
-    emit param5Broadcast(wp->getParam5());
-    emit param6Broadcast(wp->getParam6());
-    emit param7Broadcast(wp->getParam7());
+    emit commandBroadcast(wp->command());
+    emit frameBroadcast((MAV_FRAME)wp->frame());
+    emit param1Broadcast(wp->param1());
+    emit param2Broadcast(wp->param2());
+    emit param3Broadcast(wp->param3());
+    emit param4Broadcast(wp->param4());
+    emit param5Broadcast(wp->param5());
+    emit param6Broadcast(wp->param6());
+    emit param7Broadcast(wp->param7());
 
 
     if (m_ui->selectedBox->isChecked() != wp->isCurrentItem())
@@ -458,9 +458,9 @@ void WaypointEditableView::updateValues()
         m_ui->selectedBox->setChecked(wp->isCurrentItem());
         m_ui->selectedBox->blockSignals(false);
     }
-    if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
+    if (m_ui->autoContinue->isChecked() != wp->autoContinue())
     {
-        m_ui->autoContinue->setChecked(wp->getAutoContinue());
+        m_ui->autoContinue->setChecked(wp->autoContinue());
     }
 
     m_ui->idLabel->setText(QString::number(wp->sequenceNumber()));
