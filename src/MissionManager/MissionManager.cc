@@ -280,7 +280,7 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message)
     
     qCDebug(MissionManagerLog) << "_handleMissionRequest sequenceNumber:" << missionRequest.seq;
     
-    if (missionRequest.seq < 0 || missionRequest.seq >= _missionItems.count()) {
+    if (missionRequest.seq >= _missionItems.count()) {
         qCDebug(MissionManagerLog) << "_handleMissionRequest invalid sequence number requested:count" << missionRequest.seq << _missionItems.count();
         return;
     }
