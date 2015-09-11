@@ -1312,7 +1312,7 @@ void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float widt
     poly.replace(3, QPointF(p.x() - waypointSize/2.0f, p.y()));
 
     float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
-    float acceptRadius = w->getAcceptanceRadius();
+    float acceptRadius = w->acceptanceRadius();
     double yawDiff = w->yawRadians()/180.0*M_PI-yaw;
 
     // Draw background
@@ -1353,7 +1353,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             const MissionItem *w = list.at(i);
             QPointF in;
             // Use local coordinates as-is.
-            int frameRef = w->getFrame();
+            int frameRef = w->frame();
             if (frameRef == MAV_FRAME_LOCAL_NED)
             {
                 in = QPointF(w->x(), w->y());

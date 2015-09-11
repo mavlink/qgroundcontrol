@@ -23,6 +23,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include "MissionEditor.h"
 #include "ScreenToolsController.h"
+#include "MultiVehicleManager.h"
+#include "MissionManager.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -32,6 +34,7 @@ const char* MissionEditor::_settingsGroup = "MissionEditor";
 
 MissionEditor::MissionEditor(QWidget *parent)
     : QGCQmlWidgetHolder(parent)
+    , _missionItems(NULL)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     // Get rid of layout default margins
@@ -44,6 +47,15 @@ MissionEditor::MissionEditor(QWidget *parent)
     setMinimumHeight(33 * ScreenToolsController::defaultFontPixelSize_s());
 #endif
     
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    if (activeVehicle) {
+        MissionManager* missionManager = activeVehicle->missionManager();
+        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditor::_newMissionItemsAvailable);
+        _newMissionItemsAvailable();
+    } else {
+        _missionItems = new QmlObjectListModel(this);
+    }
+    
     setContextPropertyObject("controller", this);
 
     setSource(QUrl::fromUserInput("qrc:/qml/MissionEditor.qml"));
@@ -51,6 +63,34 @@ MissionEditor::MissionEditor(QWidget *parent)
 
 MissionEditor::~MissionEditor()
 {
+}
+
+void MissionEditor::_newMissionItemsAvailable(void)
+{
+    if (_missionItems) {
+        _missionItems->deleteLater();
+    }
+    
+    _missionItems = MultiVehicleManager::instance()->activeVehicle()->missionManager()->copyMissionItems();
+    emit missionItemsChanged();
+}
+
+void MissionEditor::getMissionItems(void)
+{
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    
+    if (activeVehicle) {
+        activeVehicle->missionManager()->requestMissionItems();
+    }
+}
+
+void MissionEditor::setMissionItems(void)
+{
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    
+    if (activeVehicle) {
+        activeVehicle->missionManager()->writeMissionItems(*_missionItems);
+    }
 }
 
 void MissionEditor::saveSetting(const QString &name, const QString& value)
@@ -73,10 +113,10 @@ QString MissionEditor::loadSetting(const QString &name, const QString& defaultVa
 
 void MissionEditor::addMissionItem(QGeoCoordinate coordinate)
 {
-    MissionItem * newItem = new MissionItem(this, _missionItems.count(), coordinate);
-    if (_missionItems.count() == 0) {
+    MissionItem * newItem = new MissionItem(this, _missionItems->count(), coordinate);
+    if (_missionItems->count() == 0) {
         newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
     }
     qDebug() << "MissionItem" << newItem->coordinate();
-    _missionItems.append(newItem);
+    _missionItems->append(newItem);
 }

@@ -30,6 +30,7 @@
 #include "UASMessageHandler.h"
 #include "UAS.h"
 #include "JoystickManager.h"
+#include "MissionManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -151,6 +152,10 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     _waypointViewOnlyListChanged();
     
     _loadSettings();
+    
+    if (qgcApp()->useNewMissionEditor()) {
+        _missionManager = new MissionManager(this);
+    }
 }
 
 Vehicle::~Vehicle()
@@ -187,13 +192,15 @@ Vehicle::~Vehicle()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
-    if (message.sysid != _id) {
+    if (message.sysid != _id && message.sysid != 0) {
         return;
     }
     
     if (!_containsLink(link)) {
         _addLink(link);
     }
+    
+    emit mavlinkMessageReceived(message);
     
     _uas->receiveMessage(message);
 }

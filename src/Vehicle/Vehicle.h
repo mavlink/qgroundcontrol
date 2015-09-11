@@ -41,6 +41,7 @@ class UASInterface;
 class FirmwarePlugin;
 class AutoPilotPlugin;
 class UASWaypointManager;
+class MissionManager;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -55,7 +56,8 @@ public:
     Q_PROPERTY(int id READ id CONSTANT)
     Q_PROPERTY(AutoPilotPlugin* autopilot MEMBER _autopilotPlugin CONSTANT)
     
-    Q_PROPERTY(QGeoCoordinate coordinate MEMBER _geoCoordinate NOTIFY coordinateChanged)
+    Q_PROPERTY(QGeoCoordinate   coordinate      MEMBER _geoCoordinate   NOTIFY coordinateChanged)
+    Q_PROPERTY(MissionManager*  missionManager  MEMBER _missionManager  CONSTANT)
     
     Q_INVOKABLE QString     getMavIconColor();
     
@@ -147,6 +149,8 @@ public:
     
     int manualControlReservedButtonCount(void);
     
+    MissionManager* missionManager(void) { return _missionManager; }
+    
     typedef enum {
         MessageNone,
         MessageNormal,
@@ -213,6 +217,7 @@ signals:
     void joystickModeChanged(int mode);
     void joystickEnabledChanged(bool enabled);
     void activeChanged(bool active);
+    void mavlinkMessageReceived(const mavlink_message_t& message);
     
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
@@ -351,6 +356,7 @@ private:
     UASWaypointManager* _wpm;
     int             _updateCount;
     
+    MissionManager*     _missionManager;
     QmlObjectListModel  _missionItems;
     
     static const char* _settingsGroup;

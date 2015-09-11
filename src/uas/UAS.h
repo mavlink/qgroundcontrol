@@ -485,7 +485,6 @@ protected: //COMMENTS FOR TEST UNIT
     double airSpeed;             ///< Airspeed
     double groundSpeed;          ///< Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
-    UASWaypointManager waypointManager;
     FileManager   fileManager;
 
     /// ATTITUDE
@@ -552,7 +551,7 @@ public:
 
     /** @brief Get reference to the waypoint manager **/
     UASWaypointManager* getWaypointManager() {
-        return &waypointManager;
+        return _waypointManager;
     }
 
     virtual FileManager* getFileManager() {
@@ -985,7 +984,8 @@ private:
     void _say(const QString& text, int severity = 6);
     
 private:
-    Vehicle* _vehicle;
+    UASWaypointManager* _waypointManager;
+    Vehicle*            _vehicle;
 };
 
 

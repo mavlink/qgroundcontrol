@@ -112,7 +112,12 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
     return true;
 }
 
-QObject*& QmlObjectListModel::operator[](int index)
+QObject* QmlObjectListModel::operator[](int index)
+{
+    return _objectList[index];
+}
+
+const QObject* QmlObjectListModel::operator[](int index) const
 {
     return _objectList[index];
 }
@@ -135,7 +140,7 @@ void QmlObjectListModel::append(QObject* object)
     insertRows(_objectList.count() - 1, 1);
 }
 
-int QmlObjectListModel::count(void)
+int QmlObjectListModel::count(void) const
 {
     return rowCount();
 }

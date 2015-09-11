@@ -34,7 +34,7 @@ import QGroundControl.Controllers 1.0
 import QGroundControl.ScreenTools 1.0
 
 QGCView {
-    id:         rootQGCView
+    id:         qgcView
     viewPanel:  panel
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }

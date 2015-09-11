@@ -268,7 +268,7 @@ void WaypointList::addEditable(bool onCurrentPosition)
         MissionItem *last = waypoints.last();
         wp = WPM->createWaypoint();
 //        wp->blockSignals(true);
-        MAV_FRAME frame = (MAV_FRAME)last->getFrame();
+        MAV_FRAME frame = (MAV_FRAME)last->frame();
         wp->setFrame(frame);
         if (frame == MAV_FRAME_GLOBAL || frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
@@ -280,13 +280,13 @@ void WaypointList::addEditable(bool onCurrentPosition)
             wp->setY(last->y());
             wp->setZ(last->z());
         }
-        wp->setParam1(last->getParam1());
-        wp->setParam2(last->getParam2());
-        wp->setParam3(last->getParam3());
-        wp->setParam4(last->getParam4());
-        wp->setAutocontinue(last->getAutoContinue());
+        wp->setParam1(last->param1());
+        wp->setParam2(last->param2());
+        wp->setParam3(last->param3());
+        wp->setParam4(last->param4());
+        wp->setAutocontinue(last->autoContinue());
 //        wp->blockSignals(false);
-        wp->setAction(last->getAction());
+        wp->setAction(last->command());
 //        WPM->addWaypointEditable(wp);
     }
     else

@@ -38,11 +38,12 @@ public:
     
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 
-    int count(void);
+    int count(void) const;
     void append(QObject* object);
     void clear(void);
     void removeAt(int i);
-    QObject*& operator[](int i);
+    QObject* operator[](int i);
+    const QObject* operator[](int i) const;
     
     // Overrides from QAbstractListModel
     virtual int	rowCount(const QModelIndex & parent = QModelIndex()) const;

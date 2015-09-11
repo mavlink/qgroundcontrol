@@ -56,12 +56,12 @@ MissionItem::MissionItem(QObject*       parent,
                          bool           autocontinue,
                          bool           isCurrentItem,
                          int            frame,
-                         int            action)
+                         int            command)
     : QObject(parent)
     , _sequenceNumber(sequenceNumber)
     , _coordinate(coordinate)
     , _frame(frame)
-    , _action(action)
+    , _command((MavlinkQmlSingleton::Qml_MAV_CMD)command)
     , _autocontinue(autocontinue)
     , _isCurrentItem(isCurrentItem)
     , _reachedTime(0)
@@ -145,7 +145,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     _isCurrentItem  = other._isCurrentItem;
     _coordinate     = other._coordinate;
     _frame          = other._frame;
-    _action         = other._action;
+    _command        = other._command;
     _autocontinue   = other._autocontinue;
     _reachedTime    = other._reachedTime;
     
@@ -168,7 +168,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
 
 bool MissionItem::isNavigationType()
 {
-    return (_action < MAV_CMD_NAV_LAST);
+    return (_command < MavlinkQmlSingleton::MAV_CMD_NAV_LAST);
 }
 
 void MissionItem::save(QTextStream &saveStream)
@@ -178,10 +178,10 @@ void MissionItem::save(QTextStream &saveStream)
     position = position.arg(y(), 0, 'g', 18);
     position = position.arg(z(), 0, 'g', 18);
     QString parameters("%1\t%2\t%3\t%4");
-    parameters = parameters.arg(getParam2(), 0, 'g', 18).arg(getParam2(), 0, 'g', 18).arg(loiterOrbitRadius(), 0, 'g', 18).arg(yawRadians(), 0, 'g', 18);
+    parameters = parameters.arg(param2(), 0, 'g', 18).arg(param2(), 0, 'g', 18).arg(loiterOrbitRadius(), 0, 'g', 18).arg(yawRadians(), 0, 'g', 18);
     // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE> <DESCRIPTION>
     // as documented here: http://qgroundcontrol.org/waypoint_protocol
-    saveStream << this->sequenceNumber() << "\t" << this->isCurrentItem() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
+    saveStream << this->sequenceNumber() << "\t" << this->isCurrentItem() << "\t" << this->frame() << "\t" << this->command() << "\t"  << parameters << "\t" << position  << "\t" << this->autoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
 }
 
 bool MissionItem::load(QTextStream &loadStream)
@@ -191,7 +191,7 @@ bool MissionItem::load(QTextStream &loadStream)
         setSequenceNumber(wpParams[0].toInt());
         setIsCurrentItem(wpParams[1].toInt() == 1 ? true : false);
         _frame = (MAV_FRAME) wpParams[2].toInt();
-        _action = (MAV_CMD) wpParams[3].toInt();
+        setAction(wpParams[3].toInt());
         setParam1(wpParams[4].toDouble());
         setParam2(wpParams[5].toDouble());
         setLoiterOrbitRadius(wpParams[6].toDouble());
@@ -270,19 +270,19 @@ void MissionItem::setAltitude(double altitude)
 
 void MissionItem::setAction(int /*MAV_CMD*/ action)
 {
-    if (_action != action) {
-        _action = action;
+    if (_command != action) {
+        _command = (MavlinkQmlSingleton::Qml_MAV_CMD)action;
 
         // Flick defaults according to WP type
 
-        if (_action == MAV_CMD_NAV_TAKEOFF) {
+        if (_command == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
             // We default to 15 degrees minimum takeoff pitch
             setParam1(15.0);
         }
 
         emit changed(this);
         emit commandNameChanged(commandName());
-        emit commandChanged((MavlinkQmlSingleton::Qml_MAV_CMD)_action);
+        emit commandChanged((MavlinkQmlSingleton::Qml_MAV_CMD)_command);
         emit specifiesCoordinateChanged(specifiesCoordinate());
         emit valueLabelsChanged(valueLabels());
         emit valueStringsChanged(valueStrings());
@@ -318,21 +318,21 @@ void MissionItem::setAcceptanceRadius(double radius)
     setParam2(radius);
 }
 
-void MissionItem::setParam1(double param1)
+void MissionItem::setParam1(double param)
 {
-    if (getParam1() != param1)
+    if (param1() != param)
     {
-        _param1Fact->setValue(param1);
+        _param1Fact->setValue(param);
         emit changed(this);
         emit valueStringsChanged(valueStrings());
     }
 }
 
-void MissionItem::setParam2(double param2)
+void MissionItem::setParam2(double param)
 {
-    if (getParam2() != param2)
+    if (param2() != param)
     {
-        _param2Fact->setValue(param2);
+        _param2Fact->setValue(param);
         emit valueStringsChanged(valueStrings());
         emit changed(this);
     }
@@ -396,7 +396,7 @@ void MissionItem::setHoldTime(double holdTime)
 
 bool MissionItem::specifiesCoordinate(void) const
 {
-    switch (_action) {
+    switch (_command) {
         case MAV_CMD_NAV_WAYPOINT:
         case MAV_CMD_NAV_LOITER_UNLIM:
         case MAV_CMD_NAV_LOITER_TURNS:
@@ -413,7 +413,7 @@ QString MissionItem::commandName(void)
 {
     QString type;
     
-    switch (_action) {
+    switch (_command) {
         case MAV_CMD_NAV_WAYPOINT:
             type = "Waypoint";
             break;
@@ -438,7 +438,7 @@ QString MissionItem::commandName(void)
             type = "Jump To Command";
             break;
         default:
-            type = QString("Unknown (%1)").arg(_action);
+            type = QString("Unknown (%1)").arg(_command);
             break;
     }
     
@@ -449,9 +449,9 @@ QStringList MissionItem::valueLabels(void)
 {
     QStringList labels;
     
-    switch (_action) {
+    switch (_command) {
         case MAV_CMD_NAV_WAYPOINT:
-            if (getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
+            if (frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
                 labels << "Alt (rel):";
             } else {
                 labels << "Alt:";
@@ -470,7 +470,7 @@ QStringList MissionItem::valueLabels(void)
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
             break;
         case MAV_CMD_NAV_LAND:
-            if (getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
+            if (frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
                 labels << "Alt (rel):";
             } else {
                 labels << "Alt:";
@@ -478,7 +478,7 @@ QStringList MissionItem::valueLabels(void)
             labels << "Heading:";
             break;
         case MAV_CMD_NAV_TAKEOFF:
-            if (getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
+            if (frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
                 labels << "Alt (rel):";
             } else {
                 labels << "Alt:";
@@ -507,18 +507,18 @@ QStringList MissionItem::valueStrings(void)
 {
     QStringList list;
     
-    switch (_action) {
+    switch (_command) {
         case MAV_CMD_NAV_WAYPOINT:
-            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(yawDegrees()) << _oneDecimalString(getParam2()) << _oneDecimalString(getParam1());
+            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(yawDegrees()) << _oneDecimalString(param2()) << _oneDecimalString(param1());
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
             list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius());
             break;
         case MAV_CMD_NAV_LOITER_TURNS:
-            list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius()) << _oneDecimalString(getParam1());
+            list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius()) << _oneDecimalString(param1());
             break;
         case MAV_CMD_NAV_LOITER_TIME:
-            list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius()) << _oneDecimalString(getParam1());
+            list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius()) << _oneDecimalString(param1());
             break;
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
             break;
@@ -526,13 +526,13 @@ QStringList MissionItem::valueStrings(void)
             list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(yawRadians() * (180.0 / M_PI));
             break;
         case MAV_CMD_NAV_TAKEOFF:
-            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(getParam1());
+            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(param1());
             break;
         case MAV_CMD_CONDITION_DELAY:
-            list << _oneDecimalString(getParam1());
+            list << _oneDecimalString(param1());
             break;
         case MAV_CMD_DO_JUMP:
-            list << _oneDecimalString(getParam1()) << _oneDecimalString(getParam2());
+            list << _oneDecimalString(param1()) << _oneDecimalString(param2());
             break;
         default:
             break;
@@ -561,7 +561,7 @@ QStringList MissionItem::commandNames(void) {
 int MissionItem::commandByIndex(void)
 {
     for (int i=0; i<_cMavCmd2Name; i++) {
-        if (_rgMavCmd2Name[i].command == _action) {
+        if (_rgMavCmd2Name[i].command == (MAV_CMD)_command) {
             return i;
         }
     }
@@ -583,7 +583,7 @@ QmlObjectListModel* MissionItem::facts(void)
 {
     QmlObjectListModel* model = new QmlObjectListModel(this);
     
-    switch (_action) {
+    switch ((MAV_CMD)_command) {
         case MAV_CMD_NAV_WAYPOINT:
             _param2Fact->_setName("Radius:");
             _param2Fact->setMetaData(_acceptanceRadiusMetaData);
@@ -635,9 +635,37 @@ QmlObjectListModel* MissionItem::facts(void)
             model->append(_param1Fact);
             model->append(_param2Fact);
             break;
+        default:
+            break;
     }
     
     return model;
+}
+
+int MissionItem::factCount(void)
+{
+    switch ((MAV_CMD)_command) {
+        case MAV_CMD_NAV_WAYPOINT:
+            return 3;
+        case MAV_CMD_NAV_LOITER_UNLIM:
+            return 2;
+        case MAV_CMD_NAV_LOITER_TURNS:
+            return 3;
+        case MAV_CMD_NAV_LOITER_TIME:
+            return 3;
+        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+            return 0;
+        case MAV_CMD_NAV_LAND:
+            return 1;
+        case MAV_CMD_NAV_TAKEOFF:
+            return 2;
+        case MAV_CMD_CONDITION_DELAY:
+            return 1;
+        case MAV_CMD_DO_JUMP:
+            return 2;
+        default:
+            return 0;
+    }
 }
 
 double MissionItem::yawRadians(void) const
