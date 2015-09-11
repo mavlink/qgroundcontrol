@@ -168,7 +168,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
 
 bool MissionItem::isNavigationType()
 {
-    return (_command < MAV_CMD_NAV_LAST);
+    return (_command < MavlinkQmlSingleton::MAV_CMD_NAV_LAST);
 }
 
 void MissionItem::save(QTextStream &saveStream)
@@ -275,7 +275,7 @@ void MissionItem::setAction(int /*MAV_CMD*/ action)
 
         // Flick defaults according to WP type
 
-        if (_command == MAV_CMD_NAV_TAKEOFF) {
+        if (_command == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
             // We default to 15 degrees minimum takeoff pitch
             setParam1(15.0);
         }
@@ -561,7 +561,7 @@ QStringList MissionItem::commandNames(void) {
 int MissionItem::commandByIndex(void)
 {
     for (int i=0; i<_cMavCmd2Name; i++) {
-        if (_rgMavCmd2Name[i].command == _command) {
+        if (_rgMavCmd2Name[i].command == (MAV_CMD)_command) {
             return i;
         }
     }
