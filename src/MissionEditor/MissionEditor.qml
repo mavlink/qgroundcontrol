@@ -44,7 +44,15 @@ QGCView {
     readonly property real  _verticalMargin:     ScreenTools.defaultFontPixelHeight / 2
     readonly property var   _activeVehicle:     multiVehicleManager.activeVehicle
 
+    property var _missionItems: controller.missionItems
+
     QGCPalette { id: _qgcPal; colorGroupEnabled: enabled }
+
+    function setCurrentItem(index) {
+        for (var i=0; i<_missionItems.count; i++) {
+            _missionItems.get(i).isCurrentItem = (i == index)
+        }
+    }
 
     QGCViewPanel {
         id:             panel
@@ -76,7 +84,8 @@ QGCView {
                         coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                         coordinate.altitude = 0
-                        controller.addMissionItem(coordinate)
+                        var index = controller.addMissionItem(coordinate)
+                        setCurrentItem(index)
                     }
                 }
 
@@ -89,6 +98,8 @@ QGCView {
                             label:          object.sequenceNumber
                             isCurrentItem:  object.isCurrentItem
                             coordinate:     object.coordinate
+
+                            onClicked: setCurrentItem(object.sequenceNumber)
 
                             Component.onCompleted: console.log("Indicator", object.coordinate)
                         }
@@ -171,6 +182,20 @@ QGCView {
                             MissionItemEditor {
                                 missionItem:    object
                                 width:          parent.width
+
+                                onClicked:  setCurrentItem(object.sequenceNumber)
+
+                                onRemove: {
+                                    var newCurrentItem = object.sequenceNumber - 1
+                                    controller.removeMissionItem(object.sequenceNumber)
+                                    if (_missionItems.count) {
+                                        newCurrentItem = Math.min(_missionItems.count - 1, newCurrentItem)
+                                        setCurrentItem(newCurrentItem)
+                                    }
+                                }
+
+                                onMoveUp:   controller.moveUp(object.sequenceNumber)
+                                onMoveDown: controller.moveDown(object.sequenceNumber)
                             }
                     } // ListView
                 } // Item
