@@ -11,11 +11,20 @@ import QGroundControl.Palette       1.0
 
 /// Mission item edit control
 Rectangle {
+    id: _root
+
     property var    missionItem
 
-    height: ((missionItem.factCount + 3) * (latitudeField.height + _margin)) + commandPicker.height + (_margin * 5)
-    color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
+    signal clicked
+    signal remove
+    signal moveUp
+    signal moveDown
 
+// FIXME: THis doesn't work right for RTL
+    height: missionItem.isCurrentItem ?
+                ((missionItem.factCount + (missionItem.specifiesCoordinate ? 3 : 0)) * (latitudeField.height + _margin)) + commandPicker.height + deleteButton.height + (_margin * 6) :
+                commandPicker.height + (_margin * 2)
+    color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
 
     readonly property real _editFieldWidth:     ScreenTools.defaultFontPixelWidth * 13
     readonly property real _margin:             ScreenTools.defaultFontPixelWidth / 3
@@ -30,14 +39,23 @@ Rectangle {
         anchors.fill:       parent
 
         MissionItemIndexLabel {
-            id:             label
-            isCurrentItem:  missionItem.isCurrentItem
-            label:          missionItem.sequenceNumber
+            id:                     label
+            anchors.verticalCenter: commandPicker.verticalCenter
+            isCurrentItem:          missionItem.isCurrentItem
+            label:                  missionItem.sequenceNumber
         }
+
+        MouseArea {
+            anchors.fill:   parent
+            visible:        !missionItem.isCurrentItem
+
+            onClicked: _root.clicked()
+        }
+
 
         QGCComboBox {
             id:                 commandPicker
-            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 4
+            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 10
             anchors.left:       label.right
             anchors.right:      parent.right
             currentIndex:       missionItem.commandByIndex
@@ -53,6 +71,7 @@ Rectangle {
             anchors.left:       parent.left
             anchors.right:      parent.right
             color:              qgcPal.windowShadeDark
+            visible:            missionItem.isCurrentItem
 
             Item {
                 anchors.margins:    _margin
@@ -120,7 +139,7 @@ Rectangle {
                     anchors.topMargin:  _margin
                     anchors.left:       parent.left
                     anchors.right:      parent.right
-                    anchors.top:        missionItem.specifiesCoordinate ? altitudeField.bottom : commandPicker.bottom
+                    anchors.top:        missionItem.specifiesCoordinate ? altitudeField.bottom : parent.top
                     spacing:            _margin
 
                     Repeater {
@@ -145,6 +164,38 @@ Rectangle {
                         }
                     }
                 } // Column - Values column
+
+                Row {
+                    anchors.topMargin:  _margin
+                    anchors.top:        valueColumn.bottom
+
+                    width:      parent.width
+                    spacing:    _margin
+
+                    readonly property real buttonWidth: (width - (_margin * 2)) / 3
+
+                    QGCButton {
+                        id:     deleteButton
+                        width:  parent.buttonWidth
+                        text:   "Delete"
+
+                        onClicked: _root.remove()
+                    }
+
+                    QGCButton {
+                        width:  parent.buttonWidth
+                        text:   "Up"
+
+                        onClicked: _root.moveUp()
+                    }
+
+                    QGCButton {
+                        width:  parent.buttonWidth
+                        text:   "Down"
+
+                        onClicked: _root.moveDown()
+                    }
+                }
             } // Item
         } // Rectangle
     } // Item
