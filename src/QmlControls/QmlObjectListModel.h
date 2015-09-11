@@ -42,6 +42,7 @@ public:
     void append(QObject* object);
     void clear(void);
     void removeAt(int i);
+    void insert(int i, QObject* object);
     QObject* operator[](int i);
     const QObject* operator[](int i) const;
     
