@@ -75,8 +75,8 @@ Rectangle {
         }
 
         Flow {
-            width: parent.width
-            spacing: 10
+            width:      parent.width
+            spacing:    ScreenTools.defaultFontPixelWidth
 
             Repeater {
                 model: multiVehicleManager.activeVehicle.autopilot.vehicleComponents
@@ -84,10 +84,10 @@ Rectangle {
 
                 // Outer summary item rectangle
                 Rectangle {
-                    readonly property real titleHeight: 30
+                    readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
-                    width:  250
-                    height: 200
+                    width:  ScreenTools.defaultFontPixelWidth * 28
+                    height: ScreenTools.defaultFontPixelHeight * 13
                     color:  qgcPal.windowShade
 
                     // Title bar
