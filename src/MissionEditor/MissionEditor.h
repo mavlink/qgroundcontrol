@@ -37,12 +37,12 @@ public:
 
     Q_PROPERTY(QmlObjectListModel* missionItems READ missionItemsModel NOTIFY missionItemsChanged)
     
-    Q_INVOKABLE void addMissionItem(QGeoCoordinate coordinate);
+    Q_INVOKABLE int addMissionItem(QGeoCoordinate coordinate);
     Q_INVOKABLE void getMissionItems(void);
     Q_INVOKABLE void setMissionItems(void);
-    
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
+    Q_INVOKABLE void removeMissionItem(int index);
+    Q_INVOKABLE void moveUp(int index);
+    Q_INVOKABLE void moveDown(int index);
 
     // Property accessors
     
@@ -53,6 +53,9 @@ signals:
     
 private slots:
     void _newMissionItemsAvailable();
+    
+private:
+    void _reSequence(void);
     
 private:
     QmlObjectListModel* _missionItems;

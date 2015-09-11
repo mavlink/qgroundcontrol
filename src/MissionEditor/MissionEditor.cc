@@ -36,16 +36,11 @@ MissionEditor::MissionEditor(QWidget *parent)
     : QGCQmlWidgetHolder(parent)
     , _missionItems(NULL)
 {
-    setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     // Get rid of layout default margins
     QLayout* pl = layout();
     if(pl) {
         pl->setContentsMargins(0,0,0,0);
     }
-#ifndef __android__
-    setMinimumWidth( 31 * ScreenToolsController::defaultFontPixelSize_s());
-    setMinimumHeight(33 * ScreenToolsController::defaultFontPixelSize_s());
-#endif
     
     Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     if (activeVehicle) {
@@ -72,6 +67,8 @@ void MissionEditor::_newMissionItemsAvailable(void)
     }
     
     _missionItems = MultiVehicleManager::instance()->activeVehicle()->missionManager()->copyMissionItems();
+    _reSequence();
+    
     emit missionItemsChanged();
 }
 
@@ -93,25 +90,7 @@ void MissionEditor::setMissionItems(void)
     }
 }
 
-void MissionEditor::saveSetting(const QString &name, const QString& value)
-{
-    QSettings settings;
-    
-    settings.beginGroup(_settingsGroup);
-    
-    settings.setValue(name, value);
-}
-
-QString MissionEditor::loadSetting(const QString &name, const QString& defaultValue)
-{
-    QSettings settings;
-    
-    settings.beginGroup(_settingsGroup);
-    
-    return settings.value(name, defaultValue).toString();
-}
-
-void MissionEditor::addMissionItem(QGeoCoordinate coordinate)
+int MissionEditor::addMissionItem(QGeoCoordinate coordinate)
 {
     MissionItem * newItem = new MissionItem(this, _missionItems->count(), coordinate);
     if (_missionItems->count() == 0) {
@@ -119,4 +98,55 @@ void MissionEditor::addMissionItem(QGeoCoordinate coordinate)
     }
     qDebug() << "MissionItem" << newItem->coordinate();
     _missionItems->append(newItem);
+    
+    return _missionItems->count() - 1;
+}
+
+void MissionEditor::_reSequence(void)
+{
+    for (int i=0; i<_missionItems->count(); i++) {
+        qobject_cast<MissionItem*>(_missionItems->get(i))->setSequenceNumber(i);
+    }
+}
+
+void MissionEditor::removeMissionItem(int index)
+{
+    _missionItems->removeAt(index);
+    _reSequence();
+}
+
+void MissionEditor::moveUp(int index)
+{
+    if (_missionItems->count() < 2 || index <= 0 || index >= _missionItems->count()) {
+        return;
+    }
+    
+    MissionItem item1 = *qobject_cast<MissionItem*>(_missionItems->get(index - 1));
+    MissionItem item2 = *qobject_cast<MissionItem*>(_missionItems->get(index));
+    
+    _missionItems->removeAt(index - 1);
+    _missionItems->removeAt(index - 1);
+    
+    _missionItems->insert(index - 1, new MissionItem(item2, _missionItems));
+    _missionItems->insert(index, new MissionItem(item1, _missionItems));
+    
+    _reSequence();
+}
+
+void MissionEditor::moveDown(int index)
+{
+    if (_missionItems->count() < 2 || index >= _missionItems->count() - 1) {
+        return;
+    }
+    
+    MissionItem item1 = *qobject_cast<MissionItem*>(_missionItems->get(index));
+    MissionItem item2 = *qobject_cast<MissionItem*>(_missionItems->get(index + 1));
+    
+    _missionItems->removeAt(index);
+    _missionItems->removeAt(index);
+    
+    _missionItems->insert(index, new MissionItem(item2, _missionItems));
+    _missionItems->insert(index + 1, new MissionItem(item1, _missionItems));
+    
+    _reSequence();
 }
