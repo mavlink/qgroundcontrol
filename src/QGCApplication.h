@@ -109,6 +109,10 @@ public:
     bool useNewMissionEditor(void) { return _useNewMissionEditor; }
     void setUseNewMissionEditor(bool use);
     
+#ifdef QT_DEBUG
+    bool testHighDPI(void) { return _testHighDPI; }
+#endif
+    
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -179,6 +183,10 @@ private:
 	bool				_fakeMobile;	///< true: Fake ui into displaying mobile interface
 
     bool _useNewMissionEditor;  ///< true: Use new Mission Editor
+    
+#ifdef QT_DEBUG
+    bool _testHighDPI;  ///< true: double fonts sizes for simulating high dpi devices
+#endif
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
