@@ -59,6 +59,14 @@ double ScreenToolsController::getQmlDefaultFontPixelSize(void)
         
         qmlWidgetHolder.setSource(QUrl::fromUserInput("qrc:/qml/ScreenToolsFontQuery.qml"));
     }
+
+    double qmlDefaultFontPixelSize = _qmlDefaultFontPixelSize;
     
-    return _qmlDefaultFontPixelSize;
+#ifdef QT_DEBUG
+    if (qgcApp()->testHighDPI()) {
+        qmlDefaultFontPixelSize *= 2;
+    }
+#endif
+    
+    return qmlDefaultFontPixelSize;
 }

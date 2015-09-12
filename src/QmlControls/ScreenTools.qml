@@ -8,9 +8,9 @@ import QGroundControl.ScreenToolsController 1.0
 Item {
     signal repaintRequested
 
-    readonly property real defaultFontPixelSize:    _textMeasure.contentHeight * ScreenToolsController.defaultFontPixelSizeRatio
+    readonly property real defaultFontPixelSize:    _textMeasure.fontHeight * ScreenToolsController.defaultFontPixelSizeRatio
     readonly property real defaultFontPixelHeight:  defaultFontPixelSize
-    readonly property real defaultFontPixelWidth:   _textMeasure.contentWidth
+    readonly property real defaultFontPixelWidth:   _textMeasure.fontWidth
     readonly property real smallFontPixelSize:      defaultFontPixelSize * ScreenToolsController.smallFontPixelSizeRatio
     readonly property real mediumFontPixelSize:     defaultFontPixelSize * ScreenToolsController.mediumFontPixelSizeRatio
     readonly property real largeFontPixelSize:      defaultFontPixelSize * ScreenToolsController.largeFontPixelSizeRatio
@@ -28,8 +28,11 @@ Item {
     }
 
     Text {
-        id: _textMeasure
-        text: "X"
+        id:     _textMeasure
+        text:   "X"
+
+        property real fontWidth:    contentWidth * (ScreenToolsController.testHighDPI ? 2 : 1)
+        property real fontHeight:   contentHeight * (ScreenToolsController.testHighDPI ? 2 : 1)
     }
 
     Connections {

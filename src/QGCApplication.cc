@@ -154,6 +154,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _styleIsDark(true)
 	, _fakeMobile(false)
     , _useNewMissionEditor(false)
+#ifdef QT_DEBUG
+    , _testHighDPI(false)
+#endif
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -172,6 +175,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         { "--clear-settings",   &fClearSettingsOptions, QString() },
         { "--full-logging",     &fullLogging,           QString() },
 		{ "--fake-mobile",      &_fakeMobile,           QString() },
+#ifdef QT_DEBUG
+        { "--test-high-dpi",    &_testHighDPI,          QString() },
+#endif
         // Add additional command line option flags here
     };
     
