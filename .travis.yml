@@ -1,22 +1,41 @@
-sudo: true
-
 language: cpp
 
 git:
   depth: 500
 
+env:
+  global:
+    # ANDROID_STOREPASS
+    secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
+
 matrix:
     include:
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=debug
+          sudo: true
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=installer
+          sudo: true
         - os: osx
           osx_image: beta-xcode6.3
           env: SPEC=macx-clang CONFIG=debug
         - os: osx
           osx_image: beta-xcode6.3
           env: SPEC=macx-clang CONFIG=installer
+        - os: android
+          language: android
+          env: SPEC=android-g++ CONFIG=debug
+          sudo: false
+        - os: android
+          language: android
+          env: SPEC=android-g++ CONFIG=release
+          sudo: false
+
+android:
+  components:
+    - platform-tools
+    - build-tools-21.1.1
+    - android-21
 
 cache:
   - apt
@@ -27,15 +46,15 @@ before_install:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
 
 install:
-  - if [[ "${TRAVIS_OS_NAME}" = "linux" || "${TRAVIS_OS_NAME}" = "android" ]]; then
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
          sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
       && sudo apt-add-repository -y ppa:beineri/opt-qt542
       && sudo apt-get -qq update
       && sudo apt-get -qq install g++-4.8 libc6-i386 qt54tools qt54base qt54declarative qt54serialport qt54svg qt54webkit qt54quickcontrols qt54xmlpatterns qt54x11extras qt54websockets qt54sensors qt54script qt54quick1 qt54multimedia qt54location qt54imageformats qt54graphicaleffects qt54connectivity espeak libespeak-dev libopenscenegraph-dev libsdl1.2-dev libudev-dev
-      && export PATH=/opt/qt54/bin:$PATH
       && export CXX="g++-4.8"
       && export CC="gcc-4.8"
       && export DISPLAY=:99.0
+      && export PATH=/opt/qt54/bin:$PATH
       && sh -e /etc/init.d/xvfb start
       ;
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
@@ -44,6 +63,17 @@ install:
       && brew install qt54
       && brew linkapps qt54
       && export PATH=/usr/local/opt/qt54/bin:$PATH
+      ;
+    elif [ "${TRAVIS_OS_NAME}" = "android" ]; then
+         wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
+      && chmod +x android-ndk-r10e-linux-x86_64.bin
+      && ./android-ndk-r10e-linux-x86_64.bin > /dev/null
+      && export PATH=`pwd`/android-ndk-r10e:$PATH
+      && export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e
+      && export ANDROID_SDK_ROOT=/usr/local/android-sdk
+      && wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.0-android.tar.bz2
+      && tar jxf Qt5.5.0-android.tar.bz2
+      && export PATH=`pwd`/Qt5.5.0/5.5/android_armv7/bin:$PATH
       ;
     fi
 
@@ -57,6 +87,8 @@ script:
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol --unittest; fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
   - echo -en 'travis_fold:end:script.2\\r'
+  - if [ "${TRAVIS_OS_NAME}" = "android" ]; then make install INSTALL_ROOT=./release/android-build/ && androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output release/android-build --deployment bundled --gradle; fi
+  - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "release" && "${TRAVIS_SECURE_ENV_VARS}" = "true" ]]; then androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output release/android-build --deployment bundled --gradle --sign android/android_release.keystore dagar --storepass ${ANDROID_STOREPASS}; fi
 
 deploy:
   provider: releases
