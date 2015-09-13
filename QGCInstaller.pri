@@ -36,10 +36,10 @@ installer {
         # We cd to release directory so we can run macdeployqt without a path to the
         # qgroundcontrol.app file. If you specify a path to the .app file the symbolic
         # links to plugins will not be created correctly.
-        QMAKE_POST_LINK += && cd release
+        QMAKE_POST_LINK += && cd release && mkdir package
         QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt qgroundcontrol.app -verbose=2 -qmldir=../src
         QMAKE_POST_LINK += && cd ..
-        QMAKE_POST_LINK += && hdiutil create -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/qgroundcontrol.dmg
+        QMAKE_POST_LINK += && hdiutil create -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/package/qgroundcontrol.dmg
     }
     WindowsBuild {
 		# The pdb moving command are commented out for now since we are including the .pdb in the installer. This makes it much
