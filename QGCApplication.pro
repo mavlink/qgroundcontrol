@@ -162,7 +162,6 @@ INCLUDEPATH += \
 
 FORMS += \
     src/QGCQmlWidgetHolder.ui \
-    src/ui/HDDisplay.ui \
     src/ui/Linechart.ui \
     src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MainWindow.ui \
@@ -272,9 +271,6 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/uas/UASWaypointManager.h \
-    src/ui/HDDisplay.h \
-    src/ui/HSIDisplay.h \
-    src/ui/HUD.h \
     src/ui/linechart/ChartPlot.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/linechart/LinechartPlot.h \
@@ -314,7 +310,6 @@ HEADERS += \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCPluginHost.h \
-    src/ui/QGCRGBDView.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/QGCTCPLinkConfiguration.h \
     src/ui/QGCUASFileView.h \
@@ -405,9 +400,6 @@ SOURCES += \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
     src/uas/UASWaypointManager.cc \
-    src/ui/HDDisplay.cc \
-    src/ui/HSIDisplay.cc \
-    src/ui/HUD.cc \
     src/ui/linechart/ChartPlot.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/linechart/LinechartPlot.cc \
@@ -447,7 +439,6 @@ SOURCES += \
     src/ui/QGCMAVLinkInspector.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/ui/QGCPluginHost.cc \
-    src/ui/QGCRGBDView.cc \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/QGCTCPLinkConfiguration.cc \
     src/ui/QGCUASFileView.cc \
