@@ -94,6 +94,8 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
+        readonly property real spacerHeight: ScreenTools.defaultFontPixelHeight
+
         QGCLabel {
             id:             header
             width:          parent.width
@@ -104,30 +106,36 @@ QGCView {
         Item {
             id:             headingSpacer
             anchors.top:    header.bottom
-            height:         20
+            height:         parent.spacerHeight
             width:          20
         }
 
-        QGCLabel {
+        Item {
+            id:             helpApplyRow
             anchors.top:    headingSpacer.bottom
-            width:          parent.width - applyButton.width - 5
-            text:           "Please select your airframe type. Click 'Apply and Restart' to reboot the autopilot. Please re-connect then manually."
-            wrapMode:       Text.WordWrap
-        }
+            width:          parent.width
+            height:         Math.max(helpText.contentHeight, applyButton.height)
 
-        QGCButton {
-            id:             applyButton
-            anchors.top:    headingSpacer.bottom
-            anchors.right:  parent.right
-            text:           "Apply and Restart"
+            QGCLabel {
+                id:             helpText
+                width:          parent.width - applyButton.width - 5
+                text:           "Please select your airframe type. Click 'Apply and Restart' to reboot the autopilot. Please re-connect then manually."
+                wrapMode:       Text.WordWrap
+            }
 
-            onClicked:      showDialog(applyRestartDialogComponent, "Apply and Restart", 50, StandardButton.Apply | StandardButton.Cancel)
+            QGCButton {
+                id:             applyButton
+                anchors.right:  parent.right
+                text:           "Apply and Restart"
+
+                onClicked:      showDialog(applyRestartDialogComponent, "Apply and Restart", 50, StandardButton.Apply | StandardButton.Cancel)
+            }
         }
 
         Item {
             id:             lastSpacer
-            anchors.top:    applyButton.bottom
-            height:         20
+            anchors.top:    helpApplyRow.bottom
+            height:         parent.spacerHeight
             width:          10
         }
 
@@ -140,7 +148,7 @@ QGCView {
 
             Flow {
                 width:      scroll.width
-                spacing:    10
+                spacing:    ScreenTools.defaultFontPixelWidth
 
                 ExclusiveGroup {
                     id: airframeTypeExclusive
@@ -152,16 +160,16 @@ QGCView {
                     // Outer summary item rectangle
                     Rectangle {
                         id:     airframeBackground
-                        readonly property real titleHeight: 30
-                        readonly property real innerMargin: 10
-
-                        width:  250
-                        height: 200
+                        width:  ScreenTools.defaultFontPixelWidth * 30
+                        height: width * .75
                         color:  (modelData.name != controller.currentAirframeType) ? qgcPal.windowShade : qgcPal.buttonHighlight
 
+                        readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.75
+                        readonly property real innerMargin: ScreenTools.defaultFontPixelWidth
+
                         MouseArea {
-                                anchors.fill: parent
-                                onClicked: airframeCheckBox.checked = true
+                                anchors.fill:   parent
+                                onClicked:      airframeCheckBox.checked = true
                             }
 
                         Rectangle {
@@ -170,36 +178,33 @@ QGCView {
                             height: parent.titleHeight
                             color:  qgcPal.windowShadeDark
 
-                            Text {
-                                anchors.fill:   parent
-
-                                color:          qgcPal.buttonText
-                                font.pixelSize: 12
-                                text:           modelData.name
-
+                            QGCLabel {
+                                anchors.fill:           parent
+                                color:                  qgcPal.buttonText
                                 verticalAlignment:      TextEdit.AlignVCenter
                                 horizontalAlignment:    TextEdit.AlignHCenter
+                                text:                   modelData.name
                             }
                         }
 
                         Image {
-                            id:     image
-                            x:      innerMargin
-                            width:  parent.width - (innerMargin * 2)
-                            height: parent.height - title.height - combo.height - (innerMargin * 3)
+                            id:                 image
                             anchors.topMargin:  innerMargin
                             anchors.top:        title.bottom
+                            x:                  innerMargin
+                            width:              parent.width - (innerMargin * 2)
+                            height:             parent.height - title.height - combo.height - (innerMargin * 3)
+                            fillMode:           Image.PreserveAspectFit
+                            smooth:             true
+                            source:             modelData.imageResource
 
-                            source:     modelData.imageResource
-                            fillMode:   Image.PreserveAspectFit
-                            smooth:     true
 
                         }
 
                         QGCCheckBox {
                             id:             airframeCheckBox
                             anchors.bottom: image.bottom
-                            anchors.right: image.right
+                            anchors.right:  image.right
                             checked:        modelData.name == controller.currentAirframeType
                             exclusiveGroup: airframeTypeExclusive
 
@@ -214,14 +219,14 @@ QGCView {
                         }
 
                         QGCComboBox {
-                            id:     combo
-                            objectName: modelData.airframeType + "ComboBox"
-                            x:      innerMargin
-                            anchors.topMargin: innerMargin
-                            anchors.top: image.bottom
-                            width:  parent.width - (innerMargin * 2)
-                            model:  modelData.airframes
-                            currentIndex: (modelData.name == controller.currentAirframeType) ? controller.currentVehicleIndex : -1
+                            id:                 combo
+                            objectName:         modelData.airframeType + "ComboBox"
+                            x:                  innerMargin
+                            anchors.topMargin:  innerMargin
+                            anchors.top:        image.bottom
+                            width:              parent.width - (innerMargin * 2)
+                            currentIndex:       (modelData.name == controller.currentAirframeType) ? controller.currentVehicleIndex : -1
+                            model:              modelData.airframes
 
                             onActivated: {
                                 if (index != -1) {

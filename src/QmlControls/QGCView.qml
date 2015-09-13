@@ -121,6 +121,11 @@ FactPanel {
         }
     }
 
+    /// Shows a QGCViewDialog component
+    ///     @param compoent QGCViewDialog component
+    ///     @param title Title for dialog
+    ///     @param charWidth Width of dialog in characters (-1 for full parent width)
+    ///     @param buttons Buttons to show in dialog using StandardButton enum
     function showDialog(component, title, charWidth, buttons) {
         if (__checkForEarlyDialog()) {
             return
