@@ -55,4 +55,10 @@ installer {
         QMAKE_POST_LINK += && mkdir -p release/package
         QMAKE_POST_LINK += && tar -cjf release/package/qgroundcontrol.tar.bz2 release --exclude='package' --transform 's/release/qgroundcontrol/' 
     }
+    AndroidBuild {
+        QMAKE_POST_LINK += && mkdir -p release/package
+        QMAKE_POST_LINK += && make install INSTALL_ROOT=release/android-build/
+        QMAKE_POST_LINK += && androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output release/android-build --deployment bundled --gradle --sign android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
+        QMAKE_POST_LINK += && cp release/android-build/build/outputs/apk/android-build-release-signed.apk release/package/qgroundcontrol.apk
+    }
 }
