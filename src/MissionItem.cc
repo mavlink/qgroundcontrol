@@ -34,6 +34,23 @@ This file is part of the QGROUNDCONTROL project
 
 #include "MissionItem.h"
 
+
+QDebug operator<<(QDebug dbg, const MissionItem& missionItem)
+{
+    QDebugStateSaver saver(dbg);
+    dbg.nospace() << "MissionItem(" << missionItem.coordinate() << ")";
+    
+    return dbg;
+}
+
+QDebug operator<<(QDebug dbg, const MissionItem* missionItem)
+{
+    QDebugStateSaver saver(dbg);
+    dbg.nospace() << "MissionItem(" << missionItem->coordinate() << ")";
+    
+    return dbg;
+}
+
 const MissionItem::MavCmd2Name_t  MissionItem::_rgMavCmd2Name[_cMavCmd2Name] = {
     { MAV_CMD_NAV_WAYPOINT,         "Waypoint" },
     { MAV_CMD_NAV_LOITER_UNLIM,     "Loiter" },
@@ -59,20 +76,24 @@ MissionItem::MissionItem(QObject*       parent,
                          int            command)
     : QObject(parent)
     , _sequenceNumber(sequenceNumber)
-    , _coordinate(coordinate)
-    , _frame(frame)
     , _command((MavlinkQmlSingleton::Qml_MAV_CMD)command)
     , _autocontinue(autocontinue)
     , _isCurrentItem(isCurrentItem)
     , _reachedTime(0)
     , _yawRadiansFact(NULL)
 {
+    _latitudeFact                   = new Fact(0, "Latitude:",                      FactMetaData::valueTypeDouble, this);
+    _longitudeFact                  = new Fact(0, "Longitude:",                     FactMetaData::valueTypeDouble, this);
+    _altitudeFact                   = new Fact(0, "Altitude:",                      FactMetaData::valueTypeDouble, this);
+    _yawRadiansFact                 = new Fact(0, "Heading:",                       FactMetaData::valueTypeDouble, this);
+    _loiterOrbitRadiusFact          = new Fact(0, "Radius:",                        FactMetaData::valueTypeDouble, this);
+    _param1Fact                     = new Fact(0, QString(),                        FactMetaData::valueTypeDouble, this);
+    _param2Fact                     = new Fact(0, QString(),                        FactMetaData::valueTypeDouble, this);
+    _altitudeRelativeToHomeFact     = new Fact(0, "Altitude is relative to home",   FactMetaData::valueTypeDouble, this);
 
-    _yawRadiansFact         = new Fact(0, "Heading:", FactMetaData::valueTypeDouble, this);
-    _loiterOrbitRadiusFact  = new Fact(0, "Radius:",  FactMetaData::valueTypeDouble, this);
-    _param1Fact             = new Fact(0, QString(),  FactMetaData::valueTypeDouble, this);
-    _param2Fact             = new Fact(0, QString(),  FactMetaData::valueTypeDouble, this);
+    setFrame(frame);
     
+    setCoordinate(coordinate);
     setParam1(param1);
     setParam2(param2);
     setYawRadians(param4);
@@ -80,11 +101,20 @@ MissionItem::MissionItem(QObject*       parent,
     
     // FIXME: Need to fill out more meta data
     
-    FactMetaData* yawMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
-    yawMetaData->setUnits("degrees");
+    FactMetaData* latitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _latitudeFact);
+    latitudeMetaData->setUnits("deg");
+    
+    FactMetaData* longitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _longitudeFact);
+    longitudeMetaData->setUnits("deg");
+    
+    FactMetaData* altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _altitudeFact);
+    altitudeMetaData->setUnits("meters");
+    
+    FactMetaData* yawMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _yawRadiansFact);
+    yawMetaData->setUnits("deg");
     
     _pitchMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
-    _pitchMetaData->setUnits("degrees");
+    _pitchMetaData->setUnits("deg");
     
     _acceptanceRadiusMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
     _acceptanceRadiusMetaData->setUnits("meters");
@@ -110,6 +140,9 @@ MissionItem::MissionItem(QObject*       parent,
     _jumpRepeatMetaData = new FactMetaData(FactMetaData::valueTypeInt32, this);
     _jumpRepeatMetaData->setUnits("count");
     
+    _latitudeFact->setMetaData(latitudeMetaData);
+    _longitudeFact->setMetaData(longitudeMetaData);
+    _altitudeFact->setMetaData(altitudeMetaData);
     _yawRadiansFact->setMetaData(yawMetaData);
     _loiterOrbitRadiusFact->setMetaData(loiterOrbitRadiusMetaData);
 }
@@ -117,10 +150,14 @@ MissionItem::MissionItem(QObject*       parent,
 MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     : QObject(parent)
 {
-    _yawRadiansFact         = new Fact(this);
-    _loiterOrbitRadiusFact  = new Fact(this);
-    _param1Fact             = new Fact(this);
-    _param2Fact             = new Fact(this);
+    _latitudeFact               = new Fact(this);
+    _longitudeFact              = new Fact(this);
+    _altitudeFact               = new Fact(this);
+    _yawRadiansFact             = new Fact(this);
+    _loiterOrbitRadiusFact      = new Fact(this);
+    _param1Fact                 = new Fact(this);
+    _param2Fact                 = new Fact(this);
+    _altitudeRelativeToHomeFact = new Fact(this);
     
     _pitchMetaData = new FactMetaData(this);
     
@@ -141,14 +178,17 @@ MissionItem::~MissionItem()
 
 const MissionItem& MissionItem::operator=(const MissionItem& other)
 {
-    _sequenceNumber = other._sequenceNumber;
-    _isCurrentItem  = other._isCurrentItem;
-    _coordinate     = other._coordinate;
-    _frame          = other._frame;
-    _command        = other._command;
-    _autocontinue   = other._autocontinue;
-    _reachedTime    = other._reachedTime;
+    _sequenceNumber             = other._sequenceNumber;
+    _isCurrentItem              = other._isCurrentItem;
+    _frame                      = other._frame;
+    _command                    = other._command;
+    _autocontinue               = other._autocontinue;
+    _reachedTime                = other._reachedTime;
+    _altitudeRelativeToHomeFact = other._altitudeRelativeToHomeFact;
     
+    *_latitudeFact              = *other._latitudeFact;
+    *_longitudeFact             = *other._longitudeFact;
+    *_altitudeFact              = *other._altitudeFact;
     *_yawRadiansFact            = *other._yawRadiansFact;
     *_loiterOrbitRadiusFact     = *other._loiterOrbitRadiusFact;
     *_param1Fact                = *other._param1Fact;
@@ -190,7 +230,7 @@ bool MissionItem::load(QTextStream &loadStream)
     if (wpParams.size() == 12) {
         setSequenceNumber(wpParams[0].toInt());
         setIsCurrentItem(wpParams[1].toInt() == 1 ? true : false);
-        _frame = (MAV_FRAME) wpParams[2].toInt();
+        setFrame(wpParams[2].toInt());
         setAction(wpParams[3].toInt());
         setParam1(wpParams[4].toDouble());
         setParam2(wpParams[5].toDouble());
@@ -239,9 +279,9 @@ void MissionItem::setZ(double z)
 
 void MissionItem::setLatitude(double lat)
 {
-    if (_coordinate.latitude() != lat && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_latitudeFact->value().toDouble() != lat && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        _coordinate.setLatitude(lat);
+        _latitudeFact->setValue(lat);
         emit changed(this);
         emit coordinateChanged(coordinate());
     }
@@ -249,9 +289,9 @@ void MissionItem::setLatitude(double lat)
 
 void MissionItem::setLongitude(double lon)
 {
-    if (_coordinate.longitude() != lon && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_longitudeFact->value().toDouble() != lon && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        _coordinate.setLongitude(lon);
+        _longitudeFact->setValue(lon);
         emit changed(this);
         emit coordinateChanged(coordinate());
     }
@@ -259,9 +299,9 @@ void MissionItem::setLongitude(double lon)
 
 void MissionItem::setAltitude(double altitude)
 {
-    if (_coordinate.altitude() != altitude && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_altitudeFact->value().toDouble() != altitude && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
     {
-        _coordinate.setAltitude(altitude);
+        _altitudeFact->setValue(altitude);
         emit changed(this);
         emit valueStringsChanged(valueStrings());
         emit coordinateChanged(coordinate());
@@ -283,15 +323,24 @@ void MissionItem::setAction(int /*MAV_CMD*/ action)
         emit changed(this);
         emit commandNameChanged(commandName());
         emit commandChanged((MavlinkQmlSingleton::Qml_MAV_CMD)_command);
-        emit specifiesCoordinateChanged(specifiesCoordinate());
         emit valueLabelsChanged(valueLabels());
         emit valueStringsChanged(valueStrings());
+    }
+}
+
+int MissionItem::frame(void) const
+{
+    if (_altitudeRelativeToHomeFact->value().toBool()) {
+        return MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    } else {
+        return _frame;
     }
 }
 
 void MissionItem::setFrame(int /*MAV_FRAME*/ frame)
 {
     if (_frame != frame) {
+        _altitudeRelativeToHomeFact->setValue(_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT);
         _frame = frame;
         emit changed(this);
     }
@@ -350,29 +399,17 @@ void MissionItem::setParam4(double param4)
 
 void MissionItem::setParam5(double param5)
 {
-    if (_coordinate.latitude() != param5) {
-        _coordinate.setLatitude(param5);
-        emit changed(this);
-        emit valueStringsChanged(valueStrings());
-    }
+    setLatitude(param5);
 }
 
 void MissionItem::setParam6(double param6)
 {
-    if (_coordinate.longitude() != param6) {
-        _coordinate.setLongitude(param6);
-        emit changed(this);
-        emit valueStringsChanged(valueStrings());
-    }
+    setLongitude(param6);
 }
 
 void MissionItem::setParam7(double param7)
 {
-    if (_coordinate.altitude() != param7) {
-        _coordinate.setAltitude(param7);
-        emit valueStringsChanged(valueStrings());
-        emit changed(this);
-    }
+    setAltitude(param7);
 }
 
 void MissionItem::setLoiterOrbitRadius(double radius)
@@ -509,7 +546,7 @@ QStringList MissionItem::valueStrings(void)
     
     switch (_command) {
         case MAV_CMD_NAV_WAYPOINT:
-            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(yawDegrees()) << _oneDecimalString(param2()) << _oneDecimalString(param1());
+            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(yawDegrees()) << _oneDecimalString(param2()) << _oneDecimalString(param1());
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
             list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius());
@@ -523,10 +560,10 @@ QStringList MissionItem::valueStrings(void)
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
             break;
         case MAV_CMD_NAV_LAND:
-            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(yawRadians() * (180.0 / M_PI));
+            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(yawRadians() * (180.0 / M_PI));
             break;
         case MAV_CMD_NAV_TAKEOFF:
-            list << _oneDecimalString(_coordinate.altitude()) << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(param1());
+            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(param1());
             break;
         case MAV_CMD_CONDITION_DELAY:
             list << _oneDecimalString(param1());
@@ -539,13 +576,6 @@ QStringList MissionItem::valueStrings(void)
     }
     
     return list;
-}
-
-void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
-{
-    _coordinate = coordinate;
-    emit coordinateChanged(coordinate);
-    emit changed(this);
 }
 
 QStringList MissionItem::commandNames(void) {
@@ -579,7 +609,7 @@ void MissionItem::setCommandByIndex(int index)
     setCommand((MavlinkQmlSingleton::Qml_MAV_CMD)_rgMavCmd2Name[index].command);
 }
 
-QmlObjectListModel* MissionItem::facts(void)
+QmlObjectListModel* MissionItem::textFieldFacts(void)
 {
     QmlObjectListModel* model = new QmlObjectListModel(this);
     
@@ -589,17 +619,26 @@ QmlObjectListModel* MissionItem::facts(void)
             _param2Fact->setMetaData(_acceptanceRadiusMetaData);
             _param1Fact->_setName("Hold:");
             _param1Fact->setMetaData(_holdTimeMetaData);
+            model->append(_latitudeFact);
+            model->append(_longitudeFact);
+            model->append(_altitudeFact);
             model->append(_yawRadiansFact);
             model->append(_param2Fact);
             model->append(_param1Fact);
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
+            model->append(_latitudeFact);
+            model->append(_longitudeFact);
+            model->append(_altitudeFact);
             model->append(_yawRadiansFact);
             model->append(_loiterOrbitRadiusFact);
             break;
         case MAV_CMD_NAV_LOITER_TURNS:
             _param1Fact->_setName("Turns:");
             _param1Fact->setMetaData(_loiterTurnsMetaData);
+            model->append(_latitudeFact);
+            model->append(_longitudeFact);
+            model->append(_altitudeFact);
             model->append(_yawRadiansFact);
             model->append(_loiterOrbitRadiusFact);
             model->append(_param1Fact);
@@ -607,18 +646,25 @@ QmlObjectListModel* MissionItem::facts(void)
         case MAV_CMD_NAV_LOITER_TIME:
             _param1Fact->_setName("Seconds:");
             _param1Fact->setMetaData(_loiterSecondsMetaData);
+            model->append(_latitudeFact);
+            model->append(_longitudeFact);
+            model->append(_altitudeFact);
             model->append(_yawRadiansFact);
             model->append(_loiterOrbitRadiusFact);
             model->append(_param1Fact);
             break;
-        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-            break;
         case MAV_CMD_NAV_LAND:
+            model->append(_latitudeFact);
+            model->append(_longitudeFact);
+            model->append(_altitudeFact);
             model->append(_yawRadiansFact);
             break;
         case MAV_CMD_NAV_TAKEOFF:
             _param1Fact->_setName("Pitch:");
             _param1Fact->setMetaData(_pitchMetaData);
+            model->append(_latitudeFact);
+            model->append(_longitudeFact);
+            model->append(_altitudeFact);
             model->append(_yawRadiansFact);
             model->append(_param1Fact);
             break;
@@ -642,30 +688,36 @@ QmlObjectListModel* MissionItem::facts(void)
     return model;
 }
 
-int MissionItem::factCount(void)
+QmlObjectListModel* MissionItem::checkboxFacts(void)
 {
+    QmlObjectListModel* model = new QmlObjectListModel(this);
+    
     switch ((MAV_CMD)_command) {
         case MAV_CMD_NAV_WAYPOINT:
-            return 3;
+            model->append(_altitudeRelativeToHomeFact);
+            break;
         case MAV_CMD_NAV_LOITER_UNLIM:
-            return 2;
+            model->append(_altitudeRelativeToHomeFact);
+            break;
         case MAV_CMD_NAV_LOITER_TURNS:
-            return 3;
+            model->append(_altitudeRelativeToHomeFact);
+            break;
         case MAV_CMD_NAV_LOITER_TIME:
-            return 3;
+            model->append(_altitudeRelativeToHomeFact);
+            break;
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-            return 0;
+            break;
         case MAV_CMD_NAV_LAND:
-            return 1;
+            model->append(_altitudeRelativeToHomeFact);
+            break;
         case MAV_CMD_NAV_TAKEOFF:
-            return 2;
-        case MAV_CMD_CONDITION_DELAY:
-            return 1;
-        case MAV_CMD_DO_JUMP:
-            return 2;
+            model->append(_altitudeRelativeToHomeFact);
+            break;
         default:
-            return 0;
+            break;
     }
+    
+    return model;
 }
 
 double MissionItem::yawRadians(void) const
@@ -695,3 +747,14 @@ void MissionItem::setYawDegrees(double yaw)
     setYawRadians(yaw * (M_PI / 180.0));
 }
 
+QGeoCoordinate MissionItem::coordinate(void) const
+{
+    return QGeoCoordinate(latitude(), longitude(), altitude());
+}
+
+void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    setLatitude(coordinate.latitude());
+    setLongitude(coordinate.longitude());
+    setAltitude(coordinate.altitude());
+}
