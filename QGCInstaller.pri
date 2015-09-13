@@ -52,6 +52,7 @@ installer {
         OTHER_FILES += deploy/qgroundcontrol_installer.nsi
     }
     LinuxBuild {
-        QMAKE_POST_LINK += && tar -cjf qgroundcontrol.tar.bz2 release --transform 's/release/qgroundcontrol/'
+        QMAKE_POST_LINK += && mkdir -p release/package
+        QMAKE_POST_LINK += && tar -cjf release/package/qgroundcontrol.tar.bz2 release --exclude='package' --transform 's/release/qgroundcontrol/' 
     }
 }
