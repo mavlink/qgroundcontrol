@@ -226,33 +226,39 @@ QGCView {
                 Item {
                     id:             headingSpacer
                     anchors.top:    header.bottom
-                    height:         20
+                    height:         ScreenTools.defaultFontPixelHeight
                     width:          20
                 }
 
-                QGCLabel {
-                    anchors.top:            headingSpacer.bottom
-                    anchors.left:           parent.left
-                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-                    anchors.right:          applyButton.left
-                    text:                   topHelpText
-                    wrapMode:               Text.WordWrap
-                }
+                Item {
+                    id:             helpApplyRow
+                    anchors.top:    headingSpacer.bottom
+                    width:          parent.width
+                    height:         Math.max(helpText.contentHeight, applyButton.height)
 
-                QGCButton {
-                    id:                     applyButton
-                    anchors.top:            headingSpacer.bottom
-                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-                    anchors.right:          parent.right
-                    text:                   "Generate Thresholds"
+                    QGCLabel {
+                        id:                     helpText
+                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                        anchors.left:           parent.left
+                        anchors.right:          applyButton.left
+                        text:                   topHelpText
+                        wrapMode:               Text.WordWrap
+                    }
 
-                    onClicked: controller.generateThresholds()
+                    QGCButton {
+                        id:                     applyButton
+                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                        anchors.right:          parent.right
+                        text:                   "Generate Thresholds"
+
+                        onClicked: controller.generateThresholds()
+                    }
                 }
 
                 Item {
                     id:             lastSpacer
-                    anchors.top:    applyButton.bottom
-                    height:         20
+                    anchors.top:    helpApplyRow.bottom
+                    height:         ScreenTools.defaultFontPixelHeight
                     width:          10
                 }
 
