@@ -55,7 +55,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMapDisplay.h"
 #include "MAVLinkDecoder.h"
 #include "QGCMAVLinkMessageSender.h"
-#include "QGCRGBDView.h"
 #include "UASQuickView.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
@@ -96,11 +95,7 @@ const char* MainWindow::_customCommandWidgetName = "CUSTOM_COMMAND_DOCKWIDGET";
 const char* MainWindow::_filesDockWidgetName = "FILE_VIEW_DOCKWIDGET";
 const char* MainWindow::_uasStatusDetailsDockWidgetName = "UAS_STATUS_DETAILS_DOCKWIDGET";
 const char* MainWindow::_mapViewDockWidgetName = "MAP_VIEW_DOCKWIDGET";
-const char* MainWindow::_hsiDockWidgetName = "HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET";
-const char* MainWindow::_hdd1DockWidgetName = "HEAD_DOWN_DISPLAY_1_DOCKWIDGET";
-const char* MainWindow::_hdd2DockWidgetName = "HEAD_DOWN_DISPLAY_2_DOCKWIDGET";
 const char* MainWindow::_pfdDockWidgetName = "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET";
-const char* MainWindow::_hudDockWidgetName = "HEAD_UP_DISPLAY_DOCKWIDGET";
 const char* MainWindow::_uasInfoViewDockWidgetName = "UAS_INFO_INFOVIEW_DOCKWIDGET";
 
 static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
@@ -403,11 +398,7 @@ void MainWindow::_buildCommonWidgets(void)
         { _filesDockWidgetName,             "Onboard Files",            Qt::RightDockWidgetArea },
         { _uasStatusDetailsDockWidgetName,  "Status Details",           Qt::RightDockWidgetArea },
         { _mapViewDockWidgetName,           "Map view",                 Qt::RightDockWidgetArea },
-        { _hsiDockWidgetName,               "Horizontal Situation",     Qt::BottomDockWidgetArea },
-        { _hdd1DockWidgetName,              "Flight Display",           Qt::RightDockWidgetArea },
-        { _hdd2DockWidgetName,              "Actuator Status",          Qt::RightDockWidgetArea },
         { _pfdDockWidgetName,               "Primary Flight Display",   Qt::RightDockWidgetArea },
-        { _hudDockWidgetName,               "Video Downlink",           Qt::RightDockWidgetArea },
         { _uasInfoViewDockWidgetName,       "Info View",                Qt::LeftDockWidgetArea },
     };
     static const size_t cDockWidgetInfo = sizeof(rgDockWidgetInfo) / sizeof(rgDockWidgetInfo[0]);
@@ -516,28 +507,8 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = new UASInfoWidget(this);
     } else if (widgetName == _mapViewDockWidgetName) {
         widget = new QGCMapTool(this);
-    } else if (widgetName == _hsiDockWidgetName) {
-        widget = new HSIDisplay(this);
-    } else if (widgetName == _hdd1DockWidgetName) {
-        QStringList acceptList;
-        acceptList.append("-3.3,ATTITUDE.roll,rad,+3.3,s");
-        acceptList.append("-3.3,ATTITUDE.pitch,deg,+3.3,s");
-        acceptList.append("-3.3,ATTITUDE.yaw,deg,+3.3,s");
-        HDDisplay *hddisplay = new HDDisplay(acceptList,"Flight Display",this);
-        hddisplay->addSource(mavlinkDecoder);
-
-        widget = hddisplay;
-    } else if (widgetName == _hdd2DockWidgetName) {
-        QStringList acceptList;
-        acceptList.append("0,RAW_PRESSURE.pres_abs,hPa,65500");
-        HDDisplay *hddisplay = new HDDisplay(acceptList,"Actuator Status",this);
-        hddisplay->addSource(mavlinkDecoder);
-
-        widget = hddisplay;
     } else if (widgetName == _pfdDockWidgetName) {
         widget = new FlightDisplayWidget(this);
-    } else if (widgetName == _hudDockWidgetName) {
-        widget = new HUD(320,240,this);
     } else if (widgetName == _uasInfoViewDockWidgetName) {
         QGCTabbedInfoView* pInfoView = new QGCTabbedInfoView(this);
         pInfoView->addSource(mavlinkDecoder);
