@@ -2,7 +2,7 @@
 environment:
   matrix:
   - BUILD: 'Release'
-    CONFIG: release
+    CONFIG: installer
   - BUILD: 'Debug'
     CONFIG: debug
 
@@ -11,11 +11,33 @@ install:
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86
   - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.4\msvc2013_opengl\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
+  - cinst nsis -y -installArgs /D="%programfiles(x86)%\NSIS"
 
 build_script:
-   - C:\Qt\5.4\msvc2013_opengl\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn qgroundcontrol.pro
-   - jom -j 2
+  - C:\Qt\5.4\msvc2013_opengl\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn qgroundcontrol.pro
+  - jom -j 4
 
 test_script:
-#  - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
+# - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
+
+after_build:
+  - appveyor PushArtifact C:\projects\qgroundcontrol\release\qgroundcontrol-installer-win32.exe
+
+deploy:
+  - provider: S3
+    name: qgroundcontrol-s3
+    access_key_id: AKIAIVORNALE7NHD3T6Q
+    secret_access_key:
+      secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
+    bucket: qgrondcontrol
+    set_public: true
+    folder: "%APPVEYOR_REPO_BRANCH%"
+    artifact: C:\projects\qgroundcontrol\release\qgroundcontrol-installer-win32.exe
+ 
+  - provider: GitHub
+    artifact: C:\projects\qgroundcontrol\release\qgroundcontrol-installer-win32.exe
+    draft: false
+    prerelease: false
+    on:
+      appveyor_repo_tag: true
 
