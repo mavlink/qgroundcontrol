@@ -46,6 +46,13 @@ public:
     QObject* operator[](int i);
     const QObject* operator[](int i) const;
     
+    template <class T>
+    const QList<T*>& list(void) { return *((QList<T*>*)((void*)(&_objectList))); }
+    
+signals:
+    void countChanged(int count);
+    
+private:
     // Overrides from QAbstractListModel
     virtual int	rowCount(const QModelIndex & parent = QModelIndex()) const;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
@@ -53,9 +60,6 @@ public:
     virtual bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex());
     virtual bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex());
     virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    
-signals:
-    void countChanged(int count);
 	
 private:
     QList<QObject*> _objectList;
