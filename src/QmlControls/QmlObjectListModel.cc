@@ -117,7 +117,6 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
         //_objectList[position]->deleteLater();
         _objectList.removeAt(position);
     }
-    qDebug() << _objectList;
     endRemoveRows();
     
     emit countChanged(count());
