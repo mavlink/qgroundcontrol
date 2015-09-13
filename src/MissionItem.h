@@ -60,7 +60,7 @@ public:
     
     Q_PROPERTY(int                  sequenceNumber      READ sequenceNumber         WRITE setSequenceNumber NOTIFY sequenceNumberChanged)
     Q_PROPERTY(bool                 isCurrentItem       READ isCurrentItem          WRITE setIsCurrentItem  NOTIFY isCurrentItemChanged)
-    Q_PROPERTY(bool                 specifiesCoordinate READ specifiesCoordinate                            NOTIFY specifiesCoordinateChanged)
+    Q_PROPERTY(bool                 specifiesCoordinate READ specifiesCoordinate                            NOTIFY commandChanged)
     Q_PROPERTY(QGeoCoordinate       coordinate          READ coordinate             WRITE setCoordinate     NOTIFY coordinateChanged)
     Q_PROPERTY(double               yaw                 READ yawDegrees             WRITE setYawDegrees     NOTIFY yawChanged)
     Q_PROPERTY(QStringList          commandNames        READ commandNames                                   CONSTANT)
@@ -68,8 +68,8 @@ public:
     Q_PROPERTY(QStringList          valueLabels         READ valueLabels                                    NOTIFY commandChanged)
     Q_PROPERTY(QStringList          valueStrings        READ valueStrings                                   NOTIFY valueStringsChanged)
     Q_PROPERTY(int                  commandByIndex      READ commandByIndex         WRITE setCommandByIndex NOTIFY commandChanged)
-    Q_PROPERTY(QmlObjectListModel*  facts               READ facts                                          NOTIFY commandChanged)
-    Q_PROPERTY(int                  factCount           READ factCount                                      NOTIFY commandChanged)
+    Q_PROPERTY(QmlObjectListModel*  textFieldFacts      READ textFieldFacts                                 NOTIFY commandChanged)
+    Q_PROPERTY(QmlObjectListModel*  checkboxFacts       READ checkboxFacts                                  NOTIFY commandChanged)
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand        NOTIFY commandChanged)
     
     // Property accesors
@@ -82,7 +82,7 @@ public:
     
     bool specifiesCoordinate(void) const;
     
-    QGeoCoordinate coordinate(void) const { return _coordinate; }
+    QGeoCoordinate coordinate(void) const;
     void setCoordinate(const QGeoCoordinate& coordinate);
     
     QStringList commandNames(void);
@@ -97,17 +97,17 @@ public:
     QStringList valueLabels(void);
     QStringList valueStrings(void);
     
-    QmlObjectListModel* facts(void);
-    int factCount(void);
+    QmlObjectListModel* textFieldFacts(void);
+    QmlObjectListModel* checkboxFacts(void);
     
     double yawDegrees(void) const;
     void setYawDegrees(double yaw);
     
     // C++ only methods
 
-    double latitude(void)  const { return _coordinate.latitude(); }
-    double longitude(void) const { return _coordinate.longitude(); }
-    double altitude(void)  const { return _coordinate.altitude(); }
+    double latitude(void)  const { return _latitudeFact->value().toDouble(); }
+    double longitude(void) const { return _longitudeFact->value().toDouble(); }
+    double altitude(void)  const { return _altitudeFact->value().toDouble(); }
     
     void setLatitude(double latitude);
     void setLongitude(double longitude);
@@ -158,9 +158,8 @@ public:
         return altitude();
     }
     // MAV_FRAME
-    int frame() const {
-        return _frame;
-    }
+    int frame() const;
+    
     // MAV_CMD
     int command() const {
         return _command;
@@ -176,7 +175,6 @@ public:
     
 signals:
     void sequenceNumberChanged(int sequenceNumber);
-    void specifiesCoordinateChanged(bool specifiesCoordinate);
     void isCurrentItemChanged(bool isCurrentItem);
     void coordinateChanged(const QGeoCoordinate& coordinate);
     void yawChanged(double yaw);
@@ -226,17 +224,20 @@ private:
     } MavCmd2Name_t;
     
     int                                 _sequenceNumber;
-    QGeoCoordinate                      _coordinate;
     int                                 _frame;
     MavlinkQmlSingleton::Qml_MAV_CMD    _command;
     bool                                _autocontinue;
     bool                                _isCurrentItem;
     quint64                             _reachedTime;
     
+    Fact*           _latitudeFact;
+    Fact*           _longitudeFact;
+    Fact*           _altitudeFact;
     Fact*           _yawRadiansFact;
     Fact*           _loiterOrbitRadiusFact;
     Fact*           _param1Fact;
     Fact*           _param2Fact;
+    Fact*           _altitudeRelativeToHomeFact;
     
     FactMetaData*   _pitchMetaData;
     FactMetaData*   _acceptanceRadiusMetaData;
@@ -250,5 +251,8 @@ private:
     static const int            _cMavCmd2Name = 9;
     static const MavCmd2Name_t  _rgMavCmd2Name[_cMavCmd2Name];
 };
+
+QDebug operator<<(QDebug dbg, const MissionItem& missionItem);
+QDebug operator<<(QDebug dbg, const MissionItem* missionItem);
 
 #endif

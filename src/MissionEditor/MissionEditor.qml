@@ -153,14 +153,6 @@ QGCView {
 
                                 onTriggered: controller.setMissionItems()
                             }
-
-                            MenuItem {
-                                text: "Load mission items from disk"
-                            }
-
-                            MenuItem {
-                                text: "Save mission items to disk"
-                            }
                         }
                     }
 
@@ -198,6 +190,17 @@ QGCView {
                                 onMoveDown: controller.moveDown(object.sequenceNumber)
                             }
                     } // ListView
+
+                    QGCLabel {
+                        anchors.topMargin:  _verticalMargin
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        anchors.top:        toolsButton.bottom
+                        anchors.bottom:     parent.bottom
+                        visible:            controller.missionItems.count == 0
+                        wrapMode:           Text.WordWrap
+                        text:               "Click in the map to add Mission Items"
+                    }
                 } // Item
             } // Rectangle - mission item list
         } // Item - split view container

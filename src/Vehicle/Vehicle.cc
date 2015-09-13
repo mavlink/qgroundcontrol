@@ -936,5 +936,9 @@ void Vehicle::setActive(bool active)
 
 QmlObjectListModel* Vehicle::missionItemsModel(void)
 {
-    return &_missionItems;
+    if (qgcApp()->useNewMissionEditor()) {
+        return missionManager()->missionItems();
+    } else {
+        return &_missionItems;
+    }
 }
