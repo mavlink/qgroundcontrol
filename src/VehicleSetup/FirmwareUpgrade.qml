@@ -139,12 +139,18 @@ QGCView {
         QGCViewDialog {
             anchors.fill: parent
  
-            property bool showVersionSelection: apmFlightStack.checked || advancedMode.checked
+            property bool showFirmwareTypeSelection: apmFlightStack.checked || advancedMode.checked
             property bool px4Flow:              controller.boardType == "PX4 Flow"
 
             function accept() {
                 hideDialog()
-                controller.flash(firmwareVersionCombo.model.get(firmwareVersionCombo.currentIndex).firmwareType)
+                var stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
+                var firmwareType = firmwareVersionCombo.model.get(firmwareVersionCombo.currentIndex).firmwareType
+                var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
+                if (apmFlightStack.checked) {
+                    vehicleType = vehicleTypeSelectionCombo.model.get(vehicleTypeSelectionCombo.currentIndex).vehicleType
+                }
+                controller.flash(stack, firmwareType, vehicleType)
             }
  
             function reject() {
@@ -157,64 +163,68 @@ QGCView {
             }
  
             ListModel {
-                id: px4FirmwareTypeList
+                id: firmwareTypeList
 
                 ListElement {
                     text:           "Standard Version (stable)";
-                    firmwareType:   FirmwareUpgradeController.PX4StableFirmware
+                    firmwareType:   FirmwareUpgradeController.StableFirmware
                 }
                 ListElement {
                     text:           "Beta Testing (beta)";
-                    firmwareType:   FirmwareUpgradeController.PX4BetaFirmware
+                    firmwareType:   FirmwareUpgradeController.BetaFirmware
                 }
                 ListElement {
                     text:           "Developer Build (master)";
-                    firmwareType:   FirmwareUpgradeController.PX4DeveloperFirmware
+                    firmwareType:   FirmwareUpgradeController.DeveloperFirmware
                 }
                 ListElement {
                     text:           "Custom firmware file...";
-                    firmwareType:   FirmwareUpgradeController.PX4CustomFirmware
+                    firmwareType:   FirmwareUpgradeController.CustomFirmware
                  }
             }
  
             ListModel {
-                id: apmFirmwareTypeList
+                id: vehicleTypeList
 
                 ListElement {
-                    text: "ArduCopter Quad"
-                    firmwareType: FirmwareUpgradeController.ApmArduCopterQuadFirmware
+                    text: "Default (Quad)"
+                    vehicleType: FirmwareUpgradeController.DefaultVehicleFirmware
                 }
                 ListElement {
-                    text: "ArduCopter X8"
-                    firmwareType: FirmwareUpgradeController.ApmArduCopterX8Firmware
+                    text: "Quad"
+                    vehicleType: FirmwareUpgradeController.QuadFirmware
                 }
                 ListElement {
-                    text: "ArduCopter Hexa"
-                    firmwareType: FirmwareUpgradeController.ApmArduCopterHexaFirmware
+                    text: "X8"
+                    vehicleType: FirmwareUpgradeController.X8Firmware
                 }
                 ListElement {
-                    text: "ArduCopter Octo"
-                    firmwareType: FirmwareUpgradeController.ApmArduCopterOctoFirmware
+                    text: "Hexa"
+                    vehicleType: FirmwareUpgradeController.HexaFirmware
                 }
                 ListElement {
-                    text: "ArduCopter Y"
-                    firmwareType: FirmwareUpgradeController.ApmArduCopterYFirmware
+                    text: "Octo"
+                    vehicleType: FirmwareUpgradeController.OctoFirmware
                 }
                 ListElement {
-                    text: "ArduCopter Y6"
-                    firmwareType: FirmwareUpgradeController.ApmArduCopterY6Firmware
+                    text: "Y"
+                    vehicleType: FirmwareUpgradeController.YFirmware
                 }
                 ListElement {
-                    text: "ArduCopter Heli"
-                    firmwareType: FirmwareUpgradeController.ApmArduCopterHeliFirmware
+                    text: "Y6"
+                    vehicleType: FirmwareUpgradeController.Y6Firmware
                 }
                 ListElement {
-                    text: "ArduPlane"
-                    firmwareType: FirmwareUpgradeController.ApmArduPlaneFirmware
+                    text: "Heli"
+                    vehicleType: FirmwareUpgradeController.HeliFirmware
+                }
+                ListElement {
+                    text: "Plane"
+                    vehicleType: FirmwareUpgradeController.PlaneFirmware
                 }
                 ListElement {
                     text: "Rover"
-                    firmwareType: FirmwareUpgradeController.ApmRoverFirmware
+                    vehicleType: FirmwareUpgradeController.RoverFirmware
                 }
             }
 
@@ -223,11 +233,11 @@ QGCView {
 
                 ListElement {
                     text:           "Standard Version (stable)";
-                    firmwareType:   FirmwareUpgradeController.PX4StableFirmware
+                    firmwareType:   FirmwareUpgradeController.StableFirmware
                 }
                 ListElement {
                     text:           "Custom firmware file...";
-                    firmwareType:   FirmwareUpgradeController.PX4CustomFirmware
+                    firmwareType:   FirmwareUpgradeController.CustomFirmware
                  }
             }
  
@@ -252,6 +262,17 @@ QGCView {
                     firmwareVersionCombo.currentIndex = 0
                 }
 
+                function vehicleTypeChanged(model) {
+                    vehicleTypeSelectionCombo.model = null
+                    // All of this bizarre, setting model to null and index to 1 and then to 0 is to work around
+                    // strangeness in the combo box implementation. This sequence of steps correctly changes the combo model
+                    // without generating any warnings and correctly updates the combo text with the new selection.
+                    vehicleTypeSelectionCombo.model = null
+                    vehicleTypeSelectionCombo.model = model
+                    vehicleTypeSelectionCombo.currentIndex = 1
+                    vehicleTypeSelectionCombo.currentIndex = 0
+                }
+
                 QGCRadioButton {
                     id:             px4FlightStack
                     checked:        true
@@ -259,7 +280,7 @@ QGCView {
                     text:           "PX4 Flight Stack (full QGC support)"
                     visible:        !px4Flow
 
-                    onClicked: parent.firmwareVersionChanged(px4FirmwareTypeList)
+                    onClicked: parent.firmwareVersionChanged(firmwareTypeList)
                 }
 
                 QGCRadioButton {
@@ -268,42 +289,55 @@ QGCView {
                     text:           "APM Flight Stack (partial QGC support)"
                     visible:        !px4Flow
 
-                    onClicked: parent.firmwareVersionChanged(apmFirmwareTypeList)
+                    onClicked: {
+                        parent.firmwareVersionChanged(firmwareTypeList)
+                        parent.vehicleTypeChanged(vehicleTypeList)
+                    }
                 }
- 
+
                 QGCLabel {
                     width:      parent.width
                     wrapMode:   Text.WordWrap
-                    visible:    showVersionSelection
+                    visible:    showFirmwareTypeSelection
                     text:       px4Flow ? "Select which version of the firmware you would like to install:" : "Select which version of the above flight stack you would like to install:"
                 }
 
-                QGCComboBox {
-                    id:         firmwareVersionCombo
-                    width:      200
-                    visible:    showVersionSelection
-                    model:      px4Flow ? px4FlowTypeList : px4FirmwareTypeList
+                Row {
+                    spacing: 10
+                    QGCComboBox {
+                        id:         firmwareVersionCombo
+                        width:      200
+                        visible:    showFirmwareTypeSelection
+                        model:      px4Flow ? px4FlowTypeList : firmwareTypeList
 
-                    onActivated: {
-                        if (model.get(index).firmwareType == FirmwareUpgradeController.PX4BetaFirmware) {
-                            firmwareVersionWarningLabel.visible = true
-                            firmwareVersionWarningLabel.text = "WARNING: BETA FIRMWARE. " +
-                                                                    "This firmware version is ONLY intended for beta testers. " +
-                                                                    "Although it has received FLIGHT TESTING, it represents actively changed code. " +
-                                                                    "Do NOT use for normal operation."
-                        } else if (model.get(index).firmwareType == FirmwareUpgradeController.PX4DeveloperFirmware) {
-                            firmwareVersionWarningLabel.visible = true
-                            firmwareVersionWarningLabel.text = "WARNING: CONTINUOUS BUILD FIRMWARE. " +
-                                                                    "This firmware has NOT BEEN FLIGHT TESTED. " +
-                                                                    "It is only intended for DEVELOPERS. " +
-                                                                    "Run bench tests without props first. " +
-                                                                    "Do NOT fly this without addional safety precautions. " +
-                                                                    "Follow the mailing list actively when using it."
-                         } else {
-                            firmwareVersionWarningLabel.visible = false
+                        onActivated: {
+                            if (model.get(index).firmwareType == FirmwareUpgradeController.PX4BetaFirmware || FirmwareUpgradeController.APMBetaFirmware ) {
+                                firmwareVersionWarningLabel.visible = true
+                                firmwareVersionWarningLabel.text = "WARNING: BETA FIRMWARE. " +
+                                        "This firmware version is ONLY intended for beta testers. " +
+                                        "Although it has received FLIGHT TESTING, it represents actively changed code. " +
+                                        "Do NOT use for normal operation."
+                            } else if (model.get(index).firmwareType == FirmwareUpgradeController.PX4DeveloperFirmware || FirmwareUpgradeController.APMDeveloperFirmware) {
+                                firmwareVersionWarningLabel.visible = true
+                                firmwareVersionWarningLabel.text = "WARNING: CONTINUOUS BUILD FIRMWARE. " +
+                                        "This firmware has NOT BEEN FLIGHT TESTED. " +
+                                        "It is only intended for DEVELOPERS. " +
+                                        "Run bench tests without props first. " +
+                                        "Do NOT fly this without addional safety precautions. " +
+                                        "Follow the mailing list actively when using it."
+                            } else {
+                                firmwareVersionWarningLabel.visible = false
+                            }
                         }
-                     }
-                 }
+                    }
+
+                    QGCComboBox {
+                        id:         vehicleTypeSelectionCombo
+                        width:      200
+                        visible:    apmFlightStack.checked
+                        model:      vehicleTypeList
+                    }
+                }
 
                 QGCLabel {
                     id:         firmwareVersionWarningLabel
@@ -311,8 +345,8 @@ QGCView {
                     wrapMode:   Text.WordWrap
                     visible:    false
                 }
-             }
- 
+            }
+
             QGCCheckBox {
                 id:             advancedMode
                 anchors.bottom: parent.bottom
