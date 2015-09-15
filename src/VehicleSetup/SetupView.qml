@@ -153,76 +153,85 @@ Rectangle {
         }
     }
 
-    Column {
-        id:     buttonColumn
-        width:  buttonWidth
+    Flickable {
+        id:                 buttonFlickable
+        width:              buttonWidth
+        height:             parent.height
+        contentWidth:       buttonWidth
+        contentHeight:      buttonColumn.height
+        flickableDirection: Flickable.VerticalFlick
 
-        SubMenuButton {
-            id:             summaryButton
-            width:          buttonWidth
-            imageResource: "/qmlimages/VehicleSummaryIcon.png"
-            setupIndicator: false
-            exclusiveGroup: setupButtonGroup
-            text:           "SUMMARY"
+        Column {
+            id:     buttonColumn
+            width:  buttonWidth
 
-            onClicked: showSummaryPanel()
-        }
+            SubMenuButton {
+                id:             summaryButton
+                width:          buttonWidth
+                imageResource: "/qmlimages/VehicleSummaryIcon.png"
+                setupIndicator: false
+                exclusiveGroup: setupButtonGroup
+                text:           "SUMMARY"
 
-        SubMenuButton {
-            id:             firmwareButton
-            width:          buttonWidth
-            imageResource:  "/qmlimages/FirmwareUpgradeIcon.png"
-            setupIndicator: false
-            exclusiveGroup: setupButtonGroup
-            visible:        !ScreenTools.isMobile
-            text:           "FIRMWARE"
+                onClicked: showSummaryPanel()
+            }
 
-            onClicked: showFirmwarePanel()
-        }
+            SubMenuButton {
+                id:             firmwareButton
+                width:          buttonWidth
+                imageResource:  "/qmlimages/FirmwareUpgradeIcon.png"
+                setupIndicator: false
+                exclusiveGroup: setupButtonGroup
+                visible:        !ScreenTools.isMobile
+                text:           "FIRMWARE"
 
-        SubMenuButton {
-            id:             joystickButton
-            width:          buttonWidth
-            setupIndicator: true
-            setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
-            exclusiveGroup: setupButtonGroup
-            visible:        multiVehicleManager.parameterReadyVehicleAvailable && joystickManager.joysticks.length != 0
-            text:           "JOYSTICK"
+                onClicked: showFirmwarePanel()
+            }
 
-            onClicked: showJoystickPanel()
-        }
+            SubMenuButton {
+                id:             joystickButton
+                width:          buttonWidth
+                setupIndicator: true
+                setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
+                exclusiveGroup: setupButtonGroup
+                visible:        multiVehicleManager.parameterReadyVehicleAvailable && joystickManager.joysticks.length != 0
+                text:           "JOYSTICK"
 
-        Repeater {
-            model: multiVehicleManager.parameterReadyVehicleAvailable ? multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
+                onClicked: showJoystickPanel()
+            }
+
+            Repeater {
+                model: multiVehicleManager.parameterReadyVehicleAvailable ? multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
+
+                SubMenuButton {
+                    width:          buttonWidth
+                    imageResource:  modelData.iconResource
+                    setupIndicator: modelData.requiresSetup
+                    setupComplete:  modelData.setupComplete
+                    exclusiveGroup: setupButtonGroup
+                    text:           modelData.name.toUpperCase()
+
+                    onClicked: showVehicleComponentPanel(modelData)
+                }
+            }
 
             SubMenuButton {
                 width:          buttonWidth
-                imageResource:  modelData.iconResource
-                setupIndicator: modelData.requiresSetup
-                setupComplete:  modelData.setupComplete
+                setupIndicator: false
                 exclusiveGroup: setupButtonGroup
-                text:           modelData.name.toUpperCase()
+                visible:        multiVehicleManager.parameterReadyVehicleAvailable
+                text:           "PARAMETERS"
 
-                onClicked: showVehicleComponentPanel(modelData)
+                onClicked: showParametersPanel()
             }
-        }
-
-        SubMenuButton {
-            width:          buttonWidth
-            setupIndicator: false
-            exclusiveGroup: setupButtonGroup
-            visible:        multiVehicleManager.parameterReadyVehicleAvailable
-            text:           "PARAMETERS"
-
-            onClicked: showParametersPanel()
-        }
-    } // Column
+        } // Column
+    } // Flickable
 
     Loader {
         id:                     panelLoader
         anchors.leftMargin:     defaultTextWidth
         anchors.rightMargin:    defaultTextWidth
-        anchors.left:           buttonColumn.right
+        anchors.left:           buttonFlickable.right
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
