@@ -145,6 +145,7 @@ INCLUDEPATH += \
     src/Joystick \
     src/lib/qmapcontrol \
     src/MissionEditor \
+    src/MissionManager \
     src/QmlControls \
     src/uas \
     src/ui \
@@ -161,7 +162,6 @@ INCLUDEPATH += \
 
 FORMS += \
     src/QGCQmlWidgetHolder.ui \
-    src/ui/HDDisplay.ui \
     src/ui/Linechart.ui \
     src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MainWindow.ui \
@@ -246,6 +246,7 @@ HEADERS += \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionEditor/MissionEditor.h \
+    src/MissionManager/MissionManager.h \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
@@ -270,9 +271,6 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/uas/UASWaypointManager.h \
-    src/ui/HDDisplay.h \
-    src/ui/HSIDisplay.h \
-    src/ui/HUD.h \
     src/ui/linechart/ChartPlot.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/linechart/LinechartPlot.h \
@@ -312,7 +310,6 @@ HEADERS += \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCPluginHost.h \
-    src/ui/QGCRGBDView.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/QGCTCPLinkConfiguration.h \
     src/ui/QGCUASFileView.h \
@@ -384,6 +381,7 @@ SOURCES += \
     src/LogCompressor.cc \
     src/main.cc \
     src/MissionEditor/MissionEditor.cc \
+    src/MissionManager/MissionManager.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
@@ -402,9 +400,6 @@ SOURCES += \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
     src/uas/UASWaypointManager.cc \
-    src/ui/HDDisplay.cc \
-    src/ui/HSIDisplay.cc \
-    src/ui/HUD.cc \
     src/ui/linechart/ChartPlot.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/linechart/LinechartPlot.cc \
@@ -444,7 +439,6 @@ SOURCES += \
     src/ui/QGCMAVLinkInspector.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/ui/QGCPluginHost.cc \
-    src/ui/QGCRGBDView.cc \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/QGCTCPLinkConfiguration.cc \
     src/ui/QGCUASFileView.cc \
@@ -668,12 +662,14 @@ INCLUDEPATH += \
 HEADERS += \
     src/VideoStreaming/VideoItem.h \
     src/VideoStreaming/VideoReceiver.h \
+    src/VideoStreaming/VideoStreaming.h \
     src/VideoStreaming/VideoSurface.h \
     src/VideoStreaming/VideoSurface_p.h \
 
 SOURCES += \
     src/VideoStreaming/VideoItem.cc \
     src/VideoStreaming/VideoReceiver.cc \
+    src/VideoStreaming/VideoStreaming.cc \
     src/VideoStreaming/VideoSurface.cc \
 
 contains (DEFINES, DISABLE_VIDEOSTREAMING) {
@@ -722,3 +718,11 @@ include(QGCSetup.pri)
 #
 
 include(QGCInstaller.pri)
+
+DISTFILES += \
+    android/gradle/wrapper/gradle-wrapper.jar \
+    android/gradlew \
+    android/res/values/libs.xml \
+    android/build.gradle \
+    android/gradle/wrapper/gradle-wrapper.properties \
+    android/gradlew.bat

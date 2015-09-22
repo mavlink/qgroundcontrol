@@ -47,9 +47,10 @@ class ScreenToolsController : public QQuickItem
 public:
     ScreenToolsController();
 
-    Q_PROPERTY(bool     isAndroid           READ isAndroid  CONSTANT)
-    Q_PROPERTY(bool     isiOS               READ isiOS      CONSTANT)
-    Q_PROPERTY(bool     isMobile            READ isMobile   CONSTANT)
+    Q_PROPERTY(bool     isAndroid           READ isAndroid      CONSTANT)
+    Q_PROPERTY(bool     isiOS               READ isiOS          CONSTANT)
+    Q_PROPERTY(bool     isMobile            READ isMobile       CONSTANT)
+    Q_PROPERTY(bool     testHighDPI         READ testHighDPI    CONSTANT)
 
     //! Used to trigger a \c Canvas element repaint.
     /*!
@@ -111,6 +112,12 @@ public:
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }
     bool    isMobile            () { return qgcApp()->fakeMobile(); }
+#endif
+    
+#ifdef QT_DEBUG
+    bool testHighDPI(void) { return qgcApp()->testHighDPI(); }
+#else
+    bool testHighDPI(void) { return false; }
 #endif
 
 signals:

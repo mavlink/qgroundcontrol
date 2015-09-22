@@ -52,7 +52,11 @@ public:
         valueTypeDouble
     } ValueType_t;
     
+    FactMetaData(QObject* parent = NULL);
     FactMetaData(ValueType_t type, QObject* parent = NULL);
+    FactMetaData(const FactMetaData& other, QObject* parent = NULL);
+
+    const FactMetaData& operator=(const FactMetaData& other);
     
 	// Property accessors
     QString     name(void)                      { return _name; }

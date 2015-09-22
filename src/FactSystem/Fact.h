@@ -40,9 +40,12 @@ class Fact : public QObject
     Q_OBJECT
     
 public:
-    Fact(void);
+    Fact(QObject* parent = NULL);
     Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = NULL);
-    
+    Fact(const Fact& other, QObject* parent = NULL);
+
+    const Fact& operator=(const Fact& other);
+
     Q_PROPERTY(int componentId READ componentId CONSTANT)
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
@@ -91,6 +94,9 @@ public:
     void setMetaData(FactMetaData* metaData);
     
     void _containerSetValue(const QVariant& value);
+    
+    /// Generally you should not change the name of a fact. But if you know what you are doing, you can.
+    void _setName(const QString& name) { _name = name; }
     
 signals:
     /// QObject Property System signal for value property changes

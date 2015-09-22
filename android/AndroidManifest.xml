@@ -1,17 +1,14 @@
 <?xml version="1.0"?>
-<manifest package="org.qgroundcontrol" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="2.3.0" android:versionCode="2" android:installLocation="auto">
+<manifest package="org.mavlink.qgroundcontrol" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="2.7.1" android:versionCode="2" android:installLocation="auto">
     <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="-- %%INSERT_APP_NAME%% --" android:icon="@drawable/icon">
-        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qgroundcontrol.qgchelper.UsbDeviceJNI" android:label="-- %%INSERT_APP_NAME%% --" android:screenOrientation="reverseLandscape" android:launchMode="singleTask">
+        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qgroundcontrol.qgchelper.UsbDeviceJNI" android:label="-- %%INSERT_APP_NAME%% --" android:screenOrientation="sensorLandscape" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"/>
             </intent-filter>
-            <!-- Needed to keep working while 'asleep' -->
-            <uses-permission android:name="android.permission.WAKE_LOCK"/>
-            <!-- Support devices without USB host mode since there are other connection types -->
-            <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
+
             <meta-data android:resource="@xml/device_filter" android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
             <meta-data android:resource="@xml/device_filter" android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"/>
             <!-- Rest of Standard Manifest -->
@@ -51,17 +48,20 @@
             <!-- Background running -->
         </activity>
     </application>
-    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="19"/>
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="21"/>
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
+
+    <!-- Needed to keep working while 'asleep' -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.
          Remove the comment if you do not require these default permissions. -->
     <!-- %%INSERT_PERMISSIONS -->
 
+    <!-- Support devices without USB host mode since there are other connection types -->
+    <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
     <!-- The following comment will be replaced upon deployment with default features based on the dependencies of the application.
          Remove the comment if you do not require these default features. -->
     <!-- %%INSERT_FEATURES -->
 
-<uses-permission android:name="android.permission.INTERNET"/>
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 </manifest>

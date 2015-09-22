@@ -40,16 +40,12 @@ QGCView {
     id:         rootQGCView
     viewPanel:  panel
 
-    property int firstColumnWidth: 220
-    property int textEditWidth:    80
+    property int textEditWidth:    ScreenTools.defaultFontPixelWidth * 8
 
     property Fact battNumCells:     controller.getParameterFact(-1, "BAT_N_CELLS")
     property Fact battHighVolt:     controller.getParameterFact(-1, "BAT_V_CHARGED")
     property Fact battLowVolt:      controller.getParameterFact(-1, "BAT_V_EMPTY")
     property Fact battVoltLoadDrop: controller.getParameterFact(-1, "BAT_V_LOAD_DROP")
-
-    property alias battHigh: battHighRow
-    property alias battLow:  battLowRow
 
     function getBatteryImage()
     {
@@ -110,8 +106,8 @@ QGCView {
 
 
         Column {
-            anchors.fill: parent
-            spacing: 10
+            anchors.fill:   parent
+            spacing:        ScreenTools.defaultFontPixelHeight
 
             QGCLabel {
                 text: "POWER CONFIG"
@@ -124,113 +120,102 @@ QGCView {
             }
 
             Rectangle {
-                width: parent.width
-                height: 120
-                color: palette.windowShade
+                width:  parent.width
+                height: voltageCol.height + ScreenTools.defaultFontPixelHeight
+                color:  palette.windowShade
 
                 Column {
-                    id: batteryColumn
-                    spacing: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: (parent.x + 20)
+                    id:                 voltageCol
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+
+                    property real firstColumnWidth: Math.max(Math.max(cellsLabel.contentWidth, battHighLabel.contentWidth), battLowLabel.contentWidth) + ScreenTools.defaultFontPixelWidth
 
                     Row {
-                        spacing: 10
-                        Column {
-                            id: voltageCol
-                            spacing: 10
-                            Row {
-                                spacing: 10
-                                QGCLabel { text: "Number of Cells (in Series)"; width: firstColumnWidth; anchors.baseline: cellsField.baseline}
-                                FactTextField {
-                                    id: cellsField
-                                    width: textEditWidth
-                                    fact: battNumCells
-                                    showUnits: true
-                                }
-                            }
-                            Row {
-                                id: battHighRow
-                                spacing: 10
-                                QGCLabel { text: "Full Voltage (per cell)"; width: firstColumnWidth; anchors.baseline: battHighField.baseline}
-                                FactTextField {
-                                    id: battHighField
-                                    width: textEditWidth
-                                    fact: battHighVolt
-                                    showUnits: true
-                                }
-                            }
-                            Row {
-                                id: battLowRow
-                                spacing: 10
-                                QGCLabel { text: "Empty Voltage (per cell)"; width: firstColumnWidth; anchors.baseline: battLowField.baseline}
-                                FactTextField {
-                                    id: battLowField
-                                    width: textEditWidth
-                                    fact: battLowVolt
-                                    showUnits: true
-                                }
-                            }
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            id:                 cellsLabel
+                            text:               "Number of Cells (in Series)"
+                            anchors.baseline:   cellsField.baseline
                         }
-                        Canvas {
-                            id: arrows
-                            height: voltageCol.height
-                            width: 40
-                            antialiasing: true
-                            Connections {
-                                target: ScreenTools
-                                onRepaintRequested: {
-                                    arrows.requestPaint();
-                                }
-                            }
-                            onPaint: {
-                                var y0 = voltageCol.mapFromItem(battHigh, 0, battHigh.height / 2).y;
-                                var y1 = voltageCol.mapFromItem(battLow,  0, battLow.height  / 2).y;
-                                var context = getContext("2d");
-                                context.reset();
-                                context.strokeStyle = palette.button;
-                                context.fillStyle   = palette.button;
-                                drawLineWithArrow(context, 0, y0, width, height * 0.25);
-                                drawLineWithArrow(context, 0, y1, width, height * 0.85);
-                            }
-                        }
-                        QGCColoredImage {
-                            height:   voltageCol.height
-                            width:    voltageCol.height * 0.75
-                            source:   getBatteryImage();
-                            fillMode: Image.PreserveAspectFit
-                            smooth:   true
-                            color:    palette.button
-                            cache:    false
-                        }
-                        Item { width: 20; height: 1; }
-                        Column {
-                            spacing: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            Row {
-                                spacing: 10
-                                QGCLabel {
-                                    text: "Battery Max:"
-                                    width: 80
-                                }
-                                QGCLabel {
-                                    text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
-                                }
-                            }
-                            Row {
-                                spacing: 10
-                                QGCLabel {
-                                    text: "Battery Min:"
-                                    width: 80
-                                }
-                                QGCLabel {
-                                    text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
-                                }
-                            }
+
+                        FactTextField {
+                            id:         cellsField
+                            x:          voltageCol.firstColumnWidth
+                            width:      textEditWidth
+                            fact:       battNumCells
+                            showUnits: true
                         }
                     }
+
+                    Row {
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            id:                 battHighLabel
+                            text:               "Full Voltage (per cell)"
+                            anchors.baseline:   battHighField.baseline
+                            }
+
+                        FactTextField {
+                            id:         battHighField
+                            x:          voltageCol.firstColumnWidth
+                            width:      textEditWidth
+                            fact:       battHighVolt
+                            showUnits:  true
+                        }
+                    }
+
+                    Row {
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            id:                 battLowLabel
+                            text:               "Empty Voltage (per cell)"
+                            anchors.baseline:   battLowField.baseline
+                        }
+
+                        FactTextField {
+                            id:         battLowField
+                            x:          voltageCol.firstColumnWidth
+                            width:      textEditWidth
+                            fact:       battLowVolt
+                            showUnits:  true
+                        }
+                    }
+                } // Column
+
+                QGCColoredImage {
+                    id:                     batteryImage
+                    anchors.verticalCenter: voltageCol.verticalCenter
+                    x:                      voltageCol.firstColumnWidth + textEditWidth + (ScreenTools.defaultFontPixelWidth * 3)
+                    width:                  height * 0.75
+                    height:                 voltageCol.height
+                    fillMode:               Image.PreserveAspectFit
+                    smooth:                 true
+                    color:                  palette.button
+                    cache:                  false
+                    source:                 getBatteryImage();
                 }
-            }
+
+                Column {
+                    anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
+                    anchors.left:           batteryImage.right
+                    anchors.verticalCenter: voltageCol.verticalCenter
+                    spacing:                ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        text: "Battery Max: " + (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
+                    }
+
+                    QGCLabel {
+                        text: "Battery Min: " + (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
+                    }
+                }
+            } // Rectangle - Battery settings
 
             QGCLabel {
                 text:           "ESC Calibration"
@@ -238,14 +223,16 @@ QGCView {
             }
 
             Rectangle {
-                width:              parent.width
-                height:             140
-                color:              palette.windowShade
+                width:  parent.width
+                height: escCalColumn.height + ScreenTools.defaultFontPixelHeight
+                color:  palette.windowShade
 
                 Column {
-                    anchors.margins:    10
-                    anchors.fill:       parent
-                    spacing:            10
+                    id :                escCalColumn
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    spacing:            ScreenTools.defaultFontPixelWidth
 
                     QGCLabel {
                         color:  palette.warningText
@@ -269,14 +256,16 @@ QGCView {
             }
 
             Rectangle {
-                width:              parent.width
-                height:             140
-                color:              palette.windowShade
+                width:  parent.width
+                height: uavCanEscCalColumn.height + ScreenTools.defaultFontPixelHeight
+                color:  palette.windowShade
 
                 Column {
-                    anchors.margins:    10
-                    anchors.fill:       parent
-                    spacing:            10
+                    id:                 uavCanEscCalColumn
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    spacing:            ScreenTools.defaultFontPixelWidth
 
                     QGCLabel {
                         color:  palette.warningText
@@ -294,91 +283,69 @@ QGCView {
                 }
             }
 
-            /*
-             * This is disabled for now
-            Row {
-                width: parent.width
-                spacing: 30
-                visible: showAdvanced.checked
-                Column {
-                    spacing: 10
-                    width: (parent.width / 2) - 5
-                    QGCLabel {
-                        text: "Propeller Function"
-                        font.pixelSize: ScreenTools.mediumFontPixelSize
-                    }
-                    Rectangle {
-                        width: parent.width
-                        height: 160
-                        color: palette.windowShade
-                    }
-                }
-                Column {
-                    spacing: 10
-                    width: (parent.width / 2) - 5
-                    QGCLabel {
-                        text: "Magnetometer Distortion"
-                        font.pixelSize: ScreenTools.mediumFontPixelSize
-                    }
-                    Rectangle {
-                        width: parent.width
-                        height: 160
-                        color: palette.windowShade
-                    }
-
-                }
-            }
-            */
-
-            //-- Advanced Settings
             QGCCheckBox {
-                id: showAdvanced
-                text: "Show Advanced Settings"
+                id:     showAdvanced
+                text:   "Show Advanced Settings"
             }
+
             QGCLabel {
                 text:           "Advanced Power Settings"
                 font.pixelSize: ScreenTools.mediumFontPixelSize
                 visible:        showAdvanced.checked
             }
+
             Rectangle {
-                id: batteryRectangle
-                width: parent.width
-                height: 140
-                color: palette.windowShade
-                visible: showAdvanced.checked
+                id:         batteryRectangle
+                width:      parent.width
+                height:     advBatteryColumn.height + ScreenTools.defaultFontPixelHeight
+                color:      palette.windowShade
+                visible:    showAdvanced.checked
+
                 Column {
                     id: advBatteryColumn
-                    spacing: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: (parent.x + 20)
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    anchors.top:        parent.top
+                    spacing:            ScreenTools.defaultFontPixelWidth
+
                     Row {
-                        spacing: 10
-                        QGCLabel { text: "Voltage Drop on Full Load (per cell)"; width: firstColumnWidth; anchors.baseline: battDropField.baseline}
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            text:               "Voltage Drop on Full Load (per cell)"
+                            anchors.baseline:   battDropField.baseline
+                        }
+
                         FactTextField {
-                            id: battDropField
-                            width: textEditWidth
-                            fact: battVoltLoadDrop
-                            showUnits: true
+                            id:         battDropField
+                            width:      textEditWidth
+                            fact:       battVoltLoadDrop
+                            showUnits:  true
                         }
                     }
+
                     QGCLabel {
-                        width: batteryRectangle.width - 30
-                        wrapMode: Text.WordWrap
-                        text: "Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full " +
-                              "throttle, divided by the number of battery cells. Leave at the default if unsure. " +
-                              "<font color=\"yellow\">If this value is set too high, the battery might be deep discharged and damaged.</font>"
+                        width:      parent.width
+                        wrapMode:   Text.WordWrap
+                        text:       "Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full " +
+                                        "throttle, divided by the number of battery cells. Leave at the default if unsure. " +
+                                        "<font color=\"yellow\">If this value is set too high, the battery might be deep discharged and damaged.</font>"
                     }
+
                     Row {
-                        spacing: 10
+                        spacing: ScreenTools.defaultFontPixelWidth
+
                         QGCLabel {
                             text: "Compensated Minimum Voltage:"
                         }
+
                         QGCLabel {
                             text: ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + ' V'
                         }
                     }
                 }
-            }
+            } // Rectangle - Advanced power settings
         } // Column
     } // QGCViewPanel
-}
+} // QGCView

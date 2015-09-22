@@ -35,19 +35,30 @@ public:
     MissionEditor(QWidget* parent = NULL);
     ~MissionEditor();
 
-    Q_PROPERTY(QmlObjectListModel* missionItems READ missionItemsModel CONSTANT)
+    Q_PROPERTY(QmlObjectListModel* missionItems READ missionItemsModel NOTIFY missionItemsChanged)
     
-    Q_INVOKABLE void addMissionItem(QGeoCoordinate coordinate);
-    
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
+    Q_INVOKABLE int addMissionItem(QGeoCoordinate coordinate);
+    Q_INVOKABLE void getMissionItems(void);
+    Q_INVOKABLE void setMissionItems(void);
+    Q_INVOKABLE void removeMissionItem(int index);
+    Q_INVOKABLE void moveUp(int index);
+    Q_INVOKABLE void moveDown(int index);
 
     // Property accessors
     
-    QmlObjectListModel* missionItemsModel(void) { return &_missionItems; }
+    QmlObjectListModel* missionItemsModel(void) { return _missionItems; }
+    
+signals:
+    void missionItemsChanged(void);
+    
+private slots:
+    void _newMissionItemsAvailable();
     
 private:
-    QmlObjectListModel  _missionItems;
+    void _reSequence(void);
+    
+private:
+    QmlObjectListModel* _missionItems;
     
     static const char* _settingsGroup;
 };

@@ -40,13 +40,7 @@
 
 #include <QDebug>
 
-#include <VideoItem.h>
-#include <VideoSurface.h>
-#if defined(QGC_GST_STREAMING)
-G_BEGIN_DECLS
-GST_PLUGIN_STATIC_DECLARE(QTVIDEOSINK_NAME);
-G_END_DECLS
-#endif
+#include "VideoStreaming.h"
 
 #include "configuration.h"
 #include "QGC.h"
@@ -85,6 +79,7 @@ G_END_DECLS
 #include "MavlinkQmlSingleton.h"
 #include "JoystickManager.h"
 #include "QmlObjectListModel.h"
+#include "MissionManager.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -158,6 +153,10 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests(unitTesting)
     , _styleIsDark(true)
 	, _fakeMobile(false)
+    , _useNewMissionEditor(false)
+#ifdef QT_DEBUG
+    , _testHighDPI(false)
+#endif
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -176,6 +175,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         { "--clear-settings",   &fClearSettingsOptions, QString() },
         { "--full-logging",     &fullLogging,           QString() },
 		{ "--fake-mobile",      &_fakeMobile,           QString() },
+#ifdef QT_DEBUG
+        { "--test-high-dpi",    &_testHighDPI,          QString() },
+#endif
         // Add additional command line option flags here
     };
     
@@ -276,49 +278,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
 
-    //----------------------------------------------------------------
-    //-- Video Streaming
-#if defined(QGC_GST_STREAMING)
-#ifdef Q_OS_MAC
-#ifndef __ios__
-#ifdef QGC_INSTALL_RELEASE
-    QString currentDir = QCoreApplication::applicationDirPath();
-    qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/gst-plugin-scanner");
-    qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
-    qgcputenv("GIO_EXTRA_MODULES",            currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gio/modules");
-    qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0",   currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_SYSTEM_PATH",       currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-//    QStringList env = QProcessEnvironment::systemEnvironment().keys();
-//    foreach(QString key, env) {
-//        qDebug() << key << QProcessEnvironment::systemEnvironment().value(key);
-//    }
-#endif
-#endif
-#endif
-#endif
-
-    qmlRegisterType<VideoItem>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
-    qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QLatin1String("VideoSurface from QML is not supported"));
-
-#if defined(QGC_GST_STREAMING)
-    GError* error = NULL;
-    if (!gst_init_check(&argc, &argv, &error)) {
-        qCritical() << "gst_init_check() failed: " << error->message;
-        g_error_free(error);
-    }
-    GST_PLUGIN_STATIC_REGISTER(QTVIDEOSINK_NAME);
-#endif
+    // Initialize Video Streaming
+    initializeVideoStreaming(argc, argv);
 
 }
 
 QGCApplication::~QGCApplication()
 {
     _destroySingletons();
-#if defined(QGC_GST_STREAMING)
-    gst_deinit();
-#endif
+    shutdownVideoStreaming();
 }
 
 void QGCApplication::_initCommon(void)
@@ -333,6 +301,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",   "Can only reference, cannot create");
     qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",            "Can only reference, cannot create");
     qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",        "Can only reference, cannot create");
+    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",     "Can only reference, cannot create");
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",    "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",           "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel", "Reference only");
@@ -348,7 +317,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     
 #ifndef __mobile__
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+    qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
     qmlRegisterType<JoystickConfigController>       ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
 #endif
     
@@ -418,6 +387,9 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
     _loadCurrentStyle();
+    
+    // Temp hack for new mission editor
+    _useNewMissionEditor = settings.value("UseNewMissionEditor", false).toBool();
     
     // Show splash screen
     QPixmap splashImage(":/res/SplashScreen");
@@ -800,4 +772,12 @@ void QGCApplication::showToolBarMessage(const QString& message)
     } else {
         QGCMessageBox::information("", message);
     }
+}
+
+void QGCApplication::setUseNewMissionEditor(bool use)
+{
+    // Temp hack for new mission editor
+    QSettings settings;
+    
+    settings.setValue("UseNewMissionEditor", use);
 }

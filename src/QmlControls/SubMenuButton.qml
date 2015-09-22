@@ -1,85 +1,77 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
-import QtGraphicalEffects 1.0
+import QtQuick                  2.2
+import QtQuick.Controls         1.2
+import QtQuick.Controls.Styles  1.2
+import QtGraphicalEffects       1.0
 
-import QGroundControl.Palette 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 
 Button {
-    checkable: true
-    height: 60
+    property bool   setupComplete:  true                                    ///< true: setup complete indicator shows as completed
+    property bool   setupIndicator: true                                    ///< true: show setup complete indicator
+    property string imageResource:  "/qmlimages/subMenuButtonImage.png"     ///< Button image
 
-    text: "Button"
-    property bool setupComplete: true
-    property bool setupIndicator: true
-    property string imageResource: "/qmlimages/subMenuButtonImage.png"
+    text: "Button"  ///< Pass in your own button text
+
+    checkable:  true
+    height:     ScreenTools.defaultFontPixelHeight * 5
 
     style: ButtonStyle {
         id: buttonStyle
 
-        property var __qgcPal: QGCPalette {
-            colorGroupEnabled: control.enabled
+        QGCPalette {
+            id:                 qgcPal
+            colorGroupEnabled:  control.enabled
         }
 
-        property bool __showHighlight: control.pressed | control.checked
+        property bool showHighlight: control.pressed | control.checked
 
         background: Rectangle {
-            id: innerRect
-            readonly property real titleHeight: 20
+            id:     innerRect
+            color:  showHighlight ? qgcPal.buttonHighlight : qgcPal.button
 
-            color: __showHighlight ? __qgcPal.buttonHighlight : __qgcPal.button
+            readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.5
 
-            Text {
-                id: titleBar
-
-                width: parent.width
-                height: parent.titleHeight
-
-                verticalAlignment: TextEdit.AlignVCenter
-                horizontalAlignment: TextEdit.AlignHCenter
-
-                text: control.text
-                font.pixelSize: ScreenTools.defaultFontPixelSize
-                antialiasing: true
-                color: __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
+            QGCLabel {
+                id:                     titleBar
+                width:                  parent.width
+                height:                 parent.titleHeight
+                verticalAlignment:      TextEdit.AlignVCenter
+                horizontalAlignment:    TextEdit.AlignHCenter
+                color:                  showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                text:                   control.text
 
                 Rectangle {
-                    id: setupIndicator
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 3
+                    anchors.right:          parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    width:                  radius * 2
+                    height:                 width
+                    radius:                 indicatorRadius
+                    color:                  control.setupComplete ? "#00d932" : "red"
+                    visible:                control.setupIndicator
 
-                    readonly property real indicatorRadius: 4
-
-                    x: parent.width - (indicatorRadius * 2) - 3
-                    y: (parent.height - (indicatorRadius * 2)) / 2
-                    width: indicatorRadius * 2
-                    height: indicatorRadius * 2
-
-                    radius: indicatorRadius
-                    color: control.setupIndicator ? (control.setupComplete ? "#00d932" : "red") : innerRect.color
+                    readonly property real indicatorRadius: (ScreenTools.defaultFontPixelHeight * .75) / 2
                 }
             }
 
             Rectangle {
-                width: parent.width
-                height: parent.height - parent.titleHeight
-
-                y: parent.titleHeight
-
-                color: __qgcPal.windowShade
+                anchors.top:    titleBar.bottom
+                anchors.bottom: parent.bottom
+                width:          parent.width
+                color:          qgcPal.windowShade
 
                 QGCColoredImage {
-                    source: control.imageResource
-                    fillMode: Image.PreserveAspectFit
-                    width: parent.width - 20
-                    height: parent.height - 20
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    smooth: true
-                    color: __showHighlight ? __qgcPal.buttonHighlight : __qgcPal.button
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * .75
+                    anchors.fill:       parent
+                    fillMode:           Image.PreserveAspectFit
+                    smooth:             true
+                    color:              showHighlight ? qgcPal.buttonHighlight : qgcPal.button
+                    source:             control.imageResource
                 }
             }
         }
 
-    label: Item {}
+        label: Item {}
     }
 }

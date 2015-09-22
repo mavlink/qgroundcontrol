@@ -19,10 +19,6 @@
 
 QMAKE_POST_LINK += echo "Copying files"
 
-AndroidBuild {
-    INSTALLS += $$DESTDIR
-}
-
 #
 # Copy the application resources to the associated place alongside the application
 #
@@ -191,6 +187,11 @@ WindowsBuild {
         $$DLL_DIR\\Qt5WebKitWidgets$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Widgets$${DLL_QT_DEBUGCHAR}.dll \
         $$DLL_DIR\\Qt5Xml$${DLL_QT_DEBUGCHAR}.dll
+# readd this with Qt 5.5
+#        $$DLL_DIR\\d3dcompiler*.dll \
+#        $$DLL_DIR\\libEGL$${DLL_QT_DEBUGCHAR}.dll \
+#        $$DLL_DIR\\libGLESv2$${DLL_QT_DEBUGCHAR}.dll \
+#        $$DLL_DIR\\opengl32sw.dll \
     for(COPY_FILE, COPY_FILE_LIST) {
 		QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
     }
@@ -198,7 +199,7 @@ WindowsBuild {
     # Copy platform plugins
     P_DIR = $$[QT_INSTALL_PLUGINS]
     PLUGINS_DIR_WIN = $$replace(P_DIR, "/", "\\")
-    QMAKE_POST_LINK += $$escape_expand(\\n) mkdir "$$DESTDIR_WIN\\platforms"
+    QMAKE_POST_LINK += $$escape_expand(\\n) mkdir -p "$$DESTDIR_WIN\\platforms"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY     \"$$PLUGINS_DIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\" \"$$DESTDIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\imageformats\" \"$$DESTDIR_WIN\\imageformats\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\sqldrivers\" \"$$DESTDIR_WIN\\sqldrivers\"

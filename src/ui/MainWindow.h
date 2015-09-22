@@ -50,8 +50,6 @@ This file is part of the QGROUNDCONTROL project
 #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
 #include "ParameterEditorWidget.h"
-#include "HDDisplay.h"
-#include "HSIDisplay.h"
 #include "opmapcontrol.h"
 #include "MainToolBar.h"
 #include "LogCompressor.h"
@@ -135,7 +133,6 @@ public slots:
     void loadSimulationView();
     void loadAnalyzeView();
     void loadPlanView();
-    void loadMissionEditorView();
     
     void manageLinks();
 
@@ -176,6 +173,8 @@ protected slots:
      * @brief Enable/Disable Status Bar
      */
     void showStatusBarCallback(bool checked);
+    
+    void _setUseMissionEditor(bool checked);
 
 signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
@@ -297,11 +296,7 @@ private:
     static const char* _filesDockWidgetName;
     static const char* _uasStatusDetailsDockWidgetName;
     static const char* _mapViewDockWidgetName;
-    static const char* _hsiDockWidgetName;
-    static const char* _hdd1DockWidgetName;
-    static const char* _hdd2DockWidgetName;
     static const char* _pfdDockWidgetName;
-    static const char* _hudDockWidgetName;
     static const char* _uasInfoViewDockWidgetName;
 
     QMap<QString, QDockWidget*>     _mapName2DockWidget;

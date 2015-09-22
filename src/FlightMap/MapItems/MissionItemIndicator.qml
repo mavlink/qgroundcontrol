@@ -30,8 +30,12 @@ import QGroundControl.Vehicle       1.0
 
 /// Marker for displaying a mission item on the map
 MapQuickItem {
+    id: _item
+
     property alias  label:          _label.label
     property alias  isCurrentItem:  _label.isCurrentItem
+
+    signal clicked
 
     anchorPoint.x:  sourceItem.width  / 2
     anchorPoint.y:  sourceItem.height / 2
@@ -39,5 +43,7 @@ MapQuickItem {
     sourceItem:
         MissionItemIndexLabel {
             id: _label
+
+            onClicked: _item.clicked()
         }
 }

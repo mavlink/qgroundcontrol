@@ -89,6 +89,10 @@ bool QmlObjectListModel::insertRows(int position, int rows, const QModelIndex& p
 {
     Q_UNUSED(parent);
     
+    if (position < 0 || position > _objectList.count() + 1) {
+        qWarning() << "Invalid position position:count" << position << _objectList.count();
+    }
+    
     beginInsertRows(QModelIndex(), position, position + rows - 1);
     endInsertRows();
     
@@ -101,8 +105,16 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
 {
     Q_UNUSED(parent);
     
+    if (position < 0 || position >= _objectList.count()) {
+        qWarning() << "Invalid position position:count" << position << _objectList.count();
+    } else if (position + rows > _objectList.count()) {
+        qWarning() << "Invalid rows position:rows:count" << position << rows << _objectList.count();
+    }
+    
     beginRemoveRows(QModelIndex(), position, position + rows - 1);
     for (int row=0; row<rows; row++) {
+        // FIXME: Need to figure our correct memory management for here
+        //_objectList[position]->deleteLater();
         _objectList.removeAt(position);
     }
     endRemoveRows();
@@ -112,7 +124,12 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
     return true;
 }
 
-QObject*& QmlObjectListModel::operator[](int index)
+QObject* QmlObjectListModel::operator[](int index)
+{
+    return _objectList[index];
+}
+
+const QObject* QmlObjectListModel::operator[](int index) const
 {
     return _objectList[index];
 }
@@ -129,13 +146,22 @@ void QmlObjectListModel::removeAt(int i)
     removeRows(i, 1);
 }
 
-void QmlObjectListModel::append(QObject* object)
+void QmlObjectListModel::insert(int i, QObject* object)
 {
-    _objectList += object;
-    insertRows(_objectList.count() - 1, 1);
+    if (i < 0 || i > _objectList.count()) {
+        qWarning() << "Invalid index index:count" << i << _objectList.count();
+    }
+    
+    _objectList.insert(i, object);
+    insertRows(i, 1);
 }
 
-int QmlObjectListModel::count(void)
+void QmlObjectListModel::append(QObject* object)
+{
+    insert(_objectList.count(), object);
+}
+
+int QmlObjectListModel::count(void) const
 {
     return rowCount();
 }

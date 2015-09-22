@@ -200,7 +200,7 @@ QGCView {
 
             Column {
                 anchors.fill: parent
-                spacing:      10
+                spacing:      ScreenTools.defaultFontPixelHeight
 
                 QGCLabel {
                     width:      parent.width
@@ -283,12 +283,12 @@ QGCView {
                 font.pixelSize: ScreenTools.largeFontPixelSize
             }
 
-            Item { height: 20; width: 10 } // spacer
+            Item { height: ScreenTools.defaultFontPixelHeight; width: 10 } // spacer
 
             Row {
-                readonly property int buttonWidth: 120
+                readonly property int buttonWidth: ScreenTools.defaultFontPixelWidth * 15
 
-                spacing: 20
+                spacing: ScreenTools.defaultFontPixelWidth
 
                 QGCLabel { text: "Calibrate:"; anchors.baseline: compassButton.baseline }
 
@@ -367,17 +367,16 @@ QGCView {
                 }
             }
 
-            Item { height: 20; width: 10 } // spacer
+            Item { height: ScreenTools.defaultFontPixelHeight; width: 10 } // spacer
 
             ProgressBar {
                 id: progressBar
                 width: parent.width - rotationColumnWidth
             }
 
-            Item { height: 10; width: 10 } // spacer
+            Item { height: ScreenTools.defaultFontPixelHeight; width: 10 } // spacer
 
             Item {
-                readonly property int calibrationAreaHeight: 300
                 property int calDisplayAreaWidth: parent.width - rotationColumnWidth
 
                 width:  parent.width
@@ -405,25 +404,22 @@ QGCView {
                     color:      qgcPal.windowShade
 
                     QGCLabel {
-                        id:                     orientationCalAreaHelpText
-                        width:                  parent.width
-                        wrapMode:               Text.WordWrap
-                        font.pixelSize:         ScreenTools.mediumFontPixelSize
-                        anchors.top:            orientationCalArea.top
-                        anchors.left:           orientationCalArea.left
-                        anchors.topMargin:      15
-                        anchors.leftMargin:     15
-                        anchors.rightMargin:    15
-                        anchors.bottomMargin:   15
+                        id:                 orientationCalAreaHelpText
+                        anchors.margins:    ScreenTools.defaultFontPixelWidth
+                        anchors.top:        orientationCalArea.top
+                        anchors.left:       orientationCalArea.left
+                        width:              parent.width
+                        wrapMode:           Text.WordWrap
+                        font.pixelSize:     ScreenTools.mediumFontPixelSize
                     }
 
                     Flow {
-                        anchors.top: orientationCalAreaHelpText.bottom
-                        anchors.left: orientationCalAreaHelpText.left
-                        anchors.topMargin: 15
-                        width:      parent.width
-                        height:     parent.height - orientationCalAreaHelpText.implicitHeight
-                        spacing:    5
+                        anchors.topMargin:  ScreenTools.defaultFontPixelWidth
+                        anchors.top:        orientationCalAreaHelpText.bottom
+                        anchors.left:       orientationCalAreaHelpText.left
+                        width:              parent.width
+                        height:             parent.height - orientationCalAreaHelpText.implicitHeight
+                        spacing:            ScreenTools.defaultFontPixelWidth
 
                         VehicleRotationCal {
                             visible:            controller.orientationCalDownSideVisible
@@ -471,13 +467,13 @@ QGCView {
                 }
 
                 Column {
-                    anchors.left: orientationCalArea.right
-                    anchors.leftMargin: 5
-                    spacing: 20
-                    x: parent.width - rotationColumnWidth
+                    anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+                    anchors.left:       orientationCalArea.right
+                    x:                  parent.width - rotationColumnWidth
+                    spacing:            ScreenTools.defaultFontPixelWidth
 
                     Column {
-                        spacing:            5
+                        spacing: ScreenTools.defaultFontPixelWidth
 
                         QGCLabel {
                             font.pixelSize: sideBarH1PointSize
@@ -499,7 +495,7 @@ QGCView {
                     }
 
                     Column {
-                        spacing:            5
+                        spacing: ScreenTools.defaultFontPixelWidth
 
                         // Compass 0 rotation
                         Component {
@@ -510,6 +506,7 @@ QGCView {
                                 text: "External Compass Orientation"
                             }
                         }
+
                         Component {
                             id: compass0ComponentCombo2
 
@@ -520,12 +517,14 @@ QGCView {
                                 fact:   cal_mag0_rot
                             }
                         }
+
                         Loader { sourceComponent: showCompass0Rot ? compass0ComponentLabel2 : null }
                         Loader { sourceComponent: showCompass0Rot ? compass0ComponentCombo2 : null }
                     }
 
                     Column {
-                        spacing:            5
+                        spacing: ScreenTools.defaultFontPixelWidth
+
                         // Compass 1 rotation
                         Component {
                             id: compass1ComponentLabel2
@@ -535,6 +534,7 @@ QGCView {
                                 text: "External Compass 1 Orientation"
                             }
                         }
+
                         Component {
                             id: compass1ComponentCombo2
 
@@ -545,12 +545,14 @@ QGCView {
                                 fact:   cal_mag1_rot
                             }
                         }
+
                         Loader { sourceComponent: showCompass1Rot ? compass1ComponentLabel2 : null }
                         Loader { sourceComponent: showCompass1Rot ? compass1ComponentCombo2 : null }
                     }
 
                     Column {
-                        spacing:            5
+                        spacing: ScreenTools.defaultFontPixelWidth
+
                         // Compass 2 rotation
                         Component {
                             id: compass2ComponentLabel2
@@ -560,6 +562,7 @@ QGCView {
                                 text: "Compass 2 Orientation"
                             }
                         }
+
                         Component {
                             id: compass2ComponentCombo2
 

@@ -47,14 +47,12 @@ Map {
     property real   heading:            0
     property bool   interactive:        true
     property string mapName:            'defaultMap'
-    property alias  mapMenu:            mapTypeMenu
     property alias  mapWidgets:         controlWidgets
     property bool   isSatelliteMap:     false
         
     property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
     property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
 
-    anchors.fill: parent
     zoomLevel:  18
     center:     QtPositioning.coordinate(lat, lon)
     gesture.flickDeceleration: 3000
@@ -62,8 +60,46 @@ Map {
 
     plugin: Plugin { name: "QGroundControl" }
 
-    Component.onCompleted: mapTypeMenu.update()
-
+    ExclusiveGroup { id: mapTypeGroup }
+    
+    // Map type selection MenuItem
+    Component {
+        id: menuItemComponent
+        
+        MenuItem {
+            checkable:      true
+            checked:        text == _map.activeMapType.name
+            exclusiveGroup: mapTypeGroup
+            visible:        _map.visible
+            
+            onTriggered: setCurrentMap(text)
+        }
+    }
+    
+    // Set the current map type to the specified type name
+    function setCurrentMap(name) {
+        for (var i = 0; i < _map.supportedMapTypes.length; i++) {
+            if (name === _map.supportedMapTypes[i].name) {
+                _map.activeMapType = _map.supportedMapTypes[i]
+                multiVehicleManager.saveSetting(_map.mapName + "/currentMapType", name);
+                return;
+            }
+        }
+    }
+    
+    // Add menu map types to the specified menu and sets the current map type from settings
+    function addMapMenuItems(menu) {
+        var savedMapName = multiVehicleManager.loadSetting(_map.mapName + "/currentMapType", "")
+        
+        setCurrentMap(savedMapName)
+        
+        for (var i = 0; i < _map.supportedMapTypes.length; i++) {
+            var menuItem = menuItemComponent.createObject()
+            menuItem.text = _map.supportedMapTypes[i].name
+            menu.insertItem(menu.items.length, menuItem)
+        }
+    }
+    
     /// Map control widgets
     Column {
         id:                 controlWidgets
@@ -72,56 +108,12 @@ Map {
         anchors.bottom:     parent.bottom
         spacing:            ScreenTools.defaultFontPixelWidth / 2
 
-        //-- Menu to select supported map types
-        Menu {
-            id: mapTypeMenu
-            title: "Map Type..."
-            enabled: _map.visible
-            ExclusiveGroup { id: currMapType }
-            function setCurrentMap(mapID) {
-                for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-                    if (mapID === _map.supportedMapTypes[i].name) {
-                        _map.activeMapType = _map.supportedMapTypes[i]
-                        multiVehicleManager.saveSetting(_map.mapName + "/currentMapType", mapID);
-                        return;
-                    }
-                }
-            }
-            function addMap(mapID, checked) {
-                var mItem = mapTypeMenu.addItem(mapID);
-                mItem.checkable = true
-                mItem.checked   = checked
-                mItem.exclusiveGroup = currMapType
-                var menuSlot = function() {setCurrentMap(mapID);};
-                mItem.triggered.connect(menuSlot);
-            }
-            function update() {
-                clear()
-                var mapID = ''
-                if (_map.supportedMapTypes.length > 0)
-                    mapID = _map.activeMapType.name;
-                mapID = multiVehicleManager.loadSetting(_map.mapName + "/currentMapType", mapID);
-                for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-                    var name = _map.supportedMapTypes[i].name;
-                    addMap(name, mapID === name);
-                }
-                if(mapID != '')
-                    setCurrentMap(mapID);
-            }
-        }
-
-        QGCButton {
-            id:     optionsButton
-            text:   "Options"
-            menu:   mapTypeMenu
-        }
-        
         Row {
             layoutDirection:    Qt.RightToLeft
             spacing:            ScreenTools.defaultFontPixelWidth / 2
 
             readonly property real _zoomIncrement: 1.0
-            property real _buttonWidth: (optionsButton.width - spacing) / 2
+            property real _buttonWidth: ScreenTools.defaultFontPixelWidth * 5
             
             NumberAnimation {
                 id: animateZoom

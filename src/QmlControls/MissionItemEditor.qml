@@ -4,145 +4,170 @@ import QtQuick.Controls.Styles  1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Palette       1.0
+
 
 /// Mission item edit control
 Rectangle {
+    id: _root
+
     property var    missionItem
 
-    width:          _editFieldWidth + (ScreenTools.defaultFontPixelWidth * 10)
-    height:         _valueColumn.y + _valueColumn.height + (radius / 2)
-    border.width:   2
-    border.color:   "white"
-    color:          "white"
-    radius:         ScreenTools.defaultFontPixelWidth
+    signal clicked
+    signal remove
+    signal moveUp
+    signal moveDown
 
-    readonly property real _editFieldWidth: ScreenTools.defaultFontPixelWidth * 13
+    height: missionItem.isCurrentItem ?
+                (missionItem.textFieldFacts.count * (measureTextField.height + _margin)) +
+                    (missionItem.checkboxFacts.count * (measureCheckbox.height + _margin)) +
+                    commandPicker.height + deleteButton.height + (_margin * 9) :
+                commandPicker.height + (_margin * 2)
+    color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
 
-    MissionItemIndexLabel {
-        id:                 _label
-        anchors.top:        parent.top
-        anchors.right:      parent.right
-        isCurrentItem:      missionItem.isCurrentItem
-        label:              missionItem.sequenceNumber
-    }
+    readonly property real _editFieldWidth:     ScreenTools.defaultFontPixelWidth * 16
+    readonly property real _margin:             ScreenTools.defaultFontPixelWidth / 3
 
-    QGCComboBox {
-        id:                 _commandCombo
-        anchors.margins:    parent.radius / 2
-        anchors.left:       parent.left
-        anchors.right:      _label.left
-        anchors.top:        parent.top
-        currentIndex:       missionItem.commandByIndex
-        model:              missionItem.commandNames
-
-        onActivated: missionItem.commandByIndex = index
-    }
-
-    Column {
-        id:                 _coordinateColumn
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        visible:            missionItem.specifiesCoordinate
-
+    QGCPalette {
+        id: qgcPal
+        colorGroupEnabled: enabled
     }
 
     QGCTextField {
-        id:                 _latitudeField
-        anchors.margins:    parent.radius / 2
-        anchors.top:        _commandCombo.bottom
-        anchors.right:      parent.right
-        width:              _editFieldWidth
-        text:               missionItem.coordinate.latitude
-        visible:            missionItem.specifiesCoordinate
-
-        onAccepted:         missionItem.coordinate.latitude = text
+        id:         measureTextField
+        visible:    false
     }
 
-    QGCTextField {
-        id:                 _longitudeField
-        anchors.margins:    parent.radius / 2
-        anchors.top:        _latitudeField.bottom
-        anchors.right:      parent.right
-        width:              _editFieldWidth
-        text:               missionItem.coordinate.longitude
-        visible:            missionItem.specifiesCoordinate
-
-        onAccepted:         missionItem.coordinate.longtitude = text
+    QGCCheckBox {
+        id:         measureCheckbox
+        visible:    false
     }
 
-    QGCTextField {
-        id:                 _altitudeField
-        anchors.margins:    parent.radius / 2
-        anchors.top:        _longitudeField.bottom
-        anchors.right:      parent.right
-        width:              _editFieldWidth
-        text:               missionItem.coordinate.altitude
-        visible:            missionItem.specifiesCoordinate
-        showUnits:          true
-        unitsLabel:         "meters"
+    Item {
+        anchors.margins:    _margin
+        anchors.fill:       parent
 
-        onAccepted:         missionItem.coordinate.altitude = text
-    }
-
-    QGCLabel {
-        anchors.margins:    parent.radius / 2
-        anchors.left:       parent.left
-        anchors.baseline:   _latitudeField.baseline
-        color:              "black"
-        text:               "Lat:"
-        visible:            missionItem.specifiesCoordinate
-    }
-
-    QGCLabel {
-        anchors.margins:    parent.radius / 2
-        anchors.left:       parent.left
-        anchors.baseline:   _longitudeField.baseline
-        color:              "black"
-        text:               "Long:"
-        visible:            missionItem.specifiesCoordinate
-    }
-
-    QGCLabel {
-        anchors.margins:    parent.radius / 2
-        anchors.left:       parent.left
-        anchors.baseline:   _altitudeField.baseline
-        color:              "black"
-        text:               "Alt:"
-        visible:            missionItem.specifiesCoordinate
-    }
-
-    Column {
-        id:                 _valueColumn
-        anchors.margins:    parent.radius / 2
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        missionItem.specifiesCoordinate ? _altitudeField.bottom : _commandCombo.bottom
-
-        Repeater {
-            model: missionItem.valueLabels
-
-            QGCLabel {
-                color:  "black"
-                text:   modelData
-            }
+        MissionItemIndexLabel {
+            id:                     label
+            anchors.verticalCenter: commandPicker.verticalCenter
+            isCurrentItem:          missionItem.isCurrentItem
+            label:                  missionItem.sequenceNumber
         }
-    }
 
-    Column {
-        anchors.margins:    parent.radius / 2
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        _valueColumn.top
+        MouseArea {
+            anchors.fill:   parent
+            visible:        !missionItem.isCurrentItem
 
-        Repeater {
-            model: missionItem.valueStrings
-
-            QGCLabel {
-                width:                  _valueColumn.width
-                color:                  "black"
-                text:                   modelData
-                horizontalAlignment:    Text.AlignRight
-            }
+            onClicked: _root.clicked()
         }
-    }
-}
+
+
+        QGCComboBox {
+            id:                 commandPicker
+            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 10
+            anchors.left:       label.right
+            anchors.right:      parent.right
+            currentIndex:       missionItem.commandByIndex
+            model:              missionItem.commandNames
+
+            onActivated: missionItem.commandByIndex = index
+        }
+
+        Rectangle {
+            anchors.topMargin:  _margin
+            anchors.top:        commandPicker.bottom
+            anchors.bottom:     parent.bottom
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            color:              qgcPal.windowShadeDark
+            visible:            missionItem.isCurrentItem
+
+            Item {
+                anchors.margins:    _margin
+                anchors.fill:   parent
+
+                Column {
+                    id:             valuesColumn
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    anchors.top:    parent.top
+                    spacing:        _margin
+
+                    Repeater {
+                        model: missionItem.textFieldFacts
+
+                        Item {
+                            width:  valuesColumn.width
+                            height: textField.height
+
+                            QGCLabel {
+                                anchors.baseline:   textField.baseline
+                                text:               object.name
+                            }
+
+                            FactTextField {
+                                id:             textField
+                                anchors.right:  parent.right
+                                width:          _editFieldWidth
+                                showUnits:      true
+                                fact:           object
+                            }
+                        }
+                    }
+
+                    Item {
+                        width:  10
+                        height: missionItem.textFieldFacts.count ? _margin : 0
+                    }
+
+                    Repeater {
+                        model: missionItem.checkboxFacts
+
+                        FactCheckBox {
+                            id:     textField
+                            text:   object.name
+                            fact:   object
+                        }
+                    }
+
+                    Item {
+                        width:  10
+                        height: missionItem.checkboxFacts.count ? _margin : 0
+                    }
+
+                    Row {
+                        width:      parent.width
+                        spacing:    _margin
+
+                        readonly property real buttonWidth: (width - (_margin * 2)) / 3
+
+                        QGCButton {
+                            id:     deleteButton
+                            width:  parent.buttonWidth
+                            text:   "Delete"
+
+                            onClicked: _root.remove()
+                        }
+
+                        QGCButton {
+                            width:  parent.buttonWidth
+                            text:   "Up"
+
+                            onClicked: _root.moveUp()
+                        }
+
+                        QGCButton {
+                            width:  parent.buttonWidth
+                            text:   "Down"
+
+                            onClicked: _root.moveDown()
+                        }
+                    }
+
+                } // Column
+            } // Item
+        } // Rectangle
+    } // Item
+} // Rectangle

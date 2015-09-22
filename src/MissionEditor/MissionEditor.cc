@@ -23,6 +23,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include "MissionEditor.h"
 #include "ScreenToolsController.h"
+#include "MultiVehicleManager.h"
+#include "MissionManager.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -32,17 +34,22 @@ const char* MissionEditor::_settingsGroup = "MissionEditor";
 
 MissionEditor::MissionEditor(QWidget *parent)
     : QGCQmlWidgetHolder(parent)
+    , _missionItems(NULL)
 {
-    setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     // Get rid of layout default margins
     QLayout* pl = layout();
     if(pl) {
         pl->setContentsMargins(0,0,0,0);
     }
-#ifndef __android__
-    setMinimumWidth( 31 * ScreenToolsController::defaultFontPixelSize_s());
-    setMinimumHeight(33 * ScreenToolsController::defaultFontPixelSize_s());
-#endif
+    
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    if (activeVehicle) {
+        MissionManager* missionManager = activeVehicle->missionManager();
+        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditor::_newMissionItemsAvailable);
+        _newMissionItemsAvailable();
+    } else {
+        _missionItems = new QmlObjectListModel(this);
+    }
     
     setContextPropertyObject("controller", this);
 
@@ -53,30 +60,93 @@ MissionEditor::~MissionEditor()
 {
 }
 
-void MissionEditor::saveSetting(const QString &name, const QString& value)
+void MissionEditor::_newMissionItemsAvailable(void)
 {
-    QSettings settings;
+    if (_missionItems) {
+        _missionItems->deleteLater();
+    }
     
-    settings.beginGroup(_settingsGroup);
+    _missionItems = MultiVehicleManager::instance()->activeVehicle()->missionManager()->copyMissionItems();
+    _reSequence();
     
-    settings.setValue(name, value);
+    emit missionItemsChanged();
 }
 
-QString MissionEditor::loadSetting(const QString &name, const QString& defaultValue)
+void MissionEditor::getMissionItems(void)
 {
-    QSettings settings;
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     
-    settings.beginGroup(_settingsGroup);
-    
-    return settings.value(name, defaultValue).toString();
+    if (activeVehicle) {
+        activeVehicle->missionManager()->requestMissionItems();
+    }
 }
 
-void MissionEditor::addMissionItem(QGeoCoordinate coordinate)
+void MissionEditor::setMissionItems(void)
 {
-    MissionItem * newItem = new MissionItem(this, _missionItems.count(), coordinate);
-    if (_missionItems.count() == 0) {
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    
+    if (activeVehicle) {
+        activeVehicle->missionManager()->writeMissionItems(*_missionItems);
+    }
+}
+
+int MissionEditor::addMissionItem(QGeoCoordinate coordinate)
+{
+    MissionItem * newItem = new MissionItem(this, _missionItems->count(), coordinate);
+    if (_missionItems->count() == 0) {
         newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
     }
     qDebug() << "MissionItem" << newItem->coordinate();
-    _missionItems.append(newItem);
+    _missionItems->append(newItem);
+    
+    return _missionItems->count() - 1;
+}
+
+void MissionEditor::_reSequence(void)
+{
+    for (int i=0; i<_missionItems->count(); i++) {
+        qobject_cast<MissionItem*>(_missionItems->get(i))->setSequenceNumber(i);
+    }
+}
+
+void MissionEditor::removeMissionItem(int index)
+{
+    _missionItems->removeAt(index);
+    _reSequence();
+}
+
+void MissionEditor::moveUp(int index)
+{
+    if (_missionItems->count() < 2 || index <= 0 || index >= _missionItems->count()) {
+        return;
+    }
+    
+    MissionItem item1 = *qobject_cast<MissionItem*>(_missionItems->get(index - 1));
+    MissionItem item2 = *qobject_cast<MissionItem*>(_missionItems->get(index));
+    
+    _missionItems->removeAt(index - 1);
+    _missionItems->removeAt(index - 1);
+    
+    _missionItems->insert(index - 1, new MissionItem(item2, _missionItems));
+    _missionItems->insert(index, new MissionItem(item1, _missionItems));
+    
+    _reSequence();
+}
+
+void MissionEditor::moveDown(int index)
+{
+    if (_missionItems->count() < 2 || index >= _missionItems->count() - 1) {
+        return;
+    }
+    
+    MissionItem item1 = *qobject_cast<MissionItem*>(_missionItems->get(index));
+    MissionItem item2 = *qobject_cast<MissionItem*>(_missionItems->get(index + 1));
+    
+    _missionItems->removeAt(index);
+    _missionItems->removeAt(index);
+    
+    _missionItems->insert(index, new MissionItem(item2, _missionItems));
+    _missionItems->insert(index + 1, new MissionItem(item1, _missionItems));
+    
+    _reSequence();
 }
