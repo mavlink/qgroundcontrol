@@ -30,6 +30,14 @@
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 
+
+struct FirmwareToUrlElement_t {
+    FirmwareUpgradeController::AutoPilotStackType_t    stackType;
+    FirmwareUpgradeController::FirmwareType_t          firmwareType;
+    FirmwareUpgradeController::FirmwareVehicleType_t   vehicleType;
+    QString                                            url;
+};
+
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareIDTrinity)
 {
     return ( firmwareIDTrinity.autopilotStackType |
@@ -164,6 +172,134 @@ void FirmwareUpgradeController::_foundBootloader(int bootloaderVersion, int boar
     }
 }
 
+
+/// @brief intializes the firmware hashes with proper urls.
+/// This happens only once for a class instance first time when it is needed.
+void FirmwareUpgradeController::_initFirmwareHash()
+{
+    // indirect check whether this function has been called before or not
+    // may have to be modified if _rgPX4FMUV2Firmware disappears
+    if (!_rgPX4FMUV2Firmware.isEmpty()) {
+        return;
+    }
+
+    //////////////////////////////////// PX4FMUV2 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgPX4FMV2FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v2_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4"},
+        { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://firmware.diydrones.com/Copter/stable/PX4-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    X8Firmware,             "http://firmware.diydrones.com/Copter/stable/PX4-octa-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    HexaFirmware,           "http://firmware.diydrones.com/Copter/stable/PX4-hexa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    OctoFirmware,           "http://firmware.diydrones.com/Copter/stable/PX4-octa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    YFirmware,              "http://firmware.diydrones.com/Copter/stable/PX4-tri/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    Y6Firmware,             "http://firmware.diydrones.com/Copter/stable/PX4-y6/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.diydrones.com/Copter/stable/PX4-heli/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://firmware.diydrones.com/Plane/stable/PX4/ArduPlane-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    RoverFirmware,          "http://firmware.diydrones.com/Rover/stable/PX4/APMrover2-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      QuadFirmware,           "http://firmware.diydrones.com/Copter/beta/PX4-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      X8Firmware,             "http://firmware.diydrones.com/Copter/beta/PX4-octa-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      HexaFirmware,           "http://firmware.diydrones.com/Copter/beta/PX4-hexa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      OctoFirmware,           "http://firmware.diydrones.com/Copter/beta/PX4-octa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      YFirmware,              "http://firmware.diydrones.com/Copter/beta/PX4-tri/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      Y6Firmware,             "http://firmware.diydrones.com/Copter/beta/PX4-y6/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      HeliFirmware,           "http://firmware.diydrones.com/Copter/beta/PX4-heli/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      PlaneFirmware,          "http://firmware.diydrones.com/Plane/beta/PX4/ArduPlane-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      RoverFirmware,          "http://firmware.diydrones.com/Rover/beta/PX4/APMrover2-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, QuadFirmware,           "http://firmware.diydrones.com/Copter/latest/PX4-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, X8Firmware,             "http://firmware.diydrones.com/Copter/latest/PX4-octa-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, HexaFirmware,           "http://firmware.diydrones.com/Copter/latest/PX4-hexa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, OctoFirmware,           "http://firmware.diydrones.com/Copter/latest/PX4-octa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, YFirmware,              "http://firmware.diydrones.com/Copter/latest/PX4-tri/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, Y6Firmware,             "http://firmware.diydrones.com/Copter/latest/PX4-y6/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, HeliFirmware,           "http://firmware.diydrones.com/Copter/latest/PX4-heli/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, PlaneFirmware,          "http://firmware.diydrones.com/Plane/latest/PX4/ArduPlane-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://firmware.diydrones.com/Rover/latest/PX4/APMrover2-v2.px4"}
+    };
+
+    //////////////////////////////////// PX4FMU aerocore firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t  rgAeroCoreFirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/stable/aerocore_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/beta/aerocore_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/master/aerocore_default.px4"},
+        { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    X8Firmware,             "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-octa-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    HexaFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-hexa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    OctoFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-octa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    YFirmware,              "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-tri/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    Y6Firmware,             "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-y6/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-heli/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Plane/stable/PX4/ArduPlane-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    RoverFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Rover/stable/PX4/APMrover2-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      QuadFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      X8Firmware,             "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-octa-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      HexaFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-hexa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      OctoFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-octa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      YFirmware,              "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-tri/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      Y6Firmware,             "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-y6/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      HeliFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-heli/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      PlaneFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Plane/beta/PX4/ArduPlane-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      RoverFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Rover/beta/PX4/APMrover2-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, QuadFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, X8Firmware,             "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-octa-quad/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, HexaFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-hexa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, OctoFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-octa/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, YFirmware,              "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-tri/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, Y6Firmware,             "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-y6/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, HeliFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-heli/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, PlaneFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Plane/latest/PX4/ArduPlane-v2.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Rover/latest/PX4/APMrover2-v2.px4"}
+    };
+
+    /////////////////////////////// FMUV1 firmwares ///////////////////////////////////////////
+    FirmwareToUrlElement_t rgPX4FMUV1FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/latest/px4fmu-v1_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v1_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v1_default.px4"},
+    };
+
+    /////////////////////////////// px4flow firmwares ///////////////////////////////////////
+    FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
+        { PX4Flow, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
+    };
+
+    /////////////////////////////// 3dr radio firmwares ///////////////////////////////////////
+    FirmwareToUrlElement_t rg3DRRadioFirmwareArray[] = {
+        { PX4Flow, StableFirmware, DefaultVehicleFirmware, "http://firmware.diydrones.com/SiK/latest/radio~hm_trp.ihx"}
+    };
+
+    // populate hashes now
+    int size = sizeof(rgPX4FMV2FirmwareArray)/sizeof(rgPX4FMV2FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgPX4FMV2FirmwareArray[i];
+        _rgPX4FMUV2Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
+    size = sizeof(rgAeroCoreFirmwareArray)/sizeof(rgAeroCoreFirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgAeroCoreFirmwareArray[i];
+        _rgAeroCoreFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
+    size = sizeof(rgPX4FMUV1FirmwareArray)/sizeof(rgPX4FMUV1FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgPX4FMUV1FirmwareArray[i];
+        _rgPX4FMUV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
+    size = sizeof(rgPX4FLowFirmwareArray)/sizeof(rgPX4FLowFirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgPX4FLowFirmwareArray[i];
+        _rgPX4FLowFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
+    size = sizeof(rg3DRRadioFirmwareArray)/sizeof(rg3DRRadioFirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rg3DRRadioFirmwareArray[i];
+        _rg3DRRadioFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+}
+
 /// @brief Called when the findBootloader process is unable to sync to the bootloader. Moves the state
 ///         machine to the appropriate error state.
 void FirmwareUpgradeController::_bootloaderSyncFailed(void)
@@ -174,343 +310,8 @@ void FirmwareUpgradeController::_bootloaderSyncFailed(void)
 /// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareIDTrinity)
 {
-
-    static QHash<FirmwareIdentifier, QString> rgPX4FMUV2Firmware;
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 StableFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v2_default.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 BetaFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 DeveloperFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 QuadFirmware),
-                              "http://firmware.diydrones.com/Copter/stable/PX4-quad/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 X8Firmware),
-                              "http://firmware.diydrones.com/Copter/stable/PX4-octa-quad/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 HexaFirmware),
-                              "http://firmware.diydrones.com/Copter/stable/PX4-hexa/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 OctoFirmware),
-                              "http://firmware.diydrones.com/Copter/stable/PX4-octa/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 YFirmware),
-                              "http://firmware.diydrones.com/Copter/stable/PX4-tri/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 Y6Firmware),
-                              "http://firmware.diydrones.com/Copter/stable/PX4-y6/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 HeliFirmware),
-                              "http://firmware.diydrones.com/Copter/stable/PX4-heli/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 PlaneFirmware),
-                              "http://firmware.diydrones.com/Plane/stable/PX4/ArduPlane-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 RoverFirmware),
-                              "http://firmware.diydrones.com/Rover/stable/PX4/APMrover2-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 QuadFirmware),
-                              "http://firmware.diydrones.com/Copter/beta/PX4-quad/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 X8Firmware),
-                              "http://firmware.diydrones.com/Copter/beta/PX4-octa-quad/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 HexaFirmware),
-                              "http://firmware.diydrones.com/Copter/beta/PX4-hexa/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 OctoFirmware),
-                              "http://firmware.diydrones.com/Copter/beta/PX4-octa/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 YFirmware),
-                              "http://firmware.diydrones.com/Copter/beta/PX4-tri/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 Y6Firmware),
-                              "http://firmware.diydrones.com/Copter/beta/PX4-y6/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 HeliFirmware),
-                              "http://firmware.diydrones.com/Copter/beta/PX4-heli/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 PlaneFirmware),
-                              "http://firmware.diydrones.com/Plane/beta/PX4/ArduPlane-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 RoverFirmware),
-                              "http://firmware.diydrones.com/Rover/beta/PX4/APMrover2-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 QuadFirmware),
-                              "http://firmware.diydrones.com/Copter/latest/PX4-quad/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 X8Firmware),
-                              "http://firmware.diydrones.com/Copter/latest/PX4-octa-quad/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 HexaFirmware),
-                              "http://firmware.diydrones.com/Copter/latest/PX4-hexa/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 OctoFirmware),
-                              "http://firmware.diydrones.com/Copter/latest/PX4-octa/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 YFirmware),
-                              "http://firmware.diydrones.com/Copter/latest/PX4-tri/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 Y6Firmware),
-                              "http://firmware.diydrones.com/Copter/latest/PX4-y6/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 HeliFirmware),
-                              "http://firmware.diydrones.com/Copter/latest/PX4-heli/ArduCopter-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 PlaneFirmware),
-                              "http://firmware.diydrones.com/Plane/latest/PX4/ArduPlane-v2.px4");
-
-    rgPX4FMUV2Firmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 RoverFirmware),
-                              "http://firmware.diydrones.com/Rover/latest/PX4/APMrover2-v2.px4");
-
-    //////////////////////////////////// PX4MU aerocore firmwares //////////////////////////////////////////////////
-    static QHash<FirmwareIdentifier, QString> rgAeroCoreFirmware;
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 StableFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/PX4/stable/aerocore_default.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 BetaFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/PX4/beta/aerocore_default.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 DeveloperFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/PX4/master/aerocore_default.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 QuadFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/APM/Copter/stable/PX4-quad/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 X8Firmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-octa-quad/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 HexaFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-hexa/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 OctoFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-octa/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 YFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-tri/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 Y6Firmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-y6/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 HeliFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-heli/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 PlaneFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Plane/stable/PX4/ArduPlane-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 StableFirmware,
-                                                 RoverFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Rover/stable/PX4/APMrover2-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 QuadFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-quad/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 X8Firmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-octa-quad/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 HexaFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-hexa/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 OctoFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-octa/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 YFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-tri/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 Y6Firmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-y6/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 HeliFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/beta/PX4-heli/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 PlaneFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Plane/beta/PX4/ArduPlane-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 BetaFirmware,
-                                                 RoverFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Rover/beta/PX4/APMrover2-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 QuadFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-quad/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 X8Firmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-octa-quad/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 HexaFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-hexa/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 OctoFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-octa/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 YFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-tri/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 Y6Firmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-y6/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 HeliFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-heli/ArduCopter-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 PlaneFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Plane/latest/PX4/ArduPlane-v2.px4");
-
-    rgAeroCoreFirmware.insert(FirmwareIdentifier(AutoPilotStackAPM,
-                                                 DeveloperFirmware,
-                                                 RoverFirmware),
-                              "http://gumstix-aerocore.s3.amazonaws.com/Rover/latest/PX4/APMrover2-v2.px4");
-
-    /////////////////////////////// FMUV1 firmwares ///////////////////////////////////////////
-
-    static QHash<FirmwareIdentifier, QString> rgPX4FMUV1Firmware;
-    rgPX4FMUV1Firmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 StableFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://px4-travis.s3.amazonaws.com/Firmware/latest/px4fmu-v1_default.px4");
-
-    rgPX4FMUV1Firmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 BetaFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v1_default.px4");
-
-    rgPX4FMUV1Firmware.insert(FirmwareIdentifier(AutoPilotStackPX4,
-                                                 DeveloperFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v1_default.px4");
-
-    /////////////////////////////// px4flow firmwares ///////////////////////////////////////
-
-    static QHash<FirmwareIdentifier, QString> rgPX4FLowFirmware;
-    rgPX4FLowFirmware.insert(FirmwareIdentifier(PX4Flow,
-                                                StableFirmware,
-                                                DefaultVehicleFirmware),
-                             "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4");
-
-    /////////////////////////////// 3dr radio firmwares ///////////////////////////////////////
-
-    static QHash<FirmwareIdentifier, QString> rg3DRRadioFirmware;
-    rg3DRRadioFirmware.insert(FirmwareIdentifier(PX4Flow,
-                                                 StableFirmware,
-                                                 DefaultVehicleFirmware),
-                              "http://firmware.diydrones.com/SiK/latest/radio~hm_trp.ihx");
+    // make sure the firmware hashes are populated
+    _initFirmwareHash();
 
     // Select the firmware set based on board type
     
@@ -518,23 +319,23 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareIDTr
     
     switch (_bootloaderBoardID) {
         case Bootloader::boardIDPX4FMUV1:
-            prgFirmware = rgPX4FMUV1Firmware;
+            prgFirmware = _rgPX4FMUV1Firmware;
             break;
             
         case Bootloader::boardIDPX4Flow:
-            prgFirmware = rgPX4FLowFirmware;
+            prgFirmware = _rgPX4FLowFirmware;
             break;
             
         case Bootloader::boardIDPX4FMUV2:
-            prgFirmware = rgPX4FMUV2Firmware;
+            prgFirmware = _rgPX4FMUV2Firmware;
             break;
             
         case Bootloader::boardIDAeroCore:
-            prgFirmware = rgAeroCoreFirmware;
+            prgFirmware = _rgAeroCoreFirmware;
             break;
             
         case Bootloader::boardID3DRRadio:
-            prgFirmware = rg3DRRadioFirmware;
+            prgFirmware = _rg3DRRadioFirmware;
             break;
             
         default:
