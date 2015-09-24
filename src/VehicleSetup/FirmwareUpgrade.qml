@@ -139,7 +139,7 @@ QGCView {
         QGCViewDialog {
             anchors.fill: parent
  
-            property bool showFirmwareTypeSelection: apmFlightStack.checked || advancedMode.checked
+            property bool showFirmwareTypeSelection: advancedMode.checked
             property bool px4Flow:              controller.boardType == "PX4 Flow"
 
             function accept() {

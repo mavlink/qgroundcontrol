@@ -174,12 +174,20 @@ private slots:
 
 private:
     void _getFirmwareFile(FirmwareIdentifier firmwareIDTrinity);
+    void _initFirmwareHash();
     void _downloadFirmware(void);
     void _appendStatusLog(const QString& text, bool critical = false);
     void _errorCancel(const QString& msg);
     
     QString _portName;
     QString _portDescription;
+
+    // firmware hashes
+    QHash<FirmwareIdentifier, QString> _rgPX4FMUV2Firmware;
+    QHash<FirmwareIdentifier, QString> _rgAeroCoreFirmware;
+    QHash<FirmwareIdentifier, QString> _rgPX4FMUV1Firmware;
+    QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
+    QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
 
     /// Information which comes back from the bootloader
     bool        _bootloaderFound;           ///< true: we have received the foundBootloader signals
