@@ -200,6 +200,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _addLink(link);
     }
     
+    // Give the plugin a change to adjust the message contents
+    _firmwarePlugin->adjustMavlinkMessage(&message);
+    
     emit mavlinkMessageReceived(message);
     
     _uas->receiveMessage(message);
@@ -262,6 +265,9 @@ void Vehicle::_sendMessage(mavlink_message_t message)
             int len = mavlink_msg_to_send_buffer(buffer, &message);
             static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
             mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
+            
+            // Give the plugin a chance to adjust
+            _firmwarePlugin->adjustMavlinkMessage(&message);
             
             if (link->isConnected()) {
                 link->writeBytes((const char*)buffer, len);
