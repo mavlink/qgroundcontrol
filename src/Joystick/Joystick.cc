@@ -124,7 +124,7 @@ void Joystick::_loadSettings(void)
         calibration->min = settings.value(minTpl.arg(axis), -32768).toInt(&convertOk);
         badSettings |= !convertOk;
         
-        calibration->max = settings.value(maxTpl.arg(axis), 32768).toInt(&convertOk);
+        calibration->max = settings.value(maxTpl.arg(axis), 32767).toInt(&convertOk);
         badSettings |= !convertOk;
         
         calibration->reversed = settings.value(revTpl.arg(axis), false).toBool();
