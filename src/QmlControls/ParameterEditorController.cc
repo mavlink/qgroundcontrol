@@ -53,11 +53,33 @@ QStringList ParameterEditorController::getGroupsForComponent(int componentId)
 	return groupMap[componentId].keys();
 }
 
-QStringList ParameterEditorController::getFactsForGroup(int componentId, QString group)
+QStringList ParameterEditorController::getParametersForGroup(int componentId, QString group)
 {
 	const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
 	
 	return groupMap[componentId][group];
+}
+
+QStringList ParameterEditorController::searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions)
+{
+    QStringList list;
+    
+    foreach(QString paramName, _autopilot->parameterNames(componentId)) {
+        if (searchText.isEmpty()) {
+            list += paramName;
+        } else {
+            Fact* fact = _autopilot->getParameterFact(componentId, paramName);
+            
+            if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
+                list += paramName;
+            } else if (searchInDescriptions && (fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive))) {
+                list += paramName;
+            }
+        }
+    }
+    list.sort();
+    
+    return list;
 }
 
 void ParameterEditorController::clearRCToParam(void)

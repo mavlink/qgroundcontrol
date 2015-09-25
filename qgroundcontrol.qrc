@@ -110,7 +110,6 @@
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
 
         <file alias="ScreenToolsFontQuery.qml">src/QmlControls/ScreenToolsFontQuery.qml</file>
-        <file alias="ParameterEditorWidget.qml">src/ViewWidgets/ParameterEditorWidget.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="RadioComponent.qml">src/AutoPilotPlugins/PX4/RadioComponent.qml</file>
