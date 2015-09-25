@@ -17,10 +17,10 @@ matrix:
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: true
         - os: osx
-          osx_image: beta-xcode6.3
+          osx_image: xcode7
           env: SPEC=macx-clang CONFIG=debug
         - os: osx
-          osx_image: beta-xcode6.3
+          osx_image: xcode7
           env: SPEC=macx-clang CONFIG=installer
         - os: android
           language: android
