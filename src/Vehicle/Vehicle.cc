@@ -260,20 +260,16 @@ void Vehicle::_sendMessage(mavlink_message_t message)
         if (link->isConnected()) {
             MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
             
+            // Give the plugin a chance to adjust
+            _firmwarePlugin->adjustMavlinkMessage(&message);
+            
             // Write message into buffer, prepending start sign
             uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
             int len = mavlink_msg_to_send_buffer(buffer, &message);
             static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
             mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
             
-            // Give the plugin a chance to adjust
-            _firmwarePlugin->adjustMavlinkMessage(&message);
-            
-            if (link->isConnected()) {
-                link->writeBytes((const char*)buffer, len);
-            } else {
-                qWarning() << "Link not connected";
-            }
+            link->writeBytes((const char*)buffer, len);
         }
     }
 }
