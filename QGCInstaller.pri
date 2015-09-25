@@ -36,10 +36,10 @@ installer {
         # We cd to release directory so we can run macdeployqt without a path to the
         # qgroundcontrol.app file. If you specify a path to the .app file the symbolic
         # links to plugins will not be created correctly.
-        QMAKE_POST_LINK += && cd release
+        QMAKE_POST_LINK += && cd release && mkdir package
         QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt qgroundcontrol.app -verbose=2 -qmldir=../src
         QMAKE_POST_LINK += && cd ..
-        QMAKE_POST_LINK += && hdiutil create -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/qgroundcontrol.dmg
+        QMAKE_POST_LINK += && hdiutil create -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/package/qgroundcontrol.dmg
     }
     WindowsBuild {
 		# The pdb moving command are commented out for now since we are including the .pdb in the installer. This makes it much
@@ -52,6 +52,13 @@ installer {
         OTHER_FILES += deploy/qgroundcontrol_installer.nsi
     }
     LinuxBuild {
-        QMAKE_POST_LINK += && tar -cjf qgroundcontrol.tar.bz2 release --transform 's/release/qgroundcontrol/'
+        QMAKE_POST_LINK += && mkdir -p release/package
+        QMAKE_POST_LINK += && tar -cjf release/package/qgroundcontrol.tar.bz2 release --exclude='package' --transform 's/release/qgroundcontrol/' 
+    }
+    AndroidBuild {
+        QMAKE_POST_LINK += && mkdir -p release/package
+        QMAKE_POST_LINK += && make install INSTALL_ROOT=release/android-build/
+        QMAKE_POST_LINK += && androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output release/android-build --deployment bundled --gradle --sign android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
+        QMAKE_POST_LINK += && cp release/android-build/build/outputs/apk/android-build-release-signed.apk release/package/qgroundcontrol.apk
     }
 }
