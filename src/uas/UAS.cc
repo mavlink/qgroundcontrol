@@ -2286,54 +2286,30 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
     QVariant paramValue;
 
     // Insert with correct type
-    // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
 
     switch (rawValue.param_type) {
         case MAV_PARAM_TYPE_REAL32:
-            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                paramValue = QVariant(paramUnion.param_float);
-            } else {
-                paramValue = QVariant(paramUnion.param_float);
-            }
+            paramValue = QVariant(paramUnion.param_float);
             break;
 
         case MAV_PARAM_TYPE_UINT8:
-            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                paramValue = QVariant((unsigned short)paramUnion.param_float);
-            } else {
-                paramValue = QVariant(paramUnion.param_uint8);
-            }
+            paramValue = QVariant(paramUnion.param_uint8);
             break;
 
         case MAV_PARAM_TYPE_INT8:
-            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                paramValue = QVariant((short)paramUnion.param_float);
-            } else  {
-                paramValue = QVariant(paramUnion.param_int8);
-            }
+            paramValue = QVariant(paramUnion.param_int8);
             break;
 
         case MAV_PARAM_TYPE_INT16:
-            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                paramValue = QVariant((short)paramUnion.param_float);
-            } else {
-                paramValue = QVariant(paramUnion.param_int16);
-            }
+            paramValue = QVariant(paramUnion.param_int16);
             break;
 
         case MAV_PARAM_TYPE_UINT32:
-            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                paramValue = QVariant((unsigned int)paramUnion.param_float);
-            } else {
-                paramValue = QVariant(paramUnion.param_uint32);
-            }
+            paramValue = QVariant(paramUnion.param_uint32);
             break;
+            
         case MAV_PARAM_TYPE_INT32:
-            if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                paramValue = QVariant((int)paramUnion.param_float);
-            } else {
-                paramValue = QVariant(paramUnion.param_int32);
-            }
+            paramValue = QVariant(paramUnion.param_int32);
             break;
 
         default:

@@ -26,6 +26,7 @@
 
 #include "FirmwarePluginManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
+#include "APM/APMFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 
 IMPLEMENT_QGC_SINGLETON(FirmwarePluginManager, FirmwarePluginManager)
@@ -43,9 +44,12 @@ FirmwarePluginManager::~FirmwarePluginManager()
 
 FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType)
 {
-    if (autopilotType == MAV_AUTOPILOT_PX4) {
-        return PX4FirmwarePlugin::instance();
-    } else {
-        return GenericFirmwarePlugin::instance();
+    switch (autopilotType) {
+        case MAV_AUTOPILOT_ARDUPILOTMEGA:
+            return APMFirmwarePlugin::instance();
+        case MAV_AUTOPILOT_PX4:
+            return PX4FirmwarePlugin::instance();
+        default:
+            return GenericFirmwarePlugin::instance();
     }
 }
