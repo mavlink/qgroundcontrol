@@ -39,15 +39,15 @@ import QGroundControl.FactControls 1.0
 QGCView {
     viewPanel: panel
 
-    /// true: show full information, false: for use in smaller widgets
-    property bool fullMode: true
-
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
     property Fact __editorDialogFact: Fact { }
 
     readonly property real __leftMargin: 10
     readonly property real __rightMargin: 20
     readonly property int __maxParamChars: 16
+
+    property bool _searchFilter: false  ///< true: showing results of search
+    property var _searchResults         ///< List of parameter names from search results
 
     ParameterEditorController {
         id: controller;
@@ -63,6 +63,65 @@ QGCView {
 
         ParameterEditorDialog { fact: __editorDialogFact }
     } // Component - Editor Dialog
+
+    Component {
+        id: searchDialogComponent
+
+        QGCViewDialog {
+
+            function accept() {
+                _searchResults = controller.searchParametersForComponent(-1, searchFor.text, searchInName.checked, searchInDescriptions.checked)
+                _searchFilter = true
+                hideDialog()
+            }
+
+            function reject() {
+                _searchFilter = false
+                hideDialog()
+            }
+
+            QGCLabel {
+                id:     searchForLabel
+                text:   "Search for:"
+            }
+
+            QGCTextField {
+                id:                 searchFor
+                anchors.topMargin:  defaultTextHeight / 3
+                anchors.top:        searchForLabel.bottom
+                width:              defaultTextWidth * 20
+            }
+
+            QGCLabel {
+                id:                 searchInLabel
+                anchors.topMargin:  defaultTextHeight
+                anchors.top:        searchFor.bottom
+                text:               "Search in:"
+            }
+
+            QGCCheckBox {
+                id:                 searchInName
+                anchors.topMargin:  defaultTextHeight / 3
+                anchors.top:        searchInLabel.bottom
+                text:               "Name"
+            }
+
+            QGCCheckBox {
+                id:                 searchInDescriptions
+                anchors.topMargin:  defaultTextHeight / 3
+                anchors.top:        searchInName.bottom
+                text:               "Descriptions"
+            }
+
+            QGCLabel {
+                anchors.topMargin:  defaultTextHeight
+                anchors.top:        searchInDescriptions.bottom
+                width:              parent.width
+                wrapMode:           Text.WordWrap
+                text:               "Hint: Leave 'Search For' blank and click Apply to list all parameters sorted by name."
+            }
+        }
+    }
 
     Component {
         id: factRowsComponent
@@ -84,7 +143,7 @@ QGCView {
             }
 
             Repeater {
-                model: controller.getFactsForGroup(componentId, group)
+                model: parameterNames
 
                 Column {
                     property Fact modelFact: controller.getParameterFact(componentId, modelData)
@@ -116,7 +175,6 @@ QGCView {
                             height:             parent.height
                             anchors.left:       valueLabel.right
                             verticalAlignment:	Text.AlignVCenter
-                            visible:            fullMode
                             text:               modelFact.shortDescription
                         }
 
@@ -126,7 +184,7 @@ QGCView {
 
                             onClicked: {
                                 __editorDialogFact = modelFact
-                                showDialog(editorDialogComponent, "Parameter Editor", fullMode ? 50 : -1, StandardButton.Cancel | StandardButton.Save)
+                                showDialog(editorDialogComponent, "Parameter Editor", 50, StandardButton.Cancel | StandardButton.Save)
                             }
                         }
                     }
@@ -142,6 +200,106 @@ QGCView {
         } // Column - Facts
     } // Component - factRowsComponent
 
+    Component {
+        id: groupedViewComponent
+
+        Item {
+            ScrollView {
+                id :	groupScroll
+                width:	defaultTextWidth * 25
+                height: parent.height
+
+                Column {
+                    Repeater {
+                        model: controller.componentIds
+
+                        Column {
+                            id: componentColumn
+
+                            readonly property int componentId: parseInt(modelData)
+
+                            QGCLabel {
+                                height:				contentHeight + (ScreenTools.defaultFontPixelHeight * 0.5)
+                                text:               "Component #: " + componentId.toString()
+                                verticalAlignment:	Text.AlignVCenter
+                                font.pixelSize:     ScreenTools.mediumFontPixelSize
+                            }
+
+                            Repeater {
+                                model: controller.getGroupsForComponent(componentColumn.componentId)
+
+                                Column {
+                                    QGCButton {
+                                        x:		__leftMargin
+                                        width: groupScroll.width - __leftMargin - __rightMargin
+                                        text:	modelData
+
+                                        onClicked: {
+                                            factRowsLoader.sourceComponent = null
+                                            factRowsLoader.componentId = componentId
+                                            factRowsLoader.group = modelData
+                                            factRowsLoader.sourceComponent = factRowsComponent
+                                        }
+                                    }
+
+                                    Item {
+                                        width:  1
+                                        height: ScreenTools.defaultFontPixelSize * 0.25
+                                    }
+                                } // Column - Group
+                            } // Repeater - Groups
+
+                            Item {
+                                height: 10
+                                width:	10
+                            }
+                        } // Column - Component
+                    } // Repeater - Components
+                } // Column - Component
+            } // ScrollView - Groups
+
+            ScrollView {
+                id:             factScrollView
+                anchors.left:   groupScroll.right
+                anchors.right:  parent.right
+                height:         parent.height
+
+                Loader {
+                    id:                 factRowsLoader
+                    width:              factScrollView.width
+                    sourceComponent:    factRowsComponent
+
+                    property int componentId:       controller.componentIds[0]
+                    property string group:          controller.getGroupsForComponent(controller.componentIds[0])[0]
+                    property var parameterNames:    controller.getParametersForGroup(componentId, group)
+                }
+            } // ScrollView - Facts
+        } // Item
+    } // Component - groupedViewComponent
+
+    Component {
+        id: searchResultsViewComponent
+
+        Item {
+            ScrollView {
+                id:             factScrollView
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height:         parent.height
+
+                Loader {
+                    id:                 factRowsLoader
+                    width:              factScrollView.width
+                    sourceComponent:    factRowsComponent
+
+                    property int componentId:       -1
+                    property string group:          "Search results"
+                    property var parameterNames:    _searchResults
+                }
+            } // ScrollView - Facts
+        } // Item
+    } // Component - sortedViewComponent
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
@@ -155,8 +313,8 @@ QGCView {
                 height: toolsButton.height
 
                 QGCLabel {
+                    id:             titleText
                     font.pixelSize: ScreenTools.largeFontPixelSize
-                    visible:        fullMode
                     text:           "PARAMETER EDITOR"
                 }
 
@@ -174,15 +332,17 @@ QGCView {
                             text:           "Reset all to defaults"
                             onTriggered:	controller.resetAllToDefaults()
                         }
+                        MenuItem {
+                            text:           "Search..."
+                            onTriggered:    showDialog(searchDialogComponent, "Parameter Search", 50, StandardButton.Reset | StandardButton.Apply)
+                        }
                         MenuSeparator { }
                         MenuItem {
-                            text:           "Load from file"
-                            visible:        fullMode
+                            text:           "Load from file..."
                             onTriggered:	controller.loadFromFile()
                         }
                         MenuItem {
-                            text:           "Save to file"
-                            visible:        fullMode
+                            text:           "Save to file..."
                             onTriggered:	controller.saveToFile()
                         }
                         MenuSeparator { }
@@ -200,80 +360,11 @@ QGCView {
                 width:	5
             }
 
-            Item {
-                width:  parent.width
-                height: parent.height - (lastSpacer.y + lastSpacer.height)
-
-                ScrollView {
-                    id :	groupScroll
-                    width:	defaultTextWidth * 25
-                    height: parent.height
-
-                    Column {
-                        Repeater {
-                            model: controller.componentIds
-
-                            Column {
-                                id: componentColumn
-
-                                readonly property int componentId: parseInt(modelData)
-
-                                QGCLabel {
-                                    height:				contentHeight + (ScreenTools.defaultFontPixelHeight * 0.5)
-                                    text:               "Component #: " + componentId.toString()
-                                    verticalAlignment:	Text.AlignVCenter
-                                    font.pixelSize:     ScreenTools.mediumFontPixelSize
-                                }
-
-                                Repeater {
-                                    model: controller.getGroupsForComponent(componentColumn.componentId)
-
-                                    Column {
-                                        QGCButton {
-                                            x:		__leftMargin
-                                            width: groupScroll.width - __leftMargin - __rightMargin
-                                            text:	modelData
-
-                                            onClicked: {
-                                                factRowsLoader.sourceComponent = null
-                                                factRowsLoader.componentId = componentId
-                                                factRowsLoader.group = modelData
-                                                factRowsLoader.sourceComponent = factRowsComponent
-                                            }
-                                        }
-
-                                        Item {
-                                            width:  1
-                                            height: ScreenTools.defaultFontPixelSize * 0.25
-                                        }
-                                    } // Column - Group
-                                } // Repeater - Groups
-
-                                Item {
-                                    height: 10
-                                    width:	10
-                                }
-                            } // Column - Component
-                        } // Repeater - Components
-                    } // Column - Component
-                } // ScrollView - Groups
-
-                ScrollView {
-                    id:             factScrollView
-                    anchors.left:   groupScroll.right
-                    anchors.right:  parent.right
-                    height:         parent.height
-
-                    Loader {
-                        id:     factRowsLoader
-                        width:  factScrollView.width
-
-                        property int componentId:   controller.componentIds[0]
-                        property string group:      controller.getGroupsForComponent(controller.componentIds[0])[0]
-                        sourceComponent:            factRowsComponent
-                    }
-                } // ScrollView - Facts
-            } // Item - Group ScrollView + Facts
+            Loader {
+                width:              parent.width
+                height:             parent.height - (lastSpacer.y + lastSpacer.height)
+                sourceComponent:    _searchFilter ? searchResultsViewComponent: groupedViewComponent
+            }
         } // Column - Outer
     } // QGCViewPanel
 } // QGCView
