@@ -2446,7 +2446,10 @@ void UAS::launch()
  */
 void UAS::armSystem()
 {
-    setModeArm(base_mode | MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+    // We specifically do not use setModeArm to change arming state. The APM flight stack does not support
+    // arm/disarm through the SET_MODE mavlink message. Instead we use COMMAND_LONG:MAV_CMD_COMPONENT_ARM_DISARM
+    // which works on both PX4 and APM flight stack.
+    executeCommand(MAV_CMD_COMPONENT_ARM_DISARM, 0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
 }
 
 /**
@@ -2455,12 +2458,19 @@ void UAS::armSystem()
  */
 void UAS::disarmSystem()
 {
-    setModeArm(base_mode & ~(MAV_MODE_FLAG_SAFETY_ARMED), custom_mode);
+    // We specifically do not use setModeArm to change arming state. The APM flight stack does not support
+    // arm/disarm through the SET_MODE mavlink message. Instead we use COMMAND_LONG:MAV_CMD_COMPONENT_ARM_DISARM
+    // which works on both PX4 and APM flight stack.
+    executeCommand(MAV_CMD_COMPONENT_ARM_DISARM, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
 }
 
 void UAS::toggleArmedState()
 {
-    setModeArm(base_mode ^ (MAV_MODE_FLAG_SAFETY_ARMED), custom_mode);
+    if (isArmed()) {
+        disarmSystem();
+    } else {
+        armSystem();
+    }
 }
 
 void UAS::goAutonomous()
