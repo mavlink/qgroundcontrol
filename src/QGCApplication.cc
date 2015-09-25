@@ -74,6 +74,7 @@
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
+#include "APM/APMFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
@@ -547,6 +548,7 @@ void QGCApplication::_createSingletons(void)
     
     // No dependencies
     firmwarePlugin = PX4FirmwarePlugin::_createSingleton();
+    firmwarePlugin = APMFirmwarePlugin::_createSingleton();
     
     // No dependencies
     FirmwarePluginManager* firmwarePluginManager = FirmwarePluginManager::_createSingleton();
@@ -628,6 +630,7 @@ void QGCApplication::_destroySingletons(void)
     FirmwarePluginManager::_deleteSingleton();
     GenericFirmwarePlugin::_deleteSingleton();
     PX4FirmwarePlugin::_deleteSingleton();
+    APMFirmwarePlugin::_deleteSingleton();
 }
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)

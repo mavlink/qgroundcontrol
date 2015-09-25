@@ -145,6 +145,9 @@ public:
     /// Provides access to uas from vehicle. Temporary workaround until AutoPilotPlugin is fully phased out.
     AutoPilotPlugin* autopilotPlugin(void) { return _autopilotPlugin; }
     
+    /// Provides access to the Firmware Plugin for this Vehicle
+    FirmwarePlugin* firmwarePlugin(void) { return _firmwarePlugin; }
+    
     QList<LinkInterface*> links(void);
     
     int manualControlReservedButtonCount(void);
