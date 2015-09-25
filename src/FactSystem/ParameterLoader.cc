@@ -387,11 +387,11 @@ Fact* ParameterLoader::getFact(int componentId, const QString& name)
     return _mapParameterName2Variant[componentId][name].value<Fact*>();
 }
 
-QStringList ParameterLoader::parameterNames(void)
+QStringList ParameterLoader::parameterNames(int componentId)
 {
 	QStringList names;
 	
-	foreach(QString paramName, _mapParameterName2Variant[_defaultComponentId].keys()) {
+	foreach(QString paramName, _mapParameterName2Variant[_actualComponentId(componentId)].keys()) {
 		names << paramName;
 	}
 	

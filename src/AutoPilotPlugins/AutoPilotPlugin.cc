@@ -157,9 +157,9 @@ Fact* AutoPilotPlugin::getFact(FactSystem::Provider_t provider, int componentId,
     return NULL;
 }
 
-QStringList AutoPilotPlugin::parameterNames(void)
+QStringList AutoPilotPlugin::parameterNames(int componentId)
 {
-	return _getParameterLoader()->parameterNames();
+	return _getParameterLoader()->parameterNames(componentId);
 }
 
 const QMap<int, QMap<QString, QStringList> >& AutoPilotPlugin::getGroupMap(void)
