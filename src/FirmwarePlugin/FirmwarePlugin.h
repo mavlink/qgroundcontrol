@@ -51,7 +51,9 @@ class FirmwarePlugin : public QGCSingleton
 public:
     /// Set of optional capabilites which firmware may support
     typedef enum {
-        SetFlightModeCapability,
+        SetFlightModeCapability,            ///< FirmwarePlugin::setFlightMode method is supported
+        MavCmdPreflightStorageCapability,   ///< MAV_CMD_PREFLIGHT_STORAGE is supported
+        
     } FirmwareCapabilities;
     
     /// @return true: Firmware supports all specified capabilites
@@ -76,11 +78,19 @@ public:
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) = 0;
     
+    /// FIXME: This isn't quite correct being here. All code for Joystick support is currently firmware specific
+    /// not just this. I'm going to try to change that. If not, this will need to be removed.
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
     /// The remainder can be assigned to Vehicle actions.
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     virtual int manualControlReservedButtonCount(void) = 0;
+    
+    /// Called before any mavlink message is processed by Vehicle such taht the firmwre plugin
+    /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
+    /// spec implementations such that the base code can remain mavlink generic.
+    ///     @param message[in,out] Mavlink message to adjust if needed.
+    virtual void adjustMavlinkMessage(mavlink_message_t* message) = 0;
     
 protected:
     FirmwarePlugin(QObject* parent = NULL) : QGCSingleton(parent) { }
