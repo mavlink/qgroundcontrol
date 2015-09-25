@@ -70,7 +70,7 @@ QGCView {
         QGCViewDialog {
 
             function accept() {
-                _searchResults = controller.searchParametersForComponent(-1, searchFor.text, searchInName.checked, searchInDescriptions.checked)
+                _searchResults = controller.searchParametersForComponent(-1, searchFor.text, true /*searchInName.checked*/, true /*searchInDescriptions.checked*/)
                 _searchFilter = true
                 hideDialog()
             }
@@ -92,6 +92,8 @@ QGCView {
                 width:              defaultTextWidth * 20
             }
 
+/*
+            // Leaving in for possible future use. We'll see if needed from user comments.
             QGCLabel {
                 id:                 searchInLabel
                 anchors.topMargin:  defaultTextHeight
@@ -112,10 +114,11 @@ QGCView {
                 anchors.top:        searchInName.bottom
                 text:               "Descriptions"
             }
+*/
 
             QGCLabel {
                 anchors.topMargin:  defaultTextHeight
-                anchors.top:        searchInDescriptions.bottom
+                anchors.top:        searchFor.bottom
                 width:              parent.width
                 wrapMode:           Text.WordWrap
                 text:               "Hint: Leave 'Search For' blank and click Apply to list all parameters sorted by name."
