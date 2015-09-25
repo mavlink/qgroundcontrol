@@ -117,13 +117,15 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
                 paramUnion.param_int32 = (int32_t)paramValue.param_value;
                 break;
             case MAV_PARAM_TYPE_REAL32:
-                // Already in param_float
+                paramUnion.param_float = paramValue.param_value;
                 break;
             default:
                 qCritical() << "Invalid/Unsupported data type used in parameter:" << paramValue.param_type;
         }
         
         paramValue.param_value = paramUnion.param_float;
+        
+        mavlink_msg_param_value_encode(message->sysid, message->compid, message, &paramValue);
         
     } else if (message->msgid == MAVLINK_MSG_ID_PARAM_SET) {
         mavlink_param_set_t     paramSet;
@@ -161,6 +163,8 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
             default:
                 qCritical() << "Invalid/Unsupported data type used in parameter:" << paramSet.param_type;
         }
+        
+        mavlink_msg_param_set_encode(message->sysid, message->compid, message, &paramSet);
     }
 
     // FIXME: Need to implement mavlink message severity adjustment
