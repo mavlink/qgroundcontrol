@@ -150,7 +150,7 @@ void JoystickConfigController::_setupCurrentState(void)
 
 void JoystickConfigController::_axisValueChanged(int axis, int value)
 {
-    if (axis >= 0 && axis <= _axisMax) {
+    if (axis >= 0 && axis < _axisMax) {
         // We always update raw values
         _axisRawValue[axis] = value;
         emit axisValueChanged(axis, _axisRawValue[axis]);
