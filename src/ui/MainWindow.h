@@ -49,7 +49,6 @@ This file is part of the QGROUNDCONTROL project
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
-#include "ParameterEditorWidget.h"
 #include "opmapcontrol.h"
 #include "MainToolBar.h"
 #include "LogCompressor.h"
@@ -291,7 +290,6 @@ private:
     static const char* _uasListDockWidgetName;
     static const char* _waypointsDockWidgetName;
     static const char* _mavlinkDockWidgetName;
-    static const char* _parametersDockWidgetName;
     static const char* _customCommandWidgetName;
     static const char* _filesDockWidgetName;
     static const char* _uasStatusDetailsDockWidgetName;
