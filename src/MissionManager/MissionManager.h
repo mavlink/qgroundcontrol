@@ -38,7 +38,7 @@ class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionManagerLog)
 
-class MissionManager : public QThread
+class MissionManager : public QObject
 {
     Q_OBJECT
     
@@ -73,10 +73,6 @@ signals:
     void canEditChanged(bool canEdit);
     void newMissionItemsAvailable(void);
     
-    // Internal signals
-    void _requestMissionItemsOnThread(void);
-    void _writeMissionItemsOnThread(void);
-    
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
     void _ackTimeout(void);
@@ -98,12 +94,7 @@ private:
     void _handleMissionAck(const mavlink_message_t& message);
     void _requestNextMissionItem(int sequenceNumber);
     void _clearMissionItems(void);
-    void _requestMissionItems(void);
-    void _writeMissionItems(void);
 
-    // Overrides from QThread
-    void run(void);
-    
 private:
     Vehicle*            _vehicle;
     
