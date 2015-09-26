@@ -188,3 +188,8 @@ void PX4FirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
     
     // PX4 Flight Stack plugin does no message adjustment
 }
+
+bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+{
+    return capabilities == MavCmdPreflightStorageCapability;
+}
