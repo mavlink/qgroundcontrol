@@ -346,6 +346,10 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
             case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
                 _handleFTP(msg);
                 break;
+                
+            case MAVLINK_MSG_ID_COMMAND_LONG:
+                _handleCommandLong(msg);
+                break;
 
             default:
                 qDebug() << "MockLink: Unhandled mavlink message, id:" << msg.msgid;
@@ -724,3 +728,19 @@ void MockLink::_handleFTP(const mavlink_message_t& msg)
     Q_ASSERT(_fileServer);
     _fileServer->handleFTPMessage(msg);
 }
+
+void MockLink::_handleCommandLong(const mavlink_message_t& msg)
+{
+    mavlink_command_long_t request;
+    
+    mavlink_msg_command_long_decode(&msg, &request);
+
+    if (request.command == MAV_CMD_COMPONENT_ARM_DISARM) {
+        if (request.param1 == 0.0f) {
+            _mavBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+        } else {
+            _mavBaseMode |= MAV_MODE_FLAG_SAFETY_ARMED;
+        }
+    }
+}
+
