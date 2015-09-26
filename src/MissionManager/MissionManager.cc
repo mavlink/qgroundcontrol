@@ -34,6 +34,7 @@ MissionManager::MissionManager(Vehicle* vehicle)
     : QThread()
     , _vehicle(vehicle)
     , _cMissionItems(0)
+    , _canEdit(true)
     , _ackTimeoutTimer(NULL)
     , _retryAck(AckNone)
 {
@@ -230,6 +231,11 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
                                         missionItem.frame,
                                         missionItem.command);
     _missionItems.append(item);
+    
+    if (!item->canEdit()) {
+        _canEdit = false;
+        emit canEditChanged(false);
+    }
     
     int nextSequenceNumber = missionItem.seq + 1;
     if (nextSequenceNumber == _cMissionItems) {

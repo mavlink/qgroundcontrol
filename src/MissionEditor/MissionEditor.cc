@@ -25,6 +25,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ScreenToolsController.h"
 #include "MultiVehicleManager.h"
 #include "MissionManager.h"
+#include "QGCFileDialog.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -35,6 +36,7 @@ const char* MissionEditor::_settingsGroup = "MissionEditor";
 MissionEditor::MissionEditor(QWidget *parent)
     : QGCQmlWidgetHolder(parent)
     , _missionItems(NULL)
+    , _canEdit(true)
 {
     // Get rid of layout default margins
     QLayout* pl = layout();
@@ -66,10 +68,14 @@ void MissionEditor::_newMissionItemsAvailable(void)
         _missionItems->deleteLater();
     }
     
-    _missionItems = MultiVehicleManager::instance()->activeVehicle()->missionManager()->copyMissionItems();
+    MissionManager* missionManager = MultiVehicleManager::instance()->activeVehicle()->missionManager();
+    
+    _canEdit = missionManager->canEdit();
+    _missionItems = missionManager->copyMissionItems();
     _reSequence();
     
     emit missionItemsChanged();
+    emit canEditChanged(_canEdit);
 }
 
 void MissionEditor::getMissionItems(void)
@@ -77,6 +83,8 @@ void MissionEditor::getMissionItems(void)
     Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     
     if (activeVehicle) {
+        MissionManager* missionManager = activeVehicle->missionManager();
+        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditor::_newMissionItemsAvailable);
         activeVehicle->missionManager()->requestMissionItems();
     }
 }
@@ -92,6 +100,10 @@ void MissionEditor::setMissionItems(void)
 
 int MissionEditor::addMissionItem(QGeoCoordinate coordinate)
 {
+    if (!_canEdit) {
+        qWarning() << "addMissionItem called with _canEdit == false";
+    }
+    
     MissionItem * newItem = new MissionItem(this, _missionItems->count(), coordinate);
     if (_missionItems->count() == 0) {
         newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
@@ -111,12 +123,22 @@ void MissionEditor::_reSequence(void)
 
 void MissionEditor::removeMissionItem(int index)
 {
+    if (!_canEdit) {
+        qWarning() << "addMissionItem called with _canEdit == false";
+        return;
+    }
+    
     _missionItems->removeAt(index);
     _reSequence();
 }
 
 void MissionEditor::moveUp(int index)
 {
+    if (!_canEdit) {
+        qWarning() << "addMissionItem called with _canEdit == false";
+        return;
+    }
+    
     if (_missionItems->count() < 2 || index <= 0 || index >= _missionItems->count()) {
         return;
     }
@@ -135,6 +157,11 @@ void MissionEditor::moveUp(int index)
 
 void MissionEditor::moveDown(int index)
 {
+    if (!_canEdit) {
+        qWarning() << "addMissionItem called with _canEdit == false";
+        return;
+    }
+    
     if (_missionItems->count() < 2 || index >= _missionItems->count() - 1) {
         return;
     }
@@ -149,4 +176,77 @@ void MissionEditor::moveDown(int index)
     _missionItems->insert(index + 1, new MissionItem(item1, _missionItems));
     
     _reSequence();
+}
+
+void MissionEditor::loadMissionFromFile(void)
+{
+    QString errorString;
+    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load");
+    
+    if (filename.isEmpty()) {
+        return;
+    }
+    
+    _missionItems->clear();
+    _canEdit = true;
+    
+    QFile file(filename);
+    
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        errorString = file.errorString();
+    } else {
+        QTextStream in(&file);
+        
+        const QStringList& version = in.readLine().split(" ");
+        
+        if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "120")) {
+            errorString = "The mission file is not compatible with the current version of QGroundControl.";
+        } else {
+            while (!in.atEnd()) {
+                MissionItem* item = new MissionItem();
+                
+                if (item->load(in)) {
+                    _missionItems->append(item);
+                    
+                    if (!item->canEdit()) {
+                        _canEdit = false;
+                    }
+                } else {
+                    errorString = "The mission file is corrupted.";
+                    break;
+                }
+            }
+        }
+        
+    }
+    
+    if (!errorString.isEmpty()) {
+        _missionItems->clear();
+    }
+    
+    emit canEditChanged(_canEdit);
+}
+
+void MissionEditor::saveMissionToFile(void)
+{
+    QString errorString;
+    QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to");
+    
+    if (filename.isEmpty()) {
+        return;
+    }
+    
+    QFile file(filename);
+    
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        errorString = file.errorString();
+    } else {
+        QTextStream out(&file);
+        
+        out << "QGC WPL 120\r\n";   // Version string
+        
+        for (int i=0; i<_missionItems->count(); i++) {
+            qobject_cast<MissionItem*>(_missionItems->get(i))->save(out);
+        }
+    }
 }
