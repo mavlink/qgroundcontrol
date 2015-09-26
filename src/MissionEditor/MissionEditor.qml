@@ -167,6 +167,20 @@ QGCView {
 
                                 onTriggered: controller.saveMissionToFile()
                             }
+
+                            MenuSeparator { }
+
+                            MenuItem {
+                                text:       "Move to current vehicle position"
+                                enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
+
+                                property var activeVehicle: multiVehicleManager.activeVehicle
+
+                                onTriggered: {
+                                    editorMap.latitude = activeVehicle.latitude
+                                    editorMap.longitude = activeVehicle.longitude
+                                }
+                            }
                         }
                     }
 
