@@ -90,11 +90,11 @@ public:
                            FirmwareVehicleType_t vehicle = DefaultVehicleFirmware)
             : autopilotStackType(stack), firmwareType(firmware), firmwareVehicleType(vehicle) {}
 
-        bool operator==(const FirmwareIdentifier& firmwareIDTrinity) const
+        bool operator==(const FirmwareIdentifier& firmwareId) const
         {
-            return (firmwareIDTrinity.autopilotStackType == autopilotStackType &&
-                    firmwareIDTrinity.firmwareType == firmwareType &&
-                    firmwareIDTrinity.firmwareVehicleType == firmwareVehicleType);
+            return (firmwareId.autopilotStackType == autopilotStackType &&
+                    firmwareId.firmwareType == firmwareType &&
+                    firmwareId.firmwareVehicleType == firmwareVehicleType);
         }
 
         // members
@@ -173,7 +173,7 @@ private slots:
     void _linkDisconnected(LinkInterface* link);
 
 private:
-    void _getFirmwareFile(FirmwareIdentifier firmwareIDTrinity);
+    void _getFirmwareFile(FirmwareIdentifier firmwareId);
     void _initFirmwareHash();
     void _downloadFirmware(void);
     void _appendStatusLog(const QString& text, bool critical = false);
@@ -228,6 +228,6 @@ private:
 };
 
 // global hashing function
-uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareIDTrinity);
+uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId);
 
 #endif

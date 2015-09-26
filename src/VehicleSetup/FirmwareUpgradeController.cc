@@ -38,11 +38,11 @@ struct FirmwareToUrlElement_t {
     QString                                            url;
 };
 
-uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareIDTrinity)
+uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 {
-    return ( firmwareIDTrinity.autopilotStackType |
-             (firmwareIDTrinity.firmwareType << 8) |
-             (firmwareIDTrinity.firmwareVehicleType << 16) );
+    return ( firmwareId.autopilotStackType |
+             (firmwareId.firmwareType << 8) |
+             (firmwareId.firmwareVehicleType << 16) );
 }
 
 /// @Brief Constructs a new FirmwareUpgradeController Widget. This widget is used within the PX4VehicleConfig set of screens.
@@ -308,7 +308,7 @@ void FirmwareUpgradeController::_bootloaderSyncFailed(void)
 }
 
 /// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
-void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareIDTrinity)
+void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
     // make sure the firmware hashes are populated
     _initFirmwareHash();
@@ -342,20 +342,20 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareIDTr
             break;
     }
     
-    if (prgFirmware.isEmpty() && firmwareIDTrinity.firmwareType != CustomFirmware) {
+    if (prgFirmware.isEmpty() && firmwareId.firmwareType != CustomFirmware) {
         _errorCancel("Attempting to flash an unknown board type, you must select 'Custom firmware file'");
         return;
     }
     
-    if (firmwareIDTrinity.firmwareType == CustomFirmware) {
+    if (firmwareId.firmwareType == CustomFirmware) {
         _firmwareFilename = QGCFileDialog::getOpenFileName(NULL,                                                                // Parent to main window
                                                            "Select Firmware File",                                              // Dialog Caption
                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
                                                            "Firmware Files (*.px4 *.bin *.ihx)");                               // File filter
     } else {
 
-        if (prgFirmware.contains(firmwareIDTrinity)) {
-            _firmwareFilename = prgFirmware.value(firmwareIDTrinity);
+        if (prgFirmware.contains(firmwareId)) {
+            _firmwareFilename = prgFirmware.value(firmwareId);
         } else {
             _errorCancel("Unable to find specified firmware download location");
             return;
