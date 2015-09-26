@@ -35,6 +35,9 @@
 #include "MavlinkQmlSingleton.h"
 #include "QmlObjectListModel.h"
 #include "Fact.h"
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(MissionItemLog)
 
 class MissionItem : public QObject
 {
@@ -104,6 +107,9 @@ public:
     void setYawDegrees(double yaw);
     
     // C++ only methods
+    
+    /// Returns true if this item can be edited in the ui
+    bool canEdit(void);
 
     double latitude(void)  const { return _latitudeFact->value().toDouble(); }
     double longitude(void) const { return _longitudeFact->value().toDouble(); }

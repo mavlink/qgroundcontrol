@@ -47,13 +47,17 @@ public:
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
     
-    Q_PROPERTY(bool                 inProgress   READ inProgress    CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  missionItems READ missionItems  CONSTANT)
+    Q_PROPERTY(bool                 inProgress      READ inProgress     CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems   CONSTANT)
+    Q_PROPERTY(bool                 canEdit         READ canEdit        NOTIFY  canEditChanged)
     
     // Property accessors
     
     bool inProgress(void) { return _retryAck != AckNone; }
     QmlObjectListModel* missionItems(void) { return &_missionItems; }
+    bool canEdit(void) { return _canEdit; }
+    
+    // C++ methods
     
     void requestMissionItems(void);
     
@@ -63,9 +67,13 @@ public:
     /// Returns a copy of the current set of mission items. Caller is responsible for
     /// freeing returned object.
     QmlObjectListModel* copyMissionItems(void);
-    
+
 signals:
+    // Public signals
+    void canEditChanged(bool canEdit);
     void newMissionItemsAvailable(void);
+    
+    // Internal signals
     void _requestMissionItemsOnThread(void);
     void _writeMissionItemsOnThread(void);
     
@@ -100,6 +108,7 @@ private:
     Vehicle*            _vehicle;
     
     int                 _cMissionItems;     ///< Mission items on vehicle
+    bool                _canEdit;           ///< true: Mission items are editable in the ui
 
     QTimer*             _ackTimeoutTimer;
     AckType_t           _retryAck;

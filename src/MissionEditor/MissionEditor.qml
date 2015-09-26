@@ -40,8 +40,8 @@ QGCView {
     readonly property real  _defaultLatitude:   37.803784
     readonly property real  _defaultLongitude:  -122.462276
     readonly property int   _decimalPlaces:     7
-    readonly property real  _horizontalMargin:   ScreenTools.defaultFontPixelWidth / 2
-    readonly property real  _verticalMargin:     ScreenTools.defaultFontPixelHeight / 2
+    readonly property real  _horizontalMargin:  ScreenTools.defaultFontPixelWidth / 2
+    readonly property real  _verticalMargin:    ScreenTools.defaultFontPixelHeight / 2
     readonly property var   _activeVehicle:     multiVehicleManager.activeVehicle
 
     property var _missionItems: controller.missionItems
@@ -153,6 +153,20 @@ QGCView {
 
                                 onTriggered: controller.setMissionItems()
                             }
+
+                            MenuSeparator { }
+
+                            MenuItem {
+                                text:       "Load mission from file..."
+
+                                onTriggered: controller.loadMissionFromFile()
+                            }
+
+                            MenuItem {
+                                text:       "Save mission to file..."
+
+                                onTriggered: controller.saveMissionToFile()
+                            }
                         }
                     }
 
@@ -166,7 +180,7 @@ QGCView {
                         anchors.bottom:     parent.bottom
                         spacing:            _verticalMargin
                         orientation:        ListView.Vertical
-                        model:              controller.missionItems
+                        model:              controller.canEdit ? controller.missionItems : 0
 
                         property real _maxItemHeight: 0
 
@@ -200,6 +214,18 @@ QGCView {
                         visible:            controller.missionItems.count == 0
                         wrapMode:           Text.WordWrap
                         text:               "Click in the map to add Mission Items"
+                    }
+
+                    QGCLabel {
+                        anchors.topMargin:  _verticalMargin
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        anchors.top:        toolsButton.bottom
+                        anchors.bottom:     parent.bottom
+                        visible:            !controller.canEdit
+                        wrapMode:           Text.WordWrap
+                        text:               "The set of mission items you have loaded cannot be edited by QGroundControl. " +
+                                            "You will only be able to save these to a file, or send them to a vehicle."
                     }
                 } // Item
             } // Rectangle - mission item list
