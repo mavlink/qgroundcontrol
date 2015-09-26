@@ -165,7 +165,9 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
                     }
                     break;
                 case SerialPortIds::threeDRRadioVendorId:
-                    if (info.productIdentifier() == SerialPortIds::threeDRRadioProductId) {
+                case SerialPortIds::cloneThreeDRRadioVendorId:
+                    if (info.productIdentifier() == SerialPortIds::threeDRRadioProductId ||
+                        info.productIdentifier() == SerialPortIds::cloneThreeDRRadioProductId) {
                         qCDebug(FirmwareUpgradeLog) << "Found 3DR Radio";
                         type = FoundBoard3drRadio;
                         found = true;
