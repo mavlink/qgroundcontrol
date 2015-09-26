@@ -39,9 +39,7 @@ public:
     static const int px4FlowProductId =                     21;     ///< Product ID for PX4 Flow board
 
     static const int threeDRRadioVendorId =                 1027;   ///< Vendor ID for 3DR Radio
-    static const int cloneThreeDRRadioVendorId =            4292;   ///< Vendor ID found on clone 3DR Radio
     static const int threeDRRadioProductId =                24597;  ///< Product ID for 3DR Radio
-    static const int cloneThreeDRRadioProductId =           60000;  ///< Product ID found on clone 3DR Radio
 };
 
 #endif
