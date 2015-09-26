@@ -55,7 +55,7 @@ public:
             AutoPilotStackPX4,
             AutoPilotStackAPM,
             PX4Flow,
-            PX4Radio
+            ThreeDRRadio
         } AutoPilotStackType_t;
 
         typedef enum {

@@ -131,7 +131,7 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
                 // Radio always flashes latest firmware, so we can start right away without
                 // any further user input.
                 _startFlashWhenBootloaderFound = true;
-                _startFlashWhenBootloaderFoundFirmwareIdentity = FirmwareIdentifier(PX4Radio,
+                _startFlashWhenBootloaderFoundFirmwareIdentity = FirmwareIdentifier(ThreeDRRadio,
                                                                                     StableFirmware,
                                                                                     DefaultVehicleFirmware);
             }
@@ -265,7 +265,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
 
     /////////////////////////////// 3dr radio firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rg3DRRadioFirmwareArray[] = {
-        { PX4Flow, StableFirmware, DefaultVehicleFirmware, "http://firmware.diydrones.com/SiK/latest/radio~hm_trp.ihx"}
+        { ThreeDRRadio, StableFirmware, DefaultVehicleFirmware, "http://firmware.diydrones.com/SiK/beta/radio~hm_trp.ihx"}
     };
 
     // populate hashes now
