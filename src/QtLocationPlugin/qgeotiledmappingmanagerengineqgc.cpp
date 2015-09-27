@@ -121,45 +121,44 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     //    qDebug() << "Mapping cache directory:" << cacheDir;
     //}
 
-    QGeoTileCache *tileCache = createTileCacheWithDir(cacheDir);
-
-    int cacheLimit = 0;
-    if (parameters.contains(QStringLiteral("mapping.cache.disk.size"))) {
-      bool ok = false;
-      cacheLimit = parameters.value(QStringLiteral("mapping.cache.disk.size")).toString().toInt(&ok);
-      if (!ok)
-          cacheLimit = 0;
+    QGeoTileCache* pTileCache = tileCache();
+    if(pTileCache)
+    {
+        int cacheLimit = 0;
+        //-- Disk Cache
+        if (parameters.contains(QStringLiteral("mapping.cache.disk.size"))) {
+          bool ok = false;
+          cacheLimit = parameters.value(QStringLiteral("mapping.cache.disk.size")).toString().toInt(&ok);
+          if (!ok)
+              cacheLimit = 0;
+        }
+        if(!cacheLimit)
+        {
+#ifdef __mobile__
+            cacheLimit = 128 * 1024 * 1024;
+#else
+            cacheLimit = 1024 * 1024 * 1024;
+#endif
+        }
+        pTileCache->setMaxDiskUsage(cacheLimit);
+        //-- Memory Cache
+        cacheLimit = 0;
+        if (parameters.contains(QStringLiteral("mapping.cache.memory.size"))) {
+          bool ok = false;
+          cacheLimit = parameters.value(QStringLiteral("mapping.cache.memory.size")).toString().toInt(&ok);
+          if (!ok)
+              cacheLimit = 0;
+        }
+        if(!cacheLimit)
+        {
+#ifdef __mobile__
+            cacheLimit = 16 * 1024 * 1024;
+#else
+            cacheLimit = 128 * 1024 * 1024;
+#endif
+        }
+        pTileCache->setMaxMemoryUsage(cacheLimit);
     }
-    if(!cacheLimit)
-        // QGC Default
-        cacheLimit = 1024 * 1024 * 1024;
-    tileCache->setMaxDiskUsage(cacheLimit);
-    //qDebug() << "Disk caching limit:" << cacheLimit;
-
-    cacheLimit = 0;
-    if (parameters.contains(QStringLiteral("mapping.cache.memory.size"))) {
-      bool ok = false;
-      cacheLimit = parameters.value(QStringLiteral("mapping.cache.memory.size")).toString().toInt(&ok);
-      if (!ok)
-          cacheLimit = 0;
-    }
-    if(!cacheLimit)
-        // QGC Default
-        cacheLimit = 10 * 1024 * 1024;
-    tileCache->setMaxMemoryUsage(cacheLimit);
-    //qDebug() << "Memory caching limit:" << cacheLimit;
-
-    cacheLimit = 0;
-    if (parameters.contains(QStringLiteral("mapping.cache.texture.size"))) {
-      bool ok = false;
-      cacheLimit = parameters.value(QStringLiteral("mapping.cache.texture.size")).toString().toInt(&ok);
-      if (!ok)
-          cacheLimit = 0;
-    }
-    if(!cacheLimit)
-        // QGC Default
-        cacheLimit = 10 * 1024 * 1024;
-    tileCache->setExtraTextureUsage(cacheLimit);
 
     *error = QGeoServiceProvider::NoError;
     errorString->clear();
