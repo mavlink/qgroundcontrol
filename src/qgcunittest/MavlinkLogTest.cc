@@ -183,7 +183,7 @@ void MavlinkLogTest::_connectLogNoArm_test(void)
 
 void MavlinkLogTest::_connectLogArm_test(void)
 {
-    //_connectLogWorker(true);
+    _connectLogWorker(true);
 }
 
 void MavlinkLogTest::_deleteTempLogFiles_test(void)
