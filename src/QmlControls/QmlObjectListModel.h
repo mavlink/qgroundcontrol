@@ -65,6 +65,7 @@ private:
     QList<QObject*> _objectList;
         
     static const int ObjectRole;
+    static const int TextRole;
 };
 
 #endif

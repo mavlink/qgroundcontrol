@@ -2784,9 +2784,8 @@ void UAS::home()
     double latitude = HomePositionManager::instance()->getHomeLatitude();
     double longitude = HomePositionManager::instance()->getHomeLongitude();
     double altitude = HomePositionManager::instance()->getHomeAltitude();
-    int frame = HomePositionManager::instance()->getHomeFrame();
 
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_CONTINUE, MAV_GOTO_HOLD_AT_CURRENT_POSITION, frame, 0, latitude, longitude, altitude);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_CONTINUE, MAV_GOTO_HOLD_AT_CURRENT_POSITION, MAV_FRAME_GLOBAL, 0, latitude, longitude, altitude);
     _vehicle->sendMessage(msg);
 }
 

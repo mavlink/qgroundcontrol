@@ -609,7 +609,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     
     _storeCurrentViewState();
     storeSettings();
-    HomePositionManager::instance()->storeSettings();
     event->accept();
 }
 
