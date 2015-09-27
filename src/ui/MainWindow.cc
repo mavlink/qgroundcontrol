@@ -822,6 +822,8 @@ void MainWindow::_storeCurrentViewState(void)
 {
     // HIL dock widgets are dynamic and are not part of the saved state
     _hideAllHilDockWidgets();
+    
+#ifndef __mobile__
     // Save list of visible widgets
     bool firstWidget = true;
     QString widgetNames = "";
@@ -835,6 +837,7 @@ void MainWindow::_storeCurrentViewState(void)
         }
     }
     settings.setValue(_getWindowStateKey() + "WIDGETS", widgetNames);
+#endif
     settings.setValue(_getWindowStateKey(), saveState());
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
 }
@@ -905,6 +908,7 @@ void MainWindow::_loadCurrentViewState(void)
     // Hide all widgets from previous view
     _hideAllDockWidgets();
 
+#ifndef __mobile__
     // Restore the widgets for the new view
     QString widgetNames = settings.value(_getWindowStateKey() + "WIDGETS", defaultWidgets).toString();
     qDebug() << widgetNames;
@@ -915,6 +919,7 @@ void MainWindow::_loadCurrentViewState(void)
             _showDockWidget(widgetName, true);
         }
     }
+#endif
 
     if (settings.contains(_getWindowStateKey())) {
         restoreState(settings.value(_getWindowStateKey()).toByteArray());
