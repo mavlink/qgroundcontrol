@@ -29,6 +29,7 @@
 #include <QDebug>
 
 const int QmlObjectListModel::ObjectRole = Qt::UserRole;
+const int QmlObjectListModel::TextRole = Qt::UserRole + 1;
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : QAbstractListModel(parent)
@@ -60,6 +61,8 @@ QVariant QmlObjectListModel::data(const QModelIndex &index, int role) const
     
     if (role == ObjectRole) {
         return QVariant::fromValue(_objectList[index.row()]);
+    } else if (role == TextRole) {
+        return QVariant::fromValue(_objectList[index.row()]->objectName());
     } else {
         return QVariant();
     }
@@ -70,6 +73,7 @@ QHash<int, QByteArray> QmlObjectListModel::roleNames(void) const
     QHash<int, QByteArray> hash;
     
     hash[ObjectRole] = "object";
+    hash[TextRole] = "text";
     
     return hash;
 }

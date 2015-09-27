@@ -264,6 +264,7 @@ HEADERS += \
     src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
+    src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
     src/SerialPortIds.h \
     src/uas/FileManager.h \
@@ -394,6 +395,7 @@ SOURCES += \
     src/QGCTemporaryFile.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
+    src/QmlControls/QGroundControlQmlGlobal.cc \
     src/QmlControls/QmlObjectListModel.cc \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
