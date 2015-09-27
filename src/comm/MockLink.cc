@@ -98,6 +98,7 @@ MockLink::MockLink(MockConfiguration* config) :
 
 MockLink::~MockLink(void)
 {
+    qDebug() << "MockLink destructor";
     _disconnect();
 }
 
@@ -121,7 +122,8 @@ bool MockLink::_disconnect(void)
 {
     if (_connected) {
         _connected = false;
-        exit();
+        quit();
+        wait();
         emit disconnected();
     }
 
