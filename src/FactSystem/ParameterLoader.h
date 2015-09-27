@@ -69,8 +69,7 @@ public:
 						 const QString& name);          ///< fact name
 	
 	/// Returns all parameter names
-	/// FIXME: component id missing
-	QStringList parameterNames(void);
+	QStringList parameterNames(int componentId);
     
     /// Returns the specified Fact.
     /// WARNING: Will assert if parameter does not exists. If that possibily exists, check for existince first with

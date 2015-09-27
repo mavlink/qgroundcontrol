@@ -264,6 +264,7 @@ HEADERS += \
     src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
+    src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
     src/SerialPortIds.h \
     src/uas/FileManager.h \
@@ -335,7 +336,6 @@ HEADERS += \
     src/ui/WaypointViewOnlyView.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
-    src/ViewWidgets/ParameterEditorWidget.h \
     src/ViewWidgets/ViewWidgetController.h \
     src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
@@ -395,6 +395,7 @@ SOURCES += \
     src/QGCTemporaryFile.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
+    src/QmlControls/QGroundControlQmlGlobal.cc \
     src/QmlControls/QmlObjectListModel.cc \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
@@ -464,7 +465,6 @@ SOURCES += \
     src/ui/WaypointViewOnlyView.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
-    src/ViewWidgets/ParameterEditorWidget.cc \
     src/ViewWidgets/ViewWidgetController.cc \
     src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc
@@ -578,6 +578,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
+    src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
     src/Vehicle/MultiVehicleManager.h \
@@ -614,6 +615,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
+    src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \

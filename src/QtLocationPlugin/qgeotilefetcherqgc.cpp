@@ -55,7 +55,13 @@
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)
     : QGeoTileFetcher(parent)
     , m_networkManager(new QNetworkAccessManager(this))
-    , m_userAgent("Qt Application")
+#if defined Q_OS_MACX
+    , m_userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0")
+#elif defined Q_OS_WIN32
+    , m_userAgent("Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.1.7) Gecko/20091221 Firefox/3.5.7")
+#else
+    , m_userAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:21.0) Gecko/20130331 Firefox/21.0")
+#endif
     , m_UrlFactory(NULL)
 {
     QStringList langs = QLocale::system().uiLanguages();

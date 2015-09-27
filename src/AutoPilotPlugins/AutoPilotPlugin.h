@@ -81,8 +81,7 @@ public:
     Q_INVOKABLE bool parameterExists(int componentId, const QString& name);
 	
 	/// Returns all parameter names
-	/// FIXME: component id missing, generic to fact
-	QStringList parameterNames(void);
+	QStringList parameterNames(int componentId);
 	
 	/// Returns the specified parameter Fact from the default component
 	/// WARNING: Returns a default Fact if parameter does not exists. If that possibility exists, check for existince first with

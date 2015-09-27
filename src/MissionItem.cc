@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "MissionItem.h"
 
+QGC_LOGGING_CATEGORY(MissionItemLog, "MissionItemLog")
 
 QDebug operator<<(QDebug dbg, const MissionItem& missionItem)
 {
@@ -313,11 +314,19 @@ void MissionItem::setAction(int /*MAV_CMD*/ action)
     if (_command != action) {
         _command = (MavlinkQmlSingleton::Qml_MAV_CMD)action;
 
-        // Flick defaults according to WP type
+        // Fix defaults according to WP type
 
         if (_command == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
             // We default to 15 degrees minimum takeoff pitch
             setParam1(15.0);
+        }
+        
+        if (specifiesCoordinate()) {
+            if (_frame != MAV_FRAME_GLOBAL && _frame != MAV_FRAME_GLOBAL_RELATIVE_ALT) {
+                setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
+            }
+        } else {
+            setFrame(MAV_FRAME_MISSION);
         }
 
         emit changed(this);
@@ -757,4 +766,33 @@ void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
     setLatitude(coordinate.latitude());
     setLongitude(coordinate.longitude());
     setAltitude(coordinate.altitude());
+}
+
+bool MissionItem::canEdit(void)
+{
+    bool found = false;
+    
+    for (int i=0; i<_cMavCmd2Name; i++) {
+        if (_rgMavCmd2Name[i].command == (MAV_CMD)_command) {
+            found = true;
+            break;
+        }
+    }
+    
+    if (found) {
+        if (!_autocontinue) {
+            qCDebug(MissionItemLog) << "canEdit false due to _autocontinue != true";
+            return false;
+        }
+        
+        if (_frame != MAV_FRAME_GLOBAL && _frame != MAV_FRAME_GLOBAL_RELATIVE_ALT && _frame != MAV_FRAME_MISSION) {
+            qCDebug(MissionItemLog) << "canEdit false due unsupported frame type:" << _frame;
+            return false;
+        }
+        
+        return true;
+    } else {
+        qCDebug(MissionItemLog) << "canEdit false due unsupported command:" << _command;
+        return false;
+    }
 }
