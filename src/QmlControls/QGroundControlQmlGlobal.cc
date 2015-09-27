@@ -24,19 +24,16 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "FactSystemTestGeneric.h"
-#include "QGCMAVLink.h"
+#include "QGroundControlQmlGlobal.h"
 
-UT_REGISTER_TEST(FactSystemTestGeneric)
-
-/// FactSystem Unit Test for PX4 autpilot
-FactSystemTestGeneric::FactSystemTestGeneric(void)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
+    : QObject(parent)
+    , _homePositionManager(HomePositionManager::instance())
 {
-    
+
 }
 
-void FactSystemTestGeneric::init(void)
+QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 {
-    UnitTest::init();
-    _init(MAV_AUTOPILOT_GENERIC);
+
 }

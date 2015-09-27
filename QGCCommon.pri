@@ -157,7 +157,7 @@ MacBuild {
     CONFIG += x86_64
     CONFIG -= x86
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-    QMAKE_MAC_SDK = macosx10.9
+    QMAKE_MAC_SDK = macosx10.11
 }
 
 LinuxBuild {

@@ -74,12 +74,15 @@
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
+#include "APM/APMFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
 #include "JoystickManager.h"
 #include "QmlObjectListModel.h"
 #include "MissionManager.h"
+#include "QGroundControlQmlGlobal.h"
+#include "HomePositionManager.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -122,6 +125,11 @@ static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
 static QObject* mavlinkQmlSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     return new MavlinkQmlSingleton;
+}
+
+static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    return new QGroundControlQmlGlobal;
 }
 
 #if defined(QGC_GST_STREAMING)
@@ -297,14 +305,15 @@ void QGCApplication::_initCommon(void)
     
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
     
-    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",    "Can only reference, cannot create");
-    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",   "Can only reference, cannot create");
-    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",            "Can only reference, cannot create");
-    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",        "Can only reference, cannot create");
-    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",     "Can only reference, cannot create");
-    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",    "Reference only");
-    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",           "Reference only");
-    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel", "Reference only");
+    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",        "Reference only");
+    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",       "Reference only");
+    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",                "Reference only");
+    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",            "Reference only");
+    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",         "Reference only");
+    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",        "Reference only");
+    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",               "Reference only");
+    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
+    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl",                  1, 0, "HomePositionManager",    "Reference only");
     
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
@@ -322,8 +331,9 @@ void QGCApplication::_initCommon(void)
 #endif
     
     // Register Qml Singletons
-    qmlRegisterSingletonType<ScreenToolsController> ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
-    qmlRegisterSingletonType<MavlinkQmlSingleton>   ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
+    qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
+    qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
+    qmlRegisterSingletonType<MavlinkQmlSingleton>       ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
     
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
@@ -547,6 +557,7 @@ void QGCApplication::_createSingletons(void)
     
     // No dependencies
     firmwarePlugin = PX4FirmwarePlugin::_createSingleton();
+    firmwarePlugin = APMFirmwarePlugin::_createSingleton();
     
     // No dependencies
     FirmwarePluginManager* firmwarePluginManager = FirmwarePluginManager::_createSingleton();
@@ -628,6 +639,7 @@ void QGCApplication::_destroySingletons(void)
     FirmwarePluginManager::_deleteSingleton();
     GenericFirmwarePlugin::_deleteSingleton();
     PX4FirmwarePlugin::_deleteSingleton();
+    APMFirmwarePlugin::_deleteSingleton();
 }
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)

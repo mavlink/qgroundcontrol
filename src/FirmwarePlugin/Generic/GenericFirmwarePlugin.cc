@@ -96,3 +96,10 @@ int GenericFirmwarePlugin::manualControlReservedButtonCount(void)
     // So reserve them all.
     return -1;
 }
+
+void GenericFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
+{
+    Q_UNUSED(message);
+    
+    // Generic plugin does no message adjustment
+}

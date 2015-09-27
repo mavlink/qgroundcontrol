@@ -48,10 +48,10 @@ const QString ProviderStrings::kLevelsForSigPacSpainMap[] =
 ProviderStrings::ProviderStrings()
 {
     // Google version strings
-    VersionGoogleMap            = "m@296306248";
-    VersionGoogleSatellite      = "s@168";
-    VersionGoogleLabels         = "h@296000000";
-    VersionGoogleTerrain        = "t@132,r@296000000";
+    VersionGoogleMap            = "m@313";
+    VersionGoogleSatellite      = "s@177";
+    VersionGoogleLabels         = "h@313";
+    VersionGoogleTerrain        = "t@132,r@313";
     SecGoogleWord               = "Galileo";
 
     // Google (China) version strings
@@ -196,7 +196,13 @@ void UrlFactory::_tryCorrectGoogleVersions()
         _network->setProxy(tProxy);
         QString url = "http://maps.google.com/maps?output=classic";
         qheader.setUrl(QUrl(url));
+#if defined Q_OS_MACX
+        QByteArray userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0";
+#elif defined Q_OS_WIN32
         QByteArray userAgent = "Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.1.7) Gecko/20091221 Firefox/3.5.7";
+#else
+        QByteArray userAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:21.0) Gecko/20130331 Firefox/21.0";
+#endif
         qheader.setRawHeader("User-Agent", userAgent);
         _googleReply = _network->get(qheader);
         connect(_googleReply, SIGNAL(finished()), this, SLOT(_googleVersionCompleted()));

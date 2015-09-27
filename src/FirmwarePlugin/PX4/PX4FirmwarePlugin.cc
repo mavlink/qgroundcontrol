@@ -181,3 +181,15 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
 {
     return 8;   // 8 buttons reserved for rc switch simulation
 }
+
+void PX4FirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
+{
+    Q_UNUSED(message);
+    
+    // PX4 Flight Stack plugin does no message adjustment
+}
+
+bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
+{
+    return capabilities == MavCmdPreflightStorageCapability;
+}

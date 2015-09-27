@@ -90,7 +90,6 @@ const char* MainWindow::_uasControlDockWidgetName = "UNMANNED_SYSTEM_CONTROL_DOC
 const char* MainWindow::_uasListDockWidgetName = "UNMANNED_SYSTEM_LIST_DOCKWIDGET";
 const char* MainWindow::_waypointsDockWidgetName = "WAYPOINT_LIST_DOCKWIDGET";
 const char* MainWindow::_mavlinkDockWidgetName = "MAVLINK_INSPECTOR_DOCKWIDGET";
-const char* MainWindow::_parametersDockWidgetName = "PARAMETER_INTERFACE_DOCKWIDGET";
 const char* MainWindow::_customCommandWidgetName = "CUSTOM_COMMAND_DOCKWIDGET";
 const char* MainWindow::_filesDockWidgetName = "FILE_VIEW_DOCKWIDGET";
 const char* MainWindow::_uasStatusDetailsDockWidgetName = "UAS_STATUS_DETAILS_DOCKWIDGET";
@@ -393,7 +392,6 @@ void MainWindow::_buildCommonWidgets(void)
         { _uasListDockWidgetName,           "Unmanned Systems",         Qt::RightDockWidgetArea },
         { _waypointsDockWidgetName,         "Mission Plan",             Qt::BottomDockWidgetArea },
         { _mavlinkDockWidgetName,           "MAVLink Inspector",        Qt::RightDockWidgetArea },
-        { _parametersDockWidgetName,        "Parameter Editor",			Qt::RightDockWidgetArea },
         { _customCommandWidgetName,         "Custom Command",			Qt::RightDockWidgetArea },
         { _filesDockWidgetName,             "Onboard Files",            Qt::RightDockWidgetArea },
         { _uasStatusDetailsDockWidgetName,  "Status Details",           Qt::RightDockWidgetArea },
@@ -497,8 +495,6 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = new QGCWaypointListMulti(this);
     } else if (widgetName == _mavlinkDockWidgetName) {
         widget = new QGCMAVLinkInspector(MAVLinkProtocol::instance(),this);
-    } else if (widgetName == _parametersDockWidgetName) {
-        widget = new ParameterEditorWidget(this);
     } else if (widgetName == _customCommandWidgetName) {
         widget = new CustomCommandWidget(this);
     } else if (widgetName == _filesDockWidgetName) {
@@ -613,7 +609,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     
     _storeCurrentViewState();
     storeSettings();
-    HomePositionManager::instance()->storeSettings();
     event->accept();
 }
 
@@ -827,6 +822,8 @@ void MainWindow::_storeCurrentViewState(void)
 {
     // HIL dock widgets are dynamic and are not part of the saved state
     _hideAllHilDockWidgets();
+    
+#ifndef __mobile__
     // Save list of visible widgets
     bool firstWidget = true;
     QString widgetNames = "";
@@ -840,6 +837,7 @@ void MainWindow::_storeCurrentViewState(void)
         }
     }
     settings.setValue(_getWindowStateKey() + "WIDGETS", widgetNames);
+#endif
     settings.setValue(_getWindowStateKey(), saveState());
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
 }
@@ -910,6 +908,7 @@ void MainWindow::_loadCurrentViewState(void)
     // Hide all widgets from previous view
     _hideAllDockWidgets();
 
+#ifndef __mobile__
     // Restore the widgets for the new view
     QString widgetNames = settings.value(_getWindowStateKey() + "WIDGETS", defaultWidgets).toString();
     qDebug() << widgetNames;
@@ -920,6 +919,7 @@ void MainWindow::_loadCurrentViewState(void)
             _showDockWidget(widgetName, true);
         }
     }
+#endif
 
     if (settings.contains(_getWindowStateKey())) {
         restoreState(settings.value(_getWindowStateKey()).toByteArray());
