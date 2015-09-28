@@ -27,6 +27,7 @@ import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.2
 import QtLocation               5.3
 
+import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
@@ -66,7 +67,7 @@ Item {
     property real _airSpeed:        _activeVehicle ? _activeVehicle.airSpeed : _defaultAirSpeed
     property real _climbRate:       _activeVehicle ? _activeVehicle.climbRate : _defaultClimbRate
 
-    property bool _showMap: getBool(multiVehicleManager.loadSetting(_mapName + _showMapBackgroundKey, "1"))
+    property bool _showMap: getBool(QGroundControl.flightMapSettings.loadMapSetting(flightMap.mapName, _showMapBackgroundKey, "1"))
 
     // Validate _showMap setting
     Component.onCompleted: _setShowMap(_showMap)
@@ -81,7 +82,7 @@ Item {
 
     function _setShowMap(showMap) {
         _showMap = flightDisplay.hasVideo ? showMap : true
-        multiVehicleManager.saveSetting(_mapName + _showMapBackgroundKey, setBool(_showMap))
+        QGroundControl.flightMapSettings.saveMapSetting(flightMap.mapName, _showMapBackgroundKey, setBool(_showMap))
     }
 
     FlightMap {
@@ -141,7 +142,6 @@ Item {
             size:       ScreenTools.defaultFontPixelSize * (13.3)
             heading:    _heading
             active:     multiVehicleManager.activeVehicleAvailable
-            z:          flightMap.z + 2
         }
 
         QGCAttitudeWidget {
@@ -152,8 +152,39 @@ Item {
             rollAngle:              _roll
             pitchAngle:             _pitch
             active:                 multiVehicleManager.activeVehicleAvailable
-            z:                      flightMap.z + 2
         }
+
+        DropButton {
+            id:                 mapTypeButton
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.top:        parent.top
+            anchors.right:      parent.right
+            dropDirection:      dropDown
+            buttonImage:        "/qmlimages/MapType.svg"
+            viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+
+            dropDownComponent: Component {
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    Repeater {
+                        model: QGroundControl.flightMapSettings.mapTypes
+
+                        QGCButton {
+                            checkable:  true
+                            checked:    flightMap.mapType == text
+                            text:       modelData
+
+                            onClicked: {
+                                flightMap.mapType = text
+                                mapTypeButton.hideDropDown()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     } // Flight Map
 
     QGCVideoBackground {
@@ -280,8 +311,6 @@ Item {
             MenuSeparator {
                 visible: flightDisplay.hasVideo && _showMap
             }
-
-            Component.onCompleted: flightMap.addMapMenuItems(optionsMenu)
         }
     }
 }

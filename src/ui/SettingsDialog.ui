@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>596</height>
+    <height>689</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -113,6 +113,36 @@
            <height>0</height>
           </size>
          </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string>Map Provider</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QRadioButton" name="bingMapRadio">
+            <property name="text">
+             <string>Bing</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="googleMapRadio">
+            <property name="text">
+             <string>Google</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="openMapRadio">
+            <property name="text">
+             <string>Open Streets</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
