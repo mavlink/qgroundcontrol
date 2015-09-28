@@ -37,6 +37,7 @@
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 #include "MainToolBar.h"
+#include "FlightMapSettings.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags flags) :
 QDialog(parent, flags),
@@ -94,7 +95,18 @@ _ui(new Ui::SettingsDialog)
     connect(_ui->styleChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(styleChanged(int)));
     connect(_ui->browseSavedFilesLocation, &QPushButton::clicked, this, &SettingsDialog::_selectSavedFilesDirectory);
     connect(_ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::_validateBeforeClose);
+    
+    // Flight Map settings
+    
+    FlightMapSettings* fmSettings = FlightMapSettings::instance();
+    _ui->bingMapRadio->setChecked(fmSettings->mapProvider() == "Bing");
+    _ui->googleMapRadio->setChecked(fmSettings->mapProvider() == "Google");
+    _ui->openMapRadio->setChecked(fmSettings->mapProvider() == "Open");
 
+    connect(_ui->bingMapRadio,      &QRadioButton::clicked, this, &SettingsDialog::_bingMapRadioClicked);
+    connect(_ui->googleMapRadio,    &QRadioButton::clicked, this, &SettingsDialog::_googleMapRadioClicked);
+    connect(_ui->openMapRadio,      &QRadioButton::clicked, this, &SettingsDialog::_openMapRadioClicked);
+    
     switch (showTab) {
         case ShowCommLinks:
             _ui->tabWidget->setCurrentWidget(pLinkConf);
@@ -192,4 +204,25 @@ void SettingsDialog::on_showMav_clicked(bool checked)
 void SettingsDialog::on_showRSSI_clicked(bool checked)
 {
     _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_RSSI, checked);
+}
+
+void SettingsDialog::_bingMapRadioClicked(bool checked)
+{
+    if (checked) {
+        FlightMapSettings::instance()->setMapProvider("Bing");
+    }
+}
+
+void SettingsDialog::_googleMapRadioClicked(bool checked)
+{
+    if (checked) {
+        FlightMapSettings::instance()->setMapProvider("Google");
+    }
+}
+
+void SettingsDialog::_openMapRadioClicked(bool checked)
+{
+    if (checked) {
+        FlightMapSettings::instance()->setMapProvider("Open");
+    }
 }
