@@ -187,10 +187,6 @@ QGCView {
                 id: vehicleTypeList
 
                 ListElement {
-                    text: "Default (Quad)"
-                    vehicleType: FirmwareUpgradeController.DefaultVehicleFirmware
-                }
-                ListElement {
                     text: "Quad"
                     vehicleType: FirmwareUpgradeController.QuadFirmware
                 }
