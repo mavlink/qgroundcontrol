@@ -77,7 +77,7 @@ QGCView {
                 longitude:      _homePositionCoordinate.longitude
 
                 QGCLabel {
-                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
                     text: "WIP: Danger, do not fly with this!"; font.pixelSize: ScreenTools.largeFontPixelSize }
 
 
@@ -98,9 +98,74 @@ QGCView {
                     }
                 }
 
+                DropButton {
+                    id:                     centerMapButton
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
+                    anchors.right:          mapTypeButton.left
+                    anchors.top:            mapTypeButton.top
+                    dropDirection:          dropDown
+                    label:                  "C"
+                    viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
+
+                    dropDownComponent: Component {
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            QGCButton {
+                                text: "Home"
+
+                                onClicked: centerMapButton.hideDropDown()
+                            }
+
+                            QGCButton {
+                                text: "All Items"
+
+                                onClicked: centerMapButton.hideDropDown()
+                            }
+                        }
+                    }
+                }
+
+                DropButton {
+                    id:                 mapTypeButton
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.top:        parent.top
+                    anchors.right:      parent.right
+                    dropDirection:      dropDown
+                    label:              "M"
+                    viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+
+                    dropDownComponent: Component {
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            QGCButton {
+                                text: "Street"
+
+                                onClicked: mapTypeButton.hideDropDown()
+                            }
+
+                            QGCButton {
+                                text: "Satellite"
+
+                                onClicked: mapTypeButton.hideDropDown()
+                            }
+
+                            QGCButton {
+                                text: "Hybrid"
+
+                                onClicked: mapTypeButton.hideDropDown()
+                            }
+                        }
+                    }
+                }
+
                 MissionItemIndicator {
                     label:          "H"
+                    isCurrentItem:  _showHomePositionManager
                     coordinate:     _homePositionCoordinate
+
+                    onClicked: _showHomePositionManager = true
                 }
 
                 // Add the mission items to the map
@@ -110,10 +175,13 @@ QGCView {
                     delegate:
                         MissionItemIndicator {
                             label:          object.sequenceNumber
-                            isCurrentItem:  object.isCurrentItem
+                            isCurrentItem:  !_showHomePositionManager && object.isCurrentItem
                             coordinate:     object.coordinate
 
-                            onClicked: setCurrentItem(object.sequenceNumber)
+                            onClicked: {
+                                _showHomePositionManager = false
+                                setCurrentItem(object.sequenceNumber)
+                            }
 
                             Component.onCompleted: console.log("Indicator", object.coordinate)
                         }
