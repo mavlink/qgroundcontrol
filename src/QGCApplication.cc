@@ -83,6 +83,7 @@
 #include "MissionManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "HomePositionManager.h"
+#include "FlightMapSettings.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -313,7 +314,6 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",        "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",               "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
-    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl",                  1, 0, "HomePositionManager",    "Reference only");
     
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
@@ -551,6 +551,16 @@ void QGCApplication::_createSingletons(void)
     // The order here is important since the singletons reference each other
 
     // No dependencies
+    FlightMapSettings* flightMapSettings = FlightMapSettings::_createSingleton();
+    Q_UNUSED(flightMapSettings);
+    Q_ASSERT(flightMapSettings);
+    
+    // No dependencies
+    HomePositionManager* homePositionManager = HomePositionManager::_createSingleton();
+    Q_UNUSED(homePositionManager);
+    Q_ASSERT(homePositionManager);
+
+    // No dependencies
     FirmwarePlugin* firmwarePlugin = GenericFirmwarePlugin::_createSingleton();
     Q_UNUSED(firmwarePlugin);
     Q_ASSERT(firmwarePlugin);
@@ -584,22 +594,17 @@ void QGCApplication::_createSingletons(void)
     Q_UNUSED(linkManager);
     Q_ASSERT(linkManager);
 
-    // Needs LinkManager
-    HomePositionManager* uasManager = HomePositionManager::_createSingleton();
-    Q_UNUSED(uasManager);
-    Q_ASSERT(uasManager);
-
-    // Need HomePositionManager
+    // Need MultiVehicleManager
     AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::_createSingleton();
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
 
-    // Need HomePositionManager
+    // Need MultiVehicleManager
     UASMessageHandler* messageHandler = UASMessageHandler::_createSingleton();
     Q_UNUSED(messageHandler);
     Q_ASSERT(messageHandler);
 
-    // Needs HomePositionManager
+    // Needs MultiVehicleManager
     FactSystem* factSystem = FactSystem::_createSingleton();
     Q_UNUSED(factSystem);
     Q_ASSERT(factSystem);
@@ -631,7 +636,6 @@ void QGCApplication::_destroySingletons(void)
     FactSystem::_deleteSingleton();
     UASMessageHandler::_deleteSingleton();
     AutoPilotPluginManager::_deleteSingleton();
-    HomePositionManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
     JoystickManager::_deleteSingleton();
@@ -640,6 +644,8 @@ void QGCApplication::_destroySingletons(void)
     GenericFirmwarePlugin::_deleteSingleton();
     PX4FirmwarePlugin::_deleteSingleton();
     APMFirmwarePlugin::_deleteSingleton();
+    HomePositionManager::_deleteSingleton();
+    FlightMapSettings::_deleteSingleton();
 }
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)

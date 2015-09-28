@@ -30,6 +30,7 @@
 #include <QObject>
 
 #include "HomePositionManager.h"
+#include "FlightMapSettings.h"
 
 class QGroundControlQmlGlobal : public QObject
 {
@@ -39,14 +40,17 @@ public:
     QGroundControlQmlGlobal(QObject* parent = NULL);
     ~QGroundControlQmlGlobal();
     
-    Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager CONSTANT)
+    Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
+    Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
     
     // Property accesors
     
-    HomePositionManager* homePositionManager(void) { return _homePositionManager; }
+    HomePositionManager*    homePositionManager(void)   { return _homePositionManager; }
+    FlightMapSettings*      flightMapSettings(void)     { return _flightMapSettings; }
     
 private:
     HomePositionManager*    _homePositionManager;
+    FlightMapSettings*      _flightMapSettings;
 };
 
 #endif
