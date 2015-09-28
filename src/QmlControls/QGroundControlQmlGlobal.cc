@@ -29,6 +29,7 @@
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     : QObject(parent)
     , _homePositionManager(HomePositionManager::instance())
+    , _flightMapSettings(FlightMapSettings::instance())
 {
 
 }
