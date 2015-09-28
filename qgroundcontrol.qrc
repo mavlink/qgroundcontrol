@@ -101,6 +101,7 @@
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">src/QmlControls/MissionItemIndexLabel.qml</file>
         <file alias="QGroundControl/Controls/MissionItemSummary.qml">src/QmlControls/MissionItemSummary.qml</file>
         <file alias="QGroundControl/Controls/MissionItemEditor.qml">src/QmlControls/MissionItemEditor.qml</file>
+        <file alias="QGroundControl/Controls/DropButton.qml">src/QmlControls/DropButton.qml</file>
 
         <!-- Vehicle Setup -->
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
