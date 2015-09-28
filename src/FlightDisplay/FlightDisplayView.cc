@@ -91,19 +91,3 @@ FlightDisplayView::FlightDisplayView(QWidget *parent)
 FlightDisplayView::~FlightDisplayView()
 {
 }
-
-void FlightDisplayView::saveSetting(const QString &name, const QString& value)
-{
-    QSettings settings;
-    QString key(kMainFlightDisplayViewGroup);
-    key += "/" + name;
-    settings.setValue(key, value);
-}
-
-QString FlightDisplayView::loadSetting(const QString &name, const QString& defaultValue)
-{
-    QSettings settings;
-    QString key(kMainFlightDisplayViewGroup);
-    key += "/" + name;
-    return settings.value(key, defaultValue).toString();
-}
