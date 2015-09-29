@@ -114,6 +114,7 @@ Map {
 
             QGCButton {
                 width:  parent._buttonWidth
+                //iconSource: "/qmlimages/ZoomPlus.svg"
                 text:   "+"
                 
                 onClicked: {
@@ -129,6 +130,7 @@ Map {
             
             QGCButton {
                 width:  parent._buttonWidth
+                //iconSource: "/qmlimages/ZoomMinus.svg"
                 text:   "-"
                 
                 onClicked: {

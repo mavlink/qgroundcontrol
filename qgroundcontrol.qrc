@@ -64,6 +64,8 @@
         <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
         <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
         <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
+        <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
+        <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
     </qresource>
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>

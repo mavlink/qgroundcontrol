@@ -1,4 +1,4 @@
-import QtQuick                  2.2
+import QtQuick                  2.4
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 
@@ -149,7 +149,8 @@ Item {
         anchors.fill:   parent
         fillMode:       Image.PreserveAspectFit
         opacity:        _showDropDown ? 1.0 : 0.75
-
+        mipmap:         true
+        smooth:         true
         MouseArea {
             anchors.fill: parent
 
