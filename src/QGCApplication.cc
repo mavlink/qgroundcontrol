@@ -162,7 +162,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests(unitTesting)
     , _styleIsDark(true)
 	, _fakeMobile(false)
-    , _useNewMissionEditor(false)
+#ifdef UNITTEST_BUILD
+    , _useNewMissionEditor(true)    // Unit Tests run new mission editor
+#endif
 #ifdef QT_DEBUG
     , _testHighDPI(false)
 #endif
