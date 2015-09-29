@@ -47,14 +47,14 @@ public:
     MissionItem(QObject         *parent = 0,
                 int             sequenceNumber = 0,
                 QGeoCoordinate  coordiante = QGeoCoordinate(),
+                int             action = MAV_CMD_NAV_WAYPOINT,
                 double          param1 = 0.0,
                 double          param2 = 0.0,
                 double          param3 = 0.0,
                 double          param4 = 0.0,
                 bool            autocontinue = true,
                 bool            isCurrentItem = false,
-                int             frame = MAV_FRAME_GLOBAL,
-                int             action = MAV_CMD_NAV_WAYPOINT);
+                int             frame = MAV_FRAME_GLOBAL_RELATIVE_ALT);
 
     MissionItem(const MissionItem& other, QObject* parent = NULL);
     ~MissionItem();

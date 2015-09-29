@@ -199,14 +199,14 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
             MissionItem *lwp_vo = new MissionItem(NULL,
                                                   wp->seq,
                                                   QGeoCoordinate(wp->x, wp->y, wp->z),
+                                                  (MAV_CMD) wp->command,
                                                   wp->param1,
                                                   wp->param2,
                                                   wp->param3,
                                                   wp->param4,
                                                   wp->autocontinue,
                                                   wp->current,
-                                                  (MAV_FRAME) wp->frame,
-                                                  (MAV_CMD) wp->command);
+                                                  (MAV_FRAME) wp->frame);
 
             addWaypointViewOnly(lwp_vo);
 
@@ -214,14 +214,14 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 MissionItem *lwp_ed = new MissionItem(NULL,
                                                       wp->seq,
                                                       QGeoCoordinate(wp->x, wp->y, wp->z),
+                                                      (MAV_CMD) wp->command,
                                                       wp->param1,
                                                       wp->param2,
                                                       wp->param3,
                                                       wp->param4,
                                                       wp->autocontinue,
                                                       wp->current,
-                                                      (MAV_FRAME) wp->frame,
-                                                      (MAV_CMD) wp->command);
+                                                      (MAV_FRAME) wp->frame);
                 addWaypointEditable(lwp_ed, false);
                 if (wp->current == 1) currentWaypointEditable = lwp_ed;
             }
@@ -256,14 +256,14 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         MissionItem *lwp_vo = new MissionItem(NULL,
                                               wp->seq,
                                               QGeoCoordinate(wp->x, wp->y, wp->z),
+                                              (MAV_CMD) wp->command,
                                               wp->param1,
                                               wp->param2,
                                               wp->param3,
                                               wp->param4,
                                               wp->autocontinue,
                                               wp->current,
-                                              (MAV_FRAME) wp->frame,
-                                              (MAV_CMD) wp->command);
+                                              (MAV_FRAME) wp->frame);
 
         waypointsViewOnly.replace(wp->seq, lwp_vo);
         emit waypointViewOnlyListChanged();

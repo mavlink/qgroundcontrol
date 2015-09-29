@@ -222,14 +222,14 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
     MissionItem* item = new MissionItem(this,
                                         missionItem.seq,
                                         QGeoCoordinate(missionItem.x, missionItem.y, missionItem.z),
+                                        missionItem.command,
                                         missionItem.param1,
                                         missionItem.param2,
                                         missionItem.param3,
                                         missionItem.param3,
                                         missionItem.autocontinue,
                                         missionItem.current,
-                                        missionItem.frame,
-                                        missionItem.command);
+                                        missionItem.frame);
     _missionItems.append(item);
     
     if (!item->canEdit()) {
