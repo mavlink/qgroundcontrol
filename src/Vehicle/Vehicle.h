@@ -59,6 +59,9 @@ public:
     Q_PROPERTY(QGeoCoordinate   coordinate      MEMBER _geoCoordinate   NOTIFY coordinateChanged)
     Q_PROPERTY(MissionManager*  missionManager  MEMBER _missionManager  CONSTANT)
     
+    Q_PROPERTY(bool             homePositionAvailable   READ homePositionAvailable  NOTIFY homePositionAvailableChanged)
+    Q_PROPERTY(QGeoCoordinate   homePosition            READ homePosition           NOTIFY homePositionChanged)
+    
     Q_INVOKABLE QString     getMavIconColor();
     
     //-- System Messages
@@ -154,6 +157,9 @@ public:
     
     MissionManager* missionManager(void) { return _missionManager; }
     
+    bool homePositionAvailable(void);
+    QGeoCoordinate homePosition(void);
+    
     typedef enum {
         MessageNone,
         MessageNormal,
@@ -221,6 +227,8 @@ signals:
     void joystickEnabledChanged(bool enabled);
     void activeChanged(bool active);
     void mavlinkMessageReceived(const mavlink_message_t& message);
+    void homePositionAvailableChanged(bool homePositionAvailable);
+    void homePositionChanged(const QGeoCoordinate& homePosition);
     
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
@@ -317,6 +325,9 @@ private:
     UAS* _uas;
     
     QGeoCoordinate  _geoCoordinate;
+    
+    bool            _homePositionAvailable;
+    QGeoCoordinate  _homePosition;
     
     UASInterface*   _mav;
     int             _currentMessageCount;
