@@ -26,6 +26,7 @@ import QtQuick.Controls         1.3
 import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.2
 import QtLocation               5.3
+import QtPositioning            5.2
 
 import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
@@ -92,6 +93,13 @@ Item {
         latitude:       parent._latitude
         longitude:      parent._longitude
         visible:        _showMap
+
+        // Home position
+        MissionItemIndicator {
+            label:          "H"
+            coordinate:     (_activeVehicle && _activeVehicle.homePositionAvailable) ? _activeVehicle.homePosition : QtPositioning.coordinate(0, 0)
+            visible:        _activeVehicle ? _activeVehicle.homePositionAvailable : false
+        }
 
         // Add the vehicles to the map
         MapItemView {
