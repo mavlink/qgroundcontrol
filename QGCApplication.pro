@@ -515,6 +515,7 @@ HEADERS += \
     src/FactSystem/FactSystemTestGeneric.h \
     src/FactSystem/FactSystemTestPX4.h \
     src/MissionItemTest.h \
+    src/MissionManager/MissionManagerTest.h \
     src/qgcunittest/FileDialogTest.h \
     src/qgcunittest/FileManagerTest.h \
     src/qgcunittest/FlightGearTest.h \
@@ -534,6 +535,7 @@ SOURCES += \
     src/FactSystem/FactSystemTestGeneric.cc \
     src/FactSystem/FactSystemTestPX4.cc \
     src/MissionItemTest.cc \
+    src/MissionManager/MissionManagerTest.cc \
     src/qgcunittest/FileDialogTest.cc \
     src/qgcunittest/FileManagerTest.cc \
     src/qgcunittest/FlightGearTest.cc \
