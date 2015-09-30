@@ -75,7 +75,7 @@ public:
             HeliFirmware,
             PlaneFirmware,
             RoverFirmware,
-            DefaultVehicleFirmware = QuadFirmware,
+            DefaultVehicleFirmware
         } FirmwareVehicleType_t;
 
         Q_ENUMS(AutoPilotStackType_t)
