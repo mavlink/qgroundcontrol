@@ -304,9 +304,17 @@ void WaypointList::addEditable(bool onCurrentPosition)
                     } else {
                         updateStatusLabel(tr("Added default GLOBAL (Relative alt.) waypoint."));
                     }
-                    wp = new MissionItem(NULL, 0,
+                    wp = new MissionItem(NULL,
+                                         0,
                                          QGeoCoordinate(uas->getLatitude(), uas->getLongitude(), uas->getAltitudeAMSL()),
-                                         0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                                         MAV_CMD_NAV_WAYPOINT,
+                                         0,
+                                         WPM->getAcceptanceRadiusRecommendation(),
+                                         0,
+                                         0,
+                                         true,
+                                         true,
+                                         (MAV_FRAME)WPM->getFrameRecommendation());
                     WPM->addWaypointEditable(wp);
 
                 } else {
@@ -316,9 +324,17 @@ void WaypointList::addEditable(bool onCurrentPosition)
                     } else {
                         updateStatusLabel(tr("Added default GLOBAL (Relative alt.) waypoint."));
                     }
-                    wp = new MissionItem(NULL, 0,
+                    wp = new MissionItem(NULL,
+                                         0,
                                          QGeoCoordinate(HomePositionManager::instance()->getHomeLatitude(), HomePositionManager::instance()->getHomeLongitude(), WPM->getAltitudeRecommendation()),
-                                         0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                                         MAV_CMD_NAV_WAYPOINT,
+                                         0,
+                                         WPM->getAcceptanceRadiusRecommendation(),
+                                         0,
+                                         0,
+                                         true,
+                                         true,
+                                         (MAV_FRAME)WPM->getFrameRecommendation());
                     WPM->addWaypointEditable(wp);
                 }
             }
@@ -327,15 +343,31 @@ void WaypointList::addEditable(bool onCurrentPosition)
                 if (onCurrentPosition)
                 {
                     updateStatusLabel(tr("Added default LOCAL (NED) waypoint."));
-                    wp = new MissionItem(NULL, 0,
+                    wp = new MissionItem(NULL,
+                                         0,
                                          QGeoCoordinate(uas->getLocalX(), uas->getLocalY(), uas->getLocalZ()),
-                                         0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+                                         MAV_CMD_NAV_WAYPOINT,
+                                         0,
+                                         WPM->getAcceptanceRadiusRecommendation(),
+                                         0,
+                                         0,
+                                         true,
+                                         true,
+                                         MAV_FRAME_LOCAL_NED);
                     WPM->addWaypointEditable(wp);
                 } else {
                     updateStatusLabel(tr("Added default LOCAL (NED) waypoint."));
-                    wp = new MissionItem(0, 0,
+                    wp = new MissionItem(0,
+                                         0,
                                          QGeoCoordinate(0, 0, -0.50),
-                                         0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+                                         MAV_CMD_NAV_WAYPOINT,
+                                         0,
+                                         WPM->getAcceptanceRadiusRecommendation(),
+                                         0,
+                                         0,
+                                         true,
+                                         true,
+                                         MAV_FRAME_LOCAL_NED);
                     WPM->addWaypointEditable(wp);
                 }
             }
@@ -343,9 +375,17 @@ void WaypointList::addEditable(bool onCurrentPosition)
             {
                 // MAV connected, but position unknown, add default waypoint
                 updateStatusLabel(tr("WARNING: No position known. Adding default LOCAL (NED) waypoint"));
-                wp = new MissionItem(NULL, 0,
+                wp = new MissionItem(NULL,
+                                     0,
                                      QGeoCoordinate(HomePositionManager::instance()->getHomeLatitude(), HomePositionManager::instance()->getHomeLongitude(), WPM->getAltitudeRecommendation()),
-                                     0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                                     MAV_CMD_NAV_WAYPOINT,
+                                     0,
+                                     WPM->getAcceptanceRadiusRecommendation(),
+                                     0,
+                                     0,
+                                     true,
+                                     true,
+                                     (MAV_FRAME)WPM->getFrameRecommendation());
                 WPM->addWaypointEditable(wp);
             }
         }
@@ -353,9 +393,17 @@ void WaypointList::addEditable(bool onCurrentPosition)
         {
             //Since no UAV available, create first default waypoint.
             updateStatusLabel(tr("No UAV connected. Adding default GLOBAL (NED) waypoint"));
-            wp = new MissionItem(NULL, 0,
+            wp = new MissionItem(NULL,
+                                 0,
                                  QGeoCoordinate(HomePositionManager::instance()->getHomeLatitude(), HomePositionManager::instance()->getHomeLongitude(), WPM->getAltitudeRecommendation()),
-                                 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                                 MAV_CMD_NAV_WAYPOINT,
+                                 0,
+                                 WPM->getAcceptanceRadiusRecommendation(),
+                                 0,
+                                 0,
+                                 true,
+                                 true,
+                                 (MAV_FRAME)WPM->getFrameRecommendation());
             WPM->addWaypointEditable(wp);
         }
     }

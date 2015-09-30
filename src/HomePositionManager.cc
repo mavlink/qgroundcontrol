@@ -25,6 +25,7 @@
 #include <QApplication>
 #include <QTimer>
 #include <QSettings>
+#include <QtQml>
 
 #include "UAS.h"
 #include "UASInterface.h"
@@ -51,6 +52,8 @@ HomePositionManager::HomePositionManager(QObject* parent)
     , homeLon(8.549444)
     , homeAlt(470.0)
 {
+    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl", 1, 0, "HomePositionManager", "Reference only");
+    
     _loadSettings();
 }
 
