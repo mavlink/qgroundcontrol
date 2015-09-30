@@ -267,6 +267,7 @@ void Vehicle::sendMessage(mavlink_message_t message)
 
 void Vehicle::_sendMessage(mavlink_message_t message)
 {
+    qDebug() << "Vehicle::_sendMessage";
     // Emit message on all links that are currently connected
     foreach (SharedLinkInterface sharedLink, _links) {
         LinkInterface* link = sharedLink.data();
