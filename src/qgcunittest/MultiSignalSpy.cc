@@ -223,10 +223,7 @@ bool MultiSignalSpy::waitForSignalByIndex(
     Q_ASSERT(spy);
     
     while (spy->count() == 0 && !_timeout) {
-        QCoreApplication::sendPostedEvents();
-        QCoreApplication::processEvents();
-        QCoreApplication::flush();
-        QTest::qSleep(100);
+        QTest::qWait(100);
     }
     
     // Clean up and return status
