@@ -47,7 +47,7 @@ public:
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
     
-    Q_PROPERTY(bool                 inProgress      READ inProgress     CONSTANT)
+    Q_PROPERTY(bool                 inProgress      READ inProgress     NOTIFY inProgressChanged)
     Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems   CONSTANT)
     Q_PROPERTY(bool                 canEdit         READ canEdit        NOTIFY  canEditChanged)
     
@@ -72,6 +72,7 @@ signals:
     // Public signals
     void canEditChanged(bool canEdit);
     void newMissionItemsAvailable(void);
+    void inProgressChanged(bool inProgress);
     
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
