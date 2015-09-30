@@ -141,6 +141,7 @@ INCLUDEPATH += \
     src/AutoPilotPlugins \
     src/comm \
     src/FlightDisplay \
+    src/FlightMap \
     src/input \
     src/Joystick \
     src/lib/qmapcontrol \
@@ -239,6 +240,7 @@ HEADERS += \
     src/comm/UDPLink.h \
     src/FlightDisplay/FlightDisplayWidget.h \
     src/FlightDisplay/FlightDisplayView.h \
+    src/FlightMap/FlightMapSettings.h \
     src/GAudioOutput.h \
     src/HomePositionManager.h \
     src/Joystick/Joystick.h \
@@ -374,6 +376,7 @@ SOURCES += \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayWidget.cc \
     src/FlightDisplay/FlightDisplayView.cc \
+    src/FlightMap/FlightMapSettings.cc \
     src/GAudioOutput.cc \
     src/HomePositionManager.cc \
     src/Joystick/Joystick.cc \
@@ -508,40 +511,44 @@ INCLUDEPATH += \
 	src/qgcunittest
 
 HEADERS += \
-    src/qgcunittest/FlightGearTest.h \
-    src/qgcunittest/MultiSignalSpy.h \
-    src/qgcunittest/TCPLinkTest.h \
-    src/qgcunittest/TCPLoopBackServer.h \
     src/FactSystem/FactSystemTestBase.h \
     src/FactSystem/FactSystemTestGeneric.h \
     src/FactSystem/FactSystemTestPX4.h \
+    src/MissionItemTest.h \
+    src/MissionManager/MissionManagerTest.h \
     src/qgcunittest/FileDialogTest.h \
+    src/qgcunittest/FileManagerTest.h \
+    src/qgcunittest/FlightGearTest.h \
     src/qgcunittest/LinkManagerTest.h \
     src/qgcunittest/MainWindowTest.h \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
+    src/qgcunittest/MultiSignalSpy.h \
+    src/qgcunittest/PX4RCCalibrationTest.h \
+    src/qgcunittest/TCPLinkTest.h \
+    src/qgcunittest/TCPLoopBackServer.h \
     src/qgcunittest/UnitTest.h \
     src/VehicleSetup/SetupViewTest.h \
-    src/qgcunittest/FileManagerTest.h \
-    src/qgcunittest/PX4RCCalibrationTest.h \
 
 SOURCES += \
-    src/qgcunittest/FlightGearTest.cc \
-    src/qgcunittest/MultiSignalSpy.cc \
-    src/qgcunittest/TCPLinkTest.cc \
-    src/qgcunittest/TCPLoopBackServer.cc \
     src/FactSystem/FactSystemTestBase.cc \
     src/FactSystem/FactSystemTestGeneric.cc \
     src/FactSystem/FactSystemTestPX4.cc \
+    src/MissionItemTest.cc \
+    src/MissionManager/MissionManagerTest.cc \
     src/qgcunittest/FileDialogTest.cc \
+    src/qgcunittest/FileManagerTest.cc \
+    src/qgcunittest/FlightGearTest.cc \
     src/qgcunittest/LinkManagerTest.cc \
     src/qgcunittest/MainWindowTest.cc \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
+    src/qgcunittest/MultiSignalSpy.cc \
+    src/qgcunittest/PX4RCCalibrationTest.cc \
+    src/qgcunittest/TCPLinkTest.cc \
+    src/qgcunittest/TCPLoopBackServer.cc \
     src/qgcunittest/UnitTest.cc \
     src/VehicleSetup/SetupViewTest.cc \
-    src/qgcunittest/FileManagerTest.cc \
-    src/qgcunittest/PX4RCCalibrationTest.cc \
 
 } # DebugBuild|WindowsDebugAndRelease
 } # MobileBuild

@@ -88,7 +88,7 @@ MockLink::MockLink(MockConfiguration* config) :
     _fileServer = new MockLinkFileServer(_vehicleSystemId, _vehicleComponentId, this);
     Q_CHECK_PTR(_fileServer);
     
-    _missionItemHandler = new MockLinkMissionItemHandler(_vehicleSystemId, this);
+    _missionItemHandler = new MockLinkMissionItemHandler(this);
     Q_CHECK_PTR(_missionItemHandler);
 
     moveToThread(this);
@@ -302,9 +302,11 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
         if (!mavlink_parse_char(getMavlinkChannel(), bytes[i], &msg, &comm)) {
             continue;
         }
-
+        
         Q_ASSERT(_missionItemHandler);
-        _missionItemHandler->handleMessage(msg);
+        if (_missionItemHandler->handleMessage(msg)) {
+            continue;
+        }
 
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
@@ -326,24 +328,6 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
             case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
                 _handleParamRequestRead(msg);
                 break;
-
-            case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
-                _handleMissionRequestList(msg);
-                break;
-
-            case MAVLINK_MSG_ID_MISSION_REQUEST:
-                _handleMissionRequest(msg);
-                break;
-
-            case MAVLINK_MSG_ID_MISSION_ITEM:
-                _handleMissionItem(msg);
-                break;
-
-#if 0
-            case MAVLINK_MSG_ID_MISSION_COUNT:
-                _handleMissionCount(msg);
-                break;
-#endif
                 
             case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
                 _handleFTP(msg);
@@ -625,67 +609,6 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
                                  _mapParamName2Value[componentId].count(),                  // Total number of parameters
                                  _mapParamName2Value[componentId].keys().indexOf(paramId)); // Index of this parameter
     respondWithMavlinkMessage(responseMsg);
-}
-
-void MockLink::_handleMissionRequestList(const mavlink_message_t& msg)
-{
-    mavlink_mission_request_list_t request;
-
-    mavlink_msg_mission_request_list_decode(&msg, &request);
-
-    Q_ASSERT(request.target_system == _vehicleSystemId);
-
-    mavlink_message_t   responseMsg;
-
-    mavlink_msg_mission_count_pack(_vehicleSystemId,
-                                   _vehicleComponentId,
-                                   &responseMsg,            // Outgoing message
-                                   msg.sysid,               // Target is original sender
-                                   msg.compid,              // Target is original sender
-                                   _missionItems.count());  // Number of mission items
-    respondWithMavlinkMessage(responseMsg);
-}
-
-void MockLink::_handleMissionRequest(const mavlink_message_t& msg)
-{
-    mavlink_mission_request_t request;
-
-    mavlink_msg_mission_request_decode(&msg, &request);
-
-    Q_ASSERT(request.target_system == _vehicleSystemId);
-    Q_ASSERT(request.seq < _missionItems.count());
-
-    mavlink_message_t   responseMsg;
-
-    mavlink_mission_item_t item = _missionItems[request.seq];
-
-    mavlink_msg_mission_item_pack(_vehicleSystemId,
-                                  _vehicleComponentId,
-                                  &responseMsg,            // Outgoing message
-                                  msg.sysid,               // Target is original sender
-                                  msg.compid,              // Target is original sender
-                                  request.seq,             // Index of mission item being sent
-                                  item.frame,
-                                  item.command,
-                                  item.current,
-                                  item.autocontinue,
-                                  item.param1, item.param2, item.param3, item.param4,
-                                  item.x, item.y, item.z);
-    respondWithMavlinkMessage(responseMsg);
-}
-
-void MockLink::_handleMissionItem(const mavlink_message_t& msg)
-{
-    mavlink_mission_item_t request;
-
-    mavlink_msg_mission_item_decode(&msg, &request);
-
-    Q_ASSERT(request.target_system == _vehicleSystemId);
-
-    // FIXME: What do you do with duplication sequence numbers?
-    Q_ASSERT(!_missionItems.contains(request.seq));
-
-    _missionItems[request.seq] = request;
 }
 
 void MockLink::emitRemoteControlChannelRawChanged(int channel, uint16_t raw)

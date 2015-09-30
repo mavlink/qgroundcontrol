@@ -183,6 +183,10 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
                     qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V1 (by name matching fallback)";
                     type = FoundBoardPX4FMUV1;
                     found = true;
+                } else if (info.description().startsWith("PX4 FMU")) {
+                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU, assuming V2 (by name matching fallback)";
+                    type = FoundBoardPX4FMUV2;
+                    found = true;
                 }
             }
         }

@@ -67,16 +67,17 @@ const MissionItem::MavCmd2Name_t  MissionItem::_rgMavCmd2Name[_cMavCmd2Name] = {
 MissionItem::MissionItem(QObject*       parent,
                          int            sequenceNumber,
                          QGeoCoordinate coordinate,
+                         int            command,
                          double         param1,
                          double         param2,
                          double         param3,
                          double         param4,
                          bool           autocontinue,
                          bool           isCurrentItem,
-                         int            frame,
-                         int            command)
+                         int            frame)
     : QObject(parent)
     , _sequenceNumber(sequenceNumber)
+    , _frame(-1)    // Forces set of _altitudeRelativeToHomeFact
     , _command((MavlinkQmlSingleton::Qml_MAV_CMD)command)
     , _autocontinue(autocontinue)
     , _isCurrentItem(isCurrentItem)
@@ -219,7 +220,7 @@ void MissionItem::save(QTextStream &saveStream)
     position = position.arg(y(), 0, 'g', 18);
     position = position.arg(z(), 0, 'g', 18);
     QString parameters("%1\t%2\t%3\t%4");
-    parameters = parameters.arg(param2(), 0, 'g', 18).arg(param2(), 0, 'g', 18).arg(loiterOrbitRadius(), 0, 'g', 18).arg(yawRadians(), 0, 'g', 18);
+    parameters = parameters.arg(param1(), 0, 'g', 18).arg(param2(), 0, 'g', 18).arg(loiterOrbitRadius(), 0, 'g', 18).arg(yawRadians(), 0, 'g', 18);
     // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE> <DESCRIPTION>
     // as documented here: http://qgroundcontrol.org/waypoint_protocol
     saveStream << this->sequenceNumber() << "\t" << this->isCurrentItem() << "\t" << this->frame() << "\t" << this->command() << "\t"  << parameters << "\t" << position  << "\t" << this->autoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
@@ -280,7 +281,7 @@ void MissionItem::setZ(double z)
 
 void MissionItem::setLatitude(double lat)
 {
-    if (_latitudeFact->value().toDouble() != lat && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_latitudeFact->value().toDouble() != lat)
     {
         _latitudeFact->setValue(lat);
         emit changed(this);
@@ -290,7 +291,7 @@ void MissionItem::setLatitude(double lat)
 
 void MissionItem::setLongitude(double lon)
 {
-    if (_longitudeFact->value().toDouble() != lon && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_longitudeFact->value().toDouble() != lon)
     {
         _longitudeFact->setValue(lon);
         emit changed(this);
@@ -300,7 +301,7 @@ void MissionItem::setLongitude(double lon)
 
 void MissionItem::setAltitude(double altitude)
 {
-    if (_altitudeFact->value().toDouble() != altitude && ((_frame == MAV_FRAME_GLOBAL) || (_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    if (_altitudeFact->value().toDouble() != altitude)
     {
         _altitudeFact->setValue(altitude);
         emit changed(this);
@@ -349,7 +350,7 @@ int MissionItem::frame(void) const
 void MissionItem::setFrame(int /*MAV_FRAME*/ frame)
 {
     if (_frame != frame) {
-        _altitudeRelativeToHomeFact->setValue(_frame == MAV_FRAME_GLOBAL_RELATIVE_ALT);
+        _altitudeRelativeToHomeFact->setValue(frame == MAV_FRAME_GLOBAL_RELATIVE_ALT);
         _frame = frame;
         emit changed(this);
     }

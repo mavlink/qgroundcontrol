@@ -51,6 +51,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(NULL)
+    , _homePositionAvailable(false)
     , _mav(NULL)
     , _currentMessageCount(0)
     , _messageCount(0)
@@ -202,6 +203,20 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     
     // Give the plugin a change to adjust the message contents
     _firmwarePlugin->adjustMavlinkMessage(&message);
+    
+    if (message.msgid == MAVLINK_MSG_ID_HOME_POSITION) {
+        mavlink_home_position_t homePos;
+        
+        mavlink_msg_home_position_decode(&message, &homePos);
+        
+        _homePosition.setLatitude(homePos.latitude / 10000000.0);
+        _homePosition.setLongitude(homePos.longitude / 10000000.0);
+        _homePosition.setAltitude(homePos.altitude / 1000.0);
+        _homePositionAvailable = true;
+        
+        emit homePositionAvailableChanged(true);
+        emit homePositionChanged(_homePosition);
+    }
     
     emit mavlinkMessageReceived(message);
     
@@ -944,4 +959,18 @@ QmlObjectListModel* Vehicle::missionItemsModel(void)
     } else {
         return &_missionItems;
     }
+}
+
+bool Vehicle::homePositionAvailable(void)
+{
+    return _homePositionAvailable;
+}
+
+QGeoCoordinate Vehicle::homePosition(void)
+{
+    if (!_homePositionAvailable) {
+        qWarning() << "Call to homePosition while _homePositionAvailable == false";
+    }
+    
+    return _homePosition;
 }

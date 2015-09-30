@@ -1,4 +1,4 @@
-import QtQuick                  2.2
+import QtQuick                  2.4
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 
@@ -8,8 +8,8 @@ import QGroundControl.Palette       1.0
 Item {
     id: _root
 
-    property alias  label:              buttonLabel.text
-    property alias  radius:             button.radius
+    property alias  buttonImage:        button.source
+    property real   radius:             (ScreenTools.defaultFontPixelHeight * 3) / 2
     property int    dropDirection:      dropDown
     property alias  dropDownComponent:  dropDownLoader.sourceComponent
     property real   viewportMargins:    0
@@ -144,33 +144,25 @@ Item {
     }
 
     // Button
-    Rectangle {
+    Image {
         id:             button
         anchors.fill:   parent
-        radius:         (ScreenTools.defaultFontPixelHeight * 3) / 2
-        color:          qgcPal.button
+        fillMode:       Image.PreserveAspectFit
         opacity:        _showDropDown ? 1.0 : 0.75
-
-        QGCLabel {
-            id:                     buttonLabel
-            anchors.fill:           parent
-            horizontalAlignment:    Text.AlignHCenter
-            verticalAlignment:      Text.AlignVCenter
-            color:                  "white"
-        }
-
+        mipmap:         true
+        smooth:         true
         MouseArea {
             anchors.fill: parent
 
             onClicked: _showDropDown = !_showDropDown
         }
-    } // Rectangle - button
+    } // Image - button
 
     Item {
         id:         dropDownItem
         visible:    _showDropDown
 
-        Canvas {
+        QGCCanvas {
             id:             arrowCanvas
             anchors.fill:   parent
 
@@ -224,6 +216,13 @@ Item {
                 id: dropDownLoader
                 x:  _dropMargin
                 y:  _dropMargin
+
+                Connections {
+                    target: dropDownLoader.item
+
+                    onWidthChanged: _calcPositions()
+                    onHeightChanged: _calcPositions()
+                }
             }
         }
     } // Item - dropDownItem
