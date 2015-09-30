@@ -145,6 +145,10 @@ QGCView {
             function accept() {
                 hideDialog()
                 var stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
+                if (px4Flow) {
+                    stack = FirmwareUpgradeController.PX4Flow
+                }
+
                 var firmwareType = firmwareVersionCombo.model.get(firmwareVersionCombo.currentIndex).firmwareType
                 var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
                 if (apmFlightStack.checked) {
