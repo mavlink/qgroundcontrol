@@ -40,6 +40,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderLog)
+Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderVerboseLog)
 
 /// Connects to Parameter Manager to load/update Facts
 class ParameterLoader : public QObject
