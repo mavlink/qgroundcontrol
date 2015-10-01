@@ -180,14 +180,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // Parse command line options
     
     bool fClearSettingsOptions = false; // Clear stored settings
-    bool fullLogging = false; // Turn on all logging
+    bool logging = false;               // Turn on logging
+    QString loggingOptions;
     
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, QString() },
-        { "--full-logging",     &fullLogging,           QString() },
-		{ "--fake-mobile",      &_fakeMobile,           QString() },
+        { "--clear-settings",   &fClearSettingsOptions, NULL },
+        { "--logging",          &logging,               &loggingOptions },
+		{ "--fake-mobile",      &_fakeMobile,           NULL },
 #ifdef QT_DEBUG
-        { "--test-high-dpi",    &_testHighDPI,          QString() },
+        { "--test-high-dpi",    &_testHighDPI,          NULL },
 #endif
         // Add additional command line option flags here
     };
@@ -197,8 +198,30 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
 #else
-    if (fullLogging) {
-        QLoggingCategory::setFilterRules(QStringLiteral("*Log=true"));
+    if (logging) {
+        QString filterRules;
+        QStringList logList = loggingOptions.split(",");
+        
+        if (logList[0] == "full") {
+            filterRules += "*Log.debug=true\n";
+            for(int i=1; i<logList.count(); i++) {
+                filterRules += logList[i];
+                filterRules += ".debug=false\n";
+            }
+        } else {
+            foreach(QString rule, logList) {
+                filterRules += rule;
+                filterRules += ".debug=true\n";
+            }
+        }
+        
+        if (_runningUnitTests) {
+            // We need to turn off these warnings until the firmware meta data is cleaned up
+            filterRules += "PX4ParameterLoaderLog.warning=false\n";
+        }
+        
+        qDebug() << "Filter rules" << filterRules;
+        QLoggingCategory::setFilterRules(filterRules);
     } else {
         if (_runningUnitTests) {
             // We need to turn off these warnings until the firmware meta data is cleaned up
@@ -227,7 +250,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         }
 
         if (loggingDirectoryOk) {
-            qDebug () << iniFileLocation;
+            qDebug () << "Logging ini file directory" << iniFileLocation.absolutePath();
             if (!iniFileLocation.exists(qtLoggingFile)) {
                 QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
                 if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
