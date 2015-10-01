@@ -36,6 +36,7 @@
 #include <QDebug>
 
 QGC_LOGGING_CATEGORY(ParameterLoaderLog, "ParameterLoaderLog")
+QGC_LOGGING_CATEGORY(ParameterLoaderVerboseLog, "ParameterLoaderVerboseLog")
 
 Fact ParameterLoader::_defaultFact;
 
@@ -130,7 +131,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     _waitingReadParamIndexMap[componentId].remove(parameterId);
     _waitingReadParamNameMap[componentId].remove(parameterName);
     _waitingWriteParamNameMap[componentId].remove(parameterName);
-    qCDebug(ParameterLoaderLog) << "_waitingReadParamIndexMap:" << _waitingReadParamIndexMap[componentId];
+    qCDebug(ParameterLoaderVerboseLog) << "_waitingReadParamIndexMap:" << _waitingReadParamIndexMap[componentId];
     qCDebug(ParameterLoaderLog) << "_waitingReadParamNameMap" << _waitingReadParamNameMap[componentId];
     qCDebug(ParameterLoaderLog) << "_waitingWriteParamNameMap" << _waitingWriteParamNameMap[componentId];
 
