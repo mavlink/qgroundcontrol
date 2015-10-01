@@ -214,6 +214,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
                 filterRules += ".debug=true\n";
             }
         }
+        
+        if (_runningUnitTests) {
+            // We need to turn off these warnings until the firmware meta data is cleaned up
+            filterRules += "PX4ParameterLoaderLog.warning=false\n";
+        }
+        
         qDebug() << "Filter rules" << filterRules;
         QLoggingCategory::setFilterRules(filterRules);
     } else {
@@ -244,7 +250,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         }
 
         if (loggingDirectoryOk) {
-            qDebug () << iniFileLocation;
+            qDebug () << "Logging ini file directory" << iniFileLocation.absolutePath();
             if (!iniFileLocation.exists(qtLoggingFile)) {
                 QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
                 if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
