@@ -135,9 +135,10 @@ int main(int argc, char *argv[])
 
     bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
 
+    QString unitTestOptions;
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--unittest",             &runUnitTests,          QString() },
-        { "--no-windows-assert-ui", &quietWindowsAsserts,   QString() },
+        { "--unittest",             &runUnitTests,          &unitTestOptions },
+        { "--no-windows-assert-ui", &quietWindowsAsserts,   NULL },
         // Add additional command line option flags here
     };
 
@@ -181,7 +182,7 @@ int main(int argc, char *argv[])
         }
 
         // Run the test
-        int failures = UnitTest::run(rgCmdLineOptions[0].optionArg);
+        int failures = UnitTest::run(unitTestOptions);
         if (failures == 0) {
             qDebug() << "ALL TESTS PASSED";
         } else {

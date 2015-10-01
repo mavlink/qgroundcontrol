@@ -51,7 +51,9 @@ void ParseCmdLineOptions(int&           argc,                   ///< count of ar
             
             if (arg.startsWith(QString("%1:").arg(optionStr), Qt::CaseInsensitive)) {
                 found = true;
-                prgOpts[iOption].optionArg = arg.right(arg.length() - (optionStr.length() + 1));
+                if (prgOpts[iOption].optionArg) {
+                    *prgOpts[iOption].optionArg = arg.right(arg.length() - (optionStr.length() + 1));
+                }
             } else if (arg.compare(optionStr, Qt::CaseInsensitive) == 0) {
                 found = true;
             }
