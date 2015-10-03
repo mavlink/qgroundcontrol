@@ -239,7 +239,7 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
                             << axisLength;
 #endif
 
-    return correctedValue;
+    return std::max(-1.0f, std::min(correctedValue, 1.0f));
 }
 
 
