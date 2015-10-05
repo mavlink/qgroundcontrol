@@ -54,32 +54,6 @@ enum BatteryType
     AGZN = 5
 }; ///< The type of battery used
 
-/*
-enum SpeedMeasurementSource
-{
-    PRIMARY_SPEED = 0,          // ArduPlane: Measured airspeed or estimated airspeed. ArduCopter: Ground (XY) speed.
-    GROUNDSPEED_BY_UAV = 1,     // Ground speed as reported by UAS
-    GROUNDSPEED_BY_GPS = 2,     // Ground speed as calculated from received GPS velocity data
-    LOCAL_SPEED = 3
-}; ///< For velocity data, the data source
-
-enum AltitudeMeasurementSource
-{
-    PRIMARY_ALTITUDE = 0,                  // ArduPlane: air and ground speed mix. This is the altitude used for navigastion.
-    BAROMETRIC_ALTITUDE = 1,               // Altitude is pressure altitude. Ardupilot reports no altitude purely by barometer,
-                                           // however when ALT_MIX==1, mix-altitude is purely barometric.
-    GPS_ALTITUDE = 2                       // GPS ASL altitude
-}; ///< For altitude data, the data source
-
-// TODO!!! The different frames are probably represented elsewhere. There should really only
-// be one set of frames. We also need to keep track of the home alt. somehow.
-enum AltitudeMeasurementFrame
-{
-    ABSOLUTE = 0,               // Altitude is pressure altitude
-    ABOVE_HOME_POSITION = 1
-}; ///< For altitude data, a reference frame
-*/
-
 /**
  * @brief Interface for all robots.
  *
@@ -96,11 +70,6 @@ public:
 
     /** @brief The name of the robot **/
     virtual QString getUASName() const = 0;
-    /** @brief Get short state */
-    virtual const QString& getShortState() const = 0;
-    /** @brief Get short mode */
-    virtual const QString& getShortMode() const = 0;
-    //virtual QColor getColor() = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
@@ -119,8 +88,6 @@ public:
     virtual double getRoll() const = 0;
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
-
-    virtual bool isArmed() const = 0;
 
     /** @brief Set the airframe of this MAV */
     virtual int getAirframe() const = 0;
@@ -192,15 +159,9 @@ public:
     virtual int getSystemType() = 0;
     /** @brief Is it an airplane (or like one)?,..)*/
     virtual bool isAirplane() = 0;
-    /** @brief Indicates whether this system is capable of controlling a reverse velocity.
-     * Used for, among other things, altering joystick input to either -1:1 or 0:1 range.
-     */
-    virtual bool systemCanReverse() const = 0;
 
-    virtual QString getSystemTypeName() = 0;
     /** @brief Get the type of the autopilot (PIXHAWK, APM, UDB, PPZ,..) */
     virtual int getAutopilotType() = 0;
-    virtual QString getAutopilotTypeName() = 0;
     virtual void setAutopilotType(int apType) = 0;
 
     virtual QMap<int, QString> getComponents() = 0;
@@ -209,13 +170,6 @@ public:
     {
         return color;
     }
-
-    /** @brief Returns a list of actions/commands that this vehicle can perform.
-     * Used for creating UI elements for built-in functionality for this vehicle.
-     * Actions should be mappings to `void f(void);` functions that simply issue
-     * a command to the vehicle.
-     */
-    virtual QList<QAction*> getActions() const = 0;
 
     static const unsigned int WAYPOINT_RADIUS_DEFAULT_FIXED_WING = 25;
     static const unsigned int WAYPOINT_RADIUS_DEFAULT_ROTARY_WING = 5;
@@ -250,85 +204,21 @@ public:
 
 public slots:
 
-    /** @brief Set a new name for the system */
-    virtual void setUASName(const QString& name) = 0;
-    /** @brief Execute command immediately **/
-    virtual void executeCommand(MAV_CMD command) = 0;
     /** @brief Executes a command **/
     virtual void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component) = 0;
-    /** @brief Executes a command ack, with success boolean **/
-    virtual void executeCommandAck(int num, bool success) = 0;
 
     /** @brief Selects the airframe */
     virtual void setAirframe(int airframe) = 0;
 
-    /** @brief Launches the system/Liftof **/
-    virtual void launch() = 0;
-    /** @brief Set a new waypoint **/
-    //virtual void setWaypoint(MissionItem* wp) = 0;
-    /** @brief Set this waypoint as next waypoint to fly to */
-    //virtual void setWaypointActive(int wp) = 0;
-    /** @brief Order the robot to return home / to land on the runway **/
-    virtual void home() = 0;
-    /** @brief Order the robot to land **/
-    virtual void land() = 0;
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
-    /** @brief Halt the system */
-    virtual void halt() = 0;
-    /** @brief Start/continue the current robot action */
-    virtual void go() = 0;
-    /** @brief Set the current mode of operation */
-    virtual void setMode(uint8_t newBaseMode, uint32_t newCustomMode) = 0;
-    /** Stops the robot system. If it is an MAV, the robot starts the emergency landing procedure **/
-    virtual void emergencySTOP() = 0;
-    /** Kills the robot. All systems are immediately shut down (e.g. the main power line is cut). This might lead to a crash **/
-    virtual bool emergencyKILL() = 0;
-    /**
-     * @brief Shut down the system's computers
-     *
-     * Works only if already landed and will cleanly shut down all onboard computers.
-     */
-    virtual void shutdown() = 0;
-    /** @brief Set the target position for the robot to navigate to.
-     *  @param x x-coordinate of the target position
-     *  @param y y-coordinate of the target position
-     *  @param z z-coordinate of the target position
-     *  @param yaw heading of the target position
-     */
-    virtual void setTargetPosition(float x, float y, float z, float yaw) = 0;
-    /** @brief Request the list of stored waypoints from the robot */
-    //virtual void requestWaypoints() = 0;
-    /** @brief Clear all existing waypoints on the robot */
-    //virtual void clearWaypointList() = 0;
-    /** @brief Set world frame origin at current GPS position */
-    virtual void setLocalOriginAtCurrentGPSPosition() = 0;
-    /** @brief Set world frame origin / home position at this GPS position */
+    
     virtual void setHomePosition(double lat, double lon, double alt) = 0;
-
-    virtual void enableAllDataTransmission(int rate) = 0;
-    virtual void enableRawSensorDataTransmission(int rate) = 0;
-    virtual void enableExtendedSystemStatusTransmission(int rate) = 0;
-    virtual void enableRCChannelDataTransmission(int rate) = 0;
-    virtual void enableRawControllerDataTransmission(int rate) = 0;
-    //virtual void enableRawSensorFusionTransmission(int rate) = 0;
-    virtual void enablePositionTransmission(int rate) = 0;
-    virtual void enableExtra1Transmission(int rate) = 0;
-    virtual void enableExtra2Transmission(int rate) = 0;
-    virtual void enableExtra3Transmission(int rate) = 0;
-
-    virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
-    virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
 
     /** @brief Return if this a rotary wing */
     virtual bool isRotaryWing() = 0;
     /** @brief Return if this is a fixed wing */
     virtual bool isFixedWing() = 0;
-
-    /** @brief Set the current battery type and voltages */
-    virtual void setBatterySpecs(const QString& specs) = 0;
-    /** @brief Get the current battery type and specs */
-    virtual QString getBatterySpecs() = 0;
 
     /** @brief Send the full HIL state to the MAV */
 #ifndef __mobile__
@@ -360,8 +250,6 @@ protected:
 signals:
     /** @brief The robot state has changed */
     void statusChanged(int stateFlag);
-    /** @brief A new component was detected or created */
-    void componentCreated(int uas, int component, const QString& name);
     /** @brief The robot state has changed
      *
      * @param uas this robot
@@ -369,31 +257,9 @@ signals:
      * @param description longer textual description. Should be however limited to a short text, e.g. 200 chars.
      */
     void statusChanged(UASInterface* uas, QString status, QString description);
-    /**
-     * @brief Received a plain text message from the robot
-     * This signal should NOT be used for standard communication, but rather for VERY IMPORTANT
-     * messages like critical errors.
-     *
-     * @param uasid ID of the sending system
-     * @param compid ID of the sending component
-     * @param text the status text
-     * @param severity The severity of the message, 0 for plain debug messages, 10 for very critical messages
-     */
-
-    void poiFound(UASInterface* uas, int type, int colorIndex, QString message, float x, float y, float z);
-    void poiConnectionFound(UASInterface* uas, int type, int colorIndex, QString message, float x1, float y1, float z1, float x2, float y2, float z2);
 
     /** @brief A text message from the system has been received */
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
-
-    void navModeChanged(int uasid, int mode, const QString& text);
-
-    /** @brief System is now armed */
-    void armed();
-    /** @brief System is now disarmed */
-    void disarmed();
-    /** @brief Arming mode changed */
-    void armingChanged(bool armed);
 
     /**
      * @brief Update the error count of a device
@@ -417,22 +283,10 @@ signals:
      * @param receiveDrop drop rate of packets this MAV receives (sent from GCS or other MAVs)
      */
     void dropRateChanged(int systemId,  float receiveDrop);
-    /** @brief Robot mode has changed */
-    void modeChanged(int sysId, QString status, QString description);
-    /** @brief A command has been issued **/
-    void commandSent(int command);
-    /** @brief The robot is connecting **/
-    void connecting();
     /** @brief The robot is connected **/
     void connected();
     /** @brief The robot is disconnected **/
     void disconnected();
-    /** @brief The robot is active **/
-    void activated();
-    /** @brief The robot is inactive **/
-    void deactivated();
-    /** @brief The robot is manually controlled **/
-    void manualControl();
 
     /** @brief A value of the robot has changed.
       *
@@ -448,12 +302,8 @@ signals:
       */
     void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant &value,const quint64 msecs);
 
-    void voltageChanged(int uasId, double voltage);
-    void waypointUpdated(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool active);
-    void waypointSelected(int uasId, int id);
-    void waypointReached(UASInterface* uas, int id);
-    void autoModeChanged(bool autoMode);
     void parameterUpdate(int uas, int component, QString parameterName, int parameterCount, int parameterId, int type, QVariant value);
+
     /**
      * @brief The battery status has been updated
      *
@@ -465,7 +315,6 @@ signals:
     void batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void batteryConsumedChanged(UASInterface* uas, double current_consumed);
     void statusChanged(UASInterface* uas, QString status);
-    void actuatorChanged(UASInterface*, int actId, double value);
     void thrustChanged(UASInterface*, double thrust);
     void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
@@ -520,13 +369,6 @@ signals:
     void baroStatusChanged(bool supported, bool enabled, bool ok);
     /** @brief Differential pressure / airspeed status changed */
     void airspeedStatusChanged(bool supported, bool enabled, bool ok);
-    /** @brief Actuator status changed */
-    void actuatorStatusChanged(bool supported, bool enabled, bool ok);
-    /** @brief Laser scanner status changed */
-    void laserStatusChanged(bool supported, bool enabled, bool ok);
-    /** @brief Vicon / Leica Geotracker status changed */
-    void groundTruthSensorStatusChanged(bool supported, bool enabled, bool ok);
-
 
     /** @brief Value of a remote control channel (raw) */
     void remoteControlChannelRawChanged(int channelId, float raw);
@@ -540,21 +382,6 @@ signals:
      * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
      */
     void localizationChanged(UASInterface* uas, int fix);
-    /**
-     * @brief GPS localization quality changed
-     * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
-     */
-    void gpsLocalizationChanged(UASInterface* uas, int fix);
-    /**
-     * @brief Vision localization quality changed
-     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
-     */
-    void visionLocalizationChanged(UASInterface* uas, int fix);
-    /**
-     * @brief IR/U localization quality changed
-     * @param fix 0: No IR/Ultrasound sensor, N > 0: Found N active sensors
-     */
-    void irUltraSoundLocalizationChanged(UASInterface* uas, int fix);
 
     // ERROR AND STATUS SIGNALS
     /** @brief Heartbeat timed out or was regained */
@@ -564,15 +391,8 @@ signals:
     /** @brief Core specifications have changed */
     void systemSpecsChanged(int uasId);
 
-    /** @brief Object detected */
-    void objectDetected(unsigned int time, int id, int type, const QString& name, int quality, float bearing, float distance);
-
-
     // HOME POSITION / ORIGIN CHANGES
     void homePositionChanged(int uas, double lat, double lon, double alt);
-
-    /** @brief The system received an unknown message, which it could not interpret */
-    void unknownPacketReceived(int uas, int component, int messageid);
 
 protected:
 
