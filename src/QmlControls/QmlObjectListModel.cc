@@ -27,6 +27,7 @@
 #include "QmlObjectListModel.h"
 
 #include <QDebug>
+#include <QQmlEngine>
 
 const int QmlObjectListModel::ObjectRole = Qt::UserRole;
 const int QmlObjectListModel::TextRole = Qt::UserRole + 1;
@@ -156,6 +157,8 @@ void QmlObjectListModel::insert(int i, QObject* object)
         qWarning() << "Invalid index index:count" << i << _objectList.count();
     }
     
+    QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
+
     _objectList.insert(i, object);
     insertRows(i, 1);
 }

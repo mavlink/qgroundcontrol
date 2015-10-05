@@ -39,7 +39,6 @@ AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     Q_ASSERT(vehicle);
 	
 	connect(_vehicle->uas(), &UASInterface::disconnected, this, &AutoPilotPlugin::_uasDisconnected);
-    connect(_vehicle->uas(), &UASInterface::armingChanged, this, &AutoPilotPlugin::armedChanged);
 
 	connect(this, &AutoPilotPlugin::pluginReadyChanged, this, &AutoPilotPlugin::_pluginReadyChanged);
 }
@@ -175,9 +174,4 @@ void AutoPilotPlugin::writeParametersToStream(QTextStream &stream)
 QString AutoPilotPlugin::readParametersFromStream(QTextStream &stream)
 {
 	return _getParameterLoader()->readParametersFromStream(stream);
-}
-
-bool AutoPilotPlugin::armed(void)
-{
-    return _vehicle->uas()->isArmed();
 }

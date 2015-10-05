@@ -35,6 +35,7 @@
 #include "QGCMAVLink.h"
 #include "MissionItem.h"
 #include "QmlObjectListModel.h"
+#include "MAVLinkProtocol.h"
 
 class UAS;
 class UASInterface;
@@ -62,6 +63,14 @@ public:
     Q_PROPERTY(bool             homePositionAvailable   READ homePositionAvailable  NOTIFY homePositionAvailableChanged)
     Q_PROPERTY(QGeoCoordinate   homePosition            READ homePosition           NOTIFY homePositionChanged)
     
+    Q_PROPERTY(bool armed READ armed WRITE setArmed NOTIFY armedChanged)
+
+    Q_PROPERTY(bool flightModeSetAvailable READ flightModeSetAvailable CONSTANT)
+    Q_PROPERTY(QStringList flightModes READ flightModes CONSTANT)
+    Q_PROPERTY(QString flightMode READ flightMode WRITE setFlightMode NOTIFY flightModeChanged)
+
+    Q_PROPERTY(bool hilMode READ hilMode WRITE setHilMode NOTIFY hilModeChanged)
+    
     Q_INVOKABLE QString     getMavIconColor();
     
     //-- System Messages
@@ -87,8 +96,6 @@ public:
     Q_PROPERTY(double       batteryVoltage      READ batteryVoltage     NOTIFY batteryVoltageChanged)
     Q_PROPERTY(double       batteryPercent      READ batteryPercent     NOTIFY batteryPercentChanged)
     Q_PROPERTY(double       batteryConsumed     READ batteryConsumed    NOTIFY batteryConsumedChanged)
-    Q_PROPERTY(bool         systemArmed         READ systemArmed        NOTIFY systemArmedChanged)
-    Q_PROPERTY(QString      currentMode         READ currentMode        NOTIFY currentModeChanged)
     Q_PROPERTY(QString      systemPixmap        READ systemPixmap       NOTIFY systemPixmapChanged)
     Q_PROPERTY(int          satelliteCount      READ satelliteCount     NOTIFY satelliteCountChanged)
     Q_PROPERTY(QString      currentState        READ currentState       NOTIFY currentStateChanged)
@@ -160,6 +167,17 @@ public:
     bool homePositionAvailable(void);
     QGeoCoordinate homePosition(void);
     
+    bool armed(void) { return _armed; }
+    void setArmed(bool armed);
+
+    bool flightModeSetAvailable(void);
+    QStringList flightModes(void);
+    QString flightMode(void);
+    void setFlightMode(const QString& flightMode);
+
+    bool hilMode(void);
+    void setHilMode(bool hilMode);
+    
     typedef enum {
         MessageNone,
         MessageNormal,
@@ -206,8 +224,6 @@ public:
     double          batteryVoltage      () { return _batteryVoltage; }
     double          batteryPercent      () { return _batteryPercent; }
     double          batteryConsumed     () { return _batteryConsumed; }
-    bool            systemArmed         () { return _systemArmed; }
-    QString         currentMode         () { return _currentMode; }
     QString         systemPixmap        () { return _systemPixmap; }
     QString         currentState        () { return _currentState; }
     QString         systemName          () { return _systemName; }
@@ -229,6 +245,9 @@ signals:
     void mavlinkMessageReceived(const mavlink_message_t& message);
     void homePositionAvailableChanged(bool homePositionAvailable);
     void homePositionChanged(const QGeoCoordinate& homePosition);
+    void armedChanged(bool armed);
+    void flightModeChanged(const QString& flightMode);
+    void hilModeChanged(bool hilMode);
     
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
@@ -251,9 +270,7 @@ signals:
     void batteryVoltageChanged  ();
     void batteryPercentChanged  ();
     void batteryConsumedChanged ();
-    void systemArmedChanged     ();
     void heartbeatTimeoutChanged();
-    void currentModeChanged     ();
     void currentConfigChanged   ();
     void systemPixmapChanged    ();
     void satelliteCountChanged  ();
@@ -282,9 +299,7 @@ private slots:
     void _checkUpdate                       ();
     void _updateBatteryRemaining            (UASInterface*, double voltage, double, double percent, int);
     void _updateBatteryConsumedChanged      (UASInterface*, double current_consumed);
-    void _updateArmingState                 (bool armed);
     void _updateState                       (UASInterface* system, QString name, QString description);
-    void _updateMode                        (int system, QString name, QString description);
     void _updateName                        (const QString& name);
     void _setSystemType                     (UASInterface* uas, unsigned int systemType);
     void _heartbeatTimeout                  (bool timeout, unsigned int ms);
@@ -301,7 +316,9 @@ private:
     void _loadSettings(void);
     void _saveSettings(void);
     void _startJoystick(bool start);
-    
+    void _handleHomePosition(mavlink_message_t& message);
+    void _handleHeartbeat(mavlink_message_t& message);
+
     bool    _isAirplane                     ();
     void    _addChange                      (int id);
     float   _oneDecimal                     (float value);
@@ -313,6 +330,7 @@ private:
     MAV_AUTOPILOT       _firmwareType;
     FirmwarePlugin*     _firmwarePlugin;
     AutoPilotPlugin*    _autopilotPlugin;
+    MAVLinkProtocol*    _mavlink;
     
     /// List of all links associated with this vehicle. We keep SharedLinkInterface objects
     /// which are QSharedPointer's in order to maintain reference counts across threads.
@@ -357,9 +375,7 @@ private:
     double          _batteryVoltage;
     double          _batteryPercent;
     double          _batteryConsumed;
-    bool            _systemArmed;
     QString         _currentState;
-    QString         _currentMode;
     QString         _systemName;
     QString         _systemPixmap;
     unsigned int    _currentHeartbeatTimeout;
@@ -372,6 +388,10 @@ private:
     
     MissionManager*     _missionManager;
     QmlObjectListModel  _missionItems;
+    
+    bool    _armed;         ///< true: vehicle is armed
+    uint8_t _base_mode;     ///< base_mode from HEARTBEAT
+    uint32_t _custom_mode;  ///< custom_mode from HEARTBEAT
     
     static const char* _settingsGroup;
     static const char* _joystickModeSettingsKey;

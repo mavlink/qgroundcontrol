@@ -58,7 +58,7 @@ public:
     /// @return true: continue further processing of this message, false: disregard this message
     bool notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat);
     
-    Vehicle* getVehicleById(int vehicleId);
+    Q_INVOKABLE Vehicle* getVehicleById(int vehicleId);
     
     void setHomePositionForAllVehicles(double lat, double lon, double alt);
     

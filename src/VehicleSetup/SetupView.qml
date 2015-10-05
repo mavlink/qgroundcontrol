@@ -63,7 +63,7 @@ Rectangle {
     function showFirmwarePanel()
     {
         if (!ScreenTools.isMobile) {
-            if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.autopilot.armed) {
+            if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.armed) {
                 messagePanelText = armedVehicleText
                 panelLoader.sourceComponent = messagePanelComponent
             } else {
@@ -74,7 +74,7 @@ Rectangle {
 
     function showJoystickPanel()
     {
-        if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.autopilot.armed) {
+        if (multiVehicleManager.activeVehicleAvailable && multiVehicleManager.activeVehicle.armed) {
             messagePanelText = armedVehicleText
             panelLoader.sourceComponent = messagePanelComponent
         } else {
@@ -89,7 +89,7 @@ Rectangle {
 
     function showVehicleComponentPanel(vehicleComponent)
     {
-        if (multiVehicleManager.activeVehicle.autopilot.armed) {
+        if (multiVehicleManager.activeVehicle.armed) {
             messagePanelText = armedVehicleText
             panelLoader.sourceComponent = messagePanelComponent
         } else {
