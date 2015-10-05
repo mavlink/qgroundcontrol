@@ -63,8 +63,6 @@ public:
 	/// false: One or more vehicle components require setup
 	Q_PROPERTY(bool setupComplete READ setupComplete NOTIFY setupCompleteChanged)
     
-    Q_PROPERTY(bool armed READ armed NOTIFY armedChanged)
-    
     /// Reset all parameters to their default values
     Q_INVOKABLE void resetAllParametersToDefaults(void);
 	
@@ -117,7 +115,6 @@ public:
 	// Property accessors
 	bool pluginReady(void) { return _pluginReady; }
 	bool setupComplete(void);
-    bool armed(void);
 	
     Vehicle* vehicle(void) { return _vehicle; }
     
@@ -125,7 +122,6 @@ signals:
     void pluginReadyChanged(bool pluginReady);
 	void setupCompleteChanged(bool setupComplete);
     void parameterListProgress(float value);
-    void armedChanged(bool armed);
 	
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin

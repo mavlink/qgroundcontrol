@@ -41,11 +41,9 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkManager.h"
 #include "LinkInterface.h"
 #include "UASInterface.h"
-#include "UASControlWidget.h"
 #include "UASInfoWidget.h"
 #include "WaypointList.h"
 #include "CameraView.h"
-#include "UASListWidget.h"
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
