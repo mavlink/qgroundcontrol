@@ -86,8 +86,6 @@ This file is part of the QGROUNDCONTROL project
 /// The key under which the Main Window settings are saved
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
-const char* MainWindow::_uasControlDockWidgetName = "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET";
-const char* MainWindow::_uasListDockWidgetName = "UNMANNED_SYSTEM_LIST_DOCKWIDGET";
 const char* MainWindow::_waypointsDockWidgetName = "WAYPOINT_LIST_DOCKWIDGET";
 const char* MainWindow::_mavlinkDockWidgetName = "MAVLINK_INSPECTOR_DOCKWIDGET";
 const char* MainWindow::_customCommandWidgetName = "CUSTOM_COMMAND_DOCKWIDGET";
@@ -388,8 +386,6 @@ void MainWindow::_buildCommonWidgets(void)
     };
 
     static const struct DockWidgetInfo rgDockWidgetInfo[] = {
-        { _uasControlDockWidgetName,        "Control",                  Qt::LeftDockWidgetArea },
-        { _uasListDockWidgetName,           "Unmanned Systems",         Qt::RightDockWidgetArea },
         { _waypointsDockWidgetName,         "Mission Plan",             Qt::BottomDockWidgetArea },
         { _mavlinkDockWidgetName,           "MAVLink Inspector",        Qt::RightDockWidgetArea },
         { _customCommandWidgetName,         "Custom Command",			Qt::RightDockWidgetArea },
@@ -487,11 +483,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
 
     QWidget* widget = NULL;
 
-    if (widgetName == _uasControlDockWidgetName) {
-        widget = new UASControlWidget(this);
-    } else if (widgetName == _uasListDockWidgetName) {
-        widget = new UASListWidget(this);
-    } else if (widgetName == _waypointsDockWidgetName) {
+    if (widgetName == _waypointsDockWidgetName) {
         widget = new QGCWaypointListMulti(this);
     } else if (widgetName == _mavlinkDockWidgetName) {
         widget = new QGCMAVLinkInspector(MAVLinkProtocol::instance(),this);
@@ -880,7 +872,7 @@ void MainWindow::_loadCurrentViewState(void)
         case VIEW_SIMULATION:
             _buildSimView();
             centerView = _simView;
-            defaultWidgets = "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET,WAYPOINT_LIST_DOCKWIDGET,PARAMETER_INTERFACE_DOCKWIDGET,PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET";
+            defaultWidgets = "WAYPOINT_LIST_DOCKWIDGET,PARAMETER_INTERFACE_DOCKWIDGET,PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET";
             break;
 
         default:
