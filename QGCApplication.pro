@@ -201,11 +201,8 @@ FORMS += \
     src/ui/uas/UASMessageView.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
-    src/ui/UASControl.ui \
     src/ui/UASInfo.ui \
-    src/ui/UASList.ui \
     src/ui/UASRawStatusView.ui \
-    src/ui/UASView.ui \
     src/ui/WaypointEditableView.ui \
     src/ui/WaypointList.ui \
     src/ui/WaypointViewOnlyView.ui \
@@ -322,16 +319,13 @@ HEADERS += \
     src/ui/SettingsDialog.h \
     src/ui/toolbar/MainToolBar.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
-    src/ui/uas/UASControlWidget.h \
     src/ui/uas/UASInfoWidget.h \
-    src/ui/uas/UASListWidget.h \
     src/ui/uas/UASMessageView.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewGaugeItem.h \
     src/ui/uas/UASQuickViewItem.h \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
-    src/ui/uas/UASView.h \
     src/ui/UASRawStatusView.h \
     src/ui/WaypointEditableView.h \
     src/ui/WaypointList.h \
@@ -452,16 +446,13 @@ SOURCES += \
     src/ui/SettingsDialog.cc \
     src/ui/toolbar/MainToolBar.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
-    src/ui/uas/UASControlWidget.cc \
     src/ui/uas/UASInfoWidget.cc \
-    src/ui/uas/UASListWidget.cc \
     src/ui/uas/UASMessageView.cc \
     src/ui/uas/UASQuickView.cc \
     src/ui/uas/UASQuickViewGaugeItem.cc \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
     src/ui/uas/UASQuickViewTextItem.cc \
-    src/ui/uas/UASView.cc \
     src/ui/UASRawStatusView.cpp \
     src/ui/WaypointEditableView.cc \
     src/ui/WaypointList.cc \

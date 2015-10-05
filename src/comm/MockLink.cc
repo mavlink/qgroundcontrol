@@ -338,7 +338,6 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
                 break;
 
             default:
-                qDebug() << "MockLink: Unhandled mavlink message, id:" << msg.msgid;
                 break;
         }
     }

@@ -73,8 +73,8 @@ public:
     Q_PROPERTY(QStringList actions READ actions CONSTANT)
     
     Q_PROPERTY(QVariantList buttonActions READ buttonActions NOTIFY buttonActionsChanged)
-    Q_INVOKABLE void setButtonAction(int button, int action);
-    Q_INVOKABLE int getButtonAction(int button);
+    Q_INVOKABLE void setButtonAction(int button, const QString& action);
+    Q_INVOKABLE QString getButtonAction(int button);
     
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
     
@@ -135,6 +135,7 @@ private:
     void _saveSettings(void);
     void _loadSettings(void);
     float _adjustRange(int value, Calibration_t calibration);
+    void _buttonAction(const QString& action);
     
     // Override from QThread
     virtual void run(void);
@@ -158,7 +159,7 @@ private:
     
     static const int    _cButtons = 12;
     bool                _rgButtonValues[_cButtons];
-    int                 _rgButtonActions[_cButtons];
+    QString             _rgButtonActions[_cButtons];
     quint16             _lastButtonBits;
     
     ThrottleMode_t      _throttleMode;

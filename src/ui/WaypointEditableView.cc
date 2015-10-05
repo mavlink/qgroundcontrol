@@ -13,6 +13,7 @@
 
 #include <QDoubleSpinBox>
 #include <QDebug>
+#include <QGroupBox>
 
 #include <cmath>
 #include <qmath.h>

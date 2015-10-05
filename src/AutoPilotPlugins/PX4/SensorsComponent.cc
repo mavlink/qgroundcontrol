@@ -115,7 +115,6 @@ QUrl SensorsComponent::summaryQmlSource(void) const
 {
     QString summaryQml;
     
-    qDebug() << _uas->getSystemType();
     if (_uas->getSystemType() == MAV_TYPE_FIXED_WING ||
         _uas->getSystemType() == MAV_TYPE_VTOL_DUOROTOR ||
         _uas->getSystemType() == MAV_TYPE_VTOL_QUADROTOR ||

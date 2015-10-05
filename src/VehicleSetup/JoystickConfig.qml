@@ -482,9 +482,9 @@ QGCView {
 
                                 QGCCheckBox {
                                     anchors.verticalCenter:     parent.verticalCenter
-                                    checked:                    _activeJoystick.buttonActions[modelData] != -1
+                                    checked:                    _activeJoystick.buttonActions[modelData] != ""
 
-                                    onClicked: _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.currentIndex : -1)
+                                    onClicked: _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.textAt(buttonActionCombo.currentIndex) : "")
                                 }
 
                                 Rectangle {
@@ -509,9 +509,9 @@ QGCView {
                                     id:             buttonActionCombo
                                     width:          ScreenTools.defaultFontPixelWidth * 20
                                     model:          _activeJoystick.actions
-                                    currentIndex:   _activeJoystick.buttonActions[modelData]
 
-                                    onActivated: _activeJoystick.setButtonAction(modelData, index)
+                                    onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
+                                    Component.onCompleted:  currentIndex = find(_activeJoystick.buttonActions[modelData])
                                 }
                             }
                         } // Repeater

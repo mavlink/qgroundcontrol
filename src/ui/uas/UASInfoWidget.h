@@ -74,10 +74,7 @@ public slots:
     void setVoltage(UASInterface* uas, double voltage);
     void setChargeLevel(UASInterface* uas, double chargeLevel);
     void setTimeRemaining(UASInterface* uas, double seconds);
-//    void setBattery(int uasid, BatteryType type, int cells);
 
-//    void valueChanged(int uasid, QString key, double value,quint64 time);
-//    void actuatorChanged(UASInterface* uas, int actId, double value);
     void refresh();
 
 protected:
