@@ -43,7 +43,8 @@ FactPanelController::FactPanelController(void) :
     
     _autopilot = _vehicle->autopilotPlugin();
     Q_ASSERT(_autopilot);
-    Q_ASSERT(_autopilot->pluginReady());
+    Q_ASSERT(_autopilot->parametersReady());
+    Q_ASSERT(!_autopilot->missingParameters());
     
     // Do a delayed check for the _factPanel finally being set correctly from Qml
     QTimer::singleShot(1000, this, &FactPanelController::_checkForMissingFactPanel);
