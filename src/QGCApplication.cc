@@ -424,7 +424,12 @@ bool QGCApplication::_initForNormalAppBoot(void)
     _loadCurrentStyle();
     
     // Temp hack for new mission editor
+#ifdef __mobile__
+    // Mobile builds always use new Mission Editor
+    _useNewMissionEditor = true;
+#else
     _useNewMissionEditor = settings.value("UseNewMissionEditor", false).toBool();
+#endif
     
     // Show splash screen
     QPixmap splashImage(":/res/SplashScreen");
