@@ -72,7 +72,7 @@ bool MultiVehicleManager::notifyHeartbeatInfo(LinkInterface* link, int vehicleId
         }
         
         connect(vehicle, &Vehicle::allLinksDisconnected, this, &MultiVehicleManager::_deleteVehiclePhase1);
-        connect(vehicle->autopilotPlugin(), &AutoPilotPlugin::pluginReadyChanged, this, &MultiVehicleManager::_autopilotPluginReadyChanged);
+        connect(vehicle->autopilotPlugin(), &AutoPilotPlugin::parametersReadyChanged, this, &MultiVehicleManager::_autopilotParametersReadyChanged);
 
         _vehicles.append(vehicle);
         
@@ -138,7 +138,7 @@ void MultiVehicleManager::_deleteVehiclePhase2  (void)
     if (_activeVehicle) {
         _activeVehicle->setActive(true);
         emit activeVehicleAvailableChanged(true);
-        if (_activeVehicle->autopilotPlugin()->pluginReady()) {
+        if (_activeVehicle->autopilotPlugin()->parametersReady()) {
             emit parameterReadyVehicleAvailableChanged(true);
         }
     }
@@ -181,14 +181,14 @@ void MultiVehicleManager::_setActiveVehiclePhase2(void)
         _activeVehicleAvailable = true;
         emit activeVehicleAvailableChanged(true);
         
-        if (_activeVehicle->autopilotPlugin()->pluginReady()) {
+        if (_activeVehicle->autopilotPlugin()->parametersReady()) {
             _parameterReadyVehicleAvailable = true;
             emit parameterReadyVehicleAvailableChanged(true);
         }
     }
 }
 
-void MultiVehicleManager::_autopilotPluginReadyChanged(bool pluginReady)
+void MultiVehicleManager::_autopilotParametersReadyChanged(bool parametersReady)
 {
     AutoPilotPlugin* autopilot = dynamic_cast<AutoPilotPlugin*>(sender());
     
@@ -198,8 +198,8 @@ void MultiVehicleManager::_autopilotPluginReadyChanged(bool pluginReady)
     }
     
     if (autopilot->vehicle() == _activeVehicle) {
-        _parameterReadyVehicleAvailable = pluginReady;
-        emit parameterReadyVehicleAvailableChanged(pluginReady);
+        _parameterReadyVehicleAvailable = parametersReady;
+        emit parameterReadyVehicleAvailableChanged(parametersReady);
     }
 }
 

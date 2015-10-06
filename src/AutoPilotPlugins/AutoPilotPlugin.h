@@ -54,8 +54,11 @@ public:
     AutoPilotPlugin(Vehicle* vehicle, QObject* parent);
     ~AutoPilotPlugin();
     
-	/// true: plugin is ready for use, plugin should no longer be used
-	Q_PROPERTY(bool pluginReady READ pluginReady NOTIFY pluginReadyChanged)
+	/// true: parameters are ready for use
+	Q_PROPERTY(bool parametersReady READ parametersReady NOTIFY parametersReadyChanged)
+    
+    /// true: parameters are missing from firmware response, false: all parameters received from firmware
+    Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
 	
     /// List of VehicleComponent objects
     Q_PROPERTY(QVariantList vehicleComponents READ vehicleComponents CONSTANT)
@@ -113,13 +116,15 @@ public:
     static void clearStaticData(void);
 	
 	// Property accessors
-	bool pluginReady(void) { return _pluginReady; }
+	bool parametersReady(void) { return _parametersReady; }
+    bool missingParameters(void) { return _missingParameters; }
 	bool setupComplete(void);
 	
     Vehicle* vehicle(void) { return _vehicle; }
     
 signals:
-    void pluginReadyChanged(bool pluginReady);
+    void parametersReadyChanged(bool parametersReady);
+    void missingParametersChanged(bool missingParameters);
 	void setupCompleteChanged(bool setupComplete);
     void parameterListProgress(float value);
 	
@@ -131,12 +136,13 @@ protected:
 	virtual ParameterLoader* _getParameterLoader(void) = 0;
 	
     Vehicle*    _vehicle;
-    bool        _pluginReady;
+    bool        _parametersReady;
+    bool        _missingParameters;
 	bool		_setupComplete;
 	
 private slots:
 	void _uasDisconnected(void);
-	void _pluginReadyChanged(bool pluginReady);
+	void _parametersReadyChanged(bool parametersReady);
 	
 private:
 	void _recalcSetupComplete(void);
