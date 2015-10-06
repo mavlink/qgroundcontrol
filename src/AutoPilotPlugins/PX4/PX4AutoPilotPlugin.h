@@ -63,7 +63,7 @@ public:
     PowerComponent*         powerComponent(void)        { return _powerComponent; }
 
 private slots:
-    void _pluginReadyPreChecks(void);
+    void _parametersReadyPreChecks(bool missingParameters);
     
 private:
 	// Overrides from AutoPilotPlugin
