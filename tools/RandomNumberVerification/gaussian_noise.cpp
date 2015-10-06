@@ -58,8 +58,8 @@ float generateGaussianNoise(float mu, float variance)
 	while ( u1 <= epsilon );  //Have a catch to ensure non-zero for log()
 
 	z0 = sqrt(-2.0 * log(u1)) * cos(two_pi * u2); //calculate normally distributed variable with mu = 0, var = 1
-	float noise = z0 * (variance*variance) + mu; //calculate normally distributed variable with mu = mu, std = var^2
-	return noise
+	float noise = z0 * sqrt(variance) + mu; //calculate normally distributed variable with mu = mu, std = var^2
+	return noise;
 }
 int main(int argc, char *argv[])
 {
