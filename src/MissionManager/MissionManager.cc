@@ -31,43 +31,26 @@
 QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 
 MissionManager::MissionManager(Vehicle* vehicle)
-    : QThread()
-    , _vehicle(vehicle)
+    : _vehicle(vehicle)
     , _cMissionItems(0)
+    , _canEdit(true)
     , _ackTimeoutTimer(NULL)
     , _retryAck(AckNone)
 {
-    moveToThread(this);
-    
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MissionManager::_mavlinkMessageReceived);
     
-    connect(this, &MissionManager::_writeMissionItemsOnThread, this, &MissionManager::_writeMissionItems);
-    connect(this, &MissionManager::_requestMissionItemsOnThread, this, &MissionManager::_requestMissionItems);
-    
-    start();
-}
-
-MissionManager::~MissionManager()
-{
-
-}
-
-void MissionManager::run(void)
-{
     _ackTimeoutTimer = new QTimer(this);
     _ackTimeoutTimer->setSingleShot(true);
     _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
     
     connect(_ackTimeoutTimer, &QTimer::timeout, this, &MissionManager::_ackTimeout);
     
-    _requestMissionItems();
-    
-    exec();
+    requestMissionItems();
 }
 
-void MissionManager::requestMissionItems(void)
+MissionManager::~MissionManager()
 {
-    emit _requestMissionItemsOnThread();
+
 }
 
 void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems)
@@ -77,12 +60,31 @@ void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems)
         _missionItems.append(new MissionItem(*qobject_cast<const MissionItem*>(missionItems[i])));
     }
 
-    emit _writeMissionItemsOnThread();
+    qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
+    
+    if (inProgress()) {
+        qCDebug(MissionManagerLog) << "writeMissionItems called while transaction in progress";
+        // FIXME: Better error handling
+        return;
+    }
+    
+    mavlink_message_t       message;
+    mavlink_mission_count_t missionCount;
+    
+    missionCount.target_system = _vehicle->id();
+    missionCount.target_component = MAV_COMP_ID_MISSIONPLANNER;
+    missionCount.count = _missionItems.count();
+    
+    mavlink_msg_mission_count_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &missionCount);
+    
+    _vehicle->sendMessage(message);
+    _startAckTimeout(AckMissionRequest, message);
+    emit inProgressChanged(true);
 }
 
-void MissionManager::_requestMissionItems(void)
+void MissionManager::requestMissionItems(void)
 {
-    qCDebug(MissionManagerLog) << "_requestMissionItems";
+    qCDebug(MissionManagerLog) << "requestMissionItems read sequence";
     
     mavlink_message_t               message;
     mavlink_mission_request_list_t  request;
@@ -96,6 +98,7 @@ void MissionManager::_requestMissionItems(void)
     
     _vehicle->sendMessage(message);
     _startAckTimeout(AckMissionCount, message);
+    emit inProgressChanged(true);
 }
 
 void MissionManager::_ackTimeout(void)
@@ -156,6 +159,7 @@ void MissionManager::_sendTransactionComplete(void)
     _vehicle->sendMessage(message);
     
     emit newMissionItemsAvailable();
+    emit inProgressChanged(false);
 }
 
 void MissionManager::_handleMissionCount(const mavlink_message_t& message)
@@ -172,7 +176,8 @@ void MissionManager::_handleMissionCount(const mavlink_message_t& message)
     qCDebug(MissionManagerLog) << "_handleMissionCount count:" << _cMissionItems;
     
     if (_cMissionItems == 0) {
-        _sendTransactionComplete();
+        emit newMissionItemsAvailable();
+        emit inProgressChanged(false);
     } else {
         _requestNextMissionItem(0);
     }
@@ -221,15 +226,20 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
     MissionItem* item = new MissionItem(this,
                                         missionItem.seq,
                                         QGeoCoordinate(missionItem.x, missionItem.y, missionItem.z),
+                                        missionItem.command,
                                         missionItem.param1,
                                         missionItem.param2,
                                         missionItem.param3,
-                                        missionItem.param3,
+                                        missionItem.param4,
                                         missionItem.autocontinue,
                                         missionItem.current,
-                                        missionItem.frame,
-                                        missionItem.command);
+                                        missionItem.frame);
     _missionItems.append(item);
+    
+    if (!item->canEdit()) {
+        _canEdit = false;
+        emit canEditChanged(false);
+    }
     
     int nextSequenceNumber = missionItem.seq + 1;
     if (nextSequenceNumber == _cMissionItems) {
@@ -243,29 +253,6 @@ void MissionManager::_clearMissionItems(void)
 {
     _cMissionItems = 0;
     _missionItems.clear();
-}
-
-void MissionManager::_writeMissionItems(void)
-{
-    qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
-    
-    if (inProgress()) {
-        qCDebug(MissionManagerLog) << "writeMissionItems called while transaction in progress";
-        // FIXME: Better error handling
-        return;
-    }
-    
-    mavlink_message_t       message;
-    mavlink_mission_count_t missionCount;
-    
-    missionCount.target_system = _vehicle->id();
-    missionCount.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    missionCount.count = _missionItems.count();
-    
-    mavlink_msg_mission_count_encode(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::instance()->getComponentId(), &message, &missionCount);
-    
-    _vehicle->sendMessage(message);
-    _startAckTimeout(AckMissionRequest, message);
 }
 
 void MissionManager::_handleMissionRequest(const mavlink_message_t& message)
@@ -325,8 +312,11 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
     if (missionAck.type == MAV_MISSION_ACCEPTED) {
         qCDebug(MissionManagerLog) << "_handleMissionAck write sequence complete";
     } else {
+        _missionItems.clear();
+        emit newMissionItemsAvailable();
         qCDebug(MissionManagerLog) << "_handleMissionAck ack error:" << missionAck.type;
     }
+    emit inProgressChanged(false);
 }
 
 /// Called when a new mavlink message for out vehicle is received

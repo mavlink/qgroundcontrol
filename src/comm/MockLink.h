@@ -61,14 +61,8 @@ public:
     MockLink(MockConfiguration* config = NULL);
     ~MockLink(void);
 
-    // Virtuals from LinkInterface
-    virtual QString getName(void) const { return _name; }
-    virtual void requestReset(void){ }
-    virtual bool isConnected(void) const { return _connected; }
-    virtual qint64 getConnectionSpeed(void) const { return 100000000; }
-    virtual qint64 bytesAvailable(void) { return 0; }
-
     // MockLink methods
+    int vehicleId(void) { return _vehicleSystemId; }
     MAV_AUTOPILOT getAutopilotType(void) { return _autopilotType; }
     void setAutopilotType(MAV_AUTOPILOT autopilot) { _autopilotType = autopilot; }
     void emitRemoteControlChannelRawChanged(int channel, uint16_t raw);
@@ -77,6 +71,13 @@ public:
     void respondWithMavlinkMessage(const mavlink_message_t& msg);
     
     MockLinkFileServer* getFileServer(void) { return _fileServer; }
+
+    // Virtuals from LinkInterface
+    virtual QString getName(void) const { return _name; }
+    virtual void requestReset(void){ }
+    virtual bool isConnected(void) const { return _connected; }
+    virtual qint64 getConnectionSpeed(void) const { return 100000000; }
+    virtual qint64 bytesAvailable(void) { return 0; }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
@@ -120,10 +121,8 @@ private:
     void _handleParamRequestList(const mavlink_message_t& msg);
     void _handleParamSet(const mavlink_message_t& msg);
     void _handleParamRequestRead(const mavlink_message_t& msg);
-    void _handleMissionRequestList(const mavlink_message_t& msg);
-    void _handleMissionRequest(const mavlink_message_t& msg);
-    void _handleMissionItem(const mavlink_message_t& msg);
     void _handleFTP(const mavlink_message_t& msg);
+    void _handleCommandLong(const mavlink_message_t& msg);
     float _floatUnionForParam(int componentId, const QString& paramName);
     void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
 
@@ -140,9 +139,6 @@ private:
 
     QMap<int, QMap<QString, QVariant> > _mapParamName2Value;
     QMap<QString, MAV_PARAM_TYPE>       _mapParamName2MavParamType;
-
-    typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
-    MissionList_t   _missionItems;
 
     uint8_t     _mavBaseMode;
     uint32_t    _mavCustomMode;

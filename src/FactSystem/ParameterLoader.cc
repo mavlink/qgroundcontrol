@@ -30,11 +30,13 @@
 #include "QGCApplication.h"
 #include "QGCMessageBox.h"
 #include "UASMessageHandler.h"
+#include "FirmwarePlugin.h"
 
 #include <QFile>
 #include <QDebug>
 
 QGC_LOGGING_CATEGORY(ParameterLoaderLog, "ParameterLoaderLog")
+QGC_LOGGING_CATEGORY(ParameterLoaderVerboseLog, "ParameterLoaderVerboseLog")
 
 Fact ParameterLoader::_defaultFact;
 
@@ -129,7 +131,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     _waitingReadParamIndexMap[componentId].remove(parameterId);
     _waitingReadParamNameMap[componentId].remove(parameterName);
     _waitingWriteParamNameMap[componentId].remove(parameterName);
-    qCDebug(ParameterLoaderLog) << "_waitingReadParamIndexMap:" << _waitingReadParamIndexMap[componentId];
+    qCDebug(ParameterLoaderVerboseLog) << "_waitingReadParamIndexMap:" << _waitingReadParamIndexMap[componentId];
     qCDebug(ParameterLoaderLog) << "_waitingReadParamNameMap" << _waitingReadParamNameMap[componentId];
     qCDebug(ParameterLoaderLog) << "_waitingWriteParamNameMap" << _waitingWriteParamNameMap[componentId];
 
@@ -387,11 +389,11 @@ Fact* ParameterLoader::getFact(int componentId, const QString& name)
     return _mapParameterName2Variant[componentId][name].value<Fact*>();
 }
 
-QStringList ParameterLoader::parameterNames(void)
+QStringList ParameterLoader::parameterNames(int componentId)
 {
 	QStringList names;
 	
-	foreach(QString paramName, _mapParameterName2Variant[_defaultComponentId].keys()) {
+	foreach(QString paramName, _mapParameterName2Variant[_actualComponentId(componentId)].keys()) {
 		names << paramName;
 	}
 	
@@ -499,8 +501,6 @@ void ParameterLoader::_readParameterRaw(int componentId, const QString& paramNam
 
 void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
 {
-    bool floatHack = _vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA;
-
     mavlink_param_set_t     p;
     mavlink_param_union_t   union_value;
     
@@ -509,43 +509,23 @@ void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramNa
     
     switch (factType) {
         case FactMetaData::valueTypeUint8:
-            if (floatHack) {
-                union_value.param_float = (uint8_t)value.toUInt();
-            } else {                
-                union_value.param_uint8 = (uint8_t)value.toUInt();
-            }
+            union_value.param_uint8 = (uint8_t)value.toUInt();
             break;
             
         case FactMetaData::valueTypeInt8:
-            if (floatHack) {
-                union_value.param_float = (int8_t)value.toInt();
-            } else {
-                union_value.param_int8 = (int8_t)value.toInt();
-            }
+            union_value.param_int8 = (int8_t)value.toInt();
             break;
             
         case FactMetaData::valueTypeUint16:
-            if (floatHack) {
-                union_value.param_float = (uint16_t)value.toUInt();
-            } else {
-                union_value.param_uint16 = (uint16_t)value.toUInt();
-            }
+            union_value.param_uint16 = (uint16_t)value.toUInt();
             break;
             
         case FactMetaData::valueTypeInt16:
-            if (floatHack) {
-                union_value.param_float = (int16_t)value.toInt();
-            } else {
-                union_value.param_int16 = (int16_t)value.toInt();
-            }
+            union_value.param_int16 = (int16_t)value.toInt();
             break;
             
         case FactMetaData::valueTypeUint32:
-            if (floatHack) {
-                union_value.param_float = (uint32_t)value.toUInt();
-            } else {
-                union_value.param_uint32 = (uint32_t)value.toUInt();
-            }
+            union_value.param_uint32 = (uint32_t)value.toUInt();
             break;
             
         case FactMetaData::valueTypeFloat:
@@ -557,11 +537,7 @@ void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramNa
             // fall through
             
         case FactMetaData::valueTypeInt32:
-            if (floatHack) {
-                union_value.param_float = (int32_t)value.toInt();
-            } else {
-                union_value.param_int32 = (int32_t)value.toInt();
-            }
+            union_value.param_int32 = (int32_t)value.toInt();
             break;
     }
     
@@ -578,10 +554,14 @@ void ParameterLoader::_writeParameterRaw(int componentId, const QString& paramNa
 
 void ParameterLoader::_saveToEEPROM(void)
 {
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
-    _vehicle->sendMessage(msg);
-    qCDebug(ParameterLoaderLog) << "_saveToEEPROM";
+    if (_vehicle->firmwarePlugin()->isCapable(FirmwarePlugin::MavCmdPreflightStorageCapability)) {
+        mavlink_message_t msg;
+        mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _vehicle->id(), 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
+        _vehicle->sendMessage(msg);
+        qCDebug(ParameterLoaderLog) << "_saveToEEPROM";
+    } else {
+        qCDebug(ParameterLoaderLog) << "_saveToEEPROM skipped due to FirmwarePlugin::isCapable";
+    }
 }
 
 QString ParameterLoader::readParametersFromStream(QTextStream& stream)

@@ -51,6 +51,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(NULL)
+    , _homePositionAvailable(false)
     , _mav(NULL)
     , _currentMessageCount(0)
     , _messageCount(0)
@@ -77,7 +78,6 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     , _batteryVoltage(0.0)
     , _batteryPercent(0.0)
     , _batteryConsumed(-1.0)
-    , _systemArmed(false)
     , _currentHeartbeatTimeout(0)
     , _waypointDistance(0.0)
     , _currentWaypoint(0)
@@ -85,13 +85,18 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     , _satelliteLock(0)
     , _wpm(NULL)
     , _updateCount(0)
+    , _armed(false)
+    , _base_mode(0)
+    , _custom_mode(0)
 {
     _addLink(link);
     
-    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &Vehicle::_mavlinkMessageReceived);
+    _mavlink = MAVLinkProtocol::instance();
+    
+    connect(_mavlink, &MAVLinkProtocol::messageReceived, this, &Vehicle::_mavlinkMessageReceived);
     connect(this, &Vehicle::_sendMessageOnThread, this, &Vehicle::_sendMessage, Qt::QueuedConnection);
     
-    _uas = new UAS(MAVLinkProtocol::instance(), this);
+    _uas = new UAS(_mavlink, this);
     
     setLatitude(_uas->getLatitude());
     setLongitude(_uas->getLongitude());
@@ -124,12 +129,10 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     connect(_mav, SIGNAL(altitudeChanged                    (UASInterface*, double, double, double, double, quint64)),  this, SLOT(_updateAltitude(UASInterface*, double, double, double, double, quint64)));
     connect(_mav, SIGNAL(navigationControllerErrorsChanged  (UASInterface*, double, double, double)),                   this, SLOT(_updateNavigationControllerErrors(UASInterface*, double, double, double)));
     connect(_mav, SIGNAL(statusChanged                      (UASInterface*,QString,QString)),                           this, SLOT(_updateState(UASInterface*, QString,QString)));
-    connect(_mav, SIGNAL(armingChanged                      (bool)),                                                    this, SLOT(_updateArmingState(bool)));
     connect(_mav, &UASInterface::NavigationControllerDataChanged,   this, &Vehicle::_updateNavigationControllerData);
     connect(_mav, &UASInterface::heartbeatTimeout,                  this, &Vehicle::_heartbeatTimeout);
     connect(_mav, &UASInterface::batteryChanged,                    this, &Vehicle::_updateBatteryRemaining);
     connect(_mav, &UASInterface::batteryConsumedChanged,            this, &Vehicle::_updateBatteryConsumedChanged);
-    connect(_mav, &UASInterface::modeChanged,                       this, &Vehicle::_updateMode);
     connect(_mav, &UASInterface::nameChanged,                       this, &Vehicle::_updateName);
     connect(_mav, &UASInterface::systemTypeSet,                     this, &Vehicle::_setSystemType);
     connect(_mav, &UASInterface::localizationChanged,               this, &Vehicle::_setSatLoc);
@@ -147,7 +150,6 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
         connect(pUas, &UAS::satelliteCountChanged, this, &Vehicle::_setSatelliteCount);
     }
     _setSystemType(_mav, _mav->getSystemType());
-    _updateArmingState(_mav->isArmed());
     
     _waypointViewOnlyListChanged();
     
@@ -169,12 +171,10 @@ Vehicle::~Vehicle()
     disconnect(_mav, SIGNAL(altitudeChanged                     (UASInterface*, double, double, double, double, quint64)),  this, SLOT(_updateAltitude(UASInterface*, double, double, double, double, quint64)));
     disconnect(_mav, SIGNAL(navigationControllerErrorsChanged   (UASInterface*, double, double, double)),                   this, SLOT(_updateNavigationControllerErrors(UASInterface*, double, double, double)));
     disconnect(_mav, SIGNAL(statusChanged                       (UASInterface*,QString,QString)),                           this, SLOT(_updateState(UASInterface*,QString,QString)));
-    disconnect(_mav, SIGNAL(armingChanged                       (bool)),                                                    this, SLOT(_updateArmingState(bool)));
     disconnect(_mav, &UASInterface::NavigationControllerDataChanged, this, &Vehicle::_updateNavigationControllerData);
     disconnect(_mav, &UASInterface::heartbeatTimeout,                this, &Vehicle::_heartbeatTimeout);
     disconnect(_mav, &UASInterface::batteryChanged,                  this, &Vehicle::_updateBatteryRemaining);
     disconnect(_mav, &UASInterface::batteryConsumedChanged,          this, &Vehicle::_updateBatteryConsumedChanged);
-    disconnect(_mav, &UASInterface::modeChanged,                     this, &Vehicle::_updateMode);
     disconnect(_mav, &UASInterface::nameChanged,                     this, &Vehicle::_updateName);
     disconnect(_mav, &UASInterface::systemTypeSet,                   this, &Vehicle::_setSystemType);
     disconnect(_mav, &UASInterface::localizationChanged,             this, &Vehicle::_setSatLoc);
@@ -200,9 +200,56 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _addLink(link);
     }
     
+    // Give the plugin a change to adjust the message contents
+    _firmwarePlugin->adjustMavlinkMessage(&message);
+    
+    switch (message.msgid) {
+        case MAVLINK_MSG_ID_HOME_POSITION:
+            _handleHomePosition(message);
+            break;
+        case MAVLINK_MSG_ID_HEARTBEAT:
+            _handleHeartbeat(message);
+            break;
+    }
+    
     emit mavlinkMessageReceived(message);
     
     _uas->receiveMessage(message);
+}
+
+void Vehicle::_handleHomePosition(mavlink_message_t& message)
+{
+    mavlink_home_position_t homePos;
+    
+    mavlink_msg_home_position_decode(&message, &homePos);
+    
+    _homePosition.setLatitude(homePos.latitude / 10000000.0);
+    _homePosition.setLongitude(homePos.longitude / 10000000.0);
+    _homePosition.setAltitude(homePos.altitude / 1000.0);
+    _homePositionAvailable = true;
+    
+    emit homePositionAvailableChanged(true);
+    emit homePositionChanged(_homePosition);
+}
+
+void Vehicle::_handleHeartbeat(mavlink_message_t& message)
+{
+    mavlink_heartbeat_t heartbeat;
+    
+    mavlink_msg_heartbeat_decode(&message, &heartbeat);
+    
+    bool newArmed = heartbeat.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY;
+    
+    if (_armed != newArmed) {
+        _armed = newArmed;
+        emit armedChanged(_armed);
+    }
+
+    if (heartbeat.base_mode != _base_mode || heartbeat.custom_mode != _custom_mode) {
+        _base_mode = heartbeat.base_mode;
+        _custom_mode = heartbeat.custom_mode;
+        emit flightModeChanged(flightMode());
+    }
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)
@@ -255,19 +302,19 @@ void Vehicle::_sendMessage(mavlink_message_t message)
         Q_ASSERT(link);
         
         if (link->isConnected()) {
-            MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+            MAVLinkProtocol* mavlink = _mavlink;
+            
+            // Give the plugin a chance to adjust
+            _firmwarePlugin->adjustMavlinkMessage(&message);
+            
+            static const uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
+            mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
             
             // Write message into buffer, prepending start sign
             uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
             int len = mavlink_msg_to_send_buffer(buffer, &message);
-            static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
-            mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
             
-            if (link->isConnected()) {
-                link->writeBytes((const char*)buffer, len);
-            } else {
-                qWarning() << "Link not connected";
-            }
+            link->writeBytes((const char*)buffer, len);
         }
     }
 }
@@ -524,14 +571,6 @@ QString Vehicle::getMavIconColor()
         return QString("black");
 }
 
-void Vehicle::_updateArmingState(bool armed)
-{
-    if(_systemArmed != armed) {
-        _systemArmed = armed;
-        emit systemArmedChanged();
-    }
-}
-
 void Vehicle::_updateBatteryRemaining(UASInterface*, double voltage, double, double percent, int)
 {
     
@@ -565,19 +604,6 @@ void Vehicle::_updateState(UASInterface*, QString name, QString)
     if (_currentState != name) {
         _currentState = name;
         emit currentStateChanged();
-    }
-}
-
-void Vehicle::_updateMode(int, QString name, QString)
-{
-    if (name.size()) {
-        QString shortMode = name;
-        shortMode = shortMode.replace("D|", "");
-        shortMode = shortMode.replace("A|", "");
-        if (_currentMode != shortMode) {
-            _currentMode = shortMode;
-            emit currentModeChanged();
-        }
     }
 }
 
@@ -941,4 +967,94 @@ QmlObjectListModel* Vehicle::missionItemsModel(void)
     } else {
         return &_missionItems;
     }
+}
+
+bool Vehicle::homePositionAvailable(void)
+{
+    return _homePositionAvailable;
+}
+
+QGeoCoordinate Vehicle::homePosition(void)
+{
+    if (!_homePositionAvailable) {
+        qWarning() << "Call to homePosition while _homePositionAvailable == false";
+    }
+    
+    return _homePosition;
+}
+
+void Vehicle::setArmed(bool armed)
+{
+    // We specifically use COMMAND_LONG:MAV_CMD_COMPONENT_ARM_DISARM since it is supported by more flight stacks.
+    
+    mavlink_message_t msg;
+    mavlink_command_long_t cmd;
+    
+    cmd.command = (uint16_t)MAV_CMD_COMPONENT_ARM_DISARM;
+    cmd.confirmation = 0;
+    cmd.param1 = armed ? 1.0f : 0.0f;
+    cmd.param2 = 0.0f;
+    cmd.param3 = 0.0f;
+    cmd.param4 = 0.0f;
+    cmd.param5 = 0.0f;
+    cmd.param6 = 0.0f;
+    cmd.param7 = 0.0f;
+    cmd.target_system = id();
+    cmd.target_component = 0;
+    
+    mavlink_msg_command_long_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &cmd);
+    
+    sendMessage(msg);
+}
+
+bool Vehicle::flightModeSetAvailable(void)
+{
+    return _firmwarePlugin->isCapable(FirmwarePlugin::SetFlightModeCapability);
+}
+
+QStringList Vehicle::flightModes(void)
+{
+    return _firmwarePlugin->flightModes();
+}
+
+QString Vehicle::flightMode(void)
+{
+    return _firmwarePlugin->flightMode(_base_mode, _custom_mode);
+}
+
+void Vehicle::setFlightMode(const QString& flightMode)
+{
+    uint8_t     base_mode;
+    uint32_t    custom_mode;
+
+    if (_firmwarePlugin->setFlightMode(flightMode, &base_mode, &custom_mode)) {
+        // setFlightMode will only set MAV_MODE_FLAG_CUSTOM_MODE_ENABLED in base_mode, we need to move back in the existing
+        // states.
+        uint8_t newBaseMode = _base_mode & ~MAV_MODE_FLAG_DECODE_POSITION_CUSTOM_MODE;
+        newBaseMode |= base_mode;
+
+        mavlink_message_t msg;
+        mavlink_msg_set_mode_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, id(), newBaseMode, custom_mode);
+        sendMessage(msg);
+    } else {
+        qCWarning(VehicleLog) << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
+    }
+}
+
+bool Vehicle::hilMode(void)
+{
+    return _base_mode & MAV_MODE_FLAG_HIL_ENABLED;
+}
+
+void Vehicle::setHilMode(bool hilMode)
+{
+    mavlink_message_t msg;
+
+    uint8_t newBaseMode = _base_mode & ~MAV_MODE_FLAG_DECODE_POSITION_HIL;
+    if (hilMode) {
+        newBaseMode |= MAV_MODE_FLAG_HIL_ENABLED;
+    }
+
+    mavlink_msg_set_mode_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, id(), newBaseMode, _custom_mode);
+    sendMessage(msg);
 }

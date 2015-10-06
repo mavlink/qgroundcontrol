@@ -27,8 +27,10 @@
 #include "QmlObjectListModel.h"
 
 #include <QDebug>
+#include <QQmlEngine>
 
 const int QmlObjectListModel::ObjectRole = Qt::UserRole;
+const int QmlObjectListModel::TextRole = Qt::UserRole + 1;
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : QAbstractListModel(parent)
@@ -60,6 +62,8 @@ QVariant QmlObjectListModel::data(const QModelIndex &index, int role) const
     
     if (role == ObjectRole) {
         return QVariant::fromValue(_objectList[index.row()]);
+    } else if (role == TextRole) {
+        return QVariant::fromValue(_objectList[index.row()]->objectName());
     } else {
         return QVariant();
     }
@@ -70,6 +74,7 @@ QHash<int, QByteArray> QmlObjectListModel::roleNames(void) const
     QHash<int, QByteArray> hash;
     
     hash[ObjectRole] = "object";
+    hash[TextRole] = "text";
     
     return hash;
 }
@@ -152,6 +157,8 @@ void QmlObjectListModel::insert(int i, QObject* object)
         qWarning() << "Invalid index index:count" << i << _objectList.count();
     }
     
+    QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
+
     _objectList.insert(i, object);
     insertRows(i, 1);
 }

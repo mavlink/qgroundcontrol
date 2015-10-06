@@ -141,6 +141,7 @@ INCLUDEPATH += \
     src/AutoPilotPlugins \
     src/comm \
     src/FlightDisplay \
+    src/FlightMap \
     src/input \
     src/Joystick \
     src/lib/qmapcontrol \
@@ -200,11 +201,8 @@ FORMS += \
     src/ui/uas/UASMessageView.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
-    src/ui/UASControl.ui \
     src/ui/UASInfo.ui \
-    src/ui/UASList.ui \
     src/ui/UASRawStatusView.ui \
-    src/ui/UASView.ui \
     src/ui/WaypointEditableView.ui \
     src/ui/WaypointList.ui \
     src/ui/WaypointViewOnlyView.ui \
@@ -239,6 +237,7 @@ HEADERS += \
     src/comm/UDPLink.h \
     src/FlightDisplay/FlightDisplayWidget.h \
     src/FlightDisplay/FlightDisplayView.h \
+    src/FlightMap/FlightMapSettings.h \
     src/GAudioOutput.h \
     src/HomePositionManager.h \
     src/Joystick/Joystick.h \
@@ -264,6 +263,7 @@ HEADERS += \
     src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
+    src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
     src/SerialPortIds.h \
     src/uas/FileManager.h \
@@ -319,23 +319,19 @@ HEADERS += \
     src/ui/SettingsDialog.h \
     src/ui/toolbar/MainToolBar.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
-    src/ui/uas/UASControlWidget.h \
     src/ui/uas/UASInfoWidget.h \
-    src/ui/uas/UASListWidget.h \
     src/ui/uas/UASMessageView.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewGaugeItem.h \
     src/ui/uas/UASQuickViewItem.h \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
-    src/ui/uas/UASView.h \
     src/ui/UASRawStatusView.h \
     src/ui/WaypointEditableView.h \
     src/ui/WaypointList.h \
     src/ui/WaypointViewOnlyView.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
-    src/ViewWidgets/ParameterEditorWidget.h \
     src/ViewWidgets/ViewWidgetController.h \
     src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
@@ -374,6 +370,7 @@ SOURCES += \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayWidget.cc \
     src/FlightDisplay/FlightDisplayView.cc \
+    src/FlightMap/FlightMapSettings.cc \
     src/GAudioOutput.cc \
     src/HomePositionManager.cc \
     src/Joystick/Joystick.cc \
@@ -395,6 +392,7 @@ SOURCES += \
     src/QGCTemporaryFile.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
+    src/QmlControls/QGroundControlQmlGlobal.cc \
     src/QmlControls/QmlObjectListModel.cc \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
@@ -448,23 +446,19 @@ SOURCES += \
     src/ui/SettingsDialog.cc \
     src/ui/toolbar/MainToolBar.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
-    src/ui/uas/UASControlWidget.cc \
     src/ui/uas/UASInfoWidget.cc \
-    src/ui/uas/UASListWidget.cc \
     src/ui/uas/UASMessageView.cc \
     src/ui/uas/UASQuickView.cc \
     src/ui/uas/UASQuickViewGaugeItem.cc \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
     src/ui/uas/UASQuickViewTextItem.cc \
-    src/ui/uas/UASView.cc \
     src/ui/UASRawStatusView.cpp \
     src/ui/WaypointEditableView.cc \
     src/ui/WaypointList.cc \
     src/ui/WaypointViewOnlyView.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
-    src/ViewWidgets/ParameterEditorWidget.cc \
     src/ViewWidgets/ViewWidgetController.cc \
     src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc
@@ -508,40 +502,44 @@ INCLUDEPATH += \
 	src/qgcunittest
 
 HEADERS += \
-    src/qgcunittest/FlightGearTest.h \
-    src/qgcunittest/MultiSignalSpy.h \
-    src/qgcunittest/TCPLinkTest.h \
-    src/qgcunittest/TCPLoopBackServer.h \
     src/FactSystem/FactSystemTestBase.h \
     src/FactSystem/FactSystemTestGeneric.h \
     src/FactSystem/FactSystemTestPX4.h \
+    src/MissionItemTest.h \
+    src/MissionManager/MissionManagerTest.h \
     src/qgcunittest/FileDialogTest.h \
+    src/qgcunittest/FileManagerTest.h \
+    src/qgcunittest/FlightGearTest.h \
     src/qgcunittest/LinkManagerTest.h \
     src/qgcunittest/MainWindowTest.h \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
+    src/qgcunittest/MultiSignalSpy.h \
+    src/qgcunittest/PX4RCCalibrationTest.h \
+    src/qgcunittest/TCPLinkTest.h \
+    src/qgcunittest/TCPLoopBackServer.h \
     src/qgcunittest/UnitTest.h \
     src/VehicleSetup/SetupViewTest.h \
-    src/qgcunittest/FileManagerTest.h \
-    src/qgcunittest/PX4RCCalibrationTest.h \
 
 SOURCES += \
-    src/qgcunittest/FlightGearTest.cc \
-    src/qgcunittest/MultiSignalSpy.cc \
-    src/qgcunittest/TCPLinkTest.cc \
-    src/qgcunittest/TCPLoopBackServer.cc \
     src/FactSystem/FactSystemTestBase.cc \
     src/FactSystem/FactSystemTestGeneric.cc \
     src/FactSystem/FactSystemTestPX4.cc \
+    src/MissionItemTest.cc \
+    src/MissionManager/MissionManagerTest.cc \
     src/qgcunittest/FileDialogTest.cc \
+    src/qgcunittest/FileManagerTest.cc \
+    src/qgcunittest/FlightGearTest.cc \
     src/qgcunittest/LinkManagerTest.cc \
     src/qgcunittest/MainWindowTest.cc \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
+    src/qgcunittest/MultiSignalSpy.cc \
+    src/qgcunittest/PX4RCCalibrationTest.cc \
+    src/qgcunittest/TCPLinkTest.cc \
+    src/qgcunittest/TCPLoopBackServer.cc \
     src/qgcunittest/UnitTest.cc \
     src/VehicleSetup/SetupViewTest.cc \
-    src/qgcunittest/FileManagerTest.cc \
-    src/qgcunittest/PX4RCCalibrationTest.cc \
 
 } # DebugBuild|WindowsDebugAndRelease
 } # MobileBuild
@@ -578,6 +576,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
+    src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
     src/Vehicle/MultiVehicleManager.h \
@@ -614,6 +613,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
+    src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \

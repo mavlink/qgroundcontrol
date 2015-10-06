@@ -42,7 +42,7 @@ QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
 const char* Joystick::_settingsGroup =              "Joysticks";
 const char* Joystick::_calibratedSettingsKey =      "Calibrated";
-const char* Joystick::_buttonActionSettingsKey =    "ButtonAction%1";
+const char* Joystick::_buttonActionSettingsKey =    "ButtonActionName%1";
 const char* Joystick::_throttleModeSettingsKey =    "ThrottleMode";
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
@@ -124,7 +124,7 @@ void Joystick::_loadSettings(void)
         calibration->min = settings.value(minTpl.arg(axis), -32768).toInt(&convertOk);
         badSettings |= !convertOk;
         
-        calibration->max = settings.value(maxTpl.arg(axis), 32768).toInt(&convertOk);
+        calibration->max = settings.value(maxTpl.arg(axis), 32767).toInt(&convertOk);
         badSettings |= !convertOk;
         
         calibration->reversed = settings.value(revTpl.arg(axis), false).toBool();
@@ -144,10 +144,8 @@ void Joystick::_loadSettings(void)
     }
     
     for (int button=0; button<_cButtons; button++) {
-        _rgButtonActions[button] = settings.value(QString(_buttonActionSettingsKey).arg(button), -1).toInt(&convertOk);
-        badSettings |= !convertOk;
-        
-        qCDebug(JoystickLog) << "_loadSettings button:action:badsettings" << button << _rgButtonActions[button] << badSettings;
+        _rgButtonActions[button] = settings.value(QString(_buttonActionSettingsKey).arg(button), QString()).toString();        
+        qCDebug(JoystickLog) << "_loadSettings button:action" << button << _rgButtonActions[button];
     }
     
     if (badSettings) {
@@ -239,7 +237,7 @@ float Joystick::_adjustRange(int value, Calibration_t calibration)
                             << axisLength;
 #endif
 
-    return correctedValue;
+    return std::max(-1.0f, std::min(correctedValue, 1.0f));
 }
 
 
@@ -322,10 +320,9 @@ void Joystick::run(void)
                         
                         if (buttonIndex >= reservedButtonCount) {
                             // Button is above firmware reserved set
-                            int buttonAction =_rgButtonActions[buttonIndex];
-                            if (buttonAction != -1) {
-                                qCDebug(JoystickLog) << "buttonActionTriggered" << buttonAction;
-                                emit buttonActionTriggered(buttonAction);
+                            QString buttonAction =_rgButtonActions[buttonIndex];
+                            if (!buttonAction.isEmpty()) {
+                                _buttonAction(buttonAction);
                             }
                         }
                     }
@@ -369,7 +366,8 @@ void Joystick::startPolling(Vehicle* vehicle)
         UAS* uas = _activeVehicle->uas();
         
         connect(this, &Joystick::manualControl,         uas, &UAS::setExternalControlSetpoint);
-        connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
+        // FIXME: ****
+        //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
         
         _exitThread = false;
         start();
@@ -382,7 +380,8 @@ void Joystick::stopPolling(void)
         UAS* uas = _activeVehicle->uas();
         
         disconnect(this, &Joystick::manualControl,          uas, &UAS::setExternalControlSetpoint);
-        disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
+        // FIXME: ****
+        //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
         
         _exitThread = true;
         }
@@ -435,27 +434,27 @@ int Joystick::getFunctionAxis(AxisFunction_t function)
 QStringList Joystick::actions(void)
 {
     QStringList list;
-    
-    foreach(QAction* action, MultiVehicleManager::instance()->activeVehicle()->uas()->getActions()) {
-        list += action->text();
-    }
+
+    list << "Arm" << "Disarm";
     
     return list;
 }
 
-void Joystick::setButtonAction(int button, int action)
+void Joystick::setButtonAction(int button, const QString& action)
 {
     if (button < 0 || button > _cButtons) {
         qCWarning(JoystickLog) << "Invalid button index" << button;
         return;
     }
     
+    qDebug() << "setButtonAction" << action;
+    
     _rgButtonActions[button] = action;
     _saveSettings();
     emit buttonActionsChanged(buttonActions());
 }
 
-int Joystick::getButtonAction(int button)
+QString Joystick::getButtonAction(int button)
 {
     if (button < 0 || button > _cButtons) {
         qCWarning(JoystickLog) << "Invalid button index" << button;
@@ -512,9 +511,6 @@ void Joystick::stopCalibrationMode(CalibrationMode_t mode)
     if (mode == CalibrationModeOff) {
         qWarning() << "Incorrect mode: CalibrationModeOff";
         return;
-    } else if (mode != _calibrationMode) {
-        qWarning() << "Incorrect mode sequence request:active" << mode << _calibrationMode;
-        return;
     }
     
     if (mode == CalibrationModeCalibrating) {
@@ -524,6 +520,17 @@ void Joystick::stopCalibrationMode(CalibrationMode_t mode)
         if (_pollingStartedForCalibration) {
             stopPolling();
         }
+    }
+}
+
+void Joystick::_buttonAction(const QString& action)
+{
+    if (action == "Arm") {
+        _activeVehicle->setArmed(true);
+    } else if (action == "Disarm") {
+        _activeVehicle->setArmed(false);
+    } else {
+        qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
 }
 

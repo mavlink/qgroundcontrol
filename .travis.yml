@@ -17,10 +17,10 @@ matrix:
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: true
         - os: osx
-          osx_image: beta-xcode6.3
+          osx_image: xcode7
           env: SPEC=macx-clang CONFIG=debug
         - os: osx
-          osx_image: beta-xcode6.3
+          osx_image: xcode7
           env: SPEC=macx-clang CONFIG=installer
         - os: android
           language: android
@@ -28,7 +28,7 @@ matrix:
           sudo: false
         - os: android
           language: android
-          env: SPEC=android-g++ CONFIG=release
+          env: SPEC=android-g++ CONFIG=installer
           sudo: false
 
 android:
@@ -44,6 +44,7 @@ before_install:
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/; fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
+  - if [ "${TRAVIS_OS_NAME}" = "android" ]; then wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 && mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 && tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2; fi
 
 install:
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
@@ -78,7 +79,10 @@ install:
     fi
 
 
-before_script: qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
+before_script:
+  - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then export CONFIG=release; fi
+  - qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
+
 script:
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
   - make -j4
@@ -87,18 +91,31 @@ script:
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol --unittest; fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
   - echo -en 'travis_fold:end:script.2\\r'
-  - if [ "${TRAVIS_OS_NAME}" = "android" ]; then make install INSTALL_ROOT=./release/android-build/ && androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output release/android-build --deployment bundled --gradle; fi
-  - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "release" && "${TRAVIS_SECURE_ENV_VARS}" = "true" ]]; then androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output release/android-build --deployment bundled --gradle --sign android/android_release.keystore dagar --storepass ${ANDROID_STOREPASS}; fi
 
 deploy:
-  provider: releases
-  api-key:
-    secure: ""
-  file: "release/qgroundcontrol.dmg"
-  skip_cleanup: true
-  on:
-    tags: true
-    all_branches: true
+  - provider: s3
+    access_key_id: AKIAIVORNALE7NHD3T6Q
+    secret_access_key:
+      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
+    bucket: qgroundcontrol
+    local_dir: release/package
+    upload-dir: ${TRAVIS_BRANCH}
+    acl: public_read
+    skip_cleanup: true
+    on:
+      all_branches: true
+      condition: $CONFIG = installer
+  - provider: releases
+    api-key:
+      secure: K/Zqr/FCC7QvzFxYvBtCinPkacQq2ubJ2qm982+38Zf/KjibVOF1dEbVdrGZmII6Tg5DaQzNXGYkg5PvYmJgT9xRsqeQjeYIUYqYZpAt+HYWA38AVfMU8jip/1P1wmwqD469nzJOBBa8yfsMs6Ca7tBaNl/zTxCRGnAgEzqtkdQ=
+    file:
+      - release/package/qgroundcontrol.apk
+      - release/package/qgroundcontrol.dmg
+      - release/package/qgroundcontrol.tar.bz2
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: $CONFIG = installer
 
 notifications:
   webhooks:

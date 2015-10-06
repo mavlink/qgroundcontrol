@@ -279,23 +279,58 @@ Rectangle {
 
             }
 
-            Rectangle {
-                id: mavIcon
-                width: cellHeight
-                height: cellHeight
-                visible: mainToolBar.showMav
+            QGCButton {
+                width:                  ScreenTools.defaultFontPixelWidth * 12
+                height:                 cellHeight
+                visible:                mainToolBar.showMav
                 anchors.verticalCenter: parent.verticalCenter
-                color: colorBlue
-                border.color: "#00000000"
-                border.width: 0
-                Image {
-                    source: activeVehicle.systemPixmap
-                    height: cellHeight * 0.75
-                    fillMode: Image.PreserveAspectFit
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
+                text:                   "Vehicle " + activeVehicle.id
+
+                menu: vehicleMenu
+
+                Menu {
+                    id: vehicleMenu
+                }
+
+                Component {
+                    id: vehicleMenuItemComponent
+
+                    MenuItem {
+                        checkable:      true
+                        checked:        vehicle.active
+                        onTriggered:    multiVehicleManager.activeVehicle = vehicle
+
+                        property int vehicleId: Number(text.split(" ")[1])
+                        property var vehicle:   multiVehicleManager.getVehicleById(vehicleId)
+                    }
+                }
+
+                property var vehicleMenuItems: []
+
+                function updateVehicleMenu() {
+                    // Remove old menu items
+                    for (var i=0; i<vehicleMenuItems.length; i++) {
+                        vehicleMenu.removeItem(vehicleMenuItems[i])
+                    }
+                    vehicleMenuItems.length = 0
+
+                    // Add new items
+                    for (var i=0; i<multiVehicleManager.vehicles.count; i++) {
+                        var vehicle = multiVehicleManager.vehicles.get(i)
+                        var menuItem = vehicleMenuItemComponent.createObject(null, { "text": "Vehicle " + vehicle.id })
+                        vehicleMenuItems.push(menuItem)
+                        vehicleMenu.insertItem(i, menuItem)
+                    }
+                }
+
+                Component.onCompleted: updateVehicleMenu()
+
+                Connections {
+                    target:         multiVehicleManager.vehicles
+                    onCountChanged: parent.updateVehicleMenu
                 }
             }
+
 
             Rectangle {
                 id: satelitte
@@ -478,69 +513,92 @@ Rectangle {
                 }
             }
 
-            Column {
-                height:  cellHeight * 0.85
-                width:   getProportionalDimmension(80)
+            QGCButton {
+                width:                  ScreenTools.defaultFontPixelWidth * 11
+                height:                 cellHeight
                 anchors.verticalCenter: parent.verticalCenter
+                text:                   activeVehicle.armed ? "Armed" : "Disarmed"
 
-                Rectangle {
-                    id: armedStatus
-                    width: parent.width
-                    height: parent.height / 2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: "#00000000"
-                    border.color: "#00000000"
-                    border.width: 0
+                menu: Menu {
+                    MenuItem {
+                        enabled: !activeVehicle.armed
+                        text: "Arm"
 
-                    QGCLabel {
-                        id: armedStatusText
-                        text: (activeVehicle.systemArmed) ? qsTr("ARMED") :  qsTr("DISARMED")
-                        font.pixelSize: ScreenTools.smallFontPixelSize
-                        font.weight: Font.DemiBold
-                        anchors.centerIn: parent
-                        color: (activeVehicle.systemArmed) ? colorOrangeText : colorGreenText
+                        onTriggered: activeVehicle.armed = true
+                    }
+
+                    MenuItem {
+                        enabled: activeVehicle.armed
+                        text: "Disarm"
+
+                        onTriggered: activeVehicle.armed = false
+                    }
+                }
+            }
+
+            QGCButton {
+                width:                  ScreenTools.defaultFontPixelWidth * 15
+                height:                 cellHeight
+                anchors.verticalCenter: parent.verticalCenter
+                text:                   activeVehicle.flightMode
+
+                menu: flightModesMenu
+
+                Menu {
+                    id: flightModesMenu
+                }
+
+                Component {
+                    id: flightModeMenuItemComponent
+
+                    MenuItem {
+                        checkable:      true
+                        checked:        activeVehicle.flightMode == text
+                        onTriggered:    activeVehicle.flightMode = text
                     }
                 }
 
-                Rectangle {
-                    id: stateStatus
-                    width: parent.width
-                    height: parent.height / 2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: "#00000000"
-                    border.color: "#00000000"
-                    border.width: 0
+                property var flightModesMenuItems: []
 
-                    QGCLabel {
-                        id: stateStatusText
-                        text: activeVehicle.currentState
-                        font.pixelSize: ScreenTools.smallFontPixelSize
-                        font.weight: Font.DemiBold
-                        anchors.centerIn: parent
-                        color: (activeVehicle.currentState === "STANDBY") ? colorGreenText : colorRedText
+                function updateFlightModesMenu() {
+                    // Remove old menu items
+                    for (var i=0; i<flightModesMenuItems.length; i++) {
+                        flightModesMenu.removeItem(flightModesMenuItems[i])
+                    }
+                    flightModesMenuItems.length = 0
+
+                    // Add new items
+                    for (var i=0; i<activeVehicle.flightModes.length; i++) {
+                        var menuItem = flightModeMenuItemComponent.createObject(null, { "text": activeVehicle.flightModes[i] })
+                        flightModesMenuItems.push(menuItem)
+                        flightModesMenu.insertItem(i, menuItem)
                     }
                 }
 
+                Component.onCompleted: updateFlightModesMenu()
+
+                Connections {
+                    target:                 multiVehicleManager
+                    onActiveVehicleChanged: parent.updateFlightModesMenu
+                }
             }
 
             Rectangle {
-                id: modeStatus
-                width: getProportionalDimmension(90)
-                height: cellHeight
-                color: "#00000000"
-                border.color: "#00000000"
-                border.width: 0
+                width:                  ScreenTools.defaultFontPixelWidth * 4
+                height:                 cellHeight
+                anchors.verticalCenter: parent.verticalCenter
+                color:                  colorBlue
+                border.width:           0
+                visible:                activeVehicle.hilMode
 
                 QGCLabel {
-                    id: modeStatusText
-                    text: activeVehicle.currentMode
-                    font.pixelSize: ScreenTools.smallFontPixelSize
-                    font.weight: Font.DemiBold
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: colorWhiteText
+                    anchors.fill:           parent
+                    horizontalAlignment:    Text.AlignHCenter
+                    verticalAlignment:      Text.AlignVCenter
+                    text:                   "HIL"
                 }
             }
+
         } // Row
     } // Component - activeVehicleComponent
 

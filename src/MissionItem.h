@@ -35,6 +35,9 @@
 #include "MavlinkQmlSingleton.h"
 #include "QmlObjectListModel.h"
 #include "Fact.h"
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(MissionItemLog)
 
 class MissionItem : public QObject
 {
@@ -44,14 +47,14 @@ public:
     MissionItem(QObject         *parent = 0,
                 int             sequenceNumber = 0,
                 QGeoCoordinate  coordiante = QGeoCoordinate(),
+                int             action = MAV_CMD_NAV_WAYPOINT,
                 double          param1 = 0.0,
                 double          param2 = 0.0,
                 double          param3 = 0.0,
                 double          param4 = 0.0,
                 bool            autocontinue = true,
                 bool            isCurrentItem = false,
-                int             frame = MAV_FRAME_GLOBAL,
-                int             action = MAV_CMD_NAV_WAYPOINT);
+                int             frame = MAV_FRAME_GLOBAL_RELATIVE_ALT);
 
     MissionItem(const MissionItem& other, QObject* parent = NULL);
     ~MissionItem();
@@ -104,6 +107,9 @@ public:
     void setYawDegrees(double yaw);
     
     // C++ only methods
+    
+    /// Returns true if this item can be edited in the ui
+    bool canEdit(void);
 
     double latitude(void)  const { return _latitudeFact->value().toDouble(); }
     double longitude(void) const { return _longitudeFact->value().toDouble(); }

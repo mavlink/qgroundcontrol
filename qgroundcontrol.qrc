@@ -43,6 +43,7 @@
         <file alias="PowerComponentBattery_04cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_04cell.svg</file>
         <file alias="PowerComponentBattery_05cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg</file>
         <file alias="PowerComponentBattery_06cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg</file>
+
         <file alias="attitudeDial.svg">src/FlightMap/Images/attitudeDial.svg</file>
         <file alias="attitudeInstrument.svg">src/FlightMap/Images/attitudeInstrument.svg</file>
         <file alias="attitudePointer.svg">src//FlightMap/Images/attitudePointer.svg</file>
@@ -61,6 +62,10 @@
         <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>
         <file alias="airplaneOutline.svg">src/FlightMap/Images/airplaneOutline.svg</file>
         <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
+        <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
+        <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
+        <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
+        <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
     </qresource>
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>
@@ -101,6 +106,8 @@
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">src/QmlControls/MissionItemIndexLabel.qml</file>
         <file alias="QGroundControl/Controls/MissionItemSummary.qml">src/QmlControls/MissionItemSummary.qml</file>
         <file alias="QGroundControl/Controls/MissionItemEditor.qml">src/QmlControls/MissionItemEditor.qml</file>
+        <file alias="QGroundControl/Controls/DropButton.qml">src/QmlControls/DropButton.qml</file>
+        <file alias="QGroundControl/Controls/QGCCanvas.qml">src/QmlControls/QGCCanvas.qml</file>
 
         <!-- Vehicle Setup -->
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
@@ -110,7 +117,6 @@
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
 
         <file alias="ScreenToolsFontQuery.qml">src/QmlControls/ScreenToolsFontQuery.qml</file>
-        <file alias="ParameterEditorWidget.qml">src/ViewWidgets/ParameterEditorWidget.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="RadioComponent.qml">src/AutoPilotPlugins/PX4/RadioComponent.qml</file>

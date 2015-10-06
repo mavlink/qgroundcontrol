@@ -74,12 +74,16 @@
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
+#include "APM/APMFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
 #include "JoystickManager.h"
 #include "QmlObjectListModel.h"
 #include "MissionManager.h"
+#include "QGroundControlQmlGlobal.h"
+#include "HomePositionManager.h"
+#include "FlightMapSettings.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -124,6 +128,11 @@ static QObject* mavlinkQmlSingletonFactory(QQmlEngine*, QJSEngine*)
     return new MavlinkQmlSingleton;
 }
 
+static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    return new QGroundControlQmlGlobal;
+}
+
 #if defined(QGC_GST_STREAMING)
 #ifdef Q_OS_MAC
 #ifndef __ios__
@@ -153,7 +162,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests(unitTesting)
     , _styleIsDark(true)
 	, _fakeMobile(false)
-    , _useNewMissionEditor(false)
+#ifdef UNITTEST_BUILD
+    , _useNewMissionEditor(true)    // Unit Tests run new mission editor
+#endif
 #ifdef QT_DEBUG
     , _testHighDPI(false)
 #endif
@@ -169,14 +180,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // Parse command line options
     
     bool fClearSettingsOptions = false; // Clear stored settings
-    bool fullLogging = false; // Turn on all logging
+    bool logging = false;               // Turn on logging
+    QString loggingOptions;
     
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, QString() },
-        { "--full-logging",     &fullLogging,           QString() },
-		{ "--fake-mobile",      &_fakeMobile,           QString() },
+        { "--clear-settings",   &fClearSettingsOptions, NULL },
+        { "--logging",          &logging,               &loggingOptions },
+		{ "--fake-mobile",      &_fakeMobile,           NULL },
 #ifdef QT_DEBUG
-        { "--test-high-dpi",    &_testHighDPI,          QString() },
+        { "--test-high-dpi",    &_testHighDPI,          NULL },
 #endif
         // Add additional command line option flags here
     };
@@ -186,8 +198,30 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
 #else
-    if (fullLogging) {
-        QLoggingCategory::setFilterRules(QStringLiteral("*Log=true"));
+    if (logging) {
+        QString filterRules;
+        QStringList logList = loggingOptions.split(",");
+        
+        if (logList[0] == "full") {
+            filterRules += "*Log.debug=true\n";
+            for(int i=1; i<logList.count(); i++) {
+                filterRules += logList[i];
+                filterRules += ".debug=false\n";
+            }
+        } else {
+            foreach(QString rule, logList) {
+                filterRules += rule;
+                filterRules += ".debug=true\n";
+            }
+        }
+        
+        if (_runningUnitTests) {
+            // We need to turn off these warnings until the firmware meta data is cleaned up
+            filterRules += "PX4ParameterLoaderLog.warning=false\n";
+        }
+        
+        qDebug() << "Filter rules" << filterRules;
+        QLoggingCategory::setFilterRules(filterRules);
     } else {
         if (_runningUnitTests) {
             // We need to turn off these warnings until the firmware meta data is cleaned up
@@ -216,7 +250,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         }
 
         if (loggingDirectoryOk) {
-            qDebug () << iniFileLocation;
+            qDebug () << "Logging ini file directory" << iniFileLocation.absolutePath();
             if (!iniFileLocation.exists(qtLoggingFile)) {
                 QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
                 if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -297,14 +331,14 @@ void QGCApplication::_initCommon(void)
     
     qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
     
-    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",    "Can only reference, cannot create");
-    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",   "Can only reference, cannot create");
-    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",            "Can only reference, cannot create");
-    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",        "Can only reference, cannot create");
-    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",     "Can only reference, cannot create");
-    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",    "Reference only");
-    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",           "Reference only");
-    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel", "Reference only");
+    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",        "Reference only");
+    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",       "Reference only");
+    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",                "Reference only");
+    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",            "Reference only");
+    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",         "Reference only");
+    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",        "Reference only");
+    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",               "Reference only");
+    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
     
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
@@ -322,8 +356,9 @@ void QGCApplication::_initCommon(void)
 #endif
     
     // Register Qml Singletons
-    qmlRegisterSingletonType<ScreenToolsController> ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
-    qmlRegisterSingletonType<MavlinkQmlSingleton>   ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
+    qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
+    qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
+    qmlRegisterSingletonType<MavlinkQmlSingleton>       ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
     
     // Show user an upgrade message if the settings version has been bumped up
     bool settingsUpgraded = false;
@@ -541,12 +576,23 @@ void QGCApplication::_createSingletons(void)
     // The order here is important since the singletons reference each other
 
     // No dependencies
+    FlightMapSettings* flightMapSettings = FlightMapSettings::_createSingleton();
+    Q_UNUSED(flightMapSettings);
+    Q_ASSERT(flightMapSettings);
+    
+    // No dependencies
+    HomePositionManager* homePositionManager = HomePositionManager::_createSingleton();
+    Q_UNUSED(homePositionManager);
+    Q_ASSERT(homePositionManager);
+
+    // No dependencies
     FirmwarePlugin* firmwarePlugin = GenericFirmwarePlugin::_createSingleton();
     Q_UNUSED(firmwarePlugin);
     Q_ASSERT(firmwarePlugin);
     
     // No dependencies
     firmwarePlugin = PX4FirmwarePlugin::_createSingleton();
+    firmwarePlugin = APMFirmwarePlugin::_createSingleton();
     
     // No dependencies
     FirmwarePluginManager* firmwarePluginManager = FirmwarePluginManager::_createSingleton();
@@ -573,22 +619,17 @@ void QGCApplication::_createSingletons(void)
     Q_UNUSED(linkManager);
     Q_ASSERT(linkManager);
 
-    // Needs LinkManager
-    HomePositionManager* uasManager = HomePositionManager::_createSingleton();
-    Q_UNUSED(uasManager);
-    Q_ASSERT(uasManager);
-
-    // Need HomePositionManager
+    // Need MultiVehicleManager
     AutoPilotPluginManager* pluginManager = AutoPilotPluginManager::_createSingleton();
     Q_UNUSED(pluginManager);
     Q_ASSERT(pluginManager);
 
-    // Need HomePositionManager
+    // Need MultiVehicleManager
     UASMessageHandler* messageHandler = UASMessageHandler::_createSingleton();
     Q_UNUSED(messageHandler);
     Q_ASSERT(messageHandler);
 
-    // Needs HomePositionManager
+    // Needs MultiVehicleManager
     FactSystem* factSystem = FactSystem::_createSingleton();
     Q_UNUSED(factSystem);
     Q_ASSERT(factSystem);
@@ -620,7 +661,6 @@ void QGCApplication::_destroySingletons(void)
     FactSystem::_deleteSingleton();
     UASMessageHandler::_deleteSingleton();
     AutoPilotPluginManager::_deleteSingleton();
-    HomePositionManager::_deleteSingleton();
     LinkManager::_deleteSingleton();
     GAudioOutput::_deleteSingleton();
     JoystickManager::_deleteSingleton();
@@ -628,6 +668,9 @@ void QGCApplication::_destroySingletons(void)
     FirmwarePluginManager::_deleteSingleton();
     GenericFirmwarePlugin::_deleteSingleton();
     PX4FirmwarePlugin::_deleteSingleton();
+    APMFirmwarePlugin::_deleteSingleton();
+    HomePositionManager::_deleteSingleton();
+    FlightMapSettings::_deleteSingleton();
 }
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)

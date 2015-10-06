@@ -38,7 +38,7 @@ class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionManagerLog)
 
-class MissionManager : public QThread
+class MissionManager : public QObject
 {
     Q_OBJECT
     
@@ -47,13 +47,17 @@ public:
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
     
-    Q_PROPERTY(bool                 inProgress   READ inProgress    CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  missionItems READ missionItems  CONSTANT)
+    Q_PROPERTY(bool                 inProgress      READ inProgress     NOTIFY inProgressChanged)
+    Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems   CONSTANT)
+    Q_PROPERTY(bool                 canEdit         READ canEdit        NOTIFY  canEditChanged)
     
     // Property accessors
     
     bool inProgress(void) { return _retryAck != AckNone; }
     QmlObjectListModel* missionItems(void) { return &_missionItems; }
+    bool canEdit(void) { return _canEdit; }
+    
+    // C++ methods
     
     void requestMissionItems(void);
     
@@ -63,11 +67,12 @@ public:
     /// Returns a copy of the current set of mission items. Caller is responsible for
     /// freeing returned object.
     QmlObjectListModel* copyMissionItems(void);
-    
+
 signals:
+    // Public signals
+    void canEditChanged(bool canEdit);
     void newMissionItemsAvailable(void);
-    void _requestMissionItemsOnThread(void);
-    void _writeMissionItemsOnThread(void);
+    void inProgressChanged(bool inProgress);
     
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -90,16 +95,12 @@ private:
     void _handleMissionAck(const mavlink_message_t& message);
     void _requestNextMissionItem(int sequenceNumber);
     void _clearMissionItems(void);
-    void _requestMissionItems(void);
-    void _writeMissionItems(void);
 
-    // Overrides from QThread
-    void run(void);
-    
 private:
     Vehicle*            _vehicle;
     
     int                 _cMissionItems;     ///< Mission items on vehicle
+    bool                _canEdit;           ///< true: Mission items are editable in the ui
 
     QTimer*             _ackTimeoutTimer;
     AckType_t           _retryAck;

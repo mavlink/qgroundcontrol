@@ -33,10 +33,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QMutexLocker>
 #include <QNetworkInterface>
+#include <QHostInfo>
+
 #include <iostream>
+#include <Eigen/Eigen>
+
 #include "QGCXPlaneLink.h"
 #include "QGC.h"
-#include <QHostInfo>
 #include "UAS.h"
 #include "UASInterface.h"
 #include "QGCMessageBox.h"

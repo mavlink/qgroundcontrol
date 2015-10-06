@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMessageBox>
 
 #include <iostream>
+#include <Eigen/Eigen>
 
 #include "QGCFlightGearLink.h"
 #include "QGC.h"

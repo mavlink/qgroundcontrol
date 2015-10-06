@@ -32,6 +32,7 @@ import QtQuick.Controls 1.3
 import QtLocation       5.3
 import QtPositioning    5.3
 
+import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.FlightMap             1.0
 import QGroundControl.ScreenTools           1.0
@@ -47,6 +48,7 @@ Map {
     property real   heading:            0
     property bool   interactive:        true
     property string mapName:            'defaultMap'
+    property string mapType:            QGroundControl.flightMapSettings.mapTypeForMapName(mapName)
     property alias  mapWidgets:         controlWidgets
     property bool   isSatelliteMap:     false
         
@@ -61,45 +63,20 @@ Map {
     plugin: Plugin { name: "QGroundControl" }
 
     ExclusiveGroup { id: mapTypeGroup }
-    
-    // Map type selection MenuItem
-    Component {
-        id: menuItemComponent
-        
-        MenuItem {
-            checkable:      true
-            checked:        text == _map.activeMapType.name
-            exclusiveGroup: mapTypeGroup
-            visible:        _map.visible
-            
-            onTriggered: setCurrentMap(text)
-        }
-    }
-    
-    // Set the current map type to the specified type name
-    function setCurrentMap(name) {
+
+    Component.onCompleted: onMapTypeChanged
+
+    onMapTypeChanged: {
+        QGroundControl.flightMapSettings.setMapTypeForMapName(mapName, mapType)
+        var fullMapName = QGroundControl.flightMapSettings.mapProvider + " " + mapType
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            if (name === _map.supportedMapTypes[i].name) {
+            if (fullMapName === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
-                multiVehicleManager.saveSetting(_map.mapName + "/currentMapType", name);
-                return;
+                return
             }
         }
     }
-    
-    // Add menu map types to the specified menu and sets the current map type from settings
-    function addMapMenuItems(menu) {
-        var savedMapName = multiVehicleManager.loadSetting(_map.mapName + "/currentMapType", "")
-        
-        setCurrentMap(savedMapName)
-        
-        for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            var menuItem = menuItemComponent.createObject()
-            menuItem.text = _map.supportedMapTypes[i].name
-            menu.insertItem(menu.items.length, menuItem)
-        }
-    }
-    
+
     /// Map control widgets
     Column {
         id:                 controlWidgets
@@ -107,6 +84,8 @@ Map {
         anchors.right:      parent.right
         anchors.bottom:     parent.bottom
         spacing:            ScreenTools.defaultFontPixelWidth / 2
+        z:                  1000    // Must be on top for clicking
+        visible:            !ScreenTools.isMobile
 
         Row {
             layoutDirection:    Qt.RightToLeft
@@ -135,6 +114,7 @@ Map {
 
             QGCButton {
                 width:  parent._buttonWidth
+                //iconSource: "/qmlimages/ZoomPlus.svg"
                 text:   "+"
                 
                 onClicked: {
@@ -150,6 +130,7 @@ Map {
             
             QGCButton {
                 width:  parent._buttonWidth
+                //iconSource: "/qmlimages/ZoomMinus.svg"
                 text:   "-"
                 
                 onClicked: {

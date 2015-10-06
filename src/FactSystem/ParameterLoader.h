@@ -40,6 +40,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderLog)
+Q_DECLARE_LOGGING_CATEGORY(ParameterLoaderVerboseLog)
 
 /// Connects to Parameter Manager to load/update Facts
 class ParameterLoader : public QObject
@@ -69,8 +70,7 @@ public:
 						 const QString& name);          ///< fact name
 	
 	/// Returns all parameter names
-	/// FIXME: component id missing
-	QStringList parameterNames(void);
+	QStringList parameterNames(int componentId);
     
     /// Returns the specified Fact.
     /// WARNING: Will assert if parameter does not exists. If that possibily exists, check for existince first with

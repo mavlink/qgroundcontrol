@@ -38,9 +38,6 @@ public:
 
     Q_PROPERTY(bool hasVideo READ hasVideo CONSTANT)
 
-    Q_INVOKABLE void    saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString loadSetting (const QString &key, const QString& defaultValue);
-
 #if defined(QGC_GST_STREAMING)
     bool    hasVideo            () { return true; }
 #else

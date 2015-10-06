@@ -21,21 +21,41 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-#ifndef _UASMANAGER_H_
-#define _UASMANAGER_H_
+#ifndef HomePositionManager_H
+#define HomePositionManager_H
 
-#include "UASInterface.h"
-
-#include <QList>
-#include <QMutex>
-
-#include <Eigen/Eigen>
-
-#include "QGCGeo.h"
 #include "QGCSingleton.h"
+#include "QmlObjectListModel.h"
 
-/// Manages an offline home position as well as performance coordinate transformations
-/// around a home position.
+#include <QGeoCoordinate>
+
+class HomePosition : public QObject
+{
+    Q_OBJECT
+    
+public:
+    HomePosition(const QString& name, const QGeoCoordinate& coordinate, QObject* parent = NULL);
+    ~HomePosition();
+    
+    Q_PROPERTY(QString          name        READ name           WRITE setName       NOTIFY nameChanged)
+    Q_PROPERTY(QGeoCoordinate   coordinate  READ coordinate     WRITE setCoordinate NOTIFY coordinateChanged)
+    
+    // Property accessors
+    
+    QString name(void);
+    void setName(const QString& name);
+    
+    QGeoCoordinate coordinate(void);
+    void setCoordinate(const QGeoCoordinate& coordinate);
+    
+signals:
+    void nameChanged(const QString& name);
+    void coordinateChanged(const QGeoCoordinate& coordinate);
+    
+private:
+    QGeoCoordinate  _coordinate;
+};
+
 class HomePositionManager : public QObject
 {
     Q_OBJECT
@@ -43,6 +63,40 @@ class HomePositionManager : public QObject
     DECLARE_QGC_SINGLETON(HomePositionManager, HomePositionManager)
 
 public:
+    Q_PROPERTY(QmlObjectListModel* homePositions READ homePositions CONSTANT)
+    
+    /// If name is not already a home position a new one will be added, otherwise the existing
+    /// home position will be updated
+    Q_INVOKABLE void updateHomePosition(const QString& name, const QGeoCoordinate& coordinate);
+    
+    Q_INVOKABLE void deleteHomePosition(const QString& name);
+    
+    // Property accesors
+    
+    QmlObjectListModel* homePositions(void) { return &_homePositions; }
+    
+    // Should only be called by HomePosition
+    void _storeSettings(void);
+    
+private:
+    /// @brief All access to HomePositionManager singleton is through HomePositionManager::instance
+    HomePositionManager(QObject* parent = NULL);
+    ~HomePositionManager();
+    
+    void _loadSettings(void);
+    
+    QmlObjectListModel  _homePositions;
+    
+    static const char* _settingsGroup;
+    static const char* _latitudeKey;
+    static const char* _longitudeKey;
+    static const char* _altitudeKey;
+    
+// Everything below is deprecated and will be removed once old Map code is removed
+public:
+    
+    // Deprecated methods
+    
     /** @brief Get home position latitude */
     double getHomeLatitude() const {
         return homeLat;
@@ -56,35 +110,16 @@ public:
         return homeAlt;
     }
 
-    /** @brief Get the home position coordinate frame */
-    int getHomeFrame() const
-    {
-        return homeFrame;
-    }
-
-    /** @brief Convert WGS84 coordinates to earth centric frame */
-    Eigen::Vector3d wgs84ToEcef(const double & latitude, const double & longitude, const double & altitude);
-    /** @brief Convert earth centric frame to EAST-NORTH-UP frame (x-y-z directions */
-    Eigen::Vector3d ecefToEnu(const Eigen::Vector3d & ecef);
-    /** @brief Convert WGS84 lat/lon coordinates to carthesian coordinates with home position as origin */
-    void wgs84ToEnu(const double& lat, const double& lon, const double& alt, double* east, double* north, double* up);
-    /** @brief Convert x,y,z coordinates to lat / lon / alt coordinates in east-north-up frame */
-    void enuToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt);
-    /** @brief Convert x,y,z coordinates to lat / lon / alt coordinates in north-east-down frame */
-    void nedToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt);
-
 public slots:
+    
+    // Deprecated methods
+    
     /** @brief Set the current home position, but do not change it on the UAVs */
     bool setHomePosition(double lat, double lon, double alt);
 
     /** @brief Set the current home position on all UAVs*/
     bool setHomePositionAndNotify(double lat, double lon, double alt);
 
-
-    /** @brief Load settings */
-    void loadSettings();
-    /** @brief Store settings */
-    void storeSettings();
 
 signals:
     /** @brief Current home position changed */
@@ -94,23 +129,6 @@ protected:
     double homeLat;
     double homeLon;
     double homeAlt;
-    int homeFrame;
-    Eigen::Quaterniond ecef_ref_orientation_;
-    Eigen::Vector3d ecef_ref_point_;
-
-    void initReference(const double & latitude, const double & longitude, const double & altitude);
-    
-private:
-    /// @brief All access to HomePositionManager singleton is through HomePositionManager::instance
-    HomePositionManager(QObject* parent = NULL);
-    ~HomePositionManager();
-
-public:
-    /* Need to align struct pointer to prevent a memory assertion:
-     * See http://eigen.tuxfamily.org/dox-devel/TopicUnalignedArrayAssert.html
-     * for details
-     */
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-#endif // _UASMANAGER_H_
+#endif

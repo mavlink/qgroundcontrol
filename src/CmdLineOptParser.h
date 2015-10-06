@@ -36,7 +36,7 @@
 typedef struct {
     const char* optionStr;      ///< command line option, for example "--foo"
     bool*       optionFound;    ///< if option is found this variable will be set to true
-    QString     optionArg;      ///< Option has additional argument, form is option:arg
+    QString*    optionArg;      ///< Option has additional argument, form is option:arg
 } CmdLineOpt_t;
 
 void ParseCmdLineOptions(int&           argc,
