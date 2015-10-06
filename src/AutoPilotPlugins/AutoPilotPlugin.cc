@@ -30,17 +30,18 @@
 #include "MainWindow.h"
 #include "ParameterLoader.h"
 
-AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
-    QObject(parent),
-    _vehicle(vehicle),
-    _pluginReady(false),
-	_setupComplete(false)
+AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
+    : QObject(parent)
+    , _vehicle(vehicle)
+    , _parametersReady(false)
+    , _missingParameters(false)
+	, _setupComplete(false)
 {
     Q_ASSERT(vehicle);
 	
 	connect(_vehicle->uas(), &UASInterface::disconnected, this, &AutoPilotPlugin::_uasDisconnected);
 
-	connect(this, &AutoPilotPlugin::pluginReadyChanged, this, &AutoPilotPlugin::_pluginReadyChanged);
+	connect(this, &AutoPilotPlugin::parametersReadyChanged, this, &AutoPilotPlugin::_parametersReadyChanged);
 }
 
 AutoPilotPlugin::~AutoPilotPlugin()
@@ -50,13 +51,13 @@ AutoPilotPlugin::~AutoPilotPlugin()
 
 void AutoPilotPlugin::_uasDisconnected(void)
 {
-	_pluginReady = false;
-	emit pluginReadyChanged(_pluginReady);
+	_parametersReady = false;
+	emit parametersReadyChanged(_parametersReady);
 }
 
-void AutoPilotPlugin::_pluginReadyChanged(bool pluginReady)
+void AutoPilotPlugin::_parametersReadyChanged(bool parametersReady)
 {
-	if (pluginReady) {
+	if (parametersReady) {
 		_recalcSetupComplete();
 		if (!_setupComplete) {
 			QGCMessageBox::warning("Setup", "One or more vehicle components require setup prior to flight.");
@@ -92,7 +93,7 @@ void AutoPilotPlugin::_recalcSetupComplete(void)
 
 bool AutoPilotPlugin::setupComplete(void)
 {
-	Q_ASSERT(_pluginReady);
+	Q_ASSERT(_parametersReady);
 	return _setupComplete;
 }
 

@@ -92,7 +92,7 @@ private slots:
     void _deleteVehiclePhase1(Vehicle* vehicle);
     void _deleteVehiclePhase2(void);
     void _setActiveVehiclePhase2(void);
-    void _autopilotPluginReadyChanged(bool pluginReady);
+    void _autopilotParametersReadyChanged(bool parametersReady);
     
 private:
     /// All access to singleton is through MultiVehicleManager::instance
