@@ -132,7 +132,7 @@ bool MissionManager::_stopAckTimeout(AckType_t expectedAck)
     _ackTimeoutTimer->stop();
     
     if (_retryAck != expectedAck) {
-        qCDebug(MissionManagerLog) << "Invalid ack sequence _retryAck:expectedAck" << _retryAck << expectedAck;
+        qCWarning(MissionManagerLog) << "Invalid ack sequence _retryAck:expectedAck" << _retryAck << expectedAck;
         success = false;
     } else {
         success = true;
