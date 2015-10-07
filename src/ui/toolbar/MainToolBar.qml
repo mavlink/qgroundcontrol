@@ -542,7 +542,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text:                   activeVehicle.flightMode
 
-                menu: flightModesMenu
+                menu: activeVehicle.flightModeSetAvailable ? flightModesMenu : null
 
                 Menu {
                     id: flightModesMenu
@@ -561,17 +561,19 @@ Rectangle {
                 property var flightModesMenuItems: []
 
                 function updateFlightModesMenu() {
-                    // Remove old menu items
-                    for (var i=0; i<flightModesMenuItems.length; i++) {
-                        flightModesMenu.removeItem(flightModesMenuItems[i])
-                    }
-                    flightModesMenuItems.length = 0
+                    if (activeVehicle.flightModeSetAvailable) {
+                        // Remove old menu items
+                        for (var i=0; i<flightModesMenuItems.length; i++) {
+                            flightModesMenu.removeItem(flightModesMenuItems[i])
+                        }
+                        flightModesMenuItems.length = 0
 
-                    // Add new items
-                    for (var i=0; i<activeVehicle.flightModes.length; i++) {
-                        var menuItem = flightModeMenuItemComponent.createObject(null, { "text": activeVehicle.flightModes[i] })
-                        flightModesMenuItems.push(menuItem)
-                        flightModesMenu.insertItem(i, menuItem)
+                            // Add new items
+                            for (var i=0; i<activeVehicle.flightModes.length; i++) {
+                                var menuItem = flightModeMenuItemComponent.createObject(null, { "text": activeVehicle.flightModes[i] })
+                                flightModesMenuItems.push(menuItem)
+                                flightModesMenu.insertItem(i, menuItem)
+                            }
                     }
                 }
 
