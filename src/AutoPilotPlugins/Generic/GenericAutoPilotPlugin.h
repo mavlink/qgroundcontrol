@@ -45,7 +45,7 @@ public:
     static void clearStaticData(void);
     
 private slots:
-    void _parametersReady(void);
+    void _parametersReadySlot(bool missingParameters);
     
 private:
 	// Overrides from AutoPilotPlugin

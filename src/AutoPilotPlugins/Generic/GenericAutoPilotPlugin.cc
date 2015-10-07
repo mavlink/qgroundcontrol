@@ -34,7 +34,7 @@ GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent
     _parameterFacts = new GenericParameterFacts(this, vehicle, this);
     Q_CHECK_PTR(_parameterFacts);
     
-    connect(_parameterFacts, &GenericParameterFacts::parametersReady, this, &GenericAutoPilotPlugin::_parametersReady);
+    connect(_parameterFacts, &GenericParameterFacts::parametersReady, this, &GenericAutoPilotPlugin::_parametersReadySlot);
     connect(_parameterFacts, &GenericParameterFacts::parameterListProgress, this, &GenericAutoPilotPlugin::parameterListProgress);
 }
 
@@ -50,8 +50,10 @@ const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
     return emptyList;
 }
 
-void GenericAutoPilotPlugin::_parametersReady(void)
+void GenericAutoPilotPlugin::_parametersReadySlot(bool missingParameters)
 {
-    _pluginReady = true;
-    emit pluginReadyChanged(_pluginReady);
+    _parametersReady = true;
+    _missingParameters = missingParameters;
+    emit missingParametersChanged(_missingParameters);
+    emit parametersReadyChanged(_parametersReady);
 }
