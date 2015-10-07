@@ -85,6 +85,23 @@ public:
     bool disconnect(void);
 
     LinkConfiguration* getLinkConfiguration() { return _config; }
+    
+    /// Sets a failure mode for unit testing
+    ///     @param failureMode Type of failure to simulate
+    ///     @param firstTimeOnly true: fail first call, success subsequent calls, false: fail all calls
+    void setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, bool firstTimeOnly);
+    
+    /// Called to send a MISSION_ACK message while the MissionManager is in idle state
+    void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType) { _missionItemHandler.sendUnexpectedMissionAck(ackType); }
+    
+    /// Called to send a MISSION_ITEM message while the MissionManager is in idle state
+    void sendUnexpectedMissionItem(void) { _missionItemHandler.sendUnexpectedMissionItem(); }
+    
+    /// Called to send a MISSION_REQUEST message while the MissionManager is in idle state
+    void sendUnexpectedMissionRequest(void) { _missionItemHandler.sendUnexpectedMissionRequest(); }
+    
+    /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
+    void resetMissionItemHandler(void) { _missionItemHandler.reset(); }
 
 signals:
     /// @brief Used internally to move data to the thread.
@@ -126,7 +143,7 @@ private:
     float _floatUnionForParam(int componentId, const QString& paramName);
     void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
 
-    MockLinkMissionItemHandler* _missionItemHandler;
+    MockLinkMissionItemHandler  _missionItemHandler;
 
     QString _name;
     bool    _connected;

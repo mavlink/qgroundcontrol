@@ -85,6 +85,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     , _satelliteLock(0)
     , _wpm(NULL)
     , _updateCount(0)
+    , _missionManager(NULL)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -164,6 +165,9 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
 
 Vehicle::~Vehicle()
 {
+    delete _missionManager;
+    _missionManager = NULL;
+    
     // Stop listening for system messages
     disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
     // Disconnect any previously connected active MAV
