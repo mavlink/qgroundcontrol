@@ -191,5 +191,5 @@ void PX4FirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
 
 bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    return capabilities && (MavCmdPreflightStorageCapability | SetFlightModeCapability);
+    return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability)) == capabilities;
 }
