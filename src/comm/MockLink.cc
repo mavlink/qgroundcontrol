@@ -66,17 +66,18 @@ union px4_custom_mode {
     float data_float;
 };
 
-MockLink::MockLink(MockConfiguration* config) :
-    _name("MockLink"),
-    _connected(false),
-    _vehicleSystemId(128),     // FIXME: Pull from eventual parameter manager
-    _vehicleComponentId(200),  // FIXME: magic number?
-    _inNSH(false),
-    _mavlinkStarted(false),
-    _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED),
-    _mavState(MAV_STATE_STANDBY),
-    _autopilotType(MAV_AUTOPILOT_PX4),
-    _fileServer(NULL)
+MockLink::MockLink(MockConfiguration* config)
+    : _missionItemHandler(this)
+    , _name("MockLink")
+    , _connected(false)
+    , _vehicleSystemId(128)     // FIXME: Pull from eventual parameter manager
+    , _vehicleComponentId(200)  // FIXME: magic number?
+    , _inNSH(false)
+    , _mavlinkStarted(false)
+    , _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
+    , _mavState(MAV_STATE_STANDBY)
+    , _autopilotType(MAV_AUTOPILOT_PX4)
+    , _fileServer(NULL)
 {
     _config = config;
     union px4_custom_mode   px4_cm;
@@ -88,10 +89,8 @@ MockLink::MockLink(MockConfiguration* config) :
     _fileServer = new MockLinkFileServer(_vehicleSystemId, _vehicleComponentId, this);
     Q_CHECK_PTR(_fileServer);
     
-    _missionItemHandler = new MockLinkMissionItemHandler(this);
-    Q_CHECK_PTR(_missionItemHandler);
-
     moveToThread(this);
+    
     _loadParams();
     QObject::connect(this, &MockLink::_incomingBytes, this, &MockLink::_handleIncomingBytes);
 }
@@ -149,6 +148,8 @@ void MockLink::run(void)
     QObject::disconnect(&_timer1HzTasks, &QTimer::timeout, this, &MockLink::_run1HzTasks);
     QObject::disconnect(&_timer10HzTasks, &QTimer::timeout, this, &MockLink::_run10HzTasks);
     QObject::disconnect(&_timer50HzTasks, &QTimer::timeout, this, &MockLink::_run50HzTasks);
+    
+    _missionItemHandler.shutdown();
 }
 
 void MockLink::_run1HzTasks(void)
@@ -303,8 +304,7 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
             continue;
         }
         
-        Q_ASSERT(_missionItemHandler);
-        if (_missionItemHandler->handleMessage(msg)) {
+        if (_missionItemHandler.handleMessage(msg)) {
             continue;
         }
 
@@ -668,3 +668,7 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     }
 }
 
+void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, bool firstTimeOnly)
+{
+    _missionItemHandler.setMissionItemFailureMode(failureMode, firstTimeOnly);
+}

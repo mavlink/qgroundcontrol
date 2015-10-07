@@ -26,6 +26,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QTimer>
 
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
@@ -40,11 +41,55 @@ class MockLinkMissionItemHandler : public QObject
 
 public:
     MockLinkMissionItemHandler(MockLink* mockLink);
+    ~MockLinkMissionItemHandler();
+    
+    // Prepares for destruction on correct thread
+    void shutdown(void);
 
     /// @brief Called to handle mission item related messages. All messages should be passed to this method.
     ///         It will handle the appropriate set.
     /// @return true: message handled
     bool handleMessage(const mavlink_message_t& msg);
+    
+    typedef enum {
+        FailNone,                           // No failures
+        FailReadRequestListNoResponse,      // Don't send MISSION_COUNT in response to MISSION_REQUEST_LIST
+        FailReadRequest0NoResponse,         // Don't send MISSION_ITEM in response to MISSION_REQUEST item 0
+        FailReadRequest1NoResponse,         // Don't send MISSION_ITEM in response to MISSION_REQUEST item 1
+        FailReadRequest0IncorrectSequence,  // Respond to MISSION_REQUEST 0 with incorrect sequence number in  MISSION_ITEM
+        FailReadRequest1IncorrectSequence,  // Respond to MISSION_REQUEST 1 with incorrect sequence number in  MISSION_ITEM
+        FailReadRequest0ErrorAck,           // Respond to MISSION_REQUEST 0 with MISSION_ACK error
+        FailReadRequest1ErrorAck,           // Respond to MISSION_REQUEST 1 bogus MISSION_ACK error
+        FailWriteRequest0NoResponse,        // Don't respond to MISSION_COUNT with MISSION_REQUEST 0
+        FailWriteRequest1NoResponse,        // Don't respond to MISSION_ITEM 0 with MISSION_REQUEST 1
+        FailWriteRequest0IncorrectSequence, // Respond to MISSION_COUNT 0 with MISSION_REQUEST with wrong sequence number
+        FailWriteRequest1IncorrectSequence, // Respond to MISSION_ITEM 0 with MISSION_REQUEST with wrong sequence number
+        FailWriteRequest0ErrorAck,          // Respond to MISSION_COUNT 0 with MISSION_ACK error
+        FailWriteRequest1ErrorAck,          // Respond to MISSION_ITEM 0 with MISSION_ACK error
+        FailWriteFinalAckNoResponse,        // Don't send the final MISSION_ACK
+        FailWriteFinalAckErrorAck,          // Send an error as the final MISSION_ACK
+        FailWriteFinalAckMissingRequests,   // Send the MISSION_ACK before all items have been requested
+    } FailureMode_t;
+
+    /// Sets a failure mode for unit testing
+    ///     @param failureMode Type of failure to simulate
+    ///     @param firstTimeOnly true: fail first call, success subsequent calls, false: fail all calls
+    void setMissionItemFailureMode(FailureMode_t failureMode, bool firstTimeOnly);
+    
+    /// Called to send a MISSION_ACK message while the MissionManager is in idle state
+    void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType);
+    
+    /// Called to send a MISSION_ITEM message while the MissionManager is in idle state
+    void sendUnexpectedMissionItem(void);
+    
+    /// Called to send a MISSION_REQUEST message while the MissionManager is in idle state
+    void sendUnexpectedMissionRequest(void);
+    
+    /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
+    void reset(void) { _missionItems.clear(); }
+
+private slots:
+    void _missionItemResponseTimeout(void);
 
 private:
     void _handleMissionRequestList(const mavlink_message_t& msg);
@@ -52,6 +97,8 @@ private:
     void _handleMissionItem(const mavlink_message_t& msg);
     void _handleMissionCount(const mavlink_message_t& msg);
     void _requestNextMissionItem(int sequenceNumber);
+    void _sendAck(MAV_MISSION_RESULT ackType);
+    void _startMissionItemResponseTimer(void);
 
 private:
     MockLink* _mockLink;
@@ -61,6 +108,10 @@ private:
     
     typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
     MissionList_t   _missionItems;
+    
+    QTimer* _missionItemResponseTimer;
+    FailureMode_t   _failureMode;
+    bool            _failureFirstTimeOnly;
 };
 
 #endif
