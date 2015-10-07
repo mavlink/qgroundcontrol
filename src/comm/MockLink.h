@@ -33,6 +33,7 @@
 #include "QGCMAVLink.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
+Q_DECLARE_LOGGING_CATEGORY(MockLinkLogVerbose)
 
 /// @file
 ///     @brief Mock implementation of a Link.
