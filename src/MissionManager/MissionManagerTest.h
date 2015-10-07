@@ -42,9 +42,11 @@ private slots:
     
     void _readEmptyVehicle(void);
     void _roundTripItems(void);
+    void _testWriteFailureHandling(void);
     
 private:
     void _checkInProgressValues(bool inProgress);
+    void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly);
 
     MockLink*       _mockLink;
     MissionManager* _missionManager;
@@ -53,6 +55,7 @@ private:
         canEditChangedSignalIndex = 0,
         newMissionItemsAvailableSignalIndex,
         inProgressChangedSignalIndex,
+        errorSignalIndex,
         maxSignalIndex
     };
     
@@ -60,6 +63,7 @@ private:
         canEditChangedSignalMask =              1 << canEditChangedSignalIndex,
         newMissionItemsAvailableSignalMask =    1 << newMissionItemsAvailableSignalIndex,
         inProgressChangedSignalMask =           1 << inProgressChangedSignalIndex,
+        errorSignalMask =                       1 << errorSignalIndex,
     };
 
     MultiSignalSpy*     _multiSpy;
