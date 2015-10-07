@@ -31,6 +31,7 @@
 #include <string.h>
 
 QGC_LOGGING_CATEGORY(MockLinkLog, "MockLinkLog")
+QGC_LOGGING_CATEGORY(MockLinkLogVerbose, "MockLinkLogVerbose")
 
 /// @file
 ///     @brief Mock implementation of a Link.
@@ -214,7 +215,7 @@ void MockLink::_loadParams(void)
                 break;
         }
 
-        qCDebug(MockLinkLog) << "Loading param" << paramName << paramValue;
+        qCDebug(MockLinkLogVerbose) << "Loading param" << paramName << paramValue;
 
         _mapParamName2Value[componentId][paramName] = paramValue;
         _mapParamName2MavParamType[paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
