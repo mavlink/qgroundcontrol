@@ -106,6 +106,8 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     
     _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(firmwareType);    
     _autopilotPlugin = AutoPilotPluginManager::instance()->newAutopilotPluginForVehicle(this);
+    
+    connect(_autopilotPlugin, &AutoPilotPlugin::missingParametersChanged, this, &Vehicle::missingParametersChanged);
 
     // Refresh timer
     connect(_refreshTimer, SIGNAL(timeout()), this, SLOT(_checkUpdate()));
@@ -1057,4 +1059,9 @@ void Vehicle::setHilMode(bool hilMode)
 
     mavlink_msg_set_mode_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, id(), newBaseMode, _custom_mode);
     sendMessage(msg);
+}
+
+bool Vehicle::missingParameters(void)
+{
+    return _autopilotPlugin->missingParameters();
 }

@@ -91,7 +91,7 @@ public:
     
 signals:
     /// Signalled when the full set of facts are ready
-    void parametersReady(void);
+    void parametersReady(bool missingParameters);
 
     /// Signalled to update progress of full parameter list request
     void parameterListProgress(float value);

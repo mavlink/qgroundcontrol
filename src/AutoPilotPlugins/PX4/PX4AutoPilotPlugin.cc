@@ -79,7 +79,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     _parameterFacts = new PX4ParameterLoader(this, vehicle, this);
     Q_CHECK_PTR(_parameterFacts);
     
-    connect(_parameterFacts, &PX4ParameterLoader::parametersReady, this, &PX4AutoPilotPlugin::_pluginReadyPreChecks);
+    connect(_parameterFacts, &PX4ParameterLoader::parametersReady, this, &PX4AutoPilotPlugin::_parametersReadyPreChecks);
     connect(_parameterFacts, &PX4ParameterLoader::parameterListProgress, this, &PX4AutoPilotPlugin::parameterListProgress);
 
     _airframeFacts = new PX4AirframeLoader(this, _vehicle->uas(), this);
@@ -106,7 +106,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         Q_ASSERT(_vehicle);
         
-        if (pluginReady()) {
+        if (parametersReady()) {
             _airframeComponent = new AirframeComponent(_vehicle->uas(), this);
             Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
@@ -137,7 +137,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
         } else {
-            qWarning() << "Call to vehicleCompenents prior to pluginReady";
+            qWarning() << "Call to vehicleCompenents prior to parametersReady";
         }
     }
     
@@ -145,7 +145,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
 }
 
 /// This will perform various checks prior to signalling that the plug in ready
-void PX4AutoPilotPlugin::_pluginReadyPreChecks(void)
+void PX4AutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
 {
     // Check for older parameter version set
     // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
@@ -156,6 +156,8 @@ void PX4AutoPilotPlugin::_pluginReadyPreChecks(void)
 										"Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
 	}
 	
-    _pluginReady = true;
-    emit pluginReadyChanged(_pluginReady);
+    _parametersReady = true;
+    _missingParameters = missingParameters;
+    emit missingParametersChanged(_missingParameters);
+    emit parametersReadyChanged(_parametersReady);
 }

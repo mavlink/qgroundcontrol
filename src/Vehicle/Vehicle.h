@@ -71,6 +71,8 @@ public:
 
     Q_PROPERTY(bool hilMode READ hilMode WRITE setHilMode NOTIFY hilModeChanged)
     
+    Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
+    
     Q_INVOKABLE QString     getMavIconColor();
     
     //-- System Messages
@@ -178,6 +180,8 @@ public:
     bool hilMode(void);
     void setHilMode(bool hilMode);
     
+    bool missingParameters(void);
+    
     typedef enum {
         MessageNone,
         MessageNormal,
@@ -248,6 +252,7 @@ signals:
     void armedChanged(bool armed);
     void flightModeChanged(const QString& flightMode);
     void hilModeChanged(bool hilMode);
+    void missingParametersChanged(bool missingParameters);
     
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
