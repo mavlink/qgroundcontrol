@@ -26,15 +26,99 @@
 
 #include "APMFirmwarePlugin.h"
 #include "Generic/GenericFirmwarePlugin.h"
+#include "QGCMAVLink.h"
 
 #include <QDebug>
 
 IMPLEMENT_QGC_SINGLETON(APMFirmwarePlugin, FirmwarePlugin)
 
+static const QRegExp APM_COPTER_REXP("^(ArduCopter|APM:Copter)");
+static const QRegExp APM_PLANE_REXP("^(ArduPlane|APM:Plane)");
+static const QRegExp APM_ROVER_REXP("^(ArduRover|APM:Rover)");
+
+// Regex to parse version text coming from APM, gives out firmware type, major, minor and patch level numbers
+static const QRegExp VERSION_REXP("^(APM:Copter|APM:Plane|APM:Rover|ArduCopter|ArduPlane|ArduRover) +[vV](\\d*)\\.*(\\d*)*\\.*(\\d*)*");
+
+// minimum firmware versions that don't suffer from mavlink severity inversion bug.
+// https://github.com/diydrones/apm_planner/issues/788
+static const QString MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Copter V3.4.0");
+static const QString MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Plane V3.4.0");
+static const QString MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Rover V2.6.0");
+
+
+/*
+ * @brief APMFirmwareVersion is a small class to represent the firmware version
+ * It encabsules vehicleType, major version, minor version and patch level version
+ * and provides accessors for the same.
+ * isValid() can be used, to know whether version infromation is available or not
+ * supports < operator
+ */
+APMFirmwareVersion::APMFirmwareVersion(const QString &versionText)
+{
+    _major         = 0;
+    _minor         = 0;
+    _patch         = 0;
+
+    _parseVersion(versionText);
+}
+
+bool APMFirmwareVersion::isValid() const
+{
+    return !_versionString.isEmpty();
+}
+
+bool APMFirmwareVersion::isBeta() const
+{
+    return _versionString.contains(QStringLiteral(".rc"));
+}
+
+bool APMFirmwareVersion::isDev() const
+{
+    return _versionString.contains(QStringLiteral(".dev"));
+}
+
+bool APMFirmwareVersion::operator <(const APMFirmwareVersion& other) const
+{
+    int myVersion = _major << 16 | _minor << 8 | _patch ;
+    int otherVersion = other.majorNumber() << 16 | other.minorNumber() << 8 | other.patchNumber();
+    return myVersion < otherVersion;
+}
+
+void APMFirmwareVersion::_parseVersion(const QString &versionText)
+{
+    if (versionText.isEmpty()) {
+        return;
+    }
+
+
+    if (VERSION_REXP.indexIn(versionText) == -1) {
+        qWarning() << "firmware version regex didn't match anything"
+                   << "version text to be parsed" << versionText;
+        return;
+    }
+
+    QStringList capturedTexts = VERSION_REXP.capturedTexts();
+
+    if (capturedTexts.count() < 5) {
+        qWarning() << "something wrong with parsing the version text, not hitting anything"
+                   << VERSION_REXP.captureCount() << VERSION_REXP.capturedTexts();
+        return;
+    }
+
+    // successful extraction of version numbers
+    // even though we could have collected the version string atleast
+    // but if the parsing has faild, not much point
+    _versionString = versionText;
+    _vehicleType   = capturedTexts[1];
+    _major         = capturedTexts[2].toInt();
+    _minor         = capturedTexts[3].toInt();
+    _patch         = capturedTexts[4].toInt();
+}
+
 APMFirmwarePlugin::APMFirmwarePlugin(QObject* parent) :
     FirmwarePlugin(parent)
 {
-    
+
 }
 
 bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
@@ -167,5 +251,66 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
         mavlink_msg_param_set_encode(message->sysid, message->compid, message, &paramSet);
     }
 
-    // FIXME: Need to implement mavlink message severity adjustment
+    if (message->msgid == MAVLINK_MSG_ID_STATUSTEXT)
+    {
+        QByteArray b;
+        b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
+        mavlink_msg_statustext_get_text(message, b.data());
+        // Ensure NUL-termination
+        b[b.length()-1] = '\0';
+        QString text = QString(b);
+        qCDebug(FirmwareUpgradeLog()) << text;
+
+        if (text.contains(APM_COPTER_REXP) || text.contains(APM_PLANE_REXP) || text.contains(APM_ROVER_REXP)) {
+            // found version string
+            _firmwareVersion = APMFirmwareVersion(text);
+        }
+
+        // adjust mesasge if needed
+        _adjustSeverity(message);
+    }
+}
+
+void APMFirmwarePlugin::_adjustSeverity(mavlink_message_t* message) const
+{
+    // return if we don't know the firmware version
+    if (!_firmwareVersion.isValid()) {
+        return;
+    }
+
+    bool adjustmentNeeded = false;
+    if (_firmwareVersion.vehicleType().contains(APM_COPTER_REXP)) {
+        if (_firmwareVersion < APMFirmwareVersion(MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+            adjustmentNeeded = true;
+        }
+    } else if (_firmwareVersion.vehicleType().contains(APM_PLANE_REXP)) {
+        if (_firmwareVersion < APMFirmwareVersion(MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+            adjustmentNeeded = true;
+        }
+    } else if (_firmwareVersion.vehicleType().contains(APM_ROVER_REXP)) {
+        if (_firmwareVersion < APMFirmwareVersion(MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+            adjustmentNeeded = true;
+        }
+    }
+
+    if (!adjustmentNeeded) {
+        return;
+    }
+
+    // finally lets make QGC happy with right severity values
+    mavlink_statustext_t statusText;
+    mavlink_msg_statustext_decode(message, &statusText);
+    switch(statusText.severity) {
+    case MAV_SEVERITY_ALERT:    /* SEVERITY_LOW according to old codes */
+        statusText.severity = MAV_SEVERITY_WARNING;
+        break;
+    case MAV_SEVERITY_CRITICAL: /*SEVERITY_MEDIUM according to old codes  */
+        statusText.severity = MAV_SEVERITY_ALERT;
+        break;
+    case MAV_SEVERITY_ERROR:    /*SEVERITY_HIGH according to old codes */
+        statusText.severity = MAV_SEVERITY_CRITICAL;
+        break;
+    }
+
+    mavlink_msg_statustext_encode(message->sysid, message->compid, message, &statusText);
 }
