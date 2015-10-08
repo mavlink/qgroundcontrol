@@ -168,8 +168,11 @@ WindowsBuild {
 	DEFINES += __STDC_LIMIT_MACROS
 	# Specify multi-process compilation within Visual Studio.
 	# (drastically improves compilation times for multi-core computers)
-	QMAKE_CXXFLAGS_DEBUG += -MP
-	QMAKE_CXXFLAGS_RELEASE += -MP
+	!jombuild {
+		message("When using jom/QtCreator please add CONFIG+=jombuild to your project build settings")
+		QMAKE_CXXFLAGS_DEBUG += -MP
+		QMAKE_CXXFLAGS_RELEASE += -MP
+	}
 }
 
 #

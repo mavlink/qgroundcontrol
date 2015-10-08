@@ -14,7 +14,7 @@ install:
   - cinst nsis -y -installArgs /D="%programfiles(x86)%\NSIS"
 
 build_script:
-  - C:\Qt\5.4\msvc2013_opengl\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn qgroundcontrol.pro
+  - C:\Qt\5.4\msvc2013_opengl\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn CONFIG+=jombuild qgroundcontrol.pro
   - jom -j 4
 
 test_script:
