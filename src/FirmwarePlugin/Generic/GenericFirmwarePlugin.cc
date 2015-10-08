@@ -103,3 +103,10 @@ void GenericFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
     
     // Generic plugin does no message adjustment
 }
+
+void GenericFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    
+    // Generic Flight Stack is by definition "generic", so no extra work
+}
