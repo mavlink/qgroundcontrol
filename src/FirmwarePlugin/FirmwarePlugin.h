@@ -35,6 +35,8 @@
 #include <QList>
 #include <QString>
 
+class Vehicle;
+
 /// This is the base class for Firmware specific plugins
 ///
 /// The FirmwarePlugin class is the abstract base class which represents the methods and objects
@@ -91,6 +93,9 @@ public:
     /// spec implementations such that the base code can remain mavlink generic.
     ///     @param message[in,out] Mavlink message to adjust if needed.
     virtual void adjustMavlinkMessage(mavlink_message_t* message) = 0;
+    
+    /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
+    virtual void initializeVehicle(Vehicle* vehicle) = 0;
     
 protected:
     FirmwarePlugin(QObject* parent = NULL) : QGCSingleton(parent) { }
