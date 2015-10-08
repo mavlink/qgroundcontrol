@@ -169,3 +169,15 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
 
     // FIXME: Need to implement mavlink message severity adjustment
 }
+
+void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
+{
+    // Streams are not started automatically on APM stack
+    vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,        2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS,    2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_RC_CHANNELS,        2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_POSITION,           3);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,             10);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,             10);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,             3);
+}
