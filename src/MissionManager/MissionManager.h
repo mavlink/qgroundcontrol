@@ -128,7 +128,7 @@ private:
     
     QmlObjectListModel  _missionItems;
     
-    static const int _ackTimeoutMilliseconds= 500;
+    static const int _ackTimeoutMilliseconds= 2000;
     static const int _maxRetryCount = 5;
 };
 
