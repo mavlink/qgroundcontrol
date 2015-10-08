@@ -37,7 +37,6 @@ class APMFirmwarePlugin : public FirmwarePlugin
     
 public:
     // Overrides from FirmwarePlugin
-    
     virtual bool isCapable(FirmwareCapabilities capabilities);
     virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
     virtual QStringList flightModes(void);
@@ -45,7 +44,8 @@ public:
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
     virtual int manualControlReservedButtonCount(void);
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
-
+    virtual void initializeVehicle(Vehicle* vehicle);
+    
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     APMFirmwarePlugin(QObject* parent = NULL);

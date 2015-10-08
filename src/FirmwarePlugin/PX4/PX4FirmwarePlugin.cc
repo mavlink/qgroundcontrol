@@ -193,3 +193,10 @@ bool PX4FirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
     return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability)) == capabilities;
 }
+
+void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    
+    // PX4 Flight Stack doesn't need to do any extra work
+}
