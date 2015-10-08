@@ -129,8 +129,8 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t& 
     Q_ASSERT(request.target_system == _mockLink->vehicleId());
     Q_ASSERT(request.seq < _missionItems.count());
     
-    if ((_failureMode == FailReadRequest0NoResponse && request.seq != 0) ||
-        (_failureMode == FailReadRequest1NoResponse && request.seq != 1)) {
+    if ((_failureMode == FailReadRequest0NoResponse && request.seq == 0) ||
+        (_failureMode == FailReadRequest1NoResponse && request.seq == 1)) {
         qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequest not responding due to failure mode";
     } else {
         // FIXME: Track whether all items are requested, or requested in sequence
