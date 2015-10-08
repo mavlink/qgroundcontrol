@@ -151,6 +151,10 @@ public:
     /// Sends this specified message to all links accociated with this vehicle
     void sendMessage(mavlink_message_t message);
     
+    /// Sends the specified messages multiple times to the vehicle in order to attempt to
+    /// guarantee that it makes it to the vehicle.
+    void sendMessageMultiple(mavlink_message_t message);
+    
     /// Provides access to uas from vehicle. Temporary workaround until UAS is fully phased out.
     UAS* uas(void) { return _uas; }
     
@@ -179,6 +183,11 @@ public:
 
     bool hilMode(void);
     void setHilMode(bool hilMode);
+    
+    /// Requests the specified data stream from the vehicle
+    ///     @param stream Stream which is being requested
+    ///     @param rate Rate at which to send stream in Hz
+    void requestDataStream(MAV_DATA_STREAM stream, uint16_t rate);
     
     bool missingParameters(void);
     
@@ -289,7 +298,8 @@ private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
     void _linkDisconnected(LinkInterface* link);
     void _sendMessage(mavlink_message_t message);
-    
+    void _sendMessageMultipleNext(void);
+
     void _handleTextMessage                 (int newCount);
     /** @brief Attitude from main autopilot / system state */
     void _updateAttitude                    (UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
@@ -397,7 +407,22 @@ private:
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT
     uint32_t _custom_mode;  ///< custom_mode from HEARTBEAT
+
+    /// Used to store a message being sent by sendMessageMultiple
+    typedef struct {
+        mavlink_message_t   message;    ///< Message to send multiple times
+        int                 retryCount; ///< Number of retries left
+    } SendMessageMultipleInfo_t;
     
+    QList<SendMessageMultipleInfo_t> _sendMessageMultipleList;    ///< List of messages being sent multiple times
+    
+    static const int _sendMessageMultipleRetries = 5;
+    static const int _sendMessageMultipleIntraMessageDelay = 500;
+    
+    QTimer  _sendMultipleTimer;
+    int     _nextSendMessageMultipleIndex;
+    
+    // Settings keys
     static const char* _settingsGroup;
     static const char* _joystickModeSettingsKey;
     static const char* _joystickEnabledSettingsKey;
