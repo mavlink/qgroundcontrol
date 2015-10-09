@@ -29,6 +29,8 @@
 
 #include "FirmwarePlugin.h"
 
+Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLogsLog)
+
 class APMFirmwareVersion
 {
 public:
@@ -73,8 +75,11 @@ private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     APMFirmwarePlugin(QObject* parent = NULL);
     void _adjustSeverity(mavlink_message_t* message) const;
+    static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
 
     APMFirmwareVersion _firmwareVersion;
+    bool               _textSeverityAdjustmentNeeded;
+
 };
 
 #endif
