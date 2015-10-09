@@ -15,7 +15,7 @@ install:
 
 build_script:
   - C:\Qt\5.4\msvc2013_opengl\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn CONFIG+=jombuild qgroundcontrol.pro
-  - jom -j 4
+  - jom
 
 test_script:
   - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
