@@ -507,5 +507,8 @@ QString MissionManager::_ackTypeToString(AckType_t ackType)
             return QString("MISSION_ITEM");
         case AckMissionRequest: ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
             return QString("MISSION_REQUEST");
-    }
+        default:
+            qWarning(MissionManagerLog) << "Fell off end of switch statement";
+            return QString("Internal Error");
+    }    
 }
