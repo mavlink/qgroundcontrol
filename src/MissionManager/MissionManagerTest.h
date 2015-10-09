@@ -91,6 +91,7 @@ private:
     } TestCase_t;
 
     static const TestCase_t _rgTestCases[];
+    static const int        _signalWaitTime = MissionManager::_ackTimeoutMilliseconds * MissionManager::_maxRetryCount * 2;
 };
 
 #endif

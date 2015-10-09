@@ -79,6 +79,10 @@ public:
         MissingRequestsError,   ///< Vehicle did not request all items during write sequence
     } ErrorCode_t;
 
+    // These values are public so the unit test can set appropriate signal wait times
+    static const int _ackTimeoutMilliseconds= 2000;
+    static const int _maxRetryCount = 5;
+    
 signals:
     // Public signals
     void canEditChanged(bool canEdit);
@@ -127,9 +131,6 @@ private:
     QMutex _dataMutex;
     
     QmlObjectListModel  _missionItems;
-    
-    static const int _ackTimeoutMilliseconds= 2000;
-    static const int _maxRetryCount = 5;
 };
 
 #endif
