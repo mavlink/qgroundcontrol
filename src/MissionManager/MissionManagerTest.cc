@@ -70,14 +70,15 @@ void MissionManagerTest::init(void)
     _rgSignals[canEditChangedSignalIndex] =             SIGNAL(canEditChanged(bool));
     _rgSignals[newMissionItemsAvailableSignalIndex] =   SIGNAL(newMissionItemsAvailable(void));
     _rgSignals[inProgressChangedSignalIndex] =          SIGNAL(inProgressChanged(bool));
+    _rgSignals[errorSignalIndex] =                      SIGNAL(error(int, const QString&));
 
     _multiSpy = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpy);
     QCOMPARE(_multiSpy->init(_missionManager, _rgSignals, _cSignals), true);
     
     if (_missionManager->inProgress()) {
-        _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, 1000);
-        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 1000);
+        _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, _signalWaitTime);
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
         QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
         QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalIndex), true);
     }
@@ -122,8 +123,8 @@ void MissionManagerTest::_readEmptyVehicle(void)
     
     // Now wait for read sequence to complete. We should get both a newMissionItemsAvailable and a
     // inProgressChanged signal to signal completion.
-    _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, 1000);
-    _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 1000);
+    _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, _signalWaitTime);
+    _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
     QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
     QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalMask), true);
     _checkInProgressValues(false);
@@ -133,8 +134,14 @@ void MissionManagerTest::_readEmptyVehicle(void)
     QCOMPARE(_missionManager->canEdit(), true);
 }
 
-void MissionManagerTest::_roundTripItems(void)
+void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly)
 {
+    _mockLink->setMissionItemFailureMode(failureMode, failFirstTimeOnly);
+    if (failFirstTimeOnly) {
+        // Should fail first time, then retry should succed
+        failureMode = MockLinkMissionItemHandler::FailNone;
+    }
+    
     // Setup our test case data
     const size_t cTestCases = sizeof(_rgTestCases)/sizeof(_rgTestCases[0]);
     QmlObjectListModel* list = new QmlObjectListModel();
@@ -152,7 +159,7 @@ void MissionManagerTest::_roundTripItems(void)
     
     // Send the items to the vehicle
     _missionManager->writeMissionItems(*list);
-
+    
     // writeMissionItems should emit inProgressChanged signal before returning so no need to wait for it
     QVERIFY(_missionManager->inProgress());
     QCOMPARE(_multiSpy->checkOnlySignalByMask(inProgressChangedSignalMask), true);
@@ -160,18 +167,81 @@ void MissionManagerTest::_roundTripItems(void)
     
     _multiSpy->clearAllSignals();
     
-    // Now wait for write sequence to complete. We should only get an inProgressChanged signal to signal completion.
-    _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 1000);
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(inProgressChangedSignalMask), true);
-    _checkInProgressValues(false);
+    if (failureMode == MockLinkMissionItemHandler::FailNone) {
+        // This should be clean run
+        
+        // Wait for write sequence to complete. We should get:
+        //      inProgressChanged(false) signal
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
+        QCOMPARE(_multiSpy->checkOnlySignalByMask(inProgressChangedSignalMask), true);
+        
+        // Validate inProgressChanged signal value
+        _checkInProgressValues(false);
+
+        // We should have gotten back all mission items
+        QCOMPARE(_missionManager->missionItems()->count(), (int)cTestCases);
+    } else {
+        // This should be a failed run
+        
+        // Wait for write sequence to complete. We should get:
+        //      inProgressChanged(false) signal
+        //      error(errorCode, QString) signal
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
+        QCOMPARE(_multiSpy->checkSignalByMask(inProgressChangedSignalMask | errorSignalMask), true);
+        
+        // Validate inProgressChanged signal value
+        _checkInProgressValues(false);
+        
+        // Validate error signal values
+        QSignalSpy* spy = _multiSpy->getSpyByIndex(errorSignalIndex);
+        QList<QVariant> signalArgs = spy->takeFirst();
+        QCOMPARE(signalArgs.count(), 2);
+        qDebug() << signalArgs[1].toString();
+        QCOMPARE(signalArgs[0].toInt(), (int)errorCode);
+
+        /*
+         // FIXME: This should be on the read side
+        // Validate correct number of mission items
+        int expectedMissionCount = 0;
+        
+        switch (ErrorCode) {
+            case FailWriteRequest0NoResponse:
+                // Don't respond to MISSION_COUNT with MISSION_REQUEST 0
+                expectedMissionCount = 0;
+                break;
+                
+            case FailWriteRequest1NoResponse:        // Don't respond to MISSION_ITEM 0 with MISSION_REQUEST 1
+            case FailWriteRequest0IncorrectSequence: // Respond to MISSION_COUNT 0 with MISSION_REQUEST with wrong sequence number
+            case FailWriteRequest1IncorrectSequence: // Respond to MISSION_ITEM 0 with MISSION_REQUEST with wrong sequence number
+            case FailWriteRequest0ErrorAck:          // Respond to MISSION_COUNT 0 with MISSION_ACK error
+            case FailWriteRequest1ErrorAck:          // Respond to MISSION_ITEM 0 with MISSION_ACK error
+            case FailWriteFinalAckNoResponse:        // Don't send the final MISSION_ACK
+            case FailWriteFinalAckErrorAck:          // Send an error as the final MISSION_ACK
+            case FailWriteFinalAckMissingRequests:   // Send the MISSION_ACK before all items have been requested
+                break;
+        }
+        // FIXME: Count depends on errorCode
+        //QCOMPARE(_missionManager->missionItems()->count(), (int)cTestCases);
+        */
+    }
     
-    QCOMPARE(_missionManager->missionItems()->count(), (int)cTestCases);
     QCOMPARE(_missionManager->canEdit(), true);
     
     delete list;
     list = NULL;
     _multiSpy->clearAllSignals();
+}
+
+void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly)
+{
+    _writeItems(MockLinkMissionItemHandler::FailNone, MissionManager::InternalError, false);
     
+    _mockLink->setMissionItemFailureMode(failureMode, failFirstTimeOnly);
+    if (failFirstTimeOnly) {
+        // Should fail first time, then retry should succed
+        failureMode = MockLinkMissionItemHandler::FailNone;
+    }
+
     // Read the items back from the vehicle
     _missionManager->requestMissionItems();
     
@@ -182,20 +252,69 @@ void MissionManagerTest::_roundTripItems(void)
     
     _multiSpy->clearAllSignals();
     
-    // Now wait for read sequence to complete. We should get both a newMissionItemsAvailable and a
-    // inProgressChanged signal to signal completion.
-    _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, 1000);
-    _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 1000);
-    QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
-    QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalMask), true);
-    _checkInProgressValues(false);
+    if (failureMode == MockLinkMissionItemHandler::FailNone) {
+        // This should be clean run
+        
+        // Now wait for read sequence to complete. We should get:
+        //      inProgressChanged(false) signal to signal completion
+        //      newMissionItemsAvailable signal
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
+        QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
+        QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalMask), true);
+        _checkInProgressValues(false);
+    } else {
+        // This should be a failed run
+        
+        // Wait for read sequence to complete. We should get:
+        //      inProgressChanged(false) signal to signal completion
+        //      error(errorCode, QString) signal
+        //      newMissionItemsAvailable signal
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
+        QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask | errorSignalMask), true);
+        
+        // Validate inProgressChanged signal value
+        _checkInProgressValues(false);
+        
+        // Validate error signal values
+        QSignalSpy* spy = _multiSpy->getSpyByIndex(errorSignalIndex);
+        QList<QVariant> signalArgs = spy->takeFirst();
+        QCOMPARE(signalArgs.count(), 2);
+        qDebug() << signalArgs[1].toString();
+        QCOMPARE(signalArgs[0].toInt(), (int)errorCode);
+    }
     
-    QCOMPARE(_missionManager->missionItems()->count(), (int)cTestCases);
+    _multiSpy->clearAllSignals();
+
+    // Validate returned items
+    
+    size_t cMissionItemsExpected;
+    
+    if (failureMode == MockLinkMissionItemHandler::FailNone || failFirstTimeOnly == true) {
+        cMissionItemsExpected = sizeof(_rgTestCases)/sizeof(_rgTestCases[0]);
+    } else {
+        switch (failureMode) {
+            case MockLinkMissionItemHandler::FailReadRequestListNoResponse:
+            case MockLinkMissionItemHandler::FailReadRequest0NoResponse:
+            case MockLinkMissionItemHandler::FailReadRequest0IncorrectSequence:
+            case MockLinkMissionItemHandler::FailReadRequest0ErrorAck:
+                cMissionItemsExpected = 0;
+                break;
+            case MockLinkMissionItemHandler::FailReadRequest1NoResponse:
+            case MockLinkMissionItemHandler::FailReadRequest1IncorrectSequence:
+            case MockLinkMissionItemHandler::FailReadRequest1ErrorAck:
+                cMissionItemsExpected = 1;
+                break;
+            default:
+                // Internal error
+                Q_ASSERT(false);
+                break;
+        }
+    }
+    
+    QCOMPARE(_missionManager->missionItems()->count(), (int)cMissionItemsExpected);
     QCOMPARE(_missionManager->canEdit(), true);
     
-    // Validate the returned items against our test data
-    
-    for (size_t i=0; i<cTestCases; i++) {
+    for (size_t i=0; i<cMissionItemsExpected; i++) {
         const TestCase_t* testCase = &_rgTestCases[i];
         MissionItem* actual = qobject_cast<MissionItem*>(_missionManager->missionItems()->get(i));
         
@@ -210,5 +329,107 @@ void MissionManagerTest::_roundTripItems(void)
         QCOMPARE(actual->param4(),                  testCase->expectedItem.param4);
         QCOMPARE(actual->autoContinue(),            testCase->expectedItem.autocontinue);
         QCOMPARE(actual->frame(),                   testCase->expectedItem.frame);
+    }
+    
+}
+
+void MissionManagerTest::_testWriteFailureHandling(void)
+{
+    /*
+    /// Called to send a MISSION_ACK message while the MissionManager is in idle state
+    void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType) { _missionItemHandler.sendUnexpectedMissionAck(ackType); }
+    
+    /// Called to send a MISSION_ITEM message while the MissionManager is in idle state
+    void sendUnexpectedMissionItem(void) { _missionItemHandler.sendUnexpectedMissionItem(); }
+    
+    /// Called to send a MISSION_REQUEST message while the MissionManager is in idle state
+    void sendUnexpectedMissionRequest(void) { _missionItemHandler.sendUnexpectedMissionRequest(); }
+    */
+    
+    typedef struct {
+        const char*                                 failureText;
+        MockLinkMissionItemHandler::FailureMode_t   failureMode;
+        MissionManager::ErrorCode_t                 errorCode;
+    } TestCase_t;
+    
+    static const TestCase_t rgTestCases[] = {
+        { "No Failure",                         MockLinkMissionItemHandler::FailNone,                           MissionManager::AckTimeoutError },
+        { "FailWriteRequest0NoResponse",        MockLinkMissionItemHandler::FailWriteRequest0NoResponse,        MissionManager::AckTimeoutError },
+        { "FailWriteRequest1NoResponse",        MockLinkMissionItemHandler::FailWriteRequest1NoResponse,        MissionManager::AckTimeoutError },
+        { "FailWriteRequest0IncorrectSequence", MockLinkMissionItemHandler::FailWriteRequest0IncorrectSequence, MissionManager::ItemMismatchError },
+        { "FailWriteRequest1IncorrectSequence", MockLinkMissionItemHandler::FailWriteRequest1IncorrectSequence, MissionManager::ItemMismatchError },
+        { "FailWriteRequest0ErrorAck",          MockLinkMissionItemHandler::FailWriteRequest0ErrorAck,          MissionManager::VehicleError },
+        { "FailWriteRequest1ErrorAck",          MockLinkMissionItemHandler::FailWriteRequest1ErrorAck,          MissionManager::VehicleError },
+        { "FailWriteFinalAckNoResponse",        MockLinkMissionItemHandler::FailWriteFinalAckNoResponse,        MissionManager::AckTimeoutError },
+        { "FailWriteFinalAckErrorAck",          MockLinkMissionItemHandler::FailWriteFinalAckErrorAck,          MissionManager::VehicleError },
+        { "FailWriteFinalAckMissingRequests",   MockLinkMissionItemHandler::FailWriteFinalAckMissingRequests,   MissionManager::MissingRequestsError },
+    };
+
+    for (size_t i=0; i<sizeof(rgTestCases)/sizeof(rgTestCases[0]); i++) {
+        qDebug() << "TEST CASE " << rgTestCases[i].failureText << "errorCode:" << rgTestCases[i].errorCode << "failFirstTimeOnly:false";
+        _writeItems(rgTestCases[i].failureMode, rgTestCases[i].errorCode, false);
+        _mockLink->resetMissionItemHandler();
+        qDebug() << "TEST CASE " << rgTestCases[i].failureText << "errorCode:" << rgTestCases[i].errorCode << "failFirstTimeOnly:true";
+        _writeItems(rgTestCases[i].failureMode, rgTestCases[i].errorCode, true);
+        _mockLink->resetMissionItemHandler();
+    }
+}
+
+void MissionManagerTest::_testReadFailureHandling(void)
+{
+    /*
+     FailReadRequestListNoResponse,      // Don't send MISSION_COUNT in response to MISSION_REQUEST_LIST
+     FailReadRequest0NoResponse,         // Don't send MISSION_ITEM in response to MISSION_REQUEST item 0
+     FailReadRequest1NoResponse,         // Don't send MISSION_ITEM in response to MISSION_REQUEST item 1
+     FailReadRequest0IncorrectSequence,  // Respond to MISSION_REQUEST 0 with incorrect sequence number in  MISSION_ITEM
+     FailReadRequest1IncorrectSequence,  // Respond to MISSION_REQUEST 1 with incorrect sequence number in  MISSION_ITEM
+     FailReadRequest0ErrorAck,           // Respond to MISSION_REQUEST 0 with MISSION_ACK error
+     FailReadRequest1ErrorAck,           // Respond to MISSION_REQUEST 1 bogus MISSION_ACK error
+     FailWriteRequest0NoResponse,        // Don't respond to MISSION_COUNT with MISSION_REQUEST 0
+     FailWriteRequest1NoResponse,        // Don't respond to MISSION_ITEM 0 with MISSION_REQUEST 1
+     FailWriteRequest0IncorrectSequence, // Respond to MISSION_COUNT 0 with MISSION_REQUEST with wrong sequence number
+     FailWriteRequest1IncorrectSequence, // Respond to MISSION_ITEM 0 with MISSION_REQUEST with wrong sequence number
+     FailWriteRequest0ErrorAck,          // Respond to MISSION_COUNT 0 with MISSION_ACK error
+     FailWriteRequest1ErrorAck,          // Respond to MISSION_ITEM 0 with MISSION_ACK error
+     FailWriteFinalAckNoResponse,        // Don't send the final MISSION_ACK
+     FailWriteFinalAckErrorAck,          // Send an error as the final MISSION_ACK
+     FailWriteFinalAckMissingRequests,   // Send the MISSION_ACK before all items have been requested
+     */
+    
+    /*
+     /// Called to send a MISSION_ACK message while the MissionManager is in idle state
+     void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType) { _missionItemHandler.sendUnexpectedMissionAck(ackType); }
+     
+     /// Called to send a MISSION_ITEM message while the MissionManager is in idle state
+     void sendUnexpectedMissionItem(void) { _missionItemHandler.sendUnexpectedMissionItem(); }
+     
+     /// Called to send a MISSION_REQUEST message while the MissionManager is in idle state
+     void sendUnexpectedMissionRequest(void) { _missionItemHandler.sendUnexpectedMissionRequest(); }
+     */
+    
+    typedef struct {
+        const char*                                 failureText;
+        MockLinkMissionItemHandler::FailureMode_t   failureMode;
+        MissionManager::ErrorCode_t                 errorCode;
+    } TestCase_t;
+    
+    static const TestCase_t rgTestCases[] = {
+        { "No Failure",                         MockLinkMissionItemHandler::FailNone,                           MissionManager::AckTimeoutError },
+        { "FailReadRequestListNoResponse",      MockLinkMissionItemHandler::FailReadRequestListNoResponse,      MissionManager::AckTimeoutError },
+        { "FailReadRequest0NoResponse",         MockLinkMissionItemHandler::FailReadRequest0NoResponse,         MissionManager::AckTimeoutError },
+        { "FailReadRequest1NoResponse",         MockLinkMissionItemHandler::FailReadRequest1NoResponse,         MissionManager::AckTimeoutError },
+        { "FailReadRequest0IncorrectSequence",  MockLinkMissionItemHandler::FailReadRequest0IncorrectSequence,  MissionManager::ItemMismatchError },
+        { "FailReadRequest1IncorrectSequence",  MockLinkMissionItemHandler::FailReadRequest1IncorrectSequence,  MissionManager::ItemMismatchError },
+        { "FailReadRequest0ErrorAck",           MockLinkMissionItemHandler::FailReadRequest0ErrorAck,           MissionManager::VehicleError },
+        { "FailReadRequest1ErrorAck",           MockLinkMissionItemHandler::FailReadRequest1ErrorAck,           MissionManager::VehicleError },
+    };
+    
+    for (size_t i=0; i<sizeof(rgTestCases)/sizeof(rgTestCases[0]); i++) {
+        qDebug() << "TEST CASE " << rgTestCases[i].failureText << "errorCode:" << rgTestCases[i].errorCode << "failFirstTimeOnly:false";
+        _roundTripItems(rgTestCases[i].failureMode, rgTestCases[i].errorCode, false);
+        _mockLink->resetMissionItemHandler();
+        qDebug() << "TEST CASE " << rgTestCases[i].failureText << "errorCode:" << rgTestCases[i].errorCode << "failFirstTimeOnly:true";
+        _roundTripItems(rgTestCases[i].failureMode, rgTestCases[i].errorCode, true);
+        _mockLink->resetMissionItemHandler();
     }
 }

@@ -85,9 +85,11 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     , _satelliteLock(0)
     , _wpm(NULL)
     , _updateCount(0)
+    , _missionManager(NULL)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
+    , _nextSendMessageMultipleIndex(0)
 {
     _addLink(link);
     
@@ -160,10 +162,18 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     if (qgcApp()->useNewMissionEditor()) {
         _missionManager = new MissionManager(this);
     }
+    
+    _firmwarePlugin->initializeVehicle(this);
+    
+    _sendMultipleTimer.start(_sendMessageMultipleIntraMessageDelay);
+    connect(&_sendMultipleTimer, &QTimer::timeout, this, &Vehicle::_sendMessageMultipleNext);
 }
 
 Vehicle::~Vehicle()
 {
+    delete _missionManager;
+    _missionManager = NULL;
+    
     // Stop listening for system messages
     disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
     // Disconnect any previously connected active MAV
@@ -1064,4 +1074,50 @@ void Vehicle::setHilMode(bool hilMode)
 bool Vehicle::missingParameters(void)
 {
     return _autopilotPlugin->missingParameters();
+}
+
+void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate)
+{
+    mavlink_message_t               msg;
+    mavlink_request_data_stream_t   dataStream;
+    
+    dataStream.req_stream_id = stream;
+    dataStream.req_message_rate = rate;
+    dataStream.start_stop = 1;  // start
+    dataStream.target_system = id();
+    dataStream.target_component = 0;
+    
+    mavlink_msg_request_data_stream_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &dataStream);
+
+    // We use sendMessageMultiple since we really want these to make it to the vehicle
+    sendMessageMultiple(msg);
+}
+
+void Vehicle::_sendMessageMultipleNext(void)
+{
+    if (_nextSendMessageMultipleIndex < _sendMessageMultipleList.count()) {
+        qCDebug(VehicleLog) << "_sendMessageMultipleNext:" << _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
+        
+        sendMessage(_sendMessageMultipleList[_nextSendMessageMultipleIndex].message);
+        
+        if (--_sendMessageMultipleList[_nextSendMessageMultipleIndex].retryCount <= 0) {
+            _sendMessageMultipleList.removeAt(_nextSendMessageMultipleIndex);
+        } else {
+            _nextSendMessageMultipleIndex++;
+        }
+    }
+    
+    if (_nextSendMessageMultipleIndex >= _sendMessageMultipleList.count()) {
+        _nextSendMessageMultipleIndex = 0;
+    }
+}
+
+void Vehicle::sendMessageMultiple(mavlink_message_t message)
+{
+    SendMessageMultipleInfo_t   info;
+    
+    info.message =      message;
+    info.retryCount =   _sendMessageMultipleRetries;
+    
+    _sendMessageMultipleList.append(info);
 }
