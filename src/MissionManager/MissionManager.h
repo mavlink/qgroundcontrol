@@ -115,6 +115,7 @@ private:
     void _retryWrite(void);
     void _retryRead(void);
     bool _retrySequence(AckType_t ackType);
+    QString _ackTypeToString(AckType_t ackType);
 
 private:
     Vehicle*            _vehicle;
