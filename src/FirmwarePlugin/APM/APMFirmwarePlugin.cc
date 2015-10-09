@@ -31,6 +31,7 @@
 #include <QDebug>
 
 IMPLEMENT_QGC_SINGLETON(APMFirmwarePlugin, FirmwarePlugin)
+QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
 static const QRegExp APM_COPTER_REXP("^(ArduCopter|APM:Copter)");
 static const QRegExp APM_PLANE_REXP("^(ArduPlane|APM:Plane)");
@@ -92,16 +93,16 @@ void APMFirmwareVersion::_parseVersion(const QString &versionText)
 
 
     if (VERSION_REXP.indexIn(versionText) == -1) {
-        qWarning() << "firmware version regex didn't match anything"
-                   << "version text to be parsed" << versionText;
+        qCWarning(APMFirmwarePluginLog) << "firmware version regex didn't match anything"
+                                        << "version text to be parsed" << versionText;
         return;
     }
 
     QStringList capturedTexts = VERSION_REXP.capturedTexts();
 
     if (capturedTexts.count() < 5) {
-        qWarning() << "something wrong with parsing the version text, not hitting anything"
-                   << VERSION_REXP.captureCount() << VERSION_REXP.capturedTexts();
+        qCWarning(APMFirmwarePluginLog) << "something wrong with parsing the version text, not hitting anything"
+                                        << VERSION_REXP.captureCount() << VERSION_REXP.capturedTexts();
         return;
     }
 
@@ -118,7 +119,7 @@ void APMFirmwareVersion::_parseVersion(const QString &versionText)
 APMFirmwarePlugin::APMFirmwarePlugin(QObject* parent) :
     FirmwarePlugin(parent)
 {
-
+     _textSeverityAdjustmentNeeded = false;
 }
 
 bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
@@ -204,7 +205,7 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
                 paramUnion.param_float = paramValue.param_value;
                 break;
             default:
-                qCritical() << "Invalid/Unsupported data type used in parameter:" << paramValue.param_type;
+                qCCritical(APMFirmwarePluginLog) << "Invalid/Unsupported data type used in parameter:" << paramValue.param_type;
         }
         
         paramValue.param_value = paramUnion.param_float;
@@ -245,7 +246,7 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
                 // Already in param_float
                 break;
             default:
-                qCritical() << "Invalid/Unsupported data type used in parameter:" << paramSet.param_type;
+                qCCritical(APMFirmwarePluginLog) << "Invalid/Unsupported data type used in parameter:" << paramSet.param_type;
         }
         
         mavlink_msg_param_set_encode(message->sysid, message->compid, message, &paramSet);
@@ -259,57 +260,63 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
         // Ensure NUL-termination
         b[b.length()-1] = '\0';
         QString text = QString(b);
-        qCDebug(FirmwareUpgradeLog()) << text;
+        qCDebug(APMFirmwarePluginLog) << text;
 
-        if (text.contains(APM_COPTER_REXP) || text.contains(APM_PLANE_REXP) || text.contains(APM_ROVER_REXP)) {
-            // found version string
-            _firmwareVersion = APMFirmwareVersion(text);
+        // if don't know firmwareVersion yet, try and see this message contains it
+        if (!_firmwareVersion.isValid()) {
+            if (text.contains(APM_COPTER_REXP) || text.contains(APM_PLANE_REXP) || text.contains(APM_ROVER_REXP)) {
+                // found version string
+                _firmwareVersion = APMFirmwareVersion(text);
+                _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(_firmwareVersion);
+            }
         }
 
         // adjust mesasge if needed
-        _adjustSeverity(message);
+        if (_textSeverityAdjustmentNeeded) {
+            _adjustSeverity(message);
+        }
     }
+}
+
+bool APMFirmwarePlugin::_isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion)
+{
+   if (!firmwareVersion.isValid()) {
+       return false;
+   }
+
+   bool adjustmentNeeded = false;
+   if (firmwareVersion.vehicleType().contains(APM_COPTER_REXP)) {
+       if (firmwareVersion < APMFirmwareVersion(MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+           adjustmentNeeded = true;
+       }
+   } else if (firmwareVersion.vehicleType().contains(APM_PLANE_REXP)) {
+       if (firmwareVersion < APMFirmwareVersion(MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+           adjustmentNeeded = true;
+       }
+   } else if (firmwareVersion.vehicleType().contains(APM_ROVER_REXP)) {
+       if (firmwareVersion < APMFirmwareVersion(MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
+           adjustmentNeeded = true;
+       }
+   }
+
+   return adjustmentNeeded;
 }
 
 void APMFirmwarePlugin::_adjustSeverity(mavlink_message_t* message) const
 {
-    // return if we don't know the firmware version
-    if (!_firmwareVersion.isValid()) {
-        return;
-    }
-
-    bool adjustmentNeeded = false;
-    if (_firmwareVersion.vehicleType().contains(APM_COPTER_REXP)) {
-        if (_firmwareVersion < APMFirmwareVersion(MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-            adjustmentNeeded = true;
-        }
-    } else if (_firmwareVersion.vehicleType().contains(APM_PLANE_REXP)) {
-        if (_firmwareVersion < APMFirmwareVersion(MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-            adjustmentNeeded = true;
-        }
-    } else if (_firmwareVersion.vehicleType().contains(APM_ROVER_REXP)) {
-        if (_firmwareVersion < APMFirmwareVersion(MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-            adjustmentNeeded = true;
-        }
-    }
-
-    if (!adjustmentNeeded) {
-        return;
-    }
-
-    // finally lets make QGC happy with right severity values
+    // lets make QGC happy with right severity values
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
     switch(statusText.severity) {
-    case MAV_SEVERITY_ALERT:    /* SEVERITY_LOW according to old codes */
-        statusText.severity = MAV_SEVERITY_WARNING;
-        break;
-    case MAV_SEVERITY_CRITICAL: /*SEVERITY_MEDIUM according to old codes  */
-        statusText.severity = MAV_SEVERITY_ALERT;
-        break;
-    case MAV_SEVERITY_ERROR:    /*SEVERITY_HIGH according to old codes */
-        statusText.severity = MAV_SEVERITY_CRITICAL;
-        break;
+        case MAV_SEVERITY_ALERT:    /* SEVERITY_LOW according to old codes */
+            statusText.severity = MAV_SEVERITY_WARNING;
+            break;
+        case MAV_SEVERITY_CRITICAL: /*SEVERITY_MEDIUM according to old codes  */
+            statusText.severity = MAV_SEVERITY_ALERT;
+            break;
+        case MAV_SEVERITY_ERROR:    /*SEVERITY_HIGH according to old codes */
+            statusText.severity = MAV_SEVERITY_CRITICAL;
+            break;
     }
 
     mavlink_msg_statustext_encode(message->sysid, message->compid, message, &statusText);
