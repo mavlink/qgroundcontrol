@@ -77,8 +77,8 @@ void MissionManagerTest::init(void)
     QCOMPARE(_multiSpy->init(_missionManager, _rgSignals, _cSignals), true);
     
     if (_missionManager->inProgress()) {
-        _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, 1000);
-        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 1000);
+        _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, _signalWaitTime);
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
         QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
         QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalIndex), true);
     }
@@ -123,8 +123,8 @@ void MissionManagerTest::_readEmptyVehicle(void)
     
     // Now wait for read sequence to complete. We should get both a newMissionItemsAvailable and a
     // inProgressChanged signal to signal completion.
-    _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, 1000);
-    _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 1000);
+    _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, _signalWaitTime);
+    _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
     QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
     QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalMask), true);
     _checkInProgressValues(false);
@@ -172,7 +172,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         
         // Wait for write sequence to complete. We should get:
         //      inProgressChanged(false) signal
-        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 10000);
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
         QCOMPARE(_multiSpy->checkOnlySignalByMask(inProgressChangedSignalMask), true);
         
         // Validate inProgressChanged signal value
@@ -186,7 +186,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         // Wait for write sequence to complete. We should get:
         //      inProgressChanged(false) signal
         //      error(errorCode, QString) signal
-        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 10000);
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
         QCOMPARE(_multiSpy->checkSignalByMask(inProgressChangedSignalMask | errorSignalMask), true);
         
         // Validate inProgressChanged signal value
@@ -258,7 +258,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         // Now wait for read sequence to complete. We should get:
         //      inProgressChanged(false) signal to signal completion
         //      newMissionItemsAvailable signal
-        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 10000);
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
         QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
         QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalMask), true);
         _checkInProgressValues(false);
@@ -269,7 +269,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         //      inProgressChanged(false) signal to signal completion
         //      error(errorCode, QString) signal
         //      newMissionItemsAvailable signal
-        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, 10000);
+        _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
         QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask | errorSignalMask), true);
         
         // Validate inProgressChanged signal value
