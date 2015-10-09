@@ -321,3 +321,15 @@ void APMFirmwarePlugin::_adjustSeverity(mavlink_message_t* message) const
 
     mavlink_msg_statustext_encode(message->sysid, message->compid, message, &statusText);
 }
+
+void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
+{
+    // Streams are not started automatically on APM stack
+    vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,        2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS,    2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_RC_CHANNELS,        2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_POSITION,           3);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,             10);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,             10);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,             3);
+}

@@ -67,12 +67,28 @@ public:
     /// Returns a copy of the current set of mission items. Caller is responsible for
     /// freeing returned object.
     QmlObjectListModel* copyMissionItems(void);
+    
+    /// Error codes returned in error signal
+    typedef enum {
+        InternalError,
+        AckTimeoutError,        ///< Timed out waiting for response from vehicle
+        ProtocolOrderError,     ///< Incorrect protocol sequence from vehicle
+        RequestRangeError,      ///< Vehicle requested item out of range
+        ItemMismatchError,      ///< Vehicle returned item with seq # different than requested
+        VehicleError,           ///< Vehicle returned error
+        MissingRequestsError,   ///< Vehicle did not request all items during write sequence
+    } ErrorCode_t;
 
+    // These values are public so the unit test can set appropriate signal wait times
+    static const int _ackTimeoutMilliseconds= 2000;
+    static const int _maxRetryCount = 5;
+    
 signals:
     // Public signals
     void canEditChanged(bool canEdit);
     void newMissionItemsAvailable(void);
     void inProgressChanged(bool inProgress);
+    void error(int errorCode, const QString& errorMsg);
     
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -86,7 +102,7 @@ private:
         AckMissionRequest,  ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
     } AckType_t;
     
-    void _startAckTimeout(AckType_t ack, const mavlink_message_t& message);
+    void _startAckTimeout(AckType_t ack);
     bool _stopAckTimeout(AckType_t expectedAck);
     void _sendTransactionComplete(void);
     void _handleMissionCount(const mavlink_message_t& message);
@@ -95,6 +111,10 @@ private:
     void _handleMissionAck(const mavlink_message_t& message);
     void _requestNextMissionItem(int sequenceNumber);
     void _clearMissionItems(void);
+    void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
+    void _retryWrite(void);
+    void _retryRead(void);
+    bool _retrySequence(AckType_t ackType);
 
 private:
     Vehicle*            _vehicle;
@@ -104,7 +124,6 @@ private:
 
     QTimer*             _ackTimeoutTimer;
     AckType_t           _retryAck;
-    mavlink_message_t   _retryMessage;
     int                 _retryCount;
     
     int                 _expectedSequenceNumber;
@@ -112,9 +131,6 @@ private:
     QMutex _dataMutex;
     
     QmlObjectListModel  _missionItems;
-    
-    static const int _ackTimeoutMilliseconds= 1000;
-    static const int _maxRetryCount = 5;
 };
 
 #endif

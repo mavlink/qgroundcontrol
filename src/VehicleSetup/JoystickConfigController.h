@@ -182,7 +182,7 @@ private:
     void _skipFlaps(void);
     void _saveAllTrims(void);
     
-    bool _stickSettleComplete(int value);
+    bool _stickSettleComplete(int axis, int value);
     
     void _validateCalibration(void);
     void _writeCalibration(void);
