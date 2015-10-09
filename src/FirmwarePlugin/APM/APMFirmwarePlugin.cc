@@ -254,16 +254,16 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
 
     if (message->msgid == MAVLINK_MSG_ID_STATUSTEXT)
     {
-        QByteArray b;
-        b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-        mavlink_msg_statustext_get_text(message, b.data());
-        // Ensure NUL-termination
-        b[b.length()-1] = '\0';
-        QString text = QString(b);
-        qCDebug(APMFirmwarePluginLog) << text;
-
-        // if don't know firmwareVersion yet, try and see this message contains it
         if (!_firmwareVersion.isValid()) {
+            QByteArray b;
+            b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
+            mavlink_msg_statustext_get_text(message, b.data());
+            // Ensure NUL-termination
+            b[b.length()-1] = '\0';
+            QString text = QString(b);
+            qCDebug(APMFirmwarePluginLog) << text;
+
+            // if don't know firmwareVersion yet, try and see this message contains it
             if (text.contains(APM_COPTER_REXP) || text.contains(APM_PLANE_REXP) || text.contains(APM_ROVER_REXP)) {
                 // found version string
                 _firmwareVersion = APMFirmwareVersion(text);
