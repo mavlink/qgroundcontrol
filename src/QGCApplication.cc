@@ -74,7 +74,7 @@
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
-#include "APM/APMFirmwarePlugin.h"
+#include "APM/ArduCopterFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
@@ -597,7 +597,7 @@ void QGCApplication::_createSingletons(void)
     
     // No dependencies
     firmwarePlugin = PX4FirmwarePlugin::_createSingleton();
-    firmwarePlugin = APMFirmwarePlugin::_createSingleton();
+    firmwarePlugin = ArduCopterFirmwarePlugin::_createSingleton();
     
     // No dependencies
     FirmwarePluginManager* firmwarePluginManager = FirmwarePluginManager::_createSingleton();
@@ -673,7 +673,7 @@ void QGCApplication::_destroySingletons(void)
     FirmwarePluginManager::_deleteSingleton();
     GenericFirmwarePlugin::_deleteSingleton();
     PX4FirmwarePlugin::_deleteSingleton();
-    APMFirmwarePlugin::_deleteSingleton();
+    ArduCopterFirmwarePlugin::_deleteSingleton();
     HomePositionManager::_deleteSingleton();
     FlightMapSettings::_deleteSingleton();
 }

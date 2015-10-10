@@ -28,8 +28,9 @@
 #define APMFirmwarePlugin_H
 
 #include "FirmwarePlugin.h"
+#include "QGCLoggingCategory.h"
 
-Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLogsLog)
+Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
 class APMFirmwareVersion
 {
@@ -54,11 +55,10 @@ private:
     int     _patch;
 };
 
+/// This is the base class for all stack specific APM firmware plugins
 class APMFirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
-
-    DECLARE_QGC_SINGLETON(APMFirmwarePlugin, FirmwarePlugin)
     
 public:
     // Overrides from FirmwarePlugin
@@ -71,9 +71,11 @@ public:
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
     virtual void initializeVehicle(Vehicle* vehicle);
     
-private:
-    /// All access to singleton is through AutoPilotPluginManager::instance
+protected:
+    /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(QObject* parent = NULL);
+    
+private:
     void _adjustSeverity(mavlink_message_t* message) const;
     static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
 
