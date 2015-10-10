@@ -29,6 +29,31 @@
 
 #include "FirmwarePlugin.h"
 
+Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLogsLog)
+
+class APMFirmwareVersion
+{
+public:
+    APMFirmwareVersion(const QString &versionText = "");
+    bool isValid() const;
+    bool isBeta() const;
+    bool isDev() const;
+    bool operator<(const APMFirmwareVersion& other) const;
+    QString versionString() const { return _versionString; }
+    QString vehicleType() const { return _vehicleType; }
+    int majorNumber() const { return _major; }
+    int minorNumber() const { return _minor; }
+    int patchNumber() const { return _patch; }
+
+private:
+    void _parseVersion(const QString &versionText);
+    QString _versionString;
+    QString _vehicleType;
+    int     _major;
+    int     _minor;
+    int     _patch;
+};
+
 class APMFirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
@@ -49,6 +74,12 @@ public:
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     APMFirmwarePlugin(QObject* parent = NULL);
+    void _adjustSeverity(mavlink_message_t* message) const;
+    static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
+
+    APMFirmwareVersion _firmwareVersion;
+    bool               _textSeverityAdjustmentNeeded;
+
 };
 
 #endif
