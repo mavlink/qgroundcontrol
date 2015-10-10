@@ -3,6 +3,7 @@
         <file alias="MockLink.params">src/comm/MockLink.params</file>
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
+
     <qresource prefix="/qmlimages">
         <file alias="SafetyComponentTree.svg">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.svg</file>
         <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentHome.png</file>
@@ -66,6 +67,9 @@
         <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
+
+        <!-- Map Buttons -->
+        <file alias="Sync.png">resources/Sync.png</file>
     </qresource>
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>
