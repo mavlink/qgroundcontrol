@@ -51,7 +51,7 @@ class Vehicle : public QObject
     Q_OBJECT
     
 public:
-    Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType);
+    Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType);
     ~Vehicle();
     
     Q_PROPERTY(int id READ id CONSTANT)
@@ -147,6 +147,7 @@ public:
     // Property accesors
     int id(void) { return _id; }
     MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
+    MAV_TYPE vehicleType(void) { return _vehicleType; }
     
     /// Sends this specified message to all links accociated with this vehicle
     void sendMessage(mavlink_message_t message);
@@ -344,6 +345,7 @@ private:
     bool    _active;
     
     MAV_AUTOPILOT       _firmwareType;
+    MAV_TYPE            _vehicleType;
     FirmwarePlugin*     _firmwarePlugin;
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;

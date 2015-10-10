@@ -30,7 +30,6 @@
 
 #include <QDebug>
 
-IMPLEMENT_QGC_SINGLETON(APMFirmwarePlugin, FirmwarePlugin)
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
 static const QRegExp APM_COPTER_REXP("^(ArduCopter|APM:Copter)");

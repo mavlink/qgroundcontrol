@@ -42,10 +42,11 @@ const char* Vehicle::_settingsGroup =               "Vehicle%1";        // %1 re
 const char* Vehicle::_joystickModeSettingsKey =     "JoystickMode";
 const char* Vehicle::_joystickEnabledSettingsKey =  "JoystickEnabled";
 
-Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
+Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
     : _id(vehicleId)
     , _active(false)
     , _firmwareType(firmwareType)
+    , _vehicleType(vehicleType)
     , _firmwarePlugin(NULL)
     , _autopilotPlugin(NULL)
     , _joystickMode(JoystickModeRC)
@@ -106,7 +107,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     connect(_uas, &UAS::latitudeChanged, this, &Vehicle::setLatitude);
     connect(_uas, &UAS::longitudeChanged, this, &Vehicle::setLongitude);
     
-    _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(firmwareType);    
+    _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
     _autopilotPlugin = AutoPilotPluginManager::instance()->newAutopilotPluginForVehicle(this);
     
     connect(_autopilotPlugin, &AutoPilotPlugin::missingParametersChanged, this, &Vehicle::missingParametersChanged);
