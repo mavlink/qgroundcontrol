@@ -83,6 +83,7 @@ MissionItem::MissionItem(QObject*       parent,
     , _isCurrentItem(isCurrentItem)
     , _reachedTime(0)
     , _yawRadiansFact(NULL)
+    ,_dirty(false)
 {
     _latitudeFact                   = new Fact(0, "Latitude:",                      FactMetaData::valueTypeDouble, this);
     _longitudeFact                  = new Fact(0, "Longitude:",                     FactMetaData::valueTypeDouble, this);
@@ -147,6 +148,16 @@ MissionItem::MissionItem(QObject*       parent,
     _altitudeFact->setMetaData(altitudeMetaData);
     _yawRadiansFact->setMetaData(yawMetaData);
     _loiterOrbitRadiusFact->setMetaData(loiterOrbitRadiusMetaData);
+
+    // Connect to valueChanged to track dirty state
+    connect(_latitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_longitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_altitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_yawRadiansFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_loiterOrbitRadiusFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_param1Fact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_param2Fact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_altitudeRelativeToHomeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
 }
 
 MissionItem::MissionItem(const MissionItem& other, QObject* parent)
@@ -187,6 +198,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     _autocontinue               = other._autocontinue;
     _reachedTime                = other._reachedTime;
     _altitudeRelativeToHomeFact = other._altitudeRelativeToHomeFact;
+    _dirty                      = other._dirty;
     
     *_latitudeFact              = *other._latitudeFact;
     *_longitudeFact             = *other._longitudeFact;
@@ -796,4 +808,16 @@ bool MissionItem::canEdit(void)
         qCDebug(MissionItemLog) << "canEdit false due unsupported command:" << _command;
         return false;
     }
+}
+
+void MissionItem::setDirty(bool dirty)
+{
+    _dirty = dirty;
+    emit dirtyChanged(_dirty);
+}
+
+void MissionItem::_factValueChanged(QVariant value)
+{
+    Q_UNUSED(value);
+    setDirty(true);
 }
