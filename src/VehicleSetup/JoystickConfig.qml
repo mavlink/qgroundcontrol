@@ -381,7 +381,16 @@ QGCView {
                                 width:              parent.width - activeJoystickLabel.width - parent.spacing
                                 model:              joystickManager.joystickNames
 
-                                onActivated: _activeJoystick.setActiveJoystickName(textAt(index))
+                                onActivated: joystickManager.activeJoystickName = textAt(index)
+
+                                Component.onCompleted: {
+                                    var index = joystickCombo.find(joystickManager.activeJoystickName)
+                                    if (index == -1) {
+                                        console.warn("Active joystick name not in combo", joystickManager.activeJoystickName)
+                                    } else {
+                                        joystickCombo.currentIndex = index
+                                    }
+                                }
                             }
                         }
 
