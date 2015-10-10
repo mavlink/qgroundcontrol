@@ -183,6 +183,8 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     } else {
         // This should be a failed run
         
+        setExpectedMessageBox(QMessageBox::Ok);
+
         // Wait for write sequence to complete. We should get:
         //      inProgressChanged(false) signal
         //      error(errorCode, QString) signal
@@ -199,30 +201,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         qDebug() << signalArgs[1].toString();
         QCOMPARE(signalArgs[0].toInt(), (int)errorCode);
 
-        /*
-         // FIXME: This should be on the read side
-        // Validate correct number of mission items
-        int expectedMissionCount = 0;
-        
-        switch (ErrorCode) {
-            case FailWriteRequest0NoResponse:
-                // Don't respond to MISSION_COUNT with MISSION_REQUEST 0
-                expectedMissionCount = 0;
-                break;
-                
-            case FailWriteRequest1NoResponse:        // Don't respond to MISSION_ITEM 0 with MISSION_REQUEST 1
-            case FailWriteRequest0IncorrectSequence: // Respond to MISSION_COUNT 0 with MISSION_REQUEST with wrong sequence number
-            case FailWriteRequest1IncorrectSequence: // Respond to MISSION_ITEM 0 with MISSION_REQUEST with wrong sequence number
-            case FailWriteRequest0ErrorAck:          // Respond to MISSION_COUNT 0 with MISSION_ACK error
-            case FailWriteRequest1ErrorAck:          // Respond to MISSION_ITEM 0 with MISSION_ACK error
-            case FailWriteFinalAckNoResponse:        // Don't send the final MISSION_ACK
-            case FailWriteFinalAckErrorAck:          // Send an error as the final MISSION_ACK
-            case FailWriteFinalAckMissingRequests:   // Send the MISSION_ACK before all items have been requested
-                break;
-        }
-        // FIXME: Count depends on errorCode
-        //QCOMPARE(_missionManager->missionItems()->count(), (int)cTestCases);
-        */
+        checkExpectedMessageBox();
     }
     
     QCOMPARE(_missionManager->canEdit(), true);
@@ -265,6 +244,8 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     } else {
         // This should be a failed run
         
+        setExpectedMessageBox(QMessageBox::Ok);
+
         // Wait for read sequence to complete. We should get:
         //      inProgressChanged(false) signal to signal completion
         //      error(errorCode, QString) signal
@@ -281,6 +262,8 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         QCOMPARE(signalArgs.count(), 2);
         qDebug() << signalArgs[1].toString();
         QCOMPARE(signalArgs[0].toInt(), (int)errorCode);
+        
+        checkExpectedMessageBox();
     }
     
     _multiSpy->clearAllSignals();
@@ -377,25 +360,6 @@ void MissionManagerTest::_testWriteFailureHandling(void)
 
 void MissionManagerTest::_testReadFailureHandling(void)
 {
-    /*
-     FailReadRequestListNoResponse,      // Don't send MISSION_COUNT in response to MISSION_REQUEST_LIST
-     FailReadRequest0NoResponse,         // Don't send MISSION_ITEM in response to MISSION_REQUEST item 0
-     FailReadRequest1NoResponse,         // Don't send MISSION_ITEM in response to MISSION_REQUEST item 1
-     FailReadRequest0IncorrectSequence,  // Respond to MISSION_REQUEST 0 with incorrect sequence number in  MISSION_ITEM
-     FailReadRequest1IncorrectSequence,  // Respond to MISSION_REQUEST 1 with incorrect sequence number in  MISSION_ITEM
-     FailReadRequest0ErrorAck,           // Respond to MISSION_REQUEST 0 with MISSION_ACK error
-     FailReadRequest1ErrorAck,           // Respond to MISSION_REQUEST 1 bogus MISSION_ACK error
-     FailWriteRequest0NoResponse,        // Don't respond to MISSION_COUNT with MISSION_REQUEST 0
-     FailWriteRequest1NoResponse,        // Don't respond to MISSION_ITEM 0 with MISSION_REQUEST 1
-     FailWriteRequest0IncorrectSequence, // Respond to MISSION_COUNT 0 with MISSION_REQUEST with wrong sequence number
-     FailWriteRequest1IncorrectSequence, // Respond to MISSION_ITEM 0 with MISSION_REQUEST with wrong sequence number
-     FailWriteRequest0ErrorAck,          // Respond to MISSION_COUNT 0 with MISSION_ACK error
-     FailWriteRequest1ErrorAck,          // Respond to MISSION_ITEM 0 with MISSION_ACK error
-     FailWriteFinalAckNoResponse,        // Don't send the final MISSION_ACK
-     FailWriteFinalAckErrorAck,          // Send an error as the final MISSION_ACK
-     FailWriteFinalAckMissingRequests,   // Send the MISSION_ACK before all items have been requested
-     */
-    
     /*
      /// Called to send a MISSION_ACK message while the MissionManager is in idle state
      void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType) { _missionItemHandler.sendUnexpectedMissionAck(ackType); }

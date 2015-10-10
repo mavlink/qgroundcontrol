@@ -161,6 +161,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType)
     
     if (qgcApp()->useNewMissionEditor()) {
         _missionManager = new MissionManager(this);
+        connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
     }
     
     _firmwarePlugin->initializeVehicle(this);
@@ -1120,4 +1121,10 @@ void Vehicle::sendMessageMultiple(mavlink_message_t message)
     info.retryCount =   _sendMessageMultipleRetries;
     
     _sendMessageMultipleList.append(info);
+}
+
+void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
+{
+    Q_UNUSED(errorCode);
+    qgcApp()->showToolBarMessage(QString("Error during Mission communication with Vehicle: %1").arg(errorMsg));
 }

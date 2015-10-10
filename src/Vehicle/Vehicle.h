@@ -333,6 +333,7 @@ private:
     void _startJoystick(bool start);
     void _handleHomePosition(mavlink_message_t& message);
     void _handleHeartbeat(mavlink_message_t& message);
+    void _missionManagerError(int errorCode, const QString& errorMsg);
 
     bool    _isAirplane                     ();
     void    _addChange                      (int id);

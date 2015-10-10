@@ -154,8 +154,8 @@ void MissionManager::_ackTimeout(void)
     }
     
     if (!_retrySequence(timedOutAck)) {
-        qCDebug(MissionManagerLog) << "_ackTimeout failed after max retries _retryAck:_retryCount" << timedOutAck << _retryCount;
-        _sendError(AckTimeoutError, QString("Vehicle did not respond to mission item communication: %1").arg(timedOutAck));
+        qCDebug(MissionManagerLog) << "_ackTimeout failed after max retries _retryAck:_retryCount" << _ackTypeToString(timedOutAck) << _retryCount;
+        _sendError(AckTimeoutError, QString("Vehicle did not respond to mission item communication: %1").arg(_ackTypeToString(timedOutAck)));
     }
 }
 
@@ -175,10 +175,10 @@ bool MissionManager::_stopAckTimeout(AckType_t expectedAck)
     _ackTimeoutTimer->stop();
     
     if (savedRetryAck != expectedAck) {
-        qCDebug(MissionManagerLog) << "Invalid ack sequence _retryAck:expectedAck" << savedRetryAck << expectedAck;
+        qCDebug(MissionManagerLog) << "Invalid ack sequence _retryAck:expectedAck" << _ackTypeToString(savedRetryAck) << _ackTypeToString(expectedAck);
         
         if (_retrySequence(expectedAck)) {
-            _sendError(ProtocolOrderError, QString("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(savedRetryAck).arg(expectedAck));
+            _sendError(ProtocolOrderError, QString("Vehicle responded incorrectly to mission item protocol sequence: %1:%2").arg(_ackTypeToString(savedRetryAck)).arg(_ackTypeToString(expectedAck)));
         }
         success = false;
     } else {
@@ -375,19 +375,19 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
     switch (savedRetryAck) {
         case AckNone:
             // State machine is idle. Vehicle is confused.
-            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack while state machine is idle: type:" << missionAck.type;
-            _sendError(VehicleError, "Vehicle sent unexpected MISSION_ACK message.");
+            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack while state machine is idle: error:" << missionAck.type;
+            _sendError(VehicleError, QString("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(missionAck.type));
             break;
         case AckMissionCount:
             // MISSION_COUNT message expected
-            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack when MISSION_COUNT expected: type:" << missionAck.type;
+            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack when MISSION_COUNT expected: error:" << missionAck.type;
             if (!_retrySequence(AckMissionCount)) {
                 _sendError(VehicleError, QString("Vehicle returned error: %1. Partial list of mission items may have been returned.").arg(missionAck.type));
             }
             break;
         case AckMissionItem:
             // MISSION_ITEM expected
-            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack when MISSION_ITEM expected: type:" << missionAck.type;
+            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack when MISSION_ITEM expected: error:" << missionAck.type;
             if (!_retrySequence(AckMissionItem)) {
                 _sendError(VehicleError, QString("Vehicle returned error: %1. Partial list of mission items may have been returned.").arg(missionAck.type));
             }
@@ -465,7 +465,7 @@ void MissionManager::_sendError(ErrorCode_t errorCode, const QString& errorMsg)
 /// @return true: sequence retried, false: out of retries
 bool MissionManager::_retrySequence(AckType_t ackType)
 {
-    qCDebug(MissionManagerLog) << "_retrySequence ackType:" << ackType << "_retryCount" << _retryCount;
+    qCDebug(MissionManagerLog) << "_retrySequence ackType:" << _ackTypeToString(ackType) << "_retryCount" << _retryCount;
     
     switch (ackType) {
         case AckMissionCount:
@@ -490,8 +490,25 @@ bool MissionManager::_retrySequence(AckType_t ackType)
             }
             break;
         default:
-            qCWarning(MissionManagerLog) << "_retrySequence fell through switch: ackType:" << ackType;
-            _sendError(InternalError, QString("Internal error occured during Mission Item communication: _retrySequence fell through switch: ackType:").arg(ackType));
+            qCWarning(MissionManagerLog) << "_retrySequence fell through switch: ackType:" << _ackTypeToString(ackType);
+            _sendError(InternalError, QString("Internal error occured during Mission Item communication: _retrySequence fell through switch: ackType:").arg(_ackTypeToString(ackType)));
             return false;
     }
+}
+
+QString MissionManager::_ackTypeToString(AckType_t ackType)
+{
+    switch (ackType) {
+        case AckNone:   // State machine is idle
+            return QString("No Ack");
+        case AckMissionCount:   // MISSION_COUNT message expected
+            return QString("MISSION_COUNT");
+        case AckMissionItem:  ///< MISSION_ITEM expected
+            return QString("MISSION_ITEM");
+        case AckMissionRequest: ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
+            return QString("MISSION_REQUEST");
+        default:
+            qWarning(MissionManagerLog) << "Fell off end of switch statement";
+            return QString("Internal Error");
+    }    
 }
