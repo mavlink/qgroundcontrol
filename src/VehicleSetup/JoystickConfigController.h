@@ -197,9 +197,6 @@ private:
     
     void _setHelpImage(const char* imageFile);
     
-    void _loadSettings(void);
-    void _storeSettings(void);
-    
     void _signalAllAttiudeValueChanges(void);
     
     // Member variables
@@ -215,8 +212,6 @@ private:
     static const char* _imageRollRight;
     static const char* _imagePitchUp;
     static const char* _imagePitchDown;
-    
-    static const char* _settingsGroup;
     
     static const int _updateInterval;   ///< Interval for ui update timer
     
