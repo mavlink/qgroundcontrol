@@ -40,15 +40,15 @@ private slots:
     void init(void);
     void cleanup(void);
     
+    void _testWriteFailureHandling(void);
     void _testReadFailureHandling(void);
     
 private:
     void _checkInProgressValues(bool inProgress);
     void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly);
     void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly);
-
+    
     void _readEmptyVehicle(void);
-    void _testWriteFailureHandling(void);
     
     MockLink*       _mockLink;
     MissionManager* _missionManager;
