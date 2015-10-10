@@ -1359,7 +1359,10 @@ void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
     switch (calType) {
         case StartBusConfigActuators:
             actuatorCal = 1;
-            break;
+        break;
+        case EndBusConfigActuators:
+            actuatorCal = 0;
+        break;
     }
 
     mavlink_message_t msg;

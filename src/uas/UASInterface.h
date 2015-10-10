@@ -187,7 +187,8 @@ public:
     };
 
     enum StartBusConfigType {
-        StartBusConfigActuators
+        StartBusConfigActuators,
+        EndBusConfigActuators,
     };
     
     /// Starts the specified calibration
