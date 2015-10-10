@@ -44,6 +44,7 @@ public:
     
     Q_INVOKABLE void calibrateEsc(void);
     Q_INVOKABLE void busConfigureActuators(void);
+    Q_INVOKABLE void stopBusConfigureActuators(void);
     
 signals:
     void oldFirmware(void);

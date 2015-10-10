@@ -277,8 +277,13 @@ QGCView {
                     }
 
                     QGCButton {
-                        text:       "Configure"
+                        text:       "Start Configuration"
                         onClicked:  controller.busConfigureActuators()
+                    }
+
+                    QGCButton {
+                        text:       "End Configuration"
+                        onClicked:  controller.StopBusConfigureActuators()
                     }
                 }
             }

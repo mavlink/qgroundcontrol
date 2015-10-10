@@ -55,6 +55,12 @@ void PowerComponentController::busConfigureActuators(void)
     _uas->startBusConfig(UASInterface::StartBusConfigActuators);
 }
 
+void PowerComponentController::stopBusConfigureActuators(void)
+{
+    disconnect(_uas, &UASInterface::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
+    _uas->startBusConfig(UASInterface::EndBusConfigActuators);
+}
+
 void PowerComponentController::_stopCalibration(void)
 {
     disconnect(_uas, &UASInterface::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
