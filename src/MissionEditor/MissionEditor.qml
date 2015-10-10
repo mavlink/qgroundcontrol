@@ -88,11 +88,6 @@ QGCView {
                     longitude = _homePositionCoordinate.longitude
                 }
 
-                QGCLabel {
-                    anchors.bottom: parent.bottom
-                    text: "WIP: Danger, do not fly with this!"; font.pixelSize: ScreenTools.largeFontPixelSize }
-
-
                 MouseArea {
                     anchors.fill: parent
 
@@ -107,6 +102,31 @@ QGCView {
                             var index = controller.addMissionItem(coordinate)
                             setCurrentItem(index)
                         }
+                    }
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    anchors.bottom:             parent.bottom
+                    width:                      parent.width / 3
+                    height:                     syncNeededText.height + (ScreenTools.defaultFontPixelWidth * 2)
+                    border.width:               1
+                    border.color:               "white"
+                    color:                      "black"
+                    opacity:                    0.75
+                    visible:                    controller.missionItems.dirty
+
+                    QGCLabel {
+                        id:                     syncNeededText
+                        anchors.margins:        ScreenTools.defaultFontPixelWidth
+                        anchors.top:            parent.top
+                        anchors.left:           parent.left
+                        anchors.right:          parent.right
+                        wrapMode:               Text.WordWrap
+                        horizontalAlignment:    Text.AlignHCenter
+                        verticalAlignment:      Text.AlignVCenter
+                        font.pixelSize:         ScreenTools.mediumFontPixelSize
+                        text:                   "You have unsaved changes. Be sure to use the Sync tool to save when ready."
                     }
                 }
 

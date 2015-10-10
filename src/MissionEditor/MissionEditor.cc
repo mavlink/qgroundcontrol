@@ -73,6 +73,7 @@ void MissionEditor::_newMissionItemsAvailable(void)
     _canEdit = missionManager->canEdit();
     _missionItems = missionManager->copyMissionItems();
     _reSequence();
+    _missionItems->setDirty(false);
     
     emit missionItemsChanged();
     emit canEditChanged(_canEdit);
@@ -95,6 +96,7 @@ void MissionEditor::setMissionItems(void)
     
     if (activeVehicle) {
         activeVehicle->missionManager()->writeMissionItems(*_missionItems);
+        _missionItems->setDirty(false);
     }
 }
 
@@ -225,6 +227,7 @@ void MissionEditor::loadMissionFromFile(void)
         _missionItems->clear();
     }
     
+    _missionItems->setDirty(false);
     emit canEditChanged(_canEdit);
 }
 
@@ -250,4 +253,6 @@ void MissionEditor::saveMissionToFile(void)
             qobject_cast<MissionItem*>(_missionItems->get(i))->save(out);
         }
     }
+    
+    _missionItems->setDirty(false);
 }
