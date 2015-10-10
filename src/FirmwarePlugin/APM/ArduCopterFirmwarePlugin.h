@@ -24,34 +24,30 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef FirmwarePluginManager_H
-#define FirmwarePluginManager_H
+#ifndef ArduCopterFirmwarePlugin_H
+#define ArduCopterFirmwarePlugin_H
 
-#include <QObject>
+#include "APMFirmwarePlugin.h"
 
-#include "QGCSingleton.h"
-#include "FirmwarePlugin.h"
-#include "QGCMAVLink.h"
-
-/// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
-
-class FirmwarePluginManager : public QGCSingleton
+class ArduCopterFirmwarePlugin : public APMFirmwarePlugin
 {
     Q_OBJECT
-    
-    DECLARE_QGC_SINGLETON(FirmwarePluginManager, FirmwarePluginManager)
 
+    DECLARE_QGC_SINGLETON(ArduCopterFirmwarePlugin, ArduCopterFirmwarePlugin)
+    
 public:
-    /// Returns appropriate plugin for autopilot type.
-    ///     @param autopilotType Type of autopilot to return plugin for.
-    ///     @param vehicleType Vehicle type of autopilot to return plugin for.
-    /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
-    FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType);
+    // Overrides from FirmwarePlugin
+    virtual bool isCapable(FirmwareCapabilities capabilities);
+    virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
+    virtual QStringList flightModes(void);
+    virtual QString flightMode(uint8_t base_mode, uint32_t custom_mode);
+    virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
+    
+protected:
+    /// All access to singleton is through instance()
+    ArduCopterFirmwarePlugin(QObject* parent = NULL);
     
 private:
-    /// All access to singleton is through FirmwarePluginManager::instance
-    FirmwarePluginManager(QObject* parent = NULL);
-    ~FirmwarePluginManager();
 };
 
 #endif
