@@ -198,8 +198,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
     QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
 #else
+    QString filterRules;
+    
+    // Turn off bogus ssl warning
+    filterRules += "qt.network.ssl.warning=false\n";
+    
     if (logging) {
-        QString filterRules;
         QStringList logList = loggingOptions.split(",");
         
         if (logList[0] == "full") {
@@ -219,9 +223,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
             // We need to turn off these warnings until the firmware meta data is cleaned up
             filterRules += "PX4ParameterLoaderLog.warning=false\n";
         }
-        
-        qDebug() << "Filter rules" << filterRules;
-        QLoggingCategory::setFilterRules(filterRules);
     } else {
         if (_runningUnitTests) {
             // We need to turn off these warnings until the firmware meta data is cleaned up
@@ -266,6 +267,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
             }
         }
     }
+    
+    qDebug() << "Filter rules" << filterRules;
+    QLoggingCategory::setFilterRules(filterRules);
 #endif
 
     // Set up timer for delayed missing fact display
