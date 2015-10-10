@@ -23,10 +23,6 @@ Item {
     readonly property int dropUp:       3
     readonly property int dropDown:     4
 
-    function hideDropDown() {
-        _showDropDown = false
-    }
-
     readonly property real _arrowBaseWidth:     (radius * 2) / 2    // Width of long side of arrow
     readonly property real _arrowPointHeight:   (radius * 2) / 3    // Height is long side to point
     readonly property real _dropCornerRadius:   ScreenTools.defaultFontPixelWidth / 2
@@ -39,7 +35,20 @@ Item {
     property real   _viewportMaxTop:    -y + viewportMargins
     property real   _viewportMaxBottom: parent.height - (viewportMargins * 2) - y
 
-    property bool _showDropDown: false
+    // Set up ExclusiveGroup support. We use the checked property to drive visibility of drop down.
+
+    property bool checked: false
+    property ExclusiveGroup exclusiveGroup: null
+
+    onExclusiveGroupChanged: {
+        if (exclusiveGroup) {
+            exclusiveGroup.bindCheckable(_root)
+        }
+    }
+
+    function hideDropDown() {
+        checked = false
+    }
 
     Component.onCompleted: _calcPositions()
 
@@ -138,29 +147,37 @@ Item {
         y:          _viewportMaxTop
         width:      _viewportMaxRight -_viewportMaxLeft
         height:     _viewportMaxBottom - _viewportMaxTop
-        visible:    _showDropDown
+        visible:    checked
 
-        onClicked: _showDropDown = false
+        onClicked: checked = false
     }
 
     // Button
-    Image {
-        id:             button
+    Rectangle {
         anchors.fill:   parent
-        fillMode:       Image.PreserveAspectFit
-        opacity:        _showDropDown ? 1.0 : 0.75
-        mipmap:         true
-        smooth:         true
-        MouseArea {
-            anchors.fill: parent
+        radius:         width / 2
+        border.width:   2
+        border.color:   "white"
+        color:          "transparent"
 
-            onClicked: _showDropDown = !_showDropDown
-        }
-    } // Image - button
+        Image {
+            id:             button
+            anchors.fill:   parent
+            fillMode:       Image.PreserveAspectFit
+            opacity:        checked ? 1.0 : 0.75
+            mipmap:         true
+            smooth:         true
+            MouseArea {
+                anchors.fill: parent
+
+                onClicked: checked = !checked
+            }
+        } // Image - button
+    }
 
     Item {
         id:         dropDownItem
-        visible:    _showDropDown
+        visible:    checked
 
         QGCCanvas {
             id:             arrowCanvas
