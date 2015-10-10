@@ -140,6 +140,8 @@ void LogReplayLink::run(void)
 
     // Run normal event loop until exit
     exec();
+    
+    _readTickTimer.stop();
 }
 
 void LogReplayLink::_replayError(const QString& errorMsg)
