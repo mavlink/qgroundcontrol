@@ -31,6 +31,7 @@
 #include "UAS.h"
 #include "JoystickManager.h"
 #include "MissionManager.h"
+#include "CoordinateVector.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -169,6 +170,9 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     
     _sendMultipleTimer.start(_sendMessageMultipleIntraMessageDelay);
     connect(&_sendMultipleTimer, &QTimer::timeout, this, &Vehicle::_sendMessageMultipleNext);
+    
+    _mapTrajectoryTimer.setInterval(_mapTrajectoryMsecsBetweenPoints);
+    connect(&_mapTrajectoryTimer, &QTimer::timeout, this, &Vehicle::_addNewMapTrajectoryPoint);
 }
 
 Vehicle::~Vehicle()
@@ -257,6 +261,13 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
     if (_armed != newArmed) {
         _armed = newArmed;
         emit armedChanged(_armed);
+        
+        // We are transitioning to the armed state, begin tracking trajectory points for the map
+        if (_armed) {
+            _mapTrajectoryStart();
+        } else {
+            _mapTrajectoryStop();
+        }
     }
 
     if (heartbeat.base_mode != _base_mode || heartbeat.custom_mode != _custom_mode) {
@@ -1128,4 +1139,25 @@ void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
 {
     Q_UNUSED(errorCode);
     qgcApp()->showToolBarMessage(QString("Error during Mission communication with Vehicle: %1").arg(errorMsg));
+}
+
+void Vehicle::_addNewMapTrajectoryPoint(void)
+{
+    if (_mapTrajectoryHaveFirstCoordinate) {
+        _mapTrajectoryList.append(new CoordinateVector(_mapTrajectoryLastCoordinate, _geoCoordinate, this));
+    }
+    _mapTrajectoryHaveFirstCoordinate = true;
+    _mapTrajectoryLastCoordinate = _geoCoordinate;
+}
+
+void Vehicle::_mapTrajectoryStart(void)
+{
+    _mapTrajectoryHaveFirstCoordinate = false;
+    _mapTrajectoryList.clear();
+    _mapTrajectoryTimer.start();
+}
+
+void Vehicle::_mapTrajectoryStop()
+{
+    _mapTrajectoryTimer.stop();
 }
