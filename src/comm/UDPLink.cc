@@ -322,7 +322,7 @@ bool UDPLink::_hardwareConnect()
     QHostAddress host = QHostAddress::AnyIPv4;
     _socket = new QUdpSocket();
     _socket->setProxy(QNetworkProxy::NoProxy);
-    _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint);
+    _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {
         _registerZeroconf(_config->localPort(), kZeroconfRegistration);
         //-- Connect signal if this version of Qt is not broken
