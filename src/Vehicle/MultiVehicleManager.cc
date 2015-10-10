@@ -64,7 +64,7 @@ bool MultiVehicleManager::notifyHeartbeatInfo(LinkInterface* link, int vehicleId
             return false;
         }
         
-        Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)heartbeat.autopilot);
+        Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)heartbeat.autopilot, (MAV_TYPE)heartbeat.type);
         
         if (!vehicle) {
             qWarning() << "New Vehicle allocation failed";
