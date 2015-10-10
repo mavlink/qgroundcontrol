@@ -120,6 +120,22 @@ Item {
             visible:        _activeVehicle ? _activeVehicle.homePositionAvailable : false
         }
 
+        // Add trajectory points to the map
+        MapItemView {
+            model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.trajectoryPoints : 0
+            
+            delegate:
+                MapPolyline {
+                    line.width: 3
+                    line.color: "orange"
+
+                    path: [
+                        { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },
+                        { latitude: object.coordinate2.latitude, longitude: object.coordinate2.longitude },
+                    ]
+                }
+        }
+
         // Add the vehicles to the map
         MapItemView {
             model: multiVehicleManager.vehicles

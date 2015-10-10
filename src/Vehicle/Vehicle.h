@@ -73,6 +73,8 @@ public:
     
     Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
     
+    Q_PROPERTY(QmlObjectListModel* trajectoryPoints READ trajectoryPoints CONSTANT)
+    
     Q_INVOKABLE QString     getMavIconColor();
     
     //-- System Messages
@@ -184,6 +186,8 @@ public:
 
     bool hilMode(void);
     void setHilMode(bool hilMode);
+    
+    QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
     
     /// Requests the specified data stream from the vehicle
     ///     @param stream Stream which is being requested
@@ -300,6 +304,7 @@ private slots:
     void _linkDisconnected(LinkInterface* link);
     void _sendMessage(mavlink_message_t message);
     void _sendMessageMultipleNext(void);
+    void _addNewMapTrajectoryPoint(void);
 
     void _handleTextMessage                 (int newCount);
     /** @brief Attitude from main autopilot / system state */
@@ -335,6 +340,8 @@ private:
     void _handleHomePosition(mavlink_message_t& message);
     void _handleHeartbeat(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
+    void _mapTrajectoryStart(void);
+    void _mapTrajectoryStop(void);
 
     bool    _isAirplane                     ();
     void    _addChange                      (int id);
@@ -424,6 +431,12 @@ private:
     
     QTimer  _sendMultipleTimer;
     int     _nextSendMessageMultipleIndex;
+    
+    QTimer              _mapTrajectoryTimer;
+    QmlObjectListModel  _mapTrajectoryList;
+    QGeoCoordinate      _mapTrajectoryLastCoordinate;
+    bool                _mapTrajectoryHaveFirstCoordinate;
+    static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
     
     // Settings keys
     static const char* _settingsGroup;
