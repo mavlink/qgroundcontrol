@@ -70,6 +70,10 @@ Item {
 
     property bool _showMap: getBool(QGroundControl.flightMapSettings.loadMapSetting(flightMap.mapName, _showMapBackgroundKey, "1"))
 
+    ExclusiveGroup {
+        id: _dropButtonsExclusiveGroup
+    }
+
     // Validate _showMap setting
     Component.onCompleted: _setShowMap(_showMap)
 
@@ -90,9 +94,24 @@ Item {
         id:             flightMap
         anchors.fill:   parent
         mapName:        _mapName
-        latitude:       parent._latitude
-        longitude:      parent._longitude
         visible:        _showMap
+
+        property real rootLatitude:     root._latitude
+        property real rootLongitude:    root._longitude
+
+        Component.onCompleted: updateMapPosition(true /* force */)
+
+        onRootLatitudeChanged: updateMapPosition(false /* force */)
+        onRootLongitudeChanged: updateMapPosition(false /* force */)
+
+        function updateMapPosition(force) {
+            if (_followVehicle || force) {
+                latitude = root._latitude
+                longitude = root._longitude
+            }
+        }
+
+        property bool _followVehicle: true
 
         // Home position
         MissionItemIndicator {
@@ -145,21 +164,65 @@ Item {
         }
 
         QGCCompassWidget {
-            x:          ScreenTools.defaultFontPixelSize * (7.1)
-            y:          ScreenTools.defaultFontPixelSize * (0.42)
-            size:       ScreenTools.defaultFontPixelSize * (13.3)
-            heading:    _heading
-            active:     multiVehicleManager.activeVehicleAvailable
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.left:       parent.left
+            anchors.top:        parent.top
+            size:               ScreenTools.defaultFontPixelSize * (13.3)
+            heading:            _heading
+            active:             multiVehicleManager.activeVehicleAvailable
         }
 
         QGCAttitudeWidget {
-            anchors.rightMargin:    ScreenTools.defaultFontPixelSize * (7.1)
-            anchors.right:          parent.right
-            y:                      ScreenTools.defaultFontPixelSize * (0.42)
-            size:                   ScreenTools.defaultFontPixelSize * (13.3)
-            rollAngle:              _roll
-            pitchAngle:             _pitch
-            active:                 multiVehicleManager.activeVehicleAvailable
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.left:       parent.left
+            anchors.bottom:     parent.bottom
+            size:               ScreenTools.defaultFontPixelSize * (13.3)
+            rollAngle:          _roll
+            pitchAngle:         _pitch
+            active:             multiVehicleManager.activeVehicleAvailable
+        }
+
+        DropButton {
+            id:                     centerMapDropButton
+            anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
+            anchors.right:          mapTypeButton.left
+            anchors.top:            mapTypeButton.top
+            dropDirection:          dropDown
+            buttonImage:            "/qmlimages/MapCenter.svg"
+            viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
+            exclusiveGroup:         _dropButtonsExclusiveGroup
+
+            dropDownComponent: Component {
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    QGCCheckBox {
+                        id:                 followVehicleCheckBox
+                        text:               "Follow Vehicle"
+                        checked:            flightMap._followVehicle
+                        anchors.baseline:   centerMapButton.baseline
+
+                        onClicked: {
+                            centerMapDropButton.hideDropDown()
+                            flightMap._followVehicle = !flightMap._followVehicle
+                        }
+                    }
+
+                    QGCButton {
+                        id:         centerMapButton
+                        text:       "Center map on Vehicle"
+                        enabled:    _activeVehicle && !followVehicleCheckBox.checked
+
+                        property var activeVehicle: multiVehicleManager.activeVehicle
+
+                        onClicked: {
+                            centerMapDropButton.hideDropDown()
+                            flightMap.latitude = activeVehicle.latitude
+                            flightMap.longitude = activeVehicle.longitude
+                        }
+                    }
+                }
+            }
         }
 
         DropButton {
@@ -170,6 +233,7 @@ Item {
             dropDirection:      dropDown
             buttonImage:        "/qmlimages/MapType.svg"
             viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+            exclusiveGroup:     _dropButtonsExclusiveGroup
 
             dropDownComponent: Component {
                 Row {
