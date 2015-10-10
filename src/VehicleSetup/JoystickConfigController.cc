@@ -54,8 +54,6 @@ const char*  JoystickConfigController::_imageRollRight =    "joystickRollRight.p
 const char*  JoystickConfigController::_imagePitchUp =      "joystickPitchUp.png";
 const char*  JoystickConfigController::_imagePitchDown =    "joystickPitchDown.png";
 
-const char* JoystickConfigController::_settingsGroup = "Joysticks";
-
 JoystickConfigController::JoystickConfigController(void)
     : _activeJoystick(NULL)
     , _currentStep(-1)
@@ -71,21 +69,17 @@ JoystickConfigController::JoystickConfigController(void)
     connect(joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
     
     _activeJoystickChanged(joystickManager->activeJoystick());
-    _loadSettings();
     _resetInternalCalibrationValues();
-    _activeJoystick->startCalibrationMode(Joystick::CalibrationModeMonitor);
 }
 
 void JoystickConfigController::start(void)
 {
     _stopCalibration();
-    _setInternalCalibrationValuesFromSettings();
 }
 
 JoystickConfigController::~JoystickConfigController()
 {
     _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeMonitor);
-    _storeSettings();
 }
 
 /// @brief Returns the state machine entry for the specified state.
@@ -460,7 +454,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
         info->axisMax = calibration.max;
         info->reversed = calibration.reversed;
         
-        qCDebug(JoystickConfigControllerLog) << "Read settings axis:min:max:trim:reversed" << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
+        qCDebug(JoystickConfigControllerLog) << "Read settings name:axis:min:max:trim:reversed" << joystick->name() << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
     }
     
     for (int function=0; function<Joystick::maxFunction; function++) {
@@ -484,30 +478,29 @@ void JoystickConfigController::_validateCalibration(void)
         if (chan < _axisCount) {
             // Validate Min/Max values. Although the axis appears as available we still may
             // not have good min/max/trim values for it. Set to defaults if needed.
-            if (info->axisMin > _calValidMinValue || info->axisMax < _calValidMaxValue) {
+            if (info->axisMin < _calValidMinValue || info->axisMax > _calValidMaxValue) {
                 qCDebug(JoystickConfigControllerLog) << "_validateCalibration resetting axis" << chan;
                 info->axisMin = _calDefaultMinValue;
                 info->axisMax = _calDefaultMaxValue;
                 info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
-            } else {
-                switch (_rgAxisInfo[chan].function) {
-                    case Joystick::throttleFunction:
-                    case Joystick::yawFunction:
-                    case Joystick::rollFunction:
-                    case Joystick::pitchFunction:
-                        // Make sure trim is within min/max
-                        if (info->axisTrim < info->axisMin) {
-                            info->axisTrim = info->axisMin;
-                        } else if (info->axisTrim > info->axisMax) {
-                            info->axisTrim = info->axisMax;
-                        }
-                        break;
-                    default:
-                        // Non-attitude control axiss have calculated trim
-                        info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
-                        break;
-                }
-                
+            }
+            
+            switch (_rgAxisInfo[chan].function) {
+                case Joystick::throttleFunction:
+                case Joystick::yawFunction:
+                case Joystick::rollFunction:
+                case Joystick::pitchFunction:
+                    // Make sure trim is within min/max
+                    if (info->axisTrim < info->axisMin) {
+                        info->axisTrim = info->axisMin;
+                    } else if (info->axisTrim > info->axisMax) {
+                        info->axisTrim = info->axisMax;
+                    }
+                    break;
+                default:
+                    // Non-attitude control axis have calculated trim
+                    info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
+                    break;
             }
         } else {
             // Unavailable axiss are set to defaults
@@ -608,20 +601,6 @@ void JoystickConfigController::_calSave(void)
     // This updates the internal values according to the validation rules. Then _updateView will tick and update ui
     // such that the settings that will be written our are displayed.
     _validateCalibration();
-}
-
-void JoystickConfigController::_loadSettings(void)
-{
-    QSettings settings;
-    
-    settings.beginGroup(_settingsGroup);
-}
-
-void JoystickConfigController::_storeSettings(void)
-{
-    QSettings settings;
-    
-    settings.beginGroup(_settingsGroup);
 }
 
 void JoystickConfigController::_setHelpImage(const char* imageFile)
@@ -749,13 +728,20 @@ void JoystickConfigController::_signalAllAttiudeValueChanges(void)
 
 void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
 {
+    bool joystickTransition = false;
+    
     if (_activeJoystick) {
+        joystickTransition = true;
         disconnect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
         _activeJoystick = NULL;
     }
     
     if (joystick) {
         _activeJoystick = joystick;
+        if (joystickTransition) {
+            _stopCalibration();
+        }
+        _activeJoystick->startCalibrationMode(Joystick::CalibrationModeMonitor);
         connect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
     }
 }
