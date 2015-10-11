@@ -73,7 +73,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle) : UASInterface(),
     tickLowpassVoltage(12.0f),
     warnLevelPercent(UAS_DEFAULT_BATTERY_WARNLEVEL),
     currentVoltage(12.6f),
-    lpVoltage(12.0f),
+    lpVoltage(-1.0f),
     currentCurrent(0.4f),
     chargeLevel(-1),
     lowBattAlarm(false),
@@ -495,11 +495,11 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit loadChanged(this,state.load/10.0f);
             emit valueChanged(uasId, name.arg("load"), "%", state.load/10.0f, time);
 
-            if (state.voltage_battery != UINT16_MAX) {
+            if (state.voltage_battery > 0.0f && state.voltage_battery != UINT16_MAX) {
                 // Battery charge/time remaining/voltage calculations
                 currentVoltage = state.voltage_battery/1000.0f;
-                lpVoltage = filterVoltage(currentVoltage);
-                tickLowpassVoltage = tickLowpassVoltage*0.8f + 0.2f*currentVoltage;
+                filterVoltage(currentVoltage);
+                tickLowpassVoltage = tickLowpassVoltage * 0.8f + 0.2f * currentVoltage;
 
                 // We don't want to tick above the threshold
                 if (tickLowpassVoltage > tickVoltage)
@@ -514,10 +514,10 @@ void UAS::receiveMessage(mavlink_message_t message)
                         && (currentVoltage > 3.3f)
                         /* warn only if current voltage is really still lower by a reasonable amount */
                         && ((currentVoltage - 0.2f) < tickVoltage)
-                        /* warn only every 12 seconds */
-                        && (QGC::groundTimeUsecs() - lastVoltageWarning) > 12000000)
+                        /* warn only every 20 seconds */
+                        && (QGC::groundTimeUsecs() - lastVoltageWarning) > 20000000)
                 {
-                    _say(QString("Voltage warning for system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
+                    _say(QString("Low battery system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
                     lastVoltageWarning = QGC::groundTimeUsecs();
                     lastTickVoltageValue = tickLowpassVoltage;
                 }
@@ -1557,9 +1557,14 @@ quint64 UAS::getUnixTime(quint64 time)
 /**
  * @param value battery voltage
  */
-float UAS::filterVoltage(float value) const
+float UAS::filterVoltage(float value)
 {
-    return lpVoltage * 0.6f + value * 0.4f;
+    if (lpVoltage < 0.0f) {
+        lpVoltage = value;
+    }
+
+    lpVoltage = lpVoltage * 0.6f + value * 0.4f;
+    return lpVoltage;
 }
 
 /**
