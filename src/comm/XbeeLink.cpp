@@ -2,7 +2,6 @@
 #include <QThread>
 #include <QMutex>
 #include <MG.h>
-#include <configuration.h>
 #include<string>
 #include "XbeeLink.h"
 
