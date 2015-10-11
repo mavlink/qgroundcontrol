@@ -26,6 +26,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MultiVehicleManager.h"
 #include "MissionManager.h"
 #include "QGCFileDialog.h"
+#include "CoordinateVector.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -51,6 +52,7 @@ MissionEditor::MissionEditor(QWidget *parent)
         _newMissionItemsAvailable();
     } else {
         _missionItems = new QmlObjectListModel(this);
+        connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionEditor::_missionListDirtyChanged);
     }
     
     setContextPropertyObject("controller", this);
@@ -74,6 +76,9 @@ void MissionEditor::_newMissionItemsAvailable(void)
     _missionItems = missionManager->copyMissionItems();
     _reSequence();
     _missionItems->setDirty(false);
+    
+    connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionEditor::_missionListDirtyChanged);
+    _rebuildWaypointLines();
     
     emit missionItemsChanged();
     emit canEditChanged(_canEdit);
@@ -190,7 +195,11 @@ void MissionEditor::loadMissionFromFile(void)
         return;
     }
     
-    _missionItems->clear();
+    if (_missionItems) {
+        _missionItems->deleteLater();
+    }
+    _missionItems = new QmlObjectListModel(this);
+
     _canEdit = true;
     
     QFile file(filename);
@@ -229,6 +238,9 @@ void MissionEditor::loadMissionFromFile(void)
     
     _missionItems->setDirty(false);
     emit canEditChanged(_canEdit);
+    
+    connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionEditor::_missionListDirtyChanged);
+    _rebuildWaypointLines();
 }
 
 void MissionEditor::saveMissionToFile(void)
@@ -255,4 +267,22 @@ void MissionEditor::saveMissionToFile(void)
     }
     
     _missionItems->setDirty(false);
+}
+
+void MissionEditor::_rebuildWaypointLines(void)
+{
+    _waypointLines.clear();
+    for (int i=1; i<_missionItems->count(); i++) {
+        MissionItem* item1 = qobject_cast<MissionItem*>(_missionItems->get(i-1));
+        MissionItem* item2 = qobject_cast<MissionItem*>(_missionItems->get(i));
+        
+        _waypointLines.append(new CoordinateVector(item1->coordinate(), item2->coordinate()));
+    }
+    emit waypointLinesChanged();
+}
+
+void MissionEditor::_missionListDirtyChanged(bool dirty)
+{
+    Q_UNUSED(dirty);
+    _rebuildWaypointLines();
 }
