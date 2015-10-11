@@ -87,24 +87,14 @@
     <addaction name="separator"/>
     <addaction name="actionStatusBar"/>
    </widget>
-   <widget class="QMenu" name="menuAdvanced">
+   <widget class="QMenu" name="menuWidgets">
     <property name="title">
-     <string>Advanced</string>
+     <string>Widgets</string>
     </property>
-    <widget class="QMenu" name="menuTools">
-     <property name="title">
-      <string>Tool Widgets</string>
-     </property>
-     <addaction name="separator"/>
-    </widget>
-    <addaction name="actionSimulationView"/>
-    <addaction name="separator"/>
-    <addaction name="separator"/>
-    <addaction name="menuTools"/>
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuPerspectives"/>
-   <addaction name="menuAdvanced"/>
+   <addaction name="menuWidgets"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -224,14 +214,6 @@
    </property>
    <property name="text">
     <string>Advanced Mode</string>
-   </property>
-  </action>
-  <action name="actionSimulationView">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>HIL Simulation</string>
    </property>
   </action>
   <action name="actionStatusBar">
