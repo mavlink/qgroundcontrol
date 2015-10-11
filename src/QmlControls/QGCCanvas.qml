@@ -9,9 +9,11 @@ import QGroundControl.ScreenTools 1.0
 /// are switched. In order to fix this we ahve a signal hacked into ScreenTools to force
 /// a repaint.
 Canvas {
+    id: _root
+
     Connections {
         target: ScreenTools
 
-        onRepaintRequested: arrowCanvas.requestPaint()
+        onRepaintRequested: _root.requestPaint()
     }
 }
