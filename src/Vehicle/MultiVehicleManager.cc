@@ -36,7 +36,6 @@ MultiVehicleManager::MultiVehicleManager(QObject* parent) :
     , _activeVehicleAvailable(false)
     , _parameterReadyVehicleAvailable(false)
     , _activeVehicle(NULL)
-    , _offlineWaypointManager(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
@@ -208,18 +207,6 @@ void MultiVehicleManager::setHomePositionForAllVehicles(double lat, double lon, 
     for (int i=0; i< _vehicles.count(); i++) {
         qobject_cast<Vehicle*>(_vehicles[i])->uas()->setHomePosition(lat, lon, alt);
     }
-}
-
-UASWaypointManager* MultiVehicleManager::activeWaypointManager(void)
-{
-    if (_activeVehicle) {
-        return _activeVehicle->uas()->getWaypointManager();
-    }
-    
-    if (!_offlineWaypointManager) {
-        _offlineWaypointManager = new UASWaypointManager(NULL, NULL);
-    }
-    return _offlineWaypointManager;
 }
 
 void MultiVehicleManager::saveSetting(const QString &name, const QString& value)

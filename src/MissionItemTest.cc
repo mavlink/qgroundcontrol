@@ -22,6 +22,7 @@
  ======================================================================*/
 
 #include "MissionItemTest.h"
+#include "MissionItem.h"
 
 UT_REGISTER_TEST(MissionItemTest)
 

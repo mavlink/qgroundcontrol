@@ -557,21 +557,3 @@ QGCUnconnectedInfoWidget QPushButton#connectButton {
     margin: 15px;
     padding: 20px;
 }
-
-WaypointEditableView, WaypointViewOnlyView {
-    border: 1px solid #777;
-    border-radius: 5px;
-    margin-bottom: 3px;
-}
-
-WaypointEditableView[RowColoring="odd"], WaypointViewOnlyView[RowColoring="odd"] {
-    background-color: #333;
-}
-
-WaypointEditableView[RowColoring="even"], WaypointViewOnlyView[RowColoring="even"] {
-    background-color: #555;
-}
-
-WaypointEditableView QCheckBox, WaypointEditableView .QWidget, WaypointViewOnlyView QCheckBox, WaypointViewOnlyView .QWidget {
-    background: none;
-}

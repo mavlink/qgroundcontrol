@@ -28,6 +28,8 @@
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
 
+#include <QGeoCoordinate>
+
 /// @file
 ///     @brief FlightGear HIL Simulation unit tests
 ///

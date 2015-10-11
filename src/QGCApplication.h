@@ -106,9 +106,6 @@ public:
 	/// @return true: Fake ui into showing mobile interface
 	bool fakeMobile(void) { return _fakeMobile; }
     
-    bool useNewMissionEditor(void) { return _useNewMissionEditor; }
-    void setUseNewMissionEditor(bool use);
-    
 #ifdef QT_DEBUG
     bool testHighDPI(void) { return _testHighDPI; }
 #endif

@@ -62,16 +62,6 @@ INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
 #
-# [REQUIRED] OPMapControl library from OpenPilot. Provides 2D mapping functionality.
-#
-include(libs/opmapcontrol/opmapcontrol_external.pri)
-
-INCLUDEPATH += \
-    libs/utils \
-    libs \
-    libs/opmapcontrol
-
-#
 # [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
 #
 include(libs/qwt.pri)

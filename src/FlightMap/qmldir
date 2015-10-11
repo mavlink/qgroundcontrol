@@ -13,11 +13,9 @@ QGCCompassHUD           1.0 QGCCompassHUD.qml
 QGCCompassWidget        1.0 QGCCompassWidget.qml
 QGCCurrentAltitude      1.0 QGCCurrentAltitude.qml
 QGCCurrentSpeed         1.0 QGCCurrentSpeed.qml
-QGCMapToolButton        1.0 QGCMapToolButton.qml
 QGCPitchIndicator       1.0 QGCPitchIndicator.qml
 QGCSlider               1.0 QGCSlider.qml
 QGCSpeedWidget          1.0 QGCSpeedWidget.qml
-QGCWaypointEditor       1.0 QGCWaypointEditor.qml
 
 # MapQuickItems
 VehicleMapItem          1.0 VehicleMapItem.qml
