@@ -124,7 +124,6 @@ public slots:
 
     void loadSetupView();
     void loadFlightView();
-    void loadSimulationView();
     void loadAnalyzeView();
     void loadPlanView();
     
@@ -193,7 +192,7 @@ protected:
         VIEW_ANALYZE,           // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
         VIEW_UNUSED3,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_FLIGHT,            // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
-        VIEW_SIMULATION,        // HIL Simulation view. Useful overview of the entire system when doing hardware-in-the-loop simulations.
+        VIEW_UNUSED4,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_SETUP,             // Setup view. Used for initializing the system for operation.
         VIEW_UNUSED1,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_UNUSED2,           // Unused (don't remove, or it will screw up saved settigns indices)
@@ -261,7 +260,6 @@ private slots:
     
 private slots:
     void _vehicleAdded(Vehicle* vehicle);
-    void _vehicleRemoved(Vehicle* vehicle);
 
 private:
     /// Constructor is private since all creation should be through MainWindow::_create
@@ -279,8 +277,6 @@ private:
     QPointer<QWidget> _missionEditorView;
 
     // Dock widget names
-    static const char* _uasControlDockWidgetName;
-    static const char* _uasListDockWidgetName;
     static const char* _mavlinkDockWidgetName;
     static const char* _customCommandWidgetName;
     static const char* _filesDockWidgetName;
@@ -288,9 +284,9 @@ private:
     static const char* _mapViewDockWidgetName;
     static const char* _pfdDockWidgetName;
     static const char* _uasInfoViewDockWidgetName;
+    static const char* _hilDockWidgetName;
 
     QMap<QString, QDockWidget*>     _mapName2DockWidget;
-    QMap<int, QDockWidget*>         _mapUasId2HilDockWidget;
     QMap<QDockWidget*, QAction*>    _mapDockWidget2Action;
 
     void _buildPlanView(void);
@@ -307,12 +303,8 @@ private:
     void _createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget);
     void _createInnerDockWidget(const QString& widgetName);
     void _buildCommonWidgets(void);
-    void _hideAllHilDockWidgets(void);
     void _hideAllDockWidgets(void);
     void _showDockWidget(const QString &name, bool show);
-#ifndef __mobile__
-    void _showHILConfigurationWidgets(void);
-#endif
 
     bool                    _autoReconnect;
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
