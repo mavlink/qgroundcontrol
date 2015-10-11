@@ -35,7 +35,8 @@ public:
     MissionEditor(QWidget* parent = NULL);
     ~MissionEditor();
 
-    Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItemsModel  NOTIFY missionItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems       NOTIFY missionItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  waypointLines   READ waypointLines      NOTIFY waypointLinesChanged)
     Q_PROPERTY(bool                 canEdit         READ canEdit            NOTIFY canEditChanged)
     
     Q_INVOKABLE int addMissionItem(QGeoCoordinate coordinate);
@@ -49,21 +50,26 @@ public:
 
     // Property accessors
     
-    QmlObjectListModel* missionItemsModel(void) { return _missionItems; }
+    QmlObjectListModel* missionItems(void) { return _missionItems; }
+    QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
     bool canEdit(void) { return _canEdit; }
     
 signals:
     void missionItemsChanged(void);
     void canEditChanged(bool canEdit);
+    void waypointLinesChanged(void);
     
 private slots:
     void _newMissionItemsAvailable();
+    void _missionListDirtyChanged(bool dirty);
     
 private:
     void _reSequence(void);
-    
+    void _rebuildWaypointLines(void);
+   
 private:
     QmlObjectListModel* _missionItems;
+    QmlObjectListModel  _waypointLines;
     bool                _canEdit;           ///< true: UI can edit these items, false: can't edit, can only send to vehicle or save
     
     static const char* _settingsGroup;
