@@ -383,6 +383,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                     label:          "H"
                     isCurrentItem:  _showHomePositionManager
                     coordinate:     _homePositionCoordinate
+                    z:              2
 
                     onClicked: _showHomePositionManager = true
                 }
@@ -396,13 +397,59 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             label:          object.sequenceNumber
                             isCurrentItem:  !_showHomePositionManager && object.isCurrentItem
                             coordinate:     object.coordinate
+                            z:              2
 
                             onClicked: {
                                 _showHomePositionManager = false
                                 setCurrentItem(object.sequenceNumber)
                             }
+                        }
+                }
 
-                            Component.onCompleted: console.log("Indicator", object.coordinate)
+                MapPolyline {
+                    id:         homePositionLine
+                    line.width: 3
+                    line.color: "orange"
+                    z:          1
+
+                    property var homePositionCoordinate: _homePositionCoordinate
+
+                    function update() {
+                        while (homePositionLine.path.length != 0) {
+                            homePositionLine.removeCoordinate(homePositionLine.path[0])
+                        }
+                        if (_missionItems && _missionItems.count != 0) {
+                            homePositionLine.addCoordinate(homePositionCoordinate)
+                            homePositionLine.addCoordinate(_missionItems.get(0).coordinate)
+                        }
+                    }
+
+                    onHomePositionCoordinateChanged: update()
+
+                    Connections {
+                        target: controller
+
+                        onWaypointLinesChanged: homePositionLine.update()
+                    }
+
+                    Component.onCompleted: homePositionLine.update()
+                }
+
+
+                // Add lines between waypoints
+                MapItemView {
+                    model: controller.waypointLines
+
+                    delegate:
+                        MapPolyline {
+                            line.width: 3
+                            line.color: "orange"
+                            z:          1
+
+                            path: [
+                                { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },
+                                { latitude: object.coordinate2.latitude, longitude: object.coordinate2.longitude },
+                            ]
                         }
                 }
 
@@ -630,7 +677,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                                     text: "Add/Update"
 
                                     onClicked: {
-                                        _homePositionManager.updateHomePosition(nameField.text, QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text))
+                                        _homePositionCoordinate = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
+                                        _homePositionManager.updateHomePosition(nameField.text, _homePositionCoordinate)
                                         homePosCombo.currentIndex = homePosCombo.find(nameField.text)
                                     }
                                 }
