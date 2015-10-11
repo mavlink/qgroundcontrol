@@ -37,7 +37,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QProcessEnvironment>
 #include "QGCApplication.h"
 #include "MainWindow.h"
-#include "configuration.h"
 #ifdef QT_DEBUG
 #ifndef __mobile__
 #include "UnitTest.h"

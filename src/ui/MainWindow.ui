@@ -62,7 +62,6 @@
     <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionAdd_Link"/>
     <addaction name="actionSettings"/>
-    <addaction name="actionUseMissionEditor"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -249,17 +248,6 @@
    </property>
    <property name="text">
     <string>New Mission Editor</string>
-   </property>
-   <property name="toolTip">
-    <string>Mission Editor</string>
-   </property>
-  </action>
-  <action name="actionUseMissionEditor">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Use new mission editor (reboot required)</string>
    </property>
    <property name="toolTip">
     <string>Mission Editor</string>

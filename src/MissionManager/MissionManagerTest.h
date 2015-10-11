@@ -29,6 +29,8 @@
 #include "MissionManager.h"
 #include "MultiSignalSpy.h"
 
+#include <QGeoCoordinate>
+
 class MissionManagerTest : public UnitTest
 {
     Q_OBJECT

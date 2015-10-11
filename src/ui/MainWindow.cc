@@ -40,19 +40,18 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include <QQuickView>
 #include <QDesktopWidget>
+#include <QScreen>
+#include <QDesktopServices>
 
 #include "QGC.h"
 #ifndef __ios__
 #include "SerialLink.h"
 #endif
 #include "MAVLinkProtocol.h"
-#include "QGCWaypointListMulti.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "SettingsDialog.h"
-#include "QGCMapTool.h"
-#include "QGCMapDisplay.h"
 #include "MAVLinkDecoder.h"
 #include "QGCMAVLinkMessageSender.h"
 #include "UASQuickView.h"
@@ -86,7 +85,6 @@ This file is part of the QGROUNDCONTROL project
 /// The key under which the Main Window settings are saved
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
-const char* MainWindow::_waypointsDockWidgetName = "WAYPOINT_LIST_DOCKWIDGET";
 const char* MainWindow::_mavlinkDockWidgetName = "MAVLINK_INSPECTOR_DOCKWIDGET";
 const char* MainWindow::_customCommandWidgetName = "CUSTOM_COMMAND_DOCKWIDGET";
 const char* MainWindow::_filesDockWidgetName = "FILE_VIEW_DOCKWIDGET";
@@ -386,7 +384,6 @@ void MainWindow::_buildCommonWidgets(void)
     };
 
     static const struct DockWidgetInfo rgDockWidgetInfo[] = {
-        { _waypointsDockWidgetName,         "Mission Plan",             Qt::BottomDockWidgetArea },
         { _mavlinkDockWidgetName,           "MAVLink Inspector",        Qt::RightDockWidgetArea },
         { _customCommandWidgetName,         "Custom Command",			Qt::RightDockWidgetArea },
         { _filesDockWidgetName,             "Onboard Files",            Qt::RightDockWidgetArea },
@@ -400,14 +397,6 @@ void MainWindow::_buildCommonWidgets(void)
     for (size_t i=0; i<cDockWidgetInfo; i++) {
         const struct DockWidgetInfo* pDockInfo = &rgDockWidgetInfo[i];
         _createDockWidget(pDockInfo->title, pDockInfo->name, pDockInfo->area, NULL /* no inner widget yet */);
-    }
-}
-
-void MainWindow::_buildPlanView(void)
-{
-    if (!_planView) {
-        _planView = new QGCMapTool(this);
-        _planView->setVisible(false);
     }
 }
 
@@ -446,7 +435,7 @@ void MainWindow::_buildAnalyzeView(void)
 void MainWindow::_buildSimView(void)
 {
     if (!_simView) {
-        _simView = new QGCMapTool(this);
+        _simView = new FlightDisplayView(this);
         _simView->setVisible(false);
     }
 }
@@ -483,9 +472,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
 
     QWidget* widget = NULL;
 
-    if (widgetName == _waypointsDockWidgetName) {
-        widget = new QGCWaypointListMulti(this);
-    } else if (widgetName == _mavlinkDockWidgetName) {
+    if (widgetName == _mavlinkDockWidgetName) {
         widget = new QGCMAVLinkInspector(MAVLinkProtocol::instance(),this);
     } else if (widgetName == _customCommandWidgetName) {
         widget = new CustomCommandWidget(this);
@@ -493,8 +480,6 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = new QGCUASFileViewMulti(this);
     } else if (widgetName == _uasStatusDetailsDockWidgetName) {
         widget = new UASInfoWidget(this);
-    } else if (widgetName == _mapViewDockWidgetName) {
-        widget = new QGCMapTool(this);
     } else if (widgetName == _pfdDockWidgetName) {
         widget = new FlightDisplayWidget(this);
     } else if (widgetName == _uasInfoViewDockWidgetName) {
@@ -686,7 +671,7 @@ void MainWindow::connectCommonActions()
         _ui.actionSimulationView->setChecked(true);
         _ui.actionSimulationView->activate(QAction::Trigger);
     }
-    if (_currentView == VIEW_PLAN || _currentView == VIEW_MISSIONEDITOR)
+    if (_currentView == VIEW_MISSIONEDITOR)
     {
         _ui.actionPlan->setChecked(true);
         _ui.actionPlan->activate(QAction::Trigger);
@@ -709,9 +694,6 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionSimulationView,   SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(_ui.actionAnalyze,          SIGNAL(triggered()), this, SLOT(loadAnalyzeView()));
     connect(_ui.actionPlan,             SIGNAL(triggered()), this, SLOT(loadPlanView()));
-    
-    _ui.actionUseMissionEditor->setChecked(qgcApp()->useNewMissionEditor());
-    connect(_ui.actionUseMissionEditor, &QAction::triggered, this, &MainWindow::_setUseMissionEditor);
     
     // Help Actions
     connect(_ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
@@ -858,12 +840,6 @@ void MainWindow::_loadCurrentViewState(void)
             defaultWidgets = "COMMUNICATION_CONSOLE_DOCKWIDGET,UAS_INFO_INFOVIEW_DOCKWIDGET";
             break;
 
-        case VIEW_PLAN:
-            _buildPlanView();
-            centerView = _planView;
-            defaultWidgets = "WAYPOINT_LIST_DOCKWIDGET";
-            break;
-
         case VIEW_MISSIONEDITOR:
             _buildMissionEditorView();
             centerView = _missionEditorView;
@@ -964,22 +940,12 @@ void MainWindow::loadAnalyzeView()
 
 void MainWindow::loadPlanView()
 {
-    if (qgcApp()->useNewMissionEditor()) {
-        if (_currentView != VIEW_MISSIONEDITOR)
-        {
-            _storeCurrentViewState();
-            _currentView = VIEW_MISSIONEDITOR;
-            _ui.actionPlan->setChecked(true);
-            _loadCurrentViewState();
-        }
-    } else {
-        if (_currentView != VIEW_PLAN)
-        {
-            _storeCurrentViewState();
-            _currentView = VIEW_PLAN;
-            _ui.actionPlan->setChecked(true);
-            _loadCurrentViewState();
-        }
+    if (_currentView != VIEW_MISSIONEDITOR)
+    {
+        _storeCurrentViewState();
+        _currentView = VIEW_MISSIONEDITOR;
+        _ui.actionPlan->setChecked(true);
+        _loadCurrentViewState();
     }
 }
 
@@ -1076,8 +1042,3 @@ void MainWindow::_showQmlTestWidget(void)
     new QmlTestWidget();
 }
 #endif
-
-void MainWindow::_setUseMissionEditor(bool checked)
-{
-    qgcApp()->setUseNewMissionEditor(checked);
-}

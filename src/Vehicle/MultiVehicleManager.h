@@ -30,7 +30,6 @@
 #include "QGCSingleton.h"
 #include "Vehicle.h"
 #include "QGCMAVLink.h"
-#include "UASWaypointManager.h"
 #include "QmlObjectListModel.h"
 
 class MultiVehicleManager : public QGCSingleton
@@ -63,8 +62,6 @@ public:
     void setHomePositionForAllVehicles(double lat, double lon, double alt);
     
     UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
-    
-    UASWaypointManager* activeWaypointManager(void);
     
     QList<Vehicle*> vehicles(void);
 
@@ -111,8 +108,6 @@ private:
     QList<int>  _ignoreVehicleIds;          ///< List of vehicle id for which we ignore further communication
     
     QmlObjectListModel  _vehicles;
-    
-    UASWaypointManager* _offlineWaypointManager;
 };
 
 #endif

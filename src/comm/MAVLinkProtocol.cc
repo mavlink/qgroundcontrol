@@ -22,7 +22,6 @@
 #include "UASInterface.h"
 #include "UASInterface.h"
 #include "UAS.h"
-#include "configuration.h"
 #include "LinkManager.h"
 #include "QGCMAVLink.h"
 #include "QGC.h"

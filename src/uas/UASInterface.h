@@ -40,7 +40,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
-#include "UASWaypointManager.h"
 
 class FileManager;
 
@@ -91,9 +90,6 @@ public:
 
     /** @brief Set the airframe of this MAV */
     virtual int getAirframe() const = 0;
-
-    /** @brief Get reference to the waypoint manager **/
-    virtual UASWaypointManager* getWaypointManager(void) = 0;
 
     virtual FileManager* getFileManager() = 0;
 

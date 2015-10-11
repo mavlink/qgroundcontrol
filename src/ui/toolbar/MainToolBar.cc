@@ -142,7 +142,7 @@ void MainToolBar::onSetupView()
 
 void MainToolBar::onPlanView()
 {
-    setCurrentView(MainWindow::VIEW_PLAN);
+    setCurrentView(MainWindow::VIEW_MISSIONEDITOR);
     MainWindow::instance()->loadPlanView();
 }
 
@@ -250,10 +250,10 @@ void MainToolBar::setCurrentView(int currentView)
         case MainWindow::VIEW_ANALYZE:
             view = ViewAnalyze;
             break;
-        case MainWindow::VIEW_PLAN:
+        case MainWindow::VIEW_MISSIONEDITOR:
             view = ViewPlan;
             break;
-           case MainWindow::VIEW_FLIGHT:
+        case MainWindow::VIEW_FLIGHT:
             view = ViewFly;
             break;
         case MainWindow::VIEW_SETUP:

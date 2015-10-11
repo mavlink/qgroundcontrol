@@ -42,12 +42,10 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkInterface.h"
 #include "UASInterface.h"
 #include "UASInfoWidget.h"
-#include "WaypointList.h"
 #include "CameraView.h"
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
-#include "opmapcontrol.h"
 #include "MainToolBar.h"
 #include "LogCompressor.h"
 
@@ -58,7 +56,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCUASFileViewMulti.h"
 #include "Vehicle.h"
 
-class QGCMapTool;
 class QGCMAVLinkMessageSender;
 class QGCFirmwareUpdate;
 class QSplashScreen;
@@ -170,8 +167,6 @@ protected slots:
      * @brief Enable/Disable Status Bar
      */
     void showStatusBarCallback(bool checked);
-    
-    void _setUseMissionEditor(bool checked);
 
 signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
@@ -196,10 +191,10 @@ protected:
     typedef enum _VIEW_SECTIONS
     {
         VIEW_ANALYZE,           // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
-        VIEW_PLAN,              // Old mission editor
+        VIEW_UNUSED3,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_FLIGHT,            // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
         VIEW_SIMULATION,        // HIL Simulation view. Useful overview of the entire system when doing hardware-in-the-loop simulations.
-        VIEW_SETUP,             // Setup view. Used for initializing the system for operation. Includes UI for calibration, firmware updating/checking, and parameter modifcation.
+        VIEW_SETUP,             // Setup view. Used for initializing the system for operation.
         VIEW_UNUSED1,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_UNUSED2,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_MISSIONEDITOR,     // New mission editor
@@ -286,7 +281,6 @@ private:
     // Dock widget names
     static const char* _uasControlDockWidgetName;
     static const char* _uasListDockWidgetName;
-    static const char* _waypointsDockWidgetName;
     static const char* _mavlinkDockWidgetName;
     static const char* _customCommandWidgetName;
     static const char* _filesDockWidgetName;

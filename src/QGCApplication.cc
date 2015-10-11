@@ -42,7 +42,6 @@
 
 #include "VideoStreaming.h"
 
-#include "configuration.h"
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "MainWindow.h"
@@ -828,12 +827,4 @@ void QGCApplication::showToolBarMessage(const QString& message)
     } else {
         QGCMessageBox::information("", message);
     }
-}
-
-void QGCApplication::setUseNewMissionEditor(bool use)
-{
-    // Temp hack for new mission editor
-    QSettings settings;
-    
-    settings.setValue("UseNewMissionEditor", use);
 }
