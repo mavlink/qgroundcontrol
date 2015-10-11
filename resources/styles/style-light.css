@@ -370,19 +370,3 @@ UASView {
 UASView QLabel#heartBeatLabel, UASView QLabel#typeLabel {
     border-color: #333;
 }
-
-WaypointEditableView, WaypointViewOnlyView {
-    border-color: #333;
-}
-
-WaypointEditableView[RowColoring="odd"], WaypointViewOnlyView[RowColoring="odd"] {
-    background-color: #999;
-}
-
-WaypointEditableView[RowColoring="even"], WaypointViewOnlyView[RowColoring="even"] {
-    background-color: #CCC;
-}
-
-WaypointEditableView QCheckBox, WaypointEditableView .QWidget, WaypointViewOnlyView QCheckBox, WaypointViewOnlyView .QWidget {
-    background: none;
-}

@@ -26,6 +26,7 @@
 
 #include <QObject>
 #include <QDir>
+#include <QTimer>
 
 #include "UASInterface.h"
 #include "QGCLoggingCategory.h"

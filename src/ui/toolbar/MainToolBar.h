@@ -52,7 +52,7 @@ public:
     typedef enum {
         ViewNone    = -1,
         ViewAnalyze, // MainWindow::VIEW_ENGINEER
-        ViewPlan   , // MainWindow::VIEW_MISSION
+        ViewPlan   , // MainWindow::VIEW_MISSION_EDITOR
         ViewFly    , // MainWindow::VIEW_FLIGHT
         ViewSetup  , // MainWindow::VIEW_SETUP
     } ViewType_t;

@@ -41,7 +41,6 @@ class UAS;
 class UASInterface;
 class FirmwarePlugin;
 class AutoPilotPlugin;
-class UASWaypointManager;
 class MissionManager;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
@@ -329,7 +328,6 @@ private slots:
     void _setSatelliteCount                 (double val, QString name);
     void _setSatLoc                         (UASInterface* uas, int fix);
     void _updateWaypointViewOnly            (int uas, MissionItem* wp);
-    void _waypointViewOnlyListChanged       ();
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -408,7 +406,6 @@ private:
     quint16         _currentWaypoint;
     int             _satelliteCount;
     int             _satelliteLock;
-    UASWaypointManager* _wpm;
     int             _updateCount;
     
     MissionManager*     _missionManager;
