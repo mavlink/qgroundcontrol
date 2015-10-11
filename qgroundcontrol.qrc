@@ -138,7 +138,6 @@
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
         <file alias="FlightDisplayWidget.qml">src/FlightDisplay/FlightDisplayWidget.qml</file>
-        <file alias="MapDisplay.qml">src/ui/mapdisplay/MapDisplay.qml</file>
         <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
 
         <!-- FlightMap module -->
@@ -155,11 +154,9 @@
         <file alias="QGroundControl/FlightMap/QGCCompassHUD.qml">src/FlightMap/Widgets/QGCCompassHUD.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCurrentAltitude.qml">src/FlightMap/Widgets/QGCCurrentAltitude.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCurrentSpeed.qml">src/FlightMap/Widgets/QGCCurrentSpeed.qml</file>
-        <file alias="QGroundControl/FlightMap/QGCMapToolButton.qml">src/FlightMap/Widgets/QGCMapToolButton.qml</file>
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/QGCSlider.qml">src/FlightMap/Widgets/QGCSlider.qml</file>
         <file alias="QGroundControl/FlightMap/QGCSpeedWidget.qml">src/FlightMap/Widgets/QGCSpeedWidget.qml</file>
-        <file alias="QGroundControl/FlightMap/QGCWaypointEditor.qml">src/FlightMap/Widgets/QGCWaypointEditor.qml</file>
 
         <!-- FlightMap MapQuickItems -->
         <file alias="QGroundControl/FlightMap/MissionItemIndicator.qml">src/FlightMap/MapItems/MissionItemIndicator.qml</file>

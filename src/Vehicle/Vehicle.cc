@@ -85,7 +85,6 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     , _currentWaypoint(0)
     , _satelliteCount(-1)
     , _satelliteLock(0)
-    , _wpm(NULL)
     , _updateCount(0)
     , _missionManager(NULL)
     , _armed(false)
@@ -142,14 +141,6 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     connect(_mav, &UASInterface::nameChanged,                       this, &Vehicle::_updateName);
     connect(_mav, &UASInterface::systemTypeSet,                     this, &Vehicle::_setSystemType);
     connect(_mav, &UASInterface::localizationChanged,               this, &Vehicle::_setSatLoc);
-    _wpm = _mav->getWaypointManager();
-    if (_wpm) {
-        connect(_wpm, &UASWaypointManager::currentWaypointChanged,   this, &Vehicle::_updateCurrentWaypoint);
-        connect(_wpm, &UASWaypointManager::waypointDistanceChanged,  this, &Vehicle::_updateWaypointDistance);
-        connect(_wpm, SIGNAL(waypointViewOnlyListChanged(void)),     this, SLOT(_waypointViewOnlyListChanged(void)));
-        connect(_wpm, SIGNAL(waypointViewOnlyChanged(int,MissionItem*)),this, SLOT(_updateWaypointViewOnly(int,MissionItem*)));
-        _wpm->readWaypoints(true);
-    }
     UAS* pUas = dynamic_cast<UAS*>(_mav);
     if(pUas) {
         _setSatelliteCount(pUas->getSatelliteCount(), QString(""));
@@ -157,14 +148,10 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     }
     _setSystemType(_mav, _mav->getSystemType());
     
-    _waypointViewOnlyListChanged();
-    
     _loadSettings();
     
-    if (qgcApp()->useNewMissionEditor()) {
         _missionManager = new MissionManager(this);
         connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
-    }
     
     _firmwarePlugin->initializeVehicle(this);
     
@@ -196,12 +183,6 @@ Vehicle::~Vehicle()
     disconnect(_mav, &UASInterface::nameChanged,                     this, &Vehicle::_updateName);
     disconnect(_mav, &UASInterface::systemTypeSet,                   this, &Vehicle::_setSystemType);
     disconnect(_mav, &UASInterface::localizationChanged,             this, &Vehicle::_setSatLoc);
-    if (_wpm) {
-        disconnect(_wpm, &UASWaypointManager::currentWaypointChanged,    this, &Vehicle::_updateCurrentWaypoint);
-        disconnect(_wpm, &UASWaypointManager::waypointDistanceChanged,   this, &Vehicle::_updateWaypointDistance);
-        disconnect(_wpm, SIGNAL(waypointViewOnlyListChanged(void)),      this, SLOT(_waypointViewOnlyListChanged(void)));
-        disconnect(_wpm, SIGNAL(waypointViewOnlyChanged(int,MissionItem*)), this, SLOT(_updateWaypointViewOnly(int,MissionItem*)));
-    }
     UAS* pUas = dynamic_cast<UAS*>(_mav);
     if(pUas) {
         disconnect(pUas, &UAS::satelliteCountChanged, this, &Vehicle::_setSatelliteCount);
@@ -778,21 +759,6 @@ void Vehicle::_updateWaypointViewOnly(int, MissionItem* /*wp*/)
      */
 }
 
-void Vehicle::_waypointViewOnlyListChanged()
-{
-    if(_wpm) {
-        const QList<MissionItem*>& newMisionItems = _wpm->getWaypointViewOnlyList();
-        _missionItems.clear();
-        qCDebug(VehicleLog) << QString("Loading %1 mission items").arg(newMisionItems.count());
-        for(int i = 0; i < newMisionItems.count(); i++) {
-            MissionItem* itemToCopy = newMisionItems[i];
-            MissionItem* item = new MissionItem(*itemToCopy);
-            item->setParent(this);
-            _missionItems.append(item);
-        }
-    }
-}
-
 void Vehicle::_handleTextMessage(int newCount)
 {
     // Reset?
@@ -987,11 +953,7 @@ void Vehicle::setActive(bool active)
 
 QmlObjectListModel* Vehicle::missionItemsModel(void)
 {
-    if (qgcApp()->useNewMissionEditor()) {
-        return missionManager()->missionItems();
-    } else {
-        return &_missionItems;
-    }
+    return missionManager()->missionItems();
 }
 
 bool Vehicle::homePositionAvailable(void)

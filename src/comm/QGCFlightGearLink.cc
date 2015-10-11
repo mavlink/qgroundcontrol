@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutexLocker>
 #include <QHostInfo>
 #include <QMessageBox>
+#include <QClipboard>
 
 #include <iostream>
 #include <Eigen/Eigen>

@@ -371,7 +371,6 @@ public:
     bool isRotaryWing();
     bool isFixedWing();
 
-    friend class UASWaypointManager;
     friend class FileManager;
 
 protected: //COMMENTS FOR TEST UNIT
@@ -508,11 +507,6 @@ public:
     float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
-
-    /** @brief Get reference to the waypoint manager **/
-    UASWaypointManager* getWaypointManager() {
-        return _waypointManager;
-    }
 
     virtual FileManager* getFileManager() {
         return &fileManager;
@@ -701,7 +695,6 @@ private:
     void _say(const QString& text, int severity = 6);
     
 private:
-    UASWaypointManager* _waypointManager;
     Vehicle*            _vehicle;
 };
 
