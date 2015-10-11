@@ -23,13 +23,15 @@
 
 #include "QGCFileDialog.h"
 #include "QGCApplication.h"
-#include <QRegularExpression>
 #include "MainWindow.h"
 #ifdef QT_DEBUG
 #ifndef __mobile__
 #include "UnitTest.h"
 #endif
 #endif
+
+#include <QRegularExpression>
+#include <QMessageBox>
 
 QString QGCFileDialog::getExistingDirectory(
     QWidget* parent,
