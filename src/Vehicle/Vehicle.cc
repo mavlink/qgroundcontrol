@@ -77,7 +77,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     , _latitude(DEFAULT_LAT)
     , _longitude(DEFAULT_LON)
     , _refreshTimer(new QTimer(this))
-    , _batteryVoltage(0.0)
+    , _batteryVoltage(-1.0f)
     , _batteryPercent(0.0)
     , _batteryConsumed(-1.0)
     , _currentHeartbeatTimeout(0)
