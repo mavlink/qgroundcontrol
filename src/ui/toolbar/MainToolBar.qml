@@ -479,7 +479,7 @@ Rectangle {
 
                 QGCLabel {
                     visible: batteryStatus.visible && activeVehicle.batteryConsumed < 0.0
-                    text: activeVehicle.batteryVoltage.toFixed(1) + 'V';
+                    text: (activeVehicle.batteryVoltage > 0) ? activeVehicle.batteryVoltage.toFixed(1) + 'V' : '---';
                     font.pixelSize: ScreenTools.smallFontPixelSize
                     font.weight: Font.DemiBold
                     anchors.right: parent.right
