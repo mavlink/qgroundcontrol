@@ -68,7 +68,6 @@ public:
     Q_PROPERTY(bool                 isCurrentItem       READ isCurrentItem          WRITE setIsCurrentItem  NOTIFY isCurrentItemChanged)
     Q_PROPERTY(bool                 specifiesCoordinate READ specifiesCoordinate                            NOTIFY commandChanged)
     Q_PROPERTY(QGeoCoordinate       coordinate          READ coordinate             WRITE setCoordinate     NOTIFY coordinateChanged)
-    Q_PROPERTY(double               yaw                 READ yawDegrees             WRITE setYawDegrees     NOTIFY yawChanged)
     Q_PROPERTY(QStringList          commandNames        READ commandNames                                   CONSTANT)
     Q_PROPERTY(QString              commandName         READ commandName                                    NOTIFY commandChanged)
     Q_PROPERTY(QStringList          valueLabels         READ valueLabels                                    NOTIFY commandChanged)
@@ -189,7 +188,6 @@ signals:
     void sequenceNumberChanged(int sequenceNumber);
     void isCurrentItemChanged(bool isCurrentItem);
     void coordinateChanged(const QGeoCoordinate& coordinate);
-    void yawChanged(double yaw);
     void dirtyChanged(bool dirty);
 
     /** @brief Announces a change to the waypoint data */
@@ -229,6 +227,7 @@ public:
     
 private slots:
     void _factValueChanged(QVariant value);
+    void _coordinateFactChanged(QVariant value);
 
 private:
     QString _oneDecimalString(double value);
