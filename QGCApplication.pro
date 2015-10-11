@@ -260,9 +260,11 @@ HEADERS += \
     src/QGCQuickWidget.h \
     src/QGCSingleton.h \
     src/QGCTemporaryFile.h \
+    src/QmlControls/CoordinateVector.h \
     src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/ScreenToolsController.h \
+    src/QmlControls/QGCQGeoCoordinate.h \
     src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
     src/SerialPortIds.h \
@@ -390,8 +392,10 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCSingleton.cc \
     src/QGCTemporaryFile.cc \
+    src/QmlControls/CoordinateVector.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
+    src/QmlControls/QGCQGeoCoordinate.cc \
     src/QmlControls/QGroundControlQmlGlobal.cc \
     src/QmlControls/QmlObjectListModel.cc \
     src/uas/FileManager.cc \
