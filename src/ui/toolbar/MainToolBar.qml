@@ -495,7 +495,7 @@ Rectangle {
                     anchors.rightMargin:    getProportionalDimmension(6)
                     visible: batteryStatus.visible && activeVehicle.batteryConsumed >= 0.0
                     QGCLabel {
-                        text: activeVehicle.batteryVoltage.toFixed(1) + 'V';
+                        text: (activeVehicle.batteryVoltage > 0) ? activeVehicle.batteryVoltage.toFixed(1) + 'V' : '---';
                         width: getProportionalDimmension(30)
                         horizontalAlignment: Text.AlignRight
                         font.pixelSize: ScreenTools.smallFontPixelSize
@@ -503,7 +503,7 @@ Rectangle {
                         color: colorWhite
                     }
                     QGCLabel {
-                        text: activeVehicle.batteryConsumed.toFixed(0) + 'mAh';
+                        text: (activeVehicle.batteryConsumed > 0) ? activeVehicle.batteryConsumed.toFixed(0) + 'mAh' : '---';
                         width: getProportionalDimmension(30)
                         horizontalAlignment: Text.AlignRight
                         font.pixelSize: ScreenTools.smallFontPixelSize
