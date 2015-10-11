@@ -262,7 +262,6 @@ HEADERS += \
     src/ui/linechart/ScrollZoomer.h \
     src/ui/LogReplayLinkConfigurationWidget.h \
     src/ui/MainWindow.h \
-    src/ui/map/MAV2DIcon.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
