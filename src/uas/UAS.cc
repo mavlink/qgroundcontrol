@@ -495,36 +495,39 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit loadChanged(this,state.load/10.0f);
             emit valueChanged(uasId, name.arg("load"), "%", state.load/10.0f, time);
 
-            // Battery charge/time remaining/voltage calculations
-            currentVoltage = state.voltage_battery/1000.0f;
-            lpVoltage = filterVoltage(currentVoltage);
-            tickLowpassVoltage = tickLowpassVoltage*0.8f + 0.2f*currentVoltage;
+            if (state.voltage_battery != UINT16_MAX) {
+                // Battery charge/time remaining/voltage calculations
+                currentVoltage = state.voltage_battery/1000.0f;
+                lpVoltage = filterVoltage(currentVoltage);
+                tickLowpassVoltage = tickLowpassVoltage*0.8f + 0.2f*currentVoltage;
 
-            // We don't want to tick above the threshold
-            if (tickLowpassVoltage > tickVoltage)
-            {
-                lastTickVoltageValue = tickLowpassVoltage;
+                // We don't want to tick above the threshold
+                if (tickLowpassVoltage > tickVoltage)
+                {
+                    lastTickVoltageValue = tickLowpassVoltage;
+                }
+
+                if ((startVoltage > 0.0f) && (tickLowpassVoltage < tickVoltage) && (fabs(lastTickVoltageValue - tickLowpassVoltage) > 0.1f)
+                        /* warn if lower than treshold */
+                        && (lpVoltage < tickVoltage)
+                        /* warn only if we have at least the voltage of an empty LiPo cell, else we're sampling something wrong */
+                        && (currentVoltage > 3.3f)
+                        /* warn only if current voltage is really still lower by a reasonable amount */
+                        && ((currentVoltage - 0.2f) < tickVoltage)
+                        /* warn only every 12 seconds */
+                        && (QGC::groundTimeUsecs() - lastVoltageWarning) > 12000000)
+                {
+                    _say(QString("Voltage warning for system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
+                    lastVoltageWarning = QGC::groundTimeUsecs();
+                    lastTickVoltageValue = tickLowpassVoltage;
+                }
+
+                if (startVoltage == -1.0f && currentVoltage > 0.1f) startVoltage = currentVoltage;
+                chargeLevel = state.battery_remaining;
+
+                emit batteryChanged(this, lpVoltage, currentCurrent, getChargeLevel(), 0);
             }
 
-            if ((startVoltage > 0.0f) && (tickLowpassVoltage < tickVoltage) && (fabs(lastTickVoltageValue - tickLowpassVoltage) > 0.1f)
-                    /* warn if lower than treshold */
-                    && (lpVoltage < tickVoltage)
-                    /* warn only if we have at least the voltage of an empty LiPo cell, else we're sampling something wrong */
-                    && (currentVoltage > 3.3f)
-                    /* warn only if current voltage is really still lower by a reasonable amount */
-                    && ((currentVoltage - 0.2f) < tickVoltage)
-                    /* warn only every 12 seconds */
-                    && (QGC::groundTimeUsecs() - lastVoltageWarning) > 12000000)
-            {
-                _say(QString("Voltage warning for system %1: %2 volts").arg(getUASID()).arg(lpVoltage, 0, 'f', 1, QChar(' ')));
-                lastVoltageWarning = QGC::groundTimeUsecs();
-                lastTickVoltageValue = tickLowpassVoltage;
-            }
-
-            if (startVoltage == -1.0f && currentVoltage > 0.1f) startVoltage = currentVoltage;
-            chargeLevel = state.battery_remaining;
-
-            emit batteryChanged(this, lpVoltage, currentCurrent, getChargeLevel(), 0);
             emit valueChanged(uasId, name.arg("battery_remaining"), "%", getChargeLevel(), time);
             emit valueChanged(uasId, name.arg("battery_voltage"), "V", currentVoltage, time);
 
