@@ -85,7 +85,7 @@ public:
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
     /** @brief Add one measurement and get low-passed voltage */
-    float filterVoltage(float value) const;
+    float filterVoltage(float value);
 
     Q_PROPERTY(double localX READ getLocalX WRITE setLocalX NOTIFY localXChanged)
     Q_PROPERTY(double localY READ getLocalY WRITE setLocalY NOTIFY localYChanged)
