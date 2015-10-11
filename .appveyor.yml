@@ -18,7 +18,7 @@ build_script:
   - jom
 
 test_script:
-  - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
+  - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest:MavlinkLogTest )
 
 after_build:
   - if "%CONFIG%" EQU "installer" ( appveyor PushArtifact C:\projects\qgroundcontrol\release\qgroundcontrol-installer-win32.exe )
