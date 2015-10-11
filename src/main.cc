@@ -46,6 +46,7 @@ This file is part of the QGROUNDCONTROL project
 #include <crtdbg.h>
 #endif
 #endif
+#include <iostream>
 
 /* SDL does ugly things to main() */
 #ifdef main
