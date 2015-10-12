@@ -104,253 +104,260 @@ QGCView {
         id:             panel
         anchors.fill:   parent
 
+        Flickable {
+            anchors.fill:       parent
+            flickableDirection: Flickable.VerticalFlick
+            contentHeight:      innerColumn.height
 
-        Column {
-            anchors.fill:   parent
-            spacing:        ScreenTools.defaultFontPixelHeight
+            Column {
+                id:             innerColumn
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        ScreenTools.defaultFontPixelHeight
 
-            QGCLabel {
-                text: "POWER CONFIG"
-                font.pixelSize: ScreenTools.largeFontPixelSize
-            }
+                QGCLabel {
+                    text: "POWER CONFIG"
+                    font.pixelSize: ScreenTools.largeFontPixelSize
+                }
 
-            QGCLabel {
-                text: "Battery"
-                font.pixelSize: ScreenTools.mediumFontPixelSize
-            }
+                QGCLabel {
+                    text: "Battery"
+                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                }
 
-            Rectangle {
-                width:  parent.width
-                height: voltageCol.height + ScreenTools.defaultFontPixelHeight
-                color:  palette.windowShade
+                Rectangle {
+                    width:  parent.width
+                    height: voltageCol.height + ScreenTools.defaultFontPixelHeight
+                    color:  palette.windowShade
 
-                Column {
-                    id:                 voltageCol
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-                    anchors.left:       parent.left
-                    anchors.top:        parent.top
-                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+                    Column {
+                        id:                 voltageCol
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                        anchors.left:       parent.left
+                        anchors.top:        parent.top
+                        spacing:            ScreenTools.defaultFontPixelHeight / 2
 
-                    property real firstColumnWidth: Math.max(Math.max(cellsLabel.contentWidth, battHighLabel.contentWidth), battLowLabel.contentWidth) + ScreenTools.defaultFontPixelWidth
+                        property real firstColumnWidth: Math.max(Math.max(cellsLabel.contentWidth, battHighLabel.contentWidth), battLowLabel.contentWidth) + ScreenTools.defaultFontPixelWidth
 
-                    Row {
-                        spacing: ScreenTools.defaultFontPixelWidth
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
 
-                        QGCLabel {
-                            id:                 cellsLabel
-                            text:               "Number of Cells (in Series)"
-                            anchors.baseline:   cellsField.baseline
-                        }
-
-                        FactTextField {
-                            id:         cellsField
-                            x:          voltageCol.firstColumnWidth
-                            width:      textEditWidth
-                            fact:       battNumCells
-                            showUnits: true
-                        }
-                    }
-
-                    Row {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        QGCLabel {
-                            id:                 battHighLabel
-                            text:               "Full Voltage (per cell)"
-                            anchors.baseline:   battHighField.baseline
+                            QGCLabel {
+                                id:                 cellsLabel
+                                text:               "Number of Cells (in Series)"
+                                anchors.baseline:   cellsField.baseline
                             }
 
-                        FactTextField {
-                            id:         battHighField
-                            x:          voltageCol.firstColumnWidth
-                            width:      textEditWidth
-                            fact:       battHighVolt
-                            showUnits:  true
+                            FactTextField {
+                                id:         cellsField
+                                x:          voltageCol.firstColumnWidth
+                                width:      textEditWidth
+                                fact:       battNumCells
+                                showUnits: true
+                            }
                         }
+
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            QGCLabel {
+                                id:                 battHighLabel
+                                text:               "Full Voltage (per cell)"
+                                anchors.baseline:   battHighField.baseline
+                                }
+
+                            FactTextField {
+                                id:         battHighField
+                                x:          voltageCol.firstColumnWidth
+                                width:      textEditWidth
+                                fact:       battHighVolt
+                                showUnits:  true
+                            }
+                        }
+
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            QGCLabel {
+                                id:                 battLowLabel
+                                text:               "Empty Voltage (per cell)"
+                                anchors.baseline:   battLowField.baseline
+                            }
+
+                            FactTextField {
+                                id:         battLowField
+                                x:          voltageCol.firstColumnWidth
+                                width:      textEditWidth
+                                fact:       battLowVolt
+                                showUnits:  true
+                            }
+                        }
+                    } // Column
+
+                    QGCColoredImage {
+                        id:                     batteryImage
+                        anchors.verticalCenter: voltageCol.verticalCenter
+                        x:                      voltageCol.firstColumnWidth + textEditWidth + (ScreenTools.defaultFontPixelWidth * 3)
+                        width:                  height * 0.75
+                        height:                 voltageCol.height
+                        fillMode:               Image.PreserveAspectFit
+                        smooth:                 true
+                        color:                  palette.button
+                        cache:                  false
+                        source:                 getBatteryImage();
                     }
 
-                    Row {
-                        spacing: ScreenTools.defaultFontPixelWidth
+                    Column {
+                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
+                        anchors.left:           batteryImage.right
+                        anchors.verticalCenter: voltageCol.verticalCenter
+                        spacing:                ScreenTools.defaultFontPixelHeight
 
                         QGCLabel {
-                            id:                 battLowLabel
-                            text:               "Empty Voltage (per cell)"
-                            anchors.baseline:   battLowField.baseline
-                        }
-
-                        FactTextField {
-                            id:         battLowField
-                            x:          voltageCol.firstColumnWidth
-                            width:      textEditWidth
-                            fact:       battLowVolt
-                            showUnits:  true
-                        }
-                    }
-                } // Column
-
-                QGCColoredImage {
-                    id:                     batteryImage
-                    anchors.verticalCenter: voltageCol.verticalCenter
-                    x:                      voltageCol.firstColumnWidth + textEditWidth + (ScreenTools.defaultFontPixelWidth * 3)
-                    width:                  height * 0.75
-                    height:                 voltageCol.height
-                    fillMode:               Image.PreserveAspectFit
-                    smooth:                 true
-                    color:                  palette.button
-                    cache:                  false
-                    source:                 getBatteryImage();
-                }
-
-                Column {
-                    anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
-                    anchors.left:           batteryImage.right
-                    anchors.verticalCenter: voltageCol.verticalCenter
-                    spacing:                ScreenTools.defaultFontPixelHeight
-
-                    QGCLabel {
-                        text: "Battery Max: " + (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
-                    }
-
-                    QGCLabel {
-                        text: "Battery Min: " + (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
-                    }
-                }
-            } // Rectangle - Battery settings
-
-            QGCLabel {
-                text:           "ESC Calibration"
-                font.pixelSize: ScreenTools.mediumFontPixelSize
-            }
-
-            Rectangle {
-                width:  parent.width
-                height: escCalColumn.height + ScreenTools.defaultFontPixelHeight
-                color:  palette.windowShade
-
-                Column {
-                    id :                escCalColumn
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-                    anchors.left:       parent.left
-                    anchors.top:        parent.top
-                    spacing:            ScreenTools.defaultFontPixelWidth
-
-                    QGCLabel {
-                        color:  palette.warningText
-                        text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</font>"
-                    }
-
-                    QGCLabel {
-                        text: "You must use USB connection for this operation."
-                    }
-
-                    QGCButton {
-                        text:       "Calibrate"
-                        onClicked:  controller.calibrateEsc()
-                    }
-                }
-            }
-
-            QGCLabel {
-                text:           "UAVCAN ESC Configuration"
-                font.pixelSize: ScreenTools.mediumFontPixelSize
-            }
-
-            Rectangle {
-                width:  parent.width
-                height: uavCanEscCalColumn.height + ScreenTools.defaultFontPixelHeight
-                color:  palette.windowShade
-
-                Column {
-                    id:                 uavCanEscCalColumn
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-                    anchors.left:       parent.left
-                    anchors.top:        parent.top
-                    spacing:            ScreenTools.defaultFontPixelWidth
-
-                    QGCLabel {
-                        color:  palette.warningText
-                        text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</font>"
-                    }
-
-                    QGCLabel {
-                        text: "You must use USB connection for this operation."
-                    }
-
-                    QGCButton {
-                        text:       "Start Configuration"
-                        onClicked:  controller.busConfigureActuators()
-                    }
-
-                    QGCButton {
-                        text:       "End Configuration"
-                        onClicked:  controller.StopBusConfigureActuators()
-                    }
-                }
-            }
-
-            QGCCheckBox {
-                id:     showAdvanced
-                text:   "Show Advanced Settings"
-            }
-
-            QGCLabel {
-                text:           "Advanced Power Settings"
-                font.pixelSize: ScreenTools.mediumFontPixelSize
-                visible:        showAdvanced.checked
-            }
-
-            Rectangle {
-                id:         batteryRectangle
-                width:      parent.width
-                height:     advBatteryColumn.height + ScreenTools.defaultFontPixelHeight
-                color:      palette.windowShade
-                visible:    showAdvanced.checked
-
-                Column {
-                    id: advBatteryColumn
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
-                    anchors.top:        parent.top
-                    spacing:            ScreenTools.defaultFontPixelWidth
-
-                    Row {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        QGCLabel {
-                            text:               "Voltage Drop on Full Load (per cell)"
-                            anchors.baseline:   battDropField.baseline
-                        }
-
-                        FactTextField {
-                            id:         battDropField
-                            width:      textEditWidth
-                            fact:       battVoltLoadDrop
-                            showUnits:  true
-                        }
-                    }
-
-                    QGCLabel {
-                        width:      parent.width
-                        wrapMode:   Text.WordWrap
-                        text:       "Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full " +
-                                        "throttle, divided by the number of battery cells. Leave at the default if unsure. " +
-                                        "<font color=\"yellow\">If this value is set too high, the battery might be deep discharged and damaged.</font>"
-                    }
-
-                    Row {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        QGCLabel {
-                            text: "Compensated Minimum Voltage:"
+                            text: "Battery Max: " + (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
                         }
 
                         QGCLabel {
-                            text: ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + ' V'
+                            text: "Battery Min: " + (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
+                        }
+                    }
+                } // Rectangle - Battery settings
+
+                QGCLabel {
+                    text:           "ESC Calibration"
+                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                }
+
+                Rectangle {
+                    width:  parent.width
+                    height: escCalColumn.height + ScreenTools.defaultFontPixelHeight
+                    color:  palette.windowShade
+
+                    Column {
+                        id :                escCalColumn
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                        anchors.left:       parent.left
+                        anchors.top:        parent.top
+                        spacing:            ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            color:  palette.warningText
+                            text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</font>"
+                        }
+
+                        QGCLabel {
+                            text: "You must use USB connection for this operation."
+                        }
+
+                        QGCButton {
+                            text:       "Calibrate"
+                            onClicked:  controller.calibrateEsc()
                         }
                     }
                 }
-            } // Rectangle - Advanced power settings
-        } // Column
+
+                QGCLabel {
+                    text:           "UAVCAN ESC Configuration"
+                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                }
+
+                Rectangle {
+                    width:  parent.width
+                    height: uavCanEscCalColumn.height + ScreenTools.defaultFontPixelHeight
+                    color:  palette.windowShade
+
+                    Column {
+                        id:                 uavCanEscCalColumn
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                        anchors.left:       parent.left
+                        anchors.top:        parent.top
+                        spacing:            ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            color:  palette.warningText
+                            text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</font>"
+                        }
+
+                        QGCLabel {
+                            text: "You must use USB connection for this operation."
+                        }
+
+                        QGCButton {
+                            text:       "Start Configuration"
+                            onClicked:  controller.busConfigureActuators()
+                        }
+
+                        QGCButton {
+                            text:       "End Configuration"
+                            onClicked:  controller.StopBusConfigureActuators()
+                        }
+                    }
+                }
+
+                QGCCheckBox {
+                    id:     showAdvanced
+                    text:   "Show Advanced Settings"
+                }
+
+                QGCLabel {
+                    text:           "Advanced Power Settings"
+                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                    visible:        showAdvanced.checked
+                }
+
+                Rectangle {
+                    id:         batteryRectangle
+                    width:      parent.width
+                    height:     advBatteryColumn.height + ScreenTools.defaultFontPixelHeight
+                    color:      palette.windowShade
+                    visible:    showAdvanced.checked
+
+                    Column {
+                        id: advBatteryColumn
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        anchors.top:        parent.top
+                        spacing:            ScreenTools.defaultFontPixelWidth
+
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            QGCLabel {
+                                text:               "Voltage Drop on Full Load (per cell)"
+                                anchors.baseline:   battDropField.baseline
+                            }
+
+                            FactTextField {
+                                id:         battDropField
+                                width:      textEditWidth
+                                fact:       battVoltLoadDrop
+                                showUnits:  true
+                            }
+                        }
+
+                        QGCLabel {
+                            width:      parent.width
+                            wrapMode:   Text.WordWrap
+                            text:       "Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full " +
+                                            "throttle, divided by the number of battery cells. Leave at the default if unsure. " +
+                                            "<font color=\"yellow\">If this value is set too high, the battery might be deep discharged and damaged.</font>"
+                        }
+
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            QGCLabel {
+                                text: "Compensated Minimum Voltage:"
+                            }
+
+                            QGCLabel {
+                                text: ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + ' V'
+                            }
+                        }
+                    }
+                } // Rectangle - Advanced power settings
+            } // Column
+        } // Flickable
     } // QGCViewPanel
 } // QGCView
