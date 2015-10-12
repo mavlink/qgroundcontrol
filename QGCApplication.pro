@@ -175,6 +175,7 @@ FORMS += \
     src/ui/QGCTCPLinkConfiguration.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/SettingsDialog.ui \
+    src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/uas/UASMessageView.ui \
 
 !iOSBuild {
@@ -182,7 +183,6 @@ FORMS += \
     src/ui/SerialSettings.ui \
 }
 
-!NoWidgets {
 !MobileBuild {
 FORMS += \
     src/ui/MultiVehicleDockWidget.ui \
@@ -194,12 +194,10 @@ FORMS += \
     src/ui/QGCTabbedInfoView.ui \
     src/ui/QGCUASFileView.ui \
     src/ui/QGCUASFileViewMulti.ui \
-    src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
     src/ui/UASInfo.ui \
     src/ui/UASRawStatusView.ui \
-}
 }
 
 HEADERS += \
@@ -274,6 +272,7 @@ HEADERS += \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/SettingsDialog.h \
     src/ui/toolbar/MainToolBar.h \
+    src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/uas/UASMessageView.h \
     src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
@@ -284,7 +283,6 @@ HEADERS += \
     src/ui/SerialConfigurationWindow.h \
 }
 
-!NoWidgets {
 !MobileBuild {
 HEADERS += \
     src/comm/QGCFlightGearLink.h \
@@ -303,7 +301,6 @@ HEADERS += \
     src/ui/QGCTabbedInfoView.h \
     src/ui/QGCUASFileView.h \
     src/ui/QGCUASFileViewMulti.h \
-    src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/uas/UASInfoWidget.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewGaugeItem.h \
@@ -315,7 +312,6 @@ HEADERS += \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
     src/ViewWidgets/ViewWidgetController.h \
-}
 }
 
 SOURCES += \
@@ -381,6 +377,7 @@ SOURCES += \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/SettingsDialog.cc \
     src/ui/toolbar/MainToolBar.cc \
+    src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/uas/UASMessageView.cc \
     src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc
@@ -391,7 +388,6 @@ SOURCES += \
     src/ui/SerialConfigurationWindow.cc \
 }
 
-!NoWidgets {
 !MobileBuild {
 SOURCES += \
     src/comm/QGCFlightGearLink.cc \
@@ -409,7 +405,6 @@ SOURCES += \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/QGCUASFileView.cc \
     src/ui/QGCUASFileViewMulti.cc \
-    src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/uas/UASInfoWidget.cc \
     src/ui/uas/UASQuickView.cc \
     src/ui/uas/UASQuickViewGaugeItem.cc \
@@ -421,7 +416,6 @@ SOURCES += \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \
     src/ViewWidgets/ViewWidgetController.cc \
-}
 }
 
 #
