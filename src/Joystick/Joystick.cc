@@ -283,11 +283,16 @@ void Joystick::run(void)
                     axis = _rgFunctionAxis[throttleFunction];
             float   throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
 
+            float roll_limited = std::max(static_cast<float>(-M_PI_4), std::min(roll, static_cast<float>(M_PI_4)));
+            float pitch_limited = std::max(static_cast<float>(-M_PI_4), std::min(pitch, static_cast<float>(M_PI_4)));
+            float yaw_limited = std::max(static_cast<float>(-M_PI_4), std::min(yaw, static_cast<float>(M_PI_4)));
+            float throttle_limited = std::max(static_cast<float>(-M_PI_4), std::min(throttle, static_cast<float>(M_PI_4)));
+
             // Map from unit circle to linear range and limit
-            roll =      std::max(-1.0f, std::min(tanf(asinf(roll)), 1.0f));
-            pitch =     std::max(-1.0f, std::min(tanf(asinf(pitch)), 1.0f));
-            yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw)), 1.0f));
-            throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle)), 1.0f));
+            roll =      std::max(-1.0f, std::min(tanf(asinf(roll_limited)), 1.0f));
+            pitch =     std::max(-1.0f, std::min(tanf(asinf(pitch_limited)), 1.0f));
+            yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw_limited)), 1.0f));
+            throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
             
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero) {
