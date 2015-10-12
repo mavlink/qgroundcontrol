@@ -14,6 +14,7 @@ QGCCanvas           1.0 QGCCanvas.qml
 SubMenuButton       1.0 SubMenuButton.qml
 IndicatorButton     1.0 IndicatorButton.qml
 DropButton          1.0 DropButton.qml
+RoundButton         1.0 RoundButton.qml
 VehicleRotationCal  1.0 VehicleRotationCal.qml
 VehicleSummaryRow   1.0 VehicleSummaryRow.qml
 ViewWidget          1.0 ViewWidget.qml
