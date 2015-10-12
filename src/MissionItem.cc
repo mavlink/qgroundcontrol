@@ -356,19 +356,13 @@ void MissionItem::setAction(int /*MAV_CMD*/ action)
             setParam1(15.0);
         }
         
-#if 0
-        // FIXME: Firmware currently doesn't support MAV_FRAME_MISSION
         if (specifiesCoordinate()) {
-#endif
             if (_frame != MAV_FRAME_GLOBAL && _frame != MAV_FRAME_GLOBAL_RELATIVE_ALT) {
                 setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
             }
-#if 0
-            // FIXME: Firmware currently doesn't support MAV_FRAME_MISSION
         } else {
             setFrame(MAV_FRAME_MISSION);
         }
-#endif
 
         emit changed(this);
         emit commandNameChanged(commandName());
