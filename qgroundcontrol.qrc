@@ -63,13 +63,16 @@
         <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>
         <file alias="airplaneOutline.svg">src/FlightMap/Images/airplaneOutline.svg</file>
         <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
-        <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
-        <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
 
         <!-- Map Buttons -->
-        <file alias="Sync.png">resources/Sync.png</file>
+        <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
+        <file alias="MapSync.svg">src/FlightMap/Images/MapSync.svg</file>
+        <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
+        <file alias="MapHome.svg">src/FlightMap/Images/MapHome.svg</file>
+        <file alias="MapAddMission.svg">src/FlightMap/Images/MapAddMission.svg</file>
+
     </qresource>
     <qresource prefix="/qml">
         <file alias="test.qml">src/test.qml</file>
