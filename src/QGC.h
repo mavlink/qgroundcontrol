@@ -125,6 +125,8 @@ public:
     }
 };
 
+quint32 crc32(const quint8 *src, unsigned len, unsigned state);
+
 }
 
 #define QGC_EVENTLOOP_DEBUG 0
