@@ -55,10 +55,12 @@ public:
     
     /// Returns true if the full set of facts are ready
     bool parametersAreReady(void) { return _parametersReady; }
-    
+
+public slots:
     /// Re-request the full set of parameters from the autopilot
     void refreshAllParameters(void);
-    
+
+public:
     /// Request a refresh on the specific parameter
     void refreshParameter(int componentId, const QString& name);
     
@@ -109,6 +111,7 @@ private slots:
     void _valueUpdated(const QVariant& value);
     void _restartWaitingParamTimer(void);
     void _waitingParamTimeout(void);
+    void _tryCacheLookup(void);
     
 private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
@@ -117,6 +120,9 @@ private:
     void _setupGroupMap(void);
     void _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
     void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
+    void _writeLocalParamCache();
+    void _tryCacheHashLoad(int uasId, QVariant hash_value);
+
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
     void _saveToEEPROM(void);
@@ -128,7 +134,8 @@ private:
     
     /// First mapping is by component id
     /// Second mapping is parameter name, to Fact* in QVariant
-    QMap<int, QVariantMap> _mapParameterName2Variant;
+    QMap<int, QVariantMap>            _mapParameterName2Variant;
+    QMap<int, QMap<int, QString> >    _mapParameterId2Name;
     
     /// First mapping is by component id
     /// Second mapping is group name, to Fact
@@ -150,6 +157,7 @@ private:
     int _totalParamCount;   ///< Number of parameters across all components
     
     QTimer _waitingParamTimeoutTimer;
+    QTimer _cacheTimeoutTimer;
     
     QMutex _dataMutex;
     
