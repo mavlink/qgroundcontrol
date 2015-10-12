@@ -483,8 +483,10 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = new UASInfoWidget(this);
     } else if (widgetName == _pfdDockWidgetName) {
         widget = new FlightDisplayWidget(this);
+#ifndef __mobile__
     } else if (widgetName == _hilDockWidgetName) {
         widget = new HILDockWidget(this);
+#endif
     } else if (widgetName == _uasInfoViewDockWidgetName) {
         QGCTabbedInfoView* pInfoView = new QGCTabbedInfoView(this);
         pInfoView->addSource(mavlinkDecoder);
