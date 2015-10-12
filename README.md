@@ -147,15 +147,6 @@ QGroundcontrol has functionality that is dependent on the operating system and l
 
 **NOTE:** Any variables specified at the command line call to `qmake` will override those set in `user_config.pri`.
 
-### QUpgrade
-QUpgrade is a submodule (a Git feature like a sub-repository) that contains extra functionality. It is compiled in by default if it has initialized and updated. It can be disabled by specifying `DISABLE_QUPGRADE` in the `DEFINES` variable.
-
-To include QUpgrade functionality run the following (only needs to be done once after cloning the qggroundcontrol git repository):
-* `git submodule init`
-* `git submodule update`
-
-The QUpgrade module relies on `libudev` on Linux platforms, so be sure to install the development version of that package.
-
 ### Specifying MAVLink dialects
 The MAVLink dialect compiled by default by QGC is for the pixhawk. Setting the `MAVLINK_CONF` variable sets the dialects.
 
@@ -165,11 +156,6 @@ Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by install
 ### Speech syntehsis
 QGroundcontrol can notify the controller of information via speech synthesis. This requires the `espeak` library on Linux. On Mac and Windows support is built in to the OS as of OS X 10.6 (Snow Leopard) and Windows Vista. This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding `DISABLE_SPEECH` to the `DEFINES` variable.
 
-### 3D view
-The OpenSceneGraph libraries provide 3D rendering to the map overlays that QGC can provide.
-
-OpenSceneGraph support is built-in to Mac OS X. On Linux it is commonly available through the libopenscenegraph and libopenscenegraph-qt developer packages. Windows support does not currently exist. This functionality with be automatically built if the proper libraries are installed. Disabling this feature can be done by adding `DISABLE_OPEN_SCENE_GRAPH` to the `DEFINES` variable.
-
 ### 3D mouse support
 Connexion's 3D mice are supported through the 3DxWARE driver available on Linux and Windows. Download and install the driver from 3DConnexion to enable support. This support is enabled by default with driver installation. To disable add `DISABLE_3DMOUSE` to the `DEFINES` variable.
 
@@ -177,24 +163,3 @@ Connexion's 3D mice are supported through the 3DxWARE driver available on Linux 
 QGroundControl can talk to XBee wireless devices using their proprietary protocol directly on Windows and Linux platforms. This support is not necessary if you're not using XBee devices or aren't using their proprietary protocol. On Windows, the necessary dependencies are included in this repository and no additional steps are required. For Linux, change to the `libs/thirdParty/libxbee` folder and run `make;sudo make install` to install libxbee on your system (uninstalling can be done with a `sudo make uninstall`). `qmake` will automatically detect the library on Linux, so no other work is necessary.
 
 To disable XBee support you may add `DISABLE_XBEE` to the DEFINES argument.
-
-## Repository Layout
-The following describes the directory structure and important files in the QGroundControl repository
-
-Folders:
-
-  * data     - Miscellaneous support files.
-  * deploy   - Contains scripts for packaging QGC for all supported systems.
-  * doc      - Output directory for generated Doxygen documentation. See README contained within for details.
-  * files    - Contains miscellaneous data including vehicle models and autopilot-specific data files.
-  * images   - UI images.
-  * libs     - Library dependencies for QGC.
-  * qupgrade - Source file for the qupgrade, a firmware flashing utility for the APM. Compiled into QGC by default.
-  * qml      - QML source files for the project.
-  * src      - Source code for QGroundControl. Split into subfolders for communications, user interface, autopilot-specific files, etc.
-  * tools    - Additional tools for developers.
-
-Important files:
-
-  * qgroundcontrol.pro - Primary project file for building QGC. Open this in qtcreator or pass this to qmake on the command line to build QGC.
-  * qgcvideo.pro       - Builds a standalone executable for viewing UDP video streams from a vehicle.
