@@ -57,6 +57,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HomePositionManager.h"
 #include "MissionEditor.h"
 #include "LogCompressor.h"
+#include "UAS.h"
 
 #ifndef __mobile__
 #include "QGCUASFileViewMulti.h"
