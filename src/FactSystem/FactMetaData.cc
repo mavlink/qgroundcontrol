@@ -80,7 +80,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     return *this;
 }
 
-QVariant FactMetaData::defaultValue(void)
+QVariant FactMetaData::defaultValue(void) const
 {
     if (_defaultValueAvailable) {
         return _defaultValue;
@@ -122,7 +122,7 @@ void FactMetaData::setMax(const QVariant& max)
     }
 }
 
-QVariant FactMetaData::_minForType(void)
+QVariant FactMetaData::_minForType(void) const
 {
     switch (_type) {
         case valueTypeUint8:
@@ -147,7 +147,7 @@ QVariant FactMetaData::_minForType(void)
     return QVariant();
 }
 
-QVariant FactMetaData::_maxForType(void)
+QVariant FactMetaData::_maxForType(void) const
 {
     switch (_type) {
         case valueTypeUint8:
