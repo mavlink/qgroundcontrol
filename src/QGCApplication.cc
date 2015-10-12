@@ -163,9 +163,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests(unitTesting)
     , _styleIsDark(true)
 	, _fakeMobile(false)
-#ifdef UNITTEST_BUILD
-    , _useNewMissionEditor(true)    // Unit Tests run new mission editor
-#endif
 #ifdef QT_DEBUG
     , _testHighDPI(false)
 #endif
@@ -419,14 +416,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
     _loadCurrentStyle();
-    
-    // Temp hack for new mission editor
-#ifdef __mobile__
-    // Mobile builds always use new Mission Editor
-    _useNewMissionEditor = true;
-#else
-    _useNewMissionEditor = settings.value("UseNewMissionEditor", false).toBool();
-#endif
     
     // Show splash screen
     QPixmap splashImage(":/res/SplashScreen");
