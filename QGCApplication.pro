@@ -153,7 +153,6 @@ INCLUDEPATH += \
     src/ui/linechart \
     src/ui/map \
     src/ui/mapdisplay \
-    src/ui/mavlink \
     src/ui/mission \
     src/ui/px4_configuration \
     src/ui/toolbar \
@@ -166,40 +165,41 @@ FORMS += \
     src/ui/Linechart.ui \
     src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MainWindow.ui \
-    src/ui/mavlink/QGCMAVLinkMessageSender.ui \
     src/ui/MAVLinkSettingsWidget.ui \
-    src/ui/MultiVehicleDockWidget.ui \
     src/ui/QGCCommConfiguration.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCLinkConfiguration.ui \
     src/ui/QGCMapRCToParamDialog.ui \
-    src/ui/QGCMAVLinkInspector.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCPluginHost.ui \
-    src/ui/QGCTabbedInfoView.ui \
     src/ui/QGCTCPLinkConfiguration.ui \
-    src/ui/QGCUASFileView.ui \
-    src/ui/QGCUASFileViewMulti.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/SettingsDialog.ui \
-    src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/uas/UASMessageView.ui \
-    src/ui/uas/UASQuickView.ui \
-    src/ui/uas/UASQuickViewItemSelect.ui \
-    src/ui/UASInfo.ui \
-    src/ui/UASRawStatusView.ui \
 
 !iOSBuild {
 FORMS += \
     src/ui/SerialSettings.ui \
 }
 
+!NoWidgets {
 !MobileBuild {
 FORMS += \
+    src/ui/MultiVehicleDockWidget.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
     src/ui/QGCHilXPlaneConfiguration.ui \
+    src/ui/QGCMAVLinkInspector.ui \
+    src/ui/QGCTabbedInfoView.ui \
+    src/ui/QGCUASFileView.ui \
+    src/ui/QGCUASFileViewMulti.ui \
+    src/ui/uas/QGCUnconnectedInfoWidget.ui \
+    src/ui/uas/UASQuickView.ui \
+    src/ui/uas/UASQuickViewItemSelect.ui \
+    src/ui/UASInfo.ui \
+    src/ui/UASRawStatusView.ui \
+}
 }
 
 HEADERS += \
@@ -232,7 +232,6 @@ HEADERS += \
     src/QGCApplication.h \
     src/QGCComboBox.h \
     src/QGCConfig.h \
-    src/QGCDockWidget.h \
     src/QGCFileDialog.h \
     src/QGCGeo.h \
     src/QGCLoggingCategory.h \
@@ -263,37 +262,19 @@ HEADERS += \
     src/ui/linechart/ScrollZoomer.h \
     src/ui/LogReplayLinkConfigurationWidget.h \
     src/ui/MainWindow.h \
-    src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
-    src/ui/MultiVehicleDockWidget.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/QGCLinkConfiguration.h \
-    src/ui/QGCMainWindowAPConfigurator.h \
     src/ui/QGCMapRCToParamDialog.h \
-    src/ui/QGCMAVLinkInspector.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCPluginHost.h \
-    src/ui/QGCTabbedInfoView.h \
     src/ui/QGCTCPLinkConfiguration.h \
-    src/ui/QGCUASFileView.h \
-    src/ui/QGCUASFileViewMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/SettingsDialog.h \
     src/ui/toolbar/MainToolBar.h \
-    src/ui/uas/QGCUnconnectedInfoWidget.h \
-    src/ui/uas/UASInfoWidget.h \
     src/ui/uas/UASMessageView.h \
-    src/ui/uas/UASQuickView.h \
-    src/ui/uas/UASQuickViewGaugeItem.h \
-    src/ui/uas/UASQuickViewItem.h \
-    src/ui/uas/UASQuickViewItemSelect.h \
-    src/ui/uas/UASQuickViewTextItem.h \
-    src/ui/UASRawStatusView.h \
-    src/ViewWidgets/CustomCommandWidget.h \
-    src/ViewWidgets/CustomCommandWidgetController.h \
-    src/ViewWidgets/ViewWidgetController.h \
     src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
 
@@ -303,19 +284,38 @@ HEADERS += \
     src/ui/SerialConfigurationWindow.h \
 }
 
+!NoWidgets {
 !MobileBuild {
 HEADERS += \
     src/comm/QGCFlightGearLink.h \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
+    src/QGCDockWidget.h \
     src/ui/CameraView.h \
     src/ui/HILDockWidget.h \
+    src/ui/MultiVehicleDockWidget.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilJSBSimConfiguration.h \
     src/ui/QGCHilXPlaneConfiguration.h \
+    src/ui/QGCMAVLinkInspector.h \
+    src/ui/QGCTabbedInfoView.h \
+    src/ui/QGCUASFileView.h \
+    src/ui/QGCUASFileViewMulti.h \
+    src/ui/uas/QGCUnconnectedInfoWidget.h \
+    src/ui/uas/UASInfoWidget.h \
+    src/ui/uas/UASQuickView.h \
+    src/ui/uas/UASQuickViewGaugeItem.h \
+    src/ui/uas/UASQuickViewItem.h \
+    src/ui/uas/UASQuickViewItemSelect.h \
+    src/ui/uas/UASQuickViewTextItem.h \
+    src/ui/UASRawStatusView.h \
     src/VehicleSetup/JoystickConfigController.h \
+    src/ViewWidgets/CustomCommandWidget.h \
+    src/ViewWidgets/CustomCommandWidgetController.h \
+    src/ViewWidgets/ViewWidgetController.h \
+}
 }
 
 SOURCES += \
@@ -344,7 +344,6 @@ SOURCES += \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
-    src/QGCDockWidget.cc \
     src/QGCFileDialog.cc \
     src/QGCLoggingCategory.cc \
     src/QGCPalette.cc \
@@ -370,37 +369,19 @@ SOURCES += \
     src/ui/linechart/ScrollZoomer.cc \
     src/ui/LogReplayLinkConfigurationWidget.cc \
     src/ui/MainWindow.cc \
-    src/ui/mavlink/QGCMAVLinkMessageSender.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MAVLinkSettingsWidget.cc \
-    src/ui/MultiVehicleDockWidget.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/QGCLinkConfiguration.cc \
-    src/ui/QGCMainWindowAPConfigurator.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
-    src/ui/QGCMAVLinkInspector.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/ui/QGCPluginHost.cc \
-    src/ui/QGCTabbedInfoView.cpp \
     src/ui/QGCTCPLinkConfiguration.cc \
-    src/ui/QGCUASFileView.cc \
-    src/ui/QGCUASFileViewMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/SettingsDialog.cc \
     src/ui/toolbar/MainToolBar.cc \
-    src/ui/uas/QGCUnconnectedInfoWidget.cc \
-    src/ui/uas/UASInfoWidget.cc \
     src/ui/uas/UASMessageView.cc \
-    src/ui/uas/UASQuickView.cc \
-    src/ui/uas/UASQuickViewGaugeItem.cc \
-    src/ui/uas/UASQuickViewItem.cc \
-    src/ui/uas/UASQuickViewItemSelect.cc \
-    src/ui/uas/UASQuickViewTextItem.cc \
-    src/ui/UASRawStatusView.cpp \
-    src/ViewWidgets/CustomCommandWidget.cc \
-    src/ViewWidgets/CustomCommandWidgetController.cc \
-    src/ViewWidgets/ViewWidgetController.cc \
     src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc
 
@@ -410,18 +391,37 @@ SOURCES += \
     src/ui/SerialConfigurationWindow.cc \
 }
 
+!NoWidgets {
 !MobileBuild {
 SOURCES += \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
+    src/QGCDockWidget.cc \
     src/ui/CameraView.cc \
     src/ui/HILDockWidget.cc \
+    src/ui/MultiVehicleDockWidget.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
     src/ui/QGCHilXPlaneConfiguration.cc \
+    src/ui/QGCMAVLinkInspector.cc \
+    src/ui/QGCTabbedInfoView.cpp \
+    src/ui/QGCUASFileView.cc \
+    src/ui/QGCUASFileViewMulti.cc \
+    src/ui/uas/QGCUnconnectedInfoWidget.cc \
+    src/ui/uas/UASInfoWidget.cc \
+    src/ui/uas/UASQuickView.cc \
+    src/ui/uas/UASQuickViewGaugeItem.cc \
+    src/ui/uas/UASQuickViewItem.cc \
+    src/ui/uas/UASQuickViewItemSelect.cc \
+    src/ui/uas/UASQuickViewTextItem.cc \
+    src/ui/UASRawStatusView.cpp \
     src/VehicleSetup/JoystickConfigController.cc \
+    src/ViewWidgets/CustomCommandWidget.cc \
+    src/ViewWidgets/CustomCommandWidgetController.cc \
+    src/ViewWidgets/ViewWidgetController.cc \
+}
 }
 
 #
