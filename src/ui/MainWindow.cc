@@ -33,11 +33,11 @@ This file is part of the QGROUNDCONTROL project
 #include <QTimer>
 #include <QHostInfo>
 #include <QSplashScreen>
-
 #include <QQuickView>
 #include <QDesktopWidget>
 #include <QScreen>
 #include <QDesktopServices>
+#include <QDockWidget>
 
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
@@ -46,26 +46,27 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "SettingsDialog.h"
 #include "MAVLinkDecoder.h"
-#include "UASQuickView.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
-#include "QGCTabbedInfoView.h"
-#include "UASRawStatusView.h"
 #include "FlightDisplayView.h"
-#include "FlightDisplayWidget.h"
 #include "SetupView.h"
-#include "QGCUASFileViewMulti.h"
 #include "QGCApplication.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
-#include "QGCDockWidget.h"
 #include "MultiVehicleManager.h"
-#include "CustomCommandWidget.h"
 #include "HomePositionManager.h"
 #include "MissionEditor.h"
 #include "LogCompressor.h"
 
 #ifndef __mobile__
+#include "QGCUASFileViewMulti.h"
+#include "UASQuickView.h"
+#include "QGCTabbedInfoView.h"
+#include "UASRawStatusView.h"
+#include "CustomCommandWidget.h"
+#include "QGCDockWidget.h"
+#include "FlightDisplayWidget.h"
+#include "UASInfoWidget.h"
 #include "HILDockWidget.h"
 #endif
 
