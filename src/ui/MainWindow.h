@@ -52,7 +52,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
-#include "QGCUASFileViewMulti.h"
 #include "Vehicle.h"
 
 class QGCFirmwareUpdate;
@@ -60,7 +59,6 @@ class QSplashScreen;
 class QGCStatusBar;
 class Linecharts;
 class QGCDataPlot2D;
-class QGCUASFileViewMulti;
 
 /**
  * @brief Main Application Window
