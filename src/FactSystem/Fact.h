@@ -74,18 +74,18 @@ public:
     QVariant value(void) const;
     QString valueString(void) const;
     void setValue(const QVariant& value);
-    QVariant defaultValue(void);
-	bool defaultValueAvailable(void);
-    bool valueEqualsDefault(void);
-    FactMetaData::ValueType_t type(void);
-    QString shortDescription(void);
-    QString longDescription(void);
-    QString units(void);
-    QVariant min(void);
-    bool minIsDefaultForType(void);
-    QVariant max(void);    
-    bool maxIsDefaultForType(void);
-    QString group(void);
+    QVariant defaultValue(void) const;
+	bool defaultValueAvailable(void) const;
+    bool valueEqualsDefault(void) const;
+    FactMetaData::ValueType_t type(void) const;
+    QString shortDescription(void) const;
+    QString longDescription(void) const;
+    QString units(void) const;
+    QVariant min(void) const;
+    bool minIsDefaultForType(void) const;
+    QVariant max(void) const;
+    bool maxIsDefaultForType(void) const;
+    QString group(void) const;
     
     /// Sets and sends new value to vehicle even if value is the same
     void forceSetValue(const QVariant& value);
