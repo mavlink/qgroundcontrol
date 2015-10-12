@@ -130,86 +130,42 @@ QGCView {
                     }
                 }
 
-                Rectangle {
+                Image {
                     id:                     addMissionItemsButton
                     anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
                     anchors.right:          homePositionManagerButton.left
                     anchors.top:            homePositionManagerButton.top
-                    radius:                 (ScreenTools.defaultFontPixelHeight * 3) / 2
-                    width:                  radius * 2
-                    height:                 radius * 2
-                    border.width:           2
-                    border.color:           "white"
-                    color:                  _addMissionItems ? _qgcPal.buttonHighlight : "black"
-                    opacity:                _addMissionItems ? 0.75 : 1.0
-
+                    width:                  ScreenTools.defaultFontPixelHeight * 3
+                    fillMode:               Image.PreserveAspectFit
+                    mipmap:                 true
+                    smooth:                 true
+                    source:                 "/qmlimages/MapAddMission.svg"
+                    opacity:                _addMissionItems ? 1.0 : 0.75
                     MouseArea {
                         anchors.fill: parent
-
                         onClicked: {
                             _addMissionItems = !_addMissionItems
                             _showHomePositionManager = false
                         }
                     }
-
-                    Rectangle {
-                        anchors.verticalCenter:     parent.verticalCenter
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                        height:                     width
-                        radius:                     width / 2
-                        border.width:               2
-                        border.color:               "white"
-                        color:                      "transparent"
-
-                        QGCLabel {
-                            anchors.fill:           parent
-                            horizontalAlignment:    Text.AlignHCenter
-                            verticalAlignment:      Text.AlignVCenter
-                            color:                  "white"
-                            text:                   "1"
-                        }
-                    }
                 }
 
-                Rectangle {
+                Image {
                     id:                     homePositionManagerButton
                     anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
                     anchors.right:          centerMapButton.left
                     anchors.top:            centerMapButton.top
-                    radius:                 (ScreenTools.defaultFontPixelHeight * 3) / 2
-                    width:                  radius * 2
-                    height:                 radius * 2
-                    border.width:           2
-                    border.color:           "white"
-                    color:                  _showHomePositionManager ? _qgcPal.buttonHighlight : "black"
-                    opacity:                _showHomePositionManager ? 0.75 : 1.0
-
+                    width:                  ScreenTools.defaultFontPixelHeight * 3
+                    fillMode:               Image.PreserveAspectFit
+                    mipmap:                 true
+                    smooth:                 true
+                    source:                 "/qmlimages/MapHome.svg"
+                    opacity:                _showHomePositionManager ? 1.0 : 0.75
                     MouseArea {
                         anchors.fill: parent
-
                         onClicked: {
                             _showHomePositionManager = !_showHomePositionManager
                             _addMissionItems = false
-                        }
-                    }
-
-                    Rectangle {
-                        anchors.verticalCenter:     parent.verticalCenter
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                        height:                     width
-                        radius:                     width / 2
-                        border.width:               2
-                        border.color:               "white"
-                        color:                      "transparent"
-
-                        QGCLabel {
-                            anchors.fill:           parent
-                            horizontalAlignment:    Text.AlignHCenter
-                            verticalAlignment:      Text.AlignVCenter
-                            color:                  "white"
-                            text:                   "H"
                         }
                     }
                 }
@@ -296,7 +252,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                     anchors.right:          mapTypeButton.left
                     anchors.top:            mapTypeButton.top
                     dropDirection:          dropDown
-                    buttonImage:            "/qmlimages/Sync.png"
+                    buttonImage:            "/qmlimages/MapSync.svg"
                     viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
                     exclusiveGroup:         _dropButtonsExclusiveGroup
 
@@ -571,9 +527,9 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             QGCLabel {
                                 width:      parent.width
                                 wrapMode:   Text.WordWrap
-                                text:       "To add a new home position, click in the Map to set the position. " +
+                                text:       "To add a new home position, click on the Map to set the position. " +
                                             "Then give it a new name and click Add/Update. " +
-                                            "To change the current  home position, click in the Map to set the new position. " +
+                                            "To change the current home position, click on the Map to set the new position. " +
                                             "Then click Add/Update without changing the name."
                             }
 
@@ -716,28 +672,18 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.top:        helpTitle.bottom
                             width:              parent.width
                             wrapMode:           Text.WordWrap
-                            text:               "In the upper right corner of the map you will see the Mission Planner tools:"
+                            text:               "Mission Planner tool buttons:"
                         }
 
-                        Rectangle {
-                            id:                         addMissionItemsHelpIcon
-                            anchors.topMargin:          ScreenTools.defaultFontPixelHeight
-                            anchors.top:                helpIconLabel.bottom
-                            anchors.horizontalCenter:   mapTypeHelpIcon.horizontalCenter
-                            width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                            height:                     width
-                            radius:                     width / 2
-                            border.width:               2
-                            border.color:               "white"
-                            color:                      _qgcPal.window
-
-                            QGCLabel {
-                                anchors.fill:           parent
-                                horizontalAlignment:    Text.AlignHCenter
-                                verticalAlignment:      Text.AlignVCenter
-                                color:                  "white"
-                                text:                   "1"
-                            }
+                        Image {
+                            id:                 addMissionItemsHelpIcon
+                            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                            anchors.top:        helpIconLabel.bottom
+                            width:              ScreenTools.defaultFontPixelHeight * 3
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            source:             "/qmlimages/MapAddMission.svg"
                         }
 
                         QGCLabel {
@@ -747,30 +693,19 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        addMissionItemsHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Add Mission Items tool. " +
-                                                "Click it to turn on the ability to add mission items by clicking in the map. " +
-                                                "Click it again to turn it off."
+                            text:               "<b>Add Mission Items</b><br>" +
+                                                "When enabled, add mission items by clicking on the map."
                         }
 
-                        Rectangle {
-                            id:                         homePositionManagerHelpIcon
-                            anchors.topMargin:          ScreenTools.defaultFontPixelHeight
-                            anchors.top:                addMissionItemsHelpText.bottom
-                            anchors.horizontalCenter:   mapTypeHelpIcon.horizontalCenter
-                            width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                            height:                     width
-                            radius:                     width / 2
-                            border.width:               2
-                            border.color:               "white"
-                            color:                      _qgcPal.window
-
-                            QGCLabel {
-                                anchors.fill:           parent
-                                horizontalAlignment:    Text.AlignHCenter
-                                verticalAlignment:      Text.AlignVCenter
-                                color:                  "white"
-                                text:                   "H"
-                            }
+                        Image {
+                            id:                 homePositionManagerHelpIcon
+                            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                            anchors.top:        addMissionItemsHelpText.bottom
+                            width:              ScreenTools.defaultFontPixelHeight * 3
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            source:             "/qmlimages/MapHome.svg"
                         }
 
                         QGCLabel {
@@ -780,8 +715,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        homePositionManagerHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Home Position Manager tool. " +
-                                                "This tool allows you to select/add/update home positions. " +
+                            text:               "<b>Home Position Manager</b><br>" +
+                                                "When enabled, allows you to select/add/update home positions. " +
                                                 "You can save multiple home position to represent multiple flying areas."
                         }
 
@@ -803,8 +738,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        mapCenterHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Map Center tool. " +
-                                                "It will show a set of options which will center the map."
+                            text:               "<b>Map Center</b><br>" +
+                                                "Options for centering the map."
                         }
 
                         Image {
@@ -815,7 +750,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
                             smooth:             true
-                            source:             "/qmlimages/Sync.png"
+                            source:             "/qmlimages/MapSync.svg"
                         }
 
                         QGCLabel {
@@ -825,8 +760,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        syncHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Sync tool. " +
-                                                "It will show a set of options for saving/loading mission items."
+                            text:               "<b>Sync</b><br>" +
+                                                "Options for saving/loading mission items."
                         }
 
                         Image {
@@ -847,8 +782,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        mapTypeHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Map Type tool. " +
-                                                "It will show a set of options for selecting map types."
+                            text:               "<b>Map Type</b><br>" +
+                                                "Map type options."
                         }
                     } // Item - Help Panel
                 } // Item
