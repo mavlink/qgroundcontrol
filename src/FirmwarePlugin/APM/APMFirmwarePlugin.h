@@ -29,6 +29,7 @@
 
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "ardupilotmega/ardupilotmega.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
@@ -70,6 +71,7 @@ public:
     virtual int manualControlReservedButtonCount(void);
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
     virtual void initializeVehicle(Vehicle* vehicle);
+    virtual const mavlink_message_info_t* mavlinkMessageInfo(void);
     
 protected:
     /// All access to singleton is through stack specific implementation

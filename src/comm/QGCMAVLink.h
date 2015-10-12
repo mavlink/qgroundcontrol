@@ -30,7 +30,8 @@ This file is part of the QGROUNDCONTROL project
 #ifndef QGCMAVLINK_H
 #define QGCMAVLINK_H
 
-#include <mavlink.h>
+// Generic MAVLink messages
+#include "common/mavlink.h"
 
 #endif // QGCMAVLINK_H
 

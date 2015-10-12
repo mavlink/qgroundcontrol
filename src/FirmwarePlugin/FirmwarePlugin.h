@@ -97,6 +97,9 @@ public:
     /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
     virtual void initializeVehicle(Vehicle* vehicle) = 0;
     
+    /// Returns the mavlink_message_info_t array for the firmware type
+    virtual const mavlink_message_info_t* mavlinkMessageInfo(void) = 0;
+    
 protected:
     FirmwarePlugin(QObject* parent = NULL) : QGCSingleton(parent) { }
 };

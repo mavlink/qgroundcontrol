@@ -30,6 +30,8 @@
 
 IMPLEMENT_QGC_SINGLETON(GenericFirmwarePlugin, FirmwarePlugin)
 
+const mavlink_message_info_t GenericFirmwarePlugin::_mavlinkMessageInfo[256] = MAVLINK_MESSAGE_INFO;
+
 GenericFirmwarePlugin::GenericFirmwarePlugin(QObject* parent) :
     FirmwarePlugin(parent)
 {

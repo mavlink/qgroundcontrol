@@ -46,6 +46,7 @@ public:
     virtual int manualControlReservedButtonCount(void);
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
     virtual void initializeVehicle(Vehicle* vehicle);
+    virtual const mavlink_message_info_t* mavlinkMessageInfo(void);
 
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance

@@ -25,6 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "PX4FirmwarePlugin.h"
+#include "Generic/GenericFirmwarePlugin.h"
 
 #include <QDebug>
 
@@ -199,4 +200,9 @@ void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
     Q_UNUSED(vehicle);
     
     // PX4 Flight Stack doesn't need to do any extra work
+}
+
+const mavlink_message_info_t* PX4FirmwarePlugin::mavlinkMessageInfo(void)
+{
+    return GenericFirmwarePlugin::instance()->mavlinkMessageInfo();
 }

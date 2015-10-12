@@ -7,53 +7,8 @@ WindowsBuild {
 
 #
 # [REQUIRED] Add support for the MAVLink communications protocol.
-# Some logic is involved here in selecting the proper dialect for
-# the selected autopilot system.
 #
-# If the user config file exists, it will be included. If this file
-# specifies the MAVLINK_CONF variable with a MAVLink dialect, support 
-# for it will be compiled in to QGC. It will also create a 
-# QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use within the actual code.
-#
-MAVLINKPATH_REL = libs/mavlink/include/mavlink/v1.0
-MAVLINKPATH = $$BASEDIR/$$MAVLINKPATH_REL
-DEFINES += MAVLINK_NO_DATA
-
-# First we select the dialect, checking for valid user selection
-# Users can override all other settings by specifying MAVLINK_CONF as an argument to qmake
-!isEmpty(MAVLINK_CONF) {
-    message($$sprintf("Using MAVLink dialect '%1' specified at the command line.", $$MAVLINK_CONF))
-}
-# Otherwise they can specify MAVLINK_CONF within user_config.pri
-else:exists(user_config.pri):infile(user_config.pri, MAVLINK_CONF) {
-    MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
-    !isEmpty(MAVLINK_CONF) {
-        message($$sprintf("Using MAVLink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
-    }
-}
-
-# Then we add the proper include paths dependent on the dialect.
-INCLUDEPATH += $$MAVLINKPATH
-
-exists($$MAVLINKPATH/common) {
-    !isEmpty(MAVLINK_CONF) {
-        count(MAVLINK_CONF, 1) {
-            exists($$MAVLINKPATH/$$MAVLINK_CONF) {
-                INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
-                DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
-            } else {
-                error($$sprintf("MAVLink dialect '%1' does not exist at '%2'!", $$MAVLINK_CONF, $$MAVLINKPATH_REL))
-            }
-        } else {
-            error(Only a single mavlink dialect can be specified in MAVLINK_CONF)
-        }
-    } else {
-        warning("No MAVLink dialect specified, only common messages supported.")
-        INCLUDEPATH += $$MAVLINKPATH/common
-    }
-} else {
-    error($$sprintf("MAVLink folder does not exist at '%1'! Run 'git submodule init && git submodule update' on the command line.",$$MAVLINKPATH_REL))
-}
+INCLUDEPATH += libs/mavlink/include/mavlink/v1.0
 
 #
 # [REQUIRED] EIGEN matrix library

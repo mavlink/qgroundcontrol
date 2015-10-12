@@ -42,12 +42,10 @@ protected:
     MAVLinkProtocol *_protocol;     ///< MAVLink instance
     int selectedSystemID;          ///< Currently selected system
     int selectedComponentID;       ///< Currently selected component
-    QMap<int, int> systems;     ///< Already observed systems
     QMap<int, int> components; ///< Already observed components
     QMap<int, float> onboardMessageInterval; ///< Stores the onboard selected data rate
     QMap<int, QTreeWidgetItem*> rateTreeWidgetItems; ///< Available rate tree widget items
     QTimer updateTimer; ///< Only update at 1 Hz to not overload the GUI
-    mavlink_message_info_t messageInfo[256]; // Store the metadata for all available MAVLink messages.
 
     QMap<int, QTreeWidgetItem* > uasTreeWidgetItems; ///< Tree of available uas with their widget
     QMap<int, QMap<int, QTreeWidgetItem*>* > uasMsgTreeItems; ///< Stores the widget of the received message for each UAS
@@ -73,6 +71,7 @@ protected:
     
 private slots:
     void _vehicleAdded(Vehicle* vehicle);
+    void _vehicleRemoved(Vehicle* vehicle);
 
 private:
     Ui::QGCMAVLinkInspector *ui;

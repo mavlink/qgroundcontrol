@@ -26,7 +26,6 @@
 
 #include "APMFirmwarePlugin.h"
 #include "Generic/GenericFirmwarePlugin.h"
-#include "QGCMAVLink.h"
 
 #include <QDebug>
 
@@ -331,4 +330,9 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,             10);
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,             10);
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,             3);
+}
+
+const mavlink_message_info_t* APMFirmwarePlugin::mavlinkMessageInfo(void)
+{
+    return GenericFirmwarePlugin::instance()->mavlinkMessageInfo();
 }
