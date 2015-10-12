@@ -16,6 +16,7 @@
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
+#include <basetyps.h>
 #include <sapi.h>
 #endif
 

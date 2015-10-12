@@ -21,37 +21,47 @@
  
  ======================================================================*/
 
-#ifndef QGCHILCONFIGURATION_H
-#define QGCHILCONFIGURATION_H
+#ifndef MultiVehicleDockWidget_H
+#define MultiVehicleDockWidget_H
 
 #include <QWidget>
+#include <QMap>
 
 #include "Vehicle.h"
 
-namespace Ui {
-class QGCHilConfiguration;
+namespace Ui
+{
+    class MultiVehicleDockWidget;
 }
 
-class QGCHilConfiguration : public QWidget
+/// Provides a base class for a dock widget which automatically handles
+/// Vehicles coming and going. It does this by using a stacked widget which
+/// holds individual Vehicle specific widgets.
+class MultiVehicleDockWidget : public QWidget
 {
     Q_OBJECT
-    
+
 public:
-    QGCHilConfiguration(Vehicle* vehicle, QWidget *parent = 0);
-    ~QGCHilConfiguration();
+    explicit MultiVehicleDockWidget(QWidget *parent = 0);
+    ~MultiVehicleDockWidget();
+    
+    /// Must be called in the derived class contructor to initialize the base class
+    void init(void);
 
-public slots:
-    /** @brief Receive status message */
-    void receiveStatusMessage(const QString& message);
-    void setVersion(QString version);
-
+protected:
+    /// Derived class must implement this to create the QWidget for the
+    /// specified Vehicle.
+    virtual QWidget* _newVehicleWidget(Vehicle* vehicle, QWidget* parent) = 0;
+    
 private slots:
-    void on_simComboBox_currentIndexChanged(int index);
+    void _vehicleAdded(Vehicle* vehicle);
+    void _vehicleRemoved(Vehicle* vehicle);
+    void _activeVehicleChanged(Vehicle* vehicle);
 
 private:
-    Vehicle* _vehicle;
+    QMap<int, QWidget*> _vehicleWidgets;
     
-    Ui::QGCHilConfiguration *ui;
+    Ui::MultiVehicleDockWidget* _ui;
 };
 
-#endif // QGCHILCONFIGURATION_H
+#endif

@@ -168,6 +168,7 @@ FORMS += \
     src/ui/MainWindow.ui \
     src/ui/mavlink/QGCMAVLinkMessageSender.ui \
     src/ui/MAVLinkSettingsWidget.ui \
+    src/ui/MultiVehicleDockWidget.ui \
     src/ui/QGCCommConfiguration.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCLinkConfiguration.ui \
@@ -265,6 +266,7 @@ HEADERS += \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
+    src/ui/MultiVehicleDockWidget.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/QGCLinkConfiguration.h \
@@ -308,6 +310,7 @@ HEADERS += \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
     src/ui/CameraView.h \
+    src/ui/HILDockWidget.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilJSBSimConfiguration.h \
@@ -370,6 +373,7 @@ SOURCES += \
     src/ui/mavlink/QGCMAVLinkMessageSender.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MAVLinkSettingsWidget.cc \
+    src/ui/MultiVehicleDockWidget.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/QGCLinkConfiguration.cc \
@@ -412,6 +416,7 @@ SOURCES += \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
     src/ui/CameraView.cc \
+    src/ui/HILDockWidget.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \

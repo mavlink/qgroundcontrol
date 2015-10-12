@@ -33,20 +33,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QTimer>
 #include <QHostInfo>
 #include <QSplashScreen>
-#ifndef __mobile__
-#include <QGCHilLink.h>
-#include <QGCHilConfiguration.h>
-#include <QGCHilFlightGearConfiguration.h>
-#endif
+
 #include <QQuickView>
 #include <QDesktopWidget>
 #include <QScreen>
 #include <QDesktopServices>
 
 #include "QGC.h"
-#ifndef __ios__
-#include "SerialLink.h"
-#endif
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
@@ -71,6 +64,15 @@ This file is part of the QGROUNDCONTROL project
 #include "CustomCommandWidget.h"
 #include "HomePositionManager.h"
 #include "MissionEditor.h"
+#include "LogCompressor.h"
+
+#ifndef __mobile__
+#include "HILDockWidget.h"
+#endif
+
+#ifndef __ios__
+#include "SerialLink.h"
+#endif
 
 #ifdef UNITTEST_BUILD
 #include "QmlControls/QmlTestWidget.h"
@@ -80,7 +82,6 @@ This file is part of the QGROUNDCONTROL project
 #include "Q3DWidgetFactory.h"
 #endif
 
-#include "LogCompressor.h"
 
 /// The key under which the Main Window settings are saved
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
@@ -92,6 +93,7 @@ const char* MainWindow::_uasStatusDetailsDockWidgetName = "UAS_STATUS_DETAILS_DO
 const char* MainWindow::_mapViewDockWidgetName = "MAP_VIEW_DOCKWIDGET";
 const char* MainWindow::_pfdDockWidgetName = "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET";
 const char* MainWindow::_uasInfoViewDockWidgetName = "UAS_INFO_INFOVIEW_DOCKWIDGET";
+const char* MainWindow::_hilDockWidgetName = "HIL_DOCKWIDGET";
 
 static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
 
@@ -163,7 +165,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
 #ifdef UNITTEST_BUILD
     QAction* qmlTestAction = new QAction("Test QML palette and controls", NULL);
     connect(qmlTestAction, &QAction::triggered, this, &MainWindow::_showQmlTestWidget);
-    _ui.menuTools->addAction(qmlTestAction);
+    _ui.menuWidgets->addAction(qmlTestAction);
 #endif
 
     // Load QML Toolbar
@@ -267,14 +269,12 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     _ui.actionPlan->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
     _ui.actionFlight->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
     _ui.actionAnalyze->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
-    _ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
     _ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
     _ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
     _ui.actionPlan->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
     _ui.actionFlight->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
     _ui.actionAnalyze->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
-    _ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
     _ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
@@ -341,7 +341,7 @@ void MainWindow::_createDockWidget(const QString& title, const QString& name, Qt
     action->setCheckable(true);
     action->setData(name);
     connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
-    _ui.menuTools->addAction(action);
+    _ui.menuWidgets->addAction(action);
 	
 	// Create widget
 	QGCDockWidget* dockWidget = new QGCDockWidget(title, action, this);
@@ -391,6 +391,7 @@ void MainWindow::_buildCommonWidgets(void)
         { _mapViewDockWidgetName,           "Map view",                 Qt::RightDockWidgetArea },
         { _pfdDockWidgetName,               "Primary Flight Display",   Qt::RightDockWidgetArea },
         { _uasInfoViewDockWidgetName,       "Info View",                Qt::LeftDockWidgetArea },
+        { _hilDockWidgetName,               "HIL Config",               Qt::LeftDockWidgetArea },
     };
     static const size_t cDockWidgetInfo = sizeof(rgDockWidgetInfo) / sizeof(rgDockWidgetInfo[0]);
 
@@ -482,6 +483,10 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = new UASInfoWidget(this);
     } else if (widgetName == _pfdDockWidgetName) {
         widget = new FlightDisplayWidget(this);
+#ifndef __mobile__
+    } else if (widgetName == _hilDockWidgetName) {
+        widget = new HILDockWidget(this);
+#endif
     } else if (widgetName == _uasInfoViewDockWidgetName) {
         QGCTabbedInfoView* pInfoView = new QGCTabbedInfoView(this);
         pInfoView->addSource(mavlinkDecoder);
@@ -497,48 +502,6 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         dockWidget->setWidget(widget);
     }
 }
-
-#ifndef __mobile__
-void MainWindow::_showHILConfigurationWidgets(void)
-{
-    Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
-
-    if (!vehicle) {
-        return;
-    }
-
-    UAS* mav = vehicle->uas();
-    Q_ASSERT(mav);
-
-    int uasId = mav->getUASID();
-
-    if (!_mapUasId2HilDockWidget.contains(uasId)) {
-
-        // Create QDockWidget
-        QGCDockWidget* dockWidget = new QGCDockWidget(tr("HIL Config %1").arg(uasId), NULL, this);
-        Q_CHECK_PTR(dockWidget);
-        dockWidget->setObjectName(tr("HIL_CONFIG_%1").arg(uasId));
-        dockWidget->setVisible (false);
-
-        // Create inner widget and set it
-        QWidget* widget = new QGCHilConfiguration(mav, dockWidget);
-
-        widget->setParent(dockWidget);
-        dockWidget->setWidget(widget);
-
-        _mapUasId2HilDockWidget[uasId] = dockWidget;
-
-        addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
-    }
-
-    if (_currentView == VIEW_SIMULATION) {
-        // HIL dock widgets only show up on simulation view
-        foreach (QDockWidget* dockWidget, _mapUasId2HilDockWidget) {
-            dockWidget->setVisible(true);
-        }
-    }
-}
-#endif
 
 void MainWindow::fullScreenActionItemCallback(bool)
 {
@@ -650,7 +613,6 @@ void MainWindow::connectCommonActions()
     QActionGroup* perspectives = new QActionGroup(_ui.menuPerspectives);
     perspectives->addAction(_ui.actionAnalyze);
     perspectives->addAction(_ui.actionFlight);
-    perspectives->addAction(_ui.actionSimulationView);
     perspectives->addAction(_ui.actionPlan);
     perspectives->addAction(_ui.actionSetup);
     perspectives->setExclusive(true);
@@ -665,11 +627,6 @@ void MainWindow::connectCommonActions()
     {
         _ui.actionFlight->setChecked(true);
         _ui.actionFlight->activate(QAction::Trigger);
-    }
-    if (_currentView == VIEW_SIMULATION)
-    {
-        _ui.actionSimulationView->setChecked(true);
-        _ui.actionSimulationView->activate(QAction::Trigger);
     }
     if (_currentView == VIEW_MISSIONEDITOR)
     {
@@ -687,11 +644,9 @@ void MainWindow::connectCommonActions()
 
     // Connect internal actions
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &MainWindow::_vehicleRemoved);
 
     // Views actions
     connect(_ui.actionFlight,           SIGNAL(triggered()), this, SLOT(loadFlightView()));
-    connect(_ui.actionSimulationView,   SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(_ui.actionAnalyze,          SIGNAL(triggered()), this, SLOT(loadAnalyzeView()));
     connect(_ui.actionPlan,             SIGNAL(triggered()), this, SLOT(loadPlanView()));
     
@@ -763,11 +718,6 @@ void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {
     connect(vehicle->uas(), SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
 
-    // HIL
-#ifndef __mobile__
-    _showHILConfigurationWidgets();
-#endif
-
     if (!linechartWidget)
     {
         linechartWidget = new Linecharts(this);
@@ -781,22 +731,9 @@ void MainWindow::_vehicleAdded(Vehicle* vehicle)
     }
 }
 
-void MainWindow::_vehicleRemoved(Vehicle* vehicle)
-{
-    int vehicleId = vehicle->id();
-    
-    if (_mapUasId2HilDockWidget.contains(vehicleId)) {
-        _mapUasId2HilDockWidget[vehicleId]->deleteLater();
-        _mapUasId2HilDockWidget.remove(vehicleId);
-    }
-}
-
 /// Stores the state of the toolbar, status bar and widgets associated with the current view
 void MainWindow::_storeCurrentViewState(void)
 {
-    // HIL dock widgets are dynamic and are not part of the saved state
-    _hideAllHilDockWidgets();
-    
 #ifndef __mobile__
     // Save list of visible widgets
     bool firstWidget = true;
@@ -845,12 +782,6 @@ void MainWindow::_loadCurrentViewState(void)
             centerView = _missionEditorView;
             break;
 
-        case VIEW_SIMULATION:
-            _buildSimView();
-            centerView = _simView;
-            defaultWidgets = "WAYPOINT_LIST_DOCKWIDGET,PARAMETER_INTERFACE_DOCKWIDGET,PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET";
-            break;
-
         default:
             Q_ASSERT(false);
             break;
@@ -893,22 +824,9 @@ void MainWindow::_loadCurrentViewState(void)
         restoreState(settings.value(_getWindowStateKey()).toByteArray());
     }
 
-    // HIL dock widget are dynamic and don't take part in the saved window state, so this
-    // need to happen after we restore state
-#ifndef __mobile__
-    _showHILConfigurationWidgets();
-#endif
-
     // There is a bug in Qt where a Canvas element inside a QQuickWidget does not
     // receive update requests. Here we emit a signal for them to get repainted.
     emit repaintCanvas();
-}
-
-void MainWindow::_hideAllHilDockWidgets(void)
-{
-    foreach(QDockWidget* dockWidget, _mapUasId2HilDockWidget) {
-        dockWidget->setVisible(false);
-    }
 }
 
 void MainWindow::_hideAllDockWidgets(void)
@@ -916,7 +834,6 @@ void MainWindow::_hideAllDockWidgets(void)
     foreach(QDockWidget* dockWidget, _mapName2DockWidget) {
         dockWidget->setVisible(false);
     }
-    _hideAllHilDockWidgets();
 }
 
 void MainWindow::_showDockWidgetAction(bool show)
@@ -967,17 +884,6 @@ void MainWindow::loadFlightView()
         _storeCurrentViewState();
         _currentView = VIEW_FLIGHT;
         _ui.actionFlight->setChecked(true);
-        _loadCurrentViewState();
-    }
-}
-
-void MainWindow::loadSimulationView()
-{
-    if (_currentView != VIEW_SIMULATION)
-    {
-        _storeCurrentViewState();
-        _currentView = VIEW_SIMULATION;
-        _ui.actionSimulationView->setChecked(true);
         _loadCurrentViewState();
     }
 }

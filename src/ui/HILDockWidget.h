@@ -21,37 +21,22 @@
  
  ======================================================================*/
 
-#ifndef QGCHILCONFIGURATION_H
-#define QGCHILCONFIGURATION_H
+#ifndef HILDockWidget_H
+#define HILDockWidget_H
 
-#include <QWidget>
+#include "MultiVehicleDockWidget.h"
 
-#include "Vehicle.h"
-
-namespace Ui {
-class QGCHilConfiguration;
-}
-
-class QGCHilConfiguration : public QWidget
+class HILDockWidget : public MultiVehicleDockWidget
 {
     Q_OBJECT
-    
+
 public:
-    QGCHilConfiguration(Vehicle* vehicle, QWidget *parent = 0);
-    ~QGCHilConfiguration();
+    explicit HILDockWidget(QWidget *parent = 0);
+    ~HILDockWidget();
 
-public slots:
-    /** @brief Receive status message */
-    void receiveStatusMessage(const QString& message);
-    void setVersion(QString version);
-
-private slots:
-    void on_simComboBox_currentIndexChanged(int index);
-
-private:
-    Vehicle* _vehicle;
-    
-    Ui::QGCHilConfiguration *ui;
+protected:
+    // Override from MultiVehicleDockWidget
+    virtual QWidget* _newVehicleWidget(Vehicle* vehicle, QWidget* parent);
 };
 
-#endif // QGCHILCONFIGURATION_H
+#endif
