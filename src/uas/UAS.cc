@@ -132,10 +132,8 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle) : UASInterface(),
     blockHomePositionChanges(false),
     receivedMode(false),
 
-    // Initialize HIL sensor noise variances to 0.  If user wants corrupted sensor values they will need to set them
     // Note variances calculated from flight case from this log: http://dash.oznet.ch/view/MRjW8NUNYQSuSZkbn8dEjY
     // TODO: calibrate stand-still pixhawk variances
-    /*
     xacc_var(0.6457f),
     yacc_var(0.7048f),
     zacc_var(0.97885f),
@@ -149,7 +147,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle) : UASInterface(),
     diff_pressure_var(0.5802f),
     pressure_alt_var(0.5802f),
     temperature_var(0.7145f),
-    */
+    /*
     xacc_var(0.0f),
     yacc_var(0.0f),
     zacc_var(0.0f),
@@ -163,7 +161,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle) : UASInterface(),
     diff_pressure_var(0.0f),
     pressure_alt_var(0.0f),
     temperature_var(0.0f),
-
+    */
 
 #ifndef __mobile__
     simulation(0),
@@ -1960,6 +1958,22 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
         }
         simulation = new QGCFlightGearLink(this, options);
     }
+
+    float noise_scaler = 0.05f;
+    xacc_var = noise_scaler * 1.2914f;
+    yacc_var = noise_scaler * 0.7048f;
+    zacc_var = noise_scaler * 1.9577f;
+    rollspeed_var = noise_scaler * 0.8126f;
+    pitchspeed_var = noise_scaler * 0.6145f;
+    yawspeed_var = noise_scaler * 0.5852f;
+    xmag_var = noise_scaler * 0.4786f;
+    ymag_var = noise_scaler * 0.4566f;
+    zmag_var = noise_scaler * 0.3333f;
+    abs_pressure_var = noise_scaler * 1.1604f;
+    diff_pressure_var = noise_scaler * 0.6604f;
+    pressure_alt_var = noise_scaler * 1.1604f;
+    temperature_var = noise_scaler * 2.4290f;
+
     // Connect Flight Gear Link
     link = dynamic_cast<QGCFlightGearLink*>(simulation);
     link->setStartupArguments(options);
@@ -2018,10 +2032,9 @@ void UAS::enableHilXPlane(bool enable)
             stopHil();
             delete simulation;
         }
-        qDebug() << "CREATED NEW XPLANE LINK";
         simulation = new QGCXPlaneLink(this);
 
-        float noise_scaler = 0.1f;
+        float noise_scaler = 0.05f;
         xacc_var = noise_scaler * 1.2914f;
         yacc_var = noise_scaler * 0.7048f;
         zacc_var = noise_scaler * 1.9577f;
@@ -2165,7 +2178,6 @@ float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
     /* Calculate normally distributed variable noise with mean = 0 and variance = noise_var.  Calculated according to 
     Box-Muller transform */
     static const float epsilon = std::numeric_limits<float>::min(); //used to ensure non-zero uniform numbers
-    static const float two_pi = 2.0f * 3.14159265358979323846f; // 2*pi
     static float z0; //calculated normal distribution random variables with mu = 0, var = 1;
     float u1, u2;        //random variables generated from c++ rand();
     
@@ -2179,17 +2191,16 @@ float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
     }
     while ( u1 <= epsilon );  //Have a catch to ensure non-zero for log()
 
-    z0 = sqrt(-2.0 * log(u1)) * cos(two_pi * u2); //calculate normally distributed variable with mu = 0, var = 1
+    z0 = sqrt(-2.0 * log(u1)) * cos(2.0f * M_PI * u2); //calculate normally distributed variable with mu = 0, var = 1
     
     //TODO add bias term that changes randomly to simulate accelerometer and gyro bias the exf should handle these
     //as well
-    float noise = z0 * (noise_var*noise_var); //calculate normally distributed variable with mu = 0, std = var^2  
+    float noise = z0 * sqrt(noise_var); //calculate normally distributed variable with mu = 0, std = var^2
     
     //Finally gaurd against any case where the noise is not real
-    if(std::isfinite(noise)){
+    if(std::isfinite(noise)) {
             return truth_meas + noise;
-    }
-    else{
+    } else {
         return truth_meas;
     }
 }
