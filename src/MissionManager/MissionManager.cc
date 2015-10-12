@@ -53,12 +53,23 @@ MissionManager::~MissionManager()
 
 }
 
-void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems)
+void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems, bool skipFirstItem)
 {
     _retryCount = 0;
     _missionItems.clear();
-    for (int i=0; i<missionItems.count(); i++) {
+    
+    for (int i=skipFirstItem ? 1: 0; i<missionItems.count(); i++) {
         _missionItems.append(new MissionItem(*qobject_cast<const MissionItem*>(missionItems[i])));
+    }
+    
+    if (skipFirstItem) {
+        for (int i=0; i<_missionItems.count(); i++) {
+            MissionItem* item = qobject_cast<MissionItem*>(_missionItems[i]);
+            
+            if (item->command() == MAV_CMD_CONDITION_DELAY) {
+                item->setParam1((int)item->param1() - 1);
+            }
+        }
     }
 
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
@@ -370,24 +381,24 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
     
     mavlink_msg_mission_ack_decode(&message, &missionAck);
     
-    qCDebug(MissionManagerLog) << "_handleMissionAck type:" << missionAck.type;
+    qCDebug(MissionManagerLog) << "_handleMissionAck type:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
 
     switch (savedRetryAck) {
         case AckNone:
             // State machine is idle. Vehicle is confused.
-            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack while state machine is idle: error:" << missionAck.type;
+            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack while state machine is idle: error:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
             _sendError(VehicleError, QString("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
             break;
         case AckMissionCount:
             // MISSION_COUNT message expected
-            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack when MISSION_COUNT expected: error:" << missionAck.type;
+            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack when MISSION_COUNT expected: error:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
             if (!_retrySequence(AckMissionCount)) {
                 _sendError(VehicleError, QString("Vehicle returned error: %1. Partial list of mission items may have been returned.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
             }
             break;
         case AckMissionItem:
             // MISSION_ITEM expected
-            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack when MISSION_ITEM expected: error:" << missionAck.type;
+            qCDebug(MissionManagerLog) << "_handleMissionAck vehicle sent ack when MISSION_ITEM expected: error:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
             if (!_retrySequence(AckMissionItem)) {
                 _sendError(VehicleError, QString("Vehicle returned error: %1. Partial list of mission items may have been returned.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
             }
@@ -405,7 +416,7 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
                     }
                 }
             } else {
-                qCDebug(MissionManagerLog) << "_handleMissionAck ack error:" << missionAck.type;
+                qCDebug(MissionManagerLog) << "_handleMissionAck ack error:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
                 if (!_retrySequence(AckMissionRequest)) {
                     _sendError(VehicleError, QString("Vehicle returned error: %1.  Vehicle only has partial list of mission items.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
                 }
