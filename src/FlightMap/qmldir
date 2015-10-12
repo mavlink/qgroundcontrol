@@ -19,4 +19,4 @@ QGCSpeedWidget          1.0 QGCSpeedWidget.qml
 
 # MapQuickItems
 VehicleMapItem          1.0 VehicleMapItem.qml
-MissionItemIndicator          1.0 MissionItemIndicator.qml
+MissionItemIndicator    1.0 MissionItemIndicator.qml
