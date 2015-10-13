@@ -24,9 +24,9 @@
 #ifndef MultiVehicleDockWidget_H
 #define MultiVehicleDockWidget_H
 
-#include <QWidget>
 #include <QMap>
 
+#include "QGCDockWidget.h"
 #include "Vehicle.h"
 
 namespace Ui
@@ -37,12 +37,12 @@ namespace Ui
 /// Provides a base class for a dock widget which automatically handles
 /// Vehicles coming and going. It does this by using a stacked widget which
 /// holds individual Vehicle specific widgets.
-class MultiVehicleDockWidget : public QWidget
+class MultiVehicleDockWidget : public QGCDockWidget
 {
     Q_OBJECT
 
 public:
-    explicit MultiVehicleDockWidget(QWidget *parent = 0);
+    explicit MultiVehicleDockWidget(const QString& title, QAction* action, QWidget *parent = 0);
     ~MultiVehicleDockWidget();
     
     /// Must be called in the derived class contructor to initialize the base class

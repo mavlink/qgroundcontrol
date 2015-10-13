@@ -32,10 +32,10 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _UASINFOWIDGET_H_
 #define _UASINFOWIDGET_H_
 
-#include <QWidget>
 #include <QTimer>
 #include <QMap>
 
+#include "QGCDockWidget.h"
 #include "UASInterface.h"
 #include "ui_UASInfo.h"
 #include "Vehicle.h"
@@ -44,11 +44,11 @@ This file is part of the QGROUNDCONTROL project
  * @brief Info indicator for the currently active UAS
  *
  **/
-class UASInfoWidget : public QWidget
+class UASInfoWidget : public QGCDockWidget
 {
     Q_OBJECT
 public:
-    UASInfoWidget(QWidget *parent = 0, QString name = "");
+    UASInfoWidget(const QString& title, QAction* action, QWidget *parent = 0, QString name = "");
     ~UASInfoWidget();
 
 public slots:

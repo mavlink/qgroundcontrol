@@ -35,24 +35,26 @@ This file is part of the QGROUNDCONTROL project
 #include <QStatusBar>
 #include <QStackedWidget>
 #include <QSettings>
-#include <qlist.h>
+#include <QList>
 
 #include "ui_MainWindow.h"
 #include "LinkManager.h"
 #include "LinkInterface.h"
 #include "UASInterface.h"
 #include "CameraView.h"
-#if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
-#include "Mouse6dofInput.h"
-#endif // QGC_MOUSE_ENABLED_WIN
 #include "MainToolBar.h"
 #include "LogCompressor.h"
-
 #include "FlightDisplayView.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
 #include "Vehicle.h"
+#include "QGCDockWidget.h"
+
+#if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
+    #include "Mouse6dofInput.h"
+#endif // QGC_MOUSE_ENABLED_WIN
+
 
 class QGCFirmwareUpdate;
 class QSplashScreen;
@@ -270,13 +272,12 @@ private:
     static const char* _customCommandWidgetName;
     static const char* _filesDockWidgetName;
     static const char* _uasStatusDetailsDockWidgetName;
-    static const char* _mapViewDockWidgetName;
     static const char* _pfdDockWidgetName;
     static const char* _uasInfoViewDockWidgetName;
     static const char* _hilDockWidgetName;
 
-    QMap<QString, QDockWidget*>     _mapName2DockWidget;
-    QMap<QDockWidget*, QAction*>    _mapDockWidget2Action;
+    QMap<QString, QGCDockWidget*>   _mapName2DockWidget;
+    QMap<QString, QAction*>         _mapName2Action;
 #endif
 
     void _buildPlanView(void);
@@ -290,11 +291,14 @@ private:
     void _loadCurrentViewState(void);
 
 #ifndef __mobile__
-    void _createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget);
     void _createInnerDockWidget(const QString& widgetName);
     void _buildCommonWidgets(void);
     void _hideAllDockWidgets(void);
     void _showDockWidget(const QString &name, bool show);
+    void _loadVisibleWidgetsSettings(void);
+    void _storeVisibleWidgetsSettings(void);
+    
+    static const char* _visibleWidgetsKey;
 #endif
 
     bool                    _autoReconnect;

@@ -4,8 +4,8 @@
 #include "MultiVehicleManager.h"
 #include "QGCUASFileView.h"
 
-QGCUASFileViewMulti::QGCUASFileViewMulti(QWidget *parent) :
-    QWidget(parent),
+QGCUASFileViewMulti::QGCUASFileViewMulti(const QString& title, QAction* action, QWidget *parent) :
+    QGCDockWidget(title, action, parent),
     ui(new Ui::QGCUASFileViewMulti)
 {
     ui->setupUi(this);
@@ -18,6 +18,8 @@ QGCUASFileViewMulti::QGCUASFileViewMulti(QWidget *parent) :
         _vehicleAdded(MultiVehicleManager::instance()->activeVehicle());
         _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
     }
+    
+    loadSettings();
 }
 
 void QGCUASFileViewMulti::_vehicleRemoved(Vehicle* vehicle)
