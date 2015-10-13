@@ -47,6 +47,7 @@ QGCView {
     property var    _missionItems:              controller.missionItems
     property bool   _showHomePositionManager:   false
     property bool   _addMissionItems:           false
+    property bool   _showHelpPanel:             true
 
     property var    _homePositionManager:       QGroundControl.homePositionManager
     property string _homePositionName:          _homePositionManager.homePositions.get(0).name
@@ -60,6 +61,12 @@ QGCView {
 
     ExclusiveGroup {
         id: _dropButtonsExclusiveGroup
+    }
+
+    function disableToggles() {
+        _showHomePositionManager    = false
+        _addMissionItems            = false
+        _showHelpPanel              = false
     }
 
     function setCurrentItem(index) {
@@ -141,8 +148,8 @@ QGCView {
                         buttonImage:            "/qmlimages/MapAddMission.svg"
                         exclusiveGroup:         _dropButtonsExclusiveGroup
                         onClicked: {
+                            disableToggles()
                             _addMissionItems = addMissionItemsButton.checked
-                            _showHomePositionManager = false
                         }
                     }
 
@@ -151,8 +158,8 @@ QGCView {
                         buttonImage:            "/qmlimages/MapHome.svg"
                         exclusiveGroup:         _dropButtonsExclusiveGroup
                         onClicked: {
+                            disableToggles()
                             _showHomePositionManager = homePositionManagerButton.checked
-                            _addMissionItems = false
                         }
                     }
 
@@ -164,8 +171,7 @@ QGCView {
                         exclusiveGroup:         _dropButtonsExclusiveGroup
 
                         onClicked: {
-                            _showHomePositionManager    = false
-                            _addMissionItems            = false
+                            disableToggles()
                         }
 
                         dropDownComponent: Component {
@@ -242,8 +248,7 @@ QGCView {
                         exclusiveGroup:         _dropButtonsExclusiveGroup
 
                         onClicked: {
-                            _showHomePositionManager    = false
-                            _addMissionItems            = false
+                            disableToggles()
                         }
 
                         dropDownComponent: Component {
@@ -299,8 +304,7 @@ QGCView {
                         exclusiveGroup:         _dropButtonsExclusiveGroup
 
                         onClicked: {
-                            _showHomePositionManager    = false
-                            _addMissionItems            = false
+                            disableToggles()
                         }
 
                         dropDownComponent: Component {
@@ -326,6 +330,18 @@ QGCView {
                             }
                         }
                     }
+
+                    RoundButton {
+                        id:                     showHelpButton
+                        buttonImage:            "/qmlimages/Help.svg"
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                        checked:                true
+                        onClicked: {
+                            disableToggles()
+                            _showHelpPanel = showHelpButton.checked
+                        }
+                    }
+
                 }
 
                 MissionItemIndicator {
@@ -334,7 +350,14 @@ QGCView {
                     coordinate:     _homePositionCoordinate
                     z:              2
 
-                    onClicked: _showHomePositionManager = true
+                    onClicked: {
+                        disableToggles()
+                        if (_dropButtonsExclusiveGroup.current) {
+                            _dropButtonsExclusiveGroup.current.checked = false
+                        }
+                        homePositionManagerButton.checked = true
+                        _showHomePositionManager = true
+                    }
                 }
 
                 // Add the mission items to the map
@@ -349,7 +372,13 @@ QGCView {
                             z:              2
 
                             onClicked: {
+                                disableToggles()
                                 _showHomePositionManager = false
+                                _addMissionItems = true
+                                if (_dropButtonsExclusiveGroup.current) {
+                                    _dropButtonsExclusiveGroup.current.checked = false
+                                }
+                                addMissionItemsButton.checked = true
                                 setCurrentItem(object.sequenceNumber)
                             }
                         }
@@ -432,7 +461,7 @@ QGCView {
                     // Mission Item Editor
                     Item {
                         anchors.fill:   parent
-                        visible:        !_showHomePositionManager && controller.missionItems.count != 0
+                        visible:        !_showHomePositionManager && controller.missionItems.count != 0 && !_showHelpPanel
 
                         ListView {
                             id:             missionItemSummaryList
@@ -476,7 +505,7 @@ QGCView {
                     // Home Position Manager
                     Item {
                         anchors.fill:   parent
-                        visible:        _showHomePositionManager
+                        visible:        _showHomePositionManager && !_showHelpPanel
 
                         Column {
                             anchors.fill: parent
@@ -651,7 +680,7 @@ QGCView {
                     // Help Panel
                     Item {
                         anchors.fill:   parent
-                        visible:        !_showHomePositionManager && controller.missionItems.count == 0
+                        visible:        !_showHomePositionManager && (controller.missionItems.count == 0 || _showHelpPanel)
 
                         QGCLabel {
                             id:             helpTitle
