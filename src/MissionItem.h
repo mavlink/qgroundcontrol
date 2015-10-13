@@ -36,6 +36,7 @@
 #include "QmlObjectListModel.h"
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MissionItemLog)
 
@@ -76,6 +77,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  textFieldFacts      READ textFieldFacts                                 NOTIFY commandChanged)
     Q_PROPERTY(QmlObjectListModel*  checkboxFacts       READ checkboxFacts                                  NOTIFY commandChanged)
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand        NOTIFY commandChanged)
+    Q_PROPERTY(QmlObjectListModel*  childItems          READ childItems                                     CONSTANT)
     
     // Property accesors
     
@@ -110,6 +112,8 @@ public:
     
     bool dirty(void) { return _dirty; }
     void setDirty(bool dirty);
+    
+    QmlObjectListModel* childItems(void) { return &_childItems; }
     
     // C++ only methods
     
@@ -183,6 +187,8 @@ public:
 
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);
+    
+    void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
     
 signals:
     void sequenceNumberChanged(int sequenceNumber);
@@ -264,6 +270,11 @@ private:
     FactMetaData*   _jumpRepeatMetaData;
     
     bool _dirty;
+    
+    bool _homePositionSpecialCase;  ///< true: this item is being used as a ui home position indicator
+    
+    /// This is used to reference any subsequent mission items which do not specify a coordinate.
+    QmlObjectListModel  _childItems;
     
     static const int            _cMavCmd2Name = 9;
     static const MavCmd2Name_t  _rgMavCmd2Name[_cMavCmd2Name];

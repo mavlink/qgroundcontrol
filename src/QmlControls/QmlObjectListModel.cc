@@ -35,6 +35,7 @@ const int QmlObjectListModel::TextRole = Qt::UserRole + 1;
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : QAbstractListModel(parent)
     , _dirty(false)
+    , _skipDirtyFirstItem(false)
 {
 
 }
@@ -147,16 +148,22 @@ void QmlObjectListModel::clear(void)
     }
 }
 
-void QmlObjectListModel::removeAt(int i)
+QObject* QmlObjectListModel::removeAt(int i)
 {
+    QObject* removedObject = _objectList[i];
+    
     // Look for a dirtyChanged signal on the object
     if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
-        QObject::disconnect(_objectList[i], SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
+        if (!_skipDirtyFirstItem || i != 0) {
+            QObject::disconnect(_objectList[i], SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
+        }
     }
     
     removeRows(i, 1);
     
     setDirty(true);
+    
+    return removedObject;
 }
 
 void QmlObjectListModel::insert(int i, QObject* object)
@@ -169,7 +176,9 @@ void QmlObjectListModel::insert(int i, QObject* object)
     
     // Look for a dirtyChanged signal on the object
     if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
-        QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
+        if (!_skipDirtyFirstItem || i != 0) {
+            QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
+        }
     }
 
     _objectList.insert(i, object);

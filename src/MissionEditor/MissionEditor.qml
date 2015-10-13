@@ -32,6 +32,7 @@ import QGroundControl.FlightMap     1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.Mavlink       1.0
 
 /// Mission Editor
 
@@ -51,7 +52,7 @@ QGCView {
 
     property var    _homePositionManager:       QGroundControl.homePositionManager
     property string _homePositionName:          _homePositionManager.homePositions.get(0).name
-    property var    _homePositionCoordinate:    _homePositionManager.homePositions.get(0).coordinate
+    property var    homePositionCoordinate:     _homePositionManager.homePositions.get(0).coordinate
 
     QGCPalette { id: _qgcPal; colorGroupEnabled: enabled }
 
@@ -75,6 +76,22 @@ QGCView {
         }
     }
 
+    // Home position is mission item 0, so keep them in sync
+    onHomePositionCoordinateChanged: {
+        // Changing the coordinate will set the dirty bit, so we save and reset it
+        var dirtyBit = _missionItems.dirty
+        _missionItems.get(0).coordinate = homePositionCoordinate
+        _missionItems.dirty = dirtyBit
+    }
+
+    Component.onCompleted: onHomePositionCoordinateChanged
+
+    Connections {
+        target: controller
+
+        onMissionItemsChanged: _missionItems.get(0).coordinate = homePositionCoordinate
+    }
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
@@ -91,8 +108,8 @@ QGCView {
                 mapName:        "MissionEditor"
 
                 Component.onCompleted: {
-                    latitude = _homePositionCoordinate.latitude
-                    longitude = _homePositionCoordinate.longitude
+                    latitude = homePositionCoordinate.latitude
+                    longitude = homePositionCoordinate.longitude
                 }
 
                 MouseArea {
@@ -104,7 +121,7 @@ QGCView {
                         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
                         if (_showHomePositionManager) {
-                            _homePositionCoordinate = coordinate
+                            homePositionCoordinate = coordinate
                         } else if (_addMissionItems) {
                             var index = controller.addMissionItem(coordinate)
                             setCurrentItem(index)
@@ -183,7 +200,7 @@ QGCView {
 
                                     onClicked: {
                                         centerMapButton.hideDropDown()
-                                        editorMap.center = QtPositioning.coordinate(_homePositionCoordinate.latitude, _homePositionCoordinate.longitude)
+                                        editorMap.center = QtPositioning.coordinate(homePositionCoordinate.latitude, homePositionCoordinate.longitude)
                                         _showHomePositionManager = true
                                     }
                                 }
@@ -212,8 +229,8 @@ QGCView {
                                         centerMapButton.hideDropDown()
 
                                         // Begin with only the home position in the region
-                                        var region = QtPositioning.rectangle(QtPositioning.coordinate(_homePositionCoordinate.latitude, _homePositionCoordinate.longitude),
-                                                                             QtPositioning.coordinate(_homePositionCoordinate.latitude, _homePositionCoordinate.longitude))
+                                        var region = QtPositioning.rectangle(QtPositioning.coordinate(homePositionCoordinate.latitude, _homePositionCoordinate.longitude),
+                                                                             QtPositioning.coordinate(homePositionCoordinate.latitude, _homePositionCoordinate.longitude))
 
                                         // Now expand the region to include all mission items
                                         for (var i=0; i<_missionItems.count; i++) {
@@ -344,75 +361,47 @@ QGCView {
 
                 }
 
-                MissionItemIndicator {
-                    label:          "H"
-                    isCurrentItem:  _showHomePositionManager
-                    coordinate:     _homePositionCoordinate
-                    z:              2
-
-                    onClicked: {
-                        disableToggles()
-                        if (_dropButtonsExclusiveGroup.current) {
-                            _dropButtonsExclusiveGroup.current.checked = false
-                        }
-                        homePositionManagerButton.checked = true
-                        _showHomePositionManager = true
-                    }
-                }
-
                 // Add the mission items to the map
                 MapItemView {
                     model: controller.missionItems
                     
                     delegate:
                         MissionItemIndicator {
-                            label:          object.sequenceNumber
+                            id:             itemIndicator
+                            label:          object.sequenceNumber == 0 ? "H" : object.sequenceNumber
                             isCurrentItem:  !_showHomePositionManager && object.isCurrentItem
                             coordinate:     object.coordinate
                             z:              2
+                            visible:        object.specifiesCoordinate
 
                             onClicked: {
-                                disableToggles()
                                 _showHomePositionManager = false
-                                _addMissionItems = true
-                                if (_dropButtonsExclusiveGroup.current) {
-                                    _dropButtonsExclusiveGroup.current.checked = false
-                                }
-                                addMissionItemsButton.checked = true
                                 setCurrentItem(object.sequenceNumber)
+                            }
+
+                            Row {
+                                anchors.top:    parent.top
+                                anchors.left:   parent.right
+
+                                Repeater {
+                                    model: object.childItems
+
+                                    delegate:
+                                        MissionItemIndexLabel {
+                                            label:          object.sequenceNumber
+                                            isCurrentItem:  !_showHomePositionManager && object.isCurrentItem
+                                            z:              2
+
+                                            onClicked: {
+                                                _showHomePositionManager = false
+                                                setCurrentItem(object.sequenceNumber)
+                                            }
+
+                                        }
+                                }
                             }
                         }
                 }
-
-                MapPolyline {
-                    id:         homePositionLine
-                    line.width: 3
-                    line.color: _qgcPal.mapButtonHighlight
-                    z:          1
-
-                    property var homePositionCoordinate: _homePositionCoordinate
-
-                    function update() {
-                        while (homePositionLine.path.length != 0) {
-                            homePositionLine.removeCoordinate(homePositionLine.path[0])
-                        }
-                        if (_missionItems && _missionItems.count != 0) {
-                            homePositionLine.addCoordinate(homePositionCoordinate)
-                            homePositionLine.addCoordinate(_missionItems.get(0).coordinate)
-                        }
-                    }
-
-                    onHomePositionCoordinateChanged: update()
-
-                    Connections {
-                        target: controller
-
-                        onWaypointLinesChanged: homePositionLine.update()
-                    }
-
-                    Component.onCompleted: homePositionLine.update()
-                }
-
 
                 // Add lines between waypoints
                 MapItemView {
@@ -461,7 +450,7 @@ QGCView {
                     // Mission Item Editor
                     Item {
                         anchors.fill:   parent
-                        visible:        !_showHomePositionManager && controller.missionItems.count != 0 && !_showHelpPanel
+                        visible:        !_showHomePositionManager && controller.missionItems.count != 1 && ! _showHelpPanel
 
                         ListView {
                             id:             missionItemSummaryList
@@ -482,7 +471,7 @@ QGCView {
                                     onRemove: {
                                         var newCurrentItem = object.sequenceNumber - 1
                                         controller.removeMissionItem(object.sequenceNumber)
-                                        if (_missionItems.count) {
+                                        if (_missionItems.count > 1) {
                                             newCurrentItem = Math.min(_missionItems.count - 1, newCurrentItem)
                                             setCurrentItem(newCurrentItem)
                                         }
@@ -534,9 +523,9 @@ QGCView {
                                     if (currentIndex != -1) {
                                         var homePos = _homePositionManager.homePositions.get(currentIndex)
                                         _homePositionName = homePos.name
-                                        _homePositionCoordinate = homePos.coordinate
-                                        editorMap.latitude = _homePositionCoordinate.latitude
-                                        editorMap.longitude = _homePositionCoordinate.longitude
+                                        homePositionCoordinate = homePos.coordinate
+                                        editorMap.latitude = homePositionCoordinate.latitude
+                                        editorMap.longitude = homePositionCoordinate.longitude
                                     }
                                 }
                             }
@@ -595,7 +584,7 @@ QGCView {
                                     id:             latitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           _homePositionCoordinate.latitude
+                                    text:           homePositionCoordinate.latitude
                                 }
                             }
 
@@ -617,7 +606,7 @@ QGCView {
                                     id:             longitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           _homePositionCoordinate.longitude
+                                    text:           homePositionCoordinate.longitude
                                 }
                             }
 
@@ -639,7 +628,7 @@ QGCView {
                                     id:             altitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           _homePositionCoordinate.altitude
+                                    text:           homePositionCoordinate.altitude
                                 }
                             }
 
@@ -655,8 +644,8 @@ QGCView {
                                     text: "Add/Update"
 
                                     onClicked: {
-                                        _homePositionCoordinate = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
-                                        _homePositionManager.updateHomePosition(nameField.text, _homePositionCoordinate)
+                                        homePositionCoordinate = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
+                                        _homePositionManager.updateHomePosition(nameField.text, homePositionCoordinate)
                                         homePosCombo.currentIndex = homePosCombo.find(nameField.text)
                                     }
                                 }
@@ -670,7 +659,7 @@ QGCView {
                                         homePosCombo.currentIndex = 0
                                         var homePos = _homePositionManager.homePositions.get(0)
                                         _homePositionName = homePos.name
-                                        _homePositionCoordinate = homePos.coordinate
+                                        homePositionCoordinate = homePos.coordinate
                                     }
                                 }
                             }
@@ -680,7 +669,7 @@ QGCView {
                     // Help Panel
                     Item {
                         anchors.fill:   parent
-                        visible:        !_showHomePositionManager && (controller.missionItems.count == 0 || _showHelpPanel)
+                        visible:        !_showHomePositionManager && (controller.missionItems.count == 1 || _showHelpPanel)
 
                         QGCLabel {
                             id:             helpTitle
