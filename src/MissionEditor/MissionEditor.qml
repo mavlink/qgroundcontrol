@@ -387,7 +387,7 @@ QGCView {
                 MapPolyline {
                     id:         homePositionLine
                     line.width: 3
-                    line.color: "orange"
+                    line.color: _qgcPal.mapButtonHighlight
                     z:          1
 
                     property var homePositionCoordinate: _homePositionCoordinate
@@ -421,7 +421,7 @@ QGCView {
                     delegate:
                         MapPolyline {
                             line.width: 3
-                            line.color: "orange"
+                            line.color: _qgcPal.mapButtonHighlight
                             z:          1
 
                             path: [
