@@ -15,8 +15,8 @@ Item {
 
     // On OSX ElCapitan with Qt 5.4.0 any font pixel size above 19 shows garbage test. No idea why at this point.
     // Will remove Math.min when problem is figure out.
-    readonly property real mediumFontPixelSize:     Math.min(defaultFontPixelSize * ScreenToolsController.mediumFontPixelSizeRatio, 19)
-    readonly property real largeFontPixelSize:      Math.min(defaultFontPixelSize * ScreenToolsController.largeFontPixelSizeRatio, 19)
+    readonly property real mediumFontPixelSize:     Math.min(defaultFontPixelSize * ScreenToolsController.mediumFontPixelSizeRatio, ScreenToolsController.isMobile ? 10000 : 19)
+    readonly property real largeFontPixelSize:      Math.min(defaultFontPixelSize * ScreenToolsController.largeFontPixelSizeRatio, ScreenToolsController.isMobile ? 10000 : 19)
 
     property bool isAndroid:        ScreenToolsController.isAndroid
     property bool isiOS:            ScreenToolsController.isiOS
