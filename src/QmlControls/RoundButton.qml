@@ -3,6 +3,7 @@ import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette       1.0
 
 Item {
     id: _root
@@ -17,6 +18,8 @@ Item {
     property bool checked: false
     property ExclusiveGroup exclusiveGroup: null
 
+    QGCPalette { id: qgcPal }
+
     onExclusiveGroupChanged: {
         if (exclusiveGroup) {
             exclusiveGroup.bindCheckable(_root)
@@ -29,7 +32,7 @@ Item {
         border.width:   2
         border.color:   "white"
         opacity:        checked ? 0.95 : 0.65
-        color:          checked ? "orange" : "black"
+        color:          checked ? qgcPal.mapButtonHighlight : qgcPal.mapButton
         Image {
             id:             button
             anchors.fill:   parent
