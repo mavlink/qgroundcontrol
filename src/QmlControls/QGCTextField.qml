@@ -12,6 +12,7 @@ TextField {
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     textColor: __qgcPal.textFieldText
+    height: ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 3 * 0.75 : implicitHeight
 
     Label {
         id: unitsLabelWidthGenerator
