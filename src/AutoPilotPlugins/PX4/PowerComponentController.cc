@@ -27,6 +27,7 @@
 #include "PowerComponentController.h"
 #include "QGCMAVLink.h"
 #include "QGCMessageBox.h"
+#include "UAS.h"
 
 #include <QVariant>
 #include <QQmlProperty>

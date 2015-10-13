@@ -52,7 +52,7 @@ MissionEditor::MissionEditor(QWidget *parent)
         _newMissionItemsAvailable();
     } else {
         _missionItems = new QmlObjectListModel(this);
-        connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionEditor::_missionListDirtyChanged);
+        _initAllMissionItems();
     }
     
     setContextPropertyObject("controller", this);
@@ -67,6 +67,7 @@ MissionEditor::~MissionEditor()
 void MissionEditor::_newMissionItemsAvailable(void)
 {
     if (_missionItems) {
+        _deinitAllMissionItems();
         _missionItems->deleteLater();
     }
     
@@ -74,14 +75,8 @@ void MissionEditor::_newMissionItemsAvailable(void)
     
     _canEdit = missionManager->canEdit();
     _missionItems = missionManager->copyMissionItems();
-    _reSequence();
-    _missionItems->setDirty(false);
     
-    connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionEditor::_missionListDirtyChanged);
-    _rebuildWaypointLines();
-    
-    emit missionItemsChanged();
-    emit canEditChanged(_canEdit);
+    _initAllMissionItems();
 }
 
 void MissionEditor::getMissionItems(void)
@@ -97,10 +92,11 @@ void MissionEditor::getMissionItems(void)
 
 void MissionEditor::setMissionItems(void)
 {
+    // FIXME: Need to pull out home position
     Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     
     if (activeVehicle) {
-        activeVehicle->missionManager()->writeMissionItems(*_missionItems);
+        activeVehicle->missionManager()->writeMissionItems(*_missionItems, true /* skipFirstItem */);
         _missionItems->setDirty(false);
     }
 }
@@ -112,21 +108,17 @@ int MissionEditor::addMissionItem(QGeoCoordinate coordinate)
     }
     
     MissionItem * newItem = new MissionItem(this, _missionItems->count(), coordinate, MAV_CMD_NAV_WAYPOINT);
+    _initMissionItem(newItem);
     newItem->setAltitude(30);
-    if (_missionItems->count() == 0) {
+    if (_missionItems->count() == 1) {
         newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
     }
     qDebug() << "MissionItem" << newItem->coordinate();
     _missionItems->append(newItem);
     
+    _recalcAll();
+    
     return _missionItems->count() - 1;
-}
-
-void MissionEditor::_reSequence(void)
-{
-    for (int i=0; i<_missionItems->count(); i++) {
-        qobject_cast<MissionItem*>(_missionItems->get(i))->setSequenceNumber(i);
-    }
 }
 
 void MissionEditor::removeMissionItem(int index)
@@ -136,8 +128,11 @@ void MissionEditor::removeMissionItem(int index)
         return;
     }
     
-    _missionItems->removeAt(index);
-    _reSequence();
+    MissionItem* item = qobject_cast<MissionItem*>(_missionItems->removeAt(index));
+    
+    _deinitMissionItem(item);
+    
+    _recalcAll();
 }
 
 void MissionEditor::moveUp(int index)
@@ -160,7 +155,7 @@ void MissionEditor::moveUp(int index)
     _missionItems->insert(index - 1, new MissionItem(item2, _missionItems));
     _missionItems->insert(index, new MissionItem(item1, _missionItems));
     
-    _reSequence();
+    _recalcAll();
 }
 
 void MissionEditor::moveDown(int index)
@@ -183,7 +178,7 @@ void MissionEditor::moveDown(int index)
     _missionItems->insert(index, new MissionItem(item2, _missionItems));
     _missionItems->insert(index + 1, new MissionItem(item1, _missionItems));
     
-    _reSequence();
+    _recalcAll();
 }
 
 void MissionEditor::loadMissionFromFile(void)
@@ -196,6 +191,7 @@ void MissionEditor::loadMissionFromFile(void)
     }
     
     if (_missionItems) {
+        _deinitAllMissionItems();
         _missionItems->deleteLater();
     }
     _missionItems = new QmlObjectListModel(this);
@@ -236,11 +232,7 @@ void MissionEditor::loadMissionFromFile(void)
         _missionItems->clear();
     }
     
-    _missionItems->setDirty(false);
-    emit canEditChanged(_canEdit);
-    
-    connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionEditor::_missionListDirtyChanged);
-    _rebuildWaypointLines();
+    _initAllMissionItems();
 }
 
 void MissionEditor::saveMissionToFile(void)
@@ -269,20 +261,131 @@ void MissionEditor::saveMissionToFile(void)
     _missionItems->setDirty(false);
 }
 
-void MissionEditor::_rebuildWaypointLines(void)
+void MissionEditor::_recalcWaypointLines(void)
 {
+    bool firstCoordinateItem = true;
+    MissionItem* lastCoordinateItem = qobject_cast<MissionItem*>(_missionItems->get(0));
+    
     _waypointLines.clear();
+    
     for (int i=1; i<_missionItems->count(); i++) {
-        MissionItem* item1 = qobject_cast<MissionItem*>(_missionItems->get(i-1));
-        MissionItem* item2 = qobject_cast<MissionItem*>(_missionItems->get(i));
+        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
         
-        _waypointLines.append(new CoordinateVector(item1->coordinate(), item2->coordinate()));
+        if (item->specifiesCoordinate()) {
+            if (firstCoordinateItem) {
+                if (item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
+                    // The first coordinate we hit is a takeoff command so link back to home position
+                    _waypointLines.append(new CoordinateVector(qobject_cast<MissionItem*>(_missionItems->get(0))->coordinate(), item->coordinate()));
+                } else {
+                    // First coordiante is not a takeoff command, it does not link backwards to anything
+                }
+                firstCoordinateItem = false;
+            } else {
+                // Subsequent coordinate items link to last coordinate item
+                _waypointLines.append(new CoordinateVector(lastCoordinateItem->coordinate(), item->coordinate()));
+            }
+            lastCoordinateItem = item;
+        }
     }
+    
     emit waypointLinesChanged();
 }
 
-void MissionEditor::_missionListDirtyChanged(bool dirty)
+// This will update the sequence numbers to be sequential starting from 0
+void MissionEditor::_recalcSequence(void)
 {
-    Q_UNUSED(dirty);
-    _rebuildWaypointLines();
+    MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(0));
+    
+    currentParentItem->childItems()->clear();
+    
+    for (int i=0; i<_missionItems->count(); i++) {
+        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+        
+        // Setup ascending sequence numbers
+        item->setSequenceNumber(i);
+    }
+}
+
+// This will update the child item hierarchy
+void MissionEditor::_recalcChildItems(void)
+{
+    MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(0));
+    
+    currentParentItem->childItems()->clear();
+    
+    for (int i=1; i<_missionItems->count(); i++) {
+        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+        
+        // Set up non-coordinate item child hierarchy
+        if (item->specifiesCoordinate()) {
+            item->childItems()->clear();
+            currentParentItem = item;
+        } else {
+            currentParentItem->childItems()->append(item);
+        }
+    }
+}
+
+void MissionEditor::_recalcAll(void)
+{
+    _recalcSequence();
+    _recalcChildItems();
+    _recalcWaypointLines();
+}
+
+/// Initializes a new set of mission items which may have come from the vehicle or have been loaded from a file
+void MissionEditor::_initAllMissionItems(void)
+{
+    // Add the home position item to the front
+    MissionItem* homeItem = new MissionItem(this);
+    homeItem->setHomePositionSpecialCase(true);
+    homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
+    _missionItems->insert(0, homeItem);
+    
+    for (int i=0; i<_missionItems->count(); i++) {
+        _initMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));
+    }
+    
+    _recalcSequence();
+    _recalcChildItems();
+    _recalcWaypointLines();
+    
+    emit missionItemsChanged();
+    emit canEditChanged(_canEdit);
+    
+    _missionItems->setDirty(false);
+}
+
+void MissionEditor::_deinitAllMissionItems(void)
+{
+    for (int i=0; i<_missionItems->count(); i++) {
+        _deinitMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));
+    }
+}
+
+void MissionEditor::_initMissionItem(MissionItem* item)
+{
+    _missionItems->setDirty(false);
+    
+    connect(item, &MissionItem::commandChanged,     this, &MissionEditor::_itemCommandChanged);
+    connect(item, &MissionItem::coordinateChanged,  this, &MissionEditor::_itemCoordinateChanged);
+}
+
+void MissionEditor::_deinitMissionItem(MissionItem* item)
+{
+    disconnect(item, &MissionItem::commandChanged,     this, &MissionEditor::_itemCommandChanged);
+    disconnect(item, &MissionItem::coordinateChanged,  this, &MissionEditor::_itemCoordinateChanged);
+}
+
+void MissionEditor::_itemCoordinateChanged(const QGeoCoordinate& coordinate)
+{
+    Q_UNUSED(coordinate);
+    _recalcWaypointLines();
+}
+
+void MissionEditor::_itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command)
+{
+    Q_UNUSED(command);;
+    _recalcChildItems();
+    _recalcWaypointLines();
 }

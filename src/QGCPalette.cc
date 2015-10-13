@@ -98,6 +98,16 @@ QColor QGCPalette::_textFieldText[QGCPalette::_cThemes][QGCPalette::_cColorGroup
     { QColor(0x2c, 0x2c, 0x2c), QColor(0, 0, 0) },
 };
 
+QColor QGCPalette::_mapButton[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0x58, 0x58, 0x58), QColor(0, 0, 0) },
+    { QColor(0x58, 0x58, 0x58), QColor(0, 0, 0) },
+};
+
+QColor QGCPalette::_mapButtonHighlight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0x58, 0x58, 0x58), QColor(190, 120, 28) },
+    { QColor(0x58, 0x58, 0x58), QColor(190, 120, 28) },
+};
+
 QGCPalette::QGCPalette(QObject* parent) :
     QObject(parent),
     _colorGroupEnabled(true)

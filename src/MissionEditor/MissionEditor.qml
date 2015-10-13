@@ -32,6 +32,7 @@ import QGroundControl.FlightMap     1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.Mavlink       1.0
 
 /// Mission Editor
 
@@ -47,10 +48,11 @@ QGCView {
     property var    _missionItems:              controller.missionItems
     property bool   _showHomePositionManager:   false
     property bool   _addMissionItems:           false
+    property bool   _showHelpPanel:             true
 
     property var    _homePositionManager:       QGroundControl.homePositionManager
     property string _homePositionName:          _homePositionManager.homePositions.get(0).name
-    property var    _homePositionCoordinate:    _homePositionManager.homePositions.get(0).coordinate
+    property var    homePositionCoordinate:     _homePositionManager.homePositions.get(0).coordinate
 
     QGCPalette { id: _qgcPal; colorGroupEnabled: enabled }
 
@@ -62,10 +64,32 @@ QGCView {
         id: _dropButtonsExclusiveGroup
     }
 
+    function disableToggles() {
+        _showHomePositionManager    = false
+        _addMissionItems            = false
+        _showHelpPanel              = false
+    }
+
     function setCurrentItem(index) {
         for (var i=0; i<_missionItems.count; i++) {
             _missionItems.get(i).isCurrentItem = (i == index)
         }
+    }
+
+    // Home position is mission item 0, so keep them in sync
+    onHomePositionCoordinateChanged: {
+        // Changing the coordinate will set the dirty bit, so we save and reset it
+        var dirtyBit = _missionItems.dirty
+        _missionItems.get(0).coordinate = homePositionCoordinate
+        _missionItems.dirty = dirtyBit
+    }
+
+    Component.onCompleted: onHomePositionCoordinateChanged
+
+    Connections {
+        target: controller
+
+        onMissionItemsChanged: _missionItems.get(0).coordinate = homePositionCoordinate
     }
 
     QGCViewPanel {
@@ -84,8 +108,8 @@ QGCView {
                 mapName:        "MissionEditor"
 
                 Component.onCompleted: {
-                    latitude = _homePositionCoordinate.latitude
-                    longitude = _homePositionCoordinate.longitude
+                    latitude = homePositionCoordinate.latitude
+                    longitude = homePositionCoordinate.longitude
                 }
 
                 MouseArea {
@@ -97,7 +121,7 @@ QGCView {
                         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
                         if (_showHomePositionManager) {
-                            _homePositionCoordinate = coordinate
+                            homePositionCoordinate = coordinate
                         } else if (_addMissionItems) {
                             var index = controller.addMissionItem(coordinate)
                             setCurrentItem(index)
@@ -108,7 +132,7 @@ QGCView {
                 Rectangle {
                     anchors.horizontalCenter:   parent.horizontalCenter
                     anchors.bottom:             parent.bottom
-                    width:                      parent.width / 3
+                    width:                      parent.width * 0.75
                     height:                     syncNeededText.height + (ScreenTools.defaultFontPixelWidth * 2)
                     border.width:               1
                     border.color:               "white"
@@ -130,262 +154,211 @@ QGCView {
                     }
                 }
 
-                Rectangle {
-                    id:                     addMissionItemsButton
-                    anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
-                    anchors.right:          homePositionManagerButton.left
-                    anchors.top:            homePositionManagerButton.top
-                    radius:                 (ScreenTools.defaultFontPixelHeight * 3) / 2
-                    width:                  radius * 2
-                    height:                 radius * 2
-                    border.width:           2
-                    border.color:           "white"
-                    color:                  _addMissionItems ? _qgcPal.buttonHighlight : "black"
-                    opacity:                _addMissionItems ? 0.75 : 1.0
-
-                    MouseArea {
-                        anchors.fill: parent
-
-                        onClicked: {
-                            _addMissionItems = !_addMissionItems
-                            _showHomePositionManager = false
-                        }
-                    }
-
-                    Rectangle {
-                        anchors.verticalCenter:     parent.verticalCenter
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                        height:                     width
-                        radius:                     width / 2
-                        border.width:               2
-                        border.color:               "white"
-                        color:                      "transparent"
-
-                        QGCLabel {
-                            anchors.fill:           parent
-                            horizontalAlignment:    Text.AlignHCenter
-                            verticalAlignment:      Text.AlignVCenter
-                            color:                  "white"
-                            text:                   "1"
-                        }
-                    }
-                }
-
-                Rectangle {
-                    id:                     homePositionManagerButton
-                    anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
-                    anchors.right:          centerMapButton.left
-                    anchors.top:            centerMapButton.top
-                    radius:                 (ScreenTools.defaultFontPixelHeight * 3) / 2
-                    width:                  radius * 2
-                    height:                 radius * 2
-                    border.width:           2
-                    border.color:           "white"
-                    color:                  _showHomePositionManager ? _qgcPal.buttonHighlight : "black"
-                    opacity:                _showHomePositionManager ? 0.75 : 1.0
-
-                    MouseArea {
-                        anchors.fill: parent
-
-                        onClicked: {
-                            _showHomePositionManager = !_showHomePositionManager
-                            _addMissionItems = false
-                        }
-                    }
-
-                    Rectangle {
-                        anchors.verticalCenter:     parent.verticalCenter
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                        height:                     width
-                        radius:                     width / 2
-                        border.width:               2
-                        border.color:               "white"
-                        color:                      "transparent"
-
-                        QGCLabel {
-                            anchors.fill:           parent
-                            horizontalAlignment:    Text.AlignHCenter
-                            verticalAlignment:      Text.AlignVCenter
-                            color:                  "white"
-                            text:                   "H"
-                        }
-                    }
-                }
-
-                DropButton {
-                    id:                     centerMapButton
-                    anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
-                    anchors.right:          syncButton.left
-                    anchors.top:            syncButton.top
-                    dropDirection:          dropDown
-                    buttonImage:            "/qmlimages/MapCenter.svg"
-                    viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
-                    exclusiveGroup:         _dropButtonsExclusiveGroup
-
-                    dropDownComponent: Component {
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-
-                            QGCButton {
-                                text: "Home"
-
-                                onClicked: {
-                                    centerMapButton.hideDropDown()
-                                    editorMap.center = QtPositioning.coordinate(_homePositionCoordinate.latitude, _homePositionCoordinate.longitude)
-                                    _showHomePositionManager = true
-                                }
-                            }
-
-                            QGCButton {
-                                text:       "Vehicle"
-                                enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
-
-                                property var activeVehicle: multiVehicleManager.activeVehicle
-
-                                onClicked: {
-                                    centerMapButton.hideDropDown()
-                                    editorMap.latitude = activeVehicle.latitude
-                                    editorMap.longitude = activeVehicle.longitude
-                                }
-                            }
-
-/*
-
-This code will need to wait for Qml 5.5 support since Map.visibleRegion is only in Qt 5.5
-
-                            QGCButton {
-                                text: "All Items"
-
-                                onClicked: {
-                                    centerMapButton.hideDropDown()
-
-                                    // Begin with only the home position in the region
-                                    var region = QtPositioning.rectangle(QtPositioning.coordinate(_homePositionCoordinate.latitude, _homePositionCoordinate.longitude),
-                                                                         QtPositioning.coordinate(_homePositionCoordinate.latitude, _homePositionCoordinate.longitude))
-
-                                    // Now expand the region to include all mission items
-                                    for (var i=0; i<_missionItems.count; i++) {
-                                        var missionItem = _missionItems.get(i)
-
-                                        region.topLeft.latitude = Math.max(missionItem.coordinate.latitude, region.topLeft.latitude)
-                                        region.topLeft.longitude = Math.min(missionItem.coordinate.longitude, region.topLeft.longitude)
-
-                                        region.topRight.latitude = Math.max(missionItem.coordinate.latitude, region.topRight.latitude)
-                                        region.topRight.longitude = Math.max(missionItem.coordinate.longitude, region.topRight.longitude)
-
-                                        region.bottomLeft.latitude = Math.min(missionItem.coordinate.latitude, region.bottomLeft.latitude)
-                                        region.bottomLeft.longitude = Math.min(missionItem.coordinate.longitude, region.bottomLeft.longitude)
-
-                                        region.bottomRight.latitude = Math.min(missionItem.coordinate.latitude, region.bottomRight.latitude)
-                                        region.bottomRight.longitude = Math.max(missionItem.coordinate.longitude, region.bottomRight.longitude)
-                                    }
-
-                                    editorMap.visibleRegion = region
-                                }
-                            }
-*/
-                        }
-                    }
-                }
-
-                DropButton {
-                    id:                     syncButton
-                    anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
-                    anchors.right:          mapTypeButton.left
-                    anchors.top:            mapTypeButton.top
-                    dropDirection:          dropDown
-                    buttonImage:            "/qmlimages/Sync.png"
-                    viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
-                    exclusiveGroup:         _dropButtonsExclusiveGroup
-
-                    dropDownComponent: Component {
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-
-                            QGCButton {
-                                text:       "Load from vehicle"
-                                enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
-
-                                onClicked: {
-                                    syncButton.hideDropDown()
-                                    controller.getMissionItems()
-                                }
-                            }
-
-                            QGCButton {
-                                text:       "Save to vehicle"
-                                enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
-
-                                onClicked: {
-                                    syncButton.hideDropDown()
-                                    controller.setMissionItems()
-                                }
-                            }
-
-                            QGCButton {
-                                text:       "Load from file..."
-
-                                onClicked: {
-                                    syncButton.hideDropDown()
-                                    controller.loadMissionFromFile()
-                                }
-                            }
-
-                            QGCButton {
-                                text:       "Save to file..."
-
-                                onClicked: {
-                                    syncButton.hideDropDown()
-                                    controller.saveMissionToFile()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                DropButton {
-                    id:                 mapTypeButton
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                Row {
+                    spacing:            ScreenTools.defaultFontPixelWidth
                     anchors.top:        parent.top
                     anchors.right:      parent.right
-                    dropDirection:      dropDown
-                    buttonImage:        "/qmlimages/MapType.svg"
-                    viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                    exclusiveGroup:         _dropButtonsExclusiveGroup
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
 
-                    dropDownComponent: Component {
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
+                    RoundButton {
+                        id:                     addMissionItemsButton
+                        buttonImage:            "/qmlimages/MapAddMission.svg"
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                        onClicked: {
+                            disableToggles()
+                            _addMissionItems = addMissionItemsButton.checked
+                        }
+                    }
 
-                            Repeater {
-                                model: QGroundControl.flightMapSettings.mapTypes
+                    RoundButton {
+                        id:                     homePositionManagerButton
+                        buttonImage:            "/qmlimages/MapHome.svg"
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                        onClicked: {
+                            disableToggles()
+                            _showHomePositionManager = homePositionManagerButton.checked
+                        }
+                    }
+
+                    DropButton {
+                        id:                     centerMapButton
+                        dropDirection:          dropDown
+                        buttonImage:            "/qmlimages/MapCenter.svg"
+                        viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
+
+                        onClicked: {
+                            disableToggles()
+                        }
+
+                        dropDownComponent: Component {
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
 
                                 QGCButton {
-                                    checkable:      true
-                                    checked:        editorMap.mapType == text
-                                    text:           modelData
-                                    exclusiveGroup: _mapTypeButtonsExclusiveGroup
+                                    text: "Home"
 
                                     onClicked: {
-                                        editorMap.mapType = text
-                                        checked = true
-                                        mapTypeButton.hideDropDown()
+                                        centerMapButton.hideDropDown()
+                                        editorMap.center = QtPositioning.coordinate(homePositionCoordinate.latitude, homePositionCoordinate.longitude)
+                                        _showHomePositionManager = true
+                                    }
+                                }
+
+                                QGCButton {
+                                    text:       "Vehicle"
+                                    enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
+
+                                    property var activeVehicle: multiVehicleManager.activeVehicle
+
+                                    onClicked: {
+                                        centerMapButton.hideDropDown()
+                                        editorMap.latitude = activeVehicle.latitude
+                                        editorMap.longitude = activeVehicle.longitude
+                                    }
+                                }
+
+    /*
+
+    This code will need to wait for Qml 5.5 support since Map.visibleRegion is only in Qt 5.5
+
+                                QGCButton {
+                                    text: "All Items"
+
+                                    onClicked: {
+                                        centerMapButton.hideDropDown()
+
+                                        // Begin with only the home position in the region
+                                        var region = QtPositioning.rectangle(QtPositioning.coordinate(homePositionCoordinate.latitude, _homePositionCoordinate.longitude),
+                                                                             QtPositioning.coordinate(homePositionCoordinate.latitude, _homePositionCoordinate.longitude))
+
+                                        // Now expand the region to include all mission items
+                                        for (var i=0; i<_missionItems.count; i++) {
+                                            var missionItem = _missionItems.get(i)
+
+                                            region.topLeft.latitude = Math.max(missionItem.coordinate.latitude, region.topLeft.latitude)
+                                            region.topLeft.longitude = Math.min(missionItem.coordinate.longitude, region.topLeft.longitude)
+
+                                            region.topRight.latitude = Math.max(missionItem.coordinate.latitude, region.topRight.latitude)
+                                            region.topRight.longitude = Math.max(missionItem.coordinate.longitude, region.topRight.longitude)
+
+                                            region.bottomLeft.latitude = Math.min(missionItem.coordinate.latitude, region.bottomLeft.latitude)
+                                            region.bottomLeft.longitude = Math.min(missionItem.coordinate.longitude, region.bottomLeft.longitude)
+
+                                            region.bottomRight.latitude = Math.min(missionItem.coordinate.latitude, region.bottomRight.latitude)
+                                            region.bottomRight.longitude = Math.max(missionItem.coordinate.longitude, region.bottomRight.longitude)
+                                        }
+
+                                        editorMap.visibleRegion = region
+                                    }
+                                }
+    */
+                            }
+                        }
+                    }
+
+                    DropButton {
+                        id:                     syncButton
+                        dropDirection:          dropDown
+                        buttonImage:            "/qmlimages/MapSync.svg"
+                        viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
+
+                        onClicked: {
+                            disableToggles()
+                        }
+
+                        dropDownComponent: Component {
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+
+                                QGCButton {
+                                    text:       "Load from vehicle"
+                                    enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
+
+                                    onClicked: {
+                                        syncButton.hideDropDown()
+                                        controller.getMissionItems()
+                                    }
+                                }
+
+                                QGCButton {
+                                    text:       "Save to vehicle"
+                                    enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
+
+                                    onClicked: {
+                                        syncButton.hideDropDown()
+                                        controller.setMissionItems()
+                                    }
+                                }
+
+                                QGCButton {
+                                    text:       "Load from file..."
+
+                                    onClicked: {
+                                        syncButton.hideDropDown()
+                                        controller.loadMissionFromFile()
+                                    }
+                                }
+
+                                QGCButton {
+                                    text:       "Save to file..."
+
+                                    onClicked: {
+                                        syncButton.hideDropDown()
+                                        controller.saveMissionToFile()
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                MissionItemIndicator {
-                    label:          "H"
-                    isCurrentItem:  _showHomePositionManager
-                    coordinate:     _homePositionCoordinate
-                    z:              2
+                    DropButton {
+                        id:                 mapTypeButton
+                        dropDirection:      dropDown
+                        buttonImage:        "/qmlimages/MapType.svg"
+                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
 
-                    onClicked: _showHomePositionManager = true
+                        onClicked: {
+                            disableToggles()
+                        }
+
+                        dropDownComponent: Component {
+                            Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+
+                                Repeater {
+                                    model: QGroundControl.flightMapSettings.mapTypes
+
+                                    QGCButton {
+                                        checkable:      true
+                                        checked:        editorMap.mapType == text
+                                        text:           modelData
+                                        exclusiveGroup: _mapTypeButtonsExclusiveGroup
+
+                                        onClicked: {
+                                            editorMap.mapType = text
+                                            checked = true
+                                            mapTypeButton.hideDropDown()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    RoundButton {
+                        id:                     showHelpButton
+                        buttonImage:            "/qmlimages/Help.svg"
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                        checked:                true
+                        onClicked: {
+                            disableToggles()
+                            _showHelpPanel = showHelpButton.checked
+                        }
+                    }
+
                 }
 
                 // Add the mission items to the map
@@ -394,47 +367,41 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                     
                     delegate:
                         MissionItemIndicator {
-                            label:          object.sequenceNumber
+                            id:             itemIndicator
+                            label:          object.sequenceNumber == 0 ? "H" : object.sequenceNumber
                             isCurrentItem:  !_showHomePositionManager && object.isCurrentItem
                             coordinate:     object.coordinate
                             z:              2
+                            visible:        object.specifiesCoordinate
 
                             onClicked: {
                                 _showHomePositionManager = false
                                 setCurrentItem(object.sequenceNumber)
                             }
+
+                            Row {
+                                anchors.top:    parent.top
+                                anchors.left:   parent.right
+
+                                Repeater {
+                                    model: object.childItems
+
+                                    delegate:
+                                        MissionItemIndexLabel {
+                                            label:          object.sequenceNumber
+                                            isCurrentItem:  !_showHomePositionManager && object.isCurrentItem
+                                            z:              2
+
+                                            onClicked: {
+                                                _showHomePositionManager = false
+                                                setCurrentItem(object.sequenceNumber)
+                                            }
+
+                                        }
+                                }
+                            }
                         }
                 }
-
-                MapPolyline {
-                    id:         homePositionLine
-                    line.width: 3
-                    line.color: "orange"
-                    z:          1
-
-                    property var homePositionCoordinate: _homePositionCoordinate
-
-                    function update() {
-                        while (homePositionLine.path.length != 0) {
-                            homePositionLine.removeCoordinate(homePositionLine.path[0])
-                        }
-                        if (_missionItems && _missionItems.count != 0) {
-                            homePositionLine.addCoordinate(homePositionCoordinate)
-                            homePositionLine.addCoordinate(_missionItems.get(0).coordinate)
-                        }
-                    }
-
-                    onHomePositionCoordinateChanged: update()
-
-                    Connections {
-                        target: controller
-
-                        onWaypointLinesChanged: homePositionLine.update()
-                    }
-
-                    Component.onCompleted: homePositionLine.update()
-                }
-
 
                 // Add lines between waypoints
                 MapItemView {
@@ -443,7 +410,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                     delegate:
                         MapPolyline {
                             line.width: 3
-                            line.color: "orange"
+                            line.color: _qgcPal.mapButtonHighlight
                             z:          1
 
                             path: [
@@ -483,7 +450,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                     // Mission Item Editor
                     Item {
                         anchors.fill:   parent
-                        visible:        !_showHomePositionManager && controller.missionItems.count != 0
+                        visible:        !_showHomePositionManager && controller.missionItems.count != 1 && ! _showHelpPanel
 
                         ListView {
                             id:             missionItemSummaryList
@@ -504,7 +471,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                                     onRemove: {
                                         var newCurrentItem = object.sequenceNumber - 1
                                         controller.removeMissionItem(object.sequenceNumber)
-                                        if (_missionItems.count) {
+                                        if (_missionItems.count > 1) {
                                             newCurrentItem = Math.min(_missionItems.count - 1, newCurrentItem)
                                             setCurrentItem(newCurrentItem)
                                         }
@@ -527,7 +494,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                     // Home Position Manager
                     Item {
                         anchors.fill:   parent
-                        visible:        _showHomePositionManager
+                        visible:        _showHomePositionManager && !_showHelpPanel
 
                         Column {
                             anchors.fill: parent
@@ -556,9 +523,9 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                                     if (currentIndex != -1) {
                                         var homePos = _homePositionManager.homePositions.get(currentIndex)
                                         _homePositionName = homePos.name
-                                        _homePositionCoordinate = homePos.coordinate
-                                        editorMap.latitude = _homePositionCoordinate.latitude
-                                        editorMap.longitude = _homePositionCoordinate.longitude
+                                        homePositionCoordinate = homePos.coordinate
+                                        editorMap.latitude = homePositionCoordinate.latitude
+                                        editorMap.longitude = homePositionCoordinate.longitude
                                     }
                                 }
                             }
@@ -571,9 +538,9 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             QGCLabel {
                                 width:      parent.width
                                 wrapMode:   Text.WordWrap
-                                text:       "To add a new home position, click in the Map to set the position. " +
+                                text:       "To add a new home position, click on the Map to set the position. " +
                                             "Then give it a new name and click Add/Update. " +
-                                            "To change the current  home position, click in the Map to set the new position. " +
+                                            "To change the current home position, click on the Map to set the new position. " +
                                             "Then click Add/Update without changing the name."
                             }
 
@@ -617,7 +584,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                                     id:             latitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           _homePositionCoordinate.latitude
+                                    text:           homePositionCoordinate.latitude
                                 }
                             }
 
@@ -639,7 +606,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                                     id:             longitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           _homePositionCoordinate.longitude
+                                    text:           homePositionCoordinate.longitude
                                 }
                             }
 
@@ -661,7 +628,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                                     id:             altitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           _homePositionCoordinate.altitude
+                                    text:           homePositionCoordinate.altitude
                                 }
                             }
 
@@ -677,8 +644,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                                     text: "Add/Update"
 
                                     onClicked: {
-                                        _homePositionCoordinate = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
-                                        _homePositionManager.updateHomePosition(nameField.text, _homePositionCoordinate)
+                                        homePositionCoordinate = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
+                                        _homePositionManager.updateHomePosition(nameField.text, homePositionCoordinate)
                                         homePosCombo.currentIndex = homePosCombo.find(nameField.text)
                                     }
                                 }
@@ -692,7 +659,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                                         homePosCombo.currentIndex = 0
                                         var homePos = _homePositionManager.homePositions.get(0)
                                         _homePositionName = homePos.name
-                                        _homePositionCoordinate = homePos.coordinate
+                                        homePositionCoordinate = homePos.coordinate
                                     }
                                 }
                             }
@@ -702,7 +669,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                     // Help Panel
                     Item {
                         anchors.fill:   parent
-                        visible:        !_showHomePositionManager && controller.missionItems.count == 0
+                        visible:        !_showHomePositionManager && (controller.missionItems.count == 1 || _showHelpPanel)
 
                         QGCLabel {
                             id:             helpTitle
@@ -716,28 +683,18 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.top:        helpTitle.bottom
                             width:              parent.width
                             wrapMode:           Text.WordWrap
-                            text:               "In the upper right corner of the map you will see the Mission Planner tools:"
+                            text:               "Mission Planner tool buttons:"
                         }
 
-                        Rectangle {
-                            id:                         addMissionItemsHelpIcon
-                            anchors.topMargin:          ScreenTools.defaultFontPixelHeight
-                            anchors.top:                helpIconLabel.bottom
-                            anchors.horizontalCenter:   mapTypeHelpIcon.horizontalCenter
-                            width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                            height:                     width
-                            radius:                     width / 2
-                            border.width:               2
-                            border.color:               "white"
-                            color:                      _qgcPal.window
-
-                            QGCLabel {
-                                anchors.fill:           parent
-                                horizontalAlignment:    Text.AlignHCenter
-                                verticalAlignment:      Text.AlignVCenter
-                                color:                  "white"
-                                text:                   "1"
-                            }
+                        Image {
+                            id:                 addMissionItemsHelpIcon
+                            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                            anchors.top:        helpIconLabel.bottom
+                            width:              ScreenTools.defaultFontPixelHeight * 3
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            source:             "/qmlimages/MapAddMission.svg"
                         }
 
                         QGCLabel {
@@ -747,30 +704,19 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        addMissionItemsHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Add Mission Items tool. " +
-                                                "Click it to turn on the ability to add mission items by clicking in the map. " +
-                                                "Click it again to turn it off."
+                            text:               "<b>Add Mission Items</b><br>" +
+                                                "When enabled, add mission items by clicking on the map."
                         }
 
-                        Rectangle {
-                            id:                         homePositionManagerHelpIcon
-                            anchors.topMargin:          ScreenTools.defaultFontPixelHeight
-                            anchors.top:                addMissionItemsHelpText.bottom
-                            anchors.horizontalCenter:   mapTypeHelpIcon.horizontalCenter
-                            width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                            height:                     width
-                            radius:                     width / 2
-                            border.width:               2
-                            border.color:               "white"
-                            color:                      _qgcPal.window
-
-                            QGCLabel {
-                                anchors.fill:           parent
-                                horizontalAlignment:    Text.AlignHCenter
-                                verticalAlignment:      Text.AlignVCenter
-                                color:                  "white"
-                                text:                   "H"
-                            }
+                        Image {
+                            id:                 homePositionManagerHelpIcon
+                            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                            anchors.top:        addMissionItemsHelpText.bottom
+                            width:              ScreenTools.defaultFontPixelHeight * 3
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            source:             "/qmlimages/MapHome.svg"
                         }
 
                         QGCLabel {
@@ -780,8 +726,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        homePositionManagerHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Home Position Manager tool. " +
-                                                "This tool allows you to select/add/update home positions. " +
+                            text:               "<b>Home Position Manager</b><br>" +
+                                                "When enabled, allows you to select/add/update home positions. " +
                                                 "You can save multiple home position to represent multiple flying areas."
                         }
 
@@ -803,8 +749,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        mapCenterHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Map Center tool. " +
-                                                "It will show a set of options which will center the map."
+                            text:               "<b>Map Center</b><br>" +
+                                                "Options for centering the map."
                         }
 
                         Image {
@@ -815,7 +761,7 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
                             smooth:             true
-                            source:             "/qmlimages/Sync.png"
+                            source:             "/qmlimages/MapSync.svg"
                         }
 
                         QGCLabel {
@@ -825,8 +771,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        syncHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Sync tool. " +
-                                                "It will show a set of options for saving/loading mission items."
+                            text:               "<b>Sync</b><br>" +
+                                                "Options for saving/loading mission items."
                         }
 
                         Image {
@@ -847,8 +793,8 @@ This code will need to wait for Qml 5.5 support since Map.visibleRegion is only 
                             anchors.right:      parent.right
                             anchors.top:        mapTypeHelpIcon.top
                             wrapMode:           Text.WordWrap
-                            text:               "This is the Map Type tool. " +
-                                                "It will show a set of options for selecting map types."
+                            text:               "<b>Map Type</b><br>" +
+                                                "Map type options."
                         }
                     } // Item - Help Panel
                 } // Item
