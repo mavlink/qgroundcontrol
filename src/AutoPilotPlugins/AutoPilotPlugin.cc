@@ -29,6 +29,7 @@
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "ParameterLoader.h"
+#include "UAS.h"
 
 AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : QObject(parent)

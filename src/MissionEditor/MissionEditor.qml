@@ -115,7 +115,7 @@ QGCView {
                 Rectangle {
                     anchors.horizontalCenter:   parent.horizontalCenter
                     anchors.bottom:             parent.bottom
-                    width:                      parent.width / 3
+                    width:                      parent.width * 0.75
                     height:                     syncNeededText.height + (ScreenTools.defaultFontPixelWidth * 2)
                     border.width:               1
                     border.color:               "white"

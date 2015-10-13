@@ -178,8 +178,6 @@ private:
     QStringList         _missingParams;                                  ///< List of missing facts to be displayed
 
 	bool				_fakeMobile;	///< true: Fake ui into displaying mobile interface
-
-    bool _useNewMissionEditor;  ///< true: Use new Mission Editor
     
 #ifdef QT_DEBUG
     bool _testHighDPI;  ///< true: double fonts sizes for simulating high dpi devices
