@@ -32,6 +32,7 @@
 
 #include <QRegularExpression>
 #include <QMessageBox>
+#include <QPushButton>
 
 QString QGCFileDialog::getExistingDirectory(
     QWidget* parent,
