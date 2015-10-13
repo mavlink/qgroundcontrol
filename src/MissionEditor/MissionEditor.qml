@@ -375,7 +375,19 @@ QGCView {
                             visible:        object.specifiesCoordinate
 
                             onClicked: {
-                                _showHomePositionManager = false
+                                disableToggles()
+                                if (_dropButtonsExclusiveGroup.current) {
+                                    _dropButtonsExclusiveGroup.current.checked = false
+                                }
+                                //-- Home?
+                                if (object.sequenceNumber === 0) {
+                                    homePositionManagerButton.checked = true
+                                    _showHomePositionManager = true
+                                //-- Otherwise it's a mission item
+                                } else {
+                                    addMissionItemsButton.checked = true
+                                    _addMissionItems = true
+                                }
                                 setCurrentItem(object.sequenceNumber)
                             }
 
