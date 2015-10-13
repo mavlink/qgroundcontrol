@@ -39,10 +39,12 @@ FactPanel {
     signal hideDialog
 
     function accept() {
+        Qt.inputMethod.hide()
         hideDialog()
     }
 
     function reject() {
+        Qt.inputMethod.hide()
         hideDialog()
     }
 

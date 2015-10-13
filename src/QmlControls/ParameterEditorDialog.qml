@@ -84,6 +84,9 @@ QGCViewDialog {
             id:     valueField
             text:   validate ? validateValue : fact.valueString
 
+            // At this point all Facts are numeric
+            inputMethodHints:   Qt.ImhFormattedNumbersOnly
+
             onAccepted: accept()
 
             Keys.onReleased: {
