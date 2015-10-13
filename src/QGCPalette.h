@@ -86,6 +86,12 @@ class QGCPalette : public QObject
     // Text color for TextFields
     Q_PROPERTY(QColor textFieldText READ textFieldText NOTIFY paletteChanged)
     
+    /// Background color for map buttons
+    Q_PROPERTY(QColor mapButton READ mapButton NOTIFY paletteChanged)
+
+    /// Background color for map button in selected or hover state
+    Q_PROPERTY(QColor mapButtonHighlight READ mapButtonHighlight NOTIFY paletteChanged)
+
 public:
     enum ColorGroup {
         Disabled = 0,
@@ -121,6 +127,9 @@ public:
     QColor textField(void) const { return _textField[_theme][_colorGroupEnabled ? 1 : 0]; }
     QColor textFieldText(void) const { return _textFieldText[_theme][_colorGroupEnabled ? 1 : 0]; }
     
+    QColor mapButton(void) const { return _mapButton[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor mapButtonHighlight(void) const { return _mapButtonHighlight[_theme][_colorGroupEnabled ? 1 : 0]; }
+
     static Theme globalTheme(void) { return _theme; }
     static void setGlobalTheme(Theme newTheme);
 
@@ -154,6 +163,9 @@ private:
     static QColor _textField[_cThemes][_cColorGroups];
     static QColor _textFieldText[_cThemes][_cColorGroups];
     
+    static QColor _mapButton[_cThemes][_cColorGroups];
+    static QColor _mapButtonHighlight[_cThemes][_cColorGroups];
+
     void _themeChanged(void);
     
     static QList<QGCPalette*>   _paletteObjects;    ///< List of all active QGCPalette objects

@@ -48,6 +48,7 @@ QGCView {
     property var    _missionItems:              controller.missionItems
     property bool   _showHomePositionManager:   false
     property bool   _addMissionItems:           false
+    property bool   _showHelpPanel:             true
 
     property var    _homePositionManager:       QGroundControl.homePositionManager
     property string _homePositionName:          _homePositionManager.homePositions.get(0).name
@@ -61,6 +62,12 @@ QGCView {
 
     ExclusiveGroup {
         id: _dropButtonsExclusiveGroup
+    }
+
+    function disableToggles() {
+        _showHomePositionManager    = false
+        _addMissionItems            = false
+        _showHelpPanel              = false
     }
 
     function setCurrentItem(index) {
@@ -156,20 +163,20 @@ QGCView {
                     RoundButton {
                         id:                     addMissionItemsButton
                         buttonImage:            "/qmlimages/MapAddMission.svg"
-                        opacity:                _addMissionItems ? 1.0 : 0.75
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
                         onClicked: {
-                            _addMissionItems = !_addMissionItems
-                            _showHomePositionManager = false
+                            disableToggles()
+                            _addMissionItems = addMissionItemsButton.checked
                         }
                     }
 
                     RoundButton {
                         id:                     homePositionManagerButton
                         buttonImage:            "/qmlimages/MapHome.svg"
-                        opacity:                _showHomePositionManager ? 1.0 : 0.75
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
                         onClicked: {
-                            _showHomePositionManager = !_showHomePositionManager
-                            _addMissionItems = false
+                            disableToggles()
+                            _showHomePositionManager = homePositionManagerButton.checked
                         }
                     }
 
@@ -179,6 +186,10 @@ QGCView {
                         buttonImage:            "/qmlimages/MapCenter.svg"
                         viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:         _dropButtonsExclusiveGroup
+
+                        onClicked: {
+                            disableToggles()
+                        }
 
                         dropDownComponent: Component {
                             Row {
@@ -253,6 +264,10 @@ QGCView {
                         viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:         _dropButtonsExclusiveGroup
 
+                        onClicked: {
+                            disableToggles()
+                        }
+
                         dropDownComponent: Component {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
@@ -305,6 +320,10 @@ QGCView {
                         viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:         _dropButtonsExclusiveGroup
 
+                        onClicked: {
+                            disableToggles()
+                        }
+
                         dropDownComponent: Component {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
@@ -328,6 +347,18 @@ QGCView {
                             }
                         }
                     }
+
+                    RoundButton {
+                        id:                     showHelpButton
+                        buttonImage:            "/qmlimages/Help.svg"
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                        checked:                true
+                        onClicked: {
+                            disableToggles()
+                            _showHelpPanel = showHelpButton.checked
+                        }
+                    }
+
                 }
 
                 // Add the mission items to the map
@@ -379,7 +410,7 @@ QGCView {
                     delegate:
                         MapPolyline {
                             line.width: 3
-                            line.color: "orange"
+                            line.color: _qgcPal.mapButtonHighlight
                             z:          1
 
                             path: [
@@ -419,7 +450,7 @@ QGCView {
                     // Mission Item Editor
                     Item {
                         anchors.fill:   parent
-                        visible:        !_showHomePositionManager && controller.missionItems.count != 1
+                        visible:        !_showHomePositionManager && controller.missionItems.count != 1 && ! _showHelpPanel
 
                         ListView {
                             id:             missionItemSummaryList
@@ -463,7 +494,7 @@ QGCView {
                     // Home Position Manager
                     Item {
                         anchors.fill:   parent
-                        visible:        _showHomePositionManager
+                        visible:        _showHomePositionManager && !_showHelpPanel
 
                         Column {
                             anchors.fill: parent
@@ -638,7 +669,7 @@ QGCView {
                     // Help Panel
                     Item {
                         anchors.fill:   parent
-                        visible:        !_showHomePositionManager && controller.missionItems.count == 1
+                        visible:        !_showHomePositionManager && (controller.missionItems.count == 1 || _showHelpPanel)
 
                         QGCLabel {
                             id:             helpTitle
