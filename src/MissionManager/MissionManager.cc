@@ -66,7 +66,7 @@ void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems, b
         for (int i=0; i<_missionItems.count(); i++) {
             MissionItem* item = qobject_cast<MissionItem*>(_missionItems[i]);
             
-            if (item->command() == MAV_CMD_CONDITION_DELAY) {
+            if (item->command() == MavlinkQmlSingleton::MAV_CMD_CONDITION_DELAY) {
                 item->setParam1((int)item->param1() - 1);
             }
         }
