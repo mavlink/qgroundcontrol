@@ -289,4 +289,11 @@ Map {
         }
     }
 */
+
+    MouseArea {
+        //-- TODO: Check if this is still needed when we switch to 5.5.1
+        //-- Workaround for QTBUG-46388 (Pinch zoom doesn't work without it on mobile)
+        anchors.fill: parent
+    }
+
 } // Map
