@@ -27,6 +27,7 @@
 #include "QmlTestWidget.h"
 
 QmlTestWidget::QmlTestWidget(void)
+    : QGCQmlWidgetHolder(QString(), NULL, NULL)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     resize(900, 500);

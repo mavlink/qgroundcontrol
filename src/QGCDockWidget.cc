@@ -24,24 +24,51 @@
 #include "QGCDockWidget.h"
 
 #include <QCloseEvent>
+#include <QSettings>
 
-QGCDockWidget::QGCDockWidget(const QString& title, QAction* action, QWidget *parent, Qt::WindowFlags flags) :
-    QDockWidget(title, parent, flags),
-	_action(action)
+const char*  QGCDockWidget::_settingsGroup = "DockWidgets";
+
+QGCDockWidget::QGCDockWidget(const QString& title, QAction* action, QWidget* parent)
+    : QWidget(parent)
+    , _title(title)
+	, _action(action)
 {
-	QDockWidget::DockWidgetFeatures features = QDockWidget::DockWidgetMovable;
-	
-	if (action) {
-		features |= QDockWidget::DockWidgetClosable;
-	}
-	setFeatures(features);
+    if (action) {
+        setWindowTitle(title);
+        setWindowFlags(Qt::Tool);
+        
+        loadSettings();
+    }
 }
 
 // Instead of destroying the widget just hide it
 void QGCDockWidget::closeEvent(QCloseEvent* event)
 {
-	Q_ASSERT(_action);
-	
-    event->ignore();
-	_action->trigger();
+    if (_action) {
+        saveSettings();
+        event->ignore();
+        _action->trigger();
+    }
+}
+
+void QGCDockWidget::loadSettings(void)
+{
+    if (_action) {
+        QSettings settings;
+        
+        settings.beginGroup(_settingsGroup);
+        if (settings.contains(_title)) {
+            restoreGeometry(settings.value(_title).toByteArray());
+        }
+    }
+}
+
+void QGCDockWidget::saveSettings(void)
+{
+    if (_action) {
+        QSettings settings;
+        
+        settings.beginGroup(_settingsGroup);
+        settings.setValue(_title, saveGeometry());
+    }
 }

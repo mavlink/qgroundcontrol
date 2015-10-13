@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 const char* kMainFlightDisplayViewGroup = "FlightDisplayView";
 
 FlightDisplayView::FlightDisplayView(QWidget *parent)
-    : QGCQmlWidgetHolder(parent)
+    : QGCQmlWidgetHolder(QString(), NULL, parent)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setObjectName("FlightDisplayView");
