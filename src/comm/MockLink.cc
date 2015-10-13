@@ -571,10 +571,31 @@ void MockLink::_handleParamSet(const mavlink_message_t& msg)
 
 void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
 {
+    mavlink_message_t   responseMsg;
     mavlink_param_request_read_t request;
     mavlink_msg_param_request_read_decode(&msg, &request);
-    
+
+    const QString param_name(QString::fromLocal8Bit(request.param_id, strnlen(request.param_id, MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN)));
     int componentId = request.target_component;
+
+    // special case for magic _HASH_CHECK value
+    if (request.target_component == MAV_COMP_ID_ALL && param_name == "_HASH_CHECK") {
+        mavlink_param_union_t   valueUnion;
+        valueUnion.type = MAV_PARAM_TYPE_UINT32;
+        valueUnion.param_uint32 = 0;
+        // Special case of magic hash check value
+        mavlink_msg_param_value_pack(_vehicleSystemId,
+                                     componentId,
+                                     &responseMsg,
+                                     request.param_id,
+                                     valueUnion.param_float,
+                                     MAV_PARAM_TYPE_UINT32,
+                                     0,
+                                     -1);
+        respondWithMavlinkMessage(responseMsg);
+        return;
+    }
+
     Q_ASSERT(_mapParamName2Value.contains(componentId));
 
     char paramId[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN + 1];
@@ -597,8 +618,6 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
 
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
     Q_ASSERT(_mapParamName2MavParamType.contains(paramId));
-
-    mavlink_message_t   responseMsg;
 
     mavlink_msg_param_value_pack(_vehicleSystemId,
                                  componentId,                                               // component id
