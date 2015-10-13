@@ -67,6 +67,7 @@
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
 
         <!-- Map Buttons -->
+        <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
         <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
         <file alias="MapSync.svg">src/FlightMap/Images/MapSync.svg</file>
         <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
