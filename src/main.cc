@@ -31,21 +31,25 @@ This file is part of the QGROUNDCONTROL project
 #include <QtGlobal>
 #include <QApplication>
 #include <QSslSocket>
-#ifndef __mobile__
-#include <QSerialPortInfo>
-#endif
 #include <QProcessEnvironment>
+
+#ifndef __mobile__
+    #include <QSerialPortInfo>
+#endif
+
 #include "QGCApplication.h"
 #include "MainWindow.h"
+
 #ifdef QT_DEBUG
-#ifndef __mobile__
-#include "UnitTest.h"
+    #ifndef __mobile__
+        #include "UnitTest.h"
+    #endif
+    #include "CmdLineOptParser.h"
+    #ifdef Q_OS_WIN
+        #include <crtdbg.h>
+    #endif
 #endif
-#include "CmdLineOptParser.h"
-#ifdef Q_OS_WIN
-#include <crtdbg.h>
-#endif
-#endif
+
 #include <iostream>
 
 /* SDL does ugly things to main() */

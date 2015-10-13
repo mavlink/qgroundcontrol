@@ -85,7 +85,8 @@ Map {
         anchors.bottom:     parent.bottom
         spacing:            ScreenTools.defaultFontPixelWidth / 2
         z:                  1000    // Must be on top for clicking
-        visible:            !ScreenTools.isMobile
+        // Pinch zoom doesn't seem to be working, so zoom buttons in mobile on for now
+        //visible:            !ScreenTools.isMobile
 
         Row {
             layoutDirection:    Qt.RightToLeft

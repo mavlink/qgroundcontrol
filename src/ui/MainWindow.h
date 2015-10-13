@@ -41,7 +41,6 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkManager.h"
 #include "LinkInterface.h"
 #include "UASInterface.h"
-#include "UASInfoWidget.h"
 #include "CameraView.h"
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
@@ -53,16 +52,13 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
-#include "QGCUASFileViewMulti.h"
 #include "Vehicle.h"
 
-class QGCMAVLinkMessageSender;
 class QGCFirmwareUpdate;
 class QSplashScreen;
 class QGCStatusBar;
 class Linecharts;
 class QGCDataPlot2D;
-class QGCUASFileViewMulti;
 
 /**
  * @brief Main Application Window
@@ -212,18 +208,10 @@ protected:
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
-#ifdef QGC_OSG_ENABLED
-    QPointer<QWidget> q3DWidget;
-#endif
-    QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
     QPointer<MainToolBar> _mainToolBar;
-    QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
-    QPointer<QDockWidget> mavlinkSenderWidget;
     QGCMAVLinkLogPlayer* logPlayer;
-
-    QPointer<QGCUASFileViewMulti> fileWidget;
 
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
@@ -251,15 +239,17 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private slots:
-    void _showDockWidgetAction(bool show);
     void _linkStateChange(LinkInterface*);
+	void _closeWindow(void) { close(); }
+    void _vehicleAdded(Vehicle* vehicle);
+    
+#ifndef __mobile__
+    void _showDockWidgetAction(bool show);
+#endif
+    
 #ifdef UNITTEST_BUILD
     void _showQmlTestWidget(void);
 #endif
-	void _closeWindow(void) { close(); }
-    
-private slots:
-    void _vehicleAdded(Vehicle* vehicle);
 
 private:
     /// Constructor is private since all creation should be through MainWindow::_create
@@ -272,10 +262,9 @@ private:
     QPointer<QWidget> _flightView;
     QPointer<QWidget> _setupView;
     QPointer<QWidget> _analyzeView;
-    QPointer<QWidget> _simView;
-    QPointer<QWidget> _terminalView;
     QPointer<QWidget> _missionEditorView;
 
+#ifndef __mobile__
     // Dock widget names
     static const char* _mavlinkDockWidgetName;
     static const char* _customCommandWidgetName;
@@ -288,23 +277,25 @@ private:
 
     QMap<QString, QDockWidget*>     _mapName2DockWidget;
     QMap<QDockWidget*, QAction*>    _mapDockWidget2Action;
+#endif
 
     void _buildPlanView(void);
     void _buildFlightView(void);
     void _buildSetupView(void);
     void _buildAnalyzeView(void);
-    void _buildSimView(void);
     void _buildTerminalView(void);
     void _buildMissionEditorView(void);
 
     void _storeCurrentViewState(void);
     void _loadCurrentViewState(void);
 
+#ifndef __mobile__
     void _createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget);
     void _createInnerDockWidget(const QString& widgetName);
     void _buildCommonWidgets(void);
     void _hideAllDockWidgets(void);
     void _showDockWidget(const QString &name, bool show);
+#endif
 
     bool                    _autoReconnect;
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets

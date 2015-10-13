@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include "FlightDisplayView.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "UAS.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
     : QGCQmlWidgetHolder(parent)

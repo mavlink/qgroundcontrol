@@ -24,6 +24,7 @@
 #include "FactPanelController.h"
 #include "MultiVehicleManager.h"
 #include "QGCMessageBox.h"
+#include "UAS.h"
 
 #include <QQmlEngine>
 
