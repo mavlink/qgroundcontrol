@@ -53,7 +53,7 @@ Rectangle {
             id:                     label
             anchors.verticalCenter: commandPicker.verticalCenter
             isCurrentItem:          missionItem.isCurrentItem
-            label:                  missionItem.sequenceNumber
+            label:                  missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
         }
 
         MouseArea {
@@ -71,8 +71,24 @@ Rectangle {
             anchors.right:      parent.right
             currentIndex:       missionItem.commandByIndex
             model:              missionItem.commandNames
+            visible:            missionItem.sequenceNumber != 0
 
             onActivated: missionItem.commandByIndex = index
+        }
+
+        Rectangle {
+            anchors.fill:   commandPicker
+            color:          qgcPal.button
+            visible:        missionItem.sequenceNumber == 0
+
+            QGCLabel {
+                id:                 homeLabel
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+                anchors.fill:       parent
+                verticalAlignment:  Text.AlignVCenter
+                text:               "Home"
+                color:              qgcPal.buttonText
+            }
         }
 
         Rectangle {

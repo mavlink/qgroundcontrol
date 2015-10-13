@@ -51,7 +51,7 @@ public:
     
     void append(QObject* object);
     void clear(void);
-    void removeAt(int i);
+    QObject* removeAt(int i);
     void insert(int i, QObject* object);
     QObject* operator[](int i);
     const QObject* operator[](int i) const;
@@ -79,6 +79,7 @@ private:
     QList<QObject*> _objectList;
     
     bool _dirty;
+    bool _skipDirtyFirstItem;
         
     static const int ObjectRole;
     static const int TextRole;
