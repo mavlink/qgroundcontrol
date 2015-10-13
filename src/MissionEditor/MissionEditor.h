@@ -26,6 +26,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QGCQmlWidgetHolder.h"
 #include "QmlObjectListModel.h"
+#include "Vehicle.h"
 
 class MissionEditor : public QGCQmlWidgetHolder
 {
@@ -35,9 +36,11 @@ public:
     MissionEditor(QWidget* parent = NULL);
     ~MissionEditor();
 
-    Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems       NOTIFY missionItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines   READ waypointLines      NOTIFY waypointLinesChanged)
-    Q_PROPERTY(bool                 canEdit         READ canEdit            NOTIFY canEditChanged)
+    Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems               NOTIFY missionItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines              NOTIFY waypointLinesChanged)
+    Q_PROPERTY(bool                 canEdit                     READ canEdit                    NOTIFY canEditChanged)
+    Q_PROPERTY(bool                 liveHomePositionAvailable   READ liveHomePositionAvailable  NOTIFY liveHomePositionAvailableChanged)
+    Q_PROPERTY(QGeoCoordinate       liveHomePosition            READ liveHomePosition           NOTIFY liveHomePositionChanged)
     
     Q_INVOKABLE int addMissionItem(QGeoCoordinate coordinate);
     Q_INVOKABLE void getMissionItems(void);
@@ -53,16 +56,23 @@ public:
     QmlObjectListModel* missionItems(void) { return _missionItems; }
     QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
     bool canEdit(void) { return _canEdit; }
-    
+    bool liveHomePositionAvailable(void) { return _liveHomePositionAvailable; }
+    QGeoCoordinate liveHomePosition(void) { return _liveHomePosition; }
+
 signals:
     void missionItemsChanged(void);
     void canEditChanged(bool canEdit);
     void waypointLinesChanged(void);
+    void liveHomePositionAvailableChanged(bool homePositionAvailable);
+    void liveHomePositionChanged(const QGeoCoordinate& homePosition);
     
 private slots:
     void _newMissionItemsAvailable();
     void _itemCoordinateChanged(const QGeoCoordinate& coordinate);
     void _itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
+    void _activeVehicleChanged(Vehicle* activeVehicle);
+    void _activeVehicleHomePositionAvailableChanged(bool homePositionAvailable);
+    void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
 
 private:
     void _recalcSequence(void);
@@ -78,7 +88,10 @@ private:
     QmlObjectListModel* _missionItems;
     QmlObjectListModel  _waypointLines;
     bool                _canEdit;           ///< true: UI can edit these items, false: can't edit, can only send to vehicle or save
-    
+    Vehicle*            _activeVehicle;
+    bool                _liveHomePositionAvailable;
+    QGeoCoordinate      _liveHomePosition;
+
     static const char* _settingsGroup;
 };
 
