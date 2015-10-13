@@ -602,42 +602,6 @@ void ParameterLoader::_writeLocalParamCache()
     ds << cache_map;
 }
 
-static MAV_PARAM_TYPE factType2MavParamType(int factType)
-{
-    MAV_PARAM_TYPE paramType;
-    switch (factType) {
-        case FactMetaData::valueTypeUint8:
-            paramType = MAV_PARAM_TYPE_UINT8;
-            break;
-        case FactMetaData::valueTypeInt8:
-            paramType =  MAV_PARAM_TYPE_INT8;
-            break;
-        case FactMetaData::valueTypeUint16:
-            paramType = MAV_PARAM_TYPE_UINT16;
-            break;
-        case FactMetaData::valueTypeInt16:
-            paramType = MAV_PARAM_TYPE_INT16;
-            break;
-        case FactMetaData::valueTypeUint32:
-            paramType = MAV_PARAM_TYPE_UINT32;
-            break;
-        case FactMetaData::valueTypeInt32:
-            paramType = MAV_PARAM_TYPE_INT32;
-            break;
-        case FactMetaData::valueTypeFloat:
-            paramType = MAV_PARAM_TYPE_REAL32;
-            break;
-        case FactMetaData::valueTypeDouble:
-            paramType = MAV_PARAM_TYPE_REAL64;
-            break;
-        default:
-            paramType = MAV_PARAM_TYPE_INT32;
-            qCritical() << "Unsupported fact type" << factType;
-            break;
-    }
-    return paramType;
-}
-
 void ParameterLoader::_tryCacheHashLoad(int uasId, QVariant hash_value)
 {
     uint32_t crc32_value = 0;
@@ -673,7 +637,7 @@ void ParameterLoader::_tryCacheHashLoad(int uasId, QVariant hash_value)
             foreach(int id, cache_map[component].keys()) {
                 const QString &name = cache_map[component][id].first;
                 const QVariant &value = cache_map[component][id].second.second;
-                const int mavType = factType2MavParamType(cache_map[component][id].second.first);
+                const int mavType = _factTypeToMavType(static_cast<FactMetaData::ValueType_t>(cache_map[component][id].second.first));
                 _parameterUpdate(uasId, component, name, count, id, mavType, value);
             }
         }
