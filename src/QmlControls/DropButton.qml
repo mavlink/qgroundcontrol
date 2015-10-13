@@ -8,6 +8,7 @@ import QGroundControl.Palette       1.0
 Item {
     id: _root
 
+    signal          clicked()
     property alias  buttonImage:        button.source
     property real   radius:             (ScreenTools.defaultFontPixelHeight * 3) / 2
     property int    dropDirection:      dropDown
@@ -148,8 +149,10 @@ Item {
         width:      _viewportMaxRight -_viewportMaxLeft
         height:     _viewportMaxBottom - _viewportMaxTop
         visible:    checked
-
-        onClicked: checked = false
+        onClicked:  {
+            checked = false
+            _root.clicked()
+        }
     }
 
     // Button
@@ -158,19 +161,21 @@ Item {
         radius:         width / 2
         border.width:   2
         border.color:   "white"
-        color:          "transparent"
+        opacity:        checked ? 0.95 : 0.65
+        color:          checked ? "orange" : "black"
 
         Image {
             id:             button
             anchors.fill:   parent
             fillMode:       Image.PreserveAspectFit
-            opacity:        checked ? 1.0 : 0.75
             mipmap:         true
             smooth:         true
             MouseArea {
                 anchors.fill: parent
-
-                onClicked: checked = !checked
+                onClicked:  {
+                    checked = !checked
+                    _root.clicked()
+                }
             }
         } // Image - button
     }
