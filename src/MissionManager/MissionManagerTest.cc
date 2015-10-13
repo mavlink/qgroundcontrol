@@ -158,7 +158,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     }
     
     // Send the items to the vehicle
-    _missionManager->writeMissionItems(*list);
+    _missionManager->writeMissionItems(*list, false /* skipFirstItem */);
     
     // writeMissionItems should emit inProgressChanged signal before returning so no need to wait for it
     QVERIFY(_missionManager->inProgress());
