@@ -61,12 +61,19 @@ signals:
     
 private slots:
     void _newMissionItemsAvailable();
-    void _missionListDirtyChanged(bool dirty);
-    
+    void _itemCoordinateChanged(const QGeoCoordinate& coordinate);
+    void _itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
+
 private:
-    void _reSequence(void);
-    void _rebuildWaypointLines(void);
-   
+    void _recalcSequence(void);
+    void _recalcWaypointLines(void);
+    void _recalcChildItems(void);
+    void _recalcAll(void);
+    void _initAllMissionItems(void);
+    void _deinitAllMissionItems(void);
+    void _initMissionItem(MissionItem* item);
+    void _deinitMissionItem(MissionItem* item);
+
 private:
     QmlObjectListModel* _missionItems;
     QmlObjectListModel  _waypointLines;
