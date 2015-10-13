@@ -162,7 +162,7 @@ Item {
         border.width:   2
         border.color:   "white"
         opacity:        checked ? 0.95 : 0.65
-        color:          checked ? "orange" : "black"
+        color:          checked ? qgcPal.mapButtonHighlight : qgcPal.mapButton
 
         Image {
             id:             button
