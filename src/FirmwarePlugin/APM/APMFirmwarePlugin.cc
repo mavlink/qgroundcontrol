@@ -28,8 +28,6 @@
 #include "Generic/GenericFirmwarePlugin.h"
 #include "QGCMAVLink.h"
 
-#include <QDebug>
-
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
 static const QRegExp APM_COPTER_REXP("^(ArduCopter|APM:Copter)");
@@ -115,6 +113,31 @@ void APMFirmwareVersion::_parseVersion(const QString &versionText)
     _patch         = capturedTexts[4].toInt();
 }
 
+
+/*
+ * @brief APMCustomMode encapsulates the custom modes for APM
+ */
+APMCustomMode::APMCustomMode(uint32_t mode, bool settable) :
+    _mode(mode),
+    _settable(settable)
+{
+}
+
+
+void APMCustomMode::setEnumToStringMapping(const QMap<uint32_t, QString>& enumToString)
+{
+    _enumToString = enumToString;
+}
+
+QString APMCustomMode::modeString() const
+{
+    QString mode = _enumToString.value(modeAsInt());
+    if (mode.isEmpty()) {
+        mode = "mode" + QString::number(modeAsInt());
+    }
+    return mode;
+}
+
 APMFirmwarePlugin::APMFirmwarePlugin(QObject* parent) :
     FirmwarePlugin(parent)
 {
@@ -123,11 +146,7 @@ APMFirmwarePlugin::APMFirmwarePlugin(QObject* parent) :
 
 bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    Q_UNUSED(capabilities);
-    
-    // FIXME: No capabilitis yet supported
-    
-    return false;
+    return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability)) == capabilities;
 }
 
 QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
@@ -138,29 +157,51 @@ QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin
 }
 
 QStringList APMFirmwarePlugin::flightModes(void)
-{
-    // FIXME: NYI
-    
-    qWarning() << "APMFirmwarePlugin::flightModes not supported";
-    
-    return QStringList();
+{   
+    QStringList flightModesList;
+    foreach (const APMCustomMode& customMode, _supportedModes) {
+        if (customMode.canBeSet()) {
+            flightModesList << customMode.modeString();
+        }
+    }
+    return flightModesList;
 }
 
 QString APMFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
 {
-    // FIXME: Nothing more than generic support yet
-    return GenericFirmwarePlugin::instance()->flightMode(base_mode, custom_mode);
+    QString flightMode = "Unknown";
+
+    if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
+        foreach (const APMCustomMode& customMode, _supportedModes) {
+            if (customMode.modeAsInt() == custom_mode) {
+                flightMode = customMode.modeString();
+            }
+        }
+    }
+    return flightMode;
 }
 
 bool APMFirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode)
 {
-    Q_UNUSED(flightMode);
-    Q_UNUSED(base_mode);
-    Q_UNUSED(custom_mode);
-    
-    qWarning() << "APMFirmwarePlugin::setFlightMode called on base class, not supported";
-    
-    return false;
+    *base_mode = 0;
+    *custom_mode = 0;
+
+    bool found = false;
+
+    foreach(const APMCustomMode& mode, _supportedModes) {
+        if (flightMode.compare(mode.modeString(), Qt::CaseInsensitive) == 0) {
+            *base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+            *custom_mode = mode.modeAsInt();
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        qCWarning(APMFirmwarePluginLog) << "Unknown flight Mode" << flightMode;
+    }
+
+    return found;
 }
 
 int APMFirmwarePlugin::manualControlReservedButtonCount(void)
@@ -331,4 +372,9 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,             10);
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,             10);
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,             3);
+}
+
+void APMFirmwarePlugin::setSupportedModes(QList<APMCustomMode> supportedModes)
+{
+    _supportedModes = supportedModes;
 }
