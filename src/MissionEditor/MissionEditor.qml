@@ -139,9 +139,9 @@ QGCView {
                     RoundButton {
                         id:                     addMissionItemsButton
                         buttonImage:            "/qmlimages/MapAddMission.svg"
-                        opacity:                _addMissionItems ? 1.0 : 0.75
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
                         onClicked: {
-                            _addMissionItems = !_addMissionItems
+                            _addMissionItems = addMissionItemsButton.checked
                             _showHomePositionManager = false
                         }
                     }
@@ -149,9 +149,9 @@ QGCView {
                     RoundButton {
                         id:                     homePositionManagerButton
                         buttonImage:            "/qmlimages/MapHome.svg"
-                        opacity:                _showHomePositionManager ? 1.0 : 0.75
+                        exclusiveGroup:         _dropButtonsExclusiveGroup
                         onClicked: {
-                            _showHomePositionManager = !_showHomePositionManager
+                            _showHomePositionManager = homePositionManagerButton.checked
                             _addMissionItems = false
                         }
                     }
@@ -162,6 +162,11 @@ QGCView {
                         buttonImage:            "/qmlimages/MapCenter.svg"
                         viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:         _dropButtonsExclusiveGroup
+
+                        onClicked: {
+                            _showHomePositionManager    = false
+                            _addMissionItems            = false
+                        }
 
                         dropDownComponent: Component {
                             Row {
@@ -236,6 +241,11 @@ QGCView {
                         viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:         _dropButtonsExclusiveGroup
 
+                        onClicked: {
+                            _showHomePositionManager    = false
+                            _addMissionItems            = false
+                        }
+
                         dropDownComponent: Component {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
@@ -287,6 +297,11 @@ QGCView {
                         buttonImage:        "/qmlimages/MapType.svg"
                         viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                         exclusiveGroup:         _dropButtonsExclusiveGroup
+
+                        onClicked: {
+                            _showHomePositionManager    = false
+                            _addMissionItems            = false
+                        }
 
                         dropDownComponent: Component {
                             Row {

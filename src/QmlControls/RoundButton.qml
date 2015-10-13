@@ -14,12 +14,22 @@ Item {
     width:  radius * 2
     height: radius * 2
 
+    property bool checked: false
+    property ExclusiveGroup exclusiveGroup: null
+
+    onExclusiveGroupChanged: {
+        if (exclusiveGroup) {
+            exclusiveGroup.bindCheckable(_root)
+        }
+    }
+
     Rectangle {
         anchors.fill:   parent
         radius:         width / 2
         border.width:   2
         border.color:   "white"
-        color:          "transparent"
+        opacity:        checked ? 0.95 : 0.65
+        color:          checked ? "orange" : "black"
         Image {
             id:             button
             anchors.fill:   parent
@@ -28,7 +38,10 @@ Item {
             smooth:         true
             MouseArea {
                 anchors.fill:   parent
-                onClicked:      _root.clicked()
+                onClicked: {
+                    checked = !checked
+                    _root.clicked()
+                }
             }
         }
     }
