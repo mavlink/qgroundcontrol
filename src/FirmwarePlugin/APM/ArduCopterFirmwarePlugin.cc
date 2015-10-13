@@ -26,56 +26,53 @@
 
 #include "ArduCopterFirmwarePlugin.h"
 #include "Generic/GenericFirmwarePlugin.h"
-#include "QGCMAVLink.h"
-
-#include <QDebug>
 
 IMPLEMENT_QGC_SINGLETON(ArduCopterFirmwarePlugin, ArduCopterFirmwarePlugin)
+
+APMCopterMode::APMCopterMode(uint32_t mode, bool settable) : APMCustomMode(mode, settable)
+{
+    QMap<uint32_t,QString> enumToString;
+    enumToString.insert(STABILIZE, "Stabilize");
+    enumToString.insert(ACRO,      "Acro");
+    enumToString.insert(ALT_HOLD,  "Alt Hold");
+    enumToString.insert(AUTO,      "Auto");
+    enumToString.insert(GUIDED,    "Guided");
+    enumToString.insert(LOITER,    "Loiter");
+    enumToString.insert(RTL,       "RTL");
+    enumToString.insert(CIRCLE,    "Circle");
+    enumToString.insert(POSITION,  "Position");
+    enumToString.insert(LAND,      "Land");
+    enumToString.insert(OF_LOITER, "OF Loiter");
+    enumToString.insert(DRIFT,     "Drift");
+    enumToString.insert(SPORT,     "Sport");
+    enumToString.insert(FLIP,      "Flip");
+    enumToString.insert(AUTOTUNE,  "Autotune");
+    enumToString.insert(POS_HOLD,  "Pos Hold");
+    enumToString.insert(BRAKE,     "Brake");
+
+    setEnumToStringMapping(enumToString);
+}
 
 ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(QObject* parent) :
     APMFirmwarePlugin(parent)
 {
-
-}
-
-bool ArduCopterFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
-{
-    Q_UNUSED(capabilities);
-    
-    // FIXME: No capabilitis yet supported
-    
-    return false;
-}
-
-QList<VehicleComponent*> ArduCopterFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
-{
-    Q_UNUSED(vehicle);
-    
-    return QList<VehicleComponent*>();
-}
-
-QStringList ArduCopterFirmwarePlugin::flightModes(void)
-{
-    // FIXME: NYI
-    
-    qWarning() << "ArduCopterFirmwarePlugin::flightModes not supported";
-    
-    return QStringList();
-}
-
-QString ArduCopterFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode)
-{
-    // FIXME: Nothing more than generic support yet
-    return GenericFirmwarePlugin::instance()->flightMode(base_mode, custom_mode);
-}
-
-bool ArduCopterFirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode)
-{
-    Q_UNUSED(flightMode);
-    Q_UNUSED(base_mode);
-    Q_UNUSED(custom_mode);
-    
-    qWarning() << "ArduCopterFirmwarePlugin::setFlightMode called on base class, not supported";
-    
-    return false;
+    QList<APMCustomMode> supportedFlightModes;
+    supportedFlightModes << APMCopterMode(APMCopterMode::STABILIZE ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::ACRO      ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::ALT_HOLD  ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::AUTO      ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::GUIDED    ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::LOITER    ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::RTL       ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::CIRCLE    ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::POSITION  ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::LAND      ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::OF_LOITER ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::DRIFT     ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::SPORT     ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::FLIP      ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::AUTOTUNE  ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::POS_HOLD  ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::BRAKE     ,true);
+    setSupportedModes(supportedFlightModes);
 }

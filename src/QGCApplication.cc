@@ -74,6 +74,8 @@
 #include "MultiVehicleManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
 #include "APM/ArduCopterFirmwarePlugin.h"
+#include "APM/ArduPlaneFirmwarePlugin.h"
+#include "APM/ArduRoverFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
@@ -584,6 +586,8 @@ void QGCApplication::_createSingletons(void)
     // No dependencies
     firmwarePlugin = PX4FirmwarePlugin::_createSingleton();
     firmwarePlugin = ArduCopterFirmwarePlugin::_createSingleton();
+    firmwarePlugin = ArduPlaneFirmwarePlugin::_createSingleton();
+    firmwarePlugin = ArduRoverFirmwarePlugin::_createSingleton();
     
     // No dependencies
     FirmwarePluginManager* firmwarePluginManager = FirmwarePluginManager::_createSingleton();
