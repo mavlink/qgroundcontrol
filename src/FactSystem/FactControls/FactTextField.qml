@@ -14,8 +14,11 @@ QGCTextField {
     property Fact   fact:           null
     property string _validateString
 
-    text:       fact.valueString
-    unitsLabel: fact.units
+    text:               fact.valueString
+    unitsLabel:         fact.units
+
+    // At this point all Facts are numeric
+    inputMethodHints:   Qt.ImhFormattedNumbersOnly
 
     onEditingFinished: {
         if (qgcView) {
