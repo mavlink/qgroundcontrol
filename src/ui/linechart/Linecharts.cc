@@ -2,8 +2,8 @@
 
 #include "Linecharts.h"
 #include "MultiVehicleManager.h"
-
 #include "MainWindow.h"
+#include "UAS.h"
 
 Linecharts::Linecharts(QWidget *parent) :
     QStackedWidget(parent),
