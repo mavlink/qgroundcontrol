@@ -643,8 +643,8 @@ void ParameterLoader::_tryCacheHashLoad(int uasId, QVariant hash_value)
     uint32_t crc32_value = 0;
     /* The datastructure of the cache table */
     QMap<int, MapID2NamedParam> cache_map;
-
-    QFile cache_file(QFileInfo(QSettings().fileName()).path() + QDir::separator() + "param_cache");
+    const QDir settingsDir(QFileInfo(QSettings().fileName()).dir());
+    QFile cache_file(settingsDir.filePath("param_cache"));
     if (!cache_file.exists()) {
         /* no local cache, immediately refresh all params */
         refreshAllParameters();
