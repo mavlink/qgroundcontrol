@@ -84,6 +84,7 @@ MissionItem::MissionItem(QObject*       parent,
     , _reachedTime(0)
     , _yawRadiansFact(NULL)
     ,_dirty(false)
+    , _homePositionSpecialCase(false)
 {
     _latitudeFact                   = new Fact(0, "Latitude:",                      FactMetaData::valueTypeDouble, this);
     _longitudeFact                  = new Fact(0, "Longitude:",                     FactMetaData::valueTypeDouble, this);
@@ -219,6 +220,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     _reachedTime                = other._reachedTime;
     _altitudeRelativeToHomeFact = other._altitudeRelativeToHomeFact;
     _dirty                      = other._dirty;
+    _homePositionSpecialCase    = other._homePositionSpecialCase;
     
     *_latitudeFact              = *other._latitudeFact;
     *_longitudeFact             = *other._longitudeFact;
@@ -664,9 +666,11 @@ QmlObjectListModel* MissionItem::textFieldFacts(void)
             model->append(_latitudeFact);
             model->append(_longitudeFact);
             model->append(_altitudeFact);
-            model->append(_yawRadiansFact);
-            model->append(_param2Fact);
-            model->append(_param1Fact);
+            if (!_homePositionSpecialCase) {
+                model->append(_yawRadiansFact);
+                model->append(_param2Fact);
+                model->append(_param1Fact);
+            }
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
             model->append(_latitudeFact);
@@ -736,7 +740,9 @@ QmlObjectListModel* MissionItem::checkboxFacts(void)
     
     switch ((MAV_CMD)_command) {
         case MAV_CMD_NAV_WAYPOINT:
-            model->append(_altitudeRelativeToHomeFact);
+            if (!_homePositionSpecialCase) {
+                model->append(_altitudeRelativeToHomeFact);
+            }
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
             model->append(_altitudeRelativeToHomeFact);
