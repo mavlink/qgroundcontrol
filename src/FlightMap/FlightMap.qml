@@ -50,8 +50,8 @@ Map {
     property string mapName:            'defaultMap'
     property string mapType:            QGroundControl.flightMapSettings.mapTypeForMapName(mapName)
     property alias  mapWidgets:         controlWidgets
-    property bool   isSatelliteMap:     false
-        
+    property bool   isSatelliteMap:     mapType == "Satellite Map" || mapType == "Hybrid Map"
+
     property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
     property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
 
