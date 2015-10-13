@@ -290,7 +290,6 @@ HEADERS += \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
     src/QGCDockWidget.h \
-    src/ui/CameraView.h \
     src/ui/HILDockWidget.h \
     src/ui/MultiVehicleDockWidget.h \
     src/ui/QGCHilConfiguration.h \
@@ -394,7 +393,6 @@ SOURCES += \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
     src/QGCDockWidget.cc \
-    src/ui/CameraView.cc \
     src/ui/HILDockWidget.cc \
     src/ui/MultiVehicleDockWidget.cc \
     src/ui/QGCHilConfiguration.cc \
