@@ -117,6 +117,7 @@
         <file alias="QGroundControl/Controls/DropButton.qml">src/QmlControls/DropButton.qml</file>
         <file alias="QGroundControl/Controls/RoundButton.qml">src/QmlControls/RoundButton.qml</file>
         <file alias="QGroundControl/Controls/QGCCanvas.qml">src/QmlControls/QGCCanvas.qml</file>
+        <file alias="QGroundControl/Controls/ExclusiveGroupItem.qml">src/QmlControls/ExclusiveGroupItem.qml</file>
 
         <!-- Vehicle Setup -->
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
