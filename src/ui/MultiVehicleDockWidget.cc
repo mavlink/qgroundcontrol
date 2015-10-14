@@ -40,8 +40,11 @@ MultiVehicleDockWidget::MultiVehicleDockWidget(const QString& title, QAction* ac
 
 void MultiVehicleDockWidget::init(void)
 {
+    foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles()) {
+        _vehicleAdded(vehicle);
+    }
+
     if (MultiVehicleManager::instance()->activeVehicle()) {
-        _vehicleAdded(MultiVehicleManager::instance()->activeVehicle());
         _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
     }
 }

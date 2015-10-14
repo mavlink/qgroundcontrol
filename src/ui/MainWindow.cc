@@ -95,6 +95,7 @@ const char* MainWindow::_uasStatusDetailsDockWidgetName =   "Status Details";
 const char* MainWindow::_pfdDockWidgetName =                "Primary Flight Display";
 const char* MainWindow::_uasInfoViewDockWidgetName =        "Info View";
 const char* MainWindow::_hilDockWidgetName =                "HIL Config";
+const char* MainWindow::_analyzeDockWidgetName =            "Analyze";
 
 const char* MainWindow::_visibleWidgetsKey =                "VisibleWidgets";
 #endif
@@ -277,13 +278,11 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     _ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
     _ui.actionPlan->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
     _ui.actionFlight->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
-    _ui.actionAnalyze->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
     _ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
     _ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
     _ui.actionPlan->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
     _ui.actionFlight->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
-    _ui.actionAnalyze->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
     _ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
@@ -367,6 +366,7 @@ void MainWindow::_buildCommonWidgets(void)
         _pfdDockWidgetName,
         _uasInfoViewDockWidgetName,
         _hilDockWidgetName,
+        _analyzeDockWidgetName,
     };
     static const size_t cDockWidgetNames = sizeof(rgDockWidgetNames) / sizeof(rgDockWidgetNames[0]);
 
@@ -419,6 +419,8 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = new FlightDisplayWidget(widgetName, _mapName2Action[widgetName], this);
     } else if (widgetName == _hilDockWidgetName) {
         widget = new HILDockWidget(widgetName, _mapName2Action[widgetName], this);
+    } else if (widgetName == _analyzeDockWidgetName) {
+        widget = new Linecharts(widgetName, _mapName2Action[widgetName], mavlinkDecoder, this);
     } else if (widgetName == _uasInfoViewDockWidgetName) {
         QGCTabbedInfoView* pInfoView = new QGCTabbedInfoView(widgetName, _mapName2Action[widgetName], this);
         pInfoView->addSource(mavlinkDecoder);
@@ -466,14 +468,6 @@ void MainWindow::_buildSetupView(void)
     if (!_setupView) {
         _setupView = new SetupView(this);
         _setupView->setVisible(false);
-    }
-}
-
-void MainWindow::_buildAnalyzeView(void)
-{
-    if (!_analyzeView) {
-        _analyzeView = new QGCDataPlot2D(this);
-        _analyzeView->setVisible(false);
     }
 }
 
@@ -589,18 +583,10 @@ void MainWindow::connectCommonActions()
 {
     // Bind together the perspective actions
     QActionGroup* perspectives = new QActionGroup(_ui.menuPerspectives);
-    perspectives->addAction(_ui.actionAnalyze);
-    perspectives->addAction(_ui.actionFlight);
     perspectives->addAction(_ui.actionPlan);
     perspectives->addAction(_ui.actionSetup);
     perspectives->setExclusive(true);
 
-    // Mark the right one as selected
-    if (_currentView == VIEW_ANALYZE)
-    {
-        _ui.actionAnalyze->setChecked(true);
-        _ui.actionAnalyze->activate(QAction::Trigger);
-    }
     if (_currentView == VIEW_FLIGHT)
     {
         _ui.actionFlight->setChecked(true);
@@ -625,7 +611,6 @@ void MainWindow::connectCommonActions()
 
     // Views actions
     connect(_ui.actionFlight,           SIGNAL(triggered()), this, SLOT(loadFlightView()));
-    connect(_ui.actionAnalyze,          SIGNAL(triggered()), this, SLOT(loadAnalyzeView()));
     connect(_ui.actionPlan,             SIGNAL(triggered()), this, SLOT(loadPlanView()));
     
     // Help Actions
@@ -695,18 +680,6 @@ void MainWindow::commsWidgetDestroyed(QObject *obj)
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {
     connect(vehicle->uas(), SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
-
-    if (!linechartWidget)
-    {
-        linechartWidget = new Linecharts(this);
-        linechartWidget->setVisible(false);
-    }
-
-    linechartWidget->addSource(mavlinkDecoder);
-    if (_analyzeView != linechartWidget)
-    {
-        _analyzeView = linechartWidget;
-    }
 }
 
 /// Stores the state of the toolbar, status bar and widgets associated with the current view
@@ -731,11 +704,6 @@ void MainWindow::_loadCurrentViewState(void)
         case VIEW_SETUP:
             _buildSetupView();
             centerView = _setupView;
-            break;
-
-        case VIEW_ANALYZE:
-            _buildAnalyzeView();
-            centerView = _analyzeView;
             break;
 
         case VIEW_FLIGHT:
@@ -777,17 +745,6 @@ void MainWindow::_loadCurrentViewState(void)
     // There is a bug in Qt where a Canvas element inside a QQuickWidget does not
     // receive update requests. Here we emit a signal for them to get repainted.
     emit repaintCanvas();
-}
-
-void MainWindow::loadAnalyzeView()
-{
-    if (_currentView != VIEW_ANALYZE)
-    {
-        _storeCurrentViewState();
-        _currentView = VIEW_ANALYZE;
-        _ui.actionAnalyze->setChecked(true);
-        _loadCurrentViewState();
-    }
 }
 
 void MainWindow::loadPlanView()
