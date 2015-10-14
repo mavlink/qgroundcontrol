@@ -12,8 +12,8 @@
 const float QGCMAVLinkInspector::updateHzLowpass = 0.2f;
 const unsigned int QGCMAVLinkInspector::updateInterval = 1000U;
 
-QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *parent) :
-    QWidget(parent),
+QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, MAVLinkProtocol* protocol, QWidget *parent) :
+    QGCDockWidget(title, action, parent),
     _protocol(protocol),
     selectedSystemID(0),
     selectedComponentID(0),
@@ -58,6 +58,8 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     // Attach the UI's refresh rate to a timer.
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(refreshView()));
     updateTimer.start(updateInterval);
+    
+    loadSettings();
 }
 
 void QGCMAVLinkInspector::_vehicleAdded(Vehicle* vehicle)

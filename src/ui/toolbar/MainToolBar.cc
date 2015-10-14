@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
-    : QGCQmlWidgetHolder(parent)
+    : QGCQmlWidgetHolder(QString(), NULL, parent)
     , _vehicle(NULL)
     , _mav(NULL)
     , _toolBar(NULL)

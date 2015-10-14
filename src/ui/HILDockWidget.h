@@ -31,7 +31,7 @@ class HILDockWidget : public MultiVehicleDockWidget
     Q_OBJECT
 
 public:
-    explicit HILDockWidget(QWidget *parent = 0);
+    explicit HILDockWidget(const QString& title, QAction* action, QWidget *parent = 0);
     ~HILDockWidget();
 
 protected:

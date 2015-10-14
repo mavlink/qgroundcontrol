@@ -230,6 +230,7 @@ HEADERS += \
     src/QGCApplication.h \
     src/QGCComboBox.h \
     src/QGCConfig.h \
+    src/QGCDockWidget.h \
     src/QGCFileDialog.h \
     src/QGCGeo.h \
     src/QGCLoggingCategory.h \
@@ -295,7 +296,6 @@ HEADERS += \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
-    src/QGCDockWidget.h \
     src/ui/CameraView.h \
     src/ui/HILDockWidget.h \
     src/ui/MultiVehicleDockWidget.h \
@@ -346,6 +346,7 @@ SOURCES += \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
+    src/QGCDockWidget.cc \
     src/QGCFileDialog.cc \
     src/QGCLoggingCategory.cc \
     src/QGCPalette.cc \
@@ -399,7 +400,6 @@ SOURCES += \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
-    src/QGCDockWidget.cc \
     src/ui/CameraView.cc \
     src/ui/HILDockWidget.cc \
     src/ui/MultiVehicleDockWidget.cc \

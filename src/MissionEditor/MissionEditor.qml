@@ -52,7 +52,11 @@ QGCView {
 
     property var    _homePositionManager:       QGroundControl.homePositionManager
     property string _homePositionName:          _homePositionManager.homePositions.get(0).name
-    property var    homePositionCoordinate:     _homePositionManager.homePositions.get(0).coordinate
+
+    property var    offlineHomePosition:        _homePositionManager.homePositions.get(0).coordinate
+    property var    liveHomePosition:           controller.liveHomePosition
+    property var    liveHomePositionAvailable:  controller.liveHomePositionAvailable
+    property var    homePosition:               offlineHomePosition // live or offline depending on state
 
     QGCPalette { id: _qgcPal; colorGroupEnabled: enabled }
 
@@ -76,20 +80,24 @@ QGCView {
         }
     }
 
-    // Home position is mission item 0, so keep them in sync
-    onHomePositionCoordinateChanged: {
+    function updateHomePosition() {
+        homePosition = liveHomePositionAvailable ? liveHomePosition : offlineHomePosition
         // Changing the coordinate will set the dirty bit, so we save and reset it
         var dirtyBit = _missionItems.dirty
-        _missionItems.get(0).coordinate = homePositionCoordinate
+        _missionItems.get(0).coordinate = homePosition
         _missionItems.dirty = dirtyBit
     }
 
-    Component.onCompleted: onHomePositionCoordinateChanged
+    Component.onCompleted:              updateHomePosition()
+    onOfflineHomePositionChanged:       updateHomePosition()
+    onLiveHomePositionAvailableChanged: updateHomePosition()
+    onLiveHomePositionChanged:          updateHomePosition()
 
     Connections {
         target: controller
 
-        onMissionItemsChanged: _missionItems.get(0).coordinate = homePositionCoordinate
+        // When the mission items change _missionsItems[0] changes as well so we need to reset it to home
+        onMissionItemsChanged: updateHomePosition
     }
 
     QGCViewPanel {
@@ -108,8 +116,8 @@ QGCView {
                 mapName:        "MissionEditor"
 
                 Component.onCompleted: {
-                    latitude = homePositionCoordinate.latitude
-                    longitude = homePositionCoordinate.longitude
+                    latitude = homePosition.latitude
+                    longitude = homePosition.longitude
                 }
 
                 MouseArea {
@@ -121,7 +129,7 @@ QGCView {
                         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
                         if (_showHomePositionManager) {
-                            homePositionCoordinate = coordinate
+                            offlineHomePosition = coordinate
                         } else if (_addMissionItems) {
                             var index = controller.addMissionItem(coordinate)
                             setCurrentItem(index)
@@ -200,7 +208,7 @@ QGCView {
 
                                     onClicked: {
                                         centerMapButton.hideDropDown()
-                                        editorMap.center = QtPositioning.coordinate(homePositionCoordinate.latitude, homePositionCoordinate.longitude)
+                                        editorMap.center = QtPositioning.coordinate(homePosition.latitude, homePosition.longitude)
                                         _showHomePositionManager = true
                                     }
                                 }
@@ -229,8 +237,8 @@ QGCView {
                                         centerMapButton.hideDropDown()
 
                                         // Begin with only the home position in the region
-                                        var region = QtPositioning.rectangle(QtPositioning.coordinate(homePositionCoordinate.latitude, _homePositionCoordinate.longitude),
-                                                                             QtPositioning.coordinate(homePositionCoordinate.latitude, _homePositionCoordinate.longitude))
+                                        var region = QtPositioning.rectangle(QtPositioning.coordinate(homePosition.latitude, homePosition.longitude),
+                                                                             QtPositioning.coordinate(homePosition.latitude, homePosition.longitude))
 
                                         // Now expand the region to include all mission items
                                         for (var i=0; i<_missionItems.count; i++) {
@@ -509,11 +517,12 @@ QGCView {
                         visible:        _showHomePositionManager && !_showHelpPanel
 
                         Column {
-                            anchors.fill: parent
+                            anchors.fill:   parent
+                            visible:        !liveHomePositionAvailable
 
                             QGCLabel {
                                 font.pixelSize: ScreenTools.mediumFontPixelSize
-                                text:           "Home Position Manager"
+                                text:           "Offline Home Position Manager"
                             }
 
                             Item {
@@ -522,7 +531,18 @@ QGCView {
                             }
 
                             QGCLabel {
-                                text: "Select home position to use:"
+                                width:      parent.width
+                                wrapMode:   Text.WordWrap
+                                text:       "This is used to specify a simulated home position while you are not connected to a Vehicle."
+                            }
+
+                            Item {
+                                width: 10
+                                height: ScreenTools.defaultFontPixelHeight
+                            }
+
+                            QGCLabel {
+                                text:       "Select home position to use:"
                             }
 
                             QGCComboBox {
@@ -535,9 +555,9 @@ QGCView {
                                     if (currentIndex != -1) {
                                         var homePos = _homePositionManager.homePositions.get(currentIndex)
                                         _homePositionName = homePos.name
-                                        homePositionCoordinate = homePos.coordinate
-                                        editorMap.latitude = homePositionCoordinate.latitude
-                                        editorMap.longitude = homePositionCoordinate.longitude
+                                        offlineHomePosition = homePos.coordinate
+                                        editorMap.latitude = offlineHomePosition.latitude
+                                        editorMap.longitude = offlineHomePosition.longitude
                                     }
                                 }
                             }
@@ -585,18 +605,18 @@ QGCView {
 
                             Item {
                                 width:  parent.width
-                                height: latitudeField.height
+                                height: offlineLatitudeField.height
 
                                 QGCLabel {
-                                    anchors.baseline:   latitudeField.baseline
+                                    anchors.baseline:   offlineLatitudeField.baseline
                                     text:               "Lat:"
                                 }
 
                                 QGCTextField {
-                                    id:             latitudeField
+                                    id:             offlineLatitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           homePositionCoordinate.latitude
+                                    text:           offlineHomePosition.latitude
                                 }
                             }
 
@@ -607,18 +627,18 @@ QGCView {
 
                             Item {
                                 width:  parent.width
-                                height: longitudeField.height
+                                height: offlineLongitudeField.height
 
                                 QGCLabel {
-                                    anchors.baseline:   longitudeField.baseline
+                                    anchors.baseline:   offlineLongitudeField.baseline
                                     text:               "Lon:"
                                 }
 
                                 QGCTextField {
-                                    id:             longitudeField
+                                    id:             offlineLongitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           homePositionCoordinate.longitude
+                                    text:           offlineHomePosition.longitude
                                 }
                             }
 
@@ -629,18 +649,18 @@ QGCView {
 
                             Item {
                                 width:  parent.width
-                                height: altitudeField.height
+                                height: offlineAltitudeField.height
 
                                 QGCLabel {
-                                    anchors.baseline:   altitudeField.baseline
+                                    anchors.baseline:   offlineAltitudeField.baseline
                                     text:               "Alt:"
                                 }
 
                                 QGCTextField {
-                                    id:             altitudeField
+                                    id:             offlineAltitudeField
                                     anchors.right:  parent.right
                                     width:          _editFieldWidth
-                                    text:           homePositionCoordinate.altitude
+                                    text:           offlineHomePosition.altitude
                                 }
                             }
 
@@ -656,8 +676,8 @@ QGCView {
                                     text: "Add/Update"
 
                                     onClicked: {
-                                        homePositionCoordinate = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
-                                        _homePositionManager.updateHomePosition(nameField.text, homePositionCoordinate)
+                                        offlineHomePosition = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
+                                        _homePositionManager.updateHomePosition(nameField.text, offlineHomePosition)
                                         homePosCombo.currentIndex = homePosCombo.find(nameField.text)
                                     }
                                 }
@@ -671,11 +691,88 @@ QGCView {
                                         homePosCombo.currentIndex = 0
                                         var homePos = _homePositionManager.homePositions.get(0)
                                         _homePositionName = homePos.name
-                                        homePositionCoordinate = homePos.coordinate
+                                        offlineHomePosition = homePos.coordinate
                                     }
                                 }
                             }
-                        } // Column
+                        } // Column - Offline view
+
+                        Column {
+                            anchors.fill:   parent
+                            visible:        liveHomePositionAvailable
+
+                            QGCLabel {
+                                font.pixelSize: ScreenTools.mediumFontPixelSize
+                                text:           "Vehicle Home Position"
+                            }
+
+                            Item {
+                                width: 10
+                                height: ScreenTools.defaultFontPixelHeight
+                            }
+
+                            Item {
+                                width:  parent.width
+                                height: liveLatitudeField.height
+
+                                QGCLabel {
+                                    anchors.baseline:   liveLatitudeField.baseline
+                                    text:               "Lat:"
+                                }
+
+                                QGCLabel {
+                                    id:             liveLatitudeField
+                                    anchors.right:  parent.right
+                                    width:          _editFieldWidth
+                                    text:           liveHomePosition.latitude
+                                }
+                            }
+
+                            Item {
+                                width: 10
+                                height: ScreenTools.defaultFontPixelHeight / 3
+                            }
+
+                            Item {
+                                width:  parent.width
+                                height: liveLongitudeField.height
+
+                                QGCLabel {
+                                    anchors.baseline:   liveLongitudeField.baseline
+                                    text:               "Lon:"
+                                }
+
+                                QGCLabel {
+                                    id:             liveLongitudeField
+                                    anchors.right:  parent.right
+                                    width:          _editFieldWidth
+                                    text:           liveHomePosition.longitude
+                                }
+                            }
+
+                            Item {
+                                width: 10
+                                height: ScreenTools.defaultFontPixelHeight / 3
+                            }
+
+                            Item {
+                                width:  parent.width
+                                height: liveAltitudeField.height
+
+                                QGCLabel {
+                                    anchors.baseline:   liveAltitudeField.baseline
+                                    text:               "Alt:"
+                                }
+
+                                QGCLabel {
+                                    id:             liveAltitudeField
+                                    anchors.right:  parent.right
+                                    width:          _editFieldWidth
+                                    text:           liveHomePosition.altitude
+                                }
+                            }
+                        } // Column - Online view
+
                     } // Item - Home Position Manager
 
                     // Help Panel
