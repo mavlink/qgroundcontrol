@@ -367,7 +367,9 @@ void LogReplayLink::_play(void)
 {
     // FIXME: With move to link I don't think this is needed any more? Except for the replay widget handling multi-uas?
     LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
+#ifndef __mobile__
     MAVLinkProtocol::instance()->suspendLogForReplay(true);
+#endif
     
     // Make sure we aren't at the end of the file, if we are, reset to the beginning and play from there.
     if (_logFile.atEnd()) {
@@ -397,7 +399,9 @@ void LogReplayLink::_play(void)
 void LogReplayLink::_pause(void)
 {
     LinkManager::instance()->setConnectionsAllowed();
+#ifndef __mobile__
     MAVLinkProtocol::instance()->suspendLogForReplay(false);
+#endif
     
     _readTickTimer.stop();
     
