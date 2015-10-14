@@ -80,7 +80,6 @@
     <addaction name="actionSetup"/>
     <addaction name="actionPlan"/>
     <addaction name="actionFlight"/>
-    <addaction name="actionAnalyze"/>
     <addaction name="separator"/>
     <addaction name="actionFullscreen"/>
     <addaction name="actionNormal"/>
@@ -132,14 +131,6 @@
    </property>
    <property name="text">
     <string>Plan</string>
-   </property>
-  </action>
-  <action name="actionAnalyze">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Analyze</string>
    </property>
   </action>
   <action name="actionFlight">
@@ -237,9 +228,7 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="../../qgroundcontrol.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>actionExit</sender>
