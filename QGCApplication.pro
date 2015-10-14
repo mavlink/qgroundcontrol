@@ -126,8 +126,6 @@ include(QGCExternalLibs.pri)
 # Main QGroundControl portion of project file
 #
 
-PRECOMPILED_HEADER += src/stable_headers.h
-
 RESOURCES += qgroundcontrol.qrc
 
 DEPENDPATH += \
@@ -277,8 +275,13 @@ HEADERS += \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/uas/UASMessageView.h \
     src/MissionItem.h \
-    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
-    src/stable_headers.h
+    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
+
+WindowsBuild {
+    PRECOMPILED_HEADER += src/stable_headers.h
+    HEADERS += src/stable_headers.h
+}
+
 
 !iOSBuild {
 HEADERS += \
