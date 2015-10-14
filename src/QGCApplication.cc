@@ -448,9 +448,11 @@ bool QGCApplication::_initForNormalAppBoot(void)
     splashScreen->finish(mainWindow);
     mainWindow->splashScreenFinished();
 
+#ifndef __mobile__
     // Now that main window is up check for lost log files
     connect(this, &QGCApplication::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
+#endif
 
     // Load known link configurations
     LinkManager::instance()->loadLinkConfigurationList();
