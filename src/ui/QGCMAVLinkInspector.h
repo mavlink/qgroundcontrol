@@ -1,10 +1,10 @@
 #ifndef QGCMAVLINKINSPECTOR_H
 #define QGCMAVLINKINSPECTOR_H
 
-#include <QWidget>
 #include <QMap>
 #include <QTimer>
 
+#include "QGCDockWidget.h"
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 
@@ -15,12 +15,12 @@ namespace Ui {
 class QTreeWidgetItem;
 class UASInterface;
 
-class QGCMAVLinkInspector : public QWidget
+class QGCMAVLinkInspector : public QGCDockWidget
 {
     Q_OBJECT
 
 public:
-    explicit QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *parent = 0);
+    explicit QGCMAVLinkInspector(const QString& title, QAction* action, MAVLinkProtocol* protocol, QWidget *parent = 0);
     ~QGCMAVLinkInspector();
 
 public slots:

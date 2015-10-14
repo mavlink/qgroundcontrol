@@ -43,7 +43,8 @@ This file is part of the PIXHAWK project
 #include "QGC.h"
 #include "UAS.h"
 
-UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
+UASInfoWidget::UASInfoWidget(const QString& title, QAction* action, QWidget *parent, QString name)
+    : QGCDockWidget(title, action, parent)
 {
     ui.setupUi(this);
     this->name = name;
@@ -72,6 +73,8 @@ UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
     updateTimer->start(updateInterval);
 
     this->setVisible(false);
+    
+    loadSettings();
 }
 
 UASInfoWidget::~UASInfoWidget()
