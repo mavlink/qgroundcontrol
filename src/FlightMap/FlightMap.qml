@@ -50,8 +50,8 @@ Map {
     property string mapName:            'defaultMap'
     property string mapType:            QGroundControl.flightMapSettings.mapTypeForMapName(mapName)
     property alias  mapWidgets:         controlWidgets
-    property bool   isSatelliteMap:     false
-        
+    property bool   isSatelliteMap:     mapType == "Satellite Map" || mapType == "Hybrid Map"
+
     property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
     property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
 
@@ -289,4 +289,11 @@ Map {
         }
     }
 */
+
+    MouseArea {
+        //-- TODO: Check if this is still needed when we switch to 5.5.1
+        //-- Workaround for QTBUG-46388 (Pinch zoom doesn't work without it on mobile)
+        anchors.fill: parent
+    }
+
 } // Map

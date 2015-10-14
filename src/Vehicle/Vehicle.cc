@@ -227,8 +227,8 @@ void Vehicle::_handleHomePosition(mavlink_message_t& message)
     _homePosition.setAltitude(homePos.altitude / 1000.0);
     _homePositionAvailable = true;
     
-    emit homePositionAvailableChanged(true);
     emit homePositionChanged(_homePosition);
+    emit homePositionAvailableChanged(true);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
@@ -963,10 +963,6 @@ bool Vehicle::homePositionAvailable(void)
 
 QGeoCoordinate Vehicle::homePosition(void)
 {
-    if (!_homePositionAvailable) {
-        qWarning() << "Call to homePosition while _homePositionAvailable == false";
-    }
-    
     return _homePosition;
 }
 

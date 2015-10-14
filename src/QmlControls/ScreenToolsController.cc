@@ -55,7 +55,7 @@ void ScreenToolsController::_updateCanvas()
 double ScreenToolsController::getQmlDefaultFontPixelSize(void)
 {
     if (_qmlDefaultFontPixelSize == -1) {
-        QGCQmlWidgetHolder qmlWidgetHolder;
+        QGCQmlWidgetHolder qmlWidgetHolder(QString(), NULL);
         
         qmlWidgetHolder.setSource(QUrl::fromUserInput("qrc:/qml/ScreenToolsFontQuery.qml"));
     }

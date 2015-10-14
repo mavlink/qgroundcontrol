@@ -1,9 +1,9 @@
 #ifndef QGCUASFILEVIEWMULTI_H
 #define QGCUASFILEVIEWMULTI_H
 
-#include <QWidget>
 #include <QMap>
 
+#include "QGCDockWidget.h"
 #include "QGCUASFileView.h"
 #include "UAS.h"
 
@@ -12,12 +12,12 @@ namespace Ui
 class QGCUASFileViewMulti;
 }
 
-class QGCUASFileViewMulti : public QWidget
+class QGCUASFileViewMulti : public QGCDockWidget
 {
     Q_OBJECT
 
 public:
-    explicit QGCUASFileViewMulti(QWidget *parent = 0);
+    explicit QGCUASFileViewMulti(const QString& title, QAction* action, QWidget *parent = 0);
     ~QGCUASFileViewMulti();
 
 protected:

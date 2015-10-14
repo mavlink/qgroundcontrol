@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include "CameraView.h"
 #include <QDebug>
 #include <QtOpenGL>
+#include <QOpenGLFunctions_2_0>
 
 CameraView::CameraView(int width, int height, int depth, int channels, QWidget* parent) : QGLWidget(parent)
 {
@@ -237,14 +238,26 @@ void CameraView::setPixels(int imgid, const unsigned char* imageData, int length
 
 void CameraView::paintGL()
 {
-    glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+    Q_ASSERT(QOpenGLContext::currentContext());
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (!funcs) {
+        qWarning() << "OpenGL 2.0 not available on this platform. CameraView will not function";
+        return;
+    }
+    funcs->glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
 }
 
 void CameraView::resizeGL(int w, int h)
 {
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, w, 0, h, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
+    Q_ASSERT(QOpenGLContext::currentContext());
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (!funcs) {
+        // paintGL warning should suffice
+        return;
+    }
+    funcs->glViewport(0, 0, w, h);
+    funcs->glMatrixMode(GL_PROJECTION);
+    funcs->glLoadIdentity();
+    funcs->glOrtho(0, w, 0, h, -1, 1);
+    funcs->glMatrixMode(GL_MODELVIEW);
 }
