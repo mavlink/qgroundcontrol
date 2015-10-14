@@ -162,12 +162,10 @@ INCLUDEPATH += \
 
 FORMS += \
     src/QGCQmlWidgetHolder.ui \
-    src/ui/Linechart.ui \
     src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MainWindow.ui \
     src/ui/MAVLinkSettingsWidget.ui \
     src/ui/QGCCommConfiguration.ui \
-    src/ui/QGCDataPlot2D.ui \
     src/ui/QGCLinkConfiguration.ui \
     src/ui/QGCMapRCToParamDialog.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
@@ -185,7 +183,9 @@ FORMS += \
 
 !MobileBuild {
 FORMS += \
+    src/ui/Linechart.ui \
     src/ui/MultiVehicleDockWidget.ui \
+    src/ui/QGCDataPlot2D.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
@@ -252,19 +252,11 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
-    src/ui/linechart/ChartPlot.h \
-    src/ui/linechart/IncrementalPlot.h \
-    src/ui/linechart/LinechartPlot.h \
-    src/ui/linechart/Linecharts.h \
-    src/ui/linechart/LinechartWidget.h \
-    src/ui/linechart/Scrollbar.h \
-    src/ui/linechart/ScrollZoomer.h \
     src/ui/LogReplayLinkConfigurationWidget.h \
     src/ui/MainWindow.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
     src/ui/QGCCommConfiguration.h \
-    src/ui/QGCDataPlot2D.h \
     src/ui/QGCLinkConfiguration.h \
     src/ui/QGCMapRCToParamDialog.h \
     src/ui/QGCMAVLinkLogPlayer.h \
@@ -292,7 +284,15 @@ HEADERS += \
     src/comm/QGCXPlaneLink.h \
     src/ui/CameraView.h \
     src/ui/HILDockWidget.h \
+    src/ui/linechart/ChartPlot.h \
+    src/ui/linechart/IncrementalPlot.h \
+    src/ui/linechart/LinechartPlot.h \
+    src/ui/linechart/Linecharts.h \
+    src/ui/linechart/LinechartWidget.h \
+    src/ui/linechart/Scrollbar.h \
+    src/ui/linechart/ScrollZoomer.h \
     src/ui/MultiVehicleDockWidget.h \
+    src/ui/QGCDataPlot2D.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilJSBSimConfiguration.h \
@@ -357,19 +357,11 @@ SOURCES += \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
-    src/ui/linechart/ChartPlot.cc \
-    src/ui/linechart/IncrementalPlot.cc \
-    src/ui/linechart/LinechartPlot.cc \
-    src/ui/linechart/Linecharts.cc \
-    src/ui/linechart/LinechartWidget.cc \
-    src/ui/linechart/Scrollbar.cc \
-    src/ui/linechart/ScrollZoomer.cc \
     src/ui/LogReplayLinkConfigurationWidget.cc \
     src/ui/MainWindow.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MAVLinkSettingsWidget.cc \
     src/ui/QGCCommConfiguration.cc \
-    src/ui/QGCDataPlot2D.cc \
     src/ui/QGCLinkConfiguration.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
     src/ui/QGCMAVLinkLogPlayer.cc \
@@ -396,7 +388,15 @@ SOURCES += \
     src/comm/QGCXPlaneLink.cc \
     src/ui/CameraView.cc \
     src/ui/HILDockWidget.cc \
+    src/ui/linechart/ChartPlot.cc \
+    src/ui/linechart/IncrementalPlot.cc \
+    src/ui/linechart/LinechartPlot.cc \
+    src/ui/linechart/Linecharts.cc \
+    src/ui/linechart/LinechartWidget.cc \
+    src/ui/linechart/Scrollbar.cc \
+    src/ui/linechart/ScrollZoomer.cc \
     src/ui/MultiVehicleDockWidget.cc \
+    src/ui/QGCDataPlot2D.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
