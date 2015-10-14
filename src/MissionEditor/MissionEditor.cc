@@ -142,52 +142,6 @@ void MissionEditor::removeMissionItem(int index)
     _recalcAll();
 }
 
-void MissionEditor::moveUp(int index)
-{
-    if (!_canEdit) {
-        qWarning() << "addMissionItem called with _canEdit == false";
-        return;
-    }
-    
-    if (_missionItems->count() < 2 || index <= 0 || index >= _missionItems->count()) {
-        return;
-    }
-    
-    MissionItem item1 = *qobject_cast<MissionItem*>(_missionItems->get(index - 1));
-    MissionItem item2 = *qobject_cast<MissionItem*>(_missionItems->get(index));
-    
-    _missionItems->removeAt(index - 1);
-    _missionItems->removeAt(index - 1);
-    
-    _missionItems->insert(index - 1, new MissionItem(item2, _missionItems));
-    _missionItems->insert(index, new MissionItem(item1, _missionItems));
-    
-    _recalcAll();
-}
-
-void MissionEditor::moveDown(int index)
-{
-    if (!_canEdit) {
-        qWarning() << "addMissionItem called with _canEdit == false";
-        return;
-    }
-    
-    if (_missionItems->count() < 2 || index >= _missionItems->count() - 1) {
-        return;
-    }
-    
-    MissionItem item1 = *qobject_cast<MissionItem*>(_missionItems->get(index));
-    MissionItem item2 = *qobject_cast<MissionItem*>(_missionItems->get(index + 1));
-    
-    _missionItems->removeAt(index);
-    _missionItems->removeAt(index);
-    
-    _missionItems->insert(index, new MissionItem(item2, _missionItems));
-    _missionItems->insert(index + 1, new MissionItem(item1, _missionItems));
-    
-    _recalcAll();
-}
-
 void MissionEditor::loadMissionFromFile(void)
 {
     QString errorString;
