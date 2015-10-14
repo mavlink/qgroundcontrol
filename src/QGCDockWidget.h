@@ -27,21 +27,22 @@
 #include <QDockWidget>
 #include <QAction>
 
-/// @file
-///     @brief Subclass of QDockWidget so we can intercept the closeEvent.
-///
-///     @author Don Gagne <don@thegagnes.com>
-
-class QGCDockWidget : public QDockWidget {
+class QGCDockWidget : public QWidget {
     Q_OBJECT
     
 public:
-    QGCDockWidget(const QString& title, QAction* action, QWidget *parent = 0, Qt::WindowFlags flags = 0);
+    /// Pass in title = QString() and action = NULL when just using as a regular widget
+    QGCDockWidget(const QString& title, QAction* action, QWidget *parent = 0);
+    
+    void loadSettings(void);
+    void saveSettings(void);
 
     void closeEvent(QCloseEvent* event);
 	
-private:
-	QAction* _action;
+protected:
+    QString             _title;
+	QAction*            _action;
+    static const char*  _settingsGroup;
 };
 
 

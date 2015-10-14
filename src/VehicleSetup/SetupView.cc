@@ -41,7 +41,7 @@
 #include <QDebug>
 
 SetupView::SetupView(QWidget* parent) :
-    QGCQmlWidgetHolder(parent)
+    QGCQmlWidgetHolder(QString(), NULL, parent)
 {
     setSource(QUrl::fromUserInput("qrc:/qml/SetupView.qml"));
 }

@@ -23,8 +23,12 @@ This file is part of the QGROUNDCONTROL project
 
 #include "CustomCommandWidget.h"
 
-CustomCommandWidget::CustomCommandWidget(QWidget *parent) :
-    QGCQmlWidgetHolder(parent)
+CustomCommandWidget::CustomCommandWidget(const QString& title, QAction* action, QWidget *parent) :
+    QGCQmlWidgetHolder(title, action, parent)
 {
+    Q_UNUSED(title);
+    Q_UNUSED(action);
 	setSource(QUrl::fromUserInput("qrc:/qml/CustomCommandWidget.qml"));
+    
+    loadSettings();
 }

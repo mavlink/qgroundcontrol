@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 const char* MissionEditor::_settingsGroup = "MissionEditor";
 
 MissionEditor::MissionEditor(QWidget *parent)
-    : QGCQmlWidgetHolder(parent)
+    : QGCQmlWidgetHolder(QString(), NULL, parent)
     , _missionItems(NULL)
     , _canEdit(true)
 {
