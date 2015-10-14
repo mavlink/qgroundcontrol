@@ -46,8 +46,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "SettingsDialog.h"
 #include "MAVLinkDecoder.h"
-#include "QGCDataPlot2D.h"
-#include "Linecharts.h"
 #include "FlightDisplayView.h"
 #include "SetupView.h"
 #include "QGCApplication.h"
@@ -60,6 +58,8 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 
 #ifndef __mobile__
+#include "QGCDataPlot2D.h"
+#include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
 #include "UASQuickView.h"
 #include "QGCTabbedInfoView.h"
