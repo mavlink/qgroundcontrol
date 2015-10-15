@@ -161,12 +161,6 @@ void MainToolBar::onFlyViewMenu()
     }
 }
 
-void MainToolBar::onAnalyzeView()
-{
-    setCurrentView(MainWindow::VIEW_ANALYZE);
-    MainWindow::instance()->loadAnalyzeView();
-}
-
 void MainToolBar::onDisconnect(QString conf)
 {
     if(conf.isEmpty()) {
@@ -248,9 +242,6 @@ void MainToolBar::setCurrentView(int currentView)
 {
     ViewType_t view = ViewNone;
     switch((MainWindow::VIEW_SECTIONS)currentView) {
-        case MainWindow::VIEW_ANALYZE:
-            view = ViewAnalyze;
-            break;
         case MainWindow::VIEW_MISSIONEDITOR:
             view = ViewPlan;
             break;

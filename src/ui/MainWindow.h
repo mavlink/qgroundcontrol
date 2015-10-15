@@ -56,7 +56,6 @@ This file is part of the QGROUNDCONTROL project
 #endif // QGC_MOUSE_ENABLED_WIN
 
 
-class QGCFirmwareUpdate;
 class QSplashScreen;
 class QGCStatusBar;
 class Linecharts;
@@ -122,7 +121,6 @@ public slots:
 
     void loadSetupView();
     void loadFlightView();
-    void loadAnalyzeView();
     void loadPlanView();
     
     void manageLinks();
@@ -187,7 +185,7 @@ protected:
 
     typedef enum _VIEW_SECTIONS
     {
-        VIEW_ANALYZE,           // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
+        VIEW_UNUSED5,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_UNUSED3,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_FLIGHT,            // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
         VIEW_UNUSED4,           // Unused (don't remove, or it will screw up saved settigns indices)
@@ -204,7 +202,6 @@ protected:
 
     void loadSettings();
     void storeSettings();
-
 
     QSettings settings;
 
@@ -263,7 +260,6 @@ private:
     QPointer<QWidget> _planView;
     QPointer<QWidget> _flightView;
     QPointer<QWidget> _setupView;
-    QPointer<QWidget> _analyzeView;
     QPointer<QWidget> _missionEditorView;
 
 #ifndef __mobile__
@@ -275,6 +271,7 @@ private:
     static const char* _pfdDockWidgetName;
     static const char* _uasInfoViewDockWidgetName;
     static const char* _hilDockWidgetName;
+    static const char* _analyzeDockWidgetName;
 
     QMap<QString, QGCDockWidget*>   _mapName2DockWidget;
     QMap<QString, QAction*>         _mapName2Action;
@@ -283,7 +280,6 @@ private:
     void _buildPlanView(void);
     void _buildFlightView(void);
     void _buildSetupView(void);
-    void _buildAnalyzeView(void);
     void _buildTerminalView(void);
     void _buildMissionEditorView(void);
 
