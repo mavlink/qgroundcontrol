@@ -63,7 +63,7 @@ Supported builds are 64 bit, built using the clang compiler.
 Supported builds for Linux are 32 or 64-bit, built using gcc.
 
 #### Install Qt5.4 and SDL1.2 prerequistites
-* For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel qt5-qtgraphicaleffects qt5-qtquickcontrols`
+* For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel qt5-qtgraphicaleffects qt5-qtquickcontrols qt5-qtlocation-devel`
 * For Arch Linux: `pacman -Sy qtcreator qt5-base qt5-declarative qt5-serialport qt5-svg qt5-webkit`
 * For Ubuntu: Please be aware that the time of writing, Qt5.4 is unavailable in the official repositories Ubuntu 14.04/Mint 17
     * Add this PPA for Qt5.4: `sudo add-apt-repository ppa:beineri/opt-qt541-trusty`
