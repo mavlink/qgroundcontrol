@@ -85,6 +85,7 @@
 #include "FlightMapSettings.h"
 #include "QGCQGeoCoordinate.h"
 #include "CoordinateVector.h"
+#include "MainToolBarController.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -341,7 +342,8 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<PowerComponentController>       ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
     qmlRegisterType<RadioComponentController>       ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
     qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
-    
+    qmlRegisterType<MainToolBarController>          ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
+
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
@@ -802,10 +804,16 @@ void QGCApplication::_missingParamsDisplay(void)
 
 void QGCApplication::showToolBarMessage(const QString& message)
 {
+#if 0
+    // FIXME: QmlConvert
+
     MainWindow* mainWindow = MainWindow::instance();
     if (mainWindow) {
         mainWindow->getMainToolBar()->showToolBarMessage(message);
     } else {
         QGCMessageBox::information("", message);
     }
+#else
+    Q_UNUSED(message);
+#endif
 }

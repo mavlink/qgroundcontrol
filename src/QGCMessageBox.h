@@ -28,10 +28,15 @@
 
 #include "MainWindow.h"
 #include "QGCApplication.h"
+
+#if 0
+    // FIXME: QmlConvert
 #ifdef QT_DEBUG
 #ifndef __mobile__
 #include "UnitTest.h"
 #endif
+#endif
+
 #endif
 
 /// @file
@@ -105,6 +110,9 @@ private:
             }
         }
 
+#if 0
+        // FIXME: QmlConvert
+
 #ifdef QT_DEBUG
 #ifndef __mobile__
         if (qgcApp()->runningUnitTests()) {
@@ -113,6 +121,8 @@ private:
         } else
 #endif
 #endif
+
+#endif  // QmlConvert
         {
 #ifdef Q_OS_MAC
             QString emptyTitle;

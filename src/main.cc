@@ -41,9 +41,12 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 
 #ifdef QT_DEBUG
+#if 0
+    // FIXME: QmlConvert
     #ifndef __mobile__
         #include "UnitTest.h"
     #endif
+#endif
     #include "CmdLineOptParser.h"
     #ifdef Q_OS_WIN
         #include <crtdbg.h>
@@ -178,6 +181,8 @@ int main(int argc, char *argv[])
 
     int exitCode;
 
+#if 0
+    // FIXME: QmlConvert
 #ifndef __mobile__
 #ifdef QT_DEBUG
     if (runUnitTests) {
@@ -194,6 +199,7 @@ int main(int argc, char *argv[])
         }
         exitCode = -failures;
     } else
+#endif
 #endif
 #endif
     {

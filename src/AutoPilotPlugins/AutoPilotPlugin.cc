@@ -63,11 +63,15 @@ void AutoPilotPlugin::_parametersReadyChanged(bool parametersReady)
 		if (!_setupComplete) {
 			QGCMessageBox::warning("Setup", "One or more vehicle components require setup prior to flight.");
 			
+#if 0
+            // FIXME: QmlConvert
+
 			// Take the user to Vehicle Summary
 			MainWindow* mainWindow = MainWindow::instance();
 			Q_ASSERT(mainWindow);
 			mainWindow->getMainToolBar()->onSetupView();
 			qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+#endif
 		}
 	}
 }

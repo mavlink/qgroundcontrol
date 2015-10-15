@@ -264,7 +264,7 @@ HEADERS += \
     src/ui/QGCTCPLinkConfiguration.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/SettingsDialog.h \
-    src/ui/toolbar/MainToolBar.h \
+    src/ui/toolbar/MainToolBarController.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/uas/UASMessageView.h \
     src/MissionItem.h \
@@ -369,7 +369,7 @@ SOURCES += \
     src/ui/QGCTCPLinkConfiguration.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/SettingsDialog.cc \
-    src/ui/toolbar/MainToolBar.cc \
+    src/ui/toolbar/MainToolBarController.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/uas/UASMessageView.cc \
     src/MissionItem.cc \
@@ -427,6 +427,9 @@ SOURCES += \
 # qmake with CONFIG-=debug_and_release CONFIG+=release.
 #
 
+# FIXME
+QmlConvert {
+
 DebugBuild|WindowsDebugAndRelease {
 
 HEADERS += src/QmlControls/QmlTestWidget.h
@@ -478,6 +481,7 @@ SOURCES += \
     src/VehicleSetup/SetupViewTest.cc \
 
 } # DebugBuild|WindowsDebugAndRelease
+} # QmlConvert
 } # MobileBuild
 
 #

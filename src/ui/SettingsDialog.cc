@@ -36,7 +36,7 @@
 #include "QGCApplication.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
-#include "MainToolBar.h"
+#include "MainToolBarController.h"
 #include "FlightMapSettings.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags flags) :
@@ -183,27 +183,53 @@ void SettingsDialog::_selectSavedFilesDirectory(void)
 
 void SettingsDialog::on_showGPS_clicked(bool checked)
 {
+#if 0
+    // FIXME: QmlConvert
     _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_GPS, checked);
+#else
+       Q_UNUSED(checked)
+#endif
 }
 
 void SettingsDialog::on_showBattery_clicked(bool checked)
 {
+#if 0
+    // FIXME: QmlConvert
     _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_BATTERY, checked);
+#else
+       Q_UNUSED(checked)
+#endif
 }
 
 void SettingsDialog::on_showMessages_clicked(bool checked)
 {
+#if 0
+    // FIXME: QmlConvert
+
     _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MESSAGES, checked);
+#else
+       Q_UNUSED(checked)
+#endif
 }
 
 void SettingsDialog::on_showMav_clicked(bool checked)
 {
+#if 0
+    // FIXME: QmlConvert
     _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MAV, checked);
+#else
+       Q_UNUSED(checked)
+#endif
 }
 
 void SettingsDialog::on_showRSSI_clicked(bool checked)
 {
+#if 0
+    // FIXME: QmlConvert
     _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_RSSI, checked);
+#else
+       Q_UNUSED(checked)
+#endif
 }
 
 void SettingsDialog::_bingMapRadioClicked(bool checked)

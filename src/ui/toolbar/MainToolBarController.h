@@ -27,10 +27,13 @@ This file is part of the QGROUNDCONTROL project
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef MAINTOOLBAR_H
-#define MAINTOOLBAR_H
+#ifndef MainToolBarController_H
+#define MainToolBarController_H
 
-#include "QGCQmlWidgetHolder.h"
+#include <QObject>
+
+#include "Vehicle.h"
+#include "UASMessageView.h"
 
 #define TOOL_BAR_SETTINGS_GROUP "TOOLBAR_SETTINGS_GROUP"
 #define TOOL_BAR_SHOW_BATTERY   "ShowBattery"
@@ -39,14 +42,11 @@ This file is part of the QGROUNDCONTROL project
 #define TOOL_BAR_SHOW_MESSAGES  "ShowMessages"
 #define TOOL_BAR_SHOW_RSSI      "ShowRSSI"
 
-class UASInterface;
-class UASMessage;
-class UASMessageViewRollDown;
-
-class MainToolBar : public QGCQmlWidgetHolder
+class MainToolBarController : public QObject
 {
     Q_OBJECT
     Q_ENUMS(ViewType_t)
+
 public:
 
     typedef enum {
@@ -57,8 +57,8 @@ public:
         ViewSetup  , // MainWindow::VIEW_SETUP
     } ViewType_t;
 
-    MainToolBar(QWidget* parent = NULL);
-    ~MainToolBar();
+    MainToolBarController(QObject* parent = NULL);
+    ~MainToolBarController();
 
     Q_INVOKABLE void    onSetupView();
     Q_INVOKABLE void    onPlanView();
@@ -121,7 +121,6 @@ private slots:
     void _setProgressBarValue           (float value);
     void _remoteControlRSSIChanged      (uint8_t rssi);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
-    void _heightChanged                 (double height);
     void _delayedShowToolBarMessage     (void);
 
 private:
@@ -131,7 +130,6 @@ private:
 private:
     Vehicle*        _vehicle;
     UASInterface*   _mav;
-    QQuickItem*     _toolBar;
     ViewType_t      _currentView;
     QStringList     _linkConfigurations;
     int             _connectionCount;
@@ -155,4 +153,4 @@ private:
     QMutex          _toolbarMessageQueueMutex;
 };
 
-#endif // MAINTOOLBAR_H
+#endif // MainToolBarController_H
