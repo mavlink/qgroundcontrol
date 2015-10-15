@@ -34,10 +34,22 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
+import QGroundControl.Controllers   1.0
 
 /// Flight Display View
 Item {
     id: root
+
+    // Top margin for all widgets. Used to prevent overlap with the toolbar
+    property real   topMargin: 0
+
+    // Used by parent to hide widgets when it displays something above in the z order.
+    // Prevents z order drawing problems.
+    property bool hideWidgets: false
+
+    readonly property alias zOrderTopMost:   flightMap.zOrderTopMost
+    readonly property alias zOrderWidgets:   flightMap.zOrderWidgets
+    readonly property alias zOrderMapItems:  flightMap.zOrderMapItems
 
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
@@ -70,6 +82,8 @@ Item {
 
     property bool _showMap: getBool(QGroundControl.flightMapSettings.loadMapSetting(flightMap.mapName, _showMapBackgroundKey, "1"))
 
+    FlightDisplayViewController { id: _controller; }
+
     ExclusiveGroup {
         id: _dropButtonsExclusiveGroup
     }
@@ -86,7 +100,7 @@ Item {
     }
 
     function _setShowMap(showMap) {
-        _showMap = flightDisplay.hasVideo ? showMap : true
+        _showMap = _controller.hasVideo ? showMap : true
         QGroundControl.flightMapSettings.saveMapSetting(flightMap.mapName, _showMapBackgroundKey, setBool(_showMap))
     }
 
@@ -118,6 +132,7 @@ Item {
             label:          "H"
             coordinate:     (_activeVehicle && _activeVehicle.homePositionAvailable) ? _activeVehicle.homePosition : QtPositioning.coordinate(0, 0)
             visible:        _activeVehicle ? _activeVehicle.homePositionAvailable : false
+            z:              flightMap.zOrderMapItems
         }
 
         // Add trajectory points to the map
@@ -128,6 +143,8 @@ Item {
                 MapPolyline {
                     line.width: 3
                     line.color: "orange"
+                    z:          flightMap.zOrderMapItems - 1
+
 
                     path: [
                         { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },
@@ -145,6 +162,7 @@ Item {
                         vehicle:        object
                         coordinate:     object.coordinate
                         isSatellite:    flightMap.isSatelliteMap
+                        z:              flightMap.zOrderMapItems
                 }
         }
 
@@ -157,6 +175,7 @@ Item {
                     label:          object.sequenceNumber
                     isCurrentItem:  object.isCurrentItem
                     coordinate:     object.coordinate
+                    z:              flightMap.zOrderMapItems
                 }
         }
 
@@ -175,17 +194,20 @@ Item {
                         horizontalAlignment:    Text.AlignHCenter
                         visible:                object.satelliteLock < 2
                         text:                   "No GPS Lock for Vehicle #" + object.id
+                        z:                      flightMap.zOrderMapItems - 2
                     }
             }
         }
 
         QGCCompassWidget {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.leftMargin: ScreenTools.defaultFontPixelHeight
+            anchors.topMargin:  topMargin
             anchors.left:       parent.left
             anchors.top:        parent.top
             size:               ScreenTools.defaultFontPixelSize * (13.3)
             heading:            _heading
             active:             multiVehicleManager.activeVehicleAvailable
+            z:                  flightMap.zOrderWidgets
         }
 
         QGCAttitudeWidget {
@@ -196,6 +218,7 @@ Item {
             rollAngle:          _roll
             pitchAngle:         _pitch
             active:             multiVehicleManager.activeVehicleAvailable
+            z:                  flightMap.zOrderWidgets
         }
 
         DropButton {
@@ -207,6 +230,7 @@ Item {
             buttonImage:            "/qmlimages/MapCenter.svg"
             viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
             exclusiveGroup:         _dropButtonsExclusiveGroup
+            z:                      flightMap.zOrderWidgets
 
             dropDownComponent: Component {
                 Row {
@@ -242,14 +266,16 @@ Item {
         }
 
         DropButton {
-            id:                 mapTypeButton
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
-            anchors.top:        parent.top
-            anchors.right:      parent.right
-            dropDirection:      dropDown
-            buttonImage:        "/qmlimages/MapType.svg"
-            viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-            exclusiveGroup:     _dropButtonsExclusiveGroup
+            id:                     mapTypeButton
+            anchors.topMargin:      topMargin
+            anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
+            anchors.top:            parent.top
+            anchors.right:          parent.right
+            dropDirection:          dropDown
+            buttonImage:            "/qmlimages/MapType.svg"
+            viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
+            exclusiveGroup:         _dropButtonsExclusiveGroup
+            z:                      flightMap.zOrderWidgets
 
             dropDownComponent: Component {
                 Row {
@@ -277,8 +303,8 @@ Item {
 
     QGCVideoBackground {
         anchors.fill:   parent
-        display:        videoDisplay
-        receiver:       videoReceiver
+        display:        _controller.videoSurface
+        receiver:       _controller.videoReceiver
         visible:        !_showMap
 
         QGCCompassHUD {
@@ -289,7 +315,7 @@ Item {
             height:             ScreenTools.defaultFontPixelSize * (10)
             heading:            _heading
             active:             multiVehicleManager.activeVehicleAvailable
-            z:                  70
+            z:                  flightMap.zOrderWidgets
         }
 
         QGCAttitudeHUD {
@@ -299,6 +325,7 @@ Item {
             width:              ScreenTools.defaultFontPixelSize * (30)
             height:             ScreenTools.defaultFontPixelSize * (30)
             active:             multiVehicleManager.activeVehicleAvailable
+            z:                  flightMap.zOrderWidgets
         }
     }
 
@@ -307,7 +334,8 @@ Item {
         height:         parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
         width:          ScreenTools.defaultFontPixelSize * (5)
         altitude:       _altitudeWGS84
-        z:              30
+        z:              flightMap.zOrderWidgets
+        visible:        !hideWidgets
     }
 
     QGCSpeedWidget {
@@ -315,7 +343,8 @@ Item {
         width:          ScreenTools.defaultFontPixelSize * (5)
         height:         parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
         speed:          _groundSpeed
-        z:              40
+        z:              flightMap.zOrderWidgets
+        visible:        !hideWidgets
     }
 
     QGCCurrentSpeed {
@@ -324,7 +353,8 @@ Item {
         airspeed:           _airSpeed
         groundspeed:        _groundSpeed
         active:             multiVehicleManager.activeVehicleAvailable
-        z:                  50
+        z:                  flightMap.zOrderWidgets
+        visible:             !hideWidgets
     }
 
     QGCCurrentAltitude {
@@ -333,7 +363,8 @@ Item {
         altitude:           _altitudeWGS84
         vertZ:              _climbRate
         active:             multiVehicleManager.activeVehicleAvailable
-        z:                  60
+        z:                  flightMap.zOrderWidgets
+        visible:              !hideWidgets
     }
 
     // Mission item list
@@ -348,6 +379,8 @@ Item {
         opacity:            0.75
         orientation:        ListView.Horizontal
         model:              multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
+        z:                  flightMap.zOrderWidgets
+        visible:            !hideWidgets
 
         property real _maxItemHeight: 0
 
@@ -360,12 +393,14 @@ Item {
 
 
     QGCButton {
-        id:     optionsButton
-        x:      flightMap.mapWidgets.x
-        y:      flightMap.mapWidgets.y - height - (ScreenTools.defaultFontPixelHeight / 2)
-        width:  flightMap.mapWidgets.width
-        text:   "Options"
-        menu:   optionsMenu
+        id:         optionsButton
+        x:          flightMap.mapWidgets.x
+        y:          flightMap.mapWidgets.y - height - (ScreenTools.defaultFontPixelHeight / 2)
+        z:          flightMap.zOrderWidgets
+        width:      flightMap.mapWidgets.width
+        text:       "Options"
+        menu:       optionsMenu
+        visible:    _controller.hasVideo && !hideWidgets
 
         ExclusiveGroup {
             id: backgroundTypeGroup
@@ -380,7 +415,6 @@ Item {
                 checkable:      true
                 checked:        _showMap
                 text:           "Show map as background"
-                visible:        flightDisplay.hasVideo
 
                 onTriggered:    _setShowMap(true)
             }
@@ -391,13 +425,8 @@ Item {
                 checkable:      true
                 checked:        !_showMap
                 text:           "Show video as background"
-                visible:        flightDisplay.hasVideo
 
                 onTriggered:    _setShowMap(false)
-            }
-
-            MenuSeparator {
-                visible: flightDisplay.hasVideo && _showMap
             }
         }
     }
