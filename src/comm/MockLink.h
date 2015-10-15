@@ -144,6 +144,7 @@ private:
     float _floatUnionForParam(int componentId, const QString& paramName);
     void _setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat);
     void _sendHomePosition(void);
+    void _sendGpsRawInt(void);
 
     MockLinkMissionItemHandler  _missionItemHandler;
 
@@ -167,6 +168,10 @@ private:
     MAV_AUTOPILOT _autopilotType;
     
     MockLinkFileServer* _fileServer;
+
+    static float _vehicleLatitude;
+    static float _vehicleLongitude;
+    static float _vehicleAltitude;
 };
 
 #endif
