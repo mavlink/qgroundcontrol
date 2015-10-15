@@ -21,23 +21,25 @@ test_script:
   - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
 
 after_build:
-  - if "%CONFIG%" EQU "installer" ( appveyor PushArtifact C:\projects\qgroundcontrol\release\qgroundcontrol-installer-win32.exe )
+  - if "%CONFIG%" EQU "installer" ( appveyor PushArtifact C:\projects\qgroundcontrol\release\qgroundcontrol.exe )
 
 deploy:
   - provider: S3
     name: qgroundcontrol-s3
-    access_key_id: AKIAIVORNALE7NHD3T6Q
+    access_key_id:
+      secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
     secret_access_key:
       secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
-    bucket: qgrondcontrol
+    bucket: qgroundcontrol
     set_public: true
-    folder: "%APPVEYOR_REPO_BRANCH%"
-    artifact: C:\projects\qgroundcontrol\release\qgroundcontrol-installer-win32.exe
- 
+    folder: $(APPVEYOR_REPO_BRANCH)
+    artifcat: 'release\qgroundcontrol.exe'
+    on:
+      CONFIG: installer
   - provider: GitHub
-    artifact: C:\projects\qgroundcontrol\release\qgroundcontrol-installer-win32.exe
+    artifact: 'release\qgroundcontrol.exe'
     draft: false
     prerelease: false
     on:
+      CONFIG: installer
       appveyor_repo_tag: true
-
