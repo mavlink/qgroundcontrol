@@ -666,6 +666,8 @@ void QGCApplication::_destroySingletons(void)
     GenericFirmwarePlugin::_deleteSingleton();
     PX4FirmwarePlugin::_deleteSingleton();
     ArduCopterFirmwarePlugin::_deleteSingleton();
+    ArduPlaneFirmwarePlugin::_deleteSingleton();
+    ArduRoverFirmwarePlugin::_deleteSingleton();
     HomePositionManager::_deleteSingleton();
     FlightMapSettings::_deleteSingleton();
 }
