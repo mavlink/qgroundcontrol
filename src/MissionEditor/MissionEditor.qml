@@ -440,6 +440,7 @@ QGCView {
                                 MissionItemEditor {
                                     missionItem:    object
                                     width:          parent.width
+                                    readOnly:       object.sequenceNumber == 0 && liveHomePositionAvailable
 
                                     onClicked:  setCurrentItem(object.sequenceNumber)
 
@@ -451,9 +452,6 @@ QGCView {
                                             setCurrentItem(newCurrentItem)
                                         }
                                     }
-
-                                    onMoveUp:   controller.moveUp(object.sequenceNumber)
-                                    onMoveDown: controller.moveDown(object.sequenceNumber)
                                 }
                         } // ListView
 
