@@ -33,11 +33,15 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Mavlink       1.0
+import QGroundControl.Controllers   1.0
 
 /// Mission Editor
 
 QGCView {
     viewPanel: panel
+
+    // zOrder comes from the Loader in MainWindow.qml
+    z: zOrder
 
     readonly property int   _decimalPlaces:     7
     readonly property real  _horizontalMargin:  ScreenTools.defaultFontPixelWidth / 2
@@ -45,15 +49,17 @@ QGCView {
     readonly property var   _activeVehicle:     multiVehicleManager.activeVehicle
     readonly property real  _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
 
-    property var    _missionItems:              controller.missionItems
+    property var    _missionItems:              _controller.missionItems
 
     property var    _homePositionManager:       QGroundControl.homePositionManager
     property string _homePositionName:          _homePositionManager.homePositions.get(0).name
 
     property var    offlineHomePosition:        _homePositionManager.homePositions.get(0).coordinate
-    property var    liveHomePosition:           controller.liveHomePosition
-    property var    liveHomePositionAvailable:  controller.liveHomePositionAvailable
+    property var    liveHomePosition:           _controller.liveHomePosition
+    property var    liveHomePositionAvailable:  _controller.liveHomePositionAvailable
     property var    homePosition:               offlineHomePosition // live or offline depending on state
+
+    MissionEditorController { id: _controller }
 
     QGCPalette { id: _qgcPal; colorGroupEnabled: enabled }
 
@@ -86,7 +92,7 @@ QGCView {
     onLiveHomePositionChanged:          updateHomePosition()
 
     Connections {
-        target: controller
+        target: _controller
 
         // When the mission items change _missionsItems[0] changes as well so we need to reset it to home
         onMissionItemsChanged: updateHomePosition
@@ -123,7 +129,7 @@ QGCView {
                         if (homePositionManagerButton.checked) {
                             offlineHomePosition = coordinate
                         } else if (addMissionItemsButton.checked) {
-                            var index = controller.addMissionItem(coordinate)
+                            var index = _controller.addMissionItem(coordinate)
                             setCurrentItem(index)
                         }
                     }
@@ -138,7 +144,7 @@ QGCView {
                     border.color:               "white"
                     color:                      "black"
                     opacity:                    0.75
-                    visible:                    controller.missionItems.dirty
+                    visible:                    _controller.missionItems.dirty
 
                     QGCLabel {
                         id:                     syncNeededText
@@ -154,58 +160,61 @@ QGCView {
                     }
                 }
 
-                Row {
-                    spacing:            ScreenTools.defaultFontPixelWidth
-                    anchors.top:        parent.top
-                    anchors.right:      parent.right
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
+                RoundButton {
+                    id:                     addMissionItemsButton
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.right:          homePositionManagerButton.left
+                    anchors.top:            helpButton.top
+                    buttonImage:            "/qmlimages/MapAddMission.svg"
+                    exclusiveGroup:         _dropButtonsExclusiveGroup
+                }
 
-                    RoundButton {
-                        id:                 addMissionItemsButton
-                        buttonImage:        "/qmlimages/MapAddMission.svg"
-                        exclusiveGroup:     _dropButtonsExclusiveGroup
-                    }
+                RoundButton {
+                    id:                     homePositionManagerButton
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.right:          centerMapButton.left
+                    anchors.top:            helpButton.top
+                    buttonImage:            "/qmlimages/MapHome.svg"
+                    exclusiveGroup:         _dropButtonsExclusiveGroup
+                }
 
-                    RoundButton {
-                        id:             homePositionManagerButton
-                        buttonImage:    "/qmlimages/MapHome.svg"
-                        exclusiveGroup: _dropButtonsExclusiveGroup
-                    }
+                DropButton {
+                    id:                     centerMapButton
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.right:          syncButton.left
+                    anchors.top:            helpButton.top
+                    dropDirection:          dropDown
+                    buttonImage:            "/qmlimages/MapCenter.svg"
+                    viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
+                    exclusiveGroup:         _dropButtonsExclusiveGroup
 
-                    DropButton {
-                        id:                     centerMapButton
-                        dropDirection:          dropDown
-                        buttonImage:            "/qmlimages/MapCenter.svg"
-                        viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
-                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                    dropDownComponent: Component {
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
 
-                        dropDownComponent: Component {
-                            Row {
-                                spacing: ScreenTools.defaultFontPixelWidth
+                            QGCButton {
+                                text: "Home"
 
-                                QGCButton {
-                                    text: "Home"
-
-                                    onClicked: {
-                                        centerMapButton.hideDropDown()
-                                        editorMap.center = QtPositioning.coordinate(homePosition.latitude, homePosition.longitude)
-                                    }
+                                onClicked: {
+                                    centerMapButton.hideDropDown()
+                                    editorMap.center = QtPositioning.coordinate(homePosition.latitude, homePosition.longitude)
                                 }
+                            }
 
-                                QGCButton {
-                                    text:       "Vehicle"
-                                    enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
+                            QGCButton {
+                                text:       "Vehicle"
+                                enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
 
-                                    property var activeVehicle: multiVehicleManager.activeVehicle
+                                property var activeVehicle: multiVehicleManager.activeVehicle
 
-                                    onClicked: {
-                                        centerMapButton.hideDropDown()
-                                        editorMap.latitude = activeVehicle.latitude
-                                        editorMap.longitude = activeVehicle.longitude
-                                    }
+                                onClicked: {
+                                    centerMapButton.hideDropDown()
+                                    editorMap.latitude = activeVehicle.latitude
+                                    editorMap.longitude = activeVehicle.longitude
                                 }
+                            }
 
-    /*
+                            /*
 
     This code will need to wait for Qml 5.5 support since Map.visibleRegion is only in Qt 5.5
 
@@ -240,104 +249,111 @@ QGCView {
                                     }
                                 }
     */
-                            }
                         }
                     }
+                }
 
-                    DropButton {
-                        id:                     syncButton
-                        dropDirection:          dropDown
-                        buttonImage:            "/qmlimages/MapSync.svg"
-                        viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
-                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                DropButton {
+                    id:                     syncButton
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.right:          mapTypeButton.left
+                    anchors.top:            helpButton.top
+                    dropDirection:          dropDown
+                    buttonImage:            "/qmlimages/MapSync.svg"
+                    viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
+                    exclusiveGroup:         _dropButtonsExclusiveGroup
 
-                        dropDownComponent: Component {
-                            Row {
-                                spacing: ScreenTools.defaultFontPixelWidth
+                    dropDownComponent: Component {
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
 
-                                QGCButton {
-                                    text:       "Load from vehicle"
-                                    enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
+                            QGCButton {
+                                text:       "Load from vehicle"
+                                enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
 
-                                    onClicked: {
-                                        syncButton.hideDropDown()
-                                        controller.getMissionItems()
-                                    }
-                                }
-
-                                QGCButton {
-                                    text:       "Save to vehicle"
-                                    enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
-
-                                    onClicked: {
-                                        syncButton.hideDropDown()
-                                        controller.setMissionItems()
-                                    }
-                                }
-
-                                QGCButton {
-                                    text:       "Load from file..."
-
-                                    onClicked: {
-                                        syncButton.hideDropDown()
-                                        controller.loadMissionFromFile()
-                                    }
-                                }
-
-                                QGCButton {
-                                    text:       "Save to file..."
-
-                                    onClicked: {
-                                        syncButton.hideDropDown()
-                                        controller.saveMissionToFile()
-                                    }
+                                onClicked: {
+                                    syncButton.hideDropDown()
+                                    _controller.getMissionItems()
                                 }
                             }
-                        }
-                    }
 
-                    DropButton {
-                        id:                 mapTypeButton
-                        dropDirection:      dropDown
-                        buttonImage:        "/qmlimages/MapType.svg"
-                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                        exclusiveGroup:     _dropButtonsExclusiveGroup
+                            QGCButton {
+                                text:       "Save to vehicle"
+                                enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
 
-                        dropDownComponent: Component {
-                            Row {
-                                spacing: ScreenTools.defaultFontPixelWidth
+                                onClicked: {
+                                    syncButton.hideDropDown()
+                                    _controller.setMissionItems()
+                                }
+                            }
 
-                                Repeater {
-                                    model: QGroundControl.flightMapSettings.mapTypes
+                            QGCButton {
+                                text:       "Load from file..."
 
-                                    QGCButton {
-                                        checkable:      true
-                                        checked:        editorMap.mapType == text
-                                        text:           modelData
-                                        exclusiveGroup: _mapTypeButtonsExclusiveGroup
+                                onClicked: {
+                                    syncButton.hideDropDown()
+                                    _controller.loadMissionFromFile()
+                                }
+                            }
 
-                                        onClicked: {
-                                            editorMap.mapType = text
-                                            checked = true
-                                            mapTypeButton.hideDropDown()
-                                        }
-                                    }
+                            QGCButton {
+                                text:       "Save to file..."
+
+                                onClicked: {
+                                    syncButton.hideDropDown()
+                                    _controller.saveMissionToFile()
                                 }
                             }
                         }
                     }
+                }
 
-                    RoundButton {
-                        id:                     helpButton
-                        buttonImage:            "/qmlimages/Help.svg"
-                        exclusiveGroup:         _dropButtonsExclusiveGroup
+                DropButton {
+                    id:                     mapTypeButton
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.right:          helpButton.left
+                    anchors.top:            helpButton.top
+                    dropDirection:          dropDown
+                    buttonImage:            "/qmlimages/MapType.svg"
+                    viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
+                    exclusiveGroup:         _dropButtonsExclusiveGroup
+
+                    dropDownComponent: Component {
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            Repeater {
+                                model: QGroundControl.flightMapSettings.mapTypes
+
+                                QGCButton {
+                                    checkable:      true
+                                    checked:        editorMap.mapType == text
+                                    text:           modelData
+                                    exclusiveGroup: _mapTypeButtonsExclusiveGroup
+
+                                    onClicked: {
+                                        editorMap.mapType = text
+                                        checked = true
+                                        mapTypeButton.hideDropDown()
+                                    }
+                                }
+                            }
+                        }
                     }
+                }
 
+                RoundButton {
+                    id:                     helpButton
+                    anchors.margins:        ScreenTools.defaultFontPixelWidth
+                    anchors.right:          parent.right
+                    anchors.top:            parent.top
+                    buttonImage:            "/qmlimages/Help.svg"
+                    exclusiveGroup:         _dropButtonsExclusiveGroup
                 }
 
                 // Add the mission items to the map
                 MapItemView {
-                    model: controller.missionItems
+                    model: _controller.missionItems
                     
                     delegate:
                         MissionItemIndicator {
@@ -379,7 +395,7 @@ QGCView {
 
                 // Add lines between waypoints
                 MapItemView {
-                    model: controller.waypointLines
+                    model: _controller.waypointLines
 
                     delegate:
                         MapPolyline {
@@ -432,7 +448,7 @@ QGCView {
                             anchors.fill:   parent
                             spacing:        _verticalMargin
                             orientation:    ListView.Vertical
-                            model:          controller.canEdit ? controller.missionItems : 0
+                            model:          _controller.canEdit ? _controller.missionItems : 0
 
                             property real _maxItemHeight: 0
 
@@ -446,7 +462,7 @@ QGCView {
 
                                     onRemove: {
                                         var newCurrentItem = object.sequenceNumber - 1
-                                        controller.removeMissionItem(object.sequenceNumber)
+                                        _controller.removeMissionItem(object.sequenceNumber)
                                         if (_missionItems.count > 1) {
                                             newCurrentItem = Math.min(_missionItems.count - 1, newCurrentItem)
                                             setCurrentItem(newCurrentItem)
@@ -457,7 +473,7 @@ QGCView {
 
                         QGCLabel {
                             anchors.fill:   parent
-                            visible:        !controller.canEdit
+                            visible:        !_controller.canEdit
                             wrapMode:       Text.WordWrap
                             text:           "The set of mission items you have loaded cannot be edited by QGroundControl. " +
                                             "You will only be able to save these to a file, or send them to a vehicle."

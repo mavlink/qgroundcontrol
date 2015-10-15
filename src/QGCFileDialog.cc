@@ -24,6 +24,7 @@
 #include "QGCFileDialog.h"
 #include "QGCApplication.h"
 #include "MainWindow.h"
+
 #ifdef QT_DEBUG
 #ifndef __mobile__
 #include "UnitTest.h"

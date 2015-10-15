@@ -26,30 +26,15 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 
 #include <VideoItem.h>
-#include <VideoSurface.h>
-#include "VideoReceiver.h"
 
 #include "ScreenToolsController.h"
-#include "FlightDisplayView.h"
+#include "FlightDisplayViewController.h"
 
-const char* kMainFlightDisplayViewGroup = "FlightDisplayView";
+const char* kMainFlightDisplayViewControllerGroup = "FlightDisplayViewController";
 
-FlightDisplayView::FlightDisplayView(QWidget *parent)
-    : QGCQmlWidgetHolder(QString(), NULL, parent)
+FlightDisplayViewController::FlightDisplayViewController(QObject *parent)
+    : QObject(parent)
 {
-    setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-    setObjectName("FlightDisplayView");
-    // Get rid of layout default margins
-    QLayout* pl = layout();
-    if(pl) {
-        pl->setContentsMargins(0,0,0,0);
-    }
-#ifndef __android__
-    setMinimumWidth( 31 * ScreenToolsController::defaultFontPixelSize_s());
-    setMinimumHeight(33 * ScreenToolsController::defaultFontPixelSize_s());
-#endif
-    setContextPropertyObject("flightDisplay", this);
-
     /*
      * This is the receiving end of an UDP RTP stream. The sender can be setup with this command:
      *
@@ -75,19 +60,15 @@ FlightDisplayView::FlightDisplayView(QWidget *parent)
      * Do not change anything else unless you know what you are doing. Any other change will require a matching change on the receiving end.
      *
      */
-    VideoSurface* pSurface = new VideoSurface;
-    setContextPropertyObject("videoDisplay", pSurface);
-    VideoReceiver* pReceiver = new VideoReceiver(this);
-    pReceiver->setUri(QLatin1Literal("udp://0.0.0.0:5000"));
+    _videoSurface = new VideoSurface;
+    _videoReceiver = new VideoReceiver(this);
+    _videoReceiver->setUri(QLatin1Literal("udp://0.0.0.0:5000"));
 #if defined(QGC_GST_STREAMING)
-    pReceiver->setVideoSink(pSurface->videoSink());
+    _videoReceiver->setVideoSink(_videoSurface->videoSink());
 #endif
-    setContextPropertyObject("videoReceiver", pReceiver);
-
-    setSource(QUrl::fromUserInput("qrc:/qml/FlightDisplayView.qml"));
-    setVisible(true);
 }
 
-FlightDisplayView::~FlightDisplayView()
+FlightDisplayViewController::~FlightDisplayViewController()
 {
+
 }

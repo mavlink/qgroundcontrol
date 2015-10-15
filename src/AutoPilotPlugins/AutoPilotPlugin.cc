@@ -64,9 +64,7 @@ void AutoPilotPlugin::_parametersReadyChanged(bool parametersReady)
 			QGCMessageBox::warning("Setup", "One or more vehicle components require setup prior to flight.");
 			
 			// Take the user to Vehicle Summary
-			MainWindow* mainWindow = MainWindow::instance();
-			Q_ASSERT(mainWindow);
-			mainWindow->getMainToolBar()->onSetupView();
+            MainWindow::instance()->showSetupView();
 			qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
 		}
 	}

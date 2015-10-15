@@ -24,7 +24,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QMenu>
 #include <QScrollBar>
 
-#include "MainToolBar.h"
 #include "UASMessageView.h"
 #include "QGCUnconnectedInfoWidget.h"
 #include "UASMessageHandler.h"

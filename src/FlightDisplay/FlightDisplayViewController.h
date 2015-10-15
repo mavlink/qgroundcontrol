@@ -21,22 +21,26 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-#ifndef FlightDisplayView_H
-#define FlightDisplayView_H
+#ifndef FlightDisplayViewController_H
+#define FlightDisplayViewController_H
 
-#include "QGCQmlWidgetHolder.h"
+#include <QObject>
 
-class FlightDisplayView : public QGCQmlWidgetHolder
+#include "VideoSurface.h"
+#include "VideoReceiver.h"
+
+class FlightDisplayViewController : public QObject
 {
     Q_OBJECT
-public:
-    FlightDisplayView(QWidget* parent = NULL);
-    ~FlightDisplayView();
 
-    /// @brief Invokes the Flight Display Options menu
-    void showOptionsMenu() { emit showOptionsMenuChanged(); }
+public:
+    FlightDisplayViewController(QObject* parent = NULL);
+    ~FlightDisplayViewController();
 
     Q_PROPERTY(bool hasVideo READ hasVideo CONSTANT)
+
+    Q_PROPERTY(VideoSurface*    videoSurface    MEMBER _videoSurface    CONSTANT);
+    Q_PROPERTY(VideoReceiver*   videoReceiver   MEMBER _videoReceiver   CONSTANT);
 
 #if defined(QGC_GST_STREAMING)
     bool    hasVideo            () { return true; }
@@ -44,9 +48,9 @@ public:
     bool    hasVideo            () { return false; }
 #endif
 
-signals:
-    void showOptionsMenuChanged ();
-
+private:
+    VideoSurface*   _videoSurface;
+    VideoReceiver*  _videoReceiver;
 };
 
 #endif
