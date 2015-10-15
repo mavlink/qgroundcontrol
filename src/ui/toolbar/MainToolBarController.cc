@@ -30,28 +30,20 @@ This file is part of the QGROUNDCONTROL project
 #include <QQmlContext>
 #include <QQmlEngine>
 
-#include "MainToolBar.h"
+#include "MainToolBarController.h"
 #include "ScreenToolsController.h"
 #include "MainWindow.h"
 #include "UASMessageView.h"
 #include "UASMessageHandler.h"
-#include "FlightDisplayView.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "UAS.h"
 
-MainToolBar::MainToolBar(QWidget* parent)
-    : QGCQmlWidgetHolder(QString(), NULL, parent)
+MainToolBarController::MainToolBarController(QObject* parent)
+    : QObject(parent)
     , _vehicle(NULL)
     , _mav(NULL)
-    , _toolBar(NULL)
-    , _currentView(ViewNone)
     , _connectionCount(0)
-    , _showGPS(true)
-    , _showMav(true)
-    , _showMessages(true)
-    , _showRSSI(true)
-    , _showBattery(true)
     , _progressBarValue(0.0f)
     , _remoteRSSI(0)
     , _remoteRSSIstore(100.0)
@@ -60,108 +52,44 @@ MainToolBar::MainToolBar(QWidget* parent)
     , _rollDownMessages(0)
     , _toolbarMessageVisible(false)
 {
-    setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-    setObjectName("MainToolBar");
-    setMinimumWidth(MainWindow::instance()->minimumWidth());
-    // Get rid of layout default margins
-    QLayout* pl = layout();
-    if(pl) {
-        pl->setContentsMargins(0,0,0,0);
-    }
-    setMinimumHeight(ScreenToolsController::defaultFontPixelSize_s() * 3);
-    setMaximumHeight(ScreenToolsController::defaultFontPixelSize_s() * 3);
-    // Tool Bar Preferences
-    QSettings settings;
-    settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
-    _showBattery  = settings.value(TOOL_BAR_SHOW_BATTERY,  true).toBool();
-    _showGPS      = settings.value(TOOL_BAR_SHOW_GPS,      true).toBool();
-    _showMav      = settings.value(TOOL_BAR_SHOW_MAV,      true).toBool();
-    _showMessages = settings.value(TOOL_BAR_SHOW_MESSAGES, true).toBool();
-    settings.endGroup();
-
-    setContextPropertyObject("mainToolBar", this);
-    setSource(QUrl::fromUserInput("qrc:/qml/MainToolBar.qml"));
-    setVisible(true);
     emit configListChanged();
     emit connectionCountChanged(_connectionCount);
     _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
     
     // Link signals
-    connect(LinkManager::instance(),     &LinkManager::linkConfigurationChanged, this, &MainToolBar::_updateConfigurations);
-    connect(LinkManager::instance(),     &LinkManager::linkConnected,            this, &MainToolBar::_linkConnected);
-    connect(LinkManager::instance(),     &LinkManager::linkDisconnected,         this, &MainToolBar::_linkDisconnected);
+    connect(LinkManager::instance(),     &LinkManager::linkConfigurationChanged, this, &MainToolBarController::_updateConfigurations);
+    connect(LinkManager::instance(),     &LinkManager::linkConnected,            this, &MainToolBarController::_linkConnected);
+    connect(LinkManager::instance(),     &LinkManager::linkDisconnected,         this, &MainToolBarController::_linkDisconnected);
     
     // RSSI (didn't like standard connection)
     connect(MAVLinkProtocol::instance(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
         SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)));
     
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBar::_activeVehicleChanged);
-    
-    connect(this, &MainToolBar::heightChanged, this, &MainToolBar::_heightChanged);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBarController::_activeVehicleChanged);
 }
 
-MainToolBar::~MainToolBar()
+MainToolBarController::~MainToolBarController()
 {
 
 }
 
-void MainToolBar::_setToolBarState(const QString& key, bool value)
+void MainToolBarController::onSetupView()
 {
-    QSettings settings;
-    settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
-    settings.setValue(key, value);
-    settings.endGroup();
-    if(key == TOOL_BAR_SHOW_GPS) {
-        _showGPS = value;
-        emit showGPSChanged(value);
-    } else if(key == TOOL_BAR_SHOW_MAV) {
-        _showMav = value;
-        emit showMavChanged(value);
-    }else if(key == TOOL_BAR_SHOW_BATTERY) {
-        _showBattery = value;
-        emit showBatteryChanged(value);
-    } else if(key == TOOL_BAR_SHOW_MESSAGES) {
-        _showMessages = value;
-        emit showMessagesChanged(value);
-    } else if(key == TOOL_BAR_SHOW_RSSI) {
-        _showRSSI = value;
-        emit showRSSIChanged(value);
-    }
+    MainWindow::instance()->showSetupView();
 }
 
-void MainToolBar::viewStateChanged(const QString &key, bool value)
+void MainToolBarController::onPlanView()
 {
-    _setToolBarState(key, value);
+    MainWindow::instance()->showPlanView();
 }
 
-void MainToolBar::onSetupView()
+void MainToolBarController::onFlyView()
 {
-    setCurrentView(MainWindow::VIEW_SETUP);
-    MainWindow::instance()->loadSetupView();
+    MainWindow::instance()->showFlyView();
 }
 
-void MainToolBar::onPlanView()
-{
-    setCurrentView(MainWindow::VIEW_MISSIONEDITOR);
-    MainWindow::instance()->loadPlanView();
-}
-
-void MainToolBar::onFlyView()
-{
-    setCurrentView(MainWindow::VIEW_FLIGHT);
-    MainWindow::instance()->loadFlightView();
-}
-
-void MainToolBar::onFlyViewMenu()
-{
-    FlightDisplayView* fdsp = MainWindow::instance()->getFlightDisplay();
-    if(fdsp) {
-        fdsp->showOptionsMenu();
-    }
-}
-
-void MainToolBar::onDisconnect(QString conf)
+void MainToolBarController::onDisconnect(QString conf)
 {
     if(conf.isEmpty()) {
         // Disconnect Only Connected Link
@@ -191,7 +119,7 @@ void MainToolBar::onDisconnect(QString conf)
     }
 }
 
-void MainToolBar::onConnect(QString conf)
+void MainToolBarController::onConnect(QString conf)
 {
     // Connect Link
     if(conf.isEmpty()) {
@@ -209,64 +137,48 @@ void MainToolBar::onConnect(QString conf)
     }
 }
 
-void MainToolBar::onEnterMessageArea(int x, int y)
+void MainToolBarController::onEnterMessageArea(int x, int y)
 {
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+
     // If not already there and messages are actually present
-    if(!_rollDownMessages && UASMessageHandler::instance()->messages().count())
-    {
-        if (MultiVehicleManager::instance()->activeVehicle())
+    if(!_rollDownMessages && UASMessageHandler::instance()->messages().count()) {
+        if (MultiVehicleManager::instance()->activeVehicle()) {
             MultiVehicleManager::instance()->activeVehicle()->resetMessages();
+        }
+
+        // FIXME: Position of the message dropdown is hacked right now to speed up Qml conversion
         // Show messages
         int dialogWidth = 400;
+#if 0
         x = x - (dialogWidth >> 1);
         if(x < 0) x = 0;
         y = height() / 3;
+#endif
+
         // Put dialog on top of the message alert icon
-        QPoint p = mapToGlobal(QPoint(x,y));
         _rollDownMessages = new UASMessageViewRollDown(MainWindow::instance());
         _rollDownMessages->setAttribute(Qt::WA_DeleteOnClose);
-        _rollDownMessages->move(mapFromGlobal(p));
+        _rollDownMessages->move(QPoint(100, 100));
         _rollDownMessages->setMinimumSize(dialogWidth,200);
-        connect(_rollDownMessages, &UASMessageViewRollDown::closeWindow, this, &MainToolBar::_leaveMessageView);
+        connect(_rollDownMessages, &UASMessageViewRollDown::closeWindow, this, &MainToolBarController::_leaveMessageView);
         _rollDownMessages->show();
     }
 }
 
-void MainToolBar::_leaveMessageView()
+void MainToolBarController::_leaveMessageView()
 {
     // Mouse has left the message window area (and it has closed itself)
     _rollDownMessages = NULL;
 }
 
-void MainToolBar::setCurrentView(int currentView)
-{
-    ViewType_t view = ViewNone;
-    switch((MainWindow::VIEW_SECTIONS)currentView) {
-        case MainWindow::VIEW_MISSIONEDITOR:
-            view = ViewPlan;
-            break;
-        case MainWindow::VIEW_FLIGHT:
-            view = ViewFly;
-            break;
-        case MainWindow::VIEW_SETUP:
-            view = ViewSetup;
-            break;
-        default:
-            view = ViewNone;
-            break;
-    }
-    if(view != _currentView) {
-        _currentView = view;
-        emit currentViewChanged();
-    }
-}
-
-void MainToolBar::_activeVehicleChanged(Vehicle* vehicle)
+void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
 {
     // Disconnect the previous one (if any)
     if (_vehicle) {
-        disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
-        disconnect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBarController::_remoteControlRSSIChanged);
+        disconnect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
         _mav = NULL;
         _vehicle = NULL;
     }
@@ -276,12 +188,12 @@ void MainToolBar::_activeVehicleChanged(Vehicle* vehicle)
     {
         _vehicle = vehicle;
         _mav = vehicle->uas();
-        connect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBar::_remoteControlRSSIChanged);
-        connect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBar::_setProgressBarValue);
+        connect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBarController::_remoteControlRSSIChanged);
+        connect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
     }
 }
 
-void MainToolBar::_updateConfigurations()
+void MainToolBarController::_updateConfigurations()
 {
     QStringList tmpList;
     QList<LinkConfiguration*> configs = LinkManager::instance()->getLinkConfigurationList();
@@ -301,7 +213,7 @@ void MainToolBar::_updateConfigurations()
     }
 }
 
-void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned remrssi, unsigned, unsigned, unsigned)
+void MainToolBarController::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned remrssi, unsigned, unsigned, unsigned)
 {
     // We only care if we haveone single connection
     if(_connectionCount == 1) {
@@ -318,7 +230,7 @@ void MainToolBar::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned
     }
 }
 
-void MainToolBar::_remoteControlRSSIChanged(uint8_t rssi)
+void MainToolBarController::_remoteControlRSSIChanged(uint8_t rssi)
 {
     // We only care if we have one single connection
     if(_connectionCount == 1) {
@@ -335,17 +247,17 @@ void MainToolBar::_remoteControlRSSIChanged(uint8_t rssi)
     }
 }
 
-void MainToolBar::_linkConnected(LinkInterface*)
+void MainToolBarController::_linkConnected(LinkInterface*)
 {
     _updateConnection();
 }
 
-void MainToolBar::_linkDisconnected(LinkInterface* link)
+void MainToolBarController::_linkDisconnected(LinkInterface* link)
 {
     _updateConnection(link);
 }
 
-void MainToolBar::_updateConnection(LinkInterface *disconnectedLink)
+void MainToolBarController::_updateConnection(LinkInterface *disconnectedLink)
 {
     QStringList connList;
     int oldCount = _connectionCount;
@@ -382,24 +294,18 @@ void MainToolBar::_updateConnection(LinkInterface *disconnectedLink)
     }
 }
 
-void MainToolBar::_setProgressBarValue(float value)
+void MainToolBarController::_setProgressBarValue(float value)
 {
     _progressBarValue = value;
     emit progressBarValueChanged(value);
 }
 
-void MainToolBar::_heightChanged(double height)
-{
-    setMinimumHeight(height);
-    setMaximumHeight(height);
-}
-
-void MainToolBar::showToolBarMessage(const QString& message)
+void MainToolBarController::showToolBarMessage(const QString& message)
 {
     _toolbarMessageQueueMutex.lock();
     
     if (_toolbarMessageQueue.count() == 0 && !_toolbarMessageVisible) {
-        QTimer::singleShot(500, this, &MainToolBar::_delayedShowToolBarMessage);
+        QTimer::singleShot(500, this, &MainToolBarController::_delayedShowToolBarMessage);
     }
     
     _toolbarMessageQueue += message;
@@ -407,7 +313,7 @@ void MainToolBar::showToolBarMessage(const QString& message)
     _toolbarMessageQueueMutex.unlock();
 }
 
-void MainToolBar::_delayedShowToolBarMessage(void)
+void MainToolBarController::_delayedShowToolBarMessage(void)
 {
     QString messages;
     
@@ -428,7 +334,7 @@ void MainToolBar::_delayedShowToolBarMessage(void)
     }
 }
 
-void MainToolBar::onToolBarMessageClosed(void)
+void MainToolBarController::onToolBarMessageClosed(void)
 {
     _toolbarMessageVisible = false;
     _delayedShowToolBarMessage();

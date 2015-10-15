@@ -31,6 +31,8 @@ QGCQmlWidgetHolder::QGCQmlWidgetHolder(const QString& title, QAction* action, QW
 {
     _ui.setupUi(this);
     
+    layout()->setContentsMargins(0,0,0,0);
+
     if (action) {
         setWindowTitle(title);
     }

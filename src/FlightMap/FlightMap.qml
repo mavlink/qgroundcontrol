@@ -55,6 +55,10 @@ Map {
     property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
     property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
 
+    readonly property real zOrderTopMost:   1000    ///< z order for top most items, toolbar, main window sub view
+    readonly property real zOrderWidgets:   100     ///< z order value to widgets, for example: zoom controls, hud widgetss
+    readonly property real zOrderMapItems:  50      ///< z order value for map items, for example: mission item indicators
+
     zoomLevel:  18
     center:     QtPositioning.coordinate(lat, lon)
     gesture.flickDeceleration: 3000
@@ -115,6 +119,7 @@ Map {
 
             QGCButton {
                 width:  parent._buttonWidth
+                z:      zOrderWidgets
                 //iconSource: "/qmlimages/ZoomPlus.svg"
                 text:   "+"
                 
@@ -131,6 +136,7 @@ Map {
             
             QGCButton {
                 width:  parent._buttonWidth
+                z:      zOrderWidgets
                 //iconSource: "/qmlimages/ZoomMinus.svg"
                 text:   "-"
                 
