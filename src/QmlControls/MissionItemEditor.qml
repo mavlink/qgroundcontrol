@@ -13,17 +13,16 @@ import QGroundControl.Palette       1.0
 Rectangle {
     id: _root
 
-    property var    missionItem
+    property var    missionItem ///< MissionItem associated with this editor
+    property bool   readOnly    ///< true: read only view, false: full editing view
 
     signal clicked
     signal remove
-    signal moveUp
-    signal moveDown
 
     height: missionItem.isCurrentItem ?
                 (missionItem.textFieldFacts.count * (measureTextField.height + _margin)) +
                     (missionItem.checkboxFacts.count * (measureCheckbox.height + _margin)) +
-                    commandPicker.height + deleteButton.height + (_margin * 9) :
+                    commandPicker.height + (deleteButton.visible ? deleteButton.height : 0) + (_margin * 9) :
                 commandPicker.height + (_margin * 2)
     color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
 
@@ -63,7 +62,6 @@ Rectangle {
             onClicked: _root.clicked()
         }
 
-
         QGCComboBox {
             id:                 commandPicker
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 10
@@ -71,7 +69,7 @@ Rectangle {
             anchors.right:      parent.right
             currentIndex:       missionItem.commandByIndex
             model:              missionItem.commandNames
-            visible:            missionItem.sequenceNumber != 0
+            visible:            missionItem.sequenceNumber != 0 // Item 0 is home position, can't change item type
 
             onActivated: missionItem.commandByIndex = index
         }
@@ -79,7 +77,7 @@ Rectangle {
         Rectangle {
             anchors.fill:   commandPicker
             color:          qgcPal.button
-            visible:        missionItem.sequenceNumber == 0
+            visible:        missionItem.sequenceNumber == 0 // Item 0 is home position, can't change item type
 
             QGCLabel {
                 id:                 homeLabel
@@ -119,6 +117,7 @@ Rectangle {
                             height: textField.height
 
                             QGCLabel {
+                                id:                 textFieldLabel
                                 anchors.baseline:   textField.baseline
                                 text:               object.name
                             }
@@ -129,6 +128,14 @@ Rectangle {
                                 width:          _editFieldWidth
                                 showUnits:      true
                                 fact:           object
+                                visible:        !_root.readOnly
+                            }
+
+                            FactLabel {
+                                anchors.baseline:   textFieldLabel.baseline
+                                anchors.right:      parent.right
+                                fact:               object
+                                visible:            _root.readOnly
                             }
                         }
                     }
@@ -160,25 +167,12 @@ Rectangle {
                         readonly property real buttonWidth: (width - (_margin * 2)) / 3
 
                         QGCButton {
-                            id:     deleteButton
-                            width:  parent.buttonWidth
-                            text:   "Delete"
+                            id:         deleteButton
+                            width:      parent.buttonWidth
+                            text:       "Delete"
+                            visible:    !readOnly
 
                             onClicked: _root.remove()
-                        }
-
-                        QGCButton {
-                            width:  parent.buttonWidth
-                            text:   "Up"
-
-                            onClicked: _root.moveUp()
-                        }
-
-                        QGCButton {
-                            width:  parent.buttonWidth
-                            text:   "Down"
-
-                            onClicked: _root.moveDown()
                         }
                     }
 

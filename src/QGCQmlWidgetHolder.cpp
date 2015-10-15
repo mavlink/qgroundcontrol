@@ -26,10 +26,14 @@
 
 #include "QGCQmlWidgetHolder.h"
 
-QGCQmlWidgetHolder::QGCQmlWidgetHolder(QWidget *parent) :
-    QWidget(parent)
+QGCQmlWidgetHolder::QGCQmlWidgetHolder(const QString& title, QAction* action, QWidget *parent) :
+    QGCDockWidget(title, action, parent)
 {
     _ui.setupUi(this);
+    
+    if (action) {
+        setWindowTitle(title);
+    }
     setResizeMode(QQuickWidget::SizeRootObjectToView);
 }
 

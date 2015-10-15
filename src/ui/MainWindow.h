@@ -35,26 +35,27 @@ This file is part of the QGROUNDCONTROL project
 #include <QStatusBar>
 #include <QStackedWidget>
 #include <QSettings>
-#include <qlist.h>
+#include <QList>
 
 #include "ui_MainWindow.h"
 #include "LinkManager.h"
 #include "LinkInterface.h"
 #include "UASInterface.h"
 #include "CameraView.h"
-#if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
-#include "Mouse6dofInput.h"
-#endif // QGC_MOUSE_ENABLED_WIN
 #include "MainToolBar.h"
 #include "LogCompressor.h"
-
 #include "FlightDisplayView.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
 #include "Vehicle.h"
+#include "QGCDockWidget.h"
 
-class QGCFirmwareUpdate;
+#if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
+    #include "Mouse6dofInput.h"
+#endif // QGC_MOUSE_ENABLED_WIN
+
+
 class QSplashScreen;
 class QGCStatusBar;
 class Linecharts;
@@ -120,7 +121,6 @@ public slots:
 
     void loadSetupView();
     void loadFlightView();
-    void loadAnalyzeView();
     void loadPlanView();
     
     void manageLinks();
@@ -185,7 +185,7 @@ protected:
 
     typedef enum _VIEW_SECTIONS
     {
-        VIEW_ANALYZE,           // Engineering/Analyze view mode. Used for analyzing data and modifying onboard parameters
+        VIEW_UNUSED5,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_UNUSED3,           // Unused (don't remove, or it will screw up saved settigns indices)
         VIEW_FLIGHT,            // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
         VIEW_UNUSED4,           // Unused (don't remove, or it will screw up saved settigns indices)
@@ -202,7 +202,6 @@ protected:
 
     void loadSettings();
     void storeSettings();
-
 
     QSettings settings;
 
@@ -261,7 +260,6 @@ private:
     QPointer<QWidget> _planView;
     QPointer<QWidget> _flightView;
     QPointer<QWidget> _setupView;
-    QPointer<QWidget> _analyzeView;
     QPointer<QWidget> _missionEditorView;
 
 #ifndef __mobile__
@@ -270,19 +268,18 @@ private:
     static const char* _customCommandWidgetName;
     static const char* _filesDockWidgetName;
     static const char* _uasStatusDetailsDockWidgetName;
-    static const char* _mapViewDockWidgetName;
     static const char* _pfdDockWidgetName;
     static const char* _uasInfoViewDockWidgetName;
     static const char* _hilDockWidgetName;
+    static const char* _analyzeDockWidgetName;
 
-    QMap<QString, QDockWidget*>     _mapName2DockWidget;
-    QMap<QDockWidget*, QAction*>    _mapDockWidget2Action;
+    QMap<QString, QGCDockWidget*>   _mapName2DockWidget;
+    QMap<QString, QAction*>         _mapName2Action;
 #endif
 
     void _buildPlanView(void);
     void _buildFlightView(void);
     void _buildSetupView(void);
-    void _buildAnalyzeView(void);
     void _buildTerminalView(void);
     void _buildMissionEditorView(void);
 
@@ -290,11 +287,14 @@ private:
     void _loadCurrentViewState(void);
 
 #ifndef __mobile__
-    void _createDockWidget(const QString& title, const QString& name, Qt::DockWidgetArea area, QWidget* innerWidget);
     void _createInnerDockWidget(const QString& widgetName);
     void _buildCommonWidgets(void);
     void _hideAllDockWidgets(void);
     void _showDockWidget(const QString &name, bool show);
+    void _loadVisibleWidgetsSettings(void);
+    void _storeVisibleWidgetsSettings(void);
+    
+    static const char* _visibleWidgetsKey;
 #endif
 
     bool                    _autoReconnect;

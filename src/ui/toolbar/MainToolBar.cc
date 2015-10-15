@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 
 MainToolBar::MainToolBar(QWidget* parent)
-    : QGCQmlWidgetHolder(parent)
+    : QGCQmlWidgetHolder(QString(), NULL, parent)
     , _vehicle(NULL)
     , _mav(NULL)
     , _toolBar(NULL)
@@ -161,12 +161,6 @@ void MainToolBar::onFlyViewMenu()
     }
 }
 
-void MainToolBar::onAnalyzeView()
-{
-    setCurrentView(MainWindow::VIEW_ANALYZE);
-    MainWindow::instance()->loadAnalyzeView();
-}
-
 void MainToolBar::onDisconnect(QString conf)
 {
     if(conf.isEmpty()) {
@@ -248,9 +242,6 @@ void MainToolBar::setCurrentView(int currentView)
 {
     ViewType_t view = ViewNone;
     switch((MainWindow::VIEW_SECTIONS)currentView) {
-        case MainWindow::VIEW_ANALYZE:
-            view = ViewAnalyze;
-            break;
         case MainWindow::VIEW_MISSIONEDITOR:
             view = ViewPlan;
             break;

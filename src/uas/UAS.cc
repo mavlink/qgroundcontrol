@@ -206,6 +206,7 @@ UAS::~UAS()
     if (simulation) {
         // wait for the simulator to exit
         simulation->wait();
+        simulation->disconnectSimulation();
         simulation->deleteLater();
     }
 #endif
@@ -1950,7 +1951,7 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
     Q_UNUSED(configuration);
 
     QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
-    if (!link || !simulation) {
+    if (!link) {
         // Delete wrong sim
         if (simulation) {
             stopHil();
@@ -1959,18 +1960,18 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
         simulation = new QGCFlightGearLink(this, options);
     }
 
-    float noise_scaler = 0.05f;
+    float noise_scaler = 0.002f;
     xacc_var = noise_scaler * 0.2914f;
     yacc_var = noise_scaler * 0.2914f;
     zacc_var = noise_scaler * 0.9577f;
-    rollspeed_var = noise_scaler * 0.1f * 0.8126f;
-    pitchspeed_var = noise_scaler * 0.1f * 0.6145f;
-    yawspeed_var = noise_scaler * 0.1f * 0.5852f;
+    rollspeed_var = noise_scaler * 0.8126f;
+    pitchspeed_var = noise_scaler * 0.6145f;
+    yawspeed_var = noise_scaler * 0.5852f;
     xmag_var = noise_scaler * 0.0786f;
     ymag_var = noise_scaler * 0.0566f;
     zmag_var = noise_scaler * 0.0333f;
     abs_pressure_var = noise_scaler * 1.1604f;
-    diff_pressure_var = noise_scaler * 0.6604f;
+    diff_pressure_var = noise_scaler * 0.3604f;
     pressure_alt_var = noise_scaler * 1.1604f;
     temperature_var = noise_scaler * 2.4290f;
 
@@ -1998,7 +1999,7 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
 void UAS::enableHilJSBSim(bool enable, QString options)
 {
     QGCJSBSimLink* link = dynamic_cast<QGCJSBSimLink*>(simulation);
-    if (!link || !simulation) {
+    if (!link) {
         // Delete wrong sim
         if (simulation) {
             stopHil();
@@ -2027,25 +2028,25 @@ void UAS::enableHilJSBSim(bool enable, QString options)
 void UAS::enableHilXPlane(bool enable)
 {
     QGCXPlaneLink* link = dynamic_cast<QGCXPlaneLink*>(simulation);
-    if (!link || !simulation) {
+    if (!link) {
         if (simulation) {
             stopHil();
             delete simulation;
         }
         simulation = new QGCXPlaneLink(this);
 
-        float noise_scaler = 0.02f;
+        float noise_scaler = 0.0002f;
         xacc_var = noise_scaler * 0.2914f;
         yacc_var = noise_scaler * 0.2914f;
         zacc_var = noise_scaler * 0.9577f;
-        rollspeed_var = noise_scaler * 0.15f * 0.8126f;
-        pitchspeed_var = noise_scaler * 0.15f * 0.6145f;
-        yawspeed_var = noise_scaler * 0.15f * 0.5852f;
+        rollspeed_var = noise_scaler * 0.8126f;
+        pitchspeed_var = noise_scaler * 0.6145f;
+        yawspeed_var = noise_scaler * 0.5852f;
         xmag_var = noise_scaler * 0.0786f;
         ymag_var = noise_scaler * 0.0566f;
         zmag_var = noise_scaler * 0.0333f;
         abs_pressure_var = noise_scaler * 1.1604f;
-        diff_pressure_var = noise_scaler * 0.6604f;
+        diff_pressure_var = noise_scaler * 0.3604f;
         pressure_alt_var = noise_scaler * 1.1604f;
         temperature_var = noise_scaler * 2.4290f;
     }
@@ -2347,11 +2348,11 @@ void UAS::startHil()
 #ifndef __mobile__
 void UAS::stopHil()
 {
-    if (simulation && simulation->isConnected()) {
-        simulation->disconnectSim();
-        _vehicle->setHilMode(false);
-        qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to disable.";
-    }
+   if (simulation && simulation->isConnected()) {
+       simulation->disconnectSimulation();
+       _vehicle->setHilMode(false);
+       qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to disable.";
+   }
     hilEnabled = false;
     sensorHil = false;
 }

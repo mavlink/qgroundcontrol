@@ -30,7 +30,7 @@ class FlightDisplayWidget : public QGCQmlWidgetHolder
 {
     Q_OBJECT
 public:
-    FlightDisplayWidget(QWidget* parent = NULL);
+    FlightDisplayWidget(const QString& title, QAction* action, QWidget* parent = NULL);
     ~FlightDisplayWidget();
 
     /// @brief Invokes the Flight Display Options menu
