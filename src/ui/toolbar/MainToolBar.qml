@@ -626,7 +626,6 @@ Rectangle {
                     setupButton.repaintChevron   = true;
                     planButton.repaintChevron    = true;
                     flyButton.repaintChevron     = true;
-                    analyzeButton.repaintChevron = true;
                 }
             }
 
@@ -669,19 +668,6 @@ Rectangle {
                     mainToolBar.onFlyView();
                 }
                 z: 800
-            }
-
-            QGCToolBarButton {
-                id: analyzeButton
-                width: getProportionalDimmension(90)
-                height: cellHeight
-                exclusiveGroup: mainActionGroup
-                text: qsTr("Analyze")
-                checked: (mainToolBar.currentView === MainToolBar.ViewAnalyze)
-                onClicked: {
-                    mainToolBar.onAnalyzeView();
-                }
-                z: 700
             }
         } // Row
 
