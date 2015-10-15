@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>HIL Config</string>
   </property>
   <layout class="QGridLayout" name="gridLayout" rowstretch="1,100,1" columnstretch="40,0">
    <item row="0" column="0">

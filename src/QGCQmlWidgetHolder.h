@@ -27,10 +27,10 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include <QWidget>
+#include "QGCDockWidget.h"
+#include "AutoPilotPlugin.h"
 
 #include "ui_QGCQmlWidgetHolder.h"
-#include "AutoPilotPlugin.h"
 
 namespace Ui {
 class QGCQmlWidgetHolder;
@@ -38,12 +38,16 @@ class QGCQmlWidgetHolder;
 
 /// This is used to create widgets which are implemented in QML.
 
-class QGCQmlWidgetHolder : public QWidget
+class QGCQmlWidgetHolder : public QGCDockWidget
 {
     Q_OBJECT
 
 public:
-    explicit QGCQmlWidgetHolder(QWidget *parent = 0);
+    // This has a title and action since the base class is QGCDockWidget. In order to use this
+    // control as a normal QWidget, not a doc widget just pass in:
+    //      title = QString()
+    //      action = NULL
+    explicit QGCQmlWidgetHolder(const QString& title, QAction* action, QWidget *parent = 0);
     ~QGCQmlWidgetHolder();
     
     /// Sets the UAS into the widget which in turn will load facts into the context

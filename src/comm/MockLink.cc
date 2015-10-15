@@ -157,6 +157,7 @@ void MockLink::_run1HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
         _sendHeartBeat();
+        _sendHomePosition();
     }
 }
 
@@ -691,4 +692,26 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, bool firstTimeOnly)
 {
     _missionItemHandler.setMissionItemFailureMode(failureMode, firstTimeOnly);
+}
+
+void MockLink::_sendHomePosition(void)
+{
+    mavlink_message_t   msg;
+    
+    float bogus[4];
+    bogus[0] = 0.0f;
+    bogus[1] = 0.0f;
+    bogus[2] = 0.0f;
+    bogus[3] = 0.0f;
+   
+    mavlink_msg_home_position_pack(_vehicleSystemId,
+                                   _vehicleComponentId,
+                                   &msg,
+                                   (int32_t)(47.633033f * 1E7),
+                                   (int32_t)(-122.08794f * 1E7),
+                                   (int32_t)(2.0f * 1000),
+                                   0.0f, 0.0f, 0.0f,
+                                   &bogus[0],
+                                   0.0f, 0.0f, 0.0f);
+    respondWithMavlinkMessage(msg);
 }

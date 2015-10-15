@@ -25,11 +25,13 @@
 #include "ui_MultiVehicleDockWidget.h"
 #include "MultiVehicleManager.h"
 
-MultiVehicleDockWidget::MultiVehicleDockWidget(QWidget *parent)
-    : QWidget(parent)
+MultiVehicleDockWidget::MultiVehicleDockWidget(const QString& title, QAction* action, QWidget *parent)
+    : QGCDockWidget(title, action, parent)
     , _ui(new Ui::MultiVehicleDockWidget)
 {
     _ui->setupUi(this);
+    
+    setWindowTitle(title);
     
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MultiVehicleDockWidget::_activeVehicleChanged);
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &MultiVehicleDockWidget::_vehicleAdded);
@@ -38,8 +40,11 @@ MultiVehicleDockWidget::MultiVehicleDockWidget(QWidget *parent)
 
 void MultiVehicleDockWidget::init(void)
 {
+    foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles()) {
+        _vehicleAdded(vehicle);
+    }
+
     if (MultiVehicleManager::instance()->activeVehicle()) {
-        _vehicleAdded(MultiVehicleManager::instance()->activeVehicle());
         _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
     }
 }

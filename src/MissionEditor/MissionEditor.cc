@@ -35,9 +35,11 @@ This file is part of the QGROUNDCONTROL project
 const char* MissionEditor::_settingsGroup = "MissionEditor";
 
 MissionEditor::MissionEditor(QWidget *parent)
-    : QGCQmlWidgetHolder(parent)
+    : QGCQmlWidgetHolder(QString(), NULL, parent)
     , _missionItems(NULL)
     , _canEdit(true)
+    , _activeVehicle(NULL)
+    , _liveHomePositionAvailable(false)
 {
     // Get rid of layout default margins
     QLayout* pl = layout();
@@ -45,11 +47,16 @@ MissionEditor::MissionEditor(QWidget *parent)
         pl->setContentsMargins(0,0,0,0);
     }
     
-    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    MultiVehicleManager* multiVehicleMgr = MultiVehicleManager::instance();
+    
+    connect(multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &MissionEditor::_activeVehicleChanged);
+    
+    Vehicle* activeVehicle = multiVehicleMgr->activeVehicle();
     if (activeVehicle) {
         MissionManager* missionManager = activeVehicle->missionManager();
         connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditor::_newMissionItemsAvailable);
         _newMissionItemsAvailable();
+        _activeVehicleChanged(activeVehicle);
     } else {
         _missionItems = new QmlObjectListModel(this);
         _initAllMissionItems();
@@ -131,52 +138,6 @@ void MissionEditor::removeMissionItem(int index)
     MissionItem* item = qobject_cast<MissionItem*>(_missionItems->removeAt(index));
     
     _deinitMissionItem(item);
-    
-    _recalcAll();
-}
-
-void MissionEditor::moveUp(int index)
-{
-    if (!_canEdit) {
-        qWarning() << "addMissionItem called with _canEdit == false";
-        return;
-    }
-    
-    if (_missionItems->count() < 2 || index <= 0 || index >= _missionItems->count()) {
-        return;
-    }
-    
-    MissionItem item1 = *qobject_cast<MissionItem*>(_missionItems->get(index - 1));
-    MissionItem item2 = *qobject_cast<MissionItem*>(_missionItems->get(index));
-    
-    _missionItems->removeAt(index - 1);
-    _missionItems->removeAt(index - 1);
-    
-    _missionItems->insert(index - 1, new MissionItem(item2, _missionItems));
-    _missionItems->insert(index, new MissionItem(item1, _missionItems));
-    
-    _recalcAll();
-}
-
-void MissionEditor::moveDown(int index)
-{
-    if (!_canEdit) {
-        qWarning() << "addMissionItem called with _canEdit == false";
-        return;
-    }
-    
-    if (_missionItems->count() < 2 || index >= _missionItems->count() - 1) {
-        return;
-    }
-    
-    MissionItem item1 = *qobject_cast<MissionItem*>(_missionItems->get(index));
-    MissionItem item2 = *qobject_cast<MissionItem*>(_missionItems->get(index + 1));
-    
-    _missionItems->removeAt(index);
-    _missionItems->removeAt(index);
-    
-    _missionItems->insert(index, new MissionItem(item2, _missionItems));
-    _missionItems->insert(index + 1, new MissionItem(item1, _missionItems));
     
     _recalcAll();
 }
@@ -388,4 +349,35 @@ void MissionEditor::_itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command
     Q_UNUSED(command);;
     _recalcChildItems();
     _recalcWaypointLines();
+}
+
+void MissionEditor::_activeVehicleChanged(Vehicle* activeVehicle)
+{
+    if (_activeVehicle) {
+        disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,  this, &MissionEditor::_activeVehicleHomePositionAvailableChanged);
+        disconnect(_activeVehicle, &Vehicle::homePositionChanged,           this, &MissionEditor::_activeVehicleHomePositionChanged);
+        _activeVehicle = NULL;
+        _activeVehicleHomePositionAvailableChanged(false);
+    }
+    
+    _activeVehicle = activeVehicle;
+    
+    if (_activeVehicle) {
+        connect(_activeVehicle, &Vehicle::homePositionAvailableChanged, this, &MissionEditor::_activeVehicleHomePositionAvailableChanged);
+        connect(_activeVehicle, &Vehicle::homePositionChanged,          this, &MissionEditor::_activeVehicleHomePositionChanged);
+        _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
+        _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
+    }
+}
+
+void MissionEditor::_activeVehicleHomePositionAvailableChanged(bool homePositionAvailable)
+{
+    _liveHomePositionAvailable = homePositionAvailable;
+    emit liveHomePositionAvailableChanged(_liveHomePositionAvailable);
+}
+
+void MissionEditor::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
+{
+    _liveHomePosition = homePosition;
+    emit liveHomePositionChanged(_liveHomePosition);
 }
