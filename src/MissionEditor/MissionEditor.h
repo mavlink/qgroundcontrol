@@ -48,8 +48,6 @@ public:
     Q_INVOKABLE void loadMissionFromFile(void);
     Q_INVOKABLE void saveMissionToFile(void);
     Q_INVOKABLE void removeMissionItem(int index);
-    Q_INVOKABLE void moveUp(int index);
-    Q_INVOKABLE void moveDown(int index);
 
     // Property accessors
     
