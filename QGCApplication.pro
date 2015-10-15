@@ -216,7 +216,7 @@ HEADERS += \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
     src/FlightDisplay/FlightDisplayWidget.h \
-    src/FlightDisplay/FlightDisplayView.h \
+    src/FlightDisplay/FlightDisplayViewController.h \
     src/FlightMap/FlightMapSettings.h \
     src/GAudioOutput.h \
     src/HomePositionManager.h \
@@ -224,7 +224,7 @@ HEADERS += \
     src/Joystick/JoystickManager.h \
     src/LogCompressor.h \
     src/MG.h \
-    src/MissionEditor/MissionEditor.h \
+    src/MissionEditor/MissionEditorController.h \
     src/MissionManager/MissionManager.h \
     src/QGC.h \
     src/QGCApplication.h \
@@ -327,7 +327,7 @@ SOURCES += \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayWidget.cc \
-    src/FlightDisplay/FlightDisplayView.cc \
+    src/FlightDisplay/FlightDisplayViewController.cc \
     src/FlightMap/FlightMapSettings.cc \
     src/GAudioOutput.cc \
     src/HomePositionManager.cc \
@@ -335,7 +335,7 @@ SOURCES += \
     src/Joystick/JoystickManager.cc \
     src/LogCompressor.cc \
     src/main.cc \
-    src/MissionEditor/MissionEditor.cc \
+    src/MissionEditor/MissionEditorController.cc \
     src/MissionManager/MissionManager.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
@@ -427,9 +427,6 @@ SOURCES += \
 # qmake with CONFIG-=debug_and_release CONFIG+=release.
 #
 
-# FIXME
-QmlConvert {
-
 DebugBuild|WindowsDebugAndRelease {
 
 HEADERS += src/QmlControls/QmlTestWidget.h
@@ -481,7 +478,6 @@ SOURCES += \
     src/VehicleSetup/SetupViewTest.cc \
 
 } # DebugBuild|WindowsDebugAndRelease
-} # QmlConvert
 } # MobileBuild
 
 #
@@ -522,7 +518,6 @@ HEADERS+= \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/Vehicle.h \
-    src/VehicleSetup/SetupView.h \
     src/VehicleSetup/VehicleComponent.h \
 
 !MobileBuild {
@@ -561,7 +556,6 @@ SOURCES += \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/Vehicle.cc \
-    src/VehicleSetup/SetupView.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
 !MobileBuild {

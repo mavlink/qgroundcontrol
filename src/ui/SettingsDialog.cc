@@ -61,15 +61,6 @@ _ui(new Ui::SettingsDialog)
 
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 
-    // Tool Bar Preferences
-    QSettings settings;
-    settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
-    _ui->showBattery->setChecked(settings.value( TOOL_BAR_SHOW_BATTERY,  true).toBool());
-    _ui->showGPS->setChecked(settings.value(     TOOL_BAR_SHOW_GPS,      true).toBool());
-    _ui->showMav->setChecked(settings.value(     TOOL_BAR_SHOW_MAV,      true).toBool());
-    _ui->showMessages->setChecked(settings.value(TOOL_BAR_SHOW_MESSAGES, true).toBool());
-    _ui->showRSSI->setChecked(settings.value(   TOOL_BAR_SHOW_RSSI,      true).toBool());
-    settings.endGroup();
     // Audio preferences
     _ui->audioMuteCheckBox->setChecked(GAudioOutput::instance()->isMuted());
     connect(_ui->audioMuteCheckBox, SIGNAL(toggled(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
@@ -179,57 +170,6 @@ void SettingsDialog::_selectSavedFilesDirectory(void)
     // Once a directory is selected, we need to display the various subdirectories used underneath:
     // * Flight data logs
     // * Parameters
-}
-
-void SettingsDialog::on_showGPS_clicked(bool checked)
-{
-#if 0
-    // FIXME: QmlConvert
-    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_GPS, checked);
-#else
-       Q_UNUSED(checked)
-#endif
-}
-
-void SettingsDialog::on_showBattery_clicked(bool checked)
-{
-#if 0
-    // FIXME: QmlConvert
-    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_BATTERY, checked);
-#else
-       Q_UNUSED(checked)
-#endif
-}
-
-void SettingsDialog::on_showMessages_clicked(bool checked)
-{
-#if 0
-    // FIXME: QmlConvert
-
-    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MESSAGES, checked);
-#else
-       Q_UNUSED(checked)
-#endif
-}
-
-void SettingsDialog::on_showMav_clicked(bool checked)
-{
-#if 0
-    // FIXME: QmlConvert
-    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_MAV, checked);
-#else
-       Q_UNUSED(checked)
-#endif
-}
-
-void SettingsDialog::on_showRSSI_clicked(bool checked)
-{
-#if 0
-    // FIXME: QmlConvert
-    _mainWindow->getMainToolBar()->viewStateChanged(TOOL_BAR_SHOW_RSSI, checked);
-#else
-       Q_UNUSED(checked)
-#endif
 }
 
 void SettingsDialog::_bingMapRadioClicked(bool checked)

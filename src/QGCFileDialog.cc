@@ -25,12 +25,9 @@
 #include "QGCApplication.h"
 #include "MainWindow.h"
 
-#if 0
-// FIXME: QmlConvert
 #ifdef QT_DEBUG
 #ifndef __mobile__
 #include "UnitTest.h"
-#endif
 #endif
 #endif
 
@@ -46,14 +43,11 @@ QString QGCFileDialog::getExistingDirectory(
 {
     _validate(options);
     
-#if 0
-    // FIXME: QmlConvert
 #ifdef QT_DEBUG
 #ifndef __mobile__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getExistingDirectory(parent, caption, dir, options);
     } else
-#endif
 #endif
 #endif
     {
@@ -70,14 +64,11 @@ QString QGCFileDialog::getOpenFileName(
 {
     _validate(options);
     
-#if 0
-    // FIXME: QmlConvert
 #ifdef QT_DEBUG
 #ifndef __mobile__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileName(parent, caption, dir, filter, options);
     } else
-#endif
 #endif
 #endif
     {
@@ -94,15 +85,11 @@ QStringList QGCFileDialog::getOpenFileNames(
 {
     _validate(options);
     
-#if 0
-    // FIXME: QmlConvert
-
 #ifdef QT_DEBUG
 #ifndef __mobile__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getOpenFileNames(parent, caption, dir, filter, options);
     } else
-#endif
 #endif
 #endif
     {
@@ -121,14 +108,11 @@ QString QGCFileDialog::getSaveFileName(
 {
     _validate(options);
 
-#if 0
-    // FIXME: QmlConvert
 #ifdef QT_DEBUG
 #ifndef __mobile__
     if (qgcApp()->runningUnitTests()) {
         return UnitTest::_getSaveFileName(parent, caption, dir, filter, defaultSuffix, options);
     } else
-#endif
 #endif
 #endif
     {

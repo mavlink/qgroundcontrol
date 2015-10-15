@@ -47,17 +47,13 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "SettingsDialog.h"
 #include "MAVLinkDecoder.h"
-#include "FlightDisplayView.h"
-#include "SetupView.h"
 #include "QGCApplication.h"
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 #include "HomePositionManager.h"
-#include "MissionEditor.h"
 #include "LogCompressor.h"
 #include "UAS.h"
-#include "QGCQmlWidgetHolder.h"
 
 #ifndef __mobile__
 #include "QGCDataPlot2D.h"
@@ -131,6 +127,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     , _lowPowerMode(false)
     , _showStatusBar(false)
     , _splashScreen(splashScreen)
+    , _mainQmlWidgetHolder(NULL)
 {
     Q_ASSERT(_instance == NULL);
     _instance = this;
@@ -157,11 +154,12 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     _centralLayout->setContentsMargins(0, 0, 0, 0);
     centralWidget()->setLayout(_centralLayout);
 
-    QGCQmlWidgetHolder* qmlHolder = new QGCQmlWidgetHolder(QString(), NULL, this);
-    _centralLayout->addWidget(qmlHolder);
-    qmlHolder->setVisible(true);
+    _mainQmlWidgetHolder = new QGCQmlWidgetHolder(QString(), NULL, this);
+    _centralLayout->addWidget(_mainQmlWidgetHolder);
+    _mainQmlWidgetHolder->setVisible(true);
 
-    qmlHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindow.qml"));
+    _mainQmlWidgetHolder->setContextPropertyObject("controller", this);
+    _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindow.qml"));
 
     // Set dock options
     setDockOptions(0);
@@ -173,14 +171,10 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     menuBar()->setNativeMenuBar(false);
 #endif
 
-#if 0
-    // FIXME: QmlConvert
-
 #ifdef UNITTEST_BUILD
     QAction* qmlTestAction = new QAction("Test QML palette and controls", NULL);
     connect(qmlTestAction, &QAction::triggered, this, &MainWindow::_showQmlTestWidget);
     _ui.menuWidgets->addAction(qmlTestAction);
-#endif
 #endif
 
     // Status Bar
@@ -281,6 +275,8 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
     _ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
+    _ui.actionFlight->setChecked(true);
+
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
     emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
@@ -316,7 +312,7 @@ MainWindow::MainWindow(QSplashScreen* splashScreen)
 
 MainWindow::~MainWindow()
 {
-
+    _instance = NULL;
 }
 
 QString MainWindow::_getWindowGeometryKey()
@@ -470,7 +466,14 @@ void MainWindow::closeEvent(QCloseEvent *event)
     
     // Should not be any active connections
     Q_ASSERT(!LinkManager::instance()->anyConnectedLinks());
-    
+
+    // We have to pull out the QmlWidget from the main window and delete it here, before
+    // the MainWindow ends up getting deleted. Otherwise the Qml has a reference to MainWindow
+    // inside it which in turn causes a shutdown crash.
+    _centralLayout->removeWidget(_mainQmlWidgetHolder);
+    delete _mainQmlWidgetHolder;
+    _mainQmlWidgetHolder = NULL;
+
     _storeCurrentViewState();
     storeSettings();
     event->accept();
@@ -533,9 +536,6 @@ void MainWindow::enableAutoReconnect(bool enabled)
 **/
 void MainWindow::connectCommonActions()
 {
-#if 0
-    // FIXME: QmlConvert
-
     // Connect actions from ui
     connect(_ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(manageLinks()));
 
@@ -547,7 +547,10 @@ void MainWindow::connectCommonActions()
     // Application Settings
     connect(_ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
 
-#endif // QmlConvert
+    // Views actions
+    connect(_ui.actionFlight,   &QAction::triggered,    this, &MainWindow::showFlyView);
+    connect(_ui.actionPlan,     &QAction::triggered,    this, &MainWindow::showPlanView);
+    connect(_ui.actionSetup,    &QAction::triggered,    this, &MainWindow::showSetupView);
 
     // Connect internal actions
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
@@ -643,10 +646,7 @@ bool MainWindow::x11Event(XEvent *event)
 #ifdef UNITTEST_BUILD
 void MainWindow::_showQmlTestWidget(void)
 {
-#if 0
-    // FIXME: QmlConvert
     new QmlTestWidget();
-#endif
 }
 #endif
 

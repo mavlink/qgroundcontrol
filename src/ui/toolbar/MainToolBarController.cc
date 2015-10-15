@@ -35,7 +35,6 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "UASMessageView.h"
 #include "UASMessageHandler.h"
-#include "FlightDisplayView.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "UAS.h"
@@ -44,13 +43,7 @@ MainToolBarController::MainToolBarController(QObject* parent)
     : QObject(parent)
     , _vehicle(NULL)
     , _mav(NULL)
-    , _currentView(ViewNone)
     , _connectionCount(0)
-    , _showGPS(true)
-    , _showMav(true)
-    , _showMessages(true)
-    , _showRSSI(true)
-    , _showBattery(true)
     , _progressBarValue(0.0f)
     , _remoteRSSI(0)
     , _remoteRSSIstore(100.0)
@@ -59,15 +52,6 @@ MainToolBarController::MainToolBarController(QObject* parent)
     , _rollDownMessages(0)
     , _toolbarMessageVisible(false)
 {
-    // Tool Bar Preferences
-    QSettings settings;
-    settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
-    _showBattery  = settings.value(TOOL_BAR_SHOW_BATTERY,  true).toBool();
-    _showGPS      = settings.value(TOOL_BAR_SHOW_GPS,      true).toBool();
-    _showMav      = settings.value(TOOL_BAR_SHOW_MAV,      true).toBool();
-    _showMessages = settings.value(TOOL_BAR_SHOW_MESSAGES, true).toBool();
-    settings.endGroup();
-
     emit configListChanged();
     emit connectionCountChanged(_connectionCount);
     _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
@@ -90,72 +74,19 @@ MainToolBarController::~MainToolBarController()
 
 }
 
-void MainToolBarController::_setToolBarState(const QString& key, bool value)
-{
-    QSettings settings;
-    settings.beginGroup(TOOL_BAR_SETTINGS_GROUP);
-    settings.setValue(key, value);
-    settings.endGroup();
-    if(key == TOOL_BAR_SHOW_GPS) {
-        _showGPS = value;
-        emit showGPSChanged(value);
-    } else if(key == TOOL_BAR_SHOW_MAV) {
-        _showMav = value;
-        emit showMavChanged(value);
-    }else if(key == TOOL_BAR_SHOW_BATTERY) {
-        _showBattery = value;
-        emit showBatteryChanged(value);
-    } else if(key == TOOL_BAR_SHOW_MESSAGES) {
-        _showMessages = value;
-        emit showMessagesChanged(value);
-    } else if(key == TOOL_BAR_SHOW_RSSI) {
-        _showRSSI = value;
-        emit showRSSIChanged(value);
-    }
-}
-
-void MainToolBarController::viewStateChanged(const QString &key, bool value)
-{
-    _setToolBarState(key, value);
-}
-
 void MainToolBarController::onSetupView()
 {
-#if 0
-    // FIXME: QmlConvert
-    setCurrentView(MainWindow::VIEW_SETUP);
-    MainWindow::instance()->loadSetupView();
-#endif
+    MainWindow::instance()->showSetupView();
 }
 
 void MainToolBarController::onPlanView()
 {
-#if 0
-    // FIXME: QmlConvert
-    setCurrentView(MainWindow::VIEW_MISSIONEDITOR);
-    MainWindow::instance()->loadPlanView();
-#endif
+    MainWindow::instance()->showPlanView();
 }
 
 void MainToolBarController::onFlyView()
 {
-#if 0
-    // FIXME: QmlConvert
-    setCurrentView(MainWindow::VIEW_FLIGHT);
-    MainWindow::instance()->loadFlightView();
-#endif
-}
-
-void MainToolBarController::onFlyViewMenu()
-{
-#if 0
-    // FIXME: QmlConvert
-
-    FlightDisplayView* fdsp = MainWindow::instance()->getFlightDisplay();
-    if(fdsp) {
-        fdsp->showOptionsMenu();
-    }
-#endif
+    MainWindow::instance()->showFlyView();
 }
 
 void MainToolBarController::onDisconnect(QString conf)
@@ -208,32 +139,32 @@ void MainToolBarController::onConnect(QString conf)
 
 void MainToolBarController::onEnterMessageArea(int x, int y)
 {
-#if 0
-    // FIXME: QmlConvert
+    Q_UNUSED(x);
+    Q_UNUSED(y);
 
     // If not already there and messages are actually present
-    if(!_rollDownMessages && UASMessageHandler::instance()->messages().count())
-    {
-        if (MultiVehicleManager::instance()->activeVehicle())
+    if(!_rollDownMessages && UASMessageHandler::instance()->messages().count()) {
+        if (MultiVehicleManager::instance()->activeVehicle()) {
             MultiVehicleManager::instance()->activeVehicle()->resetMessages();
+        }
+
+        // FIXME: Position of the message dropdown is hacked right now to speed up Qml conversion
         // Show messages
         int dialogWidth = 400;
+#if 0
         x = x - (dialogWidth >> 1);
         if(x < 0) x = 0;
         y = height() / 3;
+#endif
+
         // Put dialog on top of the message alert icon
-        QPoint p = mapToGlobal(QPoint(x,y));
         _rollDownMessages = new UASMessageViewRollDown(MainWindow::instance());
         _rollDownMessages->setAttribute(Qt::WA_DeleteOnClose);
-        _rollDownMessages->move(mapFromGlobal(p));
+        _rollDownMessages->move(QPoint(100, 100));
         _rollDownMessages->setMinimumSize(dialogWidth,200);
         connect(_rollDownMessages, &UASMessageViewRollDown::closeWindow, this, &MainToolBarController::_leaveMessageView);
         _rollDownMessages->show();
     }
-#else
-    Q_UNUSED(x);
-    Q_UNUSED(y);
-#endif
 }
 
 void MainToolBarController::_leaveMessageView()

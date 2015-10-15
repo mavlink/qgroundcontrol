@@ -45,46 +45,28 @@ This file is part of the QGROUNDCONTROL project
 class MainToolBarController : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ViewType_t)
 
 public:
-
-    typedef enum {
-        ViewNone    = -1,
-        ViewAnalyze, // MainWindow::VIEW_ENGINEER
-        ViewPlan   , // MainWindow::VIEW_MISSION_EDITOR
-        ViewFly    , // MainWindow::VIEW_FLIGHT
-        ViewSetup  , // MainWindow::VIEW_SETUP
-    } ViewType_t;
-
     MainToolBarController(QObject* parent = NULL);
     ~MainToolBarController();
 
     Q_INVOKABLE void    onSetupView();
     Q_INVOKABLE void    onPlanView();
     Q_INVOKABLE void    onFlyView();
-    Q_INVOKABLE void    onFlyViewMenu();
     Q_INVOKABLE void    onConnect(QString conf);
     Q_INVOKABLE void    onDisconnect(QString conf);
     Q_INVOKABLE void    onEnterMessageArea(int x, int y);
     Q_INVOKABLE void    onToolBarMessageClosed(void);
 
     Q_PROPERTY(double       height              MEMBER _toolbarHeight           NOTIFY heightChanged)
-    Q_PROPERTY(ViewType_t   currentView         MEMBER _currentView             NOTIFY currentViewChanged)
     Q_PROPERTY(QStringList  configList          MEMBER _linkConfigurations      NOTIFY configListChanged)
     Q_PROPERTY(int          connectionCount     READ connectionCount            NOTIFY connectionCountChanged)
     Q_PROPERTY(QStringList  connectedList       MEMBER _connectedList           NOTIFY connectedListChanged)
-    Q_PROPERTY(bool         showGPS             MEMBER _showGPS                 NOTIFY showGPSChanged)
-    Q_PROPERTY(bool         showMav             MEMBER _showMav                 NOTIFY showMavChanged)
-    Q_PROPERTY(bool         showMessages        MEMBER _showMessages            NOTIFY showMessagesChanged)
-    Q_PROPERTY(bool         showBattery         MEMBER _showBattery             NOTIFY showBatteryChanged)
-    Q_PROPERTY(bool         showRSSI            MEMBER _showRSSI                NOTIFY showRSSIChanged)
     Q_PROPERTY(float        progressBarValue    MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
     Q_PROPERTY(int          remoteRSSI          READ remoteRSSI                 NOTIFY remoteRSSIChanged)
     Q_PROPERTY(int          telemetryRRSSI      READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
     Q_PROPERTY(int          telemetryLRSSI      READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
 
-    void        setCurrentView          (int currentView);
     void        viewStateChanged        (const QString& key, bool value);
     int         remoteRSSI              () { return _remoteRSSI; }
     int         telemetryRRSSI          () { return _telemetryRRSSI; }
@@ -95,14 +77,8 @@ public:
     
 signals:
     void connectionCountChanged         (int count);
-    void currentViewChanged             ();
     void configListChanged              ();
     void connectedListChanged           (QStringList connectedList);
-    void showGPSChanged                 (bool value);
-    void showMavChanged                 (bool value);
-    void showMessagesChanged            (bool value);
-    void showBatteryChanged             (bool value);
-    void showRSSIChanged                (bool value);
     void progressBarValueChanged        (float value);
     void remoteRSSIChanged              (int value);
     void telemetryRRSSIChanged          (int value);
@@ -125,20 +101,13 @@ private slots:
 
 private:
     void _updateConnection              (LinkInterface *disconnectedLink = NULL);
-    void _setToolBarState               (const QString& key, bool value);
 
 private:
     Vehicle*        _vehicle;
     UASInterface*   _mav;
-    ViewType_t      _currentView;
     QStringList     _linkConfigurations;
     int             _connectionCount;
     QStringList     _connectedList;
-    bool            _showGPS;
-    bool            _showMav;
-    bool            _showMessages;
-    bool            _showRSSI;
-    bool            _showBattery;
     float           _progressBarValue;
     int             _remoteRSSI;
     double          _remoteRSSIstore;

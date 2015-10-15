@@ -23,17 +23,84 @@ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 import QtQuick          2.3
 import QtQuick.Controls 1.2
+import QtPositioning    5.2
 
-import QGroundControl.Palette               1.0
-import QGroundControl.Controls              1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.FlightMap     1.0
+import QGroundControl.ScreenTools   1.0
 
-Rectangle {
-    color:  "orange"    //palette.window
+/// Qml for MainWindow
+FlightDisplayView {
+    id: _root
+    // sets the top margin soo map widgets are not under toolbar
+    topMargin: toolbar.height + ScreenTools.defaultFontPixelWidth
 
-    QGCPalette { id: palette; colorGroupEnabled: true }
+    readonly property string _planViewSource:   "MissionEditor.qml"
+    readonly property string _setupViewSource:  "SetupView.qml"
+
+    Connections {
+        target: controller
+
+        onShowFlyView: {
+            setupViewLoader.visible = false
+            planViewLoader.visible = false
+            _root.hideWidgets = false
+        }
+
+        onShowPlanView: {
+            if (planViewLoader.source != _planViewSource) {
+                planViewLoader.source = _planViewSource
+            }
+            setupViewLoader.visible = false
+            planViewLoader.visible = true
+            _root.hideWidgets = true
+        }
+
+        onShowSetupView: {
+            if (setupViewLoader.source != _setupViewSource) {
+                setupViewLoader.source = _setupViewSource
+            }
+            setupViewLoader.visible = true
+            planViewLoader.visible = false
+            _root.hideWidgets = true
+        }
+
+        onShowToolbarMessage: toolbar.showToolbarMessage(message)
+
+        // The following are use for unit testing only
+
+        onShowSetupFirmware:            setupViewLoader.item.showFirmwarePanel()
+        onShowSetupParameters:          setupViewLoader.item.showParametersPanel()
+        onShowSetupSummary:             setupViewLoader.item.showSummaryPanel()
+        onShowSetupVehicleComponent:    setupViewLoader.item.showVehicleComponentPanel(vechicleComponent)
+    }
 
     MainToolBar {
-        width:   parent.width
-        height:  100
+        id:     toolbar
+        width:  parent.width
+        z:      _root.zOrderTopMost
+    }
+
+    Loader {
+        id:             planViewLoader
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.top:    toolbar.bottom
+        anchors.bottom: parent.bottom
+        visible:        false
+
+        property real zOrder: _root.zOrderTopMost
+    }
+
+    Loader {
+        id:                 setupViewLoader
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        toolbar.bottom
+        anchors.bottom:     parent.bottom
+        visible:            false
+
+        property real zOrder: _root.zOrderTopMost
     }
 }

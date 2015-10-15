@@ -31,7 +31,6 @@
 
 #include "UnitTest.h"
 #include "MainWindow.h"
-#include "MainToolBar.h"
 
 class MainWindowTest : public UnitTest
 {
@@ -51,7 +50,6 @@ private:
     void _connectWindowClose_test(MAV_AUTOPILOT autopilot);
     
     MainWindow*     _mainWindow;
-    MainToolBar*    _mainToolBar;
 };
 
 #endif

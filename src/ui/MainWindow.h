@@ -42,12 +42,12 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "CameraView.h"
 #include "LogCompressor.h"
-#include "FlightDisplayView.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
 #include "Vehicle.h"
 #include "QGCDockWidget.h"
+#include "QGCQmlWidgetHolder.h"
 
 #include "ui_MainWindow.h"
 
@@ -141,6 +141,19 @@ protected slots:
     void showStatusBarCallback(bool checked);
 
 signals:
+    // Signals the Qml to show the specified view
+    void showFlyView(void);
+    void showPlanView(void);
+    void showSetupView(void);
+
+    void showToolbarMessage(const QString& message);
+
+    // These are used for unit testing
+    void showSetupFirmware(void);
+    void showSetupParameters(void);
+    void showSetupSummary(void);
+    void showSetupVehicleComponent(VehicleComponent* vehicleComponent);
+
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
     /** Emitted when any value changes from any source */
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
@@ -198,7 +211,7 @@ private slots:
     void _linkStateChange(LinkInterface*);
 	void _closeWindow(void) { close(); }
     void _vehicleAdded(Vehicle* vehicle);
-    
+
 #ifndef __mobile__
     void _showDockWidgetAction(bool show);
 #endif
@@ -254,6 +267,8 @@ private:
     QVBoxLayout*            _centralLayout;
     QSplashScreen*          _splashScreen;          ///< Splash screen, NULL is splash screen not currently being shown
     Ui::MainWindow          _ui;
+
+    QGCQmlWidgetHolder*     _mainQmlWidgetHolder;
 
     QString _getWindowGeometryKey();
 };

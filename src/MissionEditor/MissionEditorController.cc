@@ -21,7 +21,7 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-#include "MissionEditor.h"
+#include "MissionEditorController.h"
 #include "ScreenToolsController.h"
 #include "MultiVehicleManager.h"
 #include "MissionManager.h"
@@ -32,46 +32,36 @@ This file is part of the QGROUNDCONTROL project
 #include <QQmlEngine>
 #include <QSettings>
 
-const char* MissionEditor::_settingsGroup = "MissionEditor";
+const char* MissionEditorController::_settingsGroup = "MissionEditorController";
 
-MissionEditor::MissionEditor(QWidget *parent)
-    : QGCQmlWidgetHolder(QString(), NULL, parent)
+MissionEditorController::MissionEditorController(QWidget *parent)
+    : QObject(parent)
     , _missionItems(NULL)
     , _canEdit(true)
     , _activeVehicle(NULL)
     , _liveHomePositionAvailable(false)
 {
-    // Get rid of layout default margins
-    QLayout* pl = layout();
-    if(pl) {
-        pl->setContentsMargins(0,0,0,0);
-    }
-    
     MultiVehicleManager* multiVehicleMgr = MultiVehicleManager::instance();
     
-    connect(multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &MissionEditor::_activeVehicleChanged);
+    connect(multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &MissionEditorController::_activeVehicleChanged);
     
     Vehicle* activeVehicle = multiVehicleMgr->activeVehicle();
     if (activeVehicle) {
         MissionManager* missionManager = activeVehicle->missionManager();
-        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditor::_newMissionItemsAvailable);
+        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditorController::_newMissionItemsAvailable);
         _newMissionItemsAvailable();
         _activeVehicleChanged(activeVehicle);
     } else {
         _missionItems = new QmlObjectListModel(this);
         _initAllMissionItems();
     }
-    
-    setContextPropertyObject("controller", this);
-
-    setSource(QUrl::fromUserInput("qrc:/qml/MissionEditor.qml"));
 }
 
-MissionEditor::~MissionEditor()
+MissionEditorController::~MissionEditorController()
 {
 }
 
-void MissionEditor::_newMissionItemsAvailable(void)
+void MissionEditorController::_newMissionItemsAvailable(void)
 {
     if (_missionItems) {
         _deinitAllMissionItems();
@@ -86,18 +76,18 @@ void MissionEditor::_newMissionItemsAvailable(void)
     _initAllMissionItems();
 }
 
-void MissionEditor::getMissionItems(void)
+void MissionEditorController::getMissionItems(void)
 {
     Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     
     if (activeVehicle) {
         MissionManager* missionManager = activeVehicle->missionManager();
-        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditor::_newMissionItemsAvailable);
+        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditorController::_newMissionItemsAvailable);
         activeVehicle->missionManager()->requestMissionItems();
     }
 }
 
-void MissionEditor::setMissionItems(void)
+void MissionEditorController::setMissionItems(void)
 {
     // FIXME: Need to pull out home position
     Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
@@ -108,7 +98,7 @@ void MissionEditor::setMissionItems(void)
     }
 }
 
-int MissionEditor::addMissionItem(QGeoCoordinate coordinate)
+int MissionEditorController::addMissionItem(QGeoCoordinate coordinate)
 {
     if (!_canEdit) {
         qWarning() << "addMissionItem called with _canEdit == false";
@@ -128,7 +118,7 @@ int MissionEditor::addMissionItem(QGeoCoordinate coordinate)
     return _missionItems->count() - 1;
 }
 
-void MissionEditor::removeMissionItem(int index)
+void MissionEditorController::removeMissionItem(int index)
 {
     if (!_canEdit) {
         qWarning() << "addMissionItem called with _canEdit == false";
@@ -142,7 +132,7 @@ void MissionEditor::removeMissionItem(int index)
     _recalcAll();
 }
 
-void MissionEditor::loadMissionFromFile(void)
+void MissionEditorController::loadMissionFromFile(void)
 {
     QString errorString;
     QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load");
@@ -196,7 +186,7 @@ void MissionEditor::loadMissionFromFile(void)
     _initAllMissionItems();
 }
 
-void MissionEditor::saveMissionToFile(void)
+void MissionEditorController::saveMissionToFile(void)
 {
     QString errorString;
     QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to");
@@ -222,7 +212,7 @@ void MissionEditor::saveMissionToFile(void)
     _missionItems->setDirty(false);
 }
 
-void MissionEditor::_recalcWaypointLines(void)
+void MissionEditorController::_recalcWaypointLines(void)
 {
     bool firstCoordinateItem = true;
     MissionItem* lastCoordinateItem = qobject_cast<MissionItem*>(_missionItems->get(0));
@@ -253,7 +243,7 @@ void MissionEditor::_recalcWaypointLines(void)
 }
 
 // This will update the sequence numbers to be sequential starting from 0
-void MissionEditor::_recalcSequence(void)
+void MissionEditorController::_recalcSequence(void)
 {
     MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(0));
     
@@ -268,7 +258,7 @@ void MissionEditor::_recalcSequence(void)
 }
 
 // This will update the child item hierarchy
-void MissionEditor::_recalcChildItems(void)
+void MissionEditorController::_recalcChildItems(void)
 {
     MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(0));
     
@@ -287,7 +277,7 @@ void MissionEditor::_recalcChildItems(void)
     }
 }
 
-void MissionEditor::_recalcAll(void)
+void MissionEditorController::_recalcAll(void)
 {
     _recalcSequence();
     _recalcChildItems();
@@ -295,7 +285,7 @@ void MissionEditor::_recalcAll(void)
 }
 
 /// Initializes a new set of mission items which may have come from the vehicle or have been loaded from a file
-void MissionEditor::_initAllMissionItems(void)
+void MissionEditorController::_initAllMissionItems(void)
 {
     // Add the home position item to the front
     MissionItem* homeItem = new MissionItem(this);
@@ -317,45 +307,45 @@ void MissionEditor::_initAllMissionItems(void)
     _missionItems->setDirty(false);
 }
 
-void MissionEditor::_deinitAllMissionItems(void)
+void MissionEditorController::_deinitAllMissionItems(void)
 {
     for (int i=0; i<_missionItems->count(); i++) {
         _deinitMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));
     }
 }
 
-void MissionEditor::_initMissionItem(MissionItem* item)
+void MissionEditorController::_initMissionItem(MissionItem* item)
 {
     _missionItems->setDirty(false);
     
-    connect(item, &MissionItem::commandChanged,     this, &MissionEditor::_itemCommandChanged);
-    connect(item, &MissionItem::coordinateChanged,  this, &MissionEditor::_itemCoordinateChanged);
+    connect(item, &MissionItem::commandChanged,     this, &MissionEditorController::_itemCommandChanged);
+    connect(item, &MissionItem::coordinateChanged,  this, &MissionEditorController::_itemCoordinateChanged);
 }
 
-void MissionEditor::_deinitMissionItem(MissionItem* item)
+void MissionEditorController::_deinitMissionItem(MissionItem* item)
 {
-    disconnect(item, &MissionItem::commandChanged,     this, &MissionEditor::_itemCommandChanged);
-    disconnect(item, &MissionItem::coordinateChanged,  this, &MissionEditor::_itemCoordinateChanged);
+    disconnect(item, &MissionItem::commandChanged,     this, &MissionEditorController::_itemCommandChanged);
+    disconnect(item, &MissionItem::coordinateChanged,  this, &MissionEditorController::_itemCoordinateChanged);
 }
 
-void MissionEditor::_itemCoordinateChanged(const QGeoCoordinate& coordinate)
+void MissionEditorController::_itemCoordinateChanged(const QGeoCoordinate& coordinate)
 {
     Q_UNUSED(coordinate);
     _recalcWaypointLines();
 }
 
-void MissionEditor::_itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command)
+void MissionEditorController::_itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command)
 {
     Q_UNUSED(command);;
     _recalcChildItems();
     _recalcWaypointLines();
 }
 
-void MissionEditor::_activeVehicleChanged(Vehicle* activeVehicle)
+void MissionEditorController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
     if (_activeVehicle) {
-        disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,  this, &MissionEditor::_activeVehicleHomePositionAvailableChanged);
-        disconnect(_activeVehicle, &Vehicle::homePositionChanged,           this, &MissionEditor::_activeVehicleHomePositionChanged);
+        disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,  this, &MissionEditorController::_activeVehicleHomePositionAvailableChanged);
+        disconnect(_activeVehicle, &Vehicle::homePositionChanged,           this, &MissionEditorController::_activeVehicleHomePositionChanged);
         _activeVehicle = NULL;
         _activeVehicleHomePositionAvailableChanged(false);
     }
@@ -363,20 +353,20 @@ void MissionEditor::_activeVehicleChanged(Vehicle* activeVehicle)
     _activeVehicle = activeVehicle;
     
     if (_activeVehicle) {
-        connect(_activeVehicle, &Vehicle::homePositionAvailableChanged, this, &MissionEditor::_activeVehicleHomePositionAvailableChanged);
-        connect(_activeVehicle, &Vehicle::homePositionChanged,          this, &MissionEditor::_activeVehicleHomePositionChanged);
+        connect(_activeVehicle, &Vehicle::homePositionAvailableChanged, this, &MissionEditorController::_activeVehicleHomePositionAvailableChanged);
+        connect(_activeVehicle, &Vehicle::homePositionChanged,          this, &MissionEditorController::_activeVehicleHomePositionChanged);
         _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
         _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
     }
 }
 
-void MissionEditor::_activeVehicleHomePositionAvailableChanged(bool homePositionAvailable)
+void MissionEditorController::_activeVehicleHomePositionAvailableChanged(bool homePositionAvailable)
 {
     _liveHomePositionAvailable = homePositionAvailable;
     emit liveHomePositionAvailableChanged(_liveHomePositionAvailable);
 }
 
-void MissionEditor::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
+void MissionEditorController::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
 {
     _liveHomePosition = homePosition;
     emit liveHomePositionChanged(_liveHomePosition);

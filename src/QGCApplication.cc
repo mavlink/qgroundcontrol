@@ -86,6 +86,10 @@
 #include "QGCQGeoCoordinate.h"
 #include "CoordinateVector.h"
 #include "MainToolBarController.h"
+#include "MissionEditorController.h"
+#include "FlightDisplayViewController.h"
+#include "VideoSurface.h"
+#include "VideoReceiver.h"
 
 #ifndef __ios__
     #include "SerialLink.h"
@@ -334,7 +338,9 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
     qmlRegisterUncreatableType<QGCQGeoCoordinate>   ("QGroundControl",                  1, 0, "QGCQGeoCoordinate",      "Reference only");
     qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                  1, 0, "CoordinateVector",       "Reference only");
-    
+    qmlRegisterUncreatableType<VideoSurface>        ("QGroundControl",                  1, 0, "VideoSurface",           "Reference only");
+    qmlRegisterUncreatableType<VideoReceiver>       ("QGroundControl",                  1, 0, "VideoReceiver",          "Reference only");
+
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<FlightModesComponentController> ("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
     qmlRegisterType<AirframeComponentController>    ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
@@ -343,6 +349,8 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<RadioComponentController>       ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
     qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     qmlRegisterType<MainToolBarController>          ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
+    qmlRegisterType<MissionEditorController>        ("QGroundControl.Controllers", 1, 0, "MissionEditorController");
+    qmlRegisterType<FlightDisplayViewController>    ("QGroundControl.Controllers", 1, 0, "FlightDisplayViewController");
 
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
@@ -638,8 +646,9 @@ void QGCApplication::_createSingletons(void)
 
 void QGCApplication::_destroySingletons(void)
 {
-    if (MainWindow::instance()) {
-        delete MainWindow::instance();
+    MainWindow* mainWindow = MainWindow::instance();
+    if (mainWindow) {
+        delete mainWindow;
     }
 
     if (LinkManager::instance(true /* nullOk */)) {
@@ -804,16 +813,10 @@ void QGCApplication::_missingParamsDisplay(void)
 
 void QGCApplication::showToolBarMessage(const QString& message)
 {
-#if 0
-    // FIXME: QmlConvert
-
     MainWindow* mainWindow = MainWindow::instance();
     if (mainWindow) {
-        mainWindow->getMainToolBar()->showToolBarMessage(message);
+        mainWindow->showToolbarMessage(message);
     } else {
         QGCMessageBox::information("", message);
     }
-#else
-    Q_UNUSED(message);
-#endif
 }

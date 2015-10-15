@@ -38,8 +38,9 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Controllers           1.0
 
-Rectangle {
-    id: toolBarHolder
+Item {
+    id:     toolBarHolder
+    height: toolBarHeight
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
 
@@ -63,21 +64,17 @@ Rectangle {
     property var colorGreenText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#046b1b" : "#00d930"
     property var colorWhiteText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#343333" : "#f0f0f0"
 
-    MainToolBarController {
-        id: _controller
+    MainToolBarController { id: _controller }
 
-        onShowMessage: {
-            toolBarMessage.text = message
-            if (toolBarMessage.contentHeight > toolBarMessageCloseButton.height) {
-                mainToolBar.height = toolBarHeight + toolBarMessage.contentHeight + (verticalMargins * 2)
-            } else {
-                mainToolBar.height = toolBarHeight + toolBarMessageCloseButton.height + (verticalMargins * 2)
-            }
-            toolBarMessageArea.visible = true
+    function showToolbarMessage(message) {
+        toolBarMessage.text = message
+        if (toolBarMessage.contentHeight > toolBarMessageCloseButton.height) {
+            mainToolBar.height = toolBarHeight + toolBarMessage.contentHeight + (verticalMargins * 2)
+        } else {
+            mainToolBar.height = toolBarHeight + toolBarMessageCloseButton.height + (verticalMargins * 2)
         }
+        toolBarMessageArea.visible = true
     }
-
-    color:  qgcPal.windowShade
 
     function getProportionalDimmension(val) {
         return toolBarHeight * val / 40
@@ -157,56 +154,43 @@ Rectangle {
     //-- Main menu for Mobile Devices
     Menu {
         id: maintMenu
+
         ExclusiveGroup { id: mainMenuGroup }
+
         MenuItem {
-            text: "Vehicle Setup"
-            checkable:  true
+            id:             flyViewShowing
+            text:           "Fly"
+            checkable:      true
+            checked:        true
             exclusiveGroup: mainMenuGroup
-            /*
-              FIXME: QmlConvert
-            checked: (_controller.currentView === MainToolBar.ViewSetup)
-            */
-            onTriggered:
-            {
-                _controller.onSetupView();
-            }
-        }
-        MenuItem {
-            text: "Plan View"
-            checkable:  true
-            /*
-              FIXME: QmlConvert
-            checked: (_controller.currentView === MainToolBar.ViewPlan)
-            */
-            exclusiveGroup: mainMenuGroup
-            onTriggered:
-            {
-                _controller.onPlanView();
-            }
-        }
-        MenuItem {
-            text: "Flight View"
-            checkable: true
-            /*
-              FIXME: QmlConvert
-            checked: (_controller.currentView === MainToolBar.ViewFly)
-            */
-            exclusiveGroup: mainMenuGroup
-            onTriggered:
-            {
+
+            onTriggered: {
+                checked = true
                 _controller.onFlyView();
             }
         }
-        //-- Flight View Context Menu
+
         MenuItem {
-            text: "Flight View Options..."
-            /*
-              FIXME: QmlConvert
-            visible: (_controller.currentView === MainToolBar.ViewFly)
-            */
-            onTriggered:
-            {
-                _controller.onFlyViewMenu();
+            id:             setupViewShowing
+            text:           "Setup"
+            checkable:      true
+            exclusiveGroup: mainMenuGroup
+
+            onTriggered: {
+                checked = true
+                _controller.onSetupView();
+            }
+        }
+
+        MenuItem {
+            id:             planViewShowing
+            text:           "Plan"
+            checkable:      true
+            exclusiveGroup: mainMenuGroup
+
+            onTriggered: {
+                checked = true
+                _controller.onPlanView();
             }
         }
     } // Menu
@@ -222,7 +206,6 @@ Rectangle {
                 id: messages
                 width: (activeVehicle.messageCount > 99) ? getProportionalDimmension(65) : getProportionalDimmension(60)
                 height: cellHeight
-                visible: _controller.showMessages
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getMessageColor()
                 border.color: "#00000000"
@@ -294,7 +277,6 @@ Rectangle {
             QGCButton {
                 width:                  ScreenTools.defaultFontPixelWidth * 12
                 height:                 cellHeight
-                visible:                _controller.showMav
                 anchors.verticalCenter: parent.verticalCenter
                 text:                   "Vehicle " + activeVehicle.id
 
@@ -348,7 +330,6 @@ Rectangle {
                 id: satelitte
                 width:  getProportionalDimmension(55)
                 height: cellHeight
-                visible: _controller.showGPS
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getSatelliteColor();
                 border.color: "#00000000"
@@ -382,7 +363,7 @@ Rectangle {
                 id: rssiRC
                 width:  getProportionalDimmension(55)
                 height: cellHeight
-                visible: _controller.showRSSI && _controller.remoteRSSI <= 100
+                visible: _controller.remoteRSSI <= 100
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getRSSIColor(_controller.remoteRSSI);
                 border.color: "#00000000"
@@ -413,7 +394,7 @@ Rectangle {
                 id: rssiTelemetry
                 width:  getProportionalDimmension(80)
                 height: cellHeight
-                visible: _controller.showRSSI && (_controller.telemetryRRSSI > 0) && (_controller.telemetryLRSSI > 0)
+                visible: (_controller.telemetryRRSSI > 0) && (_controller.telemetryLRSSI > 0)
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getRSSIColor(Math.min(_controller.telemetryRRSSI,_controller.telemetryLRSSI));
                 border.color: "#00000000"
@@ -473,7 +454,6 @@ Rectangle {
                 id: batteryStatus
                 width:  activeVehicle.batteryConsumed < 0.0 ? getProportionalDimmension(60) : getProportionalDimmension(80)
                 height: cellHeight
-                visible: _controller.showBattery
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getBatteryColor();
                 border.color: "#00000000"
@@ -644,48 +624,43 @@ Rectangle {
             ExclusiveGroup { id: mainActionGroup }
 
             QGCToolBarButton {
-                id: setupButton
-                width: getProportionalDimmension(90)
-                height: cellHeight
+                id:             setupButton
+                width:          getProportionalDimmension(90)
+                height:         cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("Setup")
-                /*
-                  FIXME: QmlConvert
-                checked: (_controller.currentView === MainToolBar.ViewSetup)
-                */
+                text:           "Setup"
+
                 onClicked: {
+                    checked = true
                     _controller.onSetupView();
                 }
                 z: 1000
             }
 
             QGCToolBarButton {
-                id: planButton
-                width: getProportionalDimmension(90)
-                height: cellHeight
+                id:             planButton
+                width:          getProportionalDimmension(90)
+                height:         cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("Plan")
-                /*
-                  FIXME: QmlConvert
-                checked: (_controller.currentView === MainToolBar.ViewPlan)
-                */
+                text:           "Plan"
+
                 onClicked: {
+                    checked = true
                     _controller.onPlanView();
                 }
                 z: 900
             }
 
             QGCToolBarButton {
-                id: flyButton
-                width: getProportionalDimmension(90)
-                height: cellHeight
+                id:             flyButton
+                width:          getProportionalDimmension(90)
+                height:         cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("Fly")
-                /*
-                  FIXME: QmlConvert
-                checked: (_controller.currentView === MainToolBar.ViewFly)
-                */
+                text:           "Fly"
+                checked:        true
+
                 onClicked: {
+                    checked = true
                     _controller.onFlyView();
                 }
                 z: 800
