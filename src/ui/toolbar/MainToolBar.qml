@@ -34,12 +34,13 @@ import QtQuick.Controls.Styles 1.2
 import QGroundControl.Controls              1.0
 import QGroundControl.FactControls          1.0
 import QGroundControl.Palette               1.0
-import QGroundControl.MainToolBar           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
+import QGroundControl.Controllers           1.0
 
-Rectangle {
-    id: toolBarHolder
+Item {
+    id:     toolBarHolder
+    height: toolBarHeight
 
     property var qgcPal: QGCPalette { id: palette; colorGroupEnabled: true }
 
@@ -63,20 +64,16 @@ Rectangle {
     property var colorGreenText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#046b1b" : "#00d930"
     property var colorWhiteText:  (qgcPal.globalTheme === QGCPalette.Light) ? "#343333" : "#f0f0f0"
 
-    color:  qgcPal.windowShade
+    MainToolBarController { id: _controller }
 
-    Connections {
-        target: mainToolBar
-
-        onShowMessage: {
-            toolBarMessage.text = message
-            if (toolBarMessage.contentHeight > toolBarMessageCloseButton.height) {
-                mainToolBar.height = toolBarHeight + toolBarMessage.contentHeight + (verticalMargins * 2)
-            } else {
-                mainToolBar.height = toolBarHeight + toolBarMessageCloseButton.height + (verticalMargins * 2)
-            }
-            toolBarMessageArea.visible = true
+    function showToolbarMessage(message) {
+        toolBarMessage.text = message
+        if (toolBarMessage.contentHeight > toolBarMessageCloseButton.height) {
+            mainToolBar.height = toolBarHeight + toolBarMessage.contentHeight + (verticalMargins * 2)
+        } else {
+            mainToolBar.height = toolBarHeight + toolBarMessageCloseButton.height + (verticalMargins * 2)
         }
+        toolBarMessageArea.visible = true
     }
 
     function getProportionalDimmension(val) {
@@ -150,51 +147,50 @@ Rectangle {
     }
 
     function showMavStatus() {
-         return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0 && mainToolBar.connectionCount > 0);
+         return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0 && _controller.connectionCount > 0);
     }
 
     //-------------------------------------------------------------------------
     //-- Main menu for Mobile Devices
     Menu {
         id: maintMenu
+
         ExclusiveGroup { id: mainMenuGroup }
+
         MenuItem {
-            text: "Vehicle Setup"
-            checkable:  true
+            id:             flyViewShowing
+            text:           "Fly"
+            checkable:      true
+            checked:        true
             exclusiveGroup: mainMenuGroup
-            checked: (mainToolBar.currentView === MainToolBar.ViewSetup)
-            onTriggered:
-            {
-                mainToolBar.onSetupView();
+
+            onTriggered: {
+                checked = true
+                _controller.onFlyView();
             }
         }
+
         MenuItem {
-            text: "Plan View"
-            checkable:  true
-            checked: (mainToolBar.currentView === MainToolBar.ViewPlan)
+            id:             setupViewShowing
+            text:           "Setup"
+            checkable:      true
             exclusiveGroup: mainMenuGroup
-            onTriggered:
-            {
-                mainToolBar.onPlanView();
+
+            onTriggered: {
+                checked = true
+                _controller.onSetupView();
             }
         }
+
         MenuItem {
-            text: "Flight View"
-            checkable: true
-            checked: (mainToolBar.currentView === MainToolBar.ViewFly)
+            id:             planViewShowing
+            text:           "Plan"
+            checkable:      true
             exclusiveGroup: mainMenuGroup
-            onTriggered:
-            {
-                mainToolBar.onFlyView();
-            }
-        }
-        //-- Flight View Context Menu
-        MenuItem {
-            text: "Flight View Options..."
-            visible: (mainToolBar.currentView === MainToolBar.ViewFly)
-            onTriggered:
-            {
-                mainToolBar.onFlyViewMenu();
+
+            onTriggered: {
+                checked = true
+                _controller.onPlanView();
             }
         }
     } // Menu
@@ -210,7 +206,6 @@ Rectangle {
                 id: messages
                 width: (activeVehicle.messageCount > 99) ? getProportionalDimmension(65) : getProportionalDimmension(60)
                 height: cellHeight
-                visible: mainToolBar.showMessages
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getMessageColor()
                 border.color: "#00000000"
@@ -273,7 +268,7 @@ Rectangle {
                     }
                     onClicked: {
                         var p = mapToItem(toolBarHolder, mouseX, mouseY);
-                        mainToolBar.onEnterMessageArea(p.x, p.y);
+                        _controller.onEnterMessageArea(p.x, p.y);
                     }
                 }
 
@@ -282,7 +277,6 @@ Rectangle {
             QGCButton {
                 width:                  ScreenTools.defaultFontPixelWidth * 12
                 height:                 cellHeight
-                visible:                mainToolBar.showMav
                 anchors.verticalCenter: parent.verticalCenter
                 text:                   "Vehicle " + activeVehicle.id
 
@@ -336,7 +330,6 @@ Rectangle {
                 id: satelitte
                 width:  getProportionalDimmension(55)
                 height: cellHeight
-                visible: mainToolBar.showGPS
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getSatelliteColor();
                 border.color: "#00000000"
@@ -370,9 +363,9 @@ Rectangle {
                 id: rssiRC
                 width:  getProportionalDimmension(55)
                 height: cellHeight
-                visible: mainToolBar.showRSSI && mainToolBar.remoteRSSI <= 100
+                visible: _controller.remoteRSSI <= 100
                 anchors.verticalCenter: parent.verticalCenter
-                color:  getRSSIColor(mainToolBar.remoteRSSI);
+                color:  getRSSIColor(_controller.remoteRSSI);
                 border.color: "#00000000"
                 border.width: 0
                 Image {
@@ -386,7 +379,7 @@ Rectangle {
                     smooth: true
                 }
                 QGCLabel {
-                    text: mainToolBar.remoteRSSI
+                    text: _controller.remoteRSSI
                     anchors.right: parent.right
                     anchors.rightMargin: getProportionalDimmension(6)
                     anchors.verticalCenter: parent.verticalCenter
@@ -401,9 +394,9 @@ Rectangle {
                 id: rssiTelemetry
                 width:  getProportionalDimmension(80)
                 height: cellHeight
-                visible: mainToolBar.showRSSI && (mainToolBar.telemetryRRSSI > 0) && (mainToolBar.telemetryLRSSI > 0)
+                visible: (_controller.telemetryRRSSI > 0) && (_controller.telemetryLRSSI > 0)
                 anchors.verticalCenter: parent.verticalCenter
-                color:  getRSSIColor(Math.min(mainToolBar.telemetryRRSSI,mainToolBar.telemetryLRSSI));
+                color:  getRSSIColor(Math.min(_controller.telemetryRRSSI,_controller.telemetryLRSSI));
                 border.color: "#00000000"
                 border.width: 0
                 Image {
@@ -429,7 +422,7 @@ Rectangle {
                             color: colorWhite
                         }
                         QGCLabel {
-                            text: mainToolBar.telemetryRRSSI + 'dB'
+                            text: _controller.telemetryRRSSI + 'dB'
                             width: getProportionalDimmension(30)
                             horizontalAlignment: Text.AlignRight
                             font.pixelSize: ScreenTools.smallFontPixelSize
@@ -446,7 +439,7 @@ Rectangle {
                             color: colorWhite
                         }
                         QGCLabel {
-                            text: mainToolBar.telemetryLRSSI + 'dB'
+                            text: _controller.telemetryLRSSI + 'dB'
                             width: getProportionalDimmension(30)
                             horizontalAlignment: Text.AlignRight
                             font.pixelSize: ScreenTools.smallFontPixelSize
@@ -461,7 +454,6 @@ Rectangle {
                 id: batteryStatus
                 width:  activeVehicle.batteryConsumed < 0.0 ? getProportionalDimmension(60) : getProportionalDimmension(80)
                 height: cellHeight
-                visible: mainToolBar.showBattery
                 anchors.verticalCenter: parent.verticalCenter
                 color:  getBatteryColor();
                 border.color: "#00000000"
@@ -632,40 +624,44 @@ Rectangle {
             ExclusiveGroup { id: mainActionGroup }
 
             QGCToolBarButton {
-                id: setupButton
-                width: getProportionalDimmension(90)
-                height: cellHeight
+                id:             setupButton
+                width:          getProportionalDimmension(90)
+                height:         cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("Setup")
-                checked: (mainToolBar.currentView === MainToolBar.ViewSetup)
+                text:           "Setup"
+
                 onClicked: {
-                    mainToolBar.onSetupView();
+                    checked = true
+                    _controller.onSetupView();
                 }
                 z: 1000
             }
 
             QGCToolBarButton {
-                id: planButton
-                width: getProportionalDimmension(90)
-                height: cellHeight
+                id:             planButton
+                width:          getProportionalDimmension(90)
+                height:         cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("Plan")
-                checked: (mainToolBar.currentView === MainToolBar.ViewPlan)
+                text:           "Plan"
+
                 onClicked: {
-                    mainToolBar.onPlanView();
+                    checked = true
+                    _controller.onPlanView();
                 }
                 z: 900
             }
 
             QGCToolBarButton {
-                id: flyButton
-                width: getProportionalDimmension(90)
-                height: cellHeight
+                id:             flyButton
+                width:          getProportionalDimmension(90)
+                height:         cellHeight
                 exclusiveGroup: mainActionGroup
-                text: qsTr("Fly")
-                checked: (mainToolBar.currentView === MainToolBar.ViewFly)
+                text:           "Fly"
+                checked:        true
+
                 onClicked: {
-                    mainToolBar.onFlyView();
+                    checked = true
+                    _controller.onFlyView();
                 }
                 z: 800
             }
@@ -728,7 +724,7 @@ Rectangle {
                 id: connectionStatus
                 width: getProportionalDimmension(160)
                 height: cellHeight
-                visible: (mainToolBar.connectionCount > 0 && multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout != 0)
+                visible: (_controller.connectionCount > 0 && multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout != 0)
                 anchors.verticalCenter: parent.verticalCenter
                 color: "#00000000"
                 border.color: "#00000000"
@@ -759,7 +755,7 @@ Rectangle {
         Menu {
             id: connectMenu
             Component.onCompleted: {
-                mainToolBar.configListChanged.connect(connectMenu.updateConnectionList);
+                _controller.configListChanged.connect(connectMenu.updateConnectionList);
                 connectMenu.updateConnectionList();
             }
             function addMenuEntry(name) {
@@ -767,15 +763,15 @@ Rectangle {
                 if(name !== "")
                     label = name;
                 var mItem = connectMenu.addItem(label);
-                var menuSlot = function() {mainToolBar.onConnect(name)};
+                var menuSlot = function() {_controller.onConnect(name)};
                 mItem.triggered.connect(menuSlot);
             }
             function updateConnectionList() {
                 connectMenu.clear();
-                for(var i = 0; i < mainToolBar.configList.length; i++) {
-                    connectMenu.addMenuEntry(mainToolBar.configList[i]);
+                for(var i = 0; i < _controller.configList.length; i++) {
+                    connectMenu.addMenuEntry(_controller.configList[i]);
                 }
-                if(mainToolBar.configList.length > 0) {
+                if(_controller.configList.length > 0) {
                     connectMenu.addSeparator();
                 }
                 // Add "Add Connection" to the list
@@ -786,7 +782,7 @@ Rectangle {
         QGCButton {
             id:         connectButton
             width:      getProportionalDimmension(100)
-            visible:    mainToolBar.connectionCount === 0
+            visible:    _controller.connectionCount === 0
             text:       qsTr("Connect")
             menu:       connectMenu
         }
@@ -794,21 +790,21 @@ Rectangle {
         QGCButton {
             id:         disconnectButton
             width:      getProportionalDimmension(100)
-            visible:    mainToolBar.connectionCount === 1
+            visible:    _controller.connectionCount === 1
             text:       qsTr("Disconnect")
             onClicked: {
-                mainToolBar.onDisconnect("");
+                _controller.onDisconnect("");
             }
         }
 
         Menu {
             id: disconnectMenu
             Component.onCompleted: {
-                mainToolBar.connectedListChanged.connect(disconnectMenu.onConnectedListChanged)
+                _controller.connectedListChanged.connect(disconnectMenu.onConnectedListChanged)
             }
             function addMenuEntry(name) {
                 var mItem = disconnectMenu.addItem(name);
-                var menuSlot = function() {mainToolBar.onDisconnect(name)};
+                var menuSlot = function() {_controller.onDisconnect(name)};
                 mItem.triggered.connect(menuSlot);
             }
             function onConnectedListChanged(conList) {
@@ -823,7 +819,7 @@ Rectangle {
             id:         multidisconnectButton
             width:      getProportionalDimmension(100)
             text:       "Disconnect"
-            visible:    mainToolBar.connectionCount > 1
+            visible:    _controller.connectionCount > 1
             menu:       disconnectMenu
         }
     } // Row
@@ -833,7 +829,7 @@ Rectangle {
         id:             progressBar
         anchors.top:    toolRow.bottom
         height:         getProportionalDimmension(3)
-        width:          parent.width * mainToolBar.progressBarValue
+        width:          parent.width * _controller.progressBarValue
         color:          qgcPal.text
     }
 
@@ -868,8 +864,8 @@ Rectangle {
 
             onClicked: {
                 parent.visible = false
-                mainToolBar.height = toolBarHeight
-                mainToolBar.onToolBarMessageClosed()
+                _controller.height = toolBarHeight
+                _controller.onToolBarMessageClosed()
             }
         }
     }

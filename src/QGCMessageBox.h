@@ -28,10 +28,12 @@
 
 #include "MainWindow.h"
 #include "QGCApplication.h"
+
 #ifdef QT_DEBUG
 #ifndef __mobile__
 #include "UnitTest.h"
 #endif
+
 #endif
 
 /// @file

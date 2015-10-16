@@ -27,14 +27,12 @@
 #include "SetupViewTest.h"
 #include "MockLink.h"
 #include "QGCMessageBox.h"
-#include "SetupView.h"
 #include "MultiVehicleManager.h"
 
 UT_REGISTER_TEST(SetupViewTest)
 
 SetupViewTest::SetupViewTest(void) :
-    _mainWindow(NULL),
-    _mainToolBar(NULL)
+    _mainWindow(NULL)
 {
     
 }
@@ -45,9 +43,6 @@ void SetupViewTest::init(void)
 
     _mainWindow = MainWindow::_create(NULL);
     Q_CHECK_PTR(_mainWindow);
-    
-    _mainToolBar = _mainWindow->getMainToolBar();
-    Q_ASSERT(_mainToolBar);
 }
 
 void SetupViewTest::cleanup(void)
@@ -78,33 +73,29 @@ void SetupViewTest::_clickThrough_test(void)
     AutoPilotPlugin* autopilot = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(autopilot);
     
-    // Switch to the Setup view
-    _mainToolBar->onSetupView();
-    QTest::qWait(1000);
-    
     MainWindow* mainWindow = MainWindow::instance();
     Q_ASSERT(mainWindow);
-    QWidget* setupViewWidget = mainWindow->getCurrentViewWidget();
-    Q_ASSERT(setupViewWidget);
-    SetupView* setupView = qobject_cast<SetupView*>(setupViewWidget);
-    Q_ASSERT(setupView);
 
+    // Switch to the Setup view
+    _mainWindow->showSetupView();
+    QTest::qWait(1000);
+    
     // Click through fixed buttons
     qDebug() << "Showing firmware";
-    setupView->showFirmware();
+    _mainWindow->showSetupFirmware();
     QTest::qWait(1000);
     qDebug() << "Showing parameters";
-    setupView->showParameters();
+    _mainWindow->showSetupParameters();
     QTest::qWait(1000);
     qDebug() << "Showing summary";
-    setupView->showSummary();
+    _mainWindow->showSetupSummary();
     QTest::qWait(1000);
     
     const QVariantList& components = autopilot->vehicleComponents();
     foreach(QVariant varComponent, components) {
         VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(varComponent));
         qDebug() << "Showing" << component->name();
-        setupView->showVehicleComponentSetup(component);
+        _mainWindow->showSetupVehicleComponent(component);
         QTest::qWait(1000);
     }
 
