@@ -1,17 +1,28 @@
 #! /bin/bash
 
-version="2.4"
-rsync -av --delete --exclude=.git ~/git/qgroundcontrol/ ~/tmp/qgroundcontrol-${version}/
+tmpdir=`mktemp -d`
+long_version=`git describe --always --tags`
+short_version=`git describe --always --tags | cut -d "-" -f 1,2`
 
-cd ~/tmp
-tar pczf qgroundcontrol_${version}.orig.tar.gz qgroundcontrol-${version}
+version=${long_version:1}
+dir_version=${short_version:1}
+echo $version
 
-cd ~/tmp/qgroundcontrol-${version}/
+debchange -v ${version} --distribution trusty
+
+qmake -r qgroundcontrol.pro
+make git_ver
+
+rsync -av --delete --exclude={.git,build-release,release,Makefile\*} . ${tmpdir}/qgroundcontrol-${dir_version}/
+
+cd ${tmpdir}
+tar pczf qgroundcontrol_${dir_version}.orig.tar.gz qgroundcontrol-${dir_version}
+
+cd ${tmpdir}/qgroundcontrol-${dir_version}/
 debuild -S
 
-dput ppa:qgroundcontrol/ppa qgroundcontrol_${version}-0ubuntu1_source.changes
-
+dput ppa:qgroundcontrol/ppa ${tmpdir}/qgroundcontrol_${version}_source.changes
 
 
 # test building the source deb locally
-debuild --prepend-path=/usr/lib/ccache -sa
+#debuild --prepend-path=/usr/lib/ccache -sa
