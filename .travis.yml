@@ -17,6 +17,8 @@ matrix:
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: false
+        - os: linux
+          env: CONFIG=doxygen
         - os: osx
           osx_image: xcode7
           env: SPEC=macx-clang CONFIG=debug QT_FATAL_WARNINGS=1
@@ -44,6 +46,7 @@ addons:
     - ubuntu-toolchain-r-test
     packages:
     - ccache
+    - doxygen
     - espeak
     - g++-4.8
     - gcc-4.8
@@ -65,7 +68,7 @@ before_install:
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 && mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 && tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2; fi
 
 install:
-  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+  - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" != "doxygen" ]]; then
          wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2
       && tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp
       && export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH
@@ -102,11 +105,12 @@ before_script:
   - ln -s /usr/bin/ccache ~/bin/gcc-4.8
   - export PATH=~/bin:$PATH
   - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then export CONFIG=release; fi
-  - qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
+  - if [ "${CONFIG}" != "doxygen" ]; then qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
 
 script:
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
-  - make -j4
+  - if [ "${CONFIG}" != "doxygen" ]; then make -j4; fi
+  - if [ "${CONFIG}" = "doxygen" ]; then cd src && doxygen documentation.dox; fi
   - echo -en 'travis_fold:end:script.1\\r'
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol --unittest; fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
@@ -135,6 +139,19 @@ deploy:
     on:
       tags: true
       condition: $CONFIG = installer
+# doxygen s3 puload
+  - provider: s3
+    access_key_id: AKIAIVORNALE7NHD3T6Q
+    secret_access_key:
+      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
+    bucket: qgroundcontrol
+    local_dir: src/html
+    upload-dir: doxygen
+    acl: public_read
+    skip_clean: true
+    branch: master
+    on:
+      condition: $CONFIG = doxygen
 
 notifications:
   webhooks:
