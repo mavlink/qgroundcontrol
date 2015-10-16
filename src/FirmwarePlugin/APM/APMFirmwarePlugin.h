@@ -55,6 +55,23 @@ private:
     int     _patch;
 };
 
+class APMCustomMode
+{
+public:
+    APMCustomMode(uint32_t mode, bool settable);
+    uint32_t modeAsInt() const { return _mode; }
+    bool canBeSet() const { return _settable; }
+    QString modeString() const;
+
+protected:
+    void setEnumToStringMapping(const QMap<uint32_t,QString>& enumToString);
+
+private:
+    uint32_t               _mode;
+    bool                   _settable;
+    QMap<uint32_t,QString> _enumToString;
+};
+
 /// This is the base class for all stack specific APM firmware plugins
 class APMFirmwarePlugin : public FirmwarePlugin
 {
@@ -74,13 +91,15 @@ public:
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(QObject* parent = NULL);
+    void setSupportedModes(QList<APMCustomMode> supportedModes);
     
 private:
     void _adjustSeverity(mavlink_message_t* message) const;
     static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
 
-    APMFirmwareVersion _firmwareVersion;
-    bool               _textSeverityAdjustmentNeeded;
+    APMFirmwareVersion      _firmwareVersion;
+    bool                    _textSeverityAdjustmentNeeded;
+    QList<APMCustomMode>    _supportedModes;
 
 };
 
