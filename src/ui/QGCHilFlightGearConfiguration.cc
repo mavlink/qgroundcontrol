@@ -1,6 +1,7 @@
 #include "QGCHilFlightGearConfiguration.h"
-
 #include "MainWindow.h"
+
+#include <QMenu>
 
 // Various settings groups and keys
 const char* QGCHilFlightGearConfiguration::_settingsGroup =                 "QGC_HILCONFIG_FLIGHTGEAR";

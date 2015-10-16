@@ -37,6 +37,7 @@ import QGroundControl.MultiVehicleManager   1.0
 Rectangle {
     id:     topLevel
     color:  palette.window
+    z:      zOrder   // zOrder comes from the Loader in MainWindow.qml
 
     QGCPalette { id: palette; colorGroupEnabled: true }
 

@@ -37,24 +37,23 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 #include <QList>
 
-#include "ui_MainWindow.h"
 #include "LinkManager.h"
 #include "LinkInterface.h"
 #include "UASInterface.h"
 #include "CameraView.h"
-#include "MainToolBar.h"
 #include "LogCompressor.h"
-#include "FlightDisplayView.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "MAVLinkDecoder.h"
 #include "Vehicle.h"
 #include "QGCDockWidget.h"
+#include "QGCQmlWidgetHolder.h"
+
+#include "ui_MainWindow.h"
 
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
     #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
-
 
 class QSplashScreen;
 class QGCStatusBar;
@@ -67,7 +66,6 @@ class QGCDataPlot2D;
  **/
 class MainWindow : public QMainWindow
 {
-    friend class MainToolBar;
     Q_OBJECT
 
 public:
@@ -106,31 +104,12 @@ public:
 
     /// @brief Restore (and connects) the last used connection (if any)
     void restoreLastUsedConnection();
-    
-    /// @brief Gets a pointer to the Main Tool Bar
-    MainToolBar* getMainToolBar(void) { return _mainToolBar; }
-
-    /// @brief Gets a pointer to the Main Flight Display
-    FlightDisplayView* getFlightDisplay() { return dynamic_cast<FlightDisplayView*>(_flightView.data()); }
-    
-    QWidget* getCurrentViewWidget(void) { return _currentViewWidget; }
 
 public slots:
     /** @brief Show the application settings */
     void showSettings();
 
-    void loadSetupView();
-    void loadFlightView();
-    void loadPlanView();
-    
     void manageLinks();
-
-    /** @brief Show the online help for users */
-    void showHelp();
-    /** @brief Show the authors / credits */
-    void showCredits();
-    /** @brief Show the project roadmap */
-    void showRoadMap();
 
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
@@ -142,8 +121,6 @@ public slots:
 
     /** @brief Update the window name */
     void configureWindowName();
-
-    void commsWidgetDestroyed(QObject *obj);
 
 protected slots:
     /**
@@ -164,6 +141,19 @@ protected slots:
     void showStatusBarCallback(bool checked);
 
 signals:
+    // Signals the Qml to show the specified view
+    void showFlyView(void);
+    void showPlanView(void);
+    void showSetupView(void);
+
+    void showToolbarMessage(const QString& message);
+
+    // These are used for unit testing
+    void showSetupFirmware(void);
+    void showSetupParameters(void);
+    void showSetupSummary(void);
+    void showSetupVehicleComponent(VehicleComponent* vehicleComponent);
+
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
     /** Emitted when any value changes from any source */
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
@@ -182,22 +172,6 @@ public:
     }
 
 protected:
-
-    typedef enum _VIEW_SECTIONS
-    {
-        VIEW_UNUSED5,           // Unused (don't remove, or it will screw up saved settigns indices)
-        VIEW_UNUSED3,           // Unused (don't remove, or it will screw up saved settigns indices)
-        VIEW_FLIGHT,            // Flight/Fly/Operate view mode. Used for 1st-person observation of the vehicle.
-        VIEW_UNUSED4,           // Unused (don't remove, or it will screw up saved settigns indices)
-        VIEW_SETUP,             // Setup view. Used for initializing the system for operation.
-        VIEW_UNUSED1,           // Unused (don't remove, or it will screw up saved settigns indices)
-        VIEW_UNUSED2,           // Unused (don't remove, or it will screw up saved settigns indices)
-        VIEW_MISSIONEDITOR,     // New mission editor
-    } VIEW_SECTIONS;
-
-    /** @brief Catch window resize events */
-    void resizeEvent(QResizeEvent * event);
-
     void connectCommonActions();
 
     void loadSettings();
@@ -205,10 +179,6 @@ protected:
 
     QSettings settings;
 
-    // Center widgets
-    QPointer<Linecharts> linechartWidget;
-
-    QPointer<MainToolBar> _mainToolBar;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
     QGCMAVLinkLogPlayer* logPlayer;
 
@@ -241,7 +211,7 @@ private slots:
     void _linkStateChange(LinkInterface*);
 	void _closeWindow(void) { close(); }
     void _vehicleAdded(Vehicle* vehicle);
-    
+
 #ifndef __mobile__
     void _showDockWidgetAction(bool show);
 #endif
@@ -277,12 +247,6 @@ private:
     QMap<QString, QAction*>         _mapName2Action;
 #endif
 
-    void _buildPlanView(void);
-    void _buildFlightView(void);
-    void _buildSetupView(void);
-    void _buildTerminalView(void);
-    void _buildMissionEditorView(void);
-
     void _storeCurrentViewState(void);
     void _loadCurrentViewState(void);
 
@@ -300,16 +264,12 @@ private:
     bool                    _autoReconnect;
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
     bool                    _showStatusBar;
-    QActionGroup*           _centerStackActionGroup;
     QVBoxLayout*            _centralLayout;
-    QList<QObject*>         _commsWidgetList;
-    QWidget*                _currentViewWidget;     ///< Currently displayed view widget
     QSplashScreen*          _splashScreen;          ///< Splash screen, NULL is splash screen not currently being shown
-    VIEW_SECTIONS           _currentView;           ///< Currently displayed view
     Ui::MainWindow          _ui;
-    QString                 _screenFileName;
 
-    QString _getWindowStateKey();
+    QGCQmlWidgetHolder*     _mainQmlWidgetHolder;
+
     QString _getWindowGeometryKey();
 };
 

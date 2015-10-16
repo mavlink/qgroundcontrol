@@ -21,20 +21,21 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-#ifndef MissionEditor_H
-#define MissionEditor_H
+#ifndef MissionEditorController_H
+#define MissionEditorController_H
 
-#include "QGCQmlWidgetHolder.h"
+#include <QObject>
+
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
-class MissionEditor : public QGCQmlWidgetHolder
+class MissionEditorController : public QObject
 {
     Q_OBJECT
     
 public:
-    MissionEditor(QWidget* parent = NULL);
-    ~MissionEditor();
+    MissionEditorController(QWidget* parent = NULL);
+    ~MissionEditorController();
 
     Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems               NOTIFY missionItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines              NOTIFY waypointLinesChanged)
