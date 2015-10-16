@@ -8,7 +8,20 @@ PLUGIN_TYPE  = geoservices
 
 DESTDIR      = $${LOCATION_PLUGIN_DESTDIR}
 
-INCLUDEPATH += $$QT.location.includes
+contains(QT_VERSION, 5.5.1) {
+
+    message(Using Local QtLocation headers for Qt 5.5.1)
+
+    INCLUDEPATH += \
+        libs/qtlocation/include \
+
+} else {
+
+    message(Using Default QtLocation headers)
+
+    INCLUDEPATH += $$QT.location.includes
+
+}
 
 HEADERS += \
     src/QtLocationPlugin/qgeoserviceproviderpluginqgc.h \
