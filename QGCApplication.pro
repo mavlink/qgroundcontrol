@@ -520,6 +520,8 @@ HEADERS+= \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h \
+    src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h \
+    src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
     src/Vehicle/MultiVehicleManager.h \
@@ -557,6 +559,8 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
     src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.cc \
+    src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.cc \
+    src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \

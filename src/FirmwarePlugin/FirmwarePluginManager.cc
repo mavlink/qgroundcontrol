@@ -27,6 +27,8 @@
 #include "FirmwarePluginManager.h"
 #include "Generic/GenericFirmwarePlugin.h"
 #include "APM/ArduCopterFirmwarePlugin.h"
+#include "APM/ArduPlaneFirmwarePlugin.h"
+#include "APM/ArduRoverFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 
 IMPLEMENT_QGC_SINGLETON(FirmwarePluginManager, FirmwarePluginManager)
@@ -51,22 +53,24 @@ FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT 
                 case MAV_TYPE_HEXAROTOR:
                 case MAV_TYPE_OCTOROTOR:
                 case MAV_TYPE_TRICOPTER:
-                    return ArduCopterFirmwarePlugin::instance();
-                    break;
-                // FIXME: The remainder of these need to be correctly assigned and new plugin classes created as needed.
-                // Once done, the unused cases can be removed and just the fall back default: left
-                case MAV_TYPE_FIXED_WING:
-                case MAV_TYPE_GENERIC:
                 case MAV_TYPE_COAXIAL:
                 case MAV_TYPE_HELICOPTER:
+                    return ArduCopterFirmwarePlugin::instance();
+                    break;
+                case MAV_TYPE_FIXED_WING:
+                    return ArduPlaneFirmwarePlugin::instance();
+                    break;
+                case MAV_TYPE_GROUND_ROVER:
+                case MAV_TYPE_SURFACE_BOAT:
+                case MAV_TYPE_SUBMARINE:
+                    return ArduRoverFirmwarePlugin::instance();
+                    break;
+                case MAV_TYPE_GENERIC:
                 case MAV_TYPE_ANTENNA_TRACKER:
                 case MAV_TYPE_GCS:
                 case MAV_TYPE_AIRSHIP:
                 case MAV_TYPE_FREE_BALLOON:
                 case MAV_TYPE_ROCKET:
-                case MAV_TYPE_GROUND_ROVER:
-                case MAV_TYPE_SURFACE_BOAT:
-                case MAV_TYPE_SUBMARINE:
                 case MAV_TYPE_FLAPPING_WING:
                 case MAV_TYPE_KITE:
                 case MAV_TYPE_ONBOARD_CONTROLLER:
