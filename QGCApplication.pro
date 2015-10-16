@@ -270,6 +270,12 @@ HEADERS += \
     src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
 
+WindowsBuild {
+    PRECOMPILED_HEADER += src/stable_headers.h
+    HEADERS += src/stable_headers.h
+}
+
+
 !iOSBuild {
 HEADERS += \
     src/comm/SerialLink.h \
