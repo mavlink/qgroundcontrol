@@ -42,7 +42,7 @@ QGCView {
 
     // User visible strings
 
-    readonly property string title:                     "FLIGHT MODES CONFIG"
+    readonly property string title:                     "FLIGHT MODES"
 
 
     property string topHelpText:                        "Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. " +
@@ -216,23 +216,8 @@ QGCView {
                 id:     scrollItem
                 width:  scroll.viewport.width
 
-                QGCLabel {
-                    id:             header
-                    width:          parent.width
-                    font.pixelSize: ScreenTools.largeFontPixelSize
-                    text:           title
-                }
-
-                Item {
-                    id:             headingSpacer
-                    anchors.top:    header.bottom
-                    height:         ScreenTools.defaultFontPixelHeight
-                    width:          20
-                }
-
                 Item {
                     id:             helpApplyRow
-                    anchors.top:    headingSpacer.bottom
                     width:          parent.width
                     height:         Math.max(helpText.contentHeight, applyButton.height)
 
@@ -242,6 +227,7 @@ QGCView {
                         anchors.left:           parent.left
                         anchors.right:          applyButton.left
                         text:                   topHelpText
+                        font.pixelSize:         ScreenTools.mediumFontPixelSize
                         wrapMode:               Text.WordWrap
                     }
 

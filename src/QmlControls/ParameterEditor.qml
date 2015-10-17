@@ -212,6 +212,8 @@ QGCView {
                 width:	defaultTextWidth * 25
                 height: parent.height
 
+                Component.onCompleted: flickableItem.flickableDirection = Flickable.VerticalFlick
+
                 Column {
                     Repeater {
                         model: controller.componentIds
@@ -317,8 +319,8 @@ QGCView {
 
                 QGCLabel {
                     id:             titleText
-                    font.pixelSize: ScreenTools.largeFontPixelSize
-                    text:           "PARAMETER EDITOR"
+                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                    text:           "PARAMETERS"
                 }
 
                 QGCButton {

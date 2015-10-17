@@ -44,15 +44,10 @@ Rectangle {
         spacing:        ScreenTools.defaultFontPixelHeight
 
         QGCLabel {
-            text:           "VEHICLE SUMMARY"
-            font.pixelSize: ScreenTools.largeFontPixelSize
-        }
-
-        QGCLabel {
             width:			parent.width
 			wrapMode:		Text.WordWrap
 			color:			setupComplete ? qgcPal.text : qgcPal.warningText
-            font.pixelSize: setupComplete ? ScreenTools.defaultFontPixelSize : ScreenTools.mediumFontPixelSize
+            font.pixelSize: ScreenTools.mediumFontPixelSize
 			text:           setupComplete ?
                                 "Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component." :
                                 "WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left."
