@@ -101,6 +101,9 @@ public:
     double headingDegrees(void) const;
     void setHeadingDegrees(double headingDegrees);
 
+    // This is public for unit testing
+    double _yawRadians(void) const;
+
     QStringList commandNames(void);
     QString commandName(void);
     QString commandDescription(void);
@@ -251,7 +254,6 @@ private slots:
 private:
     QString _oneDecimalString(double value);
     void _connectSignals(void);
-    double _yawRadians(void) const;
     void _setYawRadians(double yawRadians);
 
 private:
