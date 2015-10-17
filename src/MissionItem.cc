@@ -561,13 +561,13 @@ QString MissionItem::commandDescription(void)
             description = "Travel to a position and Loiter around the specified radius for an amount of time.";
             break;
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-            description = "Send the vehicle back to the home position set when armed.";
+            description = "Send the vehicle back to the home position.";
             break;
         case MAV_CMD_NAV_LAND:
-            description = "Land vehicle at the current location.";
+            description = "Land vehicle at the specified location.";
             break;
         case MAV_CMD_NAV_TAKEOFF:
-            description = "Lift off from the ground and travel to the specified position.";
+            description = "Take off from the ground and travel towards the specified position.";
             break;
         case MAV_CMD_CONDITION_DELAY:
             description = "Delay";
