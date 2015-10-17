@@ -1,10 +1,10 @@
 
 environment:
   matrix:
-  - BUILD: 'Release'
-    CONFIG: installer
   - BUILD: 'Debug'
     CONFIG: debug
+  - BUILD: 'Release'
+    CONFIG: installer
 
 install:
   - git submodule update --init --recursive
