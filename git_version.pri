@@ -23,4 +23,8 @@ CONFIG(debug) {
   GIT_VERSION_CXXFLAGS = $$QMAKE_CXXFLAGS_RELEASE
 }
 
-QMAKE_PRE_LINK += $$QGC_GIT_VER && $$QMAKE_CXX -c $$GIT_VERSION_CXXFLAGS git_version.cpp
+MacBuild {
+    QMAKE_PRE_LINK += $$QGC_GIT_VER && $$QMAKE_CXX -mmacosx-version-min=$$QMAKE_MACOSX_DEPLOYMENT_TARGET -c $$GIT_VERSION_CXXFLAGS git_version.cpp
+} else {
+    QMAKE_PRE_LINK += $$QGC_GIT_VER && $$QMAKE_CXX -c $$GIT_VERSION_CXXFLAGS git_version.cpp
+}
