@@ -50,9 +50,9 @@ public:
                 QGeoCoordinate  coordiante = QGeoCoordinate(),
                 int             action = MAV_CMD_NAV_WAYPOINT,
                 double          param1 = 0.0,
-                double          param2 = 0.0,
-                double          param3 = 0.0,
-                double          param4 = 0.0,
+                double          param2 = defaultAcceptanceRadius,
+                double          param3 = defaultLoiterOrbitRadius,
+                double          param4 = defaultHeading,
                 bool            autocontinue = true,
                 bool            isCurrentItem = false,
                 int             frame = MAV_FRAME_GLOBAL_RELATIVE_ALT);
@@ -67,10 +67,16 @@ public:
     
     Q_PROPERTY(int                  sequenceNumber      READ sequenceNumber         WRITE setSequenceNumber NOTIFY sequenceNumberChanged)
     Q_PROPERTY(bool                 isCurrentItem       READ isCurrentItem          WRITE setIsCurrentItem  NOTIFY isCurrentItemChanged)
+
     Q_PROPERTY(bool                 specifiesCoordinate READ specifiesCoordinate                            NOTIFY commandChanged)
     Q_PROPERTY(QGeoCoordinate       coordinate          READ coordinate             WRITE setCoordinate     NOTIFY coordinateChanged)
+
+    Q_PROPERTY(bool                 specifiesHeading    READ specifiesHeading                               NOTIFY commandChanged)
+    Q_PROPERTY(double               heading             READ headingDegrees         WRITE setHeadingDegrees NOTIFY headingDegreesChanged)
+
     Q_PROPERTY(QStringList          commandNames        READ commandNames                                   CONSTANT)
     Q_PROPERTY(QString              commandName         READ commandName                                    NOTIFY commandChanged)
+    Q_PROPERTY(QString              commandDescription  READ commandDescription                             NOTIFY commandChanged)
     Q_PROPERTY(QStringList          valueLabels         READ valueLabels                                    NOTIFY commandChanged)
     Q_PROPERTY(QStringList          valueStrings        READ valueStrings                                   NOTIFY valueStringsChanged)
     Q_PROPERTY(int                  commandByIndex      READ commandByIndex         WRITE setCommandByIndex NOTIFY commandChanged)
@@ -88,12 +94,19 @@ public:
     void setIsCurrentItem(bool isCurrentItem);
     
     bool specifiesCoordinate(void) const;
-    
     QGeoCoordinate coordinate(void) const;
     void setCoordinate(const QGeoCoordinate& coordinate);
     
+    bool specifiesHeading(void) const;
+    double headingDegrees(void) const;
+    void setHeadingDegrees(double headingDegrees);
+
+    // This is public for unit testing
+    double _yawRadians(void) const;
+
     QStringList commandNames(void);
     QString commandName(void);
+    QString commandDescription(void);
 
     int commandByIndex(void);
     void setCommandByIndex(int index);
@@ -106,9 +119,6 @@ public:
     
     QmlObjectListModel* textFieldFacts(void);
     QmlObjectListModel* checkboxFacts(void);
-    
-    double yawDegrees(void) const;
-    void setYawDegrees(double yaw);
     
     bool dirty(void) { return _dirty; }
     void setDirty(bool dirty);
@@ -136,9 +146,6 @@ public:
     void setY(double y);
     void setZ(double z);
     
-    double yawRadians(void) const;
-    void setYawRadians(double yaw);
-    
     bool autoContinue() const {
         return _autocontinue;
     }
@@ -161,7 +168,7 @@ public:
         return loiterOrbitRadius();
     }
     double param4() const {
-        return yawRadians();
+        return _yawRadians();
     }
     double param5() const {
         return latitude();
@@ -189,11 +196,19 @@ public:
     bool load(QTextStream &loadStream);
     
     void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
-    
+
+    static const double defaultPitch;
+    static const double defaultHeading;
+    static const double defaultAltitude;
+    static const double defaultAcceptanceRadius;
+    static const double defaultLoiterOrbitRadius;
+    static const double defaultLoiterTurns;
+
 signals:
     void sequenceNumberChanged(int sequenceNumber);
     void isCurrentItemChanged(bool isCurrentItem);
     void coordinateChanged(const QGeoCoordinate& coordinate);
+    void headingDegreesChanged(double heading);
     void dirtyChanged(bool dirty);
 
     /** @brief Announces a change to the waypoint data */
@@ -234,9 +249,12 @@ public:
 private slots:
     void _factValueChanged(QVariant value);
     void _coordinateFactChanged(QVariant value);
+    void _headingDegreesFactChanged(QVariant value);
 
 private:
     QString _oneDecimalString(double value);
+    void _connectSignals(void);
+    void _setYawRadians(double yawRadians);
 
 private:
     typedef struct {
@@ -254,7 +272,7 @@ private:
     Fact*           _latitudeFact;
     Fact*           _longitudeFact;
     Fact*           _altitudeFact;
-    Fact*           _yawRadiansFact;
+    Fact*           _headingDegreesFact;
     Fact*           _loiterOrbitRadiusFact;
     Fact*           _param1Fact;
     Fact*           _param2Fact;

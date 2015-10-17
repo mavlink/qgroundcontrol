@@ -72,7 +72,7 @@ FlightDisplayView {
         onShowSetupFirmware:            setupViewLoader.item.showFirmwarePanel()
         onShowSetupParameters:          setupViewLoader.item.showParametersPanel()
         onShowSetupSummary:             setupViewLoader.item.showSummaryPanel()
-        onShowSetupVehicleComponent:    setupViewLoader.item.showVehicleComponentPanel(vechicleComponent)
+        onShowSetupVehicleComponent:    setupViewLoader.item.showVehicleComponentPanel(vehicleComponent)
     }
 
     MainToolBar {

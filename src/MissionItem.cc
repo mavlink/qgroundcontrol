@@ -36,6 +36,13 @@ This file is part of the QGROUNDCONTROL project
 
 QGC_LOGGING_CATEGORY(MissionItemLog, "MissionItemLog")
 
+const double MissionItem::defaultPitch =                15.0;
+const double MissionItem::defaultHeading =              0.0;
+const double MissionItem::defaultAltitude =             25.0;
+const double MissionItem::defaultAcceptanceRadius =     3.0;
+const double MissionItem::defaultLoiterOrbitRadius =    10.0;
+const double MissionItem::defaultLoiterTurns =          1.0;
+
 QDebug operator<<(QDebug dbg, const MissionItem& missionItem)
 {
     QDebugStateSaver saver(dbg);
@@ -82,14 +89,14 @@ MissionItem::MissionItem(QObject*       parent,
     , _autocontinue(autocontinue)
     , _isCurrentItem(isCurrentItem)
     , _reachedTime(0)
-    , _yawRadiansFact(NULL)
+    , _headingDegreesFact(NULL)
     ,_dirty(false)
     , _homePositionSpecialCase(false)
 {
     _latitudeFact                   = new Fact(0, "Latitude:",                      FactMetaData::valueTypeDouble, this);
     _longitudeFact                  = new Fact(0, "Longitude:",                     FactMetaData::valueTypeDouble, this);
     _altitudeFact                   = new Fact(0, "Altitude:",                      FactMetaData::valueTypeDouble, this);
-    _yawRadiansFact                 = new Fact(0, "Heading:",                       FactMetaData::valueTypeDouble, this);
+    _headingDegreesFact             = new Fact(0, "Heading:",                       FactMetaData::valueTypeDouble, this);
     _loiterOrbitRadiusFact          = new Fact(0, "Radius:",                        FactMetaData::valueTypeDouble, this);
     _param1Fact                     = new Fact(0, QString(),                        FactMetaData::valueTypeDouble, this);
     _param2Fact                     = new Fact(0, QString(),                        FactMetaData::valueTypeDouble, this);
@@ -100,7 +107,7 @@ MissionItem::MissionItem(QObject*       parent,
     setCoordinate(coordinate);
     setParam1(param1);
     setParam2(param2);
-    setYawRadians(param4);
+    _setYawRadians(param4);
     setLoiterOrbitRadius(param3);
     
     // FIXME: Need to fill out more meta data
@@ -114,8 +121,8 @@ MissionItem::MissionItem(QObject*       parent,
     FactMetaData* altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _altitudeFact);
     altitudeMetaData->setUnits("meters");
     
-    FactMetaData* yawMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _yawRadiansFact);
-    yawMetaData->setUnits("deg");
+    FactMetaData* headingMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _headingDegreesFact);
+    headingMetaData->setUnits("deg");
     
     _pitchMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
     _pitchMetaData->setUnits("deg");
@@ -147,23 +154,10 @@ MissionItem::MissionItem(QObject*       parent,
     _latitudeFact->setMetaData(latitudeMetaData);
     _longitudeFact->setMetaData(longitudeMetaData);
     _altitudeFact->setMetaData(altitudeMetaData);
-    _yawRadiansFact->setMetaData(yawMetaData);
+    _headingDegreesFact->setMetaData(headingMetaData);
     _loiterOrbitRadiusFact->setMetaData(loiterOrbitRadiusMetaData);
 
-    // Connect to valueChanged to track dirty state
-    connect(_latitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_longitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_altitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_yawRadiansFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_loiterOrbitRadiusFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_param1Fact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_param2Fact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_altitudeRelativeToHomeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    
-    // Connect valueChanged signals so we can output coordinateChanged signal
-    connect(_latitudeFact, &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
-    connect(_longitudeFact, &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
-    connect(_altitudeFact, &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
+    _connectSignals();
 }
 
 MissionItem::MissionItem(const MissionItem& other, QObject* parent)
@@ -172,7 +166,7 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     _latitudeFact               = new Fact(this);
     _longitudeFact              = new Fact(this);
     _altitudeFact               = new Fact(this);
-    _yawRadiansFact             = new Fact(this);
+    _headingDegreesFact         = new Fact(this);
     _loiterOrbitRadiusFact      = new Fact(this);
     _param1Fact                 = new Fact(this);
     _param2Fact                 = new Fact(this);
@@ -188,26 +182,9 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     _jumpSequenceMetaData = new FactMetaData(this);
     _jumpRepeatMetaData = new FactMetaData(this);
 
-    // Connect to valueChanged to track dirty state
-    connect(_latitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_longitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_altitudeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_yawRadiansFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_loiterOrbitRadiusFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_param1Fact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_param2Fact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    connect(_altitudeRelativeToHomeFact, &Fact::valueChanged, this, &MissionItem::_factValueChanged);
-    
-    // Connect valueChanged signals so we can output coordinateChanged signal
-    connect(_latitudeFact, &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
-    connect(_longitudeFact, &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
-    connect(_altitudeFact, &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
-    
-    *this = other;
-}
+    _connectSignals();
 
-MissionItem::~MissionItem()
-{    
+    *this = other;
 }
 
 const MissionItem& MissionItem::operator=(const MissionItem& other)
@@ -221,15 +198,15 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     _altitudeRelativeToHomeFact = other._altitudeRelativeToHomeFact;
     _dirty                      = other._dirty;
     _homePositionSpecialCase    = other._homePositionSpecialCase;
-    
+
     *_latitudeFact              = *other._latitudeFact;
     *_longitudeFact             = *other._longitudeFact;
     *_altitudeFact              = *other._altitudeFact;
-    *_yawRadiansFact            = *other._yawRadiansFact;
+    *_headingDegreesFact        = *other._headingDegreesFact;
     *_loiterOrbitRadiusFact     = *other._loiterOrbitRadiusFact;
     *_param1Fact                = *other._param1Fact;
     *_param2Fact                = *other._param2Fact;
-    
+
     *_pitchMetaData             = *other._pitchMetaData;
     *_acceptanceRadiusMetaData  = *other._acceptanceRadiusMetaData;
     *_holdTimeMetaData          = *other._holdTimeMetaData;
@@ -238,8 +215,32 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     *_delaySecondsMetaData      = *other._delaySecondsMetaData;
     *_jumpSequenceMetaData      = *other._jumpSequenceMetaData;
     *_jumpRepeatMetaData        = *other._jumpRepeatMetaData;
-    
+
     return *this;
+}
+
+void MissionItem::_connectSignals(void)
+{
+    // Connect to valueChanged to track dirty state
+    connect(_latitudeFact,                  &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_longitudeFact,                 &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_altitudeFact,                  &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_headingDegreesFact,            &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_loiterOrbitRadiusFact,         &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_param1Fact,                    &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_param2Fact,                    &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+    connect(_altitudeRelativeToHomeFact,    &Fact::valueChanged, this, &MissionItem::_factValueChanged);
+
+    // Connect valueChanged signals so we can output coordinateChanged signal
+    connect(_latitudeFact,  &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
+    connect(_longitudeFact, &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
+    connect(_altitudeFact,  &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
+
+    connect(_headingDegreesFact, &Fact::valueChanged, this, &MissionItem::_headingDegreesFactChanged);
+}
+
+MissionItem::~MissionItem()
+{    
 }
 
 bool MissionItem::isNavigationType()
@@ -254,7 +255,7 @@ void MissionItem::save(QTextStream &saveStream)
     position = position.arg(y(), 0, 'g', 18);
     position = position.arg(z(), 0, 'g', 18);
     QString parameters("%1\t%2\t%3\t%4");
-    parameters = parameters.arg(param1(), 0, 'g', 18).arg(param2(), 0, 'g', 18).arg(loiterOrbitRadius(), 0, 'g', 18).arg(yawRadians(), 0, 'g', 18);
+    parameters = parameters.arg(param1(), 0, 'g', 18).arg(param2(), 0, 'g', 18).arg(loiterOrbitRadius(), 0, 'g', 18).arg(_yawRadians(), 0, 'g', 18);
     // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE> <DESCRIPTION>
     // as documented here: http://qgroundcontrol.org/waypoint_protocol
     saveStream << this->sequenceNumber() << "\t" << this->isCurrentItem() << "\t" << this->frame() << "\t" << this->command() << "\t"  << parameters << "\t" << position  << "\t" << this->autoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
@@ -271,7 +272,7 @@ bool MissionItem::load(QTextStream &loadStream)
         setParam1(wpParams[4].toDouble());
         setParam2(wpParams[5].toDouble());
         setLoiterOrbitRadius(wpParams[6].toDouble());
-        setYawRadians(wpParams[7].toDouble());
+        _setYawRadians(wpParams[7].toDouble());
         setLatitude(wpParams[8].toDouble());
         setLongitude(wpParams[9].toDouble());
         setAltitude(wpParams[10].toDouble());
@@ -351,11 +352,27 @@ void MissionItem::setAction(int /*MAV_CMD*/ action)
 
         // Fix defaults according to WP type
 
-        if (_command == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
-            // We default to 15 degrees minimum takeoff pitch
-            setParam1(15.0);
+        switch (_command) {
+            case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
+                setParam1(defaultPitch);
+                break;
+            case MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT:
+                setAcceptanceRadius(defaultAcceptanceRadius);
+                break;
+            case MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_UNLIM:
+            case MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_TIME:
+                setLoiterOrbitRadius(defaultLoiterOrbitRadius);
+                break;
+            case MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_TURNS:
+                setLoiterOrbitRadius(defaultLoiterOrbitRadius);
+                setParam1(defaultLoiterTurns);
+                break;
+            default:
+                break;
         }
-        
+        setHeadingDegrees(defaultHeading);
+        setAltitude(defaultAltitude);
+
         if (specifiesCoordinate()) {
             if (_frame != MAV_FRAME_GLOBAL && _frame != MAV_FRAME_GLOBAL_RELATIVE_ALT) {
                 setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
@@ -438,7 +455,7 @@ void MissionItem::setParam3(double param3)
 
 void MissionItem::setParam4(double param4)
 {
-    setYawRadians(param4);
+    _setYawRadians(param4);
 }
 
 void MissionItem::setParam5(double param5)
@@ -526,6 +543,46 @@ QString MissionItem::commandName(void)
     return type;
 }
 
+QString MissionItem::commandDescription(void)
+{
+    QString description;
+
+    switch (_command) {
+        case MAV_CMD_NAV_WAYPOINT:
+            description = "Travel to a position in 3D space.";
+            break;
+        case MAV_CMD_NAV_LOITER_UNLIM:
+            description = "Travel to a position and Loiter around the specified radius indefinitely.";
+            break;
+        case MAV_CMD_NAV_LOITER_TURNS:
+            description = "Travel to a position and Loiter around the specified radius for a number of turns.";
+            break;
+        case MAV_CMD_NAV_LOITER_TIME:
+            description = "Travel to a position and Loiter around the specified radius for an amount of time.";
+            break;
+        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+            description = "Send the vehicle back to the home position.";
+            break;
+        case MAV_CMD_NAV_LAND:
+            description = "Land vehicle at the specified location.";
+            break;
+        case MAV_CMD_NAV_TAKEOFF:
+            description = "Take off from the ground and travel towards the specified position.";
+            break;
+        case MAV_CMD_CONDITION_DELAY:
+            description = "Delay";
+            break;
+        case MAV_CMD_DO_JUMP:
+            description = "Jump To Command";
+            break;
+        default:
+            description = QString("Unknown (%1)").arg(_command);
+            break;
+    }
+
+    return description;
+}
+
 QStringList MissionItem::valueLabels(void)
 {
     QStringList labels;
@@ -590,24 +647,24 @@ QStringList MissionItem::valueStrings(void)
     
     switch (_command) {
         case MAV_CMD_NAV_WAYPOINT:
-            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(yawDegrees()) << _oneDecimalString(param2()) << _oneDecimalString(param1());
+            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(headingDegrees()) << _oneDecimalString(param2()) << _oneDecimalString(param1());
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
-            list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius());
+            list << _oneDecimalString(headingDegrees()) << _oneDecimalString(loiterOrbitRadius());
             break;
         case MAV_CMD_NAV_LOITER_TURNS:
-            list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius()) << _oneDecimalString(param1());
+            list << _oneDecimalString(headingDegrees()) << _oneDecimalString(loiterOrbitRadius()) << _oneDecimalString(param1());
             break;
         case MAV_CMD_NAV_LOITER_TIME:
-            list << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(loiterOrbitRadius()) << _oneDecimalString(param1());
+            list << _oneDecimalString(headingDegrees()) << _oneDecimalString(loiterOrbitRadius()) << _oneDecimalString(param1());
             break;
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
             break;
         case MAV_CMD_NAV_LAND:
-            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(yawRadians() * (180.0 / M_PI));
+            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(headingDegrees());
             break;
         case MAV_CMD_NAV_TAKEOFF:
-            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(yawRadians() * (180.0 / M_PI)) << _oneDecimalString(param1());
+            list << _oneDecimalString(_altitudeFact->value().toDouble()) << _oneDecimalString(headingDegrees()) << _oneDecimalString(param1());
             break;
         case MAV_CMD_CONDITION_DELAY:
             list << _oneDecimalString(param1());
@@ -659,59 +716,38 @@ QmlObjectListModel* MissionItem::textFieldFacts(void)
     
     switch ((MAV_CMD)_command) {
         case MAV_CMD_NAV_WAYPOINT:
-            _param2Fact->_setName("Radius:");
-            _param2Fact->setMetaData(_acceptanceRadiusMetaData);
             _param1Fact->_setName("Hold:");
             _param1Fact->setMetaData(_holdTimeMetaData);
-            model->append(_latitudeFact);
-            model->append(_longitudeFact);
             model->append(_altitudeFact);
             if (!_homePositionSpecialCase) {
-                model->append(_yawRadiansFact);
-                model->append(_param2Fact);
                 model->append(_param1Fact);
             }
             break;
         case MAV_CMD_NAV_LOITER_UNLIM:
-            model->append(_latitudeFact);
-            model->append(_longitudeFact);
             model->append(_altitudeFact);
-            model->append(_yawRadiansFact);
             model->append(_loiterOrbitRadiusFact);
             break;
         case MAV_CMD_NAV_LOITER_TURNS:
             _param1Fact->_setName("Turns:");
             _param1Fact->setMetaData(_loiterTurnsMetaData);
-            model->append(_latitudeFact);
-            model->append(_longitudeFact);
             model->append(_altitudeFact);
-            model->append(_yawRadiansFact);
             model->append(_loiterOrbitRadiusFact);
             model->append(_param1Fact);
             break;
         case MAV_CMD_NAV_LOITER_TIME:
             _param1Fact->_setName("Seconds:");
             _param1Fact->setMetaData(_loiterSecondsMetaData);
-            model->append(_latitudeFact);
-            model->append(_longitudeFact);
             model->append(_altitudeFact);
-            model->append(_yawRadiansFact);
             model->append(_loiterOrbitRadiusFact);
             model->append(_param1Fact);
             break;
         case MAV_CMD_NAV_LAND:
-            model->append(_latitudeFact);
-            model->append(_longitudeFact);
             model->append(_altitudeFact);
-            model->append(_yawRadiansFact);
             break;
         case MAV_CMD_NAV_TAKEOFF:
             _param1Fact->_setName("Pitch:");
             _param1Fact->setMetaData(_pitchMetaData);
-            model->append(_latitudeFact);
-            model->append(_longitudeFact);
             model->append(_altitudeFact);
-            model->append(_yawRadiansFact);
             model->append(_param1Fact);
             break;
         case MAV_CMD_CONDITION_DELAY:
@@ -730,6 +766,11 @@ QmlObjectListModel* MissionItem::textFieldFacts(void)
         default:
             break;
     }
+
+    if (specifiesHeading()) {
+        model->append(_headingDegreesFact);
+    }
+
     
     return model;
 }
@@ -768,30 +809,30 @@ QmlObjectListModel* MissionItem::checkboxFacts(void)
     return model;
 }
 
-double MissionItem::yawRadians(void) const
+double MissionItem::headingDegrees(void) const
 {
-    return _yawRadiansFact->value().toDouble();
+    return _headingDegreesFact->value().toDouble();
 }
 
-void MissionItem::setYawRadians(double yaw)
+void MissionItem::setHeadingDegrees(double headingDegrees)
 {
-    if (yawRadians() != yaw)
-    {
-        _yawRadiansFact->setValue(yaw);
+    if (_headingDegreesFact->value().toDouble() != headingDegrees) {
+        _headingDegreesFact->setValue(headingDegrees);
         emit changed(this);
         emit valueStringsChanged(valueStrings());
+        emit headingDegreesChanged(headingDegrees);
     }
 }
 
 
-double MissionItem::yawDegrees(void) const
+double MissionItem::_yawRadians(void) const
 {
-    return yawRadians() * (180.0 / M_PI);
+    return _headingDegreesFact->value().toDouble() * (M_PI / 180.0);
 }
 
-void MissionItem::setYawDegrees(double yaw)
+void MissionItem::_setYawRadians(double yawRadians)
 {
-    setYawRadians(yaw * (M_PI / 180.0));
+    setHeadingDegrees(yawRadians * (180 / M_PI));
 }
 
 QGeoCoordinate MissionItem::coordinate(void) const
@@ -853,4 +894,20 @@ void MissionItem::_coordinateFactChanged(QVariant value)
 {
     Q_UNUSED(value);
     emit coordinateChanged(coordinate());
+}
+
+bool MissionItem::specifiesHeading(void) const
+{
+    switch ((MAV_CMD)_command) {
+        case MAV_CMD_NAV_LAND:
+        case MAV_CMD_NAV_TAKEOFF:
+            return true;
+        default:
+            return false;
+    }
+}
+
+void MissionItem::_headingDegreesFactChanged(QVariant value)
+{
+    emit headingDegreesChanged(value.toDouble());
 }

@@ -70,6 +70,7 @@
         <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
         <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
         <file alias="MapSync.svg">src/FlightMap/Images/MapSync.svg</file>
+        <file alias="MapSyncChanged.svg">src/FlightMap/Images/MapSyncChanged.svg</file>
         <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
         <file alias="MapHome.svg">src/FlightMap/Images/MapHome.svg</file>
         <file alias="MapAddMission.svg">src/FlightMap/Images/MapAddMission.svg</file>
