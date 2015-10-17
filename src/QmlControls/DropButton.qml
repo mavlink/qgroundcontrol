@@ -224,7 +224,7 @@ Item {
                 context.lineTo(dropItemHolderRect.x, dropItemHolderRect.y)
 
                 context.closePath()
-                context.fillStyle = qgcPal.button
+                context.fillStyle = qgcPal.windowShade
                 context.fill()
             }
         } // Canvas - arrowCanvas
