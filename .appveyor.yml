@@ -9,12 +9,12 @@ environment:
 install:
   - git submodule update --init --recursive
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86
-  - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.4\msvc2013_opengl\bin;%PATH%
+  - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.5\msvc2013\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - if "%CONFIG%" EQU "installer" ( cinst nsis -y -installArgs /D="%programfiles(x86)%\NSIS" )
 
 build_script:
-  - C:\Qt\5.4\msvc2013_opengl\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn CONFIG+=jombuild qgroundcontrol.pro
+  - C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn CONFIG+=jombuild qgroundcontrol.pro
   - jom
 
 test_script:
