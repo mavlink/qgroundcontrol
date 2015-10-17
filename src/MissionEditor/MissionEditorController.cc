@@ -103,14 +103,15 @@ int MissionEditorController::addMissionItem(QGeoCoordinate coordinate)
     if (!_canEdit) {
         qWarning() << "addMissionItem called with _canEdit == false";
     }
+
+    // Coordinate will come through without altitude
+    coordinate.setAltitude(MissionItem::defaultAltitude);
     
     MissionItem * newItem = new MissionItem(this, _missionItems->count(), coordinate, MAV_CMD_NAV_WAYPOINT);
     _initMissionItem(newItem);
-    newItem->setAltitude(30);
     if (_missionItems->count() == 1) {
         newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
     }
-    qDebug() << "MissionItem" << newItem->coordinate();
     _missionItems->append(newItem);
     
     _recalcAll();

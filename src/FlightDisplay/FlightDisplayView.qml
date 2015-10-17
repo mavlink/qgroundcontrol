@@ -55,15 +55,14 @@ Item {
 
     property var _activeVehicle: multiVehicleManager.activeVehicle
 
-    readonly property real _defaultLatitude:        37.803784
-    readonly property real _defaultLongitude:       -122.462276
-    readonly property real _defaultRoll:            0
-    readonly property real _defaultPitch:           0
-    readonly property real _defaultHeading:         0
-    readonly property real _defaultAltitudeWGS84:   0
-    readonly property real _defaultGroundSpeed:     0
-    readonly property real _defaultAirSpeed:        0
-    readonly property real _defaultClimbRate:       0
+    readonly property var  _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
+    readonly property real _defaultRoll:                0
+    readonly property real _defaultPitch:               0
+    readonly property real _defaultHeading:             0
+    readonly property real _defaultAltitudeWGS84:       0
+    readonly property real _defaultGroundSpeed:         0
+    readonly property real _defaultAirSpeed:            0
+    readonly property real _defaultClimbRate:           0
 
     readonly property string _mapName:              "FlightDisplayView"
     readonly property string _showMapBackgroundKey: "/showMapBackground"
@@ -72,8 +71,7 @@ Item {
     property real _pitch:           _activeVehicle ? (isNaN(_activeVehicle.pitch) ? _defaultPitch : _activeVehicle.pitch) : _defaultPitch
     property real _heading:         _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
 
-    property real _latitude:        _activeVehicle ? ((_activeVehicle.latitude  === 0) ? _defaultLatitude : _activeVehicle.latitude) : _defaultLatitude
-    property real _longitude:       _activeVehicle ? ((_activeVehicle.longitude === 0) ? _defaultLongitude : _activeVehicle.longitude) : _defaultLongitude
+    property var  _vehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : _defaultVehicleCoordinate
 
     property real _altitudeWGS84:   _activeVehicle ? _activeVehicle.altitudeWGS84 : _defaultAltitudeWGS84
     property real _groundSpeed:     _activeVehicle ? _activeVehicle.groundSpeed : _defaultGroundSpeed
@@ -82,14 +80,20 @@ Item {
 
     property bool _showMap: getBool(QGroundControl.flightMapSettings.loadMapSetting(flightMap.mapName, _showMapBackgroundKey, "1"))
 
-    FlightDisplayViewController { id: _controller; }
+    FlightDisplayViewController { id: _controller }
 
     ExclusiveGroup {
         id: _dropButtonsExclusiveGroup
     }
 
     // Validate _showMap setting
-    Component.onCompleted: _setShowMap(_showMap)
+    Component.onCompleted: {
+        // We have to be careful to not reference root properties in a function which is in a subcomponent
+        // until the root component has completed loading. Otherwise you get undefined references.
+        flightMap.rootLoadCompleted = true
+        flightMap.updateMapPosition(true /* force */)
+        _setShowMap(_showMap)
+    }
 
     function getBool(value) {
         return value === '0' ? false : true;
@@ -104,24 +108,24 @@ Item {
         QGroundControl.flightMapSettings.saveMapSetting(flightMap.mapName, _showMapBackgroundKey, setBool(_showMap))
     }
 
+
     FlightMap {
         id:             flightMap
         anchors.fill:   parent
         mapName:        _mapName
         visible:        _showMap
+        latitude:       root._defaultCoordinate.latitude
+        longitude:      root._defaultCoordinate.longitude
 
-        property real rootLatitude:     root._latitude
-        property real rootLongitude:    root._longitude
+        property var rootVehicleCoordinate: _vehicleCoordinate
+        property bool rootLoadCompleted: false
 
-        Component.onCompleted: updateMapPosition(true /* force */)
-
-        onRootLatitudeChanged: updateMapPosition(false /* force */)
-        onRootLongitudeChanged: updateMapPosition(false /* force */)
+        onRootVehicleCoordinateChanged: updateMapPosition(false /* force */)
 
         function updateMapPosition(force) {
-            if (_followVehicle || force) {
-                latitude = root._latitude
-                longitude = root._longitude
+            if ((_followVehicle || force) && rootLoadCompleted) {
+                flightMap.latitude = root._vehicleCoordinate.latitude
+                flightMap.longitude = root._vehicleCoordinate.longitude
             }
         }
 

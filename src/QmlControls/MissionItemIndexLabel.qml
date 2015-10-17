@@ -13,7 +13,7 @@ Rectangle {
 
     QGCPalette { id: qgcPal }
 
-    width:          ScreenTools.defaultFontPixelHeight * 1.5
+    width:          ScreenTools.mediumFontPixelSize * 1.5
     height:         width
     radius:         width / 2
     border.width:   2
@@ -32,5 +32,6 @@ Rectangle {
         horizontalAlignment:    Text.AlignHCenter
         verticalAlignment:      Text.AlignVCenter
         color:                  "white"
+        font.pixelSize:         ScreenTools.mediumFontPixelSize
     }
 }
