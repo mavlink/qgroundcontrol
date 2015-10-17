@@ -193,6 +193,15 @@ Item {
                 _controller.onPlanView();
             }
         }
+
+        MenuSeparator { }
+
+
+        MenuItem {
+            text:           "QGroundControl Settings"
+
+            onTriggered: controller.showSettings()
+        }
     } // Menu
 
     Component {

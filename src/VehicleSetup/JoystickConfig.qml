@@ -149,8 +149,8 @@ QGCView {
 
         QGCLabel {
             id:             header
-            font.pixelSize: ScreenTools.largeFontPixelSize
-            text:           "JOYSTICK CONFIG"
+            font.pixelSize: ScreenTools.mediumFontPixelSize
+            text:           "JOYSTICK"
         }
 
         Item {

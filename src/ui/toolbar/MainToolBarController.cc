@@ -339,3 +339,8 @@ void MainToolBarController::onToolBarMessageClosed(void)
     _toolbarMessageVisible = false;
     _delayedShowToolBarMessage();
 }
+
+void MainToolBarController::showSettings(void)
+{
+    MainWindow::instance()->showSettings();
+}

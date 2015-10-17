@@ -296,8 +296,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QSettings settings;
+    qDebug() << "Settings location" << settings.fileName() << settings.isWritable();
+
 #ifdef UNITTEST_BUILD
-    qDebug() << "Settings location" << settings.fileName();
     Q_ASSERT(settings.isWritable());
 #endif
     // The setting will delete all settings on this boot
@@ -316,7 +317,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     // Initialize Video Streaming
     initializeVideoStreaming(argc, argv);
-
 }
 
 QGCApplication::~QGCApplication()
@@ -421,6 +421,8 @@ void QGCApplication::_initCommon(void)
     }
     qDebug() << "Saved files location" << savedFilesLocation;
     settings.setValue(_savedFilesLocationKey, savedFilesLocation);
+
+    settings.sync();
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
