@@ -166,6 +166,7 @@ FORMS += \
     src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MainWindow.ui \
     src/ui/MAVLinkSettingsWidget.ui \
+    src/ui/MockLinkConfiguration.ui \
     src/ui/QGCCommConfiguration.ui \
     src/ui/QGCLinkConfiguration.ui \
     src/ui/QGCMapRCToParamDialog.ui \
@@ -257,6 +258,7 @@ HEADERS += \
     src/ui/MainWindow.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
+    src/ui/MockLinkConfiguration.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCLinkConfiguration.h \
     src/ui/QGCMapRCToParamDialog.h \
@@ -368,6 +370,7 @@ SOURCES += \
     src/ui/MainWindow.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MAVLinkSettingsWidget.cc \
+    src/ui/MockLinkConfiguration.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCLinkConfiguration.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
