@@ -53,7 +53,11 @@ Item {
     function showSummaryPanel()
     {
         if (_fullParameterVehicleAvailable) {
-            panelLoader.source = "VehicleSummary.qml";
+            if (multiVehicleManager.activeVehicle.autopilot.vehicleComponents.length == 0) {
+                panelLoader.sourceComponent = noComponentsVehicleSummaryComponent
+            } else {
+                panelLoader.source = "VehicleSummary.qml";
+            }
         } else if (multiVehicleManager.parameterReadyVehicleAvailable) {
             panelLoader.sourceComponent = missingParametersVehicleSummaryComponent
         } else {
@@ -115,7 +119,7 @@ Item {
     }
 
     Component {
-        id: disconnectedVehicleSummaryComponent
+        id: noComponentsVehicleSummaryComponent
 
         Rectangle {
             color: qgcPal.windowShade
@@ -127,17 +131,33 @@ Item {
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
                 font.pixelSize:         ScreenTools.mediumFontPixelSize
-                text:                   "Welcome to QGroundControl. " +
-                                        "QGroundControl supports any <font color=\"orange\"><a href=\"http://www.qgroundcontrol.org/mavlink/start\">mavlink</a></font> enabled vehicle. " +
-                                        "If you are using the <font color=\"orange\"><a href=\"https://pixhawk.org/choice\">PX4 Flight Stack</a></font>, you also get full support for setting up and calibrating your vehicle. "+
-                                        "Otherwise you will only get support for flying a vehicle which has been setup and calibrated using other means. " +
-                                        "Use the Connect button above to connect to your vehicle."
+                text:                   "QGroundControl does not currently support setup of your vehicle type. " +
+                                            "If your vehicle is already configured you can still Fly."
 
                 onLinkActivated: Qt.openUrlExternally(link)
             }
         }
     }
 
+    Component {
+        id: disconnectedVehicleSummaryComponent
+
+        Rectangle {
+            color: qgcPal.windowShade
+
+            QGCLabel {
+                anchors.margins:        _defaultTextWidth * 2
+                anchors.fill:           parent
+                verticalAlignment:      Text.AlignVCenter
+                horizontalAlignment:    Text.AlignHCenter
+                wrapMode:               Text.WordWrap
+                font.pixelSize:         ScreenTools.largeFontPixelSize
+                text:                   "Click Connect on the top right to Fly. Click Firmware on the left to upgrade your vehicle."
+
+                onLinkActivated: Qt.openUrlExternally(link)
+            }
+        }
+    }
     Component {
         id: missingParametersVehicleSummaryComponent
 
@@ -218,6 +238,7 @@ Item {
                         width:          _buttonWidth
                         imageResource: "/qmlimages/VehicleSummaryIcon.png"
                         setupIndicator: false
+                        checked:        true
                         exclusiveGroup: setupButtonGroup
                         text:           "SUMMARY"
 
