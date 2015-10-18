@@ -878,10 +878,14 @@ bool MissionItem::canEdit(void)
 
 void MissionItem::setDirty(bool dirty)
 {
-    _dirty = dirty;
-    // We want to emit dirtyChanged even if _dirty didn't change. This can be handy signal for
-    // any value within the item changing.
-    emit dirtyChanged(_dirty);
+    if (!_homePositionSpecialCase || !dirty) {
+        // Home position never affects dirty bit
+
+        _dirty = dirty;
+        // We want to emit dirtyChanged even if _dirty didn't change. This can be handy signal for
+        // any value within the item changing.
+        emit dirtyChanged(_dirty);
+    }
 }
 
 void MissionItem::_factValueChanged(QVariant value)
