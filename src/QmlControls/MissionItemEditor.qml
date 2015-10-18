@@ -19,7 +19,7 @@ Rectangle {
     signal clicked
     signal remove
 
-    height: innerItem.height + (_margin * 2)
+    height: innerItem.height + (_margin * 3)
     color:  missionItem.isCurrentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
     radius: _radius
 
