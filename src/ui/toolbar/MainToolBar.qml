@@ -69,9 +69,9 @@ Item {
     function showToolbarMessage(message) {
         toolBarMessage.text = message
         if (toolBarMessage.contentHeight > toolBarMessageCloseButton.height) {
-            mainToolBar.height = toolBarHeight + toolBarMessage.contentHeight + (verticalMargins * 2)
+            toolBarHolder.height = toolBarHeight + toolBarMessage.contentHeight + (verticalMargins * 2)
         } else {
-            mainToolBar.height = toolBarHeight + toolBarMessageCloseButton.height + (verticalMargins * 2)
+            toolBarHolder.height = toolBarHeight + toolBarMessageCloseButton.height + (verticalMargins * 2)
         }
         toolBarMessageArea.visible = true
     }
@@ -864,7 +864,7 @@ Item {
 
             onClicked: {
                 parent.visible = false
-                _controller.height = toolBarHeight
+                toolBarHolder.height = toolBarHeight
                 _controller.onToolBarMessageClosed()
             }
         }
