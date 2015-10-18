@@ -1370,6 +1370,12 @@ void QSerialPort::setError(QSerialPort::SerialPortError serialPortError, const Q
     emit error(serialPortError);
 }
 
+void QSerialPort::setNativeMethods(void)
+{
+    QSerialPortPrivate::setNativeMethods();
+}
+
+
 #include "moc_qserialport.cpp"
 
 QT_END_NAMESPACE

@@ -79,7 +79,6 @@ public class UsbDeviceJNI extends QtActivity
                 }
             };
 
-
     //  NATIVE C++ FUNCTION THAT WILL BE CALLED IF THE DEVICE IS UNPLUGGED
     private static native void nativeDeviceHasDisconnected(int userDataA);
     private static native void nativeDeviceException(int userDataA, String messageA);
