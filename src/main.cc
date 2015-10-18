@@ -86,6 +86,25 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 #endif
 
+#ifdef __android__
+#include <jni.h>
+#include "qserialport.h"
+
+jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+    Q_UNUSED(reserved);
+
+    JNIEnv* env;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        return -1;
+    }
+
+    QSerialPort::setNativeMethods();
+
+    return JNI_VERSION_1_6;
+}
+#endif
+
 /**
  * @brief Starts the application
  *
