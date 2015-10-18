@@ -37,18 +37,20 @@ public:
     MissionEditorController(QWidget* parent = NULL);
     ~MissionEditorController();
 
-    Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems               NOTIFY missionItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines              NOTIFY waypointLinesChanged)
-    Q_PROPERTY(bool                 canEdit                     READ canEdit                    NOTIFY canEditChanged)
-    Q_PROPERTY(bool                 liveHomePositionAvailable   READ liveHomePositionAvailable  NOTIFY liveHomePositionAvailableChanged)
-    Q_PROPERTY(QGeoCoordinate       liveHomePosition            READ liveHomePosition           NOTIFY liveHomePositionChanged)
+    Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems                   NOTIFY missionItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines                  NOTIFY waypointLinesChanged)
+    Q_PROPERTY(bool                 canEdit                     READ canEdit                        NOTIFY canEditChanged)
+    Q_PROPERTY(bool                 liveHomePositionAvailable   READ liveHomePositionAvailable      NOTIFY liveHomePositionAvailableChanged)
+    Q_PROPERTY(QGeoCoordinate       liveHomePosition            READ liveHomePosition               NOTIFY liveHomePositionChanged)
+    Q_PROPERTY(bool                 autoSync                    READ autoSync   WRITE setAutoSync   NOTIFY autoSyncChanged)
     
     Q_INVOKABLE int addMissionItem(QGeoCoordinate coordinate);
     Q_INVOKABLE void getMissionItems(void);
-    Q_INVOKABLE void setMissionItems(void);
+    Q_INVOKABLE void sendMissionItems(void);
     Q_INVOKABLE void loadMissionFromFile(void);
     Q_INVOKABLE void saveMissionToFile(void);
     Q_INVOKABLE void removeMissionItem(int index);
+    Q_INVOKABLE void deleteCurrentMissionItem(void);
 
     // Property accessors
     
@@ -57,6 +59,8 @@ public:
     bool canEdit(void) { return _canEdit; }
     bool liveHomePositionAvailable(void) { return _liveHomePositionAvailable; }
     QGeoCoordinate liveHomePosition(void) { return _liveHomePosition; }
+    bool autoSync(void) { return _autoSync; }
+    void setAutoSync(bool autoSync);
 
 signals:
     void missionItemsChanged(void);
@@ -64,6 +68,7 @@ signals:
     void waypointLinesChanged(void);
     void liveHomePositionAvailableChanged(bool homePositionAvailable);
     void liveHomePositionChanged(const QGeoCoordinate& homePosition);
+    void autoSyncChanged(bool autoSync);
     
 private slots:
     void _newMissionItemsAvailable();
@@ -72,6 +77,8 @@ private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
     void _activeVehicleHomePositionAvailableChanged(bool homePositionAvailable);
     void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
+    void _dirtyChanged(bool dirty);
+    void _inProgressChanged(bool inProgress);
 
 private:
     void _recalcSequence(void);
@@ -82,6 +89,7 @@ private:
     void _deinitAllMissionItems(void);
     void _initMissionItem(MissionItem* item);
     void _deinitMissionItem(MissionItem* item);
+    void _autoSyncSend(void);
 
 private:
     QmlObjectListModel* _missionItems;
@@ -90,6 +98,10 @@ private:
     Vehicle*            _activeVehicle;
     bool                _liveHomePositionAvailable;
     QGeoCoordinate      _liveHomePosition;
+    bool                _autoSync;
+    bool                _firstMissionItemSync;
+    bool                _expectingNewMissionItems;
+    bool                _queuedSend;
 
     static const char* _settingsGroup;
 };

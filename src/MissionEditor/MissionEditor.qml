@@ -43,29 +43,41 @@ QGCView {
     // zOrder comes from the Loader in MainWindow.qml
     z: zOrder
 
-    readonly property int   _decimalPlaces:     7
-    readonly property real  _horizontalMargin:  ScreenTools.defaultFontPixelWidth / 2
-    readonly property real  _margin:            ScreenTools.defaultFontPixelHeight / 2
-    readonly property var   _activeVehicle:     multiVehicleManager.activeVehicle
-    readonly property real  _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
-    readonly property real  _rightPanelWidth:   ScreenTools.defaultFontPixelWidth * 30
-    readonly property real  _rightPanelOpacity: 0.8
-    readonly property int   _toolButtonCount:   6
-    readonly property int   _addMissionItemsButtonAutoOffTimeout:   10000
+    readonly property int       _decimalPlaces:     8
+    readonly property real      _horizontalMargin:  ScreenTools.defaultFontPixelWidth / 2
+    readonly property real      _margin:            ScreenTools.defaultFontPixelHeight / 2
+    readonly property var       _activeVehicle:     multiVehicleManager.activeVehicle
+    readonly property real      _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
+    readonly property real      _rightPanelWidth:   ScreenTools.defaultFontPixelWidth * 30
+    readonly property real      _rightPanelOpacity: 0.8
+    readonly property int       _toolButtonCount:   6
+    readonly property string    _autoSyncKey:       "AutoSync"
+    readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
 
-    property var    _missionItems:              _controller.missionItems
+    property var    _missionItems:              controller.missionItems
 
     property var    _homePositionManager:       QGroundControl.homePositionManager
     property string _homePositionName:          _homePositionManager.homePositions.get(0).name
 
     property var    offlineHomePosition:        _homePositionManager.homePositions.get(0).coordinate
-    property var    liveHomePosition:           _controller.liveHomePosition
-    property var    liveHomePositionAvailable:  _controller.liveHomePositionAvailable
+    property var    liveHomePosition:           controller.liveHomePosition
+    property var    liveHomePositionAvailable:  controller.liveHomePositionAvailable
     property var    homePosition:               offlineHomePosition // live or offline depending on state
 
-    property bool _syncNeeded:                  _controller.missionItems.dirty
+    property bool _syncNeeded:                  controller.missionItems.dirty
+    property bool _syncInProgress:              _activeVehicle ? _activeVehicle.missionManager.inProgress : false
 
-    MissionEditorController { id: _controller }
+    MissionEditorController {
+        id:         controller
+        autoSync:   QGroundControl.flightMapSettings.loadMapSetting(editorMap.mapName, _autoSyncKey, true)
+
+        onAutoSyncChanged:      QGroundControl.flightMapSettings.saveMapSetting(editorMap.mapName, _autoSyncKey, autoSync)
+
+        onMissionItemsChanged:  {
+            updateHomePosition()
+            itemEditor.clearItem()
+        }
+    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -85,23 +97,13 @@ QGCView {
 
     function updateHomePosition() {
         homePosition = liveHomePositionAvailable ? liveHomePosition : offlineHomePosition
-        // Changing the coordinate will set the dirty bit, so we save and reset it
-        var dirtyBit = _missionItems.dirty
         _missionItems.get(0).coordinate = homePosition
-        _missionItems.dirty = dirtyBit
     }
 
     Component.onCompleted:              updateHomePosition()
     onOfflineHomePositionChanged:       updateHomePosition()
     onLiveHomePositionAvailableChanged: updateHomePosition()
     onLiveHomePositionChanged:          updateHomePosition()
-
-    Connections {
-        target: _controller
-
-        // When the mission items change _missionsItems[0] changes as well so we need to reset it to home
-        onMissionItemsChanged: updateHomePosition
-    }
 
     QGCViewPanel {
         id:             panel
@@ -154,7 +156,7 @@ QGCView {
                         if (homePositionManagerButton.checked) {
                             offlineHomePosition = coordinate
                         } else if (addMissionItemsButton.checked) {
-                            var index = _controller.addMissionItem(coordinate)
+                            var index = controller.addMissionItem(coordinate)
                             addMissionItemsButtonAutoOffTimer.start()
                             setCurrentItem(index)
                         } else {
@@ -176,6 +178,12 @@ QGCView {
                     property var    missionItem
                     property var    missionItemIndicator
                     property real   heading: missionItem ? missionItem.heading : 0
+
+                    function clearItem() {
+                        itemEditor.visible = false
+                        itemEditor.missionItem = undefined
+                        itemEditor.missionItemIndicator = undefined
+                    }
 
                     Drag.active:    itemDrag.drag.active
                     Drag.hotSpot.x: width  / 2
@@ -206,7 +214,7 @@ QGCView {
 
                 // Add the mission items to the map
                 MapItemView {
-                    model: _controller.missionItems
+                    model: controller.missionItems
 
                     delegate:
                         MissionItemIndicator {
@@ -230,9 +238,7 @@ QGCView {
                                             itemEditor.missionItem = Qt.binding(function() { return object })
                                             itemEditor.missionItemIndicator = Qt.binding(function() { return itemIndicator })
                                         } else {
-                                            itemEditor.visible = false
-                                            itemEditor.missionItem = undefined
-                                            itemEditor.missionItemIndicator = undefined
+                                            itemEditor.clearItem()
                                         }
 
                                         // Zoom the map and move to the new position
@@ -270,7 +276,7 @@ QGCView {
 
                 // Add lines between waypoints
                 MapItemView {
-                    model: _controller.waypointLines
+                    model: controller.waypointLines
 
                     delegate:
                         MapPolyline {
@@ -301,7 +307,7 @@ QGCView {
                         anchors.fill:   parent
                         spacing:        _margin / 2
                         orientation:    ListView.Vertical
-                        model:          _controller.canEdit ? _controller.missionItems : 0
+                        model:          controller.canEdit ? controller.missionItems : 0
 
                         property real _maxItemHeight: 0
 
@@ -315,7 +321,7 @@ QGCView {
 
                             onRemove: {
                                 var newCurrentItem = object.sequenceNumber - 1
-                                _controller.removeMissionItem(object.sequenceNumber)
+                                controller.removeMissionItem(object.sequenceNumber)
                                 if (_missionItems.count > 1) {
                                     newCurrentItem = Math.min(_missionItems.count - 1, newCurrentItem)
                                     setCurrentItem(newCurrentItem)
@@ -326,7 +332,7 @@ QGCView {
 
                     QGCLabel {
                         anchors.fill:   parent
-                        visible:        !_controller.canEdit
+                        visible:        !controller.canEdit
                         wrapMode:       Text.WordWrap
                         text:           "The set of mission items you have loaded cannot be edited by QGroundControl. " +
                                         "You will only be able to save these to a file, or send them to a vehicle."
@@ -750,12 +756,13 @@ QGCView {
                 } // Item - Help Panel
 
                 RoundButton {
-                    id:                     addMissionItemsButton
-                    anchors.margins:        _margin
-                    anchors.left:           parent.left
-                    y:                      (parent.height - (_toolButtonCount * height) - ((_toolButtonCount - 1) * _margin)) / 2
-                    buttonImage:            "/qmlimages/MapAddMission.svg"
-                    exclusiveGroup:         _dropButtonsExclusiveGroup
+                    id:                 addMissionItemsButton
+                    anchors.margins:    _margin
+                    anchors.left:       parent.left
+                    y:                  (parent.height - (_toolButtonCount * height) - ((_toolButtonCount - 1) * _margin)) / 2
+                    buttonImage:        "/qmlimages/MapAddMission.svg"
+                    exclusiveGroup:     _dropButtonsExclusiveGroup
+                    z:                  editorMap.zOrderWidgets
 
                     onCheckedChanged: {
                         if (checked) {
@@ -775,10 +782,26 @@ QGCView {
                 }
 
                 RoundButton {
-                    id:                 homePositionManagerButton
+                    id:                 deleteMissionItemButton
                     anchors.margins:    _margin
                     anchors.left:       parent.left
                     anchors.top:        addMissionItemsButton.bottom
+                    buttonImage:        "/qmlimages/TrashDelete.svg"
+                    exclusiveGroup:     _dropButtonsExclusiveGroup
+                    z:                  editorMap.zOrderWidgets
+
+                    onClicked: {
+                        itemEditor.clearItem()
+                        controller.deleteCurrentMissionItem()
+                        checked = false
+                    }
+                }
+
+                RoundButton {
+                    id:                 homePositionManagerButton
+                    anchors.margins:    _margin
+                    anchors.left:       parent.left
+                    anchors.top:        deleteMissionItemButton.bottom
                     buttonImage:        "/qmlimages/MapHome.svg"
                     exclusiveGroup:     _dropButtonsExclusiveGroup
                     z:                  editorMap.zOrderWidgets
@@ -838,67 +861,8 @@ QGCView {
                     viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                     exclusiveGroup:     _dropButtonsExclusiveGroup
                     z:                  editorMap.zOrderWidgets
-
-                    dropDownComponent: Component {
-                        Column {
-                            id:         columnHolder
-                            spacing:    _margin
-
-                            QGCLabel {
-                                width:      columnHolder.width
-                                wrapMode:   Text.WordWrap
-                                text:       _syncNeeded ?
-                                                "You have unsaved changed to you mission. You should send to your vehicle, or save to a file:" :
-                                                "Sync:"
-                            }
-
-                            Row {
-                                spacing: ScreenTools.defaultFontPixelWidth
-
-                                QGCButton {
-                                    text:       "Send to vehicle"
-                                    enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
-
-                                    onClicked: {
-                                        syncButton.hideDropDown()
-                                        _controller.setMissionItems()
-                                    }
-                                }
-
-                                QGCButton {
-                                    text:       "Load from vehicle"
-                                    enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
-
-                                    onClicked: {
-                                        syncButton.hideDropDown()
-                                        _controller.getMissionItems()
-                                    }
-                                }
-                            }
-
-                            Row {
-                                spacing: ScreenTools.defaultFontPixelWidth
-
-                                QGCButton {
-                                    text:       "Save to file..."
-
-                                    onClicked: {
-                                        syncButton.hideDropDown()
-                                        _controller.saveMissionToFile()
-                                    }
-                                }
-
-                                QGCButton {
-                                    text:       "Load from file..."
-
-                                    onClicked: {
-                                        syncButton.hideDropDown()
-                                        _controller.loadMissionFromFile()
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    dropDownComponent:  syncDropDownComponent
+                    enabled:            !_syncInProgress
                 }
 
                 DropButton {
@@ -952,4 +916,83 @@ QGCView {
             } // FlightMap
         } // Item - split view container
     } // QGCViewPanel
+
+    Component {
+        id: syncDropDownComponent
+
+        Column {
+            id:         columnHolder
+            spacing:    _margin
+
+            QGCLabel {
+                width:      columnHolder.width
+                wrapMode:   Text.WordWrap
+                text:       _syncNeeded && !controller.autoSync ?
+                                "You have unsaved changed to you mission. You should send to your vehicle, or save to a file:" :
+                                "Sync:"
+            }
+
+            Row {
+                visible:    autoSyncCheckBox.enabled && autoSyncCheckBox.checked
+                spacing:    ScreenTools.defaultFontPixelWidth
+
+                QGCButton {
+                    text:       "Send to vehicle"
+                    enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
+
+                    onClicked: {
+                        syncButton.hideDropDown()
+                        controller.sendMissionItems()
+                    }
+                }
+
+                QGCButton {
+                    text:       "Load from vehicle"
+                    enabled:    _activeVehicle && !_activeVehicle.missionManager.inProgress
+
+                    onClicked: {
+                        syncButton.hideDropDown()
+                        controller.getMissionItems()
+                    }
+                }
+            }
+
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth
+
+                QGCButton {
+                    text:       "Save to file..."
+
+                    onClicked: {
+                        syncButton.hideDropDown()
+                        controller.saveMissionToFile()
+                    }
+                }
+
+                QGCButton {
+                    text:       "Load from file..."
+
+                    onClicked: {
+                        syncButton.hideDropDown()
+                        controller.loadMissionFromFile()
+                    }
+                }
+            }
+
+            QGCLabel {
+                id:         autoSyncDisallowedLabel
+                visible:    _activeVehicle && _activeVehicle.armed
+                text:       "AutoSync is not allowed whie vehicle is armed"
+            }
+
+            QGCCheckBox {
+                id:         autoSyncCheckBox
+                checked:    controller.autoSync
+                text:       "Automatically sync changes with vehicle"
+                enabled:    _activeVehicle ? !_activeVehicle.armed : false
+
+                onClicked: controller.autoSync = checked
+            }
+        }
+    }
 } // QGCVIew

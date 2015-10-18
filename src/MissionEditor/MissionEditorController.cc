@@ -27,6 +27,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MissionManager.h"
 #include "QGCFileDialog.h"
 #include "CoordinateVector.h"
+#include "QGCMessageBox.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -40,6 +41,9 @@ MissionEditorController::MissionEditorController(QWidget *parent)
     , _canEdit(true)
     , _activeVehicle(NULL)
     , _liveHomePositionAvailable(false)
+    , _autoSync(false)
+    , _firstMissionItemSync(false)
+    , _expectingNewMissionItems(false)
 {
     MultiVehicleManager* multiVehicleMgr = MultiVehicleManager::instance();
     
@@ -47,9 +51,6 @@ MissionEditorController::MissionEditorController(QWidget *parent)
     
     Vehicle* activeVehicle = multiVehicleMgr->activeVehicle();
     if (activeVehicle) {
-        MissionManager* missionManager = activeVehicle->missionManager();
-        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditorController::_newMissionItemsAvailable);
-        _newMissionItemsAvailable();
         _activeVehicleChanged(activeVehicle);
     } else {
         _missionItems = new QmlObjectListModel(this);
@@ -63,6 +64,29 @@ MissionEditorController::~MissionEditorController()
 
 void MissionEditorController::_newMissionItemsAvailable(void)
 {
+    if (_firstMissionItemSync || !_expectingNewMissionItems) {
+        // This is the first time the vehicle is seeing items. We have to be careful of transitioning from offline
+        // to online. Other case is an unexpected set of new items from the vehicle.
+
+        _firstMissionItemSync = false;
+        if (_missionItems && _missionItems->count() > 1) {
+            QGCMessageBox::StandardButton button = QGCMessageBox::warning("Mission Editing",
+                                                                          "The vehicle has sent a new set of Mission Items. "
+                                                                            "Do you want to discard your current set of unsaved items and use the ones from the vehicle instead?",
+                                                                          QGCMessageBox::Yes | QGCMessageBox::No,
+                                                                          QGCMessageBox::No);
+            if (button == QGCMessageBox::No) {
+                return;
+            }
+        }
+    } else if (_autoSync) {
+        // When we are running autoSync we assume the MissionManager is notifying us about the
+        // items we just sent to it. We keep our own edit list, instead of resetting.
+        return;
+    }
+
+    _expectingNewMissionItems = false;
+
     if (_missionItems) {
         _deinitAllMissionItems();
         _missionItems->deleteLater();
@@ -81,15 +105,15 @@ void MissionEditorController::getMissionItems(void)
     Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     
     if (activeVehicle) {
+        _expectingNewMissionItems = true;
         MissionManager* missionManager = activeVehicle->missionManager();
         connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionEditorController::_newMissionItemsAvailable);
         activeVehicle->missionManager()->requestMissionItems();
     }
 }
 
-void MissionEditorController::setMissionItems(void)
+void MissionEditorController::sendMissionItems(void)
 {
-    // FIXME: Need to pull out home position
     Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
     
     if (activeVehicle) {
@@ -131,6 +155,16 @@ void MissionEditorController::removeMissionItem(int index)
     _deinitMissionItem(item);
     
     _recalcAll();
+
+    // Set the new current item
+
+    if (index >= _missionItems->count()) {
+        index--;
+    }
+    for (int i=0; i<_missionItems->count(); i++) {
+        MissionItem* item =  qobject_cast<MissionItem*>(_missionItems->get(i));
+        item->setIsCurrentItem(i == index);
+    }
 }
 
 void MissionEditorController::loadMissionFromFile(void)
@@ -306,6 +340,8 @@ void MissionEditorController::_initAllMissionItems(void)
     emit canEditChanged(_canEdit);
     
     _missionItems->setDirty(false);
+
+    connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionEditorController::_dirtyChanged);
 }
 
 void MissionEditorController::_deinitAllMissionItems(void)
@@ -313,6 +349,8 @@ void MissionEditorController::_deinitAllMissionItems(void)
     for (int i=0; i<_missionItems->count(); i++) {
         _deinitMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));
     }
+
+    connect(_missionItems, &QmlObjectListModel::dirtyChanged, this, &MissionEditorController::_dirtyChanged);
 }
 
 void MissionEditorController::_initMissionItem(MissionItem* item)
@@ -345,8 +383,12 @@ void MissionEditorController::_itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_C
 void MissionEditorController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
     if (_activeVehicle) {
-        disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,  this, &MissionEditorController::_activeVehicleHomePositionAvailableChanged);
-        disconnect(_activeVehicle, &Vehicle::homePositionChanged,           this, &MissionEditorController::_activeVehicleHomePositionChanged);
+        MissionManager* missionManager = _activeVehicle->missionManager();
+
+        disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionEditorController::_newMissionItemsAvailable);
+        disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionEditorController::_inProgressChanged);
+        disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,      this, &MissionEditorController::_activeVehicleHomePositionAvailableChanged);
+        disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionEditorController::_activeVehicleHomePositionChanged);
         _activeVehicle = NULL;
         _activeVehicleHomePositionAvailableChanged(false);
     }
@@ -354,10 +396,23 @@ void MissionEditorController::_activeVehicleChanged(Vehicle* activeVehicle)
     _activeVehicle = activeVehicle;
     
     if (_activeVehicle) {
-        connect(_activeVehicle, &Vehicle::homePositionAvailableChanged, this, &MissionEditorController::_activeVehicleHomePositionAvailableChanged);
-        connect(_activeVehicle, &Vehicle::homePositionChanged,          this, &MissionEditorController::_activeVehicleHomePositionChanged);
+        MissionManager* missionManager = activeVehicle->missionManager();
+
+        connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionEditorController::_newMissionItemsAvailable);
+        connect(missionManager, &MissionManager::inProgressChanged,          this, &MissionEditorController::_inProgressChanged);
+        connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionEditorController::_activeVehicleHomePositionAvailableChanged);
+        connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionEditorController::_activeVehicleHomePositionChanged);
         _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
         _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
+
+        if (missionManager->inProgress()) {
+            // Vehicle is still in process of requesting mission items
+            _firstMissionItemSync = true;
+        } else {
+            // Vehicle already has mission items
+            _firstMissionItemSync = false;
+            _newMissionItemsAvailable();
+        }
     }
 }
 
@@ -371,4 +426,55 @@ void MissionEditorController::_activeVehicleHomePositionChanged(const QGeoCoordi
 {
     _liveHomePosition = homePosition;
     emit liveHomePositionChanged(_liveHomePosition);
+}
+
+void MissionEditorController::deleteCurrentMissionItem(void)
+{
+    for (int i=0; i<_missionItems->count(); i++) {
+        MissionItem* item =  qobject_cast<MissionItem*>(_missionItems->get(i));
+        if (item->isCurrentItem() && i != 0) {
+            removeMissionItem(i);
+            return;
+        }
+    }
+}
+
+void MissionEditorController::setAutoSync(bool autoSync)
+{
+    _autoSync = autoSync;
+    emit autoSyncChanged(_autoSync);
+
+    if (_autoSync) {
+        _dirtyChanged(true);
+    }
+}
+
+void MissionEditorController::_dirtyChanged(bool dirty)
+{
+    if (dirty && _autoSync) {
+        Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+
+        if (activeVehicle && !activeVehicle->armed()) {
+            if (_activeVehicle->missionManager()->inProgress()) {
+                _queuedSend = true;
+            } else {
+                _autoSyncSend();
+            }
+        }
+    }
+}
+
+void MissionEditorController::_autoSyncSend(void)
+{
+    qDebug() << "Auto-syncing with vehicle";
+    _queuedSend = false;
+    sendMissionItems();
+    _missionItems->setDirty(false);
+}
+
+void MissionEditorController::_inProgressChanged(bool inProgress)
+{
+    if (!inProgress && _queuedSend) {
+        _autoSyncSend();
+    }
 }
