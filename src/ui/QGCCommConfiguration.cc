@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "QGCUDPLinkConfiguration.h"
 #include "QGCTCPLinkConfiguration.h"
+#include "MockLinkConfiguration.h"
 #include "LogReplayLinkConfigurationWidget.h"
 #include "QGCCommConfiguration.h"
 #include "ui_QGCCommConfiguration.h"
@@ -151,7 +152,8 @@ void QGCCommConfiguration::_loadTypeConfigWidget(int type)
             break;
 #ifdef QT_DEBUG
         case LinkConfiguration::TypeMock: {
-            _ui->linkScrollArea->setWidget(NULL);
+            QWidget* conf = new MockLinkConfiguration((MockConfiguration*)_config, this);
+            _ui->linkScrollArea->setWidget(conf);
             _ui->linkGroupBox->setTitle(tr("Mock Link"));
             _ui->typeCombo->setCurrentIndex(_ui->typeCombo->findData(LinkConfiguration::TypeMock));
         }
