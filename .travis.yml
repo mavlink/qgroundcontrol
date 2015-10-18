@@ -61,11 +61,9 @@ install:
       && sh -e /etc/init.d/xvfb start
       ;
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-         brew tap PX4/homebrew-px4
-      && brew update
-      && brew install qt54
-      && brew linkapps qt54
-      && export PATH=/usr/local/opt/qt54/bin:$PATH
+         brew update
+      && brew install qt5
+      && export PATH=/usr/local/opt/qt5/bin:$PATH
       ;
     elif [ "${TRAVIS_OS_NAME}" = "android" ]; then
          wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
