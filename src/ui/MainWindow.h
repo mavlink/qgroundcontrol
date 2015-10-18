@@ -55,7 +55,6 @@ This file is part of the QGROUNDCONTROL project
     #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN
 
-class QSplashScreen;
 class QGCStatusBar;
 class Linecharts;
 class QGCDataPlot2D;
@@ -77,10 +76,7 @@ public:
     void deleteInstance(void);
 
     /// @brief Creates the MainWindow singleton. Should only be called once by QGCApplication.
-    static MainWindow* _create(QSplashScreen* splashScreen);
-
-    /// @brief Called to indicate that splash screen is no longer being displayed.
-    void splashScreenFinished(void) { _splashScreen = NULL; }
+    static MainWindow* _create();
 
     ~MainWindow();
 
@@ -96,8 +92,6 @@ public:
     {
         return _lowPowerMode;
     }
-
-    void hideSplashScreen(void);
 
     /// @brief Saves the last used connection
     void saveLastUsedConnection(const QString connection);
@@ -222,7 +216,7 @@ private slots:
 
 private:
     /// Constructor is private since all creation should be through MainWindow::_create
-    MainWindow(QSplashScreen* splashScreen);
+    MainWindow();
 
     void _openUrl(const QString& url, const QString& errorMessage);
 
@@ -265,7 +259,6 @@ private:
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
     bool                    _showStatusBar;
     QVBoxLayout*            _centralLayout;
-    QSplashScreen*          _splashScreen;          ///< Splash screen, NULL is splash screen not currently being shown
     Ui::MainWindow          _ui;
 
     QGCQmlWidgetHolder*     _mainQmlWidgetHolder;

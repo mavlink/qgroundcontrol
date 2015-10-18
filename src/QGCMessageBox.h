@@ -101,7 +101,6 @@ private:
         parent = _validateParameters(buttons, &defaultButton, parent);
 
         if (MainWindow::instance()) {
-            MainWindow::instance()->hideSplashScreen();
             if (parent == NULL) {
                 parent = MainWindow::instance();
             }
