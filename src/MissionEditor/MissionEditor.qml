@@ -206,7 +206,9 @@ QGCView {
                         onDragActiveChanged: {
                             if (!drag.active) {
                                 var point = Qt.point(itemEditor.x + (itemEditor.width  / 2), itemEditor.y + (itemEditor.height / 2))
-                                itemEditor.missionItem.coordinate = editorMap.toCoordinate(point)
+                                var coordinate = editorMap.toCoordinate(point)
+                                coordinate.altitude = itemEditor.missionItem.coordinate.altitude
+                                itemEditor.missionItem.coordinate = coordinate
                             }
                         }
                     }
