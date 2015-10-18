@@ -378,6 +378,8 @@ void QGCApplication::_initCommon(void)
     } else if (settings.allKeys().count()) {
         // Settings version key is missing and there are settings. This is an upgrade scenario.
         settingsUpgraded = true;
+    } else {
+        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
 
     if (settingsUpgraded) {
