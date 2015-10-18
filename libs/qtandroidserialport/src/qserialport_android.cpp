@@ -106,13 +106,49 @@ QSerialPortPrivate::QSerialPortPrivate(QSerialPort *q)
     , isCustomBaudRateSupported(false)
     , emittedBytesWritten(false)
     , pendingBytesWritten(0)
-    , hasRegisteredFunctions(false)
     , jniDataBits(8)
     , jniStopBits(1)
     , jniParity(0)
     , internalWriteTimeoutMsec(0)
     , isReadStopped(true)
 {
+}
+
+void QSerialPortPrivate::setNativeMethods(void)
+{
+    __android_log_print(ANDROID_LOG_INFO, kJTag, "Registering Native Functions");
+
+    //  REGISTER THE C++ FUNCTION WITH JNI
+    JNINativeMethod javaMethods[] {
+        {"nativeDeviceHasDisconnected", "(I)V",                   reinterpret_cast<void *>(jniDeviceHasDisconnected)},
+        {"nativeDeviceNewData",         "(I[B)V",                 reinterpret_cast<void *>(jniDeviceNewData)},
+        {"nativeDeviceException",       "(ILjava/lang/String;)V", reinterpret_cast<void *>(jniDeviceException)}
+    };
+
+    QAndroidJniEnvironment jniEnv;
+    if (jniEnv->ExceptionCheck()) {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+    }
+
+    jclass objectClass = jniEnv->FindClass(kJniClassName);
+    if(!objectClass) {
+        __android_log_print(ANDROID_LOG_ERROR, kJTag, "Couldn't find class: %s", kJniClassName);
+        return;
+    }
+
+    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
+
+    __android_log_print(ANDROID_LOG_INFO, kJTag, "Native Functions Registered");
+
+    if (jniEnv->ExceptionCheck()) {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+    }
+
+    if (val < 0) {
+        __android_log_print(ANDROID_LOG_ERROR, kJTag, "Error registering methods");
+    }
 }
 
 bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
@@ -138,45 +174,6 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
         __android_log_print(ANDROID_LOG_ERROR, kJTag, "Error opening %s", systemLocation.toLatin1().data());
         q_ptr->setError(QSerialPort::DeviceNotFoundError);
         return false;
-    }
-
-    if (!hasRegisteredFunctions)
-    {
-        __android_log_print(ANDROID_LOG_INFO, kJTag, "Registering Native Functions");
-        //  REGISTER THE C++ FUNCTION WITH JNI
-        JNINativeMethod javaMethods[] {
-            {"nativeDeviceHasDisconnected", "(I)V",                   reinterpret_cast<void *>(jniDeviceHasDisconnected)},
-            {"nativeDeviceNewData",         "(I[B)V",                 reinterpret_cast<void *>(jniDeviceNewData)},
-            {"nativeDeviceException",       "(ILjava/lang/String;)V", reinterpret_cast<void *>(jniDeviceException)}
-        };
-
-        QAndroidJniEnvironment jniEnv;
-        if (jniEnv->ExceptionCheck()) {
-            jniEnv->ExceptionDescribe();
-            jniEnv->ExceptionClear();
-        }
-
-        QAndroidJniObject javaClass(kJniClassName);
-        if(!javaClass.isValid()) {
-            __android_log_print(ANDROID_LOG_ERROR, kJTag, "Java class %s not valid", kJniClassName);
-            return false;
-        }
-        jclass objectClass = jniEnv->GetObjectClass(javaClass.object<jobject>());
-        jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
-        jniEnv->DeleteLocalRef(objectClass);
-        hasRegisteredFunctions = true;
-        __android_log_print(ANDROID_LOG_INFO, kJTag, "Native Functions Registered");
-
-        if (jniEnv->ExceptionCheck()) {
-            jniEnv->ExceptionDescribe();
-            jniEnv->ExceptionClear();
-        }
-
-        if(val < 0) {
-            __android_log_print(ANDROID_LOG_ERROR, kJTag, "Error registering methods");
-            q_ptr->setError(QSerialPort::OpenError);
-            return false;
-        }
     }
 
     __android_log_print(ANDROID_LOG_INFO, kJTag, "Calling Java getDeviceHandle");
