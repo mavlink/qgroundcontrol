@@ -57,6 +57,7 @@ public:
     Q_INVOKABLE void    onDisconnect(QString conf);
     Q_INVOKABLE void    onEnterMessageArea(int x, int y);
     Q_INVOKABLE void    onToolBarMessageClosed(void);
+    Q_INVOKABLE void    showSettings(void);
 
     Q_PROPERTY(double       height              MEMBER _toolbarHeight           NOTIFY heightChanged)
     Q_PROPERTY(QStringList  configList          MEMBER _linkConfigurations      NOTIFY configListChanged)

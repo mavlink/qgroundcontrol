@@ -56,13 +56,6 @@ QGCView {
         Column {
             anchors.fill: parent
 
-            QGCLabel {
-                text:           "SAFETY CONFIG"
-                font.pixelSize: ScreenTools.largeFontPixelSize
-            }
-
-            Item { height: 20; width: 10 } // spacer
-
             //-----------------------------------------------------------------
             //-- Return Home Triggers
 

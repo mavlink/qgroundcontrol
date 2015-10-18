@@ -278,13 +278,6 @@ QGCView {
         Column {
             anchors.fill: parent
 
-            QGCLabel {
-                text: "SENSORS CONFIG"
-                font.pixelSize: ScreenTools.largeFontPixelSize
-            }
-
-            Item { height: ScreenTools.defaultFontPixelHeight; width: 10 } // spacer
-
             Row {
                 readonly property int buttonWidth: ScreenTools.defaultFontPixelWidth * 15
 

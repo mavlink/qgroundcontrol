@@ -116,11 +116,6 @@ QGCView {
                 spacing:        ScreenTools.defaultFontPixelHeight
 
                 QGCLabel {
-                    text: "POWER CONFIG"
-                    font.pixelSize: ScreenTools.largeFontPixelSize
-                }
-
-                QGCLabel {
                     text: "Battery"
                     font.pixelSize: ScreenTools.mediumFontPixelSize
                 }
