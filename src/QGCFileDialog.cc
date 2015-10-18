@@ -228,6 +228,5 @@ void QGCFileDialog::_validate(Options& options)
     options |= DontUseNativeDialog;
 #endif
     if (MainWindow::instance()) {
-        MainWindow::instance()->hideSplashScreen();
     }
 }

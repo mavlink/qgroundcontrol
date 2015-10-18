@@ -33,7 +33,6 @@
 #include <QFile>
 #include <QFlags>
 #include <QThread>
-#include <QSplashScreen>
 #include <QPixmap>
 #include <QDesktopWidget>
 #include <QPainter>

@@ -31,7 +31,6 @@
 
 #include <QFile>
 #include <QFlags>
-#include <QSplashScreen>
 #include <QPixmap>
 #include <QDesktopWidget>
 #include <QPainter>
@@ -433,21 +432,12 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
     _loadCurrentStyle();
-    
-    // Show splash screen
-    QPixmap splashImage(":/res/SplashScreen");
-    QSplashScreen* splashScreen = new QSplashScreen(splashImage);
-    // Delete splash screen after mainWindow was displayed
-    splashScreen->setAttribute(Qt::WA_DeleteOnClose);
-    splashScreen->show();
-    processEvents();
-    splashScreen->showMessage(tr("Loading application fonts"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
 
     // Start the user interface
-    splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    MainWindow* mainWindow = MainWindow::_create(splashScreen);
+    MainWindow* mainWindow = MainWindow::_create();
     Q_CHECK_PTR(mainWindow);
 
     // If we made it this far and we still don't have a location. Either the specfied location was invalid
@@ -460,10 +450,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
             tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
         mainWindow->showSettings();
     }
-
-    // Remove splash screen
-    splashScreen->finish(mainWindow);
-    mainWindow->splashScreenFinished();
 
 #ifndef __mobile__
     // Now that main window is up check for lost log files
