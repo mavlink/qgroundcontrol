@@ -107,10 +107,11 @@ private:
             }
         }
 
+        qDebug() << "QGCMessageBox (unit testing)" << title << text;
+
 #ifdef QT_DEBUG
 #ifndef __mobile__
         if (qgcApp()->runningUnitTests()) {
-            qDebug() << "QGCMessageBox (unit testing)" << title << text;
             return UnitTest::_messageBox(icon, title, text, buttons, defaultButton);
         } else
 #endif

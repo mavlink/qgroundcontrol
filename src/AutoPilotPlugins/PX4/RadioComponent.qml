@@ -42,7 +42,7 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
-    readonly property string dialogTitle: "Radio Config"
+    readonly property string dialogTitle: "Radio"
     readonly property real labelToMonitorMargin: defaultTextWidth * 3
     property bool controllerCompleted: false
     property bool controllerAndViewReady: false
@@ -269,23 +269,10 @@ QGCView {
 
         // Main view Qml starts here
 
-        QGCLabel {
-            id:             header
-            font.pixelSize: ScreenTools.largeFontPixelSize
-            text:           "RADIO CONFIG"
-        }
-
-        Item {
-            id:             spacer
-            anchors.top:    header.bottom
-            width:          parent.width
-            height:         10
-        }
-
         // Left side column
         Column {
             id:             leftColumn
-            anchors.top:    spacer.bottom
+            anchors.top:    parent.top
             anchors.left:   parent.left
             anchors.right:  columnSpacer.left
             spacing:        10
@@ -504,7 +491,7 @@ QGCView {
         // Right side column
         Column {
             id:             rightColumn
-            anchors.top:    spacer.bottom
+            anchors.top:    parent.top
             anchors.right:  parent.right
             width:          defaultTextWidth * 35
             spacing:        10

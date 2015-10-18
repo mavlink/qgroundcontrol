@@ -96,30 +96,18 @@ QGCView {
 
         readonly property real spacerHeight: ScreenTools.defaultFontPixelHeight
 
-        QGCLabel {
-            id:             header
-            width:          parent.width
-            font.pixelSize: ScreenTools.largeFontPixelSize
-            text:           "AIRFRAME CONFIG"
-        }
-
-        Item {
-            id:             headingSpacer
-            anchors.top:    header.bottom
-            height:         parent.spacerHeight
-            width:          20
-        }
-
         Item {
             id:             helpApplyRow
-            anchors.top:    headingSpacer.bottom
-            width:          parent.width
+            anchors.top:    parent.top
+            anchors.left:   parent.left
+            anchors.right:  parent.right
             height:         Math.max(helpText.contentHeight, applyButton.height)
 
             QGCLabel {
                 id:             helpText
                 width:          parent.width - applyButton.width - 5
                 text:           "Please select your airframe type. Click 'Apply and Restart' to reboot the autopilot. Please re-connect then manually."
+                font.pixelSize: ScreenTools.mediumFontPixelSize
                 wrapMode:       Text.WordWrap
             }
 

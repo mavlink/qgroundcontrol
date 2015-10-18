@@ -38,7 +38,7 @@ QGCView {
     viewPanel:  panel
 
     // User visible strings
-    readonly property string title:             "FIRMWARE UPDATE"
+    readonly property string title:             "FIRMWARE"
     readonly property string highlightPrefix:   "<font color=\"yellow\">"
     readonly property string highlightSuffix:   "</font>"
     readonly property string welcomeText:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
@@ -392,7 +392,7 @@ QGCView {
         QGCLabel {
             id:             titleLabel
             text:           title
-            font.pixelSize: ScreenTools.largeFontPixelSize
+            font.pixelSize: ScreenTools.mediumFontPixelSize
         }
 
         ProgressBar {
