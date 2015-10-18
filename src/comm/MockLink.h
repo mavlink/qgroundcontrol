@@ -35,22 +35,26 @@
 Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
 Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
 
-/// @file
-///     @brief Mock implementation of a Link.
-///
-///     @author Don Gagne <don@thegagnes.com>
-
 class MockConfiguration : public LinkConfiguration
 {
 public:
+    MockConfiguration(const QString& name);
+    MockConfiguration(MockConfiguration* source);
 
-    MockConfiguration(const QString& name) : LinkConfiguration(name) {}
-    MockConfiguration(MockConfiguration* source) : LinkConfiguration(source) {}
-    int  type() { return LinkConfiguration::TypeMock; }
-    void copyFrom(LinkConfiguration* source) { LinkConfiguration::copyFrom(source); }
-    void loadSettings(QSettings& settings, const QString& root) { Q_UNUSED(settings); Q_UNUSED(root); }
-    void saveSettings(QSettings& settings, const QString& root) { Q_UNUSED(settings); Q_UNUSED(root); }
-    void updateSettings() {}
+    MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
+    void setFirmwareType(MAV_AUTOPILOT firmwareType) { _firmwareType = firmwareType; }
+
+    // Overrides from LinkConfiguration
+    int  type(void) { return LinkConfiguration::TypeMock; }
+    void copyFrom(LinkConfiguration* source);
+    void loadSettings(QSettings& settings, const QString& root);
+    void saveSettings(QSettings& settings, const QString& root);
+    void updateSettings(void);
+
+private:
+    MAV_AUTOPILOT _firmwareType;
+
+    static const char* _firmwareTypeKey;
 };
 
 class MockLink : public LinkInterface

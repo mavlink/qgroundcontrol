@@ -71,6 +71,8 @@ float MockLink::_vehicleLatitude =  47.633033f;
 float MockLink::_vehicleLongitude = -122.08794f;
 float MockLink::_vehicleAltitude =  2.5f;
 
+const char* MockConfiguration::_firmwareTypeKey = "FirmwareType";
+
 MockLink::MockLink(MockConfiguration* config)
     : _missionItemHandler(this)
     , _name("MockLink")
@@ -85,6 +87,10 @@ MockLink::MockLink(MockConfiguration* config)
     , _fileServer(NULL)
 {
     _config = config;
+    if (_config) {
+        _autopilotType = config->firmwareType();
+    }
+
     union px4_custom_mode   px4_cm;
 
     px4_cm.data = 0;
@@ -739,4 +745,52 @@ void MockLink::_sendGpsRawInt(void)
                                  UINT16_MAX,                            // course over ground not known
                                  8);                                    // satellite count
     respondWithMavlinkMessage(msg);
+}
+
+MockConfiguration::MockConfiguration(const QString& name)
+    : LinkConfiguration(name)
+    , _firmwareType(MAV_AUTOPILOT_PX4)
+{
+
+}
+
+MockConfiguration::MockConfiguration(MockConfiguration* source)
+    : LinkConfiguration(source)
+{
+    _firmwareType = source->_firmwareType;
+}
+
+void MockConfiguration::copyFrom(LinkConfiguration *source)
+{
+    LinkConfiguration::copyFrom(source);
+    MockConfiguration* usource = dynamic_cast<MockConfiguration*>(source);
+    Q_ASSERT(usource != NULL);
+    _firmwareType = usource->_firmwareType;
+}
+
+void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
+{
+    settings.beginGroup(root);
+    settings.setValue(_firmwareTypeKey, (int)_firmwareType);
+    settings.sync();
+    settings.endGroup();
+}
+
+void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
+{
+    settings.beginGroup(root);
+    _firmwareType = (MAV_AUTOPILOT)settings.value(_firmwareTypeKey, (int)MAV_AUTOPILOT_PX4).toInt();
+    settings.endGroup();
+}
+
+void MockConfiguration::updateSettings()
+{
+    if (_link) {
+        MockLink* ulink = dynamic_cast<MockLink*>(_link);
+        if (ulink) {
+            // Restart connect not supported
+            Q_ASSERT(false);
+            //ulink->_restartConnection();
+        }
+    }
 }
