@@ -34,7 +34,7 @@
 UT_REGISTER_TEST(MainWindowTest)
 
 MainWindowTest::MainWindowTest(void) :
-    _mainWindow(NULL)
+    _mainWindow()
 {
     
 }
@@ -43,7 +43,7 @@ void MainWindowTest::init(void)
 {
     UnitTest::init();
 
-    _mainWindow = MainWindow::_create(NULL);
+    _mainWindow = MainWindow::_create();
     Q_CHECK_PTR(_mainWindow);
 }
 

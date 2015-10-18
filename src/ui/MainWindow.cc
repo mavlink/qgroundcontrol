@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QTimer>
 #include <QHostInfo>
-#include <QSplashScreen>
 #include <QQuickView>
 #include <QDesktopWidget>
 #include <QScreen>
@@ -100,10 +99,10 @@ const char* MainWindow::_visibleWidgetsKey =                "VisibleWidgets";
 
 static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
 
-MainWindow* MainWindow::_create(QSplashScreen* splashScreen)
+MainWindow* MainWindow::_create()
 {
     Q_ASSERT(_instance == NULL);
-    new MainWindow(splashScreen);
+    new MainWindow();
     // _instance is set in constructor
     Q_ASSERT(_instance);
     return _instance;
@@ -122,19 +121,14 @@ void MainWindow::deleteInstance(void)
 /// @brief Private constructor for MainWindow. MainWindow singleton is only ever created
 ///         by MainWindow::_create method. Hence no other code should have access to
 ///         constructor.
-MainWindow::MainWindow(QSplashScreen* splashScreen)
+MainWindow::MainWindow()
     : _autoReconnect(false)
     , _lowPowerMode(false)
     , _showStatusBar(false)
-    , _splashScreen(splashScreen)
     , _mainQmlWidgetHolder(NULL)
 {
     Q_ASSERT(_instance == NULL);
     _instance = this;
-
-    if (splashScreen) {
-        connect(this, &MainWindow::initStatusChanged, splashScreen, &QSplashScreen::showMessage);
-    }
 
     // Qt 4/5 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
 #ifdef Q_OS_LINUX
@@ -593,15 +587,6 @@ void MainWindow::_storeCurrentViewState(void)
 #endif
     
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
-}
-
-/// @brief Hides the spash screen if it is currently being shown
-void MainWindow::hideSplashScreen(void)
-{
-    if (_splashScreen) {
-        _splashScreen->hide();
-        _splashScreen = NULL;
-    }
 }
 
 void MainWindow::manageLinks()

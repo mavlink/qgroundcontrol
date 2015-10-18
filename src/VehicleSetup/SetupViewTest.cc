@@ -41,7 +41,7 @@ void SetupViewTest::init(void)
 {
     UnitTest::init();
 
-    _mainWindow = MainWindow::_create(NULL);
+    _mainWindow = MainWindow::_create();
     Q_CHECK_PTR(_mainWindow);
 }
 
