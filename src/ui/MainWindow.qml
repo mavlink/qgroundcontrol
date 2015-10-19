@@ -26,14 +26,16 @@ import QtQuick.Controls 1.2
 import QtPositioning    5.2
 
 import QGroundControl.Controls      1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl.FlightDisplay 1.0
 import QGroundControl.ScreenTools   1.0
 
 /// Qml for MainWindow
 FlightDisplayView {
     id: _root
-    // sets the top margin soo map widgets are not under toolbar
-    topMargin: toolbar.height + ScreenTools.defaultFontPixelWidth
+
+    topMargin: toolbarLoader.height
+
+    property var _toolbar: toolbarLoader.item
 
     readonly property string _planViewSource:   "MissionEditor.qml"
     readonly property string _setupViewSource:  "SetupView.qml"
@@ -65,7 +67,7 @@ FlightDisplayView {
             _root.hideWidgets = true
         }
 
-        onShowToolbarMessage: toolbar.showToolbarMessage(message)
+        onShowToolbarMessage: _toolbar.showToolbarMessage(message)
 
         // The following are use for unit testing only
 
@@ -75,9 +77,15 @@ FlightDisplayView {
         onShowSetupVehicleComponent:    setupViewLoader.item.showVehicleComponentPanel(vehicleComponent)
     }
 
-    MainToolBar {
-        id:     toolbar
+    // We delay load the following control to improve boot time
+    Component.onCompleted: {
+        toolbarLoader.source = "MainToolBar.qml"
+    }
+
+    Loader {
+        id:     toolbarLoader
         width:  parent.width
+        height: item ? item.height : 0
         z:      _root.zOrderTopMost
     }
 
@@ -85,7 +93,7 @@ FlightDisplayView {
         id:             planViewLoader
         anchors.left:   parent.left
         anchors.right:  parent.right
-        anchors.top:    toolbar.bottom
+        anchors.top:    toolbarLoader.bottom
         anchors.bottom: parent.bottom
         visible:        false
 
@@ -97,7 +105,7 @@ FlightDisplayView {
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         anchors.left:       parent.left
         anchors.right:      parent.right
-        anchors.top:        toolbar.bottom
+        anchors.top:        toolbarLoader.bottom
         anchors.bottom:     parent.bottom
         visible:            false
 
