@@ -34,6 +34,4 @@ MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
 MissionItemSummary      1.0 MissionItemSummary.qml
 MissionItemEditor       1.0 MissionItemEditor.qml
 
-MainToolBar         1.0 MainToolBar.qml
-FlightDisplayView   1.0 FlightDisplayView.qml
-
+MainToolBar                         1.0 MainToolBar.qml
