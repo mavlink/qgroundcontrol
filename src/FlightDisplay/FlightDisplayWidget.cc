@@ -44,10 +44,8 @@ FlightDisplayWidget::FlightDisplayWidget(const QString& title, QAction* action, 
     if(pl) {
         pl->setContentsMargins(0,0,0,0);
     }
-#ifndef __android__
-    setMinimumWidth( 31 * ScreenToolsController::defaultFontPixelSize_s());
-    setMinimumHeight(33 * ScreenToolsController::defaultFontPixelSize_s());
-#endif
+    setMinimumWidth(300);
+    setMinimumHeight(300);
     setContextPropertyObject("flightDisplay", this);
 
     /*

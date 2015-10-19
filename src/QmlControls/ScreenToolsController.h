@@ -91,15 +91,6 @@ public:
     Q_PROPERTY(double mediumFontPixelSizeRatio  MEMBER _mediumFontPixelSizeRatio    CONSTANT)
     Q_PROPERTY(double largeFontPixelSizeRatio   MEMBER _largeFontPixelSizeRatio     CONSTANT)
     
-    Q_PROPERTY(double qmlDefaultFontPixelSize MEMBER _qmlDefaultFontPixelSize)
-    
-    static double getQmlDefaultFontPixelSize(void);
-
-    static int  defaultFontPixelSize_s()    { return (int)getQmlDefaultFontPixelSize(); }
-	static int  smallFontPixelSize_s()      { return (int)((double)defaultFontPixelSize_s() * _smallFontPixelSizeRatio); }
-    static int  mediumFontPixelSize_s()     { return (int)((double)defaultFontPixelSize_s() * _mediumFontPixelSizeRatio); }
-    static int  largeFontPixelSize_s()      { return (int)((double)defaultFontPixelSize_s() * _largeFontPixelSizeRatio); }
-
 #if defined (__android__)
     bool    isAndroid           () { return true;  }
     bool    isiOS               () { return false; }
@@ -131,8 +122,6 @@ private:
 	static const double _smallFontPixelSizeRatio;
     static const double _mediumFontPixelSizeRatio;
     static const double _largeFontPixelSizeRatio;
-    
-    static int _qmlDefaultFontPixelSize;
 };
 
 #endif
