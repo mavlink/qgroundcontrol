@@ -457,7 +457,6 @@ HEADERS += \
     src/qgcunittest/FileManagerTest.h \
     src/qgcunittest/FlightGearTest.h \
     src/qgcunittest/LinkManagerTest.h \
-    src/qgcunittest/MainWindowTest.h \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
     src/qgcunittest/MultiSignalSpy.h \
@@ -477,7 +476,6 @@ SOURCES += \
     src/qgcunittest/FileManagerTest.cc \
     src/qgcunittest/FlightGearTest.cc \
     src/qgcunittest/LinkManagerTest.cc \
-    src/qgcunittest/MainWindowTest.cc \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
     src/qgcunittest/MultiSignalSpy.cc \
@@ -486,6 +484,19 @@ SOURCES += \
     src/qgcunittest/TCPLoopBackServer.cc \
     src/qgcunittest/UnitTest.cc \
     src/VehicleSetup/SetupViewTest.cc \
+
+!WindowsDebugAndRelease {
+# This specific unit test seems to create havoc on Windows. Likely due to
+# creating/destroying a main window multiple times without destorying the
+# QApplication. The Qml destruction sequence is quite odd in that it is
+# all delayed until it gets back the event loop. Which likely has something
+# to do with the issue.
+HEADERS += \
+    src/qgcunittest/MainWindowTest.h \
+
+SOURCES += \
+    src/qgcunittest/MainWindowTest.cc \
+}
 
 } # DebugBuild|WindowsDebugAndRelease
 } # MobileBuild
