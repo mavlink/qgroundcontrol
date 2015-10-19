@@ -10,8 +10,6 @@
 * {
     background-color: #222;
     color: #FFF;
-    font-size: FONT_NORMAL;
-    font-weight: lighter;
 }
 
 QWidget#viewModeWidget {
@@ -132,7 +130,7 @@ QGroupBox::title {
     subcontrol-position: top center;
     margin: 0 3px 0 3px;
     padding: 0 3px 0 0;
-    font: bold FONT_SMALL;
+    font: bold;
     color: #DDD;
 }
 
@@ -152,25 +150,18 @@ QLabel:disabled {
     border-color: #444;
 }
 
-QLabel#noUas {
-    font-size: FONT_LARGE;
-}
-
 QMessageBox {
     min-width: 400px;
     min-height: 300px;
 }
 
 QLabel#tabTitleLabel {
-    font-size: FONT_LARGE;
-    font-weight: lighter;
     margin-top: 16px;
     margin-bottom: 8px;
 }
 
 QLabel#instructionLabel {
     color: #FEC654;
-    font-size: FONT_LARGE;
 }
 
 QLineEdit {
@@ -229,8 +220,6 @@ QMenuBar::item:disabled {
 QPlainTextEdit {
     border: 1px solid #777;
     border-radius: 2px;
-    font-family: "Monospace";
-    font: FONT_SMALL;
 }
 
 QProgressBar {
@@ -533,10 +522,6 @@ UASQuickViewItem QLabel {
     padding: 0;
     margin: 0;
     min-height: 1em;
-}
-
-UASQuickViewItem QLabel#value {
-    font-size: FONT_LARGE;
 }
 
 UASView {

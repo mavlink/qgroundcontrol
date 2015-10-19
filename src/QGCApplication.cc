@@ -759,17 +759,6 @@ void QGCApplication::_loadCurrentStyle(void)
         }
     }
     
-    // Now that we have the styles loaded we need to adjust the font sizes.
-    
-    QString fSmall  = QString("%1px;").arg(ScreenToolsController::smallFontPixelSize_s());
-    QString fNormal = QString("%1px;").arg(ScreenToolsController::defaultFontPixelSize_s());
-    QString fLarge  = QString("%1px;").arg(ScreenToolsController::largeFontPixelSize_s());
-    
-    qDebug() << fSmall << fNormal << fLarge;
-
-    styles.replace("FONT_SMALL",  fSmall);
-    styles.replace("FONT_NORMAL", fNormal);
-    styles.replace("FONT_LARGE",  fLarge);
     setStyleSheet(styles);
 
     if (!success) {
