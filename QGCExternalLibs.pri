@@ -64,9 +64,11 @@ DEFINES += NOMINMAX
 #
 # [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
 #
+!MobileBuild {
 include(libs/qwt.pri)
 DEPENDPATH += libs/qwt
 INCLUDEPATH += libs/qwt
+}
 
 #
 # [OPTIONAL] XBee wireless support. This is not necessary for basic serial/UART communications.

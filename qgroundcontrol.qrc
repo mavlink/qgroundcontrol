@@ -123,8 +123,9 @@
 
         <!-- Main Window -->
         <file alias="MainWindow.qml">src/ui/MainWindow.qml</file>
+        <file alias="MainWindowDelayLoad.qml">src/ui/MainWindowDelayLoad.qml</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
-        <file alias="QGroundControl/Controls/FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
+        <file alias="MainToolBarActiveVehicleComponent.qml">src/ui/toolbar/MainToolBarActiveVehicleComponent.qml</file>
 
         <!-- Vehicle Setup -->
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
@@ -151,6 +152,13 @@
         <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
         <file alias="FlightDisplayWidget.qml">src/FlightDisplay/FlightDisplayWidget.qml</file>
         <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
+
+        <!-- FlightDisplay module -->
+        <file alias="QGroundControl/FlightDisplay/qmldir">src/FlightDisplay/qmldir</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewDelayLoadInner.qml">src/FlightDisplay/FlightDisplayViewDelayLoadInner.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewDelayLoadOuter.qml">src/FlightDisplay/FlightDisplayViewDelayLoadOuter.qml</file>
+
 
         <!-- FlightMap module -->
         <file alias="QGroundControl/FlightMap/qmldir">src/FlightMap/qmldir</file>
