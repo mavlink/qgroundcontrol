@@ -73,15 +73,6 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(activeVehicleChanged(Vehicle*)));
     QCOMPARE(spyVehicle.wait(5000), true);
     
-    // Cycle through all the top level views
-    
-    _mainWindow->showSetupView();
-    QTest::qWait(200);
-    _mainWindow->showPlanView();
-    QTest::qWait(200);
-    _mainWindow->showFlyView();
-    QTest::qWait(200);
-    
     // On MainWindow close we should get a message box telling the user to disconnect first. Cancel should do nothing.
     setExpectedMessageBox(QGCMessageBox::Cancel);
     _mainWindow->close();

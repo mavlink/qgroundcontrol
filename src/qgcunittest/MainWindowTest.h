@@ -44,13 +44,9 @@ private slots:
     void cleanup(void);
     
     void _connectWindowClosePX4_test(void);
-    
-private:
-    // This is moved to private so that it does not run. It exposes
-    // a strange ASSERT inthe jscript engine which seems to be only
-    // related to running this Qml in unit tests.
     void _connectWindowCloseGeneric_test(void);
 
+private:
     void _connectWindowClose_test(MAV_AUTOPILOT autopilot);
     
     MainWindow*     _mainWindow;
