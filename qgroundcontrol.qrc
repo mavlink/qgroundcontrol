@@ -123,7 +123,6 @@
 
         <!-- Main Window -->
         <file alias="MainWindow.qml">src/ui/MainWindow.qml</file>
-        <file alias="MainWindowDelayLoad.qml">src/ui/MainWindowDelayLoad.qml</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="MainToolBarActiveVehicleComponent.qml">src/ui/toolbar/MainToolBarActiveVehicleComponent.qml</file>
 
