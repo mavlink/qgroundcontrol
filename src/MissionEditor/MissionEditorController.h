@@ -34,7 +34,7 @@ class MissionEditorController : public QObject
     Q_OBJECT
     
 public:
-    MissionEditorController(QWidget* parent = NULL);
+    MissionEditorController(QObject* parent = NULL);
     ~MissionEditorController();
 
     Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems                   NOTIFY missionItemsChanged)
@@ -54,7 +54,7 @@ public:
 
     // Property accessors
     
-    QmlObjectListModel* missionItems(void) { return _missionItems; }
+    QmlObjectListModel* missionItems(void);
     QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
     bool canEdit(void) { return _canEdit; }
     bool liveHomePositionAvailable(void) { return _liveHomePositionAvailable; }
@@ -100,7 +100,7 @@ private:
     QGeoCoordinate      _liveHomePosition;
     bool                _autoSync;
     bool                _firstMissionItemSync;
-    bool                _expectingNewMissionItems;
+    bool                _missionItemsRequested;
     bool                _queuedSend;
 
     static const char* _settingsGroup;
