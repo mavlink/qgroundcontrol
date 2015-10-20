@@ -88,6 +88,7 @@
 #include "QGCQGeoCoordinate.h"
 #include "CoordinateVector.h"
 #include "MainToolBarController.h"
+#include "MissionController.h"
 #include "MissionEditorController.h"
 #include "FlightDisplayViewController.h"
 #include "VideoSurface.h"
@@ -353,6 +354,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<RadioComponentController>       ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
     qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     qmlRegisterType<MainToolBarController>          ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
+    qmlRegisterType<MissionController>              ("QGroundControl.Controllers", 1, 0, "MissionController");
     qmlRegisterType<MissionEditorController>        ("QGroundControl.Controllers", 1, 0, "MissionEditorController");
     qmlRegisterType<FlightDisplayViewController>    ("QGroundControl.Controllers", 1, 0, "FlightDisplayViewController");
 

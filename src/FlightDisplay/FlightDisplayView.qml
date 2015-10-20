@@ -84,6 +84,7 @@ Item {
     property bool _showMap: getBool(QGroundControl.flightMapSettings.loadMapSetting(flightMap.mapName, _showMapBackgroundKey, "1"))
 
     FlightDisplayViewController { id: _controller }
+    MissionController { id: _missionController }
 
     ExclusiveGroup {
         id: _dropButtonsExclusiveGroup
@@ -178,16 +179,9 @@ Item {
         }
 
         // Add the mission items to the map
-        MapItemView {
-            model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.missionItems : 0
-            
-            delegate:
-                MissionItemIndicator {
-                    label:          object.sequenceNumber
-                    isCurrentItem:  object.isCurrentItem
-                    coordinate:     object.coordinate
-                    z:              flightMap.zOrderMapItems
-                }
+        MissionItemView {
+            model:          _missionController.missionItems
+            zOrderMapItems: flightMap.zOrderMapItems
         }
 
         Loader {
