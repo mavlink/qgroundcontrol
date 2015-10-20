@@ -17,6 +17,7 @@ QGCPitchIndicator       1.0 QGCPitchIndicator.qml
 QGCSlider               1.0 QGCSlider.qml
 QGCSpeedWidget          1.0 QGCSpeedWidget.qml
 
-# MapQuickItems
+# Map items
 VehicleMapItem          1.0 VehicleMapItem.qml
 MissionItemIndicator    1.0 MissionItemIndicator.qml
+MissionItemView         1.0 MissionItemView.qml

@@ -224,7 +224,7 @@ Item {
     //-- Indicators
     Row {
         id:                     row12
-        x:                      desktopToolsLoader.item.width + horizontalMargins
+        x:                      horizontalMargins + (ScreenTools.isMobile ? 0: desktopToolsLoader.item.width)
         height:                 cellHeight
         spacing:                cellSpacerSize
         anchors.top:            desktopToolsLoader.top
