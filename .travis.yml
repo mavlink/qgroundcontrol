@@ -13,10 +13,10 @@ matrix:
     include:
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=debug
-          sudo: true
+          sudo: false
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=installer
-          sudo: true
+          sudo: false
         - os: osx
           osx_image: xcode7
           env: SPEC=macx-clang CONFIG=debug
@@ -38,8 +38,24 @@ android:
     - build-tools-21.1.1
     - android-21
 
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - ccache
+    - espeak
+    - g++-4.8
+    - gcc-4.8
+    - libc6-i386
+    - libespeak-dev
+    - libopenscenegraph-dev
+    - libsdl1.2-dev
+    - libudev-dev
+
 cache:
   - apt
+  - ccache
 
 before_install:
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
@@ -49,10 +65,7 @@ before_install:
 
 install:
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
-      && sudo apt-get -qq update
-      && sudo apt-get -qq install g++-4.8 espeak libespeak-dev libopenscenegraph-dev libsdl1.2-dev libudev-dev
-      && wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2
+         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.5.1-linux.tar.bz2
       && tar jxf Qt5.5.1-linux.tar.bz2 -C /tmp
       && export PATH=/tmp/Qt/5.5/gcc_64/bin:$PATH
       && export CXX="g++-4.8"
