@@ -29,9 +29,7 @@ import QtPositioning    5.3
 
 import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
-import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
 
 /// The MissionItemView control is used to add Mission Item Indicators to a FlightMap.
 MapItemView {
@@ -42,11 +40,11 @@ MapItemView {
 
     delegate: MissionItemIndicator {
         id:             itemIndicator
-        label:          object.sequenceNumber == 0 ? "H" : object.sequenceNumber
+        label:          object.homePosition ? "H" : object.sequenceNumber
         isCurrentItem:  object.isCurrentItem
         coordinate:     object.coordinate
         z:              zOrderMapItems
-        visible:        object.specifiesCoordinate
+        visible:        object.specifiesCoordinate && (!object.homePosition || object.homePositionValid)
 
         onClicked: setCurrentItem(object.sequenceNumber)
 

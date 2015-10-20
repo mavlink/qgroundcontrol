@@ -90,8 +90,9 @@ MissionItem::MissionItem(QObject*       parent,
     , _isCurrentItem(isCurrentItem)
     , _reachedTime(0)
     , _headingDegreesFact(NULL)
-    ,_dirty(false)
+    , _dirty(false)
     , _homePositionSpecialCase(false)
+    , _homePositionValid(false)
 {
     _latitudeFact                   = new Fact(0, "Latitude:",                      FactMetaData::valueTypeDouble, this);
     _longitudeFact                  = new Fact(0, "Longitude:",                     FactMetaData::valueTypeDouble, this);
@@ -198,6 +199,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     _altitudeRelativeToHomeFact = other._altitudeRelativeToHomeFact;
     _dirty                      = other._dirty;
     _homePositionSpecialCase    = other._homePositionSpecialCase;
+    _homePositionValid          = other._homePositionValid;
 
     *_latitudeFact              = *other._latitudeFact;
     *_longitudeFact             = *other._longitudeFact;
@@ -914,4 +916,10 @@ bool MissionItem::specifiesHeading(void) const
 void MissionItem::_headingDegreesFactChanged(QVariant value)
 {
     emit headingDegreesChanged(value.toDouble());
+}
+
+void MissionItem::setHomePositionValid(bool homePositionValid)
+{
+    _homePositionValid = homePositionValid;
+    emit homePositionValidChanged(_homePositionValid);
 }

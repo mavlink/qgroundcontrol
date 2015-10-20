@@ -71,28 +71,32 @@ void MissionController::_newMissionItemsAvailable(void)
 
 void MissionController::_recalcWaypointLines(void)
 {
-    bool firstCoordinateItem = true;
-    MissionItem* lastCoordinateItem = qobject_cast<MissionItem*>(_missionItems->get(0));
-    
+    int firstIndex = _homePositionValid  ? 0 : 1;
+
     _waypointLines.clear();
-    
-    for (int i=1; i<_missionItems->count(); i++) {
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
-        
-        if (item->specifiesCoordinate()) {
-            if (firstCoordinateItem) {
-                if (item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
-                    // The first coordinate we hit is a takeoff command so link back to home position
-                    _waypointLines.append(new CoordinateVector(qobject_cast<MissionItem*>(_missionItems->get(0))->coordinate(), item->coordinate()));
+
+    if (firstIndex < _missionItems->count()) {
+        bool firstCoordinateItem = true;
+        MissionItem* lastCoordinateItem = qobject_cast<MissionItem*>(_missionItems->get(firstIndex));
+
+        for (int i=firstIndex; i<_missionItems->count(); i++) {
+            MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+
+            if (item->specifiesCoordinate()) {
+                if (firstCoordinateItem) {
+                    if (item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF && _homePositionValid) {
+                        // The first coordinate we hit is a takeoff command so link back to home position if we have one
+                        _waypointLines.append(new CoordinateVector(qobject_cast<MissionItem*>(_missionItems->get(0))->coordinate(), item->coordinate()));
+                    } else {
+                        // First coordiante is not a takeoff command, it does not link backwards to anything
+                    }
+                    firstCoordinateItem = false;
                 } else {
-                    // First coordiante is not a takeoff command, it does not link backwards to anything
+                    // Subsequent coordinate items link to last coordinate item
+                    _waypointLines.append(new CoordinateVector(lastCoordinateItem->coordinate(), item->coordinate()));
                 }
-                firstCoordinateItem = false;
-            } else {
-                // Subsequent coordinate items link to last coordinate item
-                _waypointLines.append(new CoordinateVector(lastCoordinateItem->coordinate(), item->coordinate()));
+                lastCoordinateItem = item;
             }
-            lastCoordinateItem = item;
         }
     }
     
@@ -102,25 +106,41 @@ void MissionController::_recalcWaypointLines(void)
 // This will update the child item hierarchy
 void MissionController::_recalcChildItems(void)
 {
-    MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(0));
-    
-    currentParentItem->childItems()->clear();
-    
-    for (int i=1; i<_missionItems->count(); i++) {
-        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
-        
-        // Set up non-coordinate item child hierarchy
-        if (item->specifiesCoordinate()) {
-            item->childItems()->clear();
-            currentParentItem = item;
-        } else {
-            currentParentItem->childItems()->append(item);
+    int firstIndex = _homePositionValid  ? 0 : 1;
+
+    if (_missionItems->count() > firstIndex) {
+        MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(firstIndex));
+
+        currentParentItem->childItems()->clear();
+
+        for (int i=firstIndex+1; i<_missionItems->count(); i++) {
+            MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+
+            // Set up non-coordinate item child hierarchy
+            if (item->specifiesCoordinate()) {
+                item->childItems()->clear();
+                currentParentItem = item;
+            } else {
+                currentParentItem->childItems()->append(item);
+            }
         }
+    }
+}
+
+// This will update the sequence numbers to be sequential starting from 0
+void MissionController::_recalcSequence(void)
+{
+    for (int i=0; i<_missionItems->count(); i++) {
+        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+
+        // Setup ascending sequence numbers
+        item->setSequenceNumber(i);
     }
 }
 
 void MissionController::_recalcAll(void)
 {
+    _recalcSequence();
     _recalcChildItems();
     _recalcWaypointLines();
 }
@@ -131,11 +151,13 @@ void MissionController::_initAllMissionItems(void)
     // Add the home position item to the front
     MissionItem* homeItem = new MissionItem(this);
     homeItem->setHomePositionSpecialCase(true);
+    homeItem->setHomePositionValid(false);
     homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
+    homeItem->setLatitude(47.3769);
+    homeItem->setLongitude(8.549444);
     _missionItems->insert(0, homeItem);
     
-    _recalcChildItems();
-    _recalcWaypointLines();
+    _recalcAll();
     
     emit missionItemsChanged();
 }
@@ -155,4 +177,12 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailable);
         _newMissionItemsAvailable();
     }
+}
+
+void MissionController::setHomePositionValid(bool homePositionValid)
+{
+    _homePositionValid = homePositionValid;
+    qobject_cast<MissionItem*>(_missionItems->get(0))->setHomePositionValid(homePositionValid);
+
+    emit homePositionValidChanged(_homePositionValid);
 }
