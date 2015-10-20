@@ -1,8 +1,8 @@
 
 environment:
   matrix:
-  - BUILD: 'Debug'
-    CONFIG: debug
+#  - BUILD: 'Debug'
+#    CONFIG: debug
   - BUILD: 'Release'
     CONFIG: installer
 
