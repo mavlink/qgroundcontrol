@@ -61,6 +61,7 @@ void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems, b
     for (int i=skipFirstItem ? 1: 0; i<missionItems.count(); i++) {
         _missionItems.append(new MissionItem(*qobject_cast<const MissionItem*>(missionItems[i])));
     }
+    emit newMissionItemsAvailable();
     
     if (skipFirstItem) {
         for (int i=0; i<_missionItems.count(); i++) {
