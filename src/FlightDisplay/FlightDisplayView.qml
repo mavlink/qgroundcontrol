@@ -52,7 +52,7 @@ Item {
     readonly property alias zOrderWidgets:   flightMap.zOrderWidgets
     readonly property alias zOrderMapItems:  flightMap.zOrderMapItems
 
-    property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     property var _activeVehicle: multiVehicleManager.activeVehicle
 
@@ -181,6 +181,12 @@ Item {
         // Add the mission items to the map
         MissionItemView {
             model:          _missionController.missionItems
+            zOrderMapItems: flightMap.zOrderMapItems
+        }
+
+        // Add lines between waypoints
+        MissionLineView {
+            model:          _missionController.waypointLines
             zOrderMapItems: flightMap.zOrderMapItems
         }
 
