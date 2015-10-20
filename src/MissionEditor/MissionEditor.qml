@@ -69,9 +69,13 @@ QGCView {
 
     MissionEditorController {
         id:         controller
+/*
+        FIXME: autoSync is temporarily disconnected since it's still buggy
+
         autoSync:   QGroundControl.flightMapSettings.loadMapSetting(editorMap.mapName, _autoSyncKey, true)
 
         onAutoSyncChanged:      QGroundControl.flightMapSettings.saveMapSetting(editorMap.mapName, _autoSyncKey, autoSync)
+*/
 
         onMissionItemsChanged:  {
             updateHomePosition()
@@ -98,6 +102,7 @@ QGCView {
     function updateHomePosition() {
         homePosition = liveHomePositionAvailable ? liveHomePosition : offlineHomePosition
         _missionItems.get(0).coordinate = homePosition
+        _missionItems.get(0).homePositionValid = true
     }
 
     Component.onCompleted:              updateHomePosition()
@@ -222,20 +227,9 @@ QGCView {
                 }
 
                 // Add lines between waypoints
-                MapItemView {
-                    model: controller.waypointLines
-
-                    delegate:
-                        MapPolyline {
-                            line.width: 3
-                            line.color: qgcPal.mapButtonHighlight
-                            z:          editorMap.zOrderMapItems - 1 // Under item indicators
-
-                            path: [
-                                { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },
-                                { latitude: object.coordinate2.latitude, longitude: object.coordinate2.longitude },
-                            ]
-                        }
+                MissionLineView {
+                    model:          controller.waypointLines
+                    zOrderMapItems: editorMap.zOrderMapItems
                 }
 
                 // Mission Item Editor
@@ -880,7 +874,7 @@ QGCView {
             }
 
             Row {
-                visible:    autoSyncCheckBox.enabled && autoSyncCheckBox.checked
+                visible:    true //autoSyncCheckBox.enabled && autoSyncCheckBox.checked
                 spacing:    ScreenTools.defaultFontPixelWidth
 
                 QGCButton {
@@ -925,6 +919,8 @@ QGCView {
                     }
                 }
             }
+/*
+        FIXME: autoSync is temporarily disconnected since it's still buggy
 
             QGCLabel {
                 id:         autoSyncDisallowedLabel
@@ -940,6 +936,7 @@ QGCView {
 
                 onClicked: controller.autoSync = checked
             }
+*/
         }
     }
 } // QGCVIew

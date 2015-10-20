@@ -40,21 +40,29 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems   NOTIFY missionItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines   READ waypointLines  NOTIFY waypointLinesChanged)
+
+    /// true: home position should be shown on map, false: home position not shown on map
+    Q_PROPERTY(bool homePositionValid READ homePositionValid WRITE setHomePositionValid NOTIFY homePositionValidChanged)
     
     // Property accessors
     
     QmlObjectListModel* missionItems(void) { return _missionItems; }
     QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
 
+    bool homePositionValid(void) { return _homePositionValid; }
+    void setHomePositionValid(bool homPositionValid);
+
 signals:
     void missionItemsChanged(void);
     void waypointLinesChanged(void);
+    void homePositionValidChanged(bool homePositionValid);
     
 private slots:
     void _newMissionItemsAvailable();
     void _activeVehicleChanged(Vehicle* activeVehicle);
 
 private:
+    void _recalcSequence(void);
     void _recalcWaypointLines(void);
     void _recalcChildItems(void);
     void _recalcAll(void);
@@ -64,6 +72,7 @@ private:
     QmlObjectListModel* _missionItems;
     QmlObjectListModel  _waypointLines;
     Vehicle*            _activeVehicle;
+    bool                _homePositionValid;
 };
 
 #endif

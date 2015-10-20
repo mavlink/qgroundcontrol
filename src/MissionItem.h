@@ -84,7 +84,13 @@ public:
     Q_PROPERTY(QmlObjectListModel*  checkboxFacts       READ checkboxFacts                                  NOTIFY commandChanged)
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand        NOTIFY commandChanged)
     Q_PROPERTY(QmlObjectListModel*  childItems          READ childItems                                     CONSTANT)
+
+    /// true: this item is being used as a home position indicator
+    Q_PROPERTY(bool                 homePosition        MEMBER _homePositionSpecialCase                     CONSTANT)
     
+    /// true: home position should be shown
+    Q_PROPERTY(bool                 homePositionValid   READ homePositionValid      WRITE setHomePositionValid NOTIFY homePositionValidChanged)
+
     // Property accesors
     
     int sequenceNumber(void) const { return _sequenceNumber; }
@@ -124,6 +130,9 @@ public:
     void setDirty(bool dirty);
     
     QmlObjectListModel* childItems(void) { return &_childItems; }
+
+    bool homePositionValid(void) { return _homePositionValid; }
+    void setHomePositionValid(bool homePositionValid);
     
     // C++ only methods
     
@@ -210,6 +219,7 @@ signals:
     void coordinateChanged(const QGeoCoordinate& coordinate);
     void headingDegreesChanged(double heading);
     void dirtyChanged(bool dirty);
+    void homePositionValidChanged(bool homePostionValid);
 
     /** @brief Announces a change to the waypoint data */
     void changed(MissionItem* wp);
@@ -290,6 +300,7 @@ private:
     bool _dirty;
     
     bool _homePositionSpecialCase;  ///< true: this item is being used as a ui home position indicator
+    bool _homePositionValid;        ///< true: home psition should be displayed
     
     /// This is used to reference any subsequent mission items which do not specify a coordinate.
     QmlObjectListModel  _childItems;
