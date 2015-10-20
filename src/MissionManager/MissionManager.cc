@@ -57,21 +57,21 @@ void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems, b
 {
     _retryCount = 0;
     _missionItems.clear();
+
+    int firstIndex = skipFirstItem ? 1 : 0;
     
-    for (int i=skipFirstItem ? 1: 0; i<missionItems.count(); i++) {
+    for (int i=firstIndex; i<missionItems.count(); i++) {
         _missionItems.append(new MissionItem(*qobject_cast<const MissionItem*>(missionItems[i])));
-    }
-    emit newMissionItemsAvailable();
-    
-    if (skipFirstItem) {
-        for (int i=0; i<_missionItems.count(); i++) {
-            MissionItem* item = qobject_cast<MissionItem*>(_missionItems[i]);
-            
-            if (item->command() == MavlinkQmlSingleton::MAV_CMD_CONDITION_DELAY) {
-                item->setParam1((int)item->param1() - 1);
-            }
+
+        MissionItem* item = qobject_cast<MissionItem*>(_missionItems.get(_missionItems.count() - 1));
+
+        // Editor uses 1-based sequence numbers, adjust them before going out
+        item->setSequenceNumber(item->sequenceNumber() - 1);
+        if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+            item->setParam1((int)item->param1() - 1);
         }
     }
+    emit newMissionItemsAvailable();
 
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
     
