@@ -108,7 +108,7 @@ QString FlightMapSettings::mapTypeForMapName(const QString& mapName)
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(mapName);
     settings.beginGroup(_mapProvider);
-    return settings.value(_mapTypeKey, "Street Map").toString();
+    return settings.value(_mapTypeKey, "Satellite Map").toString();
 }
 
 void FlightMapSettings::setMapTypeForMapName(const QString& mapName, const QString& mapType)
