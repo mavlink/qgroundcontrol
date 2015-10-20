@@ -28,14 +28,14 @@
 UT_REGISTER_TEST(MissionManagerTest)
 
 const MissionManagerTest::TestCase_t MissionManagerTest::_rgTestCases[] = {
-    { "1\t0\t3\t16\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT,     10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
+    { "0\t0\t3\t16\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 0, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT,     10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
     { "1\t0\t3\t17\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_UNLIM, 10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "1\t0\t3\t18\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_TURNS, 10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "1\t0\t3\t19\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_TIME,  10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "1\t0\t3\t21\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LAND,         10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "1\t0\t3\t22\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_TAKEOFF,      10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "1\t0\t2\t112\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n", { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_CONDITION_DELAY,  10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_MISSION } },
-    { "1\t0\t2\t177\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n", { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_DO_JUMP,          10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_MISSION } },
+    { "2\t0\t3\t18\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 2, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_TURNS, 10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
+    { "3\t0\t3\t19\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 3, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_TIME,  10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
+    { "4\t0\t3\t21\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 4, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LAND,         10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
+    { "5\t0\t3\t22\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 5, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_TAKEOFF,      10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
+    { "6\t0\t2\t112\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n", { 6, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_CONDITION_DELAY,  10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_MISSION } },
+    { "7\t0\t2\t177\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n", { 7, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_DO_JUMP,          10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_MISSION } },
 };
 
 MissionManagerTest::MissionManagerTest(void)
@@ -146,6 +146,16 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     const size_t cTestCases = sizeof(_rgTestCases)/sizeof(_rgTestCases[0]);
     QmlObjectListModel* list = new QmlObjectListModel();
     
+    // Editor has a home position item on the front, so we do the same
+    MissionItem* homeItem = new MissionItem(this);
+    homeItem->setHomePositionSpecialCase(true);
+    homeItem->setHomePositionValid(false);
+    homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
+    homeItem->setLatitude(47.3769);
+    homeItem->setLongitude(8.549444);
+    homeItem->setSequenceNumber(0);
+    list->insert(0, homeItem);
+
     for (size_t i=0; i<cTestCases; i++) {
         const TestCase_t* testCase = &_rgTestCases[i];
         
@@ -153,12 +163,19 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         
         QTextStream loadStream(testCase->itemStream, QIODevice::ReadOnly);
         QVERIFY(item->load(loadStream));
+
+        // Mission Manager expects to get 1-base sequence numbers for write
+
+        item->setSequenceNumber(item->sequenceNumber() + 1);
+        if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+            item->setParam1((int)item->param1() + 1);
+        }
         
         list->append(item);
     }
     
     // Send the items to the vehicle
-    _missionManager->writeMissionItems(*list, false /* skipFirstItem */);
+    _missionManager->writeMissionItems(*list, true /* skipFirstItem */);
     
     // writeMissionItems should emit these signals before returning:
     //      inProgressChanged
@@ -304,16 +321,17 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         MissionItem* actual = qobject_cast<MissionItem*>(_missionManager->missionItems()->get(i));
         
         qDebug() << "Test case" << i;
+        QCOMPARE(actual->sequenceNumber(),          testCase->expectedItem.sequenceNumber);
         QCOMPARE(actual->coordinate().latitude(),   testCase->expectedItem.coordinate.latitude());
         QCOMPARE(actual->coordinate().longitude(),  testCase->expectedItem.coordinate.longitude());
         QCOMPARE(actual->coordinate().altitude(),   testCase->expectedItem.coordinate.altitude());
         QCOMPARE((int)actual->command(),       (int)testCase->expectedItem.command);
-        QCOMPARE(actual->param1(),                  testCase->expectedItem.param1);
         QCOMPARE(actual->param2(),                  testCase->expectedItem.param2);
         QCOMPARE(actual->param3(),                  testCase->expectedItem.param3);
         QCOMPARE(actual->param4(),                  testCase->expectedItem.param4);
         QCOMPARE(actual->autoContinue(),            testCase->expectedItem.autocontinue);
         QCOMPARE(actual->frame(),                   testCase->expectedItem.frame);
+        QCOMPARE(actual->param1(),                  testCase->expectedItem.param1);
     }
     
 }
