@@ -32,6 +32,9 @@
 
 #include "UASInterface.h"
 #include "FactPanelController.h"
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(SensorsComponentControllerLog)
 
 /// Sensors Component MVC Controller for SensorsComponent.qml.
 class SensorsComponentController : public FactPanelController
@@ -115,6 +118,7 @@ private:
     void _appendStatusLog(const QString& text);
     void _refreshParams(void);
     void _hideAllCalAreas(void);
+    void _resetInternalState(void);
     
     enum StopCalibrationCode {
         StopCalibrationSuccess,
