@@ -21,3 +21,4 @@ QGCSpeedWidget          1.0 QGCSpeedWidget.qml
 VehicleMapItem          1.0 VehicleMapItem.qml
 MissionItemIndicator    1.0 MissionItemIndicator.qml
 MissionItemView         1.0 MissionItemView.qml
+MissionLineView         1.0 MissionLineView.qml

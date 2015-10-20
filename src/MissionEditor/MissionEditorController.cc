@@ -290,8 +290,6 @@ void MissionEditorController::_recalcSequence(void)
 {
     MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(0));
     
-    currentParentItem->childItems()->clear();
-    
     for (int i=0; i<_missionItems->count(); i++) {
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
         
@@ -340,9 +338,7 @@ void MissionEditorController::_initAllMissionItems(void)
         _initMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));
     }
     
-    _recalcSequence();
-    _recalcChildItems();
-    _recalcWaypointLines();
+    _recalcAll();
     
     emit missionItemsChanged();
     emit canEditChanged(_canEdit);
