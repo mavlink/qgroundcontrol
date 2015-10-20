@@ -288,8 +288,6 @@ void MissionEditorController::_recalcWaypointLines(void)
 // This will update the sequence numbers to be sequential starting from 0
 void MissionEditorController::_recalcSequence(void)
 {
-    MissionItem* currentParentItem = qobject_cast<MissionItem*>(_missionItems->get(0));
-    
     for (int i=0; i<_missionItems->count(); i++) {
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
         
