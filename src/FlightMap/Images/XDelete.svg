@@ -3,8 +3,8 @@
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="-89 46 72 72" enable-background="new -89 46 72 72" xml:space="preserve">
 <g>
-	<path fill="none" d="M-71.309,68.986"/>
+	<path fill="none" stroke="#FFFFFF" stroke-miterlimit="10" d="M-68.877,70.722"/>
 </g>
-<line fill="none" stroke="#FFFFFF" stroke-width="3" stroke-miterlimit="10" x1="-80" y1="108.997" x2="-26" y2="55.003"/>
-<line fill="none" stroke="#FFFFFF" stroke-width="3" stroke-miterlimit="10" x1="-26.135" y1="109" x2="-80.129" y2="55"/>
+<line fill="none" stroke="#FFFFFF" stroke-width="3" stroke-miterlimit="10" x1="-76.409" y1="105.398" x2="-29.609" y2="58.602"/>
+<line fill="none" stroke="#FFFFFF" stroke-width="3" stroke-miterlimit="10" x1="-29.725" y1="105.4" x2="-76.521" y2="58.6"/>
 </svg>
