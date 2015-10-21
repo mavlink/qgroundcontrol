@@ -94,10 +94,12 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
 
 Joystick::~Joystick()
 {
+#ifndef __mobile__
     delete _rgAxisValues;
     delete _rgCalibration;
     delete _rgButtonValues;
     delete _rgButtonActions;
+#endif
 }
 
 #ifndef __mobile__
