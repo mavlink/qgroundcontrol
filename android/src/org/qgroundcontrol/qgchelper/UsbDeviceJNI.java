@@ -43,12 +43,15 @@ import android.content.IntentFilter;
 import android.hardware.usb.*;
 import android.widget.Toast;
 import android.util.Log;
+//-- Text To Speech
+import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 
 import com.hoho.android.usbserial.driver.*;
 import org.qtproject.qt5.android.bindings.QtActivity;
 import org.qtproject.qt5.android.bindings.QtApplication;
 
-public class UsbDeviceJNI extends QtActivity
+public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListener
 {
     public static int BAD_PORT = 0;
     private static UsbDeviceJNI m_instance;
@@ -61,6 +64,7 @@ public class UsbDeviceJNI extends QtActivity
     private BroadcastReceiver m_UsbReceiver = null;
     private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
     private static final String TAG = "QGC_UsbDeviceJNI";
+    private static TextToSpeech  m_tts;
 
     private final static UsbIoManager.Listener m_Listener =
             new UsbIoManager.Listener()
@@ -96,6 +100,34 @@ public class UsbDeviceJNI extends QtActivity
         m_userData = new HashMap<Integer, Integer>();
         m_ioManager = new HashMap<Integer, UsbIoManager>();
         Log.i(TAG, "Instance created");
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Text To Speech
+    //  Pigback a ride for providing TTS to QGC
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        m_tts = new TextToSpeech(this,this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        m_tts.shutdown();
+    }
+
+    public void onInit(int status) {
+    }
+
+    public static void say(String msg)
+    {
+        Log.i(TAG, "Say: " + msg);
+        m_tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
