@@ -48,9 +48,9 @@ This file is part of the PIXHAWK project
 class GAudioOutput : public QGCSingleton
 {
     Q_OBJECT
-    
+
     DECLARE_QGC_SINGLETON(GAudioOutput, GAudioOutput)
-    
+
 public:
     /** @brief List available voices */
     QStringList listVoices(void);
@@ -88,13 +88,16 @@ signals:
 
 protected:
     bool muted;
+
+#if !defined __android__
     QThread* thread;
     QGCAudioWorker* worker;
-    
+#endif
+
 private:
     GAudioOutput(QObject *parent = NULL);
     ~GAudioOutput();
-    
+
     static const char* _mutedKey;
 };
 

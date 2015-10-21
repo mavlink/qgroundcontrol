@@ -179,7 +179,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle) : UASInterface(),
     lastSendTimeOpticalFlow(0),
     _vehicle(vehicle)
 {
-    
+
     for (unsigned int i = 0; i<255;++i)
     {
         componentID[i] = -1;
@@ -422,7 +422,7 @@ void UAS::receiveMessage(mavlink_message_t message)
                 modechanged = true;
                 this->base_mode = state.base_mode;
                 this->custom_mode = state.custom_mode;
-                modeAudio = " is now in " + audiomodeText + "flight mode";
+                modeAudio = " is now in " + audiomodeText + " flight mode";
             }
 
             // We got the mode
@@ -945,7 +945,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit valueChanged(uasId, "yaw sp", "rad", yaw, time);
         }
             break;
-                
+
         case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
         {
             if (multiComponentSourceDetected && wrongComponent)
@@ -970,14 +970,14 @@ void UAS::receiveMessage(mavlink_message_t message)
             QByteArray b;
             b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
             mavlink_msg_statustext_get_text(&message, b.data());
- 
+
             // Ensure NUL-termination
             b[b.length()-1] = '\0';
             QString text = QString(b);
             int severity = mavlink_msg_statustext_get_severity(&message);
 
-	    // If the message is NOTIFY or higher severity, or starts with a '#',
-	    // then read it aloud.
+        // If the message is NOTIFY or higher severity, or starts with a '#',
+        // then read it aloud.
             if (text.startsWith("#") || severity <= MAV_SEVERITY_NOTICE)
             {
                 text.remove("#");
@@ -1127,14 +1127,14 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
     if (!_vehicle) {
         return;
     }
-    
+
     int gyroCal = 0;
     int magCal = 0;
     int airspeedCal = 0;
     int radioCal = 0;
     int accelCal = 0;
     int escCal = 0;
-    
+
     switch (calType) {
         case StartCalibrationGyro:
             gyroCal = 1;
@@ -1164,7 +1164,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
             escCal = 2;
             break;
     }
-    
+
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(),
                                   mavlink->getComponentId(),
@@ -1188,7 +1188,7 @@ void UAS::stopCalibration(void)
     if (!_vehicle) {
         return;
     }
-    
+
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(),
                                   mavlink->getComponentId(),
@@ -1212,7 +1212,7 @@ void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
     if (!_vehicle) {
         return;
     }
-    
+
    int actuatorCal = 0;
 
     switch (calType) {
@@ -1247,7 +1247,7 @@ void UAS::stopBusConfig(void)
     if (!_vehicle) {
         return;
     }
-    
+
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(),
                                   mavlink->getComponentId(),
@@ -1518,7 +1518,7 @@ void UAS::requestImage()
     if (!_vehicle) {
         return;
     }
-    
+
    qDebug() << "trying to get an image from the uas...";
 
     // check if there is already an image transmission going on
@@ -1605,7 +1605,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
         case MAV_PARAM_TYPE_UINT32:
             paramValue = QVariant(paramUnion.param_uint32);
             break;
-            
+
         case MAV_PARAM_TYPE_INT32:
             paramValue = QVariant(paramUnion.param_int32);
             break;
@@ -1658,7 +1658,7 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
     if (!_vehicle) {
         return;
     }
-    
+
     mavlink_message_t msg;
     mavlink_command_long_t cmd;
     cmd.command = (uint16_t)command;
@@ -1686,7 +1686,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
     if (!_vehicle) {
         return;
     }
-    
+
     // Store the previous manual commands
     static float manualRollAngle = 0.0;
     static float manualPitchAngle = 0.0;
@@ -1843,7 +1843,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
 
             // Store scaling values for all 3 axes
             const float axesScaling = 1.0 * 1000.0;
-            
+
             // Calculate the new commands for roll, pitch, yaw, and thrust
             const float newRollCommand = roll * axesScaling;
             // negate pitch value because pitch is negative for pitching forward but mavlink message argument is positive for forward
@@ -1852,7 +1852,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             const float newThrustCommand = thrust * axesScaling;
 
             //qDebug() << newRollCommand << newPitchCommand << newYawCommand << newThrustCommand;
-            
+
             // Send the MANUAL_COMMAND message
             mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
         }
@@ -1870,7 +1870,7 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
     if (!_vehicle) {
         return;
     }
-    
+
    // If system has manual inputs enabled and is armed
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
@@ -1935,7 +1935,7 @@ void UAS::pairRX(int rxType, int rxSubType)
     if (!_vehicle) {
         return;
     }
-    
+
     mavlink_message_t msg;
 
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_START_RX_PAIR, 0, rxType, rxSubType, 0, 0, 0, 0, 0);
@@ -2138,7 +2138,7 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
     if (!_vehicle) {
         return;
     }
-    
+
     if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
         float q[4];
@@ -2176,12 +2176,12 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
 #ifndef __mobile__
 float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
 {
-    /* Calculate normally distributed variable noise with mean = 0 and variance = noise_var.  Calculated according to 
+    /* Calculate normally distributed variable noise with mean = 0 and variance = noise_var.  Calculated according to
     Box-Muller transform */
     static const float epsilon = std::numeric_limits<float>::min(); //used to ensure non-zero uniform numbers
     static float z0; //calculated normal distribution random variables with mu = 0, var = 1;
     float u1, u2;        //random variables generated from c++ rand();
-    
+
     /*Generate random variables in range (0 1] */
     do
     {
@@ -2193,11 +2193,11 @@ float UAS::addZeroMeanNoise(float truth_meas, float noise_var)
     while ( u1 <= epsilon );  //Have a catch to ensure non-zero for log()
 
     z0 = sqrt(-2.0 * log(u1)) * cos(2.0f * M_PI * u2); //calculate normally distributed variable with mu = 0, var = 1
-    
+
     //TODO add bias term that changes randomly to simulate accelerometer and gyro bias the exf should handle these
     //as well
     float noise = z0 * sqrt(noise_var); //calculate normally distributed variable with mu = 0, std = var^2
-    
+
     //Finally gaurd against any case where the noise is not real
     if(std::isfinite(noise)) {
             return truth_meas + noise;
@@ -2218,7 +2218,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
     if (!_vehicle) {
         return;
     }
-    
+
     if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
         float xacc_corrupt = addZeroMeanNoise(xacc, xacc_var);
@@ -2238,7 +2238,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
         mavlink_message_t msg;
         mavlink_msg_hil_sensor_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                    time_us, xacc_corrupt, yacc_corrupt, zacc_corrupt, rollspeed_corrupt, pitchspeed_corrupt,
-                                    yawspeed_corrupt, xmag_corrupt, ymag_corrupt, zmag_corrupt, abs_pressure_corrupt, 
+                                    yawspeed_corrupt, xmag_corrupt, ymag_corrupt, zmag_corrupt, abs_pressure_corrupt,
                                     diff_pressure_corrupt, pressure_alt_corrupt, temperature_corrupt, fields_changed);
         _vehicle->sendMessage(msg);
         lastSendTimeSensors = QGC::groundTimeMilliseconds();
@@ -2259,7 +2259,7 @@ void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, floa
     if (!_vehicle) {
         return;
     }
-    
+
     // FIXME: This needs to be updated for new mavlink_msg_hil_optical_flow_pack api
 
     Q_UNUSED(time_us);
@@ -2297,7 +2297,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
     if (!_vehicle) {
         return;
     }
-    
+
     // Only send at 10 Hz max rate
     if (QGC::groundTimeMilliseconds() - lastSendTimeGPS < 100)
         return;
@@ -2413,7 +2413,7 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 p
     if (!_vehicle) {
         return;
     }
-    
+
     mavlink_message_t message;
 
     char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
@@ -2447,7 +2447,7 @@ void UAS::unsetRCToParameterMap()
     if (!_vehicle) {
         return;
     }
-    
+
     char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
 
     for (int i = 0; i < 3; i++) {
@@ -2470,10 +2470,6 @@ void UAS::unsetRCToParameterMap()
 
 void UAS::_say(const QString& text, int severity)
 {
-#ifndef UNITTEST_BUILD    
-    GAudioOutput::instance()->say(text, severity);
-#else
-    Q_UNUSED(text)
-    Q_UNUSED(severity)
-#endif
+    if (!qgcApp()->runningUnitTests())
+        GAudioOutput::instance()->say(text, severity);
 }
