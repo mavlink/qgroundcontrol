@@ -561,7 +561,8 @@ QGCView {
                     anchors.margins:    margins
                     anchors.top:        parent.top
                     anchors.bottom:     parent.bottom
-                    anchors.left:       parent.left
+                    anchors.left:       addMissionItemsButton.right
+                    anchors.right:      missionItemEditor.left
                     width:              parent.width - (margins * 2) - _rightPanelWidth
                     visible:            helpButton.checked
                     color:              qgcPal.window
@@ -569,7 +570,7 @@ QGCView {
                     radius:             ScreenTools.defaultFontPixelHeight
                     z:                  editorMap.zOrderTopMost
 
-                    readonly property real margins:  ScreenTools.defaultFontPixelHeight * 4
+                    readonly property real margins:  ScreenTools.defaultFontPixelHeight
 
                     Image {
                         anchors.margins:    ScreenTools.defaultFontPixelHeight
