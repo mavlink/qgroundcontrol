@@ -57,7 +57,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     : _sdlIndex(sdlIndex)
     , _exitThread(false)
     , _name(name)
-    , _axisCount(axisCount)
+    , _axisCount(axisCount + 5)
     , _buttonCount(buttonCount)
     , _calibrationMode(CalibrationModeOff)
     , _lastButtonBits(0)
@@ -253,12 +253,20 @@ void Joystick::run(void)
     while (!_exitThread) {
         SDL_JoystickUpdate();
 
+        // Update first five non-moving fake axes
+        for (int axisIndex=0; axisIndex< 5; axisIndex++) {
+            int newAxisValue = 0;
+            // Calibration code requires signal to be emitted even if value hasn't changed
+            _rgAxisValues[axisIndex + 5] = newAxisValue;
+            emit rawAxisValueChanged(axisIndex + 5, newAxisValue);
+        }
+
         // Update axes
-        for (int axisIndex=0; axisIndex<_axisCount; axisIndex++) {
+        for (int axisIndex=0; axisIndex<_axisCount - 5; axisIndex++) {
             int newAxisValue = SDL_JoystickGetAxis(sdlJoystick, axisIndex);
             // Calibration code requires signal to be emitted even if value hasn't changed
-            _rgAxisValues[axisIndex] = newAxisValue;
-            emit rawAxisValueChanged(axisIndex, newAxisValue);
+            _rgAxisValues[axisIndex + 5] = newAxisValue;
+            emit rawAxisValueChanged(axisIndex + 5, newAxisValue);
         }
         
         // Update buttons
