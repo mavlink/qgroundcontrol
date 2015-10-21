@@ -31,14 +31,15 @@ Item {
         radius:         width / 2
         border.width:   2
         border.color:   "white"
-        opacity:        checked ? 0.95 : 0.65
         color:          checked ? qgcPal.mapButtonHighlight : qgcPal.mapButton
+
         Image {
             id:             button
             anchors.fill:   parent
             fillMode:       Image.PreserveAspectFit
             mipmap:         true
             smooth:         true
+
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {

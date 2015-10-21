@@ -410,15 +410,17 @@ QGCView {
                 spacing: 10
 
                 QGCButton {
-                    id:     skipButton
-                    text:   "Skip"
+                    id:         skipButton
+                    showBorder: true
+                    text:       "Skip"
 
                     onClicked: controller.skipButtonClicked()
                 }
 
                 QGCButton {
-                    id:     cancelButton
-                    text:   "Cancel"
+                    id:         cancelButton
+                    showBorder: true
+                    text:       "Cancel"
 
                     onClicked: controller.cancelButtonClicked()
                 }
@@ -426,6 +428,7 @@ QGCView {
                 QGCButton {
                     id:         nextButton
                     primary:    true
+                    showBorder: true
                     text:       "Calibrate"
 
                     onClicked: {
@@ -468,16 +471,18 @@ QGCView {
                 }
 
                 QGCButton {
-                    id:     bindButton
-                    text:   "Spektrum Bind"
+                    id:         bindButton
+                    showBorder: true
+                    text:       "Spektrum Bind"
 
                     onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
                 }
             }
 
             QGCButton {
-                text: "Copy Trims"
-                onClicked: showDialog(copyTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
+                showBorder: true
+                text:       "Copy Trims"
+                onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
             }
 
         } // Column - Left Column

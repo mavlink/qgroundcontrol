@@ -434,7 +434,11 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     _createSingletons();
 
+#ifdef __mobile__
+    _styleIsDark = false;
+#else
     _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
+#endif
     _loadCurrentStyle();
 
     // Exit main application when last window is closed

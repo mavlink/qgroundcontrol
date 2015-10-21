@@ -33,7 +33,7 @@ import QGroundControl.ScreenTools   1.0
 FlightDisplayView {
     id: _root
 
-    topMargin: toolbarLoader.height
+    topMargin: toolbarLoader.height + (ScreenTools.defaultFontPixelHeight / 2)
 
     property var _toolbar: toolbarLoader.item
 
@@ -102,7 +102,6 @@ FlightDisplayView {
 
     Loader {
         id:                 setupViewLoader
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        toolbarLoader.bottom
