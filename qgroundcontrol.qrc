@@ -120,6 +120,7 @@
         <file alias="QGroundControl/Controls/RoundButton.qml">src/QmlControls/RoundButton.qml</file>
         <file alias="QGroundControl/Controls/QGCCanvas.qml">src/QmlControls/QGCCanvas.qml</file>
         <file alias="QGroundControl/Controls/ExclusiveGroupItem.qml">src/QmlControls/ExclusiveGroupItem.qml</file>
+        <file alias="QGroundControl/Controls/ClickableColor.qml">src/QmlControls/ClickableColor.qml</file>
 
         <!-- Main Window -->
         <file alias="MainWindow.qml">src/ui/MainWindow.qml</file>

@@ -29,6 +29,8 @@
 
 #ifdef Q_OS_WIN
 const double ScreenToolsController::_defaultFontPixelSizeRatio = 1.0;
+#elif __mobile__
+const double ScreenToolsController::_defaultFontPixelSizeRatio = 1.0;
 #else
 const double ScreenToolsController::_defaultFontPixelSizeRatio = 0.8;
 #endif

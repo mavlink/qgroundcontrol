@@ -67,7 +67,7 @@ Rectangle {
                 Rectangle {
                     width:  ScreenTools.defaultFontPixelWidth * 28
                     height: ScreenTools.defaultFontPixelHeight * 13
-                    color:  qgcPal.windowShade
+                    color:  qgcPal.window
 
                     readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
@@ -76,7 +76,7 @@ Rectangle {
                         id:     titleBar
                         width:  parent.width
                         height: titleHeight
-                        color:  qgcPal.windowShadeDark
+                        color:  qgcPal.windowShade
 
                         // Title text
                         QGCLabel {
