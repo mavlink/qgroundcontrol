@@ -41,6 +41,9 @@ import QGroundControl.Controllers   1.0
 Item {
     id: root
 
+    property alias latitude: flightMap.latitude
+    property alias longitude: flightMap.longitude
+
     // Top margin for all widgets. Used to prevent overlap with the toolbar
     property real   topMargin: 0
 
@@ -114,7 +117,6 @@ Item {
         QGroundControl.flightMapSettings.saveMapSetting(flightMap.mapName, _showMapBackgroundKey, setBool(_showMap))
     }
 
-
     FlightMap {
         id:             flightMap
         anchors.fill:   parent
@@ -126,6 +128,8 @@ Item {
         property var rootVehicleCoordinate: _vehicleCoordinate
         property bool rootLoadCompleted: false
 
+        property bool _followVehicle: true
+
         onRootVehicleCoordinateChanged: updateMapPosition(false /* force */)
 
         Component.onCompleted: flightMapDelayLoader.source = "FlightDisplayViewDelayLoadInner.qml"
@@ -136,9 +140,6 @@ Item {
                 flightMap.longitude = root._vehicleCoordinate.longitude
             }
         }
-
-        property bool _followVehicle: true
-
         // Home position
         MissionItemIndicator {
             label:          "H"
@@ -193,6 +194,11 @@ Item {
         Loader {
             id:             flightMapDelayLoader
             anchors.fill:   parent
+        }
+
+        // Used to make pinch zoom work
+        MouseArea {
+            anchors.fill: parent
         }
     } // Flight Map
 

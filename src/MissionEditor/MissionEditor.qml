@@ -60,10 +60,10 @@ QGCView {
     property var    _homePositionManager:       QGroundControl.homePositionManager
     property string _homePositionName:          _homePositionManager.homePositions.get(0).name
 
-    property var    offlineHomePosition:        _homePositionManager.homePositions.get(0).coordinate
+    //property var    offlineHomePosition:        _homePositionManager.homePositions.get(0).coordinate
     property var    liveHomePosition:           controller.liveHomePosition
     property var    liveHomePositionAvailable:  controller.liveHomePositionAvailable
-    property var    homePosition:               offlineHomePosition // live or offline depending on state
+    //property var    homePosition:               offlineHomePosition // live or offline depending on state
 
     property bool _syncNeeded:                  controller.missionItems.dirty
     property bool _syncInProgress:              _activeVehicle ? _activeVehicle.missionManager.inProgress : false
@@ -103,13 +103,14 @@ QGCView {
     }
 
     function updateHomePosition() {
-        homePosition = liveHomePositionAvailable ? liveHomePosition : offlineHomePosition
-        _missionItems.get(0).coordinate = homePosition
-        _missionItems.get(0).homePositionValid = true
+        if (liveHomePositionAvailable) {
+            _missionItems.get(0).coordinate = liveHomePosition
+            _missionItems.get(0).homePositionValid = true
+        }
     }
 
     Component.onCompleted:              updateHomePosition()
-    onOfflineHomePositionChanged:       updateHomePosition()
+    //onOfflineHomePositionChanged:       updateHomePosition()
     onLiveHomePositionAvailableChanged: updateHomePosition()
     onLiveHomePositionChanged:          updateHomePosition()
 
@@ -124,11 +125,8 @@ QGCView {
                 id:             editorMap
                 anchors.fill:   parent
                 mapName:        "MissionEditor"
-
-                Component.onCompleted: {
-                    latitude = homePosition.latitude
-                    longitude = homePosition.longitude
-                }
+                latitude:       tabletPosition.latitude
+                longitude:      tabletPosition.longitude
 
                 readonly property real animationDuration: 500
 
@@ -161,8 +159,8 @@ QGCView {
                         coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-                        if (homePositionManagerButton.checked) {
-                            offlineHomePosition = coordinate
+                        if (false /*homePositionManagerButton.checked*/) {
+                            //offlineHomePosition = coordinate
                         } else if (addMissionItemsButton.checked) {
                             var index = controller.addMissionItem(coordinate)
                             addMissionItemsButtonAutoOffTimer.start()
@@ -242,7 +240,7 @@ QGCView {
                     anchors.bottom: parent.bottom
                     anchors.right:  parent.right
                     width:          _rightPanelWidth
-                    visible:        !homePositionManagerButton.checked && _missionItems.count > 1
+                    visible:        _missionItems.count > 1
                     opacity:        _rightPanelOpacity
                     z:              editorMap.zOrderTopMost
 
@@ -259,7 +257,8 @@ QGCView {
                             MissionItemEditor {
                             missionItem:    object
                             width:          parent.width
-                            readOnly:       object.sequenceNumber == 0 && liveHomePositionAvailable
+                            readOnly:       object.sequenceNumber == 0
+                            visible:        !readOnly || object.homePositionValid
 
                             onClicked:  setCurrentItem(object.sequenceNumber)
 
@@ -282,6 +281,9 @@ QGCView {
                                         "You will only be able to save these to a file, or send them to a vehicle."
                     }
                 } // Item - Mission Item editor
+
+/*
+Home Position Manager is commented out for now until a better implementation is completed
 
                 // Home Position Manager
                 Rectangle {
@@ -554,6 +556,7 @@ QGCView {
                         }
                     } // Column - Online view
                 } // Item - Home Position Manager
+*/
 
                 // Help Panel
                 Rectangle {
@@ -651,6 +654,9 @@ QGCView {
                                                 "Delete the currently selected mission item."
                         }
 
+                        /*
+                        Home Position Manager commented until more complete implementation is done
+
                         Image {
                             id:                 homePositionManagerHelpIcon
                             anchors.topMargin:  ScreenTools.defaultFontPixelHeight
@@ -673,11 +679,12 @@ QGCView {
                                                 "When enabled, allows you to select/add/update flying field locations. " +
                                                 "You can save multiple flying field locations for use while creating missions while you are not connected to your vehicle."
                         }
+*/
 
                         Image {
                             id:                 mapCenterHelpIcon
                             anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-                            anchors.top:        homePositionManagerHelpText.bottom
+                            anchors.top:        deleteHelpText.bottom
                             width:              ScreenTools.defaultFontPixelHeight * 3
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
@@ -793,6 +800,9 @@ QGCView {
                     }
                 }
 
+                /*
+                Home Position Manager commented until more complete implementation is done
+
                 RoundButton {
                     id:                 homePositionManagerButton
                     anchors.margins:    _margin
@@ -802,12 +812,13 @@ QGCView {
                     exclusiveGroup:     _dropButtonsExclusiveGroup
                     z:                  editorMap.zOrderWidgets
                 }
+                */
 
                 DropButton {
                     id:                 centerMapButton
                     anchors.margins:    _margin
                     anchors.left:       parent.left
-                    anchors.top:        homePositionManagerButton.bottom
+                    anchors.top:        deleteMissionItemButton.bottom
                     dropDirection:      dropRight
                     buttonImage:        "/qmlimages/MapCenter.svg"
                     viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
@@ -822,11 +833,12 @@ QGCView {
                                 spacing: ScreenTools.defaultFontPixelWidth
 
                                 QGCButton {
-                                    text: "Home"
+                                    text:       "Home"
+                                    enabled:    liveHomePositionAvailable
 
                                     onClicked: {
                                         centerMapButton.hideDropDown()
-                                        editorMap.center = QtPositioning.coordinate(homePosition.latitude, homePosition.longitude)
+                                        editorMap.center = liveHomePosition
                                     }
                                 }
 
