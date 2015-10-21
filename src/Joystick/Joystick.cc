@@ -60,6 +60,10 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     , _axisCount(axisCount)
     , _buttonCount(buttonCount)
     , _calibrationMode(CalibrationModeOff)
+    , _rgAxisValues(NULL)
+    , _rgCalibration(NULL)
+    , _rgButtonValues(NULL)
+    , _rgButtonActions(NULL)
     , _lastButtonBits(0)
     , _throttleMode(ThrottleModeCenterZero)
     , _activeVehicle(NULL)
@@ -72,12 +76,16 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     Q_UNUSED(buttonCount)
     Q_UNUSED(sdlIndex)
 #else
-    for (int i=0; i<_cAxes; i++) {
+    _rgAxisValues = new int[_axisCount];
+    _rgCalibration = new Calibration_t[_axisCount];
+    _rgButtonValues = new bool[_buttonCount];
+    _rgButtonActions = new QString[_buttonCount];
+
+    for (int i=0; i<_axisCount; i++) {
         _rgAxisValues[i] = 0;
     }
-    for (int i=0; i<_cButtons; i++) {
+    for (int i=0; i<_buttonCount; i++) {
         _rgButtonValues[i] = false;
-        _rgButtonActions[i] = -1;
     }
     
     _loadSettings();
@@ -86,7 +94,10 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
 
 Joystick::~Joystick()
 {
-    
+    delete _rgAxisValues;
+    delete _rgCalibration;
+    delete _rgButtonValues;
+    delete _rgButtonActions;
 }
 
 #ifndef __mobile__
@@ -115,7 +126,7 @@ void Joystick::_loadSettings(void)
     QString trimTpl ("Axis%1Trim");
     QString revTpl  ("Axis%1Rev");
     
-    for (int axis=0; axis<_cAxes; axis++) {
+    for (int axis=0; axis<_axisCount; axis++) {
         Calibration_t* calibration = &_rgCalibration[axis];
         
         calibration->center = settings.value(trimTpl.arg(axis), 0).toInt(&convertOk);
@@ -143,7 +154,7 @@ void Joystick::_loadSettings(void)
         qCDebug(JoystickLog) << "_loadSettings function:axis:badsettings" << function << functionAxis << badSettings;
     }
     
-    for (int button=0; button<_cButtons; button++) {
+    for (int button=0; button<_buttonCount; button++) {
         _rgButtonActions[button] = settings.value(QString(_buttonActionSettingsKey).arg(button), QString()).toString();        
         qCDebug(JoystickLog) << "_loadSettings button:action" << button << _rgButtonActions[button];
     }
@@ -171,7 +182,7 @@ void Joystick::_saveSettings(void)
     QString trimTpl ("Axis%1Trim");
     QString revTpl  ("Axis%1Rev");
     
-    for (int axis=0; axis<_cAxes; axis++) {
+    for (int axis=0; axis<_axisCount; axis++) {
         Calibration_t* calibration = &_rgCalibration[axis];
         
         settings.setValue(trimTpl.arg(axis), calibration->center);
@@ -193,7 +204,7 @@ void Joystick::_saveSettings(void)
         qCDebug(JoystickLog) << "_saveSettings name:function:axis" << _name << function << _rgFunctionSettingsKey[function];
     }
     
-    for (int button=0; button<_cButtons; button++) {
+    for (int button=0; button<_buttonCount; button++) {
         settings.setValue(QString(_buttonActionSettingsKey).arg(button), _rgButtonActions[button]);
         qCDebug(JoystickLog) << "_saveSettings button:action" << button << _rgButtonActions[button];
     }
@@ -398,7 +409,7 @@ void Joystick::stopPolling(void)
 
 void Joystick::setCalibration(int axis, Calibration_t& calibration)
 {
-    if (axis < 0 || axis > _cAxes) {
+    if (!_validAxis(axis)) {
         qCWarning(JoystickLog) << "Invalid axis index" << axis;
         return;
     }
@@ -411,7 +422,7 @@ void Joystick::setCalibration(int axis, Calibration_t& calibration)
 
 Joystick::Calibration_t Joystick::getCalibration(int axis)
 {
-    if (axis < 0 || axis > _cAxes) {
+    if (!_validAxis(axis)) {
         qCWarning(JoystickLog) << "Invalid axis index" << axis;
     }
     
@@ -420,7 +431,7 @@ Joystick::Calibration_t Joystick::getCalibration(int axis)
 
 void Joystick::setFunctionAxis(AxisFunction_t function, int axis)
 {
-    if (axis < 0 || axis > _cAxes) {
+    if (!_validAxis(axis)) {
         qCWarning(JoystickLog) << "Invalid axis index" << axis;
         return;
     }
@@ -451,7 +462,7 @@ QStringList Joystick::actions(void)
 
 void Joystick::setButtonAction(int button, const QString& action)
 {
-    if (button < 0 || button > _cButtons) {
+    if (!_validButton(button)) {
         qCWarning(JoystickLog) << "Invalid button index" << button;
         return;
     }
@@ -465,7 +476,7 @@ void Joystick::setButtonAction(int button, const QString& action)
 
 QString Joystick::getButtonAction(int button)
 {
-    if (button < 0 || button > _cButtons) {
+    if (!_validButton(button)) {
         qCWarning(JoystickLog) << "Invalid button index" << button;
     }
     
@@ -541,6 +552,16 @@ void Joystick::_buttonAction(const QString& action)
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
+}
+
+bool Joystick::_validAxis(int axis)
+{
+    return axis >= 0 && axis < _axisCount;
+}
+
+bool Joystick::_validButton(int button)
+{
+    return button >= 0 && button < _buttonCount;
 }
 
 #endif // __mobile__

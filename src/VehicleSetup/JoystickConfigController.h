@@ -54,9 +54,6 @@ public:
     JoystickConfigController(void);
     ~JoystickConfigController();
     
-    Q_PROPERTY(int minAxisCount MEMBER _axisMinimum CONSTANT)
-    Q_PROPERTY(int axisCount READ axisCount NOTIFY axisCountChanged)
-    
     Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText)
     Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
     Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton)
@@ -102,7 +99,6 @@ public:
     int axisCount(void);
     
 signals:
-    void axisCountChanged(int axisCount);
     void axisValueChanged(int axis, int value);
     
     void rollAxisMappedChanged(bool mapped);
@@ -171,6 +167,8 @@ private:
     void _advanceState(void);
     void _setupCurrentState(void);
     
+    bool _validAxis(int axis);
+
     void _inputCenterWaitBegin  (Joystick::AxisFunction_t function, int axis, int value);
     void _inputStickDetect      (Joystick::AxisFunction_t function, int axis, int value);
     void _inputStickMin         (Joystick::AxisFunction_t function, int axis, int value);
@@ -219,12 +217,13 @@ private:
 
     static const int _attitudeControls = 5;
     
-    int _axisCount;                     ///< Number of actual joystick axes available
-    static const int _axisMax = 4;      ///< Maximum number of supported joystick axes
-    static const int _axisMinimum = 4;  ///< Minimum numner of joystick axes required to run PX4
-    
-    struct AxisInfo _rgAxisInfo[_axisMax];  ///< Information associated with each axis
-    
+    int                 _axisCount;         ///< Number of actual joystick axes available
+    static const int    _axisNoAxis = -1;   ///< Signals no axis set
+    static const int    _axisMinimum = 4;   ///< Minimum numner of joystick axes required to run PX4
+    struct AxisInfo*    _rgAxisInfo;        ///< Information associated with each axis
+    int*                _axisValueSave;     ///< Saved values prior to detecting axis movement
+    int*                _axisRawValue;      ///< Current set of raw axis values
+
     enum calStates _calState;               ///< Current calibration state
     int     _calStateCurrentAxis;           ///< Current axis being worked on in calStateIdentify and calStateDetectInversion
     bool    _calStateAxisComplete;          ///< Work associated with current axis is complete
@@ -239,11 +238,7 @@ private:
     static const int _calRoughCenterDelta;
     static const int _calMoveDelta;
     static const int _calSettleDelta;
-    static const int _calMinDelta;
-    
-    int _axisValueSave[_axisMax];        ///< Saved values prior to detecting axis movement
-    
-    int _axisRawValue[_axisMax];         ///< Current set of raw axis values
+    static const int _calMinDelta;    
     
     int     _stickDetectAxis;
     int     _stickDetectInitialValue;
