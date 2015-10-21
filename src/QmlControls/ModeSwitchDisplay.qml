@@ -43,7 +43,7 @@ Rectangle {
     anchors.left:           parent.left
     anchors.right:          parent.right
     height:                 column.height + (ScreenTools.defaultFontPixelWidth * 2)
-    color:                  _qgcPal.windowShade
+    color:                  _qgcPal.window
 
     QGCPalette { id: _qgcPal; colorGroupEnabled: enabled }
 

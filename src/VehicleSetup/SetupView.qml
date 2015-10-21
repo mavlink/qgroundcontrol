@@ -34,8 +34,10 @@ import QGroundControl.Controls              1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
-Item {
-    z: zOrder   // zOrder comes from the Loader in MainWindow.qml
+Rectangle {
+    anchors.fill:   parent
+    color:          qgcPal.window
+    z:              zOrder   // zOrder comes from the Loader in MainWindow.qml
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -44,7 +46,7 @@ Item {
     readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
     readonly property real      _margin:            _defaultTextHeight / 2
-    readonly property real      _buttonWidth:       _defaultTextWidth * 15
+    readonly property real      _buttonWidth:       _defaultTextWidth * 17
     readonly property string    _armedVehicleText:  "This operation cannot be performed while vehicle is armed."
 
     property string _messagePanelText:              "missing message panel text"
@@ -198,8 +200,7 @@ Item {
     Rectangle {
         //anchors.margins:    _defaultTextHeight * 2
         anchors.fill:       parent
-        color:              qgcPal.window
-        opacity:            0.8
+        color:              qgcPal.windowShadeDark
 
         QGCLabel {
             id:                     title
@@ -218,12 +219,14 @@ Item {
             anchors.bottom:     parent.bottom
             anchors.left:       parent.left
             anchors.right:      parent.right
-            color:              qgcPal.windowShade
+            color:              qgcPal.window
 
             Flickable {
                 id:                 buttonFlickable
                 width:              _buttonWidth
-                height:             parent.height
+                anchors.topMargin:  _defaultTextHeight / 2
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
                 contentWidth:       _buttonWidth
                 contentHeight:      buttonColumn.height
                 flickableDirection: Flickable.VerticalFlick
