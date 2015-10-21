@@ -46,7 +46,9 @@ public:
     
     Q_INVOKABLE void    saveMapSetting (const QString &mapName, const QString& key, const QString& value);
     Q_INVOKABLE QString loadMapSetting (const QString &mapName, const QString& key, const QString& defaultValue);
-    
+    Q_INVOKABLE void    saveBoolMapSetting (const QString &mapName, const QString& key, bool value);
+    Q_INVOKABLE bool    loadBoolMapSetting (const QString &mapName, const QString& key, bool defaultValue);
+
     // Property accessors
     
     QString mapProvider(void);
