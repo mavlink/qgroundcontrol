@@ -138,3 +138,21 @@ QString FlightMapSettings::loadMapSetting (const QString &mapName, const QString
     settings.beginGroup(mapName);
     return settings.value(key, defaultValue).toString();
 }
+
+void FlightMapSettings::saveBoolMapSetting (const QString &mapName, const QString& key, bool value)
+{
+    QSettings settings;
+
+    settings.beginGroup(_settingsGroup);
+    settings.beginGroup(mapName);
+    settings.setValue(key, value);
+}
+
+bool FlightMapSettings::loadBoolMapSetting (const QString &mapName, const QString& key, bool defaultValue)
+{
+    QSettings settings;
+
+    settings.beginGroup(_settingsGroup);
+    settings.beginGroup(mapName);
+    return settings.value(key, defaultValue).toBool();
+}
