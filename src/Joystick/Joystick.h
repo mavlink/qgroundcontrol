@@ -152,9 +152,9 @@ private:
     
     CalibrationMode_t   _calibrationMode;
     
-    static const int    _cAxes = 4;
-    int                 _rgAxisValues[_cAxes];
-    Calibration_t       _rgCalibration[_cAxes];
+    int                 _cAxes;
+    int                 *_rgAxisValues;
+    Calibration_t       *_rgCalibration;
     int                 _rgFunctionAxis[maxFunction];
     
     static const int    _cButtons = 12;

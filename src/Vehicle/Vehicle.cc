@@ -160,6 +160,8 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     
     _mapTrajectoryTimer.setInterval(_mapTrajectoryMsecsBetweenPoints);
     connect(&_mapTrajectoryTimer, &QTimer::timeout, this, &Vehicle::_addNewMapTrajectoryPoint);
+
+    Vehicle::setJoystickEnabled(_joystickEnabled);
 }
 
 Vehicle::~Vehicle()
