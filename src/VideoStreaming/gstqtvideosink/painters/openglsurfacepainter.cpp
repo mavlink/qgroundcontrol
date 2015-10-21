@@ -23,6 +23,7 @@
 
 #include "openglsurfacepainter.h"
 #include <QtCore/qmath.h>
+#include <QOpenGLFunctions_2_0>
 
 #ifndef GL_TEXTURE0
 #  define GL_TEXTURE0    0x84C0
@@ -58,8 +59,7 @@ OpenGLSurfacePainter::OpenGLSurfacePainter()
     , m_videoColorMatrix(GST_VIDEO_COLOR_MATRIX_UNKNOWN)
 {
 #ifndef QT_OPENGL_ES
-    glActiveTexture = (_glActiveTexture) QGLContext::currentContext()->getProcAddress(
-            QLatin1String("glActiveTexture"));
+        glActiveTexture = (_glActiveTexture) QGLContext::currentContext()->getProcAddress(QLatin1String("glActiveTexture"));
 #endif
 }
 
@@ -178,24 +178,28 @@ void OpenGLSurfacePainter::paint(quint8 *data,
         QPainter *painter,
         const PaintAreas & areas)
 {
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (!funcs)
+        return;
+
     // if these are enabled, we need to reenable them after beginNativePainting()
     // has been called, as they may get disabled
-    bool stencilTestEnabled = glIsEnabled(GL_STENCIL_TEST);
-    bool scissorTestEnabled = glIsEnabled(GL_SCISSOR_TEST);
+    bool stencilTestEnabled = funcs->glIsEnabled(GL_STENCIL_TEST);
+    bool scissorTestEnabled = funcs->glIsEnabled(GL_SCISSOR_TEST);
 
     painter->beginNativePainting();
 
     if (stencilTestEnabled)
-        glEnable(GL_STENCIL_TEST);
+        funcs->glEnable(GL_STENCIL_TEST);
     if (scissorTestEnabled)
-        glEnable(GL_SCISSOR_TEST);
+        funcs->glEnable(GL_SCISSOR_TEST);
 
     const GLfloat vertexCoordArray[] = QRECT_TO_GLMATRIX(areas.videoArea);
 
-    const GLfloat txLeft = areas.sourceRect.left();
-    const GLfloat txRight = areas.sourceRect.right();
-    const GLfloat txTop = areas.sourceRect.top();
-    const GLfloat txBottom = areas.sourceRect.bottom();
+    const GLfloat txLeft    = areas.sourceRect.left();
+    const GLfloat txRight   = areas.sourceRect.right();
+    const GLfloat txTop     = areas.sourceRect.top();
+    const GLfloat txBottom  = areas.sourceRect.bottom();
 
     const GLfloat textureCoordArray[] =
     {
@@ -206,8 +210,8 @@ void OpenGLSurfacePainter::paint(quint8 *data,
     };
 
     for (int i = 0; i < m_textureCount; ++i) {
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[i]);
-        glTexImage2D(
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[i]);
+        funcs->glTexImage2D(
                 GL_TEXTURE_2D,
                 0,
                 m_textureInternalFormat,
@@ -217,10 +221,10 @@ void OpenGLSurfacePainter::paint(quint8 *data,
                 m_textureFormat,
                 m_textureType,
                 data + m_textureOffsets[i]);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        funcs->glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        funcs->glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        funcs->glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        funcs->glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
     paintImpl(painter, vertexCoordArray, textureCoordArray);
@@ -392,22 +396,24 @@ ArbFpSurfacePainter::ArbFpSurfacePainter()
     , m_programId(0)
 {
     const QGLContext *context = QGLContext::currentContext();
-
-    glProgramStringARB = (_glProgramStringARB) context->getProcAddress(
-                QLatin1String("glProgramStringARB"));
-    glBindProgramARB = (_glBindProgramARB) context->getProcAddress(
-                QLatin1String("glBindProgramARB"));
-    glDeleteProgramsARB = (_glDeleteProgramsARB) context->getProcAddress(
-                QLatin1String("glDeleteProgramsARB"));
-    glGenProgramsARB = (_glGenProgramsARB) context->getProcAddress(
-                QLatin1String("glGenProgramsARB"));
-    glProgramLocalParameter4fARB = (_glProgramLocalParameter4fARB) context->getProcAddress(
-                QLatin1String("glProgramLocalParameter4fARB"));
+        glProgramStringARB = (_glProgramStringARB) context->getProcAddress(
+                    QLatin1String("glProgramStringARB"));
+        glBindProgramARB = (_glBindProgramARB) context->getProcAddress(
+                    QLatin1String("glBindProgramARB"));
+        glDeleteProgramsARB = (_glDeleteProgramsARB) context->getProcAddress(
+                    QLatin1String("glDeleteProgramsARB"));
+        glGenProgramsARB = (_glGenProgramsARB) context->getProcAddress(
+                    QLatin1String("glGenProgramsARB"));
+        glProgramLocalParameter4fARB = (_glProgramLocalParameter4fARB) context->getProcAddress(
+                    QLatin1String("glProgramLocalParameter4fARB"));
 }
 
 void ArbFpSurfacePainter::init(const BufferFormat &format)
 {
     Q_ASSERT(m_textureCount == 0);
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (!funcs)
+        return;
 
     const char *program = 0;
 
@@ -467,7 +473,7 @@ void ArbFpSurfacePainter::init(const BufferFormat &format)
 
     glGenProgramsARB(1, &m_programId);
 
-    GLenum glError = glGetError();
+    GLenum glError = funcs->glGetError();
     if (glError != GL_NO_ERROR) {
         throw QString("ARBfb Shader allocation error ") +
             QString::number(static_cast<int>(glError), 16);
@@ -479,27 +485,28 @@ void ArbFpSurfacePainter::init(const BufferFormat &format)
                 qstrlen(program),
                 reinterpret_cast<const GLvoid *>(program));
 
-        if ((glError = glGetError()) != GL_NO_ERROR) {
-            const GLubyte* errorString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
-
+        if ((glError = funcs->glGetError()) != GL_NO_ERROR) {
+            const GLubyte* errorString = funcs->glGetString(GL_PROGRAM_ERROR_STRING_ARB);
             glDeleteProgramsARB(1, &m_programId);
             m_textureCount = 0;
             m_programId = 0;
-
             throw QString("ARBfp Shader compile error ") +
                 QString::number(static_cast<int>(glError), 16) +
                 reinterpret_cast<const char *>(errorString);
         } else {
-            glGenTextures(m_textureCount, m_textureIds);
+            funcs->glGenTextures(m_textureCount, m_textureIds);
         }
     }
 }
 
 void ArbFpSurfacePainter::cleanup()
 {
-    glDeleteTextures(m_textureCount, m_textureIds);
-    glDeleteProgramsARB(1, &m_programId);
-
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (funcs)
+    {
+        funcs->glDeleteTextures(m_textureCount, m_textureIds);
+        glDeleteProgramsARB(1, &m_programId);
+    }
     m_textureCount = 0;
     m_programId = 0;
 }
@@ -509,8 +516,11 @@ void ArbFpSurfacePainter::paintImpl(const QPainter *painter,
         const GLfloat *textureCoordArray)
 {
     Q_UNUSED(painter);
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (!funcs)
+        return;
 
-    glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    funcs->glEnable(GL_FRAGMENT_PROGRAM_ARB);
     glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, m_programId);
 
     glProgramLocalParameter4fARB(
@@ -535,28 +545,28 @@ void ArbFpSurfacePainter::paintImpl(const QPainter *painter,
             m_colorMatrix(2, 2),
             m_colorMatrix(2, 3));
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_textureIds[0]);
+    funcs->glActiveTexture(GL_TEXTURE0);
+    funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[0]);
 
     if (m_textureCount == 3) {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[1]);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[2]);
-        glActiveTexture(GL_TEXTURE0);
+        funcs->glActiveTexture(GL_TEXTURE1);
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[1]);
+        funcs->glActiveTexture(GL_TEXTURE2);
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[2]);
+        funcs->glActiveTexture(GL_TEXTURE0);
     }
 
-    glVertexPointer(2, GL_FLOAT, 0, vertexCoordArray);
-    glTexCoordPointer(2, GL_FLOAT, 0, textureCoordArray);
+    funcs->glVertexPointer(2, GL_FLOAT, 0, vertexCoordArray);
+    funcs->glTexCoordPointer(2, GL_FLOAT, 0, textureCoordArray);
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    funcs->glEnableClientState(GL_VERTEX_ARRAY);
+    funcs->glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    funcs->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisable(GL_FRAGMENT_PROGRAM_ARB);
+    funcs->glDisableClientState(GL_VERTEX_ARRAY);
+    funcs->glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    funcs->glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
 #endif
@@ -724,14 +734,19 @@ void GlslSurfacePainter::init(const BufferFormat &format)
         throw QString("Shader link error ") + m_program.log();
     }
 
-    glGenTextures(m_textureCount, m_textureIds);
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (funcs)
+        funcs->glGenTextures(m_textureCount, m_textureIds);
 }
 
 void GlslSurfacePainter::cleanup()
 {
-    glDeleteTextures(m_textureCount, m_textureIds);
-    m_program.removeAllShaders();
-
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (funcs)
+    {
+        funcs->glDeleteTextures(m_textureCount, m_textureIds);
+        m_program.removeAllShaders();
+    }
     m_textureCount = 0;
 }
 
@@ -739,8 +754,8 @@ void GlslSurfacePainter::paintImpl(const QPainter *painter,
         const GLfloat *vertexCoordArray,
         const GLfloat *textureCoordArray)
 {
-    const int deviceWidth = painter->device()->width();
-    const int deviceHeight = painter->device()->height();
+    const int deviceWidth   = painter->device()->width();
+    const int deviceHeight  = painter->device()->height();
 
     const QTransform transform = painter->deviceTransform();
 
@@ -780,27 +795,31 @@ void GlslSurfacePainter::paintImpl(const QPainter *painter,
     m_program.setAttributeArray("textureCoordArray", textureCoordArray, 2);
     m_program.setUniformValue("positionMatrix", positionMatrix);
 
+    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    if (funcs)
+        return;
+
     if (m_textureCount == 3) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[0]);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[1]);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[2]);
-        glActiveTexture(GL_TEXTURE0);
+        funcs->glActiveTexture(GL_TEXTURE0);
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[0]);
+        funcs->glActiveTexture(GL_TEXTURE1);
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[1]);
+        funcs->glActiveTexture(GL_TEXTURE2);
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[2]);
+        funcs->glActiveTexture(GL_TEXTURE0);
 
         m_program.setUniformValue("texY", 0);
         m_program.setUniformValue("texU", 1);
         m_program.setUniformValue("texV", 2);
     } else {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[0]);
+        funcs->glActiveTexture(GL_TEXTURE0);
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[0]);
 
         m_program.setUniformValue("texRgb", 0);
     }
     m_program.setUniformValue("colorMatrix", m_colorMatrix);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    funcs->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     m_program.release();
 }
