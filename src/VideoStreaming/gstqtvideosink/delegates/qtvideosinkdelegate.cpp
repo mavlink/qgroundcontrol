@@ -27,7 +27,8 @@
 
 #include <QStack>
 #include <QPainter>
-#include <QOpenGLFunctions_2_0>
+
+#include "glutils.h"
 
 QtVideoSinkDelegate::QtVideoSinkDelegate(GstElement *sink, QObject *parent)
     : BaseDelegate(sink, parent)
@@ -138,7 +139,7 @@ void QtVideoSinkDelegate::setGLContext(QGLContext *context)
 
     if (m_glContext) {
         m_glContext->makeCurrent();
-        QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+        QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
         if (funcs) {
             const QByteArray extensions(reinterpret_cast<const char *>(funcs->glGetString(GL_EXTENSIONS)));
             GST_LOG_OBJECT(m_sink, "Available GL extensions: %s", extensions.constData());
@@ -230,7 +231,6 @@ void QtVideoSinkDelegate::changePainter(const BufferFormat & format)
 void QtVideoSinkDelegate::destroyPainter()
 {
     GST_LOG_OBJECT(m_sink, "Destroying painter");
-
     delete m_painter;
     m_painter = 0;
 }
@@ -243,6 +243,5 @@ bool QtVideoSinkDelegate::event(QEvent *event)
             destroyPainter();
         }
     }
-
     return BaseDelegate::event(event);
 }
