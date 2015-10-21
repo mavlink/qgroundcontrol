@@ -220,7 +220,7 @@ private:
     static const int _attitudeControls = 5;
     
     int _axisCount;                     ///< Number of actual joystick axes available
-    static const int _axisMax = 4;      ///< Maximum number of supported joystick axes
+    static const int _axisMax = 6;      ///< Maximum number of supported joystick axes
     static const int _axisMinimum = 4;  ///< Minimum numner of joystick axes required to run PX4
     
     struct AxisInfo _rgAxisInfo[_axisMax];  ///< Information associated with each axis
