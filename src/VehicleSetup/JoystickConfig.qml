@@ -67,7 +67,6 @@ QGCView {
         if (controllerCompleted) {
             controllerAndViewReady = true
             controller.start()
-            updateAxisCount()
         }
     }
 
@@ -564,7 +563,7 @@ QGCView {
 
                 Repeater {
                     id:     axisMonitorRepeater
-                    model:  controller.axisCount
+                    model:  _activeJoystick.axisCount
                     width:  parent.width
 
                     Row {
