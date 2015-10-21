@@ -7,13 +7,6 @@
 #include <QSound>
 #endif
 
-/* For Snow leopard and later
-#if defined Q_OS_MAC & defined QGC_SPEECH_ENABLED
-#include <NSSpeechSynthesizer.h>
-#endif
-   */
-
-
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <basetyps.h>
@@ -30,6 +23,8 @@ public:
     void mute(bool mute);
     bool isMuted();
     void init();
+
+    static QString fixTextMessageForAudio(const QString& string);
 
 signals:
 
@@ -52,8 +47,7 @@ protected:
     QTimer *emergencyTimer;
     bool muted;
 private:
-    QString _fixTextMessageForAudio(const QString& string);
-    bool _getMillisecondString(const QString& string, QString& match, int& number);
+    static bool _getMillisecondString(const QString& string, QString& match, int& number);
 };
 
 #endif // QGCAUDIOWORKER_H

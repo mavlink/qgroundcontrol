@@ -38,42 +38,51 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 #include "QGC.h"
 
+#if defined __android__
+#include <QtAndroidExtras/QtAndroidExtras>
+#include <QtAndroidExtras/QAndroidJniObject>
+#endif
+
 IMPLEMENT_QGC_SINGLETON(GAudioOutput, GAudioOutput)
 
 const char* GAudioOutput::_mutedKey = "AudioMuted";
 
-GAudioOutput::GAudioOutput(QObject *parent) :
-    QGCSingleton(parent),
-    muted(false),
-    thread(new QThread()),
-    worker(new QGCAudioWorker())
+GAudioOutput::GAudioOutput(QObject *parent)
+    : QGCSingleton(parent)
+    , muted(false)
+#ifndef __android__
+    , thread(new QThread())
+    , worker(new QGCAudioWorker())
+#endif
 {
     QSettings settings;
-    
     muted = settings.value(_mutedKey, false).toBool();
     muted |= qgcApp()->runningUnitTests();
-    
+#ifndef __android__
     worker->moveToThread(thread);
     connect(this, &GAudioOutput::textToSpeak, worker, &QGCAudioWorker::say);
     connect(thread, &QThread::finished, thread, &QObject::deleteLater);
     connect(thread, &QThread::finished, worker, &QObject::deleteLater);
     thread->start();
+#endif
 }
 
 GAudioOutput::~GAudioOutput()
 {
+#ifndef __android__
     thread->quit();
+#endif
 }
 
 
 void GAudioOutput::mute(bool mute)
 {
     QSettings settings;
-    
     muted = mute;
     settings.setValue(_mutedKey, mute);
-    
+#ifndef __android__
     emit mutedChanged(mute);
+#endif
 }
 
 bool GAudioOutput::isMuted()
@@ -81,10 +90,24 @@ bool GAudioOutput::isMuted()
     return muted;
 }
 
-bool GAudioOutput::say(const QString& text, int severity)
+bool GAudioOutput::say(const QString& inText, int severity)
 {
     if (!muted) {
-        emit textToSpeak(text, severity);
+#if defined __android__
+#if defined QGC_SPEECH_ENABLED
+        static const char V_jniClassName[] {"org/qgroundcontrol/qgchelper/UsbDeviceJNI"};
+        QAndroidJniEnvironment env;
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+        QString text = QGCAudioWorker::fixTextMessageForAudio(inText);
+        QAndroidJniObject javaMessage = QAndroidJniObject::fromString(text);
+        QAndroidJniObject::callStaticMethod<void>(V_jniClassName, "say", "(Ljava/lang/String;)V", javaMessage.object<jstring>());
+#endif
+#else
+        emit textToSpeak(inText, severity);
+#endif
     }
     return true;
 }

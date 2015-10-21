@@ -10,6 +10,47 @@
 
 #if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
 #include <ApplicationServices/ApplicationServices.h>
+
+static SpeechChannel sc;
+static Fixed volume;
+
+static void speechDone(SpeechChannel sc2, void *) {
+    if (sc2 == sc)
+    {
+        DisposeSpeechChannel(sc);
+    }
+}
+
+class MacSpeech
+{
+public:
+    MacSpeech()
+    {
+        setVolume(100);
+    }
+    ~MacSpeech()
+    {
+    }
+    void say(const char* words)
+    {
+        while (SpeechBusy()) {
+            QGC::SLEEP::msleep(100);
+        }
+        NewSpeechChannel(NULL, &sc);
+        SetSpeechInfo(sc, soVolume, &volume);
+        SetSpeechInfo(sc, soSpeechDoneCallBack, reinterpret_cast<void *>(speechDone));
+        CFStringRef cfstr = CFStringCreateWithCString(NULL, words, kCFStringEncodingUTF8);
+        SpeakCFString(sc, cfstr, NULL);
+    }
+    void setVolume(int v)
+    {
+        volume = FixRatio(v, 100);
+    }
+};
+
+//-- Singleton
+MacSpeech macSpeech;
+
 #endif
 
 // Speech synthesis is only supported with MSVC compiler
@@ -18,7 +59,7 @@
 #include <sapi.h>
 #endif
 
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
+#if defined Q_OS_LINUX && !defined __android__ && defined QGC_SPEECH_ENABLED
 // Using eSpeak for speech synthesis: following https://github.com/mondhs/espeak-sample/blob/master/sampleSpeak.cpp
 #include <espeak/speak_lib.h>
 #endif
@@ -48,7 +89,7 @@ void QGCAudioWorker::init()
     sound = new QSound(":/res/Alert");
 #endif
 
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
+#if defined Q_OS_LINUX && !defined __android__ && defined QGC_SPEECH_ENABLED
     espeak_Initialize(AUDIO_OUTPUT_SYNCH_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
     espeak_VOICE *espeak_voice = espeak_GetCurrentVoice();
     espeak_voice->languages = "en-uk"; // Default to British English
@@ -82,25 +123,29 @@ void QGCAudioWorker::init()
 QGCAudioWorker::~QGCAudioWorker()
 {
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
-	if (pVoice) {
-		pVoice->Release();
-		pVoice = NULL;
-	}
+    if (pVoice) {
+        pVoice->Release();
+        pVoice = NULL;
+    }
     ::CoUninitialize();
 #endif
 }
 
 void QGCAudioWorker::say(QString inText, int severity)
 {
-	static bool threadInit = false;
-	if (!threadInit) {
-		threadInit = true;
-		init();
-	}
+#ifdef __android__
+    Q_UNUSED(inText);
+    Q_UNUSED(severity);
+#else
+    static bool threadInit = false;
+    if (!threadInit) {
+        threadInit = true;
+        init();
+    }
 
     if (!muted)
     {
-        QString text = _fixTextMessageForAudio(inText);
+        QString text = fixTextMessageForAudio(inText);
         // Prepend high priority text with alert beep
         if (severity < GAudioOutput::AUDIO_SEVERITY_CRITICAL) {
             beep();
@@ -115,35 +160,22 @@ void QGCAudioWorker::say(QString inText, int severity)
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
         HRESULT hr = pVoice->Speak(text.toStdWString().c_str(), SPF_DEFAULT, NULL);
-		if (FAILED(hr)) {
-			qDebug() << "Speak failed, HR:" << QString("%1").arg(hr, 0, 16);
-		}
+        if (FAILED(hr)) {
+            qDebug() << "Speak failed, HR:" << QString("%1").arg(hr, 0, 16);
+        }
 #elif defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
         // Set size of string for espeak: +1 for the null-character
         unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
         espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
 
 #elif defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
-        // Slashes necessary to have the right start to the sentence
-        // copying data prevents SpeakString from reading additional chars
-        text = "\\" + text;
-        std::wstring str = text.toStdWString();
-        unsigned char str2[1024] = {};
-        memcpy(str2, text.toLatin1().data(), str.length());
-        SpeakString(str2);
-
-        // Block the thread while busy
-        // because we run in our own thread, this doesn't
-        // halt the main application
-        while (SpeechBusy()) {
-            QGC::SLEEP::msleep(100);
-        }
-
+        macSpeech.say(text.toStdString().c_str());
 #else
         // Make sure there isn't an unused variable warning when speech output is disabled
         Q_UNUSED(inText);
 #endif
     }
+#endif // __android__
 }
 
 void QGCAudioWorker::mute(bool mute)
@@ -187,7 +219,7 @@ bool QGCAudioWorker::_getMillisecondString(const QString& string, QString& match
     return false;
 }
 
-QString QGCAudioWorker::_fixTextMessageForAudio(const QString& string) {
+QString QGCAudioWorker::fixTextMessageForAudio(const QString& string) {
     QString match;
     QString newNumber;
     QString result = string;
@@ -204,7 +236,9 @@ QString QGCAudioWorker::_fixTextMessageForAudio(const QString& string) {
     if(result.contains("ALTCTL", Qt::CaseInsensitive)) {
         result.replace("ALTCTL", "Altitude Control", Qt::CaseInsensitive);
     }
-    if(result.contains("RTL", Qt::CaseInsensitive)) {
+    if(result.contains("AUTO_RTL", Qt::CaseInsensitive)) {
+        result.replace("AUTO_RTL", "auto Return To Land", Qt::CaseInsensitive);
+    } else if(result.contains("RTL", Qt::CaseInsensitive)) {
         result.replace("RTL", "Return To Land", Qt::CaseInsensitive);
     }
     if(result.contains("ACCEL ", Qt::CaseInsensitive)) {
