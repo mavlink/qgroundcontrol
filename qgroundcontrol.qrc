@@ -66,6 +66,7 @@
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="TrashDelete.svg">src/FlightMap/Images/TrashDelete.svg</file>
+        <file alias="XDelete.svg">src/FlightMap/Images/XDelete.svg</file>
 
         <!-- Map Buttons -->
         <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
