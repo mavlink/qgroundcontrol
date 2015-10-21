@@ -58,6 +58,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     , _exitThread(false)
     , _name(name)
     , _axisCount(axisCount)
+    ,  _cAxes(axisCount)
     , _buttonCount(buttonCount)
     , _calibrationMode(CalibrationModeOff)
     , _lastButtonBits(0)
@@ -72,6 +73,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     Q_UNUSED(buttonCount)
     Q_UNUSED(sdlIndex)
 #else
+    _rgAxisValues = new int[_cAxes];
+    _rgCalibration = new Calibration_t[_cAxes];
     for (int i=0; i<_cAxes; i++) {
         _rgAxisValues[i] = 0;
     }
@@ -269,7 +272,6 @@ void Joystick::run(void)
                 emit rawButtonPressedChanged(buttonIndex, newButtonValue);
             }
         }
-        
         if (_calibrationMode != CalibrationModeCalibrating) {
             int     axis = _rgFunctionAxis[rollFunction];
             float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
@@ -344,7 +346,6 @@ void Joystick::run(void)
             _lastButtonBits = newButtonBits;
             
             qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
-            
             emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
         }
         
@@ -373,7 +374,6 @@ void Joystick::startPolling(Vehicle* vehicle)
         _activeVehicle = vehicle;
         
         UAS* uas = _activeVehicle->uas();
-        
         connect(this, &Joystick::manualControl,         uas, &UAS::setExternalControlSetpoint);
         // FIXME: ****
         //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
@@ -387,7 +387,7 @@ void Joystick::stopPolling(void)
 {
     if (isRunning()) {
         UAS* uas = _activeVehicle->uas();
-        
+
         disconnect(this, &Joystick::manualControl,          uas, &UAS::setExternalControlSetpoint);
         // FIXME: ****
         //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
