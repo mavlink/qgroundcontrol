@@ -291,10 +291,6 @@ void Joystick::run(void)
             float   pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
             
                     axis = _rgFunctionAxis[yawFunction];
-                    _rgCalibration[axis].min = -32768;
-                    _rgCalibration[axis].max = 32767;
-                    _rgCalibration[axis].center = 0;
-                    _rgCalibration[axis].reversed = false;
             float   yaw = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis]);
 
                     axis = _rgFunctionAxis[throttleFunction];
