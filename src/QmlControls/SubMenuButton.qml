@@ -28,7 +28,7 @@ Button {
 
         background: Rectangle {
             id:     innerRect
-            color:  showHighlight ? qgcPal.buttonHighlight : qgcPal.button
+            color:  showHighlight ? qgcPal.buttonHighlight : qgcPal.windowShade
 
             readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.5
 
@@ -59,7 +59,7 @@ Button {
                 anchors.top:    titleBar.bottom
                 anchors.bottom: parent.bottom
                 width:          parent.width
-                color:          qgcPal.windowShade
+                color:          qgcPal.windowShadeDark
 
                 QGCColoredImage {
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * .75

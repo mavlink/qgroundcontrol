@@ -37,6 +37,12 @@ class QmlTestWidget : public QGCQmlWidgetHolder
 
 public:
     QmlTestWidget(void);
+
+    Q_INVOKABLE void showColorDialog(QQuickItem* item);
+
+private slots:
+    void _colorSelected(const QColor & color);
+
 };
 
 #endif

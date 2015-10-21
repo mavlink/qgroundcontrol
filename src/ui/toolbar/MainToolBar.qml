@@ -38,9 +38,12 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Controllers           1.0
 
-Item {
-    id:     toolBarHolder
-    height: toolBarHeight
+Rectangle {
+    id:             toolBarHolder
+    anchors.left:   parent.left
+    anchors.right:  parent.right
+    height:         toolBarHeight
+    color:          qgcPal.window
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 

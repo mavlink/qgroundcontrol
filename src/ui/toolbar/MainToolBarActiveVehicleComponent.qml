@@ -105,7 +105,7 @@ Row {
     }
 
     QGCButton {
-        width:                  ScreenTools.defaultFontPixelWidth * 12
+        width:                  ScreenTools.defaultFontPixelWidth * 13
         height:                 cellHeight
         anchors.verticalCenter: parent.verticalCenter
         text:                   "Vehicle " + activeVehicle.id
@@ -359,7 +359,7 @@ Row {
     }
 
     QGCButton {
-        width:                  ScreenTools.defaultFontPixelWidth * 15
+        width:                  ScreenTools.defaultFontPixelWidth * 16
         height:                 cellHeight
         anchors.verticalCenter: parent.verticalCenter
         text:                   activeVehicle.flightMode

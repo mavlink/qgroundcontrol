@@ -45,52 +45,41 @@ class QGCPalette : public QObject
     
     Q_PROPERTY(bool colorGroupEnabled READ colorGroupEnabled WRITE setColorGroupEnabled NOTIFY paletteChanged)
 
-    /// Background color for windows
-    Q_PROPERTY(QColor window READ window NOTIFY paletteChanged)
-    
-    /// Color for shaded areas within a window. The windowShade color should be a color somewhere between window and button.
-    Q_PROPERTY(QColor windowShade READ windowShade NOTIFY paletteChanged)
-    
-    /// Color for darker shared areas within a window. The windowShadeDark color should be a color somewhere between window and windowShade.
-    Q_PROPERTY(QColor windowShadeDark READ windowShadeDark NOTIFY paletteChanged)
-    
-    /// Standard text color for label text
-    Q_PROPERTY(QColor text READ text NOTIFY paletteChanged)
-    
-	/// Color for warning text
-	Q_PROPERTY(QColor warningText READ warningText NOTIFY paletteChanged)
+    // The colors are:
+    //      window -                Background color for windows
+    //      windowShade -           Color for shaded areas within a window. The windowShade color should be a color somewhere between window and button.
+    //      windowShadeDark -       Color for darker shared areas within a window. The windowShadeDark color should be a color somewhere between window and windowShade.
+    //      text -                  Standard text color for label text
+    //      warningText -           Color for warning text
+    //      button -                Background color for buttons
+    //      buttonText -            Text color for buttons
+    //      buttonHighlight -       Background color for button in selected or hover state
+    //      buttonHighlightText -   Text color for button in selected or hover state
 
-	/// Background color for buttons
-    Q_PROPERTY(QColor button READ button NOTIFY paletteChanged)
-    
-    /// Text color for buttons
-    Q_PROPERTY(QColor buttonText READ buttonText NOTIFY paletteChanged)
-    
-    /// Background color for button in selected or hover state
-    Q_PROPERTY(QColor buttonHighlight READ buttonHighlight NOTIFY paletteChanged)
-    
-    /// Text color for button in selected or hover state
-    Q_PROPERTY(QColor buttonHighlightText READ buttonHighlightText NOTIFY paletteChanged)
+    //      primaryButton -         Background color for primary buttons. A primary button is the button which would be the
+    //                              normal default  button to press. For example in an Ok/Cancel situation where Ok would normally
+    //                              be pressed, Ok is the primary button.
+    //      primaryButtonText -     Text color for primary buttons
+    //      textField -             Background color for TextFields
+    //      textFieldText -         Text color for TextFields
+    //      mapButton -             Background color for map buttons
+    //      mapButtonHighlight -    Background color for map button in selected or hover state
 
-    /// Background color for primary buttons. A primary button is the button which would be the
-    /// normal default  button to press. For example in an Ok/Cancel situation where Ok would normally
-    /// be pressed, Ok is the primary button.
-    Q_PROPERTY(QColor primaryButton READ primaryButton NOTIFY paletteChanged)
-    
-    /// Text color for buttons
-    Q_PROPERTY(QColor primaryButtonText READ primaryButtonText NOTIFY paletteChanged)
-    
-    // Background color for TextFields
-    Q_PROPERTY(QColor textField READ textField NOTIFY paletteChanged)
-    
-    // Text color for TextFields
-    Q_PROPERTY(QColor textFieldText READ textFieldText NOTIFY paletteChanged)
-    
-    /// Background color for map buttons
-    Q_PROPERTY(QColor mapButton READ mapButton NOTIFY paletteChanged)
-
-    /// Background color for map button in selected or hover state
-    Q_PROPERTY(QColor mapButtonHighlight READ mapButtonHighlight NOTIFY paletteChanged)
+    Q_PROPERTY(QColor window                READ window                 WRITE setWindow                 NOTIFY paletteChanged)
+    Q_PROPERTY(QColor windowShade           READ windowShade            WRITE setWindowShade            NOTIFY paletteChanged)
+    Q_PROPERTY(QColor windowShadeDark       READ windowShadeDark        WRITE setWindowShadeDark        NOTIFY paletteChanged)
+    Q_PROPERTY(QColor text                  READ text                   WRITE setText                   NOTIFY paletteChanged)
+    Q_PROPERTY(QColor warningText           READ warningText            WRITE setWarningText            NOTIFY paletteChanged)
+    Q_PROPERTY(QColor button                READ button                 WRITE setButton                 NOTIFY paletteChanged)
+    Q_PROPERTY(QColor buttonText            READ buttonText             WRITE setButtonText             NOTIFY paletteChanged)
+    Q_PROPERTY(QColor buttonHighlight       READ buttonHighlight        WRITE setButtonHighlight        NOTIFY paletteChanged)
+    Q_PROPERTY(QColor buttonHighlightText   READ buttonHighlightText    WRITE setButtonHighlightText    NOTIFY paletteChanged)
+    Q_PROPERTY(QColor primaryButton         READ primaryButton          WRITE setPrimaryButton          NOTIFY paletteChanged)
+    Q_PROPERTY(QColor primaryButtonText     READ primaryButtonText      WRITE setPrimaryButtonText      NOTIFY paletteChanged)
+    Q_PROPERTY(QColor textField             READ textField              WRITE setTextField              NOTIFY paletteChanged)
+    Q_PROPERTY(QColor textFieldText         READ textFieldText          WRITE setTextFieldText          NOTIFY paletteChanged)
+    Q_PROPERTY(QColor mapButton             READ mapButton              WRITE setMapButton              NOTIFY paletteChanged)
+    Q_PROPERTY(QColor mapButtonHighlight    READ mapButtonHighlight     WRITE setMapButtonHighlight     NOTIFY paletteChanged)
 
 public:
     enum ColorGroup {
@@ -109,26 +98,37 @@ public:
     bool colorGroupEnabled(void) const { return _colorGroupEnabled; }
     void setColorGroupEnabled(bool enabled);
     
-    QColor window(void) const { return _window[_theme][_colorGroupEnabled ? 1 : 0]; }
-    QColor windowShade(void) const { return _windowShade[_theme][_colorGroupEnabled ? 1 : 0]; }
-    QColor windowShadeDark(void) const { return _windowShadeDark[_theme][_colorGroupEnabled ? 1 : 0]; }
-    
-    QColor text(void) const { return _text[_theme][_colorGroupEnabled ? 1 : 0]; }
-	QColor warningText(void) const { return _warningText[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor window(void)                 const { return _window[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor windowShade(void)            const { return _windowShade[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor windowShadeDark(void)        const { return _windowShadeDark[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor text(void)                   const { return _text[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor warningText(void)            const { return _warningText[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor button(void)                 const { return _button[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor buttonText(void)             const { return _buttonText[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor buttonHighlight(void)        const { return _buttonHighlight[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor buttonHighlightText(void)    const { return _buttonHighlightText[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor primaryButton(void)          const { return _primaryButton[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor primaryButtonText(void)      const { return _primaryButtonText[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor textField(void)              const { return _textField[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor textFieldText(void)          const { return _textFieldText[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor mapButton(void)              const { return _mapButton[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor mapButtonHighlight(void)     const { return _mapButtonHighlight[_theme][_colorGroupEnabled ? 1 : 0]; }
 
-    QColor button(void) const { return _button[_theme][_colorGroupEnabled ? 1 : 0]; }
-    QColor buttonText(void) const { return _buttonText[_theme][_colorGroupEnabled ? 1 : 0]; }
-    QColor buttonHighlight(void) const { return _buttonHighlight[_theme][_colorGroupEnabled ? 1 : 0]; }
-    QColor buttonHighlightText(void) const { return _buttonHighlightText[_theme][_colorGroupEnabled ? 1 : 0]; }
-    
-    QColor primaryButton(void) const { return _primaryButton[_theme][_colorGroupEnabled ? 1 : 0]; }
-    QColor primaryButtonText(void) const { return _primaryButtonText[_theme][_colorGroupEnabled ? 1 : 0]; }
-    
-    QColor textField(void) const { return _textField[_theme][_colorGroupEnabled ? 1 : 0]; }
-    QColor textFieldText(void) const { return _textFieldText[_theme][_colorGroupEnabled ? 1 : 0]; }
-    
-    QColor mapButton(void) const { return _mapButton[_theme][_colorGroupEnabled ? 1 : 0]; }
-    QColor mapButtonHighlight(void) const { return _mapButtonHighlight[_theme][_colorGroupEnabled ? 1 : 0]; }
+    void setWindow(QColor& color)               { _window[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setWindowShade(QColor& color)          { _windowShade[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setWindowShadeDark(QColor& color)      { _windowShadeDark[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setText(QColor& color)                 { _text[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setWarningText(QColor& color)          { _warningText[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setButton(QColor& color)               { _button[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setButtonText(QColor& color)           { _buttonText[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setButtonHighlight(QColor& color)      { _buttonHighlight[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setButtonHighlightText(QColor& color)  { _buttonHighlightText[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setPrimaryButton(QColor& color)        { _primaryButton[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setPrimaryButtonText(QColor& color)    { _primaryButtonText[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setTextField(QColor& color)            { _textField[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setTextFieldText(QColor& color)        { _textFieldText[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setMapButton(QColor& color)            { _mapButton[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setMapButtonHighlight(QColor& color)   { _mapButtonHighlight[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
 
     static Theme globalTheme(void) { return _theme; }
     static void setGlobalTheme(Theme newTheme);
@@ -137,12 +137,15 @@ signals:
     void paletteChanged(void);
     
 private:
+    static void _signalPaletteChangeToAll(void);
+    void _signalPaletteChanged(void);
+
     static Theme    _theme;             ///< There is a single theme for all palettes
     bool            _colorGroupEnabled; ///< Currently selected ColorGroup. true: enabled, false: disabled
     
     static const int _cThemes = 2;
     static const int _cColorGroups = 2;
-    
+
     static QColor _window[_cThemes][_cColorGroups];
     static QColor _windowShade[_cThemes][_cColorGroups];
     static QColor _windowShadeDark[_cThemes][_cColorGroups];
