@@ -28,6 +28,8 @@
 #include <QStack>
 #include <QPainter>
 
+#include "glutils.h"
+
 QtVideoSinkDelegate::QtVideoSinkDelegate(GstElement *sink, QObject *parent)
     : BaseDelegate(sink, parent)
     , m_painter(0)
@@ -137,20 +139,22 @@ void QtVideoSinkDelegate::setGLContext(QGLContext *context)
 
     if (m_glContext) {
         m_glContext->makeCurrent();
-
-        const QByteArray extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
-        GST_LOG_OBJECT(m_sink, "Available GL extensions: %s", extensions.constData());
+        QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
+        if (funcs) {
+            const QByteArray extensions(reinterpret_cast<const char *>(funcs->glGetString(GL_EXTENSIONS)));
+            GST_LOG_OBJECT(m_sink, "Available GL extensions: %s", extensions.constData());
 
 #ifndef QT_OPENGL_ES
-        if (extensions.contains("ARB_fragment_program"))
-            m_supportedPainters |= ArbFp;
+            if (extensions.contains("ARB_fragment_program"))
+                m_supportedPainters |= ArbFp;
 #endif
 
 #ifndef QT_OPENGL_ES_2
-        if (QGLShaderProgram::hasOpenGLShaderPrograms(m_glContext)
+            if (QGLShaderProgram::hasOpenGLShaderPrograms(m_glContext)
                 && extensions.contains("ARB_shader_objects"))
 #endif
-            m_supportedPainters |= Glsl;
+                m_supportedPainters |= Glsl;
+        }
     }
 
     GST_LOG_OBJECT(m_sink, "Done setting GL context. m_supportedPainters=%x", (int) m_supportedPainters);
@@ -227,7 +231,6 @@ void QtVideoSinkDelegate::changePainter(const BufferFormat & format)
 void QtVideoSinkDelegate::destroyPainter()
 {
     GST_LOG_OBJECT(m_sink, "Destroying painter");
-
     delete m_painter;
     m_painter = 0;
 }
@@ -240,6 +243,5 @@ bool QtVideoSinkDelegate::event(QEvent *event)
             destroyPainter();
         }
     }
-
     return BaseDelegate::event(event);
 }

@@ -26,8 +26,9 @@
 
 #include <qmath.h>
 #include <QOpenGLContext>
-#include <QOpenGLFunctions>
 #include <QtQuick/QSGMaterialShader>
+
+#include "glutils.h"
 
 static const char * const qtvideosink_glsl_vertexShader =
     "uniform highp mat4 qt_Matrix;                      \n"
@@ -256,7 +257,13 @@ VideoMaterial::VideoMaterial()
 VideoMaterial::~VideoMaterial()
 {
     if (!m_textureSize.isEmpty())
-        glDeleteTextures(m_textureCount, m_textureIds);
+    {
+        QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
+        if (funcs)
+        {
+            funcs->glDeleteTextures(m_textureCount, m_textureIds);
+        }
+    }
     gst_buffer_replace(&m_frame, NULL);
 }
 
@@ -323,9 +330,13 @@ void VideoMaterial::initYuv420PTextureInfo(bool uvSwapped, const QSize &size)
 
 void VideoMaterial::init(GstVideoColorMatrix colorMatrixType)
 {
-    glGenTextures(m_textureCount, m_textureIds);
-    m_colorMatrixType = colorMatrixType;
-    updateColors(0, 0, 0, 0);
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
+    if (funcs)
+    {
+        funcs->glGenTextures(m_textureCount, m_textureIds);
+        m_colorMatrixType = colorMatrixType;
+        updateColors(0, 0, 0, 0);
+    }
 }
 
 void VideoMaterial::setCurrentFrame(GstBuffer *buffer)
@@ -411,7 +422,10 @@ void VideoMaterial::updateColors(int brightness, int contrast, int hue, int satu
 
 void VideoMaterial::bind()
 {
-    QOpenGLFunctions *functions = QOpenGLContext::currentContext()->functions();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
+    if (!funcs)
+        return;
+
     GstBuffer *frame = NULL;
 
     m_frameMutex.lock();
@@ -422,28 +436,32 @@ void VideoMaterial::bind()
     if (frame) {
         GstMapInfo info;
         gst_buffer_map(frame, &info, GST_MAP_READ);
-        functions->glActiveTexture(GL_TEXTURE1);
+        funcs->glActiveTexture(GL_TEXTURE1);
         bindTexture(1, info.data);
-        functions->glActiveTexture(GL_TEXTURE2);
+        funcs->glActiveTexture(GL_TEXTURE2);
         bindTexture(2, info.data);
-        functions->glActiveTexture(GL_TEXTURE0); // Finish with 0 as default texture unit
+        funcs->glActiveTexture(GL_TEXTURE0); // Finish with 0 as default texture unit
         bindTexture(0, info.data);
         gst_buffer_unmap(frame, &info);
         gst_buffer_unref(frame);
     } else {
-        functions->glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[1]);
-        functions->glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[2]);
-        functions->glActiveTexture(GL_TEXTURE0); // Finish with 0 as default texture unit
-        glBindTexture(GL_TEXTURE_2D, m_textureIds[0]);
+        funcs->glActiveTexture(GL_TEXTURE1);
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[1]);
+        funcs->glActiveTexture(GL_TEXTURE2);
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[2]);
+        funcs->glActiveTexture(GL_TEXTURE0); // Finish with 0 as default texture unit
+        funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[0]);
     }
 }
 
 void VideoMaterial::bindTexture(int i, const quint8 *data)
 {
-    glBindTexture(GL_TEXTURE_2D, m_textureIds[i]);
-    glTexImage2D(
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
+    if (!funcs)
+        return;
+
+    funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[i]);
+    funcs->glTexImage2D(
         GL_TEXTURE_2D,
         0,
         m_textureInternalFormat,
@@ -453,9 +471,9 @@ void VideoMaterial::bindTexture(int i, const quint8 *data)
         m_textureFormat,
         m_textureType,
         data + m_textureOffsets[i]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    funcs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    funcs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    funcs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    funcs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
