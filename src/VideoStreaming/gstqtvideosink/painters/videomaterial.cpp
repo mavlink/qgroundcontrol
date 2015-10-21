@@ -26,8 +26,9 @@
 
 #include <qmath.h>
 #include <QOpenGLContext>
-#include <QOpenGLFunctions_2_0>
 #include <QtQuick/QSGMaterialShader>
+
+#include "glutils.h"
 
 static const char * const qtvideosink_glsl_vertexShader =
     "uniform highp mat4 qt_Matrix;                      \n"
@@ -257,7 +258,7 @@ VideoMaterial::~VideoMaterial()
 {
     if (!m_textureSize.isEmpty())
     {
-        QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+        QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
         if (funcs)
         {
             funcs->glDeleteTextures(m_textureCount, m_textureIds);
@@ -329,7 +330,7 @@ void VideoMaterial::initYuv420PTextureInfo(bool uvSwapped, const QSize &size)
 
 void VideoMaterial::init(GstVideoColorMatrix colorMatrixType)
 {
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (funcs)
     {
         funcs->glGenTextures(m_textureCount, m_textureIds);
@@ -421,7 +422,7 @@ void VideoMaterial::updateColors(int brightness, int contrast, int hue, int satu
 
 void VideoMaterial::bind()
 {
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (!funcs)
         return;
 
@@ -455,7 +456,7 @@ void VideoMaterial::bind()
 
 void VideoMaterial::bindTexture(int i, const quint8 *data)
 {
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (!funcs)
         return;
 

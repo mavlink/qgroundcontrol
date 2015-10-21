@@ -23,7 +23,8 @@
 
 #include "openglsurfacepainter.h"
 #include <QtCore/qmath.h>
-#include <QOpenGLFunctions_2_0>
+
+#include "glutils.h"
 
 #ifndef GL_TEXTURE0
 #  define GL_TEXTURE0    0x84C0
@@ -178,7 +179,7 @@ void OpenGLSurfacePainter::paint(quint8 *data,
         QPainter *painter,
         const PaintAreas & areas)
 {
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (!funcs)
         return;
 
@@ -396,22 +397,17 @@ ArbFpSurfacePainter::ArbFpSurfacePainter()
     , m_programId(0)
 {
     const QGLContext *context = QGLContext::currentContext();
-        glProgramStringARB = (_glProgramStringARB) context->getProcAddress(
-                    QLatin1String("glProgramStringARB"));
-        glBindProgramARB = (_glBindProgramARB) context->getProcAddress(
-                    QLatin1String("glBindProgramARB"));
-        glDeleteProgramsARB = (_glDeleteProgramsARB) context->getProcAddress(
-                    QLatin1String("glDeleteProgramsARB"));
-        glGenProgramsARB = (_glGenProgramsARB) context->getProcAddress(
-                    QLatin1String("glGenProgramsARB"));
-        glProgramLocalParameter4fARB = (_glProgramLocalParameter4fARB) context->getProcAddress(
-                    QLatin1String("glProgramLocalParameter4fARB"));
+    glProgramStringARB  = (_glProgramStringARB)  context->getProcAddress(QLatin1String("glProgramStringARB"));
+    glBindProgramARB    = (_glBindProgramARB)    context->getProcAddress(QLatin1String("glBindProgramARB"));
+    glDeleteProgramsARB = (_glDeleteProgramsARB) context->getProcAddress(QLatin1String("glDeleteProgramsARB"));
+    glGenProgramsARB    = (_glGenProgramsARB)    context->getProcAddress(QLatin1String("glGenProgramsARB"));
+    glProgramLocalParameter4fARB = (_glProgramLocalParameter4fARB) context->getProcAddress(QLatin1String("glProgramLocalParameter4fARB"));
 }
 
 void ArbFpSurfacePainter::init(const BufferFormat &format)
 {
     Q_ASSERT(m_textureCount == 0);
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (!funcs)
         return;
 
@@ -501,7 +497,7 @@ void ArbFpSurfacePainter::init(const BufferFormat &format)
 
 void ArbFpSurfacePainter::cleanup()
 {
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (funcs)
     {
         funcs->glDeleteTextures(m_textureCount, m_textureIds);
@@ -516,7 +512,7 @@ void ArbFpSurfacePainter::paintImpl(const QPainter *painter,
         const GLfloat *textureCoordArray)
 {
     Q_UNUSED(painter);
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (!funcs)
         return;
 
@@ -734,14 +730,14 @@ void GlslSurfacePainter::init(const BufferFormat &format)
         throw QString("Shader link error ") + m_program.log();
     }
 
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (funcs)
         funcs->glGenTextures(m_textureCount, m_textureIds);
 }
 
 void GlslSurfacePainter::cleanup()
 {
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
     if (funcs)
     {
         funcs->glDeleteTextures(m_textureCount, m_textureIds);
@@ -795,8 +791,8 @@ void GlslSurfacePainter::paintImpl(const QPainter *painter,
     m_program.setAttributeArray("textureCoordArray", textureCoordArray, 2);
     m_program.setUniformValue("positionMatrix", positionMatrix);
 
-    QOpenGLFunctions_2_0 *funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>();
-    if (funcs)
+    QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
+    if (!funcs)
         return;
 
     if (m_textureCount == 3) {
