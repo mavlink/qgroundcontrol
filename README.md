@@ -18,9 +18,10 @@
 
 
 ## Obtaining source code
-Source code for QGroundControl is kept on GitHub: https://github.com/mavlink/qgroundcontrol. Use [git](http://git-scm.com/documentation) to download the source. 
-The QGroundControl repository contains submodules so after cloning you will need to do the following:
+Source code for QGroundControl is kept on GitHub: https://github.com/mavlink/qgroundcontrol.
 ```
+git clone https://github.com/mavlink/qgroundcontrol.git
+cd qgroundcontrol
 git submodule init
 git submodule update
 ```
@@ -58,7 +59,7 @@ If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/lib
 ### Additional build notes for all supported OS
 
 * Warnings as Errors: Specifying `CONFIG+=WarningsAsErrorsOn` will turn all warnings into errors which break the build. If you are working on a pull request you plan to submit to github for consideration, you should always run with this settings turned on, since it is required for all pull requests. NOTE: Putting this line into a file called "user_config.pri" in the top-level directory will set this flag on all builds without interfering with the GIT history.
-* Parallel builds: For Linux and OSX you can use the '-j#' option to run parellel builds.
+* Parallel builds: You can use the '-j#' option to run parellel builds.
 * Location of built files: Individual build file results can be found in the `build_debug` or `build_release` directories. The built executable can be found in the `debug` or `release` directory.
 
 ## Additional functionality
