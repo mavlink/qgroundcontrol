@@ -43,9 +43,12 @@ MockLinkConfiguration::MockLinkConfiguration(MockConfiguration *config, QWidget 
             break;
     }
 
-    connect(_ui->px4Radio,      &QRadioButton::clicked, this, &MockLinkConfiguration::_px4RadioClicked);
-    connect(_ui->apmRadio,      &QRadioButton::clicked, this, &MockLinkConfiguration::_apmRadioClicked);
-    connect(_ui->genericRadio,  &QRadioButton::clicked, this, &MockLinkConfiguration::_genericRadioClicked);
+    _ui->sendStatusTextCheckBox->setChecked(config->sendStatusText());
+
+    connect(_ui->px4Radio,                  &QRadioButton::clicked, this, &MockLinkConfiguration::_px4RadioClicked);
+    connect(_ui->apmRadio,                  &QRadioButton::clicked, this, &MockLinkConfiguration::_apmRadioClicked);
+    connect(_ui->genericRadio,              &QRadioButton::clicked, this, &MockLinkConfiguration::_genericRadioClicked);
+    connect(_ui->sendStatusTextCheckBox,    &QCheckBox::clicked,    this, &MockLinkConfiguration::_sendStatusTextClicked);
 }
 
 MockLinkConfiguration::~MockLinkConfiguration()
@@ -72,4 +75,9 @@ void MockLinkConfiguration::_genericRadioClicked(bool checked)
     if (checked) {
         _config->setFirmwareType(MAV_AUTOPILOT_GENERIC);
     }
+}
+
+void MockLinkConfiguration::_sendStatusTextClicked(bool checked)
+{
+    _config->setSendStatusText(checked);
 }
