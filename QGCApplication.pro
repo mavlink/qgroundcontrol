@@ -127,7 +127,9 @@ include(QGCExternalLibs.pri)
 # Main QGroundControl portion of project file
 #
 
-RESOURCES += qgroundcontrol.qrc
+RESOURCES += \
+    qgroundcontrol.qrc \
+    qgcresources.qrc
 
 DEPENDPATH += \
     . \
