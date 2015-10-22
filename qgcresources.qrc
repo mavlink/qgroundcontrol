@@ -1,0 +1,219 @@
+<RCC>
+    <qresource prefix="/qmlimages">
+        <file alias="SafetyComponentTree.svg">src/AutoPilotPlugins/PX4/Images/SafetyComponentTree.svg</file>
+        <file alias="SafetyComponentHome.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentHome.png</file>
+        <file alias="SafetyComponentArrowDown.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentArrowDown.png</file>
+        <file alias="SafetyComponentPlane.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentPlane.png</file>
+        <file alias="VehicleDown.png">src/AutoPilotPlugins/PX4/Images/VehicleDown.png</file>
+        <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
+        <file alias="VehicleLeft.png">src/AutoPilotPlugins/PX4/Images/VehicleLeft.png</file>
+        <file alias="VehicleRight.png">src/AutoPilotPlugins/PX4/Images/VehicleRight.png</file>
+        <file alias="VehicleNoseDown.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDown.png</file>
+        <file alias="VehicleTailDown.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
+        <file alias="VehicleDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleDownRotate.png</file>
+        <file alias="VehicleLeftRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleLeftRotate.png</file>
+        <file alias="VehicleNoseDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleNoseDownRotate.png</file>
+        <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/PX4/Images/AirframeStandardPlane.png</file>
+        <file alias="AirframeFlyingWing.png">src/AutoPilotPlugins/PX4/Images/AirframeFlyingWing.png</file>
+        <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorX.png</file>
+        <file alias="AirframeQuadRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorPlus.png</file>
+        <file alias="AirframeOctoRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorX.png</file>
+        <file alias="AirframeOctoRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeOctoRotorPlus.png</file>
+        <file alias="AirframeHexaRotorX.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorX.png</file>
+        <file alias="AirframeHexaRotorPlus.png">src/AutoPilotPlugins/PX4/Images/AirframeHexaRotorPlus.png</file>
+        <file alias="AirframeQuadRotorH.png">src/AutoPilotPlugins/PX4/Images/AirframeQuadRotorH.png</file>
+        <file alias="AirframeSimulation.png">src/AutoPilotPlugins/PX4/Images/AirframeSimulation.png</file>
+        <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
+        <file alias="subMenuButtonImage.png">resources/CogWheels.png</file>
+        <file alias="SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SensorsComponentIcon.png</file>
+        <file alias="RadioComponentIcon.png">src/AutoPilotPlugins/PX4/Images/RadioComponentIcon.png</file>
+        <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
+        <file alias="AirframeComponentIcon.png">src/AutoPilotPlugins/PX4/Images/AirframeComponentIcon.png</file>
+        <file alias="SafetyComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentIcon.png</file>
+        <file alias="PowerComponentIcon.png">src/AutoPilotPlugins/PX4/Images/PowerComponentIcon.png</file>
+        <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
+        <file alias="VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
+        <file alias="PowerComponentBattery_01cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_01cell.svg</file>
+        <file alias="PowerComponentBattery_02cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_02cell.svg</file>
+        <file alias="PowerComponentBattery_03cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_03cell.svg</file>
+        <file alias="PowerComponentBattery_04cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_04cell.svg</file>
+        <file alias="PowerComponentBattery_05cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_05cell.svg</file>
+        <file alias="PowerComponentBattery_06cell.svg">src/AutoPilotPlugins/PX4/Images/PowerComponentBattery_06cell.svg</file>
+
+        <file alias="attitudeDial.svg">src/FlightMap/Images/attitudeDial.svg</file>
+        <file alias="attitudeInstrument.svg">src/FlightMap/Images/attitudeInstrument.svg</file>
+        <file alias="attitudePointer.svg">src//FlightMap/Images/attitudePointer.svg</file>
+        <file alias="buttonHome.svg">src/FlightMap/Images/buttonHome.svg</file>
+        <file alias="buttonLeft.svg">src/FlightMap/Images/buttonLeft.svg</file>
+        <file alias="buttonMore.svg">src/FlightMap/Images/buttonMore.svg</file>
+        <file alias="buttonRight.svg">src/FlightMap/Images/buttonRight.svg</file>
+        <file alias="compass.svg">src/FlightMap/Images/compass.svg</file>
+        <file alias="compassInstrumentAirplane.svg">src/FlightMap/Images/compassInstrumentAirplane.svg</file>
+        <file alias="compassInstrumentDial.svg">src/FlightMap/Images/compassInstrumentDial.svg</file>
+        <file alias="compassNeedle.svg">src/FlightMap/Images/compassNeedle.svg</file>
+        <file alias="crossHair.svg">src/FlightMap/Images/crossHair.svg</file>
+        <file alias="rollDialWhite.svg">src/FlightMap/Images/rollDialWhite.svg</file>
+        <file alias="rollPointerWhite.svg">src/FlightMap/Images/rollPointerWhite.svg</file>
+        <file alias="scale.png">src/FlightMap/Images/scale.png</file>
+        <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>
+        <file alias="airplaneOutline.svg">src/FlightMap/Images/airplaneOutline.svg</file>
+        <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
+        <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
+        <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
+
+        <!-- Map Buttons -->
+        <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
+        <file alias="HelpBlack.svg">src/FlightMap/Images/HelpBlack.svg</file>
+        <file alias="MapAddMission.svg">src/FlightMap/Images/MapAddMission.svg</file>
+        <file alias="MapAddMissionBlack.svg">src/FlightMap/Images/MapAddMissionBlack.svg</file>
+        <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
+        <file alias="MapCenterBlack.svg">src/FlightMap/Images/MapCenterBlack.svg</file>
+        <file alias="MapHome.svg">src/FlightMap/Images/MapHome.svg</file>
+        <file alias="MapHomeBlack.svg">src/FlightMap/Images/MapHomeBlack.svg</file>
+        <file alias="MapSync.svg">src/FlightMap/Images/MapSync.svg</file>
+        <file alias="MapSyncBlack.svg">src/FlightMap/Images/MapSyncBlack.svg</file>
+        <file alias="MapSyncChanged.svg">src/FlightMap/Images/MapSyncChanged.svg</file>
+        <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
+        <file alias="MapTypeBlack.svg">src/FlightMap/Images/MapTypeBlack.svg</file>
+        <file alias="TrashDelete.svg">src/FlightMap/Images/TrashDelete.svg</file>
+        <file alias="TrashDeleteBlack.svg">src/FlightMap/Images/TrashDeleteBlack.svg</file>
+        <file alias="XDelete.svg">src/FlightMap/Images/XDelete.svg</file>
+        <file alias="XDeleteBlack.svg">src/FlightMap/Images/XDeleteBlack.svg</file>
+
+    </qresource>
+
+    <qresource prefix="/res">
+        <file alias="LeftArrow">resources/LeftArrow.svg</file>
+        <file alias="RightArrow">resources/RightArrow.svg</file>
+        <file alias="DownArrow">resources/DownArrow.svg</file>
+        <file alias="UpArrow">resources/UpArrow.svg</file>
+        <file alias="BottomArrow">resources/BottomArrow.svg</file>
+        <file alias="JumpArrow">resources/JumpArrow.svg</file>
+        <file alias="PlusSign">resources/PlusSign.svg</file>
+        <file alias="MinusSign">resources/MinusSign.svg</file>
+        <file alias="Play">resources/Play.svg</file>
+        <file alias="Pause">resources/Pause.svg</file>
+        <file alias="Stop">resources/Stop.svg</file>
+        <file alias="Launch">resources/Launch.svg</file>
+        <file alias="Land">resources/Land.svg</file>
+        <file alias="Kill">resources/Kill.svg</file>
+        <file alias="Shutdown">resources/Shutdown.svg</file>
+        <file alias="AntennaT">resources/Antenna_T.svg</file>
+        <file alias="AntennaRC">resources/Antenna_RC.svg</file>
+        <file alias="Gps">resources/Gps.svg</file>
+        <file alias="Megaphone">resources/Megaphone.png</file>
+        <file alias="Yield">resources/Yield.png</file>
+        <file alias="Battery_0">resources/Battery_0.svg</file>
+        <file alias="Battery_20">resources/Battery_20.svg</file>
+        <file alias="Battery_40">resources/Battery_40.svg</file>
+        <file alias="Battery_60">resources/Battery_60.svg</file>
+        <file alias="Battery_80">resources/Battery_80.svg</file>
+        <file alias="Battery_100">resources/Battery_100.svg</file>
+        <file alias="SystemLockScreen">resources/SystemLockScreen.svg</file>
+        <file alias="SplashScreen">resources/SplashScreen.png</file>
+        <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
+    </qresource>
+
+    <qresource prefix="/res/firmware">
+        <file alias="px4.png">resources/firmware/px4.png</file>
+        <file alias="apm.png">resources/firmware/apm.png</file>
+        <file alias="3drradio.png">resources/firmware/3drradio.png</file>
+    </qresource>
+
+    <qresource prefix="/res/mavs">
+        <file alias="Helicopter">resources/mavs/helicopter.svg</file>
+        <file alias="Unknown">resources/mavs/unknown.svg</file>
+        <file alias="FixedWing">resources/mavs/fixed-wing.svg</file>
+        <file alias="Groundstation">resources/mavs/groundstation.svg</file>
+        <file alias="Generic">resources/mavs/generic.svg</file>
+        <file alias="QuadRotor">resources/mavs/quadrotor.svg</file>
+        <file alias="Coaxial">resources/mavs/coaxial.svg</file>
+        <file alias="Airship">resources/mavs/airship.svg</file>
+        <file alias="AntennaTracker">resources/mavs/antenna-tracker.svg</file>
+        <file alias="FlappingWing">resources/mavs/flapping-wing.svg</file>
+        <file alias="FreeBallon">resources/mavs/free-balloon.svg</file>
+        <file alias="GroundRover">resources/mavs/ground-rover.svg</file>
+        <file alias="HexaRotor">resources/mavs/hexarotor.svg</file>
+        <file alias="Kite">resources/mavs/kite.svg</file>
+        <file alias="OctoRotor">resources/mavs/octorotor.svg</file>
+        <file alias="Rocket">resources/mavs/rocket.svg</file>
+        <file alias="Submarine">resources/mavs/submarine.svg</file>
+        <file alias="SurfaceBoat">resources/mavs/surface-boat.svg</file>
+        <file alias="TriCopter">resources/mavs/tricopter.svg</file>
+    </qresource>
+
+    <qresource prefix="/res/mapproviders">
+        <file alias="openstreetmap.png">resources/mapproviders/openstreetmap.png</file>
+        <file alias="google.png">resources/mapproviders/google.png</file>
+        <file alias="yahoo.png">resources/mapproviders/yahoo.png</file>
+        <file alias="googleearth.svg">resources/mapproviders/googleearth.svg</file>
+    </qresource>
+
+    <qresource prefix="/res/calibration">
+        <file alias="accel_back.png">resources/calibration/accel_back.png</file>
+        <file alias="accel_front.png">resources/calibration/accel_front.png</file>
+        <file alias="accel_right.png">resources/calibration/accel_right.png</file>
+        <file alias="accel_down.png">resources/calibration/accel_down.png</file>
+        <file alias="accel_up.png">resources/calibration/accel_up.png</file>
+        <file alias="accel_left.png">resources/calibration/accel_left.png</file>
+    </qresource>
+
+    <qresource prefix="/qml/calibration/mode1">
+        <file alias="radioCenter.png">resources/calibration/mode1/radioCenter.png</file>
+        <file alias="radioHome.png">resources/calibration/mode1/radioHome.png</file>
+        <file alias="radioRollLeft.png">resources/calibration/mode1/radioRollLeft.png</file>
+        <file alias="radioRollRight.png">resources/calibration/mode1/radioRollRight.png</file>
+        <file alias="radioPitchUp.png">resources/calibration/mode1/radioPitchUp.png</file>
+        <file alias="radioPitchDown.png">resources/calibration/mode1/radioPitchDown.png</file>
+        <file alias="radioYawLeft.png">resources/calibration/mode1/radioYawLeft.png</file>
+        <file alias="radioYawRight.png">resources/calibration/mode1/radioYawRight.png</file>
+        <file alias="radioThrottleUp.png">resources/calibration/mode1/radioThrottleUp.png</file>
+        <file alias="radioThrottleDown.png">resources/calibration/mode1/radioThrottleDown.png</file>
+        <file alias="radioSwitchMinMax.png">resources/calibration/mode1/radioSwitchMinMax.png</file>
+    </qresource>
+
+    <qresource prefix="/qml/calibration/mode2">
+        <file alias="radioCenter.png">resources/calibration/mode2/radioCenter.png</file>
+        <file alias="radioHome.png">resources/calibration/mode2/radioHome.png</file>
+        <file alias="radioRollLeft.png">resources/calibration/mode2/radioRollLeft.png</file>
+        <file alias="radioRollRight.png">resources/calibration/mode2/radioRollRight.png</file>
+        <file alias="radioPitchUp.png">resources/calibration/mode2/radioPitchUp.png</file>
+        <file alias="radioPitchDown.png">resources/calibration/mode2/radioPitchDown.png</file>
+        <file alias="radioYawLeft.png">resources/calibration/mode2/radioYawLeft.png</file>
+        <file alias="radioYawRight.png">resources/calibration/mode2/radioYawRight.png</file>
+        <file alias="radioThrottleUp.png">resources/calibration/mode2/radioThrottleUp.png</file>
+        <file alias="radioThrottleDown.png">resources/calibration/mode2/radioThrottleDown.png</file>
+        <file alias="radioSwitchMinMax.png">resources/calibration/mode2/radioSwitchMinMax.png</file>
+    </qresource>
+
+    <qresource prefix="/qml/calibration/joystick">
+        <file alias="joystickCenter.png">resources/calibration/joystick/joystickCenter.png</file>
+        <file alias="joystickRollLeft.png">resources/calibration/joystick/joystickRollLeft.png</file>
+        <file alias="joystickRollRight.png">resources/calibration/joystick/joystickRollRight.png</file>
+        <file alias="joystickPitchUp.png">resources/calibration/joystick/joystickPitchUp.png</file>
+        <file alias="joystickPitchDown.png">resources/calibration/joystick/joystickPitchDown.png</file>
+        <file alias="joystickYawLeft.png">resources/calibration/joystick/joystickYawLeft.png</file>
+        <file alias="joystickYawRight.png">resources/calibration/joystick/joystickYawRight.png</file>
+        <file alias="joystickThrottleUp.png">resources/calibration/joystick/joystickThrottleUp.png</file>
+        <file alias="joystickThrottleDown.png">resources/calibration/joystick/joystickThrottleDown.png</file>
+    </qresource>
+
+    <qresource prefix="/res/styles">
+        <file alias="style-dark.css">resources/styles/style-dark.css</file>
+        <file alias="style-light.css">resources/styles/style-light.css</file>
+    </qresource>
+
+    <qresource prefix="/res/fonts">
+        <file alias="vera.ttf">resources/styles/Vera.ttf</file>
+    </qresource>
+
+    <qresource prefix="/res/audio">
+        <file alias="Alert">resources/audio/alert.wav</file>
+    </qresource>
+
+    <qresource prefix="/AutoPilotPlugins/PX4">
+        <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
+        <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
+    </qresource>
+
+</RCC>
