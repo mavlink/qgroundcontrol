@@ -17,137 +17,54 @@
 <http://qgroundcontrol.org/credits>
 
 
-## Documentation
-For generating documentation, refer to this readme or the <http://qgroundcontrol.org> website.
-
 ## Obtaining source code
-There are three ways to obtain the QGroundControl source code from our GitHub repository. You can either download a snapshot of the code in a ZIP file, clone the repository, or fork the repository if you plan to contribute to development. If you prefer one of the last two options you will need Git installed on your system; goto GitHub Help and see Set Up Git.
-
-### Clone the Repository
-This option assumes that you have Git already. To clone (checkout) the QGC repository, run the following command in the directory that you want the qgroundcontrol folder to be created:
-
-```
-git clone --recursive git://github.com/mavlink/qgroundcontrol.git
-```
-
-### Fork the Repository
-If you plan to contribute to the development of QGC, you will want this option, which also requires that you have Git set up. To fork the QGC repository, do the following:
-
-Goto GitHub Help and see Fork A Repo
-Fork the QGC Repo
-
-### Initialize submodules
-After cloning or forking you will need to initialize and update the submodules using these commands in you qgroundcontrol source directory:
-
+Source code for QGroundControl is kept on GitHub: https://github.com/mavlink/qgroundcontrol. Use [git](http://git-scm.com/documentation) to download the source. 
+The QGroundControl repository contains submodules so after cloning you will need to do the following:
 ```
 git submodule init
 git submodule update
 ```
-
 Each time you pull new source to your repository you should re-run "git submodule update" to get the latest submodules as well.
 
-## Building QGroundControl
-QGroundControl builds are supported for OSX, Linux and Windows. See the individual sections below for instruction on how to build on each OS. Also make sure to look at the "Additional Build Notes" section below.
-
-### Build on Mac OSX
-Supported builds are:
-* 64 bit
-* Built using the clang compiler
-* Built using Qt 5.5.1
+### Supported Builds
+QGroundControl builds are supported for OSX, Linux, Windows and Adroid. QGroundControl uses [Qt](http://www.qt.io) as it's cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as it's default build environment.
+* OSX: 64 bit, clang compiler
+* Ubuntu: 64 bit, gcc compiler
+* Windows: 32 bit, [Visual Studio 2013 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
+* Android: <tbd>
+* Qt version: 5.5.1 (or higher)
 
 #### Install QT
 
-1. Download Qt 5.5.1 from: <http://download.qt-project.org/official_releases/qt/5.5/5.5.1/qt-opensource-mac-x64-clang-5.5.1.dmg>
-2. Double click the package installer and follow instructions.
-
-#### Build QGroundControl
-1. From the terminal change directory to your `groundcontrol` directory
-2. Run `~/Qt/5.5/clang_64/bin/qmake qgroundcontrol.pro -r -spec macx-clang`. If you installed a different version of Qt, or installed to a different location you may need to change the first portion of the path.
-3. Run `make`
-
-### Build on Linux
-Supported builds for Linux are 32 or 64-bit, built using gcc.
-
-#### Install Qt 5 and SDL1.2 prerequistites
-* For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel qt5-qtgraphicaleffects qt5-qtquickcontrols qt5-qtlocation-devel`
-* For Arch Linux: `pacman -Sy qtcreator qt5-base qt5-declarative qt5-serialport qt5-svg qt5-webkit`
-* For Ubuntu: Install Qt 5.5.1 using the Qt online installer. http://download.qt.io/official_releases/online_installers/qt-unified-linux-x64-online.run
+* Download the Qt installer from: <http://http://www.qt.io/download-open-source/>
+    * On Ubuntu, you have to set the file to executable:`chmod +x ~/Downloads/qt-opensource-linux-x64-1.6.0-8-online.run\`
 
 If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.20' not found. You need to either update to the latest gcc, or install the latest libstdc++.6 using: sudo apt-get install libstdc++6.
 
-#### Install additional libraries
-  * For Ubuntu: `sudo apt-get install espeak libespeak-dev libudev-dev libsdl1.2-dev`
-  * For Fedora: `sudo yum install espeak espeak-devel`
-  * For Arch Linux: `pacman -Sy espeak`
+#### Install additional packages:
+    * Ubuntu: `sudo apt-get install espeak libespeak-dev libudev-dev libsdl1.2-dev`
+    * Fedora: `sudo yum install espeak espeak-devel SDL-devel SDL-static systemd-devel`
+    * Arch Linux: `pacman -Sy espeak`
+    * Windows: [USB driver to connect to Pixhawk/PX4Flow/3DR Radio](http://www.pixhawk.org/firmware/downloads)
 
-#### Build QGroundControl
-1. Change directory to you `qgroundcontrol` source directory.
-2. Run `qmake -r qgroundcontrol.pro`
-3. Run `make`
-
-### Build on Windows
-Supported builds are:
-* 32 bit only
-* Built using Visual Studio 2013 or higher
-* Built using Qt 5.5.0
-
-#### Install Windows USB driver to connect to Pixhawk/PX4Flow/3DR Radio
-Install from here: http://www.pixhawk.org/firmware/downloads
-
-#### Install Visual Studio Express 2013
-Only compilation using Visual Studio 2013 is supported. Download and install Visual Studio Express Edition (free) from here: <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop>. Make sure you install the Windows Desktop version.
-
-#### Install Qt5.5.0
-Download Qt 5.5.0 from here: <http://download.qt-project.org/official_releases/qt/5.5/5.5.0/qt-opensource-windows-x86-msvc2013-5.5.0.exe>
-  * The Qt variant should be for VS 2013, 32 bit (not 64).
-
-#### Build QGroundControl
-1. Open the Qt Command Prompt program from the Start Menu
-2. Change directory to your 'qgroundcontrol' source folder.
-3. Run `qmake -r -tp vc qgroundcontrol.pro`.  This will create a 'qgroundcontrol.sln' *Solution* file which is capable of building both debug and release configurations.
-4. Now open the generated 'qgroundcontrol.sln' file in Visual Studio.
-5. Compile and edit in Visual Studio. If you need to add new files to the qgroundcontrol project, add them to QGCApplication.pro and re-run qmake from step 3.
-
-Note that the *Solution* contains two projects. The main QGroundControl project and the QGC Geoservice Provider Factory plugin. From within Visual Studio, before running or debugging, make sure you have *qgroundcontrol* as the current project (right-click and select *Set as Current Project*)
-
-#### Alternate (Qt Creator IDE) Build Type (Any OS)
-All steps below assume you already have a running software development enviroment (i.e. gcc/g++ on Ubuntu, Xcode on Mac OSX along with the command line tools, Visual Studio on Windows, etc.) along with the various external dependencies described elsewhere in this document.
-* Download the Qt Online Installer executable from <http://www.qt.io/download-open-source/>
-    * On Ubuntu, you have to set the file to executable:`chmod +x ~/Downloads/qt-opensource-linux-x64-1.6.0-8-online.run\`
-* Run the installer and follow the installation steps.
-    * Select the directory you want to install Qt, which is handy if you don't want to install system wide or don't have root access.
-    * Select the components you want to install. *Tools* will be selected by default. You also want to install the Qt 5.4 module along with the targets you are interested in (i.e. 32-Bit OpenGL for Windows, etc.). On Ubuntu, *Android armv7* will be selected by default as well. You may or may not want to install that, depending on your desire to target that platform. Same idea for OS X. It will have *iOS* Kits selected as well.
-    * Accept the license and the installer will download all the necessary modules and install where you told it to install.
-* Go to the Qt Creator directory:
-	* `~/local/Qt/Tools/QtCreator/bin` for Ubuntu (if that's where you installed it)
-	* `~/local/Qt/Qt Creator.app` for OS X (if that's where you installed it)
-	* `C:/local/Qt/Tools/QtCreator/bin` for Windows (if that's where you installed it)
+#### Building using Qt Creator
 * Launch Qt Creator and open the `qgroundcontrol.pro` project.
-
-When you open a project in Qt Creator for the first time, it will ask what targets (*Kits*) you want to target. The options will depend on what modules you downloaded above. For instance, on Mac OS X you would select *Desktop Qt 5.4.1 clang 64bit*.
-It's also a good idea to go into *Projects/Build Steps* (side tool bar) and select Make's *Details*. For *Make Arguments*, add `-jx` (`/J x` on Windows) where `x` is at least the numbers of cores you have. That is, if you are running on a Mac Pro with 24 cores, you would use `-j24`. That will run 24 concurrent compiler instances at a time and run the build a whole lot faster. Your mileage may vary depending on your disk IO throughput. Note that for Windows, this method will build QGC x many times faster than when using Visual Studio as described above. Visual Studio allocates one process per *Project*. As QGroundControl is one very large project, it will still compile one file at a time within that one process. When you build from within Qt Creator (and give the ```/J x``` option to make), it will use x number of concurrent compiler processes.
-
-Qt Creator is a full-blown development IDE. You can even debug right from within it and it provides the full Qt API documentation. Just place the mouse cursor over a Qt class/element and hit the F1 key.
+* Select the following kit:
+    * OSX: <tbd>
+    * Ubuntu: <tbd>
+    * Windows: <tbd>
+    * Android: <tbd>
 
 ### Additional build notes for all supported OS
 
-* Debug Builds: By default qmake will create makefiles for a release build. If you want a debug build add `CONFIG+=debug` to the command line.
 * Warnings as Errors: Specifying `CONFIG+=WarningsAsErrorsOn` will turn all warnings into errors which break the build. If you are working on a pull request you plan to submit to github for consideration, you should always run with this settings turned on, since it is required for all pull requests. NOTE: Putting this line into a file called "user_config.pri" in the top-level directory will set this flag on all builds without interfering with the GIT history.
-* Parallel builds: For Linux and OSX you can use the '-j#' option to run parellel builds. On Windows parallel builds are on by default.
+* Parallel builds: For Linux and OSX you can use the '-j#' option to run parellel builds.
 * Location of built files: Individual build file results can be found in the `build_debug` or `build_release` directories. The built executable can be found in the `debug` or `release` directory.
-* Incremental builds: Incremental builds may not be 100% reliable. If you find something strange happening that seems like a bad build. Delete your `build_debug` and `build_release` directories and run qmake again.
-* Single release congfiguration on Windows: If you want to build a vs project that does not create both debug and release builds. Include `CONFIG-=debug_and_release` on the qmake command line plus either `CONFIG+=debug` or 
-`CONFIG+=release` depending on the build type you want.
-* Build using QtCreator: It is possible to build and debug using QtCreator as well. The above instructions should provide you with enough information to setup QtCreator on OSX and Linux. QtCreator on Windows is supposedly possible but we don't have any instructions available for that.
-* QGroundControl is using the Qt QLoggingCategory class for logging (<http://qt-project.org/doc/qt-5/qloggingcategory.html>). Since logging is on by default, an example qtlogging.ini file is included at the root of the repository which disables logging. Follow the instructions from Qt as to why and where to put this file. You can then edit the file to get a logging level that suits your needs.
 
 ## Additional functionality
-QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values for variables either at the command line when calling `qmake` or in the `user_config.pri`. When calling `qmake` additional variables can be set using the syntax `VARIABLE="SPACE_SEPARATED_VALUES"`, which can be repeated for multiple variables. For example: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH" MAVLINK_CONF="sensesoar"` disables the QUpgrade widget, speech functionality, and sets the MAVLink dialect to sensesoar. These values can be more permanently specified by setting them in the `user_config.pri` file in the root directly. Create this file as a plain text file and ensure it ends in .pri (not .pri.txt!).
+QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values for variables either at the command line when calling `qmake` or in the `user_config.pri`. When calling `qmake` additional variables can be set using the syntax `VARIABLE="SPACE_SEPARATED_VALUES"`, which can be repeated for multiple variables. For example: `qmake DEFINES="DISABLE_SPEECH"` disables the QUpgrade widget, speech functionality, and sets the MAVLink dialect to sensesoar. These values can be more permanently specified by setting them in the `user_config.pri` file in the root directly. Create this file as a plain text file and ensure it ends in .pri (not .pri.txt!).
 
 **NOTE:** Any variables specified at the command line call to `qmake` will override those set in `user_config.pri`.
-
-### Specifying MAVLink dialects
-The MAVLink dialect compiled by default by QGC is for the pixhawk. Setting the `MAVLINK_CONF` variable sets the dialects.
 
 ### Opal-RT's RT-LAB simulator
 Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. This allows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed. This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by adding `DISABLE_RTLAB` to the `DEFINES` variable.
