@@ -35,6 +35,13 @@
      </property>
     </widget>
    </item>
+   <item>
+    <widget class="QCheckBox" name="sendStatusTextCheckBox">
+     <property name="text">
+      <string>Send status text + voice</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>
