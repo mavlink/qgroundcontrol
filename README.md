@@ -38,7 +38,7 @@ QGroundControl builds are supported for OSX, Linux, Windows and Android. QGround
 #### Install QT
 
 * Download the [Qt installer](http://www.qt.io/download-open-source)
-    * Ubuntu: Set the file to executable:`chmod +x ~/Downloads/qt-opensource-linux-x64-1.6.0-8-online.run\`
+    * Ubuntu: Set the downloaded file to executable using:`chmod +x`
     * Windows: Default installer not quite correct, use [this](http://download.qt.io/official_releases/qt/5.5/5.5.1/qt-opensource-windows-x86-msvc2013-5.5.1.exe) instead
 
 
@@ -54,7 +54,7 @@ QGroundControl builds are supported for OSX, Linux, Windows and Android. QGround
 * Select the appropriate kit for your needs:
     * OSX: Desktop Qt 5.5.1 clang 64 bit
     * Ubuntu: <tbd>
-    * Windows: <tbd>
+    * Windows: Desktop Qt 5.5.1 MSVC2013 32bit
     * Android: Android for armeabi-v7a (GCC 4.9, Qt 5.5.1)
 
 ### Additional build notes for all supported OS
