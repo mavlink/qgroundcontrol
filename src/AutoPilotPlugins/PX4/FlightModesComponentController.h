@@ -63,16 +63,16 @@ public:
     Q_PROPERTY(int returnModeRow    MEMBER _returnModeRow   NOTIFY modeRowsChanged)
     Q_PROPERTY(int offboardModeRow  MEMBER _offboardModeRow NOTIFY modeRowsChanged)
     
-    Q_PROPERTY(int manualModeChannelIndex   READ manualModeChannelIndex     WRITE setManualModeChannelIndex     NOTIFY manualModeChannelIndexChanged)
-    Q_PROPERTY(int assistModeChannelIndex   READ assistModeChannelIndex                                         NOTIFY assistModeChannelIndexChanged)
-    Q_PROPERTY(int autoModeChannelIndex     READ autoModeChannelIndex                                           NOTIFY autoModeChannelIndexChanged)
-    Q_PROPERTY(int acroModeChannelIndex     READ acroModeChannelIndex       WRITE setAcroModeChannelIndex       NOTIFY acroModeChannelIndexChanged)
-    Q_PROPERTY(int altCtlModeChannelIndex   READ altCtlModeChannelIndex                                         NOTIFY altCtlModeChannelIndexChanged)
-    Q_PROPERTY(int posCtlModeChannelIndex   READ posCtlModeChannelIndex     WRITE setPosCtlModeChannelIndex     NOTIFY posCtlModeChannelIndexChanged)
-    Q_PROPERTY(int loiterModeChannelIndex   READ loiterModeChannelIndex     WRITE setLoiterModeChannelIndex     NOTIFY loiterModeChannelIndexChanged)
-    Q_PROPERTY(int missionModeChannelIndex  READ missionModeChannelIndex                                        NOTIFY missionModeChannelIndexChanged)
-    Q_PROPERTY(int returnModeChannelIndex   READ returnModeChannelIndex     WRITE setReturnModeChannelIndex     NOTIFY returnModeChannelIndexChanged)
-    Q_PROPERTY(int offboardModeChannelIndex READ offboardModeChannelIndex   WRITE setOffboardModeChannelIndex   NOTIFY offboardModeChannelIndexChanged)
+    Q_PROPERTY(int manualModeChannelIndex   READ manualModeChannelIndex     WRITE setManualModeChannelIndex     NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int assistModeChannelIndex   READ assistModeChannelIndex                                         NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int autoModeChannelIndex     READ autoModeChannelIndex                                           NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int acroModeChannelIndex     READ acroModeChannelIndex       WRITE setAcroModeChannelIndex       NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int altCtlModeChannelIndex   READ altCtlModeChannelIndex                                         NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int posCtlModeChannelIndex   READ posCtlModeChannelIndex     WRITE setPosCtlModeChannelIndex     NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int loiterModeChannelIndex   READ loiterModeChannelIndex     WRITE setLoiterModeChannelIndex     NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int missionModeChannelIndex  READ missionModeChannelIndex                                        NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int returnModeChannelIndex   READ returnModeChannelIndex     WRITE setReturnModeChannelIndex     NOTIFY channelIndicesChanged)
+    Q_PROPERTY(int offboardModeChannelIndex READ offboardModeChannelIndex   WRITE setOffboardModeChannelIndex   NOTIFY channelIndicesChanged)
     
     Q_PROPERTY(double manualModeRcValue     READ manualModeRcValue      NOTIFY switchLiveRangeChanged)
     Q_PROPERTY(double assistModeRcValue     READ assistModeRcValue      NOTIFY switchLiveRangeChanged)
@@ -179,16 +179,7 @@ signals:
     void thresholdsChanged(void);
     void modesSelectedChanged(void);
     void modesVisibleChanged(void);
-    void manualModeChannelIndexChanged(int index);
-    void assistModeChannelIndexChanged(int index);
-    void autoModeChannelIndexChanged(int index);
-    void acroModeChannelIndexChanged(int index);
-    void altCtlModeChannelIndexChanged(int index);
-    void posCtlModeChannelIndexChanged(int index);
-    void loiterModeChannelIndexChanged(int index);
-    void missionModeChannelIndexChanged(int index);
-    void returnModeChannelIndexChanged(int index);
-    void offboardModeChannelIndexChanged(int index);
+    void channelIndicesChanged(void);
     void modeRowsChanged(void);
     
 private slots:
