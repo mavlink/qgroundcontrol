@@ -53,7 +53,7 @@ Item {
                 horizontalAlignment:    Text.AlignHCenter
                 visible:                object.satelliteLock < 2
                 text:                   "No GPS Lock for Vehicle #" + object.id
-                z:                      flightMap.zOrderMapItems - 2
+                z:                      QGroundControl.zOrderMapItems - 2
             }
         }
     }
@@ -66,7 +66,7 @@ Item {
         size:               ScreenTools.defaultFontPixelSize * (13.3)
         heading:            _heading
         active:             multiVehicleManager.activeVehicleAvailable
-        z:                  flightMap.zOrderWidgets
+        z:                  QGroundControl.zOrderWidgets
     }
 
     QGCAttitudeWidget {
@@ -77,7 +77,7 @@ Item {
         rollAngle:          _roll
         pitchAngle:         _pitch
         active:             multiVehicleManager.activeVehicleAvailable
-        z:                  flightMap.zOrderWidgets
+        z:                  QGroundControl.zOrderWidgets
     }
 
     DropButton {
@@ -89,7 +89,7 @@ Item {
         buttonImage:            "/qmlimages/MapCenter.svg"
         viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
         exclusiveGroup:         _dropButtonsExclusiveGroup
-        z:                      flightMap.zOrderWidgets
+        z:                      QGroundControl.zOrderWidgets
 
         dropDownComponent: Component {
             Row {
@@ -134,7 +134,7 @@ Item {
         buttonImage:            "/qmlimages/MapType.svg"
         viewportMargins:        ScreenTools.defaultFontPixelWidth / 2
         exclusiveGroup:         _dropButtonsExclusiveGroup
-        z:                      flightMap.zOrderWidgets
+        z:                      QGroundControl.zOrderWidgets
 
         dropDownComponent: Component {
             Row {

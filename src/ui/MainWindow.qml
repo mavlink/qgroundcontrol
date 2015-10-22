@@ -25,6 +25,7 @@ import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtPositioning    5.2
 
+import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.ScreenTools   1.0
@@ -46,7 +47,6 @@ Item {
             flightView.visible          = true
             setupViewLoader.visible     = false
             planViewLoader.visible      = false
-            _root.hideWidgets           = false
         }
 
         onShowPlanView: {
@@ -56,7 +56,6 @@ Item {
             flightView.visible          = false
             setupViewLoader.visible     = false
             planViewLoader.visible      = true
-            _root.hideWidgets           = true
         }
 
         onShowSetupView: {
@@ -66,7 +65,6 @@ Item {
             flightView.visible          = false
             setupViewLoader.visible     = true
             planViewLoader.visible      = false
-            _root.hideWidgets           = true
         }
 
         onShowToolbarMessage: _toolbar.showToolbarMessage(message)
@@ -88,7 +86,7 @@ Item {
         id:                 toolbarLoader
         width:              parent.width
         height:             item ? item.height : 0
-        z:                  _root.zOrderTopMost
+        z:                  QGroundControl.zOrderTopMost
     }
 
     FlightDisplayView {
@@ -98,8 +96,6 @@ Item {
         anchors.top:        toolbarLoader.bottom
         anchors.bottom:     parent.bottom
         visible:            true
-
-        property real zOrder: _root.zOrderTopMost
     }
 
     Loader {
@@ -109,8 +105,6 @@ Item {
         anchors.top:        toolbarLoader.bottom
         anchors.bottom:     parent.bottom
         visible:            false
-
-        property real zOrder: _root.zOrderTopMost
     }
 
     Loader {
@@ -120,7 +114,5 @@ Item {
         anchors.top:        toolbarLoader.bottom
         anchors.bottom:     parent.bottom
         visible:            false
-
-        property real zOrder: _root.zOrderTopMost
     }
 }

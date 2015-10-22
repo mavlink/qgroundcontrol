@@ -30,12 +30,10 @@ import QGroundControl.Palette   1.0
 
 /// The MissionLineView control is used to add lines between mission items
 MapItemView {
-    property real   zOrderMapItems  ///< Z order for indicator
-
     delegate: MapPolyline {
         line.width: 3
-        line.color: "#be781c"           // Hack, can't get palette to work in here
-        z:          zOrderMapItems - 1  // Under item indicators
+        line.color: "#be781c"                           // Hack, can't get palette to work in here
+        z:          QGroundControl.zOrderMapItems - 1   // Under item indicators
 
         path: [
             { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },
