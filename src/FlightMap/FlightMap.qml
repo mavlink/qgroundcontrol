@@ -55,10 +55,6 @@ Map {
     property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
     property real   lat: (latitude  >=  -90 && latitude  <=  90) ? latitude  : 0
 
-    readonly property real zOrderTopMost:   1000    ///< z order for top most items, toolbar, main window sub view
-    readonly property real zOrderWidgets:   100     ///< z order value to widgets, for example: zoom controls, hud widgetss
-    readonly property real zOrderMapItems:  50      ///< z order value for map items, for example: mission item indicators
-
     readonly property real maxZoomLevel:    20
 
     zoomLevel:                  18
@@ -101,19 +97,19 @@ Map {
 
             readonly property real _zoomIncrement: 1.0
             property real _buttonWidth: ScreenTools.defaultFontPixelWidth * 5
-            
+
             NumberAnimation {
                 id: animateZoom
-                
+
                 property real startZoom
                 property real endZoom
-                
+
                 target:     _map
                 properties: "zoomLevel"
                 from:       startZoom
                 to:         endZoom
                 duration:   500
-                
+
                 easing {
                     type: Easing.OutExpo
                 }
@@ -122,10 +118,10 @@ Map {
 
             QGCButton {
                 width:  parent._buttonWidth
-                z:      zOrderWidgets
+                z:      QGroundControl.zOrderWidgets
                 //iconSource: "/qmlimages/ZoomPlus.svg"
                 text:   "+"
-                
+
                 onClicked: {
                     var endZoomLevel = _map.zoomLevel + parent._zoomIncrement
                     if (endZoomLevel > _map.maximumZoomLevel) {
@@ -136,13 +132,13 @@ Map {
                     animateZoom.start()
                 }
             }
-            
+
             QGCButton {
                 width:  parent._buttonWidth
-                z:      zOrderWidgets
+                z:      QGroundControl.zOrderWidgets
                 //iconSource: "/qmlimages/ZoomMinus.svg"
                 text:   "-"
-                
+
                 onClicked: {
                     var endZoomLevel = _map.zoomLevel - parent._zoomIncrement
                     if (endZoomLevel < _map.minimumZoomLevel) {
@@ -159,9 +155,9 @@ Map {
 /*
  The slider and scale display are commented out for now to try to save real estate - DonLakeFlyer
  Not sure if I'll bring them back or not. Need room for waypoint list at bottom
- 
+
  property variant scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
- 
+
     function formatDistance(meters)
     {
         var dist = Math.round(meters)
@@ -192,7 +188,7 @@ Map {
         onZoomLevelChanged:{
             scaleTimer.restart()
         }
- 
+
         function calculateScale() {
             var coord1, coord2, dist, text, f
             f = 0

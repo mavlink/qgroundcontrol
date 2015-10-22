@@ -48,10 +48,6 @@ Item {
     // Prevents z order drawing problems.
     property bool hideWidgets: false
 
-    readonly property alias zOrderTopMost:   flightMap.zOrderTopMost
-    readonly property alias zOrderWidgets:   flightMap.zOrderWidgets
-    readonly property alias zOrderMapItems:  flightMap.zOrderMapItems
-
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     property var _activeVehicle: multiVehicleManager.activeVehicle
@@ -144,18 +140,18 @@ Item {
             label:          "H"
             coordinate:     (_activeVehicle && _activeVehicle.homePositionAvailable) ? _activeVehicle.homePosition : QtPositioning.coordinate(0, 0)
             visible:        _activeVehicle ? _activeVehicle.homePositionAvailable : false
-            z:              flightMap.zOrderMapItems
+            z:              QGroundControl.zOrderMapItems
         }
 
         // Add trajectory points to the map
         MapItemView {
             model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.trajectoryPoints : 0
-            
+
             delegate:
                 MapPolyline {
                     line.width: 3
                     line.color: "orange"
-                    z:          flightMap.zOrderMapItems - 1
+                    z:          QGroundControl.zOrderMapItems - 1
 
 
                     path: [
@@ -168,26 +164,24 @@ Item {
         // Add the vehicles to the map
         MapItemView {
             model: multiVehicleManager.vehicles
-            
+
             delegate:
                 VehicleMapItem {
                         vehicle:        object
                         coordinate:     object.coordinate
                         isSatellite:    flightMap.isSatelliteMap
-                        z:              flightMap.zOrderMapItems
+                        z:              QGroundControl.zOrderMapItems
                 }
         }
 
         // Add the mission items to the map
         MissionItemView {
             model:          _missionController.missionItems
-            zOrderMapItems: flightMap.zOrderMapItems
         }
 
         // Add lines between waypoints
         MissionLineView {
             model:          _missionController.waypointLines
-            zOrderMapItems: flightMap.zOrderMapItems
         }
 
         Loader {

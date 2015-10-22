@@ -35,7 +35,6 @@ import QGroundControl.Controls      1.0
 MapItemView {
     id: _root
 
-    property real   zOrderMapItems  ///< Z order for indicator
     property var    itemDragger     ///< Set to item drag control if you want to support drag
 
     delegate: MissionItemIndicator {
@@ -43,8 +42,8 @@ MapItemView {
         label:          object.homePosition ? "H" : object.sequenceNumber
         isCurrentItem:  object.isCurrentItem
         coordinate:     object.coordinate
-        z:              zOrderMapItems
         visible:        object.specifiesCoordinate && (!object.homePosition || object.homePositionValid)
+        z:              QGroundControl.zOrderMapItems
 
         onClicked: setCurrentItem(object.sequenceNumber)
 
