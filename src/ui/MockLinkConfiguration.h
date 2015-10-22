@@ -44,6 +44,7 @@ private slots:
     void _px4RadioClicked(bool checked);
     void _apmRadioClicked(bool checked);
     void _genericRadioClicked(bool checked);
+    void _sendStatusTextClicked(bool checked);
 
 private:
     Ui::MockLinkConfiguration*  _ui;

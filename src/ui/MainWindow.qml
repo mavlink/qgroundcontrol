@@ -82,6 +82,21 @@ Item {
         toolbarLoader.source = "MainToolBar.qml"
     }
 
+    // Detect tablet position
+    property var tabletPosition: QtPositioning.coordinate(37.803784, -122.462276)
+    PositionSource {
+        id:             positionSource
+        updateInterval: 1000
+        active:         ScreenTools.isMobile
+
+        onPositionChanged: {
+            tabletPosition = positionSource.position.coordinate
+            _root.latitude = tabletPosition.latitude
+            _root.longitude = tabletPosition.longitude
+            positionSource.active = false
+        }
+    }
+
     Loader {
         id:                 toolbarLoader
         width:              parent.width
@@ -105,6 +120,8 @@ Item {
         anchors.top:        toolbarLoader.bottom
         anchors.bottom:     parent.bottom
         visible:            false
+
+        property var tabletPosition:    _root.tabletPosition
     }
 
     Loader {
@@ -114,5 +131,7 @@ Item {
         anchors.top:        toolbarLoader.bottom
         anchors.bottom:     parent.bottom
         visible:            false
+
+        property var tabletPosition:    _root.tabletPosition
     }
 }
