@@ -30,10 +30,8 @@ import QGroundControl.FlightDisplay 1.0
 import QGroundControl.ScreenTools   1.0
 
 /// Qml for MainWindow
-FlightDisplayView {
+Item {
     id: _root
-
-    topMargin: toolbarLoader.height + (ScreenTools.defaultFontPixelHeight / 2)
 
     property var _toolbar: toolbarLoader.item
 
@@ -41,30 +39,34 @@ FlightDisplayView {
     readonly property string _setupViewSource:  "SetupView.qml"
 
     Connections {
+
         target: controller
 
         onShowFlyView: {
-            setupViewLoader.visible = false
-            planViewLoader.visible = false
-            _root.hideWidgets = false
+            flightView.visible          = true
+            setupViewLoader.visible     = false
+            planViewLoader.visible      = false
+            _root.hideWidgets           = false
         }
 
         onShowPlanView: {
-            if (planViewLoader.source != _planViewSource) {
-                planViewLoader.source = _planViewSource
+            if (planViewLoader.source   != _planViewSource) {
+                planViewLoader.source   = _planViewSource
             }
-            setupViewLoader.visible = false
-            planViewLoader.visible = true
-            _root.hideWidgets = true
+            flightView.visible          = false
+            setupViewLoader.visible     = false
+            planViewLoader.visible      = true
+            _root.hideWidgets           = true
         }
 
         onShowSetupView: {
-            if (setupViewLoader.source != _setupViewSource) {
-                setupViewLoader.source = _setupViewSource
+            if (setupViewLoader.source  != _setupViewSource) {
+                setupViewLoader.source  = _setupViewSource
             }
-            setupViewLoader.visible = true
-            planViewLoader.visible = false
-            _root.hideWidgets = true
+            flightView.visible          = false
+            setupViewLoader.visible     = true
+            planViewLoader.visible      = false
+            _root.hideWidgets           = true
         }
 
         onShowToolbarMessage: _toolbar.showToolbarMessage(message)
@@ -83,19 +85,30 @@ FlightDisplayView {
     }
 
     Loader {
-        id:     toolbarLoader
-        width:  parent.width
-        height: item ? item.height : 0
-        z:      _root.zOrderTopMost
+        id:                 toolbarLoader
+        width:              parent.width
+        height:             item ? item.height : 0
+        z:                  _root.zOrderTopMost
+    }
+
+    FlightDisplayView {
+        id:                 flightView
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        toolbarLoader.bottom
+        anchors.bottom:     parent.bottom
+        visible:            true
+
+        property real zOrder: _root.zOrderTopMost
     }
 
     Loader {
-        id:             planViewLoader
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        anchors.top:    toolbarLoader.bottom
-        anchors.bottom: parent.bottom
-        visible:        false
+        id:                 planViewLoader
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        toolbarLoader.bottom
+        anchors.bottom:     parent.bottom
+        visible:            false
 
         property real zOrder: _root.zOrderTopMost
     }
