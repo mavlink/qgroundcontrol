@@ -21,15 +21,9 @@
  
  ======================================================================*/
 
-// The above copyright block should be at the top of every file.
-
-/// @file
-///     @brief This is an example class c++ file which is used to describe the QGroundControl
-///             coding style. In general almost everything in here has some coding style meaning.
-///             For example, note how this doxygen block uses the /// variant as the preferred style
-///             of doxygen marker. Not all style choices are explained.
-///
-///     @author Don Gagne <don@thegagnes.com>
+// This is an example class c++ file which is used to describe the QGroundControl
+// coding style. In general almost everything in here has some coding style meaning.
+// Not all style choices are explained.
 
 #include "CodingStyle.h"
 #include "QGCApplication.h"
