@@ -71,7 +71,8 @@ float MockLink::_vehicleLatitude =  47.633033f;
 float MockLink::_vehicleLongitude = -122.08794f;
 float MockLink::_vehicleAltitude =  2.5f;
 
-const char* MockConfiguration::_firmwareTypeKey = "FirmwareType";
+const char* MockConfiguration::_firmwareTypeKey =   "FirmwareType";
+const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 
 MockLink::MockLink(MockConfiguration* config)
     : _missionItemHandler(this)
@@ -85,10 +86,12 @@ MockLink::MockLink(MockConfiguration* config)
     , _mavState(MAV_STATE_STANDBY)
     , _autopilotType(MAV_AUTOPILOT_PX4)
     , _fileServer(NULL)
+    , _sendStatusText(false)
 {
     _config = config;
     if (_config) {
         _autopilotType = config->firmwareType();
+        _sendStatusText = config->sendStatusText();
     }
 
     union px4_custom_mode   px4_cm;
@@ -168,6 +171,10 @@ void MockLink::_run1HzTasks(void)
     if (_mavlinkStarted && _connected) {
         _sendHeartBeat();
         _sendHomePosition();
+        if (_sendStatusText) {
+            _sendStatusText = false;
+            _sendStatusTextMessages();
+        }
     }
 }
 
@@ -747,9 +754,42 @@ void MockLink::_sendGpsRawInt(void)
     respondWithMavlinkMessage(msg);
 }
 
+void MockLink::_sendStatusTextMessages(void)
+{
+    struct StatusMessage {
+        MAV_SEVERITY        severity;
+        const char*         msg;
+    };
+
+    static const struct StatusMessage rgMessages[] = {
+        { MAV_SEVERITY_INFO,        "#Testing audio output" },
+        { MAV_SEVERITY_EMERGENCY,   "Status text emergency" },
+        { MAV_SEVERITY_ALERT,       "Status text alert" },
+        { MAV_SEVERITY_CRITICAL,    "Status text critical" },
+        { MAV_SEVERITY_ERROR,       "Status text error" },
+        { MAV_SEVERITY_WARNING,     "Status text warning" },
+        { MAV_SEVERITY_NOTICE,      "Status text notice" },
+        { MAV_SEVERITY_INFO,        "Status text info" },
+        { MAV_SEVERITY_DEBUG,       "Status text debug" },
+    };
+
+    for (size_t i=0; i<sizeof(rgMessages)/sizeof(rgMessages[0]); i++) {
+        mavlink_message_t msg;
+        const struct StatusMessage* status = &rgMessages[i];
+
+        mavlink_msg_statustext_pack(_vehicleSystemId,
+                                    _vehicleComponentId,
+                                    &msg,
+                                    status->severity,
+                                    status->msg);
+        respondWithMavlinkMessage(msg);
+    }
+}
+
 MockConfiguration::MockConfiguration(const QString& name)
     : LinkConfiguration(name)
     , _firmwareType(MAV_AUTOPILOT_PX4)
+    , _sendStatusText(false)
 {
 
 }
@@ -757,21 +797,29 @@ MockConfiguration::MockConfiguration(const QString& name)
 MockConfiguration::MockConfiguration(MockConfiguration* source)
     : LinkConfiguration(source)
 {
-    _firmwareType = source->_firmwareType;
+    _firmwareType =     source->_firmwareType;
+    _sendStatusText =   source->_sendStatusText;
 }
 
 void MockConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
     MockConfiguration* usource = dynamic_cast<MockConfiguration*>(source);
-    Q_ASSERT(usource != NULL);
-    _firmwareType = usource->_firmwareType;
+
+    if (!usource) {
+        qWarning() << "dynamic_cast failed" << source << usource;
+        return;
+    }
+
+    _firmwareType =     usource->_firmwareType;
+    _sendStatusText =   usource->_sendStatusText;
 }
 
 void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
     settings.setValue(_firmwareTypeKey, (int)_firmwareType);
+    settings.setValue(_sendStatusTextKey, _sendStatusText);
     settings.sync();
     settings.endGroup();
 }
@@ -780,6 +828,7 @@ void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
     _firmwareType = (MAV_AUTOPILOT)settings.value(_firmwareTypeKey, (int)MAV_AUTOPILOT_PX4).toInt();
+    _sendStatusText = settings.value(_sendStatusTextKey, false).toBool();
     settings.endGroup();
 }
 
@@ -789,7 +838,7 @@ void MockConfiguration::updateSettings()
         MockLink* ulink = dynamic_cast<MockLink*>(_link);
         if (ulink) {
             // Restart connect not supported
-            Q_ASSERT(false);
+            qWarning() << "updateSettings not supported";
             //ulink->_restartConnection();
         }
     }
