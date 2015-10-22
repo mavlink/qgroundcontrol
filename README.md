@@ -50,11 +50,11 @@ If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/lib
 
 #### Building using Qt Creator
 * Launch Qt Creator and open the `qgroundcontrol.pro` project.
-* Select the following kit:
+* Select the appropriate kit for your needs:
     * OSX: Desktop Qt 5.5.1 clang 64 bit
     * Ubuntu: <tbd>
     * Windows: <tbd>
-    * Android: <tbd>
+    * Android: Android for armeabi-v7a (GCC 4.9, Qt 5.5.1)
 
 ### Additional build notes for all supported OS
 
