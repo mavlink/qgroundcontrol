@@ -21,18 +21,12 @@
  
  ======================================================================*/
 
-// The above copyright block should be at the top of every file.
+// This is an example class header file which is used to describe the QGroundControl
+// coding style. In general almost everything in here has some coding style meaning.
+// Not all style choices are explained.
 
-/// @file
-///     @brief This is an example class header file which is used to describe the QGroundControl
-///             coding style. In general almost everything in here has some coding style meaning.
-///             For example, note how this doxygen block uses the /// variant as the preferred style
-///             of doxygen marker. Not all style choices are explained.
-///
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef CODINGSTYLE_H
-#define CODINGSTYLE_H
+#ifndef CodingStyle_H
+#define CodingStyle_H
 
 #include <QObject>
 #include <QMap>
@@ -44,7 +38,7 @@
 #include "Fact.h"
 #include "UASInterface.h"
 
-// Note how the Qt headers, Syste, headers and the QGroundControl headers above are kept in seperate groups
+// Note how the Qt headers, System, headers and the QGroundControl headers above are kept in seperate groups
 
 // If you are going to use a logging category for a class it should have the same name as the class
 // with a suffix of Log.
