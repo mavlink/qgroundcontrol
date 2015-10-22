@@ -28,7 +28,7 @@ git submodule update
 Each time you pull new source to your repository you should re-run "git submodule update" to get the latest submodules as well.
 
 ### Supported Builds
-QGroundControl builds are supported for OSX, Linux, Windows and Adroid. QGroundControl uses [Qt](http://www.qt.io) as it's cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as it's default build environment.
+QGroundControl builds are supported for OSX, Linux, Windows and Android. QGroundControl uses [Qt](http://www.qt.io) as it's cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as it's default build environment.
 * OSX: 64 bit, clang compiler
 * Ubuntu: 64 bit, gcc compiler
 * Windows: 32 bit, [Visual Studio 2013 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
@@ -37,7 +37,7 @@ QGroundControl builds are supported for OSX, Linux, Windows and Adroid. QGroundC
 
 #### Install QT
 
-* Download the Qt installer from: <http://http://www.qt.io/download-open-source/>
+* Download the (Qt installer)[http://http://www.qt.io/download-open-source]
     * On Ubuntu, you have to set the file to executable:`chmod +x ~/Downloads/qt-opensource-linux-x64-1.6.0-8-online.run\`
 
 If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.20' not found. You need to either update to the latest gcc, or install the latest libstdc++.6 using: sudo apt-get install libstdc++6.
@@ -51,7 +51,7 @@ If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/lib
 #### Building using Qt Creator
 * Launch Qt Creator and open the `qgroundcontrol.pro` project.
 * Select the following kit:
-    * OSX: <tbd>
+    * OSX: Desktop Qt 5.5.1 clang 64 bit
     * Ubuntu: <tbd>
     * Windows: <tbd>
     * Android: <tbd>
