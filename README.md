@@ -75,15 +75,10 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 
 If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.20' not found. You need to either update to the latest gcc, or install the latest libstdc++.6 using: sudo apt-get install libstdc++6.
 
-#### [Optional] Install additional libraries
-* For text-to-speech (espeak)
-	* For Ubuntu: `sudo apt-get install espeak libespeak-dev`
-	* For Fedora: `sudo yum install espeak espeak-devel`
-	* For Arch Linux: `pacman -Sy espeak`
-* For 3D flight view (openscenegraph)
-	* For Ubuntu: `sudo apt-get install libopenscenegraph-dev`
-	* For Fedora: `sudo yum install OpenSceneGraph`
-	* For Arch Linux: `pacman -Sy openscenegraph`
+#### Install additional libraries
+  * For Ubuntu: `sudo apt-get install espeak libespeak-dev libudev-dev libsdl1.2-dev`
+  * For Fedora: `sudo yum install espeak espeak-devel`
+  * For Arch Linux: `pacman -Sy espeak`
 
 #### Build QGroundControl
 1. Change directory to you `qgroundcontrol` source directory.
