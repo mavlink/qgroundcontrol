@@ -28,6 +28,7 @@ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 
+import QGroundControl                       1.0
 import QGroundControl.AutoPilotPlugin       1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.Controls              1.0
@@ -37,7 +38,7 @@ import QGroundControl.MultiVehicleManager   1.0
 Rectangle {
     anchors.fill:   parent
     color:          qgcPal.window
-    z:              zOrder   // zOrder comes from the Loader in MainWindow.qml
+    z:              QGroundControl.zOrderTopMost
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 

@@ -41,7 +41,7 @@ QGCView {
     viewPanel: panel
 
     // zOrder comes from the Loader in MainWindow.qml
-    z: zOrder
+    z: QGroundControl.zOrderTopMost
 
     readonly property int       _decimalPlaces:     8
     readonly property real      _horizontalMargin:  ScreenTools.defaultFontPixelWidth / 2
@@ -179,7 +179,7 @@ QGCView {
                     width:      ScreenTools.defaultFontPixelHeight * 7
                     height:     ScreenTools.defaultFontPixelHeight * 7
                     visible:    false
-                    z:          editorMap.zOrderMapItems + 1    // Above item icons
+                    z:          QGroundControl.zOrderMapItems + 1    // Above item icons
 
                     property var    missionItem
                     property var    missionItemIndicator
@@ -223,14 +223,12 @@ QGCView {
                 // Add the mission items to the map
                 MissionItemView {
                     model:          controller.missionItems
-                    zOrderMapItems: editorMap.zOrderMapItems
                     itemDragger:    itemEditor
                 }
 
                 // Add lines between waypoints
                 MissionLineView {
                     model:          controller.waypointLines
-                    zOrderMapItems: editorMap.zOrderMapItems
                 }
 
                 // Mission Item Editor
@@ -242,7 +240,7 @@ QGCView {
                     width:          _rightPanelWidth
                     visible:        _missionItems.count > 1
                     opacity:        _rightPanelOpacity
-                    z:              editorMap.zOrderTopMost
+                    z:              QGroundControl.zOrderTopMost
 
                     ListView {
                         id:             missionItemSummaryList
@@ -295,7 +293,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     visible:        homePositionManagerButton.checked
                     color:          qgcPal.window
                     opacity:        _rightPanelOpacity
-                    z:              editorMap.zOrderTopMost
+                    z:              QGroundControl.zOrderTopMost
 
                     Column {
                         anchors.margins:    _margin
@@ -571,7 +569,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     color:              qgcPal.window
                     opacity:            _rightPanelOpacity
                     radius:             ScreenTools.defaultFontPixelHeight
-                    z:                  editorMap.zOrderTopMost
+                    z:                  QGroundControl.zOrderTopMost
 
                     readonly property real margins:  ScreenTools.defaultFontPixelHeight
 
@@ -767,7 +765,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     y:                  (parent.height - (_toolButtonCount * height) - ((_toolButtonCount - 1) * _margin)) / 2
                     buttonImage:        "/qmlimages/MapAddMission.svg"
                     exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  editorMap.zOrderWidgets
+                    z:                  QGroundControl.zOrderWidgets
 
                     onCheckedChanged: {
                         if (checked) {
@@ -793,7 +791,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     anchors.top:        addMissionItemsButton.bottom
                     buttonImage:        "/qmlimages/TrashDelete.svg"
                     exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  editorMap.zOrderWidgets
+                    z:                  QGroundControl.zOrderWidgets
 
                     onClicked: {
                         itemEditor.clearItem()
@@ -812,7 +810,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     anchors.top:        deleteMissionItemButton.bottom
                     buttonImage:        "/qmlimages/MapHome.svg"
                     exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  editorMap.zOrderWidgets
+                    z:                  QGroundControl.zOrderWidgets
                 }
                 */
 
@@ -825,7 +823,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     buttonImage:        "/qmlimages/MapCenter.svg"
                     viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                     exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  editorMap.zOrderWidgets
+                    z:                  QGroundControl.zOrderWidgets
 
                     dropDownComponent: Component {
                         Column {
@@ -870,7 +868,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     buttonImage:        _syncNeeded ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
                     viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                     exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  editorMap.zOrderWidgets
+                    z:                  QGroundControl.zOrderWidgets
                     dropDownComponent:  syncDropDownComponent
                     enabled:            !_syncInProgress
                 }
@@ -884,7 +882,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     buttonImage:        "/qmlimages/MapType.svg"
                     viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
                     exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  editorMap.zOrderWidgets
+                    z:                  QGroundControl.zOrderWidgets
 
                     dropDownComponent: Component {
                         Column {
@@ -921,7 +919,7 @@ Home Position Manager is commented out for now until a better implementation is 
                     anchors.top:        mapTypeButton.bottom
                     buttonImage:        "/qmlimages/Help.svg"
                     exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  editorMap.zOrderWidgets
+                    z:                  QGroundControl.zOrderWidgets
                     checked:            _showHelp
                 }
             } // FlightMap

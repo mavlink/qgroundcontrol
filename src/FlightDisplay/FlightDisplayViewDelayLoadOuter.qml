@@ -52,7 +52,7 @@ Item {
             height:             ScreenTools.defaultFontPixelSize * (10)
             heading:            _heading
             active:             multiVehicleManager.activeVehicleAvailable
-            z:                  _flightMap.zOrderWidgets
+            z:                  QGroundControl.zOrderWidgets
         }
 
         QGCAttitudeHUD {
@@ -62,7 +62,7 @@ Item {
             width:              ScreenTools.defaultFontPixelSize * (30)
             height:             ScreenTools.defaultFontPixelSize * (30)
             active:             multiVehicleManager.activeVehicleAvailable
-            z:                  _flightMap.zOrderWidgets
+            z:                  QGroundControl.zOrderWidgets
         }
     }
 
@@ -71,7 +71,7 @@ Item {
         height:         parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
         width:          ScreenTools.defaultFontPixelSize * (5)
         altitude:       _altitudeWGS84
-        z:              _flightMap.zOrderWidgets
+        z:              QGroundControl.zOrderWidgets
         visible:        !hideWidgets
     }
 
@@ -80,7 +80,7 @@ Item {
         width:          ScreenTools.defaultFontPixelSize * (5)
         height:         parent.height * 0.65 > ScreenTools.defaultFontPixelSize * (23.4) ? ScreenTools.defaultFontPixelSize * (23.4) : parent.height * 0.65
         speed:          _groundSpeed
-        z:              _flightMap.zOrderWidgets
+        z:              QGroundControl.zOrderWidgets
         visible:        !hideWidgets
     }
 
@@ -90,7 +90,7 @@ Item {
         airspeed:           _airSpeed
         groundspeed:        _groundSpeed
         active:             multiVehicleManager.activeVehicleAvailable
-        z:                  _flightMap.zOrderWidgets
+        z:                  QGroundControl.zOrderWidgets
         visible:             !hideWidgets
     }
 
@@ -100,15 +100,15 @@ Item {
         altitude:           _altitudeWGS84
         vertZ:              _climbRate
         active:             multiVehicleManager.activeVehicleAvailable
-        z:                  _flightMap.zOrderWidgets
-        visible:              !hideWidgets
+        z:                  QGroundControl.zOrderWidgets
+        visible:            !hideWidgets
     }
 
     QGCButton {
         id:         optionsButton
         x:          _flightMap.mapWidgets.x
         y:          _flightMap.mapWidgets.y - height - (ScreenTools.defaultFontPixelHeight / 2)
-        z:          _flightMap.zOrderWidgets
+        z:          QGroundControl.zOrderWidgets
         width:      _flightMap.mapWidgets.width
         text:       "Options"
         menu:       optionsMenu

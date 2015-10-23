@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 /// @file
@@ -39,15 +39,23 @@ class QGroundControlQmlGlobal : public QObject
 public:
     QGroundControlQmlGlobal(QObject* parent = NULL);
     ~QGroundControlQmlGlobal();
-    
+
     Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
-    
+
+    Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
+    Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
+    Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
+
     // Property accesors
-    
-    HomePositionManager*    homePositionManager(void)   { return _homePositionManager; }
-    FlightMapSettings*      flightMapSettings(void)     { return _flightMapSettings; }
-    
+
+    HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
+    FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }
+
+    qreal                   zOrderTopMost       ()      { return 1000; }
+    qreal                   zOrderWidgets       ()      { return 100; }
+    qreal                   zOrderMapItems      ()      { return 50; }
+
 private:
     HomePositionManager*    _homePositionManager;
     FlightMapSettings*      _flightMapSettings;
