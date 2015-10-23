@@ -30,7 +30,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef GLUTILS_H
 #define GLUTILS_H
 
-#ifdef __android__
+#ifdef __mobile__
 #include <QOpenGLFunctions>
 #define getQOpenGLFunctions() QOpenGLContext::currentContext()->functions()
 #define QOpenGLFunctionsDef QOpenGLFunctions
