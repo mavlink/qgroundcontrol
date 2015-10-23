@@ -95,6 +95,7 @@ bool GAudioOutput::say(const QString& inText, int severity)
     if (!muted) {
 #if defined __android__
 #if defined QGC_SPEECH_ENABLED
+        Q_UNUSED(severity);
         static const char V_jniClassName[] {"org/qgroundcontrol/qgchelper/UsbDeviceJNI"};
         QAndroidJniEnvironment env;
         if (env->ExceptionCheck()) {
