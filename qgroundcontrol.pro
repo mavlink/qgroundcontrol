@@ -22,8 +22,6 @@ CONFIG  +=  ordered
 SUBDIRS  =  ./QGCLocationPlugin.pro
 SUBDIRS +=  ./QGCApplication.pro
 
-include(git_version.pri)
-
 QGCApplication.depends = QGCLocationPlugin
 
 message(Qt version $$[QT_VERSION])

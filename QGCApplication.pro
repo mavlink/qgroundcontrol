@@ -18,7 +18,6 @@
 # -------------------------------------------------
 
 include(QGCCommon.pri)
-include(git_version.pri)
 
 TARGET = qgroundcontrol
 TEMPLATE = app
@@ -447,7 +446,7 @@ SOURCES += src/QmlControls/QmlTestWidget.cc
 !MobileBuild {
 
 INCLUDEPATH += \
-	src/qgcunittest
+    src/qgcunittest
 
 HEADERS += \
     src/FactSystem/FactSystemTestBase.h \
