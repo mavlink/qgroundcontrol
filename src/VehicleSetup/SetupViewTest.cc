@@ -60,7 +60,7 @@ void SetupViewTest::_clickThrough_test(void)
     
     MockLink* link = new MockLink();
     Q_CHECK_PTR(link);
-    link->setAutopilotType(MAV_AUTOPILOT_PX4);
+    link->setFirmwareType(MAV_AUTOPILOT_PX4);
     LinkManager::instance()->_addLink(link);
     linkMgr->connectLink(link);
     

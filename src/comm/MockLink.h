@@ -74,9 +74,16 @@ public:
 
     // MockLink methods
     int vehicleId(void) { return _vehicleSystemId; }
-    MAV_AUTOPILOT getAutopilotType(void) { return _autopilotType; }
-    void setAutopilotType(MAV_AUTOPILOT autopilot) { _autopilotType = autopilot; }
+    MAV_AUTOPILOT getFirmwareType(void) { return _firmwareType; }
+    void setFirmwareType(MAV_AUTOPILOT autopilot) { _firmwareType = autopilot; }
     void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; }
+
+    /// APM stack has strange handling of the first item of the mission list. If it has no
+    /// onboard mission items, sometimes it sends back a home position in position 0 and
+    /// sometimes it doesn't. Don't ask. This option allows you to configure that behavior
+    /// for unit testing.
+    void setAPMMissionResponseMode(bool sendHomePositionOnEmptyList) { _apmSendHomePositionOnEmptyList = sendHomePositionOnEmptyList; }
+
     void emitRemoteControlChannelRawChanged(int channel, uint16_t raw);
     
     /// Sends the specified mavlink message to QGC
@@ -177,11 +184,12 @@ private:
     uint8_t     _mavState;
 
     MockConfiguration* _config;
-    MAV_AUTOPILOT _autopilotType;
+    MAV_AUTOPILOT _firmwareType;
     
     MockLinkFileServer* _fileServer;
 
     bool _sendStatusText;
+    bool _apmSendHomePositionOnEmptyList;
 
     static float _vehicleLatitude;
     static float _vehicleLongitude;

@@ -200,3 +200,10 @@ void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
     
     // PX4 Flight Stack doesn't need to do any extra work
 }
+
+bool PX4FirmwarePlugin::sendHomePositionToVehicle(void)
+{
+    // PX4 stack does not want home position sent in the first position.
+    // Subsequent sequence numbers must be adjusted.
+    return false;
+}

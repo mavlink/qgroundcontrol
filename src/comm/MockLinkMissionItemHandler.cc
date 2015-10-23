@@ -32,6 +32,7 @@ MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink* mockLink)
     : _mockLink(mockLink)
     , _missionItemResponseTimer(NULL)
     , _failureMode(FailNone)
+    , _sendHomePositionOnEmptyList(false)
 {
     Q_ASSERT(mockLink);
 }
@@ -99,6 +100,11 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
         mavlink_msg_mission_request_list_decode(&msg, &request);
         
         Q_ASSERT(request.target_system == _mockLink->vehicleId());
+
+        int itemCount = _missionItems.count();
+        if (itemCount == 0 && _sendHomePositionOnEmptyList) {
+            itemCount = 1;
+        }
         
         mavlink_message_t   responseMsg;
         
@@ -107,7 +113,7 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
                                        &responseMsg,            // Outgoing message
                                        msg.sysid,               // Target is original sender
                                        msg.compid,              // Target is original sender
-                                       _missionItems.count());  // Number of mission items
+                                       itemCount);              // Number of mission items
         _mockLink->respondWithMavlinkMessage(responseMsg);
     } else {
         qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequestList not responding due to failure mode";
@@ -148,7 +154,16 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t& 
         } else {
             mavlink_message_t   responseMsg;
             
-            mavlink_mission_item_t item = _missionItems[request.seq];
+            mavlink_mission_item_t item;
+            if (_missionItems.count() == 0 && _sendHomePositionOnEmptyList) {
+                item.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
+                item.command = MAV_CMD_NAV_WAYPOINT;
+                item.current = false;
+                item.autocontinue = true;
+                item.param1 = item.param2 = item.param3 = item.param4 = item.x = item.y = item.z = 0;
+            } else {
+                item = _missionItems[request.seq];
+            }
             
             mavlink_msg_mission_item_pack(_mockLink->vehicleId(),
                                           MAV_COMP_ID_MISSIONPLANNER,

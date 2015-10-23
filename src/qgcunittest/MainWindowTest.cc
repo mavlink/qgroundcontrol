@@ -63,7 +63,7 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
     
     MockLink* link = new MockLink();
     Q_CHECK_PTR(link);
-    link->setAutopilotType(autopilot);
+    link->setFirmwareType(autopilot);
     LinkManager::instance()->_addLink(link);
     
     linkMgr->connectLink(link);

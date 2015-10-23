@@ -39,18 +39,23 @@ public:
     MissionManagerTest(void);
     
 private slots:
-    void init(void);
     void cleanup(void);
     
-    void _testWriteFailureHandling(void);
-    void _testReadFailureHandling(void);
-    
+    void _testEmptyVehicleAPM(void);
+    void _testEmptyVehiclePX4(void);
+    void _testWriteFailureHandlingAPM(void);
+    void _testReadFailureHandlingAPM(void);
+    void _testWriteFailureHandlingPX4(void);
+    void _testReadFailureHandlingPX4(void);
+
 private:
+    void _initForFirmwareType(MAV_AUTOPILOT firmwareType);
     void _checkInProgressValues(bool inProgress);
     void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly);
     void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly);
-    
-    void _readEmptyVehicle(void);
+    void _testWriteFailureHandlingWorker(void);
+    void _testReadFailureHandlingWorker(void);
+    void _readEmptyVehicleWorker(void);
     
     MockLink*       _mockLink;
     MissionManager* _missionManager;
@@ -93,6 +98,7 @@ private:
     } TestCase_t;
 
     static const TestCase_t _rgTestCases[];
+    static const size_t     _cTestCases;
     static const int        _signalWaitTime = MissionManager::_ackTimeoutMilliseconds * MissionManager::_maxRetryCount * 2;
 };
 
