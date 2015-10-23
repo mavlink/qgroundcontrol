@@ -63,8 +63,7 @@ public:
     
     /// Writes the specified set of mission items to the vehicle
     ///     @oaram missionItems Items to send to vehicle
-    ///     @param skipFirstItem true: Don't send first item
-    void writeMissionItems(const QmlObjectListModel& missionItems, bool skipFirstItem);
+    void writeMissionItems(const QmlObjectListModel& missionItems);
     
     /// Returns a copy of the current set of mission items. Caller is responsible for
     /// freeing returned object.
@@ -106,7 +105,7 @@ private:
     
     void _startAckTimeout(AckType_t ack);
     bool _stopAckTimeout(AckType_t expectedAck);
-    void _sendTransactionComplete(void);
+    void _readTransactionComplete(void);
     void _handleMissionCount(const mavlink_message_t& message);
     void _handleMissionItem(const mavlink_message_t& message);
     void _handleMissionRequest(const mavlink_message_t& message);

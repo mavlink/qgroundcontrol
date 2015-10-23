@@ -54,24 +54,27 @@ QGCView {
     readonly property string    _autoSyncKey:       "AutoSync"
     readonly property string    _showHelpKey:       "ShowHelp"
     readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
+    readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
 
     property var    _missionItems:              controller.missionItems
 
-    property var    _homePositionManager:       QGroundControl.homePositionManager
-    property string _homePositionName:          _homePositionManager.homePositions.get(0).name
-
+    //property var    _homePositionManager:       QGroundControl.homePositionManager
+    //property string _homePositionName:          _homePositionManager.homePositions.get(0).name
     //property var    offlineHomePosition:        _homePositionManager.homePositions.get(0).coordinate
+
     property var    liveHomePosition:           controller.liveHomePosition
     property var    liveHomePositionAvailable:  controller.liveHomePositionAvailable
-    //property var    homePosition:               offlineHomePosition // live or offline depending on state
+    property var    homePosition:               _defaultVehicleCoordinate
 
     property bool _syncNeeded:                  controller.missionItems.dirty
     property bool _syncInProgress:              _activeVehicle ? _activeVehicle.missionManager.inProgress : false
 
     property bool _showHelp:                    QGroundControl.flightMapSettings.loadBoolMapSetting(editorMap.mapName, _showHelpKey, true)
 
-    MissionEditorController {
+    MissionController {
         id:         controller
+
+        Component.onCompleted: start(true /* editMode */)
 /*
         FIXME: autoSync is temporarily disconnected since it's still buggy
 
@@ -104,6 +107,7 @@ QGCView {
 
     function updateHomePosition() {
         if (liveHomePositionAvailable) {
+            homePosition = liveHomePosition
             _missionItems.get(0).coordinate = liveHomePosition
             _missionItems.get(0).homePositionValid = true
         }
@@ -282,8 +286,8 @@ QGCView {
                     }
                 } // Item - Mission Item editor
 
-/*
-Home Position Manager is commented out for now until a better implementation is completed
+                /*
+                  Home Position Manager temporarily disbled till more work is done on it
 
                 // Home Position Manager
                 Rectangle {
@@ -556,7 +560,7 @@ Home Position Manager is commented out for now until a better implementation is 
                         }
                     } // Column - Online view
                 } // Item - Home Position Manager
-*/
+                */
 
                 // Help Panel
                 Rectangle {
@@ -656,7 +660,7 @@ Home Position Manager is commented out for now until a better implementation is 
                         }
 
                         /*
-                        Home Position Manager commented until more complete implementation is done
+                          Home Position Manager disabled
 
                         Image {
                             id:                 homePositionManagerHelpIcon
@@ -680,7 +684,7 @@ Home Position Manager is commented out for now until a better implementation is 
                                                 "When enabled, allows you to select/add/update flying field locations. " +
                                                 "You can save multiple flying field locations for use while creating missions while you are not connected to your vehicle."
                         }
-*/
+                        */
 
                         Image {
                             id:                 mapCenterHelpIcon
@@ -803,8 +807,7 @@ Home Position Manager is commented out for now until a better implementation is 
                 }
 
                 /*
-                Home Position Manager commented until more complete implementation is done
-
+                  Home Position manager temporarily disable
                 RoundButton {
                     id:                 homePositionManagerButton
                     anchors.margins:    _margin
