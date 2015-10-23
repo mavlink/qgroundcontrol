@@ -166,27 +166,9 @@ Vehicle::~Vehicle()
 {
     delete _missionManager;
     _missionManager = NULL;
-    
-    // Stop listening for system messages
-    disconnect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
-    // Disconnect any previously connected active MAV
-    disconnect(_mav, SIGNAL(attitudeChanged                     (UASInterface*, double,double,double,quint64)),             this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
-    disconnect(_mav, SIGNAL(attitudeChanged                     (UASInterface*, int,double,double,double,quint64)),         this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
-    disconnect(_mav, SIGNAL(speedChanged                        (UASInterface*, double, double, quint64)),                  this, SLOT(_updateSpeed(UASInterface*, double, double, quint64)));
-    disconnect(_mav, SIGNAL(altitudeChanged                     (UASInterface*, double, double, double, double, quint64)),  this, SLOT(_updateAltitude(UASInterface*, double, double, double, double, quint64)));
-    disconnect(_mav, SIGNAL(navigationControllerErrorsChanged   (UASInterface*, double, double, double)),                   this, SLOT(_updateNavigationControllerErrors(UASInterface*, double, double, double)));
-    disconnect(_mav, SIGNAL(statusChanged                       (UASInterface*,QString,QString)),                           this, SLOT(_updateState(UASInterface*,QString,QString)));
-    disconnect(_mav, &UASInterface::NavigationControllerDataChanged, this, &Vehicle::_updateNavigationControllerData);
-    disconnect(_mav, &UASInterface::heartbeatTimeout,                this, &Vehicle::_heartbeatTimeout);
-    disconnect(_mav, &UASInterface::batteryChanged,                  this, &Vehicle::_updateBatteryRemaining);
-    disconnect(_mav, &UASInterface::batteryConsumedChanged,          this, &Vehicle::_updateBatteryConsumedChanged);
-    disconnect(_mav, &UASInterface::nameChanged,                     this, &Vehicle::_updateName);
-    disconnect(_mav, &UASInterface::systemTypeSet,                   this, &Vehicle::_setSystemType);
-    disconnect(_mav, &UASInterface::localizationChanged,             this, &Vehicle::_setSatLoc);
-    UAS* pUas = dynamic_cast<UAS*>(_mav);
-    if(pUas) {
-        disconnect(pUas, &UAS::satelliteCountChanged, this, &Vehicle::_setSatelliteCount);
-    }
+
+    delete _mav;
+    _mav = NULL;
 }
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
