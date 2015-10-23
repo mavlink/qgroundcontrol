@@ -44,7 +44,7 @@ LinuxBuild {
     exists($$GST_ROOT) {
         CONFIG      += VideoEnabled
         INCLUDEPATH += $$GST_ROOT/Headers
-        LIBS        += -F$$(HOME)/Library/Developer/GStreamer/iPhone.sdk -framework GStreamer
+        LIBS        += -F$$(HOME)/Library/Developer/GStreamer/iPhone.sdk -framework GStreamer -liconv -lresolv
     }
 } else:WindowsBuild {
     #- gstreamer installed by default under c:/gstreamer
