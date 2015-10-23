@@ -96,6 +96,14 @@ public:
     
     /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
     virtual void initializeVehicle(Vehicle* vehicle) = 0;
+
+    /// Determines how to handle the first item of the mission item list. Internally to QGC the first item
+    /// is always the home position.
+    /// @return
+    ///     true: Send first mission item as home position to vehicle. When vehicle has no mission items on
+    ///             it, it may or may not return a home position back in position 0.
+    ///     false: Do not send first item to vehicle, sequence numbers must be adjusted
+    virtual bool sendHomePositionToVehicle(void) = 0;
     
 protected:
     FirmwarePlugin(QObject* parent = NULL) : QGCSingleton(parent) { }
