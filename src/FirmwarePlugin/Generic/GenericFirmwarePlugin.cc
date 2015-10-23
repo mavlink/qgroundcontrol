@@ -110,3 +110,11 @@ void GenericFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
     
     // Generic Flight Stack is by definition "generic", so no extra work
 }
+
+bool GenericFirmwarePlugin::sendHomePositionToVehicle(void)
+{
+    // Generic stack does not want home position sent in the first position.
+    // Subsequent sequence numbers must be adjusted.
+    // This is the mavlink spec default.
+    return false;
+}

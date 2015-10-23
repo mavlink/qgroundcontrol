@@ -87,7 +87,8 @@ public:
     virtual int manualControlReservedButtonCount(void);
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
     virtual void initializeVehicle(Vehicle* vehicle);
-    
+    virtual bool sendHomePositionToVehicle(void);
+
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(QObject* parent = NULL);

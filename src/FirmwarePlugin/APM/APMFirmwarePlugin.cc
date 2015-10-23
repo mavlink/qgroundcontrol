@@ -378,3 +378,9 @@ void APMFirmwarePlugin::setSupportedModes(QList<APMCustomMode> supportedModes)
 {
     _supportedModes = supportedModes;
 }
+
+bool APMFirmwarePlugin::sendHomePositionToVehicle(void)
+{
+    // APM stack wants the home position sent in the first position
+    return true;
+}
