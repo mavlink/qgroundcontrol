@@ -88,6 +88,8 @@ public:
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
     void reset(void) { _missionItems.clear(); }
 
+    void setSendHomePositionOnEmptyList(bool sendHomePositionOnEmptyList) { _sendHomePositionOnEmptyList = sendHomePositionOnEmptyList; }
+
 private slots:
     void _missionItemResponseTimeout(void);
 
@@ -112,6 +114,7 @@ private:
     QTimer* _missionItemResponseTimer;
     FailureMode_t   _failureMode;
     bool            _failureFirstTimeOnly;
+    bool            _sendHomePositionOnEmptyList;
 };
 
 #endif

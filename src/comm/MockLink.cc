@@ -84,13 +84,14 @@ MockLink::MockLink(MockConfiguration* config)
     , _mavlinkStarted(false)
     , _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
     , _mavState(MAV_STATE_STANDBY)
-    , _autopilotType(MAV_AUTOPILOT_PX4)
+    , _firmwareType(MAV_AUTOPILOT_PX4)
     , _fileServer(NULL)
     , _sendStatusText(false)
+    , _apmSendHomePositionOnEmptyList(false)
 {
     _config = config;
     if (_config) {
-        _autopilotType = config->firmwareType();
+        _firmwareType = config->firmwareType();
         _sendStatusText = config->sendStatusText();
     }
 
@@ -250,7 +251,7 @@ void MockLink::_sendHeartBeat(void)
                                _vehicleComponentId,
                                &msg,
                                MAV_TYPE_QUADROTOR,  // MAV_TYPE
-                               _autopilotType,      // MAV_AUTOPILOT
+                               _firmwareType,      // MAV_AUTOPILOT
                                _mavBaseMode,        // MAV_MODE
                                _mavCustomMode,      // custom mode
                                _mavState);          // MAV_STATE
@@ -436,7 +437,7 @@ float MockLink::_floatUnionForParam(int componentId, const QString& paramName)
 
     switch (paramType) {
         case MAV_PARAM_TYPE_INT8:
-            if (_autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
                 valueUnion.param_float = (unsigned char)paramVar.toChar().toLatin1();
             } else {
                 valueUnion.param_int8 = (unsigned char)paramVar.toChar().toLatin1();
@@ -444,7 +445,7 @@ float MockLink::_floatUnionForParam(int componentId, const QString& paramName)
             break;
 
         case MAV_PARAM_TYPE_INT32:
-            if (_autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
                 valueUnion.param_float = paramVar.toInt();
             } else {
                 valueUnion.param_int32 = paramVar.toInt();
@@ -452,7 +453,7 @@ float MockLink::_floatUnionForParam(int componentId, const QString& paramName)
             break;
 
         case MAV_PARAM_TYPE_UINT32:
-            if (_autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
                 valueUnion.param_float = paramVar.toUInt();
             } else {
                 valueUnion.param_uint32 = paramVar.toUInt();
