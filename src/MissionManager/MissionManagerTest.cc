@@ -35,8 +35,9 @@ const MissionManagerTest::TestCase_t MissionManagerTest::_rgTestCases[] = {
     { "4\t0\t3\t21\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 4, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LAND,         10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
     { "5\t0\t3\t22\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 5, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_TAKEOFF,      10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
     { "6\t0\t2\t112\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n", { 6, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_CONDITION_DELAY,  10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_MISSION } },
-    { "7\t0\t2\t177\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n", { 7, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_DO_JUMP,          10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_MISSION } },
+    { "7\t0\t2\t177\t3\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 7, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_DO_JUMP,          3,    20.0, 30.0, 40.0, true, false, MAV_FRAME_MISSION } },
 };
+const size_t MissionManagerTest::_cTestCases = sizeof(_rgTestCases)/sizeof(_rgTestCases[0]);
 
 MissionManagerTest::MissionManagerTest(void)
     : _mockLink(NULL)
@@ -44,7 +45,7 @@ MissionManagerTest::MissionManagerTest(void)
     
 }
 
-void MissionManagerTest::init(void)
+void MissionManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 {
     UnitTest::init();
     
@@ -53,6 +54,7 @@ void MissionManagerTest::init(void)
     
     _mockLink = new MockLink();
     Q_CHECK_PTR(_mockLink);
+    _mockLink->setFirmwareType(firmwareType);
     LinkManager::instance()->_addLink(_mockLink);
     
     linkMgr->connectLink(_mockLink);
@@ -110,7 +112,7 @@ void MissionManagerTest::_checkInProgressValues(bool inProgress)
     QCOMPARE(signalArgs[0].toBool(), inProgress);
 }
 
-void MissionManagerTest::_readEmptyVehicle(void)
+void MissionManagerTest::_readEmptyVehicleWorker(void)
 {
     _missionManager->requestMissionItems();
 
@@ -125,8 +127,7 @@ void MissionManagerTest::_readEmptyVehicle(void)
     // inProgressChanged signal to signal completion.
     _multiSpy->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, _signalWaitTime);
     _multiSpy->waitForSignalByIndex(inProgressChangedSignalIndex, _signalWaitTime);
-    QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
-    QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalMask), true);
+    QCOMPARE(_multiSpy->checkOnlySignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
     _checkInProgressValues(false);
     
     // Vehicle should have no items at this point
@@ -143,7 +144,6 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     }
     
     // Setup our test case data
-    const size_t cTestCases = sizeof(_rgTestCases)/sizeof(_rgTestCases[0]);
     QmlObjectListModel* list = new QmlObjectListModel();
     
     // Editor has a home position item on the front, so we do the same
@@ -156,7 +156,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     homeItem->setSequenceNumber(0);
     list->insert(0, homeItem);
 
-    for (size_t i=0; i<cTestCases; i++) {
+    for (size_t i=0; i<_cTestCases; i++) {
         const TestCase_t* testCase = &_rgTestCases[i];
         
         MissionItem* item = new MissionItem(list);
@@ -175,7 +175,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     }
     
     // Send the items to the vehicle
-    _missionManager->writeMissionItems(*list, true /* skipFirstItem */);
+    _missionManager->writeMissionItems(*list);
     
     // writeMissionItems should emit these signals before returning:
     //      inProgressChanged
@@ -197,8 +197,15 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         // Validate inProgressChanged signal value
         _checkInProgressValues(false);
 
-        // We should have gotten back all mission items
-        QCOMPARE(_missionManager->missionItems()->count(), (int)cTestCases);
+        // Validate item count in mission manager
+
+        int expectedCount = (int)_cTestCases;
+        if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            // Home position at position 0 comes from vehicle
+            expectedCount++;
+        }
+
+        QCOMPARE(_missionManager->missionItems()->count(), expectedCount);
     } else {
         // This should be a failed run
         
@@ -260,6 +267,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         QCOMPARE(_multiSpy->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
         QCOMPARE(_multiSpy->checkNoSignalByMask(canEditChangedSignalMask), true);
         _checkInProgressValues(false);
+
     } else {
         // This should be a failed run
         
@@ -292,7 +300,11 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     size_t cMissionItemsExpected;
     
     if (failureMode == MockLinkMissionItemHandler::FailNone || failFirstTimeOnly == true) {
-        cMissionItemsExpected = sizeof(_rgTestCases)/sizeof(_rgTestCases[0]);
+        cMissionItemsExpected = (int)_cTestCases;
+        if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            // Home position at position 0 comes from vehicle
+            cMissionItemsExpected++;
+        }
     } else {
         switch (failureMode) {
             case MockLinkMissionItemHandler::FailReadRequestListNoResponse:
@@ -315,28 +327,49 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     
     QCOMPARE(_missionManager->missionItems()->count(), (int)cMissionItemsExpected);
     QCOMPARE(_missionManager->canEdit(), true);
-    
-    for (size_t i=0; i<cMissionItemsExpected; i++) {
-        const TestCase_t* testCase = &_rgTestCases[i];
-        MissionItem* actual = qobject_cast<MissionItem*>(_missionManager->missionItems()->get(i));
+
+    size_t firstActualItem = 0;
+    if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        // First item is home position, don't validate it
+        firstActualItem++;
+    }
+
+    int testCaseIndex = 0;
+    for (size_t actualItemIndex=firstActualItem; actualItemIndex<cMissionItemsExpected; actualItemIndex++) {
+        const TestCase_t* testCase = &_rgTestCases[testCaseIndex];
+
+        int expectedSequenceNumber = testCase->expectedItem.sequenceNumber;
+        int expectedParam1 = (int)testCase->expectedItem.param1;
+        if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            // Account for home position in first item
+            expectedSequenceNumber++;
+            if (testCase->expectedItem.command == MAV_CMD_DO_JUMP) {
+                // Expected data in test case is for PX4
+                expectedParam1++;
+            }
+        }
+
+        MissionItem* actual = qobject_cast<MissionItem*>(_missionManager->missionItems()->get(actualItemIndex));
         
-        qDebug() << "Test case" << i;
-        QCOMPARE(actual->sequenceNumber(),          testCase->expectedItem.sequenceNumber);
+        qDebug() << "Test case" << testCaseIndex;
+        QCOMPARE(actual->sequenceNumber(),          expectedSequenceNumber);
         QCOMPARE(actual->coordinate().latitude(),   testCase->expectedItem.coordinate.latitude());
         QCOMPARE(actual->coordinate().longitude(),  testCase->expectedItem.coordinate.longitude());
         QCOMPARE(actual->coordinate().altitude(),   testCase->expectedItem.coordinate.altitude());
         QCOMPARE((int)actual->command(),       (int)testCase->expectedItem.command);
+        QCOMPARE((int)actual->param1(),        (int)expectedParam1);
         QCOMPARE(actual->param2(),                  testCase->expectedItem.param2);
         QCOMPARE(actual->param3(),                  testCase->expectedItem.param3);
         QCOMPARE(actual->param4(),                  testCase->expectedItem.param4);
         QCOMPARE(actual->autoContinue(),            testCase->expectedItem.autocontinue);
         QCOMPARE(actual->frame(),                   testCase->expectedItem.frame);
-        QCOMPARE(actual->param1(),                  testCase->expectedItem.param1);
+
+        testCaseIndex++;
     }
     
 }
 
-void MissionManagerTest::_testWriteFailureHandling(void)
+void MissionManagerTest::_testWriteFailureHandlingWorker(void)
 {
     /*
     /// Called to send a MISSION_ACK message while the MissionManager is in idle state
@@ -378,7 +411,7 @@ void MissionManagerTest::_testWriteFailureHandling(void)
     }
 }
 
-void MissionManagerTest::_testReadFailureHandling(void)
+void MissionManagerTest::_testReadFailureHandlingWorker(void)
 {
     /*
      /// Called to send a MISSION_ACK message while the MissionManager is in idle state
@@ -416,4 +449,41 @@ void MissionManagerTest::_testReadFailureHandling(void)
         _roundTripItems(rgTestCases[i].failureMode, rgTestCases[i].errorCode, true);
         _mockLink->resetMissionItemHandler();
     }
+}
+
+void MissionManagerTest::_testEmptyVehicleAPM(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    _readEmptyVehicleWorker();
+}
+
+void MissionManagerTest::_testEmptyVehiclePX4(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    _readEmptyVehicleWorker();
+}
+
+void MissionManagerTest::_testWriteFailureHandlingAPM(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    _testWriteFailureHandlingWorker();
+}
+
+void MissionManagerTest::_testReadFailureHandlingAPM(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    _testReadFailureHandlingWorker();
+}
+
+
+void MissionManagerTest::_testWriteFailureHandlingPX4(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+    _testWriteFailureHandlingWorker();
+}
+
+void MissionManagerTest::_testReadFailureHandlingPX4(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+    _testReadFailureHandlingWorker();
 }
