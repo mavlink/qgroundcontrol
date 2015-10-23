@@ -45,7 +45,7 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     UnitTest::init();
     
     MockLink* link = new MockLink();
-    link->setAutopilotType(autopilot);
+    link->setFirmwareType(autopilot);
     LinkManager::instance()->_addLink(link);
     
     LinkManager::instance()->connectLink(link);

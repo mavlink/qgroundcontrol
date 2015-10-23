@@ -86,7 +86,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  childItems          READ childItems                                     CONSTANT)
 
     /// true: this item is being used as a home position indicator
-    Q_PROPERTY(bool                 homePosition        MEMBER _homePositionSpecialCase                     CONSTANT)
+    Q_PROPERTY(bool                 homePosition        READ homePosition                                   CONSTANT)
     
     /// true: home position should be shown
     Q_PROPERTY(bool                 homePositionValid   READ homePositionValid      WRITE setHomePositionValid NOTIFY homePositionValidChanged)
@@ -131,6 +131,7 @@ public:
     
     QmlObjectListModel* childItems(void) { return &_childItems; }
 
+    bool homePosition(void) { return _homePositionSpecialCase; }
     bool homePositionValid(void) { return _homePositionValid; }
     void setHomePositionValid(bool homePositionValid);
     

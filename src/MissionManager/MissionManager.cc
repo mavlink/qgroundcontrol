@@ -26,6 +26,7 @@
 
 #include "MissionManager.h"
 #include "Vehicle.h"
+#include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 
 QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
@@ -53,8 +54,10 @@ MissionManager::~MissionManager()
 
 }
 
-void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems, bool skipFirstItem)
+void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems)
 {
+    bool skipFirstItem = !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
+
     _retryCount = 0;
     _missionItems.clear();
 
@@ -65,10 +68,12 @@ void MissionManager::writeMissionItems(const QmlObjectListModel& missionItems, b
 
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems.get(_missionItems.count() - 1));
 
-        // Editor uses 1-based sequence numbers, adjust them before going out
-        item->setSequenceNumber(item->sequenceNumber() - 1);
-        if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
-            item->setParam1((int)item->param1() - 1);
+        if (skipFirstItem) {
+            // Home is in sequence 1, remainder of items start at sequence 1
+            item->setSequenceNumber(item->sequenceNumber() - 1);
+            if (item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+                item->setParam1((int)item->param1() - 1);
+            }
         }
     }
     emit newMissionItemsAvailable();
@@ -200,9 +205,9 @@ bool MissionManager::_stopAckTimeout(AckType_t expectedAck)
     return success;
 }
 
-void MissionManager::_sendTransactionComplete(void)
+void MissionManager::_readTransactionComplete(void)
 {
-    qCDebug(MissionManagerLog) << "_sendTransactionComplete read sequence complete";
+    qCDebug(MissionManagerLog) << "_readTransactionComplete read sequence complete";
     
     mavlink_message_t       message;
     mavlink_mission_ack_t   missionAck;
@@ -233,8 +238,7 @@ void MissionManager::_handleMissionCount(const mavlink_message_t& message)
     qCDebug(MissionManagerLog) << "_handleMissionCount count:" << _cMissionItems;
     
     if (_cMissionItems == 0) {
-        emit newMissionItemsAvailable();
-        emit inProgressChanged(false);
+        _readTransactionComplete();
     } else {
         _requestNextMissionItem(0);
     }
@@ -304,7 +308,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
     
     int nextSequenceNumber = missionItem.seq + 1;
     if (nextSequenceNumber == _cMissionItems) {
-        _sendTransactionComplete();
+        _readTransactionComplete();
     } else {
         _requestNextMissionItem(nextSequenceNumber);
     }

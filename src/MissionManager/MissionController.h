@@ -29,37 +29,57 @@ This file is part of the QGROUNDCONTROL project
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
-/// MissionController is a read only controller for Mission Items
 class MissionController : public QObject
 {
     Q_OBJECT
-    
+
 public:
     MissionController(QObject* parent = NULL);
     ~MissionController();
 
-    Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems   NOTIFY missionItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines   READ waypointLines  NOTIFY waypointLinesChanged)
+    Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems                   NOTIFY missionItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines                  NOTIFY waypointLinesChanged)
+    Q_PROPERTY(bool                 canEdit                     READ canEdit                        NOTIFY canEditChanged)
+    Q_PROPERTY(bool                 liveHomePositionAvailable   READ liveHomePositionAvailable      NOTIFY liveHomePositionAvailableChanged)
+    Q_PROPERTY(QGeoCoordinate       liveHomePosition            READ liveHomePosition               NOTIFY liveHomePositionChanged)
+    Q_PROPERTY(bool                 autoSync                    READ autoSync   WRITE setAutoSync   NOTIFY autoSyncChanged)
 
-    /// true: home position should be shown on map, false: home position not shown on map
-    Q_PROPERTY(bool homePositionValid READ homePositionValid WRITE setHomePositionValid NOTIFY homePositionValidChanged)
-    
+    Q_INVOKABLE void start(bool editMode)    ;
+    Q_INVOKABLE int addMissionItem(QGeoCoordinate coordinate);
+    Q_INVOKABLE void getMissionItems(void);
+    Q_INVOKABLE void sendMissionItems(void);
+    Q_INVOKABLE void loadMissionFromFile(void);
+    Q_INVOKABLE void saveMissionToFile(void);
+    Q_INVOKABLE void removeMissionItem(int index);
+    Q_INVOKABLE void deleteCurrentMissionItem(void);
+
     // Property accessors
-    
-    QmlObjectListModel* missionItems(void) { return _missionItems; }
-    QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
 
-    bool homePositionValid(void) { return _homePositionValid; }
-    void setHomePositionValid(bool homPositionValid);
+    QmlObjectListModel* missionItems(void);
+    QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
+    bool canEdit(void) { return _canEdit; }
+    bool liveHomePositionAvailable(void) { return _liveHomePositionAvailable; }
+    QGeoCoordinate liveHomePosition(void) { return _liveHomePosition; }
+    bool autoSync(void) { return _autoSync; }
+    void setAutoSync(bool autoSync);
 
 signals:
     void missionItemsChanged(void);
+    void canEditChanged(bool canEdit);
     void waypointLinesChanged(void);
-    void homePositionValidChanged(bool homePositionValid);
-    
+    void liveHomePositionAvailableChanged(bool homePositionAvailable);
+    void liveHomePositionChanged(const QGeoCoordinate& homePosition);
+    void autoSyncChanged(bool autoSync);
+
 private slots:
     void _newMissionItemsAvailable();
+    void _itemCoordinateChanged(const QGeoCoordinate& coordinate);
+    void _itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
     void _activeVehicleChanged(Vehicle* activeVehicle);
+    void _activeVehicleHomePositionAvailableChanged(bool homePositionAvailable);
+    void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
+    void _dirtyChanged(bool dirty);
+    void _inProgressChanged(bool inProgress);
 
 private:
     void _recalcSequence(void);
@@ -67,12 +87,25 @@ private:
     void _recalcChildItems(void);
     void _recalcAll(void);
     void _initAllMissionItems(void);
+    void _deinitAllMissionItems(void);
+    void _initMissionItem(MissionItem* item);
+    void _deinitMissionItem(MissionItem* item);
+    void _autoSyncSend(void);
 
 private:
+    bool                _editMode;
     QmlObjectListModel* _missionItems;
     QmlObjectListModel  _waypointLines;
+    bool                _canEdit;           ///< true: UI can edit these items, false: can't edit, can only send to vehicle or save
     Vehicle*            _activeVehicle;
-    bool                _homePositionValid;
+    bool                _liveHomePositionAvailable;
+    QGeoCoordinate      _liveHomePosition;
+    bool                _autoSync;
+    bool                _firstMissionItemSync;
+    bool                _missionItemsRequested;
+    bool                _queuedSend;
+
+    static const char* _settingsGroup;
 };
 
 #endif

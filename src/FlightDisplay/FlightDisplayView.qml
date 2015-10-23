@@ -73,21 +73,26 @@ Item {
 
     readonly property var _flightMap: flightMap
 
-    property real _roll:            _activeVehicle ? (isNaN(_activeVehicle.roll) ? _defaultRoll : _activeVehicle.roll) : _defaultRoll
-    property real _pitch:           _activeVehicle ? (isNaN(_activeVehicle.pitch) ? _defaultPitch : _activeVehicle.pitch) : _defaultPitch
-    property real _heading:         _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
+    property real _roll:                _activeVehicle ? (isNaN(_activeVehicle.roll) ? _defaultRoll : _activeVehicle.roll) : _defaultRoll
+    property real _pitch:               _activeVehicle ? (isNaN(_activeVehicle.pitch) ? _defaultPitch : _activeVehicle.pitch) : _defaultPitch
+    property real _heading:             _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
 
-    property var  _vehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : _defaultVehicleCoordinate
+    property var  _vehicleCoordinate:   _activeVehicle ? (_activeVehicle.satelliteLock >= 2 ? _activeVehicle.coordinate : _defaultVehicleCoordinate) : _defaultVehicleCoordinate
 
-    property real _altitudeWGS84:   _activeVehicle ? _activeVehicle.altitudeWGS84 : _defaultAltitudeWGS84
-    property real _groundSpeed:     _activeVehicle ? _activeVehicle.groundSpeed : _defaultGroundSpeed
-    property real _airSpeed:        _activeVehicle ? _activeVehicle.airSpeed : _defaultAirSpeed
-    property real _climbRate:       _activeVehicle ? _activeVehicle.climbRate : _defaultClimbRate
+    property real _altitudeWGS84:       _activeVehicle ? _activeVehicle.altitudeWGS84 : _defaultAltitudeWGS84
+    property real _groundSpeed:         _activeVehicle ? _activeVehicle.groundSpeed : _defaultGroundSpeed
+    property real _airSpeed:            _activeVehicle ? _activeVehicle.airSpeed : _defaultAirSpeed
+    property real _climbRate:           _activeVehicle ? _activeVehicle.climbRate : _defaultClimbRate
 
     property bool _showMap: getBool(QGroundControl.flightMapSettings.loadMapSetting(flightMap.mapName, _showMapBackgroundKey, "1"))
 
     FlightDisplayViewController { id: _controller }
-    MissionController { id: _missionController }
+
+    MissionController {
+        id: _missionController
+
+        Component.onCompleted: start(false /* editMode */)
+    }
 
     ExclusiveGroup {
         id: _dropButtonsExclusiveGroup
