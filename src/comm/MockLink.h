@@ -191,6 +191,8 @@ private:
     bool _sendStatusText;
     bool _apmSendHomePositionOnEmptyList;
 
+    int _sendHomePositionDelayCount;
+
     static float _vehicleLatitude;
     static float _vehicleLongitude;
     static float _vehicleAltitude;
