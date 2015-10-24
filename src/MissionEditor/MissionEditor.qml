@@ -83,10 +83,7 @@ QGCView {
         onAutoSyncChanged:      QGroundControl.flightMapSettings.saveMapSetting(editorMap.mapName, _autoSyncKey, autoSync)
 */
 
-        onMissionItemsChanged:  {
-            updateHomePosition()
-            itemEditor.clearItem()
-        }
+        onMissionItemsChanged: itemEditor.clearItem()
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -104,19 +101,6 @@ QGCView {
             _missionItems.get(i).isCurrentItem = (i == index)
         }
     }
-
-    function updateHomePosition() {
-        if (liveHomePositionAvailable) {
-            homePosition = liveHomePosition
-            _missionItems.get(0).coordinate = liveHomePosition
-            _missionItems.get(0).homePositionValid = true
-        }
-    }
-
-    Component.onCompleted:              updateHomePosition()
-    //onOfflineHomePositionChanged:       updateHomePosition()
-    onLiveHomePositionAvailableChanged: updateHomePosition()
-    onLiveHomePositionChanged:          updateHomePosition()
 
     QGCViewPanel {
         id:             panel

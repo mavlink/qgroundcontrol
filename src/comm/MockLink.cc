@@ -88,6 +88,7 @@ MockLink::MockLink(MockConfiguration* config)
     , _fileServer(NULL)
     , _sendStatusText(false)
     , _apmSendHomePositionOnEmptyList(false)
+    , _sendHomePositionDelayCount(2)
 {
     _config = config;
     if (_config) {
@@ -171,7 +172,12 @@ void MockLink::_run1HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
         _sendHeartBeat();
-        _sendHomePosition();
+        if (_sendHomePositionDelayCount > 0) {
+            // We delay home position a bit to be more realistic
+            _sendHomePositionDelayCount--;
+        } else {
+            _sendHomePosition();
+        }
         if (_sendStatusText) {
             _sendStatusText = false;
             _sendStatusTextMessages();
@@ -715,24 +721,29 @@ void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode
 
 void MockLink::_sendHomePosition(void)
 {
-    mavlink_message_t msg;
-    
-    float bogus[4];
-    bogus[0] = 0.0f;
-    bogus[1] = 0.0f;
-    bogus[2] = 0.0f;
-    bogus[3] = 0.0f;
-   
-    mavlink_msg_home_position_pack(_vehicleSystemId,
-                                   _vehicleComponentId,
-                                   &msg,
-                                   (int32_t)(_vehicleLatitude * 1E7),
-                                   (int32_t)(_vehicleLongitude * 1E7),
-                                   (int32_t)(_vehicleAltitude * 1000),
-                                   0.0f, 0.0f, 0.0f,
-                                   &bogus[0],
-                                   0.0f, 0.0f, 0.0f);
-    respondWithMavlinkMessage(msg);
+    // APM stack does not yet support HOME_POSITION
+
+    if (_firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA) {
+
+        mavlink_message_t msg;
+
+        float bogus[4];
+        bogus[0] = 0.0f;
+        bogus[1] = 0.0f;
+        bogus[2] = 0.0f;
+        bogus[3] = 0.0f;
+
+        mavlink_msg_home_position_pack(_vehicleSystemId,
+                                       _vehicleComponentId,
+                                       &msg,
+                                       (int32_t)(_vehicleLatitude * 1E7),
+                                       (int32_t)(_vehicleLongitude * 1E7),
+                                       (int32_t)(_vehicleAltitude * 1000),
+                                       0.0f, 0.0f, 0.0f,
+                                       &bogus[0],
+                0.0f, 0.0f, 0.0f);
+        respondWithMavlinkMessage(msg);
+    }
 }
 
 void MockLink::_sendGpsRawInt(void)

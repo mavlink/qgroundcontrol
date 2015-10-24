@@ -85,17 +85,14 @@ bool MultiSignalSpy::init(
     return true;
 }
 
-/// @param mask bit mask specifying which signals to check. The lowest order bit represents
-///     index 0 into the rgSignals array and so on up the bit mask.
-/// @return true if signal count = 1 for the specified signals
-bool MultiSignalSpy::checkSignalByMask(quint16 mask)
+bool MultiSignalSpy::_checkSignalByMaskWorker(quint16 mask, bool multipleSignalsAllowed)
 {
     for (size_t i=0; i<_cSignals; i++) {
         if ((1 << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != NULL);
             
-            if (spy->count() !=  1) {
+            if ((multipleSignalsAllowed && spy->count() ==  0) || spy->count() != 1) {
                 _printSignalState();
                 return false;
             }
@@ -105,16 +102,14 @@ bool MultiSignalSpy::checkSignalByMask(quint16 mask)
     return true;
 }
 
-/// @return true if signal count = 1 for specified signals and signal count of 0
-///     for all other signals
-bool MultiSignalSpy::checkOnlySignalByMask(quint16 mask)
+bool MultiSignalSpy::_checkOnlySignalByMaskWorker(quint16 mask, bool multipleSignalsAllowed)
 {
     for (size_t i=0; i<_cSignals; i++) {
         QSignalSpy* spy = _rgSpys[i];
         Q_ASSERT(spy != NULL);
 
         if ((1 << i) & mask) {
-            if (spy->count() != 1) {
+            if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
                 _printSignalState();
                 return false;
             }
@@ -127,6 +122,26 @@ bool MultiSignalSpy::checkOnlySignalByMask(quint16 mask)
     }
     
     return true;
+}
+
+bool MultiSignalSpy::checkSignalByMask(quint16 mask)
+{
+    return _checkSignalByMaskWorker(mask, false /* multipleSignalsAllowed */);
+}
+
+bool MultiSignalSpy::checkOnlySignalByMask(quint16 mask)
+{
+    return _checkOnlySignalByMaskWorker(mask, false /* multipleSignalsAllowed */);
+}
+
+bool MultiSignalSpy::checkSignalsByMask(quint16 mask)
+{
+    return _checkSignalByMaskWorker(mask, true /* multipleSignalsAllowed */);
+}
+
+bool MultiSignalSpy::checkOnlySignalsByMask(quint16 mask)
+{
+    return _checkOnlySignalByMaskWorker(mask, true /* multipleSignalsAllowed */);
 }
 
 /// @return true if signal count = 0 for specified signals

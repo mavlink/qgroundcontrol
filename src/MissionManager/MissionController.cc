@@ -446,6 +446,13 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void MissionController::_activeVehicleHomePositionAvailableChanged(bool homePositionAvailable)
 {
+    MissionItem* homeItem =  qobject_cast<MissionItem*>(_missionItems->get(0));
+
+    if (homePositionAvailable) {
+        homeItem->setCoordinate(_liveHomePosition);
+    }
+    homeItem->setHomePositionValid(homePositionAvailable);
+
     _liveHomePositionAvailable = homePositionAvailable;
     emit liveHomePositionAvailableChanged(_liveHomePositionAvailable);
 }

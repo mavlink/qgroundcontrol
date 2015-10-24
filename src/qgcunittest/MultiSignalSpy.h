@@ -43,8 +43,24 @@ public:
 
     bool init(QObject* signalEmitter, const char** rgSignals, size_t cSignals);
 
+    /// @param mask bit mask specifying which signals to check. The lowest order bit represents
+    ///     index 0 into the rgSignals array and so on up the bit mask.
+    /// @return true if signal count = 1 for the specified signals
     bool checkSignalByMask(quint16 mask);
+
+    /// @return true if signal count = 1 for specified signals and signal count of 0
+    ///     for all other signals
     bool checkOnlySignalByMask(quint16 mask);
+
+    /// @param mask bit mask specifying which signals to check. The lowest order bit represents
+    ///     index 0 into the rgSignals array and so on up the bit mask.
+    /// @return true if signal count >= 1 for the specified signals
+    bool checkSignalsByMask(quint16 mask);
+
+    /// @return true if signal count >= 1 for specified signals and signal count of 0
+    ///     for all other signals
+    bool checkOnlySignalsByMask(quint16 mask);
+
     bool checkNoSignalByMask(quint16 mask);
     bool checkNoSignals(void);
 
@@ -61,6 +77,8 @@ private:
     void timerEvent(QTimerEvent * event);
     
     void _printSignalState(void);
+    bool _checkSignalByMaskWorker(quint16 mask, bool multipleSignalsAllowed);
+    bool _checkOnlySignalByMaskWorker(quint16 mask, bool multipleSignalsAllowed);
 
     QObject*        _signalEmitter;
     const char**    _rgSignals;
