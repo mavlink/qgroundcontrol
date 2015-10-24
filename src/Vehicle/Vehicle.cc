@@ -87,6 +87,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     , _satelliteLock(0)
     , _updateCount(0)
     , _missionManager(NULL)
+    , _missionManagerInitialRequestComplete(false)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -110,7 +111,8 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
     _autopilotPlugin = AutoPilotPluginManager::instance()->newAutopilotPluginForVehicle(this);
     
-    connect(_autopilotPlugin, &AutoPilotPlugin::missingParametersChanged, this, &Vehicle::missingParametersChanged);
+    connect(_autopilotPlugin, &AutoPilotPlugin::parametersReadyChanged,     this, &Vehicle::_parametersReady);
+    connect(_autopilotPlugin, &AutoPilotPlugin::missingParametersChanged,   this, &Vehicle::missingParametersChanged);
 
     // Refresh timer
     connect(_refreshTimer, SIGNAL(timeout()), this, SLOT(_checkUpdate()));
@@ -1100,4 +1102,12 @@ void Vehicle::_mapTrajectoryStart(void)
 void Vehicle::_mapTrajectoryStop()
 {
     _mapTrajectoryTimer.stop();
+}
+
+void Vehicle::_parametersReady(bool parametersReady)
+{
+    if (parametersReady && !_missionManagerInitialRequestComplete) {
+        _missionManagerInitialRequestComplete = true;
+        _missionManager->requestMissionItems();
+    }
 }
