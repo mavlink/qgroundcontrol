@@ -29,6 +29,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMessageBox.h"
 #include "FirmwarePlugin.h"
 
+QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
+
 const char* MissionController::_settingsGroup = "MissionController";
 
 MissionController::MissionController(QObject *parent)
@@ -39,7 +41,7 @@ MissionController::MissionController(QObject *parent)
     , _activeVehicle(NULL)
     , _liveHomePositionAvailable(false)
     , _autoSync(false)
-    , _firstMissionItemSync(false)
+    , _firstItemsFromVehicle(false)
     , _missionItemsRequested(false)
     , _queuedSend(false)
 {
@@ -48,49 +50,74 @@ MissionController::MissionController(QObject *parent)
 
 MissionController::~MissionController()
 {
+    // Start with empty list
+    _canEdit = true;
+    _missionItems = new QmlObjectListModel(this);
+    _initAllMissionItems();
 }
 
 void MissionController::start(bool editMode)
 {
+    qCDebug(MissionControllerLog) << "start editMode" << editMode;
+
     _editMode = editMode;
 
     MultiVehicleManager* multiVehicleMgr = MultiVehicleManager::instance();
 
     connect(multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &MissionController::_activeVehicleChanged);
 
-    Vehicle* activeVehicle = multiVehicleMgr->activeVehicle();
-    if (activeVehicle) {
-        _activeVehicleChanged(activeVehicle);
-    } else {
-        _missionItemsRequested = true;
-        _newMissionItemsAvailable();
-    }
+    _setupMissionItems(true /* fromVehicle */, true /* force */);
 }
 
-void MissionController::_newMissionItemsAvailable(void)
+void MissionController::_newMissionItemsAvailableFromVehicle(void)
 {
-    if (_editMode) {
-        if (_firstMissionItemSync) {
-            // This is the first time the vehicle is seeing items. We have to be careful of transitioning from offline
-            // to online.
+    qCDebug(MissionControllerLog) << "_newMissionItemsAvailableFromVehicle";
 
-            _firstMissionItemSync = false;
-            if (_missionItems && _missionItems->count() > 1) {
-                QGCMessageBox::StandardButton button = QGCMessageBox::warning("Mission Editing",
-                                                                              "The vehicle has sent a new set of Mission Items. "
-                                                                              "Do you want to discard your current set of unsaved items and use the ones from the vehicle instead?",
-                                                                              QGCMessageBox::Yes | QGCMessageBox::No,
-                                                                              QGCMessageBox::No);
-                if (button == QGCMessageBox::No) {
-                    return;
+    _setupMissionItems(true /* fromVehicle */, false /* force */);
+}
+
+/// @param fromVehicle true: load items from vehicle
+/// @param force true: disregard any flags which may prevent load
+void MissionController::_setupMissionItems(bool fromVehicle, bool force)
+{
+    qCDebug(MissionControllerLog) << "_setupMissionItems fromVehicle:force:_editMode:_firstItemsFromVehicle" << fromVehicle << force << _editMode << _firstItemsFromVehicle;
+
+    MissionManager* missionManager = NULL;
+    if (_activeVehicle) {
+        missionManager = _activeVehicle->missionManager();
+    } else {
+        qCDebug(MissionControllerLog) << "running offline";
+    }
+
+    if (!force) {
+        if (_editMode && fromVehicle) {
+            if (_firstItemsFromVehicle) {
+                if (missionManager) {
+                    if (missionManager->inProgress()) {
+                        // Still in progress of retrieving items from vehicle, leave current set alone and wait for
+                        // mission manager to finish
+                        qCDebug(MissionControllerLog) << "disregarding due to MissionManager in progress";
+                        return;
+                    } else {
+                        // We have the first set of items from the vehicle. If we haven't already started creating a
+                        // new mission, switch to the items from the vehicle
+                        _firstItemsFromVehicle = false;
+                        if (_missionItems->count() != 1) {
+                            qCDebug(MissionControllerLog) << "disregarding due to existing items";
+                            return;
+                        }
+                    }
                 }
+            } else if (!_missionItemsRequested) {
+                // We didn't specifically ask for new mission items. Disregard the new set since it is
+                // the most likely the set we just sent to the vehicle.
+                qCDebug(MissionControllerLog) << "disregarding due to unrequested notification";
+                return;
             }
-        } else if (!_missionItemsRequested) {
-            // We didn't specifically ask for new mission items. Disregard the new set since it is
-            // the most likely the set we just sent to the vehicle.
-            return;
         }
     }
+
+    qCDebug(MissionControllerLog) << "fell through to main setup";
 
     _missionItemsRequested = false;
 
@@ -99,17 +126,14 @@ void MissionController::_newMissionItemsAvailable(void)
         _missionItems->deleteLater();
     }
 
-    MissionManager* missionManager = NULL;
-    if (_activeVehicle) {
-        missionManager = _activeVehicle->missionManager();
-    }
-
-    if (!missionManager || missionManager->inProgress()) {
+    if (!missionManager || !fromVehicle || missionManager->inProgress()) {
         _canEdit = true;
         _missionItems = new QmlObjectListModel(this);
+        qCDebug(MissionControllerLog) << "creating empty set";
     } else {
         _canEdit = missionManager->canEdit();
         _missionItems = missionManager->copyMissionItems();
+        qCDebug(MissionControllerLog) << "loading from vehicle count"<< _missionItems->count();
     }
 
     _initAllMissionItems();
@@ -121,8 +145,6 @@ void MissionController::getMissionItems(void)
 
     if (activeVehicle) {
         _missionItemsRequested = true;
-        MissionManager* missionManager = activeVehicle->missionManager();
-        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionController::_newMissionItemsAvailable);
         activeVehicle->missionManager()->requestMissionItems();
     }
 }
@@ -406,15 +428,19 @@ void MissionController::_itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD com
 
 void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
+    qCDebug(MissionControllerLog) << "_activeVehicleChanged activeVehicle" << activeVehicle;
+
     if (_activeVehicle) {
         MissionManager* missionManager = _activeVehicle->missionManager();
 
-        disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailable);
+        disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
         disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
         disconnect(_activeVehicle, &Vehicle::homePositionAvailableChanged,      this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
         _activeVehicle = NULL;
-        _newMissionItemsAvailable();
+
+        // When the active vehicle goes away we toss the editor items
+        _setupMissionItems(false /* fromVehicle */, true /* force */);
         _activeVehicleHomePositionAvailableChanged(false);
     }
 
@@ -423,21 +449,13 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
     if (_activeVehicle) {
         MissionManager* missionManager = activeVehicle->missionManager();
 
-        connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailable);
+        connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
         connect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
         connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
-        if (missionManager->inProgress()) {
-            // Vehicle is still in process of requesting mission items
-            _firstMissionItemSync = true;
-        } else {
-            // Vehicle already has mission items
-            _firstMissionItemSync = false;
-        }
-
-        _missionItemsRequested = true;
-        _newMissionItemsAvailable();
+        _firstItemsFromVehicle = true;
+        _setupMissionItems(true /* fromVehicle */, false /* force */);
 
         _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
         _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());

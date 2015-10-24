@@ -91,8 +91,8 @@ Item {
 
         onPositionChanged: {
             tabletPosition = positionSource.position.coordinate
-            _root.latitude = tabletPosition.latitude
-            _root.longitude = tabletPosition.longitude
+            flightView.latitude = tabletPosition.latitude
+            flightView.longitude = tabletPosition.longitude
             positionSource.active = false
         }
     }

@@ -47,8 +47,6 @@ void MissionControllerManagerTest::cleanup(void)
 
 void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 {
-    UnitTest::init();
-    
     LinkManager* linkMgr = LinkManager::instance();
     Q_CHECK_PTR(linkMgr);
     
