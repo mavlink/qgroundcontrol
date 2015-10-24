@@ -304,6 +304,7 @@ private slots:
     void _sendMessage(mavlink_message_t message);
     void _sendMessageMultipleNext(void);
     void _addNewMapTrajectoryPoint(void);
+    void _parametersReady(bool parametersReady);
 
     void _handleTextMessage                 (int newCount);
     /** @brief Attitude from main autopilot / system state */
@@ -409,7 +410,7 @@ private:
     int             _updateCount;
     
     MissionManager*     _missionManager;
-    QmlObjectListModel  _missionItems;
+    bool                _missionManagerInitialRequestComplete;
     
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT
