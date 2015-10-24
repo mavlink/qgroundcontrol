@@ -36,12 +36,15 @@ MissionControllerTest::MissionControllerTest(void)
 void MissionControllerTest::cleanup(void)
 {
     delete _missionController;
+    _missionController = NULL;
 
     MissionControllerManagerTest::cleanup();
 }
 
 void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 {
+    bool startController = false;
+
     MissionControllerManagerTest::_initForFirmwareType(firmwareType);
 
     _rgSignals[missionItemsChangedSignalIndex] =                SIGNAL(missionItemsChanged());
@@ -49,17 +52,22 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     _rgSignals[liveHomePositionAvailableChangedSignalIndex] =   SIGNAL(liveHomePositionAvailableChanged(bool));
     _rgSignals[liveHomePositionChangedSignalIndex] =            SIGNAL(liveHomePositionChanged(const QGeoCoordinate&));
 
-    _missionController = new MissionController();
-    Q_CHECK_PTR(_missionController);
+    if (!_missionController) {
+        startController = true;
+        _missionController = new MissionController();
+        Q_CHECK_PTR(_missionController);
+    }
 
     _multiSpy = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpy);
     QCOMPARE(_multiSpy->init(_missionController, _rgSignals, _cSignals), true);
 
-    _missionController->start(false /* editMode */);
+    if (startController) {
+        _missionController->start(false /* editMode */);
+    }
 
     // All signals should some through on start
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(missionItemsChangedSignalMask | waypointLinesChangedSignalMask | liveHomePositionAvailableChangedSignalMask | liveHomePositionChangedSignalMask), true);
+    QCOMPARE(_multiSpy->checkOnlySignalsByMask(missionItemsChangedSignalMask | waypointLinesChangedSignalMask | liveHomePositionAvailableChangedSignalMask | liveHomePositionChangedSignalMask), true);
     _multiSpy->clearAllSignals();
 
     QmlObjectListModel* missionItems = _missionController->missionItems();
@@ -182,4 +190,29 @@ void MissionControllerTest::_testAddWayppointAPM(void)
 void MissionControllerTest::_testAddWayppointPX4(void)
 {
     _testAddWaypointWorker(MAV_AUTOPILOT_PX4);
+}
+
+void MissionControllerTest::_testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType)
+{
+    // Start offline and add item
+    _missionController = new MissionController();
+    Q_CHECK_PTR(_missionController);
+    _missionController->start(true /* editMode */);
+    _missionController->addMissionItem(QGeoCoordinate(37.803784, -122.462276));
+
+    // Go online to empty vehicle
+    MissionControllerManagerTest::_initForFirmwareType(firmwareType);
+
+    // Make sure our offline mission items are still there
+    QCOMPARE(_missionController->missionItems()->count(), 2);
+}
+
+void MissionControllerTest::_testOfflineToOnlineAPM(void)
+{
+    _testOfflineToOnlineWorker(MAV_AUTOPILOT_ARDUPILOTMEGA);
+}
+
+void MissionControllerTest::_testOfflineToOnlinePX4(void)
+{
+    _testOfflineToOnlineWorker(MAV_AUTOPILOT_PX4);
 }
