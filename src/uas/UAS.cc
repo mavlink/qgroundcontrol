@@ -758,7 +758,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             {
                 loc_type = 0;
             }
-            emit localizationChanged(this, loc_type);
             setSatelliteCount(pos.satellites_visible);
 
             if (pos.fix_type > 2)
@@ -788,6 +787,10 @@ void UAS::receiveMessage(mavlink_message_t message)
                     }
                 }
             }
+
+            // Emit this signal after the above signals. This way a trigger on gps lock signal which then asks for vehicle position
+            // gets a good position.
+            emit localizationChanged(this, loc_type);
         }
             break;
         case MAVLINK_MSG_ID_GPS_STATUS:

@@ -73,7 +73,7 @@ Item {
     property real _pitch:               _activeVehicle ? (isNaN(_activeVehicle.pitch) ? _defaultPitch : _activeVehicle.pitch) : _defaultPitch
     property real _heading:             _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
 
-    property var  _vehicleCoordinate:   _activeVehicle ? (_activeVehicle.satelliteLock >= 2 ? _activeVehicle.coordinate : _defaultVehicleCoordinate) : _defaultVehicleCoordinate
+    property var  _vehicleCoordinate:   _activeVehicle ? (_activeVehicle.coordinateValid ? _activeVehicle.coordinate : _defaultVehicleCoordinate) : _defaultVehicleCoordinate
 
     property real _altitudeWGS84:       _activeVehicle ? _activeVehicle.altitudeWGS84 : _defaultAltitudeWGS84
     property real _groundSpeed:         _activeVehicle ? _activeVehicle.groundSpeed : _defaultGroundSpeed
