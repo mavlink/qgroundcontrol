@@ -14,7 +14,7 @@ install:
   - if "%CONFIG%" EQU "installer" ( cinst nsis -y -installArgs /D="%programfiles(x86)%\NSIS" )
 
 build_script:
-  - C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn CONFIG+=jombuild qgroundcontrol.pro
+  - C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn qgroundcontrol.pro
   - jom
 
 test_script:
