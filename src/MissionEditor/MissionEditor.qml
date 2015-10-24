@@ -75,7 +75,7 @@ QGCView {
         id:         controller
 
         Component.onCompleted: start(true /* editMode */)
-/*
+        /*
         FIXME: autoSync is temporarily disconnected since it's still buggy
 
         autoSync:   QGroundControl.flightMapSettings.loadMapSetting(editorMap.mapName, _autoSyncKey, true)
@@ -83,7 +83,7 @@ QGCView {
         onAutoSyncChanged:      QGroundControl.flightMapSettings.saveMapSetting(editorMap.mapName, _autoSyncKey, autoSync)
 */
 
-        onMissionItemsChanged: itemEditor.clearItem()
+        onMissionItemsChanged: itemDragger.clearItem()
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -160,58 +160,178 @@ QGCView {
                 }
 
                 // We use this item to support dragging since dragging a MapQuickItem just doesn't seem to work
-                Item {
-                    id:         itemEditor
-                    x:          missionItemIndicator ? (missionItemIndicator.x + missionItemIndicator.anchorPoint.x - (itemEditor.width / 2)) : 100
-                    y:          missionItemIndicator ? (missionItemIndicator.y + missionItemIndicator.anchorPoint.y - (itemEditor.height / 2)) : 100
-                    width:      ScreenTools.defaultFontPixelHeight * 7
-                    height:     ScreenTools.defaultFontPixelHeight * 7
-                    visible:    false
-                    z:          QGroundControl.zOrderMapItems + 1    // Above item icons
+                Rectangle {
+                    id:             itemDragger
+                    x:              missionItemIndicator ? (missionItemIndicator.x + missionItemIndicator.anchorPoint.x - (itemDragger.width / 2)) : 100
+                    y:              missionItemIndicator ? (missionItemIndicator.y + missionItemIndicator.anchorPoint.y - (itemDragger.height / 2)) : 100
+                    width:          _radius * 2
+                    height:         _radius * 2
+                    radius:         _radius
+                    border.width:   2
+                    border.color:   "white"
+                    color:          "transparent"
+                    visible:        false
+                    z:              QGroundControl.zOrderMapItems + 1    // Above item icons
 
                     property var    missionItem
                     property var    missionItemIndicator
                     property real   heading: missionItem ? missionItem.heading : 0
 
+                    readonly property real _radius:         ScreenTools.defaultFontPixelHeight * 4
+                    readonly property real _arrowHeight:    ScreenTools.defaultFontPixelHeight
+
                     function clearItem() {
-                        itemEditor.visible = false
-                        itemEditor.missionItem = undefined
-                        itemEditor.missionItemIndicator = undefined
+                        itemDragger.visible = false
+                        itemDragger.missionItem = undefined
+                        itemDragger.missionItemIndicator = undefined
+                    }
+
+                    Image {
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        anchors.top:                parent.top
+                        height:                     parent._arrowHeight
+                        fillMode:                   Image.PreserveAspectFit
+                        mipmap:                     true
+                        smooth:                     true
+                        source:                     "/qmlimages/ArrowHead.svg"
+                    }
+
+                    Image {
+                        id:                     arrowUp
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right:          parent.right
+                        height:                 parent._arrowHeight
+                        fillMode:               Image.PreserveAspectFit
+                        mipmap:                 true
+                        smooth:                 true
+                        source:                 "/qmlimages/ArrowHead.svg"
+                        transform:              Rotation { origin.x: arrowUp.width / 2; origin.y: arrowUp.height / 2; angle: 90}
+                    }
+
+                    Image {
+                        id:                         arrowDown
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        anchors.bottom:             parent.bottom
+                        height:                     parent._arrowHeight
+                        fillMode:                   Image.PreserveAspectFit
+                        mipmap:                     true
+                        smooth:                     true
+                        source:                     "/qmlimages/ArrowHead.svg"
+                        transform:                  Rotation { origin.x: arrowDown.width / 2; origin.y: arrowDown.height / 2; angle: 180}
+                    }
+
+                    Image {
+                        id:                     arrowLeft
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left:           parent.left
+                        height:                 parent._arrowHeight
+                        fillMode:               Image.PreserveAspectFit
+                        mipmap:                 true
+                        smooth:                 true
+                        source:                 "/qmlimages/ArrowHead.svg"
+                        transform:              Rotation { origin.x: arrowLeft.width / 2; origin.y: arrowLeft.height / 2; angle: -90}
+                    }
+
+                    Rectangle {
+                        width:                      _radius * 2
+                        height:                     _radius * 2
+                        radius:                     _radius
+                        anchors.verticalCenter:     parent.verticalCenter
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        border.width:               1
+                        border.color:               "white"
+
+                        readonly property real _radius: ScreenTools.defaultFontPixelWidth / 4
                     }
 
                     Drag.active:    itemDrag.drag.active
                     Drag.hotSpot.x: width  / 2
                     Drag.hotSpot.y: height / 2
 
-                    MissionItemIndexLabel {
-                        x:              (itemEditor.width / 2) - (width / 2)
-                        y:              (itemEditor.height / 2) - (height / 2)
-                        label:          itemEditor.missionItemIndicator ? itemEditor.missionItemIndicator.label : ""
-                        isCurrentItem:  true
-                    }
-
                     MouseArea {
                         id:             itemDrag
                         anchors.fill:   parent
                         drag.target:    parent
+                        drag.minimumX:  0
+                        drag.minimumY:  0
+                        drag.maximumX:  itemDragger.parent.width - parent.width
+                        drag.maximumY:  itemDragger.parent.height - parent.height
 
                         property bool dragActive: drag.active
 
                         onDragActiveChanged: {
                             if (!drag.active) {
-                                var point = Qt.point(itemEditor.x + (itemEditor.width  / 2), itemEditor.y + (itemEditor.height / 2))
+                                var point = Qt.point(itemDragger.x + (itemDragger.width  / 2), itemDragger.y + (itemDragger.height / 2))
                                 var coordinate = editorMap.toCoordinate(point)
-                                coordinate.altitude = itemEditor.missionItem.coordinate.altitude
-                                itemEditor.missionItem.coordinate = coordinate
+                                coordinate.altitude = itemDragger.missionItem.coordinate.altitude
+                                itemDragger.missionItem.coordinate = coordinate
+                                editorMap.latitude = itemDragger.missionItem.coordinate.latitude
+                                editorMap.longitude = itemDragger.missionItem.coordinate.longitude
                             }
                         }
                     }
                 }
 
                 // Add the mission items to the map
-                MissionItemView {
+                MapItemView {
                     model:          controller.missionItems
-                    itemDragger:    itemEditor
+                    delegate:       delegateComponent
+                }
+
+                Component {
+                    id: delegateComponent
+
+                    MissionItemIndicator {
+                        id:             itemIndicator
+                        label:          object.homePosition ? "H" : object.sequenceNumber
+                        isCurrentItem:  object.isCurrentItem
+                        coordinate:     object.coordinate
+                        visible:        object.specifiesCoordinate && (!object.homePosition || object.homePositionValid)
+                        z:              QGroundControl.zOrderMapItems
+
+                        onClicked: setCurrentItem(object.sequenceNumber)
+
+                        Connections {
+                            target: object
+
+                            onIsCurrentItemChanged: {
+                                if (object.isCurrentItem && object.specifiesCoordinate) {
+                                    // Setup our drag item
+                                    if (object.sequenceNumber != 0) {
+                                        itemDragger.visible = true
+                                        itemDragger.missionItem = Qt.binding(function() { return object })
+                                        itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
+                                    } else {
+                                        itemDragger.clearItem()
+                                    }
+
+                                    // Move to the new position
+                                    editorMap.latitude = object.coordinate.latitude
+                                    editorMap.longitude = object.coordinate.longitude
+                                } else {
+                                    itemDragger.clearItem()
+                                }
+                            }
+                        }
+
+                        // These are the non-coordinate child mission items attached to this item
+                        Row {
+                            anchors.top:    parent.top
+                            anchors.left:   parent.right
+
+                            Repeater {
+                                model: object.childItems
+
+                                delegate: MissionItemIndexLabel {
+                                    label:          object.sequenceNumber
+                                    isCurrentItem:  object.isCurrentItem
+                                    z:              2
+
+                                    onClicked: setCurrentItem(object.sequenceNumber)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Add lines between waypoints
@@ -782,7 +902,7 @@ QGCView {
                     z:                  QGroundControl.zOrderWidgets
 
                     onClicked: {
-                        itemEditor.clearItem()
+                        itemDragger.clearItem()
                         controller.deleteCurrentMissionItem()
                         checked = false
                     }
