@@ -45,8 +45,6 @@ MissionManager::MissionManager(Vehicle* vehicle)
     _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
     
     connect(_ackTimeoutTimer, &QTimer::timeout, this, &MissionManager::_ackTimeout);
-    
-    requestMissionItems();
 }
 
 MissionManager::~MissionManager()
