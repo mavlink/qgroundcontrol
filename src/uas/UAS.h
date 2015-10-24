@@ -98,6 +98,7 @@ public:
     Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY rollChanged)
     Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
     Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
+    Q_PROPERTY(double heading READ getHeading WRITE setHeading NOTIFY headingChanged)
     Q_PROPERTY(double distToWaypoint READ getDistToWaypoint WRITE setDistToWaypoint NOTIFY distToWaypointChanged)
     Q_PROPERTY(double airSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY airSpeedChanged)
     Q_PROPERTY(double groundSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY groundSpeedChanged)
@@ -307,12 +308,25 @@ public:
     void setYaw(double val)
     {
         yaw = val;
+        heading = val;
         emit yawChanged(val,"yaw");
+        emit headingChanged(val,"heading");
     }
 
     double getYaw() const
     {
         return yaw;
+    }
+
+    void setHeading(double val)
+    {
+        heading = val;
+        emit headingChanged(val,"heading");
+    }
+
+    double getHeading() const
+    {
+        return heading;
     }
 
     // Setters for HIL noise variance
@@ -463,6 +477,7 @@ protected: //COMMENTS FOR TEST UNIT
     double roll;
     double pitch;
     double yaw;
+    double heading;
 
     // dongfang: This looks like a candidate for being moved off to a separate class.
     /// IMAGING
@@ -657,6 +672,7 @@ signals:
     void rollChanged(double val,QString name);
     void pitchChanged(double val,QString name);
     void yawChanged(double val,QString name);
+    void headingChanged(double val,QString name);
     void satelliteCountChanged(double val,QString name);
     void distToWaypointChanged(double val,QString name);
     void groundSpeedChanged(double val, QString name);
