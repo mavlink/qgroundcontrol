@@ -34,14 +34,11 @@ import QGroundControl.ScreenTools 1.0
 QGCMovableItem {
     id:                     root
 
-    property bool active:   false  ///< true: actively connected to data provider, false: show inactive control
     property real heading:  _defaultHeading
     property real size:     ScreenTools.defaultFontPixelSize * (10)
     property int _fontSize: ScreenTools.defaultFontPixelSize
 
     readonly property real _defaultHeading:   0
-
-    property real _heading: active ? heading : _defaultHeading
 
     width:                  size
     height:                 size
@@ -60,7 +57,7 @@ QGCMovableItem {
         transform: Rotation {
             origin.x:   pointer.width  / 2
             origin.y:   pointer.height / 2
-            angle:      _heading
+            angle:      heading
         }
     }
     Image {
