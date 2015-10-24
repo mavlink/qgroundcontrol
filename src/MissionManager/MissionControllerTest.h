@@ -43,15 +43,19 @@ public:
 private slots:
     void cleanup(void);
 
-    void _testEmptyVehicleAPM(void);
-    void _testEmptyVehiclePX4(void);
-    void _testAddWayppointAPM(void);
-    void _testAddWayppointPX4(void);
+    void _testOfflineToOnlineAPM(void);
+    void _testOfflineToOnlinePX4(void);
 
 private:
     void _initForFirmwareType(MAV_AUTOPILOT firmwareType);
     void _testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType);
     void _testAddWaypointWorker(MAV_AUTOPILOT firmwareType);
+    void _testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType);
+
+    void _testEmptyVehicleAPM(void);
+    void _testEmptyVehiclePX4(void);
+    void _testAddWayppointAPM(void);
+    void _testAddWayppointPX4(void);
 
     enum {
         missionItemsChangedSignalIndex = 0,
