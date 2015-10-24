@@ -576,6 +576,7 @@ void UAS::receiveMessage(mavlink_message_t message)
                 setRoll(QGC::limitAngleToPMPIf(attitude.roll));
                 setPitch(QGC::limitAngleToPMPIf(attitude.pitch));
                 setYaw(QGC::limitAngleToPMPIf(attitude.yaw));
+                setHeading(QGC::limitAngleToPMPIf(attitude.yaw));
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
@@ -637,6 +638,7 @@ void UAS::receiveMessage(mavlink_message_t message)
                 setRoll(QGC::limitAngleToPMPIf(phi));
                 setPitch(QGC::limitAngleToPMPIf(theta));
                 setYaw(QGC::limitAngleToPMPIf(psi));
+                setHeading(QGC::limitAngleToPMPIf(psi));
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
