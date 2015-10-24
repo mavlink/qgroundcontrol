@@ -38,7 +38,7 @@ MapQuickItem {
 
     anchorPoint.x:  vehicleIcon.width  / 2
     anchorPoint.y:  vehicleIcon.height / 2
-    visible:        vehicle.satelliteLock >= 2  // 2D lock
+    visible:        vehicle.coordinateValid
 
     sourceItem: Image {
         id:         vehicleIcon

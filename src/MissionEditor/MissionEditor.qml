@@ -56,7 +56,10 @@ QGCView {
     readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
     readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
 
-    property var    _missionItems:              controller.missionItems
+    property var    _missionItems:  controller.missionItems
+
+    property bool   gpsLock:        _activeVehicle ? _activeVehicle.coordinateValid : false
+    property bool   _firstGpsLock:  true
 
     //property var    _homePositionManager:       QGroundControl.homePositionManager
     //property string _homePositionName:          _homePositionManager.homePositions.get(0).name
@@ -70,6 +73,17 @@ QGCView {
     property bool _syncInProgress:              _activeVehicle ? _activeVehicle.missionManager.inProgress : false
 
     property bool _showHelp:                    QGroundControl.flightMapSettings.loadBoolMapSetting(editorMap.mapName, _showHelpKey, true)
+
+    onGpsLockChanged:       updateMapToVehiclePosition()
+    Component.onCompleted:  updateMapToVehiclePosition()
+
+    function updateMapToVehiclePosition() {
+        if (gpsLock && _firstGpsLock) {
+            _firstGpsLock = false
+            editorMap.latitude = _activeVehicle.latitude
+            editorMap.longitude = _activeVehicle.longitude
+        }
+    }
 
     MissionController {
         id:         controller

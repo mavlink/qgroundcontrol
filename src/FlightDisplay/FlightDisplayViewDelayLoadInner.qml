@@ -51,7 +51,7 @@ Item {
                 QGCLabel {
                 width:                  gpsLockColumn.width
                 horizontalAlignment:    Text.AlignHCenter
-                visible:                object.satelliteLock < 2
+                visible:                !object.coordinateValid
                 text:                   "No GPS Lock for Vehicle #" + object.id
                 z:                      QGroundControl.zOrderMapItems - 2
             }
@@ -65,7 +65,6 @@ Item {
         anchors.top:        parent.top
         size:               ScreenTools.defaultFontPixelSize * (13.3)
         heading:            _heading
-        active:             multiVehicleManager.activeVehicleAvailable
         z:                  QGroundControl.zOrderWidgets
     }
 

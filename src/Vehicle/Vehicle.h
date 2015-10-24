@@ -56,23 +56,23 @@ public:
     Q_PROPERTY(int id READ id CONSTANT)
     Q_PROPERTY(AutoPilotPlugin* autopilot MEMBER _autopilotPlugin CONSTANT)
     
-    Q_PROPERTY(QGeoCoordinate   coordinate      MEMBER _geoCoordinate   NOTIFY coordinateChanged)
-    Q_PROPERTY(MissionManager*  missionManager  MEMBER _missionManager  CONSTANT)
-    
-    Q_PROPERTY(bool             homePositionAvailable   READ homePositionAvailable  NOTIFY homePositionAvailableChanged)
-    Q_PROPERTY(QGeoCoordinate   homePosition            READ homePosition           NOTIFY homePositionChanged)
-    
-    Q_PROPERTY(bool armed READ armed WRITE setArmed NOTIFY armedChanged)
+    Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                             NOTIFY coordinateChanged)
+    Q_PROPERTY(bool                 coordinateValid         READ coordinateValid                        NOTIFY coordinateValidChanged)
+    Q_PROPERTY(MissionManager*      missionManager          MEMBER _missionManager                      CONSTANT)
+    Q_PROPERTY(bool                 homePositionAvailable   READ homePositionAvailable                  NOTIFY homePositionAvailableChanged)
+    Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                           NOTIFY homePositionChanged)
+    Q_PROPERTY(bool                 armed                   READ armed              WRITE setArmed      NOTIFY armedChanged)
+    Q_PROPERTY(bool                 flightModeSetAvailable  READ flightModeSetAvailable                 CONSTANT)
+    Q_PROPERTY(QStringList          flightModes             READ flightModes                            CONSTANT)
+    Q_PROPERTY(QString              flightMode              READ flightMode         WRITE setFlightMode NOTIFY flightModeChanged)
+    Q_PROPERTY(bool                 hilMode                 READ hilMode            WRITE setHilMode    NOTIFY hilModeChanged)
+    Q_PROPERTY(bool                 missingParameters       READ missingParameters                      NOTIFY missingParametersChanged)
+    Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                       CONSTANT)
 
-    Q_PROPERTY(bool flightModeSetAvailable READ flightModeSetAvailable CONSTANT)
-    Q_PROPERTY(QStringList flightModes READ flightModes CONSTANT)
-    Q_PROPERTY(QString flightMode READ flightMode WRITE setFlightMode NOTIFY flightModeChanged)
+    // Property accessors
 
-    Q_PROPERTY(bool hilMode READ hilMode WRITE setHilMode NOTIFY hilModeChanged)
-    
-    Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
-    
-    Q_PROPERTY(QmlObjectListModel* trajectoryPoints READ trajectoryPoints CONSTANT)
+    QGeoCoordinate coordinate(void) { return _coordinate; }
+    bool coordinateValid(void)      { return _coordinateValid; }
     
     Q_INVOKABLE QString     getMavIconColor();
     
@@ -94,8 +94,8 @@ public:
     Q_PROPERTY(float        altitudeRelative    READ altitudeRelative   NOTIFY altitudeRelativeChanged)
     Q_PROPERTY(float        altitudeWGS84       READ altitudeWGS84      NOTIFY altitudeWGS84Changed)
     Q_PROPERTY(float        altitudeAMSL        READ altitudeAMSL       NOTIFY altitudeAMSLChanged)
-    Q_PROPERTY(float        latitude            READ latitude           NOTIFY latitudeChanged)
-    Q_PROPERTY(float        longitude           READ longitude          NOTIFY longitudeChanged)
+    Q_PROPERTY(float        latitude            READ latitude           NOTIFY coordinateChanged)
+    Q_PROPERTY(float        longitude           READ longitude          NOTIFY coordinateChanged)
     Q_PROPERTY(double       batteryVoltage      READ batteryVoltage     NOTIFY batteryVoltageChanged)
     Q_PROPERTY(double       batteryPercent      READ batteryPercent     NOTIFY batteryPercentChanged)
     Q_PROPERTY(double       batteryConsumed     READ batteryConsumed    NOTIFY batteryConsumedChanged)
@@ -234,8 +234,8 @@ public:
     float           altitudeRelative    () { return _altitudeRelative; }
     float           altitudeWGS84       () { return _altitudeWGS84; }
     float           altitudeAMSL        () { return _altitudeAMSL; }
-    float           latitude            () { return _latitude; }
-    float           longitude           () { return _longitude; }
+    float           latitude            () { return _coordinate.latitude(); }
+    float           longitude           () { return _coordinate.longitude(); }
     bool            mavPresent          () { return _mav != NULL; }
     int             satelliteCount      () { return _satelliteCount; }
     double          batteryVoltage      () { return _batteryVoltage; }
@@ -256,6 +256,7 @@ public slots:
 signals:
     void allLinksDisconnected(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
+    void coordinateValidChanged(bool coordinateValid);
     void joystickModeChanged(int mode);
     void joystickEnabledChanged(bool enabled);
     void activeChanged(bool active);
@@ -283,7 +284,6 @@ signals:
     void altitudeRelativeChanged();
     void altitudeWGS84Changed   ();
     void altitudeAMSLChanged    ();
-    void latitudeChanged        ();
     void longitudeChanged       ();
     void batteryVoltageChanged  ();
     void batteryPercentChanged  ();
@@ -366,7 +366,8 @@ private:
     
     UAS* _uas;
     
-    QGeoCoordinate  _geoCoordinate;
+    QGeoCoordinate  _coordinate;
+    bool            _coordinateValid;       ///< true: vehicle has 3d lock and therefore valid location
     
     bool            _homePositionAvailable;
     QGeoCoordinate  _homePosition;
@@ -392,8 +393,6 @@ private:
     float           _navigationSpeedError;
     float           _navigationCrosstrackError;
     float           _navigationTargetBearing;
-    float           _latitude;
-    float           _longitude;
     QTimer*         _refreshTimer;
     QList<int>      _changes;
     double          _batteryVoltage;
