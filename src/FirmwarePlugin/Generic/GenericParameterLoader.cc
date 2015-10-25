@@ -21,15 +21,17 @@
  
  ======================================================================*/
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
+#include "GenericParameterLoader.h"
 
-#include "GenericParameterFacts.h"
-
-#include <QDebug>
-
-GenericParameterFacts::GenericParameterFacts(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent) :
+GenericParameterLoader::GenericParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent) :
     ParameterLoader(autopilot, vehicle, parent)
 {
     Q_ASSERT(vehicle);
+}
+
+/// Override from ParameterLoader which connects the meta data to the fact
+void GenericParameterLoader::_addMetaDataToFact(Fact* fact)
+{
+    // Use generic meta data
+    ParameterLoader::_addMetaDataToFact(fact);
 }

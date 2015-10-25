@@ -105,6 +105,10 @@ protected:
     /// Base implementation adds generic meta data based on variant type. Derived class can override to provide
     /// more details meta data.
     virtual void _addMetaDataToFact(Fact* fact);
+
+    AutoPilotPlugin*    _autopilot;
+    Vehicle*            _vehicle;
+    MAVLinkProtocol*    _mavlink;
     
 private slots:
     void _parameterUpdate(int uasId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value);
@@ -127,10 +131,6 @@ private:
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
     void _saveToEEPROM(void);
     void _checkInitialLoadComplete(void);
-    
-    AutoPilotPlugin*    _autopilot;
-    Vehicle*            _vehicle;
-    MAVLinkProtocol*    _mavlink;
     
     /// First mapping is by component id
     /// Second mapping is parameter name, to Fact* in QVariant

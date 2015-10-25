@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -21,30 +21,32 @@
  
  ======================================================================*/
 
-#ifndef GenericParameterFacts_h
-#define GenericParameterFacts_h
+#ifndef APMAutoPilotPlugin_H
+#define APMAutoPilotPlugin_H
 
-#include <QObject>
-
-#include "ParameterLoader.h"
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
+#include "Vehicle.h"
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-/// Collection of Parameter Facts for Generic AutoPilot
-
-class GenericParameterFacts : public ParameterLoader
+/// This is the APM specific implementation of the AutoPilot class.
+class APMAutoPilotPlugin : public AutoPilotPlugin
 {
     Q_OBJECT
-    
+
 public:
-    /// @param uas Uas which this set of facts is associated with
-    GenericParameterFacts(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent = NULL);
-    
-    /// Override from ParameterLoader
-    virtual QString getDefaultComponentIdParam(void) const { return QString(); }
+    APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent);
+    ~APMAutoPilotPlugin();
+
+    // Overrides from AutoPilotPlugin
+    virtual const QVariantList& vehicleComponents(void);
+
+    static void clearStaticData(void);
+
+public slots:
+    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
+    void _parametersReadyPreChecks(bool missingParameters);
+
+private:
+    bool _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
 };
 
 #endif

@@ -21,31 +21,28 @@
  
  ======================================================================*/
 
-#ifndef GENERICAUTOPILOT_H
-#define GENERICAUTOPILOT_H
+#ifndef GenericParameterLoader_H
+#define GenericParameterLoader_H
 
+#include "ParameterLoader.h"
+#include "FactSystem.h"
 #include "AutoPilotPlugin.h"
+#include "Vehicle.h"
 
-/// @file
-///     @brief This is the generic implementation of the AutoPilotPlugin class for mavs
-///             we do not have a specific AutoPilotPlugin implementation.
-///     @author Don Gagne <don@thegagnes.com>
-
-class GenericAutoPilotPlugin : public AutoPilotPlugin
+class GenericParameterLoader : public ParameterLoader
 {
     Q_OBJECT
-
+    
 public:
-    GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent = NULL);
-    
-    // Overrides from AutoPilotPlugin
-    virtual const QVariantList& vehicleComponents(void);
+    /// @param uas Uas which this set of facts is associated with
+    GenericParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent = NULL);
 
-    static void clearStaticData(void);
+    /// Override from ParameterLoader
+    virtual QString getDefaultComponentIdParam(void) const { return QString(); }
     
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
+private:
+    // Overrides from ParameterLoader
+    virtual void _addMetaDataToFact(Fact* fact);
 };
 
 #endif
