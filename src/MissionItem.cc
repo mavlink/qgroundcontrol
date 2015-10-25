@@ -20,15 +20,6 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/**
- * @file
- *   @brief MissionItem class
- *
- *   @author Benjamin Knecht <mavteam@student.ethz.ch>
- *   @author Petri Tanskanen <mavteam@student.ethz.ch>
- *
- */
-
 #include <QStringList>
 #include <QDebug>
 
@@ -115,10 +106,12 @@ MissionItem::MissionItem(QObject*       parent,
     
     FactMetaData* latitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _latitudeFact);
     latitudeMetaData->setUnits("deg");
-    
+    latitudeMetaData->setDecimalPlaces(7);
+
     FactMetaData* longitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _longitudeFact);
     longitudeMetaData->setUnits("deg");
-    
+    longitudeMetaData->setDecimalPlaces(7);
+
     FactMetaData* altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble, _altitudeFact);
     altitudeMetaData->setUnits("meters");
     

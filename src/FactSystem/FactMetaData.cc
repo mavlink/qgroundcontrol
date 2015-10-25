@@ -32,30 +32,32 @@
 
 #include <limits>
 
-FactMetaData::FactMetaData(QObject* parent) :
-    QObject(parent),
-    _group("*Default Group"),
-    _type(valueTypeInt32),
-    _defaultValue(0),
-    _defaultValueAvailable(false),
-    _min(_minForType()),
-    _max(_maxForType()),
-    _minIsDefaultForType(true),
-    _maxIsDefaultForType(true)
+FactMetaData::FactMetaData(QObject* parent)
+    : QObject(parent)
+    , _group("*Default Group")
+    , _type(valueTypeInt32)
+    , _defaultValue(0)
+    , _defaultValueAvailable(false)
+    , _min(_minForType())
+    , _max(_maxForType())
+    , _minIsDefaultForType(true)
+    , _maxIsDefaultForType(true)
+    , _decimalPlaces(defaultDecimalPlaces)
 {
 
 }
 
-FactMetaData::FactMetaData(ValueType_t type, QObject* parent) :
-    QObject(parent),
-    _group("*Default Group"),
-    _type(type),
-    _defaultValue(0),
-    _defaultValueAvailable(false),
-    _min(_minForType()),
-    _max(_maxForType()),
-    _minIsDefaultForType(true),
-    _maxIsDefaultForType(true)
+FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
+    : QObject(parent)
+    , _group("*Default Group")
+    , _type(type)
+    , _defaultValue(0)
+    , _defaultValueAvailable(false)
+    , _min(_minForType())
+    , _max(_maxForType())
+    , _minIsDefaultForType(true)
+    , _maxIsDefaultForType(true)
+    , _decimalPlaces(defaultDecimalPlaces)
 {
 
 }
@@ -76,6 +78,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _max                    = other._max;
     _minIsDefaultForType    = other._minIsDefaultForType;
     _maxIsDefaultForType    = other._maxIsDefaultForType;
+    _decimalPlaces          = other._decimalPlaces;
     
     return *this;
 }

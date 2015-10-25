@@ -131,7 +131,22 @@ QVariant Fact::value(void) const
 
 QString Fact::valueString(void) const
 {
-    return _value.toString();
+    QString valueString;
+
+    switch (type()) {
+        case FactMetaData::valueTypeFloat:
+            qDebug() << name() << value() << decimalPlaces();
+            valueString = QString("%1").arg(value().toFloat(), 0, 'g', decimalPlaces());
+            break;
+        case FactMetaData::valueTypeDouble:
+            valueString = QString("%1").arg(value().toDouble(), 0, 'g', decimalPlaces());
+            break;
+        default:
+            valueString = value().toString();
+            break;
+    }
+
+    return valueString;
 }
 
 QVariant Fact::defaultValue(void) const
@@ -219,6 +234,16 @@ bool Fact::maxIsDefaultForType(void) const
     } else {
         qWarning() << "Meta data pointer missing";
         return false;
+    }
+}
+
+int Fact::decimalPlaces(void) const
+{
+    if (_metaData) {
+        return _metaData->decimalPlaces();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return FactMetaData::defaultDecimalPlaces;
     }
 }
 
