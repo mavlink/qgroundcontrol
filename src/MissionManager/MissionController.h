@@ -94,7 +94,8 @@ private:
     void _initMissionItem(MissionItem* item);
     void _deinitMissionItem(MissionItem* item);
     void _autoSyncSend(void);
-    void _setupMissionItems(bool fromVehicle, bool force);
+    void _setupMissionItems(bool loadFromVehicle, bool forceLoad);
+    void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
 
 private:
     bool                _editMode;

@@ -59,18 +59,19 @@ public:
     const FactMetaData& operator=(const FactMetaData& other);
 
     // Property accessors
-    QString     name(void) const                  { return _name; }
-    QString     group(void) const                 { return _group; }
-    ValueType_t type(void) const                  { return _type; }
+    QString     name(void) const                    { return _name; }
+    QString     group(void) const                   { return _group; }
+    ValueType_t type(void) const                    { return _type; }
     QVariant    defaultValue(void) const;
-    bool		defaultValueAvailable(void) const { return _defaultValueAvailable; }
-    QString     shortDescription(void) const      { return _shortDescription; }
-    QString     longDescription(void) const       { return _longDescription;}
-    QString     units(void) const                 { return _units; }
-    QVariant    min(void) const                   { return _min; }
-    QVariant    max(void) const                   { return _max; }
-    bool        minIsDefaultForType(void) const   { return _minIsDefaultForType; }
-    bool        maxIsDefaultForType(void) const   { return _maxIsDefaultForType; }
+    bool		defaultValueAvailable(void) const   { return _defaultValueAvailable; }
+    QString     shortDescription(void) const        { return _shortDescription; }
+    QString     longDescription(void) const         { return _longDescription;}
+    QString     units(void) const                   { return _units; }
+    QVariant    min(void) const                     { return _min; }
+    QVariant    max(void) const                     { return _max; }
+    bool        minIsDefaultForType(void) const     { return _minIsDefaultForType; }
+    bool        maxIsDefaultForType(void) const     { return _maxIsDefaultForType; }
+    int         decimalPlaces(void) const           { return _decimalPlaces; }
 
     // Property setters
     void setName(const QString& name)                           { _name = name; }
@@ -81,6 +82,7 @@ public:
     void setUnits(const QString& units)                         { _units = units; }
     void setMin(const QVariant& max);
     void setMax(const QVariant& max);
+    void setDecimalPlaces(int decimalPlaces)                    { _decimalPlaces = decimalPlaces; }
     
     /// Converts the specified value, validating against meta data
     ///     @param value Value to convert, can be string
@@ -89,6 +91,8 @@ public:
     ///     @param errorString Error string if convert fails
     /// @returns false: Convert failed, errorString set
     bool convertAndValidate(const QVariant& value, bool convertOnly, QVariant& typedValue, QString& errorString);
+
+    static const int defaultDecimalPlaces = 3;
 
 private:
     QVariant _minForType(void) const;
@@ -106,6 +110,7 @@ private:
     QVariant    _max;
     bool        _minIsDefaultForType;
     bool        _maxIsDefaultForType;
+    int         _decimalPlaces;
 };
 
 #endif

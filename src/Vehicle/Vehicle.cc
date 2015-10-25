@@ -202,17 +202,32 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
 void Vehicle::_handleHomePosition(mavlink_message_t& message)
 {
+    bool emitHomePositionChanged =          false;
+    bool emitHomePositionAvailableChanged = false;
+
     mavlink_home_position_t homePos;
     
     mavlink_msg_home_position_decode(&message, &homePos);
-    
-    _homePosition.setLatitude(homePos.latitude / 10000000.0);
-    _homePosition.setLongitude(homePos.longitude / 10000000.0);
-    _homePosition.setAltitude(homePos.altitude / 1000.0);
+
+    QGeoCoordinate newHomePosition (homePos.latitude / 10000000.0,
+                                    homePos.longitude / 10000000.0,
+                                    homePos.altitude / 1000.0);
+    if (newHomePosition != _homePosition) {
+        emitHomePositionChanged = true;
+        _homePosition = newHomePosition;
+    }
+
+    if (!_homePositionAvailable) {
+        emitHomePositionAvailableChanged = true;
+    }
     _homePositionAvailable = true;
-    
-    emit homePositionChanged(_homePosition);
-    emit homePositionAvailableChanged(true);
+
+    if (emitHomePositionChanged) {
+        emit homePositionChanged(_homePosition);
+    }
+    if (emitHomePositionAvailableChanged) {
+        emit homePositionAvailableChanged(true);
+    }
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
