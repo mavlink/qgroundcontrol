@@ -66,21 +66,23 @@ void MissionController::start(bool editMode)
 
     connect(multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &MissionController::_activeVehicleChanged);
 
-    _setupMissionItems(true /* fromVehicle */, true /* force */);
+    _setupMissionItems(true /* loadFromVehicle */, true /* forceLoad */);
+    _setupActiveVehicle(multiVehicleMgr->activeVehicle(), true /* forceLoadFromVehicle */);
 }
 
 void MissionController::_newMissionItemsAvailableFromVehicle(void)
 {
     qCDebug(MissionControllerLog) << "_newMissionItemsAvailableFromVehicle";
 
-    _setupMissionItems(true /* fromVehicle */, false /* force */);
+    _setupMissionItems(true /* loadFromVehicle */, false /* forceLoad */);
 }
 
-/// @param fromVehicle true: load items from vehicle
-/// @param force true: disregard any flags which may prevent load
-void MissionController::_setupMissionItems(bool fromVehicle, bool force)
+/// @param loadFromVehicle true: load items from vehicle
+/// @param forceLoad true: disregard any flags which may prevent load
+void MissionController::_setupMissionItems(bool loadFromVehicle, bool forceLoad)
 {
-    qCDebug(MissionControllerLog) << "_setupMissionItems fromVehicle:force:_editMode:_firstItemsFromVehicle" << fromVehicle << force << _editMode << _firstItemsFromVehicle;
+    qCDebug(MissionControllerLog) << "_setupMissionItems loadFromVehicle:forceLoad:_editMode:_firstItemsFromVehicle"
+                                  << loadFromVehicle << forceLoad << _editMode << _firstItemsFromVehicle;
 
     MissionManager* missionManager = NULL;
     if (_activeVehicle) {
@@ -89,8 +91,8 @@ void MissionController::_setupMissionItems(bool fromVehicle, bool force)
         qCDebug(MissionControllerLog) << "running offline";
     }
 
-    if (!force) {
-        if (_editMode && fromVehicle) {
+    if (!forceLoad) {
+        if (_editMode && loadFromVehicle) {
             if (_firstItemsFromVehicle) {
                 if (missionManager) {
                     if (missionManager->inProgress()) {
@@ -126,7 +128,7 @@ void MissionController::_setupMissionItems(bool fromVehicle, bool force)
         _missionItems->deleteLater();
     }
 
-    if (!missionManager || !fromVehicle || missionManager->inProgress()) {
+    if (!missionManager || !loadFromVehicle || missionManager->inProgress()) {
         _canEdit = true;
         _missionItems = new QmlObjectListModel(this);
         qCDebug(MissionControllerLog) << "creating empty set";
@@ -440,8 +442,20 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
         _activeVehicle = NULL;
 
         // When the active vehicle goes away we toss the editor items
-        _setupMissionItems(false /* fromVehicle */, true /* force */);
+        _setupMissionItems(false /* loadFromVehicle */, true /* forceLoad */);
         _activeVehicleHomePositionAvailableChanged(false);
+    }
+
+    _setupActiveVehicle(activeVehicle, false /* forceLoadFromVehicle */);
+}
+
+void MissionController::_setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle)
+{
+    qCDebug(MissionControllerLog) << "_setupActiveVehicle activeVehicle:forceLoadFromVehicle"
+                                  << activeVehicle << forceLoadFromVehicle;
+
+    if (_activeVehicle) {
+        qCWarning(MissionControllerLog) << "_activeVehicle != NULL";
     }
 
     _activeVehicle = activeVehicle;
@@ -455,7 +469,7 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
         _firstItemsFromVehicle = true;
-        _setupMissionItems(true /* fromVehicle */, false /* force */);
+        _setupMissionItems(true /* fromVehicle */, forceLoadFromVehicle);
 
         _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
         _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
@@ -464,20 +478,15 @@ void MissionController::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void MissionController::_activeVehicleHomePositionAvailableChanged(bool homePositionAvailable)
 {
-    MissionItem* homeItem =  qobject_cast<MissionItem*>(_missionItems->get(0));
-
-    if (homePositionAvailable) {
-        homeItem->setCoordinate(_liveHomePosition);
-    }
-    homeItem->setHomePositionValid(homePositionAvailable);
-
     _liveHomePositionAvailable = homePositionAvailable;
+    qobject_cast<MissionItem*>(_missionItems->get(0))->setHomePositionValid(homePositionAvailable);
     emit liveHomePositionAvailableChanged(_liveHomePositionAvailable);
 }
 
 void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
 {
     _liveHomePosition = homePosition;
+    qobject_cast<MissionItem*>(_missionItems->get(0))->setCoordinate(_liveHomePosition);
     emit liveHomePositionChanged(_liveHomePosition);
 }
 
