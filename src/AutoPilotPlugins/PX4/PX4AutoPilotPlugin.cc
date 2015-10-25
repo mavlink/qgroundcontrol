@@ -23,12 +23,13 @@
 
 #include "PX4AutoPilotPlugin.h"
 #include "AutoPilotPluginManager.h"
-#include "PX4ParameterLoader.h"
 #include "PX4AirframeLoader.h"
 #include "FlightModesComponentController.h"
 #include "AirframeComponentController.h"
 #include "QGCMessageBox.h"
 #include "UAS.h"
+#include "FirmwarePlugin/PX4/PX4ParameterLoader.h"  // FIXME: Hack
+#include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h"  // FIXME: Hack
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
@@ -66,7 +67,6 @@ union px4_custom_mode {
 
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     AutoPilotPlugin(vehicle, parent),
-    _parameterFacts(NULL),
     _airframeComponent(NULL),
     _radioComponent(NULL),
     _flightModesComponent(NULL),
@@ -77,22 +77,17 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
 {
     Q_ASSERT(vehicle);
     
-    _parameterFacts = new PX4ParameterLoader(this, vehicle, this);
-    Q_CHECK_PTR(_parameterFacts);
-    
-    connect(_parameterFacts, &PX4ParameterLoader::parametersReady, this, &PX4AutoPilotPlugin::_parametersReadyPreChecks);
-    connect(_parameterFacts, &PX4ParameterLoader::parameterListProgress, this, &PX4AutoPilotPlugin::parameterListProgress);
-
     _airframeFacts = new PX4AirframeLoader(this, _vehicle->uas(), this);
     Q_CHECK_PTR(_airframeFacts);
     
-    PX4ParameterLoader::loadParameterFactMetaData();
     PX4AirframeLoader::loadAirframeFactMetaData();
+
+    // This kicks off parameter load
+    _firmwarePlugin->getParameterLoader(this, vehicle);
 }
 
 PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
 {
-    delete _parameterFacts;
     delete _airframeFacts;
 }
 
