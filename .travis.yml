@@ -54,8 +54,9 @@ addons:
     - libudev-dev
 
 cache:
-  - apt
-  - ccache
+  directories:
+    - $HOME/.ccache
+
 
 before_install:
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
@@ -93,6 +94,13 @@ install:
 
 
 before_script:
+# setup ccache
+  - mkdir -p ~/bin
+  - ln -s /usr/bin/ccache ~/bin/g++
+  - ln -s /usr/bin/ccache ~/bin/g++-4.8
+  - ln -s /usr/bin/ccache ~/bin/gcc
+  - ln -s /usr/bin/ccache ~/bin/gcc-4.8
+  - export PATH=~/bin:$PATH
   - if [[ "${TRAVIS_OS_NAME}" = "android" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then export CONFIG=release; fi
   - qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
 
