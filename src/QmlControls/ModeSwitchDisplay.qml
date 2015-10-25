@@ -45,6 +45,8 @@ Rectangle {
     height:                 column.height + (ScreenTools.defaultFontPixelWidth * 2)
     color:                  _qgcPal.window
 
+    signal modeChannelIndexSelected(int index)
+
     QGCPalette { id: _qgcPal; colorGroupEnabled: enabled }
 
     Item {
@@ -82,7 +84,7 @@ Rectangle {
                     currentIndex:   modeChannelIndex
                     enabled:        modeChannelEnabled
 
-                    onActivated: modeChannelIndex = index
+                    onActivated: modeChannelIndexSelected(index)
                 }
 
                 QGCLabel {
