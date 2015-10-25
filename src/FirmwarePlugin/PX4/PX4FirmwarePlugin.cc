@@ -25,6 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "PX4FirmwarePlugin.h"
+#include "AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h"    // FIXME: Hack
 
 #include <QDebug>
 
@@ -85,8 +86,9 @@ static const struct Modes2Name rgModes2Name[] = {
 };
 
 
-PX4FirmwarePlugin::PX4FirmwarePlugin(QObject* parent) :
-    FirmwarePlugin(parent)
+PX4FirmwarePlugin::PX4FirmwarePlugin(QObject* parent)
+    : FirmwarePlugin(parent)
+    , _parameterLoader(NULL)
 {
     
 }
@@ -206,4 +208,20 @@ bool PX4FirmwarePlugin::sendHomePositionToVehicle(void)
     // PX4 stack does not want home position sent in the first position.
     // Subsequent sequence numbers must be adjusted.
     return false;
+}
+
+ParameterLoader* PX4FirmwarePlugin::getParameterLoader(AutoPilotPlugin* autopilotPlugin, Vehicle* vehicle)
+{
+    if (!_parameterLoader) {
+        _parameterLoader = new PX4ParameterLoader(autopilotPlugin, vehicle, this);
+        Q_CHECK_PTR(_parameterLoader);
+
+        // FIXME: Why do I need SIGNAL/SLOT to make this work
+        connect(_parameterLoader, SIGNAL(parametersReady(bool)),                autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
+        connect(_parameterLoader, &PX4ParameterLoader::parameterListProgress,   autopilotPlugin, &PX4AutoPilotPlugin::parameterListProgress);
+
+        _parameterLoader->loadParameterFactMetaData();
+    }
+
+    return _parameterLoader;
 }

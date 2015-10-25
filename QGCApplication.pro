@@ -507,8 +507,8 @@ INCLUDEPATH += \
 HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \
+    src/AutoPilotPlugins/APM/APMAutoPilotPlugin.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
-    src/AutoPilotPlugins/Generic/GenericParameterFacts.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
     src/AutoPilotPlugins/PX4/AirframeComponentController.h \
@@ -518,7 +518,6 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/PowerComponentController.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4Component.h \
-    src/AutoPilotPlugins/PX4/PX4ParameterLoader.h \
     src/AutoPilotPlugins/PX4/RadioComponent.h \
     src/AutoPilotPlugins/PX4/RadioComponentController.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
@@ -527,11 +526,14 @@ HEADERS+= \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
+    src/FirmwarePlugin/APM/APMParameterLoader.h \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
+    src/FirmwarePlugin/Generic/GenericParameterLoader.h \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
+    src/FirmwarePlugin/PX4/PX4ParameterLoader.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/Vehicle.h \
     src/VehicleSetup/VehicleComponent.h \
@@ -548,8 +550,8 @@ HEADERS += \
 SOURCES += \
     src/AutoPilotPlugins/AutoPilotPlugin.cc \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
+    src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
-    src/AutoPilotPlugins/Generic/GenericParameterFacts.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
     src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
@@ -559,19 +561,21 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PowerComponentController.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
-    src/AutoPilotPlugins/PX4/PX4ParameterLoader.cc \
     src/AutoPilotPlugins/PX4/RadioComponent.cc \
     src/AutoPilotPlugins/PX4/RadioComponentController.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
     src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
+    src/FirmwarePlugin/APM/APMParameterLoader.cc \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.cc \
     src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.cc \
     src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
+    src/FirmwarePlugin/Generic/GenericParameterLoader.cc \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
+    src/FirmwarePlugin/PX4/PX4ParameterLoader.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/Vehicle.cc \
     src/VehicleSetup/VehicleComponent.cc \

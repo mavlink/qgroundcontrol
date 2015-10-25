@@ -28,6 +28,7 @@
 #define GenericFirmwarePlugin_H
 
 #include "FirmwarePlugin.h"
+#include "GenericParameterLoader.h"
 
 class GenericFirmwarePlugin : public FirmwarePlugin
 {
@@ -47,10 +48,13 @@ public:
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
     virtual void initializeVehicle(Vehicle* vehicle);
     virtual bool sendHomePositionToVehicle(void);
+    virtual ParameterLoader* getParameterLoader(AutoPilotPlugin *autopilotPlugin, Vehicle* vehicle);
 
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     GenericFirmwarePlugin(QObject* parent = NULL);
+
+    GenericParameterLoader* _parameterLoader;
 };
 
 #endif
