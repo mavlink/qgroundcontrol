@@ -105,6 +105,9 @@ public:
     ///     false: Do not send first item to vehicle, sequence numbers must be adjusted
     virtual bool sendHomePositionToVehicle(void) = 0;
     
+    /// Returns the ParameterLoader
+    virtual ParameterLoader* getParameterLoader(AutoPilotPlugin* autopilotPlugin, Vehicle* vehicle) = 0;
+    
 protected:
     FirmwarePlugin(QObject* parent = NULL) : QGCSingleton(parent) { }
 };
