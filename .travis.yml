@@ -19,7 +19,7 @@ matrix:
           sudo: false
         - os: osx
           osx_image: xcode7
-          env: SPEC=macx-clang CONFIG=debug
+          env: SPEC=macx-clang CONFIG=debug QT_FATAL_WARNINGS=1
         - os: osx
           osx_image: xcode7
           env: SPEC=macx-clang CONFIG=installer
