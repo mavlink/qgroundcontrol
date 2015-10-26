@@ -644,7 +644,7 @@ void MainWindow::_loadVisibleWidgetsSettings(void)
     if (!widgets.isEmpty()) {
         QStringList nameList = widgets.split(",");
         
-        foreach (QString name, nameList) {
+        foreach (const QString &name, nameList) {
             _showDockWidget(name, true);
         }
     }
@@ -655,7 +655,7 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
     QString widgetNames;
     bool firstWidget = true;
     
-    foreach (QString name, _mapName2DockWidget.keys()) {
+    foreach (const QString &name, _mapName2DockWidget.keys()) {
         if (_mapName2DockWidget[name]->isVisible()) {
             if (!firstWidget) {
                 widgetNames += ",";
