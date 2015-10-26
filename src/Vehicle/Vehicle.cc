@@ -42,6 +42,7 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 const char* Vehicle::_settingsGroup =               "Vehicle%1";        // %1 replaced with mavlink system id
 const char* Vehicle::_joystickModeSettingsKey =     "JoystickMode";
 const char* Vehicle::_joystickEnabledSettingsKey =  "JoystickEnabled";
+const char* Vehicle::_communicationInactivityKey =  "CommunicationInactivity";
 
 Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
     : _id(vehicleId)
@@ -92,6 +93,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     , _base_mode(0)
     , _custom_mode(0)
     , _nextSendMessageMultipleIndex(0)
+    , _communicationInactivityTimeoutMSecs(_communicationInactivityTimeoutMSecsDefault)
 {
     _addLink(link);
     
@@ -162,6 +164,10 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     
     _mapTrajectoryTimer.setInterval(_mapTrajectoryMsecsBetweenPoints);
     connect(&_mapTrajectoryTimer, &QTimer::timeout, this, &Vehicle::_addNewMapTrajectoryPoint);
+
+    _communicationInactivityTimer.setInterval(_communicationInactivityTimeoutMSecs);
+    connect(&_communicationInactivityTimer, &QTimer::timeout, this, &Vehicle::_communicationInactivityTimedOut);
+    _communicationInactivityTimer.start();
 }
 
 Vehicle::~Vehicle()
@@ -178,6 +184,8 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     if (message.sysid != _id && message.sysid != 0) {
         return;
     }
+
+    _communicationInactivityTimer.start();
     
     if (!_containsLink(link)) {
         _addLink(link);
@@ -848,6 +856,7 @@ void Vehicle::_loadSettings(void)
     }
     
     _joystickEnabled = settings.value(_joystickEnabledSettingsKey, false).toBool();
+    _communicationInactivityTimeoutMSecs = settings.value(_communicationInactivityKey, _communicationInactivityTimeoutMSecsDefault).toInt();
 }
 
 void Vehicle::_saveSettings(void)
@@ -858,6 +867,7 @@ void Vehicle::_saveSettings(void)
     
     settings.setValue(_joystickModeSettingsKey, _joystickMode);
     settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
+    settings.setValue(_communicationInactivityKey, _communicationInactivityTimeoutMSecs);
 }
 
 int Vehicle::joystickMode(void)
@@ -1111,5 +1121,15 @@ void Vehicle::_parametersReady(bool parametersReady)
     if (parametersReady && !_missionManagerInitialRequestComplete) {
         _missionManagerInitialRequestComplete = true;
         _missionManager->requestMissionItems();
+    }
+}
+
+void Vehicle::_communicationInactivityTimedOut(void)
+{
+    // Vechile is no longer communicating with us, disconnect all links
+
+    LinkManager* linkMgr = LinkManager::instance();
+    for (int i=0; i<_links.count(); i++) {
+        linkMgr->disconnectLink(_links[i].data());
     }
 }
