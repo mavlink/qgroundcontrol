@@ -43,6 +43,10 @@ public:
 private slots:
     void cleanup(void);
 
+    void _testEmptyVehicleAPM(void);
+    void _testEmptyVehiclePX4(void);
+    void _testAddWayppointAPM(void);
+    void _testAddWayppointPX4(void);
     void _testOfflineToOnlineAPM(void);
     void _testOfflineToOnlinePX4(void);
 
@@ -51,30 +55,46 @@ private:
     void _testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType);
     void _testAddWaypointWorker(MAV_AUTOPILOT firmwareType);
     void _testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType);
+    void _setupMissionItemSignals(MissionItem* item);
 
-    void _testEmptyVehicleAPM(void);
-    void _testEmptyVehiclePX4(void);
-    void _testAddWayppointAPM(void);
-    void _testAddWayppointPX4(void);
+    // MissiomItems signals
+
+    enum {
+        coordinateChangedSignalIndex = 0,
+        homePositionValidChangedSignalIndex,
+        missionItemMaxSignalIndex
+    };
+
+    enum {
+        coordinateChangedSignalMask =           1 << coordinateChangedSignalIndex,
+        homePositionValidChangedSignalMask =    1 << homePositionValidChangedSignalIndex,
+        missionItemMaxSignalMask =              1 << missionItemMaxSignalIndex,
+    };
+
+    // MissionController signals
 
     enum {
         missionItemsChangedSignalIndex = 0,
         waypointLinesChangedSignalIndex,
         liveHomePositionAvailableChangedSignalIndex,
         liveHomePositionChangedSignalIndex,
-        maxSignalIndex
+        missionControllerMaxSignalIndex
     };
 
     enum {
         missionItemsChangedSignalMask =                 1 << missionItemsChangedSignalIndex,
-        waypointLinesChangedSignalMask =                1 <<  waypointLinesChangedSignalIndex,
+        waypointLinesChangedSignalMask =                1 << waypointLinesChangedSignalIndex,
         liveHomePositionAvailableChangedSignalMask =    1 << liveHomePositionAvailableChangedSignalIndex,
         liveHomePositionChangedSignalMask =             1 << liveHomePositionChangedSignalIndex,
     };
 
-    MultiSignalSpy*     _multiSpy;
-    static const size_t _cSignals = maxSignalIndex;
-    const char*         _rgSignals[_cSignals];
+    MultiSignalSpy*     _multiSpyMissionController;
+    static const size_t _cMissionControllerSignals = missionControllerMaxSignalIndex;
+    const char*         _rgMissionControllerSignals[_cMissionControllerSignals];
+
+    MultiSignalSpy*     _multiSpyMissionItem;
+    static const size_t _cMissionItemSignals = missionItemMaxSignalIndex;
+    const char*         _rgMissionItemSignals[_cMissionItemSignals];
 
     MissionController*  _missionController;
 };
