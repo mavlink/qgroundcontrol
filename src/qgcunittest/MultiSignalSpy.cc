@@ -257,3 +257,9 @@ void MultiSignalSpy::_printSignalState(void)
         qDebug() << "Signal index:" << i << "count:" << spy->count();
     }
 }
+
+bool MultiSignalSpy::pullBoolFromSignalIndex(quint16 index)
+{
+    QSignalSpy* spy = getSpyByIndex(index);
+    return spy->value(0).value(0).toBool();
+}
