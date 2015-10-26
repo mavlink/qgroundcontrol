@@ -96,7 +96,7 @@ Item {
 
     // Validate _showMap setting
     Component.onCompleted: {
-        delayLoader.source = "FlightDisplayViewDelayLoadOuter.qml"
+        delayLoader.source = "FlightDisplayViewDelayLoad.qml"
 
         // We have to be careful to not reference root properties in a function which is in a subcomponent
         // until the root component has completed loading. Otherwise you get undefined references.
@@ -133,14 +133,13 @@ Item {
 
         onRootVehicleCoordinateChanged: updateMapPosition(false /* force */)
 
-        Component.onCompleted: flightMapDelayLoader.source = "FlightDisplayViewDelayLoadInner.qml"
-
         function updateMapPosition(force) {
             if ((_followVehicle || force) && rootLoadCompleted) {
                 flightMap.latitude = root._vehicleCoordinate.latitude
                 flightMap.longitude = root._vehicleCoordinate.longitude
             }
         }
+
         // Home position
         MissionItemIndicator {
             label:          "H"
@@ -188,11 +187,6 @@ Item {
         // Add lines between waypoints
         MissionLineView {
             model:          _missionController.waypointLines
-        }
-
-        Loader {
-            id:             flightMapDelayLoader
-            anchors.fill:   parent
         }
 
         // Used to make pinch zoom work

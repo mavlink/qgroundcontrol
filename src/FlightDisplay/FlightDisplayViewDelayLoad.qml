@@ -35,10 +35,39 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.FlightMap     1.0
 
-/// This component is used to delay load the controls which are children of the inner FlightMap
-/// control of FlightDisplayView.
-// Vehicle GPS lock display
+/// This component is used to delay load the items which are direct children of the
+/// FlightDisplayViewControl.
 Item {
+
+    QGCVideoBackground {
+        anchors.fill:   parent
+        display:        _controller.videoSurface
+        receiver:       _controller.videoReceiver
+        visible:        !_showMap
+
+        QGCCompassHUD {
+            id:                 compassHUD
+            y:                  root.height * 0.7
+            x:                  root.width  * 0.5 - ScreenTools.defaultFontPixelSize * (5)
+            width:              ScreenTools.defaultFontPixelSize * (10)
+            height:             ScreenTools.defaultFontPixelSize * (10)
+            heading:            _heading
+            active:             multiVehicleManager.activeVehicleAvailable
+            z:                  QGroundControl.zOrderWidgets
+        }
+
+        QGCAttitudeHUD {
+            id:                 attitudeHUD
+            rollAngle:          _roll
+            pitchAngle:         _pitch
+            width:              ScreenTools.defaultFontPixelSize * (30)
+            height:             ScreenTools.defaultFontPixelSize * (30)
+            active:             multiVehicleManager.activeVehicleAvailable
+            z:                  QGroundControl.zOrderWidgets
+        }
+    }
+
+    //-- Vehicle GPS lock display
     Column {
         id:     gpsLockColumn
         y:      (parent.height - height) / 2
@@ -58,27 +87,19 @@ Item {
         }
     }
 
-    QGCCompassWidget {
-        anchors.leftMargin: ScreenTools.defaultFontPixelHeight
-        anchors.topMargin:  topMargin
-        anchors.left:       parent.left
-        anchors.top:        parent.top
-        size:               ScreenTools.defaultFontPixelSize * (13.3)
-        heading:            _heading
-        z:                  QGroundControl.zOrderWidgets
-    }
-
-    QGCAttitudeWidget {
+    //-- Instrument Pannel
+    QGCInstrumentWidget {
         anchors.margins:    ScreenTools.defaultFontPixelHeight
         anchors.left:       parent.left
         anchors.bottom:     parent.bottom
-        size:               ScreenTools.defaultFontPixelSize * (13.3)
+        size:               ScreenTools.defaultFontPixelSize * (9)
+        heading:            _heading
         rollAngle:          _roll
         pitchAngle:         _pitch
-        active:             multiVehicleManager.activeVehicleAvailable
         z:                  QGroundControl.zOrderWidgets
     }
 
+    //-- Map Center Control
     DropButton {
         id:                     centerMapDropButton
         anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
@@ -123,6 +144,7 @@ Item {
         }
     }
 
+    //-- Map Type Control
     DropButton {
         id:                     mapTypeButton
         anchors.topMargin:      topMargin
@@ -156,4 +178,45 @@ Item {
             }
         }
     }
+
+    //-- Temporary Options Button
+    QGCButton {
+        id:         optionsButton
+        x:          _flightMap.mapWidgets.x
+        y:          _flightMap.mapWidgets.y - height - (ScreenTools.defaultFontPixelHeight / 2)
+        z:          QGroundControl.zOrderWidgets
+        width:      _flightMap.mapWidgets.width
+        text:       "Options"
+        menu:       optionsMenu
+        visible:    _controller.hasVideo && !hideWidgets
+
+        ExclusiveGroup {
+            id: backgroundTypeGroup
+        }
+
+        Menu {
+            id: optionsMenu
+
+            MenuItem {
+                id:             mapBackgroundMenuItem
+                exclusiveGroup: backgroundTypeGroup
+                checkable:      true
+                checked:        _showMap
+                text:           "Show map as background"
+
+                onTriggered:    _setShowMap(true)
+            }
+
+            MenuItem {
+                id:             videoBackgroundMenuItem
+                exclusiveGroup: backgroundTypeGroup
+                checkable:      true
+                checked:        !_showMap
+                text:           "Show video as background"
+
+                onTriggered:    _setShowMap(false)
+            }
+        }
+    }
+
 }
