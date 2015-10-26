@@ -65,7 +65,7 @@ Rectangle {
                 Rectangle {
                     width:  modeLabel.width
                     height: modeLabel.contentHeight
-                    color:  modeSelected ? _qgcPal.buttonHighlight : _qgcPal.windowShade
+                    color:  modeSelected ? _qgcPal.buttonHighlight : _qgcPal.button
 
                     QGCLabel {
                         id:                     modeLabel
