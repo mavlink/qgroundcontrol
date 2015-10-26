@@ -36,21 +36,26 @@ Item {
     id:     root
     height: size
 
-    property alias  heading:    compass.heading
-    property alias  active:     attitude.active
-    property alias  rollAngle:  attitude.rollAngle
-    property alias  pitchAngle: attitude.pitchAngle
-    property real   size:       ScreenTools.defaultFontPixelSize * (10)
+    property alias  heading:        compass.heading
+    property alias  rollAngle:      attitude.rollAngle
+    property alias  pitchAngle:     attitude.pitchAngle
 
+    property real   size:           ScreenTools.defaultFontPixelSize * (10)
+    property bool   isSatellite:    false
+    property bool   active:         false
+
+    property bool   _isVisible:     true
+
+    //-- Instrument Pannel
     Rectangle {
         id:                 instrumentPannel
-        anchors.left:       parent.left
+        anchors.right:      parent.right
         anchors.bottom:     parent.bottom
         height:             root.size
         width:              instruments.width + 8
         radius:             root.size / 2
-        color:              Qt.rgba(0,0,0,0.5)
-
+        visible:            _isVisible
+        color:              isSatellite ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
         Row {
             id:                 instruments
             height:             parent.height
@@ -59,14 +64,49 @@ Item {
             QGCAttitudeWidget {
                 id:             attitude
                 size:           parent.height * 0.9
+                active:         root.active
                 anchors.verticalCenter: parent.verticalCenter
             }
             QGCCompassWidget {
                 id:             compass
                 size:           parent.height * 0.9
+                active:         root.active
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
-
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                _isVisible = !_isVisible
+            }
+        }
     }
+
+    //-- Show Instruments
+    Rectangle {
+        id:                 openButton
+        anchors.right:      parent.right
+        anchors.bottom:     parent.bottom
+        height:             24
+        width:              24
+        radius:             4
+        visible:            !_isVisible
+        color:              isSatellite ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
+        Image {
+            width:              parent.width  * 0.75
+            height:             parent.height * 0.75
+            source:             "/qmlimages/buttonLeft.svg"
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.verticalCenter:     parent.verticalCenter
+            anchors.horizontalCenter:   parent.horizontalCenter
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                _isVisible = !_isVisible
+            }
+        }
+    }
+
 }
