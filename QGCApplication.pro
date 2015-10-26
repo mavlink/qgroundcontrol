@@ -272,7 +272,8 @@ HEADERS += \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/uas/UASMessageView.h \
     src/MissionItem.h \
-    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
+    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
+    src/qgcunittest/GeoTest.h
 
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
@@ -384,7 +385,9 @@ SOURCES += \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/uas/UASMessageView.cc \
     src/MissionItem.cc \
-    src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc
+    src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
+    src/QGCGeo.cc \
+    src/qgcunittest/GeoTest.cc
 
 !iOSBuild {
 SOURCES += \
