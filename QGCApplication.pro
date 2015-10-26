@@ -272,8 +272,7 @@ HEADERS += \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/uas/UASMessageView.h \
     src/MissionItem.h \
-    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
-    src/qgcunittest/GeoTest.h
+    src/AutoPilotPlugins/PX4/PX4AirframeLoader.h
 
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
@@ -359,6 +358,7 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCSingleton.cc \
     src/QGCTemporaryFile.cc \
+    src/QGCGeo.cc \
     src/QmlControls/CoordinateVector.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
@@ -385,9 +385,7 @@ SOURCES += \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/uas/UASMessageView.cc \
     src/MissionItem.cc \
-    src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
-    src/QGCGeo.cc \
-    src/qgcunittest/GeoTest.cc
+    src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc
 
 !iOSBuild {
 SOURCES += \
@@ -459,6 +457,7 @@ HEADERS += \
     src/MissionManager/MissionControllerTest.h \
     src/MissionManager/MissionControllerManagerTest.h \
     src/MissionManager/MissionManagerTest.h \
+    src/qgcunittest/GeoTest.h \
     src/qgcunittest/FileDialogTest.h \
     src/qgcunittest/FileManagerTest.h \
     src/qgcunittest/FlightGearTest.h \
@@ -481,6 +480,7 @@ SOURCES += \
     src/MissionManager/MissionControllerTest.cc \
     src/MissionManager/MissionControllerManagerTest.cc \
     src/MissionManager/MissionManagerTest.cc \
+    src/qgcunittest/GeoTest.cc \
     src/qgcunittest/FileDialogTest.cc \
     src/qgcunittest/FileManagerTest.cc \
     src/qgcunittest/FlightGearTest.cc \
