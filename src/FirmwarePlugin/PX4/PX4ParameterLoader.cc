@@ -299,6 +299,19 @@ void PX4ParameterLoader::loadParameterFactMetaData(void)
                         qCDebug(PX4ParameterLoaderLog) << "Unit:" << text;
                         metaData->setUnits(text);
                         
+                    } else if (elementName == "decimal") {
+                        Q_ASSERT(metaData);
+                        QString text = xml.readElementText();
+                        qCDebug(PX4ParameterLoaderLog) << "Decimal:" << text;
+
+                        bool convertOk;
+                        QVariant varDecimals = QVariant(text).toUInt(&convertOk);
+                        if (convertOk) {
+                            metaData->setDecimalPlaces(varDecimals.toInt());
+                        } else {
+                            qCWarning(PX4ParameterLoaderLog) << "Invalid decimals value, name:" << metaData->name() << " type:" << metaData->type() << " decimals:" << text << " error: invalid number";
+                        }
+
                     } else {
                         qDebug() << "Unknown element in XML: " << elementName;
                     }

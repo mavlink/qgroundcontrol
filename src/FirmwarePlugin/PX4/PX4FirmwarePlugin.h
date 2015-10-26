@@ -28,6 +28,7 @@
 #define PX4FirmwarePlugin_H
 
 #include "FirmwarePlugin.h"
+#include "PX4ParameterLoader.h"
 
 class PX4FirmwarePlugin : public FirmwarePlugin
 {
@@ -47,10 +48,13 @@ public:
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
     virtual void initializeVehicle(Vehicle* vehicle);
     virtual bool sendHomePositionToVehicle(void);
+    virtual ParameterLoader* getParameterLoader(AutoPilotPlugin *autopilotPlugin, Vehicle* vehicle);
 
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     PX4FirmwarePlugin(QObject* parent = NULL);
+
+    PX4ParameterLoader* _parameterLoader;
 };
 
 #endif

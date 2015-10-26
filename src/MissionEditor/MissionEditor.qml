@@ -322,8 +322,6 @@ QGCView {
                                     // Move to the new position
                                     editorMap.latitude = object.coordinate.latitude
                                     editorMap.longitude = object.coordinate.longitude
-                                } else {
-                                    itemDragger.clearItem()
                                 }
                             }
                         }

@@ -29,6 +29,7 @@
 
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "APMParameterLoader.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
@@ -88,6 +89,7 @@ public:
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
     virtual void initializeVehicle(Vehicle* vehicle);
     virtual bool sendHomePositionToVehicle(void);
+    virtual ParameterLoader* getParameterLoader(AutoPilotPlugin *autopilotPlugin, Vehicle* vehicle);
 
 protected:
     /// All access to singleton is through stack specific implementation
@@ -101,7 +103,7 @@ private:
     APMFirmwareVersion      _firmwareVersion;
     bool                    _textSeverityAdjustmentNeeded;
     QList<APMCustomMode>    _supportedModes;
-
+    APMParameterLoader*     _parameterLoader;
 };
 
 #endif
