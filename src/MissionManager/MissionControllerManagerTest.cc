@@ -92,8 +92,5 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
 void MissionControllerManagerTest::_checkInProgressValues(bool inProgress)
 {
     QCOMPARE(_missionManager->inProgress(), inProgress);
-    QSignalSpy* spy = _multiSpyMissionManager->getSpyByIndex(inProgressChangedSignalIndex);
-    QList<QVariant> signalArgs = spy->takeFirst();
-    QCOMPARE(signalArgs.count(), 1);
-    QCOMPARE(signalArgs[0].toBool(), inProgress);
+    QCOMPARE(_multiSpyMissionManager->pullBoolFromSignalIndex(inProgressChangedSignalIndex), inProgress);
 }
