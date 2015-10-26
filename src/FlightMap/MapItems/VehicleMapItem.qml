@@ -33,8 +33,9 @@ import QGroundControl.Vehicle       1.0
 
 /// Marker for displaying a vehicle location on the map
 MapQuickItem {
-    property var    vehicle             ///< Vehicle object
-    property bool   isSatellite: false  ///< true: satellite map is showing
+    property var    vehicle                ///< Vehicle object
+    property bool   isSatellite:    false  ///< true: satellite map is showing
+    property real   size:           ScreenTools.defaultFontPixelHeight * 5
 
     anchorPoint.x:  vehicleIcon.width  / 2
     anchorPoint.y:  vehicleIcon.height / 2
@@ -44,7 +45,7 @@ MapQuickItem {
         id:         vehicleIcon
         source:     isSatellite ? "/qmlimages/airplaneOpaque.svg" : "/qmlimages/airplaneOutline.svg"
         mipmap:     true
-        width:      ScreenTools.defaultFontPixelHeight * 5
+        width:      size
         fillMode:   Image.PreserveAspectFit
 
         transform: Rotation {

@@ -49,7 +49,7 @@ Map {
     property bool   interactive:        true
     property string mapName:            'defaultMap'
     property string mapType:            QGroundControl.flightMapSettings.mapTypeForMapName(mapName)
-    property alias  mapWidgets:         controlWidgets
+//  property alias  mapWidgets:         controlWidgets
     property bool   isSatelliteMap:     mapType == "Satellite Map" || mapType == "Hybrid Map"
 
     property real   lon: (longitude >= -180 && longitude <= 180) ? longitude : 0
@@ -80,6 +80,7 @@ Map {
         }
     }
 
+/*********************************************
     /// Map control widgets
     Column {
         id:                 controlWidgets
@@ -151,6 +152,7 @@ Map {
             }
         } // Row - +/- buttons
     } // Column - Map control widgets
+*********************************************/
 
 /*
  The slider and scale display are commented out for now to try to save real estate - DonLakeFlyer
