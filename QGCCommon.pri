@@ -73,6 +73,7 @@ MobileBuild {
 
 exists ($$PWD/.git) {
   GIT_DESCRIBE = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
+  message(QGroundControl version $${GIT_DESCRIBE})
 } else {
   GIT_DESCRIBE = None
 }

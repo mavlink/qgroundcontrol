@@ -26,6 +26,7 @@
 
 #include "APMFirmwarePlugin.h"
 #include "Generic/GenericFirmwarePlugin.h"
+#include "AutoPilotPlugins/APM/APMAutoPilotPlugin.h"    // FIXME: Hack
 #include "QGCMAVLink.h"
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
@@ -138,8 +139,9 @@ QString APMCustomMode::modeString() const
     return mode;
 }
 
-APMFirmwarePlugin::APMFirmwarePlugin(QObject* parent) :
-    FirmwarePlugin(parent)
+APMFirmwarePlugin::APMFirmwarePlugin(QObject* parent)
+    : FirmwarePlugin(parent)
+    , _parameterLoader(NULL)
 {
      _textSeverityAdjustmentNeeded = false;
 }
@@ -383,4 +385,20 @@ bool APMFirmwarePlugin::sendHomePositionToVehicle(void)
 {
     // APM stack wants the home position sent in the first position
     return true;
+}
+
+ParameterLoader* APMFirmwarePlugin::getParameterLoader(AutoPilotPlugin* autopilotPlugin, Vehicle* vehicle)
+{
+    if (!_parameterLoader) {
+        _parameterLoader = new APMParameterLoader(autopilotPlugin, vehicle, this);
+        Q_CHECK_PTR(_parameterLoader);
+
+        // FIXME: Why do I need SIGNAL/SLOT to make this work
+        connect(_parameterLoader, SIGNAL(parametersReady(bool)),                autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
+        connect(_parameterLoader, &APMParameterLoader::parameterListProgress,   autopilotPlugin, &APMAutoPilotPlugin::parameterListProgress);
+
+        _parameterLoader->loadParameterFactMetaData();
+    }
+
+    return _parameterLoader;
 }

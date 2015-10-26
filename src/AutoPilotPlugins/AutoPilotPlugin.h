@@ -38,6 +38,7 @@
 
 class ParameterLoader;
 class Vehicle;
+class FirmwarePlugin;
 
 /// This is the base class for AutoPilot plugins
 ///
@@ -132,20 +133,18 @@ protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
     AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
     
-	/// Returns the ParameterLoader
-	virtual ParameterLoader* _getParameterLoader(void) = 0;
-	
-    Vehicle*    _vehicle;
-    bool        _parametersReady;
-    bool        _missingParameters;
-	bool		_setupComplete;
+    Vehicle*        _vehicle;
+    FirmwarePlugin* _firmwarePlugin;
+    bool            _parametersReady;
+    bool            _missingParameters;
+    bool            _setupComplete;
 	
 private slots:
 	void _uasDisconnected(void);
 	void _parametersReadyChanged(bool parametersReady);
 	
 private:
-	void _recalcSetupComplete(void);
+	void _recalcSetupComplete(void);    
 };
 
 #endif

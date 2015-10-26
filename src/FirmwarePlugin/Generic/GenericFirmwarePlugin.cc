@@ -25,13 +25,15 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "GenericFirmwarePlugin.h"
+#include "AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h"    // FIXME: Hack
 
 #include <QDebug>
 
 IMPLEMENT_QGC_SINGLETON(GenericFirmwarePlugin, FirmwarePlugin)
 
-GenericFirmwarePlugin::GenericFirmwarePlugin(QObject* parent) :
-    FirmwarePlugin(parent)
+GenericFirmwarePlugin::GenericFirmwarePlugin(QObject* parent)
+    : FirmwarePlugin(parent)
+    , _parameterLoader(NULL)
 {
     
 }
@@ -117,4 +119,18 @@ bool GenericFirmwarePlugin::sendHomePositionToVehicle(void)
     // Subsequent sequence numbers must be adjusted.
     // This is the mavlink spec default.
     return false;
+}
+
+ParameterLoader* GenericFirmwarePlugin::getParameterLoader(AutoPilotPlugin* autopilotPlugin, Vehicle* vehicle)
+{
+    if (!_parameterLoader) {
+        _parameterLoader = new GenericParameterLoader(autopilotPlugin, vehicle, this);
+        Q_CHECK_PTR(_parameterLoader);
+
+        // FIXME: Why do I need SIGNAL/SLOT to make this work
+        connect(_parameterLoader, SIGNAL(parametersReady(bool)),                    autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
+        connect(_parameterLoader, &GenericParameterLoader::parameterListProgress,   autopilotPlugin, &GenericAutoPilotPlugin::parameterListProgress);
+    }
+
+    return _parameterLoader;
 }
