@@ -21,37 +21,35 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
+import QtQuick                      2.4
+import QtQuick.Controls             1.3
 
-import QtQuick          2.4
-import QtLocation       5.3
-import QtPositioning    5.3
-
+import QGroundControl               1.0
+import QGroundControl.FlightDisplay 1.0
+import QGroundControl.FlightMap     1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
+import QGroundControl.Controllers   1.0
 
-/// Marker for displaying a vehicle location on the map
-MapQuickItem {
-    property var    vehicle                ///< Vehicle object
-    property bool   isSatellite:    false  ///< true: satellite map is showing
-    property real   size:           ScreenTools.defaultFontPixelHeight * 5
 
-    anchorPoint.x:  vehicleIcon.width  / 2
-    anchorPoint.y:  vehicleIcon.height / 2
-    visible:        vehicle.coordinateValid
+QGCVideoBackground {
+    anchors.fill:   parent
+    display:        _controller.videoSurface
+    receiver:       _controller.videoReceiver
 
-    sourceItem: Image {
-        id:         vehicleIcon
-        source:     isSatellite ? "/qmlimages/airplaneOpaque.svg" : "/qmlimages/airplaneOutline.svg"
-        mipmap:     true
-        width:      size
-        fillMode:   Image.PreserveAspectFit
-
-        transform: Rotation {
-            origin.x:   vehicleIcon.width  / 2
-            origin.y:   vehicleIcon.height / 2
-            angle:      vehicle.heading
-        }
+    /* TODO: Come up with a way to make this an option
+    QGCAttitudeHUD {
+        id:                 attitudeHUD
+        visible:            !_mainIsMap
+        rollAngle:          _roll
+        pitchAngle:         _pitch
+        width:              ScreenTools.defaultFontPixelSize * (30)
+        height:             ScreenTools.defaultFontPixelSize * (30)
+        active:             multiVehicleManager.activeVehicleAvailable
+        z:                  QGroundControl.zOrderWidgets
     }
+    */
+
 }
