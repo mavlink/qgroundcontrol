@@ -47,8 +47,11 @@ _ui(new Ui::SettingsDialog)
     _ui->setupUi(this);
 
     // Center the window on the screen.
+    QDesktopWidget *desktop = QApplication::desktop();
+    int screen = desktop->screenNumber(parent);
+
     QRect position = frameGeometry();
-    position.moveCenter(QApplication::desktop()->availableGeometry().center());
+    position.moveCenter(QApplication::desktop()->availableGeometry(screen).center());
     move(position.topLeft());
 
     QGCLinkConfiguration*  pLinkConf     = new QGCLinkConfiguration(this);
