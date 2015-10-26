@@ -28,7 +28,9 @@
 UT_REGISTER_TEST(MissionControllerTest)
 
 MissionControllerTest::MissionControllerTest(void)
-    : _missionController(NULL)
+    : _multiSpyMissionController(NULL)
+    , _multiSpyMissionItem(NULL)
+    , _missionController(NULL)
 {
     
 }
@@ -37,6 +39,12 @@ void MissionControllerTest::cleanup(void)
 {
     delete _missionController;
     _missionController = NULL;
+
+    delete _multiSpyMissionController;
+    _multiSpyMissionController = NULL;
+
+    delete _multiSpyMissionItem;
+    _multiSpyMissionItem = NULL;
 
     MissionControllerManagerTest::cleanup();
 }
@@ -47,10 +55,20 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 
     MissionControllerManagerTest::_initForFirmwareType(firmwareType);
 
-    _rgSignals[missionItemsChangedSignalIndex] =                SIGNAL(missionItemsChanged());
-    _rgSignals[waypointLinesChangedSignalIndex] =               SIGNAL(waypointLinesChanged());
-    _rgSignals[liveHomePositionAvailableChangedSignalIndex] =   SIGNAL(liveHomePositionAvailableChanged(bool));
-    _rgSignals[liveHomePositionChangedSignalIndex] =            SIGNAL(liveHomePositionChanged(const QGeoCoordinate&));
+    void coordinateChanged(const QGeoCoordinate& coordinate);
+    void headingDegreesChanged(double heading);
+    void dirtyChanged(bool dirty);
+    void homePositionValidChanged(bool homePostionValid);
+
+    // MissionItem signals
+    _rgMissionItemSignals[coordinateChangedSignalIndex] =           SIGNAL(coordinateChanged(const QGeoCoordinate&));
+    _rgMissionItemSignals[homePositionValidChangedSignalIndex] =    SIGNAL(homePositionValidChanged(bool));
+
+    // MissionController signals
+    _rgMissionControllerSignals[missionItemsChangedSignalIndex] =               SIGNAL(missionItemsChanged());
+    _rgMissionControllerSignals[waypointLinesChangedSignalIndex] =              SIGNAL(waypointLinesChanged());
+    _rgMissionControllerSignals[liveHomePositionAvailableChangedSignalIndex] =  SIGNAL(liveHomePositionAvailableChanged(bool));
+    _rgMissionControllerSignals[liveHomePositionChangedSignalIndex] =           SIGNAL(liveHomePositionChanged(const QGeoCoordinate&));
 
     if (!_missionController) {
         startController = true;
@@ -58,17 +76,17 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
         Q_CHECK_PTR(_missionController);
     }
 
-    _multiSpy = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpy);
-    QCOMPARE(_multiSpy->init(_missionController, _rgSignals, _cSignals), true);
+    _multiSpyMissionController = new MultiSignalSpy();
+    Q_CHECK_PTR(_multiSpyMissionController);
+    QCOMPARE(_multiSpyMissionController->init(_missionController, _rgMissionControllerSignals, _cMissionControllerSignals), true);
 
     if (startController) {
         _missionController->start(false /* editMode */);
     }
 
     // All signals should some through on start
-    QCOMPARE(_multiSpy->checkOnlySignalsByMask(missionItemsChangedSignalMask | waypointLinesChangedSignalMask | liveHomePositionAvailableChangedSignalMask | liveHomePositionChangedSignalMask), true);
-    _multiSpy->clearAllSignals();
+    QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(missionItemsChangedSignalMask | waypointLinesChangedSignalMask | liveHomePositionAvailableChangedSignalMask | liveHomePositionChangedSignalMask), true);
+    _multiSpyMissionController->clearAllSignals();
 
     QmlObjectListModel* missionItems = _missionController->missionItems();
     QVERIFY(missionItems);
@@ -76,10 +94,11 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     // Empty vehicle only has home position
     QCOMPARE(missionItems->count(), 1);
 
-    // Home position should be in first slot
+    // Home position should be in first slot, but not yet valid
     MissionItem* homeItem = qobject_cast<MissionItem*>(missionItems->get(0));
     QVERIFY(homeItem);
     QCOMPARE(homeItem->homePosition(), true);
+    QCOMPARE(homeItem->homePositionValid(), false);
 
     // Home should have no children
     QCOMPARE(homeItem->childItems()->count(), 0);
@@ -111,23 +130,31 @@ void MissionControllerTest::_testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType)
     MissionItem* homeItem = qobject_cast<MissionItem*>(missionItems->get(0));
     QVERIFY(homeItem);
 
+    _setupMissionItemSignals(homeItem);
+
     if (expectedHomePositionValid) {
         // Wait for the home position to show up
 
         if (!_missionController->liveHomePositionAvailable()) {
-            QVERIFY(_multiSpy->waitForSignalByIndex(liveHomePositionChangedSignalIndex, 2000));
-
-            // Once the home position shows up we get a number of addititional signals
-            QCOMPARE(_multiSpy->checkOnlySignalsByMask(liveHomePositionChangedSignalMask | liveHomePositionAvailableChangedSignalMask | waypointLinesChangedSignalMask), true);
-
-            // These should be signalled once
-            QCOMPARE(_multiSpy->checkSignalByMask(liveHomePositionChangedSignalMask | liveHomePositionAvailableChangedSignalMask), true);
-
-            // Waypoint lines get spit out multiple tiems
-            QCOMPARE(_multiSpy->checkSignalByMask(waypointLinesChangedSignalMask), false);
-
-            _multiSpy->clearAllSignals();
+            QVERIFY(_multiSpyMissionController->waitForSignalByIndex(liveHomePositionAvailableChangedSignalIndex, 2000));
+            QCOMPARE(_multiSpyMissionController->pullBoolFromSignalIndex(liveHomePositionAvailableChangedSignalIndex), true);
         }
+
+        if (!homeItem->homePositionValid()) {
+            QVERIFY(_multiSpyMissionItem->waitForSignalByIndex(homePositionValidChangedSignalIndex, 2000));
+            QCOMPARE(_multiSpyMissionItem->pullBoolFromSignalIndex(homePositionValidChangedSignalIndex), true);
+        }
+
+        // Once the home position shows up we get a number of addititional signals
+
+        QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(liveHomePositionChangedSignalMask | liveHomePositionAvailableChangedSignalMask | waypointLinesChangedSignalMask), true);
+        QCOMPARE(_multiSpyMissionController->checkSignalByMask(liveHomePositionChangedSignalMask | liveHomePositionAvailableChangedSignalMask), true);
+        QCOMPARE(_multiSpyMissionController->checkSignalByMask(waypointLinesChangedSignalMask), false);
+
+        QCOMPARE(_multiSpyMissionItem->checkSignalByMask(homePositionValidChangedSignalMask), true);
+
+        _multiSpyMissionController->clearAllSignals();
+        _multiSpyMissionItem->clearAllSignals();
     }
 
     QCOMPARE(homeItem->homePositionValid(), expectedHomePositionValid);
@@ -153,7 +180,7 @@ void MissionControllerTest::_testAddWaypointWorker(MAV_AUTOPILOT firmwareType)
 
     _missionController->addMissionItem(coordinate);
 
-    QCOMPARE(_multiSpy->checkOnlySignalsByMask(waypointLinesChangedSignalMask), true);
+    QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(waypointLinesChangedSignalMask), true);
 
     QmlObjectListModel* missionItems = _missionController->missionItems();
     QVERIFY(missionItems);
@@ -215,4 +242,13 @@ void MissionControllerTest::_testOfflineToOnlineAPM(void)
 void MissionControllerTest::_testOfflineToOnlinePX4(void)
 {
     _testOfflineToOnlineWorker(MAV_AUTOPILOT_PX4);
+}
+
+void MissionControllerTest::_setupMissionItemSignals(MissionItem* item)
+{
+    delete _multiSpyMissionItem;
+
+    _multiSpyMissionItem = new MultiSignalSpy();
+    Q_CHECK_PTR(_multiSpyMissionItem);
+    QCOMPARE(_multiSpyMissionItem->init(item, _rgMissionItemSignals, _cMissionItemSignals), true);
 }
