@@ -34,13 +34,15 @@ import QGroundControl.Controls 1.0
 Rectangle {
     property real pitchAngle:       0
     property real rollAngle:        0
-    property real size:             100
+    property real size:             _defaultSize
     property real _reticleHeight:   1
     property real _reticleSpacing:  size * 0.15
     property real _reticleSlot:     _reticleSpacing + _reticleHeight
     property real _longDash:        size * 0.40
     property real _shortDash:       size * 0.25
-    property real _fontSize:        ScreenTools.defaultFontPixelSize * (size / 100)
+    property real _fontSize:        ScreenTools.defaultFontPixelSize * (size / _defaultSize)
+
+    property real _defaultSize:     ScreenTools.isAndroid ? 300 : 100
 
     height: size * 0.9
     width:  size

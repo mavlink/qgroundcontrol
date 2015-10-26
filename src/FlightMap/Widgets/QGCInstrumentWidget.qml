@@ -52,14 +52,14 @@ Item {
         anchors.right:      parent.right
         anchors.bottom:     parent.bottom
         height:             root.size
-        width:              instruments.width + 8
+        width:              instruments.width + ScreenTools.defaultFontPixelSize
         radius:             root.size / 2
         visible:            _isVisible
         color:              isSatellite ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
         Row {
             id:                 instruments
             height:             parent.height
-            spacing:            4
+            spacing:            ScreenTools.defaultFontPixelSize / 2
             anchors.horizontalCenter:   parent.horizontalCenter
             QGCAttitudeWidget {
                 id:             attitude
@@ -87,9 +87,9 @@ Item {
         id:                 openButton
         anchors.right:      parent.right
         anchors.bottom:     parent.bottom
-        height:             24
-        width:              24
-        radius:             4
+        height:             ScreenTools.defaultFontPixelSize * 2
+        width:              ScreenTools.defaultFontPixelSize * 2
+        radius:             ScreenTools.defaultFontPixelSize / 3
         visible:            !_isVisible
         color:              isSatellite ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
         Image {
