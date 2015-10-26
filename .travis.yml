@@ -89,7 +89,7 @@ script:
   - echo -en 'travis_fold:end:script.1\\r'
   - echo 'Running unittests' && echo -en 'travis_fold:start:script.2\\r'
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol --unittest; fi
-  - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
+- if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest:MissionManagerTest --logging:MissionManagerLog; fi
   - echo -en 'travis_fold:end:script.2\\r'
 
 deploy:
