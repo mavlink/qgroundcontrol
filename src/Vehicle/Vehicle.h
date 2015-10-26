@@ -305,6 +305,7 @@ private slots:
     void _sendMessageMultipleNext(void);
     void _addNewMapTrajectoryPoint(void);
     void _parametersReady(bool parametersReady);
+    void _communicationInactivityTimedOut(void);
 
     void _handleTextMessage                 (int newCount);
     /** @brief Attitude from main autopilot / system state */
@@ -434,10 +435,15 @@ private:
     QGeoCoordinate      _mapTrajectoryLastCoordinate;
     bool                _mapTrajectoryHaveFirstCoordinate;
     static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
+
+    QTimer              _communicationInactivityTimer;
+    int                 _communicationInactivityTimeoutMSecs;
+    static const int    _communicationInactivityTimeoutMSecsDefault = 30 * 1000;
     
     // Settings keys
     static const char* _settingsGroup;
     static const char* _joystickModeSettingsKey;
     static const char* _joystickEnabledSettingsKey;
+    static const char* _communicationInactivityKey;
 };
 #endif
