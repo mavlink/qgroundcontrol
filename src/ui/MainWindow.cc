@@ -238,16 +238,8 @@ MainWindow::MainWindow()
     }
 
     // Make sure the proper fullscreen/normal menu item is checked properly.
-    if (isFullScreen())
-    {
-        _ui.actionFullscreen->setChecked(true);
-        _ui.actionNormal->setChecked(false);
-    }
-    else
-    {
-        _ui.actionFullscreen->setChecked(false);
-        _ui.actionNormal->setChecked(true);
-    }
+    _ui.actionFullscreen->setChecked(isFullScreen());
+    _ui.actionNormal->setChecked(!isFullScreen());
 
     // And that they will stay checked properly after user input
     connect(_ui.actionFullscreen, &QAction::triggered, this, &MainWindow::fullScreenActionItemCallback);
