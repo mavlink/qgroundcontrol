@@ -71,6 +71,9 @@ public:
     bool waitForSignalByIndex(quint16 index, int msec);
     
     QSignalSpy* getSpyByIndex(quint16 index);
+
+    /// Returns the boolean value for a signal which has a single bool param
+    bool pullBoolFromSignalIndex(quint16 index);
     
 private:
     // QObject overrides
