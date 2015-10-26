@@ -389,6 +389,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = pInfoView;
     } else {
         qWarning() << "Attempt to create unknown Inner Dock Widget" << widgetName;
+	return;
     }
     
     _mapName2DockWidget[widgetName] = widget;
