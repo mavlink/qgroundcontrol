@@ -77,12 +77,14 @@
         <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
         <file alias="FlightDisplayWidget.qml">src/FlightDisplay/FlightDisplayWidget.qml</file>
         <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
+        <file alias="MissionEditorHelp.qml">src/MissionEditor/MissionEditorHelp.qml</file>
 
         <!-- FlightDisplay module -->
         <file alias="QGroundControl/FlightDisplay/qmldir">src/FlightDisplay/qmldir</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
-        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewDelayLoadInner.qml">src/FlightDisplay/FlightDisplayViewDelayLoadInner.qml</file>
-        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewDelayLoadOuter.qml">src/FlightDisplay/FlightDisplayViewDelayLoadOuter.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewMap.qml">src/FlightDisplay/FlightDisplayViewMap.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">src/FlightDisplay/FlightDisplayViewVideo.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewWidgets.qml">src/FlightDisplay/FlightDisplayViewWidgets.qml</file>
 
         <!-- FlightMap module -->
         <file alias="QGroundControl/FlightMap/qmldir">src/FlightMap/qmldir</file>
@@ -96,6 +98,7 @@
         <file alias="QGroundControl/FlightMap/QGCCompassHUD.qml">src/FlightMap/Widgets/QGCCompassHUD.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCurrentAltitude.qml">src/FlightMap/Widgets/QGCCurrentAltitude.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCurrentSpeed.qml">src/FlightMap/Widgets/QGCCurrentSpeed.qml</file>
+        <file alias="QGroundControl/FlightMap/QGCInstrumentWidget.qml">src/FlightMap/Widgets/QGCInstrumentWidget.qml</file>
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/QGCSlider.qml">src/FlightMap/Widgets/QGCSlider.qml</file>
         <file alias="QGroundControl/FlightMap/QGCSpeedWidget.qml">src/FlightMap/Widgets/QGCSpeedWidget.qml</file>

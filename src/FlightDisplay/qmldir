@@ -1,6 +1,4 @@
 Module QGroundControl.FlightDisplay
 
-FlightDisplayView               1.0 FlightDisplayView.qml
-FlightDisplayViewDelayLoadInner 1.0 FlightDisplayViewDelayLoadInner.qml
-FlightDisplayViewDelayLoadOuter 1.0 FlightDisplayViewDelayLoadOuter.qml
+FlightDisplayView           1.0 FlightDisplayView.qml
 

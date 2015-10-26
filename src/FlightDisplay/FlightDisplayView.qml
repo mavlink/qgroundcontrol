@@ -41,16 +41,6 @@ import QGroundControl.Controllers   1.0
 Item {
     id: root
 
-    property alias latitude: flightMap.latitude
-    property alias longitude: flightMap.longitude
-
-    // Top margin for all widgets. Used to prevent overlap with the toolbar
-    property real   topMargin: 0
-
-    // Used by parent to hide widgets when it displays something above in the z order.
-    // Prevents z order drawing problems.
-    property bool hideWidgets: false
-
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     property var _activeVehicle: multiVehicleManager.activeVehicle
@@ -64,145 +54,117 @@ Item {
     readonly property real _defaultAirSpeed:            0
     readonly property real _defaultClimbRate:           0
 
-    readonly property string _mapName:              "FlightDisplayView"
-    readonly property string _showMapBackgroundKey: "/showMapBackground"
+    readonly property string _mapName:                  "FlightDisplayView"
+    readonly property string _showMapBackgroundKey:     "/showMapBackground"
 
-    readonly property var _flightMap: flightMap
+    property bool _mainIsMap:           !_controller.hasVideo
 
-    property real _roll:                _activeVehicle ? (isNaN(_activeVehicle.roll) ? _defaultRoll : _activeVehicle.roll) : _defaultRoll
-    property real _pitch:               _activeVehicle ? (isNaN(_activeVehicle.pitch) ? _defaultPitch : _activeVehicle.pitch) : _defaultPitch
+    property real _roll:                _activeVehicle ? (isNaN(_activeVehicle.roll)    ? _defaultRoll    : _activeVehicle.roll)    : _defaultRoll
+    property real _pitch:               _activeVehicle ? (isNaN(_activeVehicle.pitch)   ? _defaultPitch   : _activeVehicle.pitch)   : _defaultPitch
     property real _heading:             _activeVehicle ? (isNaN(_activeVehicle.heading) ? _defaultHeading : _activeVehicle.heading) : _defaultHeading
 
     property var  _vehicleCoordinate:   _activeVehicle ? (_activeVehicle.coordinateValid ? _activeVehicle.coordinate : _defaultVehicleCoordinate) : _defaultVehicleCoordinate
 
     property real _altitudeWGS84:       _activeVehicle ? _activeVehicle.altitudeWGS84 : _defaultAltitudeWGS84
-    property real _groundSpeed:         _activeVehicle ? _activeVehicle.groundSpeed : _defaultGroundSpeed
-    property real _airSpeed:            _activeVehicle ? _activeVehicle.airSpeed : _defaultAirSpeed
-    property real _climbRate:           _activeVehicle ? _activeVehicle.climbRate : _defaultClimbRate
+    property real _groundSpeed:         _activeVehicle ? _activeVehicle.groundSpeed   : _defaultGroundSpeed
+    property real _airSpeed:            _activeVehicle ? _activeVehicle.airSpeed      : _defaultAirSpeed
+    property real _climbRate:           _activeVehicle ? _activeVehicle.climbRate     : _defaultClimbRate
 
-    property bool _showMap: getBool(QGroundControl.flightMapSettings.loadMapSetting(flightMap.mapName, _showMapBackgroundKey, "1"))
+    property var  _flightMap:           null
+    property var  _flightVideo:         null
+    property var  _savedZoomLevel:      0
 
     FlightDisplayViewController { id: _controller }
 
     MissionController {
         id: _missionController
-
         Component.onCompleted: start(false /* editMode */)
     }
 
-    ExclusiveGroup {
-        id: _dropButtonsExclusiveGroup
+    function reloadContents() {
+        if(_flightVideo) {
+            _flightVideo.visible = false
+        }
+        if(_mainIsMap) {
+            mainLoader.source   = "FlightDisplayViewMap.qml"
+            pipLoader.source    = "FlightDisplayViewVideo.qml"
+        } else {
+            mainLoader.source   = "FlightDisplayViewVideo.qml"
+            pipLoader.source    = "FlightDisplayViewMap.qml"
+        }
     }
 
-    // Validate _showMap setting
     Component.onCompleted: {
-        delayLoader.source = "FlightDisplayViewDelayLoadOuter.qml"
-
-        // We have to be careful to not reference root properties in a function which is in a subcomponent
-        // until the root component has completed loading. Otherwise you get undefined references.
-        flightMap.rootLoadCompleted = true
-        flightMap.updateMapPosition(true /* force */)
-        _setShowMap(_showMap)
+        reloadContents();
+        widgetsLoader.source    = "FlightDisplayViewWidgets.qml"
     }
 
-    function getBool(value) {
-        return value === '0' ? false : true;
-    }
-
-    function setBool(value) {
-        return value ? "1" : "0";
-    }
-
-    function _setShowMap(showMap) {
-        _showMap = _controller.hasVideo ? showMap : true
-        QGroundControl.flightMapSettings.saveMapSetting(flightMap.mapName, _showMapBackgroundKey, setBool(_showMap))
-    }
-
-    FlightMap {
-        id:             flightMap
-        anchors.fill:   parent
-        mapName:        _mapName
-        visible:        _showMap
-        latitude:       root._defaultCoordinate.latitude
-        longitude:      root._defaultCoordinate.longitude
-
-        property var rootVehicleCoordinate: _vehicleCoordinate
-        property bool rootLoadCompleted: false
-
-        property bool _followVehicle: true
-
-        onRootVehicleCoordinateChanged: updateMapPosition(false /* force */)
-
-        Component.onCompleted: flightMapDelayLoader.source = "FlightDisplayViewDelayLoadInner.qml"
-
-        function updateMapPosition(force) {
-            if ((_followVehicle || force) && rootLoadCompleted) {
-                flightMap.latitude = root._vehicleCoordinate.latitude
-                flightMap.longitude = root._vehicleCoordinate.longitude
+    //-- Main Window
+    Loader {
+        id:                 mainLoader
+        anchors.fill:       parent
+        onLoaded: {
+            if(_mainIsMap) {
+                _flightMap   = item
+                if(_savedZoomLevel != 0)
+                    _flightMap.zoomLevel = _savedZoomLevel
+                else
+                    _savedZoomLevel = _flightMap.zoomLevel
+                _flightMap.updateMapPosition(true /* force */)
+            } else {
+                _flightVideo = item
+                _flightVideo.visible = true
             }
         }
-        // Home position
-        MissionItemIndicator {
-            label:          "H"
-            coordinate:     (_activeVehicle && _activeVehicle.homePositionAvailable) ? _activeVehicle.homePosition : QtPositioning.coordinate(0, 0)
-            visible:        _activeVehicle ? _activeVehicle.homePositionAvailable : false
-            z:              QGroundControl.zOrderMapItems
+    }
+
+    //-- PIP Window
+    Rectangle {
+        id:                 pip
+        visible:            _controller.hasVideo
+        anchors.margins:    ScreenTools.defaultFontPixelHeight
+        anchors.left:       parent.left
+        anchors.bottom:     parent.bottom
+        height:             ScreenTools.defaultFontPixelSize * (9)
+        width:              ScreenTools.defaultFontPixelSize * (9) * (16/9)
+        color:              "#000010"
+        border.width:       4
+        radius:             4
+        border.color: {
+            if(_mainIsMap && _flightMap != null)
+                return _flightMap.isSatelliteMap ? Qt.rgba(1,1,1,0.75) :  Qt.rgba(0,0,0,0.75)
+            else
+                return Qt.rgba(0,0,0,0.75)
         }
-
-        // Add trajectory points to the map
-        MapItemView {
-            model: multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.trajectoryPoints : 0
-
-            delegate:
-                MapPolyline {
-                    line.width: 3
-                    line.color: "orange"
-                    z:          QGroundControl.zOrderMapItems - 1
-
-
-                    path: [
-                        { latitude: object.coordinate1.latitude, longitude: object.coordinate1.longitude },
-                        { latitude: object.coordinate2.latitude, longitude: object.coordinate2.longitude },
-                    ]
-                }
-        }
-
-        // Add the vehicles to the map
-        MapItemView {
-            model: multiVehicleManager.vehicles
-
-            delegate:
-                VehicleMapItem {
-                        vehicle:        object
-                        coordinate:     object.coordinate
-                        isSatellite:    flightMap.isSatelliteMap
-                        z:              QGroundControl.zOrderMapItems
-                }
-        }
-
-        // Add the mission items to the map
-        MissionItemView {
-            model:          _missionController.missionItems
-        }
-
-        // Add lines between waypoints
-        MissionLineView {
-            model:          _missionController.waypointLines
-        }
-
         Loader {
-            id:             flightMapDelayLoader
-            anchors.fill:   parent
+            id:                 pipLoader
+            anchors.fill:       parent
+            anchors.margins:    2
+            onLoaded: {
+                if(_mainIsMap) {
+                    _flightVideo = item
+                    _flightVideo.visible = true
+                } else {
+                    _flightMap = item
+                    _savedZoomLevel = _flightMap.zoomLevel
+                    _flightMap.zoomLevel = _savedZoomLevel - 3
+                }
+                pip.visible = _controller.hasVideo
+            }
         }
-
-        // Used to make pinch zoom work
         MouseArea {
             anchors.fill: parent
+            onClicked: {
+                _mainIsMap = !_mainIsMap
+                pip.visible = false
+                reloadContents();
+            }
         }
-    } // Flight Map
+    }
 
+    //-- Widgets
     Loader {
-        id:             delayLoader
-        anchors.fill:   parent
+        id:                 widgetsLoader
+        anchors.fill:       parent
     }
 }
