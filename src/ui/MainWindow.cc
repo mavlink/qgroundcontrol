@@ -373,14 +373,30 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
     QAction *action = _mapName2Action[widgetName];
     
     switch(action->data().toInt()) {
-    case MAVLINK_INSPECTOR: widget = new QGCMAVLinkInspector(widgetName, action, MAVLinkProtocol::instance(),this); break;
-    case CUSTOM_COMMAND:    widget = new CustomCommandWidget(widgetName, action, this); break;
-    case ONBOARD_FILES:     widget = new QGCUASFileViewMulti(widgetName, action, this); break;
-    case STATUS_DETAILS:    widget = new UASInfoWidget(widgetName, action, this); break;
-    case PRIMARY_FLIGHT_DISPLAY: widget = new FlightDisplayWidget(widgetName, action, this); break;
-    case HIL_CONFIG:        widget = new HILDockWidget(widgetName, action, this); break;
-    case ANALYZE:           widget = new Linecharts(widgetName, action, mavlinkDecoder, this); break;
-    case INFO_VIEW:         widget= new QGCTabbedInfoView(widgetName, action, this); break;
+        case MAVLINK_INSPECTOR:
+            widget = new QGCMAVLinkInspector(widgetName, action, MAVLinkProtocol::instance(),this);
+            break;
+        case CUSTOM_COMMAND:
+            widget = new CustomCommandWidget(widgetName, action, this);
+            break;
+        case ONBOARD_FILES:
+            widget = new QGCUASFileViewMulti(widgetName, action, this);
+            break;
+        case STATUS_DETAILS:
+            widget = new UASInfoWidget(widgetName, action, this);
+            break;
+        case PRIMARY_FLIGHT_DISPLAY:
+            widget = new FlightDisplayWidget(widgetName, action, this);
+            break;
+        case HIL_CONFIG:
+            widget = new HILDockWidget(widgetName, action, this);
+            break;
+        case ANALYZE:
+            widget = new Linecharts(widgetName, action, mavlinkDecoder, this);
+            break;
+        case INFO_VIEW:
+            widget= new QGCTabbedInfoView(widgetName, action, this);
+            break;
     }
 
     if(action->data().toInt() == INFO_VIEW) {
