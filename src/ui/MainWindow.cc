@@ -406,7 +406,7 @@ void MainWindow::_showDockWidgetAction(bool show)
 {
     QAction* action = qobject_cast<QAction*>(QObject::sender());
     Q_ASSERT(action);
-    _showDockWidget(action->text(), show);
+    _showDockWidget(action->data().toString(), show);
 }
 #endif
 
