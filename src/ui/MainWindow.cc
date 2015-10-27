@@ -412,11 +412,15 @@ void MainWindow::_showDockWidgetAction(bool show)
 
 void MainWindow::fullScreenActionItemCallback(bool)
 {
+    if (!_ui.actionFullscreen->isChecked())
+        _ui.actionFullscreen->setChecked(true);
     _ui.actionNormal->setChecked(false);
 }
 
 void MainWindow::normalActionItemCallback(bool)
 {
+    if (!_ui.actionNormal->isChecked())
+        _ui.actionNormal->setChecked(true);
     _ui.actionFullscreen->setChecked(false);
 }
 
