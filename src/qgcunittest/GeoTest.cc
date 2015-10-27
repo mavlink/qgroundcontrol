@@ -38,7 +38,7 @@ GeoTest::GeoTest(void)
 }
 */
 
-void GeoTest::_convertGeoToEnu_test(void)
+void GeoTest::_convertGeoToNed_test(void)
 {
     QGeoCoordinate coord(47.364869, 8.594398, 0.0);
 
@@ -47,31 +47,31 @@ void GeoTest::_convertGeoToEnu_test(void)
     double expectedZ = 0;
 
     double x, y, z;
-    convertGeoToEnu(coord, _origin, &x, &y, &z);
+    convertGeoToNed(coord, _origin, &x, &y, &z);
 
     QCOMPARE(x, expectedX);
     QCOMPARE(y, expectedY);
     QCOMPARE(z, expectedZ);
 }
 
-void GeoTest::_convertGeoToEnuAtOrigin_test(void)
+void GeoTest::_convertGeoToNedAtOrigin_test(void)
 {
     QGeoCoordinate coord(_origin);
     coord.setAltitude(10.0); // offset altitude to test z
 
     double expectedX = 0.0;
     double expectedY = 0.0;
-    double expectedZ = 10.0;
+    double expectedZ = -10.0;
 
     double x, y, z;
-    convertGeoToEnu(coord, _origin, &x, &y, &z);
+    convertGeoToNed(coord, _origin, &x, &y, &z);
 
     QCOMPARE(x, expectedX);
     QCOMPARE(y, expectedY);
     QCOMPARE(z, expectedZ);
 }
 
-void GeoTest::_convertEnuToGeo_test(void)
+void GeoTest::_convertNedToGeo_test(void)
 {
     double x = -1281.152128182419801305514;
     double y = 3486.949719522415307437768;
@@ -82,14 +82,14 @@ void GeoTest::_convertEnuToGeo_test(void)
     double expectedAlt = 0.0;
 
     QGeoCoordinate coord;
-    convertEnuToGeo(x, y, z, _origin, &coord);
+    convertNedToGeo(x, y, z, _origin, &coord);
 
     QCOMPARE(coord.latitude(), expectedLat);
     QCOMPARE(coord.longitude(), expectedLon);
     QCOMPARE(coord.altitude(), expectedAlt);
 }
 
-void GeoTest::_convertEnuToGeoAtOrigin_test(void)
+void GeoTest::_convertNedToGeoAtOrigin_test(void)
 {
     double x = 0.0;
     double y = 0.0;
@@ -100,7 +100,7 @@ void GeoTest::_convertEnuToGeoAtOrigin_test(void)
     double expectedAlt = _origin.altitude();
 
     QGeoCoordinate coord;
-    convertEnuToGeo(x, y, z, _origin, &coord);
+    convertNedToGeo(x, y, z, _origin, &coord);
 
     QCOMPARE(coord.latitude(), expectedLat);
     QCOMPARE(coord.longitude(), expectedLon);

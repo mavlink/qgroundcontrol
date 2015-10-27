@@ -39,23 +39,24 @@
 #endif
 
 /**
- * @brief Project a geodetic coordinate on to local tangential plane (LTP) as coordinate with East, North, and Up components in meters.
+ * @brief Project a geodetic coordinate on to local tangential plane (LTP) as coordinate with East,
+ * North, and Down components in meters.
  * @param[in] coord Geodetic coordinate to project onto LTP.
  * @param[in] origin Geoedetic origin for LTP projection.
  * @param[out] x North component of coordinate in local plane.
  * @param[out] y East component of coordinate in local plane.
- * @param[out] z Up (altitude) component of coordinate in local plane.
+ * @param[out] z Down component of coordinate in local plane.
  */
-void convertGeoToEnu(QGeoCoordinate coord, QGeoCoordinate origin, double* x, double* y, double* z);
+void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, double* y, double* z);
 
 /**
- * @brief Transform a local (East, North, and Up) coordinate into a geodetic coordinate.
+ * @brief Transform a local (East, North, and Down) coordinate into a geodetic coordinate.
  * @param[in] x North component of local coordinate in meters.
  * @param[in] x East component of local coordinate in meters.
- * @param[in] x Up component of local coordinate in meters.
+ * @param[in] x Down component of local coordinate in meters.
  * @param[in] origin Geoedetic origin for LTP.
  * @param[out] coord Geodetic coordinate to hold result.
  */
-void convertEnuToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate *coord);
+void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate *coord);
 
 #endif // QGCGEO_H
