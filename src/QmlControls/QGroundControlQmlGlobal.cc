@@ -1,30 +1,32 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "QGroundControlQmlGlobal.h"
+
+static const char* kQmlGlobalKeyName = "QGCQml";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     : QObject(parent)
@@ -37,4 +39,32 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
 QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 {
 
+}
+
+void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
+{
+    QSettings settings;
+    settings.beginGroup(kQmlGlobalKeyName);
+    settings.setValue(key, value);
+}
+
+QString QGroundControlQmlGlobal::loadGlobalSetting (const QString& key, const QString& defaultValue)
+{
+    QSettings settings;
+    settings.beginGroup(kQmlGlobalKeyName);
+    return settings.value(key, defaultValue).toString();
+}
+
+void QGroundControlQmlGlobal::saveBoolGlobalSetting (const QString& key, bool value)
+{
+    QSettings settings;
+    settings.beginGroup(kQmlGlobalKeyName);
+    settings.setValue(key, value);
+}
+
+bool QGroundControlQmlGlobal::loadBoolGlobalSetting (const QString& key, bool defaultValue)
+{
+    QSettings settings;
+    settings.beginGroup(kQmlGlobalKeyName);
+    return settings.value(key, defaultValue).toBool();
 }

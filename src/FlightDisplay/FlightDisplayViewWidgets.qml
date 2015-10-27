@@ -76,16 +76,20 @@ Item {
 
     //-- Instrument Pannel
     QGCInstrumentWidget {
-        anchors.margins:    ScreenTools.defaultFontPixelHeight
-        anchors.bottom:     parent.bottom
-        anchors.right:      parent.right
-        size:               ScreenTools.defaultFontPixelSize * (9)
-        active:             _activeVehicle != null
-        heading:            _heading
-        rollAngle:          _roll
-        pitchAngle:         _pitch
-        isSatellite:        _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
-        z:                  QGroundControl.zOrderWidgets
+        anchors.margins:        ScreenTools.defaultFontPixelHeight
+        anchors.right:          parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        size:                   ScreenTools.defaultFontPixelSize * (9)
+        active:                 _activeVehicle != null
+        heading:                _heading
+        rollAngle:              _roll
+        pitchAngle:             _pitch
+        altitude:               _altitudeWGS84
+        groundSpeed:            _groundSpeed
+        airSpeed:               _airSpeed
+        climbRate:              _climbRate
+        isSatellite:            _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
+        z:                      QGroundControl.zOrderWidgets
     }
 
     //-- Vertical Tool Buttons
@@ -93,7 +97,7 @@ Item {
         id:                         toolColumn
         anchors.margins:            ScreenTools.defaultFontPixelHeight
         anchors.left:               parent.left
-        anchors.top:                parent.top
+        anchors.verticalCenter:     parent.verticalCenter
         spacing:                    ScreenTools.defaultFontPixelHeight
 
         //-- Map Center Control
