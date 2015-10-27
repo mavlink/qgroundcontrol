@@ -39,7 +39,10 @@ Item {
     property alias  heading:        compass.heading
     property alias  rollAngle:      attitude.rollAngle
     property alias  pitchAngle:     attitude.pitchAngle
-
+    property real   altitude:       0
+    property real   groundSpeed:    0
+    property real   airSpeed:       0
+    property real   climbRate:      0
     property real   size:           ScreenTools.defaultFontPixelSize * (10)
     property bool   isSatellite:    false
     property bool   active:         false
@@ -48,30 +51,144 @@ Item {
 
     //-- Instrument Pannel
     Rectangle {
-        id:                 instrumentPannel
-        anchors.right:      parent.right
-        anchors.bottom:     parent.bottom
-        height:             root.size
-        width:              instruments.width + ScreenTools.defaultFontPixelSize
-        radius:             root.size / 2
-        visible:            _isVisible
-        color:              isSatellite ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
-        Row {
+        id:                     instrumentPannel
+        height:                 instruments.height + ScreenTools.defaultFontPixelSize
+        width:                  root.size
+        radius:                 root.size / 2
+        visible:                _isVisible
+        color:                  isSatellite ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
+        anchors.right:          parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        Column {
             id:                 instruments
-            height:             parent.height
-            spacing:            ScreenTools.defaultFontPixelSize / 2
-            anchors.horizontalCenter:   parent.horizontalCenter
+            width:              parent.width
+            spacing:            ScreenTools.defaultFontPixelSize * 0.33
+            anchors.verticalCenter: parent.verticalCenter
+            //-- Attitude Indicator
             QGCAttitudeWidget {
                 id:             attitude
-                size:           parent.height * 0.9
+                size:           parent.width * 0.9
                 active:         root.active
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            //-- Altitude
+            Rectangle {
+                height:         1
+                width:          parent.width * 0.9
+                color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Row {
+                width: root.size * 0.8
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    text:           "H"
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 1.25
+                    width:          parent.width * 0.45
+                    color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
+                }
+                QGCLabel {
+                    text:           altitude.toFixed(1)
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 1.25
+                    font.weight:    Font.DemiBold
+                    width:          parent.width * 0.549
+                    color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
+                }
+            }
+            //-- Ground Speed
+            Rectangle {
+                height:         1
+                width:          parent.width * 0.9
+                color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Row {
+                width: root.size * 0.8
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    text:           "GS"
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                    width:          parent.width * 0.45
+                    color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
+                }
+                QGCLabel {
+                    text:           groundSpeed.toFixed(1)
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                    font.weight:    Font.DemiBold
+                    width:          parent.width * 0.549
+                    color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
+                }
+            }
+            //-- Air Speed
+            Rectangle {
+                height:         1
+                width:          parent.width * 0.9
+                color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible:        airSpeed > 0
+            }
+            Row {
+                width: root.size * 0.8
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible:        airSpeed > 0
+                QGCLabel {
+                    text:           "AS"
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                    width:          parent.width * 0.45
+                    color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
+                }
+                QGCLabel {
+                    text:           airSpeed.toFixed(1)
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                    font.weight:    Font.DemiBold
+                    width:          parent.width * 0.549
+                    color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
+                }
+            }
+            //-- Climb Rate
+            Rectangle {
+                height:         1
+                width:          parent.width * 0.9
+                color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Row {
+                width: root.size * 0.8
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    text:           "VS"
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                    width:          parent.width * 0.45
+                    color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
+                }
+                QGCLabel {
+                    text:           climbRate.toFixed(1)
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                    font.weight:    Font.DemiBold
+                    width:          parent.width * 0.549
+                    color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
+                }
+            }
+            //-- Compass
+            Rectangle {
+                height:         1
+                width:          parent.width * 0.9
+                color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
             }
             QGCCompassWidget {
                 id:             compass
-                size:           parent.height * 0.9
+                size:           parent.width * 0.9
                 active:         root.active
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
             }
         }
         MouseArea {
@@ -84,14 +201,14 @@ Item {
 
     //-- Show Instruments
     Rectangle {
-        id:                 openButton
-        anchors.right:      parent.right
-        anchors.bottom:     parent.bottom
-        height:             ScreenTools.defaultFontPixelSize * 2
-        width:              ScreenTools.defaultFontPixelSize * 2
-        radius:             ScreenTools.defaultFontPixelSize / 3
-        visible:            !_isVisible
-        color:              isSatellite ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
+        id:                     openButton
+        anchors.right:          parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        height:                 ScreenTools.defaultFontPixelSize * 2
+        width:                  ScreenTools.defaultFontPixelSize * 2
+        radius:                 ScreenTools.defaultFontPixelSize / 3
+        visible:                !_isVisible
+        color:                  isSatellite ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
         Image {
             width:              parent.width  * 0.75
             height:             parent.height * 0.75

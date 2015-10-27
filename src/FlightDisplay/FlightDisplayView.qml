@@ -56,8 +56,9 @@ Item {
 
     readonly property string _mapName:                  "FlightDisplayView"
     readonly property string _showMapBackgroundKey:     "/showMapBackground"
+    readonly property string _mainIsMapKey:             "MainFlyWindowIsMap"
 
-    property bool _mainIsMap:           !_controller.hasVideo
+    property bool _mainIsMap:           QGroundControl.loadBoolGlobalSetting(_mainIsMapKey, true)
 
     property real _roll:                _activeVehicle ? (isNaN(_activeVehicle.roll)    ? _defaultRoll    : _activeVehicle.roll)    : _defaultRoll
     property real _pitch:               _activeVehicle ? (isNaN(_activeVehicle.pitch)   ? _defaultPitch   : _activeVehicle.pitch)   : _defaultPitch
@@ -158,6 +159,7 @@ Item {
                 _mainIsMap = !_mainIsMap
                 pip.visible = false
                 reloadContents();
+                QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, _mainIsMap)
             }
         }
     }
