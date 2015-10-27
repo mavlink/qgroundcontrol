@@ -63,7 +63,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASRawStatusView.h"
 #include "CustomCommandWidget.h"
 #include "QGCDockWidget.h"
-#include "FlightDisplayWidget.h"
 #include "UASInfoWidget.h"
 #include "HILDockWidget.h"
 #endif
@@ -89,7 +88,6 @@ const char* MainWindow::_mavlinkDockWidgetName =            "MAVLink Inspector";
 const char* MainWindow::_customCommandWidgetName =          "Custom Command";
 const char* MainWindow::_filesDockWidgetName =              "Onboard Files";
 const char* MainWindow::_uasStatusDetailsDockWidgetName =   "Status Details";
-const char* MainWindow::_pfdDockWidgetName =                "Primary Flight Display";
 const char* MainWindow::_uasInfoViewDockWidgetName =        "Info View";
 const char* MainWindow::_hilDockWidgetName =                "HIL Config";
 const char* MainWindow::_analyzeDockWidgetName =            "Analyze";
@@ -180,7 +178,7 @@ MainWindow::MainWindow()
     _buildCommonWidgets();
     emit initStatusChanged(tr("Building common actions"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 #endif
-    
+
     // Create actions
     connectCommonActions();
     // Connect user interface devices
@@ -290,7 +288,7 @@ MainWindow::MainWindow()
         qd.close();
 #endif
     }
-    
+
 #ifndef __mobile__
     _loadVisibleWidgetsSettings();
 #endif
@@ -325,7 +323,6 @@ void MainWindow::_buildCommonWidgets(void)
         _customCommandWidgetName,
         _filesDockWidgetName,
         _uasStatusDetailsDockWidgetName,
-        _pfdDockWidgetName,
         _uasInfoViewDockWidgetName,
         _hilDockWidgetName,
         _analyzeDockWidgetName,
@@ -334,14 +331,14 @@ void MainWindow::_buildCommonWidgets(void)
 
     for (size_t i=0; i<cDockWidgetNames; i++) {
         const char* pDockWidgetName = rgDockWidgetNames[i];
-        
+
         // Add to menu
         QAction* action = new QAction(pDockWidgetName, NULL);
         action->setCheckable(true);
         action->setData(pDockWidgetName);
         connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
         _ui.menuWidgets->addAction(action);
-        
+
         _mapName2Action[pDockWidgetName] = action;
     }
 }
@@ -353,13 +350,13 @@ void MainWindow::_showDockWidget(const QString& name, bool show)
     if (!_mapName2DockWidget.contains(name)) {
         _createInnerDockWidget(name);
     }
-    
+
     Q_ASSERT(_mapName2DockWidget.contains(name));
     QGCDockWidget* dockWidget = _mapName2DockWidget[name];
     Q_ASSERT(dockWidget);
-    
+
     dockWidget->setVisible(show);
-    
+
     Q_ASSERT(_mapName2Action.contains(name));
     _mapName2Action[name]->setChecked(show);
 }
@@ -368,7 +365,7 @@ void MainWindow::_showDockWidget(const QString& name, bool show)
 void MainWindow::_createInnerDockWidget(const QString& widgetName)
 {
     QGCDockWidget* widget = NULL;
-    
+
     if (widgetName == _mavlinkDockWidgetName) {
         widget = new QGCMAVLinkInspector(widgetName, _mapName2Action[widgetName], MAVLinkProtocol::instance(),this);
     } else if (widgetName == _customCommandWidgetName) {
@@ -377,8 +374,6 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = new QGCUASFileViewMulti(widgetName, _mapName2Action[widgetName], this);
     } else if (widgetName == _uasStatusDetailsDockWidgetName) {
         widget = new UASInfoWidget(widgetName, _mapName2Action[widgetName], this);
-    } else if (widgetName == _pfdDockWidgetName) {
-        widget = new FlightDisplayWidget(widgetName, _mapName2Action[widgetName], this);
     } else if (widgetName == _hilDockWidgetName) {
         widget = new HILDockWidget(widgetName, _mapName2Action[widgetName], this);
     } else if (widgetName == _analyzeDockWidgetName) {
@@ -389,9 +384,9 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = pInfoView;
     } else {
         qWarning() << "Attempt to create unknown Inner Dock Widget" << widgetName;
-	return;
+    return;
     }
-    
+
     _mapName2DockWidget[widgetName] = widget;
 }
 
@@ -436,13 +431,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
                 tr("There are still active connections to vehicles. Do you want to disconnect these before closing?"),
                 QMessageBox::Yes | QMessageBox::Cancel,
                 QMessageBox::Cancel);
-		if (button == QMessageBox::Yes) {
-			LinkManager::instance()->disconnectAll();
-			// The above disconnect causes a flurry of activity as the vehicle components are removed. This in turn
-			// causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
-			// the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
-			QTimer::singleShot(1500, this, &MainWindow::_closeWindow);
-		}
+        if (button == QMessageBox::Yes) {
+            LinkManager::instance()->disconnectAll();
+            // The above disconnect causes a flurry of activity as the vehicle components are removed. This in turn
+            // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
+            // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
+            QTimer::singleShot(1500, this, &MainWindow::_closeWindow);
+        }
 
         event->ignore();
         return;
@@ -450,7 +445,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     // This will process any remaining flight log save dialogs
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-    
+
     // Should not be any active connections
     Q_ASSERT(!LinkManager::instance()->anyConnectedLinks());
 
@@ -486,7 +481,7 @@ void MainWindow::storeSettings()
     settings.setValue("SHOW_STATUSBAR",     _showStatusBar);
     settings.endGroup();
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
-    
+
 #ifndef __mobile__
     _storeVisibleWidgetsSettings();
 #endif
@@ -578,7 +573,7 @@ void MainWindow::_storeCurrentViewState(void)
         dockWidget->saveSettings();
     }
 #endif
-    
+
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
 }
 
@@ -638,12 +633,12 @@ void MainWindow::_showQmlTestWidget(void)
 void MainWindow::_loadVisibleWidgetsSettings(void)
 {
     QSettings settings;
-    
+
     QString widgets = settings.value(_visibleWidgetsKey).toString();
-    
+
     if (!widgets.isEmpty()) {
         QStringList nameList = widgets.split(",");
-        
+
         foreach (const QString &name, nameList) {
             _showDockWidget(name, true);
         }
@@ -654,7 +649,7 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
 {
     QString widgetNames;
     bool firstWidget = true;
-    
+
     foreach (const QString &name, _mapName2DockWidget.keys()) {
         if (_mapName2DockWidget[name]->isVisible()) {
             if (!firstWidget) {
@@ -662,13 +657,13 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
             } else {
                 firstWidget = false;
             }
-            
+
             widgetNames += name;
         }
     }
-    
+
     QSettings settings;
-    
+
     settings.setValue(_visibleWidgetsKey, widgetNames);
 }
 #endif
