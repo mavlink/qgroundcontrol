@@ -354,9 +354,11 @@ void MissionManagerTest::_testReadFailureHandlingWorker(void)
         qDebug() << "TEST CASE " << rgTestCases[i].failureText << "errorCode:" << rgTestCases[i].errorCode << "failFirstTimeOnly:false";
         _roundTripItems(rgTestCases[i].failureMode, rgTestCases[i].errorCode, false);
         _mockLink->resetMissionItemHandler();
+        _multiSpyMissionManager->clearAllSignals();
         qDebug() << "TEST CASE " << rgTestCases[i].failureText << "errorCode:" << rgTestCases[i].errorCode << "failFirstTimeOnly:true";
         _roundTripItems(rgTestCases[i].failureMode, rgTestCases[i].errorCode, true);
         _mockLink->resetMissionItemHandler();
+        _multiSpyMissionManager->clearAllSignals();
     }
 }
 
