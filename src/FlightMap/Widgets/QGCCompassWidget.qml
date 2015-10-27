@@ -49,9 +49,7 @@ Item {
         id:             borderRect
         anchors.fill:   parent
         radius:         width / 2
-        color:          "#202020"
-        border.color:   "black"
-        border.width:   2
+        color:          "black"
     }
 
     Item {
