@@ -218,7 +218,6 @@ HEADERS += \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
-    src/FlightDisplay/FlightDisplayWidget.h \
     src/FlightDisplay/FlightDisplayViewController.h \
     src/FlightMap/FlightMapSettings.h \
     src/GAudioOutput.h \
@@ -336,7 +335,6 @@ SOURCES += \
     src/comm/MockLinkMissionItemHandler.cc \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
-    src/FlightDisplay/FlightDisplayWidget.cc \
     src/FlightDisplay/FlightDisplayViewController.cc \
     src/FlightMap/FlightMapSettings.cc \
     src/GAudioOutput.cc \
