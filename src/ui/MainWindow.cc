@@ -84,14 +84,29 @@ This file is part of the QGROUNDCONTROL project
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
 #ifndef __mobile__
-static const char* _mavlinkDockWidgetName = "MAVLink Inspector";
-static const char* _customCommandWidgetName = "Custom Command";
-static const char* _filesDockWidgetName = "Onboard Files";
-static const char* _uasStatusDetailsDockWidgetName = "Status Details";
-static const char* _pfdDockWidgetName = "Primary Flight Display";
-static const char* _uasInfoViewDockWidgetName = "Info View";
-static const char* _hilDockWidgetName = "HIL Config";
-static const char* _analyzeDockWidgetName = "Analyze";
+enum DockWidgetTypes { 
+    MAVLINK_INSPECTOR, 
+    CUSTOM_COMMAND, 
+    ONBOARD_FILES,
+    STATUS_DETAILS,
+    PRIMARY_FLIGHT_DISPLAY,
+    INFO_VIEW,
+    HIL_CONFIG,
+    ANALYZE
+};
+
+static const char *rgDockWidgetNames[] = {
+    "MAVLink Inspector",
+    "Custom Command",
+    "Onboard Files",
+    "Status Details",
+    "Primary Flight Display",
+    "Info View",
+    "HIL Config",
+    "Analyze"
+};
+
+#define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
 static const char* _visibleWidgetsKey = "VisibleWidgets";
 #endif
@@ -319,27 +334,16 @@ void MainWindow::_buildCommonWidgets(void)
     logPlayer = new QGCMAVLinkLogPlayer(statusBar());
     statusBar()->addPermanentWidget(logPlayer);
 
-    static const char* rgDockWidgetNames[] = {
-        _mavlinkDockWidgetName,
-        _customCommandWidgetName,
-        _filesDockWidgetName,
-        _uasStatusDetailsDockWidgetName,
-        _uasInfoViewDockWidgetName,
-        _hilDockWidgetName,
-        _analyzeDockWidgetName,
-    };
-    static const size_t cDockWidgetNames = sizeof(rgDockWidgetNames) / sizeof(rgDockWidgetNames[0]);
+    for (int i = 0, end = ARRAY_SIZE(rgDockWidgetNames); i < end; i++) {
 
-    for (size_t i=0; i<cDockWidgetNames; i++) {
         const char* pDockWidgetName = rgDockWidgetNames[i];
 
         // Add to menu
         QAction* action = new QAction(tr(pDockWidgetName), NULL);
         action->setCheckable(true);
-        action->setData(pDockWidgetName);
+        action->setData(i);
         connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
         _ui.menuWidgets->addAction(action);
-
         _mapName2Action[pDockWidgetName] = action;
     }
 }
@@ -366,28 +370,22 @@ void MainWindow::_showDockWidget(const QString& name, bool show)
 void MainWindow::_createInnerDockWidget(const QString& widgetName)
 {
     QGCDockWidget* widget = NULL;
-
-    if (widgetName == _mavlinkDockWidgetName) {
-        widget = new QGCMAVLinkInspector(widgetName, _mapName2Action[widgetName], MAVLinkProtocol::instance(),this);
-    } else if (widgetName == _customCommandWidgetName) {
-        widget = new CustomCommandWidget(widgetName, _mapName2Action[widgetName], this);
-    } else if (widgetName == _filesDockWidgetName) {
-        widget = new QGCUASFileViewMulti(widgetName, _mapName2Action[widgetName], this);
-    } else if (widgetName == _uasStatusDetailsDockWidgetName) {
-        widget = new UASInfoWidget(widgetName, _mapName2Action[widgetName], this);
-    } else if (widgetName == _hilDockWidgetName) {
-        widget = new HILDockWidget(widgetName, _mapName2Action[widgetName], this);
-    } else if (widgetName == _analyzeDockWidgetName) {
-        widget = new Linecharts(widgetName, _mapName2Action[widgetName], mavlinkDecoder, this);
-    } else if (widgetName == _uasInfoViewDockWidgetName) {
-        QGCTabbedInfoView* pInfoView = new QGCTabbedInfoView(widgetName, _mapName2Action[widgetName], this);
-        pInfoView->addSource(mavlinkDecoder);
-        widget = pInfoView;
-    } else {
-        qWarning() << "Attempt to create unknown Inner Dock Widget" << widgetName;
-    return;
+    QAction *action = _mapName2Action[widgetName];
+    
+    switch(action->data().toInt()) {
+    case MAVLINK_INSPECTOR: widget = new QGCMAVLinkInspector(widgetName, action, MAVLinkProtocol::instance(),this); break;
+    case CUSTOM_COMMAND:    widget = new CustomCommandWidget(widgetName, action, this); break;
+    case ONBOARD_FILES:     widget = new QGCUASFileViewMulti(widgetName, action, this); break;
+    case STATUS_DETAILS:    widget = new UASInfoWidget(widgetName, action, this); break;
+    case PRIMARY_FLIGHT_DISPLAY: widget = new FlightDisplayWidget(widgetName, action, this); break;
+    case HIL_CONFIG:        widget = new HILDockWidget(widgetName, action, this); break;
+    case ANALYZE:           widget = new Linecharts(widgetName, action, mavlinkDecoder, this); break;
+    case INFO_VIEW:         widget= new QGCTabbedInfoView(widgetName, action, this); break;
     }
 
+    if(action->data().toInt() == INFO_VIEW) {
+        qobject_cast<QGCTabbedInfoView*>(widget)->addSource(mavlinkDecoder);
+    }
     _mapName2DockWidget[widgetName] = widget;
 }
 
@@ -402,7 +400,7 @@ void MainWindow::_showDockWidgetAction(bool show)
 {
     QAction* action = qobject_cast<QAction*>(QObject::sender());
     Q_ASSERT(action);
-    _showDockWidget(action->data().toString(), show);
+    _showDockWidget(rgDockWidgetNames[action->data().toInt()], show);
 }
 #endif
 
