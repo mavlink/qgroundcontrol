@@ -85,16 +85,16 @@ This file is part of the QGROUNDCONTROL project
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
 #ifndef __mobile__
-const char* MainWindow::_mavlinkDockWidgetName =            "MAVLink Inspector";
-const char* MainWindow::_customCommandWidgetName =          "Custom Command";
-const char* MainWindow::_filesDockWidgetName =              "Onboard Files";
-const char* MainWindow::_uasStatusDetailsDockWidgetName =   "Status Details";
-const char* MainWindow::_pfdDockWidgetName =                "Primary Flight Display";
-const char* MainWindow::_uasInfoViewDockWidgetName =        "Info View";
-const char* MainWindow::_hilDockWidgetName =                "HIL Config";
-const char* MainWindow::_analyzeDockWidgetName =            "Analyze";
+static const char* _mavlinkDockWidgetName = "MAVLink Inspector";
+static const char* _customCommandWidgetName = "Custom Command";
+static const char* _filesDockWidgetName = "Onboard Files";
+static const char* _uasStatusDetailsDockWidgetName = "Status Details";
+static const char* _pfdDockWidgetName = "Primary Flight Display";
+static const char* _uasInfoViewDockWidgetName = "Info View";
+static const char* _hilDockWidgetName = "HIL Config";
+static const char* _analyzeDockWidgetName = "Analyze";
 
-const char* MainWindow::_visibleWidgetsKey =                "VisibleWidgets";
+static const char* _visibleWidgetsKey = "VisibleWidgets";
 #endif
 
 static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
