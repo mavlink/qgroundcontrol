@@ -93,7 +93,7 @@ QGCView {
             }
 
 /*
-            // Leaving in for possible future use. We'll see if needed from user comments.
+            // Leaving in for possible future use. We'll see if needed from user comments
             QGCLabel {
                 id:                 searchInLabel
                 anchors.topMargin:  defaultTextHeight
