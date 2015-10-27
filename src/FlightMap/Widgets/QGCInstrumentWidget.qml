@@ -83,14 +83,18 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     text:           "H"
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 1.25
                     width:          parent.width * 0.45
                     color:          isSatellite ? "black" : "white"
                     horizontalAlignment: TextEdit.AlignHCenter
                 }
                 QGCLabel {
                     text:           altitude.toFixed(1)
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 1.25
                     font.weight:    Font.DemiBold
+                    width:          parent.width * 0.549
                     color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
                 }
             }
             //-- Ground Speed
@@ -105,14 +109,18 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     text:           "GS"
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                     width:          parent.width * 0.45
                     color:          isSatellite ? "black" : "white"
                     horizontalAlignment: TextEdit.AlignHCenter
                 }
                 QGCLabel {
                     text:           groundSpeed.toFixed(1)
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                     font.weight:    Font.DemiBold
+                    width:          parent.width * 0.549
                     color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
                 }
             }
             //-- Air Speed
@@ -129,14 +137,18 @@ Item {
                 visible:        airSpeed > 0
                 QGCLabel {
                     text:           "AS"
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                     width:          parent.width * 0.45
                     color:          isSatellite ? "black" : "white"
                     horizontalAlignment: TextEdit.AlignHCenter
                 }
                 QGCLabel {
                     text:           airSpeed.toFixed(1)
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                     font.weight:    Font.DemiBold
+                    width:          parent.width * 0.549
                     color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
                 }
             }
             //-- Climb Rate
@@ -151,14 +163,18 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     text:           "VS"
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                     width:          parent.width * 0.45
                     color:          isSatellite ? "black" : "white"
                     horizontalAlignment: TextEdit.AlignHCenter
                 }
                 QGCLabel {
                     text:           climbRate.toFixed(1)
+                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
                     font.weight:    Font.DemiBold
+                    width:          parent.width * 0.549
                     color:          isSatellite ? "black" : "white"
+                    horizontalAlignment: TextEdit.AlignHCenter
                 }
             }
             //-- Compass
