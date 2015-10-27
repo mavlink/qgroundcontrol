@@ -77,13 +77,17 @@ Item {
     //-- Instrument Pannel
     QGCInstrumentWidget {
         anchors.margins:    ScreenTools.defaultFontPixelHeight
-        anchors.bottom:     parent.bottom
         anchors.right:      parent.right
+        anchors.bottom:     parent.bottom
         size:               ScreenTools.defaultFontPixelSize * (9)
         active:             _activeVehicle != null
         heading:            _heading
         rollAngle:          _roll
         pitchAngle:         _pitch
+        altitude:           _altitudeWGS84
+        groundSpeed:        _groundSpeed
+        airSpeed:           _airSpeed
+        climbRate:          _climbRate
         isSatellite:        _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
         z:                  QGroundControl.zOrderWidgets
     }
