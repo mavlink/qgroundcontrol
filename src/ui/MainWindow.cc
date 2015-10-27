@@ -399,7 +399,7 @@ void MainWindow::_hideAllDockWidgets(void)
 
 void MainWindow::_showDockWidgetAction(bool show)
 {
-    QAction* action = dynamic_cast<QAction*>(QObject::sender());
+    QAction* action = qobject_cast<QAction*>(QObject::sender());
     Q_ASSERT(action);
     _showDockWidget(action->text(), show);
 }
