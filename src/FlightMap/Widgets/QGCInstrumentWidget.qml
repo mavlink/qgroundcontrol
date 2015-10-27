@@ -88,7 +88,7 @@ Item {
                     horizontalAlignment: TextEdit.AlignHCenter
                 }
                 QGCLabel {
-                    text:           altitude
+                    text:           altitude.toFixed(1)
                     font.weight:    Font.DemiBold
                     color:          isSatellite ? "black" : "white"
                 }
@@ -110,7 +110,7 @@ Item {
                     horizontalAlignment: TextEdit.AlignHCenter
                 }
                 QGCLabel {
-                    text:           groundSpeed
+                    text:           groundSpeed.toFixed(1)
                     font.weight:    Font.DemiBold
                     color:          isSatellite ? "black" : "white"
                 }
@@ -134,7 +134,7 @@ Item {
                     horizontalAlignment: TextEdit.AlignHCenter
                 }
                 QGCLabel {
-                    text:           airSpeed
+                    text:           airSpeed.toFixed(1)
                     font.weight:    Font.DemiBold
                     color:          isSatellite ? "black" : "white"
                 }
@@ -156,7 +156,7 @@ Item {
                     horizontalAlignment: TextEdit.AlignHCenter
                 }
                 QGCLabel {
-                    text:           climbRate
+                    text:           climbRate.toFixed(1)
                     font.weight:    Font.DemiBold
                     color:          isSatellite ? "black" : "white"
                 }

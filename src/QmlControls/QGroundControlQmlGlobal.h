@@ -47,6 +47,11 @@ public:
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
     Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
 
+    Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
+    Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
+    Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
+    Q_INVOKABLE bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
+
     // Property accesors
 
     HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
