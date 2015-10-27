@@ -89,7 +89,6 @@ enum DockWidgetTypes {
     CUSTOM_COMMAND, 
     ONBOARD_FILES,
     STATUS_DETAILS,
-    PRIMARY_FLIGHT_DISPLAY,
     INFO_VIEW,
     HIL_CONFIG,
     ANALYZE
@@ -100,7 +99,6 @@ static const char *rgDockWidgetNames[] = {
     "Custom Command",
     "Onboard Files",
     "Status Details",
-    "Primary Flight Display",
     "Info View",
     "HIL Config",
     "Analyze"
@@ -384,9 +382,6 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
             break;
         case STATUS_DETAILS:
             widget = new UASInfoWidget(widgetName, action, this);
-            break;
-        case PRIMARY_FLIGHT_DISPLAY:
-            widget = new FlightDisplayWidget(widgetName, action, this);
             break;
         case HIL_CONFIG:
             widget = new HILDockWidget(widgetName, action, this);
