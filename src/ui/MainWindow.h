@@ -227,16 +227,6 @@ private:
     QPointer<QWidget> _missionEditorView;
 
 #ifndef __mobile__
-    // Dock widget names
-    static const char* _mavlinkDockWidgetName;
-    static const char* _customCommandWidgetName;
-    static const char* _filesDockWidgetName;
-    static const char* _uasStatusDetailsDockWidgetName;
-    static const char* _pfdDockWidgetName;
-    static const char* _uasInfoViewDockWidgetName;
-    static const char* _hilDockWidgetName;
-    static const char* _analyzeDockWidgetName;
-
     QMap<QString, QGCDockWidget*>   _mapName2DockWidget;
     QMap<QString, QAction*>         _mapName2Action;
 #endif
@@ -251,8 +241,6 @@ private:
     void _showDockWidget(const QString &name, bool show);
     void _loadVisibleWidgetsSettings(void);
     void _storeVisibleWidgetsSettings(void);
-    
-    static const char* _visibleWidgetsKey;
 #endif
 
     bool                    _autoReconnect;
