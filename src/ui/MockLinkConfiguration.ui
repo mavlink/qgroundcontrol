@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>187</width>
-    <height>116</height>
+    <width>238</width>
+    <height>188</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,6 +40,29 @@
      <property name="text">
       <string>Send status text + voice</string>
      </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>APM vehicle type</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QRadioButton" name="apmArduCopterRadio">
+        <property name="text">
+         <string>ArduCopter</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="apmArduPlaneRadio">
+        <property name="text">
+         <string>ArduPlane</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
