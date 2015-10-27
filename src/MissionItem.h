@@ -91,6 +91,9 @@ public:
     /// true: home position should be shown
     Q_PROPERTY(bool                 homePositionValid   READ homePositionValid      WRITE setHomePositionValid NOTIFY homePositionValidChanged)
 
+    /// Distance to previous waypoint, set by UI controller
+    Q_PROPERTY(double               distance            READ distance               WRITE setDistance       NOTIFY distanceChanged)
+
     // Property accesors
     
     int sequenceNumber(void) const { return _sequenceNumber; }
@@ -134,6 +137,9 @@ public:
     bool homePosition(void) { return _homePositionSpecialCase; }
     bool homePositionValid(void) { return _homePositionValid; }
     void setHomePositionValid(bool homePositionValid);
+
+    double distance(void) { return _distance; }
+    void setDistance(double distance);
     
     // C++ only methods
     
@@ -221,6 +227,7 @@ signals:
     void headingDegreesChanged(double heading);
     void dirtyChanged(bool dirty);
     void homePositionValidChanged(bool homePostionValid);
+    void distanceChanged(float distance);
 
     /** @brief Announces a change to the waypoint data */
     void changed(MissionItem* wp);
@@ -279,6 +286,7 @@ private:
     bool                                _autocontinue;
     bool                                _isCurrentItem;
     quint64                             _reachedTime;
+    double                              _distance;
     
     Fact*           _latitudeFact;
     Fact*           _longitudeFact;

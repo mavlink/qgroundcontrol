@@ -38,7 +38,9 @@ import QGroundControl.Controllers   1.0
 /// Mission Editor
 
 QGCView {
-    viewPanel: panel
+    id:         _root
+
+    viewPanel:  panel
 
     // zOrder comes from the Loader in MainWindow.qml
     z: QGroundControl.zOrderTopMost
@@ -82,6 +84,15 @@ QGCView {
             _firstGpsLock = false
             editorMap.latitude = _activeVehicle.latitude
             editorMap.longitude = _activeVehicle.longitude
+        }
+    }
+
+    function showDistance(missionItem) {
+        if (missionItem.distance < 0.0) {
+            waypointDistanceDisplay.visible = false
+        } else {
+            waypointDistanceDisplay.distance = missionItem.distance
+            waypointDistanceDisplay.visible = true
         }
     }
 
@@ -180,9 +191,9 @@ QGCView {
                     y:              missionItemIndicator ? (missionItemIndicator.y + missionItemIndicator.anchorPoint.y - (itemDragger.height / 2)) : 100
                     width:          _radius * 2
                     height:         _radius * 2
-                    radius:         _radius
-                    border.width:   2
-                    border.color:   "white"
+                    //radius:         _radius
+                    //border.width:   2
+                    //border.color:   "white"
                     color:          "transparent"
                     visible:        false
                     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
@@ -281,6 +292,7 @@ QGCView {
                                 itemDragger.missionItem.coordinate = coordinate
                                 editorMap.latitude = itemDragger.missionItem.coordinate.latitude
                                 editorMap.longitude = itemDragger.missionItem.coordinate.longitude
+                                _root.showDistance(itemDragger.missionItem)
                             }
                         }
                     }
@@ -309,19 +321,22 @@ QGCView {
                             target: object
 
                             onIsCurrentItemChanged: {
-                                if (object.isCurrentItem && object.specifiesCoordinate) {
-                                    // Setup our drag item
-                                    if (object.sequenceNumber != 0) {
-                                        itemDragger.visible = true
-                                        itemDragger.missionItem = Qt.binding(function() { return object })
-                                        itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
-                                    } else {
-                                        itemDragger.clearItem()
-                                    }
+                                if (object.isCurrentItem) {
+                                    _root.showDistance(object)
+                                    if (object.specifiesCoordinate) {
+                                        // Setup our drag item
+                                        if (object.sequenceNumber != 0) {
+                                            itemDragger.visible = true
+                                            itemDragger.missionItem = Qt.binding(function() { return object })
+                                            itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
+                                        } else {
+                                            itemDragger.clearItem()
+                                        }
 
-                                    // Move to the new position
-                                    editorMap.latitude = object.coordinate.latitude
-                                    editorMap.longitude = object.coordinate.longitude
+                                        // Move to the new position
+                                        editorMap.latitude = object.coordinate.latitude
+                                        editorMap.longitude = object.coordinate.longitude
+                                    }
                                 }
                             }
                         }
@@ -1040,6 +1055,31 @@ QGCView {
                     exclusiveGroup:     _dropButtonsExclusiveGroup
                     z:                  QGroundControl.zOrderWidgets
                     checked:            _showHelp
+                }
+
+                Rectangle {
+                    id:                 waypointDistanceDisplay
+                    anchors.margins:    margins
+                    anchors.left:       parent.left
+                    anchors.bottom:     parent.bottom
+                    width:              distanceLabel.width + margins
+                    height:             distanceLabel.height + margins
+                    radius:             ScreenTools.defaultFontPixelWidth
+                    color:              qgcPal.window
+                    opacity:            0.80
+                    visible:            false
+
+                    property real distance: 0
+
+                    readonly property real margins: ScreenTools.defaultFontPixelWidth
+
+                    QGCLabel {
+                        id:                         distanceLabel
+                        anchors.verticalCenter:     parent.verticalCenter
+                        anchors.horizontalCenter:   parent.horizonalCenter
+                        color:                      qgcPal.text
+                        text:                       "Distance: " + Math.round(parent.distance) + " meters"
+                    }
                 }
             } // FlightMap
         } // Item - split view container
