@@ -80,6 +80,7 @@ MissionItem::MissionItem(QObject*       parent,
     , _autocontinue(autocontinue)
     , _isCurrentItem(isCurrentItem)
     , _reachedTime(0)
+    , _distance(0.0)
     , _headingDegreesFact(NULL)
     , _dirty(false)
     , _homePositionSpecialCase(false)
@@ -189,6 +190,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     _command                    = other._command;
     _autocontinue               = other._autocontinue;
     _reachedTime                = other._reachedTime;
+    _distance                   = other._distance;
     _altitudeRelativeToHomeFact = other._altitudeRelativeToHomeFact;
     _dirty                      = other._dirty;
     _homePositionSpecialCase    = other._homePositionSpecialCase;
@@ -915,4 +917,10 @@ void MissionItem::setHomePositionValid(bool homePositionValid)
 {
     _homePositionValid = homePositionValid;
     emit homePositionValidChanged(_homePositionValid);
+}
+
+void MissionItem::setDistance(double distance)
+{
+    _distance = distance;
+    emit distanceChanged(_distance);
 }

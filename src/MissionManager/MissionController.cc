@@ -293,6 +293,9 @@ void MissionController::_recalcWaypointLines(void)
     MissionItem*    lastCoordinateItem =    qobject_cast<MissionItem*>(_missionItems->get(0));
     bool            firstCoordinateItem =   true;
 
+    // No distance for first item
+    lastCoordinateItem->setDistance(-1.0);
+
     _waypointLines.clear();
 
     for (int i=1; i<_missionItems->count(); i++) {
@@ -305,18 +308,27 @@ void MissionController::_recalcWaypointLines(void)
 
                     // The first coordinate we hit is a takeoff command so link back to home position if valid
                     if (homeItem->homePositionValid()) {
-                        _waypointLines.append(new CoordinateVector(qobject_cast<MissionItem*>(_missionItems->get(0))->coordinate(), item->coordinate()));
+                        MissionItem* homeItem = qobject_cast<MissionItem*>(_missionItems->get(0));
+
+                        item->setDistance(homeItem->coordinate().distanceTo(item->coordinate()));
+                        _waypointLines.append(new CoordinateVector(homeItem->coordinate(), item->coordinate()));
+                    } else {
+                        item->setDistance(-1.0);
                     }
                 } else {
                     // First coordiante is not a takeoff command, it does not link backwards to anything
+                    item->setDistance(-1.0);
                 }
                 firstCoordinateItem = false;
             } else if (!lastCoordinateItem->homePosition() || lastCoordinateItem->homePositionValid()) {
                 // Subsequent coordinate items link to last coordinate item. If the last coordinate item
                 // is an invalid home position we skip the line
+                item->setDistance(lastCoordinateItem->coordinate().distanceTo(item->coordinate()));
                 _waypointLines.append(new CoordinateVector(lastCoordinateItem->coordinate(), item->coordinate()));
             }
             lastCoordinateItem = item;
+        } else {
+            item->setDistance(-1.0);
         }
     }
 
