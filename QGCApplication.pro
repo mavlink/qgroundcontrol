@@ -358,6 +358,7 @@ SOURCES += \
     src/QGCQuickWidget.cc \
     src/QGCSingleton.cc \
     src/QGCTemporaryFile.cc \
+    src/QGCGeo.cc \
     src/QmlControls/CoordinateVector.cc \
     src/QmlControls/ParameterEditorController.cc \
     src/QmlControls/ScreenToolsController.cc \
@@ -456,6 +457,7 @@ HEADERS += \
     src/MissionManager/MissionControllerTest.h \
     src/MissionManager/MissionControllerManagerTest.h \
     src/MissionManager/MissionManagerTest.h \
+    src/qgcunittest/GeoTest.h \
     src/qgcunittest/FileDialogTest.h \
     src/qgcunittest/FileManagerTest.h \
     src/qgcunittest/FlightGearTest.h \
@@ -478,6 +480,7 @@ SOURCES += \
     src/MissionManager/MissionControllerTest.cc \
     src/MissionManager/MissionControllerManagerTest.cc \
     src/MissionManager/MissionManagerTest.cc \
+    src/qgcunittest/GeoTest.cc \
     src/qgcunittest/FileDialogTest.cc \
     src/qgcunittest/FileManagerTest.cc \
     src/qgcunittest/FlightGearTest.cc \
