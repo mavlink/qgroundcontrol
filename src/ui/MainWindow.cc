@@ -334,7 +334,7 @@ void MainWindow::_buildCommonWidgets(void)
         const char* pDockWidgetName = rgDockWidgetNames[i];
 
         // Add to menu
-        QAction* action = new QAction(pDockWidgetName, NULL);
+        QAction* action = new QAction(tr(pDockWidgetName), NULL);
         action->setCheckable(true);
         action->setData(pDockWidgetName);
         connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
