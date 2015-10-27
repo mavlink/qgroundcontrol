@@ -233,7 +233,8 @@ void MissionItem::_connectSignals(void)
     connect(_longitudeFact, &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
     connect(_altitudeFact,  &Fact::valueChanged, this, &MissionItem::_coordinateFactChanged);
 
-    connect(_headingDegreesFact, &Fact::valueChanged, this, &MissionItem::_headingDegreesFactChanged);
+    connect(_headingDegreesFact,            &Fact::valueChanged, this, &MissionItem::_headingDegreesFactChanged);
+    connect(_altitudeRelativeToHomeFact,    &Fact::valueChanged, this, &MissionItem::_altitudeRelativeToHomeFactChanged);
 }
 
 MissionItem::~MissionItem()
@@ -284,7 +285,6 @@ void MissionItem::setSequenceNumber(int sequenceNumber)
 {
     _sequenceNumber = sequenceNumber;
     emit sequenceNumberChanged(_sequenceNumber);
-    emit changed(this);
 }
 
 void MissionItem::setX(double x)
@@ -316,7 +316,6 @@ void MissionItem::setLatitude(double lat)
     if (_latitudeFact->value().toDouble() != lat)
     {
         _latitudeFact->setValue(lat);
-        emit changed(this);
         emit coordinateChanged(coordinate());
     }
 }
@@ -326,7 +325,6 @@ void MissionItem::setLongitude(double lon)
     if (_longitudeFact->value().toDouble() != lon)
     {
         _longitudeFact->setValue(lon);
-        emit changed(this);
         emit coordinateChanged(coordinate());
     }
 }
@@ -336,7 +334,6 @@ void MissionItem::setAltitude(double altitude)
     if (_altitudeFact->value().toDouble() != altitude)
     {
         _altitudeFact->setValue(altitude);
-        emit changed(this);
         emit valueStringsChanged(valueStrings());
         emit coordinateChanged(coordinate());
     }
@@ -378,7 +375,6 @@ void MissionItem::setAction(int /*MAV_CMD*/ action)
             setFrame(MAV_FRAME_MISSION);
         }
 
-        emit changed(this);
         emit commandNameChanged(commandName());
         emit commandChanged((MavlinkQmlSingleton::Qml_MAV_CMD)_command);
         emit valueLabelsChanged(valueLabels());
@@ -400,7 +396,7 @@ void MissionItem::setFrame(int /*MAV_FRAME*/ frame)
     if (_frame != frame) {
         _altitudeRelativeToHomeFact->setValue(frame == MAV_FRAME_GLOBAL_RELATIVE_ALT);
         _frame = frame;
-        emit changed(this);
+        emit frameChanged(_frame);
     }
 }
 
@@ -408,7 +404,7 @@ void MissionItem::setAutocontinue(bool autoContinue)
 {
     if (_autocontinue != autoContinue) {
         _autocontinue = autoContinue;
-        emit changed(this);
+        emit autoContinueChanged(_autocontinue);
     }
 }
 
@@ -430,7 +426,6 @@ void MissionItem::setParam1(double param)
     if (param1() != param)
     {
         _param1Fact->setValue(param);
-        emit changed(this);
         emit valueStringsChanged(valueStrings());
     }
 }
@@ -441,7 +436,6 @@ void MissionItem::setParam2(double param)
     {
         _param2Fact->setValue(param);
         emit valueStringsChanged(valueStrings());
-        emit changed(this);
     }
 }
 
@@ -475,7 +469,6 @@ void MissionItem::setLoiterOrbitRadius(double radius)
     if (loiterOrbitRadius() != radius) {
         _loiterOrbitRadiusFact->setValue(radius);
         emit valueStringsChanged(valueStrings());
-        emit changed(this);
     }
 }
 
@@ -815,7 +808,6 @@ void MissionItem::setHeadingDegrees(double headingDegrees)
 {
     if (_headingDegreesFact->value().toDouble() != headingDegrees) {
         _headingDegreesFact->setValue(headingDegrees);
-        emit changed(this);
         emit valueStringsChanged(valueStrings());
         emit headingDegreesChanged(headingDegrees);
     }
@@ -911,6 +903,17 @@ bool MissionItem::specifiesHeading(void) const
 void MissionItem::_headingDegreesFactChanged(QVariant value)
 {
     emit headingDegreesChanged(value.toDouble());
+}
+
+void MissionItem::_altitudeRelativeToHomeFactChanged(QVariant value)
+{
+    // Don't call setFrame, that will cause a signalling loop
+
+    int frame = value.toBool() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL;
+    if (_frame != frame) {
+        _frame = frame;
+        emit frameChanged(_frame);
+    }
 }
 
 void MissionItem::setHomePositionValid(bool homePositionValid)

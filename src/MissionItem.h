@@ -213,6 +213,8 @@ public:
     
     void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
 
+    bool relativeAltitude(void) { return _frame == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
+
     static const double defaultPitch;
     static const double defaultHeading;
     static const double defaultAltitude;
@@ -228,15 +230,12 @@ signals:
     void dirtyChanged(bool dirty);
     void homePositionValidChanged(bool homePostionValid);
     void distanceChanged(float distance);
-
-    /** @brief Announces a change to the waypoint data */
-    void changed(MissionItem* wp);
-
-    
+    void frameChanged(int frame);
     void commandNameChanged(QString type);
     void commandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
     void valueLabelsChanged(QStringList valueLabels);
     void valueStringsChanged(QStringList valueStrings);
+    bool autoContinueChanged(bool autoContinue);
     
 public:
     /** @brief Set the waypoint action */
@@ -260,14 +259,11 @@ public:
     /** @brief Wether this waypoint has been reached yet */
     bool isReached      () { return (_reachedTime > 0); }
 
-    void setChanged() {
-        emit changed(this);
-    }
-    
 private slots:
     void _factValueChanged(QVariant value);
     void _coordinateFactChanged(QVariant value);
     void _headingDegreesFactChanged(QVariant value);
+    void _altitudeRelativeToHomeFactChanged(QVariant value);
 
 private:
     QString _oneDecimalString(double value);
