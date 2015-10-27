@@ -44,6 +44,9 @@ public:
     MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
     void setFirmwareType(MAV_AUTOPILOT firmwareType) { _firmwareType = firmwareType; }
 
+    MAV_TYPE vehicleType(void) { return _vehicleType; }
+    void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; }
+
     /// @param sendStatusText true: mavlink status text messages will be sent for each severity, as well as voice output info message
     void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; }
     bool sendStatusText(void) { return _sendStatusText; }
@@ -57,9 +60,11 @@ public:
 
 private:
     MAV_AUTOPILOT   _firmwareType;
+    MAV_TYPE        _vehicleType;
     bool            _sendStatusText;
 
     static const char* _firmwareTypeKey;
+    static const char* _vehicleTypeKey;
     static const char* _sendStatusTextKey;
 };
 
@@ -183,8 +188,9 @@ private:
     uint32_t    _mavCustomMode;
     uint8_t     _mavState;
 
-    MockConfiguration* _config;
-    MAV_AUTOPILOT _firmwareType;
+    MockConfiguration*  _config;
+    MAV_AUTOPILOT       _firmwareType;
+    MAV_TYPE            _vehicleType;
     
     MockLinkFileServer* _fileServer;
 
