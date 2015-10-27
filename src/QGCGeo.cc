@@ -39,7 +39,7 @@
 
 static const float epsilon = std::numeric_limits<double>::epsilon();
 
-void convertGeoToEnu(QGeoCoordinate coord, QGeoCoordinate origin, double* x, double* y, double* z) {
+void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, double* y, double* z) {
 
     double lat_rad = coord.latitude() * M_DEG_TO_RAD;
     double lon_rad = coord.longitude() * M_DEG_TO_RAD;
@@ -60,10 +60,10 @@ void convertGeoToEnu(QGeoCoordinate coord, QGeoCoordinate origin, double* x, dou
     *x = k * (ref_cos_lat * sin_lat - ref_sin_lat * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
     *y = k * cos_lat * sin(lon_rad - ref_lon_rad) * CONSTANTS_RADIUS_OF_EARTH;
 
-    *z = coord.altitude() - origin.altitude();
+    *z = -(coord.altitude() - origin.altitude());
 }
 
-void convertEnuToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate *coord) {
+void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate *coord) {
     double x_rad = x / CONSTANTS_RADIUS_OF_EARTH;
     double y_rad = y / CONSTANTS_RADIUS_OF_EARTH;
     double c = sqrtf(x_rad * x_rad + y_rad * y_rad);
@@ -91,6 +91,6 @@ void convertEnuToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCo
     coord->setLatitude(lat_rad * M_RAD_TO_DEG);
     coord->setLongitude(lon_rad * M_RAD_TO_DEG);
 
-    coord->setAltitude(z + origin.altitude());
+    coord->setAltitude(-z + origin.altitude());
 }
 

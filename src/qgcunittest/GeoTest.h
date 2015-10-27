@@ -43,10 +43,10 @@ public:
     { }
 
 private slots:
-    void _convertGeoToEnu_test(void);
-    void _convertGeoToEnuAtOrigin_test(void);
-    void _convertEnuToGeo_test(void);
-    void _convertEnuToGeoAtOrigin_test(void);
+    void _convertGeoToNed_test(void);
+    void _convertGeoToNedAtOrigin_test(void);
+    void _convertNedToGeo_test(void);
+    void _convertNedToGeoAtOrigin_test(void);
 private:
     QGeoCoordinate _origin;
 };
