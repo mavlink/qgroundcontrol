@@ -238,16 +238,8 @@ MainWindow::MainWindow()
     }
 
     // Make sure the proper fullscreen/normal menu item is checked properly.
-    if (isFullScreen())
-    {
-        _ui.actionFullscreen->setChecked(true);
-        _ui.actionNormal->setChecked(false);
-    }
-    else
-    {
-        _ui.actionFullscreen->setChecked(false);
-        _ui.actionNormal->setChecked(true);
-    }
+    _ui.actionFullscreen->setChecked(isFullScreen());
+    _ui.actionNormal->setChecked(!isFullScreen());
 
     // And that they will stay checked properly after user input
     connect(_ui.actionFullscreen, &QAction::triggered, this, &MainWindow::fullScreenActionItemCallback);
@@ -397,6 +389,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
         widget = pInfoView;
     } else {
         qWarning() << "Attempt to create unknown Inner Dock Widget" << widgetName;
+	return;
     }
     
     _mapName2DockWidget[widgetName] = widget;
@@ -651,7 +644,7 @@ void MainWindow::_loadVisibleWidgetsSettings(void)
     if (!widgets.isEmpty()) {
         QStringList nameList = widgets.split(",");
         
-        foreach (QString name, nameList) {
+        foreach (const QString &name, nameList) {
             _showDockWidget(name, true);
         }
     }
@@ -662,7 +655,7 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
     QString widgetNames;
     bool firstWidget = true;
     
-    foreach (QString name, _mapName2DockWidget.keys()) {
+    foreach (const QString &name, _mapName2DockWidget.keys()) {
         if (_mapName2DockWidget[name]->isVisible()) {
             if (!firstWidget) {
                 widgetNames += ",";
