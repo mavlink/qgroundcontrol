@@ -47,10 +47,8 @@
         <file alias="buttonLeft.svg">src/FlightMap/Images/buttonLeft.svg</file>
         <file alias="buttonMore.svg">src/FlightMap/Images/buttonMore.svg</file>
         <file alias="buttonRight.svg">src/FlightMap/Images/buttonRight.svg</file>
-        <file alias="compass.svg">src/FlightMap/Images/compass.svg</file>
         <file alias="compassInstrumentAirplane.svg">src/FlightMap/Images/compassInstrumentAirplane.svg</file>
         <file alias="compassInstrumentDial.svg">src/FlightMap/Images/compassInstrumentDial.svg</file>
-        <file alias="compassNeedle.svg">src/FlightMap/Images/compassNeedle.svg</file>
         <file alias="crossHair.svg">src/FlightMap/Images/crossHair.svg</file>
         <file alias="rollDialWhite.svg">src/FlightMap/Images/rollDialWhite.svg</file>
         <file alias="rollPointerWhite.svg">src/FlightMap/Images/rollPointerWhite.svg</file>
