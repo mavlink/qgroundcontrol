@@ -77,6 +77,7 @@ signals:
 private slots:
     void _newMissionItemsAvailableFromVehicle();
     void _itemCoordinateChanged(const QGeoCoordinate& coordinate);
+    void _itemFrameChanged(int frame);
     void _itemCommandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
     void _activeVehicleChanged(Vehicle* activeVehicle);
     void _activeVehicleHomePositionAvailableChanged(bool homePositionAvailable);
@@ -96,6 +97,7 @@ private:
     void _autoSyncSend(void);
     void _setupMissionItems(bool loadFromVehicle, bool forceLoad);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
+    double _calcDistance(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2);
 
 private:
     bool                _editMode;
