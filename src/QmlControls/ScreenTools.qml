@@ -21,6 +21,7 @@ Item {
     property bool isAndroid:        ScreenToolsController.isAndroid
     property bool isiOS:            ScreenToolsController.isiOS
     property bool isMobile:         ScreenToolsController.isMobile
+    property bool isDebug:          ScreenToolsController.isDebug
 
     function mouseX() {
         return ScreenToolsController.mouseX()
