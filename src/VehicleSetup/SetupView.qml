@@ -110,6 +110,11 @@ Rectangle {
         }
     }
 
+    function showDebugPanel()
+    {
+        panelLoader.source = "DebugWindow.qml";
+    }
+
     Component.onCompleted: showSummaryPanel()
 
     Connections {
@@ -297,6 +302,17 @@ Rectangle {
 
                         onClicked: showParametersPanel()
                     }
+
+                    SubMenuButton {
+                        width:          _buttonWidth
+                        setupIndicator: false
+                        exclusiveGroup: setupButtonGroup
+                        visible:        ScreenTools.isDebug
+                        text:           "DEBUG"
+
+                        onClicked: showDebugPanel()
+                    }
+
                 } // Column
             } // Flickable
 
