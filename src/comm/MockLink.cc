@@ -72,6 +72,7 @@ float MockLink::_vehicleLongitude = -122.08794f;
 float MockLink::_vehicleAltitude =  2.5f;
 
 const char* MockConfiguration::_firmwareTypeKey =   "FirmwareType";
+const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
 const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 
 MockLink::MockLink(MockConfiguration* config)
@@ -85,6 +86,7 @@ MockLink::MockLink(MockConfiguration* config)
     , _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
     , _mavState(MAV_STATE_STANDBY)
     , _firmwareType(MAV_AUTOPILOT_PX4)
+    , _vehicleType(MAV_TYPE_QUADROTOR)
     , _fileServer(NULL)
     , _sendStatusText(false)
     , _apmSendHomePositionOnEmptyList(false)
@@ -93,6 +95,7 @@ MockLink::MockLink(MockConfiguration* config)
     _config = config;
     if (_config) {
         _firmwareType = config->firmwareType();
+        _vehicleType = config->vehicleType();
         _sendStatusText = config->sendStatusText();
     }
 
@@ -113,7 +116,6 @@ MockLink::MockLink(MockConfiguration* config)
 
 MockLink::~MockLink(void)
 {
-    qDebug() << "MockLink destructor";
     _disconnect();
 }
 
@@ -200,7 +202,18 @@ void MockLink::_run50HzTasks(void)
 
 void MockLink::_loadParams(void)
 {
-    QFile paramFile(":/unittest/MockLink.params");
+    QFile paramFile;
+
+    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        if (_vehicleType == MAV_TYPE_FIXED_WING) {
+            paramFile.setFileName(":/unittest/APMArduPlaneMockLink.params");
+        } else {
+            paramFile.setFileName(":/unittest/APMArduCopterMockLink.params");
+        }
+    } else {
+        paramFile.setFileName(":/unittest/PX4MockLink.params");
+    }
+
 
     bool success = paramFile.open(QFile::ReadOnly);
     Q_UNUSED(success);
@@ -234,11 +247,21 @@ void MockLink::_loadParams(void)
             case MAV_PARAM_TYPE_INT32:
                 paramValue = QVariant(valStr.toInt());
                 break;
+            case MAV_PARAM_TYPE_UINT16:
+                paramValue = QVariant((quint16)valStr.toUInt());
+                break;
+            case MAV_PARAM_TYPE_INT16:
+                paramValue = QVariant((qint16)valStr.toInt());
+                break;
+            case MAV_PARAM_TYPE_UINT8:
+                paramValue = QVariant((quint8)valStr.toUInt());
+                break;
             case MAV_PARAM_TYPE_INT8:
-                paramValue = QVariant((unsigned char)valStr.toUInt());
+                paramValue = QVariant((qint8)valStr.toUInt());
                 break;
             default:
-                Q_ASSERT(false);
+                qCritical() << "Unknown type" << paramType;
+                paramValue = QVariant(valStr.toInt());
                 break;
         }
 
@@ -405,24 +428,38 @@ void MockLink::_setParamFloatUnionIntoMap(int componentId, const QString& paramN
     QVariant paramVariant;
 
     switch (paramType) {
-        case MAV_PARAM_TYPE_INT8:
-            paramVariant = QVariant::fromValue(valueUnion.param_int8);
-            break;
+    case MAV_PARAM_TYPE_REAL32:
+        paramVariant = QVariant::fromValue(valueUnion.param_float);
+        break;
 
-        case MAV_PARAM_TYPE_INT32:
-            paramVariant = QVariant::fromValue(valueUnion.param_int32);
-            break;
+    case MAV_PARAM_TYPE_UINT32:
+        paramVariant = QVariant::fromValue(valueUnion.param_uint32);
+        break;
 
-        case MAV_PARAM_TYPE_UINT32:
-            paramVariant = QVariant::fromValue(valueUnion.param_uint32);
-            break;
+    case MAV_PARAM_TYPE_INT32:
+        paramVariant = QVariant::fromValue(valueUnion.param_int32);
+        break;
 
-        case MAV_PARAM_TYPE_REAL32:
-            paramVariant = QVariant::fromValue(valueUnion.param_float);
-            break;
+    case MAV_PARAM_TYPE_UINT16:
+        paramVariant = QVariant::fromValue(valueUnion.param_uint16);
+        break;
 
-        default:
-            qCritical() << "Invalid parameter type" << paramType;
+    case MAV_PARAM_TYPE_INT16:
+        paramVariant = QVariant::fromValue(valueUnion.param_int16);
+        break;
+
+    case MAV_PARAM_TYPE_UINT8:
+        paramVariant = QVariant::fromValue(valueUnion.param_uint8);
+        break;
+
+    case MAV_PARAM_TYPE_INT8:
+        paramVariant = QVariant::fromValue(valueUnion.param_int8);
+        break;
+
+    default:
+        qCritical() << "Invalid parameter type" << paramType;
+        paramVariant = QVariant::fromValue(valueUnion.param_int32);
+        break;
     }
 
     qCDebug(MockLinkLog) << "_setParamFloatUnionIntoMap" << paramName << paramVariant;
@@ -442,36 +479,65 @@ float MockLink::_floatUnionForParam(int componentId, const QString& paramName)
     QVariant paramVar = _mapParamName2Value[componentId][paramName];
 
     switch (paramType) {
-        case MAV_PARAM_TYPE_INT8:
-            if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                valueUnion.param_float = (unsigned char)paramVar.toChar().toLatin1();
-            } else {
-                valueUnion.param_int8 = (unsigned char)paramVar.toChar().toLatin1();
-            }
-            break;
+    case MAV_PARAM_TYPE_REAL32:
+            valueUnion.param_float = paramVar.toFloat();
+        break;
 
-        case MAV_PARAM_TYPE_INT32:
-            if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                valueUnion.param_float = paramVar.toInt();
-            } else {
-                valueUnion.param_int32 = paramVar.toInt();
-            }
-            break;
+    case MAV_PARAM_TYPE_UINT32:
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            valueUnion.param_float = paramVar.toUInt();
+        } else {
+            valueUnion.param_uint32 = paramVar.toUInt();
+        }
+        break;
 
-        case MAV_PARAM_TYPE_UINT32:
-            if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-                valueUnion.param_float = paramVar.toUInt();
-            } else {
-                valueUnion.param_uint32 = paramVar.toUInt();
-            }
-            break;
+    case MAV_PARAM_TYPE_INT32:
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            valueUnion.param_float = paramVar.toInt();
+        } else {
+            valueUnion.param_int32 = paramVar.toInt();
+        }
+        break;
 
-        case MAV_PARAM_TYPE_REAL32:
-                valueUnion.param_float = paramVar.toFloat();
-            break;
+    case MAV_PARAM_TYPE_UINT16:
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            valueUnion.param_float = paramVar.toUInt();
+        } else {
+            valueUnion.param_uint16 = paramVar.toUInt();
+        }
+        break;
 
-        default:
-            qCritical() << "Invalid parameter type" << paramType;
+    case MAV_PARAM_TYPE_INT16:
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            valueUnion.param_float = paramVar.toInt();
+        } else {
+            valueUnion.param_int16 = paramVar.toInt();
+        }
+        break;
+
+    case MAV_PARAM_TYPE_UINT8:
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            valueUnion.param_float = paramVar.toUInt();
+        } else {
+            valueUnion.param_uint8 = paramVar.toUInt();
+        }
+        break;
+
+    case MAV_PARAM_TYPE_INT8:
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            valueUnion.param_float = (unsigned char)paramVar.toChar().toLatin1();
+        } else {
+            valueUnion.param_int8 = (unsigned char)paramVar.toChar().toLatin1();
+        }
+        break;
+
+    default:
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            valueUnion.param_float = paramVar.toInt();
+        } else {
+            valueUnion.param_int32 = paramVar.toInt();
+        }
+        qCritical() << "Invalid parameter type" << paramType;
     }
 
     return valueUnion.param_float;
@@ -801,6 +867,7 @@ void MockLink::_sendStatusTextMessages(void)
 MockConfiguration::MockConfiguration(const QString& name)
     : LinkConfiguration(name)
     , _firmwareType(MAV_AUTOPILOT_PX4)
+    , _vehicleType(MAV_TYPE_QUADROTOR)
     , _sendStatusText(false)
 {
 
@@ -810,6 +877,7 @@ MockConfiguration::MockConfiguration(MockConfiguration* source)
     : LinkConfiguration(source)
 {
     _firmwareType =     source->_firmwareType;
+    _vehicleType =       source->_vehicleType;
     _sendStatusText =   source->_sendStatusText;
 }
 
@@ -824,6 +892,7 @@ void MockConfiguration::copyFrom(LinkConfiguration *source)
     }
 
     _firmwareType =     usource->_firmwareType;
+    _vehicleType =      usource->_vehicleType;
     _sendStatusText =   usource->_sendStatusText;
 }
 
@@ -831,6 +900,7 @@ void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
     settings.setValue(_firmwareTypeKey, (int)_firmwareType);
+    settings.setValue(_vehicleTypeKey, (int)_vehicleType);
     settings.setValue(_sendStatusTextKey, _sendStatusText);
     settings.sync();
     settings.endGroup();
@@ -840,6 +910,7 @@ void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
     _firmwareType = (MAV_AUTOPILOT)settings.value(_firmwareTypeKey, (int)MAV_AUTOPILOT_PX4).toInt();
+    _vehicleType = (MAV_TYPE)settings.value(_vehicleTypeKey, (int)MAV_TYPE_QUADROTOR).toInt();
     _sendStatusText = settings.value(_sendStatusTextKey, false).toBool();
     settings.endGroup();
 }
