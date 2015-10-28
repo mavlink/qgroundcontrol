@@ -25,7 +25,8 @@
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
 
-UT_REGISTER_TEST(MissionManagerTest)
+// FIXME: Temporarily disabled until this can be stabilized
+//UT_REGISTER_TEST(MissionManagerTest)
 
 const MissionManagerTest::TestCase_t MissionManagerTest::_rgTestCases[] = {
     { "0\t0\t3\t16\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 0, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT,     10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
