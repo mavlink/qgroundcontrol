@@ -36,6 +36,8 @@ Item {
     id:     root
     height: size
 
+    signal clicked
+
     property alias  heading:        compass.heading
     property alias  rollAngle:      attitude.rollAngle
     property alias  pitchAngle:     attitude.pitchAngle
@@ -48,9 +50,9 @@ Item {
 
     property bool   _isVisible:     true
 
-    //-- Instrument Pannel
+    //-- Instrument Panel
     Rectangle {
-        id:                     instrumentPannel
+        id:                     instrumentPanel
         height:                 instruments.height + ScreenTools.defaultFontPixelSize
         width:                  root.size
         radius:                 root.size / 2
@@ -162,36 +164,8 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                _isVisible = !_isVisible
+                onClicked: root.clicked()
             }
         }
     }
-
-    //-- Show Instruments
-    Rectangle {
-        id:                     openButton
-        anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        height:                 ScreenTools.defaultFontPixelSize * 2
-        width:                  ScreenTools.defaultFontPixelSize * 2
-        radius:                 ScreenTools.defaultFontPixelSize / 3
-        visible:                !_isVisible
-        color:                  isSatellite ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
-        Image {
-            width:              parent.width  * 0.75
-            height:             parent.height * 0.75
-            source:             "/qmlimages/buttonLeft.svg"
-            mipmap:             true
-            fillMode:           Image.PreserveAspectFit
-            anchors.verticalCenter:     parent.verticalCenter
-            anchors.horizontalCenter:   parent.horizontalCenter
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                _isVisible = !_isVisible
-            }
-        }
-    }
-
 }
