@@ -39,6 +39,7 @@ enum PX4_CUSTOM_MAIN_MODE {
     PX4_CUSTOM_MAIN_MODE_ACRO,
     PX4_CUSTOM_MAIN_MODE_OFFBOARD,
     PX4_CUSTOM_MAIN_MODE_STABILIZED,
+    PX4_CUSTOM_MAIN_MODE_RATTITUDE
 };
 
 enum PX4_CUSTOM_SUB_MODE_AUTO {
@@ -74,6 +75,7 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                  "Manual",           true },
     { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                  "Acro",             true },
     { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                  "Stabilized",       true },
+    { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                  "Rattitude",        true },
     { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                  "Altitude control", true },
     { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                  "Position control", true },
     { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                  "Offboard control", true },
