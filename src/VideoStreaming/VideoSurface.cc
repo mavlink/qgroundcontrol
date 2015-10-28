@@ -39,6 +39,7 @@ VideoSurface::VideoSurface(QObject *parent)
     : QObject(parent)
 #if defined(QGC_GST_STREAMING)
     , _data(new VideoSurfacePrivate)
+    , _lastFrame(0)
 #endif
 {
 }
@@ -68,6 +69,7 @@ GstElement* VideoSurface::videoSink() const
 
 void VideoSurface::onUpdate()
 {
+    _lastFrame = time(0);
     Q_FOREACH(QQuickItem *item, _data->items) {
         item->update();
     }

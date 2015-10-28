@@ -35,10 +35,11 @@ VideoItem {
     id: videoBackground
     property var display
     property var receiver
+    property var runVideo:  false
     surface: display
-    onVisibleChanged: {
+    onRunVideoChanged: {
         if(videoBackground.receiver && videoBackground.display) {
-            if(videoBackground.visible) {
+            if(videoBackground.runVideo) {
                 videoBackground.receiver.start();
             } else {
                 videoBackground.receiver.stop();
@@ -46,7 +47,7 @@ VideoItem {
         }
     }
     Component.onCompleted: {
-        if(videoBackground.visible && videoBackground.receiver) {
+        if(videoBackground.runVideo && videoBackground.receiver) {
             videoBackground.receiver.start();
         }
     }
