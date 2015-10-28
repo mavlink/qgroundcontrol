@@ -100,7 +100,6 @@ Item {
     Component.onCompleted: {
         reloadContents();
         widgetsLoader.source    = "FlightDisplayViewWidgets.qml"
-        console.log("PIP: " + _pipSize)
     }
 
     //-- Main Window
