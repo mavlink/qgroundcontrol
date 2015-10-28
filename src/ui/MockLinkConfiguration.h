@@ -44,6 +44,8 @@ private slots:
     void _px4RadioClicked(bool checked);
     void _apmRadioClicked(bool checked);
     void _genericRadioClicked(bool checked);
+    void _apmArduCopterRadioClicked(bool checked);
+    void _apmArduPlaneRadioClicked(bool checked);
     void _sendStatusTextClicked(bool checked);
 
 private:
