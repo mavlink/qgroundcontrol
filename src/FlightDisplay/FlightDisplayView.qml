@@ -75,6 +75,8 @@ Item {
     property var  _flightVideo:         null
     property var  _savedZoomLevel:      0
 
+    property real _pipSize:             ScreenTools.isAndroid ? ScreenTools.defaultFontPixelSize * (8) : ScreenTools.defaultFontPixelSize * (9)
+
     FlightDisplayViewController { id: _controller }
 
     MissionController {
@@ -125,8 +127,8 @@ Item {
         anchors.margins:    ScreenTools.defaultFontPixelHeight
         anchors.left:       parent.left
         anchors.bottom:     parent.bottom
-        height:             ScreenTools.defaultFontPixelSize * (9)
-        width:              ScreenTools.defaultFontPixelSize * (9) * (16/9)
+        height:             _pipSize
+        width:              _pipSize * (16/9)
         color:              "#000010"
         border.width:       4
         radius:             4

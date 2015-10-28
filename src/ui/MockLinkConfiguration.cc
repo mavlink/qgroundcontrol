@@ -43,10 +43,22 @@ MockLinkConfiguration::MockLinkConfiguration(MockConfiguration *config, QWidget 
             break;
     }
 
+    switch (config->vehicleType()) {
+        case MAV_TYPE_FIXED_WING:
+            _ui->apmArduPlaneRadio->setChecked(true);
+            break;
+        default:
+            _ui->apmArduCopterRadio->setChecked(true);
+            break;
+    }
+
     _ui->sendStatusTextCheckBox->setChecked(config->sendStatusText());
 
     connect(_ui->px4Radio,                  &QRadioButton::clicked, this, &MockLinkConfiguration::_px4RadioClicked);
     connect(_ui->apmRadio,                  &QRadioButton::clicked, this, &MockLinkConfiguration::_apmRadioClicked);
+    connect(_ui->genericRadio,              &QRadioButton::clicked, this, &MockLinkConfiguration::_genericRadioClicked);
+    connect(_ui->apmArduCopterRadio,        &QRadioButton::clicked, this, &MockLinkConfiguration::_apmArduCopterRadioClicked);
+    connect(_ui->apmArduPlaneRadio,         &QRadioButton::clicked, this, &MockLinkConfiguration::_apmArduPlaneRadioClicked);
     connect(_ui->genericRadio,              &QRadioButton::clicked, this, &MockLinkConfiguration::_genericRadioClicked);
     connect(_ui->sendStatusTextCheckBox,    &QCheckBox::clicked,    this, &MockLinkConfiguration::_sendStatusTextClicked);
 }
@@ -74,6 +86,20 @@ void MockLinkConfiguration::_genericRadioClicked(bool checked)
 {
     if (checked) {
         _config->setFirmwareType(MAV_AUTOPILOT_GENERIC);
+    }
+}
+
+void MockLinkConfiguration::_apmArduCopterRadioClicked(bool checked)
+{
+    if (checked) {
+        _config->setVehicleType(MAV_TYPE_QUADROTOR);
+    }
+}
+
+void MockLinkConfiguration::_apmArduPlaneRadioClicked(bool checked)
+{
+    if (checked) {
+        _config->setVehicleType(MAV_TYPE_FIXED_WING);
     }
 }
 

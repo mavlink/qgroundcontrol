@@ -42,7 +42,6 @@ Item {
     property real   altitude:       0
     property real   groundSpeed:    0
     property real   airSpeed:       0
-    property real   climbRate:      0
     property real   size:           ScreenTools.defaultFontPixelSize * (10)
     property bool   isSatellite:    false
     property bool   active:         false
@@ -78,24 +77,21 @@ Item {
                 color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
                 anchors.horizontalCenter: parent.horizontalCenter
             }
-            Row {
-                width: root.size * 0.8
-                anchors.horizontalCenter: parent.horizontalCenter
-                QGCLabel {
-                    text:           "H"
-                    font.pixelSize: ScreenTools.defaultFontPixelSize * 1.25
-                    width:          parent.width * 0.45
-                    color:          isSatellite ? "black" : "white"
-                    horizontalAlignment: TextEdit.AlignHCenter
-                }
-                QGCLabel {
-                    text:           altitude.toFixed(1)
-                    font.pixelSize: ScreenTools.defaultFontPixelSize * 1.25
-                    font.weight:    Font.DemiBold
-                    width:          parent.width * 0.549
-                    color:          isSatellite ? "black" : "white"
-                    horizontalAlignment: TextEdit.AlignHCenter
-                }
+            QGCLabel {
+                text:           "Altitude"
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                width:          parent.width
+                height:         ScreenTools.defaultFontPixelHeight * 0.5
+                color:          isSatellite ? "black" : "white"
+                horizontalAlignment: TextEdit.AlignHCenter
+            }
+            QGCLabel {
+                text:           altitude < 10000 ? altitude.toFixed(1) : altitude.toFixed(0)
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 2.5
+                font.weight:    Font.DemiBold
+                width:          parent.width
+                color:          isSatellite ? "black" : "white"
+                horizontalAlignment: TextEdit.AlignHCenter
             }
             //-- Ground Speed
             Rectangle {
@@ -103,25 +99,25 @@ Item {
                 width:          parent.width * 0.9
                 color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
                 anchors.horizontalCenter: parent.horizontalCenter
+                visible:        airSpeed <= 0
             }
-            Row {
-                width: root.size * 0.8
-                anchors.horizontalCenter: parent.horizontalCenter
-                QGCLabel {
-                    text:           "GS"
-                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
-                    width:          parent.width * 0.45
-                    color:          isSatellite ? "black" : "white"
-                    horizontalAlignment: TextEdit.AlignHCenter
-                }
-                QGCLabel {
-                    text:           groundSpeed.toFixed(1)
-                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
-                    font.weight:    Font.DemiBold
-                    width:          parent.width * 0.549
-                    color:          isSatellite ? "black" : "white"
-                    horizontalAlignment: TextEdit.AlignHCenter
-                }
+            QGCLabel {
+                text:           "Ground Speed"
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                width:          parent.width
+                height:         ScreenTools.defaultFontPixelHeight * 0.75
+                color:          isSatellite ? "black" : "white"
+                horizontalAlignment: TextEdit.AlignHCenter
+                visible:        airSpeed <= 0
+            }
+            QGCLabel {
+                text:           groundSpeed.toFixed(1)
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 1.25
+                font.weight:    Font.DemiBold
+                width:          parent.width
+                color:          isSatellite ? "black" : "white"
+                horizontalAlignment: TextEdit.AlignHCenter
+                visible:        airSpeed <= 0
             }
             //-- Air Speed
             Rectangle {
@@ -131,51 +127,23 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible:        airSpeed > 0
             }
-            Row {
-                width: root.size * 0.8
-                anchors.horizontalCenter: parent.horizontalCenter
+            QGCLabel {
+                text:           "Air Speed"
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                width:          parent.width
+                height:         ScreenTools.defaultFontPixelHeight * 0.75
+                color:          isSatellite ? "black" : "white"
                 visible:        airSpeed > 0
-                QGCLabel {
-                    text:           "AS"
-                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
-                    width:          parent.width * 0.45
-                    color:          isSatellite ? "black" : "white"
-                    horizontalAlignment: TextEdit.AlignHCenter
-                }
-                QGCLabel {
-                    text:           airSpeed.toFixed(1)
-                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
-                    font.weight:    Font.DemiBold
-                    width:          parent.width * 0.549
-                    color:          isSatellite ? "black" : "white"
-                    horizontalAlignment: TextEdit.AlignHCenter
-                }
+                horizontalAlignment: TextEdit.AlignHCenter
             }
-            //-- Climb Rate
-            Rectangle {
-                height:         1
-                width:          parent.width * 0.9
-                color:          isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            Row {
-                width: root.size * 0.8
-                anchors.horizontalCenter: parent.horizontalCenter
-                QGCLabel {
-                    text:           "VS"
-                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
-                    width:          parent.width * 0.45
-                    color:          isSatellite ? "black" : "white"
-                    horizontalAlignment: TextEdit.AlignHCenter
-                }
-                QGCLabel {
-                    text:           climbRate.toFixed(1)
-                    font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
-                    font.weight:    Font.DemiBold
-                    width:          parent.width * 0.549
-                    color:          isSatellite ? "black" : "white"
-                    horizontalAlignment: TextEdit.AlignHCenter
-                }
+            QGCLabel {
+                text:           airSpeed.toFixed(1)
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 1.25
+                font.weight:    Font.DemiBold
+                width:          parent.width
+                color:          isSatellite ? "black" : "white"
+                visible:        airSpeed > 0
+                horizontalAlignment: TextEdit.AlignHCenter
             }
             //-- Compass
             Rectangle {

@@ -87,7 +87,6 @@ Item {
         altitude:               _altitudeWGS84
         groundSpeed:            _groundSpeed
         airSpeed:               _airSpeed
-        climbRate:              _climbRate
         isSatellite:            _mainIsMap ? _flightMap ? _flightMap.isSatelliteMap : true : true
         z:                      QGroundControl.zOrderWidgets
     }
@@ -97,7 +96,7 @@ Item {
         id:                         toolColumn
         anchors.margins:            ScreenTools.defaultFontPixelHeight
         anchors.left:               parent.left
-        anchors.verticalCenter:     parent.verticalCenter
+        anchors.top:                parent.top
         spacing:                    ScreenTools.defaultFontPixelHeight
 
         //-- Map Center Control
