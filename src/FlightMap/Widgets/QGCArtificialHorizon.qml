@@ -35,6 +35,9 @@ Item {
     property real pitchAngle:   0
     clip:           true
     anchors.fill:   parent
+
+    property real angularScale: pitchAngle * root.height / 45
+
     Item {
         id: artificialHorizon
         width:  root.width  * 4
@@ -67,7 +70,7 @@ Item {
         }
         transform: [
             Translate {
-                y:  pitchAngle * 4
+                y:  angularScale
             },
             Rotation {
                 origin.x: artificialHorizon.width  / 2
