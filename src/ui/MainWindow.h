@@ -203,13 +203,13 @@ protected:
 
 private slots:
     void _linkStateChange(LinkInterface*);
-	void _closeWindow(void) { close(); }
+    void _closeWindow(void) { close(); }
     void _vehicleAdded(Vehicle* vehicle);
 
 #ifndef __mobile__
     void _showDockWidgetAction(bool show);
 #endif
-    
+
 #ifdef UNITTEST_BUILD
     void _showQmlTestWidget(void);
 #endif
@@ -232,7 +232,6 @@ private:
     static const char* _customCommandWidgetName;
     static const char* _filesDockWidgetName;
     static const char* _uasStatusDetailsDockWidgetName;
-    static const char* _pfdDockWidgetName;
     static const char* _uasInfoViewDockWidgetName;
     static const char* _hilDockWidgetName;
     static const char* _analyzeDockWidgetName;
@@ -251,7 +250,7 @@ private:
     void _showDockWidget(const QString &name, bool show);
     void _loadVisibleWidgetsSettings(void);
     void _storeVisibleWidgetsSettings(void);
-    
+
     static const char* _visibleWidgetsKey;
 #endif
 
