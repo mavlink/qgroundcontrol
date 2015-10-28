@@ -72,7 +72,7 @@ Item {
             Rotation {
                 origin.x: artificialHorizon.width  / 2
                 origin.y: artificialHorizon.height / 2
-                angle: root.visible ? -rollAngle : 0
+                angle:    -rollAngle
             }]
     }
 }
