@@ -67,7 +67,7 @@ Item {
         }
         transform: [
             Translate {
-                y:  root.visible ? pitchAngle * 4 : 0
+                y:  pitchAngle * 4
             },
             Rotation {
                 origin.x: artificialHorizon.width  / 2
