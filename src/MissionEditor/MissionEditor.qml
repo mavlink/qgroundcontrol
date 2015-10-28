@@ -401,7 +401,7 @@ QGCView {
                 } // Item - Mission Item editor
 
                 /*
-                  Home Position Manager temporarily disbled till more work is done on it
+                  Home Position Manager temporarily disbled till more work is done
 
                 // Home Position Manager
                 Rectangle {
