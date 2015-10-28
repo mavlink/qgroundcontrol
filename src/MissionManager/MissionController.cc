@@ -288,24 +288,72 @@ void MissionController::saveMissionToFile(void)
     _missionItems->setDirty(false);
 }
 
+double MissionController::_calcDistance(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2)
+{
+    QGeoCoordinate  coord1 =        item1->coordinate();
+    QGeoCoordinate  coord2 =        item2->coordinate();
+    bool            distanceOk =    false;
+
+    // Convert to fixed altitudes
+
+    qCDebug(MissionControllerLog) << homePositionValid << homeAlt
+                                  << item1->relativeAltitude() << item1->coordinate().altitude()
+                                  << item2->relativeAltitude() << item2->coordinate().altitude();
+
+    if (homePositionValid) {
+        distanceOk = true;
+        if (item1->relativeAltitude()) {
+            coord1.setAltitude(homeAlt + coord1.altitude());
+        }
+        if (item2->relativeAltitude()) {
+            coord2.setAltitude(homeAlt + coord2.altitude());
+        }
+    } else {
+        if (item1->relativeAltitude() && item2->relativeAltitude()) {
+            distanceOk = true;
+        }
+    }
+
+    qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
+
+    if (distanceOk) {
+        return item1->coordinate().distanceTo(item2->coordinate());
+    } else {
+        return -1.0;
+    }
+}
+
 void MissionController::_recalcWaypointLines(void)
 {
     MissionItem*    lastCoordinateItem =    qobject_cast<MissionItem*>(_missionItems->get(0));
+    MissionItem*    homeItem =              lastCoordinateItem;
     bool            firstCoordinateItem =   true;
+    bool            homePositionValid =     homeItem->homePositionValid();
+    double          homeAlt =               homeItem->coordinate().altitude();
+
+    qCDebug(MissionControllerLog) << "_recalcWaypointLines";
+
+    // If home position is valid we can calculate distances between all waypoints.
+    // If home position is not valid we can only calculate distances between waypoints which are
+    // both relative altitude.
+
+    // No distance for first item
+    lastCoordinateItem->setDistance(-1.0);
 
     _waypointLines.clear();
 
     for (int i=1; i<_missionItems->count(); i++) {
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
 
+        item->setDistance(-1.0);    // Assume the worst
+
         if (item->specifiesCoordinate()) {
             if (firstCoordinateItem) {
                 if (item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
-                    MissionItem* homeItem = qobject_cast<MissionItem*>(_missionItems->get(0));
-
                     // The first coordinate we hit is a takeoff command so link back to home position if valid
-                    if (homeItem->homePositionValid()) {
-                        _waypointLines.append(new CoordinateVector(qobject_cast<MissionItem*>(_missionItems->get(0))->coordinate(), item->coordinate()));
+                    if (homePositionValid) {
+                        _waypointLines.append(new CoordinateVector(homeItem->coordinate(), item->coordinate()));
+                        item->setDistance(_calcDistance(homePositionValid, homeAlt, homeItem, item));
                     }
                 } else {
                     // First coordiante is not a takeoff command, it does not link backwards to anything
@@ -314,6 +362,7 @@ void MissionController::_recalcWaypointLines(void)
             } else if (!lastCoordinateItem->homePosition() || lastCoordinateItem->homePositionValid()) {
                 // Subsequent coordinate items link to last coordinate item. If the last coordinate item
                 // is an invalid home position we skip the line
+                item->setDistance(_calcDistance(homePositionValid, homeAlt, lastCoordinateItem, item));
                 _waypointLines.append(new CoordinateVector(lastCoordinateItem->coordinate(), item->coordinate()));
             }
             lastCoordinateItem = item;
@@ -407,17 +456,25 @@ void MissionController::_initMissionItem(MissionItem* item)
 
     connect(item, &MissionItem::commandChanged,     this, &MissionController::_itemCommandChanged);
     connect(item, &MissionItem::coordinateChanged,  this, &MissionController::_itemCoordinateChanged);
+    connect(item, &MissionItem::frameChanged,       this, &MissionController::_itemFrameChanged);
 }
 
 void MissionController::_deinitMissionItem(MissionItem* item)
 {
     disconnect(item, &MissionItem::commandChanged,     this, &MissionController::_itemCommandChanged);
     disconnect(item, &MissionItem::coordinateChanged,  this, &MissionController::_itemCoordinateChanged);
+    disconnect(item, &MissionItem::frameChanged,       this, &MissionController::_itemFrameChanged);
 }
 
 void MissionController::_itemCoordinateChanged(const QGeoCoordinate& coordinate)
 {
     Q_UNUSED(coordinate);
+    _recalcWaypointLines();
+}
+
+void MissionController::_itemFrameChanged(int frame)
+{
+    Q_UNUSED(frame);
     _recalcWaypointLines();
 }
 

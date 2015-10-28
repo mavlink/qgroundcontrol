@@ -91,6 +91,9 @@ public:
     /// true: home position should be shown
     Q_PROPERTY(bool                 homePositionValid   READ homePositionValid      WRITE setHomePositionValid NOTIFY homePositionValidChanged)
 
+    /// Distance to previous waypoint, set by UI controller
+    Q_PROPERTY(double               distance            READ distance               WRITE setDistance       NOTIFY distanceChanged)
+
     // Property accesors
     
     int sequenceNumber(void) const { return _sequenceNumber; }
@@ -134,6 +137,9 @@ public:
     bool homePosition(void) { return _homePositionSpecialCase; }
     bool homePositionValid(void) { return _homePositionValid; }
     void setHomePositionValid(bool homePositionValid);
+
+    double distance(void) { return _distance; }
+    void setDistance(double distance);
     
     // C++ only methods
     
@@ -207,6 +213,8 @@ public:
     
     void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
 
+    bool relativeAltitude(void) { return _frame == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
+
     static const double defaultPitch;
     static const double defaultHeading;
     static const double defaultAltitude;
@@ -221,15 +229,13 @@ signals:
     void headingDegreesChanged(double heading);
     void dirtyChanged(bool dirty);
     void homePositionValidChanged(bool homePostionValid);
-
-    /** @brief Announces a change to the waypoint data */
-    void changed(MissionItem* wp);
-
-    
+    void distanceChanged(float distance);
+    void frameChanged(int frame);
     void commandNameChanged(QString type);
     void commandChanged(MavlinkQmlSingleton::Qml_MAV_CMD command);
     void valueLabelsChanged(QStringList valueLabels);
     void valueStringsChanged(QStringList valueStrings);
+    bool autoContinueChanged(bool autoContinue);
     
 public:
     /** @brief Set the waypoint action */
@@ -253,14 +259,11 @@ public:
     /** @brief Wether this waypoint has been reached yet */
     bool isReached      () { return (_reachedTime > 0); }
 
-    void setChanged() {
-        emit changed(this);
-    }
-    
 private slots:
     void _factValueChanged(QVariant value);
     void _coordinateFactChanged(QVariant value);
     void _headingDegreesFactChanged(QVariant value);
+    void _altitudeRelativeToHomeFactChanged(QVariant value);
 
 private:
     QString _oneDecimalString(double value);
@@ -279,6 +282,7 @@ private:
     bool                                _autocontinue;
     bool                                _isCurrentItem;
     quint64                             _reachedTime;
+    double                              _distance;
     
     Fact*           _latitudeFact;
     Fact*           _longitudeFact;
