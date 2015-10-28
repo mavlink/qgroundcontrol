@@ -34,22 +34,38 @@ import QGroundControl.Vehicle       1.0
 import QGroundControl.Controllers   1.0
 
 
-QGCVideoBackground {
-    anchors.fill:   parent
-    display:        _controller.videoSurface
-    receiver:       _controller.videoReceiver
-
-    /* TODO: Come up with a way to make this an option
-    QGCAttitudeHUD {
-        id:                 attitudeHUD
-        visible:            !_mainIsMap
-        rollAngle:          _roll
-        pitchAngle:         _pitch
-        width:              ScreenTools.defaultFontPixelSize * (30)
-        height:             ScreenTools.defaultFontPixelSize * (30)
-        active:             multiVehicleManager.activeVehicleAvailable
-        z:                  QGroundControl.zOrderWidgets
+Item {
+    id: root
+    Rectangle {
+        id:             noVideo
+        anchors.fill:   parent
+        color:          "black"
+        visible:        !_controller.videoRunning
+        QGCLabel {
+            text:               "NO VIDEO"
+            font.weight:        Font.DemiBold
+            color:              "white"
+            font.pixelSize:     ScreenTools.defaultFontPixelSize * 1.5
+            anchors.centerIn:   parent
+        }
     }
-    */
-
+    QGCVideoBackground {
+        anchors.fill:   parent
+        display:        _controller.videoSurface
+        receiver:       _controller.videoReceiver
+        visible:        _controller.videoRunning
+        runVideo:       true
+        /* TODO: Come up with a way to make this an option
+        QGCAttitudeHUD {
+            id:                 attitudeHUD
+            visible:            !_mainIsMap
+            rollAngle:          _roll
+            pitchAngle:         _pitch
+            width:              ScreenTools.defaultFontPixelSize * (30)
+            height:             ScreenTools.defaultFontPixelSize * (30)
+            active:             multiVehicleManager.activeVehicleAvailable
+            z:                  QGroundControl.zOrderWidgets
+        }
+        */
+    }
 }

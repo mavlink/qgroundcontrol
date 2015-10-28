@@ -54,6 +54,8 @@ public:
      */
 #if defined(QGC_GST_STREAMING)
     GstElement* videoSink() const;
+    time_t      lastFrame() { return _lastFrame; }
+    void        setLastFrame(time_t t) { _lastFrame = t; }
 #endif
 
 protected:
@@ -66,6 +68,7 @@ private:
     friend class VideoItem;
 #if defined(QGC_GST_STREAMING)
     VideoSurfacePrivate * const _data;
+    time_t _lastFrame;
 #endif
 };
 

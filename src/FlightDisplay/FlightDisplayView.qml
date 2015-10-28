@@ -114,7 +114,6 @@ Item {
                 _flightMap.updateMapPosition(true /* force */)
             } else {
                 _flightVideo = item
-                _flightVideo.visible = true
             }
         }
     }
@@ -144,20 +143,17 @@ Item {
             onLoaded: {
                 if(_mainIsMap) {
                     _flightVideo = item
-                    _flightVideo.visible = true
                 } else {
                     _flightMap = item
                     _savedZoomLevel = _flightMap.zoomLevel
                     _flightMap.zoomLevel = _savedZoomLevel - 3
                 }
-                pip.visible = _controller.hasVideo
             }
         }
         MouseArea {
             anchors.fill: parent
             onClicked: {
                 _mainIsMap = !_mainIsMap
-                pip.visible = false
                 reloadContents();
                 QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, _mainIsMap)
             }
