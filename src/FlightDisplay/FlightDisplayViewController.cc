@@ -34,6 +34,7 @@ const char* kMainFlightDisplayViewControllerGroup = "FlightDisplayViewController
 
 FlightDisplayViewController::FlightDisplayViewController(QObject *parent)
     : QObject(parent)
+    , _videoRunning(false)
 {
     /*
      * This is the receiving end of an UDP RTP stream. The sender can be setup with this command:
@@ -65,6 +66,8 @@ FlightDisplayViewController::FlightDisplayViewController(QObject *parent)
     _videoReceiver->setUri(QLatin1Literal("udp://0.0.0.0:5000"));
 #if defined(QGC_GST_STREAMING)
     _videoReceiver->setVideoSink(_videoSurface->videoSink());
+    connect(&_frameTimer, &QTimer::timeout, this, &FlightDisplayViewController::_updateTimer);
+    _frameTimer.start(1000);
 #endif
 }
 
@@ -72,3 +75,33 @@ FlightDisplayViewController::~FlightDisplayViewController()
 {
 
 }
+
+#if defined(QGC_GST_STREAMING)
+void FlightDisplayViewController::_updateTimer(void)
+{
+    if(_videoRunning)
+    {
+        time_t elapsed = 0;
+        if(_videoSurface)
+        {
+            elapsed = time(0) - _videoSurface->lastFrame();
+        }
+        if(elapsed > 2)
+        {
+            _videoRunning = false;
+            _videoSurface->setLastFrame(0);
+            emit videoRunningChanged();
+        }
+    }
+    else
+    {
+        if(_videoSurface && _videoSurface->lastFrame()) {
+            if(!_videoRunning)
+            {
+                _videoRunning = true;
+                emit videoRunningChanged();
+            }
+        }
+    }
+}
+#endif
