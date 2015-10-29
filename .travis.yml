@@ -19,6 +19,7 @@ matrix:
           sudo: false
         - os: linux
           env: CONFIG=doxygen
+          sudo: false
         - os: osx
           osx_image: xcode7
           env: SPEC=macx-clang CONFIG=debug QT_FATAL_WARNINGS=1
@@ -139,7 +140,6 @@ deploy:
     on:
       tags: true
       condition: $CONFIG = installer
-# doxygen s3 puload
   - provider: s3
     access_key_id: AKIAIVORNALE7NHD3T6Q
     secret_access_key:
