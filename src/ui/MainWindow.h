@@ -134,6 +134,15 @@ protected slots:
      */
     void showStatusBarCallback(bool checked);
 
+    /**
+     * @brief Disable the other QActions that trigger view mode changes
+     *
+     * When a user hits Ctrl+1, Ctrl+2, Ctrl+3  - only one view is set to active
+     * (and in the QML file for the MainWindow the others are set to have
+     * visibility = false), but on the Menu all of them would be selected making
+     * this incoherent.
+     */
+    void handleActiveViewActionState(bool triggered);
 signals:
     // Signals the Qml to show the specified view
     void showFlyView(void);
