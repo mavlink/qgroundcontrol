@@ -148,7 +148,7 @@ deploy:
     local_dir: ${TRAVIS_BUILD_DIR}/src/html
     upload-dir: doxygen
     acl: public_read
-    skip_clean: true
+    skip_cleanup: true
     branch: master
     on:
       condition: $CONFIG = doxygen
