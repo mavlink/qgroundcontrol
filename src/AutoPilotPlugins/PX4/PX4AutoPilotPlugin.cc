@@ -28,7 +28,7 @@
 #include "AirframeComponentController.h"
 #include "QGCMessageBox.h"
 #include "UAS.h"
-#include "FirmwarePlugin/PX4/PX4ParameterLoader.h"  // FIXME: Hack
+#include "FirmwarePlugin/PX4/PX4ParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h"  // FIXME: Hack
 
 /// @file
@@ -81,20 +81,11 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     Q_CHECK_PTR(_airframeFacts);
     
     PX4AirframeLoader::loadAirframeFactMetaData();
-
-    // This kicks off parameter load
-    _firmwarePlugin->getParameterLoader(this, vehicle);
 }
 
 PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
 {
     delete _airframeFacts;
-}
-
-void PX4AutoPilotPlugin::clearStaticData(void)
-{
-    PX4ParameterLoader::clearStaticData();
-    PX4AirframeLoader::clearStaticData();
 }
 
 const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)

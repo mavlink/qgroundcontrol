@@ -49,7 +49,6 @@ public:
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
     AutoPilotPluginManager(QObject* parent = NULL);
-    ~AutoPilotPluginManager();
 };
 
 #endif

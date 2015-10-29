@@ -141,7 +141,6 @@ QString APMCustomMode::modeString() const
 
 APMFirmwarePlugin::APMFirmwarePlugin(QObject* parent)
     : FirmwarePlugin(parent)
-    , _parameterLoader(NULL)
 {
      _textSeverityAdjustmentNeeded = false;
 }
@@ -387,18 +386,7 @@ bool APMFirmwarePlugin::sendHomePositionToVehicle(void)
     return true;
 }
 
-ParameterLoader* APMFirmwarePlugin::getParameterLoader(AutoPilotPlugin* autopilotPlugin, Vehicle* vehicle)
+void APMFirmwarePlugin::addMetaDataToFact(Fact* fact)
 {
-    if (!_parameterLoader) {
-        _parameterLoader = new APMParameterLoader(autopilotPlugin, vehicle, this);
-        Q_CHECK_PTR(_parameterLoader);
-
-        // FIXME: Why do I need SIGNAL/SLOT to make this work
-        connect(_parameterLoader, SIGNAL(parametersReady(bool)),                autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
-        connect(_parameterLoader, &APMParameterLoader::parameterListProgress,   autopilotPlugin, &APMAutoPilotPlugin::parameterListProgress);
-
-        _parameterLoader->loadParameterFactMetaData();
-    }
-
-    return _parameterLoader;
+    _parameterMetaData.addMetaDataToFact(fact);
 }

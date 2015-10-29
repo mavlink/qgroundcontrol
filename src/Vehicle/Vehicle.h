@@ -42,6 +42,7 @@ class UASInterface;
 class FirmwarePlugin;
 class AutoPilotPlugin;
 class MissionManager;
+class ParameterLoader;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -248,6 +249,8 @@ public:
     double          waypointDistance    () { return _waypointDistance; }
     uint16_t        currentWaypoint     () { return _currentWaypoint; }
     unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
+
+    ParameterLoader* getParameterLoader(void);
     
 public slots:
     void setLatitude(double latitude);
@@ -411,6 +414,8 @@ private:
     
     MissionManager*     _missionManager;
     bool                _missionManagerInitialRequestComplete;
+
+    ParameterLoader*    _parameterLoader;
     
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT

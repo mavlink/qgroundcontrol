@@ -39,8 +39,6 @@ public:
     // Overrides from AutoPilotPlugin
     virtual const QVariantList& vehicleComponents(void);
 
-    static void clearStaticData(void);
-
 public slots:
     // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
     void _parametersReadyPreChecks(bool missingParameters);

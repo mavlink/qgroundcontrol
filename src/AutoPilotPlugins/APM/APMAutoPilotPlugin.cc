@@ -25,7 +25,7 @@
 #include "AutoPilotPluginManager.h"
 #include "QGCMessageBox.h"
 #include "UAS.h"
-#include "FirmwarePlugin/APM/APMParameterLoader.h"  // FIXME: Hack
+#include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
@@ -34,19 +34,11 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     _incorrectParameterVersion(false)
 {
     Q_ASSERT(vehicle);
-
-    // This kicks off parameter load
-    _firmwarePlugin->getParameterLoader(this, vehicle);
 }
 
 APMAutoPilotPlugin::~APMAutoPilotPlugin()
 {
 
-}
-
-void APMAutoPilotPlugin::clearStaticData(void)
-{
-    APMParameterLoader::clearStaticData();
 }
 
 const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)

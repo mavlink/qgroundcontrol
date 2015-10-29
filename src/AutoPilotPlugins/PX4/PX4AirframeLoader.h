@@ -50,7 +50,6 @@ public:
     PX4AirframeLoader(AutoPilotPlugin* autpilot,UASInterface* uas, QObject* parent = NULL);
 
     static void loadAirframeFactMetaData(void);
-    static void clearStaticData(void);
 
 private:
     enum {
