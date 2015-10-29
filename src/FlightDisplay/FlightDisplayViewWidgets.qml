@@ -35,8 +35,6 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.FlightMap     1.0
 
-/// This component is used to delay load the items which are direct children of the
-/// FlightDisplayViewControl.
 Item {
 
     readonly property string _InstrumentVisibleKey: "IsInstrumentPanelVisible"
@@ -84,7 +82,7 @@ Item {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         visible:                _isInstrumentVisible
-        size:                   ScreenTools.defaultFontPixelSize * (9)
+        size:                   mainWindow.width * 0.15
         active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll
@@ -124,7 +122,7 @@ Item {
             anchors.fill: parent
             onClicked: {
                 _isInstrumentVisible = true
-                QGroundControl.saveBoolGlobalSetting(_InstrumentVisibleKey, false)
+                QGroundControl.saveBoolGlobalSetting(_InstrumentVisibleKey, true)
             }
         }
     }
@@ -213,7 +211,7 @@ Item {
         //-- Zoom Map In
         RoundButton {
             id:                 mapZoomPlus
-            visible:            _mainIsMap
+            visible:            _mainIsMap && !ScreenTools.isTinyScreen
             buttonImage:        "/qmlimages/ZoomPlus.svg"
             exclusiveGroup:     _dropButtonsExclusiveGroup
             z:                  QGroundControl.zOrderWidgets
@@ -227,7 +225,7 @@ Item {
         //-- Zoom Map Out
         RoundButton {
             id:                 mapZoomMinus
-            visible:            _mainIsMap
+            visible:            _mainIsMap && !ScreenTools.isTinyScreen
             buttonImage:        "/qmlimages/ZoomMinus.svg"
             exclusiveGroup:     _dropButtonsExclusiveGroup
             z:                  QGroundControl.zOrderWidgets

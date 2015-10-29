@@ -32,7 +32,7 @@ import QGroundControl.ScreenTools   1.0
 
 /// Qml for MainWindow
 Item {
-    id: _root
+    id: mainWindow
 
     property var _toolbar: toolbarLoader.item
 
@@ -121,7 +121,7 @@ Item {
         anchors.bottom:     parent.bottom
         visible:            false
 
-        property var tabletPosition:    _root.tabletPosition
+        property var tabletPosition:    mainWindow.tabletPosition
     }
 
     Loader {
@@ -132,6 +132,6 @@ Item {
         anchors.bottom:     parent.bottom
         visible:            false
 
-        property var tabletPosition:    _root.tabletPosition
+        property var tabletPosition:    mainWindow.tabletPosition
     }
 }

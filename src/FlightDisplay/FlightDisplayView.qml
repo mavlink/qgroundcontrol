@@ -80,7 +80,7 @@ Item {
     property var  _flightVideo:         null
     property var  _savedZoomLevel:      0
 
-    property real _pipSize:             ScreenTools.isAndroid ? ScreenTools.defaultFontPixelSize * (8) : ScreenTools.defaultFontPixelSize * (9)
+    property real _pipSize:             mainWindow.width * 0.2
 
     FlightDisplayViewController { id: _controller }
 
@@ -132,16 +132,13 @@ Item {
         anchors.margins:    ScreenTools.defaultFontPixelHeight
         anchors.left:       parent.left
         anchors.bottom:     parent.bottom
-        height:             _pipSize
-        width:              _pipSize * (16/9)
+        width:              _pipSize
+        height:             _pipSize * (9/16)
         color:              "#000010"
-        border.width:       4
-        radius:             4
         border.color:       _isBackgroundDark ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
         Loader {
             id:                 pipLoader
             anchors.fill:       parent
-            anchors.margins:    2
             onLoaded: {
                 if(_mainIsMap) {
                     _flightVideo = item
