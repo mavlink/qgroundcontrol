@@ -38,9 +38,11 @@ Item {
 
     property bool active:   false  ///< true: actively connected to data provider, false: show inactive control
     property real heading:  0
-    property real size:     ScreenTools.defaultFontPixelSize * (10)
+    property real size:     _defaultSize
 
-    property int _fontSize: ScreenTools.defaultFontPixelSize * 0.8
+    property real _defaultSize: ScreenTools.defaultFontPixelSize * (10)
+    property real _sizeRatio:   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
+    property int  _fontSize:    ScreenTools.defaultFontPixelSize * _sizeRatio
 
     width:                  size
     height:                 size

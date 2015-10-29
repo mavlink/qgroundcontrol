@@ -10,7 +10,7 @@ Item {
 
     signal          clicked()
     property alias  buttonImage:        button.source
-    property real   radius:             (ScreenTools.defaultFontPixelHeight * 3) / 2
+    property real   radius:             ScreenTools.defaultFontPixelHeight * 1.5
     property int    dropDirection:      dropDown
     property alias  dropDownComponent:  dropDownLoader.sourceComponent
     property real   viewportMargins:    0
@@ -159,7 +159,7 @@ Item {
     Rectangle {
         anchors.fill:   parent
         radius:         width / 2
-        border.width:   2
+        border.width:   ScreenTools.defaultFontPixelHeight * 0.0625
         border.color:   "white"
         color:          checked ? qgcPal.mapButtonHighlight : qgcPal.mapButton
 

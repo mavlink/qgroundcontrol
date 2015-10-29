@@ -1,7 +1,8 @@
 pragma Singleton
 
-import QtQuick 2.2
+import QtQuick 2.4
 import QtQuick.Controls 1.2
+import QtQuick.Window 2.2
 
 import QGroundControl.ScreenToolsController 1.0
 
@@ -22,6 +23,7 @@ Item {
     property bool isiOS:            ScreenToolsController.isiOS
     property bool isMobile:         ScreenToolsController.isMobile
     property bool isDebug:          ScreenToolsController.isDebug
+    property bool isTinyScreen:     (Screen.width / Screen.pixelDensity) < 120 // 120mm
 
     function mouseX() {
         return ScreenToolsController.mouseX()
@@ -35,7 +37,7 @@ Item {
         id:     _textMeasure
         text:   "X"
 
-        property real fontWidth:    contentWidth * (ScreenToolsController.testHighDPI ? 2 : 1)
+        property real fontWidth:    contentWidth  * (ScreenToolsController.testHighDPI ? 2 : 1)
         property real fontHeight:   contentHeight * (ScreenToolsController.testHighDPI ? 2 : 1)
     }
 
