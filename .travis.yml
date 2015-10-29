@@ -56,6 +56,7 @@ addons:
     - libopenscenegraph-dev
     - libsdl1.2-dev
     - libudev-dev
+    - texlive-font-utils
 
 cache:
   directories:
