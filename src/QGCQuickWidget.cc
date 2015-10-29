@@ -40,8 +40,8 @@ QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
     QQuickWidget(parent)
 {
     rootContext()->engine()->addImportPath("qrc:/qml");
-    rootContext()->setContextProperty("multiVehicleManager", MultiVehicleManager::instance());
-    rootContext()->setContextProperty("joystickManager", JoystickManager::instance());
+    rootContext()->setContextProperty("multiVehicleManager", qgcApp()->toolbox()->multiVehicleManager());
+    rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
 }
 
 void QGCQuickWidget::setAutoPilot(AutoPilotPlugin* autoPilot)

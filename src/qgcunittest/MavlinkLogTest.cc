@@ -92,7 +92,7 @@ void MavlinkLogTest::_bootLogDetectionCancel_test(void)
     setExpectedFileDialog(getSaveFileName, QStringList());
 
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
     
@@ -112,7 +112,7 @@ void MavlinkLogTest::_bootLogDetectionSave_test(void)
     setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
     
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
     
@@ -129,7 +129,7 @@ void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
     _createTempLogFile(true);
     
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
     
@@ -138,23 +138,12 @@ void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
 
 void MavlinkLogTest::_connectLogWorker(bool arm)
 {
-    LinkManager* linkMgr = LinkManager::instance();
-    Q_CHECK_PTR(linkMgr);
-    
-    MockLink* link = new MockLink();
-    Q_CHECK_PTR(link);
-    LinkManager::instance()->_addLink(link);
-    linkMgr->connectLink(link);
-    
-    // Wait for the uas to work it's way through the various threads
-    
-    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(activeVehicleChanged(Vehicle*)));
-    QCOMPARE(spyVehicle.wait(5000), true);
+    _connectMockLink();
 
     QDir logSaveDir;
     
     if (arm) {
-        MultiVehicleManager::instance()->activeVehicle()->setArmed(true);
+        qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->setArmed(true);
         QTest::qWait(1500); // Wait long enough for heartbeat to come through
         
         // On Disconnect: We should get a getSaveFileName dialog.
@@ -163,8 +152,7 @@ void MavlinkLogTest::_connectLogWorker(bool arm)
         setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
     }
     
-    linkMgr->disconnectLink(link);
-    QTest::qWait(1000); // Need to allow signals to move between threads
+    _disconnectMockLink();
 
     if (arm) {
         checkExpectedFileDialog();

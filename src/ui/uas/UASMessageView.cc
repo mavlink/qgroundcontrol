@@ -26,7 +26,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UASMessageView.h"
 #include "QGCUnconnectedInfoWidget.h"
-#include "UASMessageHandler.h"
 #include "ui_UASMessageView.h"
 
 /*-------------------------------------------------------------------------------------
@@ -49,9 +48,10 @@ UASMessageView::~UASMessageView()
   UASMessageViewWidget
 -------------------------------------------------------------------------------------*/
 
-UASMessageViewWidget::UASMessageViewWidget(QWidget *parent)
+UASMessageViewWidget::UASMessageViewWidget(UASMessageHandler* uasMessageHandler, QWidget *parent)
     : UASMessageView(parent)
     , _unconnectedWidget(NULL)
+    , _uasMessageHandler(uasMessageHandler)
 {
     setStyleSheet("QPlainTextEdit { border: 0px }");
     // Construct initial widget
@@ -66,7 +66,7 @@ UASMessageViewWidget::UASMessageViewWidget(QWidget *parent)
     connect(clearAction, &QAction::triggered, this, &UASMessageViewWidget::clearMessages);
     ui()->plainTextEdit->addAction(clearAction);
     // Connect message handler
-    connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageReceived, this, &UASMessageViewWidget::handleTextMessage);
+    connect(_uasMessageHandler, &UASMessageHandler::textMessageReceived, this, &UASMessageViewWidget::handleTextMessage);
 }
 
 UASMessageViewWidget::~UASMessageViewWidget()
@@ -77,7 +77,7 @@ UASMessageViewWidget::~UASMessageViewWidget()
 void UASMessageViewWidget::clearMessages()
 {
     ui()->plainTextEdit->clear();
-    UASMessageHandler::instance()->clearMessages();
+    _uasMessageHandler->clearMessages();
 }
 
 void UASMessageViewWidget::handleTextMessage(UASMessage *message)
@@ -110,24 +110,25 @@ void UASMessageViewWidget::handleTextMessage(UASMessage *message)
   UASMessageViewRollDown
 -------------------------------------------------------------------------------------*/
 
-UASMessageViewRollDown::UASMessageViewRollDown(QWidget *parent)
+UASMessageViewRollDown::UASMessageViewRollDown(UASMessageHandler* uasMessageHandler, QWidget *parent)
     : UASMessageView(parent)
+    , _uasMessageHandler(uasMessageHandler)
 {
     setAttribute(Qt::WA_TranslucentBackground);
     setStyleSheet("background-color: rgba(0%,0%,0%,80%); border: 2px;");
     QPlainTextEdit *msgWidget = ui()->plainTextEdit;
     // Init Messages
-    UASMessageHandler::instance()->lockAccess();
+    _uasMessageHandler->lockAccess();
     msgWidget->setUpdatesEnabled(false);
-    QVector<UASMessage*> messages = UASMessageHandler::instance()->messages();
+    QVector<UASMessage*> messages = _uasMessageHandler->messages();
     for(int i = 0; i < messages.count(); i++) {
         msgWidget->appendHtml(messages.at(i)->getFormatedText());
     }
     QScrollBar *scroller = msgWidget->verticalScrollBar();
     scroller->setValue(scroller->maximum());
     msgWidget->setUpdatesEnabled(true);
-    connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageReceived, this, &UASMessageViewRollDown::handleTextMessage);
-    UASMessageHandler::instance()->unlockAccess();
+    connect(_uasMessageHandler, &UASMessageHandler::textMessageReceived, this, &UASMessageViewRollDown::handleTextMessage);
+    _uasMessageHandler->unlockAccess();
 }
 
 UASMessageViewRollDown::~UASMessageViewRollDown()

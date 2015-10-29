@@ -44,19 +44,9 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
 {
     UnitTest::init();
     
-    MockLink* link = new MockLink();
-    link->setFirmwareType(autopilot);
-    LinkManager::instance()->_addLink(link);
+    _connectMockLink(autopilot);
     
-    LinkManager::instance()->connectLink(link);
-    
-    // Wait for the Vehicle to get created
-    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(5000), true);
-    QVERIFY(MultiVehicleManager::instance()->parameterReadyVehicleAvailable());
-    QVERIFY(MultiVehicleManager::instance()->activeVehicle());
-    
-    _plugin = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
+    _plugin = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_plugin);
 }
 

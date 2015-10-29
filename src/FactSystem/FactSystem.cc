@@ -29,19 +29,18 @@
 
 #include <QtQml>
 
-IMPLEMENT_QGC_SINGLETON(FactSystem, FactSystem)
-
 const char* FactSystem::_factSystemQmlUri = "QGroundControl.FactSystem";
 
-FactSystem::FactSystem(QObject* parent) :
-    QGCSingleton(parent)
+FactSystem::FactSystem(QGCApplication* app)
+    : QGCTool(app)
 {
-    
-    qmlRegisterType<Fact>(_factSystemQmlUri, 1, 0, "Fact");
-    qmlRegisterType<FactPanelController>(_factSystemQmlUri, 1, 0, "FactPanelController");
+
 }
 
-FactSystem::~FactSystem()
+void FactSystem::setToolbox(QGCToolbox *toolbox)
 {
+    QGCTool::setToolbox(toolbox);
 
+    qmlRegisterType<Fact>(_factSystemQmlUri, 1, 0, "Fact");
+    qmlRegisterType<FactPanelController>(_factSystemQmlUri, 1, 0, "FactPanelController");
 }

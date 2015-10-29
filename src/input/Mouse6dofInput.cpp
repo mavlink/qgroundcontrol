@@ -38,7 +38,7 @@ Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
     bValue(0.0),
     cValue(0.0)
 {
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Mouse6dofInput::_activeVehicleChanged);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Mouse6dofInput::_activeVehicleChanged);
     
     // Connect 3DxWare SDK MotionEvent
     connect(mouseInput, SIGNAL(Move3d(std::vector<float>&)), this, SLOT(motion3DMouse(std::vector<float>&)));
@@ -63,7 +63,7 @@ Mouse6dofInput::Mouse6dofInput(QWidget* parent) :
     bValue(0.0),
     cValue(0.0)
 {
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Mouse6dofInput::_activeVehicleChanged);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Mouse6dofInput::_activeVehicleChanged);
 
     if (!mouseActive)
     {
@@ -137,7 +137,7 @@ void Mouse6dofInput::_activeVehicleChanged(Vehicle* vehicle)
 void Mouse6dofInput::init()
 {
     // Make sure active UAS is set
-    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
 }
 
 void Mouse6dofInput::run()

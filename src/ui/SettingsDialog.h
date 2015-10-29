@@ -25,7 +25,10 @@
 #define SETTINGSDIALOG_H
 
 #include <QDialog>
+
 #include "MainWindow.h"
+#include "GAudioOutput.h"
+#include "FlightMapSettings.h"
 
 namespace Ui
 {
@@ -45,7 +48,7 @@ public:
         ShowMavlink
     };
 
-    SettingsDialog(QWidget *parent = 0, int showTab = ShowDefault, Qt::WindowFlags flags = Qt::Sheet);
+    SettingsDialog(GAudioOutput* audioOuput, FlightMapSettings* flightMapSettings, QWidget *parent = 0, int showTab = ShowDefault, Qt::WindowFlags flags = Qt::Sheet);
     ~SettingsDialog();
 
 public slots:
@@ -62,6 +65,8 @@ private slots:
 
 private:
     MainWindow*         _mainWindow;
+    GAudioOutput*       _audioOutput;
+    FlightMapSettings*  _flightMapSettings;
     Ui::SettingsDialog* _ui;
 };
 

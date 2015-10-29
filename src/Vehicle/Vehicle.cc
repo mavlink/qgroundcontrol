@@ -33,6 +33,7 @@
 #include "MissionManager.h"
 #include "CoordinateVector.h"
 #include "ParameterLoader.h"
+#include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -45,7 +46,13 @@ const char* Vehicle::_joystickModeSettingsKey =     "JoystickMode";
 const char* Vehicle::_joystickEnabledSettingsKey =  "JoystickEnabled";
 const char* Vehicle::_communicationInactivityKey =  "CommunicationInactivity";
 
-Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
+Vehicle::Vehicle(LinkInterface*             link,
+                 int                        vehicleId,
+                 MAV_AUTOPILOT              firmwareType,
+                 MAV_TYPE                   vehicleType,
+                 FirmwarePluginManager*     firmwarePluginManager,
+                 AutoPilotPluginManager*    autopilotPluginManager,
+                 JoystickManager*           joystickManager)
     : _id(vehicleId)
     , _active(false)
     , _firmwareType(firmwareType)
@@ -96,15 +103,18 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     , _custom_mode(0)
     , _nextSendMessageMultipleIndex(0)
     , _communicationInactivityTimeoutMSecs(_communicationInactivityTimeoutMSecsDefault)
+    , _firmwarePluginManager(firmwarePluginManager)
+    , _autopilotPluginManager(autopilotPluginManager)
+    , _joystickManager(joystickManager)
 {
     _addLink(link);
     
-    _mavlink = MAVLinkProtocol::instance();
+    _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     
     connect(_mavlink, &MAVLinkProtocol::messageReceived, this, &Vehicle::_mavlinkMessageReceived);
     connect(this, &Vehicle::_sendMessageOnThread, this, &Vehicle::_sendMessage, Qt::QueuedConnection);
     
-    _uas = new UAS(_mavlink, this);
+    _uas = new UAS(_mavlink, this, _firmwarePluginManager);
     
     setLatitude(_uas->getLatitude());
     setLongitude(_uas->getLongitude());
@@ -112,8 +122,8 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     connect(_uas, &UAS::latitudeChanged, this, &Vehicle::setLatitude);
     connect(_uas, &UAS::longitudeChanged, this, &Vehicle::setLongitude);
     
-    _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
-    _autopilotPlugin = AutoPilotPluginManager::instance()->newAutopilotPluginForVehicle(this);
+    _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
+    _autopilotPlugin = _autopilotPluginManager->newAutopilotPluginForVehicle(this);
     
     connect(_autopilotPlugin, &AutoPilotPlugin::parametersReadyChanged,     this, &Vehicle::_parametersReady);
     connect(_autopilotPlugin, &AutoPilotPlugin::missingParametersChanged,   this, &Vehicle::missingParametersChanged);
@@ -132,7 +142,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     _currentHeartbeatTimeout = 0;
     emit heartbeatTimeoutChanged();
     // Listen for system messages
-    connect(UASMessageHandler::instance(), &UASMessageHandler::textMessageCountChanged, this, &Vehicle::_handleTextMessage);
+    connect(qgcApp()->toolbox()->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged, this, &Vehicle::_handleTextMessage);
     // Now connect the new UAS
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
@@ -178,8 +188,13 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
 
 Vehicle::~Vehicle()
 {
+    qDebug() << "~Vehicle";
+
     delete _missionManager;
     _missionManager = NULL;
+
+    delete _autopilotPlugin;
+    _autopilotPlugin = NULL;
 
     delete _mav;
     _mav = NULL;
@@ -285,9 +300,9 @@ bool Vehicle::_containsLink(LinkInterface* link)
 void Vehicle::_addLink(LinkInterface* link)
 {
     if (!_containsLink(link)) {
-        _links += LinkManager::instance()->sharedPointerForLink(link);
+        _links += qgcApp()->toolbox()->linkManager()->sharedPointerForLink(link);
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
-        connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &Vehicle::_linkDisconnected);
+        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &Vehicle::_linkDisconnected);
     }
 }
 
@@ -790,7 +805,7 @@ void Vehicle::_handleTextMessage(int newCount)
         return;
     }
     
-    UASMessageHandler* pMh = UASMessageHandler::instance();
+    UASMessageHandler* pMh = qgcApp()->toolbox()->uasMessageHandler();
     Q_ASSERT(pMh);
     MessageType_t type = newCount ? _currentMessageType : MessageNone;
     int errorCount     = _currentErrorCount;
@@ -941,7 +956,7 @@ void Vehicle::setJoystickEnabled(bool enabled)
 void Vehicle::_startJoystick(bool start)
 {
 #ifndef __mobile__
-    Joystick* joystick = JoystickManager::instance()->activeJoystick();
+    Joystick* joystick = _joystickManager->activeJoystick();
     if (joystick) {
         if (start) {
             if (_joystickEnabled) {
@@ -1149,7 +1164,7 @@ void Vehicle::_communicationInactivityTimedOut(void)
 {
     // Vechile is no longer communicating with us, disconnect all links
 
-    LinkManager* linkMgr = LinkManager::instance();
+    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
     for (int i=0; i<_links.count(); i++) {
         linkMgr->disconnectLink(_links[i].data());
     }

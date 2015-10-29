@@ -23,7 +23,6 @@
 
 #include "Joystick.h"
 #include "QGC.h"
-#include "MultiVehicleManager.h"
 #include "AutoPilotPlugin.h"
 #include "UAS.h"
 
@@ -52,7 +51,7 @@ const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "ThrottleAxis"
 };
 
-Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex)
+Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex, MultiVehicleManager* multiVehicleManager)
 #ifndef __mobile__
     : _sdlIndex(sdlIndex)
     , _exitThread(false)
@@ -68,6 +67,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     , _throttleMode(ThrottleModeCenterZero)
     , _activeVehicle(NULL)
     , _pollingStartedForCalibration(false)
+    , _multiVehicleManager(multiVehicleManager)
 #endif // __mobile__
 {
 #ifdef __mobile__
@@ -520,7 +520,7 @@ void Joystick::startCalibrationMode(CalibrationMode_t mode)
     
     if (!isRunning()) {
         _pollingStartedForCalibration = true;
-        startPolling(MultiVehicleManager::instance()->activeVehicle());
+        startPolling(_multiVehicleManager->activeVehicle());
     }
 }
 

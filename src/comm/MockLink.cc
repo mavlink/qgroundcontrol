@@ -23,6 +23,7 @@
 
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
+#include "QGCApplication.h"
 
 #include <QTimer>
 #include <QDebug>
@@ -76,7 +77,7 @@ const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
 const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 
 MockLink::MockLink(MockConfiguration* config)
-    : _missionItemHandler(this)
+    : _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
     , _name("MockLink")
     , _connected(false)
     , _vehicleSystemId(128)     // FIXME: Pull from eventual parameter manager

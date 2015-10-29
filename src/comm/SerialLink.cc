@@ -133,7 +133,7 @@ bool SerialLink::_disconnect(void)
     }
     
 #ifdef __android__
-    LinkManager::instance()->suspendConfigurationUpdates(false);
+    qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(false);
 #endif
     return true;
 }
@@ -150,7 +150,7 @@ bool SerialLink::_connect(void)
     _disconnect();
     
 #ifdef __android__
-    LinkManager::instance()->suspendConfigurationUpdates(true);
+    qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(true);
 #endif
     
     // Initialize the connection

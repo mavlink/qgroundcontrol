@@ -31,8 +31,7 @@
 
 IMPLEMENT_QGC_SINGLETON(GenericFirmwarePlugin, FirmwarePlugin)
 
-GenericFirmwarePlugin::GenericFirmwarePlugin(QObject* parent)
-    : FirmwarePlugin(parent)
+GenericFirmwarePlugin::GenericFirmwarePlugin(void)
 {
     
 }

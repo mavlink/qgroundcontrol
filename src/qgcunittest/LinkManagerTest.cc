@@ -28,6 +28,7 @@
 
 #include "LinkManagerTest.h"
 #include "MockLink.h"
+#include "QGCApplication.h"
 
 UT_REGISTER_TEST(LinkManagerTest)
 
@@ -45,7 +46,7 @@ void LinkManagerTest::init(void)
     Q_ASSERT(_linkMgr == NULL);
     Q_ASSERT(_multiSpy == NULL);
     
-    _linkMgr = new LinkManager(NULL /* no parent */);
+    _linkMgr = qgcApp()->toolbox()->linkManager();
     Q_CHECK_PTR(_linkMgr);
     
     _rgSignals[newLinkSignalIndex] = SIGNAL(newLink(LinkInterface*));
@@ -60,9 +61,6 @@ void LinkManagerTest::cleanup(void)
     Q_ASSERT(_linkMgr);
     Q_ASSERT(_multiSpy);
     
-    _linkMgr->_shutdown();
-    
-    delete _linkMgr;
     delete _multiSpy;
     
     _linkMgr = NULL;
@@ -77,12 +75,11 @@ void LinkManagerTest::_add_test(void)
     Q_ASSERT(_linkMgr);
     Q_ASSERT(_linkMgr->getLinks().count() == 0);
     
-    MockLink* link = new MockLink();
-    _linkMgr->_addLink(link);
+    _connectMockLink();
     
     QList<LinkInterface*> links = _linkMgr->getLinks();
     QCOMPARE(links.count(), 1);
-    QCOMPARE(dynamic_cast<MockLink*>(links[0]), link);
+    QCOMPARE(dynamic_cast<MockLink*>(links[0]), _mockLink);
 }
 
 void LinkManagerTest::_delete_test(void)
@@ -90,9 +87,8 @@ void LinkManagerTest::_delete_test(void)
     Q_ASSERT(_linkMgr);
     Q_ASSERT(_linkMgr->getLinks().count() == 0);
     
-    MockLink* link = new MockLink();
-    _linkMgr->_addLink(link);
-    _linkMgr->_deleteLink(link);
+    _connectMockLink();
+    _disconnectMockLink();
     
     QCOMPARE(_linkMgr->getLinks().count(), 0);
 }
@@ -103,9 +99,8 @@ void LinkManagerTest::_addSignals_test(void)
     Q_ASSERT(_linkMgr->getLinks().count() == 0);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
-    MockLink* link = new MockLink();
-    _linkMgr->_addLink(link);
-    
+    _connectMockLink();
+
     QCOMPARE(_multiSpy->checkOnlySignalByMask(newLinkSignalMask), true);
     QSignalSpy* spy = _multiSpy->getSpyByIndex(newLinkSignalIndex);
     
@@ -115,7 +110,7 @@ void LinkManagerTest::_addSignals_test(void)
     QObject* object = qvariant_cast<QObject *>(signalArgs[0]);
     QVERIFY(object != NULL);
     MockLink* signalLink = qobject_cast<MockLink*>(object);
-    QCOMPARE(signalLink, link);
+    QCOMPARE(signalLink, _mockLink);
 }
 
 void LinkManagerTest::_deleteSignals_test(void)
@@ -124,11 +119,9 @@ void LinkManagerTest::_deleteSignals_test(void)
     Q_ASSERT(_linkMgr->getLinks().count() == 0);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
-    MockLink* link = new MockLink();
-    _linkMgr->_addLink(link);
+    _connectMockLink();
     _multiSpy->clearAllSignals();
-    
-    _linkMgr->_deleteLink(link);
+    _disconnectMockLink();
     
     QCOMPARE(_multiSpy->checkOnlySignalByMask(linkDeletedSignalMask), true);
     QSignalSpy* spy = _multiSpy->getSpyByIndex(linkDeletedSignalIndex);

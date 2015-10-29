@@ -112,7 +112,7 @@ public:
     virtual void addMetaDataToFact(Fact* fact) = 0;
     
 protected:
-    FirmwarePlugin(QObject* parent = NULL) : QGCSingleton(parent) { }
+    FirmwarePlugin(void) { };
 };
 
 #endif

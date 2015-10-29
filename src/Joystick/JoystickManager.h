@@ -24,21 +24,24 @@
 #ifndef JoystickManager_H
 #define JoystickManager_H
 
-#include "QGCSingleton.h"
 #include "QGCLoggingCategory.h"
 #include "Joystick.h"
+#include "MultiVehicleManager.h"
+#include "QGCToolbox.h"
 
 #include <QVariantList>
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
-class JoystickManager : public QGCSingleton
+class QGCApplicaiton;
+
+class JoystickManager : public QGCTool
 {
     Q_OBJECT
     
-    DECLARE_QGC_SINGLETON(JoystickManager, JoystickManager)
-
 public:
+    JoystickManager(QGCApplication* app);
+
     /// List of available joysticks
     Q_PROPERTY(QVariantList joysticks READ joysticks CONSTANT)
     Q_PROPERTY(QStringList  joystickNames READ joystickNames CONSTANT)
@@ -56,6 +59,9 @@ public:
     QString activeJoystickName(void);
     void setActiveJoystickName(const QString& name);
 
+    // Override from QGCTool
+    virtual void setToolbox(QGCToolbox *toolbox);
+
 signals:
     void activeJoystickChanged(Joystick* joystick);
     void activeJoystickNameChanged(const QString& name);
@@ -63,16 +69,12 @@ signals:
 private slots:
     
 private:
-    /// All access to singleton is through JoystickManager::instance
-    JoystickManager(QObject* parent = NULL);
-    ~JoystickManager();
-    
     void _setActiveJoystickFromSettings(void);
     
 private:
-    Joystick*   _activeJoystick;
-    
+    Joystick*                   _activeJoystick;
     QMap<QString, Joystick*>    _name2JoystickMap;
+    MultiVehicleManager*        _multiVehicleManager;
     
     static const char * _settingsGroup;
     static const char * _settingsKeyActiveJoystick;

@@ -66,7 +66,7 @@ public:
 
 protected:
     /// All access to singleton is through instance()
-    ArduRoverFirmwarePlugin(QObject* parent = NULL);
+    ArduRoverFirmwarePlugin(void);
     
 private:
 };

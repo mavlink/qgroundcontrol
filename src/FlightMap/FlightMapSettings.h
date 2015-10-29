@@ -24,17 +24,18 @@ This file is part of the QGROUNDCONTROL project
 #ifndef FlightMapSettings_H
 #define FlightMapSettings_H
 
-#include "QGCSingleton.h"
+#include "QGCToolbox.h"
 
+#include <QObject>
 #include <QStringList>
 
-class FlightMapSettings : public QObject
+class FlightMapSettings : public QGCTool
 {
     Q_OBJECT
     
-    DECLARE_QGC_SINGLETON(FlightMapSettings, FlightMapSettings)
-
 public:
+    FlightMapSettings(QGCApplication* app);
+
     /// mapProvider is either Bing, Google or Open to specify to set of maps available
     Q_PROPERTY(QString mapProvider READ mapProvider WRITE setMapProvider NOTIFY mapProviderChanged)
     
@@ -54,15 +55,14 @@ public:
     QString mapProvider(void);
     void setMapProvider(const QString& mapProvider);
     
+    // Override from QGCTool
+    virtual void setToolbox(QGCToolbox *toolbox);
+
 signals:
     void mapProviderChanged(const QString& mapProvider);
     void mapTypesChanged(const QStringList& mapTypes);
     
 private:
-    /// @brief All access to FlightMapSettings singleton is through FlightMapSettings::instance
-    FlightMapSettings(QObject* parent = NULL);
-    ~FlightMapSettings();
-    
     void _storeSettings(void);
     void _loadSettings(void);
     

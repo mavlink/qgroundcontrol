@@ -50,7 +50,7 @@ QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 * creating the UAS.
 */
 
-UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle) : UASInterface(),
+UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager) : UASInterface(),
     lipoFull(4.2f),
     lipoEmpty(3.5f),
     uasId(vehicle->id()),
@@ -177,7 +177,8 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle) : UASInterface(),
     lastSendTimeGPS(0),
     lastSendTimeSensors(0),
     lastSendTimeOpticalFlow(0),
-    _vehicle(vehicle)
+    _vehicle(vehicle),
+    _firmwarePluginManager(firmwarePluginManager)
 {
 
     for (unsigned int i = 0; i<255;++i)
@@ -398,7 +399,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             bool statechanged = false;
             bool modechanged = false;
 
-            QString audiomodeText = FirmwarePluginManager::instance()->firmwarePluginForAutopilot((MAV_AUTOPILOT)state.autopilot, (MAV_TYPE)state.type)->flightMode(state.base_mode, state.custom_mode);
+            QString audiomodeText = _firmwarePluginManager->firmwarePluginForAutopilot((MAV_AUTOPILOT)state.autopilot, (MAV_TYPE)state.type)->flightMode(state.base_mode, state.custom_mode);
 
             if ((state.system_status != this->status) && state.system_status != MAV_STATE_UNINIT)
             {
@@ -443,7 +444,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             if (statechanged && ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY))
             {
                 _say(QString("Emergency for system %1").arg(this->getUASID()), GAudioOutput::AUDIO_SEVERITY_EMERGENCY);
-                QTimer::singleShot(3000, GAudioOutput::instance(), SLOT(startEmergency()));
+                QTimer::singleShot(3000, qgcApp()->toolbox()->audioOutput(), SLOT(startEmergency()));
             }
             else if (modechanged || statechanged)
             {
@@ -1058,28 +1059,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit NavigationControllerDataChanged(this, p.nav_roll, p.nav_pitch, p.nav_bearing, p.target_bearing, p.wp_dist);
         }
             break;
-        // Messages to ignore
-        case MAVLINK_MSG_ID_RAW_IMU:
-        case MAVLINK_MSG_ID_SCALED_IMU:
-        case MAVLINK_MSG_ID_RAW_PRESSURE:
-        case MAVLINK_MSG_ID_SCALED_PRESSURE:
-        case MAVLINK_MSG_ID_OPTICAL_FLOW:
-        case MAVLINK_MSG_ID_DEBUG_VECT:
-        case MAVLINK_MSG_ID_DEBUG:
-        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
-        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
-        case MAVLINK_MSG_ID_MANUAL_CONTROL:
-        case MAVLINK_MSG_ID_HIGHRES_IMU:
-        case MAVLINK_MSG_ID_DISTANCE_SENSOR:
-            break;
         default:
-        {
-            if (!unknownPackets.contains(message.msgid))
-            {
-                unknownPackets.append(message.msgid);
-                qDebug() << "Unknown message from system:" << uasId << "message:" << message.msgid;
-            }
-        }
             break;
         }
     }
@@ -2474,5 +2454,5 @@ void UAS::unsetRCToParameterMap()
 void UAS::_say(const QString& text, int severity)
 {
     if (!qgcApp()->runningUnitTests())
-        GAudioOutput::instance()->say(text, severity);
+        qgcApp()->toolbox()->audioOutput()->say(text, severity);
 }

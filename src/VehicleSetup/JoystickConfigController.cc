@@ -24,6 +24,7 @@
 #include "JoystickConfigController.h"
 #include "JoystickManager.h"
 #include "QGCMessageBox.h"
+#include "QGCApplication.h"
 
 #include <QSettings>
 
@@ -66,12 +67,12 @@ JoystickConfigController::JoystickConfigController(void)
     , _cancelButton(NULL)
     , _nextButton(NULL)
     , _skipButton(NULL)
+    , _joystickManager(qgcApp()->toolbox()->joystickManager())
 {
-    JoystickManager* joystickManager = JoystickManager::instance();
     
-    connect(joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
+    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
     
-    _activeJoystickChanged(joystickManager->activeJoystick());
+    _activeJoystickChanged(_joystickManager->activeJoystick());
     _resetInternalCalibrationValues();
 }
 
@@ -454,7 +455,7 @@ void JoystickConfigController::_resetInternalCalibrationValues(void)
 /// @brief Sets internal calibration values from the stored settings
 void JoystickConfigController::_setInternalCalibrationValuesFromSettings(void)
 {
-    Joystick* joystick = JoystickManager::instance()->activeJoystick();
+    Joystick* joystick = _joystickManager->activeJoystick();
     
     // Initialize all function mappings to not set
     
@@ -539,7 +540,7 @@ void JoystickConfigController::_validateCalibration(void)
 /// @brief Saves the rc calibration values to the board parameters.
 void JoystickConfigController::_writeCalibration(void)
 {
-    Joystick* joystick = JoystickManager::instance()->activeJoystick();
+    Joystick* joystick = _joystickManager->activeJoystick();
 
     _validateCalibration();
     

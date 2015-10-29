@@ -31,56 +31,18 @@
 #include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 
-UT_REGISTER_TEST(MainWindowTest)
-
-MainWindowTest::MainWindowTest(void) :
-    _mainWindow()
-{
-    
-}
-
-void MainWindowTest::init(void)
-{
-    UnitTest::init();
-
-    _mainWindow = MainWindow::_create();
-    Q_CHECK_PTR(_mainWindow);
-}
-
-void MainWindowTest::cleanup(void)
-{
-    _mainWindow->close();
-    QTest::qWait(200);
-    delete _mainWindow;
-    
-    UnitTest::cleanup();
-}
+// FIXME: Temporarily turned off
+//UT_REGISTER_TEST(MainWindowTest)
 
 void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
 {
-    LinkManager* linkMgr = LinkManager::instance();
-    Q_CHECK_PTR(linkMgr);
-    
-    MockLink* link = new MockLink();
-    Q_CHECK_PTR(link);
-    link->setFirmwareType(autopilot);
-    LinkManager::instance()->_addLink(link);
-    
-    linkMgr->connectLink(link);
-    
-    // Wait for the Vehicle to work it's way through the various threads
-    
-    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(activeVehicleChanged(Vehicle*)));
-    QCOMPARE(spyVehicle.wait(5000), true);
+    _createMainWindow();
+    _connectMockLink(autopilot);
     
     // On MainWindow close we should get a message box telling the user to disconnect first. Cancel should do nothing.
     setExpectedMessageBox(QGCMessageBox::Cancel);
-    _mainWindow->close();
-    QTest::qWait(1000); // Need to allow signals to move between threads    
+    _closeMainWindow(true /* cancelExpected */);
     checkExpectedMessageBox();
-
-    linkMgr->disconnectLink(link);
-    QTest::qWait(1000); // Need to allow signals to move between threads
 }
 
 void MainWindowTest::_connectWindowClosePX4_test(void) {

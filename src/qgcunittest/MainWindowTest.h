@@ -36,20 +36,12 @@ class MainWindowTest : public UnitTest
 {
     Q_OBJECT
     
-public:
-    MainWindowTest(void);
-    
 private slots:
-    void init(void);
-    void cleanup(void);
-    
     void _connectWindowClosePX4_test(void);
     void _connectWindowCloseGeneric_test(void);
 
 private:
     void _connectWindowClose_test(MAV_AUTOPILOT autopilot);
-    
-    MainWindow*     _mainWindow;
 };
 
 #endif

@@ -32,23 +32,19 @@
 #include <QString>
 
 #include "AutoPilotPlugin.h"
-#include "QGCSingleton.h"
 #include "Vehicle.h"
+#include "QGCToolbox.h"
 
-/// AutoPilotPlugin manager is a singleton which maintains the list of AutoPilotPlugin objects.
+class QGCApplication;
 
-class AutoPilotPluginManager : public QGCSingleton
+class AutoPilotPluginManager : public QGCTool
 {
     Q_OBJECT
-    
-    DECLARE_QGC_SINGLETON(AutoPilotPluginManager, AutoPilotPluginManager)
 
 public:
+    AutoPilotPluginManager(QGCApplication* app) : QGCTool(app) { }
+
     AutoPilotPlugin* newAutopilotPluginForVehicle(Vehicle* vehicle);
-    
-private:
-    /// All access to singleton is through AutoPilotPluginManager::instance
-    AutoPilotPluginManager(QObject* parent = NULL);
 };
 
 #endif

@@ -68,7 +68,7 @@ FirmwareUpgradeController::FirmwareUpgradeController(void) :
     connect(_threadController, &PX4FirmwareUpgradeThreadController::flashComplete,          this, &FirmwareUpgradeController::_flashComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
     
-    connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &FirmwareUpgradeController::_linkDisconnected);
+    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &FirmwareUpgradeController::_linkDisconnected);
 
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 }
@@ -558,7 +558,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
 
 bool FirmwareUpgradeController::qgcConnections(void)
 {
-    return LinkManager::instance()->anyConnectedLinks();
+    return qgcApp()->toolbox()->linkManager()->anyConnectedLinks();
 }
 
 void FirmwareUpgradeController::_linkDisconnected(LinkInterface* link)
