@@ -57,8 +57,10 @@ Item {
     readonly property string _mapName:                  "FlightDisplayView"
     readonly property string _showMapBackgroundKey:     "/showMapBackground"
     readonly property string _mainIsMapKey:             "MainFlyWindowIsMap"
+    readonly property string _PIPVisibleKey:            "IsPIPVisible"
 
-    property bool _mainIsMap:           QGroundControl.loadBoolGlobalSetting(_mainIsMapKey, true)
+    property bool _mainIsMap:           QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true)
+    property bool _isPipVisible:        QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true)
 
     property real _roll:                _activeVehicle ? (isNaN(_activeVehicle.roll)    ? _defaultRoll    : _activeVehicle.roll)    : _defaultRoll
     property real _pitch:               _activeVehicle ? (isNaN(_activeVehicle.pitch)   ? _defaultPitch   : _activeVehicle.pitch)   : _defaultPitch
@@ -70,6 +72,9 @@ Item {
     property real _groundSpeed:         _activeVehicle ? _activeVehicle.groundSpeed   : _defaultGroundSpeed
     property real _airSpeed:            _activeVehicle ? _activeVehicle.airSpeed      : _defaultAirSpeed
     property real _climbRate:           _activeVehicle ? _activeVehicle.climbRate     : _defaultClimbRate
+
+    property bool _isBackgroundDark:    _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+
 
     property var  _flightMap:           null
     property var  _flightVideo:         null
@@ -123,7 +128,7 @@ Item {
     //-- PIP Window
     Rectangle {
         id:                 pip
-        visible:            _controller.hasVideo
+        visible:            _controller.hasVideo && _isPipVisible
         anchors.margins:    ScreenTools.defaultFontPixelHeight
         anchors.left:       parent.left
         anchors.bottom:     parent.bottom
@@ -132,12 +137,7 @@ Item {
         color:              "#000010"
         border.width:       4
         radius:             4
-        border.color: {
-            if(_mainIsMap && _flightMap != null)
-                return _flightMap.isSatelliteMap ? Qt.rgba(1,1,1,0.75) :  Qt.rgba(0,0,0,0.75)
-            else
-                return Qt.rgba(0,0,0,0.75)
-        }
+        border.color:       _isBackgroundDark ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
         Loader {
             id:                 pipLoader
             anchors.fill:       parent
@@ -158,6 +158,52 @@ Item {
                 _mainIsMap = !_mainIsMap
                 reloadContents();
                 QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, _mainIsMap)
+            }
+        }
+        Image {
+            id:             closePIP
+            source:         "/qmlimages/PiP.svg"
+            mipmap:         true
+            fillMode:       Image.PreserveAspectFit
+            anchors.left:   parent.left
+            anchors.bottom: parent.bottom
+            height:         ScreenTools.defaultFontPixelSize * 2.5
+            width:          ScreenTools.defaultFontPixelSize * 2.5
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    _isPipVisible = false
+                    QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, false)
+                }
+            }
+        }
+    }
+
+    //-- Show PIP
+    Rectangle {
+        id:                     openPIP
+        anchors.left :          parent.left
+        anchors.bottom:         parent.bottom
+        anchors.margins:        ScreenTools.defaultFontPixelHeight
+        height:                 ScreenTools.defaultFontPixelSize * 2
+        width:                  ScreenTools.defaultFontPixelSize * 2
+        radius:                 ScreenTools.defaultFontPixelSize / 3
+        visible:                _controller.hasVideo && !_isPipVisible
+        color:                  _isBackgroundDark ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
+        Image {
+            width:              parent.width  * 0.75
+            height:             parent.height * 0.75
+            source:             "/qmlimages/buttonRight.svg"
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.verticalCenter:     parent.verticalCenter
+            anchors.horizontalCenter:   parent.horizontalCenter
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                _isPipVisible = true
+                QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, true)
             }
         }
     }
