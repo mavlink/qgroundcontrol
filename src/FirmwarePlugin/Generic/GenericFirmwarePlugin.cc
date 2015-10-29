@@ -33,7 +33,6 @@ IMPLEMENT_QGC_SINGLETON(GenericFirmwarePlugin, FirmwarePlugin)
 
 GenericFirmwarePlugin::GenericFirmwarePlugin(QObject* parent)
     : FirmwarePlugin(parent)
-    , _parameterLoader(NULL)
 {
     
 }
@@ -121,16 +120,9 @@ bool GenericFirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
-ParameterLoader* GenericFirmwarePlugin::getParameterLoader(AutoPilotPlugin* autopilotPlugin, Vehicle* vehicle)
+void GenericFirmwarePlugin::addMetaDataToFact(Fact* fact)
 {
-    if (!_parameterLoader) {
-        _parameterLoader = new GenericParameterLoader(autopilotPlugin, vehicle, this);
-        Q_CHECK_PTR(_parameterLoader);
-
-        // FIXME: Why do I need SIGNAL/SLOT to make this work
-        connect(_parameterLoader, SIGNAL(parametersReady(bool)),                    autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
-        connect(_parameterLoader, &GenericParameterLoader::parameterListProgress,   autopilotPlugin, &GenericAutoPilotPlugin::parameterListProgress);
-    }
-
-    return _parameterLoader;
+    // Add default meta data
+    FactMetaData* metaData = new FactMetaData(fact->type(), fact);
+    fact->setMetaData(metaData);
 }

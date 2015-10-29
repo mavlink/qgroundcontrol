@@ -24,7 +24,7 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "APMParameterLoader.h"
+#include "APMParameterMetaData.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
@@ -33,15 +33,15 @@
 #include <QDir>
 #include <QDebug>
 
-QGC_LOGGING_CATEGORY(APMParameterLoaderLog, "APMParameterLoaderLog")
+QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "APMParameterMetaDataLog")
 
-bool APMParameterLoader::_parameterMetaDataLoaded = false;
-QMap<QString, FactMetaData*> APMParameterLoader::_mapParameterName2FactMetaData;
+bool                            APMParameterMetaData::_parameterMetaDataLoaded = false;
+QMap<QString, FactMetaData*>    APMParameterMetaData::_mapParameterName2FactMetaData;
 
-APMParameterLoader::APMParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, QObject* parent) :
-    ParameterLoader(autopilot, vehicle, parent)
+APMParameterMetaData::APMParameterMetaData(QObject* parent) :
+    QObject(parent)
 {
-    Q_ASSERT(vehicle);
+    _loadParameterFactMetaData();
 }
 
 /// Converts a string to a typed QVariant
@@ -49,7 +49,7 @@ APMParameterLoader::APMParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehi
 ///     @param type Type for Fact which dictates the QVariant type as well
 ///     @param convertOk Returned: true: conversion success, false: conversion failure
 /// @return Returns the correctly type QVariant
-QVariant APMParameterLoader::_stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk)
+QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk)
 {
     QVariant var(string);
 
@@ -81,7 +81,7 @@ QVariant APMParameterLoader::_stringToTypedVariant(const QString& string, FactMe
 /// Load Parameter Fact meta data
 ///
 /// The meta data comes from firmware parameters.xml file.
-void APMParameterLoader::loadParameterFactMetaData(void)
+void APMParameterMetaData::_loadParameterFactMetaData(void)
 {
     if (_parameterMetaDataLoaded) {
         return;
@@ -94,20 +94,11 @@ void APMParameterLoader::loadParameterFactMetaData(void)
     // has multiple sets of static meta data
 }
 
-void APMParameterLoader::clearStaticData(void)
-{
-    foreach(QString parameterName, _mapParameterName2FactMetaData.keys()) {
-        delete _mapParameterName2FactMetaData[parameterName];
-    }
-    _mapParameterName2FactMetaData.clear();
-    _parameterMetaDataLoaded = false;
-}
-
 /// Override from FactLoad which connects the meta data to the fact
-void APMParameterLoader::_addMetaDataToFact(Fact* fact)
+void APMParameterMetaData::addMetaDataToFact(Fact* fact)
 {
     // FIXME: Will need to switch here based on _vehicle->firmwareType() to pull right set of meta data
 
-    // Use generic meta data
-    ParameterLoader::_addMetaDataToFact(fact);
+    FactMetaData* metaData = new FactMetaData(fact->type(), fact);
+    fact->setMetaData(metaData);
 }
