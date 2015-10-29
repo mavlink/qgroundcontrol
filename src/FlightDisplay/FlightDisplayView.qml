@@ -162,7 +162,7 @@ Item {
         }
         Image {
             id:             closePIP
-            source:         "/qmlimages/PIP.svg"
+            source:         "/qmlimages/PiP.svg"
             mipmap:         true
             fillMode:       Image.PreserveAspectFit
             anchors.left:   parent.left
