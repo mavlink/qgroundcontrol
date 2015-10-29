@@ -210,8 +210,8 @@ MainWindow::MainWindow()
 #endif //QGC_MOUSE_ENABLED_LINUX
 
     // These also cause the screen to redraw so we need to update any OpenGL canvases in QML controls
-    connect(LinkManager::instance(), &LinkManager::linkConnected,    this, &MainWindow::_linkStateChange);
-    connect(LinkManager::instance(), &LinkManager::linkDisconnected, this, &MainWindow::_linkStateChange);
+    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkConnected,    this, &MainWindow::_linkStateChange);
+    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &MainWindow::_linkStateChange);
 
     // Connect link
     if (_autoReconnect)
@@ -323,7 +323,7 @@ void MainWindow::_buildCommonWidgets(void)
 {
     // Add generic MAVLink decoder
     // TODO: This is never deleted
-    mavlinkDecoder = new MAVLinkDecoder(MAVLinkProtocol::instance(), this);
+    mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol(), this);
     connect(mavlinkDecoder, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),
                       this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
 
@@ -372,7 +372,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
     
     switch(action->data().toInt()) {
         case MAVLINK_INSPECTOR:
-            widget = new QGCMAVLinkInspector(widgetName, action, MAVLinkProtocol::instance(),this);
+            widget = new QGCMAVLinkInspector(widgetName, action, qgcApp()->toolbox()->mavlinkProtocol(),this);
             break;
         case CUSTOM_COMMAND:
             widget = new CustomCommandWidget(widgetName, action, this);
@@ -438,7 +438,7 @@ void MainWindow::showStatusBarCallback(bool checked)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Disallow window close if there are active connections
-    if (LinkManager::instance()->anyConnectedLinks()) {
+    if (qgcApp()->toolbox()->linkManager()->anyConnectedLinks()) {
         QGCMessageBox::StandardButton button =
             QGCMessageBox::warning(
                 tr("QGroundControl close"),
@@ -446,7 +446,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
                 QMessageBox::Yes | QMessageBox::Cancel,
                 QMessageBox::Cancel);
         if (button == QMessageBox::Yes) {
-            LinkManager::instance()->disconnectAll();
+            qgcApp()->toolbox()->linkManager()->disconnectAll();
             // The above disconnect causes a flurry of activity as the vehicle components are removed. This in turn
             // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
             // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
@@ -461,7 +461,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
 
     // Should not be any active connections
-    Q_ASSERT(!LinkManager::instance()->anyConnectedLinks());
+    Q_ASSERT(!qgcApp()->toolbox()->linkManager()->anyConnectedLinks());
 
     // We have to pull out the QmlWidget from the main window and delete it here, before
     // the MainWindow ends up getting deleted. Otherwise the Qml has a reference to MainWindow
@@ -472,7 +472,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     _storeCurrentViewState();
     storeSettings();
+
     event->accept();
+
+    _instance = NULL;
+    emit mainWindowClosed();
 }
 
 void MainWindow::loadSettings()
@@ -542,9 +546,9 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(manageLinks()));
 
     // Audio output
-    _ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
-    connect(GAudioOutput::instance(), SIGNAL(mutedChanged(bool)), _ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
-    connect(_ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
+    _ui.actionMuteAudioOutput->setChecked(qgcApp()->toolbox()->audioOutput()->isMuted());
+    connect(qgcApp()->toolbox()->audioOutput(), SIGNAL(mutedChanged(bool)), _ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
+    connect(_ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), qgcApp()->toolbox()->audioOutput(), SLOT(mute(bool)));
 
     // Application Settings
     connect(_ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
@@ -555,7 +559,7 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionSetup,    &QAction::triggered,    this, &MainWindow::showSetupView);
 
     // Connect internal actions
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
 }
 
 void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
@@ -570,7 +574,7 @@ void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
 
 void MainWindow::showSettings()
 {
-    SettingsDialog settings(this);
+    SettingsDialog settings(qgcApp()->toolbox()->audioOutput(), qgcApp()->toolbox()->flightMapSettings(), this);
     settings.exec();
 }
 
@@ -593,7 +597,7 @@ void MainWindow::_storeCurrentViewState(void)
 
 void MainWindow::manageLinks()
 {
-    SettingsDialog settings(this, SettingsDialog::ShowCommLinks);
+    SettingsDialog settings(qgcApp()->toolbox()->audioOutput(), qgcApp()->toolbox()->flightMapSettings(), this, SettingsDialog::ShowCommLinks);
     settings.exec();
 }
 
@@ -619,7 +623,7 @@ void MainWindow::restoreLastUsedConnection()
     if(settings.contains(key)) {
         QString connection = settings.value(key).toString();
         // Create a link for it
-        LinkManager::instance()->createConnectedLink(connection);
+        qgcApp()->toolbox()->linkManager()->createConnectedLink(connection);
     }
 }
 

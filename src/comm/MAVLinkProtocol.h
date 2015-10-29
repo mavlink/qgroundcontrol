@@ -43,9 +43,11 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLink.h"
 #include "QGC.h"
 #include "QGCTemporaryFile.h"
-#include "QGCSingleton.h"
+#include "QGCToolbox.h"
 
 class LinkManager;
+class MultiVehicleManager;
+class QGCApplication;
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 
@@ -56,13 +58,14 @@ Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
  * for more information, please see the official website.
  * @ref http://pixhawk.ethz.ch/software/mavlink/
  **/
-class MAVLinkProtocol : public QGCSingleton
+class MAVLinkProtocol : public QGCTool
 {
     Q_OBJECT
-    
-    DECLARE_QGC_SINGLETON(MAVLinkProtocol, MAVLinkProtocol)
 
 public:
+    MAVLinkProtocol(QGCApplication* app);
+    ~MAVLinkProtocol();
+
     /** @brief Get the human-friendly name of this protocol */
     QString getName();
     /** @brief Get the system id of this application */
@@ -144,6 +147,9 @@ public:
     
     /// Suspend/Restart logging during replay.
     void suspendLogForReplay(bool suspend);
+
+    // Override from QGCTool
+    virtual void setToolbox(QGCToolbox *toolbox);
 
 public slots:
     /** @brief Receive bytes from a communication interface */
@@ -279,9 +285,6 @@ signals:
     void saveTempFlightDataLog(QString tempLogfile);
     
 private:
-    MAVLinkProtocol(QObject* parent = NULL);
-    ~MAVLinkProtocol();
-
     void _linkStatusChanged(LinkInterface* link, bool connected);
 
 #ifndef __mobile__
@@ -303,11 +306,12 @@ private:
     /// This way Link deletion works correctly.
     QList<SharedLinkInterface> _connectedLinks;
     
-    LinkManager* _linkMgr;
-    
     QTimer  _heartbeatTimer;    ///< Timer to emit heartbeats
     int     _heartbeatRate;     ///< Heartbeat rate, controls the timer interval
     bool    _heartbeatsEnabled; ///< Enabled/disable heartbeat emission
+
+    LinkManager*            _linkMgr;
+    MultiVehicleManager*    _multiVehicleManager;
 };
 
 #endif // MAVLINKPROTOCOL_H_

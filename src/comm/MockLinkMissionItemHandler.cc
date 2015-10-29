@@ -28,11 +28,12 @@
 
 QGC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "MockLinkMissionItemHandlerLog")
 
-MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink* mockLink)
+MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink* mockLink, MAVLinkProtocol* mavlinkProtocol)
     : _mockLink(mockLink)
     , _missionItemResponseTimer(NULL)
     , _failureMode(FailNone)
     , _sendHomePositionOnEmptyList(false)
+    , _mavlinkProtocol(mavlinkProtocol)
 {
     Q_ASSERT(mockLink);
 }
@@ -234,8 +235,8 @@ void MockLinkMissionItemHandler::_requestNextMissionItem(int sequenceNumber)
             mavlink_message_t           message;
             mavlink_mission_request_t   missionRequest;
             
-            missionRequest.target_system =      MAVLinkProtocol::instance()->getSystemId();
-            missionRequest.target_component =   MAVLinkProtocol::instance()->getComponentId();
+            missionRequest.target_system =      _mavlinkProtocol->getSystemId();
+            missionRequest.target_component =   _mavlinkProtocol->getComponentId();
             missionRequest.seq =                sequenceNumber;
             
             mavlink_msg_mission_request_encode(_mockLink->vehicleId(), MAV_COMP_ID_MISSIONPLANNER, &message, &missionRequest);
@@ -258,8 +259,8 @@ void MockLinkMissionItemHandler::_sendAck(MAV_MISSION_RESULT ackType)
     mavlink_message_t       message;
     mavlink_mission_ack_t   missionAck;
     
-    missionAck.target_system =      MAVLinkProtocol::instance()->getSystemId();
-    missionAck.target_component =   MAVLinkProtocol::instance()->getComponentId();
+    missionAck.target_system =      _mavlinkProtocol->getSystemId();
+    missionAck.target_component =   _mavlinkProtocol->getComponentId();
     missionAck.type =               ackType;
     
     mavlink_msg_mission_ack_encode(_mockLink->vehicleId(), MAV_COMP_ID_MISSIONPLANNER, &message, &missionAck);

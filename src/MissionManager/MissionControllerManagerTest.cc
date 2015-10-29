@@ -24,9 +24,9 @@
 #include "MissionControllerManagerTest.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
+#include "QGCApplication.h"
 
 MissionControllerManagerTest::MissionControllerManagerTest(void)
-    : _mockLink(NULL)
 {
     
 }
@@ -36,33 +36,16 @@ void MissionControllerManagerTest::cleanup(void)
     delete _multiSpyMissionManager;
     _multiSpyMissionManager = NULL;
 
-    LinkManager::instance()->disconnectLink(_mockLink);
-    _mockLink = NULL;
-    QTest::qWait(1000); // Need to allow signals to move between threads
-
     UnitTest::cleanup();
 }
 
 void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 {
-    LinkManager* linkMgr = LinkManager::instance();
-    Q_CHECK_PTR(linkMgr);
-    
-    _mockLink = new MockLink();
-    Q_CHECK_PTR(_mockLink);
-    _mockLink->setFirmwareType(firmwareType);
-    LinkManager::instance()->_addLink(_mockLink);
-    
-    linkMgr->connectLink(_mockLink);
-    
-    // Wait for the Vehicle to work it's way through the various threads
-    
-    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(activeVehicleChanged(Vehicle*)));
-    QCOMPARE(spyVehicle.wait(5000), true);
+    _connectMockLink(firmwareType);
     
     // Wait for the Mission Manager to finish it's initial load
     
-    _missionManager = MultiVehicleManager::instance()->activeVehicle()->missionManager();
+    _missionManager = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->missionManager();
     QVERIFY(_missionManager);
     
     _rgMissionManagerSignals[canEditChangedSignalIndex] =             SIGNAL(canEditChanged(bool));

@@ -24,6 +24,7 @@
 #include "MultiVehicleDockWidget.h"
 #include "ui_MultiVehicleDockWidget.h"
 #include "MultiVehicleManager.h"
+#include "QGCApplication.h"
 
 MultiVehicleDockWidget::MultiVehicleDockWidget(const QString& title, QAction* action, QWidget *parent)
     : QGCDockWidget(title, action, parent)
@@ -33,19 +34,19 @@ MultiVehicleDockWidget::MultiVehicleDockWidget(const QString& title, QAction* ac
     
     setWindowTitle(title);
     
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MultiVehicleDockWidget::_activeVehicleChanged);
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &MultiVehicleDockWidget::_vehicleAdded);
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &MultiVehicleDockWidget::_vehicleRemoved);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MultiVehicleDockWidget::_activeVehicleChanged);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MultiVehicleDockWidget::_vehicleAdded);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &MultiVehicleDockWidget::_vehicleRemoved);
 }
 
 void MultiVehicleDockWidget::init(void)
 {
-    foreach (Vehicle* vehicle, MultiVehicleManager::instance()->vehicles()) {
+    foreach (Vehicle* vehicle, qgcApp()->toolbox()->multiVehicleManager()->vehicles()) {
         _vehicleAdded(vehicle);
     }
 
-    if (MultiVehicleManager::instance()->activeVehicle()) {
-        _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    if (qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
+        _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
     }
 }
 

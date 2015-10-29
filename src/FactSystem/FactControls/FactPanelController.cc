@@ -36,7 +36,7 @@ QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
 FactPanelController::FactPanelController(void) :
     _factPanel(NULL)
 {
-    _vehicle = MultiVehicleManager::instance()->activeVehicle();
+    _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     Q_ASSERT(_vehicle);
     
     _uas = _vehicle->uas();

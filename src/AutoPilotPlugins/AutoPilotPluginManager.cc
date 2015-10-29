@@ -29,14 +29,6 @@
 #include "APM/APMAutoPilotPlugin.h"
 #include "Generic/GenericAutoPilotPlugin.h"
 
-IMPLEMENT_QGC_SINGLETON(AutoPilotPluginManager, AutoPilotPluginManager)
-
-AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
-    QGCSingleton(parent)
-{
-
-}
-
 AutoPilotPlugin* AutoPilotPluginManager::newAutopilotPluginForVehicle(Vehicle* vehicle)
 {
     switch (vehicle->firmwareType()) {

@@ -23,6 +23,7 @@
 
 #include "LogReplayLink.h"
 #include "LinkManager.h"
+#include "QGCApplication.h"
 
 #include <QFileInfo>
 #include <QtEndian>
@@ -101,7 +102,7 @@ LogReplayLink::~LogReplayLink(void)
 bool LogReplayLink::_connect(void)
 {
     // Disallow replay when any links are connected
-    if (LinkManager::instance()->anyConnectedLinks()) {
+    if (qgcApp()->toolbox()->linkManager()->anyConnectedLinks()) {
         emit communicationError(_errorTitle, "You must close all connections prior to replaying a log.");
         return false;
     }
@@ -366,9 +367,9 @@ void LogReplayLink::_readNextLogEntry(void)
 void LogReplayLink::_play(void)
 {
     // FIXME: With move to link I don't think this is needed any more? Except for the replay widget handling multi-uas?
-    LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
+    qgcApp()->toolbox()->linkManager()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
 #ifndef __mobile__
-    MAVLinkProtocol::instance()->suspendLogForReplay(true);
+    qgcApp()->toolbox()->mavlinkProtocol()->suspendLogForReplay(true);
 #endif
     
     // Make sure we aren't at the end of the file, if we are, reset to the beginning and play from there.
@@ -398,9 +399,9 @@ void LogReplayLink::_play(void)
 
 void LogReplayLink::_pause(void)
 {
-    LinkManager::instance()->setConnectionsAllowed();
+    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
 #ifndef __mobile__
-    MAVLinkProtocol::instance()->suspendLogForReplay(false);
+    qgcApp()->toolbox()->mavlinkProtocol()->suspendLogForReplay(false);
 #endif
     
     _readTickTimer.stop();

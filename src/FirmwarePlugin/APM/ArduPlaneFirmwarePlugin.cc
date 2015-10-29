@@ -50,8 +50,7 @@ APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable) : APMCustomMode(mode, s
     setEnumToStringMapping(enumToString);
 }
 
-ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject* parent) :
-    APMFirmwarePlugin(parent)
+ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
 {
     QList<APMCustomMode> supportedFlightModes;
     supportedFlightModes << APMPlaneMode(APMPlaneMode::MANUAL          ,true);

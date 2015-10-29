@@ -53,7 +53,7 @@ public:
 
 private:
     /// All access to singleton is through AutoPilotPluginManager::instance
-    PX4FirmwarePlugin(QObject* parent = NULL);
+    PX4FirmwarePlugin(void);
 
     PX4ParameterMetaData    _parameterMetaData;
 };

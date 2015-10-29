@@ -101,7 +101,7 @@ bool AutoPilotPlugin::setupComplete(void)
 void AutoPilotPlugin::resetAllParametersToDefaults(void)
 {
     mavlink_message_t msg;
-    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, _vehicle->uas()->getUASID(), 0, MAV_CMD_PREFLIGHT_STORAGE, 0, 2, -1, 0, 0, 0, 0, 0);
     _vehicle->sendMessage(msg);

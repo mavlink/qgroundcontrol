@@ -46,7 +46,6 @@ protected:
     void _initForFirmwareType(MAV_AUTOPILOT firmwareType);
     void _checkInProgressValues(bool inProgress);
     
-    MockLink*       _mockLink;
     MissionManager* _missionManager;
     
     typedef struct {

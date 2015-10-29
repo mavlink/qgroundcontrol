@@ -52,25 +52,33 @@ bool UASMessage::severityIsError()
     }
 }
 
-IMPLEMENT_QGC_SINGLETON(UASMessageHandler, UASMessageHandler)
-
-UASMessageHandler::UASMessageHandler(QObject *parent)
-    : QGCSingleton(parent)
+UASMessageHandler::UASMessageHandler(QGCApplication* app)
+    : QGCTool(app)
     , _activeUAS(NULL)
     , _errorCount(0)
     , _errorCountTotal(0)
     , _warningCount(0)
     , _normalCount(0)
     , _showErrorsInToolbar(false)
+    , _multiVehicleManager(NULL)
 {
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &UASMessageHandler::_activeVehicleChanged);
-    emit textMessageReceived(NULL);
-    emit textMessageCountChanged(0);
+
 }
 
 UASMessageHandler::~UASMessageHandler()
 {
     clearMessages();
+}
+
+void UASMessageHandler::setToolbox(QGCToolbox *toolbox)
+{
+   QGCTool::setToolbox(toolbox);
+
+   _multiVehicleManager = _toolbox->multiVehicleManager();
+
+   connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &UASMessageHandler::_activeVehicleChanged);
+   emit textMessageReceived(NULL);
+   emit textMessageCountChanged(0);
 }
 
 void UASMessageHandler::clearMessages()
@@ -190,7 +198,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     emit textMessageCountChanged(count);
     
     if (_showErrorsInToolbar && message->severityIsError()) {
-        qgcApp()->showToolBarMessage(message->getText());
+        _app->showToolBarMessage(message->getText());
     }
 }
 

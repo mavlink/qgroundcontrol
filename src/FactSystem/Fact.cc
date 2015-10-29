@@ -135,7 +135,6 @@ QString Fact::valueString(void) const
 
     switch (type()) {
         case FactMetaData::valueTypeFloat:
-            qDebug() << name() << value() << decimalPlaces();
             valueString = QString("%1").arg(value().toFloat(), 0, 'g', decimalPlaces());
             break;
         case FactMetaData::valueTypeDouble:

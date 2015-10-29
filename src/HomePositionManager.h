@@ -24,17 +24,19 @@ This file is part of the QGROUNDCONTROL project
 #ifndef HomePositionManager_H
 #define HomePositionManager_H
 
-#include "QGCSingleton.h"
 #include "QmlObjectListModel.h"
+#include "QGCToolbox.h"
 
 #include <QGeoCoordinate>
+
+class HomePositionManager;
 
 class HomePosition : public QObject
 {
     Q_OBJECT
     
 public:
-    HomePosition(const QString& name, const QGeoCoordinate& coordinate, QObject* parent = NULL);
+    HomePosition(const QString& name, const QGeoCoordinate& coordinate, HomePositionManager* homePositionManager, QObject* parent = NULL);
     ~HomePosition();
     
     Q_PROPERTY(QString          name        READ name           WRITE setName       NOTIFY nameChanged)
@@ -47,22 +49,23 @@ public:
     
     QGeoCoordinate coordinate(void);
     void setCoordinate(const QGeoCoordinate& coordinate);
-    
+
 signals:
     void nameChanged(const QString& name);
     void coordinateChanged(const QGeoCoordinate& coordinate);
     
 private:
-    QGeoCoordinate  _coordinate;
+    QGeoCoordinate          _coordinate;
+    HomePositionManager*    _homePositionManager;
 };
 
-class HomePositionManager : public QObject
+class HomePositionManager : public QGCTool
 {
     Q_OBJECT
     
-    DECLARE_QGC_SINGLETON(HomePositionManager, HomePositionManager)
-
 public:
+    HomePositionManager(QGCApplication* app);
+
     Q_PROPERTY(QmlObjectListModel* homePositions READ homePositions CONSTANT)
     
     /// If name is not already a home position a new one will be added, otherwise the existing
@@ -78,14 +81,13 @@ public:
     // Should only be called by HomePosition
     void _storeSettings(void);
     
+    // Override from QGCTool
+    virtual void setToolbox(QGCToolbox *toolbox);
+
 private:
-    /// @brief All access to HomePositionManager singleton is through HomePositionManager::instance
-    HomePositionManager(QObject* parent = NULL);
-    ~HomePositionManager();
-    
     void _loadSettings(void);
     
-    QmlObjectListModel  _homePositions;
+    QmlObjectListModel      _homePositions;
     
     static const char* _settingsGroup;
     static const char* _latitudeKey;

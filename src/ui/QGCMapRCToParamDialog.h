@@ -33,6 +33,7 @@
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
+#include "MultiVehicleManager.h"
 
 namespace Ui {
 class QGCMapRCToParamDialog;
@@ -46,7 +47,7 @@ class QGCMapRCToParamDialog : public QDialog
     QThread paramLoadThread;
 
 public:
-    explicit QGCMapRCToParamDialog(QString param_id, UASInterface *mav, QWidget *parent = 0);
+    explicit QGCMapRCToParamDialog(QString param_id, UASInterface *mav, MultiVehicleManager* multiVehicleManager, QWidget *parent = 0);
     ~QGCMapRCToParamDialog();
 
 signals:
@@ -65,7 +66,8 @@ private slots:
     void _parameterUpdated(QVariant value);
 
 private:
-    Ui::QGCMapRCToParamDialog *ui;
+    MultiVehicleManager*        _multiVehicleManager;
+    Ui::QGCMapRCToParamDialog*  ui;
 };
 
 #endif // QGCMAPRCTOPARAMDIALOG_H

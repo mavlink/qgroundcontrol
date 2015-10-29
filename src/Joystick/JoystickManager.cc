@@ -22,6 +22,7 @@
  ======================================================================*/
 
 #include "JoystickManager.h"
+#include "QGCApplication.h"
 
 #include <QQmlEngine>
 
@@ -35,58 +36,62 @@
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
 
-IMPLEMENT_QGC_SINGLETON(JoystickManager, JoystickManager)
-
 const char * JoystickManager::_settingsGroup =              "JoystickManager";
 const char * JoystickManager::_settingsKeyActiveJoystick =  "ActiveJoystick";
 
-JoystickManager::JoystickManager(QObject* parent)
-    : QGCSingleton(parent)
+JoystickManager::JoystickManager(QGCApplication* app)
+    : QGCTool(app)
     , _activeJoystick(NULL)
+    , _multiVehicleManager(NULL)
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     
+}
+
+void JoystickManager::setToolbox(QGCToolbox *toolbox)
+{
+   QGCTool::setToolbox(toolbox);
+
+    _multiVehicleManager = _toolbox->multiVehicleManager();
+
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+
 #ifndef __mobile__
     if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
         qWarning() << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();
         return;
     }
-    
+
     // Load available joysticks
-    
+
     qCDebug(JoystickManagerLog) << "Available joysticks";
-    
+
     for (int i=0; i<SDL_NumJoysticks(); i++) {
         QString name = SDL_JoystickName(i);
-        
+
         if (!_name2JoystickMap.contains(name)) {
             int axisCount, buttonCount;
-            
+
             SDL_Joystick* sdlJoystick = SDL_JoystickOpen(i);
             axisCount = SDL_JoystickNumAxes(sdlJoystick);
             buttonCount = SDL_JoystickNumButtons(sdlJoystick);
             SDL_JoystickClose(sdlJoystick);
 
             qCDebug(JoystickManagerLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount;
-            _name2JoystickMap[name] = new Joystick(name, axisCount, buttonCount, i);
+            _name2JoystickMap[name] = new Joystick(name, axisCount, buttonCount, i, _multiVehicleManager);
         } else {
             qCDebug(JoystickManagerLog) << "\tSkipping duplicate" << name;
         }
     }
 #endif
-    
+
     if (!_name2JoystickMap.count()) {
         qCDebug(JoystickManagerLog) << "\tnone found";
         return;
     }
-    
+
     _setActiveJoystickFromSettings();
 }
 
-JoystickManager::~JoystickManager()
-{
-
-}
 
 void JoystickManager::_setActiveJoystickFromSettings(void)
 {

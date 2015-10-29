@@ -36,6 +36,17 @@
 #include <QTimer>
 
 #include "LinkConfiguration.h"
+#include "LinkManager.h"
+#include "MAVLinkProtocol.h"
+#include "FlightMapSettings.h"
+#include "HomePositionManager.h"
+#include "FirmwarePluginManager.h"
+#include "MultiVehicleManager.h"
+#include "JoystickManager.h"
+#include "GAudioOutput.h"
+#include "AutoPilotPluginManager.h"
+#include "UASMessageHandler.h"
+#include "FactSystem.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -44,6 +55,7 @@
 // Work around circular header includes
 class QGCSingleton;
 class MainWindow;
+class QGCToolbox;
 
 /**
  * @brief The main application and management class.
@@ -109,6 +121,9 @@ public:
 #ifdef QT_DEBUG
     bool testHighDPI(void) { return _testHighDPI; }
 #endif
+
+    // Still working on getting rid of this and using dependency injection instead for everything
+    QGCToolbox* toolbox(void) { return _toolbox; }
     
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -122,7 +137,7 @@ public slots:
     
     /// Save the specified Flight Data Log
     void saveTempFlightDataLogOnMainThread(QString tempLogfile);
-    
+
 signals:
     /// Signals that the style has changed
     ///     @param darkStyle true: dark style, false: light style
@@ -166,7 +181,7 @@ private:
     static const char* _defaultSavedFileDirectoryName;      ///< Default name for user visible save file directory
     static const char* _savedFileMavlinkLogDirectoryName;   ///< Name of mavlink log subdirectory
     static const char* _savedFileParameterDirectoryName;    ///< Name of parameter subdirectory
-    
+
     bool _runningUnitTests; ///< true: running unit tests, false: normal app
     
     static const char*  _darkStyleFile;
@@ -182,6 +197,8 @@ private:
 #ifdef QT_DEBUG
     bool _testHighDPI;  ///< true: double fonts sizes for simulating high dpi devices
 #endif
+
+    QGCToolbox* _toolbox;
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;

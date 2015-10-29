@@ -26,27 +26,26 @@
 #include <QSettings>
 #include <QtQml>
 
-IMPLEMENT_QGC_SINGLETON(FlightMapSettings, FlightMapSettings)
-
 const char* FlightMapSettings::_defaultMapProvider =    "Bing";                 // Bing is default since it support full street/satellite/hybrid set
 const char* FlightMapSettings::_settingsGroup =         "FlightMapSettings";
 const char* FlightMapSettings::_mapProviderKey =        "MapProvider";
 const char* FlightMapSettings::_mapTypeKey =            "MapType";
 
-FlightMapSettings::FlightMapSettings(QObject* parent)
-    : QObject(parent)
+FlightMapSettings::FlightMapSettings(QGCApplication* app)
+    : QGCTool(app)
     , _mapProvider(_defaultMapProvider)
 {
-    qmlRegisterUncreatableType<FlightMapSettings> ("QGroundControl", 1, 0, "FlightMapSetting", "Reference only");
-    
-    _supportedMapProviders << "Bing" << "Google" << "Open";
-    
-    _loadSettings();
 }
 
-FlightMapSettings::~FlightMapSettings()
+void FlightMapSettings::setToolbox(QGCToolbox *toolbox)
 {
+    QGCTool::setToolbox(toolbox);
 
+    qmlRegisterUncreatableType<FlightMapSettings> ("QGroundControl", 1, 0, "FlightMapSetting", "Reference only");
+
+    _supportedMapProviders << "Bing" << "Google" << "Open";
+
+    _loadSettings();
 }
 
 void FlightMapSettings::_storeSettings(void)

@@ -35,17 +35,8 @@ class SetupViewTest : public UnitTest
 {
     Q_OBJECT
     
-public:
-    SetupViewTest(void);
-    
 private slots:
-    void init(void);
-    void cleanup(void);
-    
     void _clickThrough_test(void);
-    
-private:
-    MainWindow*     _mainWindow;
 };
 
 #endif

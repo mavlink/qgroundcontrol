@@ -32,13 +32,14 @@
 #include "HomePositionManager.h"
 #include "FlightMapSettings.h"
 
+class QGCToolbox;
+
 class QGroundControlQmlGlobal : public QObject
 {
     Q_OBJECT
 
 public:
-    QGroundControlQmlGlobal(QObject* parent = NULL);
-    ~QGroundControlQmlGlobal();
+    QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent = NULL);
 
     Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)

@@ -40,9 +40,12 @@
 class UAS;
 class UASInterface;
 class FirmwarePlugin;
+class FirmwarePluginManager;
 class AutoPilotPlugin;
+class AutoPilotPluginManager;
 class MissionManager;
 class ParameterLoader;
+class JoystickManager;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -51,7 +54,13 @@ class Vehicle : public QObject
     Q_OBJECT
     
 public:
-    Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType);
+    Vehicle(LinkInterface*          link,
+            int                     vehicleId,
+            MAV_AUTOPILOT           firmwareType,
+            MAV_TYPE                vehicleType,
+            FirmwarePluginManager*  firmwarePluginManager,
+            AutoPilotPluginManager* autopilotPluginManager,
+            JoystickManager*        joystickManager);
     ~Vehicle();
     
     Q_PROPERTY(int id READ id CONSTANT)
@@ -444,6 +453,10 @@ private:
     QTimer              _communicationInactivityTimer;
     int                 _communicationInactivityTimeoutMSecs;
     static const int    _communicationInactivityTimeoutMSecsDefault = 30 * 1000;
+
+    FirmwarePluginManager*  _firmwarePluginManager;
+    AutoPilotPluginManager* _autopilotPluginManager;
+    JoystickManager*        _joystickManager;
     
     // Settings keys
     static const char* _settingsGroup;

@@ -31,19 +31,6 @@
 #include "APM/ArduRoverFirmwarePlugin.h"
 #include "PX4/PX4FirmwarePlugin.h"
 
-IMPLEMENT_QGC_SINGLETON(FirmwarePluginManager, FirmwarePluginManager)
-
-FirmwarePluginManager::FirmwarePluginManager(QObject* parent) :
-    QGCSingleton(parent)
-{
-
-}
-
-FirmwarePluginManager::~FirmwarePluginManager()
-{
-
-}
-
 FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType)
 {
     switch (autopilotType) {

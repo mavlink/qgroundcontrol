@@ -26,6 +26,7 @@
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
 #include "Vehicle.h"
+#include "QGCApplication.h"
 
 #include <QFile>
 #include <QDir>
@@ -718,7 +719,7 @@ void FileManager::_sendRequest(Request* request)
     qCDebug(FileManagerLog) << "_sendRequest opcode:" << request->hdr.opcode << "seqNumber:" << request->hdr.seqNumber;
     
     if (_systemIdQGC == 0) {
-        _systemIdQGC = MAVLinkProtocol::instance()->getSystemId();
+        _systemIdQGC = qgcApp()->toolbox()->mavlinkProtocol()->getSystemId();
     }
     
     Q_ASSERT(_vehicle);

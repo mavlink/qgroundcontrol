@@ -34,11 +34,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QVector>
 #include <QMutex>
 
-#include "QGCSingleton.h"
 #include "Vehicle.h"
+#include "QGCToolbox.h"
 
 class UASInterface;
 class UASMessageHandler;
+class QGCApplication;
 
 /*!
  * @class UASMessage
@@ -68,7 +69,7 @@ public:
      * @return true: This message is a of a severity which is considered an error
      */
     bool severityIsError();
-    
+
 private:
     UASMessage(int componentid, int severity, QString text);
     void _setFormatedText(const QString formatedText) { _formatedText = formatedText; }
@@ -78,14 +79,14 @@ private:
     QString _formatedText;
 };
 
-class UASMessageHandler : public QGCSingleton
+class UASMessageHandler : public QGCTool
 {
     Q_OBJECT
-    DECLARE_QGC_SINGLETON(UASMessageHandler, UASMessageHandler)
     
 public:
-    explicit UASMessageHandler(QObject *parent = 0);
+    explicit UASMessageHandler(QGCApplication* app);
     ~UASMessageHandler();
+
     /**
      * @brief Locks access to the message list
      */
@@ -126,6 +127,9 @@ public:
     /// Begin to show message which are errors in the toolbar
     void showErrorsInToolbar(void) { _showErrorsInToolbar = true; }
     
+    // Override from QGCTool
+    virtual void setToolbox(QGCToolbox *toolbox);
+
 public slots:
     /**
      * @brief Handle text message from current active UAS
@@ -152,16 +156,16 @@ private slots:
     void _activeVehicleChanged(Vehicle* vehicle);
     
 private:
-    // Stores the UAS that we're currently receiving messages from.
-    UASInterface* _activeUAS;
-    QVector<UASMessage*> _messages;
-    QMutex  _mutex;
-    int     _errorCount;
-    int     _errorCountTotal;
-    int     _warningCount;
-    int     _normalCount;
-    QString _latestError;
-    bool    _showErrorsInToolbar;
+    UASInterface*           _activeUAS;
+    QVector<UASMessage*>    _messages;
+    QMutex                  _mutex;
+    int                     _errorCount;
+    int                     _errorCountTotal;
+    int                     _warningCount;
+    int                     _normalCount;
+    QString                 _latestError;
+    bool                    _showErrorsInToolbar;
+    MultiVehicleManager*    _multiVehicleManager;
 };
 
 #endif // QGCMESSAGEHANDLER_H

@@ -50,7 +50,7 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
     QObject(parent),
     _autopilot(autopilot),
     _vehicle(vehicle),
-    _mavlink(MAVLinkProtocol::instance()),
+    _mavlink(qgcApp()->toolbox()->mavlinkProtocol()),
     _parametersReady(false),
     _initialLoadComplete(false),
     _defaultComponentId(FactSystem::defaultComponentId),
@@ -308,7 +308,7 @@ void ParameterLoader::refreshAllParameters(void)
     
     _dataMutex.unlock();
     
-    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     Q_ASSERT(mavlink);
     
     mavlink_message_t msg;
@@ -501,7 +501,7 @@ void ParameterLoader::_tryCacheLookup()
     /* Start waiting for 2.5 seconds to get a cache hit and avoid loading all params over the radio */
     _cacheTimeoutTimer.start();
 
-    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     Q_ASSERT(mavlink);
 
     mavlink_message_t msg;
@@ -825,7 +825,7 @@ void ParameterLoader::_checkInitialLoadComplete(void)
     
     // Check for any errors during vehicle boot
     
-    UASMessageHandler* msgHandler = UASMessageHandler::instance();
+    UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();
     if (msgHandler->getErrorCountTotal()) {
         QString errors;
         bool firstError = true;

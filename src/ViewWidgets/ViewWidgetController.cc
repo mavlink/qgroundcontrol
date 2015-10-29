@@ -24,12 +24,13 @@
 #include "ViewWidgetController.h"
 #include "MultiVehicleManager.h"
 #include "UAS.h"
+#include "QGCApplication.h"
 
 ViewWidgetController::ViewWidgetController(void) :
 	_autopilot(NULL),
 	_uas(NULL)
 {
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &ViewWidgetController::_vehicleAvailable);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &ViewWidgetController::_vehicleAvailable);
 }
 
 void ViewWidgetController::_vehicleAvailable(bool available)
@@ -41,7 +42,7 @@ void ViewWidgetController::_vehicleAvailable(bool available)
     }
     
     if (available) {
-        Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
+        Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
         
         _uas = vehicle->uas();
         _autopilot = vehicle->autopilotPlugin();
@@ -51,5 +52,5 @@ void ViewWidgetController::_vehicleAvailable(bool available)
 }
 Q_INVOKABLE void ViewWidgetController::checkForVehicle(void)
 {
-    _vehicleAvailable(MultiVehicleManager::instance()->activeVehicle());
+    _vehicleAvailable(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
 }
