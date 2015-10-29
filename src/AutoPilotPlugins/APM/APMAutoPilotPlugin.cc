@@ -29,9 +29,10 @@
 #include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
-APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
-    AutoPilotPlugin(vehicle, parent),
-    _incorrectParameterVersion(false)
+APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
+    : AutoPilotPlugin(vehicle, parent)
+    , _incorrectParameterVersion(false)
+    , _airframeComponent(NULL)
 {
     Q_ASSERT(vehicle);
 }
@@ -43,9 +44,20 @@ APMAutoPilotPlugin::~APMAutoPilotPlugin()
 
 const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
 {
-    static const QVariantList emptyList;
+    if (_components.count() == 0 && !_incorrectParameterVersion) {
+        Q_ASSERT(_vehicle);
 
-    return emptyList;
+        if (parametersReady()) {
+            _airframeComponent = new APMAirframeComponent(_vehicle->uas(), this);
+            Q_CHECK_PTR(_airframeComponent);
+            _airframeComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+        } else {
+            qWarning() << "Call to vehicleCompenents prior to parametersReady";
+        }
+    }
+
+    return _components;
 }
 
 /// This will perform various checks prior to signalling that the plug in ready
