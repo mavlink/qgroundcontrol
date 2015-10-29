@@ -86,10 +86,6 @@ public:
     QString readParametersFromStream(QTextStream& stream);
     
     void writeParametersToStream(QTextStream &stream, const QString& name);
-
-    /// Return the parameter for which the default component id is derived from. Return an empty
-    /// string is this is not available.
-    virtual QString getDefaultComponentIdParam(void) const = 0;
     
 signals:
     /// Signalled when the full set of facts are ready
@@ -102,10 +98,6 @@ signals:
     void restartWaitingParamTimer(void);
     
 protected:
-    /// Base implementation adds generic meta data based on variant type. Derived class can override to provide
-    /// more details meta data.
-    virtual void _addMetaDataToFact(Fact* fact);
-
     AutoPilotPlugin*    _autopilot;
     Vehicle*            _vehicle;
     MAVLinkProtocol*    _mavlink;

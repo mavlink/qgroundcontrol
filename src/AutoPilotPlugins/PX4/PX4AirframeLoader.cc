@@ -190,9 +190,3 @@ void PX4AirframeLoader::loadAirframeFactMetaData(void)
 
     _airframeMetaDataLoaded = true;
 }
-
-void PX4AirframeLoader::clearStaticData(void)
-{
-    AirframeComponentAirframes::clear();
-    _airframeMetaDataLoaded = false;
-}

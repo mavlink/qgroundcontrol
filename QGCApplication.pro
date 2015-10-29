@@ -527,14 +527,13 @@ HEADERS+= \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
-    src/FirmwarePlugin/APM/APMParameterLoader.h \
+    src/FirmwarePlugin/APM/APMParameterMetaData.h \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h \
     src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.h \
-    src/FirmwarePlugin/Generic/GenericParameterLoader.h \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
-    src/FirmwarePlugin/PX4/PX4ParameterLoader.h \
+    src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/Vehicle.h \
     src/VehicleSetup/VehicleComponent.h \
@@ -568,15 +567,14 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
     src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
-    src/FirmwarePlugin/APM/APMParameterLoader.cc \
+    src/FirmwarePlugin/APM/APMParameterMetaData.cc \
     src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.cc \
     src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.cc \
     src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/FirmwarePlugin/Generic/GenericFirmwarePlugin.cc \
-    src/FirmwarePlugin/Generic/GenericParameterLoader.cc \
     src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
-    src/FirmwarePlugin/PX4/PX4ParameterLoader.cc \
+    src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/Vehicle.cc \
     src/VehicleSetup/VehicleComponent.cc \

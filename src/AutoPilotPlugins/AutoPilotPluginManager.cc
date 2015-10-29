@@ -37,12 +37,6 @@ AutoPilotPluginManager::AutoPilotPluginManager(QObject* parent) :
 
 }
 
-AutoPilotPluginManager::~AutoPilotPluginManager()
-{
-    PX4AutoPilotPlugin::clearStaticData();
-    GenericAutoPilotPlugin::clearStaticData();
-}
-
 AutoPilotPlugin* AutoPilotPluginManager::newAutopilotPluginForVehicle(Vehicle* vehicle)
 {
     switch (vehicle->firmwareType()) {

@@ -29,7 +29,7 @@
 
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
-#include "APMParameterLoader.h"
+#include "APMParameterMetaData.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
@@ -89,7 +89,8 @@ public:
     virtual void adjustMavlinkMessage(mavlink_message_t* message);
     virtual void initializeVehicle(Vehicle* vehicle);
     virtual bool sendHomePositionToVehicle(void);
-    virtual ParameterLoader* getParameterLoader(AutoPilotPlugin *autopilotPlugin, Vehicle* vehicle);
+    virtual void addMetaDataToFact(Fact* fact);
+    virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }
 
 protected:
     /// All access to singleton is through stack specific implementation
@@ -103,7 +104,7 @@ private:
     APMFirmwareVersion      _firmwareVersion;
     bool                    _textSeverityAdjustmentNeeded;
     QList<APMCustomMode>    _supportedModes;
-    APMParameterLoader*     _parameterLoader;
+    APMParameterMetaData    _parameterMetaData;
 };
 
 #endif

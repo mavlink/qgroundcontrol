@@ -32,6 +32,7 @@
 #include "JoystickManager.h"
 #include "MissionManager.h"
 #include "CoordinateVector.h"
+#include "ParameterLoader.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -89,6 +90,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     , _updateCount(0)
     , _missionManager(NULL)
     , _missionManagerInitialRequestComplete(false)
+    , _parameterLoader(NULL)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -154,9 +156,13 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
     
     _loadSettings();
     
-        _missionManager = new MissionManager(this);
-        connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
-    
+    _missionManager = new MissionManager(this);
+    connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
+
+    _parameterLoader = new ParameterLoader(_autopilotPlugin, this /* Vehicle */, this /* parent */);
+    connect(_parameterLoader, SIGNAL(parametersReady(bool)),        _autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
+    connect(_parameterLoader, SIGNAL(parameterListProgress(float)), _autopilotPlugin, SIGNAL(parameterListProgress(float)));
+
     _firmwarePlugin->initializeVehicle(this);
     
     _sendMultipleTimer.start(_sendMessageMultipleIntraMessageDelay);
@@ -1147,4 +1153,9 @@ void Vehicle::_communicationInactivityTimedOut(void)
     for (int i=0; i<_links.count(); i++) {
         linkMgr->disconnectLink(_links[i].data());
     }
+}
+
+ParameterLoader* Vehicle::getParameterLoader(void)
+{
+    return _parameterLoader;
 }

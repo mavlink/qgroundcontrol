@@ -90,7 +90,6 @@ static const struct Modes2Name rgModes2Name[] = {
 
 PX4FirmwarePlugin::PX4FirmwarePlugin(QObject* parent)
     : FirmwarePlugin(parent)
-    , _parameterLoader(NULL)
 {
     
 }
@@ -212,18 +211,7 @@ bool PX4FirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
-ParameterLoader* PX4FirmwarePlugin::getParameterLoader(AutoPilotPlugin* autopilotPlugin, Vehicle* vehicle)
+void PX4FirmwarePlugin::addMetaDataToFact(Fact* fact)
 {
-    if (!_parameterLoader) {
-        _parameterLoader = new PX4ParameterLoader(autopilotPlugin, vehicle, this);
-        Q_CHECK_PTR(_parameterLoader);
-
-        // FIXME: Why do I need SIGNAL/SLOT to make this work
-        connect(_parameterLoader, SIGNAL(parametersReady(bool)),                autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
-        connect(_parameterLoader, &PX4ParameterLoader::parameterListProgress,   autopilotPlugin, &PX4AutoPilotPlugin::parameterListProgress);
-
-        _parameterLoader->loadParameterFactMetaData();
-    }
-
-    return _parameterLoader;
+    _parameterMetaData.addMetaDataToFact(fact);
 }
