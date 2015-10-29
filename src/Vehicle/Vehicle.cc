@@ -161,7 +161,7 @@ Vehicle::Vehicle(LinkInterface* link, int vehicleId, MAV_AUTOPILOT firmwareType,
 
     _parameterLoader = new ParameterLoader(_autopilotPlugin, this /* Vehicle */, this /* parent */);
     connect(_parameterLoader, SIGNAL(parametersReady(bool)),        _autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
-    connect(_parameterLoader, SIGNAL(parameterListProgress(float)), _autopilotPlugin, SLOT(parameterListProgress(float)));
+    connect(_parameterLoader, SIGNAL(parameterListProgress(float)), _autopilotPlugin, SIGNAL(parameterListProgress(float)));
 
     _firmwarePlugin->initializeVehicle(this);
     
