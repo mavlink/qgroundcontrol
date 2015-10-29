@@ -90,7 +90,7 @@ Item {
         QGCPitchIndicator {
             id:                 pitchWidget
             visible:            root.showPitch
-            size:               root.size * 0.65
+            size:               root.size * 0.5
             anchors.verticalCenter: parent.verticalCenter
             pitchAngle:         _pitchAngle
             rollAngle:          _rollAngle

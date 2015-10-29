@@ -44,9 +44,8 @@ Rectangle {
 
     property real _defaultSize:     ScreenTools.isAndroid ? 300 : 100
 
-    height: size * 0.9
+    height: size
     width:  size
-    radius: ScreenTools.defaultFontPixelSize * (0.66)
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.verticalCenter:   parent.verticalCenter
     clip: true
