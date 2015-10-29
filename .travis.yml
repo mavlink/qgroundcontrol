@@ -51,6 +51,7 @@ addons:
     - espeak
     - g++-4.8
     - gcc-4.8
+    - graphviz
     - libc6-i386
     - libespeak-dev
     - libopenscenegraph-dev
