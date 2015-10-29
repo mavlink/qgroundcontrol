@@ -31,14 +31,6 @@ GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent
     AutoPilotPlugin(vehicle, parent)
 {
     Q_ASSERT(vehicle);
-
-    // This kicks off parameter load
-    _firmwarePlugin->getParameterLoader(this, vehicle);
-}
-
-void GenericAutoPilotPlugin::clearStaticData(void)
-{
-    // No Static data yet
 }
 
 const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)

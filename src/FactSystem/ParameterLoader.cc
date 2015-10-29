@@ -198,7 +198,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     
     // Attempt to determine default component id
     if (_defaultComponentId == FactSystem::defaultComponentId && _defaultComponentIdParam.isEmpty()) {
-        _defaultComponentIdParam = getDefaultComponentIdParam();
+        _defaultComponentIdParam = _vehicle->firmwarePlugin()->getDefaultComponentIdParam();
     }
     if (!_defaultComponentIdParam.isEmpty() && _defaultComponentIdParam == parameterName) {
         _defaultComponentId = componentId;
@@ -255,7 +255,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     fact->_containerSetValue(value);
     
     if (setMetaData) {
-        _addMetaDataToFact(fact);
+        _vehicle->firmwarePlugin()->addMetaDataToFact(fact);
     }
     
     _dataMutex.unlock();
@@ -291,12 +291,6 @@ void ParameterLoader::_valueUpdated(const QVariant& value)
     
     _writeParameterRaw(componentId, fact->name(), value);
     qCDebug(ParameterLoaderLog) << "Set parameter (componentId:" << componentId << "name:" << name << value << ")";
-}
-
-void ParameterLoader::_addMetaDataToFact(Fact* fact)
-{
-    FactMetaData* metaData = new FactMetaData(fact->type(), this);
-    fact->setMetaData(metaData);
 }
 
 void ParameterLoader::refreshAllParameters(void)

@@ -114,8 +114,6 @@ public:
     // Must be implemented by derived class
     virtual const QVariantList& vehicleComponents(void) = 0;
     
-    static void clearStaticData(void);
-	
 	// Property accessors
 	bool parametersReady(void) { return _parametersReady; }
     bool missingParameters(void) { return _missingParameters; }
