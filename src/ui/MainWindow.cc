@@ -557,9 +557,21 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionFlight,   &QAction::triggered,    this, &MainWindow::showFlyView);
     connect(_ui.actionPlan,     &QAction::triggered,    this, &MainWindow::showPlanView);
     connect(_ui.actionSetup,    &QAction::triggered,    this, &MainWindow::showSetupView);
+    connect(_ui.actionFlight,   &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
+    connect(_ui.actionPlan,     &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
+    connect(_ui.actionSetup,    &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
 
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
+}
+
+void MainWindow::handleActiveViewActionState(bool triggered)
+{
+    Q_UNUSED(triggered);
+    QAction *triggeredAction = qobject_cast<QAction*>(sender());
+    _ui.actionFlight->setChecked(triggeredAction == _ui.actionFlight);
+    _ui.actionPlan->setChecked(triggeredAction == _ui.actionPlan);
+    _ui.actionSetup->setChecked(triggeredAction == _ui.actionSetup);
 }
 
 void MainWindow::_openUrl(const QString& url, const QString& errorMessage)

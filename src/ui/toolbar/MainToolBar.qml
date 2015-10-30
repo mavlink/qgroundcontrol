@@ -445,6 +445,13 @@ Rectangle {
                     flyButton.repaintChevron     = true;
                 }
             }
+            Connections {
+                target:controller
+                onShowFlyView:  { flyButton.checked   = true }
+                onShowPlanView: { planButton.checked  = true }
+                onShowSetupView:{ setupButton.checked = true }
+            }
+
 
             ExclusiveGroup { id: mainActionGroup }
 
