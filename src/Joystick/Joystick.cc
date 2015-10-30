@@ -75,6 +75,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int sdlI
     Q_UNUSED(axisCount)
     Q_UNUSED(buttonCount)
     Q_UNUSED(sdlIndex)
+    Q_UNUSED(multiVehicleManager)
 #else
     _rgAxisValues = new int[_axisCount];
     _rgCalibration = new Calibration_t[_axisCount];

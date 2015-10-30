@@ -25,6 +25,7 @@
 #include "QGC.h"
 #include "MG.h"
 #include "QGCLoggingCategory.h"
+#include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
