@@ -423,5 +423,9 @@ void UnitTest::_closeMainWindow(bool cancelExpected)
 
         mainWindowSpy.wait(2000);
         QCOMPARE(mainWindowSpy.count(), cancelExpected ? 0 : 1);
+
+        // This leaves enough time for any dangling Qml components to get cleaned up.
+        // This prevents qWarning from bad references in Qml
+        QTest::qWait(1000);
     }
 }
