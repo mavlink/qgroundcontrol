@@ -112,21 +112,6 @@ public:
         return homeAlt;
     }
 
-public slots:
-    
-    // Deprecated methods
-    
-    /** @brief Set the current home position, but do not change it on the UAVs */
-    bool setHomePosition(double lat, double lon, double alt);
-
-    /** @brief Set the current home position on all UAVs*/
-    bool setHomePositionAndNotify(double lat, double lon, double alt);
-
-
-signals:
-    /** @brief Current home position changed */
-    void homePositionChanged(double lat, double lon, double alt);
-    
 protected:
     double homeLat;
     double homeLon;

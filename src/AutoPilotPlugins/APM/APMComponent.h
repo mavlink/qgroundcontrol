@@ -37,7 +37,7 @@ class APMComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    APMComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     /// @brief Returns an list of parameter names for which a change should cause the setupCompleteChanged
     ///         signal to be emitted. Last element is signalled by NULL.

@@ -212,13 +212,6 @@ void MultiVehicleManager::_autopilotParametersReadyChanged(bool parametersReady)
     }
 }
 
-void MultiVehicleManager::setHomePositionForAllVehicles(double lat, double lon, double alt)
-{
-    for (int i=0; i< _vehicles.count(); i++) {
-        qobject_cast<Vehicle*>(_vehicles[i])->uas()->setHomePosition(lat, lon, alt);
-    }
-}
-
 void MultiVehicleManager::saveSetting(const QString &name, const QString& value)
 {
     QSettings settings;

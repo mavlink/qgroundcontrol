@@ -31,7 +31,7 @@
 #include <QQmlContext>
 #include <QQuickItem>
 
-#include "UASInterface.h"
+#include "Vehicle.h"
 
 class AutoPilotPlugin;
 
@@ -53,7 +53,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(QString prerequisiteSetup READ prerequisiteSetup)
     
 public:
-    VehicleComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     ~VehicleComponent();
     
     virtual QString name(void) const = 0;
@@ -73,8 +73,8 @@ signals:
     void setupCompleteChanged(bool setupComplete);
     
 protected:
-    UASInterface*                   _uas;
-    AutoPilotPlugin*                _autopilot;
+    Vehicle*            _vehicle;
+    AutoPilotPlugin*    _autopilot;
 };
 
 #endif

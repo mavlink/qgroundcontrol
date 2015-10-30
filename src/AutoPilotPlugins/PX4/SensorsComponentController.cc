@@ -445,12 +445,15 @@ void SensorsComponentController::_refreshParams(void)
 
 bool SensorsComponentController::fixedWing(void)
 {
-    UASInterface* uas = _autopilot->vehicle()->uas();
-    Q_ASSERT(uas);
-    return uas->getSystemType() == MAV_TYPE_FIXED_WING ||
-            uas->getSystemType() == MAV_TYPE_VTOL_DUOROTOR ||
-            uas->getSystemType() == MAV_TYPE_VTOL_QUADROTOR ||
-            uas->getSystemType() == MAV_TYPE_VTOL_TILTROTOR;
+    switch (_vehicle->vehicleType()) {
+        case MAV_TYPE_FIXED_WING:
+        case MAV_TYPE_VTOL_DUOROTOR:
+        case MAV_TYPE_VTOL_QUADROTOR:
+        case MAV_TYPE_VTOL_TILTROTOR:
+            return true;
+        default:
+            return false;
+    }
 }
 
 void SensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)

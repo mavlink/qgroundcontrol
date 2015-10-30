@@ -47,28 +47,30 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMessageBox.h"
 #include "HomePositionManager.h"
 #include "QGCApplication.h"
+#include "Vehicle.h"
+#include "UAS.h"
 
 // FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
 //#define DEBUG_FLIGHTGEAR_CONNECT
 
-QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
-    flightGearVersion(3),
-    startupArguments(startupArguments),
-    _sensorHilEnabled(true),
-    barometerOffsetkPa(0.0f),
-    _udpCommSocket(NULL),
-    _fgProcess(NULL)
+QGCFlightGearLink::QGCFlightGearLink(Vehicle* vehicle, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port)
+    : _vehicle(vehicle)
+    , _udpCommSocket(NULL)
+    , _fgProcess(NULL)
+    , flightGearVersion(3)
+    , startupArguments(startupArguments)
+    , _sensorHilEnabled(true)
+    , barometerOffsetkPa(0.0f)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
 
     this->host = host;
-    this->port = port+mav->getUASID();
+    this->port = port + _vehicle->id();
     this->connectState = false;
-    this->currentPort = 49000+mav->getUASID();
-    this->mav = mav;
+    this->currentPort = 49000 + _vehicle->id();
     this->name = tr("FlightGear 3.0+ Link (port:%1)").arg(port);
     setRemoteHost(remoteHost);
     
@@ -88,7 +90,7 @@ QGCFlightGearLink::~QGCFlightGearLink()
 /// @brief Runs the simulation thread. We do setup work here which needs to happen in the seperate thread.
 void QGCFlightGearLink::run()
 {
-    Q_ASSERT(mav);
+    Q_ASSERT(_vehicle);
     Q_ASSERT(!_fgProcessName.isEmpty());
         
     // We communicate with FlightGear over a UDP _udpCommSocket
@@ -100,16 +102,16 @@ void QGCFlightGearLink::run()
     
     
     // Connect to the various HIL signals that we use to then send information across the UDP protocol to FlightGear.
-    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)),
+    connect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)),
             this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     connect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)),
-            mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
+            _vehicle->uas(), SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
     connect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)),
-            mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
+            _vehicle->uas(), SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
     connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)),
-            mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+            _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
     connect(this, SIGNAL(sensorHilOpticalFlowChanged(quint64, qint16, qint16, float,float, quint8, float)),
-            mav, SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
+            _vehicle->uas(), SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
     
     // Start a new QProcess to run FlightGear in
     _fgProcess = new QProcess(this);
@@ -430,7 +432,7 @@ void QGCFlightGearLink::readBytes()
         zmag_body = mag_body(2);
 
         emit sensorHilRawImuChanged(QGC::groundTimeUsecs(), xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
-                                    xmag_body, ymag_body, zmag_body, abs_pressure*1e-2f, diff_pressure*1e-2f, pressure_alt, temperature, fields_changed); //Pressure in hPa for mavlink
+                                    xmag_body, ymag_body, zmag_body, abs_pressure*1e-2f, diff_pressure*1e-2f, pressure_alt, temperature, fields_changed); //Pressure in hPa for _vehicle->uas()link
 
 //        qDebug()  << "sensorHilRawImuChanged " << xacc  << yacc << zacc  << rollspeed << pitchspeed << yawspeed << xmag << ymag << zmag << abs_pressure << diff_pressure << pressure_alt << temperature;
         int gps_fix_type = 3;
@@ -491,12 +493,12 @@ bool QGCFlightGearLink::disconnectSimulation()
 {
     disconnect(_fgProcess, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    disconnect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
-    disconnect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
-    disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+    disconnect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
+    disconnect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), _vehicle->uas(), SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
+    disconnect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), _vehicle->uas(), SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
+    disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
     disconnect(this, SIGNAL(sensorHilOpticalFlowChanged(quint64, qint16, qint16, float,float, quint8, float)),
-            mav, SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
+            _vehicle->uas(), SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
 
     if (_fgProcess)
     {
@@ -629,7 +631,7 @@ bool QGCFlightGearLink::connectSimulation()
     // have that information setup we start the thread which will call run, which will in turn
     // start the various FG processes on the seperate thread.
     
-    if (!mav) {
+    if (!_vehicle->uas()) {
         return false;
     }
     
@@ -846,7 +848,7 @@ bool QGCFlightGearLink::connectSimulation()
     _fgArgList += "--fg-aircraft=" + qgcAircraftDir;
     
     // Setup protocol we will be using to communicate with FlightGear
-    QString fgProtocol(mav->getSystemType() == MAV_TYPE_QUADROTOR ? "qgroundcontrol-quadrotor" : "qgroundcontrol-fixed-wing");
+    QString fgProtocol(_vehicle->vehicleType() == MAV_TYPE_QUADROTOR ? "qgroundcontrol-quadrotor" : "qgroundcontrol-fixed-wing");
     QString fgProtocolArg("--generic=socket,%1,300,127.0.0.1,%2,udp,%3");
     _fgArgList << fgProtocolArg.arg("out").arg(port).arg(fgProtocol);
     _fgArgList << fgProtocolArg.arg("in").arg(currentPort).arg(fgProtocol);
@@ -947,7 +949,7 @@ bool QGCFlightGearLink::connectSimulation()
     }
     
     // Start the engines to save a startup step
-    if (mav->getSystemType() == MAV_TYPE_QUADROTOR) {
+    if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR) {
         // Start all engines of the quad
         _fgArgList << "--prop:/engines/engine[0]/running=true";
         _fgArgList << "--prop:/engines/engine[1]/running=true";

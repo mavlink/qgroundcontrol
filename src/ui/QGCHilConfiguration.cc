@@ -29,6 +29,7 @@
 #include "QGCHilFlightGearConfiguration.h"
 #include "QGCHilJSBSimConfiguration.h"
 #include "QGCHilXPlaneConfiguration.h"
+#include "UAS.h"
 
 QGCHilConfiguration::QGCHilConfiguration(Vehicle* vehicle, QWidget *parent)
     : QWidget(parent)
@@ -87,7 +88,7 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
     {
         // Ensure the sim exists and is disabled
         _vehicle->uas()->enableHilFlightGear(false, "", true, this);
-        QGCHilFlightGearConfiguration* hfgconf = new QGCHilFlightGearConfiguration(_vehicle->uas(), this);
+        QGCHilFlightGearConfiguration* hfgconf = new QGCHilFlightGearConfiguration(_vehicle, this);
         hfgconf->show();
         ui->simulatorConfigurationLayout->addWidget(hfgconf);
         QGCFlightGearLink* fg = dynamic_cast<QGCFlightGearLink*>(_vehicle->uas()->getHILSimulation());
@@ -117,7 +118,7 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
     {
         // Ensure the sim exists and is disabled
         _vehicle->uas()->enableHilJSBSim(false, "");
-        QGCHilJSBSimConfiguration* hfgconf = new QGCHilJSBSimConfiguration(_vehicle->uas(), this);
+        QGCHilJSBSimConfiguration* hfgconf = new QGCHilJSBSimConfiguration(_vehicle, this);
         hfgconf->show();
         ui->simulatorConfigurationLayout->addWidget(hfgconf);
         QGCJSBSimLink* jsb = dynamic_cast<QGCJSBSimLink*>(_vehicle->uas()->getHILSimulation());

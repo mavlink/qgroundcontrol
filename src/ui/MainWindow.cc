@@ -60,7 +60,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCUASFileViewMulti.h"
 #include "UASQuickView.h"
 #include "QGCTabbedInfoView.h"
-#include "UASRawStatusView.h"
 #include "CustomCommandWidget.h"
 #include "QGCDockWidget.h"
 #include "UASInfoWidget.h"

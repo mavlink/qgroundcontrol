@@ -27,8 +27,8 @@
 #include "APMAirframeComponent.h"
 #include "QGCQmlWidgetHolder.h"
 
-APMAirframeComponent::APMAirframeComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    APMComponent(uas, autopilot, parent),
+APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    APMComponent(vehicle, autopilot, parent),
     _name(tr("Airframe"))
 {
 

@@ -27,12 +27,12 @@
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
 
-VehicleComponent::VehicleComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
+VehicleComponent::VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     QObject(parent),
-    _uas(uas),
+    _vehicle(vehicle),
     _autopilot(autopilot)
 {
-    Q_ASSERT(uas);
+    Q_ASSERT(vehicle);
     Q_ASSERT(autopilot);
 }
 

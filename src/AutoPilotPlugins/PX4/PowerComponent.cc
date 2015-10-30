@@ -28,8 +28,8 @@
 #include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 
-PowerComponent::PowerComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(uas, autopilot, parent),
+PowerComponent::PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(vehicle, autopilot, parent),
     _name(tr("Power"))
 {
 }
