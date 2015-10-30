@@ -198,13 +198,6 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
         // Use the same shared pointer as LinkManager
         _connectedLinks.append(_linkMgr->sharedPointerForLink(link));
         
-#ifndef __mobile__
-        if (_connectedLinks.count() == 1) {
-            // This is the first link, we need to start logging
-            _startLogging();
-        }
-#endif
-        
         // Send command to start MAVLink
         // XXX hacky but safe
         // Start NSH
@@ -364,6 +357,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 #endif
 
             if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+#ifndef __mobile__
+                // Start loggin on first heartbeat
+                _startLogging();
+#endif
+
                 // Notify the vehicle manager of the heartbeat. This will create/update vehicles as needed.
                 mavlink_heartbeat_t heartbeat;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
@@ -657,20 +655,20 @@ bool MAVLinkProtocol::_closeLogFile(void)
 
 void MAVLinkProtocol::_startLogging(void)
 {
-    Q_ASSERT(!_tempLogFile.isOpen());
+    if (!_tempLogFile.isOpen()) {
+        if (!_logSuspendReplay) {
+            if (!_tempLogFile.open()) {
+                emit protocolStatusMessage(tr("MAVLink Protocol"), tr("Opening Flight Data file for writing failed. "
+                                                                      "Unable to write to %1. Please choose a different file location.").arg(_tempLogFile.fileName()));
+                _closeLogFile();
+                _logSuspendError = true;
+                return;
+            }
 
-    if (!_logSuspendReplay) {
-        if (!_tempLogFile.open()) {
-            emit protocolStatusMessage(tr("MAVLink Protocol"), tr("Opening Flight Data file for writing failed. "
-                                                                  "Unable to write to %1. Please choose a different file location.").arg(_tempLogFile.fileName()));
-            _closeLogFile();
-            _logSuspendError = true;
-            return;
+            qDebug() << "Temp log" << _tempLogFile.fileName();
+
+            _logSuspendError = false;
         }
-    
-        qDebug() << "Temp log" << _tempLogFile.fileName();
-        
-        _logSuspendError = false;
     }
 }
 
