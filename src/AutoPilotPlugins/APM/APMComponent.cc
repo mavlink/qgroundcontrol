@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -21,33 +21,33 @@
  
  ======================================================================*/
 
-#ifndef APMAutoPilotPlugin_H
-#define APMAutoPilotPlugin_H
+/// @file
+///     @author Don Gagne <don@thegagnes.com>
 
+#include "APMComponent.h"
+#include "Fact.h"
 #include "AutoPilotPlugin.h"
-#include "Vehicle.h"
-#include "APMAirframeComponent.h"
 
-/// This is the APM specific implementation of the AutoPilot class.
-class APMAutoPilotPlugin : public AutoPilotPlugin
+APMComponent::APMComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
+    VehicleComponent(uas, autopilot, parent)
 {
-    Q_OBJECT
+    Q_ASSERT(uas);
+    Q_ASSERT(autopilot);
+}
 
-public:
-    APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent);
-    ~APMAutoPilotPlugin();
+void APMComponent::setupTriggerSignals(void)
+{
+    // Watch for changed on trigger list params
+    foreach (QString paramName, setupCompleteChangedTriggerList()) {
+        Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
+        
+        connect(fact, &Fact::valueChanged, this, &APMComponent::_triggerUpdated);
+    }
+}
 
-    // Overrides from AutoPilotPlugin
-    virtual const QVariantList& vehicleComponents(void);
 
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
-
-private:
-    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
-    QVariantList            _components;
-    APMAirframeComponent*   _airframeComponent;
-};
-
-#endif
+void APMComponent::_triggerUpdated(QVariant value)
+{
+    Q_UNUSED(value);
+    emit setupCompleteChanged(setupComplete());
+}
