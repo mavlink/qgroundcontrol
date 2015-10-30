@@ -3,6 +3,7 @@
 #include "UASQuickViewTextItem.h"
 #include "MultiVehicleManager.h"
 #include "UAS.h"
+#include "QGCApplication.h"
 
 #include <QMetaMethod>
 #include <QDebug>
@@ -21,8 +22,8 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
     m_verticalLayoutList.append(new QVBoxLayout());
     ui.horizontalLayout->addItem(m_verticalLayoutList[0]);
 
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &UASQuickView::_activeVehicleChanged);
-    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &UASQuickView::_activeVehicleChanged);
+    _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
     loadSettings();

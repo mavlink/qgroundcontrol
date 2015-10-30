@@ -39,27 +39,27 @@
 #define MEAN_EARTH_DIAMETER	12756274.0
 #define UMR	0.017453292519943295769236907684886
 
-IMPLEMENT_QGC_SINGLETON(HomePositionManager, HomePositionManager)
-
 const char* HomePositionManager::_settingsGroup =   "HomePositionManager";
 const char* HomePositionManager::_latitudeKey =     "Latitude";
 const char* HomePositionManager::_longitudeKey =    "Longitude";
 const char* HomePositionManager::_altitudeKey =     "Altitude";
 
-HomePositionManager::HomePositionManager(QObject* parent)
-    : QObject(parent)
+HomePositionManager::HomePositionManager(QGCApplication* app)
+    : QGCTool(app)
     , homeLat(47.3769)
     , homeLon(8.549444)
     , homeAlt(470.0)
 {
-    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl", 1, 0, "HomePositionManager", "Reference only");
-    
-    _loadSettings();
+
 }
 
-HomePositionManager::~HomePositionManager()
+void HomePositionManager::setToolbox(QGCToolbox *toolbox)
 {
+    QGCTool::setToolbox(toolbox);
 
+    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl", 1, 0, "HomePositionManager", "Reference only");
+
+    _loadSettings();
 }
 
 void HomePositionManager::_storeSettings(void)
@@ -116,7 +116,7 @@ void HomePositionManager::_loadSettings(void)
     settings.endGroup();
     
     if (_homePositions.count() == 0) {
-        _homePositions.append(new HomePosition("ETH Campus", QGeoCoordinate(47.3769, 8.549444, 470.0)));
+        _homePositions.append(new HomePosition("ETH Campus", QGeoCoordinate(47.3769, 8.549444, 470.0), this));
     }
     
     // Deprecated settings for old editor
@@ -169,7 +169,7 @@ bool HomePositionManager::setHomePositionAndNotify(double lat, double lon, doubl
     bool changed = setHomePosition(lat, lon, alt);
 
     if (changed) {
-        MultiVehicleManager::instance()->setHomePositionForAllVehicles(homeLat, homeLon, homeAlt);
+        qgcApp()->toolbox()->multiVehicleManager()->setHomePositionForAllVehicles(homeLat, homeLon, homeAlt);
     }
 
 	return changed;
@@ -218,9 +218,10 @@ void HomePositionManager::deleteHomePosition(const QString& name)
     _storeSettings();
 }
 
-HomePosition::HomePosition(const QString& name, const QGeoCoordinate& coordinate, QObject* parent)
+HomePosition::HomePosition(const QString& name, const QGeoCoordinate& coordinate, HomePositionManager* homePositionManager, QObject* parent)
     : QObject(parent)
     , _coordinate(coordinate)
+    , _homePositionManager(homePositionManager)
 {
     setObjectName(name);
 }
@@ -238,7 +239,7 @@ QString HomePosition::name(void)
 void HomePosition::setName(const QString& name)
 {
     setObjectName(name);
-    HomePositionManager::instance()->_storeSettings();
+    _homePositionManager->_storeSettings();
     emit nameChanged(name);
 }
 
@@ -250,6 +251,6 @@ QGeoCoordinate HomePosition::coordinate(void)
 void HomePosition::setCoordinate(const QGeoCoordinate& coordinate)
 {
     _coordinate = coordinate;
-    HomePositionManager::instance()->_storeSettings();
+    _homePositionManager->_storeSettings();
     emit coordinateChanged(coordinate);
 }

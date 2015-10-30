@@ -4,6 +4,7 @@
 #include "QGCMAVLinkInspector.h"
 #include "MultiVehicleManager.h"
 #include "UAS.h"
+#include "QGCApplication.h"
 
 #include "ui_QGCMAVLinkInspector.h"
 
@@ -52,7 +53,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, 
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clearView()));
 
     // Connect external connections
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &QGCMAVLinkInspector::_vehicleAdded);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &QGCMAVLinkInspector::_vehicleAdded);
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 
     // Attach the UI's refresh rate to a timer.
@@ -101,7 +102,7 @@ void QGCMAVLinkInspector::rebuildComponentList()
     ui->componentComboBox->addItem(tr("All"), 0);
 
     // Fill
-    Vehicle* vehicle = MultiVehicleManager::instance()->getVehicleById(selectedSystemID);
+    Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(selectedSystemID);
     if (vehicle)
     {
         UASInterface* uas = vehicle->uas();
@@ -334,7 +335,7 @@ void QGCMAVLinkInspector::addUAStoTree(int sysId)
     if(!uasTreeWidgetItems.contains(sysId))
     {
         // Add the UAS to the main tree after it has been created
-        Vehicle* vehicle = MultiVehicleManager::instance()->getVehicleById(sysId);
+        Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(sysId);
         if (vehicle)
         {
             UASInterface* uas = vehicle->uas();

@@ -25,18 +25,16 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "QGroundControlQmlGlobal.h"
+#include "QGCApplication.h"
+
+#include <QSettings>
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent)
     : QObject(parent)
-    , _homePositionManager(HomePositionManager::instance())
-    , _flightMapSettings(FlightMapSettings::instance())
-{
-
-}
-
-QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
+    , _homePositionManager(toolbox->homePositionManager())
+    , _flightMapSettings(toolbox->flightMapSettings())
 {
 
 }

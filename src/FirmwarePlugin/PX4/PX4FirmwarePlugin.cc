@@ -88,8 +88,7 @@ static const struct Modes2Name rgModes2Name[] = {
 };
 
 
-PX4FirmwarePlugin::PX4FirmwarePlugin(QObject* parent)
-    : FirmwarePlugin(parent)
+PX4FirmwarePlugin::PX4FirmwarePlugin(void)
 {
     
 }

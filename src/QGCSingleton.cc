@@ -29,8 +29,3 @@
 #include "QGCSingleton.h"
 #include "QGCApplication.h"
 
-QGCSingleton::QGCSingleton(QObject* parent) :
-    QObject(parent)
-{
-
-}

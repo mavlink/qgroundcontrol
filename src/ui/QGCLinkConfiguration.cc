@@ -38,7 +38,7 @@ QGCLinkConfiguration::QGCLinkConfiguration(QWidget *parent) :
     _ui(new Ui::QGCLinkConfiguration)
 {
     // Stop automatic link updates while this UI is up
-    LinkManager::instance()->suspendConfigurationUpdates(true);
+    qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(true);
     _ui->setupUi(this);
     _viewModel = new LinkViewModel;
     _ui->linkView->setModel(_viewModel);
@@ -52,7 +52,7 @@ QGCLinkConfiguration::~QGCLinkConfiguration()
     if(_viewModel) delete _viewModel;
     if(_ui) delete _ui;
     // Resume automatic link updates
-    LinkManager::instance()->suspendConfigurationUpdates(false);
+    qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(false);
 }
 
 void QGCLinkConfiguration::on_delLinkButton_clicked()
@@ -72,13 +72,13 @@ void QGCLinkConfiguration::on_delLinkButton_clicked()
                 LinkInterface* iface = config->getLink();
                 if(iface) {
                     // Disconnect it (if connected)
-                    LinkManager::instance()->disconnectLink(iface);
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(iface);
                 }
                 _viewModel->beginChange();
                 // Remove configuration
-                LinkManager::instance()->removeLinkConfiguration(config);
+                qgcApp()->toolbox()->linkManager()->removeLinkConfiguration(config);
                 // Save list
-                LinkManager::instance()->saveLinkConfigurationList();
+                qgcApp()->toolbox()->linkManager()->saveLinkConfigurationList();
                 _viewModel->endChange();
             }
         }
@@ -101,10 +101,10 @@ void QGCLinkConfiguration::on_connectLinkButton_clicked()
             if(link) {
                 // Disconnect Link
                 if (link->isConnected()) {
-                    LinkManager::instance()->disconnectLink(link);
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(link);
                 }
             } else {
-                LinkInterface* link = LinkManager::instance()->createConnectedLink(config);
+                LinkInterface* link = qgcApp()->toolbox()->linkManager()->createConnectedLink(config);
                 if(link) {
                     // Now go hunting for the parent so we can shut this down
                     QWidget* pQw = parentWidget();
@@ -186,8 +186,8 @@ void QGCLinkConfiguration::on_addLinkButton_clicked()
         if(config) {
             _fixUnnamed(config);
             _viewModel->beginChange();
-            LinkManager::instance()->addLinkConfiguration(commDialog->getConfig());
-            LinkManager::instance()->saveLinkConfigurationList();
+            qgcApp()->toolbox()->linkManager()->addLinkConfiguration(commDialog->getConfig());
+            qgcApp()->toolbox()->linkManager()->saveLinkConfigurationList();
             _viewModel->endChange();
         }
     }
@@ -213,7 +213,7 @@ void QGCLinkConfiguration::_editLink(int row)
                     _viewModel->beginChange();
                     config->copyFrom(tmpConfig);
                     // Save it
-                    LinkManager::instance()->saveLinkConfigurationList();
+                    qgcApp()->toolbox()->linkManager()->saveLinkConfigurationList();
                     _viewModel->endChange();
                     // Tell link about changes (if any)
                     config->updateSettings();
@@ -261,14 +261,14 @@ LinkViewModel::LinkViewModel(QObject *parent) : QAbstractListModel(parent)
 int LinkViewModel::rowCount( const QModelIndex & parent) const
 {
     Q_UNUSED(parent);
-    QList<LinkConfiguration*> cfgList = LinkManager::instance()->getLinkConfigurationList();
+    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
     int count = cfgList.count();
     return count;
 }
 
 QVariant LinkViewModel::data( const QModelIndex & index, int role) const
 {
-    QList<LinkConfiguration*> cfgList = LinkManager::instance()->getLinkConfigurationList();
+    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
     if (role == Qt::DisplayRole && index.row() < cfgList.count()) {
         QString name(cfgList.at(index.row())->name());
         return name;
@@ -278,7 +278,7 @@ QVariant LinkViewModel::data( const QModelIndex & index, int role) const
 
 LinkConfiguration* LinkViewModel::getConfiguration(int row)
 {
-    QList<LinkConfiguration*> cfgList = LinkManager::instance()->getLinkConfigurationList();
+    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
     if(row < cfgList.count()) {
         return cfgList.at(row);
     }

@@ -30,6 +30,7 @@
 
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
+#include "MAVLinkProtocol.h"
 
 class MockLink;
 
@@ -40,7 +41,7 @@ class MockLinkMissionItemHandler : public QObject
     Q_OBJECT
 
 public:
-    MockLinkMissionItemHandler(MockLink* mockLink);
+    MockLinkMissionItemHandler(MockLink* mockLink, MAVLinkProtocol* mavlinkProtocol);
     ~MockLinkMissionItemHandler();
     
     // Prepares for destruction on correct thread
@@ -111,10 +112,11 @@ private:
     typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
     MissionList_t   _missionItems;
     
-    QTimer* _missionItemResponseTimer;
-    FailureMode_t   _failureMode;
-    bool            _failureFirstTimeOnly;
-    bool            _sendHomePositionOnEmptyList;
+    QTimer*             _missionItemResponseTimer;
+    FailureMode_t       _failureMode;
+    bool                _failureFirstTimeOnly;
+    bool                _sendHomePositionOnEmptyList;
+    MAVLinkProtocol*    _mavlinkProtocol;
 };
 
 #endif

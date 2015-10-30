@@ -39,10 +39,12 @@
 #include "MainToolBarController.h"
 #include "FlightMapSettings.h"
 
-SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags flags) :
-QDialog(parent, flags),
-_mainWindow(MainWindow::instance()),
-_ui(new Ui::SettingsDialog)
+SettingsDialog::SettingsDialog(GAudioOutput* audioOutput, FlightMapSettings* flightMapSettings, QWidget *parent, int showTab, Qt::WindowFlags flags)
+    : QDialog(parent, flags)
+    , _mainWindow(MainWindow::instance())
+    , _audioOutput(audioOutput)
+    , _flightMapSettings(flightMapSettings)
+    , _ui(new Ui::SettingsDialog)
 {
     _ui->setupUi(this);
 
@@ -55,7 +57,7 @@ _ui(new Ui::SettingsDialog)
     move(position.topLeft());
 
     QGCLinkConfiguration*  pLinkConf     = new QGCLinkConfiguration(this);
-    MAVLinkSettingsWidget* pMavsettings  = new MAVLinkSettingsWidget(MAVLinkProtocol::instance(), this);
+    MAVLinkSettingsWidget* pMavsettings  = new MAVLinkSettingsWidget(qgcApp()->toolbox()->mavlinkProtocol(), this);
 
     // Add the link settings pane
     _ui->tabWidget->addTab(pLinkConf,     "Comm Links");
@@ -65,9 +67,9 @@ _ui(new Ui::SettingsDialog)
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 
     // Audio preferences
-    _ui->audioMuteCheckBox->setChecked(GAudioOutput::instance()->isMuted());
-    connect(_ui->audioMuteCheckBox, SIGNAL(toggled(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
-    connect(GAudioOutput::instance(), SIGNAL(mutedChanged(bool)), _ui->audioMuteCheckBox, SLOT(setChecked(bool)));
+    _ui->audioMuteCheckBox->setChecked(_audioOutput->isMuted());
+    connect(_ui->audioMuteCheckBox, SIGNAL(toggled(bool)), _audioOutput, SLOT(mute(bool)));
+    connect(_audioOutput, SIGNAL(mutedChanged(bool)), _ui->audioMuteCheckBox, SLOT(setChecked(bool)));
 
     // Reconnect
     _ui->reconnectCheckBox->setChecked(_mainWindow->autoReconnectEnabled());
@@ -92,7 +94,7 @@ _ui(new Ui::SettingsDialog)
     
     // Flight Map settings
     
-    FlightMapSettings* fmSettings = FlightMapSettings::instance();
+    FlightMapSettings* fmSettings = _flightMapSettings;
     _ui->bingMapRadio->setChecked(fmSettings->mapProvider() == "Bing");
     _ui->googleMapRadio->setChecked(fmSettings->mapProvider() == "Google");
     _ui->openMapRadio->setChecked(fmSettings->mapProvider() == "Open");
@@ -178,20 +180,20 @@ void SettingsDialog::_selectSavedFilesDirectory(void)
 void SettingsDialog::_bingMapRadioClicked(bool checked)
 {
     if (checked) {
-        FlightMapSettings::instance()->setMapProvider("Bing");
+        _flightMapSettings->setMapProvider("Bing");
     }
 }
 
 void SettingsDialog::_googleMapRadioClicked(bool checked)
 {
     if (checked) {
-        FlightMapSettings::instance()->setMapProvider("Google");
+        _flightMapSettings->setMapProvider("Google");
     }
 }
 
 void SettingsDialog::_openMapRadioClicked(bool checked)
 {
     if (checked) {
-        FlightMapSettings::instance()->setMapProvider("Open");
+        _flightMapSettings->setMapProvider("Open");
     }
 }

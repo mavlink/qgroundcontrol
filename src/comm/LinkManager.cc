@@ -46,27 +46,20 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
 #include "SerialPortIds.h"
+#include "QGCApplication.h"
 
-IMPLEMENT_QGC_SINGLETON(LinkManager, LinkManager)
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 
-/**
- * @brief Private singleton constructor
- *
- * This class implements the singleton design pattern and has therefore only a private constructor.
- **/
-LinkManager::LinkManager(QObject* parent)
-    : QGCSingleton(parent)
+LinkManager::LinkManager(QGCApplication* app)
+    : QGCTool(app)
     , _configUpdateSuspended(false)
     , _configurationsLoaded(false)
     , _connectionsSuspended(false)
     , _mavlinkChannelsUsedBitMask(0)
     , _nullSharedLink(NULL)
+    , _mavlinkProtocol(NULL)
 {
-#ifndef __ios__
-    connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateConfigurationList);
-    _portListTimer.start(1000);
-#endif
+
 }
 
 LinkManager::~LinkManager()
@@ -78,6 +71,18 @@ LinkManager::~LinkManager()
         _linkConfigurations.removeAt(0);
     }
     Q_ASSERT_X(_links.count() == 0, "LinkManager", "LinkManager::_shutdown should have been called previously");
+}
+
+void LinkManager::setToolbox(QGCToolbox *toolbox)
+{
+   QGCTool::setToolbox(toolbox);
+
+   _mavlinkProtocol = _toolbox->mavlinkProtocol();
+
+#ifndef __ios__
+    connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateConfigurationList);
+    _portListTimer.start(1000);
+#endif
 }
 
 LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
@@ -149,16 +154,15 @@ void LinkManager::_addLink(LinkInterface* link)
 
     // MainWindow may be around when doing things like running unit tests
     if (MainWindow::instance()) {
-        connect(link, &LinkInterface::communicationError, qgcApp(), &QGCApplication::criticalMessageBoxOnMainThread);
+        connect(link, &LinkInterface::communicationError, _app, &QGCApplication::criticalMessageBoxOnMainThread);
     }
 
-    MAVLinkProtocol* mavlink = MAVLinkProtocol::instance();
-    connect(link, &LinkInterface::bytesReceived, mavlink, &MAVLinkProtocol::receiveBytes);
-    connect(link, &LinkInterface::connected, mavlink, &MAVLinkProtocol::linkConnected);
-    connect(link, &LinkInterface::disconnected, mavlink, &MAVLinkProtocol::linkDisconnected);
-    mavlink->resetMetadataForLink(link);
+    connect(link, &LinkInterface::bytesReceived,    _mavlinkProtocol, &MAVLinkProtocol::receiveBytes);
+    connect(link, &LinkInterface::connected,        _mavlinkProtocol, &MAVLinkProtocol::linkConnected);
+    connect(link, &LinkInterface::disconnected,     _mavlinkProtocol, &MAVLinkProtocol::linkDisconnected);
+    _mavlinkProtocol->resetMetadataForLink(link);
 
-    connect(link, &LinkInterface::connected, this, &LinkManager::_linkConnected);
+    connect(link, &LinkInterface::connected,    this, &LinkManager::_linkConnected);
     connect(link, &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 }
 

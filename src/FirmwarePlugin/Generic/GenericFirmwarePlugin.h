@@ -51,8 +51,7 @@ public:
     virtual QString getDefaultComponentIdParam(void) const { return QString(); }
 
 private:
-    /// All access to singleton is through AutoPilotPluginManager::instance
-    GenericFirmwarePlugin(QObject* parent = NULL);
+    GenericFirmwarePlugin(void);
 };
 
 #endif

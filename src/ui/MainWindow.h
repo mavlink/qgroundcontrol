@@ -154,6 +154,9 @@ signals:
     /** Emitted when any the Canvas elements within QML wudgets need updating */
     void repaintCanvas();
 
+    // Used for unit tests to know when the main window closes
+    void mainWindowClosed(void);
+
 #ifdef QGC_MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
     void x11EventOccured(XEvent *event);

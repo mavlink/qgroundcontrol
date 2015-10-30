@@ -94,7 +94,7 @@ public:
 
 protected:
     /// All access to singleton is through stack specific implementation
-    APMFirmwarePlugin(QObject* parent = NULL);
+    APMFirmwarePlugin(void);
     void setSupportedModes(QList<APMCustomMode> supportedModes);
     
 private:

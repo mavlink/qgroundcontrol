@@ -42,6 +42,7 @@ This file is part of the PIXHAWK project
 #include "MultiVehicleManager.h"
 #include "QGC.h"
 #include "UAS.h"
+#include "QGCApplication.h"
 
 UASInfoWidget::UASInfoWidget(const QString& title, QAction* action, QWidget *parent, QString name)
     : QGCDockWidget(title, action, parent)
@@ -50,8 +51,8 @@ UASInfoWidget::UASInfoWidget(const QString& title, QAction* action, QWidget *par
     this->name = name;
     activeUAS = NULL;
 
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &UASInfoWidget::_activeVehicleChanged);
-    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &UASInfoWidget::_activeVehicleChanged);
+    _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
 
     startTime = QGC::groundTimeMilliseconds();
 

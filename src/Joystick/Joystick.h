@@ -29,6 +29,7 @@
 
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "MultiVehicleManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
@@ -38,7 +39,7 @@ class Joystick : public QThread
     Q_OBJECT
     
 public:
-    Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex);
+    Joystick(const QString& name, int axisCount, int buttonCount, int sdlIndex, MultiVehicleManager* multiVehicleManager);
     ~Joystick();
     
     typedef struct {
@@ -171,6 +172,8 @@ private:
     
     Vehicle*            _activeVehicle;
     bool                _pollingStartedForCalibration;
+
+    MultiVehicleManager*    _multiVehicleManager;
 #endif // __mobile__
     
 private:

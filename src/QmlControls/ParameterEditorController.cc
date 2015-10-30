@@ -158,6 +158,6 @@ void ParameterEditorController::resetAllToDefaults(void)
 void ParameterEditorController::setRCToParam(const QString& paramName)
 {
 	Q_ASSERT(_uas);
-	QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, MainWindow::instance());
+    QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
 	d->exec();
 }
