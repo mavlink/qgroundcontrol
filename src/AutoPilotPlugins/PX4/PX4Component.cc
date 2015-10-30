@@ -28,10 +28,10 @@
 #include "Fact.h"
 #include "AutoPilotPlugin.h"
 
-PX4Component::PX4Component(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(uas, autopilot, parent)
+PX4Component::PX4Component(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    VehicleComponent(vehicle, autopilot, parent)
 {
-    Q_ASSERT(uas);
+    Q_ASSERT(vehicle);
     Q_ASSERT(autopilot);
 }
 

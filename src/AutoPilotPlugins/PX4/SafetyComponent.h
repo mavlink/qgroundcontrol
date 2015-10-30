@@ -36,7 +36,7 @@ class SafetyComponent : public PX4Component
     Q_OBJECT
     
 public:
-    SafetyComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from PX4Component
     virtual QStringList setupCompleteChangedTriggerList(void) const;

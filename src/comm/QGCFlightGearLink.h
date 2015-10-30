@@ -38,18 +38,20 @@ This file is part of the QGROUNDCONTROL project
 #include <QUdpSocket>
 #include <QTimer>
 #include <QProcess>
-#include <LinkInterface.h>
+
+#include "LinkInterface.h"
 #include "QGCConfig.h"
 #include "UASInterface.h"
 #include "QGCHilLink.h"
-#include <QGCHilFlightGearConfiguration.h>
+#include "QGCHilFlightGearConfiguration.h"
+#include "Vehicle.h"
 
 class QGCFlightGearLink : public QGCHilLink
 {
     Q_OBJECT
 
 public:
-    QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCFlightGearLink(Vehicle* vehicle, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCFlightGearLink();
 
     bool isConnected();
@@ -135,20 +137,6 @@ public slots:
     void processError(QProcess::ProcessError err);
 
 protected:
-    QString name;
-    QHostAddress host;
-    QHostAddress currentHost;
-    quint16 currentPort;
-    quint16 port;
-    int id;
-    bool connectState;
-
-    UASInterface* mav;
-    unsigned int flightGearVersion;
-    QString startupArguments;
-    bool _sensorHilEnabled;
-    float barometerOffsetkPa;
-
     void setName(QString name);
     
 private slots:
@@ -158,6 +146,7 @@ private slots:
 private:
     static bool _findUIArgument(const QStringList& uiArgList, const QString& argLabel, QString& argValue);
 
+    Vehicle*    _vehicle;
     QString     _fgProcessName;             ///< FlightGear process to start
     QString     _fgProcessWorkingDirPath;   ///< Working directory to start FG process in, empty for none
     QStringList _fgArgList;                 ///< Arguments passed to FlightGear process
@@ -166,6 +155,19 @@ private:
     QProcess*   _fgProcess;                 ///< FlightGear process
     
     QString     _fgProtocolFileFullyQualified;  ///< Fully qualified file name for protocol file
+
+    QString name;
+    QHostAddress host;
+    QHostAddress currentHost;
+    quint16 currentPort;
+    quint16 port;
+    int id;
+    bool connectState;
+
+    unsigned int flightGearVersion;
+    QString startupArguments;
+    bool _sensorHilEnabled;
+    float barometerOffsetkPa;
 };
 
 #endif // QGCFLIGHTGEARLINK_H

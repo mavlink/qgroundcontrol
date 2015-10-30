@@ -67,16 +67,9 @@ public:
 
     /* MANAGEMENT */
 
-    /** @brief The name of the robot **/
-    virtual QString getUASName() const = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
-
-    virtual double getLocalX() const = 0;
-    virtual double getLocalY() const = 0;
-    virtual double getLocalZ() const = 0;
-    virtual bool localPositionKnown() const = 0;
 
     virtual double getLatitude() const = 0;
     virtual double getLongitude() const = 0;
@@ -88,29 +81,7 @@ public:
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
 
-    /** @brief Set the airframe of this MAV */
-    virtual int getAirframe() const = 0;
-
     virtual FileManager* getFileManager() = 0;
-
-    enum Airframe {
-        QGC_AIRFRAME_GENERIC = 0,
-        QGC_AIRFRAME_EASYSTAR,
-        QGC_AIRFRAME_TWINSTAR,
-        QGC_AIRFRAME_MERLIN,
-        QGC_AIRFRAME_CHEETAH,
-        QGC_AIRFRAME_MIKROKOPTER,
-        QGC_AIRFRAME_REAPER,
-        QGC_AIRFRAME_PREDATOR,
-        QGC_AIRFRAME_COAXIAL,
-        QGC_AIRFRAME_PTERYX,
-        QGC_AIRFRAME_TRICOPTER,
-        QGC_AIRFRAME_HEXCOPTER,
-        QGC_AIRFRAME_X8,
-        QGC_AIRFRAME_VIPER_2_0,
-        QGC_AIRFRAME_CAMFLYER_Q,
-        QGC_AIRFRAME_END_OF_ENUM
-    };
 
     /**
      * @brief Get the color for this UAS
@@ -150,11 +121,6 @@ public:
         nextColor++;
         return colors[nextColor];//return the next color
    }
-
-    /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
-    virtual int getSystemType() = 0;
-    /** @brief Is it an airplane (or like one)?,..)*/
-    virtual bool isAirplane() = 0;
 
     /** @brief Get the type of the autopilot (PIXHAWK, APM, UDB, PPZ,..) */
     virtual int getAutopilotType() = 0;
@@ -204,18 +170,10 @@ public slots:
     /** @brief Executes a command **/
     virtual void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component) = 0;
 
-    /** @brief Selects the airframe */
-    virtual void setAirframe(int airframe) = 0;
-
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
     
     virtual void setHomePosition(double lat, double lon, double alt) = 0;
-
-    /** @brief Return if this a rotary wing */
-    virtual bool isRotaryWing() = 0;
-    /** @brief Return if this is a fixed wing */
-    virtual bool isFixedWing() = 0;
 
     /** @brief Send the full HIL state to the MAV */
 #ifndef __mobile__
@@ -322,8 +280,6 @@ signals:
     void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     /** @brief A user (or an autonomous mission or obstacle avoidance planner) requested to set a new setpoint */
     void userPositionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired);
-    void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
-    void localPositionChanged(UASInterface*, int component, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
     void altitudeChanged(UASInterface*, double altitudeAMSL, double altitudeWGS84, double altitudeRelative, double climbRate, quint64 usec);
     /** @brief Update the status of one satellite used for localization */
@@ -339,8 +295,6 @@ signals:
 
     void imageStarted(int imgid, int width, int height, int depth, int channels);
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);
-    /** @brief Emit the new system type */
-    void systemTypeSet(UASInterface* uas, unsigned int type);
 
     /** @brief Attitude control enabled/disabled */
     void attitudeControlEnabled(bool enabled);

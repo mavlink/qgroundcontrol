@@ -45,8 +45,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMessageBox.h"
 #include "HomePositionManager.h"
 
-QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress localHost, quint16 localPort) :
-    mav(mav),
+QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress localHost, quint16 localPort) :
+    _vehicle(vehicle),
     remoteHost(QHostAddress("127.0.0.1")),
     remotePort(49000),
     socket(NULL),
@@ -156,7 +156,7 @@ void QGCXPlaneLink::setVersion(unsigned int version)
  **/
 void QGCXPlaneLink::run()
 {
-    if (!mav) {
+    if (!_vehicle) {
         emit statusMessage("No MAV present");
         return;
     }
@@ -182,22 +182,15 @@ void QGCXPlaneLink::run()
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
-    UAS* uas = dynamic_cast<UAS*>(mav);
-    if (uas)
-    {
-        connect(uas, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)), Qt::QueuedConnection);
-        connect(uas, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)), Qt::QueuedConnection);
+    connect(_vehicle->uas(), SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
 
-        connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), uas, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
-        connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), uas, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
-        connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), uas, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), Qt::QueuedConnection);
-        connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), uas, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), Qt::QueuedConnection);
+    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), _vehicle->uas(), SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), Qt::QueuedConnection);
 
-        uas->startHil();
-    } else {
-        emit statusMessage(tr("Failed to connect to drone instance"));
-        return;
-    }
+        _vehicle->uas()->startHil();
 
 #pragma pack(push, 1)
     struct iset_struct
@@ -246,20 +239,13 @@ void QGCXPlaneLink::run()
         QGC::SLEEP::msleep(5);
     }
 
-    uas = dynamic_cast<UAS*>(mav);
-    if (uas)
-    {
-        disconnect(uas, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-        disconnect(uas, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
+    disconnect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
+    disconnect(_vehicle->uas(), SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
 
-        disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), uas, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-        disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), uas, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), uas, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
-        disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), uas, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-
-        // Do not toggle HIL state on the UAS - this is not the job of this link, but of the
-        // UAS object
-    }
+    disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), _vehicle->uas(), SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
+    disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
 
     connectState = false;
 
@@ -368,7 +354,7 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
 
 void QGCXPlaneLink::updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
-    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     // Only update this for multirotors
     {
 
@@ -450,19 +436,7 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
 
     bool isFixedWing = true;
 
-    if (mav->getAirframe() == UASInterface::QGC_AIRFRAME_X8 ||
-            mav->getAirframe() == UASInterface::QGC_AIRFRAME_VIPER_2_0 ||
-            mav->getAirframe() == UASInterface::QGC_AIRFRAME_CAMFLYER_Q)
-    {
-        // de-mix delta-mixed inputs
-        // pitch input - mixed roll and pitch channels
-        p.f[0] = 0.5f * (rollAilerons - pitchElevator);
-        // roll input - mixed roll and pitch channels
-        p.f[1] = 0.5f * (rollAilerons + pitchElevator);
-        // yaw
-        p.f[2] = 0.0f;
-    }
-    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
         qDebug() << "MAV_TYPE_QUADROTOR";
 
@@ -1021,17 +995,17 @@ void QGCXPlaneLink::setRandomPosition()
     double offLon = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
     double offAlt = rand() / static_cast<double>(RAND_MAX) * 200.0 + 100.0;
 
-    if (mav->getAltitudeAMSL() + offAlt < 0)
+    if (_vehicle->altitudeAMSL() + offAlt < 0)
     {
         offAlt *= -1.0;
     }
 
-    setPositionAttitude(mav->getLatitude() + offLat,
-                        mav->getLongitude() + offLon,
-                        mav->getAltitudeAMSL() + offAlt,
-                        mav->getRoll(),
-                        mav->getPitch(),
-                        mav->getYaw());
+    setPositionAttitude(_vehicle->latitude() + offLat,
+                        _vehicle->longitude() + offLon,
+                        _vehicle->altitudeAMSL() + offAlt,
+                        _vehicle->roll(),
+                        _vehicle->pitch(),
+                        _vehicle->uas()->getYaw());
 }
 
 void QGCXPlaneLink::setRandomAttitude()
@@ -1043,9 +1017,9 @@ void QGCXPlaneLink::setRandomAttitude()
     double pitch = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
     double yaw = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
 
-    setPositionAttitude(mav->getLatitude(),
-                        mav->getLongitude(),
-                        mav->getAltitudeAMSL(),
+    setPositionAttitude(_vehicle->latitude(),
+                        _vehicle->longitude(),
+                        _vehicle->altitudeAMSL(),
                         roll,
                         pitch,
                         yaw);
