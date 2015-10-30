@@ -48,7 +48,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
         Q_ASSERT(_vehicle);
 
         if (parametersReady()) {
-            _airframeComponent = new APMAirframeComponent(_vehicle->uas(), this);
+            _airframeComponent = new APMAirframeComponent(_vehicle, this);
             Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));

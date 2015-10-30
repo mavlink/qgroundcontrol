@@ -40,8 +40,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QProcess>
 #include <LinkInterface.h>
 #include "QGCConfig.h"
-#include "UASInterface.h"
 #include "QGCHilLink.h"
+#include "Vehicle.h"
 
 class QGCJSBSimLink : public QGCHilLink
 {
@@ -49,7 +49,7 @@ class QGCJSBSimLink : public QGCHilLink
     //Q_INTERFACES(QGCJSBSimLinkInterface:LinkInterface)
 
 public:
-    QGCJSBSimLink(UASInterface* mav, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCJSBSimLink();
 
     bool isConnected();
@@ -127,7 +127,8 @@ public slots:
 
     void setStartupArguments(QString startupArguments);
 
-protected:
+private:
+    Vehicle*    _vehicle;
     QString name;
     QHostAddress host;
     QHostAddress currentHost;
@@ -147,7 +148,6 @@ protected:
     QMutex statisticsMutex;
     QMutex dataMutex;
     QTimer refreshTimer;
-    UASInterface* mav;
     QProcess* process;
     unsigned int flightGearVersion;
     QString startupArguments;
@@ -155,10 +155,6 @@ protected:
     bool _sensorHilEnabled;
 
     void setName(QString name);
-
-signals:
-
-
 };
 
 #endif // QGCJSBSimLink_H

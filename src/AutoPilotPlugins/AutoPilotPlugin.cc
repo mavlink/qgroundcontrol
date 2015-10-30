@@ -170,7 +170,7 @@ const QMap<int, QMap<QString, QStringList> >& AutoPilotPlugin::getGroupMap(void)
 
 void AutoPilotPlugin::writeParametersToStream(QTextStream &stream)
 {
-    _vehicle->getParameterLoader()->writeParametersToStream(stream, _vehicle->uas()->getUASName());
+    _vehicle->getParameterLoader()->writeParametersToStream(stream);
 }
 
 QString AutoPilotPlugin::readParametersFromStream(QTextStream &stream)

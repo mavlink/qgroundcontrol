@@ -5,7 +5,6 @@
 #include "MAVLinkDecoder.h"
 #include "UASMessageView.h"
 #include "UASQuickView.h"
-#include "UASRawStatusView.h"
 
 #include "ui_QGCTabbedInfoView.h"
 
@@ -22,7 +21,6 @@ private:
     Ui::QGCTabbedInfoView ui;
     UASMessageViewWidget *messageView;
     UASQuickView *quickView;
-    UASRawStatusView *rawView;
 };
 
 #endif // QGCTABBEDINFOVIEW_H

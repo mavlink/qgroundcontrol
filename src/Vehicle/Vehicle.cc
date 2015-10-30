@@ -90,8 +90,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _batteryPercent(0.0)
     , _batteryConsumed(-1.0)
     , _currentHeartbeatTimeout(0)
-    , _waypointDistance(0.0)
-    , _currentWaypoint(0)
     , _satelliteCount(-1)
     , _satelliteLock(0)
     , _updateCount(0)
@@ -154,15 +152,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, &UASInterface::heartbeatTimeout,                  this, &Vehicle::_heartbeatTimeout);
     connect(_mav, &UASInterface::batteryChanged,                    this, &Vehicle::_updateBatteryRemaining);
     connect(_mav, &UASInterface::batteryConsumedChanged,            this, &Vehicle::_updateBatteryConsumedChanged);
-    connect(_mav, &UASInterface::nameChanged,                       this, &Vehicle::_updateName);
-    connect(_mav, &UASInterface::systemTypeSet,                     this, &Vehicle::_setSystemType);
     connect(_mav, &UASInterface::localizationChanged,               this, &Vehicle::_setSatLoc);
     UAS* pUas = dynamic_cast<UAS*>(_mav);
     if(pUas) {
         _setSatelliteCount(pUas->getSatelliteCount(), QString(""));
         connect(pUas, &UAS::satelliteCountChanged, this, &Vehicle::_setSatelliteCount);
     }
-    _setSystemType(_mav, _mav->getSystemType());
     
     _loadSettings();
     
@@ -188,8 +183,6 @@ Vehicle::Vehicle(LinkInterface*             link,
 
 Vehicle::~Vehicle()
 {
-    qDebug() << "~Vehicle";
-
     delete _missionManager;
     _missionManager = NULL;
 
@@ -519,12 +512,6 @@ void Vehicle::_updateNavigationControllerData(UASInterface *uas, float, float, f
  * Internal
  */
 
-bool Vehicle::_isAirplane() {
-    if (_mav)
-        return _mav->isAirplane();
-    return false;
-}
-
 void Vehicle::_addChange(int id)
 {
     if(!_changes.contains(id)) {
@@ -639,86 +626,6 @@ void Vehicle::_updateState(UASInterface*, QString name, QString)
     }
 }
 
-void Vehicle::_updateName(const QString& name)
-{
-    if (_systemName != name) {
-        _systemName = name;
-        emit systemNameChanged();
-    }
-}
-
-/**
- * The current system type is represented through the system icon.
- *
- * @param uas Source system, has to be the same as this->uas
- * @param systemType type ID, following the MAVLink system type conventions
- * @see http://pixhawk.ethz.ch/software/mavlink
- */
-void Vehicle::_setSystemType(UASInterface*, unsigned int systemType)
-{
-    _systemPixmap = "qrc:/res/mavs/";
-    switch (systemType) {
-        case MAV_TYPE_GENERIC:
-            _systemPixmap += "Generic";
-            break;
-        case MAV_TYPE_FIXED_WING:
-            _systemPixmap += "FixedWing";
-            break;
-        case MAV_TYPE_QUADROTOR:
-            _systemPixmap += "QuadRotor";
-            break;
-        case MAV_TYPE_COAXIAL:
-            _systemPixmap += "Coaxial";
-            break;
-        case MAV_TYPE_HELICOPTER:
-            _systemPixmap += "Helicopter";
-            break;
-        case MAV_TYPE_ANTENNA_TRACKER:
-            _systemPixmap += "AntennaTracker";
-            break;
-        case MAV_TYPE_GCS:
-            _systemPixmap += "Groundstation";
-            break;
-        case MAV_TYPE_AIRSHIP:
-            _systemPixmap += "Airship";
-            break;
-        case MAV_TYPE_FREE_BALLOON:
-            _systemPixmap += "FreeBalloon";
-            break;
-        case MAV_TYPE_ROCKET:
-            _systemPixmap += "Rocket";
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-            _systemPixmap += "GroundRover";
-            break;
-        case MAV_TYPE_SURFACE_BOAT:
-            _systemPixmap += "SurfaceBoat";
-            break;
-        case MAV_TYPE_SUBMARINE:
-            _systemPixmap += "Submarine";
-            break;
-        case MAV_TYPE_HEXAROTOR:
-            _systemPixmap += "HexaRotor";
-            break;
-        case MAV_TYPE_OCTOROTOR:
-            _systemPixmap += "OctoRotor";
-            break;
-        case MAV_TYPE_TRICOPTER:
-            _systemPixmap += "TriCopter";
-            break;
-        case MAV_TYPE_FLAPPING_WING:
-            _systemPixmap += "FlappingWing";
-            break;
-        case MAV_TYPE_KITE:
-            _systemPixmap += "Kite";
-            break;
-        default:
-            _systemPixmap += "Unknown";
-            break;
-    }
-    emit systemPixmapChanged();
-}
-
 void Vehicle::_heartbeatTimeout(bool timeout, unsigned int ms)
 {
     unsigned int elapsed = ms;
@@ -754,39 +661,6 @@ void Vehicle::_setSatLoc(UASInterface*, int fix)
         _satelliteLock = fix;
         emit satelliteLockChanged();
     }
-}
-
-void Vehicle::_updateWaypointDistance(double distance)
-{
-    if (_waypointDistance != distance) {
-        _waypointDistance = distance;
-        emit waypointDistanceChanged();
-    }
-}
-
-void Vehicle::_updateCurrentWaypoint(quint16 id)
-{
-    if (_currentWaypoint != id) {
-        _currentWaypoint = id;
-        emit currentWaypointChanged();
-    }
-}
-
-void Vehicle::_updateWaypointViewOnly(int, MissionItem* /*wp*/)
-{
-    /*
-     bool changed = false;
-     for(int i = 0; i < _waypoints.count(); i++) {
-     if(_waypoints[i].sequenceNumber() == wp->sequenceNumber()) {
-     _waypoints[i] = *wp;
-     changed = true;
-     break;
-     }
-     }
-     if(changed) {
-     emit waypointListChanged();
-     }
-     */
 }
 
 void Vehicle::_handleTextMessage(int newCount)

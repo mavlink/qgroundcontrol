@@ -41,20 +41,20 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "QGCMessageBox.h"
 
-QGCJSBSimLink::QGCJSBSimLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
-    socket(NULL),
-    process(NULL),
-    startupArguments(startupArguments)
+QGCJSBSimLink::QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port)
+    : _vehicle(vehicle)
+    , socket(NULL)
+    , process(NULL)
+    , startupArguments(startupArguments)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
 
     this->host = host;
-    this->port = port+mav->getUASID();
+    this->port = port + _vehicle->id();
     this->connectState = false;
-    this->currentPort = 49000+mav->getUASID();
-    this->mav = mav;
+    this->currentPort = 49000 + _vehicle->id();
     this->name = tr("JSBSim Link (port:%1)").arg(port);
     setRemoteHost(remoteHost);
 }
@@ -75,7 +75,7 @@ void QGCJSBSimLink::run()
 {
     qDebug() << "STARTING FLIGHTGEAR LINK";
 
-    if (!mav) return;
+    if (!_vehicle) return;
     socket = new QUdpSocket(this);
     socket->moveToThread(this);
     connectState = socket->bind(host, port, QAbstractSocket::ReuseAddressHint);
@@ -84,15 +84,11 @@ void QGCJSBSimLink::run()
 
     process = new QProcess(this);
 
-    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    connect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
 
 
-    UAS* uas = dynamic_cast<UAS*>(mav);
-    if (uas)
-    {
-        uas->startHil();
-    }
+    _vehicle->uas()->startHil();
 
     //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
     // Catch process error
@@ -139,7 +135,7 @@ void QGCJSBSimLink::run()
 
     /*Prepare JSBSim Arguments */
 
-    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
         arguments << QString("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
     }
@@ -364,8 +360,8 @@ bool QGCJSBSimLink::disconnectSimulation()
 {
     disconnect(process, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    disconnect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
+    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
 
     if (process)
     {

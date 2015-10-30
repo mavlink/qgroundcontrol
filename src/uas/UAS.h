@@ -71,15 +71,8 @@ public:
 
     /* MANAGEMENT */
 
-    /** @brief The name of the robot */
-    QString getUASName(void) const;
     /** @brief Get the unique system id */
     int getUASID() const;
-    /** @brief Get the airframe */
-    int getAirframe() const
-    {
-        return airframe;
-    }
     /** @brief Get the components */
     QMap<int, QString> getComponents();
 
@@ -88,13 +81,9 @@ public:
     /** @brief Add one measurement and get low-passed voltage */
     float filterVoltage(float value);
 
-    Q_PROPERTY(double localX READ getLocalX WRITE setLocalX NOTIFY localXChanged)
-    Q_PROPERTY(double localY READ getLocalY WRITE setLocalY NOTIFY localYChanged)
-    Q_PROPERTY(double localZ READ getLocalZ WRITE setLocalZ NOTIFY localZChanged)
     Q_PROPERTY(double latitude READ getLatitude WRITE setLatitude NOTIFY latitudeChanged)
     Q_PROPERTY(double longitude READ getLongitude WRITE setLongitude NOTIFY longitudeChanged)
     Q_PROPERTY(double satelliteCount READ getSatelliteCount WRITE setSatelliteCount NOTIFY satelliteCountChanged)
-    Q_PROPERTY(bool isLocalPositionKnown READ localPositionKnown)
     Q_PROPERTY(bool isGlobalPositionKnown READ globalPositionKnown)
     Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY rollChanged)
     Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
@@ -248,11 +237,6 @@ public:
         return satelliteCount;
     }
 
-    virtual bool localPositionKnown() const
-    {
-        return isLocalPositionKnown;
-    }
-
     virtual bool globalPositionKnown() const
     {
         return isGlobalPositionKnown;
@@ -369,9 +353,6 @@ public:
         temperature_var = var;
     }
 
-    bool isRotaryWing();
-    bool isFixedWing();
-
     friend class FileManager;
 
 protected: //COMMENTS FOR TEST UNIT
@@ -387,10 +368,6 @@ protected: //COMMENTS FOR TEST UNIT
     QTimer statusTimeout;       ///< Timer for various status timeouts
 
     /// BASIC UAS TYPE, NAME AND STATE
-    QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
-    unsigned char type;           ///< UAS type (from type enum)
-    int airframe;                 ///< The airframe type
-    int autopilot;                ///< Type of the Autopilot: -1: None, 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
     uint8_t base_mode;                 ///< The current mode of the MAV
     uint32_t custom_mode;         ///< The current mode of the MAV
     int status;                   ///< The current status of the MAV
@@ -427,7 +404,6 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// POSITION
     bool positionLock;          ///< Status if position information is available or not
-    bool isLocalPositionKnown;  ///< If the local position has been received for this MAV
     bool isGlobalPositionKnown; ///< If the global position has been received for this MAV
 
     double localX;
@@ -502,8 +478,6 @@ protected: //COMMENTS FOR TEST UNIT
 #endif
 
 public:
-    /** @brief Set the current battery type */
-    void setBattery(BatteryType type, int cells);
     /** @brief Get the current charge level */
     float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
@@ -520,34 +494,10 @@ public:
     }
 #endif
 
-    int  getSystemType();
-    bool isAirplane();
-
     QImage getImage();
     void requestImage();
-    int getAutopilotType(){
-        return autopilot;
-    }
 
 public slots:
-    /** @brief Set the autopilot type */
-    void setAutopilotType(int apType)
-    {
-        autopilot = apType;
-        emit systemSpecsChanged(uasId);
-    }
-    /** @brief Set the type of airframe */
-    void setSystemType(int systemType);
-    /** @brief Set the specific airframe type */
-    void setAirframe(int airframe)
-    {
-        if((airframe >= QGC_AIRFRAME_GENERIC) && (airframe < QGC_AIRFRAME_END_OF_ENUM))
-        {
-          this->airframe = airframe;
-          emit systemSpecsChanged(uasId);
-        }
-
-    }
     /** @brief Executes a command with 7 params */
     void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component);
 
@@ -620,9 +570,6 @@ public slots:
     /** @brief Update the system state */
     void updateState();
 
-    /** @brief Set world frame origin / home position at this GPS position */
-    void setHomePosition(double lat, double lon, double alt);
-
     void startCalibration(StartCalibrationType calType);
     void stopCalibration(void);
 
@@ -686,12 +633,6 @@ protected:
     quint64 lastSendTimeSensors; ///< Last HIL Sensors message sent
     quint64 lastSendTimeOpticalFlow; ///< Last HIL Optical Flow message sent
 
-protected slots:
-    /** @brief Write settings to disk */
-    void writeSettings();
-    /** @brief Read settings from disk */
-    void readSettings();
-    
 private:
     void _say(const QString& text, int severity = 6);
     
