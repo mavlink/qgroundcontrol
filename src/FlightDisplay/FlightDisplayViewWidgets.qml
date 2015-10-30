@@ -82,7 +82,7 @@ Item {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         visible:                _isInstrumentVisible
-        size:                   mainWindow.width * 0.15
+        size:                   ScreenTools.isTinyScreen ? mainWindow.width * 0.2 : mainWindow.width * 0.15
         active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll
@@ -108,7 +108,7 @@ Item {
         width:                  ScreenTools.defaultFontPixelSize * 2
         radius:                 ScreenTools.defaultFontPixelSize / 3
         visible:                !_isInstrumentVisible
-        color:                  _isBackgroundDark ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
+        color:                  isBackgroundDark ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
         Image {
             width:              parent.width  * 0.75
             height:             parent.height * 0.75
@@ -130,6 +130,7 @@ Item {
     //-- Vertical Tool Buttons
     Column {
         id:                         toolColumn
+        visible:                    _mainIsMap
         anchors.margins:            ScreenTools.defaultFontPixelHeight
         anchors.left:               parent.left
         anchors.top:                parent.top

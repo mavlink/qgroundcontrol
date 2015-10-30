@@ -43,7 +43,11 @@ Item {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    property var _activeVehicle: multiVehicleManager.activeVehicle
+    property real avaiableHeight: parent.height
+
+    readonly property bool isBackgroundDark: _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+
+    property var _activeVehicle:  multiVehicleManager.activeVehicle
 
     readonly property var  _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
     readonly property real _defaultRoll:                0
@@ -72,9 +76,6 @@ Item {
     property real _groundSpeed:         _activeVehicle ? _activeVehicle.groundSpeed   : _defaultGroundSpeed
     property real _airSpeed:            _activeVehicle ? _activeVehicle.airSpeed      : _defaultAirSpeed
     property real _climbRate:           _activeVehicle ? _activeVehicle.climbRate     : _defaultClimbRate
-
-    property bool _isBackgroundDark:    _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
-
 
     property var  _flightMap:           null
     property var  _flightVideo:         null
@@ -135,7 +136,7 @@ Item {
         width:              _pipSize
         height:             _pipSize * (9/16)
         color:              "#000010"
-        border.color:       _isBackgroundDark ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
+        border.color:       isBackgroundDark ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
         Loader {
             id:                 pipLoader
             anchors.fill:       parent
@@ -186,7 +187,7 @@ Item {
         width:                  ScreenTools.defaultFontPixelSize * 2
         radius:                 ScreenTools.defaultFontPixelSize / 3
         visible:                _controller.hasVideo && !_isPipVisible
-        color:                  _isBackgroundDark ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
+        color:                  isBackgroundDark ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
         Image {
             width:              parent.width  * 0.75
             height:             parent.height * 0.75
@@ -208,6 +209,10 @@ Item {
     //-- Widgets
     Loader {
         id:                 widgetsLoader
-        anchors.fill:       parent
+        anchors.right:      parent.right
+        anchors.left:       parent.left
+        anchors.bottom:     parent.bottom
+        height:             avaiableHeight
     }
+
 }

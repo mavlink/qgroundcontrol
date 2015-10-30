@@ -51,8 +51,11 @@
 
         <!-- Main Window -->
         <file alias="MainWindow.qml">src/ui/MainWindow.qml</file>
+
+        <!-- Main ToolBar -->
         <file alias="QGroundControl/Controls/MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
-        <file alias="MainToolBarActiveVehicleComponent.qml">src/ui/toolbar/MainToolBarActiveVehicleComponent.qml</file>
+        <file alias="QGroundControl/Controls/MainToolBarIndicators.qml">src/ui/toolbar/MainToolBarIndicators.qml</file>
+        <file alias="QGroundControl/Controls/SignalStrength.qml">src/ui/toolbar/SignalStrength.qml</file>
 
         <!-- Vehicle Setup -->
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
