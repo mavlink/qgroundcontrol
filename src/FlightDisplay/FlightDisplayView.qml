@@ -84,11 +84,6 @@ Item {
 
     FlightDisplayViewController { id: _controller }
 
-    MissionController {
-        id: _missionController
-        Component.onCompleted: start(false /* editMode */)
-    }
-
     function reloadContents() {
         if(_flightVideo) {
             _flightVideo.visible = false
