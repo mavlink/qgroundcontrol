@@ -570,9 +570,6 @@ public slots:
     /** @brief Update the system state */
     void updateState();
 
-    /** @brief Set world frame origin / home position at this GPS position */
-    void setHomePosition(double lat, double lon, double alt);
-
     void startCalibration(StartCalibrationType calType);
     void stopCalibration(void);
 

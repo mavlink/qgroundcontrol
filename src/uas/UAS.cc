@@ -1010,42 +1010,6 @@ void UAS::receiveMessage(mavlink_message_t message)
     }
 }
 
-/**
-* Set the home position of the UAS.
-* @param lat The latitude fo the home position
-* @param lon The longitude of the home position
-* @param alt The altitude of the home position
-*/
-void UAS::setHomePosition(double lat, double lon, double alt)
-{
-    if (!_vehicle || blockHomePositionChanges)
-        return;
-
-    QMessageBox::StandardButton button = QGCMessageBox::question(tr("Set a new home position for vehicle %1").arg(getUASID()),
-                                                                 tr("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location"),
-                                                                 QMessageBox::Yes | QMessageBox::Cancel,
-                                                                 QMessageBox::Cancel);
-    if (button == QMessageBox::Yes)
-    {
-        mavlink_message_t msg;
-        mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_DO_SET_HOME, 1, 0, 0, 0, 0, lat, lon, alt);
-        // Send message twice to increase chance that it reaches its goal
-        _vehicle->sendMessage(msg);
-
-        // Send new home position to UAS
-        mavlink_set_gps_global_origin_t home;
-        home.target_system = uasId;
-        home.latitude = lat*1E7;
-        home.longitude = lon*1E7;
-        home.altitude = alt*1000;
-        qDebug() << "lat:" << home.latitude << " lon:" << home.longitude;
-        mavlink_msg_set_gps_global_origin_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &home);
-        _vehicle->sendMessage(msg);
-    } else {
-        blockHomePositionChanges = true;
-    }
-}
-
 void UAS::startCalibration(UASInterface::StartCalibrationType calType)
 {
     if (!_vehicle) {
