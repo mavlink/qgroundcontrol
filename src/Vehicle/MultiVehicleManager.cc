@@ -30,6 +30,8 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 
+QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
+
 MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     : QGCTool(app)
     , _activeVehicleAvailable(false)
@@ -97,6 +99,8 @@ bool MultiVehicleManager::notifyHeartbeatInfo(LinkInterface* link, int vehicleId
 /// and all other right things happen when the Vehicle goes away.
 void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
 {
+    qCDebug(MultiVehicleManagerLog) << "_deleteVehiclePhase1";
+
     _vehicleBeingDeleted = vehicle;
 
     // Remove from map
@@ -133,6 +137,8 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
 
 void MultiVehicleManager::_deleteVehiclePhase2  (void)
 {
+    qCDebug(MultiVehicleManagerLog) << "_deleteVehiclePhase2";
+
     /// Qml has been notified of vehicle about to go away and should be disconnected from it by now.
     /// This means we can now clear the active vehicle property and delete the Vehicle for real.
     
@@ -157,6 +163,8 @@ void MultiVehicleManager::_deleteVehiclePhase2  (void)
 
 void MultiVehicleManager::setActiveVehicle(Vehicle* vehicle)
 {
+    qCDebug(MultiVehicleManagerLog) << "setActiveVehicle" << vehicle;
+
     if (vehicle != _activeVehicle) {
         if (_activeVehicle) {
             _activeVehicle->setActive(false);
@@ -180,6 +188,8 @@ void MultiVehicleManager::setActiveVehicle(Vehicle* vehicle)
 
 void MultiVehicleManager::_setActiveVehiclePhase2(void)
 {
+    qCDebug(MultiVehicleManagerLog) << "_setActiveVehiclePhase2";
+
     // Now we signal the new active vehicle
     _activeVehicle = _vehicleBeingSetActive;
     emit activeVehicleChanged(_activeVehicle);
