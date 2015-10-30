@@ -765,7 +765,7 @@ void Vehicle::_loadSettings(void)
         _joystickMode = JoystickModeRC;
     }
     
-    _joystickEnabled = settings.value(_joystickEnabledSettingsKey, false).toBool();
+    setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
     _communicationInactivityTimeoutMSecs = settings.value(_communicationInactivityKey, _communicationInactivityTimeoutMSecsDefault).toInt();
 }
 
