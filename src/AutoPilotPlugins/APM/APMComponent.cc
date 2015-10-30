@@ -28,10 +28,10 @@
 #include "Fact.h"
 #include "AutoPilotPlugin.h"
 
-APMComponent::APMComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(uas, autopilot, parent)
+APMComponent::APMComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    VehicleComponent(vehicle, autopilot, parent)
 {
-    Q_ASSERT(uas);
+    Q_ASSERT(vehicle);
     Q_ASSERT(autopilot);
 }
 

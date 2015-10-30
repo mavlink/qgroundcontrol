@@ -65,7 +65,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, 
 
 void QGCMAVLinkInspector::_vehicleAdded(Vehicle* vehicle)
 {
-    ui->systemComboBox->addItem(vehicle->uas()->getUASName(), vehicle->id());
+    ui->systemComboBox->addItem(QString("Vehicle %1").arg(vehicle->id()), vehicle->id());
 
     // Add a tree for a new UAS
     addUAStoTree(vehicle->id());
@@ -340,14 +340,7 @@ void QGCMAVLinkInspector::addUAStoTree(int sysId)
         {
             UASInterface* uas = vehicle->uas();
             QStringList idstring;
-            if (uas->getUASName() == "")
-            {
-                idstring << tr("UAS ") + QString::number(uas->getUASID());
-            }
-            else
-            {
-                idstring << uas->getUASName();
-            }
+            idstring << QString("Vehicle %1").arg(uas->getUASID());
             QTreeWidgetItem* uasWidget = new QTreeWidgetItem(idstring);
             uasWidget->setFirstColumnSpanned(true);
             uasTreeWidgetItems.insert(sysId,uasWidget);

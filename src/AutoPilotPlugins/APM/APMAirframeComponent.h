@@ -31,7 +31,7 @@ class APMAirframeComponent : public APMComponent
     Q_OBJECT
     
 public:
-    APMAirframeComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from APMComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;

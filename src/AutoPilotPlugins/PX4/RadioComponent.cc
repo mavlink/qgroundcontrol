@@ -28,8 +28,8 @@
 #include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 
-RadioComponent::RadioComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(uas, autopilot, parent),
+RadioComponent::RadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(vehicle, autopilot, parent),
     _name(tr("Radio"))
 {
 }

@@ -68,8 +68,8 @@ static const struct mavType mavTypeInfo[] = {
 static size_t cMavTypes = sizeof(mavTypeInfo) / sizeof(mavTypeInfo[0]);
 #endif
 
-AirframeComponent::AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(uas, autopilot, parent),
+AirframeComponent::AirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(vehicle, autopilot, parent),
     _name(tr("Airframe"))
 {
 #if 0

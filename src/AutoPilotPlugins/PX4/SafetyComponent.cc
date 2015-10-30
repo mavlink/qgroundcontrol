@@ -28,8 +28,8 @@
 #include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 
-SafetyComponent::SafetyComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(uas, autopilot, parent),
+SafetyComponent::SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(vehicle, autopilot, parent),
     _name(tr("Safety"))
 {
 }
