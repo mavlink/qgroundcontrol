@@ -53,8 +53,7 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) : APMCustomMode(mode,
     setEnumToStringMapping(enumToString);
 }
 
-ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(QObject* parent) :
-    APMFirmwarePlugin(parent)
+ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
 {
     QList<APMCustomMode> supportedFlightModes;
     supportedFlightModes << APMCopterMode(APMCopterMode::STABILIZE ,true);

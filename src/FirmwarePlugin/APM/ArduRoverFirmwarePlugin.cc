@@ -44,8 +44,7 @@ APMRoverMode::APMRoverMode(uint32_t mode, bool settable) : APMCustomMode(mode, s
     setEnumToStringMapping(enumToString);
 }
 
-ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(QObject* parent) :
-    APMFirmwarePlugin(parent)
+ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
 {
     QList<APMCustomMode> supportedFlightModes;
     supportedFlightModes << APMRoverMode(APMRoverMode::MANUAL       ,true);

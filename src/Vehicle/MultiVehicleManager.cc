@@ -28,42 +28,52 @@
 #include "AutoPilotPlugin.h"
 #include "MAVLinkProtocol.h"
 #include "UAS.h"
+#include "QGCApplication.h"
 
-IMPLEMENT_QGC_SINGLETON(MultiVehicleManager, MultiVehicleManager)
-
-MultiVehicleManager::MultiVehicleManager(QObject* parent) :
-    QGCSingleton(parent)
+MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
+    : QGCTool(app)
     , _activeVehicleAvailable(false)
     , _parameterReadyVehicleAvailable(false)
     , _activeVehicle(NULL)
+    , _firmwarePluginManager(NULL)
+    , _autopilotPluginManager(NULL)
+    , _joystickManager(NULL)
+    , _mavlinkProtocol(NULL)
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
+
 }
 
-MultiVehicleManager::~MultiVehicleManager()
+void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 {
+   QGCTool::setToolbox(toolbox);
 
+   _firmwarePluginManager =     _toolbox->firmwarePluginManager();
+   _autopilotPluginManager =    _toolbox->autopilotPluginManager();
+   _joystickManager =           _toolbox->joystickManager();
+   _mavlinkProtocol =           _toolbox->mavlinkProtocol();
+
+   QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+   qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
 }
 
 bool MultiVehicleManager::notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat)
 {
     if (!getVehicleById(vehicleId) && !_ignoreVehicleIds.contains(vehicleId)) {
-        if (vehicleId == MAVLinkProtocol::instance()->getSystemId()) {
-            qgcApp()->showToolBarMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
+        if (vehicleId == _mavlinkProtocol->getSystemId()) {
+            _app->showToolBarMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
         }
         
         QSettings settings;
         bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
         if (mavlinkVersionCheck && heartbeat.mavlink_version != MAVLINK_VERSION) {
             _ignoreVehicleIds += vehicleId;
-            qgcApp()->showToolBarMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
+            _app->showToolBarMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
                                                  "It is unsafe to use different MAVLink versions. "
                                                  "QGroundControl therefore refuses to connect to vehicle #%1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(vehicleId).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
             return false;
         }
         
-        Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)heartbeat.autopilot, (MAV_TYPE)heartbeat.type);
+        Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)heartbeat.autopilot, (MAV_TYPE)heartbeat.type, _firmwarePluginManager, _autopilotPluginManager, _joystickManager);
         
         if (!vehicle) {
             qWarning() << "New Vehicle allocation failed";

@@ -1,10 +1,11 @@
 #include "QGCTabbedInfoView.h"
+#include "QGCApplication.h"
 
 QGCTabbedInfoView::QGCTabbedInfoView(const QString& title, QAction* action, QWidget *parent)
     : QGCDockWidget(title, action, parent)
 {
     ui.setupUi(this);
-    messageView = new UASMessageViewWidget(this);
+    messageView = new UASMessageViewWidget(qgcApp()->toolbox()->uasMessageHandler(), this);
     //actionsWidget = new UASActionsWidget(this);
     quickView = new UASQuickView(this);
     //rawView = new UASRawStatusView(this);

@@ -62,7 +62,7 @@ void MissionController::start(bool editMode)
 
     _editMode = editMode;
 
-    MultiVehicleManager* multiVehicleMgr = MultiVehicleManager::instance();
+    MultiVehicleManager* multiVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
 
     connect(multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &MissionController::_activeVehicleChanged);
 
@@ -143,7 +143,7 @@ void MissionController::_setupMissionItems(bool loadFromVehicle, bool forceLoad)
 
 void MissionController::getMissionItems(void)
 {
-    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
 
     if (activeVehicle) {
         _missionItemsRequested = true;
@@ -153,7 +153,7 @@ void MissionController::getMissionItems(void)
 
 void MissionController::sendMissionItems(void)
 {
-    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
 
     if (activeVehicle) {
         activeVehicle->missionManager()->writeMissionItems(*_missionItems);
@@ -576,7 +576,7 @@ void MissionController::setAutoSync(bool autoSync)
 void MissionController::_dirtyChanged(bool dirty)
 {
     if (dirty && _autoSync) {
-        Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+        Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
 
         if (activeVehicle && !activeVehicle->armed()) {
             if (_activeVehicle->missionManager()->inProgress()) {

@@ -27,14 +27,14 @@
 #include "FileManagerTest.h"
 #include "MultiVehicleManager.h"
 #include "UAS.h"
+#include "QGCApplication.h"
 
 //UT_REGISTER_TEST(FileManagerTest)
 
-FileManagerTest::FileManagerTest(void) :
-    _mockLink(NULL),
-    _fileServer(NULL),
-    _fileManager(NULL),
-    _multiSpy(NULL)
+FileManagerTest::FileManagerTest(void)
+    : _fileServer(NULL)
+    , _fileManager(NULL)
+    , _multiSpy(NULL)
 {
 
 }
@@ -44,24 +44,12 @@ void FileManagerTest::init(void)
 {
     UnitTest::init();
     
-    _mockLink = new MockLink();
-    Q_CHECK_PTR(_mockLink);
-    LinkManager::instance()->_addLink(_mockLink);
-    LinkManager::instance()->connectLink(_mockLink);
+    _connectMockLink();
 
     _fileServer = _mockLink->getFileServer();
     QVERIFY(_fileServer != NULL);
     
-    // Wait or the Vehicle to show up
-    MultiVehicleManager* vehicleManager = MultiVehicleManager::instance();
-    QSignalSpy spyVehicleCreate(vehicleManager, SIGNAL(activeVehicleChanged(Vehicle*)));
-    if (!vehicleManager->activeVehicle()) {
-        QCOMPARE(spyVehicleCreate.wait(10000), true);
-    }
-    UASInterface* uas = vehicleManager->activeVehicle()->uas();
-    QVERIFY(uas != NULL);
-    
-    _fileManager = uas->getFileManager();
+    _fileManager = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->uas()->getFileManager();
     QVERIFY(_fileManager != NULL);
     
     Q_ASSERT(_multiSpy == NULL);
@@ -89,9 +77,9 @@ void FileManagerTest::cleanup(void)
     
     // Disconnecting the link will prompt for log file save
     setExpectedFileDialog(getSaveFileName, QStringList());
-    LinkManager::instance()->disconnectLink(_mockLink);
+    _disconnectMockLink();
+
     _fileServer = NULL;
-    _mockLink = NULL;
     _fileManager = NULL;
     
     delete _multiSpy;

@@ -29,6 +29,7 @@
 #include "UnitTest.h"
 #include "QGCApplication.h"
 #include "MAVLinkProtocol.h"
+#include "MainWindow.h"
 
 bool UnitTest::_messageBoxRespondedTo = false;
 bool UnitTest::_badResponseButton = false;
@@ -41,14 +42,17 @@ QStringList UnitTest::_fileDialogResponse;
 enum UnitTest::FileDialogType UnitTest::_fileDialogExpectedType = getOpenFileName;
 int UnitTest::_missedFileDialogCount = 0;
 
-UnitTest::UnitTest(void) :
-    _expectMissedFileDialog(false),
-    _expectMissedMessageBox(false),
-    _unitTestRun(false),
-    _initCalled(false),
-    _cleanupCalled(false)
-{
-    
+UnitTest::UnitTest(void)
+    : _linkManager(NULL)
+    , _mockLink(NULL)
+    , _mainWindow(NULL)
+    , _expectMissedFileDialog(false)
+    , _expectMissedMessageBox(false)
+    , _unitTestRun(false)
+    , _initCalled(false)
+    , _cleanupCalled(false)
+{    
+
 }
 
 UnitTest::~UnitTest()
@@ -101,6 +105,11 @@ int UnitTest::run(QString& singleTest)
 void UnitTest::init(void)
 {
     _initCalled = true;
+
+    if (!_linkManager) {
+        _linkManager = qgcApp()->toolbox()->linkManager();
+        connect(_linkManager, &LinkManager::linkDeleted, this, &UnitTest::_linkDeleted);
+    }
     
     _messageBoxRespondedTo = false;
     _missedMessageBoxCount = 0;
@@ -127,6 +136,9 @@ void UnitTest::init(void)
 void UnitTest::cleanup(void)
 {
     _cleanupCalled = true;
+
+    _disconnectMockLink();
+    _closeMainWindow();
 
     // We add a slight delay here to allow for deleteLater and Qml cleanup
     QTest::qWait(200);
@@ -357,4 +369,59 @@ QString UnitTest::_getSaveFileName(
     }
 
     return _fileDialogResponseSingle(getSaveFileName);
+}
+
+void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
+{
+    Q_ASSERT(!_mockLink);
+
+    _mockLink = new MockLink();
+    _mockLink->setFirmwareType(autopilot);
+
+    _linkManager->_addLink(_mockLink);
+    _linkManager->connectLink(_mockLink);
+
+    // Wait for the Vehicle to get created
+    QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+    QCOMPARE(spyVehicle.wait(5000), true);
+    QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->parameterReadyVehicleAvailable());
+    QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
+}
+
+void UnitTest::_disconnectMockLink(void)
+{
+    if (_mockLink) {
+        QSignalSpy  linkSpy(_linkManager, SIGNAL(linkDeleted(LinkInterface*)));
+
+        _linkManager->disconnectLink(_mockLink);
+
+        // Wait for link to go away
+        linkSpy.wait(1000);
+        QCOMPARE(linkSpy.count(), 1);
+    }
+}
+
+void UnitTest::_linkDeleted(LinkInterface* link)
+{
+    if (link == _mockLink) {
+        _mockLink = NULL;
+    }
+}
+
+void UnitTest::_createMainWindow(void)
+{
+    _mainWindow = MainWindow::_create();
+    Q_CHECK_PTR(_mainWindow);
+}
+
+void UnitTest::_closeMainWindow(bool cancelExpected)
+{
+    if (_mainWindow) {
+        QSignalSpy  mainWindowSpy(_mainWindow, SIGNAL(mainWindowClosed()));
+
+        _mainWindow->close();
+
+        mainWindowSpy.wait(2000);
+        QCOMPARE(mainWindowSpy.count(), cancelExpected ? 0 : 1);
+    }
 }

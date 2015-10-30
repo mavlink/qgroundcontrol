@@ -94,7 +94,6 @@ private:
     
     void _validateParameters(void);
     
-    MockLink*           _mockLink;
     AutoPilotPlugin*    _autopilot;
     
     QGCQmlWidgetHolder* _calWidget;

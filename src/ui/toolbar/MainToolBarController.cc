@@ -54,19 +54,19 @@ MainToolBarController::MainToolBarController(QObject* parent)
 {
     emit configListChanged();
     emit connectionCountChanged(_connectionCount);
-    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
+    _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
     
     // Link signals
-    connect(LinkManager::instance(),     &LinkManager::linkConfigurationChanged, this, &MainToolBarController::_updateConfigurations);
-    connect(LinkManager::instance(),     &LinkManager::linkConnected,            this, &MainToolBarController::_linkConnected);
-    connect(LinkManager::instance(),     &LinkManager::linkDisconnected,         this, &MainToolBarController::_linkDisconnected);
+    connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkConfigurationChanged, this, &MainToolBarController::_updateConfigurations);
+    connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkConnected,            this, &MainToolBarController::_linkConnected);
+    connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkDisconnected,         this, &MainToolBarController::_linkDisconnected);
     
     // RSSI (didn't like standard connection)
-    connect(MAVLinkProtocol::instance(),
+    connect(qgcApp()->toolbox()->mavlinkProtocol(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
         SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)));
     
-    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBarController::_activeVehicleChanged);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBarController::_activeVehicleChanged);
 }
 
 MainToolBarController::~MainToolBarController()
@@ -95,7 +95,7 @@ void MainToolBarController::onDisconnect(QString conf)
         // Disconnect Only Connected Link
         int connectedCount = 0;
         LinkInterface* connectedLink = NULL;
-        QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+        QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
         foreach(LinkInterface* link, links) {
             if (link->isConnected()) {
                 connectedCount++;
@@ -105,14 +105,14 @@ void MainToolBarController::onDisconnect(QString conf)
         Q_ASSERT(connectedCount   == 1);
         Q_ASSERT(_connectionCount == 1);
         Q_ASSERT(connectedLink);
-        LinkManager::instance()->disconnectLink(connectedLink);
+        qgcApp()->toolbox()->linkManager()->disconnectLink(connectedLink);
     } else {
         // Disconnect Named Connected Link
-        QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+        QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
         foreach(LinkInterface* link, links) {
             if (link->isConnected()) {
                 if(link->getLinkConfiguration() && link->getLinkConfiguration()->name() == conf) {
-                    LinkManager::instance()->disconnectLink(link);
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(link);
                 }
             }
         }
@@ -126,14 +126,14 @@ void MainToolBarController::onConnect(QString conf)
         MainWindow::instance()->manageLinks();
     } else {
         // We don't want the list updating under our feet
-        LinkManager::instance()->suspendConfigurationUpdates(true);
+        qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(true);
         // Create a link
-        LinkInterface* link = LinkManager::instance()->createConnectedLink(conf);
+        LinkInterface* link = qgcApp()->toolbox()->linkManager()->createConnectedLink(conf);
         if(link) {
             // Save last used connection
             MainWindow::instance()->saveLastUsedConnection(conf);
         }
-        LinkManager::instance()->suspendConfigurationUpdates(false);
+        qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(false);
     }
 }
 
@@ -143,9 +143,9 @@ void MainToolBarController::onEnterMessageArea(int x, int y)
     Q_UNUSED(y);
 
     // If not already there and messages are actually present
-    if(!_rollDownMessages && UASMessageHandler::instance()->messages().count()) {
-        if (MultiVehicleManager::instance()->activeVehicle()) {
-            MultiVehicleManager::instance()->activeVehicle()->resetMessages();
+    if(!_rollDownMessages && qgcApp()->toolbox()->uasMessageHandler()->messages().count()) {
+        if (qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
+            qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->resetMessages();
         }
 
         // FIXME: Position of the message dropdown is hacked right now to speed up Qml conversion
@@ -158,7 +158,7 @@ void MainToolBarController::onEnterMessageArea(int x, int y)
 #endif
 
         // Put dialog on top of the message alert icon
-        _rollDownMessages = new UASMessageViewRollDown(MainWindow::instance());
+        _rollDownMessages = new UASMessageViewRollDown(qgcApp()->toolbox()->uasMessageHandler(), MainWindow::instance());
         _rollDownMessages->setAttribute(Qt::WA_DeleteOnClose);
         _rollDownMessages->move(QPoint(100, 100));
         _rollDownMessages->setMinimumSize(dialogWidth,200);
@@ -196,7 +196,7 @@ void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
 void MainToolBarController::_updateConfigurations()
 {
     QStringList tmpList;
-    QList<LinkConfiguration*> configs = LinkManager::instance()->getLinkConfigurationList();
+    QList<LinkConfiguration*> configs = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
     foreach(LinkConfiguration* conf, configs) {
         if(conf) {
             if(conf->isPreferred()) {
@@ -263,7 +263,7 @@ void MainToolBarController::_updateConnection(LinkInterface *disconnectedLink)
     int oldCount = _connectionCount;
     // If there are multiple connected links add/update the connect button menu
     _connectionCount = 0;
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
     foreach(LinkInterface* link, links) {
         if (disconnectedLink != link && link->isConnected()) {
             _connectionCount++;

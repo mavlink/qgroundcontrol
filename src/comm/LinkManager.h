@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #include "QGCLoggingCategory.h"
+#include "QGCToolbox.h"
 
 // Links
 #ifndef __ios__
@@ -48,12 +49,11 @@ This file is part of the PIXHAWK project
 #endif
 
 #include "ProtocolInterface.h"
-#include "QGCSingleton.h"
 #include "MAVLinkProtocol.h"
 
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerLog)
 
-class LinkManagerTest;
+class QGCApplication;
 
 /// Manage communication links
 ///
@@ -61,16 +61,16 @@ class LinkManagerTest;
 /// links and takes care of connecting them as well assigning the correct
 /// protocol instance to transport the link data into the application.
 
-class LinkManager : public QGCSingleton
+class LinkManager : public QGCTool
 {
     Q_OBJECT
-    DECLARE_QGC_SINGLETON(LinkManager, LinkManager)
 
     /// Unit Test has access to private constructor/destructor
     friend class LinkManagerTest;
 
 public:
-
+    LinkManager(QGCApplication* app);
+    ~LinkManager();
 
     /*!
       Add a new link configuration setting to the list
@@ -144,6 +144,9 @@ public:
     void _deleteLink(LinkInterface* link);
     void _addLink(LinkInterface* link);
 
+    // Override from QGCTool
+    virtual void setToolbox(QGCToolbox *toolbox);
+
 signals:
     void newLink(LinkInterface* link);
     void linkDeleted(LinkInterface* link);
@@ -156,10 +159,6 @@ private slots:
     void _linkDisconnected(void);
 
 private:
-    /// All access to LinkManager is through LinkManager::instance
-    LinkManager(QObject* parent = NULL);
-    ~LinkManager();
-    
     virtual void _shutdown(void);
 
     bool _connectionsSuspendedMsg(void);
@@ -186,6 +185,8 @@ private:
     uint32_t _mavlinkChannelsUsedBitMask;
     
     SharedLinkInterface _nullSharedLink;
+
+    MAVLinkProtocol*    _mavlinkProtocol;
 };
 
 #endif

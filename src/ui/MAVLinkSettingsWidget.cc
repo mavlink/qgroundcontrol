@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSettingsWidget.h"
 #include "LinkManager.h"
 #include "UDPLink.h"
+#include "QGCApplication.h"
 #include "ui_MAVLinkSettingsWidget.h"
 #include <QSettings>
 
@@ -142,7 +143,7 @@ void MAVLinkSettingsWidget::enableDroneOS(bool enable)
 
     // Delete from all lists first
     UDPLink* firstUdp = NULL;
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
     foreach (LinkInterface* link, links)
     {
         UDPLink* udp = dynamic_cast<UDPLink*>(link);

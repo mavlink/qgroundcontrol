@@ -60,7 +60,7 @@ void QGCMAVLinkLogPlayer::_pause(void)
 void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
 {
     // Disallow replay when any links are connected
-    if (LinkManager::instance()->anyConnectedLinks()) {
+    if (qgcApp()->toolbox()->linkManager()->anyConnectedLinks()) {
         QGCMessageBox::information(tr("Log Replay"), tr("You must close all connections prior to replaying a log."));
         return;
     }
@@ -81,7 +81,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
     linkConfig->setLogFilename(logFilename);
     linkConfig->setName(linkConfig->logFilenameShort());
     _ui->logFileNameLabel->setText(linkConfig->logFilenameShort());
-    _replayLink = (LogReplayLink*)LinkManager::instance()->createConnectedLink(linkConfig);
+    _replayLink = (LogReplayLink*)qgcApp()->toolbox()->linkManager()->createConnectedLink(linkConfig);
     
     connect(_replayLink, &LogReplayLink::logFileStats, this, &QGCMAVLinkLogPlayer::_logFileStats);
     connect(_replayLink, &LogReplayLink::playbackStarted, this, &QGCMAVLinkLogPlayer::_playbackStarted);

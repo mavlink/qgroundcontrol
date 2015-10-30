@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLink.h"
 #include "FileManager.h"
 #include "Vehicle.h"
+#include "FirmwarePluginManager.h"
 
 #ifndef __mobile__
 #include "QGCHilLink.h"
@@ -62,7 +63,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, Vehicle* vehicle);
+    UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager);
     ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
@@ -695,7 +696,8 @@ private:
     void _say(const QString& text, int severity = 6);
     
 private:
-    Vehicle*            _vehicle;
+    Vehicle*                _vehicle;
+    FirmwarePluginManager*  _firmwarePluginManager;
 };
 
 

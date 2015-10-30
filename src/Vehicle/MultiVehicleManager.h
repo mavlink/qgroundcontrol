@@ -27,18 +27,24 @@
 #ifndef MultiVehicleManager_H
 #define MultiVehicleManager_H
 
-#include "QGCSingleton.h"
 #include "Vehicle.h"
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
+#include "QGCToolbox.h"
 
-class MultiVehicleManager : public QGCSingleton
+class FirmwarePluginManager;
+class AutoPilotPluginManager;
+class JoystickManager;
+class QGCApplication;
+class MAVLinkProtocol;
+
+class MultiVehicleManager : public QGCTool
 {
     Q_OBJECT
     
-    DECLARE_QGC_SINGLETON(MultiVehicleManager, MultiVehicleManager)
-
 public:
+    MultiVehicleManager(QGCApplication* app);
+
     Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
     Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);
     
@@ -76,6 +82,9 @@ public:
     
     QmlObjectListModel* vehiclesModel(void) { return &_vehicles; }
     
+    // Override from QGCTool
+    virtual void setToolbox(QGCToolbox *toolbox);
+
 signals:
     void vehicleAdded(Vehicle* vehicle);
     void vehicleRemoved(Vehicle* vehicle);
@@ -92,10 +101,6 @@ private slots:
     void _autopilotParametersReadyChanged(bool parametersReady);
     
 private:
-    /// All access to singleton is through MultiVehicleManager::instance
-    MultiVehicleManager(QObject* parent = NULL);
-    ~MultiVehicleManager();
-    
     bool _vehicleExists(int vehicleId);
     
     bool        _activeVehicleAvailable;            ///< true: An active vehicle is available
@@ -108,6 +113,11 @@ private:
     QList<int>  _ignoreVehicleIds;          ///< List of vehicle id for which we ignore further communication
     
     QmlObjectListModel  _vehicles;
+
+    FirmwarePluginManager*  _firmwarePluginManager;
+    AutoPilotPluginManager* _autopilotPluginManager;
+    JoystickManager*        _joystickManager;
+    MAVLinkProtocol*        _mavlinkProtocol;
 };
 
 #endif

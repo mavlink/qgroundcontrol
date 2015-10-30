@@ -27,8 +27,6 @@
 #ifndef QGCSINGLETON_H
 #define QGCSINGLETON_H
 
-#include "QGCApplication.h"
-
 #include <QObject>
 #include <QMutex>
 
@@ -40,14 +38,12 @@
     public: \
         static interfaceName* instance(bool nullOk = false); \
         static void setMockInstance(interfaceName* mock); \
-    private: \
         static interfaceName* _createSingleton(void); \
         static void _deleteSingleton(void); \
+    private: \
         static interfaceName* _instance; \
         static interfaceName* _mockInstance; \
         static interfaceName* _realInstance; \
-        friend class QGCApplication; \
-        friend class UnitTest; \
 
 /// @def IMPLEMENT_QGC_SINGLETON
 /// Include this macro in your Derived Class implementation
@@ -61,7 +57,7 @@
     interfaceName* className::_createSingleton(void) \
     { \
         Q_ASSERT(_instance == NULL); \
-        _instance = new className(qgcApp()); \
+        _instance = new className; \
         return _instance; \
     } \
     \
@@ -151,10 +147,6 @@ class QGCSingleton : public QObject
 {
     Q_OBJECT
     
-protected:
-    /// Constructor is private since all creation is done through _createInstance
-    ///     @param parent Parent object
-    QGCSingleton(QObject* parent = NULL);
 };
 
 #endif

@@ -76,7 +76,6 @@ private:
     static const uint8_t    _systemIdQGC = 255;
     static const uint8_t    _systemIdServer = 128;
 
-    MockLink*           _mockLink;
     MockLinkFileServer* _fileServer;
     FileManager*        _fileManager;
 

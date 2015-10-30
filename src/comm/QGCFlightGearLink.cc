@@ -46,6 +46,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFileDialog.h"
 #include "QGCMessageBox.h"
 #include "HomePositionManager.h"
+#include "QGCApplication.h"
 
 // FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
@@ -957,11 +958,11 @@ bool QGCFlightGearLink::connectSimulation()
     }
     
     // We start out at our home position
-    _fgArgList << QString("--lat=%1").arg(HomePositionManager::instance()->getHomeLatitude());
-    _fgArgList << QString("--lon=%1").arg(HomePositionManager::instance()->getHomeLongitude());
+    _fgArgList << QString("--lat=%1").arg(qgcApp()->toolbox()->homePositionManager()->getHomeLatitude());
+    _fgArgList << QString("--lon=%1").arg(qgcApp()->toolbox()->homePositionManager()->getHomeLongitude());
     // The altitude is not set because an altitude not equal to the ground altitude leads to a non-zero default throttle in flightgear
     // Without the altitude-setting the aircraft is positioned on the ground
-    //_fgArgList << QString("--altitude=%1").arg(HomePositionManager::instance()->getHomeAltitude());
+    //_fgArgList << QString("--altitude=%1").arg(qgcApp()->toolbox()->homePositionManager()->getHomeAltitude());
     
 #ifdef DEBUG_FLIGHTGEAR_CONNECT
     // This tell FlightGear to output highest debug level of log output. Handy for debuggin failures by looking at the FG

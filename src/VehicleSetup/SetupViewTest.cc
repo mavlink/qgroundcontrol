@@ -31,50 +31,14 @@
 
 UT_REGISTER_TEST(SetupViewTest)
 
-SetupViewTest::SetupViewTest(void) :
-    _mainWindow(NULL)
-{
-    
-}
-
-void SetupViewTest::init(void)
-{
-    UnitTest::init();
-
-    _mainWindow = MainWindow::_create();
-    Q_CHECK_PTR(_mainWindow);
-}
-
-void SetupViewTest::cleanup(void)
-{
-    _mainWindow->close();
-    delete _mainWindow;
-    
-    UnitTest::cleanup();
-}
-
 void SetupViewTest::_clickThrough_test(void)
 {
-    LinkManager* linkMgr = LinkManager::instance();
-    Q_CHECK_PTR(linkMgr);
+    _connectMockLink();
     
-    MockLink* link = new MockLink();
-    Q_CHECK_PTR(link);
-    link->setFirmwareType(MAV_AUTOPILOT_PX4);
-    LinkManager::instance()->_addLink(link);
-    linkMgr->connectLink(link);
-    
-    // Wait for the Vehicle to get created
-    QSignalSpy spyVehicle(MultiVehicleManager::instance(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(5000), true);
-    QVERIFY(MultiVehicleManager::instance()->parameterReadyVehicleAvailable());
-    QVERIFY(MultiVehicleManager::instance()->activeVehicle());
-
-    AutoPilotPlugin* autopilot = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
+    AutoPilotPlugin* autopilot = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(autopilot);
-    
-    MainWindow* mainWindow = MainWindow::instance();
-    Q_ASSERT(mainWindow);
+
+    _createMainWindow();
 
     // Switch to the Setup view
     _mainWindow->showSetupView();
@@ -103,7 +67,6 @@ void SetupViewTest::_clickThrough_test(void)
     
     setExpectedMessageBox(QGCMessageBox::Yes);
     
-    _mainWindow->close();
-    QTest::qWait(1000); // Need to allow signals to move between threads
+    _closeMainWindow();
     checkExpectedMessageBox();
 }

@@ -43,12 +43,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QtAndroidExtras/QAndroidJniObject>
 #endif
 
-IMPLEMENT_QGC_SINGLETON(GAudioOutput, GAudioOutput)
-
 const char* GAudioOutput::_mutedKey = "AudioMuted";
 
-GAudioOutput::GAudioOutput(QObject *parent)
-    : QGCSingleton(parent)
+GAudioOutput::GAudioOutput(QGCApplication* app)
+    : QGCTool(app)
     , muted(false)
 #ifndef __android__
     , thread(new QThread())
@@ -57,7 +55,7 @@ GAudioOutput::GAudioOutput(QObject *parent)
 {
     QSettings settings;
     muted = settings.value(_mutedKey, false).toBool();
-    muted |= qgcApp()->runningUnitTests();
+    muted |= app->runningUnitTests();
 #ifndef __android__
     worker->moveToThread(thread);
     connect(this, &GAudioOutput::textToSpeak, worker, &QGCAudioWorker::say);

@@ -35,11 +35,16 @@
 #include <QMessageBox>
 #include <QFileDialog>
 
+#include "QGCMAVLink.h"
+#include "LinkInterface.h"
+
 #define UT_REGISTER_TEST(className) static UnitTestWrapper<className> t(#className);
 
 class QGCMessageBox;
 class QGCFileDialog;
-class UnitTest;
+class LinkManager;
+class MockLink;
+class MainWindow;
 
 class UnitTest : public QObject
 {
@@ -102,9 +107,21 @@ protected slots:
     virtual void cleanup(void);
     
 protected:
+    void _connectMockLink(MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4);
+    void _disconnectMockLink(void);
+    void _createMainWindow(void);
+    void _closeMainWindow(bool cancelExpected = false);
+
+    LinkManager*    _linkManager;
+    MockLink*       _mockLink;
+    MainWindow*     _mainWindow;
+
     bool _expectMissedFileDialog;   // true: expect a missed file dialog, used for internal testing
     bool _expectMissedMessageBox;   // true: expect a missed message box, used for internal testing
-    
+
+private slots:
+    void _linkDeleted(LinkInterface* link);
+
 private:
     // When the app is running in unit test mode the QGCMessageBox methods are re-routed here.
     

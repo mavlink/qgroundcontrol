@@ -139,8 +139,7 @@ QString APMCustomMode::modeString() const
     return mode;
 }
 
-APMFirmwarePlugin::APMFirmwarePlugin(QObject* parent)
-    : FirmwarePlugin(parent)
+APMFirmwarePlugin::APMFirmwarePlugin(void)
 {
      _textSeverityAdjustmentNeeded = false;
 }

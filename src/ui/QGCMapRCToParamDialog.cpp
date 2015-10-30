@@ -26,7 +26,6 @@
 
 #include "QGCMapRCToParamDialog.h"
 #include "ui_QGCMapRCToParamDialog.h"
-#include "MultiVehicleManager.h"
 
 #include <QDebug>
 #include <QTimer>
@@ -34,11 +33,12 @@
 #include <QShowEvent>
 #include <QPushButton>
 
-QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id, UASInterface *mav, QWidget *parent) :
-    QDialog(parent),
-    param_id(param_id),
-    mav(mav),
-    ui(new Ui::QGCMapRCToParamDialog)
+QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id, UASInterface *mav, MultiVehicleManager* multiVehicleManager, QWidget *parent)
+    : QDialog(parent)
+    , param_id(param_id)
+    , mav(mav)
+    , _multiVehicleManager(multiVehicleManager)
+    , ui(new Ui::QGCMapRCToParamDialog)
 {
     ui->setupUi(this);
     
@@ -49,7 +49,7 @@ QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id, UASInterface *mav
     ui->paramIdLabel->setText(param_id);
 
     // refresh the parameter from onboard to make sure the current value is used
-    AutoPilotPlugin* autopilot = MultiVehicleManager::instance()->getVehicleById(mav->getUASID())->autopilotPlugin();
+    AutoPilotPlugin* autopilot = _multiVehicleManager->getVehicleById(mav->getUASID())->autopilotPlugin();
     Q_ASSERT(autopilot);
     connect(autopilot->getParameterFact(FactSystem::defaultComponentId, param_id), &Fact::valueChanged, this, &QGCMapRCToParamDialog::_parameterUpdated);
     autopilot->refreshParameter(FactSystem::defaultComponentId, param_id);
