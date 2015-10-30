@@ -59,7 +59,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     receiveDropRate(0),
     sendDropRate(0),
 
-    autopilot(vehicle->firmwareType()),
     base_mode(0),
     custom_mode(0),
     status(-1),

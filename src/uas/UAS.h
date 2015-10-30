@@ -368,7 +368,6 @@ protected: //COMMENTS FOR TEST UNIT
     QTimer statusTimeout;       ///< Timer for various status timeouts
 
     /// BASIC UAS TYPE, NAME AND STATE
-    int autopilot;                ///< Type of the Autopilot: -1: None, 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
     uint8_t base_mode;                 ///< The current mode of the MAV
     uint32_t custom_mode;         ///< The current mode of the MAV
     int status;                   ///< The current status of the MAV
@@ -479,8 +478,6 @@ protected: //COMMENTS FOR TEST UNIT
 #endif
 
 public:
-    /** @brief Set the current battery type */
-    void setBattery(BatteryType type, int cells);
     /** @brief Get the current charge level */
     float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
@@ -499,17 +496,8 @@ public:
 
     QImage getImage();
     void requestImage();
-    int getAutopilotType(){
-        return autopilot;
-    }
 
 public slots:
-    /** @brief Set the autopilot type */
-    void setAutopilotType(int apType)
-    {
-        autopilot = apType;
-        emit systemSpecsChanged(uasId);
-    }
     /** @brief Executes a command with 7 params */
     void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component);
 

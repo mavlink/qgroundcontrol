@@ -43,16 +43,6 @@ This file is part of the QGROUNDCONTROL project
 
 class FileManager;
 
-enum BatteryType
-{
-    NICD = 0,
-    NIMH = 1,
-    LIION = 2,
-    LIPOLY = 3,
-    LIFE = 4,
-    AGZN = 5
-}; ///< The type of battery used
-
 /**
  * @brief Interface for all robots.
  *
@@ -121,10 +111,6 @@ public:
         nextColor++;
         return colors[nextColor];//return the next color
    }
-
-    /** @brief Get the type of the autopilot (PIXHAWK, APM, UDB, PPZ,..) */
-    virtual int getAutopilotType() = 0;
-    virtual void setAutopilotType(int apType) = 0;
 
     virtual QMap<int, QString> getComponents() = 0;
 
