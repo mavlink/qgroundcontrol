@@ -63,10 +63,6 @@ void SetupViewTest::_clickThrough_test(void)
         QTest::qWait(1000);
     }
 
-    // On MainWindow close we should get a message box telling the user to disconnect first.
-    
-    setExpectedMessageBox(QGCMessageBox::Yes);
-    
+    _disconnectMockLink();
     _closeMainWindow();
-    checkExpectedMessageBox();
 }
