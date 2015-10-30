@@ -765,7 +765,7 @@ void Vehicle::_loadSettings(void)
         _joystickMode = JoystickModeRC;
     }
     
-    setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
+    _joystickEnabled = settings.value(_joystickEnabledSettingsKey, false).toBool();
     _communicationInactivityTimeoutMSecs = settings.value(_communicationInactivityKey, _communicationInactivityTimeoutMSecsDefault).toInt();
 }
 
@@ -813,16 +813,25 @@ bool Vehicle::joystickEnabled(void)
 
 void Vehicle::setJoystickEnabled(bool enabled)
 {
+    // The magic parameter will go away,
+    // until then don't mess with the logic here!
     Fact* fact = _autopilotPlugin->getParameterFact(FactSystem::defaultComponentId, "COM_RC_IN_MODE");
     if (!fact) {
         qCWarning(JoystickLog) << "Missing COM_RC_IN_MODE parameter";
     }
     
-    if (fact->value().toInt() != 2) {
+    // Any value greater than one
+    // indicates special handling on
+    // the autopilot side. Force the
+    // joystick to on.
+    if (fact->value().toInt() > 1) {
+        // Mandatory in this setting
+        _joystickEnabled = true;
+    } else {
         fact->setValue(enabled ? 1 : 0);
+        _joystickEnabled = enabled;
     }
     
-    _joystickEnabled = enabled;
     _startJoystick(_joystickEnabled);
     _saveSettings();
 }
@@ -1031,6 +1040,10 @@ void Vehicle::_parametersReady(bool parametersReady)
     if (parametersReady && !_missionManagerInitialRequestComplete) {
         _missionManagerInitialRequestComplete = true;
         _missionManager->requestMissionItems();
+    }
+
+    if (parametersReady) {
+        setJoystickEnabled(_joystickEnabled);
     }
 }
 
