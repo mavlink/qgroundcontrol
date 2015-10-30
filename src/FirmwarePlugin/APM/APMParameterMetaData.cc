@@ -97,6 +97,8 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
 /// Override from FactLoad which connects the meta data to the fact
 void APMParameterMetaData::addMetaDataToFact(Fact* fact)
 {
+    _loadParameterFactMetaData();
+
     // FIXME: Will need to switch here based on _vehicle->firmwareType() to pull right set of meta data
 
     FactMetaData* metaData = new FactMetaData(fact->type(), fact);
