@@ -168,8 +168,6 @@ private slots:
     void _missingParamsDisplay(void);
     
 private:
-    void _createSingletons(void);
-    void _destroySingletons(void);
     void _loadCurrentStyle(void);
     
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version

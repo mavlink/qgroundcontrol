@@ -124,10 +124,6 @@ void UnitTest::init(void)
     _expectMissedFileDialog = false;
     _expectMissedMessageBox = false;
     
-    // Each test gets a clean global state
-    qgcApp()->_destroySingletons();
-    qgcApp()->_createSingletons();
-    
     MAVLinkProtocol::deleteTempLogFiles();
 }
 
@@ -152,8 +148,6 @@ void UnitTest::cleanup(void)
         QEXPECT_FAIL("", "Expecting failure due internal testing", Continue);
     }
     QCOMPARE(_missedFileDialogCount, 0);
-    
-    qgcApp()->_destroySingletons();
 }
 
 void UnitTest::setExpectedMessageBox(QMessageBox::StandardButton response)
