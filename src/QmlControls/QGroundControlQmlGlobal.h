@@ -48,6 +48,9 @@ public:
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
     Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
 
+    /// Global "Advance Mode" preference. Certain UI elements and features are different based on this.
+    Q_PROPERTY(bool                 isAdvancedMode      READ isAdvancedMode         CONSTANT)
+
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -61,6 +64,9 @@ public:
     qreal                   zOrderTopMost       ()      { return 1000; }
     qreal                   zOrderWidgets       ()      { return 100; }
     qreal                   zOrderMapItems      ()      { return 50; }
+
+    //-- TODO: Make this into an actual preference.
+    bool                    isAdvancedMode      ()      { return false; }
 
 private:
     HomePositionManager*    _homePositionManager;
