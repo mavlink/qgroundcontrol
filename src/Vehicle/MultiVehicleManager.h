@@ -65,8 +65,6 @@ public:
     
     Q_INVOKABLE Vehicle* getVehicleById(int vehicleId);
     
-    void setHomePositionForAllVehicles(double lat, double lon, double alt);
-    
     UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
     
     QList<Vehicle*> vehicles(void);

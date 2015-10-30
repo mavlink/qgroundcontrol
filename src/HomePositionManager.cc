@@ -117,62 +117,7 @@ void HomePositionManager::_loadSettings(void)
     
     if (_homePositions.count() == 0) {
         _homePositions.append(new HomePosition("ETH Campus", QGeoCoordinate(47.3769, 8.549444, 470.0), this));
-    }
-    
-    // Deprecated settings for old editor
-
-    settings.beginGroup("QGC_UASMANAGER");
-    bool changed =  setHomePosition(settings.value("HOMELAT", homeLat).toDouble(),
-                                    settings.value("HOMELON", homeLon).toDouble(),
-                                    settings.value("HOMEALT", homeAlt).toDouble());
-
-    // Make sure to fire the change - this will
-    // make sure widgets get the signal once
-    if (!changed)
-    {
-        emit homePositionChanged(homeLat, homeLon, homeAlt);
-    }
-
-    settings.endGroup();
-}
-
-bool HomePositionManager::setHomePosition(double lat, double lon, double alt)
-{
-    // Checking for NaN and infitiny
-    // and checking for borders
-    bool changed = false;
-    if (!isnan(lat) && !isnan(lon) && !isnan(alt)
-        && !isinf(lat) && !isinf(lon) && !isinf(alt)
-        && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0)
-        {
-
-        if (fabs(homeLat - lat) > 1e-7) changed = true;
-        if (fabs(homeLon - lon) > 1e-7) changed = true;
-        if (fabs(homeAlt - alt) > 0.5f) changed = true;
-
-        if (changed)
-        {
-            homeLat = lat;
-            homeLon = lon;
-            homeAlt = alt;
-
-            emit homePositionChanged(homeLat, homeLon, homeAlt);
-        }
-    }
-    return changed;
-}
-
-bool HomePositionManager::setHomePositionAndNotify(double lat, double lon, double alt)
-{
-    // Checking for NaN and infitiny
-    // and checking for borders
-    bool changed = setHomePosition(lat, lon, alt);
-
-    if (changed) {
-        qgcApp()->toolbox()->multiVehicleManager()->setHomePositionForAllVehicles(homeLat, homeLon, homeAlt);
-    }
-
-	return changed;
+    }    
 }
 
 void HomePositionManager::updateHomePosition(const QString& name, const QGeoCoordinate& coordinate)

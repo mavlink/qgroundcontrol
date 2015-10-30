@@ -119,9 +119,6 @@ public:
         return color;
     }
 
-    static const unsigned int WAYPOINT_RADIUS_DEFAULT_FIXED_WING = 25;
-    static const unsigned int WAYPOINT_RADIUS_DEFAULT_ROTARY_WING = 5;
-    
     enum StartCalibrationType {
         StartCalibrationRadio,
         StartCalibrationGyro,
@@ -158,8 +155,6 @@ public slots:
 
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
-    
-    virtual void setHomePosition(double lat, double lon, double alt) = 0;
 
     /** @brief Send the full HIL state to the MAV */
 #ifndef __mobile__
