@@ -27,8 +27,6 @@
 #include "FactSystemTestGeneric.h"
 #include "QGCMAVLink.h"
 
-UT_REGISTER_TEST(FactSystemTestGeneric)
-
 /// FactSystem Unit Test for PX4 autpilot
 FactSystemTestGeneric::FactSystemTestGeneric(void)
 {

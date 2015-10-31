@@ -31,7 +31,6 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-UT_REGISTER_TEST(RadioConfigTest)
 QGC_LOGGING_CATEGORY(RadioConfigTestLog, "RadioConfigTestLog")
 
 // This will check for the wizard buttons being enabled of disabled according to the mask you pass in.

@@ -34,9 +34,6 @@
 #include "UAS.h"
 #include "MultiVehicleManager.h"
 
-// FIXME: Temporarily disabled until this can be stabilized
-//UT_REGISTER_TEST(MavlinkLogTest)
-
 const char* MavlinkLogTest::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MavlinkLogTest::_logFileExtension = "mavlink";             ///< Extension for log files
 const char* MavlinkLogTest::_saveLogFilename = "qgroundcontrol.mavlink.ut";        ///< Filename to save log files to
