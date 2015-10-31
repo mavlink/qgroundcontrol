@@ -29,18 +29,18 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(Vehicle* vehicle, Q
     QStringList items;
     if (_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
     {
-        items << "EasyStar";
+        /*items << "EasyStar";*/
         items << "Rascal110-JSBSim";
-        items << "c172p";
+        /*items << "c172p";
         items << "YardStik";
-        items << "Malolo1";
+        items << "Malolo1";*/
         _mavSettingsSubGroup = _mavSettingsSubGroupFixedWing;
     }
-    else if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
+    /*else if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
         items << "arducopter";
         _mavSettingsSubGroup = _mavSettingsSubGroupQuadRotor;
-    }
+    }*/
     else
     {
         // FIXME: Should disable all input, won't work. Show error message in the status label thing.
