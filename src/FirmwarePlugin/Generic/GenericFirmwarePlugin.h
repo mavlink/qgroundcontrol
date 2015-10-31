@@ -32,8 +32,6 @@
 class GenericFirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
-
-    DECLARE_QGC_SINGLETON(GenericFirmwarePlugin, FirmwarePlugin)
     
 public:
     // Overrides from FirmwarePlugin
@@ -49,9 +47,6 @@ public:
     virtual bool sendHomePositionToVehicle(void);
     virtual void addMetaDataToFact(Fact* fact);
     virtual QString getDefaultComponentIdParam(void) const { return QString(); }
-
-private:
-    GenericFirmwarePlugin(void);
 };
 
 #endif

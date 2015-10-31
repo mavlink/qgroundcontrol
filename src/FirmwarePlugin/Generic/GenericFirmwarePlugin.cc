@@ -29,13 +29,6 @@
 
 #include <QDebug>
 
-IMPLEMENT_QGC_SINGLETON(GenericFirmwarePlugin, FirmwarePlugin)
-
-GenericFirmwarePlugin::GenericFirmwarePlugin(void)
-{
-    
-}
-
 QList<VehicleComponent*> GenericFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {
     Q_UNUSED(vehicle);

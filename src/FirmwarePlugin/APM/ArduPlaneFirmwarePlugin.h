@@ -59,16 +59,9 @@ public:
 class ArduPlaneFirmwarePlugin : public APMFirmwarePlugin
 {
     Q_OBJECT
-
-    DECLARE_QGC_SINGLETON(ArduPlaneFirmwarePlugin, ArduPlaneFirmwarePlugin)
     
 public:
-
-protected:
-    /// All access to singleton is through instance()
     ArduPlaneFirmwarePlugin(void);
-    
-private:
 };
 
 #endif
