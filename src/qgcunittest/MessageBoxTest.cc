@@ -29,8 +29,6 @@
 #include "MessageBoxTest.h"
 #include "QGCMessageBox.h"
 
-UT_REGISTER_TEST(MessageBoxTest)
-
 MessageBoxTest::MessageBoxTest(void)
 {
     

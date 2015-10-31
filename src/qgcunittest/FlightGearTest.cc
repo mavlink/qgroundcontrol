@@ -29,8 +29,6 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-UT_REGISTER_TEST(FlightGearUnitTest)
-
 FlightGearUnitTest::FlightGearUnitTest(void)
 {
     

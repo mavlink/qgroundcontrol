@@ -488,6 +488,7 @@ SOURCES += \
     src/qgcunittest/TCPLinkTest.cc \
     src/qgcunittest/TCPLoopBackServer.cc \
     src/qgcunittest/UnitTest.cc \
+    src/qgcunittest/UnitTestList.cc \
     src/VehicleSetup/SetupViewTest.cc \
 } # DebugBuild|WindowsDebugAndRelease
 } # MobileBuild
