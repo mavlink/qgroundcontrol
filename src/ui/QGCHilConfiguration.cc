@@ -114,17 +114,19 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
             connect(xplane, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
         }
     }
-    else if (4)
-    {
-        // Ensure the sim exists and is disabled
-        _vehicle->uas()->enableHilJSBSim(false, "");
-        QGCHilJSBSimConfiguration* hfgconf = new QGCHilJSBSimConfiguration(_vehicle, this);
-        hfgconf->show();
-        ui->simulatorConfigurationLayout->addWidget(hfgconf);
-        QGCJSBSimLink* jsb = dynamic_cast<QGCJSBSimLink*>(_vehicle->uas()->getHILSimulation());
-        if (jsb)
-        {
-            connect(jsb, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
-        }
-    }
+// Disabling JSB Sim since its not well maintained,
+// but as refactoring is pending we're not ditching the code yet
+//    else if (4)
+//    {
+//        // Ensure the sim exists and is disabled
+//        _vehicle->uas()->enableHilJSBSim(false, "");
+//        QGCHilJSBSimConfiguration* hfgconf = new QGCHilJSBSimConfiguration(_vehicle, this);
+//        hfgconf->show();
+//        ui->simulatorConfigurationLayout->addWidget(hfgconf);
+//        QGCJSBSimLink* jsb = dynamic_cast<QGCJSBSimLink*>(_vehicle->uas()->getHILSimulation());
+//        if (jsb)
+//        {
+//            connect(jsb, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
+//        }
+//    }
 }
