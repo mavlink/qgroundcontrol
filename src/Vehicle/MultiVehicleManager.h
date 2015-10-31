@@ -31,12 +31,15 @@
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 #include "QGCToolbox.h"
+#include "QGCLoggingCategory.h"
 
 class FirmwarePluginManager;
 class AutoPilotPluginManager;
 class JoystickManager;
 class QGCApplication;
 class MAVLinkProtocol;
+
+Q_DECLARE_LOGGING_CATEGORY(MultiVehicleManagerLog)
 
 class MultiVehicleManager : public QGCTool
 {
