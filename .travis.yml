@@ -65,7 +65,6 @@ cache:
 
 
 before_install:
-  - openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in Google_Play_Android_Developer-bb93ae7d61ca.p12.enc -out android/Google_Play_Android_Developer-bb93ae7d61ca.p12 -d
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/; fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
@@ -121,7 +120,12 @@ script:
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
 
 after_success:
-  - if [[ "${TRAVIS_OS_NAME}" = "android" && "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_BRANCH}" = "master" ]]; then ./tools/google_play_upload.py org.mavlink.qgroundcontrol release/package/qgroundcontrol.apk; fi
+  - if [[ "${TRAVIS_OS_NAME}" = "android" && "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_BRANCH}" = "master" ]]; then
+         pip install google-api-python-client
+      && openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in Google_Play_Android_Developer-bb93ae7d61ca.p12.enc -out android/Google_Play_Android_Developer-bb93ae7d61ca.p12 -d
+      && ./tools/google_play_upload.py org.mavlink.qgroundcontrol release/package/qgroundcontrol.apk
+      ;
+    fi
 
 deploy:
   - provider: s3
