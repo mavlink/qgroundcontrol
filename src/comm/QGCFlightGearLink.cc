@@ -663,8 +663,8 @@ bool QGCFlightGearLink::connectSimulation()
     // that is pretty non-standard so we don't try to get fancy beyond hardcoding that path.
     fgAppDir.setPath("/Applications");
     fgAppName = "FlightGear.app";
-    _fgProcessName = "./fgfs.sh";
-    _fgProcessWorkingDirPath = "/Applications/FlightGear.app/Contents/Resources/";
+    _fgProcessName = "./fgfs";
+    _fgProcessWorkingDirPath = "/Applications/FlightGear.app/Contents/MacOS/";
     fgRootPathProposedList += "/Applications/FlightGear.app/Contents/Resources/data/";
 #elif defined Q_OS_WIN32
     _fgProcessName = "fgfs.exe";
