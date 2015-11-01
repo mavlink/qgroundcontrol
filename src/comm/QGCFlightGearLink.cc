@@ -133,7 +133,7 @@ void QGCFlightGearLink::run()
 	// On Windows we need to full qualify the location of the excecutable. The call to setWorkingDirectory only
 	// sets the QProcess context, not the QProcess::start context. For some strange reason this is not the case on
 	// OSX.
-	QDir fgProcessFullyQualified(_fgProcessWorkingDirPath);
+    QDir fgProcessFullyQualified(_fgProcessWorkingDirPath);
 	_fgProcessName = fgProcessFullyQualified.absoluteFilePath(_fgProcessName);
 #endif
     
@@ -663,8 +663,14 @@ bool QGCFlightGearLink::connectSimulation()
     // that is pretty non-standard so we don't try to get fancy beyond hardcoding that path.
     fgAppDir.setPath("/Applications");
     fgAppName = "FlightGear.app";
-    _fgProcessName = "./fgfs.sh";
-    _fgProcessWorkingDirPath = "/Applications/FlightGear.app/Contents/Resources/";
+    // new path
+    _fgProcessName = "./fgfs";
+    _fgProcessWorkingDirPath = "/Applications/FlightGear.app/Contents/MacOS/";
+    if(!QFileInfo(_fgProcessWorkingDirPath + _fgProcessName).exists()){
+        // old path
+        _fgProcessName = "./fgfs.sh";
+        _fgProcessWorkingDirPath = "/Applications/FlightGear.app/Contents/Resources/";
+    }
     fgRootPathProposedList += "/Applications/FlightGear.app/Contents/Resources/data/";
 #elif defined Q_OS_WIN32
     _fgProcessName = "fgfs.exe";
