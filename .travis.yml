@@ -57,6 +57,7 @@ addons:
     - libopenscenegraph-dev
     - libsdl1.2-dev
     - libudev-dev
+    - python-openssl
     - texlive-font-utils
 
 cache:
