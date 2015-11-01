@@ -1765,7 +1765,7 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
         simulation = new QGCFlightGearLink(_vehicle, options);
     }
 
-    float noise_scaler = 0.002f;
+    float noise_scaler = 0.0001f;
     xacc_var = noise_scaler * 0.2914f;
     yacc_var = noise_scaler * 0.2914f;
     zacc_var = noise_scaler * 0.9577f;
@@ -1775,10 +1775,10 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
     xmag_var = noise_scaler * 0.0786f;
     ymag_var = noise_scaler * 0.0566f;
     zmag_var = noise_scaler * 0.0333f;
-    abs_pressure_var = noise_scaler * 1.1604f;
-    diff_pressure_var = noise_scaler * 0.3604f;
-    pressure_alt_var = noise_scaler * 1.1604f;
-    temperature_var = noise_scaler * 2.4290f;
+    abs_pressure_var = noise_scaler * 0.5604f;
+    diff_pressure_var = noise_scaler * 0.2604f;
+    pressure_alt_var = noise_scaler * 0.5604f;
+    temperature_var = noise_scaler * 0.7290f;
 
     // Connect Flight Gear Link
     link = dynamic_cast<QGCFlightGearLink*>(simulation);
@@ -1840,7 +1840,7 @@ void UAS::enableHilXPlane(bool enable)
         }
         simulation = new QGCXPlaneLink(_vehicle);
 
-        float noise_scaler = 0.0002f;
+        float noise_scaler = 0.0001f;
         xacc_var = noise_scaler * 0.2914f;
         yacc_var = noise_scaler * 0.2914f;
         zacc_var = noise_scaler * 0.9577f;
@@ -1850,10 +1850,10 @@ void UAS::enableHilXPlane(bool enable)
         xmag_var = noise_scaler * 0.0786f;
         ymag_var = noise_scaler * 0.0566f;
         zmag_var = noise_scaler * 0.0333f;
-        abs_pressure_var = noise_scaler * 1.1604f;
-        diff_pressure_var = noise_scaler * 0.3604f;
-        pressure_alt_var = noise_scaler * 1.1604f;
-        temperature_var = noise_scaler * 2.4290f;
+        abs_pressure_var = noise_scaler * 0.5604f;
+        diff_pressure_var = noise_scaler * 0.2604f;
+        pressure_alt_var = noise_scaler * 0.5604f;
+        temperature_var = noise_scaler * 0.7290f;
     }
     // Connect X-Plane Link
     if (enable)
