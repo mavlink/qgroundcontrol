@@ -595,7 +595,7 @@ void QGCXPlaneLink::readBytes()
 				if (fabsf(groundspeed)<0.1f && alt_agl<1.0) 
 				{
 					// TODO: Add centrip. acceleration to the current static acceleration implementation.
-					Eigen::Vector3f g(0, 0, -9.81f);
+                    Eigen::Vector3f g(0, 0, -9.80665f);
 					Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
 					Eigen::Vector3f gr = R.transpose().eval() * g;
 
@@ -617,6 +617,7 @@ void QGCXPlaneLink::readBytes()
 				}
 
 				fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
+                emitUpdate = true;
             }
             // atmospheric pressure aircraft for XPlane 9 and 10
             else if (p.index == 6)
@@ -644,6 +645,8 @@ void QGCXPlaneLink::readBytes()
                 rollspeed = p.f[1];
                 yawspeed = p.f[2];
                 fields_changed |= (1 << 3) | (1 << 4) | (1 << 5);
+
+                emitUpdate = true;
             }
             else if ((xPlaneVersion == 10 && p.index == 17) || (xPlaneVersion == 9 && p.index == 18))
             {
