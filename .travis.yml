@@ -65,7 +65,7 @@ cache:
 
 
 before_install:
-  - openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-bb93ae7d61ca.p12.enc -out android/Google_Play_Android_Developer-bb93ae7d61ca.p12 -d
+  - openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in Google_Play_Android_Developer-bb93ae7d61ca.p12.enc -out android/Google_Play_Android_Developer-bb93ae7d61ca.p12 -d
   - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/; fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
