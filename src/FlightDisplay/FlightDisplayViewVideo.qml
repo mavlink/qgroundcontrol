@@ -45,7 +45,7 @@ Item {
             text:               "NO VIDEO"
             font.weight:        Font.DemiBold
             color:              "white"
-            font.pixelSize:     ScreenTools.defaultFontPixelSize * 1.5
+            font.pixelSize:     _mainIsMap ? 12 * ScreenTools.fontHRatio : 20 * ScreenTools.fontHRatio
             anchors.centerIn:   parent
         }
     }
