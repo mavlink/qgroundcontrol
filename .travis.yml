@@ -65,7 +65,7 @@ cache:
 
 
 before_install:
-  - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --tags
+  - cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --all --tags
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/; fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/; fi
   - if [ "${TRAVIS_OS_NAME}" = "android" ]; then wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 && mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 && tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2; fi
@@ -81,6 +81,7 @@ install:
       && sh -e /etc/init.d/xvfb start
       ;
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+         brew update;
          brew update
       && brew install qt5
       && export PATH=/usr/local/opt/qt5/bin:$PATH

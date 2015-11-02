@@ -1,11 +1,51 @@
-import QtQuick 2.2
+import QtQuick 2.4
 import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Controls.Private 1.0
+import QtGraphicalEffects 1.0
 
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
 
+Item {
+    id: _root
+
+    property alias          source:  icon.source
+    property bool           checked: false
+    property ExclusiveGroup exclusiveGroup:  null
+
+    signal   clicked()
+
+    onExclusiveGroupChanged: {
+        if (exclusiveGroup) {
+            exclusiveGroup.bindCheckable(_root)
+        }
+    }
+
+    Image {
+        id:             icon
+        width:          parent.height * 0.9
+        height:         parent.height * 0.9
+        mipmap:         true
+        fillMode:       Image.PreserveAspectFit
+        visible:        false
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    ColorOverlay {
+        id:             iconOverlay
+        anchors.fill:   icon
+        source:         icon
+        color:          (checked ? "#ffff20" : "#ffffff")
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            checked = true
+            _root.clicked()
+        }
+    }
+}
+
+/*
 QGCButton {
     id: button
     property bool repaintChevron: false
@@ -62,3 +102,4 @@ QGCButton {
         }
     }
 }
+*/

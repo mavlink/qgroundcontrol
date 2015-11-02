@@ -34,10 +34,10 @@ import QGroundControl.ScreenTools   1.0
 Item {
     id: mainWindow
 
-    property var _toolbar: toolbarLoader.item
-
     readonly property string _planViewSource:   "MissionEditor.qml"
     readonly property string _setupViewSource:  "SetupView.qml"
+
+    property real avaiableHeight: height - toolBar.height
 
     Connections {
 
@@ -67,7 +67,7 @@ Item {
             planViewLoader.visible      = false
         }
 
-        onShowToolbarMessage: _toolbar.showToolbarMessage(message)
+        onShowToolbarMessage: toolBar.showToolbarMessage(message)
 
         // The following are use for unit testing only
 
@@ -75,11 +75,6 @@ Item {
         onShowSetupParameters:          setupViewLoader.item.showParametersPanel()
         onShowSetupSummary:             setupViewLoader.item.showSummaryPanel()
         onShowSetupVehicleComponent:    setupViewLoader.item.showVehicleComponentPanel(vehicleComponent)
-    }
-
-    // We delay load the following control to improve boot time
-    Component.onCompleted: {
-        toolbarLoader.source = "MainToolBar.qml"
     }
 
     // Detect tablet position
@@ -97,41 +92,37 @@ Item {
         }
     }
 
-    Loader {
-        id:                 toolbarLoader
-        width:              parent.width
-        height:             item ? item.height : 0
+    MainToolBar {
+        id:                 toolBar
+        height:             ScreenTools.isMobile ? (ScreenTools.isTinyScreen ? (mainWindow.width * 0.0666) : (mainWindow.width * 0.0444)) : ScreenTools.defaultFontPixelSize * 4
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        parent.top
+        isBackgroundDark:   flightView.isBackgroundDark
         z:                  QGroundControl.zOrderTopMost
     }
 
     FlightDisplayView {
-        id:                 flightView
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        toolbarLoader.bottom
-        anchors.bottom:     parent.bottom
-        visible:            true
+        id:             flightView
+        anchors.fill:   parent
+        avaiableHeight: mainWindow.avaiableHeight
+        visible:        true
     }
 
     Loader {
         id:                 planViewLoader
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        toolbarLoader.bottom
-        anchors.bottom:     parent.bottom
+        anchors.fill:       parent
         visible:            false
-
         property var tabletPosition:    mainWindow.tabletPosition
     }
 
     Loader {
         id:                 setupViewLoader
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        toolbarLoader.bottom
         anchors.bottom:     parent.bottom
+        anchors.right:      parent.right
+        anchors.left:       parent.left
+        height:             mainWindow.avaiableHeight
         visible:            false
-
         property var tabletPosition:    mainWindow.tabletPosition
     }
 }

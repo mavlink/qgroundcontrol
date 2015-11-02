@@ -23,17 +23,18 @@ ExclusiveGroupItem  1.0 ExclusiveGroupItem.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 
-ModeSwitchDisplay 1.0 ModeSwitchDisplay.qml
+ModeSwitchDisplay   1.0 ModeSwitchDisplay.qml
 
-QGCView         1.0 QGCView.qml
-QGCViewPanel    1.0 QGCViewPanel.qml
-QGCViewDialog   1.0 QGCViewDialog.qml
-QGCViewMessage  1.0 QGCViewMessage.qml
+QGCView             1.0 QGCView.qml
+QGCViewPanel        1.0 QGCViewPanel.qml
+QGCViewDialog       1.0 QGCViewDialog.qml
+QGCViewMessage      1.0 QGCViewMessage.qml
 
 MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
 MissionItemSummary      1.0 MissionItemSummary.qml
 MissionItemEditor       1.0 MissionItemEditor.qml
 
-MainToolBar 1.0 MainToolBar.qml
+MainToolBar         1.0 MainToolBar.qml
+SignalStrength      1.0 SignalStrength.qml
 
-ClickableColor 1.0 ClickableColor.qml
+ClickableColor      1.0 ClickableColor.qml
