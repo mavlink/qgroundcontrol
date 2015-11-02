@@ -27,9 +27,8 @@
 #include "ArduCopterFirmwarePlugin.h"
 #include "Generic/GenericFirmwarePlugin.h"
 
-IMPLEMENT_QGC_SINGLETON(ArduCopterFirmwarePlugin, ArduCopterFirmwarePlugin)
-
-APMCopterMode::APMCopterMode(uint32_t mode, bool settable) : APMCustomMode(mode, settable)
+APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
+    APMCustomMode(mode, settable)
 {
     QMap<uint32_t,QString> enumToString;
     enumToString.insert(STABILIZE, "Stabilize");

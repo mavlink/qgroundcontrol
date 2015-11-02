@@ -17,12 +17,9 @@ matrix:
         - os: linux
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: false
-        - os: linux
-          env: CONFIG=doxygen
-          sudo: false
         - os: osx
           osx_image: xcode7
-          env: SPEC=macx-clang CONFIG=debug
+          env: SPEC=macx-clang CONFIG=debug QT_FATAL_WARNINGS=1
         - os: osx
           osx_image: xcode7
           env: SPEC=macx-clang CONFIG=installer
@@ -33,6 +30,9 @@ matrix:
         - os: android
           language: android
           env: SPEC=android-g++ CONFIG=installer
+          sudo: false
+        - os: linux
+          env: CONFIG=doxygen
           sudo: false
 
 android:
@@ -111,12 +111,21 @@ before_script:
   - if [ "${CONFIG}" != "doxygen" ]; then qmake -r qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}; fi
 
 script:
+  - ./tools/update_android_version.sh
   - echo 'Building QGroundControl' && echo -en 'travis_fold:start:script.1\\r'
   - if [ "${CONFIG}" != "doxygen" ]; then make -j4; fi
   - if [ "${CONFIG}" = "doxygen" ]; then cd src && doxygen documentation.dox; fi
   - echo -en 'travis_fold:end:script.1\\r'
   - if [[ "${TRAVIS_OS_NAME}" = "linux" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol --unittest; fi
   - if [[ "${TRAVIS_OS_NAME}" = "osx" && "${CONFIG}" = "debug" ]]; then ./debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest; fi
+
+after_success:
+  - if [[ "${TRAVIS_OS_NAME}" = "android" && "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_BRANCH}" = "master" ]]; then
+         pip install --user google-api-python-client PyOpenSSL
+      && openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in Google_Play_Android_Developer-bb93ae7d61ca.p12.enc -out android/Google_Play_Android_Developer-bb93ae7d61ca.p12 -d
+      && ./tools/google_play_upload.py org.mavlink.qgroundcontrol release/package/qgroundcontrol.apk
+      ;
+    fi
 
 deploy:
   - provider: s3

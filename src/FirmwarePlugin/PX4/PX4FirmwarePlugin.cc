@@ -29,8 +29,6 @@
 
 #include <QDebug>
 
-IMPLEMENT_QGC_SINGLETON(PX4FirmwarePlugin, FirmwarePlugin)
-
 enum PX4_CUSTOM_MAIN_MODE {
     PX4_CUSTOM_MAIN_MODE_MANUAL = 1,
     PX4_CUSTOM_MAIN_MODE_ALTCTL,
@@ -87,11 +85,6 @@ static const struct Modes2Name rgModes2Name[] = {
     { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,      "Landing",          false },
 };
 
-
-PX4FirmwarePlugin::PX4FirmwarePlugin(void)
-{
-
-}
 
 QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
 {

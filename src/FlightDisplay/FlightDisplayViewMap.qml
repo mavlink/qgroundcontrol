@@ -54,6 +54,11 @@ FlightMap {
         }
     }
 
+    MissionController {
+        id: _missionController
+        Component.onCompleted: start(false /* editMode */)
+    }
+
     // Home position
     MissionItemIndicator {
         label:          "H"

@@ -85,7 +85,7 @@ public:
     /// Returns error messages from loading
     QString readParametersFromStream(QTextStream& stream);
     
-    void writeParametersToStream(QTextStream &stream, const QString& name);
+    void writeParametersToStream(QTextStream &stream);
     
 signals:
     /// Signalled when the full set of facts are ready

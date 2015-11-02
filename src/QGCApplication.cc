@@ -49,7 +49,6 @@
 #include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "UDPLink.h"
-#include "QGCSingleton.h"
 #include "LinkManager.h"
 #include "HomePositionManager.h"
 #include "UASMessageHandler.h"
@@ -322,7 +321,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
 QGCApplication::~QGCApplication()
 {
-    _destroySingletons();
+    MainWindow* mainWindow = MainWindow::instance();
+    if (mainWindow) {
+        delete mainWindow;
+    }
+
     shutdownVideoStreaming();
     delete _toolbox;
 }
@@ -432,8 +435,6 @@ void QGCApplication::_initCommon(void)
 bool QGCApplication::_initForNormalAppBoot(void)
 {
     QSettings settings;
-
-    _createSingletons();
 
 #ifdef __mobile__
     _styleIsDark = false;
@@ -571,37 +572,6 @@ QGCApplication* qgcApp(void)
 {
     Q_ASSERT(QGCApplication::_app);
     return QGCApplication::_app;
-}
-
-/// @brief We create all the non-ui based singletons here instead of allowing them to be created randomly
-///         by calls to instance. The reason being that depending on boot sequence the singleton may end
-///         up being creating on something other than the main thread.
-void QGCApplication::_createSingletons(void)
-{
-    // No dependencies
-    FirmwarePlugin* firmwarePlugin = GenericFirmwarePlugin::_createSingleton();
-    Q_UNUSED(firmwarePlugin);
-    Q_ASSERT(firmwarePlugin);
-
-    // No dependencies
-    firmwarePlugin = PX4FirmwarePlugin::_createSingleton();
-    firmwarePlugin = ArduCopterFirmwarePlugin::_createSingleton();
-    firmwarePlugin = ArduPlaneFirmwarePlugin::_createSingleton();
-    firmwarePlugin = ArduRoverFirmwarePlugin::_createSingleton();
-}
-
-void QGCApplication::_destroySingletons(void)
-{
-    MainWindow* mainWindow = MainWindow::instance();
-    if (mainWindow) {
-        delete mainWindow;
-    }
-
-    GenericFirmwarePlugin::_deleteSingleton();
-    PX4FirmwarePlugin::_deleteSingleton();
-    ArduCopterFirmwarePlugin::_deleteSingleton();
-    ArduPlaneFirmwarePlugin::_deleteSingleton();
-    ArduRoverFirmwarePlugin::_deleteSingleton();
 }
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)

@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QMutexLocker>
 #include <QNetworkProxy>
+#include <QNetworkInterface>
 #include <iostream>
 
 #include "UDPLink.h"
@@ -461,8 +462,38 @@ void UDPConfiguration::addHost(const QString& host, int port)
         if(ipAdd.isEmpty()) {
             qWarning() << "UDP:" << "Could not resolve host:" << host << "port:" << port;
         } else {
-            _hosts[ipAdd] = port;
-            //qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
+
+            // In simulation and testing setups the vehicle and the GCS can be
+            // running on the same host. This leads to packets arriving through
+            // the local network or the loopback adapter, which makes it look
+            // like the vehicle is connected through two different links,
+            // complicating routing.
+            //
+            // We detect this case and force all traffic to a simulated instance
+            // onto the local loopback interface.
+
+            bool not_local = true;
+
+            // Run through all IPv4 interfaces and check if their canonical
+            // IP address in string representation matches the source IP address
+            foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
+                if (address.protocol() == QAbstractSocket::IPv4Protocol) {
+
+                    if (ipAdd.endsWith(address.toString())) {
+                        // This is a local address of the same host
+                        not_local = false;
+                    }
+                }
+            }
+
+            if (not_local) {
+                // This is a normal remote host, add it using its IPv4 address
+                _hosts[ipAdd] = port;
+                //qDebug() << "UDP:" << "Adding Host:" << ipAdd << ":" << port;
+            } else {
+                // It is localhost, so talk to it through the IPv4 loopback interface
+                _hosts["127.0.0.1"] = port;
+            }
         }
     }
 }

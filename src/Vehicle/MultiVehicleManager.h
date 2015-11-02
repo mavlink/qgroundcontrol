@@ -31,12 +31,15 @@
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 #include "QGCToolbox.h"
+#include "QGCLoggingCategory.h"
 
 class FirmwarePluginManager;
 class AutoPilotPluginManager;
 class JoystickManager;
 class QGCApplication;
 class MAVLinkProtocol;
+
+Q_DECLARE_LOGGING_CATEGORY(MultiVehicleManagerLog)
 
 class MultiVehicleManager : public QGCTool
 {
@@ -64,8 +67,6 @@ public:
     bool notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat);
     
     Q_INVOKABLE Vehicle* getVehicleById(int vehicleId);
-    
-    void setHomePositionForAllVehicles(double lat, double lon, double alt);
     
     UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
     

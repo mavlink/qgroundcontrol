@@ -20,12 +20,9 @@
 ## Obtaining source code
 Source code for QGroundControl is kept on GitHub: https://github.com/mavlink/qgroundcontrol.
 ```
-git clone https://github.com/mavlink/qgroundcontrol.git
-cd qgroundcontrol
-git submodule init
-git submodule update
+git clone --recursive https://github.com/mavlink/qgroundcontrol.git
 ```
-Each time you pull new source to your repository you should re-run "git submodule update" to get the latest submodules as well.
+Each time you pull new source to your repository you should run `git submodule update` to get the latest submodules as well.
 
 ### Supported Builds
 QGroundControl builds are supported for OSX, Linux, Windows and Android. QGroundControl uses [Qt](http://www.qt.io) as it's cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as it's default build environment.

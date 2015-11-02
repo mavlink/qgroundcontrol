@@ -43,8 +43,8 @@ static const SwitchListItem switchList[] = {
 };
 static const size_t cSwitchList = sizeof(switchList) / sizeof(switchList[0]);
 
-FlightModesComponent::FlightModesComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(uas, autopilot, parent),
+FlightModesComponent::FlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(vehicle, autopilot, parent),
     _name(tr("Flight Modes"))
 {
 }
