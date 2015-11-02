@@ -200,7 +200,6 @@ FORMS += \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
     src/ui/UASInfo.ui \
-    src/ui/UASRawStatusView.ui \
 }
 
 HEADERS += \
@@ -240,7 +239,6 @@ HEADERS += \
     src/QGCPalette.h \
     src/QGCQmlWidgetHolder.h \
     src/QGCQuickWidget.h \
-    src/QGCSingleton.h \
     src/QGCTemporaryFile.h \
     src/QGCToolbox.h \
     src/QmlControls/CoordinateVector.h \
@@ -317,7 +315,6 @@ HEADERS += \
     src/ui/uas/UASQuickViewItem.h \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
-    src/ui/UASRawStatusView.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/ViewWidgets/CustomCommandWidget.h \
     src/ViewWidgets/CustomCommandWidgetController.h \
@@ -355,7 +352,6 @@ SOURCES += \
     src/QGCPalette.cc \
     src/QGCQmlWidgetHolder.cpp \
     src/QGCQuickWidget.cc \
-    src/QGCSingleton.cc \
     src/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
     src/QGCGeo.cc \
@@ -423,7 +419,6 @@ SOURCES += \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
     src/ui/uas/UASQuickViewTextItem.cc \
-    src/ui/UASRawStatusView.cpp \
     src/VehicleSetup/JoystickConfigController.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \

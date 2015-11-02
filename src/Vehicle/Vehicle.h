@@ -63,9 +63,8 @@ public:
             JoystickManager*        joystickManager);
     ~Vehicle();
     
-    Q_PROPERTY(int id READ id CONSTANT)
-    Q_PROPERTY(AutoPilotPlugin* autopilot MEMBER _autopilotPlugin CONSTANT)
-    
+    Q_PROPERTY(int                  id                      READ id                                     CONSTANT)
+    Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                             NOTIFY coordinateChanged)
     Q_PROPERTY(bool                 coordinateValid         READ coordinateValid                        NOTIFY coordinateValidChanged)
     Q_PROPERTY(MissionManager*      missionManager          MEMBER _missionManager                      CONSTANT)
@@ -78,54 +77,51 @@ public:
     Q_PROPERTY(bool                 hilMode                 READ hilMode            WRITE setHilMode    NOTIFY hilModeChanged)
     Q_PROPERTY(bool                 missingParameters       READ missingParameters                      NOTIFY missingParametersChanged)
     Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                       CONSTANT)
+    Q_PROPERTY(float                roll                    READ roll                                   NOTIFY rollChanged)
+    Q_PROPERTY(float                pitch                   READ pitch                                  NOTIFY pitchChanged)
+    Q_PROPERTY(float                heading                 READ heading                                NOTIFY headingChanged)
+    Q_PROPERTY(float                groundSpeed             READ groundSpeed                            NOTIFY groundSpeedChanged)
+    Q_PROPERTY(float                airSpeed                READ airSpeed                               NOTIFY airSpeedChanged)
+    Q_PROPERTY(float                climbRate               READ climbRate                              NOTIFY climbRateChanged)
+    Q_PROPERTY(float                altitudeRelative        READ altitudeRelative                       NOTIFY altitudeRelativeChanged)
+    Q_PROPERTY(float                altitudeWGS84           READ altitudeWGS84                          NOTIFY altitudeWGS84Changed)
+    Q_PROPERTY(float                altitudeAMSL            READ altitudeAMSL                           NOTIFY altitudeAMSLChanged)
+    Q_PROPERTY(float                latitude                READ latitude                               NOTIFY coordinateChanged)
+    Q_PROPERTY(float                longitude               READ longitude                              NOTIFY coordinateChanged)
+    Q_PROPERTY(double               batteryVoltage          READ batteryVoltage                         NOTIFY batteryVoltageChanged)
+    Q_PROPERTY(double               batteryPercent          READ batteryPercent                         NOTIFY batteryPercentChanged)
+    Q_PROPERTY(double               batteryConsumed         READ batteryConsumed                        NOTIFY batteryConsumedChanged)
+    Q_PROPERTY(int                  satelliteCount          READ satelliteCount                         NOTIFY satelliteCountChanged)
+    Q_PROPERTY(QString              currentState            READ currentState                           NOTIFY currentStateChanged)
+    Q_PROPERTY(int                  satelliteLock           READ satelliteLock                          NOTIFY satelliteLockChanged)
+    Q_PROPERTY(unsigned int         heartbeatTimeout        READ heartbeatTimeout                       NOTIFY heartbeatTimeoutChanged)
+    Q_PROPERTY(QmlObjectListModel*  missionItems            READ missionItemsModel                      CONSTANT)
+    Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                        NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool                 messageTypeNormal       READ messageTypeNormal                      NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool                 messageTypeWarning      READ messageTypeWarning                     NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool                 messageTypeError        READ messageTypeError                       NOTIFY messageTypeChanged)
+    Q_PROPERTY(int                  newMessageCount         READ newMessageCount                        NOTIFY newMessageCountChanged)
+    Q_PROPERTY(int                  messageCount            READ messageCount                           NOTIFY messageCountChanged)
+    Q_PROPERTY(QString              latestError             READ latestError                            NOTIFY latestErrorChanged)
+    Q_PROPERTY(int                  joystickMode            READ joystickMode       WRITE setJoystickMode NOTIFY joystickModeChanged)
+    Q_PROPERTY(QStringList          joystickModes           READ joystickModes                          CONSTANT)
+    Q_PROPERTY(bool                 joystickEnabled         READ joystickEnabled    WRITE setJoystickEnabled NOTIFY joystickEnabledChanged)
+    Q_PROPERTY(bool                 active READ active      WRITE setActive                             NOTIFY activeChanged)
 
-    // Property accessors
-
-    QGeoCoordinate coordinate(void) { return _coordinate; }
-    bool coordinateValid(void)      { return _coordinateValid; }
-    
-    Q_INVOKABLE QString     getMavIconColor();
-    
-    //-- System Messages
-    Q_PROPERTY(bool         messageTypeNone     READ messageTypeNone    NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool         messageTypeNormal   READ messageTypeNormal  NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool         messageTypeWarning  READ messageTypeWarning NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool         messageTypeError    READ messageTypeError   NOTIFY messageTypeChanged)
-    Q_PROPERTY(int          newMessageCount     READ newMessageCount    NOTIFY newMessageCountChanged)
-    Q_PROPERTY(int          messageCount        READ messageCount       NOTIFY messageCountChanged)
-    Q_PROPERTY(QString      latestError         READ latestError        NOTIFY latestErrorChanged)
-    //-- UAV Stats
-    Q_PROPERTY(float        roll                READ roll               NOTIFY rollChanged)
-    Q_PROPERTY(float        pitch               READ pitch              NOTIFY pitchChanged)
-    Q_PROPERTY(float        heading             READ heading            NOTIFY headingChanged)
-    Q_PROPERTY(float        groundSpeed         READ groundSpeed        NOTIFY groundSpeedChanged)
-    Q_PROPERTY(float        airSpeed            READ airSpeed           NOTIFY airSpeedChanged)
-    Q_PROPERTY(float        climbRate           READ climbRate          NOTIFY climbRateChanged)
-    Q_PROPERTY(float        altitudeRelative    READ altitudeRelative   NOTIFY altitudeRelativeChanged)
-    Q_PROPERTY(float        altitudeWGS84       READ altitudeWGS84      NOTIFY altitudeWGS84Changed)
-    Q_PROPERTY(float        altitudeAMSL        READ altitudeAMSL       NOTIFY altitudeAMSLChanged)
-    Q_PROPERTY(float        latitude            READ latitude           NOTIFY coordinateChanged)
-    Q_PROPERTY(float        longitude           READ longitude          NOTIFY coordinateChanged)
-    Q_PROPERTY(double       batteryVoltage      READ batteryVoltage     NOTIFY batteryVoltageChanged)
-    Q_PROPERTY(double       batteryPercent      READ batteryPercent     NOTIFY batteryPercentChanged)
-    Q_PROPERTY(double       batteryConsumed     READ batteryConsumed    NOTIFY batteryConsumedChanged)
-    Q_PROPERTY(QString      systemPixmap        READ systemPixmap       NOTIFY systemPixmapChanged)
-    Q_PROPERTY(int          satelliteCount      READ satelliteCount     NOTIFY satelliteCountChanged)
-    Q_PROPERTY(QString      currentState        READ currentState       NOTIFY currentStateChanged)
-    Q_PROPERTY(QString      systemName          READ systemName         NOTIFY systemNameChanged)
-    Q_PROPERTY(int          satelliteLock       READ satelliteLock      NOTIFY satelliteLockChanged)
-    Q_PROPERTY(double       waypointDistance    READ waypointDistance   NOTIFY waypointDistanceChanged)
-    Q_PROPERTY(uint16_t     currentWaypoint     READ currentWaypoint    NOTIFY currentWaypointChanged)
-    Q_PROPERTY(unsigned int heartbeatTimeout    READ heartbeatTimeout   NOTIFY heartbeatTimeoutChanged)
-    
-    Q_PROPERTY(QmlObjectListModel* missionItems READ missionItemsModel CONSTANT)
-    QmlObjectListModel* missionItemsModel(void);
-    
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
     /// The remainder can be assigned to Vehicle actions.
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     Q_PROPERTY(int manualControlReservedButtonCount READ manualControlReservedButtonCount CONSTANT)
+
+    Q_INVOKABLE QString     getMavIconColor();
+
+    // Property accessors
+
+    QGeoCoordinate coordinate(void) { return _coordinate; }
+    bool coordinateValid(void)      { return _coordinateValid; }
+    QmlObjectListModel* missionItemsModel(void);
+    
     
     typedef enum {
         JoystickModeRC,         ///< Joystick emulates an RC Transmitter
@@ -136,22 +132,16 @@ public:
         JoystickModeMax
     } JoystickMode_t;
     
-    /// The joystick mode associated with this vehicle. Joystick modes are stored keyed by mavlink system id.
-    Q_PROPERTY(int joystickMode READ joystickMode WRITE setJoystickMode NOTIFY joystickModeChanged)
     int joystickMode(void);
     void setJoystickMode(int mode);
     
     /// List of joystick mode names
-    Q_PROPERTY(QStringList joystickModes READ joystickModes CONSTANT)
     QStringList joystickModes(void);
     
-    // Enable/Disable joystick for this vehicle
-    Q_PROPERTY(bool joystickEnabled READ joystickEnabled WRITE setJoystickEnabled NOTIFY joystickEnabledChanged)
     bool joystickEnabled(void);
     void setJoystickEnabled(bool enabled);
     
     // Is vehicle active with respect to current active vehicle in QGC
-    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
     bool active(void);
     void setActive(bool active);
     
@@ -227,7 +217,6 @@ public:
     // Called when the message drop-down is invoked to clear current count
     void resetMessages();
     
-    
     bool            messageTypeNone     () { return _currentMessageType == MessageNone; }
     bool            messageTypeNormal   () { return _currentMessageType == MessageNormal; }
     bool            messageTypeWarning  () { return _currentMessageType == MessageWarning; }
@@ -251,12 +240,8 @@ public:
     double          batteryVoltage      () { return _batteryVoltage; }
     double          batteryPercent      () { return _batteryPercent; }
     double          batteryConsumed     () { return _batteryConsumed; }
-    QString         systemPixmap        () { return _systemPixmap; }
     QString         currentState        () { return _currentState; }
-    QString         systemName          () { return _systemName; }
     int             satelliteLock       () { return _satelliteLock; }
-    double          waypointDistance    () { return _waypointDistance; }
-    uint16_t        currentWaypoint     () { return _currentWaypoint; }
     unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
 
     ParameterLoader* getParameterLoader(void);
@@ -302,13 +287,9 @@ signals:
     void batteryConsumedChanged ();
     void heartbeatTimeoutChanged();
     void currentConfigChanged   ();
-    void systemPixmapChanged    ();
     void satelliteCountChanged  ();
     void currentStateChanged    ();
-    void systemNameChanged      ();
     void satelliteLockChanged   ();
-    void waypointDistanceChanged();
-    void currentWaypointChanged ();
     
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
@@ -324,9 +305,7 @@ private slots:
     void _updateAttitude                    (UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief Attitude from one specific component / redundant autopilot */
     void _updateAttitude                    (UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
-    /** @brief Speed */
     void _updateSpeed                       (UASInterface* uas, double _groundSpeed, double _airSpeed, quint64 timestamp);
-    /** @brief Altitude */
     void _updateAltitude                    (UASInterface* uas, double _altitudeAMSL, double _altitudeWGS84, double _altitudeRelative, double _climbRate, quint64 timestamp);
     void _updateNavigationControllerErrors  (UASInterface* uas, double altitudeError, double speedError, double xtrackError);
     void _updateNavigationControllerData    (UASInterface *uas, float navRoll, float navPitch, float navBearing, float targetBearing, float targetDistance);
@@ -334,14 +313,9 @@ private slots:
     void _updateBatteryRemaining            (UASInterface*, double voltage, double, double percent, int);
     void _updateBatteryConsumedChanged      (UASInterface*, double current_consumed);
     void _updateState                       (UASInterface* system, QString name, QString description);
-    void _updateName                        (const QString& name);
-    void _setSystemType                     (UASInterface* uas, unsigned int systemType);
     void _heartbeatTimeout                  (bool timeout, unsigned int ms);
-    void _updateCurrentWaypoint             (quint16 id);
-    void _updateWaypointDistance            (double distance);
     void _setSatelliteCount                 (double val, QString name);
     void _setSatLoc                         (UASInterface* uas, int fix);
-    void _updateWaypointViewOnly            (int uas, MissionItem* wp);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -355,7 +329,6 @@ private:
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
 
-    bool    _isAirplane                     ();
     void    _addChange                      (int id);
     float   _oneDecimal                     (float value);
 
@@ -412,11 +385,7 @@ private:
     double          _batteryPercent;
     double          _batteryConsumed;
     QString         _currentState;
-    QString         _systemName;
-    QString         _systemPixmap;
     unsigned int    _currentHeartbeatTimeout;
-    double          _waypointDistance;
-    quint16         _currentWaypoint;
     int             _satelliteCount;
     int             _satelliteLock;
     int             _updateCount;

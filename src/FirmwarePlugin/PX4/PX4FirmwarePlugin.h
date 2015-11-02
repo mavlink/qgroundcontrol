@@ -34,11 +34,8 @@ class PX4FirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
 
-    DECLARE_QGC_SINGLETON(PX4FirmwarePlugin, FirmwarePlugin)
-    
 public:
     // Overrides from FirmwarePlugin
-    
     virtual bool isCapable(FirmwareCapabilities capabilities);
     virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
     virtual QStringList flightModes(void);
@@ -52,9 +49,6 @@ public:
     virtual QString getDefaultComponentIdParam(void) const { return QString("SYS_AUTOSTART"); }
 
 private:
-    /// All access to singleton is through AutoPilotPluginManager::instance
-    PX4FirmwarePlugin(void);
-
     PX4ParameterMetaData    _parameterMetaData;
 };
 

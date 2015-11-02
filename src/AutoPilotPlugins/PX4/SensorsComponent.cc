@@ -31,8 +31,8 @@
 
 // These two list must be kept in sync
 
-SensorsComponent::SensorsComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent) :
-    PX4Component(uas, autopilot, parent),
+SensorsComponent::SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+    PX4Component(vehicle, autopilot, parent),
     _name(tr("Sensors"))
 {
 
@@ -87,11 +87,15 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
     QStringList triggers;
     
     triggers << "CAL_MAG0_ID" << "CAL_GYRO0_ID" << "CAL_ACC0_ID";
-    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING ||
-        _uas->getSystemType() == MAV_TYPE_VTOL_DUOROTOR ||
-        _uas->getSystemType() == MAV_TYPE_VTOL_QUADROTOR ||
-        _uas->getSystemType() == MAV_TYPE_VTOL_TILTROTOR) {
-        triggers << "SENS_DPRES_OFF";
+    switch (_vehicle->vehicleType()) {
+        case MAV_TYPE_FIXED_WING:
+        case MAV_TYPE_VTOL_DUOROTOR:
+        case MAV_TYPE_VTOL_QUADROTOR:
+        case MAV_TYPE_VTOL_TILTROTOR:
+            triggers << "SENS_DPRES_OFF";
+            break;
+        default:
+            break;
     }
     
     return triggers;
@@ -115,13 +119,16 @@ QUrl SensorsComponent::summaryQmlSource(void) const
 {
     QString summaryQml;
     
-    if (_uas->getSystemType() == MAV_TYPE_FIXED_WING ||
-        _uas->getSystemType() == MAV_TYPE_VTOL_DUOROTOR ||
-        _uas->getSystemType() == MAV_TYPE_VTOL_QUADROTOR ||
-        _uas->getSystemType() == MAV_TYPE_VTOL_TILTROTOR) {
-        summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
-    } else {
-        summaryQml = "qrc:/qml/SensorsComponentSummary.qml";
+    switch (_vehicle->vehicleType()) {
+        case MAV_TYPE_FIXED_WING:
+        case MAV_TYPE_VTOL_DUOROTOR:
+        case MAV_TYPE_VTOL_QUADROTOR:
+        case MAV_TYPE_VTOL_TILTROTOR:
+            summaryQml = "qrc:/qml/SensorsComponentSummaryFixedWing.qml";
+            break;
+        default:
+            summaryQml = "qrc:/qml/SensorsComponentSummary.qml";
+            break;
     }
     
     return QUrl::fromUserInput(summaryQml);

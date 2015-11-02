@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<manifest package="org.mavlink.qgroundcontrol" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="2.7.1-668-g4ad2975" android:versionCode="8" android:installLocation="auto">
+<manifest package="org.mavlink.qgroundcontrol" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="2.7.1-801-g075d5af" android:versionCode="2109" android:installLocation="auto">
     <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="-- %%INSERT_APP_NAME%% --" android:icon="@drawable/icon">
         <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qgroundcontrol.qgchelper.UsbDeviceJNI" android:label="-- %%INSERT_APP_NAME%% --" android:screenOrientation="sensorLandscape" android:launchMode="singleTask">
             <intent-filter>
@@ -48,7 +48,7 @@
             <!-- Background running -->
         </activity>
     </application>
-    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="22"/>
+    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="22"/>
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
 
     <!-- Needed to keep working while 'asleep' -->

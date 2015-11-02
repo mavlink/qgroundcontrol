@@ -40,8 +40,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QProcess>
 #include <LinkInterface.h>
 #include "QGCConfig.h"
-#include "UASInterface.h"
 #include "QGCHilLink.h"
+#include "Vehicle.h"
 
 class QGCXPlaneLink : public QGCHilLink
 {
@@ -49,7 +49,7 @@ class QGCXPlaneLink : public QGCHilLink
     //Q_INTERFACES(QGCXPlaneLinkInterface:LinkInterface)
 
 public:
-    QGCXPlaneLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
+    QGCXPlaneLink(Vehicle* vehicle, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
     ~QGCXPlaneLink();
 
     /**
@@ -164,7 +164,7 @@ public slots:
     void setRandomAttitude();
 
 protected:
-    UASInterface* mav;
+    Vehicle* _vehicle;
     QString name;
     QHostAddress localHost;
     quint16 localPort;

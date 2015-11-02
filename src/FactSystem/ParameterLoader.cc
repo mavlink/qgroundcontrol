@@ -708,9 +708,9 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
     return errors;
 }
 
-void ParameterLoader::writeParametersToStream(QTextStream &stream, const QString& name)
+void ParameterLoader::writeParametersToStream(QTextStream &stream)
 {
-    stream << "# Onboard parameters for system " << name << "\n";
+    stream << "# Onboard parameters for vehicle " << _vehicle->id() << "\n";
     stream << "#\n";
     stream << "# MAV ID  COMPONENT ID  PARAM NAME  VALUE (FLOAT)\n";
 

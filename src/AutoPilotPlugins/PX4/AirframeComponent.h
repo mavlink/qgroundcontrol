@@ -35,7 +35,7 @@ class AirframeComponent : public PX4Component
     Q_OBJECT
     
 public:
-    AirframeComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    AirframeComponent(Vehicle* vehicles, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from PX4Component
     virtual QStringList setupCompleteChangedTriggerList(void) const;

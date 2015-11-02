@@ -35,7 +35,7 @@ class PowerComponent : public PX4Component
     Q_OBJECT
     
 public:
-    PowerComponent(UASInterface* uas, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from PX4Component
     virtual QStringList setupCompleteChangedTriggerList(void) const;
