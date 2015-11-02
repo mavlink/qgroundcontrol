@@ -81,6 +81,7 @@ install:
       && sh -e /etc/init.d/xvfb start
       ;
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+         brew update;
          brew update
       && brew install qt5
       && export PATH=/usr/local/opt/qt5/bin:$PATH
