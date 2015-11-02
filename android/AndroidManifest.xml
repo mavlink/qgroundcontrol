@@ -48,7 +48,7 @@
             <!-- Background running -->
         </activity>
     </application>
-    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="22"/>
+    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="22"/>
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
 
     <!-- Needed to keep working while 'asleep' -->
