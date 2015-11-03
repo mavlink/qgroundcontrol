@@ -25,6 +25,7 @@ import QtQuick 2.5
 import QtQuick.Controls 1.2
 import QtGraphicalEffects 1.0
 import QtQuick.Controls.Styles 1.2
+import QtQuick.Dialogs 1.1
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -441,7 +442,19 @@ Row {
         MouseArea {
             anchors.fill:   parent
             onClicked: {
+                armDialog.visible = true
+            }
+        }
+        MessageDialog {
+            id:         armDialog
+            visible:    false
+            icon:       StandardIcon.Warning
+            standardButtons: StandardButton.Yes | StandardButton.No
+            title:      activeVehicle.armed ? "Disarming Vehicle" : "Arming Vehicle"
+            text:       activeVehicle.armed ? "Do you want to disarm? This will cut power to all motors." : "Do you want to arm? This will enable all motors."
+            onYes: {
                 activeVehicle.armed = !activeVehicle.armed
+                armDialog.visible = false
             }
         }
     }
