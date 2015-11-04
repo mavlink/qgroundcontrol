@@ -151,8 +151,8 @@ QGCView {
                             height:         firstColumnWidth * 0.65
                             Image {
                                 id:             icon
-                                width:          parent.width
-                                height:         parent.width * 0.5
+                                width:          parent.width * 0.75
+                                height:         width * 0.5
                                 mipmap:         true
                                 fillMode:       Image.PreserveAspectFit
                                 visible:        false
@@ -164,7 +164,7 @@ QGCView {
                                 id:             iconOverlay
                                 anchors.fill:   icon
                                 source:         icon
-                                color:          palette.button
+                                color:          palette.text
                             }
                             anchors.verticalCenter: parent.verticalCenter
                         }
