@@ -21,7 +21,7 @@
 
  ======================================================================*/
 
-import QtQuick 2.2
+import QtQuick 2.5
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Dialogs 1.2
@@ -180,7 +180,7 @@ QGCView {
                     Rectangle {
                         id:     airframeBackground
                         width:  _boxWidth
-                        height: ScreenTools.defaultFontPixelWidth * 22.5
+                        height: ScreenTools.defaultFontPixelHeight * 14
                         color:  (modelData.name != controller.currentAirframeType) ? qgcPal.windowShade : qgcPal.buttonHighlight
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.75
@@ -210,22 +210,22 @@ QGCView {
                             id:                 image
                             anchors.topMargin:  innerMargin
                             anchors.top:        title.bottom
-                            x:                  innerMargin
-                            width:              parent.width - (innerMargin * 2)
+                            width:              parent.width * 0.75
                             height:             parent.height - title.height - combo.height - (innerMargin * 3)
                             fillMode:           Image.PreserveAspectFit
                             smooth:             true
+                            mipmap:             true
                             source:             modelData.imageResource
-
-
+                            anchors.horizontalCenter: parent.horizontalCenter
                         }
 
                         QGCCheckBox {
                             id:             airframeCheckBox
-                            anchors.bottom: image.bottom
-                            anchors.right:  image.right
                             checked:        modelData.name == controller.currentAirframeType
                             exclusiveGroup: airframeTypeExclusive
+                            anchors.bottom: image.bottom
+                            anchors.right:  parent.right
+                            anchors.rightMargin: innerMargin
 
                             onCheckedChanged: {
                                 if (checked && combo.currentIndex != -1) {
