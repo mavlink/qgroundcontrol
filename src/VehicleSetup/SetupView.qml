@@ -115,6 +115,11 @@ Rectangle {
         panelLoader.source = "DebugWindow.qml";
     }
 
+    function showGeneralPanel()
+    {
+        panelLoader.source = "GeneralSettings.qml";
+    }
+
     Component.onCompleted: showSummaryPanel()
 
     Connections {
@@ -239,6 +244,15 @@ Rectangle {
                     text:           "SUMMARY"
 
                     onClicked: showSummaryPanel()
+                }
+
+                SubMenuButton {
+                    width:          _buttonWidth
+                    setupIndicator: false
+                    exclusiveGroup: setupButtonGroup
+                    visible:        true
+                    text:           "GENERAL"
+                    onClicked: showGeneralPanel()
                 }
 
                 SubMenuButton {

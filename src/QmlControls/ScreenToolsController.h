@@ -115,7 +115,7 @@ public:
 #endif
 
 signals:
-    void repaintRequested(void);
+    void repaintRequested();
 
 private slots:
     void _updateCanvas();

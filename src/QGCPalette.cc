@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 /// @file
@@ -34,7 +34,7 @@ QList<QGCPalette*>   QGCPalette::_paletteObjects;
 QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
 
 QColor QGCPalette::_window[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#ffffff"), QColor("#ffffff") },
+    { QColor("#f9f8f4"), QColor("#f9f8f4") },
     { QColor(0x22, 0x22, 0x22), QColor(0x22, 0x22, 0x22) }
 };
 
@@ -54,8 +54,8 @@ QColor QGCPalette::_text[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
 };
 
 QColor QGCPalette::_warningText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-		{ QColor(0xFF, 0xFF, 0x00), QColor(0xFF, 0xFF, 0x00) },
-		{ QColor(0xFF, 0xFF, 0x00), QColor(0xFF, 0xFF, 0x00) }
+    { QColor("#cc0808"), QColor("#cc0808") },
+    { QColor("#e4e428"), QColor("#e4e428") }
 };
 
 QColor QGCPalette::_button[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
@@ -79,8 +79,8 @@ QColor QGCPalette::_buttonHighlightText[QGCPalette::_cThemes][QGCPalette::_cColo
 };
 
 QColor QGCPalette::_primaryButton[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0x58, 0x58, 0x58), QColor(152, 255, 252) },
-    { QColor(0x58, 0x58, 0x58), QColor(152, 255, 252) },
+    { QColor(0x58, 0x58, 0x58), QColor("#badec5") },
+    { QColor(0x58, 0x58, 0x58), QColor("#badec5") },
 };
 
 QColor QGCPalette::_primaryButtonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {

@@ -64,6 +64,7 @@
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
         <file alias="DebugWindow.qml">src/VehicleSetup/DebugWindow.qml</file>
+        <file alias="GeneralSettings.qml">src/VehicleSetup/GeneralSettings.qml</file>
 
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
