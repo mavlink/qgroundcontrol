@@ -30,8 +30,7 @@ CheckBox {
                 text:           control.text
                 antialiasing:   true
                 font.pixelSize: ScreenTools.defaultFontPixelSize
-            //  This messes up when a *width*, which is wider than the control is given
-            //  anchors.centerIn: parent
+                anchors.verticalCenter: parent.verticalCenter
                 color: control.__qgcPal.text
             }
         }
