@@ -106,13 +106,15 @@ QGCView {
 
         Flickable {
             anchors.fill:       parent
-            flickableDirection: Flickable.VerticalFlick
+            clip:               true
             contentHeight:      innerColumn.height
+            contentWidth:       panel.width
+            boundsBehavior:     Flickable.StopAtBounds
+            flickableDirection: Flickable.VerticalFlick
 
             Column {
                 id:             innerColumn
-                anchors.left:   parent.left
-                anchors.right:  parent.right
+                width:          panel.width
                 spacing:        ScreenTools.defaultFontPixelHeight
 
                 QGCLabel {
@@ -246,6 +248,7 @@ QGCView {
 
                         QGCButton {
                             text:       "Calibrate"
+                            width:      ScreenTools.defaultFontPixelWidth * 20
                             onClicked:  controller.calibrateEsc()
                         }
                     }
@@ -279,11 +282,13 @@ QGCView {
 
                         QGCButton {
                             text:       "Start Configuration"
+                            width:      ScreenTools.defaultFontPixelWidth * 20
                             onClicked:  controller.busConfigureActuators()
                         }
 
                         QGCButton {
                             text:       "End Configuration"
+                            width:      ScreenTools.defaultFontPixelWidth * 20
                             onClicked:  controller.StopBusConfigureActuators()
                         }
                     }

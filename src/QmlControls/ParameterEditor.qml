@@ -62,7 +62,7 @@ QGCView {
         id: editorDialogComponent
 
         ParameterEditorDialog { fact: __editorDialogFact }
-    } // Component - Editor Dialog
+    }
 
     Component {
         id: searchDialogComponent
@@ -207,14 +207,17 @@ QGCView {
         id: groupedViewComponent
 
         Item {
-            ScrollView {
-                id :	groupScroll
-                width:	defaultTextWidth * 25
-                height: parent.height
-
-                Component.onCompleted: flickableItem.flickableDirection = Flickable.VerticalFlick
-
+            Flickable {
+                id :                groupScroll
+                width:              defaultTextWidth * 25
+                height:             parent.height
+                clip:               true
+                contentHeight:      groupedViewComponentColumn.height
+                contentWidth:       groupedViewComponentColumn.width
+                boundsBehavior:     Flickable.StopAtBounds
+                flickableDirection: Flickable.VerticalFlick
                 Column {
+                    id: groupedViewComponentColumn
                     Repeater {
                         model: controller.componentIds
 
@@ -261,24 +264,27 @@ QGCView {
                         } // Column - Component
                     } // Repeater - Components
                 } // Column - Component
-            } // ScrollView - Groups
+            } // Flickable - Groups
 
-            ScrollView {
+            Flickable {
                 id:             factScrollView
                 anchors.left:   groupScroll.right
                 anchors.right:  parent.right
                 height:         parent.height
+                contentHeight:  factRowsLoader.height
+                contentWidth:   panel.width * 2 //-- TODO: Find how to get actual resulting width. "factRowsLoader.sourceComponent.width" doesn't work.
+                boundsBehavior: Flickable.StopAtBounds
+                clip:           true
 
                 Loader {
                     id:                 factRowsLoader
-                    width:              factScrollView.width
                     sourceComponent:    factRowsComponent
 
                     property int componentId:       controller.componentIds[0]
                     property string group:          controller.getGroupsForComponent(controller.componentIds[0])[0]
                     property var parameterNames:    controller.getParametersForGroup(componentId, group)
                 }
-            } // ScrollView - Facts
+            } // Flickable - Facts
         } // Item
     } // Component - groupedViewComponent
 
@@ -291,6 +297,8 @@ QGCView {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 height:         parent.height
+                horizontalScrollBarPolicy:  Qt.ScrollBarAlwaysOff
+                verticalScrollBarPolicy:    Qt.ScrollBarAlwaysOff
 
                 Loader {
                     id:                 factRowsLoader

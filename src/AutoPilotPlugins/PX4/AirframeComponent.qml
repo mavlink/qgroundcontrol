@@ -39,6 +39,28 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
+    property real _minW:        ScreenTools.defaultFontPixelWidth * 30
+    property real _boxWidth:    _minW
+    property real _boxSpace:    ScreenTools.defaultFontPixelWidth
+
+    function computeDimensions() {
+        var sw  = 0
+        var rw  = 0
+        var idx = Math.floor(scroll.width / (_minW + ScreenTools.defaultFontPixelWidth))
+        if(idx < 1) {
+            _boxWidth = scroll.width
+            _boxSpace = 0
+        } else {
+            _boxSpace = 0
+            if(idx > 1) {
+                _boxSpace = ScreenTools.defaultFontPixelWidth
+                sw = _boxSpace * (idx - 1)
+            }
+            rw = scroll.width - sw
+            _boxWidth = rw / idx
+        }
+    }
+
     AirframeComponentController {
         id:         controller
         factPanel:  panel
@@ -127,16 +149,25 @@ QGCView {
             width:          10
         }
 
-        ScrollView {
-            id:                         scroll
-            anchors.top:                lastSpacer.bottom
-            anchors.bottom:             parent.bottom
-            width:                      parent.width
-            horizontalScrollBarPolicy:  Qt.ScrollBarAlwaysOff
+        Flickable {
+            id:             scroll
+            anchors.top:    lastSpacer.bottom
+            anchors.bottom: parent.bottom
+            width:          parent.width
+            clip:           true
+            contentHeight:  flowView.height
+            contentWidth:   parent.width
+            boundsBehavior:     Flickable.StopAtBounds
+            flickableDirection: Flickable.VerticalFlick
+
+            onWidthChanged: {
+                computeDimensions()
+            }
 
             Flow {
+                id:         flowView
                 width:      scroll.width
-                spacing:    ScreenTools.defaultFontPixelWidth
+                spacing:    _boxSpace
 
                 ExclusiveGroup {
                     id: airframeTypeExclusive
@@ -148,8 +179,8 @@ QGCView {
                     // Outer summary item rectangle
                     Rectangle {
                         id:     airframeBackground
-                        width:  ScreenTools.defaultFontPixelWidth * 30
-                        height: width * .75
+                        width:  _boxWidth
+                        height: ScreenTools.defaultFontPixelWidth * 22.5
                         color:  (modelData.name != controller.currentAirframeType) ? qgcPal.windowShade : qgcPal.buttonHighlight
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.75
