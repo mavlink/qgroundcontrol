@@ -356,11 +356,10 @@ QGCView {
 
                         QGCCheckBox {
                             enabled:    allowEnableDisable
-                            text:       _activeJoystick.calibrated ? (rcInMode.value < 2 ? "Enable joystick input, disable RC input" : "Enable/Disable not allowed (COM_RC_IN_MODE=2)") : "Enable/Disable not allowed (Calibrate First)"
+                            text:       _activeJoystick.calibrated ? "Enable joystick input" : "Enable/Disable not allowed (Calibrate First)"
                             checked:    _activeVehicle.joystickEnabled
 
-                            property bool allowEnableDisable:   _activeJoystick.calibrated && rcInMode.value < 2
-                            property Fact rcInMode:             controller.getParameterFact(-1, "COM_RC_IN_MODE")
+                            property bool allowEnableDisable:   _activeJoystick.calibrated
 
                             onClicked:  _activeVehicle.joystickEnabled = checked
                         }
