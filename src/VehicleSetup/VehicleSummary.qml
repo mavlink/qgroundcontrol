@@ -32,81 +32,126 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
 
 Rectangle {
-    color: qgcPal.window
+    id:             _summaryRoot
+    anchors.fill:   parent
+    color:          qgcPal.window
+
+    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 30
+    property real _summaryBoxWidth: _minSummaryW
+    property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth
+
+    function computeSummaryBoxSize() {
+        var sw  = 0
+        var rw  = 0
+        var idx = Math.floor(_summaryRoot.width / (_minSummaryW + ScreenTools.defaultFontPixelWidth))
+        if(idx < 1) {
+            _summaryBoxWidth = _summaryRoot.width
+            _summaryBoxSpace = 0
+        } else {
+            _summaryBoxSpace = 0
+            if(idx > 1) {
+                _summaryBoxSpace = ScreenTools.defaultFontPixelWidth
+                sw = _summaryBoxSpace * (idx - 1)
+            }
+            rw = _summaryRoot.width - sw
+            _summaryBoxWidth = rw / idx
+        }
+    }
+
+    function capitalizeWords(sentence) {
+        return sentence.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+    }
 
     QGCPalette {
         id:                 qgcPal
         colorGroupEnabled:  enabled
     }
 
-    Column {
-        anchors.fill:   parent
-        spacing:        ScreenTools.defaultFontPixelHeight
+    Component.onCompleted: {
+        computeSummaryBoxSize()
+    }
 
-        QGCLabel {
-            width:			parent.width
-			wrapMode:		Text.WordWrap
-			color:			setupComplete ? qgcPal.text : qgcPal.warningText
-            font.pixelSize: ScreenTools.mediumFontPixelSize
-			text:           setupComplete ?
-                                "Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component." :
-                                "WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left."
+    onWidthChanged: {
+        computeSummaryBoxSize()
+    }
 
-            property bool setupComplete: multiVehicleManager.activeVehicle.autopilot.setupComplete
-        }
+    Flickable {
+        clip:               true
+        anchors.fill:       parent
+        contentHeight:      summaryColumn.height
+        contentWidth:       _summaryRoot.width
+        flickableDirection: Flickable.VerticalFlick
+        boundsBehavior:     Flickable.StopAtBounds
 
-        Flow {
-            width:      parent.width
-            spacing:    ScreenTools.defaultFontPixelWidth
+        Column {
+            id:             summaryColumn
+            width:          _summaryRoot.width
+            spacing:        ScreenTools.defaultFontPixelHeight
 
-            Repeater {
-                model: multiVehicleManager.activeVehicle.autopilot.vehicleComponents
+            QGCLabel {
+                width:			parent.width
+                wrapMode:		Text.WordWrap
+                color:			setupComplete ? qgcPal.text : qgcPal.warningText
+                font.pixelSize: ScreenTools.mediumFontPixelSize
+                text:           setupComplete ?
+                                    "Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component." :
+                                    "WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left."
 
+                property bool setupComplete: multiVehicleManager.activeVehicle.autopilot.setupComplete
+            }
 
-                // Outer summary item rectangle
-                Rectangle {
-                    width:  ScreenTools.defaultFontPixelWidth * 28
-                    height: ScreenTools.defaultFontPixelHeight * 13
-                    color:  qgcPal.window
+            Flow {
+                id:         _flowCtl
+                width:      _summaryRoot.width
+                spacing:    _summaryBoxSpace
 
-                    readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
+                Repeater {
+                    model: multiVehicleManager.activeVehicle.autopilot.vehicleComponents
 
-                    // Title bar
+                    // Outer summary item rectangle
                     Rectangle {
-                        id:     titleBar
-                        width:  parent.width
-                        height: titleHeight
-                        color:  qgcPal.windowShade
+                        width:  _summaryBoxWidth
+                        height: ScreenTools.defaultFontPixelHeight * 13
+                        color:  qgcPal.window
 
-                        // Title text
-                        QGCLabel {
-                            anchors.fill:           parent
-                            verticalAlignment:      TextEdit.AlignVCenter
-                            horizontalAlignment:    TextEdit.AlignHCenter
-                            text:                   modelData.name.toUpperCase()
-                        }
+                        readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
-                        // Setup indicator
+                        // Title bar
                         Rectangle {
-                            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 3
-                            anchors.right:          parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            width:                  10//radius * 2
-                            height:                 10//height
-                            radius:                 (ScreenTools.defaultFontPixelHeight * .75) * 2
-                            color:                  modelData.setupComplete ? "#00d932" : "red"
-                            visible:                modelData.requiresSetup
+                            id:     titleBar
+                            width:  parent.width
+                            height: titleHeight
+                            color:  qgcPal.windowShade
+
+                            // Title text
+                            QGCLabel {
+                                anchors.fill:           parent
+                                verticalAlignment:      TextEdit.AlignVCenter
+                                horizontalAlignment:    TextEdit.AlignHCenter
+                                text:                   capitalizeWords(modelData.name)
+                            }
+
+                            // Setup indicator
+                            Rectangle {
+                                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 3
+                                anchors.right:          parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                width:                  ScreenTools.defaultFontPixelWidth
+                                height:                 width
+                                radius:                 width / 2
+                                color:                  modelData.setupComplete ? "#00d932" : "red"
+                                visible:                modelData.requiresSetup
+                            }
                         }
-                    }
 
-                    // Summary Qml
-                    Rectangle {
-                        anchors.top:    titleBar.bottom
-                        width:          parent.width
-
-                        Loader {
-                            anchors.fill:   parent
-                            source:         modelData.summaryQmlSource
+                        // Summary Qml
+                        Rectangle {
+                            anchors.top:    titleBar.bottom
+                            width:          parent.width
+                            Loader {
+                                anchors.fill:   parent
+                                source:         modelData.summaryQmlSource
+                            }
                         }
                     }
                 }

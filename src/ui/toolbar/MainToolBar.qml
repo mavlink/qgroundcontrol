@@ -45,6 +45,7 @@ Rectangle {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     property var  activeVehicle:        multiVehicleManager.activeVehicle
+    property var  mainWindow:           null
     property bool isMessageImportant:   activeVehicle ? !activeVehicle.messageTypeNormal && !activeVehicle.messageTypeNone : false
     property bool isBackgroundDark:     true
 
@@ -395,22 +396,27 @@ Rectangle {
         height:         ScreenTools.defaultFontPixelHeight * ScreenTools.fontHRatio * 6
         color:          Qt.rgba(0,0,0,0.65)
         visible:        false
-        QGCLabel {
-            id:                 toolBarMessage
+        ScrollView {
             width:              toolBarMessageArea.width - toolBarMessageCloseButton.width
-            wrapMode:           Text.WordWrap
-            color:              qgcPal.warningText
-            lineHeightMode:     Text.ProportionalHeight
-            lineHeight:         1.25
-            anchors.left:       parent.left
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            anchors.margins:    tbSpacing
+            frameVisible:       false
+            horizontalScrollBarPolicy:  Qt.ScrollBarAlwaysOff
+            verticalScrollBarPolicy:    Qt.ScrollBarAlwaysOff
+            QGCLabel {
+                id:                 toolBarMessage
+                width:              toolBarMessageArea.width - toolBarMessageCloseButton.width
+                wrapMode:           Text.WordWrap
+                color:              qgcPal.warningText
+                lineHeightMode:     Text.ProportionalHeight
+                lineHeight:         1.15
+                anchors.margins:    tbSpacing
+            }
         }
         QGCButton {
             id:                 toolBarMessageCloseButton
             primary:            true
-            text:               "Close Message"
+            text:               "Close"
             anchors.right:      parent.right
             anchors.bottom:     parent.bottom
             anchors.margins:    tbSpacing

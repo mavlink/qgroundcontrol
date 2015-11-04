@@ -98,6 +98,7 @@ Item {
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        parent.top
+        mainWindow:         mainWindow
         isBackgroundDark:   flightView.isBackgroundDark
         z:                  QGroundControl.zOrderTopMost
     }
@@ -118,11 +119,9 @@ Item {
 
     Loader {
         id:                 setupViewLoader
-        anchors.bottom:     parent.bottom
-        anchors.right:      parent.right
-        anchors.left:       parent.left
-        height:             mainWindow.avaiableHeight
+        anchors.fill:       parent
         visible:            false
         property var tabletPosition:    mainWindow.tabletPosition
     }
+
 }
