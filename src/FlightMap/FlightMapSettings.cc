@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 #include "FlightMapSettings.h"
@@ -43,7 +43,7 @@ void FlightMapSettings::setToolbox(QGCToolbox *toolbox)
 
     qmlRegisterUncreatableType<FlightMapSettings> ("QGroundControl", 1, 0, "FlightMapSetting", "Reference only");
 
-    _supportedMapProviders << "Bing" << "Google" << "Open";
+    _supportedMapProviders << "Bing" << "Google" << "OpenStreetMap";
 
     _loadSettings();
 }
@@ -51,7 +51,7 @@ void FlightMapSettings::setToolbox(QGCToolbox *toolbox)
 void FlightMapSettings::_storeSettings(void)
 {
     QSettings settings;
-    
+
     settings.beginGroup(_settingsGroup);
     settings.setValue(_mapProviderKey, _supportedMapProviders.contains(_mapProvider) ? _mapProvider : _defaultMapProvider);
 }
@@ -59,14 +59,14 @@ void FlightMapSettings::_storeSettings(void)
 void FlightMapSettings::_loadSettings(void)
 {
     QSettings settings;
-    
+
     settings.beginGroup(_settingsGroup);
     _mapProvider = settings.value(_mapProviderKey, _defaultMapProvider).toString();
-    
+
     if (!_supportedMapProviders.contains(_mapProvider)) {
         _mapProvider = _defaultMapProvider;
     }
-    
+
     _setMapTypesForCurrentProvider();
 }
 
@@ -88,22 +88,22 @@ void FlightMapSettings::setMapProvider(const QString& mapProvider)
 void FlightMapSettings::_setMapTypesForCurrentProvider(void)
 {
     _mapTypes.clear();
-    
+
     if (_mapProvider == "Bing") {
         _mapTypes << "Street Map" << "Satellite Map" << "Hybrid Map";
     } else if (_mapProvider == "Google") {
         _mapTypes << "Street Map" << "Satellite Map" << "Terrain Map";
-    } else if (_mapProvider == "Open") {
+    } else if (_mapProvider == "OpenStreetMap") {
         _mapTypes << "Street Map";
     }
-    
+
     emit mapTypesChanged(_mapTypes);
 }
 
 QString FlightMapSettings::mapTypeForMapName(const QString& mapName)
 {
     QSettings settings;
-    
+
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(mapName);
     settings.beginGroup(_mapProvider);
@@ -113,7 +113,7 @@ QString FlightMapSettings::mapTypeForMapName(const QString& mapName)
 void FlightMapSettings::setMapTypeForMapName(const QString& mapName, const QString& mapType)
 {
     QSettings settings;
-    
+
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(mapName);
     settings.beginGroup(_mapProvider);
@@ -123,7 +123,7 @@ void FlightMapSettings::setMapTypeForMapName(const QString& mapName, const QStri
 void FlightMapSettings::saveMapSetting (const QString &mapName, const QString& key, const QString& value)
 {
     QSettings settings;
-    
+
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(mapName);
     settings.setValue(key, value);
@@ -132,7 +132,7 @@ void FlightMapSettings::saveMapSetting (const QString &mapName, const QString& k
 QString FlightMapSettings::loadMapSetting (const QString &mapName, const QString& key, const QString& defaultValue)
 {
     QSettings settings;
-    
+
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(mapName);
     return settings.value(key, defaultValue).toString();
