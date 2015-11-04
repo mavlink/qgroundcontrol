@@ -813,25 +813,7 @@ bool Vehicle::joystickEnabled(void)
 
 void Vehicle::setJoystickEnabled(bool enabled)
 {
-    // The magic parameter will go away,
-    // until then don't mess with the logic here!
-    Fact* fact = _autopilotPlugin->getParameterFact(FactSystem::defaultComponentId, "COM_RC_IN_MODE");
-    if (!fact) {
-        qCWarning(JoystickLog) << "Missing COM_RC_IN_MODE parameter";
-    }
-    
-    // Any value greater than one
-    // indicates special handling on
-    // the autopilot side. Force the
-    // joystick to on.
-    if (fact->value().toInt() > 1) {
-        // Mandatory in this setting
-        _joystickEnabled = true;
-    } else {
-        fact->setValue(enabled ? 1 : 0);
-        _joystickEnabled = enabled;
-    }
-    
+    _joystickEnabled = enabled;
     _startJoystick(_joystickEnabled);
     _saveSettings();
 }
