@@ -35,8 +35,8 @@
       <output name="MAIN2">right aileron</output>
       <output name="MAIN4">throttle</output>
     </airframe>
-    <airframe id="3033" maintainer="Simon Wilks &lt;simon@px4.io&gt;" name="Wing Wing (aka Z-84) Flying Wing">
-      <maintainer>Simon Wilks &lt;simon@px4.io&gt;</maintainer>
+    <airframe id="3033" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Wing Wing (aka Z-84) Flying Wing">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Flying Wing</type>
       <url>https://pixhawk.org/platforms/planes/z-84_wing_wing</url>
       <output name="AUX1">feed-through of RC AUX1 channel</output>
@@ -72,6 +72,15 @@
     <airframe id="11001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic Hexa coaxial geometry">
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Hexarotor Coaxial</type>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+      <output angle="60" direction="CW" name="MAIN1">front right top, CW</output>
+      <output angle="60" direction="CCW" name="MAIN2">front right bottom, CCW</output>
+      <output angle="180" direction="CW" name="MAIN3">back top, CW</output>
+      <output angle="180" direction="CCW" name="MAIN4">back bottom, CCW</output>
+      <output angle="-60" direction="CW" name="MAIN5">front left top, CW</output>
+      <output angle="-60" direction="CCW" name="MAIN6">front left bottom, CCW</output>
     </airframe>
   </airframe_group>
   <airframe_group image="AirframeHexaRotorX.png" name="Hexarotor x">
@@ -136,6 +145,10 @@
     </airframe>
   </airframe_group>
   <airframe_group image="AirframeQuadRotorX.png" name="Quadrotor x">
+    <airframe id="10020" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR DIY Quad">
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
     <airframe id="4001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic Quadrotor X config">
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
@@ -251,6 +264,16 @@
       <output name="MAIN3">throttle</output>
       <output name="MAIN4">rudder</output>
       <output name="MAIN5">flaps</output>
+    </airframe>
+  </airframe_group>
+  <airframe_group image="" name="Standard VTOL">
+    <airframe id="13005" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="Generic AAERT tailplane airframe with Quad VTOL.">
+      <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
+      <type>Standard VTOL</type>
+    </airframe>
+    <airframe id="13006" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="Generic quad delta VTOL.">
+      <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
+      <type>Standard VTOL</type>
     </airframe>
   </airframe_group>
   <airframe_group image="" name="Tricopter Y+">
