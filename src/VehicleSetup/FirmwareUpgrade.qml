@@ -39,7 +39,7 @@ QGCView {
 
     // User visible strings
     readonly property string title:             "FIRMWARE"
-    readonly property string highlightPrefix:   "<font color=\"yellow\">"
+    readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
     readonly property string highlightSuffix:   "</font>"
     readonly property string welcomeText:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
     readonly property string plugInText:        highlightPrefix + "Plug in your device" + highlightSuffix + " via USB to " + highlightPrefix + "start" + highlightSuffix + " firmware upgrade"
@@ -79,12 +79,12 @@ QGCView {
             initialBoardSearch = false
             statusTextArea.append(plugInText)
         }
- 
+
         onBoardGone: {
             initialBoardSearch = false
             statusTextArea.append(plugInText)
         }
- 
+
         onBoardFound: {
             if (initialBoardSearch) {
                 // Board was found right away, so something is already plugged in before we've started upgrade
@@ -138,7 +138,7 @@ QGCView {
 
         QGCViewDialog {
             anchors.fill: parent
- 
+
             property bool showFirmwareTypeSelection: advancedMode.checked
             property bool px4Flow:              controller.boardType == "PX4 Flow"
 
@@ -156,16 +156,16 @@ QGCView {
                 }
                 controller.flash(stack, firmwareType, vehicleType)
             }
- 
+
             function reject() {
                 cancelFlash()
                 hideDialog()
             }
- 
+
             ExclusiveGroup {
                 id: firmwareGroup
             }
- 
+
             ListModel {
                 id: firmwareTypeList
 
@@ -186,7 +186,7 @@ QGCView {
                     firmwareType:   FirmwareUpgradeController.CustomFirmware
                  }
             }
- 
+
             ListModel {
                 id: vehicleTypeList
 
@@ -240,7 +240,7 @@ QGCView {
                     firmwareType:   FirmwareUpgradeController.CustomFirmware
                  }
             }
- 
+
             Column {
                 anchors.fill:   parent
                 spacing:        defaultTextHeight

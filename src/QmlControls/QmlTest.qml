@@ -12,19 +12,34 @@ Rectangle {
 
     Column {
 
-        Row {
-            ExclusiveGroup { id: themeGroup }
-
-            QGCRadioButton {
-                text: "Light"
-                exclusiveGroup: themeGroup
-                onClicked: { palette.globalTheme = QGCPalette.Light }
+        Rectangle {
+            width:  parent.width
+            height: themeChoice.height * 2
+            color:  palette.window
+            QGCLabel {
+                text: "Window Color"
+                anchors.left:           parent.left
+                anchors.leftMargin:     20
+                anchors.verticalCenter: parent.horizontalCenter
             }
-
-            QGCRadioButton {
-                text: "Dark"
-                exclusiveGroup: themeGroup
-                onClicked: { palette.globalTheme = QGCPalette.Dark }
+            Row {
+                id: themeChoice
+                anchors.centerIn: parent
+                anchors.margins: 20
+                spacing:         20
+                ExclusiveGroup { id: themeGroup }
+                QGCRadioButton {
+                    text: "Light"
+                    checked: palette.globalTheme === QGCPalette.Light
+                    exclusiveGroup: themeGroup
+                    onClicked: { palette.globalTheme = QGCPalette.Light }
+                }
+                QGCRadioButton {
+                    text: "Dark"
+                    checked: palette.globalTheme === QGCPalette.Dark
+                    exclusiveGroup: themeGroup
+                    onClicked: { palette.globalTheme = QGCPalette.Dark }
+                }
             }
         }
 
@@ -464,6 +479,38 @@ Rectangle {
                     horizontalAlignment: Text.AlignHCenter
                     property var palette: QGCPalette { colorGroupEnabled: true }
                     text: palette.textFieldText
+                }
+
+                // warningText
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "warningText"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.warningText
+                    onColorSelected: palette.warningText = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.warningText
+                    onColorSelected: palette.warningText = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.warningText
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.warningText
                 }
             }
 

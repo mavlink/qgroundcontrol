@@ -47,6 +47,10 @@ QGCView {
     property Fact battLowVolt:      controller.getParameterFact(-1, "BAT_V_EMPTY")
     property Fact battVoltLoadDrop: controller.getParameterFact(-1, "BAT_V_LOAD_DROP")
 
+    readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
+    readonly property string highlightSuffix:   "</font>"
+
+
     function getBatteryImage()
     {
         switch(battNumCells.value) {
@@ -94,7 +98,7 @@ QGCView {
         onBatteryConnected:     showMessage("ESC Calibration", "Performing calibration. This will take a few seconds..", 0)
         onCalibrationFailed:    showMessage("ESC Calibration failed", errorMessage, StandardButton.Ok)
         onCalibrationSuccess:   showMessage("ESC Calibration", "Calibration complete. You can disconnect your battery now if you like.", StandardButton.Ok)
-        onConnectBattery:       showMessage("ESC Calibration", "<font color=\"yellow\">WARNING: Props must be removed from vehicle prior to performing ESC calibration.</font> Connect the battery now and calibration will begin.", 0)
+        onConnectBattery:       showMessage("ESC Calibration", highlightPrefix + "WARNING: Props must be removed from vehicle prior to performing ESC calibration." + highlightSuffix + " Connect the battery now and calibration will begin.", 0)
         onDisconnectBattery:    showMessage("ESC Calibration failed", "You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.", StandardButton.Ok)
     }
 
@@ -239,7 +243,7 @@ QGCView {
 
                         QGCLabel {
                             color:  palette.warningText
-                            text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</font>"
+                            text:   "WARNING: Propellers must be removed from vehicle prior to performing ESC calibration."
                         }
 
                         QGCLabel {
@@ -273,7 +277,7 @@ QGCView {
 
                         QGCLabel {
                             color:  palette.warningText
-                            text:   "<font color=\"yellow\">WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</font>"
+                            text:   "WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration."
                         }
 
                         QGCLabel {
@@ -341,7 +345,7 @@ QGCView {
                             wrapMode:   Text.WordWrap
                             text:       "Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full " +
                                             "throttle, divided by the number of battery cells. Leave at the default if unsure. " +
-                                            "<font color=\"yellow\">If this value is set too high, the battery might be deep discharged and damaged.</font>"
+                                            highlightPrefix + "If this value is set too high, the battery might be deep discharged and damaged." + highlightSuffix
                         }
 
                         Row {
