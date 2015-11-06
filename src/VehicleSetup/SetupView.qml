@@ -36,7 +36,6 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
 Rectangle {
-    //color:          qgcPal.windowShadeDark
     color:          qgcPal.window
     z:              QGroundControl.zOrderTopMost
 
@@ -108,16 +107,6 @@ Rectangle {
                 panelLoader.source = vehicleComponent.setupSource
             }
         }
-    }
-
-    function showDebugPanel()
-    {
-        panelLoader.source = "DebugWindow.qml";
-    }
-
-    function showGeneralPanel()
-    {
-        panelLoader.source = "GeneralSettings.qml";
     }
 
     Component.onCompleted: showSummaryPanel()
@@ -219,7 +208,7 @@ Rectangle {
 
         Flickable {
             id:                 buttonScroll
-            width:              _buttonWidth
+            width:              mainWindow.menuButtonWidth
             anchors.topMargin:  _defaultTextHeight / 2
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
@@ -231,12 +220,12 @@ Rectangle {
 
             Column {
                 id:         buttonColumn
-                width:      _buttonWidth
+                width:      mainWindow.menuButtonWidth
                 spacing:    _defaultTextHeight / 2
 
                 SubMenuButton {
                     id:             summaryButton
-                    width:          _buttonWidth
+                    width:          mainWindow.menuButtonWidth
                     imageResource: "/qmlimages/VehicleSummaryIcon.png"
                     setupIndicator: false
                     checked:        true
@@ -247,17 +236,8 @@ Rectangle {
                 }
 
                 SubMenuButton {
-                    width:          _buttonWidth
-                    setupIndicator: false
-                    exclusiveGroup: setupButtonGroup
-                    visible:        true
-                    text:           "GENERAL"
-                    onClicked: showGeneralPanel()
-                }
-
-                SubMenuButton {
                     id:             firmwareButton
-                    width:          _buttonWidth
+                    width:          mainWindow.menuButtonWidth
                     imageResource:  "/qmlimages/FirmwareUpgradeIcon.png"
                     setupIndicator: false
                     exclusiveGroup: setupButtonGroup
@@ -269,7 +249,7 @@ Rectangle {
 
                 SubMenuButton {
                     id:             joystickButton
-                    width:          _buttonWidth
+                    width:          mainWindow.menuButtonWidth
                     setupIndicator: true
                     setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
                     exclusiveGroup: setupButtonGroup
@@ -283,7 +263,7 @@ Rectangle {
                     model: _fullParameterVehicleAvailable ? multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
 
                     SubMenuButton {
-                        width:          _buttonWidth
+                        width:          mainWindow.menuButtonWidth
                         imageResource:  modelData.iconResource
                         setupIndicator: modelData.requiresSetup
                         setupComplete:  modelData.setupComplete
@@ -295,23 +275,13 @@ Rectangle {
                 }
 
                 SubMenuButton {
-                    width:          _buttonWidth
+                    width:          mainWindow.menuButtonWidth
                     setupIndicator: false
                     exclusiveGroup: setupButtonGroup
                     visible:        multiVehicleManager.parameterReadyVehicleAvailable
                     text:           "PARAMETERS"
 
                     onClicked: showParametersPanel()
-                }
-
-                SubMenuButton {
-                    width:          _buttonWidth
-                    setupIndicator: false
-                    exclusiveGroup: setupButtonGroup
-                    visible:        ScreenTools.isDebug
-                    text:           "DEBUG"
-
-                    onClicked: showDebugPanel()
                 }
 
             }

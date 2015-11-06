@@ -45,7 +45,7 @@ Rectangle {
         anchors.right:      parent.right
         width:              ScreenTools.defaultFontPixelHeight * 1.5
         height:             ScreenTools.defaultFontPixelHeight * 1.5
-        source:             (qgcPal.globalTheme === QGCPalette.Light) ? "/qmlimages/XDeleteBlack.svg" : "/qmlimages/XDelete.svg"
+        source:             (qgcPal.globalTheme === QGCPalette.Light) ? "/res/XDeleteBlack.svg" : "/res/XDelete.svg"
         fillMode:           Image.PreserveAspectFit
         mipmap:             true
         smooth:             true

@@ -101,8 +101,8 @@ Row {
     //-- Message Indicator
     Item {
         id:         messages
-        width:      cellHeight
-        height:     cellHeight
+        width:      mainWindow.tbCellHeight
+        height:     mainWindow.tbCellHeight
         visible:    activeVehicle.messageCount
         anchors.verticalCenter: parent.verticalCenter
 
@@ -112,7 +112,7 @@ Row {
             visible:            activeVehicle.messageCount > 0 && isMessageImportant
             Image {
                 source:         "/qmlimages/Yield.svg"
-                height:         cellHeight * 0.75
+                height:         mainWindow.tbButtonWidth
                 fillMode:       Image.PreserveAspectFit
                 mipmap:         true
                 smooth:         true
@@ -142,7 +142,7 @@ Row {
             Image {
                 id:             messageIcon
                 source:         "/qmlimages/Megaphone.svg"
-                height:         cellHeight * 0.5
+                height:         mainWindow.tbCellHeight * 0.5
                 fillMode:       Image.PreserveAspectFit
                 mipmap:         true
                 smooth:         true
@@ -171,7 +171,7 @@ Row {
     Item {
         id:     satelitte
         width:  gpsRow.width * 1.1
-        height: cellHeight
+        height: mainWindow.tbCellHeight
         Row {
             id:     gpsRow
             height: parent.height
@@ -181,13 +181,13 @@ Row {
                 fillMode:       Image.PreserveAspectFit
                 mipmap:         true
                 smooth:         true
-                width:          cellHeight * 0.65
-                height:         cellHeight * 0.5
+                width:          mainWindow.tbCellHeight * 0.65
+                height:         mainWindow.tbCellHeight * 0.5
                 opacity:        activeVehicle.satelliteCount < 1 ? 0.5 : 1
                 anchors.verticalCenter: parent.verticalCenter
             }
             SignalStrength {
-                size:           cellHeight * 0.5
+                size:           mainWindow.tbCellHeight * 0.5
                 percent:        getSatStrength(activeVehicle.satelliteCount)
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -208,7 +208,7 @@ Row {
     Item {
         id:     rcRssi
         width:  rssiRow.width * 1.1
-        height: cellHeight
+        height: mainWindow.tbCellHeight
         Row {
             id:     rssiRow
             height: parent.height
@@ -217,13 +217,13 @@ Row {
                 fillMode:       Image.PreserveAspectFit
                 mipmap:         true
                 smooth:         true
-                width:          cellHeight * 0.65
-                height:         cellHeight * 0.5
+                width:          mainWindow.tbCellHeight * 0.65
+                height:         mainWindow.tbCellHeight * 0.5
                 opacity:        _controller.remoteRSSI < 1 ? 0.5 : 1
                 anchors.verticalCenter: parent.verticalCenter
             }
             SignalStrength {
-                size:           cellHeight * 0.5
+                size:           mainWindow.tbCellHeight * 0.5
                 percent:        _controller.remoteRSSI
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -235,11 +235,11 @@ Row {
     Item {
         id: batteryStatus
         width:  battRow.width * 1.1
-        height: cellHeight
+        height: mainWindow.tbCellHeight
         opacity: (activeVehicle.batteryVoltage > 0) ? 1 : 0.5
         Row {
             id:         battRow
-            height:     cellHeight
+            height:     mainWindow.tbCellHeight
             spacing:    tbSpacing
             anchors.horizontalCenter: parent.horizontalCenter
             Column {
@@ -285,7 +285,7 @@ Row {
     //-- Vehicle Selector
     QGCButton {
         width:      ScreenTools.defaultFontPixelSize * 12
-        height:     cellHeight * 0.75
+        height:     mainWindow.tbButtonWidth
         text:       "Vehicle " + activeVehicle.id
         visible:    vehicleMenuItems.length > 0
         anchors.verticalCenter: parent.verticalCenter
@@ -340,7 +340,7 @@ Row {
 
     Item {
         width:  selectorRow.width * 1.1
-        height: cellHeight
+        height: mainWindow.tbCellHeight
         anchors.verticalCenter: parent.verticalCenter
         Row {
             id:                 selectorRow
@@ -348,8 +348,8 @@ Row {
             anchors.verticalCenter:   parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
             Image {
-                width:          cellHeight * 0.65
-                height:         cellHeight * 0.65
+                width:          mainWindow.tbCellHeight * 0.65
+                height:         mainWindow.tbCellHeight * 0.65
                 fillMode:       Image.PreserveAspectFit
                 mipmap:         true
                 smooth:         true
@@ -417,15 +417,15 @@ Row {
 
     Item {
         width:  armCol.width * 1.1
-        height: cellHeight
+        height: mainWindow.tbCellHeight
         anchors.verticalCenter: parent.verticalCenter
         Row {
             id:                 armCol
             spacing:            tbSpacing * 0.5
             anchors.verticalCenter: parent.verticalCenter
             Image {
-                width:          cellHeight * 0.5
-                height:         cellHeight * 0.5
+                width:          mainWindow.tbCellHeight * 0.5
+                height:         mainWindow.tbCellHeight * 0.5
                 fillMode:       Image.PreserveAspectFit
                 mipmap:         true
                 smooth:         true
@@ -476,7 +476,7 @@ Row {
     Rectangle {
         id: rssiRC
         width:  getProportionalDimmension(55)
-        height: cellHeight
+        height: mainWindow.tbCellHeight
         visible: _controller.remoteRSSI <= 100
         anchors.verticalCenter: parent.verticalCenter
         color:  getRSSIColor(_controller.remoteRSSI);
@@ -484,7 +484,7 @@ Row {
         border.width: 0
         Image {
             source: "qrc:/res/AntennaRC";
-            width: cellHeight * 0.7
+            width: mainWindow.tbCellHeight * 0.7
             fillMode: Image.PreserveAspectFit
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
@@ -507,7 +507,7 @@ Row {
     Rectangle {
         id: rssiTelemetry
         width:  getProportionalDimmension(80)
-        height: cellHeight
+        height: mainWindow.tbCellHeight
         visible: (_controller.telemetryRRSSI > 0) && (_controller.telemetryLRSSI > 0)
         anchors.verticalCenter: parent.verticalCenter
         color:  getRSSIColor(Math.min(_controller.telemetryRRSSI,_controller.telemetryLRSSI));
@@ -515,7 +515,7 @@ Row {
         border.width: 0
         Image {
             source: "qrc:/res/AntennaT";
-            width: cellHeight * 0.7
+            width: mainWindow.tbCellHeight * 0.7
             fillMode: Image.PreserveAspectFit
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
