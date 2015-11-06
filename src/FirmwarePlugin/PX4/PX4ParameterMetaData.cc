@@ -188,7 +188,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                 
                 QString name = xml.attributes().value("name").toString();
                 QString type = xml.attributes().value("type").toString();
-                QString strDefault = xml.attributes().value("default").toString();
+                QString strDefault =    xml.attributes().value("default").toString();
                 
                 qCDebug(PX4ParameterMetaDataLog) << "Found parameter name:" << name << " type:" << type << " default:" << strDefault;
 
