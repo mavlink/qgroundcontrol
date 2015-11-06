@@ -40,7 +40,7 @@ import QGroundControl.Controllers           1.0
 
 Rectangle {
     id:     toolBar
-    color:  isBackgroundDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
+    color:  opaqueBackground ? "#404040" : (isBackgroundDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5))
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -48,6 +48,7 @@ Rectangle {
     property var  mainWindow:           null
     property bool isMessageImportant:   activeVehicle ? !activeVehicle.messageTypeNormal && !activeVehicle.messageTypeNone : false
     property bool isBackgroundDark:     true
+    property bool opaqueBackground:     false
 
     /*
         Dev System (Mac OS)
@@ -132,13 +133,9 @@ Rectangle {
 
     */
 
-    readonly property int   cellHeight:     height * 0.75
-
     readonly property real  tbFontSmall:    10 * ScreenTools.fontHRatio
     readonly property real  tbFontNormal:   12 * ScreenTools.fontHRatio
     readonly property real  tbFontLarge:    18 * ScreenTools.fontHRatio
-
-    readonly property real  tbSpacing:      ScreenTools.isMobile ? toolBar.width * 0.00824 : 9.54
 
     readonly property var   colorGreen:     "#05f068"
     readonly property var   colorOrange:    "#f0ab06"
@@ -172,61 +169,78 @@ Rectangle {
 
     Row {
         id:             viewRow
-        height:         cellHeight
-        spacing:        tbSpacing
+        height:         mainWindow.tbCellHeight
+        spacing:        mainWindow.tbSpacing
         anchors.left:   parent.left
-        anchors.leftMargin:     tbSpacing
+        anchors.leftMargin:     mainWindow.tbSpacing
         anchors.verticalCenter: parent.verticalCenter
 
         ExclusiveGroup { id: mainActionGroup }
 
         QGCToolBarButton {
+            id:                 preferencesButton
+            width:              mainWindow.tbButtonWidth
+            height:             mainWindow.tbCellHeight
+            source:             "/qmlimages/Hamburger.svg"
+            onClicked: {
+                mainWindow.showLeftMenu();
+                preferencesButton.checked = false;
+            }
+        }
+
+        Rectangle {
+            height: mainWindow.tbCellHeight
+            width:  1
+            color: Qt.rgba(1,1,1,0.45)
+        }
+
+        QGCToolBarButton {
             id:                 setupButton
-            width:              cellHeight * 1.3
-            height:             cellHeight
+            width:              mainWindow.tbButtonWidth
+            height:             mainWindow.tbCellHeight
             exclusiveGroup:     mainActionGroup
-            source:             "qrc:/res/Gears"
+            source:             "/qmlimages/Gears.svg"
             onClicked: {
                 _controller.onSetupView();
             }
         }
 
         Rectangle {
-            height: cellHeight
+            height: mainWindow.tbCellHeight
             width:  1
             color: Qt.rgba(1,1,1,0.45)
         }
 
         QGCToolBarButton {
             id:                 planButton
-            width:              cellHeight * 1.3
-            height:             cellHeight
+            width:              mainWindow.tbButtonWidth
+            height:             mainWindow.tbCellHeight
             exclusiveGroup:     mainActionGroup
-            source:             "qrc:/res/Plan"
+            source:             "/qmlimages/Plan.svg"
             onClicked: {
                 _controller.onPlanView();
             }
         }
 
         Rectangle {
-            height: cellHeight
+            height: mainWindow.tbCellHeight
             width:  1
             color: Qt.rgba(1,1,1,0.45)
         }
 
         QGCToolBarButton {
             id:                 flyButton
-            width:              cellHeight * 1.3
-            height:             cellHeight
+            width:              mainWindow.tbButtonWidth
+            height:             mainWindow.tbCellHeight
             exclusiveGroup:     mainActionGroup
-            source:             "qrc:/res/PaperPlane"
+            source:             "/qmlimages/PaperPlane.svg"
             onClicked: {
                 _controller.onFlyView();
             }
         }
 
         Rectangle {
-            height: cellHeight
+            height: mainWindow.tbCellHeight
             width:  1
             color: Qt.rgba(1,1,1,0.45)
         }
@@ -235,10 +249,10 @@ Rectangle {
 
     Item {
         visible:                showMavStatus() && !connectionStatus.visible
-        height:                 cellHeight
+        height:                 mainWindow.tbCellHeight
         width:                  (toolBar.width - viewRow.width - connectRow.width)
         anchors.left:           viewRow.right
-        anchors.leftMargin:     tbSpacing * 2
+        anchors.leftMargin:     mainWindow.tbSpacing * 2
         anchors.verticalCenter: parent.verticalCenter
         Loader {
             source:             multiVehicleManager.activeVehicleAvailable ? "MainToolBarIndicators.qml" : ""
@@ -255,15 +269,15 @@ Rectangle {
         font.weight:    Font.DemiBold
         color:          colorRed
         anchors.left:           viewRow.right
-        anchors.leftMargin:     tbSpacing * 2
+        anchors.leftMargin:     mainWindow.tbSpacing * 2
         anchors.verticalCenter: parent.verticalCenter
     }
 
     Row {
         id:                     connectRow
-        height:                 cellHeight
-        spacing:                tbSpacing
-        anchors.rightMargin:    tbSpacing
+        height:                 mainWindow.tbCellHeight
+        spacing:                mainWindow.tbSpacing
+        anchors.rightMargin:    mainWindow.tbSpacing
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
 
@@ -295,15 +309,15 @@ Rectangle {
         }
 
         Rectangle {
-            height: cellHeight
+            height: mainWindow.tbCellHeight
             width:  1
             color: Qt.rgba(1,1,1,0.45)
         }
 
         QGCToolBarButton {
             id:             connectButton
-            width:          cellHeight * 1.3
-            height:         cellHeight
+            width:          mainWindow.tbButtonWidth
+            height:         mainWindow.tbCellHeight
             visible:        _controller.connectionCount === 0
             source:         "/qmlimages/Connect.svg"
             checked:        false
@@ -327,15 +341,15 @@ Rectangle {
                 console.log("tbFontSmall:         " + tbFontSmall);
                 console.log("tbFontNormal:        " + tbFontNormal);
                 console.log("tbFontLarge:         " + tbFontLarge);
-                console.log("tbSpacing:           " + tbSpacing);
+                console.log("mainWindow.tbSpacing:           " + tbSpacing);
                 */
             }
         }
 
         QGCToolBarButton {
             id:             disconnectButton
-            width:          cellHeight * 1.3
-            height:         cellHeight
+            width:          mainWindow.tbButtonWidth
+            height:         mainWindow.tbCellHeight
             visible:        _controller.connectionCount === 1
             source:         "/qmlimages/Disconnect.svg"
             checked:        false
@@ -365,8 +379,8 @@ Rectangle {
 
         QGCToolBarButton {
             id:             multidisconnectButton
-            width:          cellHeight * 1.3
-            height:         cellHeight
+            width:          mainWindow.tbButtonWidth
+            height:         mainWindow.tbCellHeight
             visible:        _controller.connectionCount > 1
             source:         "/qmlimages/Disconnect.svg"
             checked:        false
@@ -410,7 +424,7 @@ Rectangle {
                 color:              qgcPal.warningText
                 lineHeightMode:     Text.ProportionalHeight
                 lineHeight:         1.15
-                anchors.margins:    tbSpacing
+                anchors.margins:    mainWindow.tbSpacing
             }
         }
         QGCButton {
@@ -419,7 +433,7 @@ Rectangle {
             text:               "Close"
             anchors.right:      parent.right
             anchors.bottom:     parent.bottom
-            anchors.margins:    tbSpacing
+            anchors.margins:    mainWindow.tbSpacing
             onClicked: {
                 toolBarMessageArea.visible = false
                 _controller.onToolBarMessageClosed()
