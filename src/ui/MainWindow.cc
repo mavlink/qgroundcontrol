@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009 - 2013 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -83,9 +83,9 @@ This file is part of the QGROUNDCONTROL project
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
 #ifndef __mobile__
-enum DockWidgetTypes { 
-    MAVLINK_INSPECTOR, 
-    CUSTOM_COMMAND, 
+enum DockWidgetTypes {
+    MAVLINK_INSPECTOR,
+    CUSTOM_COMMAND,
     ONBOARD_FILES,
     STATUS_DETAILS,
     INFO_VIEW,
@@ -368,7 +368,7 @@ void MainWindow::_createInnerDockWidget(const QString& widgetName)
 {
     QGCDockWidget* widget = NULL;
     QAction *action = _mapName2Action[widgetName];
-    
+
     switch(action->data().toInt()) {
         case MAVLINK_INSPECTOR:
             widget = new QGCMAVLinkInspector(widgetName, action, qgcApp()->toolbox()->mavlinkProtocol(),this);
