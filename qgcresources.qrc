@@ -98,24 +98,11 @@
     </qresource>
 
     <qresource prefix="/res">
-        <file alias="LeftArrow">resources/LeftArrow.svg</file>
-        <file alias="RightArrow">resources/RightArrow.svg</file>
-        <file alias="DownArrow">resources/DownArrow.svg</file>
-        <file alias="UpArrow">resources/UpArrow.svg</file>
-        <file alias="BottomArrow">resources/BottomArrow.svg</file>
-        <file alias="JumpArrow">resources/JumpArrow.svg</file>
-        <file alias="PlusSign">resources/PlusSign.svg</file>
-        <file alias="MinusSign">resources/MinusSign.svg</file>
         <file alias="Play">resources/Play.svg</file>
         <file alias="Pause">resources/Pause.svg</file>
         <file alias="Stop">resources/Stop.svg</file>
-        <file alias="Launch">resources/Launch.svg</file>
-        <file alias="Land">resources/Land.svg</file>
-        <file alias="Kill">resources/Kill.svg</file>
-        <file alias="Shutdown">resources/Shutdown.svg</file>
         <file alias="AntennaT">resources/Antenna_T.svg</file>
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
-        <file alias="SystemLockScreen">resources/SystemLockScreen.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
         <file alias="PowerButton">resources/PowerButton.svg</file>
@@ -151,13 +138,6 @@
         <file alias="Submarine">resources/mavs/submarine.svg</file>
         <file alias="SurfaceBoat">resources/mavs/surface-boat.svg</file>
         <file alias="TriCopter">resources/mavs/tricopter.svg</file>
-    </qresource>
-
-    <qresource prefix="/res/mapproviders">
-        <file alias="openstreetmap.png">resources/mapproviders/openstreetmap.png</file>
-        <file alias="google.png">resources/mapproviders/google.png</file>
-        <file alias="yahoo.png">resources/mapproviders/yahoo.png</file>
-        <file alias="googleearth.svg">resources/mapproviders/googleearth.svg</file>
     </qresource>
 
     <qresource prefix="/res/calibration">
@@ -212,10 +192,6 @@
     <qresource prefix="/res/styles">
         <file alias="style-dark.css">resources/styles/style-dark.css</file>
         <file alias="style-light.css">resources/styles/style-light.css</file>
-    </qresource>
-
-    <qresource prefix="/res/fonts">
-        <file alias="vera.ttf">resources/styles/Vera.ttf</file>
     </qresource>
 
     <qresource prefix="/res/audio">
