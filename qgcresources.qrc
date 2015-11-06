@@ -41,9 +41,7 @@
         <file alias="attitudeInstrument.svg">src/FlightMap/Images/attitudeInstrument.svg</file>
         <file alias="attitudePointer.svg">src//FlightMap/Images/attitudePointer.svg</file>
         <file alias="buttonHome.svg">src/FlightMap/Images/buttonHome.svg</file>
-        <file alias="buttonLeft.svg">src/FlightMap/Images/buttonLeft.svg</file>
         <file alias="buttonMore.svg">src/FlightMap/Images/buttonMore.svg</file>
-        <file alias="buttonRight.svg">src/FlightMap/Images/buttonRight.svg</file>
         <file alias="compassInstrumentAirplane.svg">src/FlightMap/Images/compassInstrumentAirplane.svg</file>
         <file alias="compassInstrumentDial.svg">src/FlightMap/Images/compassInstrumentDial.svg</file>
         <file alias="crossHair.svg">src/FlightMap/Images/crossHair.svg</file>
@@ -74,9 +72,6 @@
         <file alias="MapTypeBlack.svg">src/FlightMap/Images/MapTypeBlack.svg</file>
         <file alias="TrashDelete.svg">src/FlightMap/Images/TrashDelete.svg</file>
         <file alias="TrashDeleteBlack.svg">src/FlightMap/Images/TrashDeleteBlack.svg</file>
-        <file alias="XDelete.svg">src/FlightMap/Images/XDelete.svg</file>
-        <file alias="XDeleteBlack.svg">src/FlightMap/Images/XDeleteBlack.svg</file>
-
 
         <!-- Toolbar -->
         <file alias="Armed.svg">src/ui/toolbar/Images/Armed.svg</file>
@@ -84,8 +79,12 @@
         <file alias="Connect.svg">src/ui/toolbar/Images/Connect.svg</file>
         <file alias="Disarmed.svg">src/ui/toolbar/Images/Disarmed.svg</file>
         <file alias="Disconnect.svg">src/ui/toolbar/Images/Disconnect.svg</file>
+        <file alias="Gears.svg">src/ui/toolbar/Images/Gears.svg</file>
         <file alias="Gps.svg">src/ui/toolbar/Images/Gps.svg</file>
+        <file alias="Hamburger.svg">src/ui/toolbar/Images/Hamburger.svg</file>
         <file alias="Megaphone.svg">src/ui/toolbar/Images/Megaphone.svg</file>
+        <file alias="PaperPlane.svg">src/ui/toolbar/Images/PaperPlane.svg</file>
+        <file alias="Plan.svg">src/ui/toolbar/Images/Plan.svg</file>
         <file alias="Quad.svg">src/ui/toolbar/Images/Quad.svg</file>
         <file alias="RC.svg">src/ui/toolbar/Images/RC.svg</file>
         <file alias="Signal0.svg">src/ui/toolbar/Images/Signal0.svg</file>
@@ -116,19 +115,14 @@
         <file alias="Shutdown">resources/Shutdown.svg</file>
         <file alias="AntennaT">resources/Antenna_T.svg</file>
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
-        <file alias="Battery_0">resources/Battery_0.svg</file>
-        <file alias="Battery_20">resources/Battery_20.svg</file>
-        <file alias="Battery_40">resources/Battery_40.svg</file>
-        <file alias="Battery_60">resources/Battery_60.svg</file>
-        <file alias="Battery_80">resources/Battery_80.svg</file>
-        <file alias="Battery_100">resources/Battery_100.svg</file>
         <file alias="SystemLockScreen">resources/SystemLockScreen.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
-        <file alias="Gears">resources/Gears.svg</file>
-        <file alias="Plan">resources/Plan.svg</file>
-        <file alias="PaperPlane">resources/PaperPlane.svg</file>
         <file alias="PowerButton">resources/PowerButton.svg</file>
+        <file alias="buttonLeft.svg">resources/buttonLeft.svg</file>
+        <file alias="buttonRight.svg">resources/buttonRight.svg</file>
+        <file alias="XDelete.svg">resources/XDelete.svg</file>
+        <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
     </qresource>
 
     <qresource prefix="/res/firmware">

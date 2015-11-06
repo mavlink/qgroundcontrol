@@ -33,7 +33,7 @@ Item {
         id:             iconOverlay
         anchors.fill:   icon
         source:         icon
-        color:          (checked ? "#ffff20" : "#ffffff")
+        color:          (checked ? "#e4e428" : "#ffffff")
     }
 
     MouseArea {
