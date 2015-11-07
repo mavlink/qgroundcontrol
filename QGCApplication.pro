@@ -271,7 +271,7 @@ HEADERS += \
     src/ui/uas/UASMessageView.h \
     src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
-    src/QGCSettings.h
+    src/QmlControls/QGCImageProvider.h \
 
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
@@ -383,7 +383,7 @@ SOURCES += \
     src/ui/uas/UASMessageView.cc \
     src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
-    src/QGCSettings.cpp
+    src/QmlControls/QGCImageProvider.cc \
 
 !iOSBuild {
 SOURCES += \

@@ -53,6 +53,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HomePositionManager.h"
 #include "LogCompressor.h"
 #include "UAS.h"
+#include "QGCImageProvider.h"
 
 #ifndef __mobile__
 #include "QGCDataPlot2D.h"
@@ -165,6 +166,10 @@ MainWindow::MainWindow()
 
     _mainQmlWidgetHolder->setContextPropertyObject("controller", this);
     _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindow.qml"));
+
+    // Image provider
+    QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
+    _mainQmlWidgetHolder->getEngine()->addImageProvider(QLatin1String("QGCImages"), pImgProvider);
 
     // Set dock options
     setDockOptions(0);
@@ -309,6 +314,7 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    _mainQmlWidgetHolder->getEngine()->removeImageProvider(QLatin1String("QGCImages"));
     _instance = NULL;
 }
 
@@ -465,6 +471,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
     // We have to pull out the QmlWidget from the main window and delete it here, before
     // the MainWindow ends up getting deleted. Otherwise the Qml has a reference to MainWindow
     // inside it which in turn causes a shutdown crash.
+    // Remove image provider
+    _mainQmlWidgetHolder->getEngine()->removeImageProvider(QLatin1String("QGCImages"));
     _centralLayout->removeWidget(_mainQmlWidgetHolder);
     delete _mainQmlWidgetHolder;
     _mainQmlWidgetHolder = NULL;
@@ -474,7 +482,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     event->accept();
 
+    //-- TODO: This effectively causes the QGCApplication destructor to not being able
+    //   to access the pointer it is trying to delete.
     _instance = NULL;
+
     emit mainWindowClosed();
 }
 
