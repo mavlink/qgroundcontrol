@@ -33,7 +33,7 @@ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 #include "QGCImageProvider.h"
 
 #include <QPainter>
-#include <qFont>
+#include <QFont>
 
 QGCImageProvider::QGCImageProvider(QGCApplication *app)
     : QGCTool(app)
