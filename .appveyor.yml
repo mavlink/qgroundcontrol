@@ -21,7 +21,7 @@ test_script:
   - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
 
 after_build:
-  - if "%CONFIG%" EQU "installer" ( appveyor PushArtifact C:\projects\qgroundcontrol\release\qgroundcontrol.exe )
+  - if "%CONFIG%" EQU "installer" ( if defined %APPVEYOR_PULL_REQUEST_NUMBER% ( appveyor PushArtifact C:\projects\qgroundcontrol\release\qgroundcontrol.exe ) )
 
 deploy:
   - provider: S3
