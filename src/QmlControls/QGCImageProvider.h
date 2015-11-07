@@ -23,28 +23,37 @@
 
 /**
  * @file
- *   @brief Definition of main class
+ *   @brief Image Provider
  *
-*   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <mavlink@grubba.com>
  *
  */
 
 
-#ifndef QGCSETTINGS_H
-#define QGCSETTINGS_H
+#ifndef QGCIMAGEPROVIDER_H
+#define QGCIMAGEPROVIDER_H
 
 #include <QObject>
+#include <QQmlListProperty>
+#include <QQuickImageProvider>
 
-class QGCSettings : public QObject
+#include "QGCToolbox.h"
+
+class QGCImageProvider : public QGCTool, public QQuickImageProvider
 {
-    Q_OBJECT
 public:
-    explicit QGCSettings(QObject *parent = 0);
-
-signals:
-
-public slots:
-
+    QGCImageProvider        (QGCApplication* app);
+    ~QGCImageProvider       ();
+    QImage  requestImage    (const QString & id, QSize * size, const QSize & requestedSize);
+    void    setImage        (QImage* pImage, int id = 0);
+    void    setToolbox      (QGCToolbox *toolbox);
+private:
+    //-- TODO: For now this is holding a single image. If you happen to have two
+    //   or more vehicles with flow, it will not work. To properly manage that condition
+    //   this should be a map between each vehicle and its image. The URL provided
+    //   for the image request would contain the vehicle identification.
+    QImage _pImage;
 };
 
-#endif // QGCSETTINGS_H
+
+#endif // QGCIMAGEPROVIDER_H

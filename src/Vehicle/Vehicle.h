@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 /// @file
@@ -29,7 +29,6 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
-#include <QQmlListProperty>
 
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
@@ -52,7 +51,7 @@ Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 class Vehicle : public QObject
 {
     Q_OBJECT
-    
+
 public:
     Vehicle(LinkInterface*          link,
             int                     vehicleId,
@@ -62,7 +61,7 @@ public:
             AutoPilotPluginManager* autopilotPluginManager,
             JoystickManager*        joystickManager);
     ~Vehicle();
-    
+
     Q_PROPERTY(int                  id                      READ id                                     CONSTANT)
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                             NOTIFY coordinateChanged)
@@ -106,7 +105,8 @@ public:
     Q_PROPERTY(int                  joystickMode            READ joystickMode       WRITE setJoystickMode NOTIFY joystickModeChanged)
     Q_PROPERTY(QStringList          joystickModes           READ joystickModes                          CONSTANT)
     Q_PROPERTY(bool                 joystickEnabled         READ joystickEnabled    WRITE setJoystickEnabled NOTIFY joystickEnabledChanged)
-    Q_PROPERTY(bool                 active READ active      WRITE setActive                             NOTIFY activeChanged)
+    Q_PROPERTY(bool                 active                  READ active             WRITE setActive     NOTIFY activeChanged)
+    Q_PROPERTY(int                  flowImageIndex          READ flowImageIndex                         NOTIFY flowImageIndexChanged)
 
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
@@ -121,8 +121,8 @@ public:
     QGeoCoordinate coordinate(void) { return _coordinate; }
     bool coordinateValid(void)      { return _coordinateValid; }
     QmlObjectListModel* missionItemsModel(void);
-    
-    
+
+
     typedef enum {
         JoystickModeRC,         ///< Joystick emulates an RC Transmitter
         JoystickModeAttitude,
@@ -131,50 +131,50 @@ public:
         JoystickModeVelocity,
         JoystickModeMax
     } JoystickMode_t;
-    
+
     int joystickMode(void);
     void setJoystickMode(int mode);
-    
+
     /// List of joystick mode names
     QStringList joystickModes(void);
-    
+
     bool joystickEnabled(void);
     void setJoystickEnabled(bool enabled);
-    
+
     // Is vehicle active with respect to current active vehicle in QGC
     bool active(void);
     void setActive(bool active);
-    
+
     // Property accesors
     int id(void) { return _id; }
     MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
     MAV_TYPE vehicleType(void) { return _vehicleType; }
-    
+
     /// Sends this specified message to all links accociated with this vehicle
     void sendMessage(mavlink_message_t message);
-    
+
     /// Sends the specified messages multiple times to the vehicle in order to attempt to
     /// guarantee that it makes it to the vehicle.
     void sendMessageMultiple(mavlink_message_t message);
-    
+
     /// Provides access to uas from vehicle. Temporary workaround until UAS is fully phased out.
     UAS* uas(void) { return _uas; }
-    
+
     /// Provides access to uas from vehicle. Temporary workaround until AutoPilotPlugin is fully phased out.
     AutoPilotPlugin* autopilotPlugin(void) { return _autopilotPlugin; }
-    
+
     /// Provides access to the Firmware Plugin for this Vehicle
     FirmwarePlugin* firmwarePlugin(void) { return _firmwarePlugin; }
-    
+
     QList<LinkInterface*> links(void);
-    
+
     int manualControlReservedButtonCount(void);
-    
+
     MissionManager* missionManager(void) { return _missionManager; }
-    
+
     bool homePositionAvailable(void);
     QGeoCoordinate homePosition(void);
-    
+
     bool armed(void) { return _armed; }
     void setArmed(bool armed);
 
@@ -185,23 +185,25 @@ public:
 
     bool hilMode(void);
     void setHilMode(bool hilMode);
-    
+
     QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
-    
+
+    int  flowImageIndex() { return _flowImageIndex; }
+
     /// Requests the specified data stream from the vehicle
     ///     @param stream Stream which is being requested
     ///     @param rate Rate at which to send stream in Hz
     void requestDataStream(MAV_DATA_STREAM stream, uint16_t rate);
-    
+
     bool missingParameters(void);
-    
+
     typedef enum {
         MessageNone,
         MessageNormal,
         MessageWarning,
         MessageError
     } MessageType_t;
-    
+
     enum {
         ROLL_CHANGED,
         PITCH_CHANGED,
@@ -213,10 +215,10 @@ public:
         ALTITUDEWGS84_CHANGED,
         ALTITUDEAMSL_CHANGED
     };
-    
+
     // Called when the message drop-down is invoked to clear current count
     void resetMessages();
-    
+
     bool            messageTypeNone     () { return _currentMessageType == MessageNone; }
     bool            messageTypeNormal   () { return _currentMessageType == MessageNormal; }
     bool            messageTypeWarning  () { return _currentMessageType == MessageWarning; }
@@ -245,11 +247,11 @@ public:
     unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
 
     ParameterLoader* getParameterLoader(void);
-    
+
 public slots:
     void setLatitude(double latitude);
     void setLongitude(double longitude);
-    
+
 signals:
     void allLinksDisconnected(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
@@ -264,10 +266,10 @@ signals:
     void flightModeChanged(const QString& flightMode);
     void hilModeChanged(bool hilMode);
     void missingParametersChanged(bool missingParameters);
-    
+
     /// Used internally to move sendMessage call to main thread
     void _sendMessageOnThread(mavlink_message_t message);
-    
+
     void messageTypeChanged     ();
     void newMessageCountChanged ();
     void messageCountChanged    ();
@@ -290,7 +292,8 @@ signals:
     void satelliteCountChanged  ();
     void currentStateChanged    ();
     void satelliteLockChanged   ();
-    
+    void flowImageIndexChanged  ();
+
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
     void _linkDisconnected(LinkInterface* link);
@@ -316,6 +319,8 @@ private slots:
     void _heartbeatTimeout                  (bool timeout, unsigned int ms);
     void _setSatelliteCount                 (double val, QString name);
     void _setSatLoc                         (UASInterface* uas, int fix);
+    /** @brief A new camera image has arrived */
+    void _imageReady                        (UASInterface* uas);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -335,29 +340,29 @@ private:
 private:
     int     _id;            ///< Mavlink system id
     bool    _active;
-    
+
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
     FirmwarePlugin*     _firmwarePlugin;
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
-    
+
     /// List of all links associated with this vehicle. We keep SharedLinkInterface objects
     /// which are QSharedPointer's in order to maintain reference counts across threads.
     /// This way Link deletion works correctly.
     QList<SharedLinkInterface> _links;
-    
+
     JoystickMode_t  _joystickMode;
     bool            _joystickEnabled;
-    
+
     UAS* _uas;
-    
+
     QGeoCoordinate  _coordinate;
     bool            _coordinateValid;       ///< true: vehicle has 3d lock and therefore valid location
-    
+
     bool            _homePositionAvailable;
     QGeoCoordinate  _homePosition;
-    
+
     UASInterface*   _mav;
     int             _currentMessageCount;
     int             _messageCount;
@@ -389,12 +394,12 @@ private:
     int             _satelliteCount;
     int             _satelliteLock;
     int             _updateCount;
-    
+
     MissionManager*     _missionManager;
     bool                _missionManagerInitialRequestComplete;
 
     ParameterLoader*    _parameterLoader;
-    
+
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT
     uint32_t _custom_mode;  ///< custom_mode from HEARTBEAT
@@ -404,15 +409,15 @@ private:
         mavlink_message_t   message;    ///< Message to send multiple times
         int                 retryCount; ///< Number of retries left
     } SendMessageMultipleInfo_t;
-    
+
     QList<SendMessageMultipleInfo_t> _sendMessageMultipleList;    ///< List of messages being sent multiple times
-    
+
     static const int _sendMessageMultipleRetries = 5;
     static const int _sendMessageMultipleIntraMessageDelay = 500;
-    
+
     QTimer  _sendMultipleTimer;
     int     _nextSendMessageMultipleIndex;
-    
+
     QTimer              _mapTrajectoryTimer;
     QmlObjectListModel  _mapTrajectoryList;
     QGeoCoordinate      _mapTrajectoryLastCoordinate;
@@ -423,10 +428,12 @@ private:
     int                 _communicationInactivityTimeoutMSecs;
     static const int    _communicationInactivityTimeoutMSecsDefault = 30 * 1000;
 
-    FirmwarePluginManager*  _firmwarePluginManager;
-    AutoPilotPluginManager* _autopilotPluginManager;
-    JoystickManager*        _joystickManager;
-    
+    FirmwarePluginManager*      _firmwarePluginManager;
+    AutoPilotPluginManager*     _autopilotPluginManager;
+    JoystickManager*            _joystickManager;
+
+    int                         _flowImageIndex;
+
     // Settings keys
     static const char* _settingsGroup;
     static const char* _joystickModeSettingsKey;
