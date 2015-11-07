@@ -94,6 +94,11 @@ Rectangle {
         panelLoader.source = "SetupParameterEditor.qml";
     }
 
+    function showPX4FlowPanel()
+    {
+        panelLoader.source = "PX4FlowSensor.qml";
+    }
+
     function showVehicleComponentPanel(vehicleComponent)
     {
         if (multiVehicleManager.activeVehicle.armed) {
@@ -245,6 +250,16 @@ Rectangle {
                     text:           "FIRMWARE"
 
                     onClicked: showFirmwarePanel()
+                }
+
+                SubMenuButton {
+                    id:             px4FlowButton
+                    width:          mainWindow.menuButtonWidth
+                    exclusiveGroup: setupButtonGroup
+                    visible:        _fullParameterVehicleAvailable
+                    setupIndicator: false
+                    text:           "PX4FLOW"
+                    onClicked:      showPX4FlowPanel()
                 }
 
                 SubMenuButton {
