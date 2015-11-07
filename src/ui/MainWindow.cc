@@ -471,11 +471,17 @@ void MainWindow::closeEvent(QCloseEvent *event)
     // We have to pull out the QmlWidget from the main window and delete it here, before
     // the MainWindow ends up getting deleted. Otherwise the Qml has a reference to MainWindow
     // inside it which in turn causes a shutdown crash.
-    // Remove image provider
-    _mainQmlWidgetHolder->getEngine()->removeImageProvider(QLatin1String("QGCImages"));
-    _centralLayout->removeWidget(_mainQmlWidgetHolder);
-    delete _mainQmlWidgetHolder;
-    _mainQmlWidgetHolder = NULL;
+
+    //-- Unit test gets here with _mainQmlWidgetHolder being NULL
+
+    if(_mainQmlWidgetHolder)
+    {
+        // Remove image provider
+        _mainQmlWidgetHolder->getEngine()->removeImageProvider(QLatin1String("QGCImages"));
+        _centralLayout->removeWidget(_mainQmlWidgetHolder);
+        delete _mainQmlWidgetHolder;
+        _mainQmlWidgetHolder = NULL;
+    }
 
     _storeCurrentViewState();
     storeSettings();
