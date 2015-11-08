@@ -265,11 +265,11 @@ QGCView {
 
                 Rectangle {
                     width:  parent.width
-                    height: uavCanEscCalColumn.height + ScreenTools.defaultFontPixelHeight
+                    height: uavCanConfigColumn.height + ScreenTools.defaultFontPixelHeight
                     color:  palette.windowShade
 
                     Column {
-                        id:                 uavCanEscCalColumn
+                        id:                 uavCanConfigColumn
                         anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
                         anchors.left:       parent.left
                         anchors.top:        parent.top
@@ -283,6 +283,26 @@ QGCView {
                             uncheckedValue:     0
                             text:               "Enable UAVCAN as the default MAIN output bus (requires restart)"
                         }
+                    }
+                }
+
+                QGCLabel {
+                    text:           "UAVCAN Motor Index and Direction Assignment"
+                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                }
+
+                Rectangle {
+                    width:  parent.width
+                    height: uavCanEscCalColumn.height + ScreenTools.defaultFontPixelHeight
+                    color:  palette.windowShade
+                    enabled: uavcanEnabledCheckBox.checked
+
+                    Column {
+                        id:                 uavCanEscCalColumn
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                        anchors.left:       parent.left
+                        anchors.top:        parent.top
+                        spacing:            ScreenTools.defaultFontPixelWidth
 
                         QGCLabel {
                             color:  palette.warningText
