@@ -290,17 +290,21 @@ QGCView {
                         }
 
                         QGCLabel {
-                            text: "After starting the configuration, turn each motor into its turn direction, one after the other."
+                            text: "ESC parameters will only be accessible in the editor after assignment."
+                        }
+
+                        QGCLabel {
+                            text: "Start the process, then turn each motor into its turn direction, in the order of their motor indices."
                         }
 
                         QGCButton {
-                            text:       "Start Configuration"
+                            text:       "Start Assignment"
                             width:      ScreenTools.defaultFontPixelWidth * 20
                             onClicked:  controller.busConfigureActuators()
                         }
 
                         QGCButton {
-                            text:       "End Configuration"
+                            text:       "Stop Assignment"
                             width:      ScreenTools.defaultFontPixelWidth * 20
                             onClicked:  controller.StopBusConfigureActuators()
                         }
