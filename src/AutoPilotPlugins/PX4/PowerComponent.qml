@@ -225,7 +225,7 @@ QGCView {
                 } // Rectangle - Battery settings
 
                 QGCLabel {
-                    text:           "ESC Calibration"
+                    text:           "ESC PWM Minimum and Maximum Calibration"
                     font.pixelSize: ScreenTools.mediumFontPixelSize
                 }
 
@@ -259,7 +259,7 @@ QGCView {
                 }
 
                 QGCLabel {
-                    text:           "UAVCAN ESC Configuration"
+                    text:           "UAVCAN Bus Configuration"
                     font.pixelSize: ScreenTools.mediumFontPixelSize
                 }
 
@@ -275,13 +275,22 @@ QGCView {
                         anchors.top:        parent.top
                         spacing:            ScreenTools.defaultFontPixelWidth
 
+                        FactCheckBox {
+                            id:                 uavcanEnabledCheckBox
+                            width:              ScreenTools.defaultFontPixelWidth * 20
+                            fact:               controller.getParameterFact(-1, "UAVCAN_ENABLE")
+                            checkedValue:       3
+                            uncheckedValue:     0
+                            text:               "Enable UAVCAN as the default MAIN output bus (requires restart)"
+                        }
+
                         QGCLabel {
                             color:  palette.warningText
                             text:   "WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration."
                         }
 
                         QGCLabel {
-                            text: "You must use USB connection for this operation."
+                            text: "After starting the configuration, turn each motor into its turn direction, one after the other."
                         }
 
                         QGCButton {
