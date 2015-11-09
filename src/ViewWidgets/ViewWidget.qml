@@ -1,4 +1,4 @@
-import QtQuick 2.2
+import QtQuick 2.5
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
@@ -6,78 +6,78 @@ import QGroundControl.Palette 1.0
 import QGroundControl.Controllers 1.0
 
 Rectangle {
-	property Component connectedComponent: __componentConnected
-	property Component disconnectedComponent: __componentDisconnected
+    property Component connectedComponent: __componentConnected
+    property Component disconnectedComponent: __componentDisconnected
 
-	QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
-	ViewWidgetController { id: __controller }
+    QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
+    ViewWidgetController { id: __controller }
 
-	color: __qgcPal.window
+    color: __qgcPal.window
 
-	Component.onCompleted: __controller.checkForVehicle()
+    Component.onCompleted: __controller.checkForVehicle()
 
-	Connections {
-		target: __controller
+    Connections {
+        target: __controller
 
-		onPluginConnected: {
-			pageLoader.autopilot = autopilot
-			pageLoader.sourceComponent = connectedComponent
-		}
+        onPluginConnected: {
+            pageLoader.autopilot = autopilot
+            pageLoader.sourceComponent = connectedComponent
+        }
 
-		onPluginDisconnected: {
+        onPluginDisconnected: {
             pageLoader.sourceComponent = null
-			pageLoader.sourceComponent = disconnectedComponent
-			pageLoader.autopilot = null
-		}
-	}
+            pageLoader.sourceComponent = disconnectedComponent
+            pageLoader.autopilot = null
+        }
+    }
 
-	Loader {
-		id: pageLoader
+    Loader {
+        id: pageLoader
 
-		anchors.fill: parent
+        anchors.fill: parent
 
-		property var autopilot
+        property var autopilot
 
-		sourceComponent: __componentDisconnected
-	}
+        sourceComponent: __componentDisconnected
+    }
 
-	Component {
-		id: __componentConnected
+    Component {
+        id: __componentConnected
 
-		Rectangle {
-			QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
+        Rectangle {
+            QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
 
-			anchors.fill:	parent
-			color:			__qgcPal.window
+            anchors.fill:	parent
+            color:			__qgcPal.window
 
-			QGCLabel {
-				anchors.fill:	parent
+            QGCLabel {
+                anchors.fill:	parent
 
-				horizontalAlignment:	Text.AlignHCenter
-				verticalAlignment:		Text.AlignVCenter
+                horizontalAlignment:	Text.AlignHCenter
+                verticalAlignment:		Text.AlignVCenter
 
-				text: "missing connected implementation"
-			}
-		}
-	}
+                text: "missing connected implementation"
+            }
+        }
+    }
 
-	Component {
-		id: __componentDisconnected
+    Component {
+        id: __componentDisconnected
 
-		Rectangle {
-			QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
+        Rectangle {
+            QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
 
-			anchors.fill:	parent
-			color:			__qgcPal.window
+            anchors.fill:	parent
+            color:			__qgcPal.window
 
-			QGCLabel {
-				anchors.fill:	parent
+            QGCLabel {
+                anchors.fill:	parent
 
-				horizontalAlignment:	Text.AlignHCenter
-				verticalAlignment:		Text.AlignVCenter
+                horizontalAlignment:	Text.AlignHCenter
+                verticalAlignment:		Text.AlignVCenter
 
-				text: "no vehicle connected"
-			}
-		}
-	}
+                text: "no vehicle connected"
+            }
+        }
+    }
 }
