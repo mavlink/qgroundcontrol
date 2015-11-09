@@ -49,6 +49,7 @@ linux {
     macx-clang | macx-llvm {
         message("Mac build")
         CONFIG += MacBuild
+        DEFINES += __macos__
         QMAKE_CXXFLAGS += -fvisibility=hidden
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
@@ -60,6 +61,7 @@ linux {
     message("iOS build")
     CONFIG += iOSBuild MobileBuild app_bundle
     DEFINES += __ios__
+    QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     warning("iOS build is experimental and not yet fully functional")
 } else {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")

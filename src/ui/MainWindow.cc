@@ -265,7 +265,7 @@ MainWindow::MainWindow()
     connect(_ui.actionStatusBar,  &QAction::triggered, this, &MainWindow::showStatusBarCallback);
 
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
-#ifdef Q_OS_MACX
+#ifdef __macos__
     _ui.actionSetup->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
     _ui.actionPlan->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
     _ui.actionFlight->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
@@ -290,7 +290,7 @@ MainWindow::MainWindow()
         menuBar()->hide();
 #endif
         show();
-#ifdef Q_OS_MAC
+#ifdef __macos__
         // TODO HACK
         // This is a really ugly hack. For whatever reason, by having a QQuickWidget inside a
         // QDockWidget (MainToolBar above), the main menu is not shown when the app first

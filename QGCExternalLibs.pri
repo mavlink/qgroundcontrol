@@ -260,7 +260,7 @@ contains (DEFINES, DISABLE_SPEECH) {
     }
 }
 # Mac support is built into OS 10.6+.
-else:MacBuild {
+else:MacBuild|iOSBuild {
     message("Including support for speech output")
     DEFINES += QGC_SPEECH_ENABLED
 }
