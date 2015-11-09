@@ -40,7 +40,7 @@ void APMComponent::setupTriggerSignals(void)
     // Watch for changed on trigger list params
     foreach (QString paramName, setupCompleteChangedTriggerList()) {
         Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
-        
+        qDebug() << "Param:" << paramName;
         connect(fact, &Fact::valueChanged, this, &APMComponent::_triggerUpdated);
     }
 }

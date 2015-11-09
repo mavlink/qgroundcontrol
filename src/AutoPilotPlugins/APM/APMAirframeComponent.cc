@@ -59,7 +59,7 @@ bool APMAirframeComponent::setupComplete(void) const
 {
     // You'll need to figure out which parameters trigger setup complete
 #if 0
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt() != 0;
+    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt() != 0;
 #else
     return true;
 #endif
@@ -67,37 +67,17 @@ bool APMAirframeComponent::setupComplete(void) const
 
 QString APMAirframeComponent::setupStateDescription(void) const
 {
-    const char* stateDescription;
-    
-    if (requiresSetup()) {
-        stateDescription = "Requires calibration";
-    } else {
-        stateDescription = "Calibrated";
-    }
-    return QString(stateDescription);
+    return QString(requiresSetup() ? "Requires calibration" : "Calibrated");
 }
 
 QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
 {
-    // You'll need to figure out which parameters trigger setup complete
-#if 0
-    return QStringList("SYS_AUTOSTART");
-#else
     return QStringList();
-#endif
 }
 
 QStringList APMAirframeComponent::paramFilterList(void) const
 {
-#if 0
-    QStringList list;
-    
-    list << "SYS_AUTOSTART";
-    
-    return list;
-#else
     return QStringList();
-#endif
 }
 
 QUrl APMAirframeComponent::setupSource(void) const
