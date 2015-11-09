@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -24,24 +24,40 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "AutoPilotPluginManager.h"
-#include "PX4/PX4AutoPilotPlugin.h"
-#include "APM/APMAutoPilotPlugin.h"
-#include "Generic/GenericAutoPilotPlugin.h"
+#ifndef APMAirframeComponentAirframes_H
+#define APMAirframeComponentAirframes_H
 
-#include <QDebug>
+#include <QObject>
+#include <QQuickItem>
+#include <QList>
+#include <QMap>
 
-AutoPilotPlugin* AutoPilotPluginManager::newAutopilotPluginForVehicle(Vehicle* vehicle)
+#include "UASInterface.h"
+#include "AutoPilotPlugin.h"
+
+/// MVC Controller for AirframeComponent.qml.
+class APMAirframeComponentAirframes
 {
-    switch (vehicle->firmwareType()) {
-        case MAV_AUTOPILOT_PX4:
-            qDebug() << "Starting a PX4 Plugin";
-            return new PX4AutoPilotPlugin(vehicle, vehicle);
-        case MAV_AUTOPILOT_ARDUPILOTMEGA:
-            qDebug() << "Starting a APM Plugin";
-            return new APMAutoPilotPlugin(vehicle, vehicle);
-        default:
-            qDebug() << "Starting a Default Plugin";
-            return new GenericAutoPilotPlugin(vehicle, vehicle);
-    }
-}
+public:
+    typedef struct {
+        QString name;
+        int         autostartId;
+    } AirframeInfo_t;
+    
+    typedef struct {
+        QString name;
+        QString imageResource;
+        QList<AirframeInfo_t*> rgAirframeInfo;
+    } AirframeType_t;
+
+    static QMap<QString, APMAirframeComponentAirframes::AirframeType_t*>& get();
+    static void clear();
+    static void insert(QString& group, QString& image, QString& name, int id);
+    
+protected:
+    static QMap<QString, AirframeType_t*> rgAirframeTypes;
+    
+private:
+};
+
+#endif
