@@ -37,10 +37,8 @@ APMComponent::APMComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject
 
 void APMComponent::setupTriggerSignals(void)
 {
-    // Watch for changed on trigger list params
-    foreach (QString paramName, setupCompleteChangedTriggerList()) {
+    foreach (const QString& paramName, setupCompleteChangedTriggerList()) {
         Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
-        
         connect(fact, &Fact::valueChanged, this, &APMComponent::_triggerUpdated);
     }
 }

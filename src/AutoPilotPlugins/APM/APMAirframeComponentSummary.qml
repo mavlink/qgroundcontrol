@@ -13,33 +13,27 @@ FactPanel {
     color:          qgcPal.windowShadeDark
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+    APMAirframeComponentController {
+        id:         controller
+        factPanel:  panel
+    }
 
-/*
-    property Fact sysIdFact:        controller.getParameterFact(-1, "MAV_SYS_ID")
-    property Fact sysAutoStartFact: controller.getParameterFact(-1, "SYS_AUTOSTART")
+    property Fact sysIdFact:        controller.getParameterFact(-1, "FRAME")
 
-    property bool autoStartSet: sysAutoStartFact.value != 0
-*/
 
     Column {
         anchors.fill: parent
         anchors.margins: 8
 
-/*
         VehicleSummaryRow {
-            labelText: "System ID:"
-            valueText: sysIdFact.valueString
-        }
+            id: nameRow;
+            labelText: "Frame Type:"
+            valueText: sysIdFact.valueString === "0" ? "Plus"
+                     : sysIdFact.valueString === "1" ? "X"
+                     : sysIdFact.valueString === "2" ? "V"
+                     : sysIdFact.valueString == "3" ? "H"
+                     :/* Fact.value == 10 */ "New Y6";
 
-        VehicleSummaryRow {
-            labelText: "Airframe type:"
-            valueText: autoStartSet ? controller.currentAirframeType : "Setup required"
         }
-
-        VehicleSummaryRow {
-            labelText: "Vehicle:"
-            valueText: autoStartSet ? controller.currentVehicleName : "Setup required"
-        }
-*/
     }
 }

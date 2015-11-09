@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -21,36 +21,42 @@
  
  ======================================================================*/
 
-#ifndef APMAutoPilotPlugin_H
-#define APMAutoPilotPlugin_H
+/// @file
+///     @author Don Gagne <don@thegagnes.com>
 
+#ifndef APMAirframeComponentAirframes_H
+#define APMAirframeComponentAirframes_H
+
+#include <QObject>
+#include <QQuickItem>
+#include <QList>
+#include <QMap>
+
+#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
-#include "Vehicle.h"
 
-class APMAirframeComponent;
-class APMAirframeLoader;
+class APMAirframe;
 
-/// This is the APM specific implementation of the AutoPilot class.
-class APMAutoPilotPlugin : public AutoPilotPlugin
+/// MVC Controller for AirframeComponent.qml.
+class APMAirframeComponentAirframes
 {
-    Q_OBJECT
-
 public:
-    APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent);
-    ~APMAutoPilotPlugin();
+    typedef struct {
+        QString name;
+        QString imageResource;
+        int type;
+        QList<APMAirframe*> rgAirframeInfo;
+    } AirframeType_t;
+    typedef QMap<QString, AirframeType_t*> AirframeTypeMap;
 
-    // Overrides from AutoPilotPlugin
-    virtual const QVariantList& vehicleComponents(void);
-
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
-
+    static AirframeTypeMap& get();
+    static void clear();
+    static void insert(const QString& group, int groupId, const QString& image,const QString& name, const QString& file);
+    
+protected:
+    static AirframeTypeMap rgAirframeTypes;
+    
 private:
-    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
-    QVariantList            _components;
-    APMAirframeComponent*   _airframeComponent;
-    APMAirframeLoader*      _airframeFacts;
 };
 
 #endif
