@@ -57,22 +57,13 @@ bool APMAirframeComponent::requiresSetup(void) const
 
 bool APMAirframeComponent::setupComplete(void) const
 {
-    // You'll need to figure out which parameters trigger setup complete
-#if 0
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt() != 0;
-#else
-    return true;
-#endif
+    //: Not the correct one, but it works for the moment.
+    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != -1;
 }
 
 QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
 {
-    // You'll need to figure out which parameters trigger setup complete
-#if 0
-    return QStringList("SYS_AUTOSTART");
-#else
     return QStringList();
-#endif
 }
 
 QUrl APMAirframeComponent::setupSource(void) const
