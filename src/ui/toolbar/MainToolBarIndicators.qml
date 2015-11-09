@@ -112,7 +112,7 @@ Row {
             visible:            activeVehicle.messageCount > 0 && isMessageImportant
             Image {
                 source:         "/qmlimages/Yield.svg"
-                height:         mainWindow.tbButtonWidth
+                height:         mainWindow.tbCellHeight * 0.75
                 fillMode:       Image.PreserveAspectFit
                 mipmap:         true
                 smooth:         true
