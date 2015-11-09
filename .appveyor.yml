@@ -1,3 +1,7 @@
+version: '{branch}-{build}'
+
+build:
+  verbosity: minimal
 
 environment:
   matrix:
@@ -20,12 +24,12 @@ build_script:
 test_script:
   - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
 
-after_build:
-  - if "%CONFIG%" EQU "installer" ( if defined %APPVEYOR_PULL_REQUEST_NUMBER% ( appveyor PushArtifact C:\projects\qgroundcontrol\release\qgroundcontrol.exe ) )
+artifacts:
+  - path: 'release\qgroundcontrol-installer.exe'
+    name: s3
 
 deploy:
   - provider: S3
-    name: qgroundcontrol-s3
     access_key_id:
       secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
     secret_access_key:
@@ -33,11 +37,11 @@ deploy:
     bucket: qgroundcontrol
     set_public: true
     folder: $(APPVEYOR_REPO_BRANCH)
-    artifcat: 'release\qgroundcontrol.exe'
+    artifact: 'release\qgroundcontrol-installer.exe'
     on:
       CONFIG: installer
   - provider: GitHub
-    artifact: 'release\qgroundcontrol.exe'
+    artifact: 'release\qgroundcontrol-installer.exe'
     draft: false
     prerelease: false
     on:
