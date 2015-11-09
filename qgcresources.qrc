@@ -208,6 +208,9 @@
         <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>
+    <qresource prefix="/AutoPilotPlugins/APM">
+        <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/APM/AirframeFactMetaData.xml</file>
+    </qresource>
 
     <qresource prefix="/FirmwarePlugin/APM">
         <file alias="apm.pdef.xml">src/FirmwarePlugin/APM/apm.pdef.xml</file>

@@ -26,12 +26,14 @@
 
 #include "AutoPilotPlugin.h"
 #include "Vehicle.h"
-#include "APMAirframeComponent.h"
-#include "APMFlightModesComponent.h"
-#include "APMRadioComponent.h"
-#include "APMSafetyComponent.h"
-#include "APMSensorsComponent.h"
-#include "APMTuningComponent.h"
+
+class APMAirframeComponent;
+class APMAirframeLoader;
+class APMFlightModesComponent;
+class APMRadioComponent;
+class APMTuningComponent;
+class APMSafetyComponent;
+class APMSensorsComponent;
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -66,6 +68,7 @@ private:
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;
     APMTuningComponent*         _tuningComponent;
+    APMAirframeLoader*      _airframeFacts;
 };
 
 #endif
