@@ -281,7 +281,7 @@ QGCView {
                             fact:               controller.getParameterFact(-1, "UAVCAN_ENABLE")
                             checkedValue:       3
                             uncheckedValue:     0
-                            text:               "Enable UAVCAN as the default MAIN output bus (requires restart)"
+                            text:               "Enable UAVCAN as the default MAIN output bus (requires autopilot restart)"
                         }
                     }
                 }
