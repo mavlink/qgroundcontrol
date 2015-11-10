@@ -91,7 +91,7 @@
       <unit>RPM/v</unit>
       <decimal>0</decimal>
       <min>0</min>
-      <max>100</max>
+      <max>4000</max>
     </parameter>
     <parameter default="0.0" name="mot_ls" type="FLOAT">
       <short_desc>READ ONLY: Motor inductance in henries.</short_desc>
