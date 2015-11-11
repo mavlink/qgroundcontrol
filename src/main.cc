@@ -151,12 +151,12 @@ int main(int argc, char *argv[])
     Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryQGC)
 
     bool runUnitTests = false;          // Run unit tests
-    bool stressUnitTests = false;       // Stress test unit tests
 
 #ifdef QT_DEBUG
     // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
     // which need to be handled before a QApplication object is started.
 
+    bool stressUnitTests = false;       // Stress test unit tests
     bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
 
     QString unitTestOptions;
