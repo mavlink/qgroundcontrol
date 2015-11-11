@@ -30,10 +30,13 @@ linux {
     linux-g++ | linux-g++-64 {
         message("Linux build")
         CONFIG += LinuxBuild
+        DEFINES += __STDC_LIMIT_MACROS
     } else : android-g++ {
         message("Android build")
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
+        DEFINES += __STDC_LIMIT_MACROS
+        target.path = $$DESTDIR
         warning("Android build is experimental and not fully functional")
     } else {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
@@ -42,6 +45,7 @@ linux {
     win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
         message("Windows build")
         CONFIG += WindowsBuild
+        DEFINES += __STDC_LIMIT_MACROS
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2010, 2012, and 2013 are supported")
     }
@@ -49,6 +53,10 @@ linux {
     macx-clang | macx-llvm {
         message("Mac build")
         CONFIG += MacBuild
+        CONFIG += x86_64
+        CONFIG -= x86
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+        QMAKE_MAC_SDK = macosx10.11
         QMAKE_CXXFLAGS += -fvisibility=hidden
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
@@ -60,6 +68,9 @@ linux {
     message("iOS build")
     CONFIG += iOSBuild MobileBuild app_bundle
     DEFINES += __ios__
+    QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
+    QMAKE_IOS_TARGETED_DEVICE_FAMILY = 2 #- iPad only for now
+    QMAKE_LFLAGS += -Wl,-no_pie
     warning("iOS build is experimental and not yet fully functional")
 } else {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
@@ -109,75 +120,21 @@ win32:debug_and_release {
 # Setup our build directories
 
 BASEDIR      = $$IN_PWD
-DESTDIR      = $${OUT_PWD}/debug
-BUILDDIR     = $${OUT_PWD}/build-debug
 
-ReleaseBuild {
-    DESTDIR  = $${OUT_PWD}/release
-    BUILDDIR = $${OUT_PWD}/build-release
-}
-
-iOSBuild {
-    # For whatever reason, the iOS build fails with these set. Some files have the full,
-    # properly concatenaded path and file name while others have only the second portion,
-    # as if BUILDDIR was empty.
-    OBJECTS_DIR = $$(HOME)/tmp/qgcfoo
-    MOC_DIR     = $$(HOME)/tmp/qgcfoo
-    UI_DIR      = $$(HOME)/tmp/qgcfoo
-    RCC_DIR     = $$(HOME)/tmp/qgcfoo
-} else {
-    OBJECTS_DIR = $${BUILDDIR}/obj
-    MOC_DIR     = $${BUILDDIR}/moc
-    UI_DIR      = $${BUILDDIR}/ui
-    RCC_DIR     = $${BUILDDIR}/rcc
+!ios {
+    OBJECTS_DIR  = $${OUT_PWD}/obj
+    MOC_DIR      = $${OUT_PWD}/moc
+    UI_DIR       = $${OUT_PWD}/ui
+    RCC_DIR      = $${OUT_PWD}/rcc
 }
 
 LANGUAGE = C++
 
-AndroidBuild {
-    target.path = $$DESTDIR
-}
-
-# We place the created plugin lib into the objects dir so that make clean will clean it as well
-iOSBuild {
-    LOCATION_PLUGIN_DESTDIR = $$(HOME)/tmp/qgcfoo
-} else {
-    LOCATION_PLUGIN_DESTDIR = $$OBJECTS_DIR
-}
-
-LOCATION_PLUGIN_NAME = QGeoServiceProviderFactoryQGC
-
-message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET OUTPUT $$OUT_PWD)
+LOCATION_PLUGIN_DESTDIR = $${OUT_PWD}/src/QtLocationPlugin
+LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
 
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
-
-#
-# OS Specific settings
-#
-
-AndroidBuild {
-    DEFINES += __STDC_LIMIT_MACROS
-}
-
-iOSBuild {
-    QMAKE_IOS_DEPLOYMENT_TARGET = 7.0
-}
-
-MacBuild {
-    CONFIG += x86_64
-    CONFIG -= x86
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-    QMAKE_MAC_SDK = macosx10.11
-}
-
-LinuxBuild {
-    DEFINES += __STDC_LIMIT_MACROS
-}
-
-WindowsBuild {
-    DEFINES += __STDC_LIMIT_MACROS
-}
 
 #
 # By default warnings as errors are turned off. Even so, in order for a pull request

@@ -140,8 +140,8 @@ int main(int argc, char *argv[])
 #ifndef __mobile__
     qRegisterMetaType<QSerialPortInfo>();
 #endif
-    
-    // We statically link to the google QtLocation plugin
+
+    // We statically link our own QtLocation plugin
 
 #ifdef Q_OS_WIN
     // In Windows, the compiler doesn't see the use of the class created by Q_IMPORT_PLUGIN

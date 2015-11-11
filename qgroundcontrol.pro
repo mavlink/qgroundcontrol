@@ -17,12 +17,9 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-TEMPLATE =  subdirs
-CONFIG  +=  ordered
-SUBDIRS  =  ./QGCLocationPlugin.pro
-SUBDIRS +=  ./QGCApplication.pro
-
-QGCApplication.depends = QGCLocationPlugin
+equals(OUT_PWD, $$IN_PWD) {
+    error("You must use shadow build.")
+}
 
 message(Qt version $$[QT_VERSION])
 
@@ -30,3 +27,12 @@ message(Qt version $$[QT_VERSION])
     error("Unsupported Qt version, 5.4+ is required")
 }
 
+ios {
+    include($$PWD/src/QtLocationPlugin/QGCLocationPlugin.pro)
+    include($$PWD/QGCApplication.pro)
+} else {
+    TEMPLATE =  subdirs
+    SUBDIRS  =  ./src/QtLocationPlugin/QGCLocationPlugin.pro
+    SUBDIRS +=  ./QGCApplication.pro
+    QGCApplication.depends = QGCLocationPlugin
+}
