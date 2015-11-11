@@ -19,8 +19,9 @@
 
 include(QGCCommon.pri)
 
-TARGET = qgroundcontrol
+TARGET   = qgroundcontrol
 TEMPLATE = app
+DESTDIR  = $${OUT_PWD}/build
 
 # Load additional config flags from user_config.pri
 exists(user_config.pri):infile(user_config.pri, CONFIG) {
@@ -34,13 +35,9 @@ LinuxBuild {
 
 # QGC QtLocation plugin
 
-LIBS += -L$${LOCATION_PLUGIN_DESTDIR}
-LIBS += -l$${LOCATION_PLUGIN_NAME}
-
-WindowsBuild {
-    PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/$${LOCATION_PLUGIN_NAME}.lib
-} else {
-    PRE_TARGETDEPS += $${LOCATION_PLUGIN_DESTDIR}/lib$${LOCATION_PLUGIN_NAME}.a
+!ios {
+    LIBS += -L$${LOCATION_PLUGIN_DESTDIR}
+    LIBS += -l$${LOCATION_PLUGIN_NAME}
 }
 
 # Qt configuration
@@ -88,8 +85,12 @@ MacBuild {
 
 iOSBuild {
     QMAKE_INFO_PLIST = $${BASEDIR}/ios/iOS-Info.plist
-    ICON = $${BASEDIR}/resources/icons/macx.icns
-    OTHER_FILES += $${BASEDIR}/iOS-Info.plist
+    OTHER_FILES += $${BASEDIR}/ios/iOS-Info.plist
+    ios_icon.files = $$files($$PWD/ios/AppIcon*.png)
+    QMAKE_BUNDLE_DATA += ios_icon
+    app_launch_images.files = $$PWD/ios/LaunchScreen.xib
+    QMAKE_BUNDLE_DATA += app_launch_images
+    #-- TODO: Add iTunesArtwork
 }
 
 LinuxBuild {
@@ -277,7 +278,6 @@ WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
     HEADERS += src/stable_headers.h
 }
-
 
 !iOSBuild {
 HEADERS += \
