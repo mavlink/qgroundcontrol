@@ -17,7 +17,7 @@
 # executable name is usually:   qgroundcontrol
 
 die () {
-    echo "$@" 1>&2
+    echo "$@" 1>&2  
     exit 1
 }
 
@@ -28,7 +28,6 @@ RELOC=$(dirname $0)/osxrelocator.py
 
 echo "GST Installer"
 [ "$#" -eq 3 ] || die "3 arguments required, $# provided"
-[ -d "$1" ] || die "Could not find $1"
 [ -d "$2" ] || die "Could not find $2"
 
 FMWORK_TARGET=$1
@@ -46,9 +45,9 @@ process_framework() {
     echo "GST Installer: Copying $GST_ROOT to $FMWORK_TARGET"
     rsync -a --delete "$GST_ROOT" "$FMWORK_TARGET" || die "Error copying $GST_ROOT to $FMWORK_TARGET"
     #-- Prune unused stuff
-    rm -rf $GST_TARGET/bin/*
-    rm -rf $GST_TARGET/Headers/*
-    rm -rf $GST_TARGET/include/*
+    rm -rf $GST_TARGET/bin
+    rm -rf $GST_TARGET/Headers
+    rm -rf $GST_TARGET/include
     rm -rf $GST_TARGET/lib/*.a
     rm -rf $GST_TARGET/lib/*.la
     rm -rf $GST_TARGET/lib/gio/modules/static
@@ -57,6 +56,7 @@ process_framework() {
     rm -rf $GST_TARGET/lib/gstreamer-1.0/static
     rm -rf $GST_TARGET/lib/libffi-3.0.13
     rm -rf $GST_TARGET/lib/pkgconfig
+    rm $GST_TARGET/Commands
     #-- Some dylibs are dupes instead of symlinks.
     #-- This will do a minimum job in trying to clean those.
     #-- Doesn't work. The stupid thing can't load a dlyb symlink.

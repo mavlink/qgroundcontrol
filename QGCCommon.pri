@@ -122,7 +122,7 @@ win32:debug_and_release {
 
 BASEDIR      = $$IN_PWD
 
-!ios {
+!iOSBuild {
     OBJECTS_DIR  = $${OUT_PWD}/obj
     MOC_DIR      = $${OUT_PWD}/moc
     UI_DIR       = $${OUT_PWD}/ui

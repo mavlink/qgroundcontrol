@@ -54,6 +54,18 @@ This file is part of the QGROUNDCONTROL project
     G_END_DECLS
 #endif
 
+#if defined(QGC_GST_STREAMING)
+#if defined(__macos__)
+#ifdef QGC_INSTALL_RELEASE
+static void qgcputenv(const QString& key, const QString& root, const QString& path)
+{
+    QString value = root + path;
+    qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
+}
+#endif
+#endif
+#endif
+
 void initializeVideoStreaming(int &argc, char* argv[])
 {
 #if defined(QGC_GST_STREAMING)

@@ -17,7 +17,7 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-equals(OUT_PWD, $$IN_PWD) {
+exists($${OUT_PWD}/qgroundcontrol.pro) {
     error("You must use shadow build.")
 }
 

@@ -75,11 +75,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QmlControls/QmlTestWidget.h"
 #endif
 
-#ifdef QGC_OSG_ENABLED
-#include "Q3DWidgetFactory.h"
-#endif
-
-
 /// The key under which the Main Window settings are saved
 const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
@@ -314,7 +309,6 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
-    _mainQmlWidgetHolder->getEngine()->removeImageProvider(QLatin1String("QGCImages"));
     _instance = NULL;
 }
 

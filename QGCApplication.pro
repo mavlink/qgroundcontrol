@@ -21,7 +21,12 @@ include(QGCCommon.pri)
 
 TARGET   = qgroundcontrol
 TEMPLATE = app
-DESTDIR  = $${OUT_PWD}/build
+
+DebugBuild {
+    DESTDIR  = $${OUT_PWD}/debug
+} else {
+    DESTDIR  = $${OUT_PWD}/release
+}
 
 # Load additional config flags from user_config.pri
 exists(user_config.pri):infile(user_config.pri, CONFIG) {
@@ -35,7 +40,7 @@ LinuxBuild {
 
 # QGC QtLocation plugin (for ios, it's all compiled in with the rest.)
 
-!ios {
+!iOSBuild {
     LIBS += -L$${LOCATION_PLUGIN_DESTDIR}
     LIBS += -l$${LOCATION_PLUGIN_NAME}
 }
@@ -78,18 +83,25 @@ QT += testlib
 #
 
 MacBuild {
-    QMAKE_INFO_PLIST = Custom-Info.plist
-    ICON = $${BASEDIR}/resources/icons/macx.icns
-    OTHER_FILES += Custom-Info.plist
+    QMAKE_INFO_PLIST    = Custom-Info.plist
+    ICON                = $${BASEDIR}/resources/icons/macx.icns
+    OTHER_FILES        += Custom-Info.plist
 }
 
 iOSBuild {
-    QMAKE_INFO_PLIST    = $${BASEDIR}/ios/iOS-Info.plist
-    OTHER_FILES += $${BASEDIR}/ios/iOS-Info.plist
-    BUNDLE.files = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/LaunchScreen.xib
+    BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib
     QMAKE_BUNDLE_DATA  += BUNDLE
     LIBS               += -framework AVFoundation
     OBJECTIVE_SOURCES  += src/audio/QGCAudioWorker_iOS.mm
+    #-- Info.plist (need an "official" one for the App Store)
+    ForAppStore {
+        message(App Store Build)
+        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
+        OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
+    } else {
+        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
+        OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
+    }
     #-- TODO: Add iTunesArtwork
 }
 
@@ -662,6 +674,14 @@ AndroidBuild {
         $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
         $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbDeviceJNI.java \
         $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbIoManager.java
+
+    DISTFILES += \
+        android/gradle/wrapper/gradle-wrapper.jar \
+        android/gradlew \
+        android/res/values/libs.xml \
+        android/build.gradle \
+        android/gradle/wrapper/gradle-wrapper.properties \
+        android/gradlew.bat
 }
 
 #-------------------------------------------------------------------------------------
@@ -676,11 +696,3 @@ include(QGCSetup.pri)
 #
 
 include(QGCInstaller.pri)
-
-DISTFILES += \
-    android/gradle/wrapper/gradle-wrapper.jar \
-    android/gradlew \
-    android/res/values/libs.xml \
-    android/build.gradle \
-    android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew.bat
