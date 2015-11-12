@@ -246,16 +246,3 @@ Vehicle* MultiVehicleManager::getVehicleById(int vehicleId)
 
     return NULL;
 }
-
-QList<Vehicle*> MultiVehicleManager::vehicles(void)
-{
-    QList<Vehicle*> list;
-
-    for (int i=0; i< _vehicles.count(); i++) {
-        list += qobject_cast<Vehicle*>(_vehicles[i]);
-    }
-
-    return list;
-}
-
-
