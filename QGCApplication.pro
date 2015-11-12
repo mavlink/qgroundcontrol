@@ -87,9 +87,11 @@ MacBuild {
 }
 
 iOSBuild {
-    QMAKE_INFO_PLIST = $${BASEDIR}/ios/iOS-Info.plist
-    ICON = $${BASEDIR}/resources/icons/macx.icns
-    OTHER_FILES += $${BASEDIR}/iOS-Info.plist
+    QMAKE_INFO_PLIST    = $${BASEDIR}/ios/iOS-Info.plist
+    ICON                = $${BASEDIR}/resources/icons/macx.icns
+    OTHER_FILES        += $${BASEDIR}/iOS-Info.plist
+    LIBS               += -framework AVFoundation
+    OBJECTIVE_SOURCES  += src/audio/QGCAudioWorker_iOS.mm
 }
 
 LinuxBuild {
