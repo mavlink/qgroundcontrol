@@ -84,10 +84,12 @@ MacBuild {
 }
 
 iOSBuild {
-    QMAKE_INFO_PLIST = $${BASEDIR}/ios/iOS-Info.plist
+    QMAKE_INFO_PLIST    = $${BASEDIR}/ios/iOS-Info.plist
     OTHER_FILES += $${BASEDIR}/ios/iOS-Info.plist
     BUNDLE.files = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/LaunchScreen.xib
-    QMAKE_BUNDLE_DATA += BUNDLE
+    QMAKE_BUNDLE_DATA  += BUNDLE
+    LIBS               += -framework AVFoundation
+    OBJECTIVE_SOURCES  += src/audio/QGCAudioWorker_iOS.mm
     #-- TODO: Add iTunesArtwork
 }
 

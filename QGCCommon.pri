@@ -53,6 +53,7 @@ linux {
     macx-clang | macx-llvm {
         message("Mac build")
         CONFIG += MacBuild
+        DEFINES += __macos__
         CONFIG += x86_64
         CONFIG -= x86
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
