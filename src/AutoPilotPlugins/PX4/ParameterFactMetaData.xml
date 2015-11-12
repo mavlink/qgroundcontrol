@@ -1,6 +1,141 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <parameters>
   <version>3</version>
+  <group name="UAVCAN Motor Parameters" no_code_generation="true">
+    <parameter default="75" name="ctl_bw" type="INT32">
+      <short_desc>Speed controller bandwidth</short_desc>
+      <long_desc>Speed controller bandwidth, in Hz. Higher values result in faster speed and current rise times, but may result in overshoot and higher current consumption. For fixed-wing aircraft, this value should be less than 50 Hz; for multirotors, values up to 100 Hz may provide improvements in responsiveness.</long_desc>
+      <unit>Hertz</unit>
+      <min>10</min>
+      <max>250</max>
+    </parameter>
+    <parameter default="1" name="ctl_dir" type="INT32">
+      <short_desc>Reverse direction</short_desc>
+      <long_desc>Motor spin direction as detected during initial enumeration. Use 0 or 1 to reverse direction.</long_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="1" name="ctl_gain" type="FLOAT">
+      <short_desc>Speed (RPM) controller gain</short_desc>
+      <long_desc>Speed (RPM) controller gain. Determines controller
+            aggressiveness; units are amp-seconds per radian. Systems with
+            higher rotational inertia (large props) will need gain increased;
+            systems with low rotational inertia (small props) may need gain
+            decreased. Higher values result in faster response, but may result
+            in oscillation and excessive overshoot. Lower values result in a
+            slower, smoother response.</long_desc>
+      <unit>amp-seconds per radian</unit>
+      <decimal>3</decimal>
+      <min>0.00</min>
+      <max>1.00</max>
+    </parameter>
+    <parameter default="3.5" name="ctl_hz_idle" type="FLOAT">
+      <short_desc>Idle speed (e Hz)</short_desc>
+      <long_desc>Idle speed (e Hz)</long_desc>
+      <unit>Hertz</unit>
+      <decimal>3</decimal>
+      <min>0.0</min>
+      <max>100.0</max>
+    </parameter>
+    <parameter default="25" name="ctl_start_rate" type="INT32">
+      <short_desc>Spin-up rate (e Hz/s)</short_desc>
+      <long_desc>Spin-up rate (e Hz/s)</long_desc>
+      <unit>Hz/s</unit>
+      <min>5</min>
+      <max>1000</max>
+    </parameter>
+    <parameter default="0" name="esc_index" type="INT32">
+      <short_desc>Index of this ESC in throttle command messages.</short_desc>
+      <long_desc>Index of this ESC in throttle command messages.</long_desc>
+      <unit>Index</unit>
+      <min>0</min>
+      <max>15</max>
+    </parameter>
+    <parameter default="20034" name="id_ext_status" type="INT32">
+      <short_desc>Extended status ID</short_desc>
+      <long_desc>Extended status ID</long_desc>
+      <min>1</min>
+      <max>100000</max>
+    </parameter>
+    <parameter default="50000" name="int_ext_status" type="INT32">
+      <short_desc>Extended status interval (µs)</short_desc>
+      <long_desc>Extended status interval (µs)</long_desc>
+      <unit>µs</unit>
+      <min>0</min>
+      <max>1000000</max>
+    </parameter>
+    <parameter default="50000" name="int_status" type="INT32">
+      <short_desc>ESC status interval (µs)</short_desc>
+      <long_desc>ESC status interval (µs)</long_desc>
+      <unit>µs</unit>
+      <max>1000000</max>
+    </parameter>
+    <parameter default="12" name="mot_i_max" type="FLOAT">
+      <short_desc>Motor current limit in amps</short_desc>
+      <long_desc>Motor current limit in amps. This determines the maximum
+            current controller setpoint, as well as the maximum allowable
+            current setpoint slew rate. This value should generally be set to
+            the continuous current rating listed in the motor’s specification
+            sheet, or set equal to the motor’s specified continuous power
+            divided by the motor voltage limit.</long_desc>
+      <unit>Amps</unit>
+      <decimal>3</decimal>
+      <min>1</min>
+      <max>80</max>
+    </parameter>
+    <parameter default="2300" name="mot_kv" type="INT32">
+      <short_desc>Motor Kv in RPM per volt</short_desc>
+      <long_desc>Motor Kv in RPM per volt. This can be taken from the motor’s
+            specification sheet; accuracy will help control performance but
+            some deviation from the specified value is acceptable.</long_desc>
+      <unit>RPM/v</unit>
+      <decimal>0</decimal>
+      <min>0</min>
+      <max>4000</max>
+    </parameter>
+    <parameter default="0.0" name="mot_ls" type="FLOAT">
+      <short_desc>READ ONLY: Motor inductance in henries.</short_desc>
+      <long_desc>READ ONLY: Motor inductance in henries. This is measured on start-up.</long_desc>
+      <unit>henries</unit>
+      <decimal>3</decimal>
+    </parameter>
+    <parameter default="14" name="mot_num_poles" type="INT32">
+      <short_desc>Number of motor poles.</short_desc>
+      <long_desc>Number of motor poles. Used to convert mechanical speeds to
+            electrical speeds. This number should be taken from the motor’s
+            specification sheet.</long_desc>
+      <unit>Poles</unit>
+      <min>2</min>
+      <max>40</max>
+    </parameter>
+    <parameter default="0.0" name="mot_rs" type="FLOAT">
+      <short_desc>READ ONLY: Motor resistance in ohms</short_desc>
+      <long_desc>READ ONLY: Motor resistance in ohms. This is measured on start-up. When
+            tuning a new motor, check that this value is approximately equal
+            to the value shown in the motor’s specification sheet.</long_desc>
+      <unit>Ohms</unit>
+      <decimal>3</decimal>
+    </parameter>
+    <parameter default="0.5" name="mot_v_accel" type="FLOAT">
+      <short_desc>Acceleration limit (V)</short_desc>
+      <long_desc>Acceleration limit (V)</long_desc>
+      <unit>Volts</unit>
+      <decimal>3</decimal>
+      <min>0.01</min>
+      <max>1.00</max>
+    </parameter>
+    <parameter default="14.8" name="mot_v_max" type="FLOAT">
+      <short_desc>Motor voltage limit in volts</short_desc>
+      <long_desc>Motor voltage limit in volts. The current controller’s
+            commanded voltage will never exceed this value. Note that this may
+            safely be above the nominal voltage of the motor; to determine the
+            actual motor voltage limit, divide the motor’s rated power by the
+            motor current limit.</long_desc>
+      <unit>Volts</unit>
+      <decimal>3</decimal>
+      <min>0</min>
+    </parameter>
+  </group>
   <group name="Attitude EKF estimator">
     <parameter default="1e-4" name="EKF_ATT_V3_Q0" type="FLOAT">
       <short_desc>Body angular rate process noise</short_desc>
@@ -22,12 +157,6 @@
     </parameter>
     <parameter default="100.0" name="EKF_ATT_V4_R2" type="FLOAT">
       <short_desc>Mag measurement noise</short_desc>
-    </parameter>
-    <parameter default="1" name="EKF_ATT_ENABLED" type="INT32">
-      <short_desc>EKF attitude estimator enabled</short_desc>
-      <long_desc>If enabled, it uses the older EKF filter. However users can enable the new quaternion based complimentary filter by setting EKF_ATT_ENABLED = 0.</long_desc>
-      <min>0</min>
-      <max>1</max>
     </parameter>
     <parameter default="0.0018" name="ATT_J11" type="FLOAT">
       <short_desc>Moment of inertia matrix diagonal entry (1, 1)</short_desc>
@@ -53,9 +182,16 @@
       <short_desc>Complimentary filter accelerometer weight</short_desc>
       <min>0</min>
       <max>1</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.1" name="ATT_W_MAG" type="FLOAT">
       <short_desc>Complimentary filter magnetometer weight</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter default="0.1" name="ATT_W_EXT_HDG" type="FLOAT">
+      <short_desc>Complimentary filter external heading weight</short_desc>
       <min>0</min>
       <max>1</max>
     </parameter>
@@ -63,16 +199,25 @@
       <short_desc>Complimentary filter gyroscope bias weight</short_desc>
       <min>0</min>
       <max>1</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="0.0" name="ATT_MAG_DECL" type="FLOAT">
       <short_desc>Magnetic declination, in degrees</short_desc>
       <long_desc>This parameter is not used in normal operation, as the declination is looked up based on the GPS coordinates of the vehicle.</long_desc>
       <unit>degrees</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter default="1" name="ATT_MAG_DECL_A" type="INT32">
       <short_desc>Enable automatic GPS based declination compensation</short_desc>
       <min>0</min>
       <max>1</max>
+    </parameter>
+    <parameter default="0" name="ATT_EXT_HDG_M" type="INT32">
+      <short_desc>External heading usage mode (from Motion capture/Vision)
+Set to 1 to use heading estimate from vision.
+Set to 2 to use heading from motion capture</short_desc>
+      <min>0</min>
+      <max>2</max>
     </parameter>
     <parameter default="2" name="ATT_ACC_COMP" type="INT32">
       <short_desc>Enable acceleration compensation based on GPS
@@ -85,11 +230,13 @@ velocity</short_desc>
       <min>0</min>
       <max>2</max>
       <unit>rad/s</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter default="0.2" name="ATT_VIBE_THRESH" type="FLOAT">
       <short_desc>Threshold (of RMS) to warn about high vibration levels</short_desc>
-      <min>0.001</min>
-      <max>100</max>
+      <min>0.01</min>
+      <max>10</max>
+      <decimal>2</decimal>
     </parameter>
   </group>
   <group name="Battery Calibration">
@@ -126,8 +273,7 @@ velocity</short_desc>
       <min>1</min>
       <max>100000</max>
     </parameter>
-    <parameter default="0.0082" name="BAT_V_SCALING" type="FLOAT">
-      <board>CONFIG_ARCH_BOARD_PX4FMU_V2</board>
+    <parameter default="-1.0" name="BAT_V_SCALING" type="FLOAT">
       <short_desc>Scaling factor for battery voltage sensor on FMU v2</short_desc>
     </parameter>
     <parameter default="0.0124" name="BAT_C_SCALING" type="FLOAT">
@@ -209,6 +355,12 @@ velocity</short_desc>
       <min>0</min>
       <max>240024</max>
     </parameter>
+    <parameter default="0" name="CBRK_BUZZER" type="INT32">
+      <short_desc>Circuit breaker for disabling buzzer</short_desc>
+      <long_desc>Setting this parameter to 782097 will disable the buzzer audio notification. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <min>0</min>
+      <max>782097</max>
+    </parameter>
   </group>
   <group name="Commander">
     <parameter default="0" name="COM_DL_LOSS_EN" type="INT32">
@@ -283,6 +435,11 @@ velocity</short_desc>
       <long_desc>The default value of 0 requires a valid RC transmitter setup. Setting this to 1 disables RC input handling and the associated checks. A value of 2 will generate RC control data from manual input received via MAVLink instead of directly forwarding the manual input data.</long_desc>
       <min>0</min>
       <max>2</max>
+    </parameter>
+    <parameter default="0" name="COM_DISARM_LAND" type="INT32">
+      <short_desc>Time-out for auto disarm after landing</short_desc>
+      <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. A value of zero means that automatic disarming is disabled.</long_desc>
+      <min>0</min>
     </parameter>
   </group>
   <group name="Data Link Loss">
@@ -610,11 +767,11 @@ velocity</short_desc>
     </parameter>
   </group>
   <group name="Geofence">
-    <parameter default="0" name="GF_MODE" type="INT32">
-      <short_desc>Geofence mode</short_desc>
-      <long_desc>0 = disabled, 1 = geofence file only, 2 = max horizontal (GF_MAX_HOR_DIST) and vertical (GF_MAX_VER_DIST) distances, 3 = both</long_desc>
+    <parameter default="1" name="GF_ACTION" type="INT32">
+      <short_desc>Geofence violation action</short_desc>
+      <long_desc>0 = none, 1 = warning (default), 2 = loiter, 3 = return to launch, 4 = fight termination</long_desc>
       <min>0</min>
-      <max>3</max>
+      <max>4</max>
     </parameter>
     <parameter default="0" name="GF_ALTMODE" type="INT32">
       <short_desc>Geofence altitude mode</short_desc>
@@ -636,11 +793,11 @@ velocity</short_desc>
     </parameter>
     <parameter default="-1" name="GF_MAX_HOR_DIST" type="INT32">
       <short_desc>Max horizontal distance in meters</short_desc>
-      <long_desc>Set to &gt; 0 to activate RTL if horizontal distance to home exceeds this value.</long_desc>
+      <long_desc>Set to &gt; 0 to activate a geofence action if horizontal distance to home exceeds this value.</long_desc>
     </parameter>
     <parameter default="-1" name="GF_MAX_VER_DIST" type="INT32">
       <short_desc>Max vertical distance in meters</short_desc>
-      <long_desc>Set to &gt; 0 to activate RTL if vertical distance to home exceeds this value.</long_desc>
+      <long_desc>Set to &gt; 0 to activate a geofence action if vertical distance to home exceeds this value.</long_desc>
     </parameter>
   </group>
   <group name="L1 Control">
@@ -705,7 +862,7 @@ velocity</short_desc>
       <min>0.0</min>
       <max>1.0</max>
     </parameter>
-    <parameter default="25.0" name="FW_CLMBOUT_DIFF" type="FLOAT">
+    <parameter default="10.0" name="FW_CLMBOUT_DIFF" type="FLOAT">
       <short_desc>Climbout Altitude difference</short_desc>
       <long_desc>If the altitude error exceeds this parameter, the system will climb out with maximum throttle and minimum airspeed until it is closer than this distance to the desired altitude. Mostly used for takeoff waypoints / modes. Set to zero to disable climbout mode (not recommended).</long_desc>
       <min>0.0</min>
@@ -818,6 +975,131 @@ velocity</short_desc>
       <long_desc>The throttle is set to this value while the system is waiting for the take-off.</long_desc>
       <min>0</min>
       <max>1</max>
+    </parameter>
+  </group>
+  <group name="Local Position Estimator">
+    <parameter default="1" name="LPE_ENABLED" type="INT32">
+      <short_desc>Enable local position estimator</short_desc>
+    </parameter>
+    <parameter default="1" name="LPE_INTEGRATE" type="INT32">
+      <short_desc>Enable accelerometer integration for prediction</short_desc>
+    </parameter>
+    <parameter default="0.01" name="LPE_FLW_XY" type="FLOAT">
+      <short_desc>Optical flow xy standard deviation</short_desc>
+      <min>0.01</min>
+      <max>1</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.2" name="LPE_SNR_Z" type="FLOAT">
+      <short_desc>Sonar z standard deviation</short_desc>
+      <min>0.01</min>
+      <max>1</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.03" name="LPE_LDR_Z" type="FLOAT">
+      <short_desc>Lidar z standard deviation</short_desc>
+      <min>0.01</min>
+      <max>1</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.0454" name="LPE_ACC_XY" type="FLOAT">
+      <short_desc>Accelerometer xy standard deviation</short_desc>
+      <long_desc>Data sheet sqrt(Noise power) = 150ug/sqrt(Hz) std dev = (150*9.8*1e-6)*sqrt(1000 Hz) m/s^2 Since accels sampled at 1000 Hz. should be 0.0464</long_desc>
+      <min>0.00001</min>
+      <max>2</max>
+      <unit>m/s^2</unit>
+    </parameter>
+    <parameter default="0.0454" name="LPE_ACC_Z" type="FLOAT">
+      <short_desc>Accelerometer z standard deviation</short_desc>
+      <long_desc>(see Accel x comments)</long_desc>
+      <min>0.00001</min>
+      <max>2</max>
+      <unit>m/s^2</unit>
+    </parameter>
+    <parameter default="1.0" name="LPE_BAR_Z" type="FLOAT">
+      <short_desc>Barometric presssure altitude z standard deviation</short_desc>
+      <min>0.01</min>
+      <max>3</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="2.0" name="LPE_GPS_XY" type="FLOAT">
+      <short_desc>GPS xy standard deviation</short_desc>
+      <min>0.01</min>
+      <max>5</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="10.0" name="LPE_GPS_Z" type="FLOAT">
+      <short_desc>GPS z standard deviation</short_desc>
+      <min>0.01</min>
+      <max>20</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.275" name="LPE_GPS_VXY" type="FLOAT">
+      <short_desc>GPS xy velocity standard deviation</short_desc>
+      <min>0.01</min>
+      <max>2</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="0.237" name="LPE_GPS_VZ" type="FLOAT">
+      <short_desc>GPS z velocity standard deviation</short_desc>
+      <min>0.01</min>
+      <max>2</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="3.0" name="LPE_EPH_MAX" type="FLOAT">
+      <short_desc>GPS max eph</short_desc>
+      <min>1.0</min>
+      <max>5.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.5" name="LPE_VIS_XY" type="FLOAT">
+      <short_desc>Vision xy standard deviation</short_desc>
+      <min>0.01</min>
+      <max>1</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.5" name="LPE_VIS_Z" type="FLOAT">
+      <short_desc>Vision z standard deviation</short_desc>
+      <min>0.01</min>
+      <max>2</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0" name="LPE_NO_VISION" type="INT32">
+      <short_desc>Circuit breaker to disable vision input</short_desc>
+      <long_desc>Set to the appropriate key (328754) to disable vision input.</long_desc>
+      <min>0</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="0.05" name="LPE_VIC_P" type="FLOAT">
+      <short_desc>Vicon position standard deviation</short_desc>
+      <min>0.01</min>
+      <max>1</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.0" name="LPE_PN_P" type="FLOAT">
+      <short_desc>Position propagation process noise power (variance*sampling rate)</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>(m/s^2)-s</unit>
+    </parameter>
+    <parameter default="0.0" name="LPE_PN_V" type="FLOAT">
+      <short_desc>Velocity propagation process noise power (variance*sampling rate)</short_desc>
+      <min>0</min>
+      <max>5</max>
+      <unit>(m/s)-s</unit>
+    </parameter>
+    <parameter default="1e-8" name="LPE_PN_B" type="FLOAT">
+      <short_desc>Accel bias propagation process noise power (variance*sampling rate)</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>(m/s)-s</unit>
+    </parameter>
+    <parameter default="1000.0" name="LPE_BETA_MAX" type="FLOAT">
+      <short_desc>Fault detection threshold, for chi-squared dist</short_desc>
+      <long_desc>TODO add separate params for 1 dof, 3 dof, and 6 dof beta or false alarm rate in false alarms/hr</long_desc>
+      <min>3</min>
+      <max>1000</max>
+      <unit />
     </parameter>
   </group>
   <group name="MAVLink">
@@ -1023,22 +1305,29 @@ velocity</short_desc>
       <max>360.0</max>
       <unit>deg/s</unit>
     </parameter>
-    <parameter default="90.0" name="MC_ACRO_R_MAX" type="FLOAT">
+    <parameter default="360.0" name="MC_ACRO_R_MAX" type="FLOAT">
       <short_desc>Max acro roll rate</short_desc>
       <min>0.0</min>
       <max>360.0</max>
       <unit>deg/s</unit>
     </parameter>
-    <parameter default="90.0" name="MC_ACRO_P_MAX" type="FLOAT">
+    <parameter default="360.0" name="MC_ACRO_P_MAX" type="FLOAT">
       <short_desc>Max acro pitch rate</short_desc>
       <min>0.0</min>
       <max>360.0</max>
       <unit>deg/s</unit>
     </parameter>
-    <parameter default="120.0" name="MC_ACRO_Y_MAX" type="FLOAT">
+    <parameter default="360.0" name="MC_ACRO_Y_MAX" type="FLOAT">
       <short_desc>Max acro yaw rate</short_desc>
       <min>0.0</min>
       <unit>deg/s</unit>
+    </parameter>
+    <parameter default="1.0" name="MC_RATT_TH" type="FLOAT">
+      <short_desc>Threshold for Rattitude mode</short_desc>
+      <long_desc>Manual input needed in order to override attitude control rate setpoints and instead pass manual stick inputs as rate setpoints</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit />
     </parameter>
     <parameter default="6.0" name="MP_ROLL_P" type="FLOAT">
       <short_desc>Roll P gain</short_desc>
@@ -1269,6 +1558,33 @@ velocity</short_desc>
       <short_desc>Max manual yaw rate</short_desc>
       <min>0.0</min>
       <unit>degree / s</unit>
+    </parameter>
+    <parameter default="0.1" name="MPC_HOLD_XY_DZ" type="FLOAT">
+      <short_desc>Deadzone of X,Y sticks where position hold is enabled</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%</unit>
+    </parameter>
+    <parameter default="0.1" name="MPC_HOLD_Z_DZ" type="FLOAT">
+      <short_desc>Deadzone of Z stick where altitude hold is enabled</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%</unit>
+    </parameter>
+    <parameter default="0.5" name="MPC_HOLD_MAX_XY" type="FLOAT">
+      <short_desc>Maximum horizontal velocity for which position hold is enabled (use 0 to disable check)</short_desc>
+      <min>0.0</min>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="0.5" name="MPC_HOLD_MAX_Z" type="FLOAT">
+      <short_desc>Maximum vertical velocity for which position hold is enabled (use 0 to disable check)</short_desc>
+      <min>0.0</min>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="5.0" name="MPC_VELD_LP" type="FLOAT">
+      <short_desc>Low pass filter cut freq. for numerical velocity derivative</short_desc>
+      <min>0.0</min>
+      <unit>Hz</unit>
     </parameter>
     <parameter default="0.1" name="MPP_THR_MIN" type="FLOAT">
       <short_desc>Minimum thrust</short_desc>
@@ -1697,9 +2013,9 @@ velocity</short_desc>
       <min>0.0</min>
       <max>10.0</max>
     </parameter>
-    <parameter default="3.0" name="INAV_W_Z_SONAR" type="FLOAT">
-      <short_desc>Z axis weight for sonar</short_desc>
-      <long_desc>Weight (cutoff frequency) for sonar measurements.</long_desc>
+    <parameter default="3.0" name="INAV_W_Z_LIDAR" type="FLOAT">
+      <short_desc>Z axis weight for lidar</short_desc>
+      <long_desc>Weight (cutoff frequency) for lidar measurements.</long_desc>
       <min>0.0</min>
       <max>10.0</max>
     </parameter>
@@ -1733,11 +2049,11 @@ velocity</short_desc>
       <min>0.0</min>
       <max>10.0</max>
     </parameter>
-    <parameter default="5.0" name="INAV_W_XY_FLOW" type="FLOAT">
+    <parameter default="10.0" name="INAV_W_XY_FLOW" type="FLOAT">
       <short_desc>XY axis weight for optical flow</short_desc>
       <long_desc>Weight (cutoff frequency) for optical flow (velocity) measurements.</long_desc>
       <min>0.0</min>
-      <max>10.0</max>
+      <max>30.0</max>
     </parameter>
     <parameter default="0.5" name="INAV_W_XY_RES_V" type="FLOAT">
       <short_desc>XY axis weight for resetting velocity</short_desc>
@@ -1764,19 +2080,19 @@ velocity</short_desc>
       <max>1.0</max>
       <unit>rad/px</unit>
     </parameter>
-    <parameter default="0.5" name="INAV_FLOW_Q_MIN" type="FLOAT">
+    <parameter default="0.3" name="INAV_FLOW_Q_MIN" type="FLOAT">
       <short_desc>Minimal acceptable optical flow quality</short_desc>
       <long_desc>0 - lowest quality, 1 - best quality.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
     </parameter>
-    <parameter default="0.05" name="INAV_SONAR_FILT" type="FLOAT">
-      <short_desc>Weight for sonar filter</short_desc>
-      <long_desc>Sonar filter detects spikes on sonar measurements and used to detect new surface level.</long_desc>
+    <parameter default="0.05" name="INAV_LIDAR_FILT" type="FLOAT">
+      <short_desc>Weight for lidar filter</short_desc>
+      <long_desc>Lidar filter detects spikes on lidar measurements and used to detect new surface level.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
     </parameter>
-    <parameter default="0.5" name="INAV_SONAR_ERR" type="FLOAT">
+    <parameter default="0.5" name="INAV_LIDAR_ERR" type="FLOAT">
       <short_desc>Sonar maximal error for new surface</short_desc>
       <long_desc>If sonar measurement error is larger than this value it skiped (spike) or accepted as new surface level (if offset is stable).</long_desc>
       <min>0.0</min>
@@ -1809,6 +2125,20 @@ velocity</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>s</unit>
+    </parameter>
+    <parameter default="0.0" name="INAV_FLOW_DIST_X" type="FLOAT">
+      <short_desc>Flow module offset (center of rotation) in X direction</short_desc>
+      <long_desc>Yaw X flow compensation</long_desc>
+      <min>-1.0</min>
+      <max>1.0</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="0.0" name="INAV_FLOW_DIST_Y" type="FLOAT">
+      <short_desc>Flow module offset (center of rotation) in Y direction</short_desc>
+      <long_desc>Yaw Y flow compensation</long_desc>
+      <min>-1.0</min>
+      <max>1.0</max>
+      <unit>m</unit>
     </parameter>
     <parameter default="0" name="CBRK_NO_VISION" type="INT32">
       <short_desc>Disable vision input</short_desc>
@@ -2565,6 +2895,11 @@ velocity</short_desc>
       <min>0</min>
       <max>18</max>
     </parameter>
+    <parameter default="0" name="RC_MAP_RATT_SW" type="INT32">
+      <short_desc>Rattitude switch channel mapping</short_desc>
+      <min>0</min>
+      <max>18</max>
+    </parameter>
     <parameter default="0" name="RC_MAP_POSCTL_SW" type="INT32">
       <short_desc>Posctl switch channel mapping</short_desc>
       <min>0</min>
@@ -2598,6 +2933,12 @@ velocity</short_desc>
     </parameter>
     <parameter default="0.75" name="RC_AUTO_TH" type="FLOAT">
       <short_desc>Threshold for selecting auto mode</short_desc>
+      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
+      <min>-1</min>
+      <max>1</max>
+    </parameter>
+    <parameter default="0.5" name="RC_RATT_TH" type="FLOAT">
+      <short_desc>Threshold for selecting rattitude mode</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
@@ -2661,7 +3002,7 @@ velocity</short_desc>
       <short_desc>Logging rate</short_desc>
       <long_desc>A value of -1 indicates the commandline argument should be obeyed. A value of 0 sets the minimum rate, any other value is interpreted as rate in Hertz. This parameter is only read out before logging starts (which commonly is before arming).</long_desc>
       <min>-1</min>
-      <max>1</max>
+      <max>100</max>
     </parameter>
     <parameter default="-1" name="SDLOG_EXT" type="INT32">
       <short_desc>Enable extended logging mode</short_desc>
@@ -2941,6 +3282,18 @@ velocity</short_desc>
     <parameter default="1.0" name="CAL_ACC2_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
     </parameter>
+    <parameter default="0" name="CAL_ACC_PRIME" type="INT32">
+      <short_desc>Primary accel ID</short_desc>
+    </parameter>
+    <parameter default="0" name="CAL_GYRO_PRIME" type="INT32">
+      <short_desc>Primary gyro ID</short_desc>
+    </parameter>
+    <parameter default="0" name="CAL_MAG_PRIME" type="INT32">
+      <short_desc>Primary mag ID</short_desc>
+    </parameter>
+    <parameter default="0" name="CAL_BARO_PRIME" type="INT32">
+      <short_desc>Primary baro ID</short_desc>
+    </parameter>
     <parameter default="0.0" name="SENS_DPRES_OFF" type="FLOAT">
       <short_desc>Differential pressure sensor offset</short_desc>
       <long_desc>The offset (zero-reading) in Pascal</long_desc>
@@ -3007,7 +3360,7 @@ velocity</short_desc>
   <group name="System">
     <parameter default="0" name="SYS_AUTOSTART" type="INT32">
       <short_desc>Auto-start script index</short_desc>
-      <long_desc>Defines the auto-start script used to bootstrap the system.</long_desc>
+      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Defines the auto-start script used to bootstrap the system.</long_desc>
     </parameter>
     <parameter default="0" name="SYS_AUTOCONFIG" type="INT32">
       <short_desc>Automatically configure default values</short_desc>
@@ -3029,7 +3382,7 @@ velocity</short_desc>
     </parameter>
     <parameter default="0" name="SYS_COMPANION" type="INT32">
       <short_desc>Companion computer interface</short_desc>
-      <long_desc>Configures the baud rate of the companion computer interface. Set to zero to disable, set to these values to enable (NO OTHER VALUES SUPPORTED!) 921600: enables onboard mode at 921600 baud, 8N1. 57600: enables onboard mode at 57600 baud, 8N1. 157600: enables OSD mode at 57600 baud, 8N1.</long_desc>
+      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the companion computer interface. Set to zero to disable, set to these values to enable (NO OTHER VALUES SUPPORTED!) 921600: enables onboard mode at 921600 baud, 8N1. 57600: enables onboard mode at 57600 baud, 8N1. 157600: enables OSD mode at 57600 baud, 8N1.</long_desc>
       <min>0</min>
       <max>921600</max>
     </parameter>
@@ -3042,9 +3395,9 @@ velocity</short_desc>
   <group name="UAVCAN">
     <parameter default="0" name="UAVCAN_ENABLE" type="INT32">
       <short_desc>Enable UAVCAN</short_desc>
-      <long_desc>Allowed values: 0 - UAVCAN disabled. 1 - Enabled support for UAVCAN actuators and sensors. 2 - Enabled support for dynamic node ID allocation and firmware update.</long_desc>
+      <long_desc>Allowed values: 0 - UAVCAN disabled. 1 - Enabled support for UAVCAN actuators and sensors. 2 - Enabled support for dynamic node ID allocation and firmware update. 3 - Sets the motor control outputs to UAVCAN and enables support for dynamic node ID allocation and firmware update.</long_desc>
       <min>0</min>
-      <max>2</max>
+      <max>3</max>
     </parameter>
     <parameter default="1" name="UAVCAN_NODE_ID" type="INT32">
       <short_desc>UAVCAN Node ID</short_desc>
@@ -3410,18 +3763,6 @@ Maps the change of airspeed error to the acceleration setpoint</short_desc>
     </parameter>
     <parameter default="0.2" name="EXFW_PITCH_P" type="FLOAT">
       <short_desc>EXFW_PITCH_P</short_desc>
-    </parameter>
-    <parameter default="0.4" name="FPE_LO_THRUST" type="FLOAT">
-      <short_desc>FPE_LO_THRUST</short_desc>
-    </parameter>
-    <parameter default="0.5" name="FPE_SONAR_LP_U" type="FLOAT">
-      <short_desc>FPE_SONAR_LP_U</short_desc>
-    </parameter>
-    <parameter default="0.2" name="FPE_SONAR_LP_L" type="FLOAT">
-      <short_desc>FPE_SONAR_LP_L</short_desc>
-    </parameter>
-    <parameter default="0" name="FPE_DEBUG" type="INT32">
-      <short_desc>FPE_DEBUG</short_desc>
     </parameter>
     <parameter default="0.1" name="RV_YAW_P" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
