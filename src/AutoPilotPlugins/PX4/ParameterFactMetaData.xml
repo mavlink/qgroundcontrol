@@ -41,7 +41,6 @@
       <short_desc>Spin-up rate (e Hz/s)</short_desc>
       <long_desc>Spin-up rate (e Hz/s)</long_desc>
       <unit>Hz/s</unit>
-      <decimal />
       <min>5</min>
       <max>1000</max>
     </parameter>
@@ -49,23 +48,19 @@
       <short_desc>Index of this ESC in throttle command messages.</short_desc>
       <long_desc>Index of this ESC in throttle command messages.</long_desc>
       <unit>Index</unit>
-      <decimal />
       <min>0</min>
       <max>15</max>
     </parameter>
     <parameter default="20034" name="id_ext_status" type="INT32">
       <short_desc>Extended status ID</short_desc>
       <long_desc>Extended status ID</long_desc>
-      <unit />
-      <decimal />
       <min>1</min>
-      <max>1023</max>
+      <max>100000</max>
     </parameter>
     <parameter default="50000" name="int_ext_status" type="INT32">
       <short_desc>Extended status interval (µs)</short_desc>
       <long_desc>Extended status interval (µs)</long_desc>
       <unit>µs</unit>
-      <decimal />
       <min>0</min>
       <max>1000000</max>
     </parameter>
@@ -73,7 +68,6 @@
       <short_desc>ESC status interval (µs)</short_desc>
       <long_desc>ESC status interval (µs)</long_desc>
       <unit>µs</unit>
-      <decimal />
       <max>1000000</max>
     </parameter>
     <parameter default="12" name="mot_i_max" type="FLOAT">
@@ -97,7 +91,7 @@
       <unit>RPM/v</unit>
       <decimal>0</decimal>
       <min>0</min>
-      <max>100</max>
+      <max>4000</max>
     </parameter>
     <parameter default="0.0" name="mot_ls" type="FLOAT">
       <short_desc>READ ONLY: Motor inductance in henries.</short_desc>
@@ -111,7 +105,6 @@
             electrical speeds. This number should be taken from the motor’s
             specification sheet.</long_desc>
       <unit>Poles</unit>
-      <decimal />
       <min>2</min>
       <max>40</max>
     </parameter>
@@ -123,7 +116,7 @@
       <unit>Ohms</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default=".5" name="mot_v_accel" type="INT32">
+    <parameter default="0.5" name="mot_v_accel" type="FLOAT">
       <short_desc>Acceleration limit (V)</short_desc>
       <long_desc>Acceleration limit (V)</long_desc>
       <unit>Volts</unit>
