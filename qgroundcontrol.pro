@@ -28,9 +28,15 @@ message(Qt version $$[QT_VERSION])
 }
 
 ios {
+    #-- Qmake can't handle a project within a project when generating
+    #   an Xcode project. You end up with one project for the app and
+    #   nothing for the location plugin.
     include($$PWD/src/QtLocationPlugin/QGCLocationPlugin.pro)
     include($$PWD/QGCApplication.pro)
 } else {
+    #-- The rest (make files or Visual Studio projects) works. Note
+    #   that by default, we're using make files for Mac OS too. If
+    #   you want an Xcode project, the same above applies.
     TEMPLATE =  subdirs
     SUBDIRS  =  ./src/QtLocationPlugin/QGCLocationPlugin.pro
     SUBDIRS +=  ./QGCApplication.pro
