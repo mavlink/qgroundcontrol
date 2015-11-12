@@ -421,7 +421,7 @@ Rectangle {
                 id:                 toolBarMessage
                 width:              toolBarMessageArea.width - toolBarMessageCloseButton.width
                 wrapMode:           Text.WordWrap
-                color:              qgcPal.warningText
+                color:              "#e4e428"
                 lineHeightMode:     Text.ProportionalHeight
                 lineHeight:         1.15
                 anchors.margins:    mainWindow.tbSpacing

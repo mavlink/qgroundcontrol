@@ -55,7 +55,7 @@
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)
     : QGeoTileFetcher(parent)
     , m_networkManager(new QNetworkAccessManager(this))
-#if defined Q_OS_MACX
+#if defined Q_OS_MAC
     , m_userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0")
 #elif defined Q_OS_WIN32
     , m_userAgent("Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.1.7) Gecko/20091221 Firefox/3.5.7")
