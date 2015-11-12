@@ -156,16 +156,21 @@ int main(int argc, char *argv[])
     // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
     // which need to be handled before a QApplication object is started.
 
+    bool stressUnitTests = false;       // Stress test unit tests
     bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
 
     QString unitTestOptions;
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--unittest",             &runUnitTests,          &unitTestOptions },
+        { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
         { "--no-windows-assert-ui", &quietWindowsAsserts,   NULL },
         // Add additional command line option flags here
     };
 
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
+    if (stressUnitTests) {
+        runUnitTests = true;
+    }
 
     if (quietWindowsAsserts) {
 #ifdef Q_OS_WIN
@@ -195,23 +200,27 @@ int main(int argc, char *argv[])
 
     app->_initCommon();
 
-    int exitCode;
+    int exitCode = 0;
 
 #ifndef __mobile__
 #ifdef QT_DEBUG
     if (runUnitTests) {
-        if (!app->_initForUnitTests()) {
-            return -1;
-        }
+        for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {
+            if (!app->_initForUnitTests()) {
+                return -1;
+            }
 
-        // Run the test
-        int failures = UnitTest::run(unitTestOptions);
-        if (failures == 0) {
-            qDebug() << "ALL TESTS PASSED";
-        } else {
-            qDebug() << failures << " TESTS FAILED!";
+            // Run the test
+            int failures = UnitTest::run(unitTestOptions);
+            if (failures == 0) {
+                qDebug() << "ALL TESTS PASSED";
+                exitCode = 0;
+            } else {
+                qDebug() << failures << " TESTS FAILED!";
+                exitCode = -failures;
+                break;
+            }
         }
-        exitCode = -failures;
     } else
 #endif
 #endif

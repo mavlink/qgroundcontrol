@@ -29,8 +29,6 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 
-//UT_REGISTER_TEST(FileManagerTest)
-
 FileManagerTest::FileManagerTest(void)
     : _fileServer(NULL)
     , _fileManager(NULL)
