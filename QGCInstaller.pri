@@ -36,7 +36,7 @@ installer {
         # We cd to release directory so we can run macdeployqt without a path to the
         # qgroundcontrol.app file. If you specify a path to the .app file the symbolic
         # links to plugins will not be created correctly.
-        QMAKE_POST_LINK += && cd $${DESTDIR} && mkdir package
+        QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
         QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt qgroundcontrol.app -verbose=2 -qmldir=$${BASEDIR}/src
         QMAKE_POST_LINK += && cd $${OUT_PWD}
         QMAKE_POST_LINK += && hdiutil create -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname QGroundControl $${DESTDIR}/package/qgroundcontrol.dmg
@@ -58,9 +58,9 @@ installer {
     }
     AndroidBuild {
         #-- TODO: This uses hardcoded paths. It should use $${DESTDIR}
-        QMAKE_POST_LINK += && mkdir -p release/package
-        QMAKE_POST_LINK += && make install INSTALL_ROOT=release/android-build/
-        QMAKE_POST_LINK += && androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output release/android-build --deployment bundled --gradle --sign android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
-        QMAKE_POST_LINK += && cp release/android-build/build/outputs/apk/android-build-release-signed.apk release/package/qgroundcontrol.apk
+        QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
+        QMAKE_POST_LINK += && make install INSTALL_ROOT=$${DESTDIR}/android-build/
+        QMAKE_POST_LINK += && androiddeployqt --input android-libqgroundcontrol.so-deployment-settings.json --output $${DESTDIR}/android-build --deployment bundled --gradle --sign $${BASEDIR}/android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
+        QMAKE_POST_LINK += && cp $${DESTDIR}/android-build/build/outputs/apk/android-build-release-signed.apk $${DESTDIR}/package/qgroundcontrol.apk
     }
 }
