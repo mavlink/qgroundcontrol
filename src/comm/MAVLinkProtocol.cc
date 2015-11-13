@@ -108,6 +108,8 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    connect(this, &MAVLinkProtocol::protocolStatusMessage, _app, &QGCApplication::criticalMessageBoxOnMainThread);
    connect(this, &MAVLinkProtocol::saveTempFlightDataLog, _app, &QGCApplication::saveTempFlightDataLogOnMainThread);
 
+   connect(_multiVehicleManager->vehicles(), &QmlObjectListModel::countChanged, this, &MAVLinkProtocol::_vehicleCountChanged);
+
    emit versionCheckChanged(m_enable_version_check);
 }
 
@@ -217,13 +219,6 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
         }
         Q_UNUSED(found);
         Q_ASSERT(found);
-        
-#ifndef __mobile__
-        if (_connectedLinks.count() == 0) {
-            // Last link is gone, close out logging
-            _stopLogging();
-        }
-#endif
     }
 }
 
@@ -632,6 +627,18 @@ void MAVLinkProtocol::setHeartbeatRate(int rate)
 int MAVLinkProtocol::getHeartbeatRate()
 {
     return _heartbeatRate;
+}
+
+void MAVLinkProtocol::_vehicleCountChanged(int count)
+{
+#ifndef __mobile__
+    if (count == 0) {
+        // Last vehicle is gone, close out logging
+        _stopLogging();
+    }
+#else
+    Q_UNUSED(count);
+#endif
 }
 
 #ifndef __mobile__
