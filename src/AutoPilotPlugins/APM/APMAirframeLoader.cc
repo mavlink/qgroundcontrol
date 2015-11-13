@@ -128,8 +128,6 @@ void APMAirframeLoader::loadAirframeFactMetaData(void)
                     qDebug() << "Airframe version stamp too old, skipping load. Found:" << intVersion << "Want: 3 File:" << airframeFilename;
                     return;
                 }
-
-
             } else if (elementName == "airframe_group") {
                 if (xmlState != XmlStateFoundVersion) {
                     // We didn't get a version stamp, assume older version we can't read

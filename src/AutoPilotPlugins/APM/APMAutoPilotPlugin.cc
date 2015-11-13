@@ -32,7 +32,7 @@
 #include "APMAirframeComponentAirframes.h"
 #include "APMAirframeComponentController.h"
 #include "APMAirframeLoader.h"
-#include "apmremoteparamscontroller.h"
+#include "APMRemoteParamsDownloader.h"
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
@@ -43,8 +43,6 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     Q_ASSERT(vehicle);
     _airframeFacts = new APMAirframeLoader(this, vehicle->uas(), this);
     APMAirframeLoader::loadAirframeFactMetaData();
-
-    qmlRegisterType<APMRemoteParamsController>  ("QGroundControl.Controllers", 1, 0, "APMRemoteParamsController");
 }
 
 APMAutoPilotPlugin::~APMAutoPilotPlugin()
@@ -85,9 +83,9 @@ void APMAutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
 										"Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
 	}
 #endif
-	
+    Q_UNUSED(missingParameters);
     _parametersReady = true;
-    _missingParameters = false; missingParameters;
+    _missingParameters = false;// missingParameters;
     emit missingParametersChanged(_missingParameters);
     emit parametersReadyChanged(_parametersReady);
 }

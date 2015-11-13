@@ -30,10 +30,14 @@
 #include <QObject>
 #include <QQuickItem>
 #include <QList>
+#include <QAbstractListModel>
 
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
+#include "APMAirframeComponentAirframes.h"
+
+class APMAirframeModel;
 
 /// MVC Controller for APMAirframeComponent.qml.
 class APMAirframeComponentController : public FactPanelController
@@ -45,7 +49,7 @@ public:
     ~APMAirframeComponentController();
     
     Q_PROPERTY(bool showCustomConfigPanel MEMBER _showCustomConfigPanel NOTIFY showCustomConfigPanelChanged)
-    Q_PROPERTY(QVariantList airframeTypes MEMBER _airframeTypes CONSTANT)
+    Q_PROPERTY(APMAirframeModel* airframeTypesModel MEMBER _airframeTypesModel CONSTANT)
     Q_PROPERTY(QString currentAirframeType MEMBER _currentAirframeType CONSTANT)
     Q_PROPERTY(QString currentVehicleName MEMBER _currentVehicleName CONSTANT)
     Q_PROPERTY(int currentVehicleIndex MEMBER _currentVehicleIndex CONSTANT)
@@ -56,23 +60,23 @@ public:
     void setCurrentAirframeIndex(int newIndex);
     
 signals:
+    void loadAirframesCompleted();
     void autostartIdChanged(int newAutostartId);
     void showCustomConfigPanelChanged(bool show);
     
 private slots:
     void _waitParamWriteSignal(QVariant value);
     void _rebootAfterStackUnwind(void);
-    
+    void _fillAirFrames(void);
 private:
     static bool _typesRegistered;
-    
-    QVariantList    _airframeTypes;
     QString         _currentAirframeType;
     QString         _currentVehicleName;
     int             _currentVehicleIndex;
     int             _autostartId;
     bool            _showCustomConfigPanel;
     int             _waitParamWriteSignalCount;
+    APMAirframeModel    *_airframeTypesModel;
 };
 
 class APMAirframe : public QObject
@@ -104,11 +108,26 @@ public:
     Q_PROPERTY(QVariantList airframes MEMBER _airframes CONSTANT)
     
     void addAirframe(const QString& name, int autostartId);
-    
+    QString name() const;
+    QString imageResource() const;
+
 private:
     QString         _name;
     QString         _imageResource;
     QVariantList    _airframes;
+};
+
+class APMAirframeModel : public QAbstractListModel {
+    Q_OBJECT
+public:
+    enum types {NAME = Qt::UserRole + 1, IMAGE, COLUMNS};
+    APMAirframeModel(QObject *parent);
+    QVariant data(const QModelIndex &index, int role) const;
+    int rowCount(const QModelIndex &parent) const;
+    void setAirframeTypes(const QList<APMAirframeType*>& airframeTypes);
+
+private:
+     QList<APMAirframeType*> _airframeTypes;
 };
 
 #endif

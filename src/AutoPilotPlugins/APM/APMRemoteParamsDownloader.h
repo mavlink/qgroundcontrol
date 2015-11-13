@@ -1,7 +1,7 @@
 #ifndef APMREMOTEPARAMSCONTROLLER_H
 #define APMREMOTEPARAMSCONTROLLER_H
 
-#include <QAbstractListModel>
+#include <QObject>
 #include <QNetworkAccessManager>
 #include <QUrl>
 #include <QJsonArray>
@@ -10,14 +10,12 @@ class QNetworkReply;
 class QFile;
 class QUrl;
 
-class APMRemoteParamsController : public QAbstractListModel
+class APMRemoteParamsDownloader : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString statusText READ statusText)
 public:
-    explicit APMRemoteParamsController();
-    int rowCount(const QModelIndex &parent) const;
-    QVariant data(const QModelIndex &index, int role) const;
+    explicit APMRemoteParamsDownloader();
     QString statusText() const;
 public slots:
     void refreshParamList();
@@ -31,7 +29,8 @@ private:
     void manualListSetup();
     void processDownloadedVersionObject(const QByteArray& listObject);
     void startDownloadingRemoteParams();
-
+signals:
+    void finished();
 private:
     QString m_statusText;
     QNetworkAccessManager m_networkAccessManager;

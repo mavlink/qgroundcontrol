@@ -295,7 +295,7 @@ HEADERS += \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/AutoPilotPlugins/APM/APMAirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
-    src/AutoPilotPlugins/APM/apmremoteparamscontroller.h
+    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h
 
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
@@ -408,7 +408,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
     src/AutoPilotPlugins/APM/APMAirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
-    src/AutoPilotPlugins/APM/apmremoteparamscontroller.cpp
+    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc
 
 !iOSBuild {
 SOURCES += \

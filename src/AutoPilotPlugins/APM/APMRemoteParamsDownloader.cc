@@ -21,7 +21,7 @@
 
  ======================================================================*/
 
-#include "apmremoteparamscontroller.h"
+#include "APMRemoteParamsDownloader.h"
 
 #include <QMessageBox>
 #include <QDesktopServices>
@@ -36,14 +36,14 @@
 #include <QCryptographicHash>
 #include <QApplication>
 
-#include "apmremoteparamscontroller.h"
+#include "APMRemoteParamsDownloader.h"
 
 #define FRAME_PARAMS_LIST QUrl("https://api.github.com/repos/diydrones/ardupilot/contents/Tools/Frame_params")
 #define FRAME_PARAMS_URL "https://raw.github.com/diydrones/ardupilot/master/Tools/Frame_params/"
 
 static QString dataLocation;
 
-APMRemoteParamsController::APMRemoteParamsController() :
+APMRemoteParamsDownloader::APMRemoteParamsDownloader() :
     m_networkReply(NULL),
     m_downloadedParamFile(NULL)
 {
@@ -54,16 +54,16 @@ APMRemoteParamsController::APMRemoteParamsController() :
     qDebug() << "DataLocation " << dataLocation;
 }
 
-QString APMRemoteParamsController::statusText() const
+QString APMRemoteParamsDownloader::statusText() const
 {
     return m_statusText;
 }
-void APMRemoteParamsController::setStatusText(const QString& text)
+void APMRemoteParamsDownloader::setStatusText(const QString& text)
 {
     m_statusText = text;
 }
 
-void APMRemoteParamsController::refreshParamList()
+void APMRemoteParamsDownloader::refreshParamList()
 {
     qDebug() << "refresh list of param files from server";
     setStatusText(tr("Refresh Param file list"));
@@ -92,13 +92,13 @@ void APMRemoteParamsController::refreshParamList()
     "type":"file",
     "url":"https://api.github.com/repos/diydrones/ardupilot/contents/Tools/Frame_params/Parrot_Bebop.param?ref=master"
 */
-void APMRemoteParamsController::startFileDownloadRequest()
+void APMRemoteParamsDownloader::startFileDownloadRequest()
 {
     if (curr == end) {
         // invalidate the iterators, clean memory.
         m_documentArray = QJsonArray();
+        emit finished();
         return;
-
     }
 
     QJsonObject obj = (*curr).toObject();
@@ -159,7 +159,7 @@ void APMRemoteParamsController::startFileDownloadRequest()
     curr++;
 }
 
-void APMRemoteParamsController::httpFinished()
+void APMRemoteParamsDownloader::httpFinished()
 {
     qDebug() << "Finished:" << m_downloadedParamFile->fileName();
     m_downloadedParamFile->flush();
@@ -182,18 +182,18 @@ void APMRemoteParamsController::httpFinished()
     startFileDownloadRequest();
 }
 
-void APMRemoteParamsController::httpReadyRead()
+void APMRemoteParamsDownloader::httpReadyRead()
 {
     if (m_downloadedParamFile)
         m_downloadedParamFile->write(m_networkReply->readAll());
 }
 
-void APMRemoteParamsController::updateDataReadProgress(qint64 bytesRead, qint64 totalBytes)
+void APMRemoteParamsDownloader::updateDataReadProgress(qint64 bytesRead, qint64 totalBytes)
 {
     qDebug() << bytesRead << totalBytes;
 }
 
-void APMRemoteParamsController::httpParamListFinished()
+void APMRemoteParamsDownloader::httpParamListFinished()
 {
     if (m_networkReply->error()) {
         qDebug() <<  "Download failed:" << m_networkReply->errorString();
@@ -203,7 +203,7 @@ void APMRemoteParamsController::httpParamListFinished()
     startFileDownloadRequest();
 }
 
-void APMRemoteParamsController::processDownloadedVersionObject(const QByteArray &listObject)
+void APMRemoteParamsDownloader::processDownloadedVersionObject(const QByteArray &listObject)
 {
     QJsonParseError jsonErrorChecker;
     QJsonDocument jsonDocument = QJsonDocument::fromJson(listObject, &jsonErrorChecker);
@@ -215,17 +215,4 @@ void APMRemoteParamsController::processDownloadedVersionObject(const QByteArray 
     m_documentArray = jsonDocument.array();
     curr = m_documentArray.constBegin();
     end = m_documentArray.constEnd();
-}
-
-QVariant APMRemoteParamsController::data(const QModelIndex &index, int role) const
-{
-    Q_UNUSED(index);
-    Q_UNUSED(role);
-    return QVariant();
-}
-
-int APMRemoteParamsController::rowCount(const QModelIndex &parent) const
-{
-    Q_UNUSED(parent);
-    return 0;
 }

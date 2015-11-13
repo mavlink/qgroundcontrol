@@ -61,13 +61,6 @@ QGCView {
         }
     }
 
-    APMRemoteParamsController {
-        id: paramsController
-        Component.onCompleted: {
-            console.log("Carregando o componente corretamente");
-        }
-    }
-
     APMAirframeComponentController {
         id:         controller
         factPanel:  panel

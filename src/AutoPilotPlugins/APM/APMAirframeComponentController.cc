@@ -26,6 +26,7 @@
 
 #include "APMAirframeComponentController.h"
 #include "APMAirframeComponentAirframes.h"
+#include "APMRemoteParamsDownloader.h"
 #include "QGCMAVLink.h"
 #include "MultiVehicleManager.h"
 #include "AutoPilotPluginManager.h"
@@ -40,7 +41,8 @@ bool APMAirframeComponentController::_typesRegistered = false;
 APMAirframeComponentController::APMAirframeComponentController(void) :
     _currentVehicleIndex(0),
     _autostartId(0),
-    _showCustomConfigPanel(false)
+    _showCustomConfigPanel(false),
+    _airframeTypesModel(new APMAirframeModel(this))
 {
     if (!_typesRegistered) {
         _typesRegistered = true;
@@ -54,19 +56,25 @@ APMAirframeComponentController::APMAirframeComponentController(void) :
         return;
     }
     
+    APMRemoteParamsDownloader *paramDownloader = new APMRemoteParamsDownloader();
+    connect(paramDownloader, SIGNAL(finished()), this, SLOT(_fillAirFrames()));
+}
+
+APMAirframeComponentController::~APMAirframeComponentController()
+{
+
+}
+
+void APMAirframeComponentController::_fillAirFrames()
+{
     // Load up member variables
-    
     bool autostartFound = false;
     _autostartId = 0; //getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt();
-
-    qDebug() << "Number of Air frames found:" << APMAirframeComponentAirframes::get().count();
+    QList<APMAirframeType*> airframeTypes;
     for (int tindex = 0; tindex < APMAirframeComponentAirframes::get().count(); tindex++) {
-
         const APMAirframeComponentAirframes::AirframeType_t* pType = APMAirframeComponentAirframes::get().values().at(tindex);
-
         APMAirframeType* airframeType = new APMAirframeType(pType->name, pType->imageResource, this);
         Q_CHECK_PTR(airframeType);
-
 
         for (int index = 0; index < pType->rgAirframeInfo.count(); index++) {
             const APMAirframeComponentAirframes::AirframeInfo_t* pInfo = pType->rgAirframeInfo.at(index);
@@ -81,19 +89,16 @@ APMAirframeComponentController::APMAirframeComponentController(void) :
             }
             airframeType->addAirframe(pInfo->name, pInfo->autostartId);
         }
-        
-        _airframeTypes.append(QVariant::fromValue(airframeType));
+        airframeTypes.append(airframeType);
     }
-    
+
+    _airframeTypesModel->setAirframeTypes(airframeTypes);
+
     if (_autostartId != 0 && !autostartFound) {
         _showCustomConfigPanel = true;
         emit showCustomConfigPanelChanged(true);
     }
-}
-
-APMAirframeComponentController::~APMAirframeComponentController()
-{
-
+    emit loadAirframesCompleted();
 }
 
 void APMAirframeComponentController::changeAutostart(void)
@@ -104,7 +109,8 @@ void APMAirframeComponentController::changeAutostart(void)
 	}
 	
     qgcApp()->setOverrideCursor(Qt::WaitCursor);
-    
+
+    /*
     Fact* sysAutoStartFact  = getParameterFact(-1, "SYS_AUTOSTART");
     Fact* sysAutoConfigFact = getParameterFact(-1, "SYS_AUTOCONFIG");
     
@@ -116,6 +122,9 @@ void APMAirframeComponentController::changeAutostart(void)
     // We use forceSetValue to params are sent even if the previous value is that same as the new value
     sysAutoStartFact->forceSetValue(_autostartId);
     sysAutoConfigFact->forceSetValue(1);
+    */
+
+    qDebug() << "Button Clicked!";
 }
 
 void APMAirframeComponentController::_waitParamWriteSignal(QVariant value)
@@ -148,12 +157,10 @@ APMAirframeType::APMAirframeType(const QString& name, const QString& imageResour
     _name(name),
     _imageResource(imageResource)
 {
-    
 }
 
 APMAirframeType::~APMAirframeType()
 {
-    
 }
 
 void APMAirframeType::addAirframe(const QString& name, int autostartId)
@@ -169,10 +176,49 @@ APMAirframe::APMAirframe(const QString& name, int autostartId, QObject* parent) 
     _name(name),
     _autostartId(autostartId)
 {
-    
 }
 
 APMAirframe::~APMAirframe()
 {
-    
 }
+
+APMAirframeModel::APMAirframeModel(QObject *parent) : QAbstractListModel(parent)
+{
+}
+
+QVariant APMAirframeModel::data(const QModelIndex &index, int role) const
+{
+    if(!index.isValid())
+        return QVariant();
+
+    APMAirframeType *airframeType = _airframeTypes.at(index.row());
+    switch(role) {
+    case NAME: return airframeType->name();
+    case IMAGE: return airframeType->imageResource();
+    }
+    return QVariant();
+}
+
+int APMAirframeModel::rowCount(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent);
+    return _airframeTypes.count();
+}
+
+void APMAirframeModel::setAirframeTypes(const QList<APMAirframeType*>& airframeTypes)
+{
+    beginResetModel();
+    _airframeTypes = airframeTypes;
+    endResetModel();
+}
+
+QString APMAirframeType::imageResource() const
+{
+    return _imageResource;
+}
+
+QString APMAirframeType::name() const
+{
+    return _name;
+}
+
