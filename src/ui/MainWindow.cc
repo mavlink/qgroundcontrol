@@ -437,7 +437,7 @@ void MainWindow::showStatusBarCallback(bool checked)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Disallow window close if there are active connections
-    if (qgcApp()->toolbox()->linkManager()->anyConnectedLinks()) {
+    if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count()) {
         QGCMessageBox::StandardButton button =
             QGCMessageBox::warning(
                 tr("QGroundControl close"),
