@@ -102,11 +102,13 @@ QStringList APMAirframeComponent::paramFilterList(void) const
 
 QUrl APMAirframeComponent::setupSource(void) const
 {
+    qDebug() << "Returning the right airframe component";
     return QUrl::fromUserInput("qrc:/qml/APMAirframeComponent.qml");
 }
 
 QUrl APMAirframeComponent::summaryQmlSource(void) const
 {
+    qDebug() << "Returning the right airframe component summary";
     return QUrl::fromUserInput("qrc:/qml/APMAirframeComponentSummary.qml");
 }
 

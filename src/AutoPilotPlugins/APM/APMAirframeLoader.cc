@@ -27,7 +27,7 @@
 #include "APMAirframeLoader.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
-#include "AirframeComponentAirframes.h"
+#include "APMAirframeComponentAirframes.h"
 
 #include <QFile>
 #include <QFileInfo>
@@ -57,7 +57,7 @@ void APMAirframeLoader::loadAirframeFactMetaData(void)
 
     qCDebug(APMAirframeLoaderLog) << "Loading PX4 airframe fact meta data";
 
-    Q_ASSERT(AirframeComponentAirframes::get().count() == 0);
+    Q_ASSERT(APMAirframeComponentAirframes::get().count() == 0);
 
     QString airframeFilename;
 
@@ -164,7 +164,7 @@ void APMAirframeLoader::loadAirframeFactMetaData(void)
                 qCDebug(APMAirframeLoaderLog) << "Found airframe name:" << name << " type:" << airframeGroup << " id:" << id;
 
                 // Now that we know type we can airframe meta data object and add it to the system
-                AirframeComponentAirframes::insert(airframeGroup, image, name, id.toInt());
+                APMAirframeComponentAirframes::insert(airframeGroup, image, name, id.toInt());
 
             } else {
                 // We should be getting meta data now

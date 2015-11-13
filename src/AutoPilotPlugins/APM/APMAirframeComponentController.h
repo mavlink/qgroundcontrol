@@ -45,15 +45,11 @@ public:
     ~APMAirframeComponentController();
     
     Q_PROPERTY(bool showCustomConfigPanel MEMBER _showCustomConfigPanel NOTIFY showCustomConfigPanelChanged)
-    
     Q_PROPERTY(QVariantList airframeTypes MEMBER _airframeTypes CONSTANT)
-    
     Q_PROPERTY(QString currentAirframeType MEMBER _currentAirframeType CONSTANT)
     Q_PROPERTY(QString currentVehicleName MEMBER _currentVehicleName CONSTANT)
     Q_PROPERTY(int currentVehicleIndex MEMBER _currentVehicleIndex CONSTANT)
-    
     Q_PROPERTY(int autostartId MEMBER _autostartId NOTIFY autostartIdChanged)
-    
     Q_INVOKABLE void changeAutostart(void);
     
     int currentAirframeIndex(void);

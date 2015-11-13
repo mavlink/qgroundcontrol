@@ -49,7 +49,7 @@ APMAirframeComponentController::APMAirframeComponentController(void) :
     }
     
     QStringList usedParams;
-    usedParams << "SYS_AUTOSTART" << "SYS_AUTOCONFIG";
+    //usedParams << "SYS_AUTOSTART" << "SYS_AUTOCONFIG";
     if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
         return;
     }
@@ -57,14 +57,16 @@ APMAirframeComponentController::APMAirframeComponentController(void) :
     // Load up member variables
     
     bool autostartFound = false;
-    _autostartId = getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt();
+    _autostartId = 0; //getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt();
 
+    qDebug() << "Number of Air frames found:" << APMAirframeComponentAirframes::get().count();
     for (int tindex = 0; tindex < APMAirframeComponentAirframes::get().count(); tindex++) {
 
         const APMAirframeComponentAirframes::AirframeType_t* pType = APMAirframeComponentAirframes::get().values().at(tindex);
 
         APMAirframeType* airframeType = new APMAirframeType(pType->name, pType->imageResource, this);
         Q_CHECK_PTR(airframeType);
+
 
         for (int index = 0; index < pType->rgAirframeInfo.count(); index++) {
             const APMAirframeComponentAirframes::AirframeInfo_t* pInfo = pType->rgAirframeInfo.at(index);

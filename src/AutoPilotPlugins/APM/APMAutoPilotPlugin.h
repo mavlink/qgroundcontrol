@@ -26,7 +26,9 @@
 
 #include "AutoPilotPlugin.h"
 #include "Vehicle.h"
-#include "APMAirframeComponent.h"
+
+class APMAirframeComponent;
+class APMAirframeLoader;
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -48,6 +50,7 @@ private:
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
     QVariantList            _components;
     APMAirframeComponent*   _airframeComponent;
+    APMAirframeLoader*      _airframeFacts;
 };
 
 #endif
