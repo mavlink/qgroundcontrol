@@ -66,3 +66,83 @@ bool QGroundControlQmlGlobal::loadBoolGlobalSetting (const QString& key, bool de
     settings.beginGroup(kQmlGlobalKeyName);
     return settings.value(key, defaultValue).toBool();
 }
+
+#ifdef QT_DEBUG
+void QGroundControlQmlGlobal::_startMockLink(MockConfiguration* mockConfig)
+{
+    MockLink* mockLink = new MockLink(mockConfig);
+
+    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
+
+    linkManager->_addLink(mockLink);
+    linkManager->connectLink(mockLink);
+}
+#endif
+
+void QGroundControlQmlGlobal::startPX4MockLink(bool sendStatusText)
+{
+#ifdef QT_DEBUG
+    MockConfiguration   mockConfig("PX4 MockLink");
+
+    mockConfig.setFirmwareType(MAV_AUTOPILOT_PX4);
+    mockConfig.setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig.setSendStatusText(sendStatusText);
+
+    _startMockLink(&mockConfig);
+#endif
+}
+
+void QGroundControlQmlGlobal::startGenericMockLink(bool sendStatusText)
+{
+#ifdef QT_DEBUG
+    MockConfiguration   mockConfig("Generic MockLink");
+
+    mockConfig.setFirmwareType(MAV_AUTOPILOT_GENERIC);
+    mockConfig.setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig.setSendStatusText(sendStatusText);
+
+    _startMockLink(&mockConfig);
+#endif
+}
+
+void QGroundControlQmlGlobal::startAPMArduCopterMockLink(bool sendStatusText)
+{
+#ifdef QT_DEBUG
+    MockConfiguration   mockConfig("APM ArduCopter MockLink");
+
+    mockConfig.setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig.setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig.setSendStatusText(sendStatusText);
+
+    _startMockLink(&mockConfig);
+#endif
+}
+
+void QGroundControlQmlGlobal::startAPMArduPlaneMockLink(bool sendStatusText)
+{
+#ifdef QT_DEBUG
+    MockConfiguration   mockConfig("APM ArduPlane MockLink");
+
+    mockConfig.setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig.setVehicleType(MAV_TYPE_FIXED_WING);
+    mockConfig.setSendStatusText(sendStatusText);
+
+    _startMockLink(&mockConfig);
+#endif
+}
+
+void QGroundControlQmlGlobal::stopAllMockLinks(void)
+{
+#ifdef QT_DEBUG
+    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
+
+    QList<LinkInterface*> links = linkManager->getLinks();
+    for (int i=0; i<links.count(); i++) {
+        LinkInterface* link = links[i];
+        MockLink* mockLink = qobject_cast<MockLink*>(link);
+        if (mockLink) {
+            linkManager->disconnectLink(mockLink);
+        }
+    }
+#endif
+}
