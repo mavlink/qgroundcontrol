@@ -11,7 +11,7 @@
     <key>CFBundleIconFile</key>
     <string></string>
     <key>CFBundleIdentifier</key>
-    <string>org.mavlink.qgroundcontrol</string>
+    <string>com.grubba.qgroundcontrol</string>
     <key>CFBundleName</key>
     <string>QGroundControl</string>
     <key>CFBundlePackageType</key>
@@ -33,7 +33,7 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>ForAppStore</key>
-    <string>No</string>
+    <string>Yes</string>
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationLandscapeLeft</string>
