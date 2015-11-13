@@ -41,6 +41,16 @@ Item {
 
     property bool _isInstrumentVisible: QGroundControl.loadBoolGlobalSetting(_InstrumentVisibleKey, true)
 
+    function getGadgetWidth() {
+        if(ScreenTools.isMobile) {
+            if(ScreenTools.isTinyScreen)
+                return mainWindow.width * 0.2
+            return mainWindow.width * 0.15
+        }
+        var w = mainWindow.width * 0.15
+        return Math.min(w, 200)
+    }
+
     ExclusiveGroup {
         id: _dropButtonsExclusiveGroup
     }
@@ -78,11 +88,12 @@ Item {
 
     //-- Instrument Panel
     QGCInstrumentWidget {
+        id:                     instrumentGadget
         anchors.margins:        ScreenTools.defaultFontPixelHeight
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         visible:                _isInstrumentVisible
-        size:                   ScreenTools.isTinyScreen ? mainWindow.width * 0.2 : mainWindow.width * 0.15
+        size:                   getGadgetWidth()
         active:                 _activeVehicle != null
         heading:                _heading
         rollAngle:              _roll
