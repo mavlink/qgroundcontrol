@@ -30,8 +30,6 @@
 #include "MockLink.h"
 #include "QGCApplication.h"
 
-UT_REGISTER_TEST(LinkManagerTest)
-
 LinkManagerTest::LinkManagerTest(void) :
     _linkMgr(NULL),
     _multiSpy(NULL)

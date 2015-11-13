@@ -51,106 +51,10 @@ WindowsBuild {
 #
 
 MacBuild {
-
-	# Copy non-standard libraries and frameworks into app package
-    QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/libs/lib/mac64/lib $$DESTDIR/$${TARGET}.app/Contents/libs
+    # Copy non-standard frameworks into app package
     QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/lib/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
-
-	# Fix library paths inside executable
-
-    INSTALL_NAME_TARGET = $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
-    INSTALL_NAME_LIB_LIST = \
-        libOpenThreads.dylib \
-        libosg.dylib \
-        libosgViewer.dylib \
-        libosgGA.dylib \
-        libosgDB.dylib \
-        libosgText.dylib \
-        libosgWidget.dylib
-    for(INSTALL_NAME_LIB, INSTALL_NAME_LIB_LIST) {
-        QMAKE_POST_LINK += && install_name_tool -change $$INSTALL_NAME_LIB "@executable_path/../libs/$${INSTALL_NAME_LIB}" $$INSTALL_NAME_TARGET
-    }
-
-	# Fix library paths within libraries (inter-library dependencies)
-
-	# OSG GA LIBRARY
-    INSTALL_NAME_TARGET = $$DESTDIR/$${TARGET}.app/Contents/libs/libosgGA.dylib
-    INSTALL_NAME_LIB_LIST = \
-        libOpenThreads.dylib \
-        libosg.dylib \
-        libosgGA.dylib \
-        libosgDB.dylib \
-        libosgUtil.dylib
-    for(INSTALL_NAME_LIB, INSTALL_NAME_LIB_LIST) {
-        QMAKE_POST_LINK += && install_name_tool -change $$INSTALL_NAME_LIB "@executable_path/../libs/$${INSTALL_NAME_LIB}" $$INSTALL_NAME_TARGET
-    }
-
-	# OSG DB LIBRARY
-    INSTALL_NAME_TARGET = $$DESTDIR/$${TARGET}.app/Contents/libs/libosgDB.dylib
-    INSTALL_NAME_LIB_LIST = \
-        libOpenThreads.dylib \
-        libosg.dylib \
-        libosgDB.dylib \
-        libosgUtil.dylib
-    for(INSTALL_NAME_LIB, INSTALL_NAME_LIB_LIST) {
-        QMAKE_POST_LINK += && install_name_tool -change $$INSTALL_NAME_LIB "@executable_path/../libs/$${INSTALL_NAME_LIB}" $$INSTALL_NAME_TARGET
-    }
-
-	# OSG TEXT LIBRARY
-    INSTALL_NAME_TARGET = $$DESTDIR/$${TARGET}.app/Contents/libs/libosgText.dylib
-    INSTALL_NAME_LIB_LIST = \
-        libOpenThreads.dylib \
-        libosg.dylib \
-        libosgDB.dylib \
-        libosgUtil.dylib \
-        libosgText.dylib
-    for(INSTALL_NAME_LIB, INSTALL_NAME_LIB_LIST) {
-        QMAKE_POST_LINK += && install_name_tool -change $$INSTALL_NAME_LIB "@executable_path/../libs/$${INSTALL_NAME_LIB}" $$INSTALL_NAME_TARGET
-    }
-
-	# OSG UTIL LIBRARY
-    INSTALL_NAME_TARGET = $$DESTDIR/$${TARGET}.app/Contents/libs/libosgUtil.dylib
-    INSTALL_NAME_LIB_LIST = \
-        libOpenThreads.dylib \
-        libosg.dylib
-    for(INSTALL_NAME_LIB, INSTALL_NAME_LIB_LIST) {
-        QMAKE_POST_LINK += && install_name_tool -change $$INSTALL_NAME_LIB "@executable_path/../libs/$${INSTALL_NAME_LIB}" $$INSTALL_NAME_TARGET
-    }
-
-
-	# OSG VIEWER LIBRARY
-    INSTALL_NAME_TARGET = $$DESTDIR/$${TARGET}.app/Contents/libs/libosgViewer.dylib
-    INSTALL_NAME_LIB_LIST = \
-        libOpenThreads.dylib \
-        libosg.dylib \
-        libosgGA.dylib \
-        libosgDB.dylib \
-        libosgUtil.dylib \
-        libosgText.dylib
-    for(INSTALL_NAME_LIB, INSTALL_NAME_LIB_LIST) {
-        QMAKE_POST_LINK += && install_name_tool -change $$INSTALL_NAME_LIB "@executable_path/../libs/$${INSTALL_NAME_LIB}" $$INSTALL_NAME_TARGET
-    }
-
-	# OSG WIDGET LIBRARY
-    INSTALL_NAME_TARGET = $$DESTDIR/$${TARGET}.app/Contents/libs/libosgWidget.dylib
-    INSTALL_NAME_LIB_LIST = \
-        libOpenThreads.dylib \
-        libosg.dylib \
-        libosgGA.dylib \
-        libosgDB.dylib \
-        libosgUtil.dylib \
-        libosgText.dylib \
-        libosgViewer.dylib
-    for(INSTALL_NAME_LIB, INSTALL_NAME_LIB_LIST) {
-        QMAKE_POST_LINK += && install_name_tool -change $$INSTALL_NAME_LIB "@executable_path/../libs/$${INSTALL_NAME_LIB}" $$INSTALL_NAME_TARGET
-    }
-
-	# CORE OSG LIBRARY
-    QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$DESTDIR/$${TARGET}.app/Contents/libs/libosg.dylib
-
     # SDL Framework
     QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL.framework/Versions/A/SDL" "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
-
 }
 
 WindowsBuild {
@@ -165,29 +69,29 @@ WindowsBuild {
         $$BASEDIR\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
-		QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
     }
 
 
         ReleaseBuild {
-		# Copy Visual Studio DLLs
-		# Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
-		win32-msvc2010 {
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp100.dll\"  \"$$DESTDIR_WIN\"
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr100.dll\"  \"$$DESTDIR_WIN\"
-		}
-		else:win32-msvc2012 {
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp110.dll\"  \"$$DESTDIR_WIN\"
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr110.dll\"  \"$$DESTDIR_WIN\"
-		}
-		else:win32-msvc2013 {
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp120.dll\"  \"$$DESTDIR_WIN\"
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr120.dll\"  \"$$DESTDIR_WIN\"
-		}
-		else {
-			error("Visual studio version not supported, installation cannot be completed.")
-		}
-	}
+        # Copy Visual Studio DLLs
+        # Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
+        win32-msvc2010 {
+            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp100.dll\"  \"$$DESTDIR_WIN\"
+            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr100.dll\"  \"$$DESTDIR_WIN\"
+        }
+        else:win32-msvc2012 {
+            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp110.dll\"  \"$$DESTDIR_WIN\"
+            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr110.dll\"  \"$$DESTDIR_WIN\"
+        }
+        else:win32-msvc2013 {
+            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp120.dll\"  \"$$DESTDIR_WIN\"
+            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr120.dll\"  \"$$DESTDIR_WIN\"
+        }
+        else {
+            error("Visual studio version not supported, installation cannot be completed.")
+        }
+    }
 
     DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR_WIN\\$${TARGET}.exe))
     QMAKE_POST_LINK += $$escape_expand(\\n) windeployqt --no-compiler-runtime --qmldir=$${BASEDIR_WIN}\\src $${DEPLOY_TARGET}

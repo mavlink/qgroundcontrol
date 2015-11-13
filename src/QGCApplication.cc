@@ -107,18 +107,18 @@
 
 QGCApplication* QGCApplication::_app = NULL;
 
-const char* QGCApplication::_deleteAllSettingsKey = "DeleteAllSettingsNextBoot";
-const char* QGCApplication::_settingsVersionKey = "SettingsVersion";
-const char* QGCApplication::_savedFilesLocationKey = "SavedFilesLocation";
-const char* QGCApplication::_promptFlightDataSave = "PromptFLightDataSave";
-const char* QGCApplication::_styleKey = "StyleIsDark";
+const char* QGCApplication::_deleteAllSettingsKey   = "DeleteAllSettingsNextBoot";
+const char* QGCApplication::_settingsVersionKey     = "SettingsVersion";
+const char* QGCApplication::_savedFilesLocationKey  = "SavedFilesLocation";
+const char* QGCApplication::_promptFlightDataSave   = "PromptFLightDataSave";
+const char* QGCApplication::_styleKey               = "StyleIsDark";
 
-const char* QGCApplication::_defaultSavedFileDirectoryName = "QGroundControl";
-const char* QGCApplication::_savedFileMavlinkLogDirectoryName = "FlightData";
-const char* QGCApplication::_savedFileParameterDirectoryName = "SavedParameters";
+const char* QGCApplication::_defaultSavedFileDirectoryName      = "QGroundControl";
+const char* QGCApplication::_savedFileMavlinkLogDirectoryName   = "FlightData";
+const char* QGCApplication::_savedFileParameterDirectoryName    = "SavedParameters";
 
-const char* QGCApplication::_darkStyleFile = ":/res/styles/style-dark.css";
-const char* QGCApplication::_lightStyleFile = ":/res/styles/style-light.css";
+const char* QGCApplication::_darkStyleFile          = ":/res/styles/style-dark.css";
+const char* QGCApplication::_lightStyleFile         = ":/res/styles/style-light.css";
 
 
 // Qml Singleton factories
@@ -139,20 +139,6 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
     return new QGroundControlQmlGlobal(qgcApp()->toolbox());
 }
 
-#if defined(QGC_GST_STREAMING)
-#ifdef Q_OS_MAC
-#ifndef __ios__
-#ifdef QGC_INSTALL_RELEASE
-static void qgcputenv(const QString& key, const QString& root, const QString& path)
-{
-    QString value = root + path;
-    qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
-}
-#endif
-#endif
-#endif
-#endif
-
 /**
  * @brief Constructor for the main application.
  *
@@ -166,7 +152,11 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     : QApplication(argc, argv)
     , _runningUnitTests(unitTesting)
+#if defined (__mobile__)
+    , _styleIsDark(false)
+#else
     , _styleIsDark(true)
+#endif
     , _fakeMobile(false)
 #ifdef QT_DEBUG
     , _testHighDPI(false)
@@ -291,7 +281,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     this->setApplicationVersion(versionString);
 
     // Set settings format
+#if !defined(__mobile__) && !defined(__macos__)
     QSettings::setDefaultFormat(QSettings::IniFormat);
+#else
+    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+    if(!settingsLocation.isEmpty())
+    {
+        QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, settingsLocation);
+    }
+#endif
 
     QSettings settings;
     qDebug() << "Settings location" << settings.fileName() << settings.isWritable();
@@ -436,11 +434,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
 {
     QSettings settings;
 
-#ifdef __mobile__
-    _styleIsDark = false;
-#else
     _styleIsDark = settings.value(_styleKey, _styleIsDark).toBool();
-#endif
     _loadCurrentStyle();
 
     // Exit main application when last window is closed

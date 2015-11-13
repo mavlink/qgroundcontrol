@@ -1,10 +1,16 @@
+version: '{branch}-{build}'
+
+build:
+  verbosity: minimal
 
 environment:
   matrix:
 #  - BUILD: 'Debug'
 #    CONFIG: debug
+#    SHADOW_BUILD_DIR: $(APPVEYOR_BUILD_FOLDER)\build_windows_debug
   - BUILD: 'Release'
     CONFIG: installer
+    SHADOW_BUILD_DIR: $(APPVEYOR_BUILD_FOLDER)\build_windows_install
 
 install:
   - git submodule update --init --recursive
@@ -14,18 +20,18 @@ install:
   - if "%CONFIG%" EQU "installer" ( cinst nsis -y -installArgs /D="%programfiles(x86)%\NSIS" )
 
 build_script:
-  - C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn qgroundcontrol.pro
-  - jom
+  - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
+  - cd %SHADOW_BUILD_DIR% && jom
 
 test_script:
-  - if "%CONFIG%" EQU "debug" ( debug\qgroundcontrol --unittest )
+  - if "%CONFIG%" EQU "debug" ( %SHADOW_BUILD_DIR%\debug\qgroundcontrol --unittest )
 
-after_build:
-  - if "%CONFIG%" EQU "installer" ( appveyor PushArtifact C:\projects\qgroundcontrol\release\qgroundcontrol.exe )
+artifacts:
+  - path: '%SHADOW_BUILD_DIR%\release\qgroundcontrol-installer.exe'
+    name: s3
 
 deploy:
   - provider: S3
-    name: qgroundcontrol-s3
     access_key_id:
       secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
     secret_access_key:
@@ -33,11 +39,11 @@ deploy:
     bucket: qgroundcontrol
     set_public: true
     folder: $(APPVEYOR_REPO_BRANCH)
-    artifcat: 'release\qgroundcontrol.exe'
+    artifact: '$(SHADOW_BUILD_DIR)\release\qgroundcontrol-installer.exe'
     on:
       CONFIG: installer
   - provider: GitHub
-    artifact: 'release\qgroundcontrol.exe'
+    artifact: '$(SHADOW_BUILD_DIR)\release\qgroundcontrol-installer.exe'
     draft: false
     prerelease: false
     on:

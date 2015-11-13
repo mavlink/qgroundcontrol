@@ -32,6 +32,7 @@
 #include "AutoPilotPluginManager.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
+#include "QGCImageProvider.h"
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : _firmwarePluginManager(NULL)
@@ -45,6 +46,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _audioOutput(NULL)
     , _uasMessageHandler(NULL)
     , _factSystem(NULL)
+    , _imageProvider(NULL)
 {
     _firmwarePluginManager =    new FirmwarePluginManager(app);
     _autopilotPluginManager =   new AutoPilotPluginManager(app);
@@ -57,6 +59,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _joystickManager =          new JoystickManager(app);
     _audioOutput =              new GAudioOutput(app);
     _uasMessageHandler =        new UASMessageHandler(app);
+    _imageProvider =            new QGCImageProvider(app);
 
     _firmwarePluginManager->setToolbox(this);
     _autopilotPluginManager->setToolbox(this);
@@ -69,6 +72,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _joystickManager->setToolbox(this);
     _audioOutput->setToolbox(this);
     _uasMessageHandler->setToolbox(this);
+    _imageProvider->setToolbox(this);
 }
 
 QGCToolbox::~QGCToolbox()

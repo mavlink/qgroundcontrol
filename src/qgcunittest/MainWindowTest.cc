@@ -31,9 +31,6 @@
 #include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 
-// FIXME: Temporarily turned off
-//UT_REGISTER_TEST(MainWindowTest)
-
 void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
 {
     _createMainWindow();

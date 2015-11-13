@@ -58,7 +58,6 @@
 #include "qgeotilefetcherqgc.h"
 #include "OpenPilotMaps.h"
 
-
 #if QT_VERSION >= 0x050500
 QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent)
     : QGeoTiledMap(engine, parent)

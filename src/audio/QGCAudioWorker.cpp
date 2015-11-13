@@ -8,7 +8,7 @@
 #include "QGCAudioWorker.h"
 #include "GAudioOutput.h"
 
-#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
+#if (defined __macos__) && defined QGC_SPEECH_ENABLED
 #include <ApplicationServices/ApplicationServices.h>
 
 static SpeechChannel sc;
@@ -51,6 +51,10 @@ public:
 //-- Singleton
 MacSpeech macSpeech;
 
+#endif
+
+#if (defined __ios__) && defined QGC_SPEECH_ENABLED
+extern void iOSSpeak(QString msg);
 #endif
 
 // Speech synthesis is only supported with MSVC compiler
@@ -168,8 +172,10 @@ void QGCAudioWorker::say(QString inText, int severity)
         unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
         espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
 
-#elif defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
+#elif (defined __macos__) && defined QGC_SPEECH_ENABLED
         macSpeech.say(text.toStdString().c_str());
+#elif (defined __ios__) && defined QGC_SPEECH_ENABLED
+        iOSSpeak(text);
 #else
         // Make sure there isn't an unused variable warning when speech output is disabled
         Q_UNUSED(inText);

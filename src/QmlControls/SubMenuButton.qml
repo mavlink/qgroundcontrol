@@ -39,6 +39,7 @@ Button {
                 verticalAlignment:      TextEdit.AlignVCenter
                 horizontalAlignment:    TextEdit.AlignHCenter
                 color:                  showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                font.pixelSize:         ScreenTools.isMobile ? ScreenTools.defaultFontPixelSize * 0.75 : ScreenTools.defaultFontPixelSize
                 text:                   control.text
 
                 Rectangle {

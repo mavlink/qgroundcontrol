@@ -225,7 +225,7 @@ QGCView {
                 } // Rectangle - Battery settings
 
                 QGCLabel {
-                    text:           "ESC Calibration"
+                    text:           "ESC PWM Minimum and Maximum Calibration"
                     font.pixelSize: ScreenTools.mediumFontPixelSize
                 }
 
@@ -259,7 +259,35 @@ QGCView {
                 }
 
                 QGCLabel {
-                    text:           "UAVCAN ESC Configuration"
+                    text:           "UAVCAN Bus Configuration"
+                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                }
+
+                Rectangle {
+                    width:  parent.width
+                    height: uavCanConfigColumn.height + ScreenTools.defaultFontPixelHeight
+                    color:  palette.windowShade
+
+                    Column {
+                        id:                 uavCanConfigColumn
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                        anchors.left:       parent.left
+                        anchors.top:        parent.top
+                        spacing:            ScreenTools.defaultFontPixelWidth
+
+                        FactCheckBox {
+                            id:                 uavcanEnabledCheckBox
+                            width:              ScreenTools.defaultFontPixelWidth * 20
+                            fact:               controller.getParameterFact(-1, "UAVCAN_ENABLE")
+                            checkedValue:       3
+                            uncheckedValue:     0
+                            text:               "Enable UAVCAN as the default MAIN output bus (requires autopilot restart)"
+                        }
+                    }
+                }
+
+                QGCLabel {
+                    text:           "UAVCAN Motor Index and Direction Assignment"
                     font.pixelSize: ScreenTools.mediumFontPixelSize
                 }
 
@@ -267,6 +295,7 @@ QGCView {
                     width:  parent.width
                     height: uavCanEscCalColumn.height + ScreenTools.defaultFontPixelHeight
                     color:  palette.windowShade
+                    enabled: uavcanEnabledCheckBox.checked
 
                     Column {
                         id:                 uavCanEscCalColumn
@@ -281,17 +310,21 @@ QGCView {
                         }
 
                         QGCLabel {
-                            text: "You must use USB connection for this operation."
+                            text: "ESC parameters will only be accessible in the editor after assignment."
+                        }
+
+                        QGCLabel {
+                            text: "Start the process, then turn each motor into its turn direction, in the order of their motor indices."
                         }
 
                         QGCButton {
-                            text:       "Start Configuration"
+                            text:       "Start Assignment"
                             width:      ScreenTools.defaultFontPixelWidth * 20
                             onClicked:  controller.busConfigureActuators()
                         }
 
                         QGCButton {
-                            text:       "End Configuration"
+                            text:       "Stop Assignment"
                             width:      ScreenTools.defaultFontPixelWidth * 20
                             onClicked:  controller.StopBusConfigureActuators()
                         }

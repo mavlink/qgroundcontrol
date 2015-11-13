@@ -29,10 +29,6 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-// This unit test has gotten too flaky to run reliably under TeamCity. Removing for now till there is
-// time to debug.
-//UT_REGISTER_TEST(TCPLinkUnitTest)
-
 TCPLinkUnitTest::TCPLinkUnitTest(void)
     : _config(NULL)
     , _link(NULL)

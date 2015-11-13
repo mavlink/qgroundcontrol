@@ -29,8 +29,6 @@
 #include "FileDialogTest.h"
 #include "QGCFileDialog.h"
 
-UT_REGISTER_TEST(FileDialogTest)
-
 FileDialogTest::FileDialogTest(void)
 {
     

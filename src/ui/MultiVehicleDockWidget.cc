@@ -41,8 +41,10 @@ MultiVehicleDockWidget::MultiVehicleDockWidget(const QString& title, QAction* ac
 
 void MultiVehicleDockWidget::init(void)
 {
-    foreach (Vehicle* vehicle, qgcApp()->toolbox()->multiVehicleManager()->vehicles()) {
-        _vehicleAdded(vehicle);
+    QmlObjectListModel* vehicles = qgcApp()->toolbox()->multiVehicleManager()->vehicles();
+
+    for (int i=0; i<vehicles->count(); i++) {
+        _vehicleAdded(qobject_cast<Vehicle*>(vehicles->get(i)));
     }
 
     if (qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {

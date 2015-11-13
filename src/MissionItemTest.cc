@@ -24,8 +24,6 @@
 #include "MissionItemTest.h"
 #include "MissionItem.h"
 
-UT_REGISTER_TEST(MissionItemTest)
-
 const MissionItemTest::ItemInfo_t MissionItemTest::_rgItemInfo[] = {
     { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT,         10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT },
     { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_UNLIM,     10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT },
