@@ -89,6 +89,8 @@ void QGroundControlQmlGlobal::startPX4MockLink(bool sendStatusText)
     mockConfig.setSendStatusText(sendStatusText);
 
     _startMockLink(&mockConfig);
+#else
+    Q_UNUSED(sendStatusText);
 #endif
 }
 
@@ -102,6 +104,8 @@ void QGroundControlQmlGlobal::startGenericMockLink(bool sendStatusText)
     mockConfig.setSendStatusText(sendStatusText);
 
     _startMockLink(&mockConfig);
+#else
+    Q_UNUSED(sendStatusText);
 #endif
 }
 
@@ -115,6 +119,8 @@ void QGroundControlQmlGlobal::startAPMArduCopterMockLink(bool sendStatusText)
     mockConfig.setSendStatusText(sendStatusText);
 
     _startMockLink(&mockConfig);
+#else
+    Q_UNUSED(sendStatusText);
 #endif
 }
 
@@ -128,6 +134,8 @@ void QGroundControlQmlGlobal::startAPMArduPlaneMockLink(bool sendStatusText)
     mockConfig.setSendStatusText(sendStatusText);
 
     _startMockLink(&mockConfig);
+#else
+    Q_UNUSED(sendStatusText);
 #endif
 }
 
