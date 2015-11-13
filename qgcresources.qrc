@@ -36,10 +36,9 @@
         <file alias="VehicleSummaryIcon.png">src/VehicleSetup/VehicleSummaryIcon.png</file>
         <file alias="VehicleTailDown.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
         <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
-
         <file alias="attitudeDial.svg">src/FlightMap/Images/attitudeDial.svg</file>
         <file alias="attitudeInstrument.svg">src/FlightMap/Images/attitudeInstrument.svg</file>
-        <file alias="attitudePointer.svg">src//FlightMap/Images/attitudePointer.svg</file>
+        <file alias="attitudePointer.svg">src/FlightMap/Images/attitudePointer.svg</file>
         <file alias="buttonHome.svg">src/FlightMap/Images/buttonHome.svg</file>
         <file alias="buttonMore.svg">src/FlightMap/Images/buttonMore.svg</file>
         <file alias="compassInstrumentAirplane.svg">src/FlightMap/Images/compassInstrumentAirplane.svg</file>
@@ -54,8 +53,6 @@
         <file alias="airplaneOpaque.svg">src/FlightMap/Images/airplaneOpaque.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
-
-        <!-- Map Buttons -->
         <file alias="ArrowHead.svg">src/FlightMap/Images/ArrowHead.svg</file>
         <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
         <file alias="HelpBlack.svg">src/FlightMap/Images/HelpBlack.svg</file>
@@ -72,8 +69,6 @@
         <file alias="MapTypeBlack.svg">src/FlightMap/Images/MapTypeBlack.svg</file>
         <file alias="TrashDelete.svg">src/FlightMap/Images/TrashDelete.svg</file>
         <file alias="TrashDeleteBlack.svg">src/FlightMap/Images/TrashDeleteBlack.svg</file>
-
-        <!-- Toolbar -->
         <file alias="Armed.svg">src/ui/toolbar/Images/Armed.svg</file>
         <file alias="Battery.svg">src/ui/toolbar/Images/Battery.svg</file>
         <file alias="Connect.svg">src/ui/toolbar/Images/Connect.svg</file>
@@ -94,9 +89,7 @@
         <file alias="Signal80.svg">src/ui/toolbar/Images/Signal80.svg</file>
         <file alias="Signal100.svg">src/ui/toolbar/Images/Signal100.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
-
     </qresource>
-
     <qresource prefix="/res">
         <file alias="Play">resources/Play.svg</file>
         <file alias="Pause">resources/Pause.svg</file>
@@ -111,13 +104,11 @@
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
     </qresource>
-
     <qresource prefix="/res/firmware">
         <file alias="px4.png">resources/firmware/px4.png</file>
         <file alias="apm.png">resources/firmware/apm.png</file>
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>
     </qresource>
-
     <qresource prefix="/res/mavs">
         <file alias="Helicopter">resources/mavs/helicopter.svg</file>
         <file alias="Unknown">resources/mavs/unknown.svg</file>
@@ -139,7 +130,6 @@
         <file alias="SurfaceBoat">resources/mavs/surface-boat.svg</file>
         <file alias="TriCopter">resources/mavs/tricopter.svg</file>
     </qresource>
-
     <qresource prefix="/res/calibration">
         <file alias="accel_back.png">resources/calibration/accel_back.png</file>
         <file alias="accel_front.png">resources/calibration/accel_front.png</file>
@@ -148,7 +138,6 @@
         <file alias="accel_up.png">resources/calibration/accel_up.png</file>
         <file alias="accel_left.png">resources/calibration/accel_left.png</file>
     </qresource>
-
     <qresource prefix="/qml/calibration/mode1">
         <file alias="radioCenter.png">resources/calibration/mode1/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode1/radioHome.png</file>
@@ -162,7 +151,6 @@
         <file alias="radioThrottleDown.png">resources/calibration/mode1/radioThrottleDown.png</file>
         <file alias="radioSwitchMinMax.png">resources/calibration/mode1/radioSwitchMinMax.png</file>
     </qresource>
-
     <qresource prefix="/qml/calibration/mode2">
         <file alias="radioCenter.png">resources/calibration/mode2/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode2/radioHome.png</file>
@@ -176,7 +164,6 @@
         <file alias="radioThrottleDown.png">resources/calibration/mode2/radioThrottleDown.png</file>
         <file alias="radioSwitchMinMax.png">resources/calibration/mode2/radioSwitchMinMax.png</file>
     </qresource>
-
     <qresource prefix="/qml/calibration/joystick">
         <file alias="joystickCenter.png">resources/calibration/joystick/joystickCenter.png</file>
         <file alias="joystickRollLeft.png">resources/calibration/joystick/joystickRollLeft.png</file>
@@ -188,19 +175,18 @@
         <file alias="joystickThrottleUp.png">resources/calibration/joystick/joystickThrottleUp.png</file>
         <file alias="joystickThrottleDown.png">resources/calibration/joystick/joystickThrottleDown.png</file>
     </qresource>
-
     <qresource prefix="/res/styles">
         <file alias="style-dark.css">resources/styles/style-dark.css</file>
         <file alias="style-light.css">resources/styles/style-light.css</file>
     </qresource>
-
     <qresource prefix="/res/audio">
         <file alias="Alert">resources/audio/alert.wav</file>
     </qresource>
-
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
         <file alias="ParameterFactMetaData.xml">src/AutoPilotPlugins/PX4/ParameterFactMetaData.xml</file>
     </qresource>
-
+    <qresource prefix="/AutoPilotPlugins/APM">
+        <file alias="AirframeFactMetaData.xml">src/AutoPilotPlugins/APM/AirframeFactMetaData.xml</file>
+    </qresource>
 </RCC>

@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<airframes>
+  <version>1</version>
+  <airframe_group image="AirframeQuadRotorX.png" name="Quadrotor x">
+      <airframe id="10020" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR Aero M">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10021" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR Aero RTF">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10022" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR Iris+">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10023" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR QUAD X4 RTF">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10024" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR Rover">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10025" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR Tarot">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10026" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR X8+ RTF">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10027" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR X8-M RTF">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10028" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR X8">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10029" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR Y6A">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10030" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="3DR Y6B">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10031" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Iris with GoPro">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10032" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Iris with Tarot">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10033" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Iris">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10034" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Parrot Bebop">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+      <airframe id="10035" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Storm32">
+        <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+        <type>Quadrotor x</type>
+      </airframe>
+  </airframe_group>
+<airframes>

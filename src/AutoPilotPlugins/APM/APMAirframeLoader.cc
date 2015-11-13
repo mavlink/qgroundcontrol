@@ -69,7 +69,7 @@ void APMAirframeLoader::loadAirframeFactMetaData(void)
         airframeFilename = parameterDir.filePath("PX4AirframeFactMetaData.xml");
     }
     if (airframeFilename.isEmpty() || !QFile(airframeFilename).exists()) {
-        airframeFilename = ":/AutoPilotPlugins/PX4/AirframeFactMetaData.xml";
+        airframeFilename = ":/AutoPilotPlugins/APM/AirframeFactMetaData.xml";
     }
 
     qCDebug(APMAirframeLoaderLog) << "Loading meta data file:" << airframeFilename;
