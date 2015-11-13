@@ -24,6 +24,7 @@
         <file alias="MavlinkSettings.qml">src/ui/preferences/MavlinkSettings.qml</file>
         <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
         <file alias="MissionEditorHelp.qml">src/MissionEditor/MissionEditorHelp.qml</file>
+        <file alias="MockLink.qml">src/ui/preferences/MockLink.qml</file>
         <file alias="PowerComponent.qml">src/AutoPilotPlugins/PX4/PowerComponent.qml</file>
         <file alias="PowerComponentSummary.qml">src/AutoPilotPlugins/PX4/PowerComponentSummary.qml</file>
         <file alias="PX4FlowSensor.qml">src/VehicleSetup/PX4FlowSensor.qml</file>
