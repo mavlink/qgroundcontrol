@@ -1,12 +1,4 @@
 
-!ios {
-    include($$PWD/../../QGCCommon.pri)
-    TEMPLATE     = lib
-    TARGET       = QGeoServiceProviderFactoryQGC
-    CONFIG      += plugin static
-    PLUGIN_TYPE  = geoservices
-}
-
 QT  += location-private positioning-private network
 
 contains(QT_VERSION, 5.5.1) {
