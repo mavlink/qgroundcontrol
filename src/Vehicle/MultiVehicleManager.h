@@ -54,7 +54,7 @@ public:
     Q_PROPERTY(bool                 activeVehicleAvailable          READ activeVehicleAvailable                                 NOTIFY activeVehicleAvailableChanged)
     Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                         NOTIFY parameterReadyVehicleAvailableChanged)
     Q_PROPERTY(Vehicle*             activeVehicle                   READ activeVehicle                  WRITE setActiveVehicle  NOTIFY activeVehicleChanged)
-    Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehiclesModel                                          CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehicles                                               CONSTANT)
 
     // Methods
 
@@ -70,8 +70,6 @@ public:
 
     UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
 
-    QList<Vehicle*> vehicles(void);
-
     // Property accessors
 
     bool activeVehicleAvailable(void) { return _activeVehicleAvailable; }
@@ -81,7 +79,7 @@ public:
     Vehicle* activeVehicle(void) { return _activeVehicle; }
     void setActiveVehicle(Vehicle* vehicle);
 
-    QmlObjectListModel* vehiclesModel(void) { return &_vehicles; }
+    QmlObjectListModel* vehicles(void) { return &_vehicles; }
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);

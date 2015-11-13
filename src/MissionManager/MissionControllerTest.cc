@@ -25,8 +25,6 @@
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
 
-UT_REGISTER_TEST(MissionControllerTest)
-
 MissionControllerTest::MissionControllerTest(void)
     : _multiSpyMissionController(NULL)
     , _multiSpyMissionItem(NULL)

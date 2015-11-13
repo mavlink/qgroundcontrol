@@ -172,6 +172,20 @@ Item {
             QGCButton {
                 width:      parent.width * 0.8
                 height:     ScreenTools.defaultFontPixelHeight * 2.5
+                text:       "Mock Link"
+                visible:    ScreenTools.isDebug
+                exclusiveGroup: panelActionGroup
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    if(__rightPanel.source != "MockLink.qml") {
+                        __rightPanel.source = "MockLink.qml"
+                    }
+                    checked = true
+                }
+            }
+            QGCButton {
+                width:      parent.width * 0.8
+                height:     ScreenTools.defaultFontPixelHeight * 2.5
                 text:       "Debug"
                 visible:    ScreenTools.isDebug
                 exclusiveGroup: panelActionGroup

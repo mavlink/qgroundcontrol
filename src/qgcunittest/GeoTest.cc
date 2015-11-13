@@ -29,8 +29,6 @@
 #include "GeoTest.h"
 #include "QGCGeo.h"
 
-UT_REGISTER_TEST(GeoTest)
-
 /*
 GeoTest::GeoTest(void)
 {

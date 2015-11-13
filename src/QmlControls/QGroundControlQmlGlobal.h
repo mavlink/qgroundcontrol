@@ -34,6 +34,10 @@
 #include "HomePositionManager.h"
 #include "FlightMapSettings.h"
 
+#ifdef QT_DEBUG
+#include "MockLink.h"
+#endif
+
 class QGCToolbox;
 
 class QGroundControlQmlGlobal : public QObject
@@ -57,6 +61,12 @@ public:
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
     Q_INVOKABLE bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
+
+    Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText);
+    Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText);
+    Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText);
+    Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
+    Q_INVOKABLE void    stopAllMockLinks            (void);
 
     // Property accesors
 
@@ -123,6 +133,10 @@ signals:
     void isVersionCheckEnabledChanged   (bool enabled);
 
 private:
+#ifdef QT_DEBUG
+    void _startMockLink(MockConfiguration* mockConfig);
+#endif
+
     HomePositionManager*    _homePositionManager;
     FlightMapSettings*      _flightMapSettings;
 };

@@ -29,8 +29,6 @@
 #include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 
-UT_REGISTER_TEST(SetupViewTest)
-
 void SetupViewTest::_clickThrough_test(void)
 {
     _connectMockLink();
