@@ -108,9 +108,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    connect(this, &MAVLinkProtocol::protocolStatusMessage, _app, &QGCApplication::criticalMessageBoxOnMainThread);
    connect(this, &MAVLinkProtocol::saveTempFlightDataLog, _app, &QGCApplication::saveTempFlightDataLogOnMainThread);
 
-#ifndef __mobile__
    connect(_multiVehicleManager->vehicles(), &QmlObjectListModel::countChanged, this, &MAVLinkProtocol::_vehicleCountChanged);
-#endif
 
    emit versionCheckChanged(m_enable_version_check);
 }
@@ -631,6 +629,18 @@ int MAVLinkProtocol::getHeartbeatRate()
     return _heartbeatRate;
 }
 
+void MAVLinkProtocol::_vehicleCountChanged(int count)
+{
+#ifndef __mobile__
+    if (count == 0) {
+        // Last vehicle is gone, close out logging
+        _stopLogging();
+    }
+#else
+    Q_UNUSED(count);
+#endif
+}
+
 #ifndef __mobile__
 /// @brief Closes the log file if it is open
 bool MAVLinkProtocol::_closeLogFile(void)
@@ -724,14 +734,6 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
     
     foreach(const QFileInfo fileInfo, fileInfoList) {
         QFile::remove(fileInfo.filePath());
-    }
-}
-
-void MAVLinkProtocol::_vehicleCountChanged(int count)
-{
-    if (count == 0) {
-        // Last vehicle is gone, close out logging
-        _stopLogging();
     }
 }
 #endif
