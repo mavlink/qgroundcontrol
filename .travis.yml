@@ -123,7 +123,7 @@ script:
 after_success:
   - if [[ "${TRAVIS_OS_NAME}" = "android" && "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_BRANCH}" = "master" ]]; then
          pip install --user google-api-python-client PyOpenSSL
-      && openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in Google_Play_Android_Developer-bb93ae7d61ca.p12.enc -out android/Google_Play_Android_Developer-bb93ae7d61ca.p12 -d
+      && cd ${SHADOW_BUILD_DIR} && openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in ${TRAVIS_BUILD_DIR}/Google_Play_Android_Developer-bb93ae7d61ca.p12.enc -out Google_Play_Android_Developer-bb93ae7d61ca.p12 -d
       && ${TRAVIS_BUILD_DIR}/tools/google_play_upload.py org.mavlink.qgroundcontrol ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
       ;
     fi
@@ -137,6 +137,7 @@ deploy:
     local_dir: ${SHADOW_BUILD_DIR}/release/package
     upload-dir: ${TRAVIS_BRANCH}
     acl: public_read
+    region: us-west-2
     skip_cleanup: true
     on:
       all_branches: true
@@ -160,6 +161,7 @@ deploy:
     local_dir: ${TRAVIS_BUILD_DIR}/src/html
     upload-dir: doxygen
     acl: public_read
+    region: us-west-2
     skip_cleanup: true
     branch: master
     on:
