@@ -39,7 +39,7 @@ argparser.add_argument('apk_file',
 def main():
   # Load the key in PKCS 12 format that you downloaded from the Google APIs
   # Console when you created your Service account.
-  f = file('android/Google_Play_Android_Developer-bb93ae7d61ca.p12', 'rb')
+  f = file('Google_Play_Android_Developer-bb93ae7d61ca.p12', 'rb')
   key = f.read()
   f.close()
 
