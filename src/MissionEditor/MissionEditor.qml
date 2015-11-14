@@ -46,7 +46,7 @@ QGCView {
     z: QGroundControl.zOrderTopMost
 
     readonly property int       _decimalPlaces:     8
-    readonly property real      _horizontalMargin:  ScreenTools.defaultFontPixelWidth / 2
+    readonly property real      _horizontalMargin:  ScreenTools.defaultFontPixelWidth  / 2
     readonly property real      _margin:            ScreenTools.defaultFontPixelHeight / 2
     readonly property var       _activeVehicle:     multiVehicleManager.activeVehicle
     readonly property real      _editFieldWidth:    ScreenTools.defaultFontPixelWidth * 16
@@ -695,6 +695,17 @@ QGCView {
                 } // Item - Home Position Manager
                 */
 
+                //-- Dismiss Drop Down (if any)
+                MouseArea {
+                    anchors.fill:   parent
+                    enabled:        _dropButtonsExclusiveGroup.current != null
+                    onClicked: {
+                        if(_dropButtonsExclusiveGroup.current)
+                            _dropButtonsExclusiveGroup.current.checked = false
+                        _dropButtonsExclusiveGroup.current = null
+                    }
+                }
+
                 //-- Help Panel
                 Loader {
                     id:         helpPanel
@@ -705,169 +716,186 @@ QGCView {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
-
-                RoundButton {
-                    id:                 addMissionItemsButton
-                    anchors.margins:    _margin
-                    anchors.left:       parent.left
-                    y:                  (parent.height - (_toolButtonCount * height) - ((_toolButtonCount - 1) * _margin)) / 2
-                    buttonImage:        "/qmlimages/MapAddMission.svg"
-                    exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  QGroundControl.zOrderWidgets
-
-                    onCheckedChanged: {
-                        if (checked) {
-                            addMissionItemsButtonAutoOffTimer.start()
-                        } else {
-                            addMissionItemsButtonAutoOffTimer.stop()
-                        }
-                    }
-
-                    Timer {
-                        id:         addMissionItemsButtonAutoOffTimer
-                        interval:   _addMissionItemsButtonAutoOffTimeout
-                        repeat:     false
-
-                        onTriggered: addMissionItemsButton.checked = false
-                    }
+                Item {
+                    id:     toolbarSpacer
+                    height: mainWindow.tbHeight
+                    width:  1
                 }
 
-                RoundButton {
-                    id:                 deleteMissionItemButton
-                    anchors.margins:    _margin
-                    anchors.left:       parent.left
-                    anchors.top:        addMissionItemsButton.bottom
-                    buttonImage:        "/qmlimages/TrashDelete.svg"
-                    exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  QGroundControl.zOrderWidgets
+                //-- Vertical Tool Buttons
+                Column {
+                    id:                         toolColumn
+                    anchors.margins:            ScreenTools.defaultFontPixelHeight
+                    anchors.left:               parent.left
+                    anchors.top:                toolbarSpacer.bottom
+                    spacing:                    ScreenTools.defaultFontPixelHeight
 
-                    onClicked: {
-                        itemDragger.clearItem()
-                        controller.deleteCurrentMissionItem()
-                        checked = false
-                    }
-                }
+                    RoundButton {
+                        id:                 addMissionItemsButton
+                        buttonImage:        "/qmlimages/MapAddMission.svg"
+                        z:                  QGroundControl.zOrderWidgets
 
-                /*
-                  Home Position manager temporarily disable
-                RoundButton {
-                    id:                 homePositionManagerButton
-                    anchors.margins:    _margin
-                    anchors.left:       parent.left
-                    anchors.top:        deleteMissionItemButton.bottom
-                    buttonImage:        "/qmlimages/MapHome.svg"
-                    exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  QGroundControl.zOrderWidgets
-                }
-                */
-
-                DropButton {
-                    id:                 centerMapButton
-                    anchors.margins:    _margin
-                    anchors.left:       parent.left
-                    anchors.top:        deleteMissionItemButton.bottom
-                    dropDirection:      dropRight
-                    buttonImage:        "/qmlimages/MapCenter.svg"
-                    viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                    exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  QGroundControl.zOrderWidgets
-
-                    dropDownComponent: Component {
-                        Column {
-                            QGCLabel { text: "Center map:" }
-
-                            Row {
-                                spacing: ScreenTools.defaultFontPixelWidth
-
-                                QGCButton {
-                                    text:       "Home"
-                                    enabled:    liveHomePositionAvailable
-
-                                    onClicked: {
-                                        centerMapButton.hideDropDown()
-                                        editorMap.center = liveHomePosition
-                                    }
-                                }
-
-                                QGCButton {
-                                    text:       "Vehicle"
-                                    enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
-
-                                    property var activeVehicle: multiVehicleManager.activeVehicle
-
-                                    onClicked: {
-                                        centerMapButton.hideDropDown()
-                                        editorMap.latitude = activeVehicle.latitude
-                                        editorMap.longitude = activeVehicle.longitude
-                                    }
-                                }
+                        onCheckedChanged: {
+                            if (checked) {
+                                addMissionItemsButtonAutoOffTimer.start()
+                            } else {
+                                addMissionItemsButtonAutoOffTimer.stop()
                             }
                         }
+
+                        Timer {
+                            id:         addMissionItemsButtonAutoOffTimer
+                            interval:   _addMissionItemsButtonAutoOffTimeout
+                            repeat:     false
+
+                            onTriggered: addMissionItemsButton.checked = false
+                        }
                     }
-                }
 
-                DropButton {
-                    id:                 syncButton
-                    anchors.margins:    _margin
-                    anchors.left:       parent.left
-                    anchors.top:        centerMapButton.bottom
-                    dropDirection:      dropRight
-                    buttonImage:        _syncNeeded ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
-                    viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                    exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  QGroundControl.zOrderWidgets
-                    dropDownComponent:  syncDropDownComponent
-                    enabled:            !_syncInProgress
-                }
+                    RoundButton {
+                        id:                 deleteMissionItemButton
+                        buttonImage:        "/qmlimages/TrashDelete.svg"
+                        z:                  QGroundControl.zOrderWidgets
+                        onClicked: {
+                            addMissionItemsButton.checked = false
+                            itemDragger.clearItem()
+                            controller.deleteCurrentMissionItem()
+                            checked = false
+                        }
+                    }
 
-                DropButton {
-                    id:                 mapTypeButton
-                    anchors.margins:    _margin
-                    anchors.left:       parent.left
-                    anchors.top:        syncButton.bottom
-                    dropDirection:      dropRight
-                    buttonImage:        "/qmlimages/MapType.svg"
-                    viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                    exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  QGroundControl.zOrderWidgets
+                    /*
+                      Home Position manager temporarily disable
+                    RoundButton {
+                        id:                 homePositionManagerButton
+                        buttonImage:        "/qmlimages/MapHome.svg"
+                        //exclusiveGroup:     _dropButtonsExclusiveGroup
+                        z:                  QGroundControl.zOrderWidgets
+                    }
+                    */
 
-                    dropDownComponent: Component {
-                        Column {
-                            QGCLabel { text: "Map type:" }
+                    DropButton {
+                        id:                 centerMapButton
+                        dropDirection:      dropRight
+                        buttonImage:        "/qmlimages/MapCenter.svg"
+                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+                        exclusiveGroup:     _dropButtonsExclusiveGroup
+                        z:                  QGroundControl.zOrderWidgets
 
-                            Row {
-                                spacing: ScreenTools.defaultFontPixelWidth
+                        dropDownComponent: Component {
+                            Column {
+                                QGCLabel { text: "Center map:" }
 
-                                Repeater {
-                                    model: QGroundControl.flightMapSettings.mapTypes
+                                Row {
+                                    spacing: ScreenTools.defaultFontPixelWidth
 
                                     QGCButton {
-                                        checkable:      true
-                                        checked:        editorMap.mapType == text
-                                        text:           modelData
-                                        exclusiveGroup: _mapTypeButtonsExclusiveGroup
+                                        text:       "Home"
+                                        enabled:    liveHomePositionAvailable
 
                                         onClicked: {
-                                            editorMap.mapType = text
-                                            checked = true
-                                            mapTypeButton.hideDropDown()
+                                            centerMapButton.hideDropDown()
+                                            editorMap.center = liveHomePosition
+                                        }
+                                    }
+
+                                    QGCButton {
+                                        text:       "Vehicle"
+                                        enabled:    activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0
+
+                                        property var activeVehicle: multiVehicleManager.activeVehicle
+
+                                        onClicked: {
+                                            centerMapButton.hideDropDown()
+                                            editorMap.latitude = activeVehicle.latitude
+                                            editorMap.longitude = activeVehicle.longitude
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                RoundButton {
-                    id:                 helpButton
-                    anchors.margins:    _margin
-                    anchors.left:       parent.left
-                    anchors.top:        mapTypeButton.bottom
-                    buttonImage:        "/qmlimages/Help.svg"
-                    exclusiveGroup:     _dropButtonsExclusiveGroup
-                    z:                  QGroundControl.zOrderWidgets
-                    checked:            _showHelp
+                    DropButton {
+                        id:                 syncButton
+                        dropDirection:      dropRight
+                        buttonImage:        _syncNeeded ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
+                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+                        exclusiveGroup:     _dropButtonsExclusiveGroup
+                        z:                  QGroundControl.zOrderWidgets
+                        dropDownComponent:  syncDropDownComponent
+                        enabled:            !_syncInProgress
+                    }
+
+                    DropButton {
+                        id:                 mapTypeButton
+                        dropDirection:      dropRight
+                        buttonImage:        "/qmlimages/MapType.svg"
+                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+                        exclusiveGroup:     _dropButtonsExclusiveGroup
+                        z:                  QGroundControl.zOrderWidgets
+
+                        dropDownComponent: Component {
+                            Column {
+                                QGCLabel { text: "Map type:" }
+
+                                Row {
+                                    spacing: ScreenTools.defaultFontPixelWidth
+
+                                    Repeater {
+                                        model: QGroundControl.flightMapSettings.mapTypes
+
+                                        QGCButton {
+                                            checkable:      true
+                                            checked:        editorMap.mapType == text
+                                            text:           modelData
+                                            exclusiveGroup: _mapTypeButtonsExclusiveGroup
+
+                                            onClicked: {
+                                                editorMap.mapType = text
+                                                checked = true
+                                                mapTypeButton.hideDropDown()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    //-- Zoom Map In
+                    RoundButton {
+                        id:                 mapZoomPlus
+                        visible:            !ScreenTools.isTinyScreen
+                        buttonImage:        "/qmlimages/ZoomPlus.svg"
+                        z:                  QGroundControl.zOrderWidgets
+                        onClicked: {
+                            if(editorMap)
+                                editorMap.zoomLevel += 0.5
+                            checked = false
+                        }
+                    }
+
+                    //-- Zoom Map Out
+                    RoundButton {
+                        id:                 mapZoomMinus
+                        visible:            !ScreenTools.isTinyScreen
+                        buttonImage:        "/qmlimages/ZoomMinus.svg"
+                        z:                  QGroundControl.zOrderWidgets
+                        onClicked: {
+                            if(editorMap)
+                                editorMap.zoomLevel -= 0.5
+                            checked = false
+                        }
+                    }
+
+                    RoundButton {
+                        id:                 helpButton
+                        buttonImage:        "/qmlimages/Help.svg"
+                        exclusiveGroup:     _dropButtonsExclusiveGroup
+                        z:                  QGroundControl.zOrderWidgets
+                        checked:            _showHelp
+                    }
                 }
 
                 Rectangle {
