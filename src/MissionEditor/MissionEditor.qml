@@ -782,6 +782,17 @@ QGCView {
                     */
 
                     DropButton {
+                        id:                 syncButton
+                        dropDirection:      dropRight
+                        buttonImage:        _syncNeeded ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
+                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
+                        exclusiveGroup:     _dropButtonsExclusiveGroup
+                        z:                  QGroundControl.zOrderWidgets
+                        dropDownComponent:  syncDropDownComponent
+                        enabled:            !_syncInProgress
+                    }
+
+                    DropButton {
                         id:                 centerMapButton
                         dropDirection:      dropRight
                         buttonImage:        "/qmlimages/MapCenter.svg"
@@ -821,17 +832,6 @@ QGCView {
                                 }
                             }
                         }
-                    }
-
-                    DropButton {
-                        id:                 syncButton
-                        dropDirection:      dropRight
-                        buttonImage:        _syncNeeded ? "/qmlimages/MapSyncChanged.svg" : "/qmlimages/MapSync.svg"
-                        viewportMargins:    ScreenTools.defaultFontPixelWidth / 2
-                        exclusiveGroup:     _dropButtonsExclusiveGroup
-                        z:                  QGroundControl.zOrderWidgets
-                        dropDownComponent:  syncDropDownComponent
-                        enabled:            !_syncInProgress
                     }
 
                     DropButton {
