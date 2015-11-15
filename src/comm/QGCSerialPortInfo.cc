@@ -81,6 +81,9 @@ QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::boardType(void) const
         } else if (description().startsWith("PX4 FMU")) {
             qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU, assuming V2 (by name matching fallback)";
             boardType = BoardTypePX4FMUV2;
+        } else if (description() == "FT231X USB UART") {
+            qCDebug(QGCSerialPortInfoLog) << "Found possible Radio (by name matching fallback)";
+            boardType = BoardType3drRadio;
         }
     }
 
