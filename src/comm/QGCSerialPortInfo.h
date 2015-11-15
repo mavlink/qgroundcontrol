@@ -63,6 +63,7 @@ public:
     static const int threeDRRadioVendorId =                 1027;   ///< Vendor ID for 3DR Radio
     static const int threeDRRadioProductId =                24597;  ///< Product ID for 3DR Radio
 
+    QGCSerialPortInfo(void);
     QGCSerialPortInfo(const QSerialPort & port);
 
     /// Override of QSerialPortInfo::availablePorts

@@ -25,6 +25,12 @@
 
 QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "QGCSerialPortInfoLog")
 
+QGCSerialPortInfo::QGCSerialPortInfo(void) :
+    QSerialPortInfo()
+{
+
+}
+
 QGCSerialPortInfo::QGCSerialPortInfo(const QSerialPort & port) :
     QSerialPortInfo(port)
 {
