@@ -323,7 +323,6 @@ QGCApplication::~QGCApplication()
     if (mainWindow) {
         delete mainWindow;
     }
-
     shutdownVideoStreaming();
     delete _toolbox;
 }

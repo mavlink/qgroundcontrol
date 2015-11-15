@@ -54,10 +54,10 @@ CONFIG += qt \
     thread
 
 QT += \
-    network \
     concurrent \
     gui \
     location \
+    network \
     opengl \
     positioning \
     qml \
