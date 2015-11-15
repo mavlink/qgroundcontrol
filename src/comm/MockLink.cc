@@ -83,7 +83,7 @@ MockLink::MockLink(MockConfiguration* config)
     , _vehicleSystemId(128)     // FIXME: Pull from eventual parameter manager
     , _vehicleComponentId(200)  // FIXME: magic number?
     , _inNSH(false)
-    , _mavlinkStarted(false)
+    , _mavlinkStarted(true)
     , _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
     , _mavState(MAV_STATE_STANDBY)
     , _firmwareType(MAV_AUTOPILOT_PX4)
@@ -336,10 +336,13 @@ void MockLink::_handleIncomingNSHBytes(const char* bytes, int cBytes)
     if (cBytes > 0) {
         qDebug() << "NSH:" << (const char*)bytes;
 
+#if 0
+        // MockLink not quite ready to handle this correctly yet
         if (strncmp(bytes, "sh /etc/init.d/rc.usb\n", cBytes) == 0) {
             // This is the mavlink start command
             _mavlinkStarted = true;
         }
+#endif
     }
 }
 
