@@ -200,14 +200,16 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
         // Use the same shared pointer as LinkManager
         _connectedLinks.append(_linkMgr->sharedPointerForLink(link));
         
-        // Send command to start MAVLink
-        // XXX hacky but safe
-        // Start NSH
-        const char init[] = {0x0d, 0x0d, 0x0d, 0x0d};
-        link->writeBytes(init, sizeof(init));
-        const char* cmd = "sh /etc/init.d/rc.usb\n";
-        link->writeBytes(cmd, strlen(cmd));
-        link->writeBytes(init, 4);
+        if (link->requiresUSBMavlinkStart()) {
+            // Send command to start MAVLink
+            // XXX hacky but safe
+            // Start NSH
+            const char init[] = {0x0d, 0x0d, 0x0d, 0x0d};
+            link->writeBytes(init, sizeof(init));
+            const char* cmd = "sh /etc/init.d/rc.usb\n";
+            link->writeBytes(cmd, strlen(cmd));
+            link->writeBytes(init, 4);
+        }
     } else {
         bool found = false;
         for (int i=0; i<_connectedLinks.count(); i++) {

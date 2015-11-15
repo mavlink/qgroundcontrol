@@ -30,24 +30,16 @@
 
 #include "Bootloader.h"
 #include "FirmwareImage.h"
+#include "QGCSerialPortInfo.h"
 
 #include <QObject>
 #include <QThread>
 #include <QTimer>
 #include <QTime>
-#include <QSerialPortInfo>
 
 #include "qextserialport.h"
 
 #include <stdint.h>
-
-typedef enum {
-    FoundBoardPX4FMUV1,
-    FoundBoardPX4FMUV2,
-    FoundBoardPX4Flow,
-    FoundBoard3drRadio,
-    FoundBoardAeroCore
-} PX4FirmwareUpgradeFoundBoardType_t;
 
 class PX4FirmwareUpgradeThreadController;
 
@@ -64,7 +56,7 @@ public:
     
 signals:
     void updateProgress(int curr, int total);
-    void foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
+    void foundBoard(bool firstAttempt, const QGCSerialPortInfo& portInfo, int type);
     void noBoardFound(void);
     void boardGone(void);
     void foundBootloader(int bootloaderVersion, int boardID, int flashSize);
@@ -85,9 +77,9 @@ private slots:
     void _cancel(void);
     
 private:
-    bool _findBoardFromPorts(QSerialPortInfo& portInfo, PX4FirmwareUpgradeFoundBoardType_t& type);
-    bool _findBootloader(const QSerialPortInfo& portInfo, bool radioMode, bool errorOnNotFound);
-    void _3drRadioForceBootloader(const QSerialPortInfo& portInfo);
+    bool _findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType);
+    bool _findBootloader(const QGCSerialPortInfo& portInfo, bool radioMode, bool errorOnNotFound);
+    void _3drRadioForceBootloader(const QGCSerialPortInfo& portInfo);
     bool _erase(void);
     
     PX4FirmwareUpgradeThreadController* _controller;
@@ -100,7 +92,7 @@ private:
     
     bool                _foundBoard;            ///< true: board is currently connected
     bool                _findBoardFirstAttempt; ///< true: this is our first try looking for a board
-    QSerialPortInfo     _foundBoardPortInfo;    ///< port info for found board
+    QGCSerialPortInfo   _foundBoardPortInfo;    ///< port info for found board
 };
 
 /// @brief Provides methods to interact with the bootloader. The commands themselves are signalled
@@ -128,7 +120,7 @@ public:
     
 signals:
     /// @brief Emitted by the find board process when it finds a board.
-    void foundBoard(bool firstAttempt, const QSerialPortInfo &portInfo, int type);
+    void foundBoard(bool firstAttempt, const QGCSerialPortInfo &portInfo, int boardType);
     
     void noBoardFound(void);
     
@@ -163,7 +155,7 @@ signals:
     void _cancel(void);
     
 private slots:
-    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type) { emit foundBoard(firstAttempt, portInfo, type); }
+    void _foundBoard(bool firstAttempt, const QGCSerialPortInfo& portInfo, int type) { emit foundBoard(firstAttempt, portInfo, type); }
     void _noBoardFound(void) { emit noBoardFound(); }
     void _boardGone(void) { emit boardGone(); }
     void _foundBootloader(int bootloaderVersion, int boardID, int flashSize) { emit foundBootloader(bootloaderVersion, boardID, flashSize); }
