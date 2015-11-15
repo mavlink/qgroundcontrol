@@ -103,7 +103,10 @@ QGCView {
     MissionController {
         id:         controller
 
-        Component.onCompleted: start(true /* editMode */)
+        Component.onCompleted: {
+            start(true /* editMode */)
+        }
+
         /*
         FIXME: autoSync is temporarily disconnected since it's still buggy
 
@@ -142,8 +145,12 @@ QGCView {
                 id:             editorMap
                 anchors.fill:   parent
                 mapName:        "MissionEditor"
-                latitude:       tabletPosition.latitude
-                longitude:      tabletPosition.longitude
+                latitude:       mainWindow.tabletPosition.latitude
+                longitude:      mainWindow.tabletPosition.longitude
+
+                Component.onCompleted: {
+                    console.log("Init coordinate " + mainWindow.tabletPosition.latitude)
+                }
 
                 readonly property real animationDuration: 500
 
@@ -866,7 +873,7 @@ QGCView {
                     //-- Zoom Map In
                     RoundButton {
                         id:                 mapZoomPlus
-                        visible:            !ScreenTools.isTinyScreen
+                        visible:            !ScreenTools.isTinyScreen && !ScreenTools.isShortScreen
                         buttonImage:        "/qmlimages/ZoomPlus.svg"
                         z:                  QGroundControl.zOrderWidgets
                         onClicked: {
@@ -879,7 +886,7 @@ QGCView {
                     //-- Zoom Map Out
                     RoundButton {
                         id:                 mapZoomMinus
-                        visible:            !ScreenTools.isTinyScreen
+                        visible:            !ScreenTools.isTinyScreen && !ScreenTools.isShortScreen
                         buttonImage:        "/qmlimages/ZoomMinus.svg"
                         z:                  QGroundControl.zOrderWidgets
                         onClicked: {
