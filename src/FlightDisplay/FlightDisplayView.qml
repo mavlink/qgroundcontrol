@@ -49,7 +49,7 @@ Item {
 
     property var _activeVehicle:  multiVehicleManager.activeVehicle
 
-    readonly property var  _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
+    readonly property var  _defaultVehicleCoordinate:   mainWindow.tabletPosition
     readonly property real _defaultRoll:                0
     readonly property real _defaultPitch:               0
     readonly property real _defaultHeading:             0
