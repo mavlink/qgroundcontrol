@@ -26,8 +26,13 @@ build_script:
 test_script:
   - if "%CONFIG%" EQU "debug" ( %SHADOW_BUILD_DIR%\debug\qgroundcontrol --unittest )
 
+before_deploy:
+  - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\release\qgroundcontrol-installer.exe %APPVEYOR_BUILD_FOLDER%\qgroundcontrol-installer.exe )
+  - dir %SHADOW_BUILD_DIR%
+  - dir %APPVEYOR_BUILD_FOLDER%
+
 artifacts:
-  - path: '%SHADOW_BUILD_DIR%\release\qgroundcontrol-installer.exe'
+  - path: './qgroundcontrol-installer.exe'
     name: s3
 
 deploy:
@@ -39,11 +44,11 @@ deploy:
     bucket: qgroundcontrol
     set_public: true
     folder: $(APPVEYOR_REPO_BRANCH)
-    artifact: '$(SHADOW_BUILD_DIR)\release\qgroundcontrol-installer.exe'
+    artifact: './qgroundcontrol-installer.exe'
     on:
       CONFIG: installer
   - provider: GitHub
-    artifact: '$(SHADOW_BUILD_DIR)\release\qgroundcontrol-installer.exe'
+    artifact: './qgroundcontrol-installer.exe'
     draft: false
     prerelease: false
     on:
