@@ -33,12 +33,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QSslSocket>
 #include <QProcessEnvironment>
 
-#ifndef __mobile__
-    #include <QSerialPortInfo>
-#endif
-
 #include "QGCApplication.h"
 #include "MainWindow.h"
+
+#ifndef __mobile__
+    #include "QGCSerialPortInfo.h"
+#endif
 
 #ifdef QT_DEBUG
     #ifndef __mobile__
@@ -58,7 +58,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 #ifndef __mobile__
-Q_DECLARE_METATYPE(QSerialPortInfo)
+    Q_DECLARE_METATYPE(QGCSerialPortInfo)
 #endif
 
 #ifdef Q_OS_WIN
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 #endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
 #ifndef __mobile__
-    qRegisterMetaType<QSerialPortInfo>();
+    qRegisterMetaType<QGCSerialPortInfo>();
 #endif
 
     // We statically link our own QtLocation plugin

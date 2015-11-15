@@ -21,13 +21,35 @@
  
  ======================================================================*/
 
-#ifndef SerialPortIds_H
-#define SerialPortIds_H
+#ifndef QGCSerialPortInfo_H
+#define QGCSerialPortInfo_H
 
-// SerialPortInfo Vendor and Product Ids for known boards
-class SerialPortIds {
+#ifdef __android__
+    #include "qserialportinfo.h"
+#else
+    #include <QSerialPortInfo>
+#endif
 
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(QGCSerialPortInfoLog)
+
+/// QGC's version of Qt QSerialPortInfo. It provides additional information about board types
+/// that QGC cares about.
+class QGCSerialPortInfo : public QSerialPortInfo
+{
 public:
+    typedef enum {
+        BoardTypePX4FMUV1,
+        BoardTypePX4FMUV2,
+        BoardTypePX4Flow,
+        BoardType3drRadio,
+        BoardTypeAeroCore,
+        BoardTypeUnknown
+    } BoardType_t;
+
+    // Vendor and products ids for the boards we care about
+
     static const int px4VendorId =                          9900;   ///< Vendor ID for Pixhawk board (V2 and V1) and PX4 Flow
 
     static const int pixhawkFMUV2ProductId =                17;     ///< Product ID for Pixhawk V2 board
@@ -40,6 +62,20 @@ public:
 
     static const int threeDRRadioVendorId =                 1027;   ///< Vendor ID for 3DR Radio
     static const int threeDRRadioProductId =                24597;  ///< Product ID for 3DR Radio
+
+    QGCSerialPortInfo(const QSerialPort & port);
+
+    /// Override of QSerialPortInfo::availablePorts
+    static QList<QGCSerialPortInfo> availablePorts(void);
+
+    BoardType_t boardType(void) const;
+
+    /// @return true: board is a Pixhawk board
+    bool boardTypePixhawk(void) const;
+
+    /// @return true: Board is currently in bootloader
+    bool isBootloader(void) const;
+
 };
 
 #endif
