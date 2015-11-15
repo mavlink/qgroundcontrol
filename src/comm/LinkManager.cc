@@ -34,18 +34,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 #ifndef __ios__
-#ifdef __android__
-#include "qserialportinfo.h"
-#else
-#include <QSerialPortInfo>
-#endif
+#include "QGCSerialPortInfo.h"
 #endif
 
 #include "LinkManager.h"
 #include "MainWindow.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
-#include "SerialPortIds.h"
 #include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
@@ -489,9 +484,9 @@ void LinkManager::_updateConfigurationList(void)
     }
     bool saveList = false;
     QStringList currentPorts;
-    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
+    QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
     // Iterate Comm Ports
-    foreach (QSerialPortInfo portInfo, portList) {
+    foreach (QGCSerialPortInfo portInfo, portList) {
 #if 0
         // Too noisy for most logging, so turn on as needed
         qCDebug(LinkManagerLog) << "-----------------------------------------------------";
@@ -504,8 +499,15 @@ void LinkManager::_updateConfigurationList(void)
 #endif
         // Save port name
         currentPorts << portInfo.systemLocation();
-        // Is this a PX4 and NOT in bootloader mode?
-        if (portInfo.vendorIdentifier() == SerialPortIds::px4VendorId && !portInfo.description().contains("BL")) {
+
+        QGCSerialPortInfo::BoardType_t boardType = portInfo.boardType();
+
+        if (boardType != QGCSerialPortInfo::BoardTypeUnknown) {
+            if (portInfo.isBootloader()) {
+                // Don't connect to bootloader
+                continue;
+            }
+            
             SerialConfiguration* pSerial = _findSerialConfiguration(portInfo.systemLocation());
             if (pSerial) {
                 //-- If this port is configured make sure it has the preferred flag set
@@ -514,45 +516,34 @@ void LinkManager::_updateConfigurationList(void)
                     saveList = true;
                 }
             } else {
-                // Lets create a new Serial configuration automatically
-                if (portInfo.description() == "AeroCore") {
-                    pSerial = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
-                } else if (portInfo.description().contains("PX4Flow")) {
-                    pSerial = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
-                } else if (portInfo.description().contains("PX4")) {
+                switch (boardType) {
+                case QGCSerialPortInfo::BoardTypePX4FMUV1:
+                case QGCSerialPortInfo::BoardTypePX4FMUV2:
                     pSerial = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
-                } else {
-                    continue;
+                    break;
+                case QGCSerialPortInfo::BoardTypeAeroCore:
+                    pSerial = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
+                    break;
+                case QGCSerialPortInfo::BoardTypePX4Flow:
+                    pSerial = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
+                    break;
+                case QGCSerialPortInfo::BoardType3drRadio:
+                    pSerial = new SerialConfiguration(QString("3DR Radio on %1").arg(portInfo.portName().trimmed()));
+                default:
+                    qWarning() << "Internal error";
+                    break;
                 }
+
+                pSerial->setBaud(boardType == QGCSerialPortInfo::BoardType3drRadio ? 57600 : 115200);
                 pSerial->setDynamic(true);
                 pSerial->setPreferred(true);
-                pSerial->setBaud(115200);
-                pSerial->setPortName(portInfo.systemLocation());
-                addLinkConfiguration(pSerial);
-                saveList = true;
-            }
-        }
-        // Is this an FTDI Chip? It could be a 3DR Modem
-        if (portInfo.vendorIdentifier() == SerialPortIds::threeDRRadioVendorId && portInfo.productIdentifier() == SerialPortIds::threeDRRadioProductId) {
-            SerialConfiguration* pSerial = _findSerialConfiguration(portInfo.systemLocation());
-            if (pSerial) {
-                //-- If this port is configured make sure it has the preferred flag set, unless someone else already has it set.
-                if(!pSerial->isPreferred() && !saveList) {
-                    pSerial->setPreferred(true);
-                    saveList = true;
-                }
-            } else {
-                // Lets create a new Serial configuration automatically (an assumption at best)
-                pSerial = new SerialConfiguration(QString("3DR Radio on %1").arg(portInfo.portName().trimmed()));
-                pSerial->setDynamic(true);
-                pSerial->setPreferred(true);
-                pSerial->setBaud(57600);
                 pSerial->setPortName(portInfo.systemLocation());
                 addLinkConfiguration(pSerial);
                 saveList = true;
             }
         }
     }
+
     // Now we go through the current configuration list and make sure any dynamic config has gone away
     QList<LinkConfiguration*>  _confToDelete;
     foreach (LinkConfiguration* pLink, _linkConfigurations) {

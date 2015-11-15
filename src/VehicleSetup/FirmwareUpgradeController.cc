@@ -109,23 +109,23 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
 {
     _foundBoardInfo = info;
     switch (type) {
-        case FoundBoardPX4FMUV1:
+        case QGCSerialPortInfo::BoardTypePX4FMUV1:
             _foundBoardType = "PX4 FMU V1";
             _startFlashWhenBootloaderFound = false;
             break;
-        case FoundBoardPX4FMUV2:
+        case QGCSerialPortInfo::BoardTypePX4FMUV2:
             _foundBoardType = "Pixhawk";
             _startFlashWhenBootloaderFound = false;
             break;
-        case FoundBoardAeroCore:
+        case QGCSerialPortInfo::BoardTypeAeroCore:
             _foundBoardType = "AeroCore";
             _startFlashWhenBootloaderFound = false;
             break;
-        case FoundBoardPX4Flow:
+        case QGCSerialPortInfo::BoardTypePX4Flow:
             _foundBoardType = "PX4 Flow";
             _startFlashWhenBootloaderFound = false;
             break;
-        case FoundBoard3drRadio:
+        case QGCSerialPortInfo::BoardType3drRadio:
             _foundBoardType = "3DR Radio";
             if (!firstAttempt) {
                 // Radio always flashes latest firmware, so we can start right away without
