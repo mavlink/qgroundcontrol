@@ -15,10 +15,8 @@
 
 #ifdef __android__
 #include "qserialport.h"
-#include "qserialportinfo.h"
 #else
 #include <QSerialPort>
-#include <QSerialPortInfo>
 #endif
 
 #include "SerialLink.h"
@@ -26,6 +24,7 @@
 #include "MG.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
+#include "QGCSerialPortInfo.h"
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
@@ -378,6 +377,15 @@ void SerialLink::_emitLinkError(const QString& errorMsg)
 LinkConfiguration* SerialLink::getLinkConfiguration()
 {
     return _config;
+}
+
+bool SerialLink::requiresUSBMavlinkStart(void) const
+{
+    if (_port) {
+        return QGCSerialPortInfo(*_port).boardTypePixhawk();
+    } else {
+        return false;
+    }
 }
 
 //--------------------------------------------------------------------------

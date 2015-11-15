@@ -29,10 +29,8 @@
 #include "Bootloader.h"
 #include "QGCLoggingCategory.h"
 #include "QGC.h"
-#include "SerialPortIds.h"
 
 #include <QTimer>
-#include <QSerialPortInfo>
 #include <QDebug>
 #include <QSerialPort>
 
@@ -99,8 +97,8 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
 {
     qCDebug(FirmwareUpgradeLog) << "_findBoardOnce";
     
-    QSerialPortInfo                     portInfo;
-    PX4FirmwareUpgradeFoundBoardType_t  boardType;
+    QGCSerialPortInfo               portInfo;
+    QGCSerialPortInfo::BoardType_t  boardType;
     
     if (_findBoardFromPorts(portInfo, boardType)) {
         if (!_foundBoard) {
@@ -108,7 +106,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
             _foundBoardPortInfo = portInfo;
             emit foundBoard(_findBoardFirstAttempt, portInfo, boardType);
             if (!_findBoardFirstAttempt) {
-                if (boardType == FoundBoard3drRadio) {
+                if (boardType == QGCSerialPortInfo::BoardType3drRadio) {
                     _3drRadioForceBootloader(portInfo);
                     return;
                 } else {
@@ -131,11 +129,9 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
     _timerRetry->start();
 }
 
-bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portInfo, PX4FirmwareUpgradeFoundBoardType_t& type)
+bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType)
 {
-    bool found = false;
-    
-    foreach (QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
+    foreach (QGCSerialPortInfo info, QGCSerialPortInfo::availablePorts()) {
         qCDebug(FirmwareUpgradeLog) << "Serial Port --------------";
         qCDebug(FirmwareUpgradeLog) << "\tport name:" << info.portName();
         qCDebug(FirmwareUpgradeLog) << "\tdescription:" << info.description();
@@ -143,55 +139,8 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
         qCDebug(FirmwareUpgradeLog) << "\tvendor ID:" << info.vendorIdentifier();
         qCDebug(FirmwareUpgradeLog) << "\tproduct ID:" << info.productIdentifier();
         
-        if (!info.portName().isEmpty()) {
-            switch (info.vendorIdentifier()) {
-                case SerialPortIds::px4VendorId:
-                    if (info.productIdentifier() == SerialPortIds::pixhawkFMUV2ProductId || info.productIdentifier() == SerialPortIds::pixhawkFMUV2OldBootloaderProductId) {
-                        qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V2";
-                        type = FoundBoardPX4FMUV2;
-                        found = true;
-                    } else if (info.productIdentifier() == SerialPortIds::pixhawkFMUV1ProductId) {
-                        qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V1";
-                        type = FoundBoardPX4FMUV1;
-                        found = true;
-                    } else if (info.productIdentifier() == SerialPortIds::px4FlowProductId) {
-                        qCDebug(FirmwareUpgradeLog) << "Found PX4 Flow";
-                        type = FoundBoardPX4Flow;
-                        found = true;
-                    } else if (info.productIdentifier() == SerialPortIds::AeroCoreProductId) {
-                        qCDebug(FirmwareUpgradeLog) << "Found AeroCore";
-                        type = FoundBoardAeroCore;
-                        found = true;
-                    }
-                    break;
-                case SerialPortIds::threeDRRadioVendorId:
-                    if (info.productIdentifier() == SerialPortIds::threeDRRadioProductId) {
-                        qCDebug(FirmwareUpgradeLog) << "Found 3DR Radio";
-                        type = FoundBoard3drRadio;
-                        found = true;
-                    }
-                    break;
-            }
-            if (!found) {
-                // Fall back to port name matching which could lead to incorrect board mapping. But in some cases the
-                // vendor and product id do not come through correctly so this is used as a last chance detection method.
-                if (info.description() == "PX4 FMU v2.x" || info.description() == "PX4 BL FMU v2.x") {
-                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V2 (by name matching fallback)";
-                    type = FoundBoardPX4FMUV2;
-                    found = true;
-                } else if (info.description() == "PX4 FMU v1.x" || info.description() == "PX4 BL FMU v1.x") {
-                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU V1 (by name matching fallback)";
-                    type = FoundBoardPX4FMUV1;
-                    found = true;
-                } else if (info.description().startsWith("PX4 FMU")) {
-                    qCDebug(FirmwareUpgradeLog) << "Found PX4 FMU, assuming V2 (by name matching fallback)";
-                    type = FoundBoardPX4FMUV2;
-                    found = true;
-                }
-            }
-        }
-        
-        if (found) {
+        boardType = info.boardType();
+        if (boardType != QGCSerialPortInfo::BoardTypeUnknown) {
             portInfo = info;
             return true;
         }
@@ -200,7 +149,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QSerialPortInfo& portIn
     return false;
 }
 
-void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QSerialPortInfo& portInfo)
+void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPortInfo& portInfo)
 {
     // First make sure we can't get the bootloader
     
@@ -257,7 +206,7 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QSerialPortI
     _findBootloader(portInfo, true /* radio mode */, true /* errorOnNotFound */);
 }
 
-bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QSerialPortInfo& portInfo, bool radioMode, bool errorOnNotFound)
+bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& portInfo, bool radioMode, bool errorOnNotFound)
 {
     qCDebug(FirmwareUpgradeLog) << "_findBootloader";
     
