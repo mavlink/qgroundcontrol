@@ -163,16 +163,22 @@ public:
 
 signals:
     void newLink(LinkInterface* link);
+
+    // Link has been deleted. You may not necessarily get a linkInactive before the link is deleted.
     void linkDeleted(LinkInterface* link);
 
-    // The order of signals:
-    //      linkConnected->linkActive->linkInactive->linkDisconnected->linkDeleted
-    // Persistent links are only disconnected/deleted at shutdown time, during normal
-    // operation they will not send these signals.
+    // Link has been connected, but no Vehicle seen on link yet.
     void linkConnected(LinkInterface* link);
+
+    // Link disconnected, all vehicles on link should be gone as well.
     void linkDisconnected(LinkInterface* link);
+
+    // New vehicle has been seen on the link.
     void linkActive(LinkInterface* link, int vehicleId, int vehicleFirmwareType, int vehicleType);
+
+    // No longer hearing from any vehicles on this link.
     void linkInactive(LinkInterface* link);
+
     void linkConfigurationChanged();
 
 private slots:

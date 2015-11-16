@@ -208,10 +208,6 @@ MainWindow::MainWindow()
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
 #endif //QGC_MOUSE_ENABLED_LINUX
 
-    // These also cause the screen to redraw so we need to update any OpenGL canvases in QML controls
-    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkConnected,    this, &MainWindow::_linkStateChange);
-    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &MainWindow::_linkStateChange);
-
     // Connect link
     if (_autoReconnect)
     {
@@ -649,11 +645,6 @@ void MainWindow::restoreLastUsedConnection()
         // Create a link for it
         qgcApp()->toolbox()->linkManager()->createConnectedLink(connection);
     }
-}
-
-void MainWindow::_linkStateChange(LinkInterface*)
-{
-    emit repaintCanvas();
 }
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
