@@ -111,8 +111,35 @@ void APMAirframeComponentController::changeAutostart(void)
 	}
 	
     qgcApp()->setOverrideCursor(Qt::WaitCursor);
+    QDir dataLocation = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).at(0)
+           + QDir::separator() + qApp->applicationName();
+    ;
+
+    QScopedPointer<QFile> parametersFile(new QFile(dataLocation.absoluteFilePath(_currentFileParams)));
+    parametersFile->open(QIODevice::ReadOnly);
+
+    QTextStream reader(parametersFile.data());
+
+    while (!reader.atEnd()) {
+        QString line = reader.readLine().trimmed();
+        if (line.isEmpty() || line.at(0) == QChar('#')) {
+            // Comment line, get out.
+            continue;
+        }
+
+        QStringList aux = line.split(',');
+
+        //TODO: Verify if this is correct.
+        //Fact *param = getParameterFact(-1, aux.at(0));
+        //param->setValue(QVariant::fromValue(aux.at(1));
+        qDebug() << "Setting the parameters" << aux;
+    }
+   qgcApp()->setOverrideCursor(Qt::ArrowCursor);
 
     /*
+     * This is the old code for PX4, I have no idea if I should use this
+     */
+#if 0
     Fact* sysAutoStartFact  = getParameterFact(-1, "SYS_AUTOSTART");
     Fact* sysAutoConfigFact = getParameterFact(-1, "SYS_AUTOCONFIG");
 
@@ -124,7 +151,7 @@ void APMAirframeComponentController::changeAutostart(void)
     // We use forceSetValue to params are sent even if the previous value is that same as the new value
     sysAutoStartFact->forceSetValue(_autostartId);
     sysAutoConfigFact->forceSetValue(1);
-    */
+#endif
 
     qDebug() << "Button Clicked!";
 }
@@ -232,5 +259,14 @@ QString APMAirframeType::imageResource() const
 QString APMAirframeType::name() const
 {
     return _name;
+}
+
+APMAirframeType *APMAirframeModel::getAirframeType(const QString &airframeTypeName) const {
+    foreach(APMAirframeType *type, _airframeTypes) {
+        if (type->name() == airframeTypeName) {
+            return type;
+        }
+    }
+    return NULL;
 }
 

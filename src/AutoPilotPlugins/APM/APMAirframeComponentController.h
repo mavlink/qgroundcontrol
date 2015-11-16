@@ -54,7 +54,10 @@ public:
     Q_PROPERTY(QString currentVehicleName MEMBER _currentVehicleName CONSTANT)
     Q_PROPERTY(int currentVehicleIndex MEMBER _currentVehicleIndex CONSTANT)
     Q_PROPERTY(int autostartId MEMBER _autostartId NOTIFY autostartIdChanged)
+    Q_PROPERTY(QString fileParams MEMBER _currentFileParams)
+
     Q_INVOKABLE void changeAutostart(void);
+
     
     int currentAirframeIndex(void);
     void setCurrentAirframeIndex(int newIndex);
@@ -74,6 +77,7 @@ private:
     QString         _currentVehicleName;
     int             _currentVehicleIndex;
     int             _autostartId;
+    QString         _currentFileParams;
     bool            _showCustomConfigPanel;
     int             _waitParamWriteSignalCount;
     APMAirframeModel    *_airframeTypesModel;
@@ -128,7 +132,7 @@ public:
     QVariant data(const QModelIndex &index, int role) const;
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     void setAirframeTypes(const QList<APMAirframeType*>& airframeTypes);
-
+    APMAirframeType *getAirframeType(const QString& airframeTypeName) const;
 private:
      QList<APMAirframeType*> _airframeTypes;
 };

@@ -251,6 +251,8 @@ QGCView {
                                 if (index != -1) {
                                     currentIndex = index
                                     controller.autostartId = object.airframes[index].autostartId
+                                    controller.fileParams = object.airframes[index].params;
+                                    console.log(controller.fileParams + "changed!");
                                     airframeCheckBox.checked = true;
                                 }
                             }
