@@ -174,25 +174,25 @@ QGCView {
                 }
 
                 Repeater {
-                    model: controller.airframeTypes
+                    model: controller.airframeTypesModel
 
                     // Outer summary item rectangle
-                    Rectangle {
+                    delegate : Rectangle {
                         id:     airframeBackground
                         width:  _boxWidth
                         height: ScreenTools.defaultFontPixelHeight * 14
-                        color:  (modelData.name != controller.currentAirframeType) ? qgcPal.windowShade : qgcPal.buttonHighlight
+                        color:  (index != controller.currentAirframeType) ? qgcPal.windowShade : qgcPal.buttonHighlight
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.75
                         readonly property real innerMargin: ScreenTools.defaultFontPixelWidth
 
                         MouseArea {
                                 anchors.fill:   parent
-                                onClicked:      airframeCheckBox.checked = true
+                                onClicked:      airframeCheckBox.checked = true;
                             }
 
                         Rectangle {
-                            id:     title
+                            id:     nameRect;
                             width:  parent.width
                             height: parent.titleHeight
                             color:  qgcPal.windowShadeDark
@@ -202,34 +202,34 @@ QGCView {
                                 color:                  qgcPal.buttonText
                                 verticalAlignment:      TextEdit.AlignVCenter
                                 horizontalAlignment:    TextEdit.AlignHCenter
-                                text:                   modelData.name
+                                text:                   name
                             }
                         }
 
                         Image {
-                            id:                 image
+                            id:                 imageRect
                             anchors.topMargin:  innerMargin
-                            anchors.top:        title.bottom
+                            anchors.top:        nameRect.bottom
                             width:              parent.width * 0.75
-                            height:             parent.height - title.height - combo.height - (innerMargin * 3)
+                            height:             parent.height - nameRect.height - combo.height - (innerMargin * 3)
                             fillMode:           Image.PreserveAspectFit
                             smooth:             true
                             mipmap:             true
-                            source:             modelData.imageResource
+                            source:             image
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
 
                         QGCCheckBox {
                             id:             airframeCheckBox
-                            checked:        modelData.name == controller.currentAirframeType
+                            checked:        name == controller.currentAirframeType
                             exclusiveGroup: airframeTypeExclusive
-                            anchors.bottom: image.bottom
+                            anchors.bottom: imageRect.bottom
                             anchors.right:  parent.right
                             anchors.rightMargin: innerMargin
 
                             onCheckedChanged: {
                                 if (checked && combo.currentIndex != -1) {
-                                    controller.autostartId = modelData.airframes[combo.currentIndex].autostartId
+                                    controller.autostartId = object.airframes[combo.currentIndex].autostartId
                                     airframeBackground.color = qgcPal.buttonHighlight;
                                 } else {
                                     airframeBackground.color = qgcPal.windowShade;
@@ -239,18 +239,18 @@ QGCView {
 
                         QGCComboBox {
                             id:                 combo
-                            objectName:         modelData.airframeType + "ComboBox"
+                            objectName:         object.airframeType + "ComboBox"
                             x:                  innerMargin
                             anchors.topMargin:  innerMargin
-                            anchors.top:        image.bottom
+                            anchors.top:        imageRect.bottom
                             width:              parent.width - (innerMargin * 2)
-                            currentIndex:       (modelData.name == controller.currentAirframeType) ? controller.currentVehicleIndex : -1
-                            model:              modelData.airframes
+                            currentIndex:       (name == controller.currentAirframeType) ? controller.currentVehicleIndex : -1
+                            model:              object.airframes
 
                             onActivated: {
                                 if (index != -1) {
                                     currentIndex = index
-                                    controller.autostartId = modelData.airframes[index].autostartId
+                                    controller.autostartId = object.airframes[index].autostartId
                                     airframeCheckBox.checked = true;
                                 }
                             }

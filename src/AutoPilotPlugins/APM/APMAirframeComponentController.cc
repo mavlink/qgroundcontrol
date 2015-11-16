@@ -195,6 +195,7 @@ QVariant APMAirframeModel::data(const QModelIndex &index, int role) const
     switch(role) {
     case NAME: return airframeType->name();
     case IMAGE: return airframeType->imageResource();
+    case OBJECT: return QVariant::fromValue(airframeType);
     }
     return QVariant();
 }
@@ -205,11 +206,19 @@ int APMAirframeModel::rowCount(const QModelIndex &parent) const
     return _airframeTypes.count();
 }
 
+QHash<int, QByteArray> APMAirframeModel::roleNames() const {
+    QHash<int, QByteArray> roles;
+    roles[NAME] = "name";
+    roles[IMAGE] = "image";
+    roles[OBJECT] = "object";
+    return roles;
+}
+
 void APMAirframeModel::setAirframeTypes(const QList<APMAirframeType*>& airframeTypes)
 {
-    beginResetModel();
+    beginInsertRows(QModelIndex(), 0, airframeTypes.count()-1);
     _airframeTypes = airframeTypes;
-    endResetModel();
+    endInsertRows();
 }
 
 QString APMAirframeType::imageResource() const

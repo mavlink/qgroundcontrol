@@ -120,10 +120,11 @@ private:
 class APMAirframeModel : public QAbstractListModel {
     Q_OBJECT
 public:
-    enum types {NAME = Qt::UserRole + 1, IMAGE, COLUMNS};
+    enum APMAirFrameRoles {NAME = Qt::UserRole + 1, IMAGE, OBJECT, COLUMNS};
+    QHash<int, QByteArray> roleNames() const;
     APMAirframeModel(QObject *parent);
     QVariant data(const QModelIndex &index, int role) const;
-    int rowCount(const QModelIndex &parent) const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const;
     void setAirframeTypes(const QList<APMAirframeType*>& airframeTypes);
 
 private:
