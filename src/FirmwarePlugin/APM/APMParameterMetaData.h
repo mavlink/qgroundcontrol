@@ -41,6 +41,8 @@ Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
 
 /// Collection of Parameter Facts for PX4 AutoPilot
 
+typedef QMap<QString, FactMetaData> NametoFactMetaDataMap;
+
 class APMParameterMetaData : public QObject
 {
     Q_OBJECT
@@ -75,11 +77,7 @@ private:
     static QString mavTypeToString(MAV_TYPE vehicleTypeEnum);
 
     static bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
-    static QMap<QString, FactMetaData*> _mapParameterName2FactMetaDataArduCopter; ///< Maps from a parameter name to FactMetaData
-    static QMap<QString, FactMetaData*> _mapParameterName2FactMetaDataArduPlane;
-    static QMap<QString, FactMetaData*> _mapParameterName2FactMetaDataArduRover;
-    static QMap<QString, FactMetaData*> _mapParameterName2FactMetaDataAntennaTracker;
-    static QPointer<Vehicle> _vehicle;
+    static QMap<QString, NametoFactMetaDataMap> _parametersMap; ///< Maps from a parameter name to FactMetaData
 };
 
 #endif

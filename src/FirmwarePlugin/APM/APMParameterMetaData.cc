@@ -37,13 +37,12 @@ QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "APMParameterMetaDataLog")
 
 bool APMParameterMetaData::_parameterMetaDataLoaded = false;
 QPointer<Vehicle> APMParameterMetaData::_vehicle    = NULL;
-QMap<QString, FactMetaData*> APMParameterMetaData::_mapParameterName2FactMetaData;
+QMap<QString, NametoFactMetaDataMap*> APMParameterMetaData::_parametersMap;
 
 APMParameterMetaData::APMParameterMetaData(QObject* parent) :
     QObject(parent)
 {
     _loadParameterFactMetaData();
-//    _vehicle = vehicle;
 }
 
 /// Converts a string to a typed QVariant
@@ -137,7 +136,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
     }
     _parameterMetaDataLoaded = true;
 
-    QRegExp parameterCategories = QRegExp("(ArduCopter | ArduPlane | ArduRover | AntennaTracker | libraries");
+    QRegExp parameterCategories = QRegExp("(ArduCopter | ArduPlane | ArduRover | AntennaTracker");
     QString currentCategory;
 
     qCDebug(APMParameterMetaDataLog) << "Loading APM parameter fact meta data for vehicle type" << vehicleName;
@@ -191,6 +190,13 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                     return;
                 }
                 xmlState.push(XmlStateFoundVehicles);
+            } else if (elementName == "libraries") {
+                if (xmlState.top() != XmlStateNone) {
+                    qCWarning(APMParameterMetaDataLog) << "Badly formed XML, libraries matched";
+                    return;
+                }
+                currentCategory = "libraries";
+                xmlState.push(XmlStateFoundLibraries);
             } else if (elementName == "parameters") {
                 if (xmlState.top() != XmlStateFoundVehicles && xmlState.top() != XmlStateFoundLibraries) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, parameters matched";
@@ -199,7 +205,11 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
 
                 if (xml.attributes().hasAttribute("name")) {
                     // we will handle metadata only for specific MAV_TYPEs and libraries
-                    if (!xml.attributes().value("name").contains(parameterCategories)) {
+                    const QString nameValue = xml.attributes().value("name");
+                    if (!nameValue.contains(parameterCategories)) {
+                        xmlState.push(XmlStateFoundParameters);
+                        currentCategory = nameValue;
+                    } else if(xmlState.top() == XmlStateFoundLibraries) {
                         xmlState.push(XmlStateFoundParameters);
                     } else {
                         qCDebug(APMParameterMetaDataLog) << "not interested in this block of parameters skip";
