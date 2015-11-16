@@ -152,7 +152,7 @@ Rectangle {
     }
 
     function showMavStatus() {
-         return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0 && _controller.connectionCount > 0);
+         return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0);
     }
 
     Component.onCompleted: {

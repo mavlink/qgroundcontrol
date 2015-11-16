@@ -44,6 +44,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
+QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
 
 LinkManager::LinkManager(QGCApplication* app)
     : QGCTool(app)
@@ -53,6 +54,7 @@ LinkManager::LinkManager(QGCApplication* app)
     , _mavlinkChannelsUsedBitMask(0)
     , _nullSharedLink(NULL)
     , _mavlinkProtocol(NULL)
+    , _allowAutoConnect(true)
 {
 
 }
@@ -195,9 +197,6 @@ bool LinkManager::connectLink(LinkInterface* link)
 bool LinkManager::disconnectLink(LinkInterface* link, bool disconnectPersistenLink)
 {
     Q_ASSERT(link);
-
-    link->setActive(false);
-    emit linkInactive(link);
 
     if (disconnectPersistenLink || !link->persistentLink()) {
         link->_disconnect();
@@ -454,7 +453,7 @@ SerialConfiguration* LinkManager::_findSerialConfiguration(const QString& portNa
 #ifndef __ios__
 void LinkManager::_updateAutoConnectLinks(void)
 {
-    if (_configUpdateSuspended || !_configurationsLoaded) {
+    if (!_allowAutoConnect || _configUpdateSuspended || !_configurationsLoaded) {
         return;
     }
     bool saveList = false;
@@ -463,16 +462,15 @@ void LinkManager::_updateAutoConnectLinks(void)
 
     // Iterate Comm Ports
     foreach (QGCSerialPortInfo portInfo, portList) {
-#if 1
-        // Too noisy for most logging, so turn on as needed
-        qCDebug(LinkManagerLog) << "-----------------------------------------------------";
-        qCDebug(LinkManagerLog) << "portName:         " << portInfo.portName();
-        qCDebug(LinkManagerLog) << "systemLocation:   " << portInfo.systemLocation();
-        qCDebug(LinkManagerLog) << "description:      " << portInfo.description();
-        qCDebug(LinkManagerLog) << "manufacturer:     " << portInfo.manufacturer();
-        qCDebug(LinkManagerLog) << "serialNumber:     " << portInfo.serialNumber();
-        qCDebug(LinkManagerLog) << "vendorIdentifier: " << portInfo.vendorIdentifier();
-#endif
+        qCDebug(LinkManagerVerboseLog) << "-----------------------------------------------------";
+        qCDebug(LinkManagerVerboseLog) << "portName:          " << portInfo.portName();
+        qCDebug(LinkManagerVerboseLog) << "systemLocation:    " << portInfo.systemLocation();
+        qCDebug(LinkManagerVerboseLog) << "description:       " << portInfo.description();
+        qCDebug(LinkManagerVerboseLog) << "manufacturer:      " << portInfo.manufacturer();
+        qCDebug(LinkManagerVerboseLog) << "serialNumber:      " << portInfo.serialNumber();
+        qCDebug(LinkManagerVerboseLog) << "vendorIdentifier:  " << portInfo.vendorIdentifier();
+        qCDebug(LinkManagerVerboseLog) << "productIdentifier: " << portInfo.productIdentifier();
+
         // Save port name
         currentPorts << portInfo.systemLocation();
 
@@ -499,11 +497,13 @@ void LinkManager::_updateAutoConnectLinks(void)
                     break;
                 case QGCSerialPortInfo::BoardType3drRadio:
                     pSerialConfig = new SerialConfiguration(QString("3DR Radio on %1").arg(portInfo.portName().trimmed()));
+                    break;
                 default:
                     qWarning() << "Internal error";
                     continue;
                 }
 
+                qCDebug(LinkManagerLog) << "New auto-connect port added: " << pSerialConfig->name() << portInfo.systemLocation();
                 pSerialConfig->setBaud(boardType == QGCSerialPortInfo::BoardType3drRadio ? 57600 : 115200);
                 pSerialConfig->setDynamic(true);
                 pSerialConfig->setPortName(portInfo.systemLocation());
@@ -605,6 +605,8 @@ SharedLinkInterface& LinkManager::sharedPointerForLink(LinkInterface* link)
 void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
 {
     if (!link->active() && !_ignoreVehicleIds.contains(vehicleId)) {
+        qCDebug(LinkManagerLog) << "New heartbeat on link: " << link->getName();
+
         if (vehicleId == _mavlinkProtocol->getSystemId()) {
             _app->showToolBarMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
         }
@@ -622,4 +624,10 @@ void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int 
         link->setActive(true);
         emit linkActive(link, vehicleId, vehicleFirmwareType, vehicleType);
     }
+}
+
+void LinkManager::shutdown(void)
+{
+    _allowAutoConnect = false;
+    disconnectAll(true /* disconnectPersistentLink */);
 }

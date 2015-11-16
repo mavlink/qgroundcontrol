@@ -299,13 +299,14 @@ void Vehicle::_addLink(LinkInterface* link)
     if (!_containsLink(link)) {
         _links += qgcApp()->toolbox()->linkManager()->sharedPointerForLink(link);
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
-        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactive);
+        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
+        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
     }
 }
 
-void Vehicle::_linkInactive(LinkInterface* link)
+void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
 {
-    qCDebug(VehicleLog) << "_linkInactve:" << link->getName();
+    qCDebug(VehicleLog) << "_linkInactveOrDeleted:" << link->getName();
     qCDebug(VehicleLog) << "link count:" << _links.count();
 
     for (int i=0; i<_links.count(); i++) {

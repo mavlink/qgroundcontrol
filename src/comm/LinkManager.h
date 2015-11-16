@@ -52,6 +52,7 @@ This file is part of the PIXHAWK project
 #include "MAVLinkProtocol.h"
 
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerLog)
+Q_DECLARE_LOGGING_CATEGORY(LinkManagerVerboseLog)
 
 class QGCApplication;
 
@@ -154,6 +155,9 @@ public:
     void _deleteLink(LinkInterface* link);
     void _addLink(LinkInterface* link);
 
+    // Called to signal app shutdown. Disconnects all links while turning off auto-connect.
+    void shutdown(void);
+
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -204,6 +208,7 @@ private:
 
     MAVLinkProtocol*    _mavlinkProtocol;
     QList<int>          _ignoreVehicleIds;  ///< List of vehicle id for which we ignore further communication
+    bool                _allowAutoConnect;
 };
 
 #endif
