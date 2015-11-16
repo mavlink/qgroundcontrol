@@ -65,7 +65,10 @@ LinkManager::~LinkManager()
         if(pLink) delete pLink;
         _linkConfigurations.removeAt(0);
     }
-    Q_ASSERT_X(_links.count() == 0, "LinkManager", "LinkManager::_shutdown should have been called previously");
+
+    if (anyConnectedLinks()) {
+        qWarning() << "Why are there still connected links?";
+    }
 }
 
 void LinkManager::setToolbox(QGCToolbox *toolbox)
@@ -73,6 +76,7 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
 
    _mavlinkProtocol = _toolbox->mavlinkProtocol();
+   connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &LinkManager::_vehicleHeartbeatInfo);
 
 #ifndef __ios__
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateConfigurationList);
@@ -80,7 +84,7 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
 #endif
 }
 
-LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
+LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config, bool persistentLink)
 {
     Q_ASSERT(config);
     LinkInterface* pLink = NULL;
@@ -106,19 +110,20 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
 #endif
     }
     if(pLink) {
+        pLink->setPersistentLink(persistentLink);
         _addLink(pLink);
         connectLink(pLink);
     }
     return pLink;
 }
 
-LinkInterface* LinkManager::createConnectedLink(const QString& name)
+LinkInterface* LinkManager::createConnectedLink(const QString& name, bool persistentLink)
 {
     Q_ASSERT(name.isEmpty() == false);
     for(int i = 0; i < _linkConfigurations.count(); i++) {
         LinkConfiguration* conf = _linkConfigurations.at(i);
         if(conf && conf->name() == name)
-            return createConnectedLink(conf);
+            return createConnectedLink(conf, persistentLink);
     }
     return NULL;
 }
@@ -161,39 +166,15 @@ void LinkManager::_addLink(LinkInterface* link)
     connect(link, &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 }
 
-bool LinkManager::connectAll()
+void LinkManager::disconnectAll(bool disconnectPersistentLink)
 {
-    if (_connectionsSuspendedMsg()) {
-        return false;
-    }
-
-    bool allConnected = true;
-
-    foreach (SharedLinkInterface sharedLink, _links) {
-        Q_ASSERT(sharedLink.data());
-        if (!sharedLink.data()->_connect()) {
-            allConnected = false;
-        }
-    }
-
-    return allConnected;
-}
-
-bool LinkManager::disconnectAll()
-{
-    bool allDisconnected = true;
-
     // Make a copy so the list is modified out from under us
     QList<SharedLinkInterface> links = _links;
 
     foreach (SharedLinkInterface sharedLink, links) {
         Q_ASSERT(sharedLink.data());
-        if (!disconnectLink(sharedLink.data())) {
-            allDisconnected = false;
-        }
+        disconnectLink(sharedLink.data(), disconnectPersistentLink);
     }
-
-    return allDisconnected;
 }
 
 bool LinkManager::connectLink(LinkInterface* link)
@@ -211,19 +192,24 @@ bool LinkManager::connectLink(LinkInterface* link)
     }
 }
 
-bool LinkManager::disconnectLink(LinkInterface* link)
+bool LinkManager::disconnectLink(LinkInterface* link, bool disconnectPersistenLink)
 {
     Q_ASSERT(link);
-    if (link->_disconnect()) {
+
+    link->setActive(false);
+    emit linkInactive(link);
+
+    if (disconnectPersistenLink || !link->persistentLink()) {
+        link->_disconnect();
         LinkConfiguration* config = link->getLinkConfiguration();
         if(config) {
             config->setLink(NULL);
         }
         _deleteLink(link);
         return true;
-    } else {
-        return false;
     }
+
+    return false;
 }
 
 void LinkManager::_deleteLink(LinkInterface* link)
@@ -260,7 +246,10 @@ const QList<LinkInterface*> LinkManager::getLinks()
     QList<LinkInterface*> list;
     
     foreach (SharedLinkInterface sharedLink, _links) {
-        list << sharedLink.data();
+        LinkInterface* link = sharedLink.data();
+        if (!link->persistentLink()) {
+            list << sharedLink.data();
+        }
     }
     
     return list;
@@ -284,13 +273,6 @@ void LinkManager::setConnectionsSuspended(QString reason)
     _connectionsSuspended = true;
     _connectionsSuspendedReason = reason;
     Q_ASSERT(!reason.isEmpty());
-}
-
-void LinkManager::_shutdown(void)
-{
-    while (_links.count() != 0) {
-        disconnectLink(_links[0].data());
-    }
 }
 
 void LinkManager::_linkConnected(void)
@@ -360,9 +342,10 @@ void LinkManager::saveLinkConfigurationList()
 
 void LinkManager::loadLinkConfigurationList()
 {
-    bool udpExists = false;
+    UDPConfiguration*   defaultUdpLinkConfig = NULL;
     bool linksChanged = false;
     QSettings settings;
+
     // Is the group even there?
     if(settings.contains(LinkConfiguration::settingsRoot() + "/count")) {
         // Find out how many configurations we have
@@ -416,7 +399,7 @@ void LinkManager::loadLinkConfigurationList()
                                 if(pLink->type() == LinkConfiguration::TypeUdp) {
                                     UDPConfiguration* uLink = dynamic_cast<UDPConfiguration*>(pLink);
                                     if(uLink && uLink->localPort() == QGC_UDP_LOCAL_PORT) {
-                                        udpExists = true;
+                                        defaultUdpLinkConfig = uLink;
                                     }
                                 }
                             }
@@ -444,17 +427,19 @@ void LinkManager::loadLinkConfigurationList()
 #endif
 
     //-- If we don't have a configured UDP link, create a default one
-    if(!udpExists) {
-        UDPConfiguration* uLink = new UDPConfiguration("Default UDP Link");
-        uLink->setLocalPort(QGC_UDP_LOCAL_PORT);
-        uLink->setDynamic();
-        addLinkConfiguration(uLink);
-        linksChanged = true;
+    if(!defaultUdpLinkConfig) {
+        defaultUdpLinkConfig = new UDPConfiguration("Default UDP Link");
+        defaultUdpLinkConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
+        defaultUdpLinkConfig->setDynamic();
     }
     
     if(linksChanged) {
         emit linkConfigurationChanged();
     }
+
+    // Start the default UDP link
+    createConnectedLink(defaultUdpLinkConfig, true /* persistenLink */);
+
     // Enable automatic Serial PX4/3DR Radio hunting
     _configurationsLoaded = true;
 }
@@ -589,7 +574,21 @@ bool LinkManager::anyConnectedLinks(void)
 {
     bool found = false;
     foreach (SharedLinkInterface sharedLink, _links) {
-        if (sharedLink.data()->isConnected()) {
+        LinkInterface* link = sharedLink.data();
+        if (link->isConnected()) {
+            found = true;
+            break;
+        }
+    }
+    return found;
+}
+
+bool LinkManager::anyActiveLinks(void)
+{
+    bool found = false;
+    foreach (SharedLinkInterface sharedLink, _links) {
+        LinkInterface* link = sharedLink.data();
+        if (link->active()) {
             found = true;
             break;
         }
@@ -604,7 +603,29 @@ SharedLinkInterface& LinkManager::sharedPointerForLink(LinkInterface* link)
             return _links[i];
         }
     }
-    // This should never happen
-    Q_ASSERT(false);
+
+    qWarning() << "Internal error";
     return _nullSharedLink;
+}
+
+void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
+{
+    if (!link->active() && !_ignoreVehicleIds.contains(vehicleId)) {
+        if (vehicleId == _mavlinkProtocol->getSystemId()) {
+            _app->showToolBarMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
+        }
+
+        QSettings settings;
+        bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
+        if (mavlinkVersionCheck && vehicleMavlinkVersion != MAVLINK_VERSION) {
+            _ignoreVehicleIds += vehicleId;
+            _app->showToolBarMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
+                                                 "It is unsafe to use different MAVLink versions. "
+                                                 "QGroundControl therefore refuses to connect to vehicle #%1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(vehicleId).arg(vehicleMavlinkVersion).arg(MAVLINK_VERSION));
+            return;
+        }
+
+        link->setActive(true);
+        emit linkActive(link, vehicleId, vehicleFirmwareType, vehicleType);
+    }
 }

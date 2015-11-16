@@ -128,6 +128,14 @@ public:
     /// @return true: "sh /etc/init.d/rc.usb" must be sent on link to start mavlink
     virtual bool requiresUSBMavlinkStart(void) const { return false; }
 
+    /// @return true: Link is persistent and should never be disconnected
+    bool persistentLink(void) { return _persistentLink; }
+
+    bool active(void) { return _active; }
+    void setActive(bool active) { _active = active; }
+
+    void setPersistentLink(bool persistentLink) { _persistentLink = persistentLink; }
+
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);
@@ -184,8 +192,10 @@ signals:
 protected:
     // Links are only created by LinkManager so constructor is not public
     LinkInterface() :
-        QThread(0),
-        _mavlinkChannelSet(false)
+        QThread(0)
+        , _mavlinkChannelSet(false)
+        , _persistentLink(false)
+        , _active(false)
     {
         // Initialize everything for the data rate calculation buffers.
         _inDataIndex  = 0;
@@ -321,12 +331,7 @@ private:
      **/
     virtual bool _connect(void) = 0;
 
-    /**
-     * @brief Disconnect this interface logically
-     *
-     * @return True if connection could be terminated, false otherwise
-     **/
-    virtual bool _disconnect(void) = 0;
+    virtual void _disconnect(void) = 0;
     
     /// Sets the mavlink channel to use for this link
     void _setMavlinkChannel(uint8_t channel) { Q_ASSERT(!_mavlinkChannelSet); _mavlinkChannelSet = true; _mavlinkChannel = channel; }
@@ -351,6 +356,9 @@ private:
     qint64  _outDataWriteTimes[_dataRateBufferSize]; // in ms
     
     mutable QMutex _dataRateMutex; // Mutex for accessing the data rate member variables
+
+    bool _persistentLink;   ///< true: Link is persistent and should never be disconnected
+    bool _active;           ///< true: link is actively receiving mavlink messages
 };
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterface;

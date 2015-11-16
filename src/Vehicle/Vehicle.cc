@@ -299,13 +299,13 @@ void Vehicle::_addLink(LinkInterface* link)
     if (!_containsLink(link)) {
         _links += qgcApp()->toolbox()->linkManager()->sharedPointerForLink(link);
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
-        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &Vehicle::_linkDisconnected);
+        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactive);
     }
 }
 
-void Vehicle::_linkDisconnected(LinkInterface* link)
+void Vehicle::_linkInactive(LinkInterface* link)
 {
-    qCDebug(VehicleLog) << "_linkDisconnected:" << link->getName();
+    qCDebug(VehicleLog) << "_linkInactve:" << link->getName();
     qCDebug(VehicleLog) << "link count:" << _links.count();
 
     for (int i=0; i<_links.count(); i++) {
@@ -316,7 +316,7 @@ void Vehicle::_linkDisconnected(LinkInterface* link)
     }
 
     if (_links.count() == 0) {
-        emit allLinksDisconnected(this);
+        emit allLinksInactive(this);
     }
 }
 
@@ -1035,11 +1035,11 @@ void Vehicle::_parametersReady(bool parametersReady)
 
 void Vehicle::_communicationInactivityTimedOut(void)
 {
-    // Vechile is no longer communicating with us, disconnect all links
+    // Vehicle is no longer communicating with us, disconnect all links inactive
 
     LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
     for (int i=0; i<_links.count(); i++) {
-        linkMgr->disconnectLink(_links[i].data());
+        linkMgr->disconnectLink(_links[i].data(), false /* disconnectPersistenLink */);
     }
 }
 

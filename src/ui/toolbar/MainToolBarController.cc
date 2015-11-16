@@ -105,14 +105,14 @@ void MainToolBarController::onDisconnect(QString conf)
         Q_ASSERT(connectedCount   == 1);
         Q_ASSERT(_connectionCount == 1);
         Q_ASSERT(connectedLink);
-        qgcApp()->toolbox()->linkManager()->disconnectLink(connectedLink);
+        qgcApp()->toolbox()->linkManager()->disconnectLink(connectedLink, false /* disconnectPersistenLink */);
     } else {
         // Disconnect Named Connected Link
         QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
         foreach(LinkInterface* link, links) {
             if (link->isConnected()) {
                 if(link->getLinkConfiguration() && link->getLinkConfiguration()->name() == conf) {
-                    qgcApp()->toolbox()->linkManager()->disconnectLink(link);
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(link, false /* disconnectPersistenLink */);
                 }
             }
         }

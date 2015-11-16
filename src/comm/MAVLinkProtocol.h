@@ -238,6 +238,9 @@ protected:
     int systemId;
 
 signals:
+    /// Heartbeat received on link
+    void vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
+
     /** @brief Message received and directly copied via signal */
     void messageReceived(LinkInterface* link, mavlink_message_t message);
     /** @brief Emitted if heartbeat emission mode is changed */
@@ -303,11 +306,13 @@ private:
     static const char*  _tempLogFileTemplate;    ///< Template for temporary log file
     static const char*  _logFileExtension;       ///< Extension for log files
 #endif
-    
+
+#if 0
     /// List of all links connected to protocol. We keep SharedLinkInterface objects
     /// which are QSharedPointer's in order to maintain reference counts across threads.
     /// This way Link deletion works correctly.
     QList<SharedLinkInterface> _connectedLinks;
+#endif
     
     QTimer  _heartbeatTimer;    ///< Timer to emit heartbeats
     int     _heartbeatRate;     ///< Heartbeat rate, controls the timer interval

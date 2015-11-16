@@ -193,12 +193,14 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
     Q_ASSERT(link);
     
     if (connected) {
+#if 0
         foreach (SharedLinkInterface sharedLink, _connectedLinks) {
             Q_ASSERT(sharedLink.data() != link);
         }
         
         // Use the same shared pointer as LinkManager
         _connectedLinks.append(_linkMgr->sharedPointerForLink(link));
+#endif
         
         if (link->requiresUSBMavlinkStart()) {
             // Send command to start MAVLink
@@ -211,6 +213,7 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
             link->writeBytes(init, 4);
         }
     } else {
+#if 0
         bool found = false;
         for (int i=0; i<_connectedLinks.count(); i++) {
             if (_connectedLinks[i].data() == link) {
@@ -221,6 +224,7 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
         }
         Q_UNUSED(found);
         Q_ASSERT(found);
+#endif
     }
 }
 
@@ -359,12 +363,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 _startLogging();
 #endif
 
-                // Notify the vehicle manager of the heartbeat. This will create/update vehicles as needed.
                 mavlink_heartbeat_t heartbeat;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
-                if (!_multiVehicleManager->notifyHeartbeatInfo(link, message.sysid, heartbeat)) {
-                    continue;
-                }
+                emit vehicleHeartbeatInfo(link, message.sysid, heartbeat.mavlink_version, heartbeat.autopilot, heartbeat.type);
             }
 
             // Increase receive counter

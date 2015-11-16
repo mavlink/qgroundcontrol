@@ -102,7 +102,7 @@ LogReplayLink::~LogReplayLink(void)
 bool LogReplayLink::_connect(void)
 {
     // Disallow replay when any links are connected
-    if (qgcApp()->toolbox()->linkManager()->anyConnectedLinks()) {
+    if (qgcApp()->toolbox()->linkManager()->anyActiveLinks()) {
         emit communicationError(_errorTitle, "You must close all connections prior to replaying a log.");
         return false;
     }
@@ -115,7 +115,7 @@ bool LogReplayLink::_connect(void)
     return true;
 }
 
-bool LogReplayLink::_disconnect(void)
+void LogReplayLink::_disconnect(void)
 {
     if (_connected) {
         quit();
@@ -123,7 +123,6 @@ bool LogReplayLink::_disconnect(void)
         _connected = false;
         emit disconnected();
     }
-    return true;
 }
 
 void LogReplayLink::run(void)

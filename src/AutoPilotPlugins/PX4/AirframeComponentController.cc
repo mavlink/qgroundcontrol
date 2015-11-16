@@ -139,7 +139,7 @@ void AirframeComponentController::_rebootAfterStackUnwind(void)
         QGC::SLEEP::usleep(500);
         qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     }
-    qgcApp()->toolbox()->linkManager()->disconnectAll();
+    qgcApp()->toolbox()->linkManager()->disconnectAll(false /* disconnectPersistenLink */);
     qgcApp()->restoreOverrideCursor();
 }
 

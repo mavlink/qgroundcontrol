@@ -445,7 +445,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
                 QMessageBox::Yes | QMessageBox::Cancel,
                 QMessageBox::Cancel);
         if (button == QMessageBox::Yes) {
-            qgcApp()->toolbox()->linkManager()->disconnectAll();
+            qgcApp()->toolbox()->linkManager()->disconnectAll(true /* disconnectPersistenLink */);
             // The above disconnect causes a flurry of activity as the vehicle components are removed. This in turn
             // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
             // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
@@ -460,7 +460,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
 
     // Should not be any active connections
-    Q_ASSERT(!qgcApp()->toolbox()->linkManager()->anyConnectedLinks());
+    if (qgcApp()->toolbox()->linkManager()->anyConnectedLinks()) {
+        qWarning() << "All links should be disconnected by now";
+    }
 
     // We have to pull out the QmlWidget from the main window and delete it here, before
     // the MainWindow ends up getting deleted. Otherwise the Qml has a reference to MainWindow

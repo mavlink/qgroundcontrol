@@ -149,7 +149,7 @@ void QGroundControlQmlGlobal::stopAllMockLinks(void)
         LinkInterface* link = links[i];
         MockLink* mockLink = qobject_cast<MockLink*>(link);
         if (mockLink) {
-            linkManager->disconnectLink(mockLink);
+            linkManager->disconnectLink(mockLink, false /* disconnectPersistenLink */);
         }
     }
 #endif

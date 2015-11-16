@@ -57,33 +57,20 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
 
+   connect(_toolbox->linkManager(), &LinkManager::linkActive, this, &MultiVehicleManager::_linkActive);
 }
 
-bool MultiVehicleManager::notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat)
+void MultiVehicleManager::_linkActive(LinkInterface* link, int vehicleId, int vehicleFirmwareType, int vehicleType)
 {
-    if (!getVehicleById(vehicleId) && !_ignoreVehicleIds.contains(vehicleId)) {
-        if (vehicleId == _mavlinkProtocol->getSystemId()) {
-            _app->showToolBarMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
-        }
-
-        QSettings settings;
-        bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
-        if (mavlinkVersionCheck && heartbeat.mavlink_version != MAVLINK_VERSION) {
-            _ignoreVehicleIds += vehicleId;
-            _app->showToolBarMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
-                                                 "It is unsafe to use different MAVLink versions. "
-                                                 "QGroundControl therefore refuses to connect to vehicle #%1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(vehicleId).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
-            return false;
-        }
-
-        Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)heartbeat.autopilot, (MAV_TYPE)heartbeat.type, _firmwarePluginManager, _autopilotPluginManager, _joystickManager);
+    if (!getVehicleById(vehicleId)) {
+        Vehicle* vehicle = new Vehicle(link, vehicleId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _autopilotPluginManager, _joystickManager);
 
         if (!vehicle) {
             qWarning() << "New Vehicle allocation failed";
-            return false;
+            return;
         }
 
-        connect(vehicle, &Vehicle::allLinksDisconnected, this, &MultiVehicleManager::_deleteVehiclePhase1);
+        connect(vehicle, &Vehicle::allLinksInactive, this, &MultiVehicleManager::_deleteVehiclePhase1);
         connect(vehicle->autopilotPlugin(), &AutoPilotPlugin::parametersReadyChanged, this, &MultiVehicleManager::_autopilotParametersReadyChanged);
 
         _vehicles.append(vehicle);
@@ -92,8 +79,6 @@ bool MultiVehicleManager::notifyHeartbeatInfo(LinkInterface* link, int vehicleId
 
         setActiveVehicle(vehicle);
     }
-
-    return true;
 }
 
 /// This slot is connected to the Vehicle::allLinksDestroyed signal such that the Vehicle is deleted

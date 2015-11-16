@@ -71,8 +71,7 @@ void QGCLinkConfiguration::on_delLinkButton_clicked()
                 // Get link attached to this configuration (if any)
                 LinkInterface* iface = config->getLink();
                 if(iface) {
-                    // Disconnect it (if connected)
-                    qgcApp()->toolbox()->linkManager()->disconnectLink(iface);
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(iface, false /* disconnectPersistenLink */);
                 }
                 _viewModel->beginChange();
                 // Remove configuration
@@ -101,7 +100,7 @@ void QGCLinkConfiguration::on_connectLinkButton_clicked()
             if(link) {
                 // Disconnect Link
                 if (link->isConnected()) {
-                    qgcApp()->toolbox()->linkManager()->disconnectLink(link);
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(link, false /* disconnectPersistenLink */);
                 }
             } else {
                 LinkInterface* link = qgcApp()->toolbox()->linkManager()->createConnectedLink(config);

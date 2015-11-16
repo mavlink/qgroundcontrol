@@ -558,7 +558,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
 
 bool FirmwareUpgradeController::qgcConnections(void)
 {
-    return qgcApp()->toolbox()->linkManager()->anyConnectedLinks();
+    return qgcApp()->toolbox()->linkManager()->anyActiveLinks();
 }
 
 void FirmwareUpgradeController::_linkDisconnected(LinkInterface* link)

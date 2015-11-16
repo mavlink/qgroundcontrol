@@ -158,7 +158,7 @@ private:
     
     // From LinkInterface
     virtual bool _connect(void);
-    virtual bool _disconnect(void);
+    virtual void _disconnect(void);
 
     // Internal methods
     void _emitLinkError(const QString& errorMsg);

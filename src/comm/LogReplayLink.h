@@ -130,7 +130,7 @@ private:
     
     // Virtuals from LinkInterface
     virtual bool _connect(void);
-    virtual bool _disconnect(void);
+    virtual void _disconnect(void);
     
     // Virtuals from QThread
     virtual void run(void);

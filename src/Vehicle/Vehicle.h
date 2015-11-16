@@ -253,7 +253,7 @@ public slots:
     void setLongitude(double longitude);
 
 signals:
-    void allLinksDisconnected(Vehicle* vehicle);
+    void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
     void coordinateValidChanged(bool coordinateValid);
     void joystickModeChanged(int mode);
@@ -296,7 +296,7 @@ signals:
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
-    void _linkDisconnected(LinkInterface* link);
+    void _linkInactive(LinkInterface* link);
     void _sendMessage(mavlink_message_t message);
     void _sendMessageMultipleNext(void);
     void _addNewMapTrajectoryPoint(void);

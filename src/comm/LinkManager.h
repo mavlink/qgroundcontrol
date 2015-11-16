@@ -112,10 +112,10 @@ public:
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
     /// Link takes ownership of config.
-    LinkInterface* createConnectedLink(LinkConfiguration* config);
+    LinkInterface* createConnectedLink(LinkConfiguration* config, bool persistenLink = false);
 
     /// Creates, connects (and adds) a link  based on the given configuration name.
-    LinkInterface* createConnectedLink(const QString& name);
+    LinkInterface* createConnectedLink(const QString& name, bool persistenLink = false);
 
     /// Returns true if the link manager is holding this link
     bool containsLink(LinkInterface* link);
@@ -124,20 +124,30 @@ public:
     /// keep references to a link in a thread other than the main ui thread.
     SharedLinkInterface& sharedPointerForLink(LinkInterface* link);
 
-    /// Re-connects all existing links
-    bool connectAll();
-
-    /// Disconnects all existing links
-    bool disconnectAll();
+    /// Disconnects all existing links, including persistent links.
+    ///     @param disconnectPersistentLink See disconnectLink
+    void disconnectAll(bool disconnectPersistentLink);
 
     /// Connect the specified link
     bool connectLink(LinkInterface* link);
 
-    /// Disconnect the specified link
-    bool disconnectLink(LinkInterface* link);
+    /// Disconnect the specified link.
+    ///     @param disconnectPersistentLink
+    ///                 true: link is disconnected no matter what type
+    ///                 false: if persistent link, link is marked as inactive and linkInactive is signalled
+    ///                 false: if not persistent link, link is disconnected
+    bool disconnectLink(LinkInterface* link, bool disconnectPersistentLink);
     
-    /// Returns true if there are any connected links
+    /// Called to notify that a heartbeat was received with the specified information. Will transition
+    /// a link to active as needed.
+    ///     @param link Heartbeat came through on this link
+    ///     @param vehicleId Mavlink system id for vehicle
+    ///     @param heartbeat Mavlink heartbeat message
+    /// @return true: continue further processing of this message, false: disregard this message
+    bool notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat);
+
     bool anyConnectedLinks(void);
+    bool anyActiveLinks(void);
     
     // The following APIs are public but should not be called in normal use. The are mainly exposed
     // here for unit test code.
@@ -150,17 +160,23 @@ public:
 signals:
     void newLink(LinkInterface* link);
     void linkDeleted(LinkInterface* link);
+
+    // The order of signals:
+    //      linkConnected->linkActive->linkInactive->linkDisconnected->linkDeleted
+    // Persistent links are only disconnected/deleted at shutdown time, during normal
+    // operation they will not send these signals.
     void linkConnected(LinkInterface* link);
     void linkDisconnected(LinkInterface* link);
+    void linkActive(LinkInterface* link, int vehicleId, int vehicleFirmwareType, int vehicleType);
+    void linkInactive(LinkInterface* link);
     void linkConfigurationChanged();
 
 private slots:
     void _linkConnected(void);
     void _linkDisconnected(void);
+    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
 
 private:
-    virtual void _shutdown(void);
-
     bool _connectionsSuspendedMsg(void);
     void _updateConfigurationList(void);
 #ifndef __ios__
@@ -187,6 +203,7 @@ private:
     SharedLinkInterface _nullSharedLink;
 
     MAVLinkProtocol*    _mavlinkProtocol;
+    QList<int>          _ignoreVehicleIds;  ///< List of vehicle id for which we ignore further communication
 };
 
 #endif
