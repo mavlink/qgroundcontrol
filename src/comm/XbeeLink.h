@@ -67,7 +67,7 @@ protected:
 private:
     // From LinkInterface
     virtual bool _connect(void);
-    virtual bool _disconnect(void);
+    virtual void _disconnect(void);
 
     bool hardwareConnect();
 	//void CALLTYPE portCallback(xbee_con *XbeeCon, xbee_pkt *XbeePkt);
