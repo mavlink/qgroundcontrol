@@ -51,7 +51,7 @@ QMap<QString, APMAirframeComponentAirframes::AirframeType_t*>& APMAirframeCompon
     return rgAirframeTypes;
 }
 
-void APMAirframeComponentAirframes::insert(QString& group, QString& image, QString& name, int id)
+void APMAirframeComponentAirframes::insert(const QString& group,const QString& image,const QString& name, const QString& file, int id)
 {
     AirframeType_t *g;
     if (!rgAirframeTypes.contains(group)) {
@@ -69,6 +69,7 @@ void APMAirframeComponentAirframes::insert(QString& group, QString& image, QStri
 
     AirframeInfo_t *i = new AirframeInfo_t;
     i->name = name;
+    i->file = file;
     i->autostartId = id;
 
     g->rgAirframeInfo.append(i);

@@ -41,6 +41,7 @@ class APMAirframeComponentAirframes
 public:
     typedef struct {
         QString name;
+        QString file;
         int         autostartId;
     } AirframeInfo_t;
     
@@ -52,7 +53,7 @@ public:
 
     static QMap<QString, APMAirframeComponentAirframes::AirframeType_t*>& get();
     static void clear();
-    static void insert(QString& group, QString& image, QString& name, int id);
+    static void insert(const QString& group,const QString& image,const QString& name, const QString& file, int id);
     
 protected:
     static QMap<QString, AirframeType_t*> rgAirframeTypes;

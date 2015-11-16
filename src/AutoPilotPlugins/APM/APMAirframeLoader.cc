@@ -158,11 +158,12 @@ void APMAirframeLoader::loadAirframeFactMetaData(void)
 
                 QString name = xml.attributes().value("name").toString();
                 QString id = xml.attributes().value("id").toString();
+                QString file = xml.attributes().value("file").toString();
 
-                qCDebug(APMAirframeLoaderLog) << "Found airframe name:" << name << " type:" << airframeGroup << " id:" << id;
+                qCDebug(APMAirframeLoaderLog) << "Found airframe name:" << name
+                    << " type:" << airframeGroup << " file: " << file << " id:" << id;
 
-                // Now that we know type we can airframe meta data object and add it to the system
-                APMAirframeComponentAirframes::insert(airframeGroup, image, name, id.toInt());
+                APMAirframeComponentAirframes::insert(airframeGroup, image, name, file, id.toInt());
 
             } else {
                 // We should be getting meta data now

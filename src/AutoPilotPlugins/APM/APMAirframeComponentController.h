@@ -84,14 +84,16 @@ class APMAirframe : public QObject
     Q_OBJECT
     
 public:
-    APMAirframe(const QString& name, int autostartId, QObject* parent = NULL);
+    APMAirframe(const QString& name, const QString& paramsFile, int autostartId, QObject* parent = NULL);
     ~APMAirframe();
     
     Q_PROPERTY(QString text MEMBER _name CONSTANT)
     Q_PROPERTY(int autostartId MEMBER _autostartId CONSTANT)
+    Q_PROPERTY(QString params MEMBER _paramsFile CONSTANT)
     
 private:
     QString _name;
+    QString _paramsFile;
     int     _autostartId;
 };
 
@@ -107,7 +109,7 @@ public:
     Q_PROPERTY(QString imageResource MEMBER _imageResource CONSTANT)
     Q_PROPERTY(QVariantList airframes MEMBER _airframes CONSTANT)
     
-    void addAirframe(const QString& name, int autostartId);
+    void addAirframe(const QString& name, const QString& paramsFile, int autostartId);
     QString name() const;
     QString imageResource() const;
 

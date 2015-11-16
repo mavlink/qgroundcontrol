@@ -165,13 +165,9 @@ void APMRemoteParamsDownloader::httpFinished()
     m_downloadedParamFile->flush();
     m_downloadedParamFile->close();
 
-    QVariant redirectionTarget = m_networkReply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (m_networkReply->error()) {
         m_downloadedParamFile->remove();
         setStatusText(tr("Download failed: %1.").arg(m_networkReply->errorString()));
-    } else {
-        QString fileName = m_downloadedParamFile->fileName();
-        setStatusText(tr("Downloaded to %2.").arg(fileName));
     }
 
     m_networkReply->deleteLater();
@@ -190,7 +186,8 @@ void APMRemoteParamsDownloader::httpReadyRead()
 
 void APMRemoteParamsDownloader::updateDataReadProgress(qint64 bytesRead, qint64 totalBytes)
 {
-    qDebug() << bytesRead << totalBytes;
+    Q_UNUSED(bytesRead);
+    Q_UNUSED(totalBytes);
 }
 
 void APMRemoteParamsDownloader::httpParamListFinished()

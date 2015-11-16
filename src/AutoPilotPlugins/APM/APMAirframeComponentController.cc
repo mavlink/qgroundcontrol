@@ -70,9 +70,11 @@ void APMAirframeComponentController::_fillAirFrames()
     // Load up member variables
     bool autostartFound = false;
     _autostartId = 0; //getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt();
+
     QList<APMAirframeType*> airframeTypes;
     for (int tindex = 0; tindex < APMAirframeComponentAirframes::get().count(); tindex++) {
         const APMAirframeComponentAirframes::AirframeType_t* pType = APMAirframeComponentAirframes::get().values().at(tindex);
+
         APMAirframeType* airframeType = new APMAirframeType(pType->name, pType->imageResource, this);
         Q_CHECK_PTR(airframeType);
 
@@ -87,7 +89,7 @@ void APMAirframeComponentController::_fillAirFrames()
                 _currentVehicleName = pInfo->name;
                 _currentVehicleIndex = index;
             }
-            airframeType->addAirframe(pInfo->name, pInfo->autostartId);
+            airframeType->addAirframe(pInfo->name, pInfo->file, pInfo->autostartId);
         }
         airframeTypes.append(airframeType);
     }
@@ -103,8 +105,8 @@ void APMAirframeComponentController::_fillAirFrames()
 
 void APMAirframeComponentController::changeAutostart(void)
 {
-	if (qgcApp()->toolbox()->multiVehicleManager()->vehicles().count() > 1) {
-        QGCMessageBox::warning("APMAirframe Config", "You cannot change APMAirframe configuration while connected to multiple vehicles.");
+    if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() > 1) {
+        QGCMessageBox::warning("APMAirframe Config", "You cannot change Airframe configuration while connected to multiple vehicles.");
 		return;
 	}
 	
@@ -113,7 +115,7 @@ void APMAirframeComponentController::changeAutostart(void)
     /*
     Fact* sysAutoStartFact  = getParameterFact(-1, "SYS_AUTOSTART");
     Fact* sysAutoConfigFact = getParameterFact(-1, "SYS_AUTOCONFIG");
-    
+
     // We need to wait for the vehicleUpdated signals to come back before we reboot
     _waitParamWriteSignalCount = 0;
     connect(sysAutoStartFact, &Fact::vehicleUpdated, this, &APMAirframeComponentController::_waitParamWriteSignal);
@@ -163,17 +165,18 @@ APMAirframeType::~APMAirframeType()
 {
 }
 
-void APMAirframeType::addAirframe(const QString& name, int autostartId)
+void APMAirframeType::addAirframe(const QString& name, const QString& file, int autostartId)
 {
-    APMAirframe* airframe = new APMAirframe(name, autostartId);
+    APMAirframe* airframe = new APMAirframe(name, file, autostartId);
     Q_CHECK_PTR(airframe);
     
     _airframes.append(QVariant::fromValue(airframe));
 }
 
-APMAirframe::APMAirframe(const QString& name, int autostartId, QObject* parent) :
+APMAirframe::APMAirframe(const QString& name, const QString& paramsFile, int autostartId, QObject* parent) :
     QObject(parent),
     _name(name),
+    _paramsFile(paramsFile),
     _autostartId(autostartId)
 {
 }
