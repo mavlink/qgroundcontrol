@@ -203,7 +203,7 @@ bool PX4FirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
-void PX4FirmwarePlugin::addMetaDataToFact(Fact* fact)
+void PX4FirmwarePlugin::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 {
-    _parameterMetaData.addMetaDataToFact(fact);
+    _parameterMetaData.addMetaDataToFact(fact, vehicleType);
 }

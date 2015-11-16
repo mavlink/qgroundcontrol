@@ -79,7 +79,7 @@ public:
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) = 0;
     
-    /// FIXME: This isn't quite correct being here. All code for Joystick support is currently firmware specific
+    /// FIXME: This isn't quite correct being here. All code for Joystick suvehicleTypepport is currently firmware specific
     /// not just this. I'm going to try to change that. If not, this will need to be removed.
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
@@ -108,7 +108,7 @@ public:
     virtual QString getDefaultComponentIdParam(void) const = 0;
 
     /// Adds the parameter meta data to the Fact
-    virtual void addMetaDataToFact(Fact* fact) = 0;
+    virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType) = 0;
 };
 
 #endif

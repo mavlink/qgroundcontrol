@@ -112,8 +112,10 @@ bool GenericFirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
-void GenericFirmwarePlugin::addMetaDataToFact(Fact* fact)
+void GenericFirmwarePlugin::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 {
+    Q_UNUSED(vehicleType)
+
     // Add default meta data
     FactMetaData* metaData = new FactMetaData(fact->type(), fact);
     fact->setMetaData(metaData);

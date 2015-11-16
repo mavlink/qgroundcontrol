@@ -255,7 +255,7 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     fact->_containerSetValue(value);
 
     if (setMetaData) {
-        _vehicle->firmwarePlugin()->addMetaDataToFact(fact);
+        _vehicle->firmwarePlugin()->addMetaDataToFact(fact, _vehicle->vehicleType());
     }
 
     _dataMutex.unlock();

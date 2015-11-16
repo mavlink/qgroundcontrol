@@ -36,8 +36,7 @@
 QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "APMParameterMetaDataLog")
 
 bool APMParameterMetaData::_parameterMetaDataLoaded = false;
-QPointer<Vehicle> APMParameterMetaData::_vehicle    = NULL;
-QMap<QString, NametoFactMetaDataMap*> APMParameterMetaData::_parametersMap;
+QMap<QString, ParameterNametoFactMetaDataMap> APMParameterMetaData::_vehicleTypeToParametersMap;
 
 APMParameterMetaData::APMParameterMetaData(QObject* parent) :
     QObject(parent)
@@ -139,10 +138,6 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
     QRegExp parameterCategories = QRegExp("(ArduCopter | ArduPlane | ArduRover | AntennaTracker");
     QString currentCategory;
 
-    qCDebug(APMParameterMetaDataLog) << "Loading APM parameter fact meta data for vehicle type" << vehicleName;
-
-    Q_ASSERT(_mapParameterName2FactMetaData.count() == 0);
-
     QString parameterFilename;
 
     // We want unit test builds to always use the resource based meta data to provide repeatable results
@@ -183,15 +178,16 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                 if (xmlState.top() != XmlStateNone) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, paramfile matched";
                 }
+                xmlState.push(XmlstateParamFileFound);
                 // we don't really do anything with this element
             } else if (elementName == "vehicles") {
-                if (xmlState.top() != XmlStateNone) {
+                if (xmlState.top() != XmlstateParamFileFound) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, vehicles matched";
                     return;
                 }
                 xmlState.push(XmlStateFoundVehicles);
             } else if (elementName == "libraries") {
-                if (xmlState.top() != XmlStateNone) {
+                if (xmlState.top() != XmlstateParamFileFound) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, libraries matched";
                     return;
                 }
@@ -205,7 +201,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
 
                 if (xml.attributes().hasAttribute("name")) {
                     // we will handle metadata only for specific MAV_TYPEs and libraries
-                    const QString nameValue = xml.attributes().value("name");
+                    const QString nameValue = xml.attributes().value("name").toString();
                     if (!nameValue.contains(parameterCategories)) {
                         xmlState.push(XmlStateFoundParameters);
                         currentCategory = nameValue;
@@ -214,7 +210,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                     } else {
                         qCDebug(APMParameterMetaDataLog) << "not interested in this block of parameters skip";
                         if (skipXMLBlock(xml, "parameters")) {
-                            qDebug() << "something wrong with the xml";
+                            qDebug() << "something wrong with the xml, skip of the xml failed";
                             return;
                         }
                         xml.readNext();
@@ -222,7 +218,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                     }
                 }
             }  else if (elementName == "param") {
-                if (xmlState.top() = XmlStateFoundParameters) {
+                if (xmlState.top() != XmlStateFoundParameters) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, element param";
                     return;
                 }
@@ -238,7 +234,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                     name = name.split(':').last();
                 }
                 QString group = name.split('_').first();
-                group = group.remove(QRegExp("[0-9]*$")); // remove any nubmers from the end
+                group = group.remove(QRegExp("[0-9]*$")); // remove any numbers from the end
 
                 QString shortDescription = xml.attributes().value("humanName").toString();
                 QString longDescription = xml.attributes().value("docmentation").toString();
@@ -252,15 +248,15 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
 
                 metaData = new FactMetaData();
                 Q_CHECK_PTR(metaData);
-                if (_mapParameterName2FactMetaData.contains(name)) {
+                if (_vehicleTypeToParametersMap[currentCategory].contains(name)) {
                     // We can't trust the meta dafa since we have dups
                     qCWarning(APMParameterMetaDataLog) << "Duplicate parameter found:" << name;
                     badMetaData = true;
                     // Reset to default meta data
-                    _mapParameterName2FactMetaData[name] = metaData;
+                    _vehicleTypeToParametersMap[currentCategory][name] = metaData;
                 } else {
                     qCDebug(APMParameterMetaDataLog) << "inserting metadata for field" << name;
-                    _mapParameterName2FactMetaData[name] = metaData;
+                    _vehicleTypeToParametersMap[currentCategory][name] = metaData;
                     metaData->setName(name);
                     metaData->setGroup(group);
                     metaData->setShortDescription(shortDescription);
@@ -304,19 +300,26 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                 xmlState.pop();
             } else if (elementName == "parameters") {
                 qCDebug(APMParameterMetaDataLog) << "end of parameters";
+                correctGroupMemberships(_vehicleTypeToParametersMap[currentCategory], groupMembers);
+                groupMembers.clear();
                 xmlState.pop();
             }
         }
         xml.readNext();
     }
 
+
+}
+
+void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap, QMap<QString,QStringList>& groupMembers)
+{
     foreach(const QString& groupName, groupMembers.keys()) {
-        if (groupMembers[groupName].count() == 1) {
-            foreach(const QString& parameter, groupMembers.value(groupName)) {
-                _mapParameterName2FactMetaData[parameter]->setGroup("others");
+            if (groupMembers[groupName].count() == 1) {
+                foreach(const QString& parameter, groupMembers.value(groupName)) {
+                    parameterToFactMetaDataMap[parameter]->setGroup("others");
+                }
             }
         }
-    }
 }
 
 bool APMParameterMetaData::skipXMLBlock(QXmlStreamReader &xml, const QString &blockName)
@@ -385,17 +388,16 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader &xml, FactM
 }
 
 /// Override from FactLoad which connects the meta data to the fact
-void APMParameterMetaData::addMetaDataToFact(Fact* fact)
+void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 {
     _loadParameterFactMetaData();
 
-    // FIXME: Will need to switch here based on _vehicle->firmwareType() to pull right set of meta data
-
-    FactMetaData* metaData = new FactMetaData(fact->type(), fact);
-    if (_mapParameterName2FactMetaData.contains(fact->name())) {
-        fact->setMetaData(_mapParameterName2FactMetaData[fact->name()]);
+    const QString mavTypeString = mavTypeToString(vehicleType);
+    if (_vehicleTypeToParametersMap[mavTypeString].contains(fact->name())) {
+        fact->setMetaData(_vehicleTypeToParametersMap[mavTypeString][fact->name()]);
     } else {
         // Use generic meta data
-        ParameterMetaData::addMetaDataToFact(fact);
+        FactMetaData* metaData = new FactMetaData(fact->type(), fact);
+        fact->setMetaData(metaData);
     }
 }

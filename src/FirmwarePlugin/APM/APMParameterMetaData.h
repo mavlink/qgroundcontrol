@@ -41,7 +41,7 @@ Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
 
 /// Collection of Parameter Facts for PX4 AutoPilot
 
-typedef QMap<QString, FactMetaData> NametoFactMetaDataMap;
+typedef QMap<QString, FactMetaData*> ParameterNametoFactMetaDataMap;
 
 class APMParameterMetaData : public QObject
 {
@@ -55,11 +55,12 @@ public:
     virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }    
     
     // Overrides from ParameterLoader
-    static void addMetaDataToFact(Fact* fact);
+    static void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
 
 private:
     enum {
         XmlStateNone,
+        XmlstateParamFileFound,
         XmlStateFoundVehicles,
         XmlStateFoundLibraries,
         XmlStateFoundParameters,
@@ -72,12 +73,13 @@ private:
 
     static void _loadParameterFactMetaData(void);
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
-    static bool skipParameterXMLBlock(QXmlStreamReader& xml, const QString& blockName);
+    static bool skipXMLBlock(QXmlStreamReader& xml, const QString& blockName);
     static bool parseParameterAttributes(QXmlStreamReader& xml, FactMetaData* metaData);
+    static void correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap, QMap<QString,QStringList>& groupMembers);
     static QString mavTypeToString(MAV_TYPE vehicleTypeEnum);
 
     static bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
-    static QMap<QString, NametoFactMetaDataMap> _parametersMap; ///< Maps from a parameter name to FactMetaData
+    static QMap<QString, ParameterNametoFactMetaDataMap> _vehicleTypeToParametersMap; ///< Maps from a vehicle type to paramametertoFactMeta map>
 };
 
 #endif
