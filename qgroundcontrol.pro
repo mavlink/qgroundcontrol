@@ -54,10 +54,10 @@ CONFIG += qt \
     thread
 
 QT += \
-    network \
     concurrent \
     gui \
     location \
+    network \
     opengl \
     positioning \
     qml \
@@ -302,6 +302,7 @@ WindowsBuild {
 
 !iOSBuild {
 HEADERS += \
+    src/comm/QGCSerialPortInfo.h \
     src/comm/SerialLink.h \
     src/ui/SerialConfigurationWindow.h \
 }
@@ -407,6 +408,7 @@ SOURCES += \
 
 !iOSBuild {
 SOURCES += \
+    src/comm/QGCSerialPortInfo.cc \
     src/comm/SerialLink.cc \
     src/ui/SerialConfigurationWindow.cc \
 }

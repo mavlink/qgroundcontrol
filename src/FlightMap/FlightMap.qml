@@ -43,8 +43,8 @@ import QGroundControl.Mavlink               1.0
 Map {
     id: _map
 
-    property real   latitude:           0
-    property real   longitude:          0
+    property real   latitude:           64.154549   //-- If you find yourself here on startup, something went wrong :)
+    property real   longitude:          -22.023540
     property real   heading:            0
     property bool   interactive:        true
     property string mapName:            'defaultMap'

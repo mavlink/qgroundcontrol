@@ -283,6 +283,9 @@ signals:
     
     /// @brief Emitted when a temporary log file is ready for saving
     void saveTempFlightDataLog(QString tempLogfile);
+
+private slots:
+    void _vehicleCountChanged(int count);
     
 private:
     void _linkStatusChanged(LinkInterface* link, bool connected);

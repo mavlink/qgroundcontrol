@@ -47,6 +47,9 @@ Item {
     property real avaiableHeight:   height - tbHeight
     property real menuButtonWidth:  (tbButtonWidth * 2) + (tbSpacing * 4) + 1
 
+    property var defaultPosition:   QtPositioning.coordinate(37.803784, -122.462276)
+    property var tabletPosition:    defaultPosition
+
     Connections {
 
         target: controller
@@ -86,17 +89,23 @@ Item {
     }
 
     //-- Detect tablet position
-    property var tabletPosition: QtPositioning.coordinate(37.803784, -122.462276)
     PositionSource {
         id:             positionSource
         updateInterval: 1000
-        active:         true // ScreenTools.isMobile
-
+        active:         false
         onPositionChanged: {
-            tabletPosition          = positionSource.position.coordinate
-            flightView.latitude     = tabletPosition.latitude
-            flightView.longitude    = tabletPosition.longitude
-            positionSource.active   = false
+            if(positionSource.valid) {
+                if(positionSource.position.coordinate.latitude) {
+                    if(Math.abs(positionSource.position.coordinate.latitude)  > 0.001) {
+                        if(positionSource.position.coordinate.longitude) {
+                            if(Math.abs(positionSource.position.coordinate.longitude)  > 0.001) {
+                                tabletPosition = positionSource.position.coordinate
+                            }
+                        }
+                    }
+                }
+            }
+            positionSource.stop()
         }
     }
 
@@ -146,20 +155,21 @@ Item {
         anchors.fill:       parent
         avaiableHeight:     mainWindow.avaiableHeight
         visible:            true
+        Component.onCompleted: {
+            positionSource.start()
+        }
     }
 
     Loader {
         id:                 planViewLoader
         anchors.fill:       parent
         visible:            false
-        property var tabletPosition:    mainWindow.tabletPosition
     }
 
     Loader {
         id:                 setupViewLoader
         anchors.fill:       parent
         visible:            false
-        property var tabletPosition:    mainWindow.tabletPosition
     }
 
 }

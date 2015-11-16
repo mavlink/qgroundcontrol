@@ -39,8 +39,8 @@ FlightMap {
     id:             flightMap
     anchors.fill:   parent
     mapName:        _mapName
-    latitude:       root._defaultCoordinate.latitude
-    longitude:      root._defaultCoordinate.longitude
+    latitude:       mainWindow.tabletPosition.latitude
+    longitude:      mainWindow.tabletPosition.longitude
 
     property var    rootVehicleCoordinate:  _vehicleCoordinate
     property bool   _followVehicle:         true
