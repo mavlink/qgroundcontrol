@@ -199,11 +199,7 @@ void MainToolBarController::_updateConfigurations()
     QList<LinkConfiguration*> configs = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
     foreach(LinkConfiguration* conf, configs) {
         if(conf) {
-            if(conf->isPreferred()) {
-                tmpList.insert(0,conf->name());
-            } else {
-                tmpList << conf->name();
-            }
+            tmpList << conf->name();
         }
     }
     // Any changes?

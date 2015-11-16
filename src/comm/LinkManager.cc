@@ -79,7 +79,7 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &LinkManager::_vehicleHeartbeatInfo);
 
 #ifndef __ios__
-    connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateConfigurationList);
+    connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
     _portListTimer.start(1000);
 #endif
 }
@@ -330,7 +330,6 @@ void LinkManager::saveLinkConfigurationList()
             root += QString("/Link%1").arg(index++);
             settings.setValue(root + "/name", pLink->name());
             settings.setValue(root + "/type", pLink->type());
-            settings.setValue(root + "/preferred", pLink->isPreferred());
             // Have the instance save its own values
             pLink->saveSettings(settings, root);
         }
@@ -359,34 +358,25 @@ void LinkManager::loadLinkConfigurationList()
                     if(settings.contains(root + "/name")) {
                         QString name = settings.value(root + "/name").toString();
                         if(!name.isEmpty()) {
-                            bool preferred = false;
-                            if(settings.contains(root + "/preferred")) {
-                                preferred = settings.value(root + "/preferred").toBool();
-                            }
                             LinkConfiguration* pLink = NULL;
                             switch(type) {
 #ifndef __ios__
                                 case LinkConfiguration::TypeSerial:
                                     pLink = (LinkConfiguration*)new SerialConfiguration(name);
-                                    pLink->setPreferred(preferred);
                                     break;
 #endif
                                 case LinkConfiguration::TypeUdp:
                                     pLink = (LinkConfiguration*)new UDPConfiguration(name);
-                                    pLink->setPreferred(preferred);
                                     break;
                                 case LinkConfiguration::TypeTcp:
                                     pLink = (LinkConfiguration*)new TCPConfiguration(name);
-                                    pLink->setPreferred(preferred);
                                     break;
                                 case LinkConfiguration::TypeLogReplay:
                                     pLink = (LinkConfiguration*)new LogReplayLinkConfiguration(name);
-                                    pLink->setPreferred(preferred);
                                     break;
 #ifdef QT_DEBUG
                                 case LinkConfiguration::TypeMock:
                                     pLink = (LinkConfiguration*)new MockConfiguration(name);
-                                    pLink->setPreferred(false);
                                     break;
 #endif
                             }
@@ -430,7 +420,7 @@ void LinkManager::loadLinkConfigurationList()
     if(!defaultUdpLinkConfig) {
         defaultUdpLinkConfig = new UDPConfiguration("Default UDP Link");
         defaultUdpLinkConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
-        defaultUdpLinkConfig->setDynamic();
+        defaultUdpLinkConfig->setDynamic(true);
     }
     
     if(linksChanged) {
@@ -462,7 +452,7 @@ SerialConfiguration* LinkManager::_findSerialConfiguration(const QString& portNa
 #endif
 
 #ifndef __ios__
-void LinkManager::_updateConfigurationList(void)
+void LinkManager::_updateAutoConnectLinks(void)
 {
     if (_configUpdateSuspended || !_configurationsLoaded) {
         return;
@@ -470,9 +460,10 @@ void LinkManager::_updateConfigurationList(void)
     bool saveList = false;
     QStringList currentPorts;
     QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
+
     // Iterate Comm Ports
     foreach (QGCSerialPortInfo portInfo, portList) {
-#if 0
+#if 1
         // Too noisy for most logging, so turn on as needed
         qCDebug(LinkManagerLog) << "-----------------------------------------------------";
         qCDebug(LinkManagerLog) << "portName:         " << portInfo.portName();
@@ -493,66 +484,69 @@ void LinkManager::_updateConfigurationList(void)
                 continue;
             }
             
-            SerialConfiguration* pSerial = _findSerialConfiguration(portInfo.systemLocation());
-            if (pSerial) {
-                //-- If this port is configured make sure it has the preferred flag set
-                if(!pSerial->isPreferred()) {
-                    pSerial->setPreferred(true);
-                    saveList = true;
-                }
-            } else {
+            SerialConfiguration* pSerialConfig = _findSerialConfiguration(portInfo.systemLocation());
+            if (!pSerialConfig) {
                 switch (boardType) {
                 case QGCSerialPortInfo::BoardTypePX4FMUV1:
                 case QGCSerialPortInfo::BoardTypePX4FMUV2:
-                    pSerial = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
+                    pSerialConfig = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
                     break;
                 case QGCSerialPortInfo::BoardTypeAeroCore:
-                    pSerial = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
+                    pSerialConfig = new SerialConfiguration(QString("AeroCore on %1").arg(portInfo.portName().trimmed()));
                     break;
                 case QGCSerialPortInfo::BoardTypePX4Flow:
-                    pSerial = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
+                    pSerialConfig = new SerialConfiguration(QString("PX4Flow on %1").arg(portInfo.portName().trimmed()));
                     break;
                 case QGCSerialPortInfo::BoardType3drRadio:
-                    pSerial = new SerialConfiguration(QString("3DR Radio on %1").arg(portInfo.portName().trimmed()));
+                    pSerialConfig = new SerialConfiguration(QString("3DR Radio on %1").arg(portInfo.portName().trimmed()));
                 default:
                     qWarning() << "Internal error";
-                    break;
+                    continue;
                 }
 
-                pSerial->setBaud(boardType == QGCSerialPortInfo::BoardType3drRadio ? 57600 : 115200);
-                pSerial->setDynamic(true);
-                pSerial->setPreferred(true);
-                pSerial->setPortName(portInfo.systemLocation());
-                addLinkConfiguration(pSerial);
+                pSerialConfig->setBaud(boardType == QGCSerialPortInfo::BoardType3drRadio ? 57600 : 115200);
+                pSerialConfig->setDynamic(true);
+                pSerialConfig->setPortName(portInfo.systemLocation());
+                addLinkConfiguration(pSerialConfig);
                 saveList = true;
+            }
+
+            LinkInterface* link = pSerialConfig->getLink();
+            if (link) {
+                if (link->isConnected()) {
+                    link->setPersistentLink(true);
+                    connectLink(link);
+                }
+            } else {
+                createConnectedLink(pSerialConfig, true /* persistenLink */);
             }
         }
     }
 
     // Now we go through the current configuration list and make sure any dynamic config has gone away
     QList<LinkConfiguration*>  _confToDelete;
-    foreach (LinkConfiguration* pLink, _linkConfigurations) {
-        Q_ASSERT(pLink != NULL);
-        // We only care about dynamic links
-        if(pLink->isDynamic()) {
-            if(pLink->type() == LinkConfiguration::TypeSerial) {
-                // Don't mess with connected link. Let it deal with the disapearing device.
-                if(pLink->getLink() == NULL) {
-                    SerialConfiguration* pSerial = dynamic_cast<SerialConfiguration*>(pLink);
-                    if(!currentPorts.contains(pSerial->portName())) {
-                        _confToDelete.append(pSerial);
-                    }
-                }
+    foreach (LinkConfiguration* pLinkConfig, _linkConfigurations) {
+        // We only care about dynamic serial links
+        if (pLinkConfig->isDynamic() && pLinkConfig->type() == LinkConfiguration::TypeSerial) {
+            SerialConfiguration* pSerialConfig = dynamic_cast<SerialConfiguration*>(pLinkConfig);
+            if (!currentPorts.contains(pSerialConfig->portName())) {
+                _confToDelete.append(pSerialConfig);
             }
         }
     }
-    // Now remove all links that are gone
-    foreach (LinkConfiguration* pDelete, _confToDelete) {
-        removeLinkConfiguration(pDelete);
+
+    // Now disconnect/remove all links that are gone
+    foreach (LinkConfiguration* pDeleteConfig, _confToDelete) {
         saveList = true;
+
+        LinkInterface* link = pDeleteConfig->getLink();
+        if (link) {
+            disconnectLink(link, true /* disconnectPersistentLink */);
+        }
+        removeLinkConfiguration(pDeleteConfig);
     }
-    // Save configuration list, which will also trigger a signal for the UI
-    if(saveList) {
+
+    if (saveList) {
         saveLinkConfigurationList();
     }
 }

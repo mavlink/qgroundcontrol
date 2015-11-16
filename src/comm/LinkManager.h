@@ -178,7 +178,7 @@ private slots:
 
 private:
     bool _connectionsSuspendedMsg(void);
-    void _updateConfigurationList(void);
+    void _updateAutoConnectLinks(void);
 #ifndef __ios__
     SerialConfiguration* _findSerialConfiguration(const QString& portName);
 #endif

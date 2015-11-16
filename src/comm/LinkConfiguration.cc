@@ -42,8 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #define LINK_SETTING_ROOT "LinkConfigurations"
 
 LinkConfiguration::LinkConfiguration(const QString& name)
-    : _preferred(false)
-    , _dynamic(false)
+    : _dynamic(false)
 {
     _link = NULL;
     _name = name;
@@ -54,7 +53,6 @@ LinkConfiguration::LinkConfiguration(LinkConfiguration* copy)
 {
     _link       = copy->getLink();
     _name       = copy->name();
-    _preferred  = copy->isPreferred();
     _dynamic    = copy->isDynamic();
     Q_ASSERT(!_name.isEmpty());
 }
@@ -64,7 +62,6 @@ void LinkConfiguration::copyFrom(LinkConfiguration* source)
     Q_ASSERT(source != NULL);
     _link       = source->getLink();
     _name       = source->name();
-    _preferred  = source->isPreferred();
     _dynamic    = source->isDynamic();
 }
 
