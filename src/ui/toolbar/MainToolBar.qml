@@ -31,6 +31,7 @@ import QtQuick 2.5
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
+import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.FactControls          1.0
 import QGroundControl.Palette               1.0
@@ -152,7 +153,7 @@ Rectangle {
     }
 
     function showMavStatus() {
-         return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0 && _controller.connectionCount > 0);
+         return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0);
     }
 
     Component.onCompleted: {
@@ -283,42 +284,42 @@ Rectangle {
 
         Menu {
             id: connectMenu
+
             Component.onCompleted: {
-                _controller.configListChanged.connect(connectMenu.updateConnectionList);
+                QGroundControl.linkManager.linkConfigurations.countChanged.connect(connectMenu.updateConnectionList);
                 connectMenu.updateConnectionList();
             }
-            function addMenuEntry(name) {
-                var label = "Add Connection"
-                if(name !== "")
-                    label = name;
-                var mItem = connectMenu.addItem(label);
-                var menuSlot = function() {_controller.onConnect(name)};
-                mItem.triggered.connect(menuSlot);
-            }
+
             function updateConnectionList() {
                 connectMenu.clear();
-                for(var i = 0; i < _controller.configList.length; i++) {
-                    connectMenu.addMenuEntry(_controller.configList[i]);
+                for(var i = 0; i < QGroundControl.linkManager.linkConfigurations.count; i++) {
+                    var config = QGroundControl.linkManager.linkConfigurations.get(i)
+                    var mItem = connectMenu.addItem(config.name);
+                    var menuSlot = function() {QGroundControl.linkManager.createConnectedLink(config, false /* persistentLink */);}
+                    mItem.triggered.connect(menuSlot);
                 }
-                if(_controller.configList.length > 0) {
+                if(QGroundControl.linkManager.linkConfigurations.count > 0) {
                     connectMenu.addSeparator();
                 }
                 // Add "Add Connection" to the list
-                connectMenu.addMenuEntry("");
+                var mItem = connectMenu.addItem("Add Connection...")
+                var menuSlot = function() { _controller.manageLinks() }
+                mItem.triggered.connect(menuSlot)
             }
         }
 
         Rectangle {
-            height: mainWindow.tbCellHeight
-            width:  1
-            color: Qt.rgba(1,1,1,0.45)
+            height:     mainWindow.tbCellHeight
+            width:      1
+            color:      Qt.rgba(1,1,1,0.45)
+            visible:    !ScreenTools.isMobile
         }
 
         QGCToolBarButton {
             id:             connectButton
             width:          mainWindow.tbButtonWidth
             height:         mainWindow.tbCellHeight
-            visible:        _controller.connectionCount === 0
+            visible:        !ScreenTools.isMobile && QGroundControl.linkManager.links.count == 1
             source:         "/qmlimages/Connect.svg"
             checked:        false
             onClicked: {
@@ -350,30 +351,12 @@ Rectangle {
             id:             disconnectButton
             width:          mainWindow.tbButtonWidth
             height:         mainWindow.tbCellHeight
-            visible:        _controller.connectionCount === 1
+            visible:        !ScreenTools.isMobile && QGroundControl.linkManager.links.count == 2
             source:         "/qmlimages/Disconnect.svg"
             checked:        false
             onClicked: {
                 checked = false
-                _controller.onDisconnect("");
-            }
-        }
-
-        Menu {
-            id: disconnectMenu
-            Component.onCompleted: {
-                _controller.connectedListChanged.connect(disconnectMenu.onConnectedListChanged)
-            }
-            function addMenuEntry(name) {
-                var mItem = disconnectMenu.addItem(name);
-                var menuSlot = function() {_controller.onDisconnect(name)};
-                mItem.triggered.connect(menuSlot);
-            }
-            function onConnectedListChanged(conList) {
-                disconnectMenu.clear();
-                for(var i = 0; i < conList.length; i++) {
-                    disconnectMenu.addMenuEntry(conList[i]);
-                }
+                QGroundControl.linkManager.disconnectLink(QGroundControl.linkManager.links.get(1), false /* disconnectPersistentLink */)
             }
         }
 
@@ -381,15 +364,33 @@ Rectangle {
             id:             multidisconnectButton
             width:          mainWindow.tbButtonWidth
             height:         mainWindow.tbCellHeight
-            visible:        _controller.connectionCount > 1
+            visible:        !ScreenTools.isMobile && QGroundControl.linkManager.links.count > 2
             source:         "/qmlimages/Disconnect.svg"
             checked:        false
             onClicked: {
                 checked = false
-                disconnectMenu.popup()
-            }
+                disconnectMenu.popup()}
         }
 
+        Menu {
+            id: disconnectMenu
+
+            Component.onCompleted: {
+                QGroundControl.linkManager.links.countChanged.connect(disconnectMenu.updateConnectionList);
+                disconnectMenu.updateConnectionList();
+            }
+
+            function updateConnectionList() {
+                disconnectMenu.clear();
+                for(var i = 0; i < QGroundControl.linkManager.linkConfigurations.count; i++) {
+                    var name = QGroundControl.linkManager.linkConfigurations.get(i).name
+                    var link = QGroundControl.linkManager.linkConfigurations.get(i).getLink()
+                    var mItem = connectMenu.addItem(name)
+                    var menuSlot = function() { QGroundControl.linkManager.disconnectLink(link, false /* disconnectPersistentLink */) }
+                    mItem.triggered.connect(menuSlot)
+                }
+            }
+        }
     }
 
     // Progress bar

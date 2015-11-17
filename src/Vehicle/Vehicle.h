@@ -166,8 +166,6 @@ public:
     /// Provides access to the Firmware Plugin for this Vehicle
     FirmwarePlugin* firmwarePlugin(void) { return _firmwarePlugin; }
 
-    QList<LinkInterface*> links(void);
-
     int manualControlReservedButtonCount(void);
 
     MissionManager* missionManager(void) { return _missionManager; }
@@ -253,7 +251,7 @@ public slots:
     void setLongitude(double longitude);
 
 signals:
-    void allLinksDisconnected(Vehicle* vehicle);
+    void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
     void coordinateValidChanged(bool coordinateValid);
     void joystickModeChanged(int mode);
@@ -296,7 +294,7 @@ signals:
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
-    void _linkDisconnected(LinkInterface* link);
+    void _linkInactiveOrDeleted(LinkInterface* link);
     void _sendMessage(mavlink_message_t message);
     void _sendMessageMultipleNext(void);
     void _addNewMapTrajectoryPoint(void);
@@ -347,10 +345,7 @@ private:
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
 
-    /// List of all links associated with this vehicle. We keep SharedLinkInterface objects
-    /// which are QSharedPointer's in order to maintain reference counts across threads.
-    /// This way Link deletion works correctly.
-    QList<SharedLinkInterface> _links;
+    QList<LinkInterface*> _links;
 
     JoystickMode_t  _joystickMode;
     bool            _joystickEnabled;

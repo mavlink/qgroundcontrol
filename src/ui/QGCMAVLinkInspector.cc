@@ -490,7 +490,10 @@ void QGCMAVLinkInspector::changeStreamInterval(int msgid, int interval)
     mavlink_message_t msg;
     mavlink_msg_request_data_stream_encode(_protocol->getSystemId(), _protocol->getComponentId(), &msg, &stream);
 
+#if 0
+    // FIXME: Is this really used?
     _protocol->sendMessage(msg);
+#endif
 }
 
 void QGCMAVLinkInspector::rateTreeItemChanged(QTreeWidgetItem* paramItem, int column)

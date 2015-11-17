@@ -159,8 +159,6 @@ signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
     /** Emitted when any value changes from any source */
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
-    /** Emitted when any the Canvas elements within QML wudgets need updating */
-    void repaintCanvas();
 
     // Used for unit tests to know when the main window closes
     void mainWindowClosed(void);
@@ -213,7 +211,6 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private slots:
-    void _linkStateChange(LinkInterface*);
     void _closeWindow(void) { close(); }
     void _vehicleAdded(Vehicle* vehicle);
 

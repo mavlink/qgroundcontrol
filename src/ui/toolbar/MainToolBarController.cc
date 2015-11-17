@@ -43,7 +43,6 @@ MainToolBarController::MainToolBarController(QObject* parent)
     : QObject(parent)
     , _vehicle(NULL)
     , _mav(NULL)
-    , _connectionCount(0)
     , _progressBarValue(0.0f)
     , _remoteRSSI(0)
     , _remoteRSSIstore(100.0)
@@ -52,19 +51,7 @@ MainToolBarController::MainToolBarController(QObject* parent)
     , _rollDownMessages(0)
     , _toolbarMessageVisible(false)
 {
-    emit configListChanged();
-    emit connectionCountChanged(_connectionCount);
     _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
-    
-    // Link signals
-    connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkConfigurationChanged, this, &MainToolBarController::_updateConfigurations);
-    connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkConnected,            this, &MainToolBarController::_linkConnected);
-    connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkDisconnected,         this, &MainToolBarController::_linkDisconnected);
-    
-    // RSSI (didn't like standard connection)
-    connect(qgcApp()->toolbox()->mavlinkProtocol(),
-        SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
-        SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)));
     
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBarController::_activeVehicleChanged);
 }
@@ -87,54 +74,6 @@ void MainToolBarController::onPlanView()
 void MainToolBarController::onFlyView()
 {
     MainWindow::instance()->showFlyView();
-}
-
-void MainToolBarController::onDisconnect(QString conf)
-{
-    if(conf.isEmpty()) {
-        // Disconnect Only Connected Link
-        int connectedCount = 0;
-        LinkInterface* connectedLink = NULL;
-        QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
-        foreach(LinkInterface* link, links) {
-            if (link->isConnected()) {
-                connectedCount++;
-                connectedLink = link;
-            }
-        }
-        Q_ASSERT(connectedCount   == 1);
-        Q_ASSERT(_connectionCount == 1);
-        Q_ASSERT(connectedLink);
-        qgcApp()->toolbox()->linkManager()->disconnectLink(connectedLink);
-    } else {
-        // Disconnect Named Connected Link
-        QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
-        foreach(LinkInterface* link, links) {
-            if (link->isConnected()) {
-                if(link->getLinkConfiguration() && link->getLinkConfiguration()->name() == conf) {
-                    qgcApp()->toolbox()->linkManager()->disconnectLink(link);
-                }
-            }
-        }
-    }
-}
-
-void MainToolBarController::onConnect(QString conf)
-{
-    // Connect Link
-    if(conf.isEmpty()) {
-        MainWindow::instance()->manageLinks();
-    } else {
-        // We don't want the list updating under our feet
-        qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(true);
-        // Create a link
-        LinkInterface* link = qgcApp()->toolbox()->linkManager()->createConnectedLink(conf);
-        if(link) {
-            // Save last used connection
-            MainWindow::instance()->saveLastUsedConnection(conf);
-        }
-        qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(false);
-    }
 }
 
 void MainToolBarController::onEnterMessageArea(int x, int y)
@@ -177,7 +116,6 @@ void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
 {
     // Disconnect the previous one (if any)
     if (_vehicle) {
-        disconnect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBarController::_remoteControlRSSIChanged);
         disconnect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
         _mav = NULL;
         _vehicle = NULL;
@@ -188,31 +126,12 @@ void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
     {
         _vehicle = vehicle;
         _mav = vehicle->uas();
-        connect(_mav, &UASInterface::remoteControlRSSIChanged, this, &MainToolBarController::_remoteControlRSSIChanged);
         connect(_vehicle->autopilotPlugin(), &AutoPilotPlugin::parameterListProgress, this, &MainToolBarController::_setProgressBarValue);
     }
 }
 
-void MainToolBarController::_updateConfigurations()
-{
-    QStringList tmpList;
-    QList<LinkConfiguration*> configs = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
-    foreach(LinkConfiguration* conf, configs) {
-        if(conf) {
-            if(conf->isPreferred()) {
-                tmpList.insert(0,conf->name());
-            } else {
-                tmpList << conf->name();
-            }
-        }
-    }
-    // Any changes?
-    if(tmpList != _linkConfigurations) {
-        _linkConfigurations = tmpList;
-        emit configListChanged();
-    }
-}
-
+#if 0
+// FIXME: Huh?
 void MainToolBarController::_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned rssi, unsigned remrssi, unsigned, unsigned, unsigned)
 {
     // We only care if we haveone single connection
@@ -246,53 +165,7 @@ void MainToolBarController::_remoteControlRSSIChanged(uint8_t rssi)
         }
     }
 }
-
-void MainToolBarController::_linkConnected(LinkInterface*)
-{
-    _updateConnection();
-}
-
-void MainToolBarController::_linkDisconnected(LinkInterface* link)
-{
-    _updateConnection(link);
-}
-
-void MainToolBarController::_updateConnection(LinkInterface *disconnectedLink)
-{
-    QStringList connList;
-    int oldCount = _connectionCount;
-    // If there are multiple connected links add/update the connect button menu
-    _connectionCount = 0;
-    QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
-    foreach(LinkInterface* link, links) {
-        if (disconnectedLink != link && link->isConnected()) {
-            _connectionCount++;
-            if(link->getLinkConfiguration()) {
-                connList << link->getLinkConfiguration()->name();
-            }
-        }
-    }
-    if(oldCount != _connectionCount) {
-        emit connectionCountChanged(_connectionCount);
-    }
-    if(connList != _connectedList) {
-        _connectedList = connList;
-        emit connectedListChanged(_connectedList);
-    }
-    // Update telemetry RSSI display
-    if(_connectionCount != 1 && _telemetryRRSSI > 0) {
-        _telemetryRRSSI = 0;
-        emit telemetryRRSSIChanged(_telemetryRRSSI);
-    }
-    if(_connectionCount != 1 && _telemetryLRSSI > 0) {
-        _telemetryLRSSI = 0;
-        emit telemetryLRSSIChanged(_telemetryLRSSI);
-    }
-    if(_connectionCount != 1 && _remoteRSSI > 0) {
-        _remoteRSSI = 0;
-        emit remoteRSSIChanged(_remoteRSSI);
-    }
-}
+#endif
 
 void MainToolBarController::_setProgressBarValue(float value)
 {
@@ -343,4 +216,9 @@ void MainToolBarController::onToolBarMessageClosed(void)
 void MainToolBarController::showSettings(void)
 {
     MainWindow::instance()->showSettings();
+}
+
+void MainToolBarController::manageLinks(void)
+{
+    MainWindow::instance()->manageLinks();
 }

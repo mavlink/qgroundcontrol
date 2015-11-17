@@ -30,12 +30,16 @@ class LinkInterface;
 
 /// Interface holding link specific settings.
 
-class LinkConfiguration
+class LinkConfiguration : public QObject
 {
+    Q_OBJECT
+
 public:
     LinkConfiguration(const QString& name);
     LinkConfiguration(LinkConfiguration* copy);
     virtual ~LinkConfiguration() {}
+
+    Q_PROPERTY(QString name     READ name WRITE setName NOTIFY nameChanged)
 
     ///  The link types supported by QGC
     enum {
@@ -69,7 +73,7 @@ public:
      * This is the user friendly name shown in the connection drop down box and the name used to save the configuration in the settings.
      * @param[in] name The configuration name
      */
-    void setName(const QString name)  {_name = name; }
+    void setName(const QString name);
 
     /*!
      * @brief Set the link this configuration is currently attched to.
@@ -83,19 +87,7 @@ public:
      *
      * @return The pointer to the current LinkInterface instance (if any)
      */
-    LinkInterface* getLink() { return _link; }
-
-    /*!
-     *
-     * Is this a preferred configuration? (decided at runtime)
-     * @return True if this is a known configuration (PX4, etc.)
-     */
-    bool isPreferred() { return _preferred; }
-
-    /*!
-     * Set if this is this a preferred configuration. (decided at runtime)
-    */
-    void setPreferred(bool preferred = true) { _preferred = preferred; }
+    Q_INVOKABLE LinkInterface* getLink() { return _link; }
 
     /*!
      *
@@ -178,11 +170,13 @@ public:
      */
     static LinkConfiguration* duplicateSettings(LinkConfiguration *source);
 
+signals:
+    void nameChanged(const QString& name);
+
 protected:
     LinkInterface* _link; ///< Link currently using this configuration (if any)
 private:
     QString _name;
-    bool    _preferred;  ///< Determined internally if this is a preferred connection. It comes up first in the drop down box.
     bool    _dynamic;    ///< A connection added automatically and not persistent (unless it's edited).
 };
 

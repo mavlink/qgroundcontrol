@@ -285,38 +285,28 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
 
 bool Vehicle::_containsLink(LinkInterface* link)
 {
-    foreach (SharedLinkInterface sharedLink, _links) {
-        if (sharedLink.data() == link) {
-            return true;
-        }
-    }
-
-    return false;
+    return _links.contains(link);
 }
 
 void Vehicle::_addLink(LinkInterface* link)
 {
     if (!_containsLink(link)) {
-        _links += qgcApp()->toolbox()->linkManager()->sharedPointerForLink(link);
+        _links += link;
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
-        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &Vehicle::_linkDisconnected);
+        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
+        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
     }
 }
 
-void Vehicle::_linkDisconnected(LinkInterface* link)
+void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
 {
-    qCDebug(VehicleLog) << "_linkDisconnected:" << link->getName();
+    qCDebug(VehicleLog) << "_linkInactveOrDeleted:" << link->getName();
     qCDebug(VehicleLog) << "link count:" << _links.count();
 
-    for (int i=0; i<_links.count(); i++) {
-        if (_links[i].data() == link) {
-            _links.removeAt(i);
-            break;
-        }
-    }
+    _links.removeOne(link);
 
     if (_links.count() == 0) {
-        emit allLinksDisconnected(this);
+        emit allLinksInactive(this);
     }
 }
 
@@ -328,10 +318,7 @@ void Vehicle::sendMessage(mavlink_message_t message)
 void Vehicle::_sendMessage(mavlink_message_t message)
 {
     // Emit message on all links that are currently connected
-    foreach (SharedLinkInterface sharedLink, _links) {
-        LinkInterface* link = sharedLink.data();
-        Q_ASSERT(link);
-
+    foreach (LinkInterface* link, _links) {
         if (link->isConnected()) {
             MAVLinkProtocol* mavlink = _mavlink;
 
@@ -348,17 +335,6 @@ void Vehicle::_sendMessage(mavlink_message_t message)
             link->writeBytes((const char*)buffer, len);
         }
     }
-}
-
-QList<LinkInterface*> Vehicle::links(void)
-{
-    QList<LinkInterface*> list;
-
-    foreach (SharedLinkInterface sharedLink, _links) {
-        list += sharedLink.data();
-    }
-
-    return list;
 }
 
 void Vehicle::setLatitude(double latitude)
@@ -1035,11 +1011,11 @@ void Vehicle::_parametersReady(bool parametersReady)
 
 void Vehicle::_communicationInactivityTimedOut(void)
 {
-    // Vechile is no longer communicating with us, disconnect all links
+    // Vehicle is no longer communicating with us, disconnect all links inactive
 
     LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
     for (int i=0; i<_links.count(); i++) {
-        linkMgr->disconnectLink(_links[i].data());
+        linkMgr->disconnectLink(_links[i], false /* disconnectPersistenLink */);
     }
 }
 
