@@ -42,6 +42,7 @@ class FactMetaData : public QObject
     
 public:
     typedef enum {
+        valueTypeUnknown = -1,
         valueTypeUint8,
         valueTypeInt8,
         valueTypeUint16,
@@ -83,6 +84,7 @@ public:
     void setMin(const QVariant& max);
     void setMax(const QVariant& max);
     void setDecimalPlaces(int decimalPlaces)                    { _decimalPlaces = decimalPlaces; }
+    void setType(ValueType_t type);
     
     /// Converts the specified value, validating against meta data
     ///     @param value Value to convert, can be string

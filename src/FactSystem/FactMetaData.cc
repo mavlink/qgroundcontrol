@@ -35,7 +35,7 @@
 FactMetaData::FactMetaData(QObject* parent)
     : QObject(parent)
     , _group("*Default Group")
-    , _type(valueTypeInt32)
+    , _type(valueTypeUnknown)
     , _defaultValue(0)
     , _defaultValueAvailable(false)
     , _min(_minForType())
@@ -95,7 +95,9 @@ QVariant FactMetaData::defaultValue(void) const
 
 void FactMetaData::setDefaultValue(const QVariant& defaultValue)
 {
-    if (_min <= defaultValue && defaultValue <= _max) {
+    if (_type == valueTypeUnknown) {
+        _defaultValue = defaultValue;
+    } else if (_min <= defaultValue && defaultValue <= _max) {
         _defaultValue = defaultValue;
         _defaultValueAvailable = true;
     } else {
@@ -105,7 +107,9 @@ void FactMetaData::setDefaultValue(const QVariant& defaultValue)
 
 void FactMetaData::setMin(const QVariant& min)
 {
-    if (min > _minForType()) {
+    if (_type == valueTypeUnknown) {
+        _min = min;
+    } else if (min > _minForType()) {
         _min = min;
         _minIsDefaultForType = false;
     } else {
@@ -116,12 +120,30 @@ void FactMetaData::setMin(const QVariant& min)
 
 void FactMetaData::setMax(const QVariant& max)
 {
-    if (max > _maxForType()) {
+    if (_type == valueTypeUnknown) {
+        _max = max;
+    } else if (max > _maxForType()) {
         qWarning() << "Attempt to set max above allowable value";
         _max = _maxForType();
     } else {
         _max = max;
         _maxIsDefaultForType = false;
+    }
+}
+
+void FactMetaData::setType(ValueType_t type)
+{
+    bool needsValidation = (_type != type);
+
+    _type = type;
+
+    // validate that everything is in order
+    if (needsValidation) {
+        setMin(min());
+        setMax(max());
+        if (defaultValueAvailable()) {
+            setDefaultValue(defaultValue());
+        }
     }
 }
 
@@ -177,11 +199,16 @@ QVariant FactMetaData::_maxForType(void) const
 
 bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, QVariant& typedValue, QString& errorString)
 {
-    bool convertOk;
+    bool convertOk = false;
     
     errorString.clear();
     
     switch (type()) {
+        case FactMetaData::valueTypeUnknown:
+            convertOk = true; // keep the code at the end of the function happy
+            errorString = "can't validate a value whose type is not known yet";
+            break;
+
         case FactMetaData::valueTypeInt8:
         case FactMetaData::valueTypeInt16:
         case FactMetaData::valueTypeInt32:
@@ -224,7 +251,7 @@ bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, Q
     }
     
     if (!convertOk) {
-        errorString = "Invalid number";
+        errorString += "Invalid number";
     }
     
     return convertOk && errorString.isEmpty();

@@ -285,15 +285,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
             QString elementName = xml.name().toString();
 
             if (elementName == "param" && xmlState.top() == XmlStateFoundParameter) {
-                // Done loading this parameter, validate default value
-                if (metaData->defaultValueAvailable()) {
-                    QVariant var;
-
-                    if (!metaData->convertAndValidate(metaData->defaultValue(), false /* convertOnly */, var, errorString)) {
-                        qCWarning(APMParameterMetaDataLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->defaultValue() << " error:" << errorString;
-                    }
-                }
-
+                // Done loading this parameter
                 // Reset for next parameter
                 metaData = NULL;
                 badMetaData = false;
@@ -322,7 +314,7 @@ void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMa
         }
 }
 
-bool APMParameterMetaData::skipXMLBlock(QXmlStreamReader &xml, const QString &blockName)
+bool APMParameterMetaData::skipXMLBlock(QXmlStreamReader& xml, const QString& blockName)
 {
     QString elementName;
     do {
@@ -332,57 +324,49 @@ bool APMParameterMetaData::skipXMLBlock(QXmlStreamReader &xml, const QString &bl
     return !xml.isEndDocument();
 }
 
-bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader &xml, FactMetaData *metaData)
+bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, FactMetaData *metaData)
 {
     Q_ASSERT(metaData);
     QString elementName = xml.name().toString();
-    while (elementName == "field") {
-        QString attributeName = xml.attributes().value("name").toString();
-        if ( attributeName == "range") {
-            QString range = xml.readElementText();
-            QStringList rangeList = range.split(' ');
-            if (rangeList.count() != 2) {
-                qCWarning(APMParameterMetaDataLog) << "something wrong with range, ignoring error";
+    QList<QPair<QString,QString> > values;
+    // as long as param doens't end
+    while (!(elementName == "param" && xml.isEndElement())) {
+        if (elementName == "field") {
+            QString attributeName = xml.attributes().value("name").toString();
+            if ( attributeName == "range") {
+                QString range = xml.readElementText();
+                QStringList rangeList = range.split(' ');
+                if (rangeList.count() != 2) {
+                    qCWarning(APMParameterMetaDataLog) << "something wrong with range, ignoring error";
+                }
+                QString min = rangeList.first();
+                QString max = rangeList.last();
+                metaData->setMin(min);
+                metaData->setMax(max);
+                qCDebug(APMParameterMetaDataLog) << "read field parameter " << "min: " << min << "max: " << max;
+            } else if (attributeName == "Increment") {
+                QString increment = xml.readElementText();
+                qCDebug(APMParameterMetaDataLog) << "read Increment: " << increment;
+                // TODO:: some better way of using the increment size.
+                metaData->setShortDescription(metaData->shortDescription() + ", increment size: " + increment);
+            } else if (attributeName == "Units") {
+                QString units = xml.readElementText();
+                qCDebug(APMParameterMetaDataLog) << "read Units: " << units;
+                metaData->setUnits(units);
             }
-            QString min = rangeList.first();
-            QString max = rangeList.last();
-            metaData->setMin(min);
-            metaData->setMax(max);
-            qCDebug(APMParameterMetaDataLog) << "read field parameter " << "min: " << min << "max: " << max;
-        } else if (attributeName == "Increment") {
-            QString increment = xml.readElementText();
-            qCDebug(APMParameterMetaDataLog) << "read Increment: " << increment;
-            metaData->setShortDescription(metaData->shortDescription() + "increment size: " + increment);
-        } else if (attributeName == "Units") {
-            QString units = xml.readElementText();
-            qCDebug(APMParameterMetaDataLog) << "read Units: " << units;
-            metaData->setUnits(units);
-        }
-        xml.readNext();
-        elementName = xml.name().toString();
-    }
-
-    if (elementName == "values") {
-        Q_ASSERT(metaData);
-        xml.readNext();
-
-        QString elementName = xml.name().toString();
-        if (elementName != "value") {
-            qCDebug(APMParameterMetaDataLog) << "Badly fomrmed xml, failed to read parameter";
-            return false;
-        }
-
-        QList<QPair<QString,QString> > values;
-        while (elementName == "value") {
+        } else if (elementName == "values") {
+            // doing nothing value will follow anyway. May be used for sanity checking.
+        } else if (elementName == "value") {
             QString valueValue = xml.attributes().value("code").toString();
             QString valueName = xml.readElementText();
             qCDebug(APMParameterMetaDataLog) << "read value parameter " << "value desc: " << valueName << "code: " << valueValue;
             values << QPair<QString,QString>(valueValue, valueName);
-            xml.readNext();
-            elementName = xml.name().toString();
+            // TODO:: not using values for anything as of now.
+        } else {
+            qCDebug(APMParameterMetaDataLog) << "Unknown parameter element in XML: " << elementName;
         }
-    } else {
-        qCDebug(APMParameterMetaDataLog) << "Unknown parameter element in XML: " << elementName;
+        xml.readNext();
+        elementName = xml.name().toString();
     }
     return true;
 }
@@ -394,7 +378,15 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 
     const QString mavTypeString = mavTypeToString(vehicleType);
     if (_vehicleTypeToParametersMap[mavTypeString].contains(fact->name())) {
-        fact->setMetaData(_vehicleTypeToParametersMap[mavTypeString][fact->name()]);
+        FactMetaData *metaData = _vehicleTypeToParametersMap[mavTypeString][fact->name()];
+        metaData->setType(fact->type());
+//        if (metaData->defaultValueAvailable()) {
+//            QVariant var;
+//            if (!metaData->convertAndValidate(metaData->defaultValue(), false /* convertOnly */, var, errorString)) {
+//                qCWarning(APMParameterMetaDataLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->defaultValue() << " error:" << errorString;
+//            }
+//        }
+        fact->setMetaData(metaData);
     } else {
         // Use generic meta data
         FactMetaData* metaData = new FactMetaData(fact->type(), fact);
