@@ -456,7 +456,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
 
     // Should not be any active connections
-    if (qgcApp()->toolbox()->linkManager()->anyConnectedLinks()) {
+    if (qgcApp()->toolbox()->linkManager()->anyActiveLinks()) {
         qWarning() << "All links should be disconnected by now";
     }
 

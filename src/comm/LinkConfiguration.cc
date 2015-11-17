@@ -135,3 +135,9 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
     }
     return dupe;
 }
+
+void LinkConfiguration::setName(const QString name)
+{
+    _name = name;
+    emit nameChanged(name);
+}

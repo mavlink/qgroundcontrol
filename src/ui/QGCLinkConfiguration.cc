@@ -74,8 +74,12 @@ void QGCLinkConfiguration::on_delLinkButton_clicked()
                     qgcApp()->toolbox()->linkManager()->disconnectLink(iface, false /* disconnectPersistenLink */);
                 }
                 _viewModel->beginChange();
+
                 // Remove configuration
-                qgcApp()->toolbox()->linkManager()->removeLinkConfiguration(config);
+                QmlObjectListModel* linkConfigurations = qgcApp()->toolbox()->linkManager()->linkConfigurations();
+                linkConfigurations->removeOne(config);
+                delete config;
+
                 // Save list
                 qgcApp()->toolbox()->linkManager()->saveLinkConfigurationList();
                 _viewModel->endChange();
@@ -185,7 +189,7 @@ void QGCLinkConfiguration::on_addLinkButton_clicked()
         if(config) {
             _fixUnnamed(config);
             _viewModel->beginChange();
-            qgcApp()->toolbox()->linkManager()->addLinkConfiguration(commDialog->getConfig());
+            qgcApp()->toolbox()->linkManager()->linkConfigurations()->append(commDialog->getConfig());
             qgcApp()->toolbox()->linkManager()->saveLinkConfigurationList();
             _viewModel->endChange();
         }
@@ -260,16 +264,13 @@ LinkViewModel::LinkViewModel(QObject *parent) : QAbstractListModel(parent)
 int LinkViewModel::rowCount( const QModelIndex & parent) const
 {
     Q_UNUSED(parent);
-    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
-    int count = cfgList.count();
-    return count;
+    return qgcApp()->toolbox()->linkManager()->linkConfigurations()->count();
 }
 
 QVariant LinkViewModel::data( const QModelIndex & index, int role) const
 {
-    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
-    if (role == Qt::DisplayRole && index.row() < cfgList.count()) {
-        QString name(cfgList.at(index.row())->name());
+    if (role == Qt::DisplayRole && index.row() < rowCount()) {
+        QString name(qgcApp()->toolbox()->linkManager()->linkConfigurations()->value<LinkConfiguration*>(index.row())->name());
         return name;
     }
     return QVariant();
@@ -277,9 +278,8 @@ QVariant LinkViewModel::data( const QModelIndex & index, int role) const
 
 LinkConfiguration* LinkViewModel::getConfiguration(int row)
 {
-    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
-    if(row < cfgList.count()) {
-        return cfgList.at(row);
+    if(row < rowCount()) {
+        return qgcApp()->toolbox()->linkManager()->linkConfigurations()->value<LinkConfiguration*>(row);
     }
     return NULL;
 }

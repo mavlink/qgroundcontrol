@@ -52,6 +52,8 @@ class TCPLinkUnitTest;
 
 class TCPConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
 
     /*!

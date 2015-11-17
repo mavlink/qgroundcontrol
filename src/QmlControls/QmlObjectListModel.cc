@@ -197,11 +197,6 @@ int QmlObjectListModel::count(void) const
     return rowCount();
 }
 
-QObject* QmlObjectListModel::get(int index)
-{
-    return _objectList[index];
-}
-
 void QmlObjectListModel::setDirty(bool dirty)
 {
     _dirty = dirty;

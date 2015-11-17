@@ -33,6 +33,8 @@
 
 class LogReplayLinkConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
     LogReplayLinkConfiguration(const QString& name);
     LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy);

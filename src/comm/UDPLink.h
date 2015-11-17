@@ -52,6 +52,8 @@ This file is part of the QGROUNDCONTROL project
 
 class UDPConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
 
     /*!

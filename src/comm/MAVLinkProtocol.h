@@ -158,12 +158,6 @@ public slots:
     void linkConnected(void);
     void linkDisconnected(void);
     
-    /** @brief Send MAVLink message through serial interface */
-    void sendMessage(mavlink_message_t message);
-    /** @brief Send MAVLink message */
-    void sendMessage(LinkInterface* link, mavlink_message_t message);
-    /** @brief Send MAVLink message with correct system / component ID */
-    void sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid);
     /** @brief Set the rate at which heartbeats are emitted */
     void setHeartbeatRate(int rate);
     /** @brief Set the system id of this application */
@@ -292,6 +286,9 @@ private slots:
     
 private:
     void _linkStatusChanged(LinkInterface* link, bool connected);
+    void _sendMessage(mavlink_message_t message);
+    void _sendMessage(LinkInterface* link, mavlink_message_t message);
+    void _sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid);
 
 #ifndef __mobile__
     bool _closeLogFile(void);

@@ -166,8 +166,6 @@ public:
     /// Provides access to the Firmware Plugin for this Vehicle
     FirmwarePlugin* firmwarePlugin(void) { return _firmwarePlugin; }
 
-    QList<LinkInterface*> links(void);
-
     int manualControlReservedButtonCount(void);
 
     MissionManager* missionManager(void) { return _missionManager; }
@@ -347,10 +345,7 @@ private:
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
 
-    /// List of all links associated with this vehicle. We keep SharedLinkInterface objects
-    /// which are QSharedPointer's in order to maintain reference counts across threads.
-    /// This way Link deletion works correctly.
-    QList<SharedLinkInterface> _links;
+    QList<LinkInterface*> _links;
 
     JoystickMode_t  _joystickMode;
     bool            _joystickEnabled;

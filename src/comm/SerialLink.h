@@ -59,6 +59,8 @@ Q_DECLARE_LOGGING_CATEGORY(SerialLinkLog)
 
 class SerialConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
 
     SerialConfiguration(const QString& name);

@@ -37,6 +37,8 @@ Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
 
 class MockConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
     MockConfiguration(const QString& name);
     MockConfiguration(MockConfiguration* source);

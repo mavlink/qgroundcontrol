@@ -33,6 +33,7 @@ static const char* kQmlGlobalKeyName = "QGCQml";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent)
     : QObject(parent)
+    , _linkManager(toolbox->linkManager())
     , _homePositionManager(toolbox->homePositionManager())
     , _flightMapSettings(toolbox->flightMapSettings())
 {
@@ -144,10 +145,10 @@ void QGroundControlQmlGlobal::stopAllMockLinks(void)
 #ifdef QT_DEBUG
     LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
 
-    QList<LinkInterface*> links = linkManager->getLinks();
-    for (int i=0; i<links.count(); i++) {
-        LinkInterface* link = links[i];
+    for (int i=0; i<linkManager->links()->count(); i++) {
+        LinkInterface* link = linkManager->links()->value<LinkInterface*>(i);
         MockLink* mockLink = qobject_cast<MockLink*>(link);
+
         if (mockLink) {
             linkManager->disconnectLink(mockLink, false /* disconnectPersistenLink */);
         }
