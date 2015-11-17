@@ -365,7 +365,6 @@ void LogReplayLink::_readNextLogEntry(void)
 
 void LogReplayLink::_play(void)
 {
-    // FIXME: With move to link I don't think this is needed any more? Except for the replay widget handling multi-uas?
     qgcApp()->toolbox()->linkManager()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
 #ifndef __mobile__
     qgcApp()->toolbox()->mavlinkProtocol()->suspendLogForReplay(true);

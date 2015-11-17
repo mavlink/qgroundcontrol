@@ -26,12 +26,13 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Dialogs 1.2
 
-import QGroundControl.Controls 1.0
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controllers 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.ScreenTools   1.0
 
 QGCView {
     id:         qgcView
@@ -88,7 +89,7 @@ QGCView {
         onBoardFound: {
             if (initialBoardSearch) {
                 // Board was found right away, so something is already plugged in before we've started upgrade
-                if (controller.qgcConnections) {
+                if (QGroundControl.linkManager.anyActiveLinks) {
                     statusTextArea.append(qgcDisconnectText)
                 } else {
                     statusTextArea.append(usbUnplugText.replace('{0}', controller.boardType))

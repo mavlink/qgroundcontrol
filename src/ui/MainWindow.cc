@@ -452,6 +452,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }
 
+    // We still need to shutdown LinkManager even though no active connections so that we don't get any
+    // more auto-connect links during shutdown.
+    qgcApp()->toolbox()->linkManager()->shutdown();
+
     // This will process any remaining flight log save dialogs
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
 

@@ -72,8 +72,17 @@ public:
     LinkManager(QGCApplication* app);
     ~LinkManager();
 
+    Q_PROPERTY(bool anyActiveLinks                      READ anyActiveLinks     NOTIFY anyActiveLinksChanged)
+    Q_PROPERTY(bool anyConnectedLinks                   READ anyConnectedLinks  NOTIFY anyConnectedLinksChanged)
     Q_PROPERTY(QmlObjectListModel* links                READ links              CONSTANT)
     Q_PROPERTY(QmlObjectListModel* linkConfigurations   READ linkConfigurations CONSTANT)
+
+    // Property accessors
+    bool                anyConnectedLinks(void);
+    bool                anyActiveLinks(void);
+    QmlObjectListModel* links(void)                 { return &_links; }
+    QmlObjectListModel* linkConfigurations(void)    { return &_linkConfigurations; }
+
 
     /// Load list of link configurations from disk
     void loadLinkConfigurationList();
@@ -120,9 +129,6 @@ public:
     /// @return true: continue further processing of this message, false: disregard this message
     bool notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat);
 
-    Q_INVOKABLE bool anyConnectedLinks(void);
-    Q_INVOKABLE bool anyActiveLinks(void);
-    
     // The following APIs are public but should not be called in normal use. The are mainly exposed
     // here for unit test code.
     void _deleteLink(LinkInterface* link);
@@ -131,13 +137,13 @@ public:
     // Called to signal app shutdown. Disconnects all links while turning off auto-connect.
     void shutdown(void);
 
-    QmlObjectListModel* links(void)                 { return &_links; }
-    QmlObjectListModel* linkConfigurations(void)    { return &_linkConfigurations; }
-
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
 signals:
+    void anyActiveLinksChanged(bool anyActiveLinks);
+    void anyConnectedLinksChanged(bool anyConnectedLinks);
+
     void newLink(LinkInterface* link);
 
     // Link has been deleted. You may not necessarily get a linkInactive before the link is deleted.
@@ -181,7 +187,6 @@ private:
 
     MAVLinkProtocol*    _mavlinkProtocol;
     QList<int>          _ignoreVehicleIds;  ///< List of vehicle id for which we ignore further communication
-    bool                _allowAutoConnect;
 
     QmlObjectListModel  _links;
     QmlObjectListModel  _linkConfigurations;

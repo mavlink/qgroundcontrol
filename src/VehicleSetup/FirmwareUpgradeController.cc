@@ -68,13 +68,17 @@ FirmwareUpgradeController::FirmwareUpgradeController(void) :
     connect(_threadController, &PX4FirmwareUpgradeThreadController::flashComplete,          this, &FirmwareUpgradeController::_flashComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
     
-    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &FirmwareUpgradeController::_linkDisconnected);
-
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
+}
+
+FirmwareUpgradeController::~FirmwareUpgradeController()
+{
+    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
 }
 
 void FirmwareUpgradeController::startBoardSearch(void)
 {
+    qgcApp()->toolbox()->linkManager()->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
     _bootloaderFound = false;
     _startFlashWhenBootloaderFound = false;
     _threadController->startFindBoardLoop();
@@ -554,17 +558,6 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
                               "append",
                               Q_RETURN_ARG(QVariant, returnedValue),
                               Q_ARG(QVariant, varText));
-}
-
-bool FirmwareUpgradeController::qgcConnections(void)
-{
-    return qgcApp()->toolbox()->linkManager()->anyActiveLinks();
-}
-
-void FirmwareUpgradeController::_linkDisconnected(LinkInterface* link)
-{
-    Q_UNUSED(link);
-    emit qgcConnectionsChanged(qgcConnections());
 }
 
 void FirmwareUpgradeController::_errorCancel(const QString& msg)

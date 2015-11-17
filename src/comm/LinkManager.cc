@@ -53,7 +53,6 @@ LinkManager::LinkManager(QGCApplication* app)
     , _connectionsSuspended(false)
     , _mavlinkChannelsUsedBitMask(0)
     , _mavlinkProtocol(NULL)
-    , _allowAutoConnect(true)
 {
     qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
     qmlRegisterUncreatableType<LinkConfiguration>   ("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
@@ -188,6 +187,9 @@ bool LinkManager::connectLink(LinkInterface* link)
     }
 
     if (link->_connect()) {
+        if (!anyConnectedLinks()) {
+            emit anyConnectedLinksChanged(true);
+        }
         return true;
     } else {
         return false;
@@ -413,7 +415,7 @@ SerialConfiguration* LinkManager::_autoconnectConfigurationsContainsPort(const Q
 #ifndef __ios__
 void LinkManager::_updateAutoConnectLinks(void)
 {
-    if (!_allowAutoConnect || _configUpdateSuspended || !_configurationsLoaded) {
+    if (_connectionsSuspended || qgcApp()->runningUnitTests()) {
         return;
     }
 
@@ -551,11 +553,15 @@ void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int 
 
         link->setActive(true);
         emit linkActive(link, vehicleId, vehicleFirmwareType, vehicleType);
+
+        if (!anyActiveLinks()) {
+            emit anyActiveLinksChanged(true);
+        }
     }
 }
 
 void LinkManager::shutdown(void)
 {
-    _allowAutoConnect = false;
+    setConnectionsSuspended("Shutdown");
     disconnectAll(true /* disconnectPersistentLink */);
 }
