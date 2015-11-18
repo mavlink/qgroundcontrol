@@ -208,10 +208,6 @@ MainWindow::MainWindow()
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
 #endif //QGC_MOUSE_ENABLED_LINUX
 
-    // These also cause the screen to redraw so we need to update any OpenGL canvases in QML controls
-    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkConnected,    this, &MainWindow::_linkStateChange);
-    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &MainWindow::_linkStateChange);
-
     // Connect link
     if (_autoReconnect)
     {
@@ -445,7 +441,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
                 QMessageBox::Yes | QMessageBox::Cancel,
                 QMessageBox::Cancel);
         if (button == QMessageBox::Yes) {
-            qgcApp()->toolbox()->linkManager()->disconnectAll();
+            qgcApp()->toolbox()->linkManager()->shutdown();
             // The above disconnect causes a flurry of activity as the vehicle components are removed. This in turn
             // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
             // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
@@ -456,11 +452,17 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }
 
+    // We still need to shutdown LinkManager even though no active connections so that we don't get any
+    // more auto-connect links during shutdown.
+    qgcApp()->toolbox()->linkManager()->shutdown();
+
     // This will process any remaining flight log save dialogs
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
 
     // Should not be any active connections
-    Q_ASSERT(!qgcApp()->toolbox()->linkManager()->anyConnectedLinks());
+    if (qgcApp()->toolbox()->linkManager()->anyActiveLinks()) {
+        qWarning() << "All links should be disconnected by now";
+    }
 
     // We have to pull out the QmlWidget from the main window and delete it here, before
     // the MainWindow ends up getting deleted. Otherwise the Qml has a reference to MainWindow
@@ -647,11 +649,6 @@ void MainWindow::restoreLastUsedConnection()
         // Create a link for it
         qgcApp()->toolbox()->linkManager()->createConnectedLink(connection);
     }
-}
-
-void MainWindow::_linkStateChange(LinkInterface*)
-{
-    emit repaintCanvas();
 }
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
