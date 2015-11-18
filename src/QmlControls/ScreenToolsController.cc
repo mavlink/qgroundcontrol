@@ -43,15 +43,5 @@ const double ScreenToolsController::_largeFontPixelSizeRatio    = 1.66;
 
 ScreenToolsController::ScreenToolsController()
 {
-    MainWindow* mainWindow = MainWindow::instance();
-    // Unit tests can run Qml without MainWindow
-    if (mainWindow) {
-        connect(mainWindow, &MainWindow::repaintCanvas, this, &ScreenToolsController::_updateCanvas);
-    }
-}
 
-void ScreenToolsController::_updateCanvas()
-{
-    emit repaintRequested();
 }
-

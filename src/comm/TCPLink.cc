@@ -124,18 +124,16 @@ void TCPLink::readBytes()
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.
  **/
-bool TCPLink::_disconnect(void)
+void TCPLink::_disconnect(void)
 {
 	quit();
 	wait();
-    if (_socket)
-	{
+    if (_socket) {
         _socketIsConnected = false;
 		_socket->deleteLater(); // Make sure delete happens on correct thread
 		_socket = NULL;
         emit disconnected();
 	}
-    return true;
 }
 
 /**

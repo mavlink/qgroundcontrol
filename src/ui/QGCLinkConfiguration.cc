@@ -32,6 +32,8 @@ This file is part of the QGROUNDCONTROL project
 #include "ui_QGCLinkConfiguration.h"
 #include "QGCCommConfiguration.h"
 #include "QGCMessageBox.h"
+#include "UDPLink.h"
+#include "TCPLink.h"
 
 QGCLinkConfiguration::QGCLinkConfiguration(QWidget *parent) :
     QWidget(parent),
@@ -69,14 +71,17 @@ void QGCLinkConfiguration::on_delLinkButton_clicked()
                 QMessageBox::Cancel);
             if (button == QMessageBox::Yes) {
                 // Get link attached to this configuration (if any)
-                LinkInterface* iface = config->getLink();
+                LinkInterface* iface = config->link();
                 if(iface) {
-                    // Disconnect it (if connected)
-                    qgcApp()->toolbox()->linkManager()->disconnectLink(iface);
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(iface, false /* disconnectAutoconnectLink */);
                 }
                 _viewModel->beginChange();
+
                 // Remove configuration
-                qgcApp()->toolbox()->linkManager()->removeLinkConfiguration(config);
+                QmlObjectListModel* linkConfigurations = qgcApp()->toolbox()->linkManager()->linkConfigurations();
+                linkConfigurations->removeOne(config);
+                delete config;
+
                 // Save list
                 qgcApp()->toolbox()->linkManager()->saveLinkConfigurationList();
                 _viewModel->endChange();
@@ -97,11 +102,11 @@ void QGCLinkConfiguration::on_connectLinkButton_clicked()
     if(index.row() >= 0) {
         LinkConfiguration* config = _viewModel->getConfiguration(index.row());
         if(config) {
-            LinkInterface* link = config->getLink();
+            LinkInterface* link = config->link();
             if(link) {
                 // Disconnect Link
                 if (link->isConnected()) {
-                    qgcApp()->toolbox()->linkManager()->disconnectLink(link);
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(link, false /* disconnectAutoconnectLink */);
                 }
             } else {
                 LinkInterface* link = qgcApp()->toolbox()->linkManager()->createConnectedLink(config);
@@ -186,7 +191,7 @@ void QGCLinkConfiguration::on_addLinkButton_clicked()
         if(config) {
             _fixUnnamed(config);
             _viewModel->beginChange();
-            qgcApp()->toolbox()->linkManager()->addLinkConfiguration(commDialog->getConfig());
+            qgcApp()->toolbox()->linkManager()->linkConfigurations()->append(commDialog->getConfig());
             qgcApp()->toolbox()->linkManager()->saveLinkConfigurationList();
             _viewModel->endChange();
         }
@@ -240,7 +245,7 @@ void QGCLinkConfiguration::_updateButtons()
             if(config->isDynamic()) {
                 deleteEnabled = false;
             }
-            LinkInterface* link = config->getLink();
+            LinkInterface* link = config->link();
             if(link) {
                 _ui->connectLinkButton->setText("Disconnect");
             } else {
@@ -261,16 +266,13 @@ LinkViewModel::LinkViewModel(QObject *parent) : QAbstractListModel(parent)
 int LinkViewModel::rowCount( const QModelIndex & parent) const
 {
     Q_UNUSED(parent);
-    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
-    int count = cfgList.count();
-    return count;
+    return qgcApp()->toolbox()->linkManager()->linkConfigurations()->count();
 }
 
 QVariant LinkViewModel::data( const QModelIndex & index, int role) const
 {
-    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
-    if (role == Qt::DisplayRole && index.row() < cfgList.count()) {
-        QString name(cfgList.at(index.row())->name());
+    if (role == Qt::DisplayRole && index.row() < rowCount()) {
+        QString name(qgcApp()->toolbox()->linkManager()->linkConfigurations()->value<LinkConfiguration*>(index.row())->name());
         return name;
     }
     return QVariant();
@@ -278,9 +280,8 @@ QVariant LinkViewModel::data( const QModelIndex & index, int role) const
 
 LinkConfiguration* LinkViewModel::getConfiguration(int row)
 {
-    QList<LinkConfiguration*> cfgList = qgcApp()->toolbox()->linkManager()->getLinkConfigurationList();
-    if(row < cfgList.count()) {
-        return cfgList.at(row);
+    if(row < rowCount()) {
+        return qgcApp()->toolbox()->linkManager()->linkConfigurations()->value<LinkConfiguration*>(row);
     }
     return NULL;
 }

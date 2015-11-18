@@ -94,6 +94,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _satelliteCount(-1)
     , _satelliteLock(0)
     , _updateCount(0)
+    , _rcRSSI(0)
+    , _rcRSSIstore(100.0)
     , _missionManager(NULL)
     , _missionManagerInitialRequestComplete(false)
     , _parameterLoader(NULL)
@@ -106,6 +108,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _autopilotPluginManager(autopilotPluginManager)
     , _joystickManager(joystickManager)
     , _flowImageIndex(0)
+    , _allLinksInactiveSent(false)
 {
     _addLink(link);
 
@@ -119,9 +122,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     setLatitude(_uas->getLatitude());
     setLongitude(_uas->getLongitude());
 
-    connect(_uas, &UAS::latitudeChanged,    this, &Vehicle::setLatitude);
-    connect(_uas, &UAS::longitudeChanged,   this, &Vehicle::setLongitude);
-    connect(_uas, &UAS::imageReady,         this, &Vehicle::_imageReady);
+    connect(_uas, &UAS::latitudeChanged,            this, &Vehicle::setLatitude);
+    connect(_uas, &UAS::longitudeChanged,           this, &Vehicle::setLongitude);
+    connect(_uas, &UAS::imageReady,                 this, &Vehicle::_imageReady);
+    connect(_uas, &UAS::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
     _firmwarePlugin     = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
     _autopilotPlugin    = _autopilotPluginManager->newAutopilotPluginForVehicle(this);
@@ -186,6 +190,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 
 Vehicle::~Vehicle()
 {
+    qCDebug(VehicleLog) << "~Vehicle" << this;
+
     delete _missionManager;
     _missionManager = NULL;
 
@@ -285,38 +291,29 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
 
 bool Vehicle::_containsLink(LinkInterface* link)
 {
-    foreach (SharedLinkInterface sharedLink, _links) {
-        if (sharedLink.data() == link) {
-            return true;
-        }
-    }
-
-    return false;
+    return _links.contains(link);
 }
 
 void Vehicle::_addLink(LinkInterface* link)
 {
     if (!_containsLink(link)) {
-        _links += qgcApp()->toolbox()->linkManager()->sharedPointerForLink(link);
+        _links += link;
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
-        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &Vehicle::_linkDisconnected);
+        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
+        connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
     }
 }
 
-void Vehicle::_linkDisconnected(LinkInterface* link)
+void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
 {
-    qCDebug(VehicleLog) << "_linkDisconnected:" << link->getName();
-    qCDebug(VehicleLog) << "link count:" << _links.count();
+    qCDebug(VehicleLog) << "_linkInactiveOrDeleted linkCount" << _links.count();
 
-    for (int i=0; i<_links.count(); i++) {
-        if (_links[i].data() == link) {
-            _links.removeAt(i);
-            break;
-        }
-    }
+    _links.removeOne(link);
 
-    if (_links.count() == 0) {
-        emit allLinksDisconnected(this);
+    if (_links.count() == 0 && !_allLinksInactiveSent) {
+        // Make sure to not send this more than one time
+        _allLinksInactiveSent = true;
+        emit allLinksInactive(this);
     }
 }
 
@@ -328,10 +325,7 @@ void Vehicle::sendMessage(mavlink_message_t message)
 void Vehicle::_sendMessage(mavlink_message_t message)
 {
     // Emit message on all links that are currently connected
-    foreach (SharedLinkInterface sharedLink, _links) {
-        LinkInterface* link = sharedLink.data();
-        Q_ASSERT(link);
-
+    foreach (LinkInterface* link, _links) {
         if (link->isConnected()) {
             MAVLinkProtocol* mavlink = _mavlink;
 
@@ -348,17 +342,6 @@ void Vehicle::_sendMessage(mavlink_message_t message)
             link->writeBytes((const char*)buffer, len);
         }
     }
-}
-
-QList<LinkInterface*> Vehicle::links(void)
-{
-    QList<LinkInterface*> list;
-
-    foreach (SharedLinkInterface sharedLink, _links) {
-        list += sharedLink.data();
-    }
-
-    return list;
 }
 
 void Vehicle::setLatitude(double latitude)
@@ -1035,11 +1018,11 @@ void Vehicle::_parametersReady(bool parametersReady)
 
 void Vehicle::_communicationInactivityTimedOut(void)
 {
-    // Vechile is no longer communicating with us, disconnect all links
+    // Vehicle is no longer communicating with us, disconnect all links inactive
 
     LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
     for (int i=0; i<_links.count(); i++) {
-        linkMgr->disconnectLink(_links[i].data());
+        linkMgr->disconnectLink(_links[i], false /* disconnectAutoconnectLink */);
     }
 }
 
@@ -1056,5 +1039,19 @@ void Vehicle::_imageReady(UASInterface*)
         qgcApp()->toolbox()->imageProvider()->setImage(&img, _id);
         _flowImageIndex++;
         emit flowImageIndexChanged();
+    }
+}
+
+void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
+{
+    // Low pass to git rid of jitter
+    _rcRSSIstore = (_rcRSSIstore * 0.9f) + ((float)rssi * 0.1);
+    uint8_t filteredRSSI = (uint8_t)ceil(_rcRSSIstore);
+    if(_rcRSSIstore < 0.1) {
+        filteredRSSI = 0;
+    }
+    if(_rcRSSI != filteredRSSI) {
+        _rcRSSI = filteredRSSI;
+        emit rcRSSIChanged(_rcRSSI);
     }
 }

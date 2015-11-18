@@ -58,14 +58,6 @@ public:
 
     // Methods
 
-    /// Called to notify that a heartbeat was received with the specified information. MultiVehicleManager
-    /// will create/update Vehicles as necessary.
-    ///     @param link Heartbeat came through on this link
-    ///     @param vehicleId Mavlink system id for vehicle
-    ///     @param heartbeat Mavlink heartbeat message
-    /// @return true: continue further processing of this message, false: disregard this message
-    bool notifyHeartbeatInfo(LinkInterface* link, int vehicleId, mavlink_heartbeat_t& heartbeat);
-
     Q_INVOKABLE Vehicle* getVehicleById(int vehicleId);
 
     UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
@@ -98,6 +90,7 @@ private slots:
     void _deleteVehiclePhase2(void);
     void _setActiveVehiclePhase2(void);
     void _autopilotParametersReadyChanged(bool parametersReady);
+    void _linkActive(LinkInterface* link, int vehicleId, int vehicleFirmwareType, int vehicleType);
 
 private:
     bool _vehicleExists(int vehicleId);
@@ -106,8 +99,8 @@ private:
     bool        _parameterReadyVehicleAvailable;    ///< true: An active vehicle with ready parameters is available
     Vehicle*    _activeVehicle;                     ///< Currently active vehicle from a ui perspective
 
-    Vehicle*    _vehicleBeingDeleted;               ///< Vehicle being deleted in queued phases
-    Vehicle*    _vehicleBeingSetActive;             ///< Vehicle being set active in queued phases
+    QList<Vehicle*> _vehiclesBeingDeleted;          ///< List of Vehicles being deleted in queued phases
+    Vehicle*        _vehicleBeingSetActive;         ///< Vehicle being set active in queued phases
 
     QList<int>  _ignoreVehicleIds;          ///< List of vehicle id for which we ignore further communication
 

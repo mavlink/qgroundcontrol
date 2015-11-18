@@ -219,12 +219,12 @@ Row {
                 smooth:         true
                 width:          mainWindow.tbCellHeight * 0.65
                 height:         mainWindow.tbCellHeight * 0.5
-                opacity:        _controller.remoteRSSI < 1 ? 0.5 : 1
+                opacity:        activeVehicle.rcRSSI < 1 ? 0.5 : 1
                 anchors.verticalCenter: parent.verticalCenter
             }
             SignalStrength {
                 size:           mainWindow.tbCellHeight * 0.5
-                percent:        _controller.remoteRSSI
+                percent:        activeVehicle.rcRSSI
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -284,10 +284,11 @@ Row {
     //-------------------------------------------------------------------------
     //-- Vehicle Selector
     QGCButton {
-        width:      ScreenTools.defaultFontPixelSize * 12
-        height:     mainWindow.tbButtonWidth
-        text:       "Vehicle " + activeVehicle.id
-        visible:    vehicleMenuItems.length > 0
+        id:                     vehicleSelectorButton
+        width:                  ScreenTools.defaultFontPixelSize * 12
+        height:                 mainWindow.tbButtonWidth
+        text:                   "Vehicle " + activeVehicle.id
+        visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
         anchors.verticalCenter: parent.verticalCenter
 
         menu: vehicleMenu
@@ -331,7 +332,7 @@ Row {
 
         Connections {
             target:         multiVehicleManager.vehicles
-            onCountChanged: parent.updateVehicleMenu
+            onCountChanged: vehicleSelectorButton.updateVehicleMenu
         }
     }
 
