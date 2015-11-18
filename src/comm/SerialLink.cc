@@ -124,7 +124,7 @@ void SerialLink::readBytes()
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.
  **/
-bool SerialLink::_disconnect(void)
+void SerialLink::_disconnect(void)
 {
     if (_port) {
         _port->close();
@@ -135,7 +135,6 @@ bool SerialLink::_disconnect(void)
 #ifdef __android__
     qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(false);
 #endif
-    return true;
 }
 
 /**

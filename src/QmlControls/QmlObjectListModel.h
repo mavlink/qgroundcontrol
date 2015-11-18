@@ -34,13 +34,13 @@ public:
     QmlObjectListModel(QObject* parent = NULL);
     ~QmlObjectListModel();
     
-    Q_INVOKABLE QObject* get(int index);
-    
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     
     /// Returns true if any of the items in the list are dirty. Requires each object to have
     /// a dirty property and dirtyChanged signal.
     Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
+
+    Q_INVOKABLE QObject* get(int index)     { return _objectList[index]; }
 
     // Property accessors
     
@@ -52,13 +52,14 @@ public:
     void append(QObject* object);
     void clear(void);
     QObject* removeAt(int i);
+    QObject* removeOne(QObject* object) { return removeAt(indexOf(object)); }
     void insert(int i, QObject* object);
     QObject* operator[](int i);
     const QObject* operator[](int i) const;
-    
-    template <class T>
-    const QList<T*>& list(void) { return *((QList<T*>*)((void*)(&_objectList))); }
-    
+    bool contains(QObject* object) { return _objectList.indexOf(object) != -1; }
+    int indexOf(QObject* object) { return _objectList.indexOf(object); }
+    template<class T> T value(int index) { return qobject_cast<T>(_objectList[index]); }
+
 signals:
     void countChanged(int count);
     void dirtyChanged(bool dirtyChanged);

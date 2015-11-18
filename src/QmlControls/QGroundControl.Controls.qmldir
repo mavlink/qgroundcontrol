@@ -9,7 +9,6 @@ QGCComboBox         1.0 QGCComboBox.qml
 QGCColoredImage     1.0 QGCColoredImage.qml
 QGCToolBarButton    1.0 QGCToolBarButton.qml
 QGCMovableItem      1.0 QGCMovableItem.qml
-QGCCanvas           1.0 QGCCanvas.qml
 
 SubMenuButton       1.0 SubMenuButton.qml
 IndicatorButton     1.0 IndicatorButton.qml
