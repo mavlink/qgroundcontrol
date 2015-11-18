@@ -71,6 +71,10 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string, Fact
         case FactMetaData::valueTypeDouble:
             convertTo = QVariant::Double;
             break;
+        case FactMetaData::valueTypeUnknown: // keep compiler happy
+            *convertOk = false;
+            return var;
+            break;
     }
     
     *convertOk = var.convert(convertTo);
@@ -135,7 +139,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
     }
     _parameterMetaDataLoaded = true;
 
-    QRegExp parameterCategories = QRegExp("(ArduCopter | ArduPlane | ArduRover | AntennaTracker");
+    QRegExp parameterCategories = QRegExp("ArduCopter|ArduPlane|APMrover2|AntennaTracker");
     QString currentCategory;
 
     QString parameterFilename;
@@ -174,7 +178,9 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
         if (xml.isStartElement()) {
             QString elementName = xml.name().toString();
 
-            if (elementName == "paramfile") {
+            if (elementName.isEmpty()) {
+                // skip empty elements
+            } else if (elementName == "paramfile") {
                 if (xmlState.top() != XmlStateNone) {
                     qCWarning(APMParameterMetaDataLog) << "Badly formed XML, paramfile matched";
                 }
@@ -202,10 +208,12 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                 if (xml.attributes().hasAttribute("name")) {
                     // we will handle metadata only for specific MAV_TYPEs and libraries
                     const QString nameValue = xml.attributes().value("name").toString();
-                    if (!nameValue.contains(parameterCategories)) {
+                    if (nameValue.contains(parameterCategories)) {
                         xmlState.push(XmlStateFoundParameters);
                         currentCategory = nameValue;
                     } else if(xmlState.top() == XmlStateFoundLibraries) {
+                        // we handle all libraries section under the same category libraries
+                        // so not setting currentCategory
                         xmlState.push(XmlStateFoundParameters);
                     } else {
                         qCDebug(APMParameterMetaDataLog) << "not interested in this block of parameters skip";
@@ -263,6 +271,9 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                     metaData->setLongDescription(longDescription);
 
                     groupMembers[group] << name;
+                    if (name == "AUTOTUNE_AGGR") {
+                        qDebug() << "nothing here";
+                    }
 
                     qCDebug(APMParameterMetaDataLog) << "APM parameter description doesn't specify a default value";
                 }
@@ -287,13 +298,17 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
             if (elementName == "param" && xmlState.top() == XmlStateFoundParameter) {
                 // Done loading this parameter
                 // Reset for next parameter
+                qCDebug(APMParameterMetaDataLog) << "done loading parameter";
                 metaData = NULL;
                 badMetaData = false;
                 xmlState.pop();
             } else if (elementName == "parameters") {
-                qCDebug(APMParameterMetaDataLog) << "end of parameters";
+                qCDebug(APMParameterMetaDataLog) << "end of parameters for category: " << currentCategory;
                 correctGroupMemberships(_vehicleTypeToParametersMap[currentCategory], groupMembers);
                 groupMembers.clear();
+                xmlState.pop();
+            } else if (elementName == "vehicles") {
+                qCDebug(APMParameterMetaDataLog) << "vehicles end here, libraries will follow";
                 xmlState.pop();
             }
         }
@@ -331,7 +346,9 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, FactM
     QList<QPair<QString,QString> > values;
     // as long as param doens't end
     while (!(elementName == "param" && xml.isEndElement())) {
-        if (elementName == "field") {
+        if (elementName.isEmpty()) {
+            // skip empty elements. Somehow I am getting lot of these. Dont know what to do with them.
+        } else if (elementName == "field") {
             QString attributeName = xml.attributes().value("name").toString();
             if ( attributeName == "range") {
                 QString range = xml.readElementText();
@@ -377,19 +394,25 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     _loadParameterFactMetaData();
 
     const QString mavTypeString = mavTypeToString(vehicleType);
+    FactMetaData *metaData = NULL;
+
+    // check if we have metadata for fact, use generic otherwise
     if (_vehicleTypeToParametersMap[mavTypeString].contains(fact->name())) {
-        FactMetaData *metaData = _vehicleTypeToParametersMap[mavTypeString][fact->name()];
-        metaData->setType(fact->type());
-//        if (metaData->defaultValueAvailable()) {
-//            QVariant var;
-//            if (!metaData->convertAndValidate(metaData->defaultValue(), false /* convertOnly */, var, errorString)) {
-//                qCWarning(APMParameterMetaDataLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->defaultValue() << " error:" << errorString;
-//            }
-//        }
-        fact->setMetaData(metaData);
+        metaData = _vehicleTypeToParametersMap[mavTypeString][fact->name()];
+    } else if (_vehicleTypeToParametersMap["libraries"].contains(fact->name())) {
+        metaData = _vehicleTypeToParametersMap["libraries"][fact->name()];
     } else {
-        // Use generic meta data
-        FactMetaData* metaData = new FactMetaData(fact->type(), fact);
-        fact->setMetaData(metaData);
+        qCWarning(APMParameterMetaDataLog) << "No metaData for " << fact->name() << "using generic metadata";
+        metaData = new FactMetaData(fact->type(), fact);
     }
+
+    metaData->setType(fact->type());
+    fact->setMetaData(metaData);
+
+//    if (metaData->defaultValueAvailable()) {
+//        QVariant var;
+//        if (!metaData->convertAndValidate(metaData->defaultValue(), false /* convertOnly */, var, errorString)) {
+//            qCWarning(APMParameterMetaDataLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->defaultValue() << " error:" << errorString;
+//        }
+//    }
 }

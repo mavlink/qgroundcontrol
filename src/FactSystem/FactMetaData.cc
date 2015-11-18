@@ -113,7 +113,9 @@ void FactMetaData::setMin(const QVariant& min)
         _min = min;
         _minIsDefaultForType = false;
     } else {
-        qWarning() << "Attempt to set min below allowable value";
+        qWarning() << "Attempt to set min below allowable value for fact: " << name()
+                   << ", value attempted: " << min
+                   << ", type: " << type() << ", min for type: " << _minForType();
         _min = _minForType();
     }
 }
@@ -122,7 +124,10 @@ void FactMetaData::setMax(const QVariant& max)
 {
     if (_type == valueTypeUnknown) {
         _max = max;
-    } else if (max > _maxForType()) {
+        return;
+    }
+
+    if (max > _maxForType()) {
         qWarning() << "Attempt to set max above allowable value";
         _max = _maxForType();
     } else {

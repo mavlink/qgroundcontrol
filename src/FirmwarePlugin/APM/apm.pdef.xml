@@ -767,6 +767,11 @@
 <field name="Increment">1</field>
 <field name="Units">Centimeters</field>
 </param>
+<param humanName="RTL speed" name="ArduCopter:RTL_SPEED" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain horizontally while flying home. If this is set to zero, WPNAV_SPEED will be used instead." user="Standard">
+<field name="Range">0 2000</field>
+<field name="Increment">50</field>
+<field name="Units">cm/s</field>
+</param>
 <param humanName="Rangefinder gain" name="ArduCopter:RNGFND_GAIN" documentation="Used to adjust the speed with which the target altitude is changed when objects are sensed below the copter" user="Standard">
 <field name="Range">0.01 2.0</field>
 <field name="Increment">0.01</field>
@@ -1395,16 +1400,6 @@
 <value code="0">Disabled</value>
 <value code=" 1">Enabled</value>
 </values>
-</param>
-<param humanName="Heli Stabilize Throttle Collective Minimum" name="ArduCopter:H_STAB_COL_MIN" documentation="Helicopter's minimum collective position while pilot directly controls collective in stabilize mode" user="Standard">
-<field name="Range">0 500</field>
-<field name="Increment">1</field>
-<field name="Units">Percent*10</field>
-</param>
-<param humanName="Stabilize Throttle Maximum" name="ArduCopter:H_STAB_COL_MAX" documentation="Helicopter's maximum collective position while pilot directly controls collective in stabilize mode" user="Standard">
-<field name="Range">500 1000</field>
-<field name="Increment">1</field>
-<field name="Units">Percent*10</field>
 </param>
 <param humanName="ESC Update Speed" name="ArduCopter:RC_SPEED" documentation="This is the speed in Hertz that your ESCs will receive updates" user="Advanced">
 <field name="Range">50 490</field>
@@ -2182,6 +2177,12 @@
 </values>
 <field name="RebootRequired">True</field>
 </param>
+<param humanName="Save GPS configuration" name="GPS_SAVE_CFG" documentation="Determines whether the configuration for this GPS should be written to non-volatile memory on the GPS. Currently working for UBlox." user="Advanced">
+<values>
+<value code="0">Do not save config</value>
+<value code="1">Save config</value>
+</values>
+</param>
 </parameters>
 <parameters name="CAM_">
 <param humanName="Camera shutter (trigger) type" name="CAM_TRIGG_TYPE" documentation="how to trigger the camera to take a picture" user="Standard">
@@ -2897,6 +2898,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -2955,6 +2957,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -3013,6 +3016,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -3071,6 +3075,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -3129,6 +3134,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -3187,6 +3193,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -3245,6 +3252,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -3303,6 +3311,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -3361,6 +3370,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -3419,6 +3429,7 @@
 <value code="27">Parachute</value>
 <value code="28">EPM</value>
 <value code="29">LandingGear</value>
+<value code="30">EngineRunEnable</value>
 </values>
 </param>
 </parameters>
@@ -4743,6 +4754,12 @@
 <param humanName="User-defined serial number" name="BRD_SERIAL_NUM" documentation="User-defined serial number of this vehicle, it can be any arbitrary number you want and has no effect on the autopilot" user="Standard">
 <field name="Range">-32767 to 32768 (any 16bit signed number)</field>
 </param>
+<param humanName=" Enable use of UAVCAN devices" name="BRD_CAN_ENABLE" documentation="Enabling this option on a Pixhawk enables UAVCAN devices. Note that this uses about 25k of memory">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
 </parameters>
 <parameters name="AFS_">
 <param humanName="Manual Pin" name="AFS_MAN_PIN" documentation="This sets a digital output pin to set high when in manual mode" user="Advanced">
@@ -4935,7 +4952,7 @@
 <field name="Range">100 500</field>
 <field name="Increment">50</field>
 </param>
-<param humanName="GPS glitch radius gate size (m)" name="EKF_GLITCH_RAD" documentation="This parameter controls the maximum amount of difference in horizontal position (in m) between the value predicted by the filter and the value measured by the GPS before the long term glitch protection logic is activated and an offset is applied to the GPS measurement to compensate. Position steps smaller than this value will be temporarily ignored, but will then be accepted and the filter will move to the new position. Position steps larger than this value will be ignored initially, but the filter will then apply an offset to the GPS position measurement." user="Advanced">
+<param humanName="GPS glitch radius gate size (m)" name="EKF_GLITCH_RAD" documentation="This parameter controls the maximum amount of difference in horizontal position (in m) between the value predicted by the filter and the value measured by the GPS before the long term glitch protection logic is activated and the filter states are reset to the new GPS position. Position steps smaller than this value will be temporarily ignored, but will then be accepted and the filter will move to the new position. Position steps larger than this value will be ignored initially, but the filter will then apply an offset to the GPS position measurement." user="Advanced">
 <field name="Range">10 50</field>
 <field name="Increment">5</field>
 <field name="Units">meters</field>
@@ -4989,13 +5006,13 @@
 </param>
 </parameters>
 <parameters name="EK2_">
-<param humanName="Enable EKF2" name="EK2_ENABLE" documentation="This enables EKF2. Enabling EKF2 only makes the maths run, it does not mean it will be used for flight control. To use it for flight control set AHRS_EKF_USE=3" user="Advanced">
+<param humanName="Enable EKF2" name="EK2_ENABLE" documentation="This enables EKF2. Enabling EKF2 only makes the maths run, it does not mean it will be used for flight control. To use it for flight control set AHRS_EKF_TYPE=2. A reboot or restart will need to be performed after changing the value of EK2_ENABLE for it to take effect." user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code=" 1">Enabled</value>
 </values>
 </param>
-<param humanName="GPS mode control" name="EK2_GPS_TYPE" documentation="This parameter controls use of GPS measurements : 0 = use 3D velocity &amp; 2D position, 1 = use 2D velocity and 2D position, 2 = use 2D position, 3 = use no GPS (optical flow will be used if available)" user="Advanced">
+<param humanName="GPS mode control" name="EK2_GPS_TYPE" documentation="This controls use of GPS measurements : 0 = use 3D velocity &amp; 2D position, 1 = use 2D velocity and 2D position, 2 = use 2D position, 3 = use no GPS (optical flow will be used if available)" user="Advanced">
 <values>
 <value code="0">GPS 3D Vel and 2D Pos</value>
 <value code=" 1">GPS 2D vel and 2D pos</value>
@@ -5003,62 +5020,66 @@
 <value code=" 3">No GPS use optical flow</value>
 </values>
 </param>
-<param humanName="GPS horizontal velocity measurement noise scaler" name="EK2_VELNE_NOISE" documentation="This is the scaler that is applied to the speed accuracy reported by the receiver to estimate the horizontal velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then a speed acuracy of 1 is assumed. Increasing it reduces the weighting on these measurements." user="Advanced">
+<param humanName="GPS horizontal velocity measurement noise (m/s)" name="EK2_VELNE_NOISE" documentation="This sets a lower limit on the speed accuracy reported by the GPS receiver that is used to set horizontal velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then the parameter value will be used. Increasing it reduces the weighting of the GPS horizontal velocity measurements." user="Advanced">
 <field name="Range">0.05 5.0</field>
 <field name="Increment">0.05</field>
+<field name="Units">m/s</field>
 </param>
-<param humanName="GPS vertical velocity measurement noise scaler" name="EK2_VELD_NOISE" documentation="This is the scaler that is applied to the speed accuracy reported by the receiver to estimate the vertical velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then a speed acuracy of 1 is assumed. Increasing it reduces the weighting on this measurement." user="Advanced">
+<param humanName="GPS vertical velocity measurement noise (m/s)" name="EK2_VELD_NOISE" documentation="This sets a lower limit on the speed accuracy reported by the GPS receiver that is used to set vertical velocity observation noise. If the model of receiver used does not provide a speed accurcy estimate, then the parameter value will be used. Increasing it reduces the weighting of the GPS vertical velocity measurements." user="Advanced">
 <field name="Range">0.05 5.0</field>
 <field name="Increment">0.05</field>
+<field name="Units">m/s</field>
 </param>
-<param humanName="GPS velocity measurement gate size" name="EK2_VEL_GATE" documentation="This parameter sets the number of standard deviations applied to the GPS velocity measurement innovation consistency check. Decreasing it makes it more likely that good measurements willbe rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
-<field name="Range">1 100</field>
-<field name="Increment">1</field>
+<param humanName="GPS velocity innovation gate size" name="EK2_VEL_GATE" documentation="This sets the percentage number of standard deviations applied to the GPS velocity measurement innovation consistency check. Decreasing it makes it more likely that good measurements willbe rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 1000</field>
+<field name="Increment">25</field>
 </param>
-<param humanName="GPS horizontal position measurement noise (m)" name="EK2_POSNE_NOISE" documentation="This is the RMS value of noise in the GPS horizontal position measurements. Increasing it reduces the weighting on these measurements." user="Advanced">
+<param humanName="GPS horizontal position measurement noise (m)" name="EK2_POSNE_NOISE" documentation="This sets the GPS horizontal position observation noise. Increasing it reduces the weighting of GPS horizontal position measurements." user="Advanced">
 <field name="Range">0.1 10.0</field>
 <field name="Increment">0.1</field>
-<field name="Units">meters</field>
+<field name="Units">m</field>
 </param>
-<param humanName="GPS position measurement gate size" name="EK2_POS_GATE" documentation="This parameter sets the number of standard deviations applied to the GPS position measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
-<field name="Range">1 100</field>
-<field name="Increment">1</field>
+<param humanName="GPS position measurement gate size" name="EK2_POS_GATE" documentation="This sets the percentage number of standard deviations applied to the GPS position measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 1000</field>
+<field name="Increment">25</field>
 </param>
-<param humanName="GPS glitch radius gate size (m)" name="EK2_GLITCH_RAD" documentation="This parameter controls the maximum amount of difference in horizontal position (in m) between the value predicted by the filter and the value measured by the GPS before the long term glitch protection logic is activated and an offset is applied to the GPS measurement to compensate. Position steps smaller than this value will be temporarily ignored, but will then be accepted and the filter will move to the new position. Position steps larger than this value will be ignored initially, but the filter will then apply an offset to the GPS position measurement." user="Advanced">
-<field name="Range">10 50</field>
+<param humanName="GPS glitch radius gate size (m)" name="EK2_GLITCH_RAD" documentation="This controls the maximum radial uncertainty in position between the value predicted by the filter and the value measured by the GPS before the filter position and velocity states are reset to the GPS. Making this value larger allows the filter to ignore larger GPS glitches but also means that non-GPS errors such as IMU and compass can create a larger error in position before the filter is forced back to the GPS position." user="Advanced">
+<field name="Range">10 100</field>
 <field name="Increment">5</field>
-<field name="Units">meters</field>
+<field name="Units">m</field>
 </param>
 <param humanName="GPS measurement delay (msec)" name="EK2_GPS_DELAY" documentation="This is the number of msec that the GPS measurements lag behind the inertial measurements." user="Advanced">
 <field name="Range">0 250</field>
 <field name="Increment">10</field>
-<field name="Units">milliseconds</field>
+<field name="Units">msec</field>
 </param>
-<param humanName="Primary height source" name="EK2_ALT_SOURCE" documentation="This parameter controls which height sensor is used by the EKF during optical flow navigation (when EKF_GPS_TYPE = 3). A value of will 0 cause it to always use baro altitude. A value of 1 will casue it to use range finder if available." user="Advanced">
+<param humanName="Primary height source" name="EK2_ALT_SOURCE" documentation="This parameter controls which height sensor is used by the EKF. If the selected optionn cannot be used, it will default to Baro as the primary height source. Setting 0 will use the baro altitude at all times. Setting 1 uses the range finder and is only available in combination with optical flow navigation (EK2_GPS_TYPE = 3). Setting 2 uses GPS." user="Advanced">
 <values>
 <value code="0">Use Baro</value>
 <value code=" 1">Use Range Finder</value>
+<value code=" 2">Use GPS</value>
 </values>
 </param>
-<param humanName="Altitude measurement noise (m)" name="EK2_ALT_NOISE" documentation="This is the RMS value of noise in the altitude measurement. Increasing it reduces the weighting on this measurement." user="Advanced">
+<param humanName="Altitude measurement noise (m)" name="EK2_ALT_NOISE" documentation="This is the RMS value of noise in the altitude measurement. Increasing it reduces the weighting of the baro measurement and will make the filter respond more slowly to baro measurement errors, but will make it more sensitive to GPS and accelerometer errors." user="Advanced">
 <field name="Range">0.1 10.0</field>
 <field name="Increment">0.1</field>
-<field name="Units">meters</field>
+<field name="Units">m</field>
 </param>
-<param humanName="Height measurement gate size" name="EK2_HGT_GATE" documentation="This parameter sets the number of standard deviations applied to the height measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
-<field name="Range">1 100</field>
-<field name="Increment">1</field>
+<param humanName="Height measurement gate size" name="EK2_HGT_GATE" documentation="This sets the percentage number of standard deviations applied to the height measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 1000</field>
+<field name="Increment">25</field>
 </param>
 <param humanName="Height measurement delay (msec)" name="EK2_HGT_DELAY" documentation="This is the number of msec that the Height measurements lag behind the inertial measurements." user="Advanced">
 <field name="Range">0 250</field>
 <field name="Increment">10</field>
-<field name="Units">milliseconds</field>
+<field name="Units">msec</field>
 </param>
 <param humanName="Magnetometer measurement noise (Gauss)" name="EK2_MAG_NOISE" documentation="This is the RMS value of noise in magnetometer measurements. Increasing it reduces the weighting on these measurements." user="Advanced">
 <field name="Range">0.01 0.5</field>
 <field name="Increment">0.01</field>
+<field name="Units">gauss</field>
 </param>
-<param humanName="Magnetometer calibration mode" name="EK2_MAG_CAL" documentation="EKF_MAG_CAL = 0 enables calibration when airborne and is the default setting for Plane users. EKF_MAG_CAL = 1 enables calibration when manoeuvreing. EKF_MAG_CAL = 2 prevents magnetometer calibration regardless of flight condition, is recommended if the external magnetic field is varying and is the default for rovers. EKF_MAG_CAL = 3 enables calibration when the first in-air field and yaw reset has completed and is the default for copters. EKF_MAG_CAL = 4 enables calibration all the time." user="Advanced">
+<param humanName="Magnetometer calibration mode" name="EK2_MAG_CAL" documentation="EKF_MAG_CAL = 0 enables calibration when airborne and is the default setting for Plane users. EKF_MAG_CAL = 1 enables calibration when manoeuvreing. EKF_MAG_CAL = 2 prevents magnetometer calibration regardless of flight condition, is recommended if the external magnetic field is varying and is the default for rovers. EKF_MAG_CAL = 3 enables calibration when the first in-air field and yaw reset has completed and is the default for copters. EKF_MAG_CAL = 4 enables calibration all the time. This determines when the filter will use the 3-axis magnetometer fusion model that estimates both earth and body fixed magnetic field states. This model is only suitable for use when the external magnetic field environment is stable." user="Advanced">
 <values>
 <value code="0">When flying</value>
 <value code="1">When manoeuvring</value>
@@ -5067,57 +5088,58 @@
 <value code="4">Always</value>
 </values>
 </param>
-<param humanName="Magnetometer measurement gate size" name="EK2_MAG_GATE" documentation="This parameter sets the number of standard deviations applied to the magnetometer measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
-<field name="Range">1 100</field>
-<field name="Increment">1</field>
+<param humanName="Magnetometer measurement gate size" name="EK2_MAG_GATE" documentation="This sets the percentage number of standard deviations applied to the magnetometer measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 1000</field>
+<field name="Increment">25</field>
 </param>
-<param humanName="Equivalent airspeed measurement noise (m/s)" name="EK2_EAS_NOISE" documentation="This is the RMS value of noise in equivalent airspeed measurements. Increasing it reduces the weighting on these measurements." user="Advanced">
+<param humanName="Equivalent airspeed measurement noise (m/s)" name="EK2_EAS_NOISE" documentation="This is the RMS value of noise in equivalent airspeed measurements used by planes. Increasing it reduces the weighting of airspeed measurements and will make wind speed estimates less noisy and slower to converge. Increasing also increases navigation errors when dead-reckoning without GPS measurements." user="Advanced">
 <field name="Range">0.5 5.0</field>
 <field name="Increment">0.1</field>
 <field name="Units">m/s</field>
 </param>
-<param humanName="Airspeed measurement gate size" name="EK2_EAS_GATE" documentation="This parameter sets the number of standard deviations applied to the airspeed measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
-<field name="Range">1 100</field>
-<field name="Increment">1</field>
+<param humanName="Airspeed measurement gate size" name="EK2_EAS_GATE" documentation="This sets the percentage number of standard deviations applied to the airspeed measurement innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 1000</field>
+<field name="Increment">25</field>
 </param>
 <param humanName="Range finder measurement noise (m)" name="EK2_RNG_NOISE" documentation="This is the RMS value of noise in the range finder measurement. Increasing it reduces the weighting on this measurement." user="Advanced">
 <field name="Range">0.1 10.0</field>
 <field name="Increment">0.1</field>
-<field name="Units">meters</field>
+<field name="Units">m</field>
 </param>
-<param humanName="Range finder measurement gate size" name="EK2_RNG_GATE" documentation="This parameter sets the number of standard deviations applied to the range finder innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
-<field name="Range">1 - 100</field>
-<field name="Increment">1</field>
+<param humanName="Range finder measurement gate size" name="EK2_RNG_GATE" documentation="This sets the percentage number of standard deviations applied to the range finder innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 - 1000</field>
+<field name="Increment">25</field>
 </param>
-<param humanName="Maximum valid optical flow rate" name="EK2_MAX_FLOW" documentation="This parameter sets the magnitude maximum optical flow rate in rad/sec that will be accepted by the filter" user="Advanced">
+<param humanName="Maximum valid optical flow rate" name="EK2_MAX_FLOW" documentation="This sets the magnitude maximum optical flow rate in rad/sec that will be accepted by the filter" user="Advanced">
 <field name="Range">1.0 - 4.0</field>
 <field name="Increment">0.1</field>
+<field name="Units">rad/s</field>
 </param>
 <param humanName="Optical flow measurement noise (rad/s)" name="EK2_FLOW_NOISE" documentation="This is the RMS value of noise and errors in optical flow measurements. Increasing it reduces the weighting on these measurements." user="Advanced">
 <field name="Range">0.05 - 1.0</field>
 <field name="Increment">0.05</field>
 <field name="Units">rad/s</field>
 </param>
-<param humanName="Optical Flow measurement gate size" name="EK2_FLOW_GATE" documentation="This parameter sets the number of standard deviations applied to the optical flow innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
-<field name="Range">1 - 100</field>
-<field name="Increment">1</field>
+<param humanName="Optical Flow measurement gate size" name="EK2_FLOW_GATE" documentation="This sets the percentage number of standard deviations applied to the optical flow innovation consistency check. Decreasing it makes it more likely that good measurements will be rejected. Increasing it makes it more likely that bad measurements will be accepted." user="Advanced">
+<field name="Range">100 - 1000</field>
+<field name="Increment">25</field>
 </param>
 <param humanName="Optical Flow measurement delay (msec)" name="EK2_FLOW_DELAY" documentation="This is the number of msec that the optical flow measurements lag behind the inertial measurements. It is the time from the end of the optical flow averaging period and does not include the time delay due to the 100msec of averaging within the flow sensor." user="Advanced">
 <field name="Range">0 - 250</field>
 <field name="Increment">10</field>
-<field name="Units">milliseconds</field>
+<field name="Units">msec</field>
 </param>
-<param humanName="Rate gyro noise (rad/s)" name="EK2_GYRO_PNOISE" documentation="This noise controls the growth of estimated error due to gyro measurement errors excluding bias. Increasing it makes the flter trust the gyro measurements less and other measurements more." user="Advanced">
-<field name="Range">0.001 0.05</field>
-<field name="Increment">0.001</field>
+<param humanName="Rate gyro noise (rad/s)" name="EK2_GYRO_PNOISE" documentation="This control disturbance noise controls the growth of estimated error due to gyro measurement errors excluding bias. Increasing it makes the flter trust the gyro measurements less and other measurements more." user="Advanced">
+<field name="Range">0.0001 0.01</field>
+<field name="Increment">0.0001</field>
 <field name="Units">rad/s</field>
 </param>
-<param humanName="Accelerometer noise (m/s^2)" name="EK2_ACC_PNOISE" documentation="This noise controls the growth of estimated error due to accelerometer measurement errors excluding bias. Increasing it makes the flter trust the accelerometer measurements less and other measurements more." user="Advanced">
-<field name="Range">0.05 1.0</field>
+<param humanName="Accelerometer noise (m/s^2)" name="EK2_ACC_PNOISE" documentation="This control disturbance noise controls the growth of estimated error due to accelerometer measurement errors excluding bias. Increasing it makes the flter trust the accelerometer measurements less and other measurements more." user="Advanced">
+<field name="Range">0.01 1.0</field>
 <field name="Increment">0.01</field>
 <field name="Units">m/s/s</field>
 </param>
-<param humanName="Rate gyro bias process noise (rad/s)" name="EK2_GBIAS_PNOISE" documentation="This noise controls the growth of gyro bias state error estimates. Increasing it makes rate gyro bias estimation faster and noisier." user="Advanced">
+<param humanName="Rate gyro bias process noise (rad/s)" name="EK2_GBIAS_PNOISE" documentation="This state  process noise controls growth of the gyro delta angle bias state error estimate. Increasing it makes rate gyro bias estimation faster and noisier." user="Advanced">
 <field name="Range">0.0000001 0.00001</field>
 <field name="Units">rad/s</field>
 </param>
@@ -5125,24 +5147,32 @@
 <field name="Range">0.0000001 0.00001</field>
 <field name="Units">1/s</field>
 </param>
-<param humanName="Accelerometer bias process noise (m/s^2)" name="EK2_ABIAS_PNOISE" documentation="This noise controls the growth of the vertical acelerometer bias state error estimate. Increasing it makes accelerometer bias estimation faster and noisier." user="Advanced">
+<param humanName="Accelerometer bias process noise (m/s^2)" name="EK2_ABIAS_PNOISE" documentation="This noise controls the growth of the vertical accelerometer delta velocity bias state error estimate. Increasing it makes accelerometer bias estimation faster and noisier." user="Advanced">
 <field name="Range">0.00001 0.001</field>
 <field name="Units">m/s/s</field>
 </param>
-<param humanName="Magnetic field process noise (gauss/s)" name="EK2_MAG_PNOISE" documentation="This noise controls the growth of magnetic field state error estimates. Increasing it makes magnetic field bias estimation faster and noisier." user="Advanced">
+<param humanName="Magnetic field process noise (gauss/s)" name="EK2_MAG_PNOISE" documentation="This state process noise controls the growth of magnetic field state error estimates. Increasing it makes magnetic field bias estimation faster and noisier." user="Advanced">
 <field name="Range">0.0001 0.01</field>
 <field name="Units">gauss/s</field>
 </param>
-<param humanName="Wind velocity process noise (m/s^2)" name="EK2_WIND_PNOISE" documentation="This noise controls the growth of wind state error estimates. Increasing it makes wind estimation faster and noisier." user="Advanced">
+<param humanName="Wind velocity process noise (m/s^2)" name="EK2_WIND_PNOISE" documentation="This state process noise controls the growth of wind state error estimates. Increasing it makes wind estimation faster and noisier." user="Advanced">
 <field name="Range">0.01 1.0</field>
 <field name="Increment">0.1</field>
+<field name="Units">m/s/s</field>
 </param>
-<param humanName="Height rate to wind procss noise scaler" name="EK2_WIND_PSCALE" documentation="Increasing this parameter increases how rapidly the wind states adapt when changing altitude, but does make wind speed estimation noiser." user="Advanced">
+<param humanName="Height rate to wind procss noise scaler" name="EK2_WIND_PSCALE" documentation="This controls how much the process noise on the wind states is increased when gaining or losing altitude to take into account changes in wind speed and direction with altitude. Increasing this parameter increases how rapidly the wind states adapt when changing altitude, but does make wind velocity estimation noiser." user="Advanced">
 <field name="Range">0.0 1.0</field>
 <field name="Increment">0.1</field>
 </param>
-<param humanName="GPS preflight check" name="EK2_GPS_CHECK" documentation="1 byte bitmap of GPS preflight checks to perform. Set to 0 to bypass all checks. Set to 255 perform all checks. Set to 3 to check just the number of satellites and HDoP. Set to 31 for the most rigorous checks that will still allow checks to pass when the copter is moving, eg launch from a boat." user="Advanced">
+<param humanName="GPS preflight check" name="EK2_GPS_CHECK" documentation="This is a 1 byte bitmap controlling which GPS preflight checks are performed. Set to 0 to bypass all checks. Set to 255 perform all checks. Set to 3 to check just the number of satellites and HDoP. Set to 31 for the most rigorous checks that will still allow checks to pass when the copter is moving, eg launch from a boat." user="Advanced">
 <field name="Bitmask">0:NSats,1:HDoP,2:speed error,3:horiz pos error,4:yaw error,5:pos drift,6:vert speed,7:horiz speed</field>
+</param>
+<param humanName="Bitmask of active IMUs" name="EK2_IMU_MASK" documentation="1 byte bitmap of IMUs to use in EKF2. A separate instance of EKF2 will be started for each IMU selected. Set to 1 to use the first IMU only (default), set to 2 to use the second IMU only, set to 3 to use the first and second IMU. Additional IMU's can be used up to a maximum of 6 if memory and processing resources permit. There may be insufficient memory and processing resources to run multiple instances. If this occurs EKF2 will fail to start." user="Advanced">
+<field name="Range">1 127</field>
+</param>
+<param humanName="GPS accuracy check scaler (%)" name="EK2_CHECK_SCALE" documentation="This scales the thresholds that are used to check GPS accuracy before it is used by the EKF. A value of 100 is the default. Values greater than 100 increase and values less than 100 reduce the maximum GPS error the EKF will accept. A value of 200 will double the allowable GPS error." user="Advanced">
+<field name="Range">50 200</field>
+<field name="Units">%</field>
 </param>
 </parameters>
 <parameters name="RPM">
@@ -5384,6 +5414,38 @@
 <field name="Units">pwm</field>
 </param>
 </parameters>
+<parameters name="IM_">
+<param humanName="Stabilize Mode Collective Point 1" name="IM_STAB_COL_1" documentation="Helicopter's minimum collective pitch setting at zero throttle input in Stabilize mode" user="Standard">
+<field name="Range">0 500</field>
+<field name="Increment">1</field>
+<field name="Units">Percent*10</field>
+</param>
+<param humanName="Stabilize Mode Collective Point 2" name="IM_STAB_COL_2" documentation="Helicopter's collective pitch setting at mid-low throttle input in Stabilize mode" user="Standard">
+<field name="Range">0 500</field>
+<field name="Increment">1</field>
+<field name="Units">Percent*10</field>
+</param>
+<param humanName="Stabilize Mode Collective Point 3" name="IM_STAB_COL_3" documentation="Helicopter's collective pitch setting at mid-high throttle input in Stabilize mode" user="Standard">
+<field name="Range">500 1000</field>
+<field name="Increment">1</field>
+<field name="Units">Percent*10</field>
+</param>
+<param humanName="Stabilize Mode Collective Point 4" name="IM_STAB_COL_4" documentation="Helicopter's maximum collective pitch setting at full throttle input in Stabilize mode" user="Standard">
+<field name="Range">500 1000</field>
+<field name="Increment">1</field>
+<field name="Units">Percent*10</field>
+</param>
+<param humanName="Acro Mode Collective Expo" name="IM_ACRO_COL_EXP" documentation="Used to soften collective pitch inputs near center point in Acro mode." user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="0.1">Very Low</value>
+<value code="0.2">Low</value>
+<value code="0.3">Medium</value>
+<value code="0.4">High</value>
+<value code="0.5">Very High</value>
+</values>
+</param>
+</parameters>
 <parameters name="WPNAV_">
 <param humanName="Waypoint Horizontal Speed Target" name="WPNAV_SPEED" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain horizontally during a WP mission" user="Standard">
 <field name="Range">0 2000</field>
@@ -5421,7 +5483,7 @@
 <field name="Units">cm/s/s</field>
 </param>
 <param humanName="Loiter maximum jerk" name="WPNAV_LOIT_JERK" documentation="Loiter maximum jerk in cm/s/s/s" user="Advanced">
-<field name="Range">500 2000</field>
+<field name="Range">500 5000</field>
 <field name="Increment">1</field>
 <field name="Units">cm/s/s/s</field>
 </param>
