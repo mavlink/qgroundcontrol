@@ -56,25 +56,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="reconnectCheckBox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Automatically reconnect last link on application startup</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QCheckBox" name="lowPowerCheckBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">

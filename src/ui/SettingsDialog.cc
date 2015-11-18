@@ -71,10 +71,6 @@ SettingsDialog::SettingsDialog(GAudioOutput* audioOutput, FlightMapSettings* fli
     connect(_ui->audioMuteCheckBox, SIGNAL(toggled(bool)), _audioOutput, SLOT(mute(bool)));
     connect(_audioOutput, SIGNAL(mutedChanged(bool)), _ui->audioMuteCheckBox, SLOT(setChecked(bool)));
 
-    // Reconnect
-    _ui->reconnectCheckBox->setChecked(_mainWindow->autoReconnectEnabled());
-    connect(_ui->reconnectCheckBox, SIGNAL(clicked(bool)), _mainWindow, SLOT(enableAutoReconnect(bool)));
-
     // Low power mode
     _ui->lowPowerCheckBox->setChecked(_mainWindow->lowPowerModeEnabled());
     connect(_ui->lowPowerCheckBox, SIGNAL(clicked(bool)), _mainWindow, SLOT(enableLowPowerMode(bool)));
