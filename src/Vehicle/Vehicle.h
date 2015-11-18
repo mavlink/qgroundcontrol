@@ -107,6 +107,7 @@ public:
     Q_PROPERTY(bool                 joystickEnabled         READ joystickEnabled    WRITE setJoystickEnabled NOTIFY joystickEnabledChanged)
     Q_PROPERTY(bool                 active                  READ active             WRITE setActive     NOTIFY activeChanged)
     Q_PROPERTY(int                  flowImageIndex          READ flowImageIndex                         NOTIFY flowImageIndexChanged)
+    Q_PROPERTY(int                  rcRSSI                  READ rcRSSI                                 NOTIFY rcRSSIChanged)
 
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
@@ -165,8 +166,6 @@ public:
 
     /// Provides access to the Firmware Plugin for this Vehicle
     FirmwarePlugin* firmwarePlugin(void) { return _firmwarePlugin; }
-
-    QList<LinkInterface*> links(void);
 
     int manualControlReservedButtonCount(void);
 
@@ -245,6 +244,7 @@ public:
     QString         currentState        () { return _currentState; }
     int             satelliteLock       () { return _satelliteLock; }
     unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
+    int             rcRSSI              () { return _rcRSSI; }
 
     ParameterLoader* getParameterLoader(void);
 
@@ -253,7 +253,7 @@ public slots:
     void setLongitude(double longitude);
 
 signals:
-    void allLinksDisconnected(Vehicle* vehicle);
+    void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
     void coordinateValidChanged(bool coordinateValid);
     void joystickModeChanged(int mode);
@@ -293,15 +293,17 @@ signals:
     void currentStateChanged    ();
     void satelliteLockChanged   ();
     void flowImageIndexChanged  ();
+    void rcRSSIChanged          (int rcRSSI);
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
-    void _linkDisconnected(LinkInterface* link);
+    void _linkInactiveOrDeleted(LinkInterface* link);
     void _sendMessage(mavlink_message_t message);
     void _sendMessageMultipleNext(void);
     void _addNewMapTrajectoryPoint(void);
     void _parametersReady(bool parametersReady);
     void _communicationInactivityTimedOut(void);
+    void _remoteControlRSSIChanged(uint8_t rssi);
 
     void _handleTextMessage                 (int newCount);
     /** @brief Attitude from main autopilot / system state */
@@ -347,10 +349,7 @@ private:
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
 
-    /// List of all links associated with this vehicle. We keep SharedLinkInterface objects
-    /// which are QSharedPointer's in order to maintain reference counts across threads.
-    /// This way Link deletion works correctly.
-    QList<SharedLinkInterface> _links;
+    QList<LinkInterface*> _links;
 
     JoystickMode_t  _joystickMode;
     bool            _joystickEnabled;
@@ -394,6 +393,8 @@ private:
     int             _satelliteCount;
     int             _satelliteLock;
     int             _updateCount;
+    int             _rcRSSI;
+    double          _rcRSSIstore;
 
     MissionManager*     _missionManager;
     bool                _missionManagerInitialRequestComplete;
@@ -433,6 +434,8 @@ private:
     JoystickManager*            _joystickManager;
 
     int                         _flowImageIndex;
+
+    bool _allLinksInactiveSent; ///< true: allLinkInactive signal already sent one time
 
     // Settings keys
     static const char* _settingsGroup;

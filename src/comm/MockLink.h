@@ -37,6 +37,8 @@ Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
 
 class MockConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
     MockConfiguration(const QString& name);
     MockConfiguration(MockConfiguration* source);
@@ -146,7 +148,7 @@ private slots:
 private:
     // From LinkInterface
     virtual bool _connect(void);
-    virtual bool _disconnect(void);
+    virtual void _disconnect(void);
 
     // QThread override
     virtual void run(void);
