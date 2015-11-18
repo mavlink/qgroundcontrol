@@ -129,8 +129,7 @@ void MainWindow::deleteInstance(void)
 ///         by MainWindow::_create method. Hence no other code should have access to
 ///         constructor.
 MainWindow::MainWindow()
-    : _autoReconnect(false)
-    , _lowPowerMode(false)
+    : _lowPowerMode(false)
     , _showStatusBar(false)
     , _mainQmlWidgetHolder(NULL)
 {
@@ -207,12 +206,6 @@ MainWindow::MainWindow()
     mouse = new Mouse6dofInput(this);
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
 #endif //QGC_MOUSE_ENABLED_LINUX
-
-    // Connect link
-    if (_autoReconnect)
-    {
-        restoreLastUsedConnection();
-    }
 
     // Set low power mode
     enableLowPowerMode(_lowPowerMode);
@@ -496,7 +489,6 @@ void MainWindow::loadSettings()
     // Why the screaming?
     QSettings settings;
     settings.beginGroup(MAIN_SETTINGS_GROUP);
-    _autoReconnect  = settings.value("AUTO_RECONNECT",      _autoReconnect).toBool();
     _lowPowerMode   = settings.value("LOW_POWER_MODE",      _lowPowerMode).toBool();
     _showStatusBar  = settings.value("SHOW_STATUSBAR",      _showStatusBar).toBool();
     settings.endGroup();
@@ -506,7 +498,6 @@ void MainWindow::storeSettings()
 {
     QSettings settings;
     settings.beginGroup(MAIN_SETTINGS_GROUP);
-    settings.setValue("AUTO_RECONNECT",     _autoReconnect);
     settings.setValue("LOW_POWER_MODE",     _lowPowerMode);
     settings.setValue("SHOW_STATUSBAR",     _showStatusBar);
     settings.endGroup();
@@ -541,11 +532,6 @@ void MainWindow::configureWindowName()
     windowname.append(")");
     #endif
     setWindowTitle(windowname);
-}
-
-void MainWindow::enableAutoReconnect(bool enabled)
-{
-    _autoReconnect = enabled;
 }
 
 /**
@@ -632,23 +618,6 @@ void MainWindow::saveLastUsedConnection(const QString connection)
     QString key(MAIN_SETTINGS_GROUP);
     key += "/LAST_CONNECTION";
     settings.setValue(key, connection);
-}
-
-/// @brief Restore (and connects) the last used connection (if any)
-void MainWindow::restoreLastUsedConnection()
-{
-    // TODO This should check and see of the port/whatever is present
-    // first. That is, if the last connection was to a PX4 on some serial
-    // port, it should check and see if the port is present before making
-    // the connection.
-    QSettings settings;
-    QString key(MAIN_SETTINGS_GROUP);
-    key += "/LAST_CONNECTION";
-    if(settings.contains(key)) {
-        QString connection = settings.value(key).toString();
-        // Create a link for it
-        qgcApp()->toolbox()->linkManager()->createConnectedLink(connection);
-    }
 }
 
 #ifdef QGC_MOUSE_ENABLED_LINUX

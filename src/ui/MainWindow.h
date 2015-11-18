@@ -80,12 +80,6 @@ public:
     ~MainWindow();
 
 
-    /** @brief Get auto link reconnect setting */
-    bool autoReconnectEnabled() const
-    {
-        return _autoReconnect;
-    }
-
     /** @brief Get low power mode setting */
     bool lowPowerModeEnabled() const
     {
@@ -95,17 +89,11 @@ public:
     /// @brief Saves the last used connection
     void saveLastUsedConnection(const QString connection);
 
-    /// @brief Restore (and connects) the last used connection (if any)
-    void restoreLastUsedConnection();
-
 public slots:
     /** @brief Show the application settings */
     void showSettings();
 
     void manageLinks();
-
-    /** @brief Automatically reconnect last link */
-    void enableAutoReconnect(bool enabled);
 
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { _lowPowerMode = enabled; }
@@ -251,7 +239,6 @@ private:
     void _storeVisibleWidgetsSettings(void);
 #endif
 
-    bool                    _autoReconnect;
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
     bool                    _showStatusBar;
     QVBoxLayout*            _centralLayout;
