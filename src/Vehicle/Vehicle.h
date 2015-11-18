@@ -402,7 +402,10 @@ private:
     int             _satelliteCount;
     int             _satelliteLock;
     int             _updateCount;
+<<<<<<< 39349c942a94b1a2714e3fb8818b82c455779861
     QString         _formatedMessage;
+=======
+>>>>>>> Auto connect support
     int             _rcRSSI;
     double          _rcRSSIstore;
 
