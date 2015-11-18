@@ -47,9 +47,4 @@ Item {
         property real fontWidth:    contentWidth  * (ScreenToolsController.testHighDPI ? 2 : 1)
         property real fontHeight:   contentHeight * (ScreenToolsController.testHighDPI ? 2 : 1)
     }
-
-    Connections {
-        target: ScreenToolsController
-        onRepaintRequested: repaintRequested()
-    }
 }
