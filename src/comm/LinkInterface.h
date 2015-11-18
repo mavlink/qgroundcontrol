@@ -57,6 +57,15 @@ class LinkInterface : public QThread
     friend class LinkManager;
 
 public:
+    Q_PROPERTY(bool autoconnect READ autoconnect    WRITE setAutoconnect    NOTIFY autoconnectChanged)
+    Q_PROPERTY(bool active      READ active         WRITE setActive         NOTIFY activeChanged)
+
+    // Property accessors
+    bool autoconnect(void)                  { return _autoconnect; }
+    void setAutoconnect(bool autoconnect)   { _autoconnect = autoconnect; emit autoconnectChanged(autoconnect); }
+    bool active(void)                       { return _active; }
+    void setActive(bool active)             { _active = active; emit activeChanged(active); }
+
     /**
      * @brief Get link configuration (if used)
      * @return A pointer to the instance of LinkConfiguration if supported. NULL otherwise.
@@ -128,6 +137,7 @@ public:
     /// @return true: "sh /etc/init.d/rc.usb" must be sent on link to start mavlink
     virtual bool requiresUSBMavlinkStart(void) const { return false; }
 
+
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);
@@ -148,6 +158,8 @@ public slots:
     virtual void writeBytes(const char *bytes, qint64 length) = 0;
     
 signals:
+    void autoconnectChanged(bool autoconnect);
+    void activeChanged(bool active);
 
     /**
      * @brief New data arrived
@@ -184,8 +196,10 @@ signals:
 protected:
     // Links are only created by LinkManager so constructor is not public
     LinkInterface() :
-        QThread(0),
-        _mavlinkChannelSet(false)
+        QThread(0)
+        , _mavlinkChannelSet(false)
+        , _autoconnect(false)
+        , _active(false)
     {
         // Initialize everything for the data rate calculation buffers.
         _inDataIndex  = 0;
@@ -321,12 +335,7 @@ private:
      **/
     virtual bool _connect(void) = 0;
 
-    /**
-     * @brief Disconnect this interface logically
-     *
-     * @return True if connection could be terminated, false otherwise
-     **/
-    virtual bool _disconnect(void) = 0;
+    virtual void _disconnect(void) = 0;
     
     /// Sets the mavlink channel to use for this link
     void _setMavlinkChannel(uint8_t channel) { Q_ASSERT(!_mavlinkChannelSet); _mavlinkChannelSet = true; _mavlinkChannel = channel; }
@@ -351,6 +360,9 @@ private:
     qint64  _outDataWriteTimes[_dataRateBufferSize]; // in ms
     
     mutable QMutex _dataRateMutex; // Mutex for accessing the data rate member variables
+
+    bool _autoconnect;  ///< true: Link is an autoconnect connection and should never be disconnected
+    bool _active;       ///< true: link is actively receiving mavlink messages
 };
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterface;

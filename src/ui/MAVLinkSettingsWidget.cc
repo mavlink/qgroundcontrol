@@ -141,12 +141,14 @@ void MAVLinkSettingsWidget::enableDroneOS(bool enable)
     QString hostString = m_ui->droneOSComboBox->currentText();
     //QString host = hostString.split(":").first();
 
+    LinkManager*    linkMgr = qgcApp()->toolbox()->linkManager();
+    UDPLink*        firstUdp = NULL;
+
     // Delete from all lists first
-    UDPLink* firstUdp = NULL;
-    QList<LinkInterface*> links = qgcApp()->toolbox()->linkManager()->getLinks();
-    foreach (LinkInterface* link, links)
-    {
-        UDPLink* udp = dynamic_cast<UDPLink*>(link);
+    for (int i=0; i<linkMgr->links()->count(); i++) {
+        LinkInterface*  link = linkMgr->links()->value<LinkInterface*>(i);
+        UDPLink*        udp = qobject_cast<UDPLink*>(link);
+
         if (udp)
         {
             if (!firstUdp) firstUdp = udp;

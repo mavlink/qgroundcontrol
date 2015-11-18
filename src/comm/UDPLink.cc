@@ -281,7 +281,7 @@ void UDPLink::readBytes()
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.
  **/
-bool UDPLink::_disconnect(void)
+void UDPLink::_disconnect(void)
 {
     _running = false;
     quit();
@@ -293,7 +293,6 @@ bool UDPLink::_disconnect(void)
         emit disconnected();
     }
     _connectState = false;
-    return true;
 }
 
 /**

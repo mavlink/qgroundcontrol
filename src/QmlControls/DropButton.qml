@@ -184,7 +184,7 @@ Item {
         id:         dropDownItem
         visible:    checked
 
-        QGCCanvas {
+        Canvas {
             id:             arrowCanvas
             anchors.fill:   parent
 

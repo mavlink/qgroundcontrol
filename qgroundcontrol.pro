@@ -270,7 +270,6 @@ HEADERS += \
     src/QmlControls/QGCQGeoCoordinate.h \
     src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
-    src/SerialPortIds.h \
     src/uas/FileManager.h \
     src/uas/UAS.h \
     src/uas/UASInterface.h \

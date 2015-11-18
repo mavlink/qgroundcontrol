@@ -169,6 +169,34 @@ Rectangle {
                     }
                 }
             }
+
+            //-----------------------------------------------------------------
+            //-- Autoconnect settings
+            QGCLabel { text: "Autoconnect to the following devices:" }
+
+            QGCCheckBox {
+                text:       "Pixhawk"
+                checked:    QGroundControl.linkManager.autoconnectPixhawk
+                onClicked:  QGroundControl.linkManager.autoconnectPixhawk = checked
+            }
+
+            QGCCheckBox {
+                text:       "3DR Radio"
+                checked:    QGroundControl.linkManager.autoconnect3DRRadio
+                onClicked:  QGroundControl.linkManager.autoconnect3DRRadio = checked
+            }
+
+            QGCCheckBox {
+                text:       "PX4 Flow"
+                checked:    QGroundControl.linkManager.autoconnectPX4Flow
+                onClicked:  QGroundControl.linkManager.autoconnectPX4Flow = checked
+            }
+
+            QGCCheckBox {
+                text:       "UDP"
+                checked:    QGroundControl.linkManager.autoconnectUDP
+                onClicked:  QGroundControl.linkManager.autoconnectUDP = checked
+            }
         }
     }
 }

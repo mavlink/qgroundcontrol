@@ -104,7 +104,8 @@ public:
     };
 
     FirmwareUpgradeController(void);
-    
+    ~FirmwareUpgradeController();
+
     Q_PROPERTY(QString boardPort READ boardPort NOTIFY boardFound)
     Q_PROPERTY(QString boardDescription READ boardDescription NOTIFY boardFound)
     Q_PROPERTY(QString boardType MEMBER _foundBoardType NOTIFY boardFound)
@@ -115,9 +116,6 @@ public:
     /// Progress bar for you know what
     Q_PROPERTY(QQuickItem* progressBar READ progressBar WRITE setProgressBar)
 
-    /// Returns true if there are active QGC connections
-    Q_PROPERTY(bool qgcConnections READ qgcConnections NOTIFY qgcConnectionsChanged)
-    
     /// Starts searching for boards on the background thread
     Q_INVOKABLE void startBoardSearch(void);
     
@@ -140,8 +138,6 @@ public:
     QQuickItem* statusLog(void) { return _statusLog; }
     void setStatusLog(QQuickItem* statusLog) { _statusLog = statusLog; }
     
-    bool qgcConnections(void);
-    
     QString boardPort(void) { return _foundBoardInfo.portName(); }
     QString boardDescription(void) { return _foundBoardInfo.description(); }
     
@@ -151,7 +147,6 @@ signals:
     void boardGone(void);
     void flashComplete(void);
     void flashCancelled(void);
-    void qgcConnectionsChanged(bool connections);
     void error(void);
     
 private slots:
@@ -170,7 +165,6 @@ private slots:
     void _eraseStarted(void);
     void _eraseComplete(void);
     void _eraseProgressTick(void);
-    void _linkDisconnected(LinkInterface* link);
 
 private:
     void _getFirmwareFile(FirmwareIdentifier firmwareId);
