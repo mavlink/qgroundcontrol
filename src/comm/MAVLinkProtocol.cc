@@ -57,7 +57,7 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
 #ifndef __mobile__
     , _logSuspendError(false)
     , _logSuspendReplay(false)
-    , _logWasArmed(false)
+    , _logPromptForSave(false)
     , _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension))
 #endif
     , _heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE)
@@ -343,11 +343,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
                 
                 // Check for the vehicle arming going by. This is used to trigger log save.
-                if (!_logWasArmed && message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                if (!_logPromptForSave && message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
                     mavlink_heartbeat_t state;
                     mavlink_msg_heartbeat_decode(&message, &state);
                     if (state.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY) {
-                        _logWasArmed = true;
+                        _logPromptForSave = true;
                     }
                 }
             }
@@ -674,7 +674,11 @@ void MAVLinkProtocol::_startLogging(void)
                 return;
             }
 
-            qDebug() << "Temp log" << _tempLogFile.fileName();
+            if (_app->promptFlightDataSaveNotArmed()) {
+                _logPromptForSave = true;
+            }
+
+            qDebug() << "Temp log" << _tempLogFile.fileName() << _logPromptForSave;
 
             _logSuspendError = false;
         }
@@ -685,13 +689,13 @@ void MAVLinkProtocol::_stopLogging(void)
 {
     if (_closeLogFile()) {
         // If the signals are not connected it means we are running a unit test. In that case just delete log files
-        if (_logWasArmed && _app->promptFlightDataSave()) {
+        if (_logPromptForSave && _app->promptFlightDataSave()) {
             emit saveTempFlightDataLog(_tempLogFile.fileName());
         } else {
             QFile::remove(_tempLogFile.fileName());
         }
     }
-    _logWasArmed = false;
+    _logPromptForSave = false;
 }
 
 /// @brief Checks the temp directory for log files which may have been left there.
