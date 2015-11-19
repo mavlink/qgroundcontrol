@@ -44,8 +44,7 @@ QGCView {
     readonly property string highlightSuffix:   "</font>"
     readonly property string welcomeText:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
     readonly property string plugInText:        highlightPrefix + "Plug in your device" + highlightSuffix + " via USB to " + highlightPrefix + "start" + highlightSuffix + " firmware upgrade"
-    readonly property string qgcDisconnectText: "All QGroundControl connections to vehicles must be disconnected prior to firmware upgrade. " +
-                                                    "Click " + highlightPrefix + "Disconnect" + highlightSuffix + " in the toolbar above."
+    readonly property string qgcDisconnectText: "All QGroundControl connections to vehicles must be disconnected prior to firmware upgrade."
     property string usbUnplugText:              "Device must be disconnected from USB to start firmware upgrade. " +
                                                     highlightPrefix + "Disconnect {0}" + highlightSuffix + " from usb."
 
