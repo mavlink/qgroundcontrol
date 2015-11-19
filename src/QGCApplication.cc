@@ -107,11 +107,12 @@
 
 QGCApplication* QGCApplication::_app = NULL;
 
-const char* QGCApplication::_deleteAllSettingsKey   = "DeleteAllSettingsNextBoot";
-const char* QGCApplication::_settingsVersionKey     = "SettingsVersion";
-const char* QGCApplication::_savedFilesLocationKey  = "SavedFilesLocation";
-const char* QGCApplication::_promptFlightDataSave   = "PromptFLightDataSave";
-const char* QGCApplication::_styleKey               = "StyleIsDark";
+const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
+const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
+const char* QGCApplication::_savedFilesLocationKey          = "SavedFilesLocation";
+const char* QGCApplication::_promptFlightDataSave           = "PromptFLightDataSave";
+const char* QGCApplication::_promptFlightDataSaveNotArmed   = "PromptFLightDataSaveNotArmed";
+const char* QGCApplication::_styleKey                       = "StyleIsDark";
 
 const char* QGCApplication::_defaultSavedFileDirectoryName      = "QGroundControl";
 const char* QGCApplication::_savedFileMavlinkLogDirectoryName   = "FlightData";
@@ -554,10 +555,23 @@ bool QGCApplication::promptFlightDataSave(void)
     return settings.value(_promptFlightDataSave, true).toBool();
 }
 
+bool QGCApplication::promptFlightDataSaveNotArmed(void)
+{
+    QSettings settings;
+
+    return settings.value(_promptFlightDataSaveNotArmed, false).toBool();
+}
+
 void QGCApplication::setPromptFlightDataSave(bool promptForSave)
 {
     QSettings settings;
     settings.setValue(_promptFlightDataSave, promptForSave);
+}
+
+void QGCApplication::setPromptFlightDataSaveNotArmed(bool promptForSave)
+{
+    QSettings settings;
+    settings.setValue(_promptFlightDataSaveNotArmed, promptForSave);
 }
 
 /// @brief Returns the QGCApplication object singleton.

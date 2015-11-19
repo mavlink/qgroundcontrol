@@ -154,3 +154,51 @@ void QGroundControlQmlGlobal::stopAllMockLinks(void)
     }
 #endif
 }
+
+void QGroundControlQmlGlobal::setIsDarkStyle(bool dark)
+{
+    qgcApp()->setStyle(dark);
+    emit isDarkStyleChanged(dark);
+}
+
+void QGroundControlQmlGlobal::setIsAudioMuted(bool muted)
+{
+    qgcApp()->toolbox()->audioOutput()->mute(muted);
+    emit isAudioMutedChanged(muted);
+}
+
+void QGroundControlQmlGlobal::setIsLowPowerMode(bool low)
+{
+    MainWindow::instance()->enableLowPowerMode(low);
+    emit isLowPowerModeChanged(low);
+}
+
+void QGroundControlQmlGlobal::setIsSaveLogPrompt(bool prompt)
+{
+    qgcApp()->setPromptFlightDataSave(prompt);
+    emit isSaveLogPromptChanged(prompt);
+}
+
+void QGroundControlQmlGlobal::setIsSaveLogPromptNotArmed(bool prompt)
+{
+    qgcApp()->setPromptFlightDataSaveNotArmed(prompt);
+    emit isSaveLogPromptNotArmedChanged(prompt);
+}
+
+void QGroundControlQmlGlobal::setIsHeartBeatEnabled(bool enable)
+{
+    qgcApp()->toolbox()->mavlinkProtocol()->enableHeartbeats(enable);
+    emit isHeartBeatEnabledChanged(enable);
+}
+
+void QGroundControlQmlGlobal::setIsMultiplexingEnabled(bool enable)
+{
+    qgcApp()->toolbox()->mavlinkProtocol()->enableMultiplexing(enable);
+    emit isMultiplexingEnabledChanged(enable);
+}
+
+void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
+{
+    qgcApp()->toolbox()->mavlinkProtocol()->enableVersionCheck(enable);
+    emit isVersionCheckEnabledChanged(enable);
+}
