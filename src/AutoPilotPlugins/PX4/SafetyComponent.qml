@@ -65,7 +65,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Return Home Triggers
 
-                QGCLabel { text: "Triggers For Return Home"; font.pixelSize: ScreenTools.mediumFontPixelSize; }
+                QGCLabel { text: "Triggers For Return Home"; font.weight: Font.DemiBold; }
 
                 Item { height: ScreenTools.defaultFontPixelHeight * 0.5; width: 1 } // spacer
 
@@ -132,7 +132,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Return Home Settings
 
-                QGCLabel { text: "Return Home Settings"; font.pixelSize: ScreenTools.mediumFontPixelSize; }
+                QGCLabel { text: "Return Home Settings"; font.weight: Font.DemiBold; }
 
                 Item { height: ScreenTools.defaultFontPixelHeight * 0.5; width: 1 } // spacer
 
