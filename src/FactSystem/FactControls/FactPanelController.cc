@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 #include "FactPanelController.h"
@@ -38,15 +38,15 @@ FactPanelController::FactPanelController(void) :
 {
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     Q_ASSERT(_vehicle);
-    
+
     _uas = _vehicle->uas();
     Q_ASSERT(_uas);
-    
+
     _autopilot = _vehicle->autopilotPlugin();
     Q_ASSERT(_autopilot);
     Q_ASSERT(_autopilot->parametersReady());
     Q_ASSERT(!_autopilot->missingParameters());
-    
+
     // Do a delayed check for the _factPanel finally being set correctly from Qml
     QTimer::singleShot(1000, this, &FactPanelController::_checkForMissingFactPanel);
 }
@@ -60,7 +60,7 @@ void FactPanelController::setFactPanel(QQuickItem* panel)
 {
     // Once we finally have the _factPanel member set, send any
     // missing fact notices that were waiting to go out
-    
+
     _factPanel = panel;
     foreach (QString missingParam, _delayedMissingParams) {
         _notifyPanelMissingParameter(missingParam);
@@ -95,9 +95,9 @@ void FactPanelController::_notifyPanelErrorMsg(const QString& errorMsg)
 void FactPanelController::_reportMissingParameter(int componentId, const QString& name)
 {
     qgcApp()->reportMissingParameter(componentId, name);
-    
+
     QString missingParam = QString("%1:%2").arg(componentId).arg(name);
-    
+
     // If missing parameters a reported from the constructor of a derived class we
     // will not have access to _factPanel yet. Just record list of missing facts
     // in that case instead of notify. Once _factPanel is available they will be
@@ -112,14 +112,14 @@ void FactPanelController::_reportMissingParameter(int componentId, const QString
 bool FactPanelController::_allParametersExists(int componentId, QStringList names)
 {
     bool noMissingFacts = true;
-    
+
     foreach (QString name, names) {
         if (!_autopilot->parameterExists(componentId, name)) {
             _reportMissingParameter(componentId, name);
             noMissingFacts = false;
         }
     }
-    
+
     return noMissingFacts;
 }
 
