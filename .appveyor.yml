@@ -29,7 +29,7 @@ test_script:
 
 artifacts:
   - path: qgroundcontrol-installer.exe
-    name: s3
+    name: qgcinstaller
 
 deploy:
   - provider: S3
@@ -40,13 +40,13 @@ deploy:
     bucket: qgroundcontrol
     set_public: true
     folder: $(APPVEYOR_REPO_BRANCH)
-    artifact: s3
+    artifact: qgcinstaller
     on:
       CONFIG: installer
   - provider: GitHub
     auth_token:
       secure: dzWLqd0eTKjrAWC5LgqVnwLemmrNdddGA2ZZn/OthAP37mwCLkP2C1zil7ivmEE8
-    artifact: s3
+    artifact: qgcinstaller
     draft: false
     prerelease: false
     on:
