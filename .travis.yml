@@ -145,10 +145,9 @@ deploy:
   - provider: releases
     api-key:
       secure: K/Zqr/FCC7QvzFxYvBtCinPkacQq2ubJ2qm982+38Zf/KjibVOF1dEbVdrGZmII6Tg5DaQzNXGYkg5PvYmJgT9xRsqeQjeYIUYqYZpAt+HYWA38AVfMU8jip/1P1wmwqD469nzJOBBa8yfsMs6Ca7tBaNl/zTxCRGnAgEzqtkdQ=
+    file_glob: true
     file:
-      - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.apk
-      - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.dmg
-      - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.tar.bz2
+      - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.*
     skip_cleanup: true
     on:
       tags: true
