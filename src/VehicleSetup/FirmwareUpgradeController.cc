@@ -568,6 +568,7 @@ void FirmwareUpgradeController::_errorCancel(const QString& msg)
     _appendStatusLog("------------------------------------------", false);
     emit error();
     cancel();
+    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
 }
 
 void FirmwareUpgradeController::_eraseStarted(void)
