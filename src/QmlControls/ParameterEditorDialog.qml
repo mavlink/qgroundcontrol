@@ -110,7 +110,7 @@ QGCViewDialog {
             visible: !fact.minIsDefaultForType
 
             QGCLabel { text: "Minimum value:" }
-            QGCLabel { text: fact.min }
+            QGCLabel { text: fact.minString }
         }
 
         Row {
@@ -118,14 +118,14 @@ QGCViewDialog {
             visible: !fact.maxIsDefaultForType
 
             QGCLabel { text: "Maximum value:" }
-            QGCLabel { text: fact.max }
+            QGCLabel { text: fact.maxString }
         }
 
         Row {
             spacing: defaultTextWidth
 
             QGCLabel { text: "Default value:" }
-            QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValue : "none" }
+            QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValueString : "none" }
         }
 
         QGCLabel {

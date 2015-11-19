@@ -129,23 +129,28 @@ QVariant Fact::value(void) const
     return _value;
 }
 
-QString Fact::valueString(void) const
+QString Fact::_variantToString(const QVariant& variant) const
 {
     QString valueString;
 
     switch (type()) {
         case FactMetaData::valueTypeFloat:
-            valueString = QString("%1").arg(value().toFloat(), 0, 'g', decimalPlaces());
+            valueString = QString("%1").arg(variant.toFloat(), 0, 'f', decimalPlaces());
             break;
         case FactMetaData::valueTypeDouble:
-            valueString = QString("%1").arg(value().toDouble(), 0, 'g', decimalPlaces());
+            valueString = QString("%1").arg(variant.toDouble(), 0, 'f', decimalPlaces());
             break;
         default:
-            valueString = value().toString();
+            valueString = variant.toString();
             break;
     }
 
     return valueString;
+}
+
+QString Fact::valueString(void) const
+{
+    return _variantToString(value());
 }
 
 QVariant Fact::defaultValue(void) const
@@ -159,6 +164,11 @@ QVariant Fact::defaultValue(void) const
         qWarning() << "Meta data pointer missing";
         return QVariant(0);
     }
+}
+
+QString Fact::defaultValueString(void) const
+{
+    return _variantToString(defaultValue());
 }
 
 FactMetaData::ValueType_t Fact::type(void) const
@@ -206,6 +216,11 @@ QVariant Fact::min(void) const
     }
 }
 
+QString Fact::minString(void) const
+{
+    return _variantToString(min());
+}
+
 QVariant Fact::max(void) const
 {
     if (_metaData) {
@@ -214,6 +229,11 @@ QVariant Fact::max(void) const
         qWarning() << "Meta data pointer missing";
         return QVariant(0);
     }
+}
+
+QString Fact::maxString(void) const
+{
+    return _variantToString(max());
 }
 
 bool Fact::minIsDefaultForType(void) const
