@@ -119,11 +119,11 @@ QGCView {
             Column {
                 id:             innerColumn
                 width:          panel.width
-                spacing:        ScreenTools.defaultFontPixelHeight
+                spacing:        ScreenTools.defaultFontPixelHeight * 0.5
 
                 QGCLabel {
                     text: "Battery"
-                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                    font.weight: Font.DemiBold
                 }
 
                 Rectangle {
@@ -213,20 +213,30 @@ QGCView {
                         anchors.left:           batteryImage.right
                         anchors.verticalCenter: voltageCol.verticalCenter
                         spacing:                ScreenTools.defaultFontPixelHeight
-
-                        QGCLabel {
-                            text: "Battery Max: " + (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
+                        Row {
+                            QGCLabel {
+                                width:  ScreenTools.defaultFontPixelWidth * 12
+                                text:   "Battery Max:"
+                            }
+                            QGCLabel {
+                                text:   (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
+                            }
                         }
-
-                        QGCLabel {
-                            text: "Battery Min: " + (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
+                        Row {
+                            QGCLabel {
+                                width:  ScreenTools.defaultFontPixelWidth * 12
+                                text:   "Battery Min:"
+                            }
+                            QGCLabel {
+                                text:   (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
+                            }
                         }
                     }
                 } // Rectangle - Battery settings
 
                 QGCLabel {
                     text:           "ESC PWM Minimum and Maximum Calibration"
-                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                    font.weight:    Font.DemiBold
                 }
 
                 Rectangle {
@@ -258,15 +268,22 @@ QGCView {
                     }
                 }
 
+                QGCCheckBox {
+                    id:     showUAVCAN
+                    text:   "Show UAVCAN Settings"
+                }
+
                 QGCLabel {
                     text:           "UAVCAN Bus Configuration"
-                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                    font.weight:    Font.DemiBold
+                    visible:        showUAVCAN.checked
                 }
 
                 Rectangle {
-                    width:  parent.width
-                    height: uavCanConfigColumn.height + ScreenTools.defaultFontPixelHeight
-                    color:  palette.windowShade
+                    width:      parent.width
+                    height:     uavCanConfigColumn.height + ScreenTools.defaultFontPixelHeight
+                    color:      palette.windowShade
+                    visible:    showUAVCAN.checked
 
                     Column {
                         id:                 uavCanConfigColumn
@@ -288,14 +305,16 @@ QGCView {
 
                 QGCLabel {
                     text:           "UAVCAN Motor Index and Direction Assignment"
-                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                    font.weight:    Font.DemiBold
+                    visible:        showUAVCAN.checked
                 }
 
                 Rectangle {
-                    width:  parent.width
-                    height: uavCanEscCalColumn.height + ScreenTools.defaultFontPixelHeight
-                    color:  palette.windowShade
-                    enabled: uavcanEnabledCheckBox.checked
+                    width:      parent.width
+                    height:     uavCanEscCalColumn.height + ScreenTools.defaultFontPixelHeight
+                    color:      palette.windowShade
+                    visible:    showUAVCAN.checked
+                    enabled:    uavcanEnabledCheckBox.checked
 
                     Column {
                         id:                 uavCanEscCalColumn
@@ -326,7 +345,7 @@ QGCView {
                         QGCButton {
                             text:       "Stop Assignment"
                             width:      ScreenTools.defaultFontPixelWidth * 20
-                            onClicked:  controller.StopBusConfigureActuators()
+                            onClicked:  controller.stopBusConfigureActuators()
                         }
                     }
                 }
@@ -338,7 +357,7 @@ QGCView {
 
                 QGCLabel {
                     text:           "Advanced Power Settings"
-                    font.pixelSize: ScreenTools.mediumFontPixelSize
+                    font.weight:    Font.DemiBold
                     visible:        showAdvanced.checked
                 }
 
