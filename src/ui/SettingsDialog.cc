@@ -39,11 +39,8 @@
 #include "MainToolBarController.h"
 #include "FlightMapSettings.h"
 
-SettingsDialog::SettingsDialog(GAudioOutput* audioOutput, FlightMapSettings* flightMapSettings, QWidget *parent, int showTab, Qt::WindowFlags flags)
+SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags flags)
     : QDialog(parent, flags)
-    , _mainWindow(MainWindow::instance())
-    , _audioOutput(audioOutput)
-    , _flightMapSettings(flightMapSettings)
     , _ui(new Ui::SettingsDialog)
 {
     _ui->setupUi(this);
@@ -66,42 +63,11 @@ SettingsDialog::SettingsDialog(GAudioOutput* audioOutput, FlightMapSettings* fli
 
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 
-    // Audio preferences
-    _ui->audioMuteCheckBox->setChecked(_audioOutput->isMuted());
-    connect(_ui->audioMuteCheckBox, SIGNAL(toggled(bool)), _audioOutput, SLOT(mute(bool)));
-    connect(_audioOutput, SIGNAL(mutedChanged(bool)), _ui->audioMuteCheckBox, SLOT(setChecked(bool)));
-
-    // Reconnect
-    _ui->reconnectCheckBox->setChecked(_mainWindow->autoReconnectEnabled());
-    connect(_ui->reconnectCheckBox, SIGNAL(clicked(bool)), _mainWindow, SLOT(enableAutoReconnect(bool)));
-
-    // Low power mode
-    _ui->lowPowerCheckBox->setChecked(_mainWindow->lowPowerModeEnabled());
-    connect(_ui->lowPowerCheckBox, SIGNAL(clicked(bool)), _mainWindow, SLOT(enableLowPowerMode(bool)));
-
-    connect(_ui->deleteSettings, &QAbstractButton::toggled, this, &SettingsDialog::_deleteSettingsToggled);
-
-    // Application color style
-    _ui->styleChooser->setCurrentIndex(qgcApp()->styleIsDark() ? 0 : 1);
-
     _ui->savedFilesLocation->setText(qgcApp()->savedFilesLocation());
-    _ui->promptFlightDataSave->setChecked(qgcApp()->promptFlightDataSave());
 
     // Connect signals
-    connect(_ui->styleChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(styleChanged(int)));
     connect(_ui->browseSavedFilesLocation, &QPushButton::clicked, this, &SettingsDialog::_selectSavedFilesDirectory);
     connect(_ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::_validateBeforeClose);
-    
-    // Flight Map settings
-    
-    FlightMapSettings* fmSettings = _flightMapSettings;
-    _ui->bingMapRadio->setChecked(fmSettings->mapProvider() == "Bing");
-    _ui->googleMapRadio->setChecked(fmSettings->mapProvider() == "Google");
-    _ui->openMapRadio->setChecked(fmSettings->mapProvider() == "Open");
-
-    connect(_ui->bingMapRadio,      &QRadioButton::clicked, this, &SettingsDialog::_bingMapRadioClicked);
-    connect(_ui->googleMapRadio,    &QRadioButton::clicked, this, &SettingsDialog::_googleMapRadioClicked);
-    connect(_ui->openMapRadio,      &QRadioButton::clicked, this, &SettingsDialog::_openMapRadioClicked);
     
     switch (showTab) {
         case ShowCommLinks:
@@ -118,29 +84,6 @@ SettingsDialog::~SettingsDialog()
     delete _ui;
 }
 
-void SettingsDialog::styleChanged(int index)
-{
-    qgcApp()->setStyle(index == 0);
-}
-
-void SettingsDialog::_deleteSettingsToggled(bool checked)
-{
-    if (checked){
-        QGCMessageBox::StandardButton answer =
-            QGCMessageBox::question(tr("Delete Settings"),
-                tr("All saved settings will be deleted the next time you start QGroundControl. Is this really what you want?"),
-                QMessageBox::Yes | QMessageBox::No,
-                QMessageBox::No);
-        if (answer == QMessageBox::Yes) {
-            qgcApp()->deleteAllSettingsNextBoot();
-        } else {
-            _ui->deleteSettings->setChecked(false);
-        }
-    } else {
-        qgcApp()->clearDeleteAllSettingsNextBoot();
-    }
-}
-
 /// @brief Validates the settings before closing
 void SettingsDialog::_validateBeforeClose(void)
 {
@@ -155,7 +98,7 @@ void SettingsDialog::_validateBeforeClose(void)
     }
     // Locations is valid, save
     app->setSavedFilesLocation(saveLocation);
-    qgcApp()->setPromptFlightDataSave(_ui->promptFlightDataSave->checkState() == Qt::Checked);
+
     // Close dialog
     accept();
 }
@@ -169,31 +112,5 @@ void SettingsDialog::_selectSavedFilesDirectory(void)
         _ui->savedFilesLocation->text());
     if (!newLocation.isEmpty()) {
         _ui->savedFilesLocation->setText(newLocation);
-    }
-
-    // TODO:
-    // Once a directory is selected, we need to display the various subdirectories used underneath:
-    // * Flight data logs
-    // * Parameters
-}
-
-void SettingsDialog::_bingMapRadioClicked(bool checked)
-{
-    if (checked) {
-        _flightMapSettings->setMapProvider("Bing");
-    }
-}
-
-void SettingsDialog::_googleMapRadioClicked(bool checked)
-{
-    if (checked) {
-        _flightMapSettings->setMapProvider("Google");
-    }
-}
-
-void SettingsDialog::_openMapRadioClicked(bool checked)
-{
-    if (checked) {
-        _flightMapSettings->setMapProvider("Open");
     }
 }
