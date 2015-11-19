@@ -297,7 +297,7 @@ private:
 
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay
-    bool _logWasArmed;          ///< true: vehicle was armed during logging
+    bool _logPromptForSave;     ///< true: Prompt for log save when appropriate
 
     QGCTemporaryFile    _tempLogFile;            ///< File to log to
     static const char*  _tempLogFileTemplate;    ///< Template for temporary log file

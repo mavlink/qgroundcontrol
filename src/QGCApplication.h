@@ -93,11 +93,14 @@ public:
     /// @brief Validates that the specified location will work for the saved files location.
     bool validatePossibleSavedFilesLocation(QString& location);
     
-    /// @brief Returns true is all mavlink connections should be logged
+    /// @return true: Prompt to save log file when vehicle goes away
     bool promptFlightDataSave(void);
     
-    /// @brief Sets the flag to log all mavlink connections
+    /// @return true: Prompt to save log file even if vehicle was not armed
+    bool promptFlightDataSaveNotArmed(void);
+
     void setPromptFlightDataSave(bool promptForSave);
+    void setPromptFlightDataSaveNotArmed(bool promptForSave);
 
     /// @brief Returns truee if unit test are being run
     bool runningUnitTests(void) { return _runningUnitTests; }
@@ -173,7 +176,8 @@ private:
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
     static const char* _savedFilesLocationKey;          ///< Settings key for user visible saved files location
-    static const char* _promptFlightDataSave;           ///< Settings key to prompt for saving Flight Data Log for all flights
+    static const char* _promptFlightDataSave;           ///< Settings key for promptFlightDataSave
+    static const char* _promptFlightDataSaveNotArmed;   ///< Settings key for promptFlightDataSaveNotArmed
     static const char* _styleKey;                       ///< Settings key for UI style
     
     static const char* _defaultSavedFileDirectoryName;      ///< Default name for user visible save file directory
