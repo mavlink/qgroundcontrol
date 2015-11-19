@@ -48,25 +48,14 @@ public:
         ShowMavlink
     };
 
-    SettingsDialog(GAudioOutput* audioOuput, FlightMapSettings* flightMapSettings, QWidget *parent = 0, int showTab = ShowDefault, Qt::WindowFlags flags = Qt::Sheet);
+    SettingsDialog(QWidget *parent = 0, int showTab = ShowDefault, Qt::WindowFlags flags = Qt::Sheet);
     ~SettingsDialog();
 
-public slots:
-    void styleChanged(int index);
-
 private slots:
-    void _deleteSettingsToggled(bool checked);
     void _selectSavedFilesDirectory(void);
     void _validateBeforeClose(void);
-    
-    void _bingMapRadioClicked(bool checked);
-    void _googleMapRadioClicked(bool checked);
-    void _openMapRadioClicked(bool checked);
 
 private:
-    MainWindow*         _mainWindow;
-    GAudioOutput*       _audioOutput;
-    FlightMapSettings*  _flightMapSettings;
     Ui::SettingsDialog* _ui;
 };
 
