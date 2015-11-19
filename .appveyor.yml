@@ -48,6 +48,8 @@ deploy:
     on:
       CONFIG: installer
   - provider: GitHub
+    auth_token:
+      secure: dzWLqd0eTKjrAWC5LgqVnwLemmrNdddGA2ZZn/OthAP37mwCLkP2C1zil7ivmEE8
     artifact: './qgroundcontrol-installer.exe'
     draft: false
     prerelease: false
