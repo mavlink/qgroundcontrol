@@ -53,14 +53,17 @@ public:
     Q_PROPERTY(QVariant valueString             READ valueString                            NOTIFY valueChanged)
     Q_PROPERTY(QString  units                   READ units                                  CONSTANT)
     Q_PROPERTY(QVariant defaultValue            READ defaultValue                           CONSTANT)
+    Q_PROPERTY(QString  defaultValueString      READ defaultValueString                     CONSTANT)
     Q_PROPERTY(bool     defaultValueAvailable   READ defaultValueAvailable                  CONSTANT)
     Q_PROPERTY(bool     valueEqualsDefault      READ valueEqualsDefault                     NOTIFY valueChanged)
     Q_PROPERTY(FactMetaData::ValueType_t type   READ type                                   CONSTANT)
     Q_PROPERTY(QString  shortDescription        READ shortDescription                       CONSTANT)
     Q_PROPERTY(QString  longDescription         READ longDescription                        CONSTANT)
     Q_PROPERTY(QVariant min                     READ min                                    CONSTANT)
+    Q_PROPERTY(QString  minString               READ minString                              CONSTANT)
     Q_PROPERTY(bool     minIsDefaultForType     READ minIsDefaultForType                    CONSTANT)
     Q_PROPERTY(QVariant max                     READ max                                    CONSTANT)
+    Q_PROPERTY(QString  maxString               READ maxString                              CONSTANT)
     Q_PROPERTY(bool     maxIsDefaultForType     READ maxIsDefaultForType                    CONSTANT)
     Q_PROPERTY(int      decimalPlaces           READ decimalPlaces                          CONSTANT)
     
@@ -70,25 +73,30 @@ public:
     
     // Property system methods
     
-    QString name(void) const;
-    int componentId(void) const;
-    QVariant value(void) const;
-    QString valueString(void) const;
-    void setValue(const QVariant& value);
-    QVariant defaultValue(void) const;
-	bool defaultValueAvailable(void) const;
-    bool valueEqualsDefault(void) const;
+    QString     name(void) const;
+    int         componentId(void) const;
+    QVariant    value(void) const;
+    QString     valueString(void) const;
+    QVariant    defaultValue(void) const;
+    QString     defaultValueString(void) const;
+    bool        defaultValueAvailable(void) const;
+    bool        valueEqualsDefault(void) const;
+    QString     shortDescription(void) const;
+    QString     longDescription(void) const;
+    QString     units(void) const;
+    QVariant    min(void) const;
+    QString     minString(void) const;
+    bool        minIsDefaultForType(void) const;
+    QVariant    max(void) const;
+    QString     maxString(void) const;
+    bool        maxIsDefaultForType(void) const;
+    QString     group(void) const;
+    int         decimalPlaces(void) const;
+
     FactMetaData::ValueType_t type(void) const;
-    QString shortDescription(void) const;
-    QString longDescription(void) const;
-    QString units(void) const;
-    QVariant min(void) const;
-    bool minIsDefaultForType(void) const;
-    QVariant max(void) const;
-    bool maxIsDefaultForType(void) const;
-    QString group(void) const;
-    int decimalPlaces(void) const;
-    
+
+    void setValue(const QVariant& value);
+
     /// Sets and sends new value to vehicle even if value is the same
     void forceSetValue(const QVariant& value);
     
@@ -115,6 +123,8 @@ signals:
     void _containerValueChanged(const QVariant& value);
     
 private:
+    QString _variantToString(const QVariant& variant) const;
+
     QString                     _name;
     int                         _componentId;
     QVariant                    _value;
