@@ -63,6 +63,23 @@ SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags fla
 
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 
+<<<<<<< HEAD
+=======
+    // Audio preferences
+    _ui->audioMuteCheckBox->setChecked(_audioOutput->isMuted());
+    connect(_ui->audioMuteCheckBox, SIGNAL(toggled(bool)), _audioOutput, SLOT(mute(bool)));
+    connect(_audioOutput, SIGNAL(mutedChanged(bool)), _ui->audioMuteCheckBox, SLOT(setChecked(bool)));
+
+    // Low power mode
+    _ui->lowPowerCheckBox->setChecked(_mainWindow->lowPowerModeEnabled());
+    connect(_ui->lowPowerCheckBox, SIGNAL(clicked(bool)), _mainWindow, SLOT(enableLowPowerMode(bool)));
+
+    connect(_ui->deleteSettings, &QAbstractButton::toggled, this, &SettingsDialog::_deleteSettingsToggled);
+
+    // Application color style
+    _ui->styleChooser->setCurrentIndex(qgcApp()->styleIsDark() ? 0 : 1);
+
+>>>>>>> origin/ACWork
     _ui->savedFilesLocation->setText(qgcApp()->savedFilesLocation());
 
     // Connect signals
