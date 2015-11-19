@@ -76,11 +76,10 @@ QGCView {
         id: customConfigDialogComponent
 
         QGCViewMessage {
-            id:             customConfigDialog
-
-            message:        "Your vehicle is using a custom airframe configuration. " +
-                                "This configuration can only be modified through the Parameter Editor.\n\n" +
-                                "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
+            id:       customConfigDialog
+            message:  "Your vehicle is using a custom airframe configuration. " +
+                      "This configuration can only be modified through the Parameter Editor.\n\n" +
+                      "If you want to Reset your airframe configuration and select a standard configuration, click 'Reset' above."
 
             property Fact sys_autostart: controller.getParameterFact(-1, "SYS_AUTOSTART")
 
@@ -129,7 +128,7 @@ QGCView {
                 id:             helpText
                 width:          parent.width - applyButton.width - 5
                 text:           "Please select your airframe type. Click 'Apply and Restart' to reboot the autopilot. Please re-connect then manually."
-                font.pixelSize: ScreenTools.mediumFontPixelSize
+                font.weight:    Font.DemiBold
                 wrapMode:       Text.WordWrap
             }
 
