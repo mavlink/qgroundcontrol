@@ -596,7 +596,7 @@ void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
 
 void MainWindow::showSettings()
 {
-    SettingsDialog settings(qgcApp()->toolbox()->audioOutput(), qgcApp()->toolbox()->flightMapSettings(), this);
+    SettingsDialog settings(this);
     settings.exec();
 }
 
@@ -619,7 +619,7 @@ void MainWindow::_storeCurrentViewState(void)
 
 void MainWindow::manageLinks()
 {
-    SettingsDialog settings(qgcApp()->toolbox()->audioOutput(), qgcApp()->toolbox()->flightMapSettings(), this, SettingsDialog::ShowCommLinks);
+    SettingsDialog settings(this, SettingsDialog::ShowCommLinks);
     settings.exec();
 }
 

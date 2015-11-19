@@ -86,11 +86,23 @@ Rectangle {
             //-----------------------------------------------------------------
             //-- Prompt Save Log
             QGCCheckBox {
+                id:         promptSaveLog
                 text:       "Prompt to save Flight Data Log after each flight"
                 checked:    QGroundControl.isSaveLogPrompt
                 visible:    !ScreenTools.isMobile
                 onClicked: {
                     QGroundControl.isSaveLogPrompt = checked
+                }
+            }
+            //-----------------------------------------------------------------
+            //-- Prompt Save even if not armed
+            QGCCheckBox {
+                text:       "Prompt to save Flight Data Log even if vehicle was not armed"
+                checked:    QGroundControl.isSaveLogPromptNotArmed
+                visible:    !ScreenTools.isMobile
+                enabled:    promptSaveLog.checked
+                onClicked: {
+                    QGroundControl.isSaveLogPromptNotArmed = checked
                 }
             }
             //-----------------------------------------------------------------
