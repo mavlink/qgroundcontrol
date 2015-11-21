@@ -49,23 +49,22 @@ MainToolBarController::MainToolBarController(QObject* parent)
     , _remoteRSSIstore(100.0)
     , _telemetryRRSSI(0)
     , _telemetryLRSSI(0)
-    , _rollDownMessages(0)
     , _toolbarMessageVisible(false)
 {
     emit configListChanged();
     emit connectionCountChanged(_connectionCount);
     _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
-    
+
     // Link signals
     connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkConfigurationChanged, this, &MainToolBarController::_updateConfigurations);
     connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkConnected,            this, &MainToolBarController::_linkConnected);
     connect(qgcApp()->toolbox()->linkManager(),     &LinkManager::linkDisconnected,         this, &MainToolBarController::_linkDisconnected);
-    
+
     // RSSI (didn't like standard connection)
     connect(qgcApp()->toolbox()->mavlinkProtocol(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)), this,
         SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned)));
-    
+
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBarController::_activeVehicleChanged);
 }
 
@@ -137,42 +136,6 @@ void MainToolBarController::onConnect(QString conf)
     }
 }
 
-void MainToolBarController::onEnterMessageArea(int x, int y)
-{
-    Q_UNUSED(x);
-    Q_UNUSED(y);
-
-    // If not already there and messages are actually present
-    if(!_rollDownMessages && qgcApp()->toolbox()->uasMessageHandler()->messages().count()) {
-        if (qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
-            qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->resetMessages();
-        }
-
-        // FIXME: Position of the message dropdown is hacked right now to speed up Qml conversion
-        // Show messages
-        int dialogWidth = 400;
-#if 0
-        x = x - (dialogWidth >> 1);
-        if(x < 0) x = 0;
-        y = height() / 3;
-#endif
-
-        // Put dialog on top of the message alert icon
-        _rollDownMessages = new UASMessageViewRollDown(qgcApp()->toolbox()->uasMessageHandler(), MainWindow::instance());
-        _rollDownMessages->setAttribute(Qt::WA_DeleteOnClose);
-        _rollDownMessages->move(QPoint(100, 100));
-        _rollDownMessages->setMinimumSize(dialogWidth,200);
-        connect(_rollDownMessages, &UASMessageViewRollDown::closeWindow, this, &MainToolBarController::_leaveMessageView);
-        _rollDownMessages->show();
-    }
-}
-
-void MainToolBarController::_leaveMessageView()
-{
-    // Mouse has left the message window area (and it has closed itself)
-    _rollDownMessages = NULL;
-}
-
 void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
 {
     // Disconnect the previous one (if any)
@@ -182,7 +145,7 @@ void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
         _mav = NULL;
         _vehicle = NULL;
     }
-    
+
     // Connect new system
     if (vehicle)
     {
@@ -303,30 +266,30 @@ void MainToolBarController::_setProgressBarValue(float value)
 void MainToolBarController::showToolBarMessage(const QString& message)
 {
     _toolbarMessageQueueMutex.lock();
-    
+
     if (_toolbarMessageQueue.count() == 0 && !_toolbarMessageVisible) {
         QTimer::singleShot(500, this, &MainToolBarController::_delayedShowToolBarMessage);
     }
-    
+
     _toolbarMessageQueue += message;
-    
+
     _toolbarMessageQueueMutex.unlock();
 }
 
 void MainToolBarController::_delayedShowToolBarMessage(void)
 {
     QString messages;
-    
+
     if (!_toolbarMessageVisible) {
         _toolbarMessageQueueMutex.lock();
-        
+
         foreach (QString message, _toolbarMessageQueue) {
             messages += message + "\n";
         }
         _toolbarMessageQueue.clear();
-        
+
         _toolbarMessageQueueMutex.unlock();
-        
+
         if (!messages.isEmpty()) {
             _toolbarMessageVisible = true;
             emit showMessage(messages);
