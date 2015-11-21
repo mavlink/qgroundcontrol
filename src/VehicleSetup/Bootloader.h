@@ -76,6 +76,7 @@ public:
     // Supported bootloader board ids
     static const int boardIDPX4FMUV1 = 5;   ///< PX4 V1 board
     static const int boardIDPX4FMUV2 = 9;   ///< PX4 V2 board
+    static const int boardIDPX4FMUV4 = 11;   ///< PX4 V4 board
     static const int boardIDPX4Flow = 6;    ///< PX4 Flow board
     static const int boardIDAeroCore = 98;  ///< Gumstix AeroCore board
     static const int boardID3DRRadio = 78;  ///< 3DR Radio
