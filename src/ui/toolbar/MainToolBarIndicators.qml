@@ -160,8 +160,7 @@ Row {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                var p = mapToItem(toolBar, mouseX, mouseY);
-                _controller.onEnterMessageArea(p.x, p.y);
+                toolBar.showMessageArea()
             }
         }
     }
@@ -568,3 +567,5 @@ Row {
 */
 
 } // Row
+
+

@@ -35,6 +35,7 @@
 #include "MissionItem.h"
 #include "QmlObjectListModel.h"
 #include "MAVLinkProtocol.h"
+#include "UASMessageHandler.h"
 
 class UAS;
 class UASInterface;
@@ -45,6 +46,7 @@ class AutoPilotPluginManager;
 class MissionManager;
 class ParameterLoader;
 class JoystickManager;
+class UASMessage;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -101,6 +103,8 @@ public:
     Q_PROPERTY(bool                 messageTypeError        READ messageTypeError                       NOTIFY messageTypeChanged)
     Q_PROPERTY(int                  newMessageCount         READ newMessageCount                        NOTIFY newMessageCountChanged)
     Q_PROPERTY(int                  messageCount            READ messageCount                           NOTIFY messageCountChanged)
+    Q_PROPERTY(QString              formatedMessages        READ formatedMessages                       NOTIFY formatedMessagesChanged)
+    Q_PROPERTY(QString              formatedMessage         READ formatedMessage                        NOTIFY formatedMessageChanged)
     Q_PROPERTY(QString              latestError             READ latestError                            NOTIFY latestErrorChanged)
     Q_PROPERTY(int                  joystickMode            READ joystickMode       WRITE setJoystickMode NOTIFY joystickModeChanged)
     Q_PROPERTY(QStringList          joystickModes           READ joystickModes                          CONSTANT)
@@ -115,6 +119,9 @@ public:
     Q_PROPERTY(int manualControlReservedButtonCount READ manualControlReservedButtonCount CONSTANT)
 
     Q_INVOKABLE QString     getMavIconColor();
+
+    // Called when the message drop-down is invoked to clear current count
+    Q_INVOKABLE void        resetMessages();
 
     // Property accessors
 
@@ -216,15 +223,14 @@ public:
         ALTITUDEAMSL_CHANGED
     };
 
-    // Called when the message drop-down is invoked to clear current count
-    void resetMessages();
-
     bool            messageTypeNone     () { return _currentMessageType == MessageNone; }
     bool            messageTypeNormal   () { return _currentMessageType == MessageNormal; }
     bool            messageTypeWarning  () { return _currentMessageType == MessageWarning; }
     bool            messageTypeError    () { return _currentMessageType == MessageError; }
     int             newMessageCount     () { return _currentMessageCount; }
     int             messageCount        () { return _messageCount; }
+    QString         formatedMessages    ();
+    QString         formatedMessage     () { return _formatedMessage; }
     QString         latestError         () { return _latestError; }
     float           roll                () { return _roll; }
     float           pitch               () { return _pitch; }
@@ -273,6 +279,8 @@ signals:
     void messageTypeChanged     ();
     void newMessageCountChanged ();
     void messageCountChanged    ();
+    void formatedMessagesChanged();
+    void formatedMessageChanged ();
     void latestErrorChanged     ();
     void rollChanged            ();
     void pitchChanged           ();
@@ -304,6 +312,7 @@ private slots:
     void _communicationInactivityTimedOut(void);
 
     void _handleTextMessage                 (int newCount);
+    void _handletextMessageReceived         (UASMessage* message);
     /** @brief Attitude from main autopilot / system state */
     void _updateAttitude                    (UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief Attitude from one specific component / redundant autopilot */
@@ -394,6 +403,7 @@ private:
     int             _satelliteCount;
     int             _satelliteLock;
     int             _updateCount;
+    QString         _formatedMessage;
 
     MissionManager*     _missionManager;
     bool                _missionManagerInitialRequestComplete;

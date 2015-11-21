@@ -125,6 +125,10 @@ Item {
         }
     }
 
+    function setMapInteractive(enabled) {
+        flightView.interactive = enabled
+    }
+
     //-- Left Settings Menu
     Loader {
         id:                 leftPanel

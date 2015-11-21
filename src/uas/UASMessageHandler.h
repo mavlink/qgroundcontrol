@@ -37,6 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Vehicle.h"
 #include "QGCToolbox.h"
 
+class Vehicle;
 class UASInterface;
 class UASMessageHandler;
 class QGCApplication;
@@ -82,7 +83,7 @@ private:
 class UASMessageHandler : public QGCTool
 {
     Q_OBJECT
-    
+
 public:
     explicit UASMessageHandler(QGCApplication* app);
     ~UASMessageHandler();
@@ -123,10 +124,10 @@ public:
      * @brief Get latest error message
      */
     QString getLatestError()   { return _latestError; }
-    
+
     /// Begin to show message which are errors in the toolbar
     void showErrorsInToolbar(void) { _showErrorsInToolbar = true; }
-    
+
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -139,7 +140,7 @@ public slots:
      * @param text Message Text
      */
     void handleTextMessage(int uasid, int componentid, int severity, QString text);
-    
+
 signals:
     /**
      * @brief Sent out when new message arrives
@@ -151,10 +152,10 @@ signals:
      * @param count The new message count
      */
     void textMessageCountChanged(int count);
-    
+
 private slots:
     void _activeVehicleChanged(Vehicle* vehicle);
-    
+
 private:
     UASInterface*           _activeUAS;
     QVector<UASMessage*>    _messages;
