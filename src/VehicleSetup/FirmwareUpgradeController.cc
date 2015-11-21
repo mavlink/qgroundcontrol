@@ -187,6 +187,13 @@ void FirmwareUpgradeController::_initFirmwareHash()
         return;
     }
 
+    //////////////////////////////////// PX4FMUV4 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgPX4FMV4FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v4_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v4_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v4_default.px4"},
+    };
+
     //////////////////////////////////// PX4FMUV2 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMV2FirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v2_default.px4"},
@@ -273,6 +280,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
     };
 
     // populate hashes now
+    int size = sizeof(rgPX4FMV4FirmwareArray)/sizeof(rgPX4FMV4FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgPX4FMV4FirmwareArray[i];
+        _rgPX4FMUV4Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     int size = sizeof(rgPX4FMV2FirmwareArray)/sizeof(rgPX4FMV2FirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgPX4FMV2FirmwareArray[i];
@@ -332,6 +345,10 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
             
         case Bootloader::boardIDPX4FMUV2:
             prgFirmware = _rgPX4FMUV2Firmware;
+            break;
+
+        case Bootloader::boardIDPX4FMUV4:
+            prgFirmware = _rgPX4FMUV4Firmware;
             break;
             
         case Bootloader::boardIDAeroCore:
