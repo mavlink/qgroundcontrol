@@ -42,7 +42,7 @@ class UASMessageView;
 class UASMessageView : public QWidget
 {
     Q_OBJECT
-    
+
 public:
     explicit UASMessageView(QWidget *parent = 0);
     virtual ~UASMessageView();
@@ -68,27 +68,6 @@ public slots:
 private:
     QGCUnconnectedInfoWidget*   _unconnectedWidget;
     UASMessageHandler*          _uasMessageHandler;
-};
-
-// Roll down Message View
-class UASMessageViewRollDown : public UASMessageView
-{
-    Q_OBJECT
-public:
-    explicit UASMessageViewRollDown(UASMessageHandler* uasMessageHandler, QWidget *parent);
-    ~UASMessageViewRollDown();
-
-signals:
-    void closeWindow();
-
-public slots:
-    void handleTextMessage(UASMessage* message);
-
-protected:
-    void leaveEvent(QEvent* event);
-
-private:
-    UASMessageHandler*  _uasMessageHandler;
 };
 
 #endif // QGCMESSAGEVIEW_H

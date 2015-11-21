@@ -50,6 +50,8 @@ Rectangle {
     property bool isBackgroundDark:     true
     property bool opaqueBackground:     false
 
+    property string formatedMessage:    activeVehicle ? activeVehicle.formatedMessage : ""
+
     /*
         Dev System (Mac OS)
 
@@ -145,6 +147,28 @@ Rectangle {
     readonly property var   colorWhite:     "#ffffff"
 
     MainToolBarController { id: _controller }
+
+    onFormatedMessageChanged: {
+        if(messageArea.visible) {
+            messageText.append(formatedMessage)
+            //-- Hack to scroll down
+            messageFlick.flick(0,-500)
+        }
+    }
+
+    function showMessageArea() {
+        if(multiVehicleManager.activeVehicleAvailable) {
+            messageText.text = activeVehicle.formatedMessages
+            //-- Hack to scroll to last message
+            for (var i = 0; i < activeVehicle.messageCount; i++)
+                messageFlick.flick(0,-5000)
+            activeVehicle.resetMessages()
+        } else {
+            messageText.text = "No Messages"
+        }
+        messageArea.visible = true
+        mainWindow.setMapInteractive(false)
+    }
 
     function showToolbarMessage(message) {
         toolBarMessage.text = message
@@ -248,6 +272,7 @@ Rectangle {
     }
 
     Item {
+        id:                     vehicleIndicators
         visible:                showMavStatus() && !connectionStatus.visible
         height:                 mainWindow.tbCellHeight
         width:                  (toolBar.width - viewRow.width - connectRow.width)
@@ -258,6 +283,55 @@ Rectangle {
             source:             multiVehicleManager.activeVehicleAvailable ? "MainToolBarIndicators.qml" : ""
             anchors.left:       parent.left
             anchors.verticalCenter:   parent.verticalCenter
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- System Message Area
+    Rectangle {
+        id:             messageArea
+        width:          mainWindow.width  * 0.5
+        height:         mainWindow.height * 0.5
+        anchors.top:    parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        color:          Qt.rgba(0,0,0,0.75)
+        visible:        false
+        radius:         ScreenTools.defaultFontPixelHeight * 0.5
+        Flickable {
+            id:                 messageFlick
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.fill:       parent
+            contentHeight:      messageText.height
+            contentWidth:       messageText.width
+            boundsBehavior:     Flickable.StopAtBounds
+            pixelAligned:       true
+            clip:               true
+            TextEdit {
+                id:         messageText
+                readOnly:   true
+                textFormat: TextEdit.RichText
+                color:      "white"
+            }
+        }
+        //-- Dismiss System Message
+        Image {
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.top:        parent.top
+            anchors.right:      parent.right
+            width:              ScreenTools.defaultFontPixelHeight * 1.5
+            height:             ScreenTools.defaultFontPixelHeight * 1.5
+            source:             "/res/XDelete.svg"
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    messageText.text    = ""
+                    messageArea.visible = false
+                    mainWindow.setMapInteractive(true)
+                }
+            }
         }
     }
 
