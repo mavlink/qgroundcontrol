@@ -27,7 +27,6 @@
 #include "LinkManager.h"
 #include "FirmwarePlugin.h"
 #include "AutoPilotPluginManager.h"
-#include "UASMessageHandler.h"
 #include "UAS.h"
 #include "JoystickManager.h"
 #include "MissionManager.h"
@@ -111,7 +110,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
-    connect(_mavlink, &MAVLinkProtocol::messageReceived, this, &Vehicle::_mavlinkMessageReceived);
+    connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
     connect(this, &Vehicle::_sendMessageOnThread, this, &Vehicle::_sendMessage, Qt::QueuedConnection);
 
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
@@ -143,7 +142,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     _currentHeartbeatTimeout = 0;
     emit heartbeatTimeoutChanged();
     // Listen for system messages
-    connect(qgcApp()->toolbox()->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged, this, &Vehicle::_handleTextMessage);
+    connect(qgcApp()->toolbox()->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
+    connect(qgcApp()->toolbox()->uasMessageHandler(), &UASMessageHandler::textMessageReceived,      this, &Vehicle::_handletextMessageReceived);
     // Now connect the new UAS
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
@@ -592,6 +592,24 @@ QString Vehicle::getMavIconColor()
         return _mav->getColor().name();
     else
         return QString("black");
+}
+
+QString Vehicle::formatedMessages()
+{
+    QString messages;
+    foreach(UASMessage* message, qgcApp()->toolbox()->uasMessageHandler()->messages()) {
+        messages += message->getFormatedText();
+    }
+    return messages;
+}
+
+void Vehicle::_handletextMessageReceived(UASMessage* message)
+{
+    if(message)
+    {
+        _formatedMessage = message->getFormatedText();
+        emit formatedMessageChanged();
+    }
 }
 
 void Vehicle::_updateBatteryRemaining(UASInterface*, double voltage, double, double percent, int)

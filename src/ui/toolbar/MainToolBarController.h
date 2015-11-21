@@ -55,7 +55,6 @@ public:
     Q_INVOKABLE void    onFlyView();
     Q_INVOKABLE void    onConnect(QString conf);
     Q_INVOKABLE void    onDisconnect(QString conf);
-    Q_INVOKABLE void    onEnterMessageArea(int x, int y);
     Q_INVOKABLE void    onToolBarMessageClosed(void);
     Q_INVOKABLE void    showSettings(void);
 
@@ -73,9 +72,9 @@ public:
     int         telemetryRRSSI          () { return _telemetryRRSSI; }
     int         telemetryLRSSI          () { return _telemetryLRSSI; }
     int         connectionCount         () { return _connectionCount; }
-    
+
     void showToolBarMessage(const QString& message);
-    
+
 signals:
     void connectionCountChanged         (int count);
     void configListChanged              ();
@@ -85,7 +84,7 @@ signals:
     void telemetryRRSSIChanged          (int value);
     void telemetryLRSSIChanged          (int value);
     void heightChanged                  (double height);
-    
+
     /// Shows a non-modal message below the toolbar
     void showMessage(const QString& message);
 
@@ -94,7 +93,6 @@ private slots:
     void _updateConfigurations          ();
     void _linkConnected                 (LinkInterface* link);
     void _linkDisconnected              (LinkInterface* link);
-    void _leaveMessageView              ();
     void _setProgressBarValue           (float value);
     void _remoteControlRSSIChanged      (uint8_t rssi);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
@@ -116,8 +114,6 @@ private:
     int             _telemetryLRSSI;
     double          _toolbarHeight;
 
-    UASMessageViewRollDown* _rollDownMessages;
-    
     bool            _toolbarMessageVisible;
     QStringList     _toolbarMessageQueue;
     QMutex          _toolbarMessageQueueMutex;

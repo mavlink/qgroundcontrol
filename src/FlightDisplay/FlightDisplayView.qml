@@ -44,6 +44,7 @@ Item {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     property real avaiableHeight: parent.height
+    property bool interactive:    true
 
     readonly property bool isBackgroundDark: _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
 
@@ -84,6 +85,11 @@ Item {
     property real _pipSize:             mainWindow.width * 0.2
 
     FlightDisplayViewController { id: _controller }
+
+    onInteractiveChanged: {
+        if(_flightMap)
+            _flightMap.interactive = interactive
+    }
 
     function reloadContents() {
         if(_flightVideo) {
