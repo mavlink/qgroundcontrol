@@ -43,7 +43,7 @@ Item {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    property real avaiableHeight: parent.height
+    property real availableHeight: parent.height
     property bool interactive:    true
 
     readonly property bool isBackgroundDark: _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
@@ -213,7 +213,7 @@ Item {
         anchors.right:      parent.right
         anchors.left:       parent.left
         anchors.bottom:     parent.bottom
-        height:             avaiableHeight
+        height:             availableHeight
     }
 
 }
