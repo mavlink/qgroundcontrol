@@ -293,7 +293,9 @@ HEADERS += \
     src/ui/uas/UASMessageView.h \
     src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
+    src/AutoPilotPlugins/APM/APMAirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
+    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.h
 
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
@@ -404,7 +406,9 @@ SOURCES += \
     src/ui/uas/UASMessageView.cc \
     src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
+    src/AutoPilotPlugins/APM/APMAirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
+    src/AutoPilotPlugins/APM/APMRemoteParamsDownloader.cc
 
 !iOSBuild {
 SOURCES += \
@@ -522,6 +526,7 @@ SOURCES += \
 
 INCLUDEPATH += \
     src/AutoPilotPlugins/PX4 \
+    src/AutoPilotPlugins/APM \
     src/FirmwarePlugin \
     src/Vehicle \
     src/VehicleSetup \
@@ -531,6 +536,8 @@ HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPluginManager.h \
     src/AutoPilotPlugins/APM/APMAutoPilotPlugin.h \
     src/AutoPilotPlugins/APM/APMAirframeComponent.h \
+    src/AutoPilotPlugins/APM/APMAirframeComponentController.h \
+    src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.h \
     src/AutoPilotPlugins/APM/APMComponent.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
@@ -575,7 +582,9 @@ SOURCES += \
     src/AutoPilotPlugins/AutoPilotPluginManager.cc \
     src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
     src/AutoPilotPlugins/APM/APMAirframeComponent.cc \
+    src/AutoPilotPlugins/APM/APMAirframeComponentController.cc \
     src/AutoPilotPlugins/APM/APMComponent.cc \
+    src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \

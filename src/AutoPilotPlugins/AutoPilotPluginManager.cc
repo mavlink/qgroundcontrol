@@ -29,14 +29,19 @@
 #include "APM/APMAutoPilotPlugin.h"
 #include "Generic/GenericAutoPilotPlugin.h"
 
+#include <QDebug>
+
 AutoPilotPlugin* AutoPilotPluginManager::newAutopilotPluginForVehicle(Vehicle* vehicle)
 {
     switch (vehicle->firmwareType()) {
         case MAV_AUTOPILOT_PX4:
+            qDebug() << "Starting a PX4 Plugin";
             return new PX4AutoPilotPlugin(vehicle, vehicle);
         case MAV_AUTOPILOT_ARDUPILOTMEGA:
+            qDebug() << "Starting a APM Plugin";
             return new APMAutoPilotPlugin(vehicle, vehicle);
         default:
+            qDebug() << "Starting a Default Plugin";
             return new GenericAutoPilotPlugin(vehicle, vehicle);
     }
 }
