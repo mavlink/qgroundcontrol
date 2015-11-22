@@ -34,11 +34,13 @@
 /// @Brief Constructs a new ParameterEditorController Widget. This widget is used within the PX4VehicleConfig set of screens.
 ParameterEditorController::ParameterEditorController(void)
 {
-    const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
-    
-    foreach (int componentId, groupMap.keys()) {
-		_componentIds += QString("%1").arg(componentId);
-	}
+    if (_autopilot) {
+        const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
+
+        foreach (int componentId, groupMap.keys()) {
+            _componentIds += QString("%1").arg(componentId);
+        }
+    }
 }
 
 ParameterEditorController::~ParameterEditorController()
