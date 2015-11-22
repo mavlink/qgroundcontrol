@@ -91,6 +91,7 @@ public:
     virtual bool sendHomePositionToVehicle(void);
     virtual void addMetaDataToFact(Fact* fact);
     virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }
+    virtual QList<MAV_CMD> supportedMissionCommands(void);
 
 protected:
     /// All access to singleton is through stack specific implementation

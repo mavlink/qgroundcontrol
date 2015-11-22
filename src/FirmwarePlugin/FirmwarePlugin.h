@@ -109,6 +109,9 @@ public:
 
     /// Adds the parameter meta data to the Fact
     virtual void addMetaDataToFact(Fact* fact) = 0;
+
+    /// List of supported mission commands. Empty list for all commands supported.
+    virtual QList<MAV_CMD> supportedMissionCommands(void) = 0;
 };
 
 #endif
