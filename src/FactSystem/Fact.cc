@@ -31,7 +31,7 @@
 Fact::Fact(QObject* parent)
     : QObject(parent)
     , _componentId(-1)
-    , _value(0)
+    , _rawValue(0)
     , _type(FactMetaData::valueTypeInt32)
     , _metaData(NULL)
 {    
@@ -43,7 +43,7 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
     : QObject(parent)
     , _name(name)
     , _componentId(componentId)
-    , _value(0)
+    , _rawValue(0)
     , _type(type)
     , _metaData(NULL)
 {
@@ -61,7 +61,7 @@ const Fact& Fact::operator=(const Fact& other)
 {
     _name           = other._name;
     _componentId    = other._componentId;
-    _value          = other._value;
+    _rawValue          = other._rawValue;
     _type           = other._type;
     
     if (_metaData && other._metaData) {
@@ -80,9 +80,27 @@ void Fact::forceSetValue(const QVariant& value)
         QString     errorString;
         
         if (_metaData->convertAndValidate(value, true /* convertOnly */, typedValue, errorString)) {
-            _value.setValue(typedValue);
-            emit valueChanged(_value);
-            emit _containerValueChanged(_value);
+            _rawValue.setValue(_metaData->cookedTranslator()(typedValue));
+            emit valueChanged(typedValue);
+            emit _containerValueChanged(typedValue);
+        }
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+}
+
+void Fact::setRawValue(const QVariant& value)
+{
+    if (_metaData) {
+        QVariant    typedValue;
+        QString     errorString;
+        
+        if (_metaData->convertAndValidate(value, true /* convertOnly */, typedValue, errorString)) {
+            if (typedValue != _rawValue) {
+                _rawValue.setValue(typedValue);
+                emit valueChanged(this->value());
+                emit _containerValueChanged(this->value());
+            }
         }
     } else {
         qWarning() << "Meta data pointer missing";
@@ -92,16 +110,28 @@ void Fact::forceSetValue(const QVariant& value)
 void Fact::setValue(const QVariant& value)
 {
     if (_metaData) {
-        QVariant    typedValue;
-        QString     errorString;
-        
-        if (_metaData->convertAndValidate(value, true /* convertOnly */, typedValue, errorString)) {
-            if (typedValue != _value) {
-                _value.setValue(typedValue);
-                emit valueChanged(_value);
-                emit _containerValueChanged(_value);
-            }
+        setRawValue(_metaData->cookedTranslator()(value));
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+}
+
+void Fact::setEnumStringValue(const QString& value)
+{
+    if (_metaData) {
+        int index = _metaData->enumStrings().indexOf(value);
+        if (index != -1) {
+            setValue(_metaData->enumValues()[index]);
         }
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+}
+
+void Fact::setEnumIndex(int index)
+{
+    if (_metaData) {
+        setValue(_metaData->enumValues()[index]);
     } else {
         qWarning() << "Meta data pointer missing";
     }
@@ -109,9 +139,9 @@ void Fact::setValue(const QVariant& value)
 
 void Fact::_containerSetValue(const QVariant& value)
 {
-    _value = value;
-    emit valueChanged(_value);
-    emit vehicleUpdated(_value);
+    _rawValue = value;
+    emit valueChanged(_rawValue);
+    emit vehicleUpdated(_rawValue);
 }
 
 QString Fact::name(void) const
@@ -126,7 +156,63 @@ int Fact::componentId(void) const
 
 QVariant Fact::value(void) const
 {
-    return _value;
+    if (_metaData) {
+        return _metaData->rawTranslator()(_rawValue);
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return _rawValue;
+    }
+}
+
+QString Fact::enumStringValue(void) const
+{
+    if (_metaData) {
+        int enumIndex = this->enumIndex();
+        if (enumIndex > 0 && enumIndex < _metaData->enumStrings().count()) {
+            return _metaData->enumStrings()[enumIndex];
+        }
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+
+    return QString();
+}
+
+int Fact::enumIndex(void) const
+{
+    if (_metaData) {
+        int index = 0;
+        foreach (QVariant enumValue, _metaData->enumValues()) {
+            if (enumValue == value()) {
+                return index;
+            }
+            index ++;
+        }
+    } else {
+        qWarning() << "Meta data pointer missing";
+    }
+
+    return -1;
+}
+
+QStringList Fact::enumStrings(void) const
+{
+    if (_metaData) {
+        return _metaData->enumStrings();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QStringList();
+    }
+}
+
+QVariantList Fact::enumValues(void) const
+{
+    if (_metaData) {
+        return _metaData->enumValues();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QVariantList();
+    }
 }
 
 QString Fact::_variantToString(const QVariant& variant) const
@@ -279,6 +365,7 @@ QString Fact::group(void) const
 void Fact::setMetaData(FactMetaData* metaData)
 {
     _metaData = metaData;
+    emit valueChanged(value());
 }
 
 bool Fact::valueEqualsDefault(void) const
