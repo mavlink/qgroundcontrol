@@ -8,6 +8,18 @@ import QGroundControl.Controls 1.0
 
 QGCComboBox {
     property Fact fact: Fact { }
-    currentIndex: fact.value
-    onActivated: fact.value = index
+    property bool indexModel: true  ///< true: model must be specifed, selected index is fact value, false: use enum meta data
+
+    model: fact.enumStrings
+
+    currentIndex: indexModel ? fact.value : fact.enumIndex
+
+    onActivated: {
+        if (indexModel) {
+            fact.value = index
+        } else {
+            console.log("setting enumIndex", index)
+            fact.enumIndex = index
+        }
+    }
 }

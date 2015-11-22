@@ -46,56 +46,67 @@ public:
 
     const Fact& operator=(const Fact& other);
 
-    Q_PROPERTY(int      componentId             READ componentId                            CONSTANT)
-    Q_PROPERTY(QString  group                   READ group                                  CONSTANT)
-    Q_PROPERTY(QString  name                    READ name                                   CONSTANT)
-    Q_PROPERTY(QVariant value                   READ value                  WRITE setValue  NOTIFY valueChanged USER true)
-    Q_PROPERTY(QVariant valueString             READ valueString                            NOTIFY valueChanged)
-    Q_PROPERTY(QString  units                   READ units                                  CONSTANT)
-    Q_PROPERTY(QVariant defaultValue            READ defaultValue                           CONSTANT)
-    Q_PROPERTY(QString  defaultValueString      READ defaultValueString                     CONSTANT)
-    Q_PROPERTY(bool     defaultValueAvailable   READ defaultValueAvailable                  CONSTANT)
-    Q_PROPERTY(bool     valueEqualsDefault      READ valueEqualsDefault                     NOTIFY valueChanged)
-    Q_PROPERTY(FactMetaData::ValueType_t type   READ type                                   CONSTANT)
-    Q_PROPERTY(QString  shortDescription        READ shortDescription                       CONSTANT)
-    Q_PROPERTY(QString  longDescription         READ longDescription                        CONSTANT)
-    Q_PROPERTY(QVariant min                     READ min                                    CONSTANT)
-    Q_PROPERTY(QString  minString               READ minString                              CONSTANT)
-    Q_PROPERTY(bool     minIsDefaultForType     READ minIsDefaultForType                    CONSTANT)
-    Q_PROPERTY(QVariant max                     READ max                                    CONSTANT)
-    Q_PROPERTY(QString  maxString               READ maxString                              CONSTANT)
-    Q_PROPERTY(bool     maxIsDefaultForType     READ maxIsDefaultForType                    CONSTANT)
-    Q_PROPERTY(int      decimalPlaces           READ decimalPlaces                          CONSTANT)
-    
+    Q_PROPERTY(int          componentId             READ componentId                                        CONSTANT)
+    Q_PROPERTY(int          decimalPlaces           READ decimalPlaces                                      CONSTANT)
+    Q_PROPERTY(QVariant     defaultValue            READ defaultValue                                       CONSTANT)
+    Q_PROPERTY(QString      defaultValueString      READ defaultValueString                                 CONSTANT)
+    Q_PROPERTY(bool         defaultValueAvailable   READ defaultValueAvailable                              CONSTANT)
+    Q_PROPERTY(int          enumIndex               READ enumIndex              WRITE setEnumIndex          NOTIFY valueChanged)
+    Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                        CONSTANT)
+    Q_PROPERTY(QString      enumStringValue         READ enumStringValue        WRITE setEnumStringValue    NOTIFY valueChanged)
+    Q_PROPERTY(QVariantList enumValues              READ enumValues                                         CONSTANT)
+    Q_PROPERTY(QString      group                   READ group                                              CONSTANT)
+    Q_PROPERTY(QString      longDescription         READ longDescription                                    CONSTANT)
+    Q_PROPERTY(QVariant     max                     READ max                                                CONSTANT)
+    Q_PROPERTY(QString      maxString               READ maxString                                          CONSTANT)
+    Q_PROPERTY(bool         maxIsDefaultForType     READ maxIsDefaultForType                                CONSTANT)
+    Q_PROPERTY(QVariant     min                     READ min                                                CONSTANT)
+    Q_PROPERTY(QString      minString               READ minString                                          CONSTANT)
+    Q_PROPERTY(bool         minIsDefaultForType     READ minIsDefaultForType                                CONSTANT)
+    Q_PROPERTY(QString      name                    READ name                                               CONSTANT)
+    Q_PROPERTY(QString      shortDescription        READ shortDescription                                   CONSTANT)
+    Q_PROPERTY(FactMetaData::ValueType_t type       READ type                                               CONSTANT)
+    Q_PROPERTY(QString      units                   READ units                                              CONSTANT)
+    Q_PROPERTY(QVariant     value                   READ value                  WRITE setValue              NOTIFY valueChanged)
+    Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                 NOTIFY valueChanged)
+    Q_PROPERTY(QVariant     valueString             READ valueString                                        NOTIFY valueChanged)
+
     /// Convert and validate value
     ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
     Q_INVOKABLE QString validate(const QString& value, bool convertOnly);
     
-    // Property system methods
-    
-    QString     name(void) const;
-    int         componentId(void) const;
-    QVariant    value(void) const;
-    QString     valueString(void) const;
-    QVariant    defaultValue(void) const;
-    QString     defaultValueString(void) const;
-    bool        defaultValueAvailable(void) const;
-    bool        valueEqualsDefault(void) const;
-    QString     shortDescription(void) const;
-    QString     longDescription(void) const;
-    QString     units(void) const;
-    QVariant    min(void) const;
-    QString     minString(void) const;
-    bool        minIsDefaultForType(void) const;
-    QVariant    max(void) const;
-    QString     maxString(void) const;
-    bool        maxIsDefaultForType(void) const;
-    QString     group(void) const;
-    int         decimalPlaces(void) const;
+    int             componentId             (void) const;
+    int             decimalPlaces           (void) const;
+    QVariant        defaultValue            (void) const;
+    bool            defaultValueAvailable   (void) const;
+    QString         defaultValueString      (void) const;
+    int             enumIndex               (void) const;
+    QStringList     enumStrings             (void) const;
+    QString         enumStringValue         (void) const;
+    QVariantList    enumValues              (void) const;
+    QString         group                   (void) const;
+    QString         longDescription         (void) const;
+    QVariant        max                     (void) const;
+    QString         maxString               (void) const;
+    bool            maxIsDefaultForType     (void) const;
+    QVariant        min                     (void) const;
+    QString         minString               (void) const;
+    bool            minIsDefaultForType     (void) const;
+    QString         name                    (void) const;
+    QVariant        rawValue                (void) const { return _rawValue; }  /// value prior to translation, careful
+    QString         shortDescription        (void) const;
+    FactMetaData::ValueType_t type          (void) const;
+    QString         units                   (void) const;
+    QVariant        value                   (void) const;
+    QString         valueString             (void) const;
+    bool            valueEqualsDefault      (void) const;
 
-    FactMetaData::ValueType_t type(void) const;
+    void setRawValue        (const QVariant& value);
+    void setValue           (const QVariant& value);
+    void setEnumIndex       (int index);
+    void setEnumStringValue (const QString& value);
 
-    void setValue(const QVariant& value);
+    // C++ methods
 
     /// Sets and sends new value to vehicle even if value is the same
     void forceSetValue(const QVariant& value);
@@ -127,7 +138,7 @@ private:
 
     QString                     _name;
     int                         _componentId;
-    QVariant                    _value;
+    QVariant                    _rawValue;
     FactMetaData::ValueType_t   _type;
     FactMetaData*               _metaData;
 };
