@@ -95,6 +95,8 @@
         <file alias="Signal100.svg">src/ui/toolbar/Images/Signal100.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
 
+        <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
+
     </qresource>
 
     <qresource prefix="/res">

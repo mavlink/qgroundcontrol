@@ -49,14 +49,14 @@ private:
     typedef struct {
         int            sequenceNumber;
         QGeoCoordinate coordinate;
-        int            command;
+        MAV_CMD        command;
         double         param1;
         double         param2;
         double         param3;
         double         param4;
         bool           autocontinue;
         bool           isCurrentItem;
-        int            frame;
+        MAV_FRAME      frame;
     } ItemInfo_t;
     
     typedef struct {
