@@ -1,5 +1,8 @@
 language: cpp
 
+rvm:
+  - rbx-2.1.1
+
 git:
   depth: 500
 
