@@ -155,7 +155,7 @@ VideoEnabled {
         $$PWD/gstqtvideosink/utils/utils.cpp \
 
 } else {
-    LinuxBuild|MacBuild|iOSBuild|WindowsBuild {
+    LinuxBuild|MacBuild|iOSBuild|WindowsBuild|AndroidBuild {
         message("Skipping support for video streaming (GStreamer libraries not installed)")
         MacBuild {
             message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/osx/")
