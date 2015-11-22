@@ -118,3 +118,9 @@ void GenericFirmwarePlugin::addMetaDataToFact(Fact* fact)
     FactMetaData* metaData = new FactMetaData(fact->type(), fact);
     fact->setMetaData(metaData);
 }
+
+QList<MAV_CMD> GenericFirmwarePlugin::supportedMissionCommands(void)
+{
+    // Generic supports all commands
+    return QList<MAV_CMD>();
+}
