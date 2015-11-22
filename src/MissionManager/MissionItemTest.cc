@@ -54,11 +54,12 @@ const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLoiterTurns[] =
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLoiterTime[] = {
     { "Altitude:",  -30.0 },
     { "Radius:",    30.0 },
-    { "Seconds:",   10.0 },
+    { "Hold:",      10.0 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLand[] = {
     { "Altitude:",  -30.0 },
+    { "Abort Alt:", 10.0 },
     { "Heading:",   1.0 },
 };
 
@@ -69,7 +70,7 @@ const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesTakeoff[] = {
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesConditionDelay[] = {
-    { "Seconds:",   10.0 },
+    { "Hold:", 10.0 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesDoJump[] = {
@@ -101,18 +102,19 @@ void MissionItemTest::_test(void)
         
         qDebug() << "Command:" << info->command;
         
-        MissionItem* item = new MissionItem(NULL,
-                                            info->sequenceNumber,
-                                            info->coordinate,
+        MissionItem* item = new MissionItem(info->sequenceNumber,
                                             info->command,
+                                            info->frame,
                                             info->param1,
                                             info->param2,
                                             info->param3,
                                             info->param4,
+                                            info->coordinate.latitude(),
+                                            info->coordinate.longitude(),
+                                            info->coordinate.altitude(),
                                             info->autocontinue,
-                                            info->isCurrentItem,
-                                            info->frame);
-        
+                                            info->isCurrentItem);
+
         // Validate the saving is working correctly
         QString savedItemString;
         QTextStream saveStream(&savedItemString, QIODevice::WriteOnly);
@@ -123,6 +125,7 @@ void MissionItemTest::_test(void)
         size_t factCount = 0;
         for (int i=0; i<item->textFieldFacts()->count(); i++) {
             Fact* fact = qobject_cast<Fact*>(item->textFieldFacts()->get(i));
+            qDebug() << fact->name();
             
             bool found = false;
             for (size_t j=0; j<expected->cFactValues; j++) {
@@ -130,11 +133,7 @@ void MissionItemTest::_test(void)
                 
                 if (factValue->name == fact->name()) {
                     qDebug() << factValue->name;
-                    if (strcmp(factValue->name,  "Heading:") == 0) {
-                        QCOMPARE(fact->value().toDouble() * (M_PI / 180.0), item->_yawRadians());
-                    } else {
-                        QCOMPARE(fact->value().toDouble(), factValue->value);
-                    }
+                    QCOMPARE(fact->rawValue().toDouble(), factValue->value);
                     factCount ++;
                     found = true;
                     break;

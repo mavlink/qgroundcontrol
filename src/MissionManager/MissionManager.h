@@ -49,13 +49,11 @@ public:
     
     Q_PROPERTY(bool                 inProgress      READ inProgress     NOTIFY inProgressChanged)
     Q_PROPERTY(QmlObjectListModel*  missionItems    READ missionItems   CONSTANT)
-    Q_PROPERTY(bool                 canEdit         READ canEdit        NOTIFY  canEditChanged)
     
     // Property accessors
     
     bool inProgress(void) { return _retryAck != AckNone; }
     QmlObjectListModel* missionItems(void) { return &_missionItems; }
-    bool canEdit(void) { return _canEdit; }
     
     // C++ methods
     
@@ -85,8 +83,6 @@ public:
     static const int _maxRetryCount = 5;
     
 signals:
-    // Public signals
-    void canEditChanged(bool canEdit);
     void newMissionItemsAvailable(void);
     void inProgressChanged(bool inProgress);
     void error(int errorCode, const QString& errorMsg);
@@ -123,7 +119,6 @@ private:
     Vehicle*            _vehicle;
     
     int                 _cMissionItems;     ///< Mission items on vehicle
-    bool                _canEdit;           ///< true: Mission items are editable in the ui
 
     QTimer*             _ackTimeoutTimer;
     AckType_t           _retryAck;
