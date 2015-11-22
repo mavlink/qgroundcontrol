@@ -205,7 +205,7 @@ Rectangle {
     Rectangle {
         //-- Limit height to available height (below tool bar)
         anchors.topMargin:  _margin
-        height:             mainWindow.avaiableHeight
+        height:             mainWindow.availableHeight
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
         anchors.right:      parent.right
