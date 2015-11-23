@@ -149,10 +149,6 @@ QGCView {
                 latitude:       mainWindow.tabletPosition.latitude
                 longitude:      mainWindow.tabletPosition.longitude
 
-                Component.onCompleted: {
-                    console.log("Init coordinate " + mainWindow.tabletPosition.latitude)
-                }
-
                 readonly property real animationDuration: 500
 
                 Behavior on zoomLevel {

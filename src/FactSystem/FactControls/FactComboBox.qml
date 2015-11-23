@@ -18,7 +18,6 @@ QGCComboBox {
         if (indexModel) {
             fact.value = index
         } else {
-            console.log("setting enumIndex", index)
             fact.enumIndex = index
         }
     }
