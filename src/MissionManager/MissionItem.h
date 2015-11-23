@@ -93,8 +93,6 @@ public:
     /// are shown next to the part item in the ui.
     Q_PROPERTY(QmlObjectListModel*  childItems      READ childItems     CONSTANT)
 
-    Q_INVOKABLE void setDefaultsForCommand(void);
-
     // Property accesors
     
     MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_commandFact.value().toInt(); };
@@ -172,6 +170,9 @@ public:
     static const double defaultLoiterOrbitRadius;
     static const double defaultLoiterTurns;
 
+public slots:
+    void setDefaultsForCommand(void);
+
 signals:
     void commandChanged             (MavlinkQmlSingleton::Qml_MAV_CMD command);
     void coordinateChanged          (const QGeoCoordinate& coordinate);
@@ -210,8 +211,10 @@ private:
 
 private:
     typedef struct {
+        int     param;
         QString label;
         QString units;
+        double  defaultValue;
         int     decimalPlaces;
     } ParamInfo_t;
 
@@ -269,6 +272,7 @@ private:
     static QMap<MAV_CMD, MavCmdInfo_t> _mavCmdInfoMap;
 
     static const QString _decimalPlacesJsonKey;
+    static const QString _defaultJsonKey;
     static const QString _descriptionJsonKey;
     static const QString _friendlyNameJsonKey;
     static const QString _friendlyEditJsonKey;
