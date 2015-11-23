@@ -47,6 +47,7 @@ FactMetaData* MissionItem::_longitudeMetaData =         NULL;
 FactMetaData* MissionItem::_supportedCommandMetaData =  NULL;
 
 const QString MissionItem::_decimalPlacesJsonKey        (QStringLiteral("decimalPlaces"));
+const QString MissionItem::_defaultJsonKey              (QStringLiteral("default"));
 const QString MissionItem::_descriptionJsonKey          (QStringLiteral("description"));
 const QString MissionItem::_friendlyEditJsonKey         (QStringLiteral("friendlyEdit"));
 const QString MissionItem::_friendlyNameJsonKey         (QStringLiteral("friendlyName"));
@@ -246,8 +247,8 @@ void MissionItem::_connectSignals(void)
     connect(&_param5Fact,   &Fact::valueChanged,                    this, &MissionItem::_setDirtyFromSignal);
     connect(&_param6Fact,   &Fact::valueChanged,                    this, &MissionItem::_setDirtyFromSignal);
     connect(&_param7Fact,   &Fact::valueChanged,                    this, &MissionItem::_setDirtyFromSignal);
-    connect(this,           &MissionItem::commandChanged,           this, &MissionItem::_setDirtyFromSignal);
-    connect(this,           &MissionItem::frameChanged,             this, &MissionItem::_setDirtyFromSignal);
+    connect(&_frameFact,    &Fact::valueChanged,                    this, &MissionItem::_setDirtyFromSignal);
+    connect(&_commandFact,  &Fact::valueChanged,                    this, &MissionItem::_setDirtyFromSignal);
     connect(this,           &MissionItem::sequenceNumberChanged,    this, &MissionItem::_setDirtyFromSignal);
 
     // Values from these facts must propogate back and forth between the real object storage
@@ -264,14 +265,18 @@ void MissionItem::_connectSignals(void)
     // The following changes may also change friendlyEditAllowed
     connect(&_autoContinueFact, &Fact::valueChanged,        this, &MissionItem::_sendFriendlyEditAllowedChanged);
     connect(&_commandFact,      &Fact::valueChanged,        this, &MissionItem::_sendFriendlyEditAllowedChanged);
-    connect(this,               &MissionItem::frameChanged, this, &MissionItem::_sendFriendlyEditAllowedChanged);
+    connect(&_frameFact,        &Fact::valueChanged,        this, &MissionItem::_sendFriendlyEditAllowedChanged);
 
     // Whenever these properties change the ui model changes as well
     connect(this, &MissionItem::commandChanged, this, &MissionItem::_sendUiModelChanged);
     connect(this, &MissionItem::rawEditChanged, this, &MissionItem::_sendUiModelChanged);
 
+    // These fact signals must alway signal out through MissionItem signals
     connect(&_commandFact,  &Fact::valueChanged, this, &MissionItem::_sendCommandChanged);
     connect(&_frameFact,    &Fact::valueChanged, this, &MissionItem::_sendFrameChanged);
+
+    // When the command changes we need to set defaults
+    connect(&_commandFact,  &Fact::valueChanged, this, &MissionItem::setDefaultsForCommand);
 }
 
 bool MissionItem::_validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types)
@@ -376,8 +381,8 @@ bool MissionItem::_loadMavCmdInfoJson(void)
                 // Validate key types
                 QStringList             keys;
                 QList<QJsonValue::Type> types;
-                keys << _labelJsonKey << _unitsJsonKey << _decimalPlacesJsonKey;
-                types << QJsonValue::String << QJsonValue::String<< QJsonValue::Double;
+                keys << _labelJsonKey << _unitsJsonKey << _defaultJsonKey << _decimalPlacesJsonKey;
+                types << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Double;
                 if (!_validateKeyTypes(paramObject, keys, types)) {
                     return false;
                 }
@@ -389,7 +394,9 @@ bool MissionItem::_loadMavCmdInfoJson(void)
                     return false;
                 }
 
+                _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].param =          i;
                 _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].units =          paramObject.value(_unitsJsonKey).toString();
+                _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].defaultValue =   paramObject.value(_defaultJsonKey).toDouble(0.0);
                 _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].decimalPlaces =  paramObject.value(_decimalPlacesJsonKey).toInt(FactMetaData::defaultDecimalPlaces);
             }
         }
@@ -519,6 +526,7 @@ void MissionItem::setCommand(MAV_CMD command)
 {
     if ((MAV_CMD)this->command() != command) {
         _commandFact.setValue(command);
+        setDefaultsForCommand();
         emit commandChanged(this->command());
     }
 }
@@ -533,6 +541,7 @@ void MissionItem::setFrame(MAV_FRAME frame)
 {
     if (this->frame() != frame) {
         _frameFact.setValue(frame);
+        frameChanged(frame);
     }
 }
 
@@ -837,7 +846,6 @@ void MissionItem::_syncSupportedCommandToCommand(const QVariant& value)
         qDebug() << value.toInt();
         _syncingSupportedCommandAndCommand = true;
         _commandFact.setValue(value.toInt());
-        qDebug() << _commandFact.value().toInt();
         _syncingSupportedCommandAndCommand = false;
     }
 }
@@ -853,29 +861,29 @@ void MissionItem::_syncCommandToSupportedCommand(const QVariant& value)
 
 void MissionItem::setDefaultsForCommand(void)
 {
-    switch ((MAV_CMD)command()) {
-    case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
-        setParam1(_degreesToRadians(defaultTakeoffPitch).toDouble());
-        break;
-    case MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT:
-        setParam2(defaultAcceptanceRadius);
-        break;
-    case MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_UNLIM:
-    case MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_TIME:
-        setParam3(defaultLoiterOrbitRadius);
-        break;
-    case MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_TURNS:
-        setParam1(defaultLoiterTurns);
-        setParam3(defaultLoiterOrbitRadius);
-        break;
-    default:
-        break;
+    foreach (ParamInfo_t paramInfo, _mavCmdInfoMap[(MAV_CMD)command()].paramInfoMap) {
+        double defaultValue = paramInfo.defaultValue;
+
+        switch (paramInfo.param) {
+            case 1:
+                _param1Fact.setRawValue(defaultValue);
+                break;
+            case 2:
+                _param2Fact.setRawValue(defaultValue);
+                break;
+            case 3:
+                _param3Fact.setRawValue(defaultValue);
+                break;
+            case 4:
+                _param4Fact.setRawValue(defaultValue);
+                break;
+        }
     }
 
-    setParam4(_degreesToRadians(defaultHeading).toDouble());
     setParam7(defaultAltitude);
-
+    setAutoContinue(true);
     setFrame(specifiesCoordinate() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
+    setRawEdit(false);
 }
 
 void MissionItem::_sendUiModelChanged(void)
