@@ -84,6 +84,13 @@ QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::boardType(void) const
         } else if (description() == "FT231X USB UART") {
             qCDebug(QGCSerialPortInfoLog) << "Found possible Radio (by name matching fallback)";
             boardType = BoardType3drRadio;
+#ifdef __android__
+        } else if (description().endsWith("USB UART")) {
+            // This is a fairly broad fallbacks for radios which will also catch most FTDI devices. That would
+            // cause problems on desktop due to incorrect connections. Since mobile is more anal about connecting
+            // it will work fine here.
+            boardType = BoardType3drRadio;
+#endif
         }
     }
 

@@ -31,6 +31,7 @@
 
 #include "QGCApplication.h"
 #include "MainWindow.h"
+#include "LinkManager.h"
 #include "HomePositionManager.h"
 #include "FlightMapSettings.h"
 
@@ -47,6 +48,8 @@ class QGroundControlQmlGlobal : public QObject
 public:
     QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent = NULL);
 
+    Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
+    Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
     Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
 
@@ -81,6 +84,8 @@ public:
 
     // Property accesors
 
+    LinkManager*            linkManager ()              { return _linkManager; }
+    MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
     HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
     FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }
 
@@ -124,6 +129,8 @@ private:
     void _startMockLink(MockConfiguration* mockConfig);
 #endif
 
+    MultiVehicleManager*    _multiVehicleManager;
+    LinkManager*            _linkManager;
     HomePositionManager*    _homePositionManager;
     FlightMapSettings*      _flightMapSettings;
 };

@@ -98,6 +98,7 @@ MockLink::MockLink(MockConfiguration* config)
         _firmwareType = config->firmwareType();
         _vehicleType = config->vehicleType();
         _sendStatusText = config->sendStatusText();
+        _config->setLink(this);
     }
 
     union px4_custom_mode   px4_cm;
@@ -136,7 +137,7 @@ bool MockLink::_connect(void)
     return true;
 }
 
-bool MockLink::_disconnect(void)
+void MockLink::_disconnect(void)
 {
     if (_connected) {
         _connected = false;
@@ -144,8 +145,6 @@ bool MockLink::_disconnect(void)
         wait();
         emit disconnected();
     }
-
-    return true;
 }
 
 void MockLink::run(void)
