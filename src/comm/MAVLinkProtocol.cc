@@ -193,13 +193,6 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
     Q_ASSERT(link);
     
     if (connected) {
-        foreach (SharedLinkInterface sharedLink, _connectedLinks) {
-            Q_ASSERT(sharedLink.data() != link);
-        }
-        
-        // Use the same shared pointer as LinkManager
-        _connectedLinks.append(_linkMgr->sharedPointerForLink(link));
-        
         if (link->requiresUSBMavlinkStart()) {
             // Send command to start MAVLink
             // XXX hacky but safe
@@ -210,17 +203,6 @@ void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
             link->writeBytes(cmd, strlen(cmd));
             link->writeBytes(init, 4);
         }
-    } else {
-        bool found = false;
-        for (int i=0; i<_connectedLinks.count(); i++) {
-            if (_connectedLinks[i].data() == link) {
-                found = true;
-                _connectedLinks.removeAt(i);
-                break;
-            }
-        }
-        Q_UNUSED(found);
-        Q_ASSERT(found);
     }
 }
 
@@ -236,7 +218,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     // Since receiveBytes signals cross threads we can end up with signals in the queue
     // that come through after the link is disconnected. For these we just drop the data
     // since the link is closed.
-    if (!_linkMgr->containsLink(link)) {
+    if (!_linkMgr->links()->contains(link)) {
         return;
     }
     
@@ -300,7 +282,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 {
                     mavlink_message_t msg;
                     mavlink_msg_ping_pack(getSystemId(), getComponentId(), &msg, ping.time_usec, ping.seq, message.sysid, message.compid);
-                    sendMessage(msg);
+                    _sendMessage(msg);
                 }
             }
 
@@ -359,12 +341,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 _startLogging();
 #endif
 
-                // Notify the vehicle manager of the heartbeat. This will create/update vehicles as needed.
                 mavlink_heartbeat_t heartbeat;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
-                if (!_multiVehicleManager->notifyHeartbeatInfo(link, message.sysid, heartbeat)) {
-                    continue;
-                }
+                emit vehicleHeartbeatInfo(link, message.sysid, heartbeat.mavlink_version, heartbeat.autopilot, heartbeat.type);
             }
 
             // Increase receive counter
@@ -417,15 +396,13 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Multiplex message if enabled
             if (m_multiplexingEnabled)
             {
-                // Get all links connected to this unit
-                QList<LinkInterface*> links = _linkMgr->getLinks();
-
                 // Emit message on all links that are currently connected
-                foreach (LinkInterface* currLink, links)
-                {
+                for (int i=0; i<_linkMgr->links()->count(); i++) {
+                    LinkInterface* currLink = _linkMgr->links()->value<LinkInterface*>(i);
+
                     // Only forward this message to the other links,
                     // not the link the message was received on
-                    if (currLink != link) sendMessage(currLink, message, message.sysid, message.compid);
+                    if (currLink && currLink != link) _sendMessage(currLink, message, message.sysid, message.compid);
                 }
             }
         }
@@ -460,17 +437,11 @@ int MAVLinkProtocol::getComponentId()
 /**
  * @param message message to send
  */
-void MAVLinkProtocol::sendMessage(mavlink_message_t message)
+void MAVLinkProtocol::_sendMessage(mavlink_message_t message)
 {
-    // Get all links connected to this unit
-    QList<LinkInterface*> links = _linkMgr->getLinks();
-
-    // Emit message on all links that are currently connected
-    QList<LinkInterface*>::iterator i;
-    for (i = links.begin(); i != links.end(); ++i)
-    {
-        sendMessage(*i, message);
-//        qDebug() << __FILE__ << __LINE__ << "SENT MESSAGE OVER" << ((LinkInterface*)*i)->getName() << "LIST SIZE:" << links.size();
+    for (int i=0; i<_linkMgr->links()->count(); i++) {
+        LinkInterface* link = _linkMgr->links()->value<LinkInterface*>(i);
+        _sendMessage(link, message);
     }
 }
 
@@ -478,7 +449,7 @@ void MAVLinkProtocol::sendMessage(mavlink_message_t message)
  * @param link the link to send the message over
  * @param message message to send
  */
-void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message)
+void MAVLinkProtocol::_sendMessage(LinkInterface* link, mavlink_message_t message)
 {
     // Create buffer
     static uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
@@ -501,7 +472,7 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
  * @param systemid id of the system the message is originating from
  * @param componentid id of the component the message is originating from
  */
-void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid)
+void MAVLinkProtocol::_sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid)
 {
     // Create buffer
     static uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
@@ -529,7 +500,7 @@ void MAVLinkProtocol::sendHeartbeat()
     {
         mavlink_message_t beat;
         mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL_ARMED, 0, MAV_STATE_ACTIVE);
-        sendMessage(beat);
+        _sendMessage(beat);
     }
     if (m_authEnabled)
     {
@@ -538,7 +509,7 @@ void MAVLinkProtocol::sendHeartbeat()
         memset(&auth, 0, sizeof(auth));
         memcpy(auth.key, m_authKey.toStdString().c_str(), qMin(m_authKey.length(), MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN));
         mavlink_msg_auth_key_encode(getSystemId(), getComponentId(), &msg, &auth);
-        sendMessage(msg);
+        _sendMessage(msg);
     }
 }
 

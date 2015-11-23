@@ -52,6 +52,8 @@ This file is part of the QGROUNDCONTROL project
 
 class UDPConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
 
     /*!
@@ -203,7 +205,7 @@ private:
     
     // From LinkInterface
     virtual bool _connect(void);
-    virtual bool _disconnect(void);
+    virtual void _disconnect(void);
 
     bool _hardwareConnect();
     void _restartConnection();

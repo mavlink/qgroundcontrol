@@ -114,12 +114,6 @@ public:
     bool testHighDPI            () { return false; }
 #endif
 
-signals:
-    void repaintRequested();
-
-private slots:
-    void _updateCanvas();
-
 private:
     static const double _defaultFontPixelSizeRatio;
     static const double _smallFontPixelSizeRatio;

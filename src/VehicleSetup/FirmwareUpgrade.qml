@@ -26,12 +26,13 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Dialogs 1.2
 
-import QGroundControl.Controls 1.0
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controllers 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.ScreenTools   1.0
 
 QGCView {
     id:         qgcView
@@ -43,8 +44,7 @@ QGCView {
     readonly property string highlightSuffix:   "</font>"
     readonly property string welcomeText:       "QGroundControl can upgrade the firmware on Pixhawk devices, 3DR Radios and PX4 Flow Smart Cameras."
     readonly property string plugInText:        highlightPrefix + "Plug in your device" + highlightSuffix + " via USB to " + highlightPrefix + "start" + highlightSuffix + " firmware upgrade"
-    readonly property string qgcDisconnectText: "All QGroundControl connections to vehicles must be disconnected prior to firmware upgrade. " +
-                                                    "Click " + highlightPrefix + "Disconnect" + highlightSuffix + " in the toolbar above."
+    readonly property string qgcDisconnectText: "All QGroundControl connections to vehicles must be disconnected prior to firmware upgrade."
     property string usbUnplugText:              "Device must be disconnected from USB to start firmware upgrade. " +
                                                     highlightPrefix + "Disconnect {0}" + highlightSuffix + " from usb."
 
@@ -88,7 +88,7 @@ QGCView {
         onBoardFound: {
             if (initialBoardSearch) {
                 // Board was found right away, so something is already plugged in before we've started upgrade
-                if (controller.qgcConnections) {
+                if (QGroundControl.linkManager.anyActiveLinks) {
                     statusTextArea.append(qgcDisconnectText)
                 } else {
                     statusTextArea.append(usbUnplugText.replace('{0}', controller.boardType))

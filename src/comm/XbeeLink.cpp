@@ -158,7 +158,7 @@ bool XbeeLink::_connect(void)
     return true;
 }
 
-bool XbeeLink::_disconnect(void)
+void XbeeLink::_disconnect(void)
 {
 	if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
 
@@ -170,7 +170,6 @@ bool XbeeLink::_disconnect(void)
 	this->m_connected = false;
 
 	emit disconnected();
-	return true;
 }
 
 void XbeeLink::writeBytes(const char *bytes, qint64 length)  // TO DO: delete the data array

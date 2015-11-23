@@ -80,12 +80,6 @@ public:
     ~MainWindow();
 
 
-    /** @brief Get auto link reconnect setting */
-    bool autoReconnectEnabled() const
-    {
-        return _autoReconnect;
-    }
-
     /** @brief Get low power mode setting */
     bool lowPowerModeEnabled() const
     {
@@ -95,17 +89,11 @@ public:
     /// @brief Saves the last used connection
     void saveLastUsedConnection(const QString connection);
 
-    /// @brief Restore (and connects) the last used connection (if any)
-    void restoreLastUsedConnection();
-
 public slots:
     /** @brief Show the application settings */
     void showSettings();
 
     void manageLinks();
-
-    /** @brief Automatically reconnect last link */
-    void enableAutoReconnect(bool enabled);
 
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { _lowPowerMode = enabled; }
@@ -159,8 +147,6 @@ signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
     /** Emitted when any value changes from any source */
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
-    /** Emitted when any the Canvas elements within QML wudgets need updating */
-    void repaintCanvas();
 
     // Used for unit tests to know when the main window closes
     void mainWindowClosed(void);
@@ -213,7 +199,6 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private slots:
-    void _linkStateChange(LinkInterface*);
     void _closeWindow(void) { close(); }
     void _vehicleAdded(Vehicle* vehicle);
 
@@ -254,7 +239,6 @@ private:
     void _storeVisibleWidgetsSettings(void);
 #endif
 
-    bool                    _autoReconnect;
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
     bool                    _showStatusBar;
     QVBoxLayout*            _centralLayout;
