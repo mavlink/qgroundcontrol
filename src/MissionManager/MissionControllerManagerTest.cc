@@ -48,7 +48,6 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
     _missionManager = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->missionManager();
     QVERIFY(_missionManager);
     
-    _rgMissionManagerSignals[canEditChangedSignalIndex] =             SIGNAL(canEditChanged(bool));
     _rgMissionManagerSignals[newMissionItemsAvailableSignalIndex] =   SIGNAL(newMissionItemsAvailable(void));
     _rgMissionManagerSignals[inProgressChangedSignalIndex] =          SIGNAL(inProgressChanged(bool));
     _rgMissionManagerSignals[errorSignalIndex] =                      SIGNAL(error(int, const QString&));
@@ -61,7 +60,6 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
         _multiSpyMissionManager->waitForSignalByIndex(newMissionItemsAvailableSignalIndex, _missionManagerSignalWaitTime);
         _multiSpyMissionManager->waitForSignalByIndex(inProgressChangedSignalIndex, _missionManagerSignalWaitTime);
         QCOMPARE(_multiSpyMissionManager->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
-        QCOMPARE(_multiSpyMissionManager->checkNoSignalByMask(canEditChangedSignalIndex), true);
     }
     
     QVERIFY(!_missionManager->inProgress());

@@ -40,13 +40,6 @@ Rectangle {
         anchors.right:      parent.right
         height:             valuesRect.visible ? valuesRect.y + valuesRect.height : valuesRect.y
 
-        MissionItemIndexLabel {
-            id:                     label
-            anchors.verticalCenter: commandPicker.verticalCenter
-            isCurrentItem:          missionItem.isCurrentItem
-            label:                  missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
-        }
-
         MouseArea {
             anchors.fill:   parent
             visible:        !missionItem.isCurrentItem
@@ -54,14 +47,37 @@ Rectangle {
             onClicked: _root.clicked()
         }
 
-        QGCComboBox {
+        MissionItemIndexLabel {
+            id:                     label
+            anchors.verticalCenter: commandPicker.verticalCenter
+            isCurrentItem:          missionItem.isCurrentItem
+            label:                  missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
+        }
+
+        Image {
+            id:                     rawEdit
+            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 8
+            anchors.left:           label.right
+            anchors.verticalCenter: commandPicker.verticalCenter
+            width:                  commandPicker.height
+            height:                 commandPicker.height
+            visible:                missionItem.friendlyEditAllowed && missionItem.sequenceNumber != 0 && missionItem.isCurrentItem
+            source:                 "qrc:/qmlimages/CogWheel.svg"
+
+            MouseArea {
+                anchors.fill:   parent
+                onClicked:      missionItem.rawEdit = !missionItem.rawEdit
+            }
+        }
+
+        FactComboBox {
             id:                 commandPicker
-            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 10
-            anchors.left:       label.right
+            anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+            anchors.left:       rawEdit.right
             anchors.right:      parent.right
-            currentIndex:       missionItem.commandByIndex
-            model:              missionItem.commandNames
-            visible:            missionItem.sequenceNumber != 0 && missionItem.isCurrentItem
+            indexModel:         false
+            fact:               missionItem.supportedCommand
+            visible:            missionItem.sequenceNumber != 0 && missionItem.isCurrentItem && !missionItem.rawEdit
 
             onActivated: missionItem.commandByIndex = index
         }
@@ -69,10 +85,9 @@ Rectangle {
         Rectangle {
             anchors.fill:   commandPicker
             color:          qgcPal.button
-            visible:        !commandPicker.visible
+            visible:        missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem
 
             QGCLabel {
-                id:                 homeLabel
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                 anchors.fill:       parent
                 verticalAlignment:  Text.AlignVCenter
@@ -89,7 +104,7 @@ Rectangle {
             anchors.right:      parent.right
             height:             valuesItem.height
             color:              qgcPal.windowShadeDark
-            visible:            missionItem.isCurrentItem
+            visible:            missionItem.sequenceNumber != 0 && missionItem.isCurrentItem
             radius:             _radius
 
             Item {
@@ -110,7 +125,20 @@ Rectangle {
                     QGCLabel {
                         width:      parent.width
                         wrapMode:   Text.WordWrap
-                        text:       missionItem.commandDescription
+                        text:       missionItem.rawEdit ?
+                                        "Provides advanced access to all commands/parameters. Be very careful!" :
+                                        missionItem.commandDescription
+                    }
+
+                    Repeater {
+                        model: missionItem.comboboxFacts
+
+                        FactComboBox {
+                            width:      valuesColumn.width
+                            indexModel: false
+                            model:      object.enumStrings
+                            fact:       object
+                        }
                     }
 
                     Repeater {
@@ -148,7 +176,6 @@ Rectangle {
                         model: missionItem.checkboxFacts
 
                         FactCheckBox {
-                            id:     textField
                             text:   object.name
                             fact:   object
                         }

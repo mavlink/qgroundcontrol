@@ -37,8 +37,9 @@ import QGroundControl.FactControls 1.0
 FactPanel {
     id: __rootItem
 
-    property var qgcView:               __rootItem  /// Used by Fact controls for validation dialogs
+    property var qgcView:               __rootItem  ///< Used by Fact controls for validation dialogs
     property bool completedSignalled:   false
+    property real topDialogMargin:      0           ///< Set a top margin for dialog
 
     property var viewPanel
 
@@ -278,11 +279,13 @@ FactPanel {
 
         // This is the main dialog panel which is anchored to the right edge
         Rectangle {
-            id:             __dialogPanel
-            width:          __dialogCharWidth == -1 ? parent.width : defaultTextWidth * __dialogCharWidth
-            height:         parent.height
-            anchors.left:   __transparentSection.right
-            color:          __qgcPal.windowShadeDark
+            id:                 __dialogPanel
+            width:              __dialogCharWidth == -1 ? parent.width : defaultTextWidth * __dialogCharWidth
+            anchors.topMargin:  topDialogMargin
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.left:       __transparentSection.right
+            color:              __qgcPal.windowShadeDark
 
             Rectangle {
                 id:     __header

@@ -54,11 +54,12 @@ const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLoiterTurns[] =
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLoiterTime[] = {
     { "Altitude:",  -30.0 },
     { "Radius:",    30.0 },
-    { "Seconds:",   10.0 },
+    { "Hold:",      10.0 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLand[] = {
     { "Altitude:",  -30.0 },
+    { "Abort Alt:", 10.0 },
     { "Heading:",   1.0 },
 };
 
@@ -69,11 +70,11 @@ const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesTakeoff[] = {
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesConditionDelay[] = {
-    { "Seconds:",   10.0 },
+    { "Hold:", 10.0 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesDoJump[] = {
-    { "Seq #:",   10.0 },
+    { "Item #:",   10.0 },
     { "Repeat:",  20.0 },
 };
 
@@ -101,18 +102,19 @@ void MissionItemTest::_test(void)
         
         qDebug() << "Command:" << info->command;
         
-        MissionItem* item = new MissionItem(NULL,
-                                            info->sequenceNumber,
-                                            info->coordinate,
+        MissionItem* item = new MissionItem(info->sequenceNumber,
                                             info->command,
+                                            info->frame,
                                             info->param1,
                                             info->param2,
                                             info->param3,
                                             info->param4,
+                                            info->coordinate.latitude(),
+                                            info->coordinate.longitude(),
+                                            info->coordinate.altitude(),
                                             info->autocontinue,
-                                            info->isCurrentItem,
-                                            info->frame);
-        
+                                            info->isCurrentItem);
+
         // Validate the saving is working correctly
         QString savedItemString;
         QTextStream saveStream(&savedItemString, QIODevice::WriteOnly);
@@ -129,28 +131,24 @@ void MissionItemTest::_test(void)
                 const FactValue_t* factValue = &expected->rgFactValues[j];
                 
                 if (factValue->name == fact->name()) {
-                    qDebug() << factValue->name;
-                    if (strcmp(factValue->name,  "Heading:") == 0) {
-                        QCOMPARE(fact->value().toDouble() * (M_PI / 180.0), item->_yawRadians());
-                    } else {
-                        QCOMPARE(fact->value().toDouble(), factValue->value);
-                    }
+                    QCOMPARE(fact->rawValue().toDouble(), factValue->value);
                     factCount ++;
                     found = true;
                     break;
                 }
             }
             
+            if (!found) {
+                qDebug() << fact->name();
+            }
             QVERIFY(found);
         }
-        qDebug() << info->command;
         QCOMPARE(factCount, expected->cFactValues);
         
         // Validate that loading is working correctly
         MissionItem* loadedItem = new MissionItem();
         QTextStream loadStream(&savedItemString, QIODevice::ReadOnly);
         QVERIFY(loadedItem->load(loadStream));
-        //qDebug() << savedItemString;
         QCOMPARE(loadedItem->coordinate().latitude(), item->coordinate().latitude());
         QCOMPARE(loadedItem->coordinate().longitude(), item->coordinate().longitude());
         QCOMPARE(loadedItem->coordinate().altitude(), item->coordinate().altitude());

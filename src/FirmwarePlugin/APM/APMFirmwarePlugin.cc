@@ -389,3 +389,13 @@ void APMFirmwarePlugin::addMetaDataToFact(Fact* fact)
 {
     _parameterMetaData.addMetaDataToFact(fact);
 }
+
+QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
+{
+    QList<MAV_CMD> list;
+
+    // FIXME: Temp list, just dup of PX4
+    list << MAV_CMD_NAV_WAYPOINT << MAV_CMD_NAV_LOITER_UNLIM << MAV_CMD_NAV_LOITER_TURNS << MAV_CMD_NAV_LOITER_TIME
+         << MAV_CMD_NAV_RETURN_TO_LAUNCH << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF << MAV_CMD_CONDITION_DELAY << MAV_CMD_DO_JUMP;
+    return list;
+}

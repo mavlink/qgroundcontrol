@@ -59,7 +59,8 @@ QGCViewDialog {
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
             forceSave.visible = true
         }
-        valueField.forceActiveFocus();
+        // This was causing problems where it would never give up focus even when hidden!
+        //valueField.forceActiveFocus()
     }
 
     Column {
@@ -83,6 +84,7 @@ QGCViewDialog {
         QGCTextField {
             id:     valueField
             text:   validate ? validateValue : fact.valueString
+            focus:  true
 
             // At this point all Facts are numeric
             inputMethodHints:   Qt.ImhFormattedNumbersOnly

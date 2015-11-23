@@ -49,16 +49,16 @@ protected:
     MissionManager* _missionManager;
     
     typedef struct {
-        int            sequenceNumber;
-        QGeoCoordinate coordinate;
-        int            command;
-        double         param1;
-        double         param2;
-        double         param3;
-        double         param4;
-        bool           autocontinue;
-        bool           isCurrentItem;
-        int            frame;
+        int             sequenceNumber;
+        QGeoCoordinate  coordinate;
+        MAV_CMD         command;
+        double          param1;
+        double          param2;
+        double          param3;
+        double          param4;
+        bool            autocontinue;
+        bool            isCurrentItem;
+        MAV_FRAME       frame;
     } ItemInfo_t;
     
     typedef struct {
@@ -67,15 +67,13 @@ protected:
     } TestCase_t;
 
     typedef enum {
-        canEditChangedSignalIndex = 0,
-        newMissionItemsAvailableSignalIndex,
+        newMissionItemsAvailableSignalIndex = 0,
         inProgressChangedSignalIndex,
         errorSignalIndex,
         maxSignalIndex
     } MissionManagerSignalIndex_t;
 
     typedef enum {
-        canEditChangedSignalMask =              1 << canEditChangedSignalIndex,
         newMissionItemsAvailableSignalMask =    1 << newMissionItemsAvailableSignalIndex,
         inProgressChangedSignalMask =           1 << inProgressChangedSignalIndex,
         errorSignalMask =                       1 << errorSignalIndex,
