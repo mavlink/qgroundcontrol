@@ -843,7 +843,6 @@ void MissionItem::_syncFrameToAltitudeRelativeToHome(void)
 void MissionItem::_syncSupportedCommandToCommand(const QVariant& value)
 {
     if (!_syncingSupportedCommandAndCommand) {
-        qDebug() << value.toInt();
         _syncingSupportedCommandAndCommand = true;
         _commandFact.setValue(value.toInt());
         _syncingSupportedCommandAndCommand = false;

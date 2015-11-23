@@ -74,7 +74,7 @@ const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesConditionDelay[
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesDoJump[] = {
-    { "Seq #:",   10.0 },
+    { "Item #:",   10.0 },
     { "Repeat:",  20.0 },
 };
 
@@ -125,14 +125,12 @@ void MissionItemTest::_test(void)
         size_t factCount = 0;
         for (int i=0; i<item->textFieldFacts()->count(); i++) {
             Fact* fact = qobject_cast<Fact*>(item->textFieldFacts()->get(i));
-            qDebug() << fact->name();
             
             bool found = false;
             for (size_t j=0; j<expected->cFactValues; j++) {
                 const FactValue_t* factValue = &expected->rgFactValues[j];
                 
                 if (factValue->name == fact->name()) {
-                    qDebug() << factValue->name;
                     QCOMPARE(fact->rawValue().toDouble(), factValue->value);
                     factCount ++;
                     found = true;
@@ -140,16 +138,17 @@ void MissionItemTest::_test(void)
                 }
             }
             
+            if (!found) {
+                qDebug() << fact->name();
+            }
             QVERIFY(found);
         }
-        qDebug() << info->command;
         QCOMPARE(factCount, expected->cFactValues);
         
         // Validate that loading is working correctly
         MissionItem* loadedItem = new MissionItem();
         QTextStream loadStream(&savedItemString, QIODevice::ReadOnly);
         QVERIFY(loadedItem->load(loadStream));
-        //qDebug() << savedItemString;
         QCOMPARE(loadedItem->coordinate().latitude(), item->coordinate().latitude());
         QCOMPARE(loadedItem->coordinate().longitude(), item->coordinate().longitude());
         QCOMPARE(loadedItem->coordinate().altitude(), item->coordinate().altitude());
