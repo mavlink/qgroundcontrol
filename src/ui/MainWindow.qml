@@ -44,7 +44,7 @@ Item {
     property int  tbCellHeight:     tbHeight * 0.75
     property real tbSpacing:        ScreenTools.isMobile ? width * 0.00824 : 9.54
     property real tbButtonWidth:    tbCellHeight * 1.3
-    property real avaiableHeight:   height - tbHeight
+    property real availableHeight:  height - tbHeight
     property real menuButtonWidth:  (tbButtonWidth * 2) + (tbSpacing * 4) + 1
 
     property var defaultPosition:   QtPositioning.coordinate(37.803784, -122.462276)
@@ -157,7 +157,7 @@ Item {
     FlightDisplayView {
         id:                 flightView
         anchors.fill:       parent
-        avaiableHeight:     mainWindow.avaiableHeight
+        availableHeight:    mainWindow.availableHeight
         visible:            true
         Component.onCompleted: {
             positionSource.start()

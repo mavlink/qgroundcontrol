@@ -40,7 +40,8 @@ import QGroundControl.Controllers   1.0
 QGCView {
     id:         _root
 
-    viewPanel:  panel
+    viewPanel:          panel
+    topDialogMargin:    height - mainWindow.availableHeight
 
     // zOrder comes from the Loader in MainWindow.qml
     z: QGroundControl.zOrderTopMost
@@ -148,10 +149,6 @@ QGCView {
                 latitude:       mainWindow.tabletPosition.latitude
                 longitude:      mainWindow.tabletPosition.longitude
 
-                Component.onCompleted: {
-                    console.log("Init coordinate " + mainWindow.tabletPosition.latitude)
-                }
-
                 readonly property real animationDuration: 500
 
                 Behavior on zoomLevel {
@@ -211,7 +208,6 @@ QGCView {
 
                     property var    missionItem
                     property var    missionItemIndicator
-                    property real   heading: missionItem ? missionItem.heading : 0
 
                     readonly property real _radius:         ScreenTools.defaultFontPixelHeight * 4
                     readonly property real _arrowHeight:    ScreenTools.defaultFontPixelHeight
@@ -328,28 +324,32 @@ QGCView {
 
                         onClicked: setCurrentItem(object.sequenceNumber)
 
+                        function updateItemIndicator()
+                        {
+                            if (object.isCurrentItem) {
+                                _root.showDistance(object)
+                                if (object.specifiesCoordinate) {
+                                    // Setup our drag item
+                                    if (object.sequenceNumber != 0) {
+                                        itemDragger.visible = true
+                                        itemDragger.missionItem = Qt.binding(function() { return object })
+                                        itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
+                                    } else {
+                                        itemDragger.clearItem()
+                                    }
+
+                                    // Move to the new position
+                                    editorMap.latitude = object.coordinate.latitude
+                                    editorMap.longitude = object.coordinate.longitude
+                                }
+                            }
+                        }
+
                         Connections {
                             target: object
 
-                            onIsCurrentItemChanged: {
-                                if (object.isCurrentItem) {
-                                    _root.showDistance(object)
-                                    if (object.specifiesCoordinate) {
-                                        // Setup our drag item
-                                        if (object.sequenceNumber != 0) {
-                                            itemDragger.visible = true
-                                            itemDragger.missionItem = Qt.binding(function() { return object })
-                                            itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
-                                        } else {
-                                            itemDragger.clearItem()
-                                        }
-
-                                        // Move to the new position
-                                        editorMap.latitude = object.coordinate.latitude
-                                        editorMap.longitude = object.coordinate.longitude
-                                    }
-                                }
-                            }
+                            onIsCurrentItemChanged: updateItemIndicator()
+                            onCommandChanged:       updateItemIndicator()
                         }
 
                         // These are the non-coordinate child mission items attached to this item
@@ -380,7 +380,7 @@ QGCView {
                 // Mission Item Editor
                 Item {
                     id:             missionItemEditor
-                    height:         mainWindow.avaiableHeight
+                    height:         mainWindow.availableHeight
                     anchors.bottom: parent.bottom
                     anchors.right:  parent.right
                     width:          _rightPanelWidth
@@ -389,11 +389,10 @@ QGCView {
                     z:              QGroundControl.zOrderTopMost
 
                     ListView {
-                        id:             missionItemSummaryList
                         anchors.fill:   parent
                         spacing:        _margin / 2
                         orientation:    ListView.Vertical
-                        model:          controller.canEdit ? controller.missionItems : 0
+                        model:          controller.missionItems
 
                         property real _maxItemHeight: 0
 
@@ -416,14 +415,6 @@ QGCView {
                             }
                         }
                     } // ListView
-
-                    QGCLabel {
-                        anchors.fill:   parent
-                        visible:        !controller.canEdit
-                        wrapMode:       Text.WordWrap
-                        text:           "The set of mission items you have loaded cannot be edited by QGroundControl. " +
-                                        "You will only be able to save these to a file, or send them to a vehicle."
-                    }
                 } // Item - Mission Item editor
 
                 /*

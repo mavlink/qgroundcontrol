@@ -33,19 +33,18 @@
 
 QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
 
-FactPanelController::FactPanelController(void) :
-    _factPanel(NULL)
+FactPanelController::FactPanelController(void)
+    : _vehicle(NULL)
+    , _uas(NULL)
+    , _autopilot(NULL)
+    , _factPanel(NULL)
 {
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
-    Q_ASSERT(_vehicle);
 
-    _uas = _vehicle->uas();
-    Q_ASSERT(_uas);
-
-    _autopilot = _vehicle->autopilotPlugin();
-    Q_ASSERT(_autopilot);
-    Q_ASSERT(_autopilot->parametersReady());
-    Q_ASSERT(!_autopilot->missingParameters());
+    if (_vehicle) {
+        _uas = _vehicle->uas();
+        _autopilot = _vehicle->autopilotPlugin();
+    }
 
     // Do a delayed check for the _factPanel finally being set correctly from Qml
     QTimer::singleShot(1000, this, &FactPanelController::_checkForMissingFactPanel);
@@ -114,7 +113,7 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
     bool noMissingFacts = true;
 
     foreach (QString name, names) {
-        if (!_autopilot->parameterExists(componentId, name)) {
+        if (_autopilot && !_autopilot->parameterExists(componentId, name)) {
             _reportMissingParameter(componentId, name);
             noMissingFacts = false;
         }
@@ -132,7 +131,7 @@ void FactPanelController::_checkForMissingFactPanel(void)
 
 Fact* FactPanelController::getParameterFact(int componentId, const QString& name)
 {
-    if (_autopilot->parameterExists(componentId, name)) {
+    if (_autopilot && _autopilot->parameterExists(componentId, name)) {
         Fact* fact = _autopilot->getParameterFact(componentId, name);
         QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
         return fact;
@@ -144,7 +143,7 @@ Fact* FactPanelController::getParameterFact(int componentId, const QString& name
 
 bool FactPanelController::parameterExists(int componentId, const QString& name)
 {
-    return _autopilot->parameterExists(componentId, name);
+    return _autopilot ? _autopilot->parameterExists(componentId, name) : false;
 }
 
 void FactPanelController::_showInternalError(const QString& errorMsg)

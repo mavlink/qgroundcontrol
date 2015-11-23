@@ -58,8 +58,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     homeItem->setHomePositionSpecialCase(true);
     homeItem->setHomePositionValid(false);
     homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
-    homeItem->setLatitude(47.3769);
-    homeItem->setLongitude(8.549444);
+    homeItem->setCoordinate(QGeoCoordinate(47.3769, 8.549444, 0));
     homeItem->setSequenceNumber(0);
     list->insert(0, homeItem);
 
@@ -137,8 +136,6 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         checkExpectedMessageBox();
     }
     
-    QCOMPARE(_missionManager->canEdit(), true);
-    
     delete list;
     list = NULL;
     _multiSpyMissionManager->clearAllSignals();
@@ -172,7 +169,6 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         //      newMissionItemsAvailable signal
         _multiSpyMissionManager->waitForSignalByIndex(inProgressChangedSignalIndex, _missionManagerSignalWaitTime);
         QCOMPARE(_multiSpyMissionManager->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
-        QCOMPARE(_multiSpyMissionManager->checkNoSignalByMask(canEditChangedSignalMask), true);
         _checkInProgressValues(false);
 
     } else {
@@ -233,7 +229,6 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     }
     
     QCOMPARE(_missionManager->missionItems()->count(), (int)cMissionItemsExpected);
-    QCOMPARE(_missionManager->canEdit(), true);
 
     size_t firstActualItem = 0;
     if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
