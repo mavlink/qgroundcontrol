@@ -136,10 +136,9 @@ QGCView {
         running:    true
 
         onTriggered: {
+            recalcModePositions()
             if (rcInMode.value == 1) {
                 showDialog(joystickEnabledDialogComponent, title, 50, 0)
-            } else {
-                recalcModePositions()
             }
         }
     }
