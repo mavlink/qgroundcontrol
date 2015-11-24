@@ -98,14 +98,12 @@ void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
 
 void MainToolBarController::_telemetryChanged(LinkInterface*, unsigned, unsigned, int rssi, int remrssi, unsigned, unsigned, unsigned)
 {
-    if((unsigned)_telemetryLRSSI != rssi) {
-        // According to the Silabs data sheet, the RSSI value is 0.5db per bit
-        _telemetryLRSSI = rssi >> 1;
+    if(_telemetryLRSSI != rssi) {
+        _telemetryLRSSI = rssi;
         emit telemetryLRSSIChanged(_telemetryLRSSI);
     }
-    if((unsigned)_telemetryRRSSI != remrssi) {
-        // According to the Silabs data sheet, the RSSI value is 0.5db per bit
-        _telemetryRRSSI = remrssi >> 1;
+    if(_telemetryRRSSI != remrssi) {
+        _telemetryRRSSI = remrssi;
         emit telemetryRRSSIChanged(_telemetryRRSSI);
     }
 }

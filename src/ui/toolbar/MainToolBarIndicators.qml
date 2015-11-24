@@ -536,7 +536,7 @@ Row {
                     color: colorWhite
                 }
                 QGCLabel {
-                    text: _controller.telemetryRRSSI + 'dB'
+                    text: _controller.telemetryRRSSI + 'dBm'
                     width: getProportionalDimmension(30)
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: ScreenTools.smallFontPixelSize
@@ -553,7 +553,7 @@ Row {
                     color: colorWhite
                 }
                 QGCLabel {
-                    text: _controller.telemetryLRSSI + 'dB'
+                    text: _controller.telemetryLRSSI + 'dBm'
                     width: getProportionalDimmension(30)
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: ScreenTools.smallFontPixelSize
