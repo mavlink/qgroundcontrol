@@ -269,8 +269,8 @@ signals:
      *
      * @param rxerrors receive errors
      * @param fixed count of error corrected packets
-     * @param rssi local signal strength
-     * @param remrssi remote signal strength
+     * @param rssi local signal strength in dBm
+     * @param remrssi remote signal strength in dBm
      * @param txbuf how full the tx buffer is as a percentage
      * @param noise background noise level
      * @param remnoise remote background noise level

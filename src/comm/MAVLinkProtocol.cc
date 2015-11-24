@@ -291,8 +291,25 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // process telemetry status message
                 mavlink_radio_status_t rstatus;
                 mavlink_msg_radio_status_decode(&message, &rstatus);
+                int rssi = rstatus.rssi,
+                    remrssi = rstatus.remrssi;
+                // 3DR Si1k radio needs rssi fields to be converted to dBm
+                if (message.sysid == '3' && message.compid == 'D') {
+                    /* Per the Si1K datasheet figure 23.25 and SI AN474 code
+                     * samples the relationship between the RSSI register
+                     * and received power is as follows:
+                     *
+                     *                       10
+                     * inputPower = rssi * ------ 127
+                     *                       19
+                     *
+                     * Additionally limit to the only realistic range [-120,0] dBm
+                     */
+                    rssi    = qMin(qMax(qRound(static_cast<qreal>(rssi)    / 1.9 - 127.0), - 120), 0);
+                    remrssi = qMin(qMax(qRound(static_cast<qreal>(remrssi) / 1.9 - 127.0), - 120), 0);
+                }
 
-                emit radioStatusChanged(link, rstatus.rxerrors, rstatus.fixed, rstatus.rssi, rstatus.remrssi,
+                emit radioStatusChanged(link, rstatus.rxerrors, rstatus.fixed, rssi, remrssi,
                     rstatus.txbuf, rstatus.noise, rstatus.remnoise);
             }
 
