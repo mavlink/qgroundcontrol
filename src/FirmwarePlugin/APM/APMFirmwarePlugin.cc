@@ -146,7 +146,7 @@ APMFirmwarePlugin::APMFirmwarePlugin(void)
 
 bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability)) == capabilities;
+    return (capabilities & SetFlightModeCapability) == capabilities;
 }
 
 QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
