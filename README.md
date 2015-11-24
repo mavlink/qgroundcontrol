@@ -33,7 +33,7 @@ QGroundControl builds are supported for OSX, Linux, Windows and Android. QGround
 * Qt version: 5.5.1 (or higher)
 
 #### Install QT
-
+You need to install Qt like this instead of using packages from say a Linux distribution because QGroundControl needs access to private Qt headers.
 * Download the [Qt installer](http://www.qt.io/download-open-source)
     * Ubuntu: Set the downloaded file to executable using:`chmod +x`
     * Windows: Default installer not quite correct, use [this](http://download.qt.io/official_releases/qt/5.5/5.5.1/qt-opensource-windows-x86-msvc2013-5.5.1.exe) instead
