@@ -95,7 +95,7 @@ public:
 
     // Property accesors
     
-    MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_commandFact.value().toInt(); };
+    MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_commandFact.cookedValue().toInt(); };
     QString         commandDescription  (void) const;
     QString         commandName         (void) const;
     QGeoCoordinate  coordinate          (void) const;
@@ -135,8 +135,8 @@ public:
 
     // C++ only methods
 
-    MAV_FRAME   frame       (void)  const { return (MAV_FRAME)_frameFact.value().toInt(); }
-    bool        autoContinue(void)  const { return _autoContinueFact.value().toBool(); }
+    MAV_FRAME   frame       (void)  const { return (MAV_FRAME)_frameFact.rawValue().toInt(); }
+    bool        autoContinue(void)  const { return _autoContinueFact.rawValue().toBool(); }
     double      param1      (void)  const { return _param1Fact.rawValue().toDouble(); }
     double      param2      (void)  const { return _param2Fact.rawValue().toDouble(); }
     double      param3      (void)  const { return _param3Fact.rawValue().toDouble(); }

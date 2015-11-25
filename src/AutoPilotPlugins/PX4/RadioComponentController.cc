@@ -652,7 +652,7 @@ void RadioComponentController::_resetInternalCalibrationValues(void)
         enum rcCalFunctions curFunction = rgFlightModeFunctions[i];
         
         bool ok;
-        int switchChannel = getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[curFunction].parameterName)->value().toInt(&ok);
+        int switchChannel = getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[curFunction].parameterName)->rawValue().toInt(&ok);
         Q_ASSERT(ok);
         
         // Parameter: 1-based channel, 0=not mapped
@@ -694,16 +694,16 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
     for (int i = 0; i < _chanMax; ++i) {
         struct ChannelInfo* info = &_rgChannelInfo[i];
         
-        info->rcTrim = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(i+1))->value().toInt(&convertOk);
+        info->rcTrim = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(i+1))->rawValue().toInt(&convertOk);
         Q_ASSERT(convertOk);
         
-        info->rcMin = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(i+1))->value().toInt(&convertOk);
+        info->rcMin = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(i+1))->rawValue().toInt(&convertOk);
         Q_ASSERT(convertOk);
 
-        info->rcMax = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(i+1))->value().toInt(&convertOk);
+        info->rcMax = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(i+1))->rawValue().toInt(&convertOk);
         Q_ASSERT(convertOk);
 
-        float floatReversed = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(i+1))->value().toFloat(&convertOk);
+        float floatReversed = getParameterFact(FactSystem::defaultComponentId, revTpl.arg(i+1))->rawValue().toFloat(&convertOk);
         Q_ASSERT(convertOk);
         Q_ASSERT(floatReversed == 1.0f || floatReversed == -1.0f);
         info->reversed = floatReversed == -1.0f;
@@ -712,7 +712,7 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
     for (int i=0; i<rcCalFunctionMax; i++) {
         int32_t paramChannel;
         
-        paramChannel = getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[i].parameterName)->value().toInt(&convertOk);
+        paramChannel = getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[i].parameterName)->rawValue().toInt(&convertOk);
         Q_ASSERT(convertOk);
         
         if (paramChannel != 0) {
@@ -794,10 +794,10 @@ void RadioComponentController::_writeCalibration(void)
         struct ChannelInfo* info = &_rgChannelInfo[chan];
         int                 oneBasedChannel = chan + 1;
         
-        getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->setValue((float)info->rcTrim);
-        getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->setValue((float)info->rcMin);
-        getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->setValue((float)info->rcMax);
-        getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->setValue(info->reversed ? -1.0f : 1.0f);
+        getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->setRawValue((float)info->rcTrim);
+        getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->setRawValue((float)info->rcMin);
+        getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->setRawValue((float)info->rcMax);
+        getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->setRawValue(info->reversed ? -1.0f : 1.0f);
     }
     
     // Write function mapping parameters
@@ -810,12 +810,12 @@ void RadioComponentController::_writeCalibration(void)
             // Note that the channel value is 1-based
             paramChannel = _rgFunctionChannelMapping[i] + 1;
         }
-        getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[i].parameterName)->setValue(paramChannel);
+        getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[i].parameterName)->setRawValue(paramChannel);
     }
     
     // If the RC_CHAN_COUNT parameter is available write the channel count
     if (parameterExists(FactSystem::defaultComponentId, "RC_CHAN_CNT")) {
-        getParameterFact(FactSystem::defaultComponentId, "RC_CHAN_CNT")->setValue(_chanCount);
+        getParameterFact(FactSystem::defaultComponentId, "RC_CHAN_CNT")->setRawValue(_chanCount);
     }
     
     _stopCalibration();
