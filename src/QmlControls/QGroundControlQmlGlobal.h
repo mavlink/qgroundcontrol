@@ -169,7 +169,7 @@ private:
     HomePositionManager*    _homePositionManager;
     FlightMapSettings*      _flightMapSettings;
 
-    bool _virtualTabletJoystick;
+    bool    _virtualTabletJoystick;
 
     bool    _showGPS;
     bool    _showRCRSSI;
@@ -178,8 +178,6 @@ private:
     bool    _showBatteryConsumption;
     bool    _showModeSelector;
     bool    _showArmed;
-
-    static const char*  _virtualTabletJoystickKey;
 };
 
 #endif
