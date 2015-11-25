@@ -193,9 +193,9 @@ MissionItem::MissionItem(int             sequenceNumber,
     _param2Fact.setRawValue(param2);
     _param3Fact.setRawValue(param3);
     _param4Fact.setRawValue(param4);
-    _param5Fact.setValue(param5);
-    _param6Fact.setValue(param6);
-    _param7Fact.setValue(param7);
+    _param5Fact.setRawValue(param5);
+    _param6Fact.setRawValue(param6);
+    _param7Fact.setRawValue(param7);
 }
 
 MissionItem::MissionItem(const MissionItem& other, QObject* parent)
@@ -226,13 +226,13 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     _syncFrameToAltitudeRelativeToHome();
     _syncCommandToSupportedCommand(QVariant(this->command()));
 
-    _param1Fact.setValue(other._param1Fact.value());
-    _param2Fact.setValue(other._param2Fact.value());
-    _param3Fact.setValue(other._param3Fact.value());
-    _param4Fact.setValue(other._param4Fact.value());
-    _param5Fact.setValue(other._param5Fact.value());
-    _param6Fact.setValue(other._param6Fact.value());
-    _param7Fact.setValue(other._param7Fact.value());
+    _param1Fact.setRawValue(other._param1Fact.rawValue());
+    _param2Fact.setRawValue(other._param2Fact.rawValue());
+    _param3Fact.setRawValue(other._param3Fact.rawValue());
+    _param4Fact.setRawValue(other._param4Fact.rawValue());
+    _param5Fact.setRawValue(other._param5Fact.rawValue());
+    _param6Fact.setRawValue(other._param6Fact.rawValue());
+    _param7Fact.setRawValue(other._param7Fact.rawValue());
 
     return *this;
 }
@@ -525,7 +525,7 @@ void MissionItem::setSequenceNumber(int sequenceNumber)
 void MissionItem::setCommand(MAV_CMD command)
 {
     if ((MAV_CMD)this->command() != command) {
-        _commandFact.setValue(command);
+        _commandFact.setRawValue(command);
         setDefaultsForCommand();
         emit commandChanged(this->command());
     }
@@ -540,7 +540,7 @@ void MissionItem::setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command)
 void MissionItem::setFrame(MAV_FRAME frame)
 {
     if (this->frame() != frame) {
-        _frameFact.setValue(frame);
+        _frameFact.setRawValue(frame);
         frameChanged(frame);
     }
 }
@@ -548,7 +548,7 @@ void MissionItem::setFrame(MAV_FRAME frame)
 void MissionItem::setAutoContinue(bool autoContinue)
 {
     if (this->autoContinue() != autoContinue) {
-        _autoContinueFact.setValue(autoContinue);
+        _autoContinueFact.setRawValue(autoContinue);
     }
 }
 
@@ -748,7 +748,7 @@ QmlObjectListModel* MissionItem::comboboxFacts(void)
 
 QGeoCoordinate MissionItem::coordinate(void) const
 {
-    return QGeoCoordinate(_param5Fact.value().toDouble(), _param6Fact.value().toDouble(), _param7Fact.value().toDouble());
+    return QGeoCoordinate(_param5Fact.rawValue().toDouble(), _param6Fact.rawValue().toDouble(), _param7Fact.rawValue().toDouble());
 }
 
 void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
@@ -835,7 +835,7 @@ void MissionItem::_syncFrameToAltitudeRelativeToHome(void)
 {
     if (!_syncingAltitudeRelativeToHomeAndFrame) {
         _syncingAltitudeRelativeToHomeAndFrame = true;
-        _altitudeRelativeToHomeFact.setValue(relativeAltitude());
+        _altitudeRelativeToHomeFact.setRawValue(relativeAltitude());
         _syncingAltitudeRelativeToHomeAndFrame = false;
     }
 }
@@ -844,7 +844,7 @@ void MissionItem::_syncSupportedCommandToCommand(const QVariant& value)
 {
     if (!_syncingSupportedCommandAndCommand) {
         _syncingSupportedCommandAndCommand = true;
-        _commandFact.setValue(value.toInt());
+        _commandFact.setRawValue(value.toInt());
         _syncingSupportedCommandAndCommand = false;
     }
 }
@@ -853,7 +853,7 @@ void MissionItem::_syncCommandToSupportedCommand(const QVariant& value)
 {
     if (!_syncingSupportedCommandAndCommand) {
         _syncingSupportedCommandAndCommand = true;
-        _supportedCommandFact.setValue(value.toInt());
+        _supportedCommandFact.setRawValue(value.toInt());
         _syncingSupportedCommandAndCommand = false;
     }
 }

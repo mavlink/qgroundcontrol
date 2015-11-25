@@ -61,7 +61,7 @@ void FactSystemTestBase::_parameter_default_component_id_test(void)
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, FactSystem::defaultComponentId, "RC_MAP_THROTTLE"));
     Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, FactSystem::defaultComponentId, "RC_MAP_THROTTLE");
     QVERIFY(fact != NULL);
-    QVariant factValue = fact->value();
+    QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
     
     QCOMPARE(factValue.toInt(), 3);
@@ -72,7 +72,7 @@ void FactSystemTestBase::_parameter_specific_component_id_test(void)
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 50, "RC_MAP_THROTTLE"));
     Fact* fact = _plugin->getFact(FactSystem::ParameterProvider, 50, "RC_MAP_THROTTLE");
     QVERIFY(fact != NULL);
-    QVariant factValue = fact->value();
+    QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
     
     
@@ -82,7 +82,7 @@ void FactSystemTestBase::_parameter_specific_component_id_test(void)
     QVERIFY(_plugin->factExists(FactSystem::ParameterProvider, 51, "COMPONENT_51"));
     fact = _plugin->getFact(FactSystem::ParameterProvider, 51, "COMPONENT_51");
     QVERIFY(fact != NULL);
-    factValue = fact->value();
+    factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
     
     QCOMPARE(factValue.toInt(), 51);
@@ -119,7 +119,7 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     // Change the value
     
     QVariant paramValue = 12;
-    _plugin->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_THROTTLE")->setValue(paramValue);
+    _plugin->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_THROTTLE")->setRawValue(paramValue);
 
     QTest::qWait(500); // Let the signals flow through
     
