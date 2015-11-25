@@ -68,13 +68,13 @@ QString FlightModesComponent::iconResource(void) const
 
 bool FlightModesComponent::requiresSetup(void) const
 {
-    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->value().toInt() == 1 ? false : true;
+    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
 }
 
 bool FlightModesComponent::setupComplete(void) const
 {
-    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->value().toInt() == 1 ||
-            _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->value().toInt() != 0;
+    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ||
+            _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0;
 }
 
 QString FlightModesComponent::setupStateDescription(void) const
@@ -117,7 +117,7 @@ QUrl FlightModesComponent::summaryQmlSource(void) const
 
 QString FlightModesComponent::prerequisiteSetup(void) const
 {
-    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->value().toInt() == 1) {
+    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
         // No RC input
         return QString();
     } else {
