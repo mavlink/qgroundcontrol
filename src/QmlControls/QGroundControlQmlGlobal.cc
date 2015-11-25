@@ -32,12 +32,15 @@
 static const char* kQmlGlobalKeyName  = "QGCQml";
 static const char* kQmlToolBarKeyName = "QGCToolbar";
 
+const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey = "VirtualTabletJoystick";
+
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent)
     : QObject(parent)
     , _multiVehicleManager(toolbox->multiVehicleManager())
     , _linkManager(toolbox->linkManager())
     , _homePositionManager(toolbox->homePositionManager())
     , _flightMapSettings(toolbox->flightMapSettings())
+    , _virtualTabletJoystick(false)
     , _showGPS(true)
     , _showRCRSSI(true)
     , _showTelemRSSI(false)
@@ -45,9 +48,9 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* p
     , _showBatteryConsumption(false)
     , _showModeSelector(true)
     , _showArmed(true)
-
 {
     QSettings settings;
+    _virtualTabletJoystick  = settings.value(_virtualTabletJoystickKey, false).toBool();
     settings.beginGroup(kQmlToolBarKeyName);
     _showGPS                = settings.value("ShowGPS",               _showGPS).toBool();
     _showRCRSSI             = settings.value("ShowRCRSSI",            _showRCRSSI).toBool();
@@ -55,8 +58,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* p
     _showBattery            = settings.value("ShowBattery",           _showBattery).toBool();
     _showBatteryConsumption = settings.value("ShowBatteryConsumption",_showBatteryConsumption).toBool();
     _showModeSelector       = settings.value("ShowModeSelector",      _showModeSelector).toBool();
-    _showArmed              = settings.value("ShowArmed",             _showArmed).toBool();
-}
+    _showArmed              = settings.value("ShowArmed",             _showArmed).toBool();}
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
 {
@@ -222,6 +224,16 @@ void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
     emit isVersionCheckEnabledChanged(enable);
 }
 
+void QGroundControlQmlGlobal::setVirtualTabletJoystick(bool enabled)
+{
+    if (_virtualTabletJoystick != enabled) {
+        QSettings settings;
+        settings.setValue(_virtualTabletJoystickKey, enabled);
+        _virtualTabletJoystick = enabled;
+        emit virtualTabletJoystickChanged(enabled);
+    }
+}
+
 void QGroundControlQmlGlobal::setShowGPS(bool state)
 {
     _showGPS = state;
@@ -275,6 +287,7 @@ void QGroundControlQmlGlobal::setShowModeSelector(bool state)
     settings.setValue("ShowModeSelector", state);
     emit showModeSelectorChanged(state);
 }
+
 void QGroundControlQmlGlobal::setShowArmed(bool state)
 {
     _showArmed = state;

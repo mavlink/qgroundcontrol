@@ -245,14 +245,14 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
         _mapParameterName2Variant[componentId][parameterName] = QVariant::fromValue(fact);
 
         // We need to know when the fact changes from QML so that we can send the new value to the parameter manager
-        connect(fact, &Fact::_containerValueChanged, this, &ParameterLoader::_valueUpdated);
+        connect(fact, &Fact::_containerRawValueChanged, this, &ParameterLoader::_valueUpdated);
     }
 
     Q_ASSERT(_mapParameterName2Variant[componentId].contains(parameterName));
 
     Fact* fact = _mapParameterName2Variant[componentId][parameterName].value<Fact*>();
     Q_ASSERT(fact);
-    fact->_containerSetValue(value);
+    fact->_containerSetRawValue(value);
 
     if (setMetaData) {
         _vehicle->firmwarePlugin()->addMetaDataToFact(fact);
@@ -465,7 +465,7 @@ void ParameterLoader::_waitingParamTimeout(void)
             foreach(QString paramName, _waitingWriteParamNameMap[componentId].keys()) {
                 paramsRequested = true;
                 _waitingWriteParamNameMap[componentId][paramName]++;   // Bump retry count
-                _writeParameterRaw(componentId, paramName, _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->value());
+                _writeParameterRaw(componentId, paramName, _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->rawValue());
                 qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
 
                 if (++batchCount > maxBatchSize) {
@@ -586,7 +586,7 @@ void ParameterLoader::_writeLocalParamCache()
         foreach(int id, _mapParameterId2Name[component].keys()) {
             const QString name(_mapParameterId2Name[component][id]);
             const Fact *fact = _mapParameterName2Variant[component][name].value<Fact*>();
-            cache_map[component][id] = NamedParam(name, ParamTypeVal(fact->type(), fact->value()));
+            cache_map[component][id] = NamedParam(name, ParamTypeVal(fact->type(), fact->rawValue()));
         }
     }
 
@@ -700,7 +700,7 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
                 }
 
                 qCDebug(ParameterLoaderLog) << "Updating parameter" << componentId << paramName << valStr;
-                fact->setValue(valStr);
+                fact->setRawValue(valStr);
             }
         }
     }

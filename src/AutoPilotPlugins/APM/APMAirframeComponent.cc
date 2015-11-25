@@ -59,7 +59,7 @@ bool APMAirframeComponent::setupComplete(void) const
 {
     // You'll need to figure out which parameters trigger setup complete
 #if 0
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt() != 0;
+    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt() != 0;
 #else
     return true;
 #endif

@@ -66,6 +66,7 @@ public:
     Q_PROPERTY(bool     isHeartBeatEnabled      READ isHeartBeatEnabled         WRITE setIsHeartBeatEnabled         NOTIFY isHeartBeatEnabledChanged)
     Q_PROPERTY(bool     isMultiplexingEnabled   READ isMultiplexingEnabled      WRITE setIsMultiplexingEnabled      NOTIFY isMultiplexingEnabledChanged)
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
+    Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
 
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
@@ -100,14 +101,15 @@ public:
     qreal                   zOrderWidgets       ()      { return 100; }
     qreal                   zOrderMapItems      ()      { return 50; }
 
-    bool    isDarkStyle                 () { return qgcApp()->styleIsDark(); }
-    bool    isAudioMuted                () { return qgcApp()->toolbox()->audioOutput()->isMuted(); }
-    bool    isLowPowerMode              () { return MainWindow::instance()->lowPowerModeEnabled(); }
-    bool    isSaveLogPrompt             () { return qgcApp()->promptFlightDataSave(); }
-    bool    isSaveLogPromptNotArmed     () { return qgcApp()->promptFlightDataSaveNotArmed(); }
-    bool    isHeartBeatEnabled          () { return qgcApp()->toolbox()->mavlinkProtocol()->heartbeatsEnabled(); }
-    bool    isMultiplexingEnabled       () { return qgcApp()->toolbox()->mavlinkProtocol()->multiplexingEnabled(); }
-    bool    isVersionCheckEnabled       () { return qgcApp()->toolbox()->mavlinkProtocol()->versionCheckEnabled(); }
+    bool    isDarkStyle             () { return qgcApp()->styleIsDark(); }
+    bool    isAudioMuted            () { return qgcApp()->toolbox()->audioOutput()->isMuted(); }
+    bool    isLowPowerMode          () { return MainWindow::instance()->lowPowerModeEnabled(); }
+    bool    isSaveLogPrompt         () { return qgcApp()->promptFlightDataSave(); }
+    bool    isSaveLogPromptNotArmed () { return qgcApp()->promptFlightDataSaveNotArmed(); }
+    bool    isHeartBeatEnabled      () { return qgcApp()->toolbox()->mavlinkProtocol()->heartbeatsEnabled(); }
+    bool    isMultiplexingEnabled   () { return qgcApp()->toolbox()->mavlinkProtocol()->multiplexingEnabled(); }
+    bool    isVersionCheckEnabled   () { return qgcApp()->toolbox()->mavlinkProtocol()->versionCheckEnabled(); }
+    bool    virtualTabletJoystick   () { return _virtualTabletJoystick; }
 
     bool    showGPS                     () { return _showGPS; }
     bool    showRCRSSI                  () { return _showRCRSSI; }
@@ -128,6 +130,7 @@ public:
     void    setIsHeartBeatEnabled       (bool enable);
     void    setIsMultiplexingEnabled    (bool enable);
     void    setIsVersionCheckEnabled    (bool enable);
+    void    setVirtualTabletJoystick    (bool enabled);
 
     void    setShowGPS                  (bool state);
     void    setShowRCRSSI               (bool state);
@@ -146,6 +149,7 @@ signals:
     void isHeartBeatEnabledChanged      (bool enabled);
     void isMultiplexingEnabledChanged   (bool enabled);
     void isVersionCheckEnabledChanged   (bool enabled);
+    void virtualTabletJoystickChanged   (bool enabled);
 
     void showGPSChanged                 (bool state);
     void showRCRSSIChanged              (bool state);
@@ -165,6 +169,8 @@ private:
     HomePositionManager*    _homePositionManager;
     FlightMapSettings*      _flightMapSettings;
 
+    bool _virtualTabletJoystick;
+
     bool    _showGPS;
     bool    _showRCRSSI;
     bool    _showTelemRSSI;
@@ -173,6 +179,7 @@ private:
     bool    _showModeSelector;
     bool    _showArmed;
 
+    static const char*  _virtualTabletJoystickKey;
 };
 
 #endif
