@@ -32,7 +32,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
 Row {
-    spacing:  tbSpacing * 2
+    spacing:  tbSpacing
 
     function getSatStrength(count) {
         if (count < 1)
@@ -60,6 +60,16 @@ Row {
         // Cannot be so make make it obnoxious to show error
         console.log("Invalid vehicle message type")
         return "purple";
+    }
+
+    function getRSSIColor(value) {
+        if(value < 1)
+            return colorGrey;
+        if(value < 10)
+            return colorRed;
+        if(value < 50)
+            return colorOrange;
+        return colorGreen;
     }
 
     function getBatteryVoltageText() {
@@ -168,9 +178,10 @@ Row {
     //-------------------------------------------------------------------------
     //-- GPS Indicator
     Item {
-        id:     satelitte
-        width:  gpsRow.width * 1.1
-        height: mainWindow.tbCellHeight
+        id:         satelitte
+        width:      gpsRow.width * 1.1
+        height:     mainWindow.tbCellHeight
+        visible:    QGroundControl.showGPS
         Row {
             id:     gpsRow
             height: parent.height
@@ -205,9 +216,10 @@ Row {
     //-------------------------------------------------------------------------
     //-- RC RSSI
     Item {
-        id:     rcRssi
-        width:  rssiRow.width * 1.1
-        height: mainWindow.tbCellHeight
+        id:         rcRssi
+        width:      rssiRow.width * 1.1
+        height:     mainWindow.tbCellHeight
+        visible:    QGroundControl.showRCRSSI
         Row {
             id:     rssiRow
             height: parent.height
@@ -230,12 +242,84 @@ Row {
     }
 
     //-------------------------------------------------------------------------
+    //-- Telemetry RSSI
+    Item {
+        id:         telemRssi
+        width:      telemRow.width
+        height:     mainWindow.tbCellHeight
+        visible:    QGroundControl.showTelemetryRSSI
+        Row {
+            id:                 telemRow
+            height:             parent.height
+            spacing:            ScreenTools.defaultFontPixelWidth * 0.25
+            Image {
+                source:         "/qmlimages/TelemRSSI.svg"
+                fillMode:       Image.PreserveAspectFit
+                mipmap:         true
+                smooth:         true
+                height:         parent.height * 0.5
+                width:          height * 1.5
+                opacity:        _controller.telemetryLRSSI >= 1 ? 1 : 0.5
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            Column {
+                width:                  telemLocalRow.width
+                height:                 parent.height
+                Row {
+                    id:                 telemLocalRow
+                    height:             parent.height * .5
+                    spacing:            ScreenTools.defaultFontPixelWidth * 0.25
+                    Image {
+                        source:         "/qmlimages/ArrowLeft.svg"
+                        fillMode:       Image.PreserveAspectFit
+                        mipmap:         true
+                        smooth:         true
+                        height:         parent.height
+                        width:          height
+                        opacity:        _controller.telemetryLRSSI >= 1 ? 1 : 0.5
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QGCLabel {
+                        text:           _controller.telemetryLRSSI + 'dB'
+                        color:          getRSSIColor(_controller.telemetryLRSSI)
+                        font.pixelSize: tbFontNormal
+                        horizontalAlignment:    Text.AlignRight
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                Row {
+                    height:             parent.height * .5
+                    spacing:            ScreenTools.defaultFontPixelWidth * 0.25
+                    Image {
+                        source:         "/qmlimages/ArrowRight.svg"
+                        fillMode:       Image.PreserveAspectFit
+                        mipmap:         true
+                        smooth:         true
+                        height:         parent.height
+                        width:          height
+                        opacity:        _controller.telemetryRRSSI >= 1 ? 1 : 0.5
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QGCLabel {
+                        text:           _controller.telemetryRRSSI + 'dB'
+                        color:          getRSSIColor(_controller.telemetryRRSSI)
+                        font.pixelSize: tbFontNormal
+                        horizontalAlignment:    Text.AlignRight
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
     //-- Battery Indicator
     Item {
-        id: batteryStatus
-        width:  battRow.width * 1.1
-        height: mainWindow.tbCellHeight
-        opacity: (activeVehicle.batteryVoltage > 0) ? 1 : 0.5
+        id:         batteryStatus
+        width:      battRow.width * 1.1
+        height:     mainWindow.tbCellHeight
+        opacity:    (activeVehicle.batteryVoltage > 0) ? 1 : 0.5
+        visible:    QGroundControl.showBattery
         Row {
             id:         battRow
             height:     mainWindow.tbCellHeight
@@ -250,15 +334,16 @@ Row {
                     fillMode:       Image.PreserveAspectFit
                     mipmap:         true
                     smooth:         true
-                    height:         batPercent.height * 0.85
+                    height:         battConsumed.visible ? mainWindow.tbCellHeight * 0.45 : mainWindow.tbCellHeight * 0.65
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 QGCLabel {
+                    id:             battConsumed
                     text:           (activeVehicle.batteryConsumed > 0) ? activeVehicle.batteryConsumed.toFixed(0) + 'mAh' : 'N/A';
                     font.pixelSize: tbFontSmall
                     color:          getBatteryColor()
-                    visible:        QGroundControl.isAdvancedMode
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible:        QGroundControl.showBatteryConsumption
+                    horizontalAlignment: Text.AlignHCenter
                 }
             }
             Column {
@@ -268,13 +353,13 @@ Row {
                     text:           getBatteryPercentageText()
                     font.pixelSize: tbFontLarge
                     color:          getBatteryColor()
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    horizontalAlignment: Text.AlignHCenter
                 }
                 QGCLabel {
                     text:           getBatteryVoltageText()
                     font.pixelSize: tbFontNormal
                     color:          getBatteryColor()
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    horizontalAlignment: Text.AlignHCenter
                 }
             }
         }
@@ -339,8 +424,9 @@ Row {
     //-- Mode Selector
 
     Item {
-        width:  selectorRow.width * 1.1
-        height: mainWindow.tbCellHeight
+        width:      selectorRow.width * 1.1
+        height:     mainWindow.tbCellHeight
+        visible:    QGroundControl.showModeSelector
         anchors.verticalCenter: parent.verticalCenter
         Row {
             id:                 selectorRow
@@ -416,8 +502,9 @@ Row {
     //-- Arm/Disarm
 
     Item {
-        width:  armCol.width * 1.1
-        height: mainWindow.tbCellHeight
+        width:      armCol.width * 1.1
+        height:     mainWindow.tbCellHeight
+        visible:    QGroundControl.showArmed
         anchors.verticalCenter: parent.verticalCenter
         Row {
             id:                 armCol

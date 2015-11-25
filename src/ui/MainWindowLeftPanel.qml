@@ -159,6 +159,19 @@ Item {
             QGCButton {
                 width:      parent.width * 0.8
                 height:     ScreenTools.defaultFontPixelHeight * 2.5
+                text:       "Toolbar"
+                exclusiveGroup: panelActionGroup
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    if(__rightPanel.source != "ToolBarSettings.qml") {
+                        __rightPanel.source = "ToolBarSettings.qml"
+                    }
+                    checked = true
+                }
+            }
+            QGCButton {
+                width:      parent.width * 0.8
+                height:     ScreenTools.defaultFontPixelHeight * 2.5
                 text:       "MavLink"
                 exclusiveGroup: panelActionGroup
                 anchors.horizontalCenter: parent.horizontalCenter

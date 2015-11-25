@@ -17,6 +17,7 @@
         <file alias="FlightModesComponent.qml">src/AutoPilotPlugins/PX4/FlightModesComponent.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="GeneralSettings.qml">src/ui/preferences/GeneralSettings.qml</file>
+        <file alias="ToolBarSettings.qml">src/ui/preferences/ToolBarSettings.qml</file>
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="MainWindow.qml">src/ui/MainWindow.qml</file>

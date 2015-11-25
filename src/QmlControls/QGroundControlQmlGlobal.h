@@ -58,7 +58,6 @@ public:
     Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
 
     // Various QGC settings exposed to Qml
-    Q_PROPERTY(bool     isAdvancedMode          READ isAdvancedMode                                                 CONSTANT)                               ///< Global "Advance Mode" preference. Certain UI elements and features are different based on this.
     Q_PROPERTY(bool     isDarkStyle             READ isDarkStyle                WRITE setIsDarkStyle                NOTIFY isDarkStyleChanged)              // TODO: Should be in ScreenTools?
     Q_PROPERTY(bool     isAudioMuted            READ isAudioMuted               WRITE setIsAudioMuted               NOTIFY isAudioMutedChanged)
     Q_PROPERTY(bool     isLowPowerMode          READ isLowPowerMode             WRITE setIsLowPowerMode             NOTIFY isLowPowerModeChanged)
@@ -82,9 +81,17 @@ public:
     Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
     Q_INVOKABLE void    stopAllMockLinks            (void);
 
-    // Property accesors
+    // Toolbar Settings
+    Q_PROPERTY(bool         showGPS                 READ showGPS                WRITE  setShowGPS                   NOTIFY showGPSChanged)
+    Q_PROPERTY(bool         showRCRSSI              READ showRCRSSI             WRITE  setShowRCRSSI                NOTIFY showRCRSSIChanged)
+    Q_PROPERTY(bool         showTelemetryRSSI       READ showTelemetryRSSI      WRITE  SetShowTelemetryRSSI         NOTIFY showTelemetryRSSIChanged)
+    Q_PROPERTY(bool         showBattery             READ showBattery            WRITE  setShowBattery               NOTIFY showBatteryChanged)
+    Q_PROPERTY(bool         showBatteryConsumption  READ showBatteryConsumption WRITE  setShowBatteryConsumption    NOTIFY showBatteryConsumptionChanged)
+    Q_PROPERTY(bool         showModeSelector        READ showModeSelector       WRITE  setShowModeSelector          NOTIFY showModeSelectorChanged)
+    Q_PROPERTY(bool         showArmed               READ showArmed              WRITE  setShowArmed                 NOTIFY showArmedChanged)
 
-    LinkManager*            linkManager ()              { return _linkManager; }
+    // Property accesors
+    LinkManager*            linkManager         ()      { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
     HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
     FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }
@@ -93,17 +100,25 @@ public:
     qreal                   zOrderWidgets       ()      { return 100; }
     qreal                   zOrderMapItems      ()      { return 50; }
 
-    bool    isDarkStyle             () { return qgcApp()->styleIsDark(); }
-    bool    isAudioMuted            () { return qgcApp()->toolbox()->audioOutput()->isMuted(); }
-    bool    isLowPowerMode          () { return MainWindow::instance()->lowPowerModeEnabled(); }
-    bool    isSaveLogPrompt         () { return qgcApp()->promptFlightDataSave(); }
-    bool    isSaveLogPromptNotArmed () { return qgcApp()->promptFlightDataSaveNotArmed(); }
-    bool    isHeartBeatEnabled      () { return qgcApp()->toolbox()->mavlinkProtocol()->heartbeatsEnabled(); }
-    bool    isMultiplexingEnabled   () { return qgcApp()->toolbox()->mavlinkProtocol()->multiplexingEnabled(); }
-    bool    isVersionCheckEnabled   () { return qgcApp()->toolbox()->mavlinkProtocol()->versionCheckEnabled(); }
+    bool    isDarkStyle                 () { return qgcApp()->styleIsDark(); }
+    bool    isAudioMuted                () { return qgcApp()->toolbox()->audioOutput()->isMuted(); }
+    bool    isLowPowerMode              () { return MainWindow::instance()->lowPowerModeEnabled(); }
+    bool    isSaveLogPrompt             () { return qgcApp()->promptFlightDataSave(); }
+    bool    isSaveLogPromptNotArmed     () { return qgcApp()->promptFlightDataSaveNotArmed(); }
+    bool    isHeartBeatEnabled          () { return qgcApp()->toolbox()->mavlinkProtocol()->heartbeatsEnabled(); }
+    bool    isMultiplexingEnabled       () { return qgcApp()->toolbox()->mavlinkProtocol()->multiplexingEnabled(); }
+    bool    isVersionCheckEnabled       () { return qgcApp()->toolbox()->mavlinkProtocol()->versionCheckEnabled(); }
+
+    bool    showGPS                     () { return _showGPS; }
+    bool    showRCRSSI                  () { return _showRCRSSI; }
+    bool    showTelemetryRSSI           () { return _showTelemRSSI; }
+    bool    showBattery                 () { return _showBattery; }
+    bool    showBatteryConsumption      () { return _showBatteryConsumption; }
+    bool    showModeSelector            () { return _showModeSelector; }
+    bool    showArmed                   () { return _showArmed; }
 
     //-- TODO: Make this into an actual preference.
-    bool    isAdvancedMode          () { return false; }
+    bool    isAdvancedMode              () { return false; }
 
     void    setIsDarkStyle              (bool dark);
     void    setIsAudioMuted             (bool muted);
@@ -113,6 +128,14 @@ public:
     void    setIsHeartBeatEnabled       (bool enable);
     void    setIsMultiplexingEnabled    (bool enable);
     void    setIsVersionCheckEnabled    (bool enable);
+
+    void    setShowGPS                  (bool state);
+    void    setShowRCRSSI               (bool state);
+    void    SetShowTelemetryRSSI        (bool state);
+    void    setShowBattery              (bool state);
+    void    setShowBatteryConsumption   (bool state);
+    void    setShowModeSelector         (bool state);
+    void    setShowArmed                (bool state);
 
 signals:
     void isDarkStyleChanged             (bool dark);
@@ -124,6 +147,14 @@ signals:
     void isMultiplexingEnabledChanged   (bool enabled);
     void isVersionCheckEnabledChanged   (bool enabled);
 
+    void showGPSChanged                 (bool state);
+    void showRCRSSIChanged              (bool state);
+    void showTelemetryRSSIChanged       (bool state);
+    void showBatteryChanged             (bool state);
+    void showBatteryConsumptionChanged  (bool state);
+    void showModeSelectorChanged        (bool state);
+    void showArmedChanged               (bool state);
+
 private:
 #ifdef QT_DEBUG
     void _startMockLink(MockConfiguration* mockConfig);
@@ -133,6 +164,15 @@ private:
     LinkManager*            _linkManager;
     HomePositionManager*    _homePositionManager;
     FlightMapSettings*      _flightMapSettings;
+
+    bool    _showGPS;
+    bool    _showRCRSSI;
+    bool    _showTelemRSSI;
+    bool    _showBattery;
+    bool    _showBatteryConsumption;
+    bool    _showModeSelector;
+    bool    _showArmed;
+
 };
 
 #endif

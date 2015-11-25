@@ -29,7 +29,8 @@
 
 #include <QSettings>
 
-static const char* kQmlGlobalKeyName = "QGCQml";
+static const char* kQmlGlobalKeyName  = "QGCQml";
+static const char* kQmlToolBarKeyName = "QGCToolbar";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent)
     : QObject(parent)
@@ -37,8 +38,24 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* p
     , _linkManager(toolbox->linkManager())
     , _homePositionManager(toolbox->homePositionManager())
     , _flightMapSettings(toolbox->flightMapSettings())
-{
+    , _showGPS(true)
+    , _showRCRSSI(true)
+    , _showTelemRSSI(false)
+    , _showBattery(true)
+    , _showBatteryConsumption(false)
+    , _showModeSelector(true)
+    , _showArmed(true)
 
+{
+    QSettings settings;
+    settings.beginGroup(kQmlToolBarKeyName);
+    _showGPS                = settings.value("ShowGPS",               _showGPS).toBool();
+    _showRCRSSI             = settings.value("ShowRCRSSI",            _showRCRSSI).toBool();
+    _showTelemRSSI          = settings.value("ShowTelemetryRSSI",     _showTelemRSSI).toBool();
+    _showBattery            = settings.value("ShowBattery",           _showBattery).toBool();
+    _showBatteryConsumption = settings.value("ShowBatteryConsumption",_showBatteryConsumption).toBool();
+    _showModeSelector       = settings.value("ShowModeSelector",      _showModeSelector).toBool();
+    _showArmed              = settings.value("ShowArmed",             _showArmed).toBool();
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
@@ -203,4 +220,66 @@ void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
 {
     qgcApp()->toolbox()->mavlinkProtocol()->enableVersionCheck(enable);
     emit isVersionCheckEnabledChanged(enable);
+}
+
+void QGroundControlQmlGlobal::setShowGPS(bool state)
+{
+    _showGPS = state;
+    QSettings settings;
+    settings.beginGroup(kQmlToolBarKeyName);
+    settings.setValue("ShowGPS", state);
+    emit showGPSChanged(state);
+}
+
+void QGroundControlQmlGlobal::setShowRCRSSI(bool state)
+{
+    _showRCRSSI = state;
+    QSettings settings;
+    settings.beginGroup(kQmlToolBarKeyName);
+    settings.setValue("ShowRCRSSI", state);
+    emit showRCRSSIChanged(state);
+}
+
+void QGroundControlQmlGlobal::SetShowTelemetryRSSI(bool state)
+{
+    _showTelemRSSI = state;
+    QSettings settings;
+    settings.beginGroup(kQmlToolBarKeyName);
+    settings.setValue("ShowTelemetryRSSI", state);
+    emit showTelemetryRSSIChanged(state);
+}
+
+void QGroundControlQmlGlobal::setShowBattery(bool state)
+{
+    _showBattery = state;
+    QSettings settings;
+    settings.beginGroup(kQmlToolBarKeyName);
+    settings.setValue("ShowBattery", state);
+    emit showBatteryChanged(state);
+}
+
+void QGroundControlQmlGlobal::setShowBatteryConsumption(bool state)
+{
+    _showBatteryConsumption = state;
+    QSettings settings;
+    settings.beginGroup(kQmlToolBarKeyName);
+    settings.setValue("ShowBatteryConsumption", state);
+    emit showBatteryConsumptionChanged(state);
+}
+
+void QGroundControlQmlGlobal::setShowModeSelector(bool state)
+{
+    _showModeSelector = state;
+    QSettings settings;
+    settings.beginGroup(kQmlToolBarKeyName);
+    settings.setValue("ShowModeSelector", state);
+    emit showModeSelectorChanged(state);
+}
+void QGroundControlQmlGlobal::setShowArmed(bool state)
+{
+    _showArmed = state;
+    QSettings settings;
+    settings.beginGroup(kQmlToolBarKeyName);
+    settings.setValue("ShowArmed", state);
+    emit showArmedChanged(state);
 }

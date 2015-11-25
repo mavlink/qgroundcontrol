@@ -75,6 +75,8 @@
 
         <!-- Toolbar -->
         <file alias="Armed.svg">src/ui/toolbar/Images/Armed.svg</file>
+        <file alias="ArrowRight.svg">src/ui/toolbar/Images/ArrowRight.svg</file>
+        <file alias="ArrowLeft.svg">src/ui/toolbar/Images/ArrowLeft.svg</file>
         <file alias="Battery.svg">src/ui/toolbar/Images/Battery.svg</file>
         <file alias="Connect.svg">src/ui/toolbar/Images/Connect.svg</file>
         <file alias="Disarmed.svg">src/ui/toolbar/Images/Disarmed.svg</file>
@@ -93,6 +95,7 @@
         <file alias="Signal60.svg">src/ui/toolbar/Images/Signal60.svg</file>
         <file alias="Signal80.svg">src/ui/toolbar/Images/Signal80.svg</file>
         <file alias="Signal100.svg">src/ui/toolbar/Images/Signal100.svg</file>
+        <file alias="TelemRSSI.svg">src/ui/toolbar/Images/TelemRSSI.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
 
         <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
