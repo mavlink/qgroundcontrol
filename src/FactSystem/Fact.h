@@ -67,7 +67,7 @@ public:
     Q_PROPERTY(QString      shortDescription        READ shortDescription                                   CONSTANT)
     Q_PROPERTY(FactMetaData::ValueType_t type       READ type                                               CONSTANT)
     Q_PROPERTY(QString      units                   READ units                                              CONSTANT)
-    Q_PROPERTY(QVariant     value                   READ value                  WRITE setValue              NOTIFY valueChanged)
+    Q_PROPERTY(QVariant     value                   READ cookedValue            WRITE setCookedValue        NOTIFY valueChanged)
     Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                 NOTIFY valueChanged)
     Q_PROPERTY(QVariant     valueString             READ valueString                                        NOTIFY valueChanged)
 
@@ -75,6 +75,7 @@ public:
     ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
     Q_INVOKABLE QString validate(const QString& value, bool convertOnly);
     
+    QVariant        cookedValue             (void) const;   /// Value after translation
     int             componentId             (void) const;
     int             decimalPlaces           (void) const;
     QVariant        defaultValue            (void) const;
@@ -97,24 +98,23 @@ public:
     QString         shortDescription        (void) const;
     FactMetaData::ValueType_t type          (void) const;
     QString         units                   (void) const;
-    QVariant        value                   (void) const;
     QString         valueString             (void) const;
     bool            valueEqualsDefault      (void) const;
 
     void setRawValue        (const QVariant& value);
-    void setValue           (const QVariant& value);
+    void setCookedValue     (const QVariant& value);
     void setEnumIndex       (int index);
     void setEnumStringValue (const QString& value);
 
     // C++ methods
 
     /// Sets and sends new value to vehicle even if value is the same
-    void forceSetValue(const QVariant& value);
+    void forceSetRawValue(const QVariant& value);
     
     /// Sets the meta data associated with the Fact.
     void setMetaData(FactMetaData* metaData);
     
-    void _containerSetValue(const QVariant& value);
+    void _containerSetRawValue(const QVariant& value);
     
     /// Generally you should not change the name of a fact. But if you know what you are doing, you can.
     void _setName(const QString& name) { _name = name; }
@@ -131,7 +131,7 @@ signals:
     /// Signalled when property has been changed by a call to the property write accessor
     ///
     /// This signal is meant for use by Fact container implementations.
-    void _containerValueChanged(const QVariant& value);
+    void _containerRawValueChanged(const QVariant& value);
     
 private:
     QString _variantToString(const QVariant& variant) const;
