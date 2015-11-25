@@ -1074,3 +1074,8 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
         emit rcRSSIChanged(_rcRSSI);
     }
 }
+
+void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
+{
+    _uas->setExternalControlSetpoint(roll, pitch, yaw, thrust, 0, JoystickModeRC);
+}
