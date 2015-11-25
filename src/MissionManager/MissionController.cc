@@ -168,6 +168,9 @@ int MissionController::addMissionItem(QGeoCoordinate coordinate)
         newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
     }
     newItem->setDefaultsForCommand();
+    if (newItem->command() == MAV_CMD_NAV_WAYPOINT) {
+        newItem->setParam7(_findLastAltitude());
+    }
     _missionItems->append(newItem);
 
     _recalcAll();
@@ -591,4 +594,19 @@ void MissionController::_inProgressChanged(bool inProgress)
 QmlObjectListModel* MissionController::missionItems(void)
 {
     return _missionItems;
+}
+
+double MissionController::_findLastAltitude(void)
+{
+    double lastAltitude = MissionItem::defaultAltitude;
+
+    for (int i=0; i<_missionItems->count(); i++) {
+        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+
+        if (item->specifiesCoordinate()) {
+            lastAltitude = item->param7();
+        }
+    }
+
+    return lastAltitude;
 }
