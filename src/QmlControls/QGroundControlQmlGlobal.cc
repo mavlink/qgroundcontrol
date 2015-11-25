@@ -29,7 +29,9 @@
 
 #include <QSettings>
 
-static const char* kQmlGlobalKeyName = "QGCQml";
+static const char* kQmlGlobalKeyName =                                  "QGCQml";
+
+const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey = "VirtualTabletJoystick";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent)
     : QObject(parent)
@@ -37,8 +39,10 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* p
     , _linkManager(toolbox->linkManager())
     , _homePositionManager(toolbox->homePositionManager())
     , _flightMapSettings(toolbox->flightMapSettings())
+    , _virtualTabletJoystick(false)
 {
-
+    QSettings settings;
+    _virtualTabletJoystick = settings.value(_virtualTabletJoystickKey, false). toBool();
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
@@ -203,4 +207,14 @@ void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
 {
     qgcApp()->toolbox()->mavlinkProtocol()->enableVersionCheck(enable);
     emit isVersionCheckEnabledChanged(enable);
+}
+
+void QGroundControlQmlGlobal::setVirtualTabletJoystick(bool enabled)
+{
+    if (_virtualTabletJoystick != enabled) {
+        QSettings settings;
+        settings.setValue(_virtualTabletJoystickKey, enabled);
+        _virtualTabletJoystick = enabled;
+        emit virtualTabletJoystickChanged(enabled);
+    }
 }
