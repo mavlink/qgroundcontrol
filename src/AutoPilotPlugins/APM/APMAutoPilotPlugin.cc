@@ -27,6 +27,12 @@
 #include "UAS.h"
 #include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
+#include "APMComponent.h"
+#include "APMAirframeComponent.h"
+#include "APMAirframeComponentAirframes.h"
+#include "APMAirframeComponentController.h"
+#include "APMAirframeLoader.h"
+#include "APMRemoteParamsDownloader.h"
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
@@ -35,6 +41,8 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _airframeComponent(NULL)
 {
     Q_ASSERT(vehicle);
+    _airframeFacts = new APMAirframeLoader(this, vehicle->uas(), this);
+    APMAirframeLoader::loadAirframeFactMetaData();
 }
 
 APMAutoPilotPlugin::~APMAutoPilotPlugin()
@@ -75,9 +83,9 @@ void APMAutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
 										"Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
 	}
 #endif
-	
+    Q_UNUSED(missingParameters);
     _parametersReady = true;
-    _missingParameters = missingParameters;
+    _missingParameters = false;// missingParameters;
     emit missingParametersChanged(_missingParameters);
     emit parametersReadyChanged(_parametersReady);
 }
