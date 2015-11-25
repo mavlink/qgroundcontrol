@@ -67,6 +67,7 @@ public:
     Q_PROPERTY(bool     isHeartBeatEnabled      READ isHeartBeatEnabled         WRITE setIsHeartBeatEnabled         NOTIFY isHeartBeatEnabledChanged)
     Q_PROPERTY(bool     isMultiplexingEnabled   READ isMultiplexingEnabled      WRITE setIsMultiplexingEnabled      NOTIFY isMultiplexingEnabledChanged)
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
+    Q_PROPERTY(bool     virtualTabletJoystick   READ virtualTabletJoystick      WRITE setVirtualTabletJoystick      NOTIFY virtualTabletJoystickChanged)
 
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
@@ -101,6 +102,7 @@ public:
     bool    isHeartBeatEnabled      () { return qgcApp()->toolbox()->mavlinkProtocol()->heartbeatsEnabled(); }
     bool    isMultiplexingEnabled   () { return qgcApp()->toolbox()->mavlinkProtocol()->multiplexingEnabled(); }
     bool    isVersionCheckEnabled   () { return qgcApp()->toolbox()->mavlinkProtocol()->versionCheckEnabled(); }
+    bool    virtualTabletJoystick   () { return _virtualTabletJoystick; }
 
     //-- TODO: Make this into an actual preference.
     bool    isAdvancedMode          () { return false; }
@@ -113,6 +115,7 @@ public:
     void    setIsHeartBeatEnabled       (bool enable);
     void    setIsMultiplexingEnabled    (bool enable);
     void    setIsVersionCheckEnabled    (bool enable);
+    void    setVirtualTabletJoystick    (bool enabled);
 
 signals:
     void isDarkStyleChanged             (bool dark);
@@ -123,6 +126,7 @@ signals:
     void isHeartBeatEnabledChanged      (bool enabled);
     void isMultiplexingEnabledChanged   (bool enabled);
     void isVersionCheckEnabledChanged   (bool enabled);
+    void virtualTabletJoystickChanged   (bool enabled);
 
 private:
 #ifdef QT_DEBUG
@@ -133,6 +137,10 @@ private:
     LinkManager*            _linkManager;
     HomePositionManager*    _homePositionManager;
     FlightMapSettings*      _flightMapSettings;
+
+    bool _virtualTabletJoystick;
+
+    static const char*  _virtualTabletJoystickKey;
 };
 
 #endif
