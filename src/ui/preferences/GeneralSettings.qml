@@ -54,17 +54,19 @@ Rectangle {
         Column {
             id:                 settingsColumn
             width:              _generalRoot.width
-            spacing:            ScreenTools.defaultFontPixelHeight
             anchors.margins:    ScreenTools.defaultFontPixelWidth
+            spacing:            ScreenTools.defaultFontPixelHeight / 2
+
             QGCLabel {
                 text:   "General Settings"
                 font.pixelSize: ScreenTools.mediumFontPixelSize
             }
-            Rectangle {
-                height: 1
+
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
                 width:  parent.width
-                color:  qgcPal.button
             }
+
             //-----------------------------------------------------------------
             //-- Audio preferences
             QGCCheckBox {
@@ -131,6 +133,12 @@ Rectangle {
                     }
                 }
             }
+
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  parent.width
+            }
+
             //-----------------------------------------------------------------
             //-- Map Providers
             Row {
@@ -182,6 +190,11 @@ Rectangle {
                 }
             }
 
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  parent.width
+            }
+
             //-----------------------------------------------------------------
             //-- Autoconnect settings
             QGCLabel { text: "Autoconnect to the following devices:" }
@@ -208,6 +221,20 @@ Rectangle {
                 text:       "UDP"
                 checked:    QGroundControl.linkManager.autoconnectUDP
                 onClicked:  QGroundControl.linkManager.autoconnectUDP = checked
+            }
+
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  parent.width
+            }
+
+            //-----------------------------------------------------------------
+            //-- Virtual joystick settings
+            QGCCheckBox {
+                text:       "Thumb Joystick (WIP - be careful!)"
+                checked:    QGroundControl.virtualTabletJoystick
+                onClicked:  QGroundControl.virtualTabletJoystick = checked
+                visible:    ScreenTools.isMobile
             }
         }
     }
