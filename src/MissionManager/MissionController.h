@@ -95,6 +95,7 @@ private:
     void _setupMissionItems(bool loadFromVehicle, bool forceLoad);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
     double _calcDistance(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2);
+    double _findLastAltitude(void);
 
 private:
     bool                _editMode;
