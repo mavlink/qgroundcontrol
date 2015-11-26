@@ -222,7 +222,7 @@ Item {
         anchors.right:  parent.right
         anchors.bottom: parent.bottom
         height:         thumbAreaHeight
-        visible:        ScreenTools.isMobile
+        //visible:        ScreenTools.isMobile  // FIXME: HACKED IN FOR DESKTOP
 
         readonly property real thumbAreaHeight: parent.height / 4
 
@@ -302,6 +302,9 @@ Item {
             onTriggered: {
                 if (_activeVehicle) {
                     _activeVehicle.virtualTabletJoystickValue(rightStick.roll, rightStick.pitch, leftStick.yaw, leftStick.thrust)
+                } else {
+                    leftStick.reCenter()
+                    rightStick.reCenter()
                 }
             }
         }
@@ -333,8 +336,8 @@ Item {
             }
 
             Column {
-                QGCLabel { text: leftStick.point.x }
-                QGCLabel { text: leftStick.point.y }
+                QGCLabel { text: leftStick.yaw }
+                QGCLabel { text: leftStick.thrust }
             }
 
             Rectangle {
@@ -373,8 +376,8 @@ Item {
             }
 
             Column {
-                QGCLabel { text: rightStick.point.x }
-                QGCLabel { text: rightStick.point.y }
+                QGCLabel { text: rightStick.roll }
+                QGCLabel { text: rightStick.pitch }
             }
 
             Rectangle {
