@@ -80,7 +80,7 @@ signals:
 private slots:
     void _activeVehicleChanged          (Vehicle* vehicle);
     void _setProgressBarValue           (float value);
-    void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
+    void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
     void _delayedShowToolBarMessage     (void);
 
 private:
