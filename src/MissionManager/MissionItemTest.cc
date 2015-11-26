@@ -25,68 +25,68 @@
 #include "MissionItem.h"
 
 const MissionItemTest::ItemInfo_t MissionItemTest::_rgItemInfo[] = {
-    { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT,         10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_UNLIM,     10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_TURNS,     10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_TIME,      10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LAND,             10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_TAKEOFF,          10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_CONDITION_DELAY,      10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_MISSION },
-    { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_DO_JUMP,              10.0, 20.0, 30.0, 1.0, true, false, MAV_FRAME_MISSION },
+    { MAV_CMD_NAV_WAYPOINT,     MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_NAV_LOITER_UNLIM, MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_NAV_LOITER_TURNS, MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_NAV_LOITER_TIME,  MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_NAV_LAND,         MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_NAV_TAKEOFF,      MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_CONDITION_DELAY,  MAV_FRAME_MISSION },
+    { MAV_CMD_DO_JUMP,          MAV_FRAME_MISSION },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesWaypoint[] = {
-    { "Altitude:",  -30.0 },
-    { "Hold:",      10.0 },
+    { "Altitude:",  70.1234567 },
+    { "Hold:",      10.1234567 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLoiterUnlim[] = {
-    { "Altitude:",  -30.0 },
-    { "Radius:",    30.0 },
+    { "Altitude:",  70.1234567 },
+    { "Radius:",    30.1234567 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLoiterTurns[] = {
-    { "Altitude:",  -30.0 },
-    { "Radius:",    30.0 },
-    { "Turns:",     10.0 },
+    { "Altitude:",  70.1234567 },
+    { "Radius:",    30.1234567 },
+    { "Turns:",     10.1234567 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLoiterTime[] = {
-    { "Altitude:",  -30.0 },
-    { "Radius:",    30.0 },
-    { "Hold:",      10.0 },
+    { "Altitude:",  70.1234567 },
+    { "Radius:",    30.1234567 },
+    { "Hold:",      10.1234567 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesLand[] = {
-    { "Altitude:",  -30.0 },
-    { "Abort Alt:", 10.0 },
-    { "Heading:",   1.0 },
+    { "Altitude:",  70.1234567 },
+    { "Abort Alt:", 10.1234567 },
+    { "Heading:",   40.1234567 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesTakeoff[] = {
-    { "Altitude:",  -30.0 },
-    { "Heading:",   1.0 },
-    { "Pitch:",     10.0 },
+    { "Altitude:",  70.1234567 },
+    { "Heading:",   40.1234567 },
+    { "Pitch:",     10.1234567 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesConditionDelay[] = {
-    { "Hold:", 10.0 },
+    { "Hold:", 10.1234567 },
 };
 
 const MissionItemTest::FactValue_t MissionItemTest::_rgFactValuesDoJump[] = {
-    { "Item #:",   10.0 },
-    { "Repeat:",  20.0 },
+    { "Item #:",    10.1234567 },
+    { "Repeat:",    20.1234567 },
 };
 
 const MissionItemTest::ItemExpected_t MissionItemTest::_rgItemExpected[] = {
-    { "1\t0\t3\t16\t10\t20\t30\t1\t-10\t-20\t-30\t1\r\n",  sizeof(MissionItemTest::_rgFactValuesWaypoint)/sizeof(MissionItemTest::_rgFactValuesWaypoint[0]),             MissionItemTest::_rgFactValuesWaypoint },
-    { "1\t0\t3\t17\t10\t20\t30\t1\t-10\t-20\t-30\t1\r\n",  sizeof(MissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(MissionItemTest::_rgFactValuesLoiterUnlim[0]),       MissionItemTest::_rgFactValuesLoiterUnlim },
-    { "1\t0\t3\t18\t10\t20\t30\t1\t-10\t-20\t-30\t1\r\n",  sizeof(MissionItemTest::_rgFactValuesLoiterTurns)/sizeof(MissionItemTest::_rgFactValuesLoiterTurns[0]),       MissionItemTest::_rgFactValuesLoiterTurns },
-    { "1\t0\t3\t19\t10\t20\t30\t1\t-10\t-20\t-30\t1\r\n",  sizeof(MissionItemTest::_rgFactValuesLoiterTime)/sizeof(MissionItemTest::_rgFactValuesLoiterTime[0]),         MissionItemTest::_rgFactValuesLoiterTime },
-    { "1\t0\t3\t21\t10\t20\t30\t1\t-10\t-20\t-30\t1\r\n",  sizeof(MissionItemTest::_rgFactValuesLand)/sizeof(MissionItemTest::_rgFactValuesLand[0]),                     MissionItemTest::_rgFactValuesLand },
-    { "1\t0\t3\t22\t10\t20\t30\t1\t-10\t-20\t-30\t1\r\n",  sizeof(MissionItemTest::_rgFactValuesTakeoff)/sizeof(MissionItemTest::_rgFactValuesTakeoff[0]),               MissionItemTest::_rgFactValuesTakeoff },
-    { "1\t0\t2\t112\t10\t20\t30\t1\t-10\t-20\t-30\t1\r\n", sizeof(MissionItemTest::_rgFactValuesConditionDelay)/sizeof(MissionItemTest::_rgFactValuesConditionDelay[0]), MissionItemTest::_rgFactValuesConditionDelay },
-    { "1\t0\t2\t177\t10\t20\t30\t1\t-10\t-20\t-30\t1\r\n", sizeof(MissionItemTest::_rgFactValuesDoJump)/sizeof(MissionItemTest::_rgFactValuesDoJump[0]),                 MissionItemTest::_rgFactValuesDoJump },
+    { sizeof(MissionItemTest::_rgFactValuesWaypoint)/sizeof(MissionItemTest::_rgFactValuesWaypoint[0]),             MissionItemTest::_rgFactValuesWaypoint },
+    { sizeof(MissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(MissionItemTest::_rgFactValuesLoiterUnlim[0]),       MissionItemTest::_rgFactValuesLoiterUnlim },
+    { sizeof(MissionItemTest::_rgFactValuesLoiterTurns)/sizeof(MissionItemTest::_rgFactValuesLoiterTurns[0]),       MissionItemTest::_rgFactValuesLoiterTurns },
+    { sizeof(MissionItemTest::_rgFactValuesLoiterTime)/sizeof(MissionItemTest::_rgFactValuesLoiterTime[0]),         MissionItemTest::_rgFactValuesLoiterTime },
+    { sizeof(MissionItemTest::_rgFactValuesLand)/sizeof(MissionItemTest::_rgFactValuesLand[0]),                     MissionItemTest::_rgFactValuesLand },
+    { sizeof(MissionItemTest::_rgFactValuesTakeoff)/sizeof(MissionItemTest::_rgFactValuesTakeoff[0]),               MissionItemTest::_rgFactValuesTakeoff },
+    { sizeof(MissionItemTest::_rgFactValuesConditionDelay)/sizeof(MissionItemTest::_rgFactValuesConditionDelay[0]), MissionItemTest::_rgFactValuesConditionDelay },
+    { sizeof(MissionItemTest::_rgFactValuesDoJump)/sizeof(MissionItemTest::_rgFactValuesDoJump[0]),                 MissionItemTest::_rgFactValuesDoJump },
 };
 
 MissionItemTest::MissionItemTest(void)
@@ -102,24 +102,35 @@ void MissionItemTest::_test(void)
         
         qDebug() << "Command:" << info->command;
         
-        MissionItem* item = new MissionItem(info->sequenceNumber,
+        MissionItem* item = new MissionItem(1,
                                             info->command,
                                             info->frame,
-                                            info->param1,
-                                            info->param2,
-                                            info->param3,
-                                            info->param4,
-                                            info->coordinate.latitude(),
-                                            info->coordinate.longitude(),
-                                            info->coordinate.altitude(),
-                                            info->autocontinue,
-                                            info->isCurrentItem);
+                                            10.1234567,
+                                            20.1234567,
+                                            30.1234567,
+                                            40.1234567,
+                                            50.1234567,
+                                            60.1234567,
+                                            70.1234567,
+                                            true,
+                                            false);
 
         // Validate the saving is working correctly
+
         QString savedItemString;
         QTextStream saveStream(&savedItemString, QIODevice::WriteOnly);
         item->save(saveStream);
-        QCOMPARE(savedItemString, QString(expected->streamString));
+
+        // Param floats to string with 18 digits or precision
+        QString paramStrings = "10.1234567000000002\t"
+                                "20.1234566999999984\t"
+                                "30.1234566999999984\t"
+                                "40.1234566999999984\t"
+                                "50.1234566999999984\t"
+                                "60.1234566999999984\t"
+                                "70.1234567000000055";
+        QString expectedItemString = QString("1\t0\t%1\t%2\t%3\t1\r\n").arg(info->frame).arg(info->command).arg(paramStrings);
+        QCOMPARE(savedItemString, expectedItemString);
         
         // Validate that the fact values are correctly returned
         size_t factCount = 0;
