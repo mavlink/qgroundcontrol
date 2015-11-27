@@ -86,15 +86,13 @@ Item {
         }
     }
 
-    /*
-      FIXME: Temp Hack
     //-- Instrument Panel
     QGCInstrumentWidget {
         id:                     instrumentGadget
         anchors.margins:        ScreenTools.defaultFontPixelHeight
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        visible:                _isInstrumentVisible
+        visible:                !QGroundControl.virtualTabletJoystick && _isInstrumentVisible
         size:                   getGadgetWidth()
         active:                 _activeVehicle != null
         heading:                _heading
@@ -120,7 +118,7 @@ Item {
         height:                 ScreenTools.defaultFontPixelSize * 2
         width:                  ScreenTools.defaultFontPixelSize * 2
         radius:                 ScreenTools.defaultFontPixelSize / 3
-        visible:                !_isInstrumentVisible
+        visible:                !QGroundControl.virtualTabletJoystick && !_isInstrumentVisible
         color:                  isBackgroundDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
         Image {
             width:              parent.width  * 0.75
@@ -139,7 +137,6 @@ Item {
             }
         }
     }
-*/
 
     //-- Vertical Tool Buttons
     Column {

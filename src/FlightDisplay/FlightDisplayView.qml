@@ -222,7 +222,7 @@ Item {
         anchors.right:  parent.right
         anchors.bottom: parent.bottom
         height:         thumbAreaHeight
-        //visible:        ScreenTools.isMobile  // FIXME: HACKED IN FOR DESKTOP
+        visible:        QGroundControl.virtualTabletJoystick
 
         readonly property real thumbAreaHeight: parent.height / 4
 
@@ -296,7 +296,7 @@ Item {
 
         Timer {
             interval:   10
-            running:    true
+            running:    QGroundControl.virtualTabletJoystick
             repeat:     true
 
             onTriggered: {

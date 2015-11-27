@@ -234,7 +234,6 @@ Rectangle {
                 text:       "Thumb Joystick (WIP - be careful!)"
                 checked:    QGroundControl.virtualTabletJoystick
                 onClicked:  QGroundControl.virtualTabletJoystick = checked
-                visible:    ScreenTools.isMobile
             }
         }
     }
