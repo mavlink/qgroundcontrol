@@ -25,11 +25,12 @@ import QtQuick          2.5
 import QtQuick.Controls 1.2
 import QtPositioning    5.2
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl                       1.0
+import QGroundControl.Palette               1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.FlightDisplay         1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.MultiVehicleManager   1.0
 
 /// Qml for MainWindow
 Item {
@@ -40,15 +41,20 @@ Item {
 
     QGCPalette { id: __qgcPal; colorGroupEnabled: true }
 
-    property real tbHeight:         ScreenTools.isMobile ? (ScreenTools.isTinyScreen ? (mainWindow.width * 0.0666) : (mainWindow.width * 0.05)) : ScreenTools.defaultFontPixelSize * 4
-    property int  tbCellHeight:     tbHeight * 0.75
-    property real tbSpacing:        ScreenTools.isMobile ? width * 0.00824 : 9.54
-    property real tbButtonWidth:    tbCellHeight * 1.3
-    property real availableHeight:  height - tbHeight
-    property real menuButtonWidth:  (tbButtonWidth * 2) + (tbSpacing * 4) + 1
+    property real   tbHeight:           ScreenTools.isMobile ? (ScreenTools.isTinyScreen ? (mainWindow.width * 0.0666) : (mainWindow.width * 0.05)) : ScreenTools.defaultFontPixelSize * 4
+    property int    tbCellHeight:       tbHeight * 0.75
+    property real   tbSpacing:          ScreenTools.isMobile ? width * 0.00824 : 9.54
+    property real   tbButtonWidth:      tbCellHeight * 1.3
+    property real   availableHeight:    height - tbHeight
+    property real   menuButtonWidth:    (tbButtonWidth * 2) + (tbSpacing * 4) + 1
 
-    property var defaultPosition:   QtPositioning.coordinate(37.803784, -122.462276)
-    property var tabletPosition:    defaultPosition
+    property var    defaultPosition:    QtPositioning.coordinate(37.803784, -122.462276)
+    property var    tabletPosition:     defaultPosition
+
+    property var    currentPopUp:       null
+    property real   currentCenterX:     0
+    property var    activeVehicle:      multiVehicleManager.activeVehicle
+    property string formatedMessage:    activeVehicle ? activeVehicle.formatedMessage : ""
 
     Connections {
 
@@ -129,6 +135,42 @@ Item {
         flightView.interactive = enabled
     }
 
+    onFormatedMessageChanged: {
+        if(messageArea.visible) {
+            messageText.append(formatedMessage)
+            //-- Hack to scroll down
+            messageFlick.flick(0,-500)
+        }
+    }
+
+    function showMessageArea() {
+        if(currentPopUp) {
+            currentPopUp.close()
+        }
+        if(multiVehicleManager.activeVehicleAvailable) {
+            messageText.text = activeVehicle.formatedMessages
+            //-- Hack to scroll to last message
+            for (var i = 0; i < activeVehicle.messageCount; i++)
+                messageFlick.flick(0,-5000)
+            activeVehicle.resetMessages()
+        } else {
+            messageText.text = "No Messages"
+        }
+        currentPopUp = messageArea
+        messageArea.visible = true
+        mainWindow.setMapInteractive(false)
+    }
+
+    function showPopUp(dropItem, centerX) {
+        if(currentPopUp) {
+            currentPopUp.close()
+        }
+        indicatorDropdown.centerX = centerX
+        indicatorDropdown.sourceComponent = dropItem
+        indicatorDropdown.visible = true
+        currentPopUp = indicatorDropdown
+    }
+
     //-- Left Settings Menu
     Loader {
         id:                 leftPanel
@@ -174,6 +216,85 @@ Item {
         id:                 setupViewLoader
         anchors.fill:       parent
         visible:            false
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Dismiss Pop Up Messages
+    MouseArea {
+        visible:        currentPopUp != null
+        enabled:        currentPopUp != null
+        anchors.fill:   parent
+        onClicked: {
+            currentPopUp.close()
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Indicator Drop Down Info
+    Loader {
+        id: indicatorDropdown
+        visible: false
+        property real centerX: 0
+        function close() {
+            sourceComponent = null
+            mainWindow.currentPopUp = null
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- System Message Area
+    Rectangle {
+        id:                 messageArea
+
+        function close() {
+            currentPopUp = null
+            messageText.text    = ""
+            mainWindow.setMapInteractive(true)
+            messageArea.visible = false
+        }
+
+        width:              mainWindow.width  * 0.5
+        height:             mainWindow.height * 0.5
+        color:              Qt.rgba(0,0,0,0.75)
+        visible:            false
+        radius:             ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.top:                parent.top
+        anchors.topMargin:          tbHeight + ScreenTools.defaultFontPixelHeight
+        Flickable {
+            id:                 messageFlick
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.fill:       parent
+            contentHeight:      messageText.height
+            contentWidth:       messageText.width
+            boundsBehavior:     Flickable.StopAtBounds
+            pixelAligned:       true
+            clip:               true
+            TextEdit {
+                id:         messageText
+                readOnly:   true
+                textFormat: TextEdit.RichText
+                color:      "white"
+            }
+        }
+        //-- Dismiss System Message
+        Image {
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.top:        parent.top
+            anchors.right:      parent.right
+            width:              ScreenTools.defaultFontPixelHeight * 1.5
+            height:             ScreenTools.defaultFontPixelHeight * 1.5
+            source:             "/res/XDelete.svg"
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    messageArea.close()
+                }
+            }
+        }
     }
 
 }
