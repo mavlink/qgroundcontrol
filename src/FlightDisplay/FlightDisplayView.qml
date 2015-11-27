@@ -226,6 +226,10 @@ Item {
 
         readonly property real thumbAreaHeight: parent.height / 4
 
+        QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
+
+        Component.onCompleted: console.log("test", mapPal)
+
         MultiPointTouchArea {
             anchors.fill:       parent
             maximumTouchPoints: 2
@@ -316,7 +320,7 @@ Item {
             width:          parent.thumbAreaHeight
             height:         parent.thumbAreaHeight
             radius:         parent.thumbAreaHeight / 2
-            border.color:   "white"
+            border.color:   mapPal.thumbJoystick
             border.width:   2
             color:          "transparent"
 
@@ -350,7 +354,7 @@ Item {
                 anchors.margins:    multiTouchItem.thumbAreaHeight / 4
                 anchors.fill:       parent
                 radius:             width / 2
-                border.color:       "white"
+                border.color:       mapPal.thumbJoystick
                 border.width:       2
                 color:              "transparent"
             }
@@ -359,7 +363,7 @@ Item {
                 width:  hatWidth
                 height: hatWidth
                 radius: hatWidthHalf
-                color:  "white"
+                color:  mapPal.thumbJoystick
                 x:      leftStick.point.x - hatWidthHalf
                 y:      leftStick.point.y - hatWidthHalf
 
@@ -375,7 +379,7 @@ Item {
             width:          parent.thumbAreaHeight
             height:         parent.thumbAreaHeight
             radius:         parent.thumbAreaHeight / 2
-            border.color:   "white"
+            border.color:   mapPal.thumbJoystick
             border.width:   2
             color:          "transparent"
 
@@ -409,7 +413,7 @@ Item {
                 anchors.margins:    multiTouchItem.thumbAreaHeight / 4
                 anchors.fill:       parent
                 radius:             width / 2
-                border.color:       "white"
+                border.color:       mapPal.thumbJoystick
                 border.width:       2
                 color:              "transparent"
             }
@@ -418,7 +422,7 @@ Item {
                 width:  hatWidth
                 height: hatWidth
                 radius: hatWidthHalf
-                color:  "white"
+                color:  mapPal.thumbJoystick
                 x:      rightStick.point.x - hatWidthHalf
                 y:      rightStick.point.y - hatWidthHalf
 
