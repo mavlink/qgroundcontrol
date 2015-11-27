@@ -328,7 +328,7 @@ Item {
                 leftStick.yaw = point.x / multiTouchItem.thumbAreaHeight
                 leftStick.thrust = point.y / multiTouchItem.thumbAreaHeight
                 leftStick.yaw *= 2.0
-                leftStick.thrust *= -2.0
+                leftStick.thrust *= -1.0
                 leftStick.yaw -= 1.0
                 leftStick.thrust += 1.0
             }
