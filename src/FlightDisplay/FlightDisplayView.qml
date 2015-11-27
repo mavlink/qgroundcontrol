@@ -315,7 +315,10 @@ Item {
             anchors.bottom: parent.bottom
             width:          parent.thumbAreaHeight
             height:         parent.thumbAreaHeight
-            color:          "orange"
+            radius:         parent.thumbAreaHeight / 2
+            border.color:   "white"
+            border.width:   2
+            color:          "transparent"
 
             property var point:     Qt.point(0, 0)
             property real yaw:      0
@@ -335,17 +338,33 @@ Item {
                 point = Qt.point(leftStick.width / 2, leftStick.height / 2)
             }
 
+            /*
+              Keep for debugging
             Column {
                 QGCLabel { text: leftStick.yaw }
                 QGCLabel { text: leftStick.thrust }
             }
+            */
 
             Rectangle {
-                width:  ScreenTools.defaultFontPixelHeight
-                height: ScreenTools.defaultFontPixelHeight
-                color:  "black"
-                x:      leftStick.point.x - (width / 2)
-                y:      leftStick.point.y - (height / 2)
+                anchors.margins:    multiTouchItem.thumbAreaHeight / 4
+                anchors.fill:       parent
+                radius:             width / 2
+                border.color:       "white"
+                border.width:       2
+                color:              "transparent"
+            }
+
+            Rectangle {
+                width:  hatWidth
+                height: hatWidth
+                radius: hatWidthHalf
+                color:  "white"
+                x:      leftStick.point.x - hatWidthHalf
+                y:      leftStick.point.y - hatWidthHalf
+
+                readonly property real hatWidth:        ScreenTools.defaultFontPixelHeight
+                readonly property real hatWidthHalf:    ScreenTools.defaultFontPixelHeight / 2
             }
         }
 
@@ -355,7 +374,10 @@ Item {
             anchors.bottom: parent.bottom
             width:          parent.thumbAreaHeight
             height:         parent.thumbAreaHeight
-            color:          "orange"
+            radius:         parent.thumbAreaHeight / 2
+            border.color:   "white"
+            border.width:   2
+            color:          "transparent"
 
             property var point:     Qt.point(0, 0)
             property real roll:     0
@@ -375,17 +397,33 @@ Item {
                 point = Qt.point(rightStick.width / 2, rightStick.height / 2)
             }
 
+            /*
+              Keep for debugging
             Column {
                 QGCLabel { text: rightStick.roll }
                 QGCLabel { text: rightStick.pitch }
             }
+            */
 
             Rectangle {
-                width:  ScreenTools.defaultFontPixelHeight
-                height: ScreenTools.defaultFontPixelHeight
-                color:  "black"
-                x:      rightStick.point.x - (width / 2)
-                y:      rightStick.point.y - (height / 2)
+                anchors.margins:    multiTouchItem.thumbAreaHeight / 4
+                anchors.fill:       parent
+                radius:             width / 2
+                border.color:       "white"
+                border.width:       2
+                color:              "transparent"
+            }
+
+            Rectangle {
+                width:  hatWidth
+                height: hatWidth
+                radius: hatWidthHalf
+                color:  "white"
+                x:      rightStick.point.x - hatWidthHalf
+                y:      rightStick.point.y - hatWidthHalf
+
+                readonly property real hatWidth:        ScreenTools.defaultFontPixelHeight
+                readonly property real hatWidthHalf:    ScreenTools.defaultFontPixelHeight / 2
             }
         }
     }
