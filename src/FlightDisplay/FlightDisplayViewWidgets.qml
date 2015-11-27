@@ -86,6 +86,8 @@ Item {
         }
     }
 
+    /*
+      FIXME: Temp Hack
     //-- Instrument Panel
     QGCInstrumentWidget {
         id:                     instrumentGadget
@@ -137,6 +139,7 @@ Item {
             }
         }
     }
+*/
 
     //-- Vertical Tool Buttons
     Column {
