@@ -28,12 +28,12 @@ This file is part of the QGROUNDCONTROL project
  */
 
 import QtQuick 2.5
+import QtQuick.Layouts 1.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
-import QGroundControl.FactControls          1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
@@ -50,8 +50,6 @@ Rectangle {
     property bool isMessageImportant:   activeVehicle ? !activeVehicle.messageTypeNormal && !activeVehicle.messageTypeNone : false
     property bool isBackgroundDark:     true
     property bool opaqueBackground:     false
-
-    property string formatedMessage:    activeVehicle ? activeVehicle.formatedMessage : ""
 
     /*
         Dev System (Mac OS)
@@ -149,28 +147,6 @@ Rectangle {
 
     MainToolBarController { id: _controller }
 
-    onFormatedMessageChanged: {
-        if(messageArea.visible) {
-            messageText.append(formatedMessage)
-            //-- Hack to scroll down
-            messageFlick.flick(0,-500)
-        }
-    }
-
-    function showMessageArea() {
-        if(multiVehicleManager.activeVehicleAvailable) {
-            messageText.text = activeVehicle.formatedMessages
-            //-- Hack to scroll to last message
-            for (var i = 0; i < activeVehicle.messageCount; i++)
-                messageFlick.flick(0,-5000)
-            activeVehicle.resetMessages()
-        } else {
-            messageText.text = "No Messages"
-        }
-        messageArea.visible = true
-        mainWindow.setMapInteractive(false)
-    }
-
     function showToolbarMessage(message) {
         toolBarMessage.text = message
         toolBarMessageArea.visible = true
@@ -178,6 +154,21 @@ Rectangle {
 
     function showMavStatus() {
          return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0);
+    }
+
+    function getBatteryColor() {
+        if(activeVehicle) {
+            if(activeVehicle.batteryPercent > 75) {
+                return colorGreen
+            }
+            if(activeVehicle.batteryPercent > 50) {
+                return colorOrange
+            }
+            if(activeVehicle.batteryPercent > 0.1) {
+                return colorRed
+            }
+        }
+        return colorGrey
     }
 
     Component.onCompleted: {
@@ -192,6 +183,113 @@ Rectangle {
         onShowSetupView:{ setupButton.checked = true }
     }
 
+    //---------------------------------------------
+    // Battery Info
+    Component {
+        id: batteryInfo
+        Rectangle {
+            color:          Qt.rgba(0,0,0,0.75)
+            width:          battCol.width   + ScreenTools.defaultFontPixelWidth  * 3
+            height:         battCol.height  + ScreenTools.defaultFontPixelHeight * 2
+            radius:         ScreenTools.defaultFontPixelHeight * 0.5
+            Column {
+                id:                 battCol
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                width:              Math.max(battGrid.width, battLabel.width)
+                anchors.margins:    ScreenTools.defaultFontPixelHeight
+                anchors.centerIn:   parent
+                QGCLabel {
+                    id:         battLabel
+                    text:       (activeVehicle && (activeVehicle.batteryVoltage > 0)) ? "Battery Status" : "Battery Data Unavailable"
+                    font.weight:Font.DemiBold
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                GridLayout {
+                    id:                 battGrid
+                    visible:            (activeVehicle && (activeVehicle.batteryVoltage > 0))
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    columns: 2
+                    QGCLabel {
+                        text:   "Voltage:"
+                    }
+                    QGCLabel {
+                        text:   activeVehicle ? (activeVehicle.batteryVoltage.toFixed(1) + " V") : "N/A"
+                        color:  getBatteryColor()
+                    }
+                    // TODO: What "controller" provides "Facts"?
+                    /*
+                    QGCLabel {
+                        text:   "Cell Voltage:"
+                    }
+                    QGCLabel {
+                        text:   (activeVehicle.batteryVoltage / controller.getParameterFact(-1, "BAT_N_CELLS").value) + "V"
+                        color:  getBatteryColor()
+                    }
+                    */
+                    QGCLabel {
+                        text:   "Accumulated Consumption:"
+                    }
+                    QGCLabel {
+                        text:   activeVehicle ? (activeVehicle.batteryConsumed + " mA") : "N/A"
+                        color:  getBatteryColor()
+                    }
+                }
+            }
+            Component.onCompleted: {
+                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
+                x = pos.x
+                y = pos.y + ScreenTools.defaultFontPixelHeight
+            }
+        }
+    }
+
+    //---------------------------------------------
+    // RC RSSI Info
+    Component {
+        id: rcRSSIInfo
+        Rectangle {
+            color:          Qt.rgba(0,0,0,0.75)
+            width:          battCol.width   + ScreenTools.defaultFontPixelWidth  * 3
+            height:         battCol.height  + ScreenTools.defaultFontPixelHeight * 2
+            radius:         ScreenTools.defaultFontPixelHeight * 0.5
+            Column {
+                id:                 battCol
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                width:              Math.max(battGrid.width, rssiLabel.width)
+                anchors.margins:    ScreenTools.defaultFontPixelHeight
+                anchors.centerIn:   parent
+                QGCLabel {
+                    id:         rssiLabel
+                    text:       "RC RSSI Status"
+                    font.weight:Font.DemiBold
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                GridLayout {
+                    id:                 battGrid
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    columns: 2
+                    QGCLabel {
+                        text:   "RSSI:"
+                    }
+                    QGCLabel {
+                        text:   activeVehicle ? (activeVehicle.rcRSSI + "%") : 0
+                    }
+                }
+            }
+            Component.onCompleted: {
+                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
+                x = pos.x
+                y = pos.y + ScreenTools.defaultFontPixelHeight
+            }
+        }
+    }
+
+    //---------------------------------------------
+    // Toolbar Row
     Row {
         id:             viewRow
         height:         mainWindow.tbCellHeight
@@ -284,55 +382,6 @@ Rectangle {
             source:             multiVehicleManager.activeVehicleAvailable ? "MainToolBarIndicators.qml" : ""
             anchors.left:       parent.left
             anchors.verticalCenter:   parent.verticalCenter
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //-- System Message Area
-    Rectangle {
-        id:             messageArea
-        width:          mainWindow.width  * 0.5
-        height:         mainWindow.height * 0.5
-        anchors.top:    parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        color:          Qt.rgba(0,0,0,0.75)
-        visible:        false
-        radius:         ScreenTools.defaultFontPixelHeight * 0.5
-        Flickable {
-            id:                 messageFlick
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
-            anchors.fill:       parent
-            contentHeight:      messageText.height
-            contentWidth:       messageText.width
-            boundsBehavior:     Flickable.StopAtBounds
-            pixelAligned:       true
-            clip:               true
-            TextEdit {
-                id:         messageText
-                readOnly:   true
-                textFormat: TextEdit.RichText
-                color:      "white"
-            }
-        }
-        //-- Dismiss System Message
-        Image {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
-            anchors.top:        parent.top
-            anchors.right:      parent.right
-            width:              ScreenTools.defaultFontPixelHeight * 1.5
-            height:             ScreenTools.defaultFontPixelHeight * 1.5
-            source:             "/res/XDelete.svg"
-            fillMode:           Image.PreserveAspectFit
-            mipmap:             true
-            smooth:             true
-            MouseArea {
-                anchors.fill:   parent
-                onClicked: {
-                    messageText.text    = ""
-                    messageArea.visible = false
-                    mainWindow.setMapInteractive(true)
-                }
-            }
         }
     }
 
