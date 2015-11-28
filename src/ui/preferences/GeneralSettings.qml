@@ -201,18 +201,21 @@ Rectangle {
 
             QGCCheckBox {
                 text:       "Pixhawk"
+                visible:    !ScreenTools.isiOS
                 checked:    QGroundControl.linkManager.autoconnectPixhawk
                 onClicked:  QGroundControl.linkManager.autoconnectPixhawk = checked
             }
 
             QGCCheckBox {
                 text:       "3DR Radio"
+                visible:    !ScreenTools.isiOS
                 checked:    QGroundControl.linkManager.autoconnect3DRRadio
                 onClicked:  QGroundControl.linkManager.autoconnect3DRRadio = checked
             }
 
             QGCCheckBox {
                 text:       "PX4 Flow"
+                visible:    !ScreenTools.isiOS
                 checked:    QGroundControl.linkManager.autoconnectPX4Flow
                 onClicked:  QGroundControl.linkManager.autoconnectPX4Flow = checked
             }
