@@ -61,10 +61,21 @@ public:
     Q_PROPERTY(float        progressBarValue    MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
     Q_PROPERTY(int          telemetryRRSSI      READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)
     Q_PROPERTY(int          telemetryLRSSI      READ telemetryLRSSI             NOTIFY telemetryLRSSIChanged)
+    Q_PROPERTY(unsigned int telemetryRXErrors   READ telemetryRXErrors          NOTIFY telemetryRXErrorsChanged)
+    Q_PROPERTY(unsigned int telemetryFixed      READ telemetryFixed             NOTIFY telemetryFixedChanged)
+    Q_PROPERTY(unsigned int telemetryTXBuffer   READ telemetryTXBuffer          NOTIFY telemetryTXBufferChanged)
+    Q_PROPERTY(unsigned int telemetryLNoise     READ telemetryLNoise            NOTIFY telemetryLNoiseChanged)
+    Q_PROPERTY(unsigned int telemetryRNoise     READ telemetryRNoise            NOTIFY telemetryRNoiseChanged)
 
     void        viewStateChanged        (const QString& key, bool value);
+
     int         telemetryRRSSI          () { return _telemetryRRSSI; }
     int         telemetryLRSSI          () { return _telemetryLRSSI; }
+    unsigned int telemetryRXErrors      () { return _telemetryRXErrors; }
+    unsigned int telemetryFixed         () { return _telemetryFixed; }
+    unsigned int telemetryTXBuffer      () { return _telemetryTXBuffer; }
+    unsigned int telemetryLNoise        () { return _telemetryLNoise; }
+    unsigned int telemetryRNoise        () { return _telemetryRNoise; }
 
     void showToolBarMessage(const QString& message);
 
@@ -73,6 +84,11 @@ signals:
     void telemetryRRSSIChanged          (int value);
     void telemetryLRSSIChanged          (int value);
     void heightChanged                  (double height);
+    void telemetryRXErrorsChanged       (unsigned int value);
+    void telemetryFixedChanged          (unsigned int value);
+    void telemetryTXBufferChanged       (unsigned int value);
+    void telemetryLNoiseChanged         (unsigned int value);
+    void telemetryRNoiseChanged         (unsigned int value);
 
     /// Shows a non-modal message below the toolbar
     void showMessage(const QString& message);
@@ -90,6 +106,12 @@ private:
     double          _remoteRSSIstore;
     int             _telemetryRRSSI;
     int             _telemetryLRSSI;
+    uint32_t        _telemetryRXErrors;
+    uint32_t        _telemetryFixed;
+    uint32_t        _telemetryTXBuffer;
+    uint32_t        _telemetryLNoise;
+    uint32_t        _telemetryRNoise;
+
     double          _toolbarHeight;
 
     bool            _toolbarMessageVisible;
