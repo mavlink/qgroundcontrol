@@ -80,7 +80,9 @@ public:
     Q_PROPERTY(bool autoconnectPixhawk                  READ autoconnectPixhawk                 WRITE setAutoconnectPixhawk     NOTIFY autoconnectPixhawkChanged)
     Q_PROPERTY(bool autoconnect3DRRadio                 READ autoconnect3DRRadio                WRITE setAutoconnect3DRRadio    NOTIFY autoconnect3DRRadioChanged)
     Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
+    //-- LinkInterface
     Q_PROPERTY(QmlObjectListModel* links                READ links                                                              CONSTANT)
+    //-- LinkConfiguration
     Q_PROPERTY(QmlObjectListModel* linkConfigurations   READ linkConfigurations                                                 CONSTANT)
 
     // Property accessors

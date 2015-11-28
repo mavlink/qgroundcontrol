@@ -306,8 +306,7 @@ Row {
     //-- Vehicle Selector
     QGCButton {
         id:                     vehicleSelectorButton
-        width:                  ScreenTools.defaultFontPixelSize * 12
-        height:                 mainWindow.tbButtonWidth
+        width:                  ScreenTools.defaultFontPixelSize * 8
         text:                   "Vehicle " + (activeVehicle ? activeVehicle.id : "None")
         visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
         anchors.verticalCenter: parent.verticalCenter
