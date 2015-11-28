@@ -234,10 +234,9 @@ Rectangle {
             //-----------------------------------------------------------------
             //-- Virtual joystick settings
             QGCCheckBox {
-                text:       "Thumb Joystick (WIP - be careful!)"
+                text:       "Virtual Joystick"
                 checked:    QGroundControl.virtualTabletJoystick
                 onClicked:  QGroundControl.virtualTabletJoystick = checked
-                visible:    ScreenTools.isMobile
             }
         }
     }
