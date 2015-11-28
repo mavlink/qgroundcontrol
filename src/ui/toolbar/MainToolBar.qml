@@ -171,6 +171,16 @@ Rectangle {
         return colorGrey
     }
 
+    function getRSSIColor(value) {
+        if(value >= 0)
+            return colorGrey;
+        if(value > -60)
+            return colorGreen;
+        if(value > -90)
+            return colorOrange;
+        return colorRed;
+    }
+
     Component.onCompleted: {
         //-- TODO: Get this from the actual state
         flyButton.checked = true
@@ -277,6 +287,85 @@ Rectangle {
                     }
                     QGCLabel {
                         text:   activeVehicle ? (activeVehicle.rcRSSI + "%") : 0
+                    }
+                }
+            }
+            Component.onCompleted: {
+                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
+                x = pos.x
+                y = pos.y + ScreenTools.defaultFontPixelHeight
+            }
+        }
+    }
+
+    //---------------------------------------------
+    // Telemetry RSSI Info
+    Component {
+        id: telemRSSIInfo
+        Rectangle {
+            color:          Qt.rgba(0,0,0,0.75)
+            width:          telemCol.width   + ScreenTools.defaultFontPixelWidth  * 3
+            height:         telemCol.height  + ScreenTools.defaultFontPixelHeight * 2
+            radius:         ScreenTools.defaultFontPixelHeight * 0.5
+            Column {
+                id:                 telemCol
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                width:              Math.max(telemGrid.width, telemLabel.width)
+                anchors.margins:    ScreenTools.defaultFontPixelHeight
+                anchors.centerIn:   parent
+                QGCLabel {
+                    id:         telemLabel
+                    text:       "Telemetry RSSI Status"
+                    font.weight:Font.DemiBold
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                GridLayout {
+                    id:                 telemGrid
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    columns: 2
+                    QGCLabel {
+                        text:   "Local RSSI:"
+                    }
+                    QGCLabel {
+                        text:   _controller.telemetryLRSSI + " dBm"
+                    }
+                    QGCLabel {
+                        text:   "Remote RSSI:"
+                    }
+                    QGCLabel {
+                        text:   _controller.telemetryRRSSI + " dBm"
+                    }
+                    QGCLabel {
+                        text:   "RX Errors:"
+                    }
+                    QGCLabel {
+                        text:   _controller.telemetryRXErrors
+                    }
+                    QGCLabel {
+                        text:   "Errors Fixed:"
+                    }
+                    QGCLabel {
+                        text:   _controller.telemetryFixed
+                    }
+                    QGCLabel {
+                        text:   "TX Buffer:"
+                    }
+                    QGCLabel {
+                        text:   _controller.telemetryTXBuffer
+                    }
+                    QGCLabel {
+                        text:   "Local Noise:"
+                    }
+                    QGCLabel {
+                        text:   _controller.telemetryLNoise
+                    }
+                    QGCLabel {
+                        text:   "Remote Noise:"
+                    }
+                    QGCLabel {
+                        text:   _controller.telemetryRNoise
                     }
                 }
             }
