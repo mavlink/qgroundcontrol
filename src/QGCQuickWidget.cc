@@ -39,6 +39,7 @@
 QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
     QQuickWidget(parent)
 {
+    setAttribute(Qt::WA_AcceptTouchEvents);
     rootContext()->engine()->addImportPath("qrc:/qml");
     rootContext()->setContextProperty("multiVehicleManager", qgcApp()->toolbox()->multiVehicleManager());
     rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());

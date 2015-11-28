@@ -258,6 +258,7 @@ HEADERS += \
     src/QGCFileDialog.h \
     src/QGCGeo.h \
     src/QGCLoggingCategory.h \
+    src/QGCMapPalette.h \
     src/QGCMessageBox.h \
     src/QGCPalette.h \
     src/QGCQmlWidgetHolder.h \
@@ -371,6 +372,7 @@ SOURCES += \
     src/QGCDockWidget.cc \
     src/QGCFileDialog.cc \
     src/QGCLoggingCategory.cc \
+    src/QGCMapPalette.cc \
     src/QGCPalette.cc \
     src/QGCQmlWidgetHolder.cpp \
     src/QGCQuickWidget.cc \
