@@ -21,7 +21,7 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-import QtQuick                  2.4
+import QtQuick                  2.5
 import QtQuick.Controls         1.3
 import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.2
@@ -216,4 +216,117 @@ Item {
         height:             availableHeight
     }
 
+    Item {
+        id:             multiTouchItem
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.bottom: parent.bottom
+        height:         thumbAreaHeight
+        visible:        QGroundControl.virtualTabletJoystick
+
+        readonly property real thumbAreaHeight: parent.height / 4
+
+        QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
+
+        Component.onCompleted: console.log("test", mapPal)
+
+        MultiPointTouchArea {
+            anchors.fill:       parent
+            maximumTouchPoints: 2
+
+            property var leftRect:  Qt.rect(0, 0, parent.thumbAreaHeight, parent.thumbAreaHeight)
+            property var rightRect: Qt.rect(parent.width - parent.thumbAreaHeight, 0, parent.thumbAreaHeight, parent.thumbAreaHeight)
+
+            function pointInRect(rect, point) {
+                return point.x >= rect.x &&
+                        point.y >= rect.y &&
+                        point.x <= rect.x + rect.width &&
+                        point.y <= rect.y + rect.height
+            }
+
+            function newTouchPoints(touchPoints)
+            {
+                var point1Location = 0
+                var point2Location = 0
+
+                var point1
+                if (touchPoints.length > 0) {
+                    point1 = touchPoints[0]
+                    if (pointInRect(leftRect, point1)) {
+                        point1Location = -1
+                    } else if (pointInRect(rightRect, point1)) {
+                        point1Location = 1
+                    }
+                }
+
+                var point2
+                if (touchPoints.length == 2) {
+                    point2 = touchPoints[1]
+                    if (pointInRect(leftRect, point2)) {
+                        point2Location = -1
+                    } else if (pointInRect(rightRect, point2)) {
+                        point2Location = 1
+                    }
+                }
+
+                // Make sure points are not both in the same rect
+                if (point1Location != point2Location) {
+                    if (point1Location != 0) {
+                        if (point1Location == -1) {
+                            leftStick.stickPosition = point1
+                        } else {
+                            rightStick.stickPosition = Qt.point(point1.x - (multiTouchItem.width - multiTouchItem.thumbAreaHeight), point1.y)
+                        }
+                    }
+                    if (point2Location != 0) {
+                        if (point2Location == -1) {
+                            rightStick.stickPosition = Qt.point(point2.x - (multiTouchItem.width - multiTouchItem.thumbAreaHeight), point2.y)
+                        } else {
+                            leftStick.stickPosition = point2
+                        }
+                    }
+                }
+            }
+
+            onPressed:      newTouchPoints(touchPoints)
+            onTouchUpdated: newTouchPoints(touchPoints)
+
+            onReleased: {
+                leftStick.reCenter()
+                rightStick.reCenter()
+            }
+
+        }
+
+        Timer {
+            interval:   10
+            running:    QGroundControl.virtualTabletJoystick
+            repeat:     true
+
+            onTriggered: {
+                if (_activeVehicle) {
+                    _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
+                }
+            }
+        }
+
+        JoystickThumbPad {
+            id:             leftStick
+            anchors.left:   parent.left
+            anchors.bottom: parent.bottom
+            width:          parent.thumbAreaHeight
+            height:         parent.thumbAreaHeight
+            yAxisThrottle:  true
+            lightColors:    !isBackgroundDark
+        }
+
+        JoystickThumbPad {
+            id:             rightStick
+            anchors.right:  parent.right
+            anchors.bottom: parent.bottom
+            width:          parent.thumbAreaHeight
+            height:         parent.thumbAreaHeight
+            lightColors:    !isBackgroundDark
+        }
+    }
 }

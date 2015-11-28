@@ -1508,7 +1508,6 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-#ifndef __mobile__
 void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode)
 {
     if (!_vehicle) {
@@ -1690,7 +1689,6 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
     }
 }
-#endif
 
 #ifndef __mobile__
 void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw)
