@@ -228,6 +228,39 @@ Row {
     }
 
     //-------------------------------------------------------------------------
+    //-- Telemetry RSSI
+    Item {
+        id:         telemRssi
+        width:      telemIcon.width
+        height:     mainWindow.tbCellHeight
+        visible:    _controller.telemetryLRSSI < 0
+        Image {
+            id:             telemIcon
+            source:         "/qmlimages/TelemRSSI.svg"
+            fillMode:       Image.PreserveAspectFit
+            mipmap:         true
+            smooth:         true
+            height:         parent.height * 0.5
+            width:          height * 1.5
+            visible:        false
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        ColorOverlay {
+            id:             telemOverlay
+            anchors.fill:   telemIcon
+            source:         telemIcon
+            color:          getRSSIColor(_controller.telemetryLRSSI)
+        }
+        MouseArea {
+            anchors.fill:   parent
+            onClicked: {
+                var centerX = mapToItem(toolBar, x, y).x + (width / 2)
+                mainWindow.showPopUp(telemRSSIInfo, centerX)
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
     //-- Battery Indicator
     Item {
         id: batteryStatus
