@@ -191,6 +191,13 @@ Row {
             anchors.leftMargin: gpsIcon.width
             anchors.left:   parent.left
         }
+        MouseArea {
+            anchors.fill:   parent
+            onClicked: {
+                var centerX = mapToItem(toolBar, x, y).x + (width / 2)
+                mainWindow.showPopUp(gpsInfo, centerX)
+            }
+        }
     }
 
     //-------------------------------------------------------------------------
