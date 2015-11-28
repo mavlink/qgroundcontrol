@@ -95,10 +95,9 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
    _mavlinkProtocol = _toolbox->mavlinkProtocol();
    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &LinkManager::_vehicleHeartbeatInfo);
 
-#ifndef __ios__
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
     _portListTimer.start(1000);
-#endif
+    
 }
 
 LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config, bool autoconnectLink)
@@ -415,7 +414,6 @@ SerialConfiguration* LinkManager::_autoconnectConfigurationsContainsPort(const Q
 }
 #endif
 
-#ifndef __ios__
 void LinkManager::_updateAutoConnectLinks(void)
 {
     if (_connectionsSuspended || qgcApp()->runningUnitTests()) {
@@ -429,7 +427,8 @@ void LinkManager::_updateAutoConnectLinks(void)
         createConnectedLink(_autoconnectUDPConfig, true /* persistenLink */);
     }
 
-
+    
+#ifndef __ios__
     QStringList currentPorts;
     QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
 
@@ -522,8 +521,8 @@ void LinkManager::_updateAutoConnectLinks(void)
         _autoconnectConfigurations.removeOne(pDeleteConfig);
         delete pDeleteConfig;
     }
+#endif // __ios__
 }
-#endif
 
 bool LinkManager::anyConnectedLinks(void)
 {
