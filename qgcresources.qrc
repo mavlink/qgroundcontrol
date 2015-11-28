@@ -93,6 +93,7 @@
         <file alias="Signal60.svg">src/ui/toolbar/Images/Signal60.svg</file>
         <file alias="Signal80.svg">src/ui/toolbar/Images/Signal80.svg</file>
         <file alias="Signal100.svg">src/ui/toolbar/Images/Signal100.svg</file>
+        <file alias="TelemRSSI.svg">src/ui/toolbar/Images/TelemRSSI.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
 
         <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>

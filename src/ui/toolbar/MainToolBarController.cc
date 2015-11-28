@@ -96,7 +96,7 @@ void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)
     }
 }
 
-void MainToolBarController::_telemetryChanged(LinkInterface*, unsigned, unsigned, int rssi, int remrssi, unsigned, unsigned, unsigned)
+void MainToolBarController::_telemetryChanged(LinkInterface*, unsigned rxerrors, unsigned fixed, int rssi, int remrssi, unsigned txbuf, unsigned noise, unsigned remnoise)
 {
     if(_telemetryLRSSI != rssi) {
         _telemetryLRSSI = rssi;
@@ -105,6 +105,26 @@ void MainToolBarController::_telemetryChanged(LinkInterface*, unsigned, unsigned
     if(_telemetryRRSSI != remrssi) {
         _telemetryRRSSI = remrssi;
         emit telemetryRRSSIChanged(_telemetryRRSSI);
+    }
+    if(_telemetryRXErrors != rxerrors) {
+        _telemetryRXErrors = rxerrors;
+        emit telemetryRXErrorsChanged(_telemetryRXErrors);
+    }
+    if(_telemetryFixed != fixed) {
+        _telemetryFixed = fixed;
+        emit telemetryFixedChanged(_telemetryFixed);
+    }
+    if(_telemetryTXBuffer != txbuf) {
+        _telemetryTXBuffer = txbuf;
+        emit telemetryTXBufferChanged(_telemetryTXBuffer);
+    }
+    if(_telemetryLNoise != noise) {
+        _telemetryLNoise = noise;
+        emit telemetryLNoiseChanged(_telemetryLNoise);
+    }
+    if(_telemetryRNoise != remnoise) {
+        _telemetryRNoise = remnoise;
+        emit telemetryRNoiseChanged(_telemetryRNoise);
     }
 }
 
