@@ -61,12 +61,18 @@ Item {
         target: controller
 
         onShowFlyView: {
+            if(currentPopUp) {
+                currentPopUp.close()
+            }
             flightView.visible          = true
             setupViewLoader.visible     = false
             planViewLoader.visible      = false
         }
 
         onShowPlanView: {
+            if(currentPopUp) {
+                currentPopUp.close()
+            }
             if (planViewLoader.source   != _planViewSource) {
                 planViewLoader.source   = _planViewSource
             }
@@ -76,6 +82,9 @@ Item {
         }
 
         onShowSetupView: {
+            if(currentPopUp) {
+                currentPopUp.close()
+            }
             if (setupViewLoader.source  != _setupViewSource) {
                 setupViewLoader.source  = _setupViewSource
             }

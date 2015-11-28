@@ -41,7 +41,7 @@ import QGroundControl.Controllers           1.0
 
 Rectangle {
     id:     toolBar
-    color:  opaqueBackground ? "#404040" : (isBackgroundDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5))
+    color:  opaqueBackground ? "#404040" : Qt.rgba(0,0,0,0.75)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -181,6 +181,22 @@ Rectangle {
         return colorRed;
     }
 
+    function getGpsLockStatus() {
+        if(activeVehicle) {
+            if(activeVehicle.satelliteLock == 0) {
+                return "No Satellite Link"
+            }
+            if(activeVehicle.satelliteLock == 1) {
+                return "No GPS Lock"
+            }
+            if(activeVehicle.satelliteLock == 2) {
+                return "2D Lock"
+            }
+            return "3D Lock"
+        }
+        return "N/A"
+    }
+
     Component.onCompleted: {
         //-- TODO: Get this from the actual state
         flyButton.checked = true
@@ -191,6 +207,56 @@ Rectangle {
         onShowFlyView:  { flyButton.checked   = true }
         onShowPlanView: { planButton.checked  = true }
         onShowSetupView:{ setupButton.checked = true }
+    }
+
+    //---------------------------------------------
+    // GPS Info
+    Component {
+        id: gpsInfo
+        Rectangle {
+            color:          Qt.rgba(0,0,0,0.75)
+            width:          gpsCol.width   + ScreenTools.defaultFontPixelWidth  * 3
+            height:         gpsCol.height  + ScreenTools.defaultFontPixelHeight * 2
+            radius:         ScreenTools.defaultFontPixelHeight * 0.5
+            Column {
+                id:                 gpsCol
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                width:              Math.max(gpsGrid.width, gpsLabel.width)
+                anchors.margins:    ScreenTools.defaultFontPixelHeight
+                anchors.centerIn:   parent
+                QGCLabel {
+                    id:         gpsLabel
+                    text:       (activeVehicle && (activeVehicle.satelliteCount > 0)) ? "GPS Status" : "GPS Data Unavailable"
+                    font.weight:Font.DemiBold
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                GridLayout {
+                    id:                 gpsGrid
+                    visible:            (activeVehicle && (activeVehicle.satelliteCount > 0))
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    columns: 2
+                    QGCLabel {
+                        text:   "GPS Count:"
+                    }
+                    QGCLabel {
+                        text:   activeVehicle ? (activeVehicle.satelliteCount) : "N/A"
+                    }
+                    QGCLabel {
+                        text:   "GPS Lock:"
+                    }
+                    QGCLabel {
+                        text:   getGpsLockStatus()
+                    }
+                }
+            }
+            Component.onCompleted: {
+                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
+                x = pos.x
+                y = pos.y + ScreenTools.defaultFontPixelHeight
+            }
+        }
     }
 
     //---------------------------------------------
@@ -261,23 +327,24 @@ Rectangle {
         id: rcRSSIInfo
         Rectangle {
             color:          Qt.rgba(0,0,0,0.75)
-            width:          battCol.width   + ScreenTools.defaultFontPixelWidth  * 3
-            height:         battCol.height  + ScreenTools.defaultFontPixelHeight * 2
+            width:          rcrssiCol.width   + ScreenTools.defaultFontPixelWidth  * 3
+            height:         rcrssiCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
             Column {
-                id:                 battCol
+                id:                 rcrssiCol
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                width:              Math.max(battGrid.width, rssiLabel.width)
+                width:              Math.max(rcrssiGrid.width, rssiLabel.width)
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
                 anchors.centerIn:   parent
                 QGCLabel {
                     id:         rssiLabel
-                    text:       "RC RSSI Status"
+                    text:       activeVehicle ? (activeVehicle.rcRSSI > 0 ? "RC RSSI Status" : "RC RSSI Data Unavailable") : "N/A"
                     font.weight:Font.DemiBold
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 GridLayout {
-                    id:                 battGrid
+                    id:                 rcrssiGrid
+                    visible:            activeVehicle && activeVehicle.rcRSSI > 0
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
