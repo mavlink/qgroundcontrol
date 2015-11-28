@@ -139,7 +139,7 @@ public:
     ///                 false: if autoconnect link, link is marked as inactive and linkInactive is signalled
     ///                 false: if not autoconnect link, link is disconnected
     Q_INVOKABLE bool disconnectLink(LinkInterface* link, bool disconnectAutoconnectLink);
-    
+
     /// Called to notify that a heartbeat was received with the specified information. Will transition
     /// a link to active as needed.
     ///     @param link Heartbeat came through on this link
@@ -205,9 +205,7 @@ private:
     bool    _configurationsLoaded;                      ///< true: Link configurations have been loaded
     bool    _connectionsSuspended;                      ///< true: all new connections should not be allowed
     QString _connectionsSuspendedReason;                ///< User visible reason for suspension
-#ifndef __ios__
     QTimer  _portListTimer;
-#endif
     uint32_t _mavlinkChannelsUsedBitMask;
 
     MAVLinkProtocol*    _mavlinkProtocol;
