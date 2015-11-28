@@ -56,6 +56,7 @@
 #include "QGCTemporaryFile.h"
 #include "QGCFileDialog.h"
 #include "QGCPalette.h"
+#include "QGCMapPalette.h"
 #include "QGCLoggingCategory.h"
 #include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
@@ -334,7 +335,8 @@ void QGCApplication::_initCommon(void)
 
     // Register our Qml objects
 
-    qmlRegisterType<QGCPalette>("QGroundControl.Palette", 1, 0, "QGCPalette");
+    qmlRegisterType<QGCPalette>     ("QGroundControl.Palette", 1, 0, "QGCPalette");
+    qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
 
     qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",        "Reference only");
     qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",       "Reference only");
