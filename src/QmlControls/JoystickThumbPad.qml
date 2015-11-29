@@ -5,9 +5,10 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 Rectangle {
+    id:             _joyRoot
     radius:         width / 2
     border.color:   mapPal.thumbJoystick
-    border.width:   2
+    border.width:   ScreenTools.defaultFontPixelWidth * 0.25
     color:          "transparent"
 
     property alias  lightColors:            mapPal.lightColors  /// true: use light colors from QGCMapPalette for drawing

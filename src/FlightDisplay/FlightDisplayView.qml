@@ -216,15 +216,15 @@ Item {
         height:             availableHeight
     }
 
+    //-- Virtual Joystick
     Item {
         id:             multiTouchItem
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        anchors.bottom: parent.bottom
+        width:          parent.width * 0.6
         height:         thumbAreaHeight
         visible:        QGroundControl.virtualTabletJoystick
+        anchors.centerIn: parent
 
-        readonly property real thumbAreaHeight: parent.height / 4
+        readonly property real thumbAreaHeight: Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
 
         QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
 
@@ -302,7 +302,6 @@ Item {
             interval:   10
             running:    QGroundControl.virtualTabletJoystick
             repeat:     true
-
             onTriggered: {
                 if (_activeVehicle) {
                     _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
