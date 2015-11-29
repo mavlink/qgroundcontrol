@@ -128,7 +128,7 @@ Item {
     }
 
     //-- PIP Window
-    Rectangle {
+    Item {
         id:                 pip
         visible:            _controller.hasVideo && _isPipVisible
         anchors.margins:    ScreenTools.defaultFontPixelHeight
@@ -136,8 +136,6 @@ Item {
         anchors.bottom:     parent.bottom
         width:              _pipSize
         height:             _pipSize * (9/16)
-        color:              "#000010"
-        border.color:       isBackgroundDark ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
         Loader {
             id:                 pipLoader
             anchors.fill:       parent
@@ -216,15 +214,17 @@ Item {
         height:             availableHeight
     }
 
+    //-- Virtual Joystick
     Item {
         id:             multiTouchItem
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        anchors.bottom: parent.bottom
+        width:          parent.width  - (pip.width / 2)
         height:         thumbAreaHeight
         visible:        QGroundControl.virtualTabletJoystick
+        anchors.bottom: pip.top
+        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 2
+        anchors.horizontalCenter: parent.horizontalCenter
 
-        readonly property real thumbAreaHeight: parent.height / 4
+        readonly property real thumbAreaHeight: Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
 
         QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
 
@@ -313,7 +313,6 @@ Item {
             interval:   10
             running:    QGroundControl.virtualTabletJoystick
             repeat:     true
-
             onTriggered: {
                 if (_activeVehicle) {
                     _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
