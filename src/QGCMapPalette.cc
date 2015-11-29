@@ -26,7 +26,7 @@
 #include <QApplication>
 #include <QPalette>
 
-QColor QGCMapPalette::_thumbJoystick[QGCMapPalette::_cColorGroups] = { QColor("#ffffff"), QColor("#f000000") };
+QColor QGCMapPalette::_thumbJoystick[QGCMapPalette::_cColorGroups] = { QColor(255,255,255,127), QColor(0,0,0,127) };
 
 QGCMapPalette::QGCMapPalette(QObject* parent) :
     QObject(parent)
