@@ -232,7 +232,10 @@ Item {
 
         MultiPointTouchArea {
             anchors.fill:       parent
-            maximumTouchPoints: 2
+            touchPoints: [
+                TouchPoint { id: point1 },
+                TouchPoint { id: point2 }
+            ]
 
             property var leftRect:  Qt.rect(0, 0, parent.thumbAreaHeight, parent.thumbAreaHeight)
             property var rightRect: Qt.rect(parent.width - parent.thumbAreaHeight, 0, parent.thumbAreaHeight, parent.thumbAreaHeight)
@@ -251,6 +254,7 @@ Item {
 
                 var point1
                 if (touchPoints.length > 0) {
+                    //console.log("Point1", touchPoints[0].x, touchPoints[0].y)
                     point1 = touchPoints[0]
                     if (pointInRect(leftRect, point1)) {
                         point1Location = -1
@@ -261,6 +265,7 @@ Item {
 
                 var point2
                 if (touchPoints.length == 2) {
+                    //console.log("Point2", touchPoints[1].x, touchPoints[1].y)
                     point2 = touchPoints[1]
                     if (pointInRect(leftRect, point2)) {
                         point2Location = -1
@@ -269,33 +274,39 @@ Item {
                     }
                 }
 
+                var leftStickSet = false
+                var rightStickSet = false
+
                 // Make sure points are not both in the same rect
                 if (point1Location != point2Location) {
                     if (point1Location != 0) {
                         if (point1Location == -1) {
                             leftStick.stickPosition = point1
+                            leftStickSet = true
                         } else {
                             rightStick.stickPosition = Qt.point(point1.x - (multiTouchItem.width - multiTouchItem.thumbAreaHeight), point1.y)
+                            rightStickSet = true
                         }
                     }
                     if (point2Location != 0) {
                         if (point2Location == -1) {
-                            rightStick.stickPosition = Qt.point(point2.x - (multiTouchItem.width - multiTouchItem.thumbAreaHeight), point2.y)
-                        } else {
                             leftStick.stickPosition = point2
+                            leftStickSet = true
+                        } else {
+                            rightStick.stickPosition = Qt.point(point2.x - (multiTouchItem.width - multiTouchItem.thumbAreaHeight), point2.y)
+                            rightStickSet = true
                         }
                     }
                 }
+                if (!leftStickSet) {
+                    leftStick.reCenter()
+                }
+                if (!rightStickSet) {
+                    rightStick.reCenter()
+                }
             }
 
-            onPressed:      newTouchPoints(touchPoints)
             onTouchUpdated: newTouchPoints(touchPoints)
-
-            onReleased: {
-                leftStick.reCenter()
-                rightStick.reCenter()
-            }
-
         }
 
         Timer {
