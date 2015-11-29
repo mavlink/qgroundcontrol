@@ -310,8 +310,8 @@ Item {
         }
 
         Timer {
-            interval:   10
-            running:    QGroundControl.virtualTabletJoystick
+            interval:   40  // 25Hz, same as real joystick rate
+            running:    QGroundControl.virtualTabletJoystick && _activeVehicle
             repeat:     true
             onTriggered: {
                 if (_activeVehicle) {
