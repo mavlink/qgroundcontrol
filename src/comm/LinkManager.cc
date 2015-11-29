@@ -96,7 +96,7 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &LinkManager::_vehicleHeartbeatInfo);
 
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
-    _portListTimer.start(1000);
+    _portListTimer.start(6000); // timeout must be long enough to get past bootloader on second pass
     
 }
 
@@ -451,11 +451,22 @@ void LinkManager::_updateAutoConnectLinks(void)
         if (boardType != QGCSerialPortInfo::BoardTypeUnknown) {
             if (portInfo.isBootloader()) {
                 // Don't connect to bootloader
+                qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
                 continue;
             }
             
-            if (!_autoconnectConfigurationsContainsPort(portInfo.systemLocation())) {
+            if (_autoconnectConfigurationsContainsPort(portInfo.systemLocation())) {
+                qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
+            } else if (!_autoconnectWaitList.contains(portInfo.systemLocation())) {
+                // We don't connect to the port the first time we see it. The ability to correctly detect whether we
+                // are in the bootloader is flaky from a cross-platform standpoint. So by putting it on a wait list
+                // and only connect on the second pass we leave enough time for the board to boot up.
+                qCDebug(LinkManagerLog) << "Waiting for next autoconnect pass" << portInfo.systemLocation();
+                _autoconnectWaitList.append(portInfo.systemLocation());
+            } else {
                 SerialConfiguration* pSerialConfig = NULL;
+
+                _autoconnectWaitList.removeOne(portInfo.systemLocation());
 
                 switch (boardType) {
                 case QGCSerialPortInfo::BoardTypePX4FMUV1:
@@ -494,8 +505,6 @@ void LinkManager::_updateAutoConnectLinks(void)
 
                     createConnectedLink(pSerialConfig);
                 }
-            } else {
-                qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
             }
         }
     }

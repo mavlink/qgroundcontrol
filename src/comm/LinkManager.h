@@ -206,6 +206,8 @@ private:
     QmlObjectListModel  _linkConfigurations;
     QmlObjectListModel  _autoconnectConfigurations;
 
+    QStringList _autoconnectWaitList;
+
     bool _autoconnectUDP;
     bool _autoconnectPixhawk;
     bool _autoconnect3DRRadio;
