@@ -122,10 +122,7 @@ Item {
             id:                 instruments
             width:              parent.width
             spacing:            ScreenTools.defaultFontPixelSize * 0.33
-            Item {
-                height:         ScreenTools.defaultFontPixelHeight * 0.33
-                width:          1
-            }
+            anchors.verticalCenter: parent.verticalCenter
             QGCLabel {
                 text:           "Altitude (m)"
                 font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
@@ -136,18 +133,11 @@ Item {
             }
             QGCLabel {
                 text:           _altitudeWGS84 < 10000 ? _altitudeWGS84.toFixed(1) : _altitudeWGS84.toFixed(0)
-                font.pixelSize: ScreenTools.defaultFontPixelSize * 2.5
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 1.5
                 font.weight:    Font.DemiBold
                 width:          parent.width
                 color:          "white"
                 horizontalAlignment: TextEdit.AlignHCenter
-            }
-            //-- Ground Speed
-            Rectangle {
-                height:         1
-                width:          parent.width * 0.9
-                color:          Qt.rgba(1,1,1,0.25)
-                anchors.horizontalCenter: parent.horizontalCenter
             }
             QGCLabel {
                 text:           "Ground Speed (km/h)"
@@ -159,7 +149,7 @@ Item {
             }
             QGCLabel {
                 text:           (_groundSpeed * 3.6).toFixed(1)
-                font.pixelSize: ScreenTools.defaultFontPixelSize * 1.5
+                font.pixelSize: ScreenTools.defaultFontPixelSize
                 font.weight:    Font.DemiBold
                 width:          parent.width
                 color:          "white"
