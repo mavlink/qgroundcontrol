@@ -133,6 +133,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& port
 {
     foreach (QGCSerialPortInfo info, QGCSerialPortInfo::availablePorts()) {
         qCDebug(FirmwareUpgradeLog) << "Serial Port --------------";
+        qCDebug(FirmwareUpgradeLog) << "\tboard type" << info.boardType();
         qCDebug(FirmwareUpgradeLog) << "\tport name:" << info.portName();
         qCDebug(FirmwareUpgradeLog) << "\tdescription:" << info.description();
         qCDebug(FirmwareUpgradeLog) << "\tsystem location:" << info.systemLocation();
