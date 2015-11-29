@@ -92,7 +92,7 @@ Item {
         anchors.margins:        ScreenTools.defaultFontPixelHeight
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        visible:                _isInstrumentVisible
+        visible:                _isInstrumentVisible && !QGroundControl.virtualTabletJoystick
         size:                   getGadgetWidth()
         active:                 _activeVehicle != null
         heading:                _heading
@@ -109,6 +109,55 @@ Item {
         }
     }
 
+    //-- Alternate Instrument Panel
+    Rectangle {
+        visible:            QGroundControl.virtualTabletJoystick
+        anchors.margins:    ScreenTools.defaultFontPixelHeight
+        anchors.right:      parent.right
+        anchors.bottom:     parent.bottom
+        width:              _pipSize
+        height:             _pipSize * (9/16)
+        color:              Qt.rgba(0,0,0,0.75)
+        Column {
+            id:                 instruments
+            width:              parent.width
+            spacing:            ScreenTools.defaultFontPixelSize * 0.33
+            anchors.verticalCenter: parent.verticalCenter
+            QGCLabel {
+                text:           "Altitude (m)"
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                width:          parent.width
+                height:         ScreenTools.defaultFontPixelSize * 0.75
+                color:          "white"
+                horizontalAlignment: TextEdit.AlignHCenter
+            }
+            QGCLabel {
+                text:           _altitudeWGS84 < 10000 ? _altitudeWGS84.toFixed(1) : _altitudeWGS84.toFixed(0)
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 1.5
+                font.weight:    Font.DemiBold
+                width:          parent.width
+                color:          "white"
+                horizontalAlignment: TextEdit.AlignHCenter
+            }
+            QGCLabel {
+                text:           "Ground Speed (km/h)"
+                font.pixelSize: ScreenTools.defaultFontPixelSize * 0.75
+                width:          parent.width
+                height:         ScreenTools.defaultFontPixelSize * 0.75
+                color:          "white"
+                horizontalAlignment: TextEdit.AlignHCenter
+            }
+            QGCLabel {
+                text:           (_groundSpeed * 3.6).toFixed(1)
+                font.pixelSize: ScreenTools.defaultFontPixelSize
+                font.weight:    Font.DemiBold
+                width:          parent.width
+                color:          "white"
+                horizontalAlignment: TextEdit.AlignHCenter
+            }
+        }
+    }
+
     //-- Show (Hidden) Instrument Panel
     Rectangle {
         id:                     openButton
@@ -118,7 +167,7 @@ Item {
         height:                 ScreenTools.defaultFontPixelSize * 2
         width:                  ScreenTools.defaultFontPixelSize * 2
         radius:                 ScreenTools.defaultFontPixelSize / 3
-        visible:                !_isInstrumentVisible
+        visible:                !_isInstrumentVisible && !QGroundControl.virtualTabletJoystick
         color:                  isBackgroundDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
         Image {
             width:              parent.width  * 0.75
