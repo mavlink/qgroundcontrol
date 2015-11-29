@@ -43,6 +43,14 @@ Item {
         stickPosition = Qt.point(width / 2, width / 2)
     }
 
+    /*
+      Keep in for debugging
+    Column {
+        QGCLabel { text: xAxis }
+        QGCLabel { text: yAxis }
+    }
+    */
+
     Image {
         anchors.fill:       parent
         source:             lightColors ? "/res/JoystickBezel.png" : "/res/JoystickBezelLight.png"
