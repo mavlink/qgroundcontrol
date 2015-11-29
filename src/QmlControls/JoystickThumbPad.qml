@@ -4,12 +4,8 @@ import QtQuick.Controls         1.2
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
-Rectangle {
+Item {
     id:             _joyRoot
-    radius:         width / 2
-    border.color:   mapPal.thumbJoystick
-    border.width:   ScreenTools.defaultFontPixelWidth * 0.25
-    color:          "transparent"
 
     property alias  lightColors:            mapPal.lightColors  /// true: use light colors from QGCMapPalette for drawing
     property var    stickPosition:          Qt.point(0, 0)
@@ -47,9 +43,11 @@ Rectangle {
         stickPosition = Qt.point(width / 2, width / 2)
     }
 
-    Column {
-        QGCLabel { text: xAxis }
-        QGCLabel { text: yAxis }
+    Image {
+        anchors.fill:       parent
+        source:             lightColors ? "/res/JoystickBezel.png" : "/res/JoystickBezelLight.png"
+        mipmap:             true
+        smooth:             true
     }
 
     Rectangle {
