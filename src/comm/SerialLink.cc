@@ -211,9 +211,6 @@ bool SerialLink::_hardwareConnect(QString &type)
         return false; // couldn't create serial port.
     }
 
-    // We need to catch this signal and then emit disconnected. You can't connect
-    // signal to signal otherwise disonnected will have the wrong QObject::Sender
-    QObject::connect(_port, SIGNAL(aboutToClose()), this, SLOT(_rerouteDisconnected()));
     QObject::connect(_port, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(linkError(QSerialPort::SerialPortError)));
     QObject::connect(_port, &QIODevice::readyRead, this, &SerialLink::_readBytes);
 
@@ -359,11 +356,6 @@ void SerialLink::_resetConfiguration()
         _port->setStopBits      (static_cast<QSerialPort::StopBits>    (_config->stopBits()));
         _port->setParity        (static_cast<QSerialPort::Parity>      (_config->parity()));
     }
-}
-
-void SerialLink::_rerouteDisconnected(void)
-{
-    emit disconnected();
 }
 
 void SerialLink::_emitLinkError(const QString& errorMsg)

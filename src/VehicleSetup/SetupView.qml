@@ -159,7 +159,7 @@ Rectangle {
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
                 font.pixelSize:         ScreenTools.largeFontPixelSize
-                text:                   "Click Connect on the top right to Fly. Click Firmware on the left to upgrade your vehicle."
+                text:                   "Connect vehicle to your device and QGroundControl will automatically detect to it. Click Firmware on the left to upgrade your vehicle."
 
                 onLinkActivated: Qt.openUrlExternally(link)
             }

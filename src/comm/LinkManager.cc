@@ -53,6 +53,7 @@ const char* LinkManager::_autoconnectUDPKey =       "AutoconnectUDP";
 const char* LinkManager::_autoconnectPixhawkKey =   "AutoconnectPixhawk";
 const char* LinkManager::_autoconnect3DRRadioKey =  "Autoconnect3DRRadio";
 const char* LinkManager::_autoconnectPX4FlowKey =   "AutoconnectPX4Flow";
+const char* LinkManager::_defaultUPDLinkName =      "Default UDP Link";
 
 LinkManager::LinkManager(QGCApplication* app)
     : QGCTool(app)
@@ -61,7 +62,6 @@ LinkManager::LinkManager(QGCApplication* app)
     , _connectionsSuspended(false)
     , _mavlinkChannelsUsedBitMask(0)
     , _mavlinkProtocol(NULL)
-    , _autoconnectUDPConfig(NULL)
     , _autoconnectUDP(true)
     , _autoconnectPixhawk(true)
     , _autoconnect3DRRadio(true)
@@ -96,11 +96,11 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &LinkManager::_vehicleHeartbeatInfo);
 
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
-    _portListTimer.start(1000);
+    _portListTimer.start(6000); // timeout must be long enough to get past bootloader on second pass
     
 }
 
-LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config, bool autoconnectLink)
+LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
 {
     Q_ASSERT(config);
     LinkInterface* pLink = NULL;
@@ -126,20 +126,19 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config, bool 
 #endif
     }
     if(pLink) {
-        pLink->setAutoconnect(autoconnectLink);
         _addLink(pLink);
         connectLink(pLink);
     }
     return pLink;
 }
 
-LinkInterface* LinkManager::createConnectedLink(const QString& name, bool autoconnectLink)
+LinkInterface* LinkManager::createConnectedLink(const QString& name)
 {
     Q_ASSERT(name.isEmpty() == false);
     for(int i = 0; i < _linkConfigurations.count(); i++) {
         LinkConfiguration* conf = _linkConfigurations.value<LinkConfiguration*>(i);
         if(conf && conf->name() == name)
-            return createConnectedLink(conf, autoconnectLink);
+            return createConnectedLink(conf);
     }
     return NULL;
 }
@@ -184,11 +183,11 @@ void LinkManager::_addLink(LinkInterface* link)
     connect(link, &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 }
 
-void LinkManager::disconnectAll(bool disconnectAutoconnectLink)
+void LinkManager::disconnectAll(void)
 {
     // Walk list in reverse order to preserve indices during delete
     for (int i=_links.count()-1; i>=0; i--) {
-        disconnectLink(_links.value<LinkInterface*>(i), disconnectAutoconnectLink);
+        disconnectLink(_links.value<LinkInterface*>(i));
     }
 }
 
@@ -201,14 +200,10 @@ bool LinkManager::connectLink(LinkInterface* link)
     }
 
     bool previousAnyConnectedLinks = anyConnectedLinks();
-    bool previousAnyNonAutoconnectConnectedLinks = anyNonAutoconnectConnectedLinks();
 
     if (link->_connect()) {
         if (!previousAnyConnectedLinks) {
             emit anyConnectedLinksChanged(true);
-        }
-        if (!previousAnyNonAutoconnectConnectedLinks && anyNonAutoconnectConnectedLinks()) {
-            emit anyNonAutoconnectConnectedLinksChanged(true);
         }
         return true;
     } else {
@@ -216,21 +211,16 @@ bool LinkManager::connectLink(LinkInterface* link)
     }
 }
 
-bool LinkManager::disconnectLink(LinkInterface* link, bool disconnectAutoconnectLink)
+void LinkManager::disconnectLink(LinkInterface* link)
 {
     Q_ASSERT(link);
 
-    if (disconnectAutoconnectLink || !link->autoconnect()) {
-        link->_disconnect();
-        LinkConfiguration* config = link->getLinkConfiguration();
-        if(config) {
-            config->setLink(NULL);
-        }
-        _deleteLink(link);
-        return true;
+    link->_disconnect();
+    LinkConfiguration* config = link->getLinkConfiguration();
+    if(config) {
+        config->setLink(NULL);
     }
-
-    return false;
+    _deleteLink(link);
 }
 
 void LinkManager::_deleteLink(LinkInterface* link)
@@ -420,14 +410,24 @@ void LinkManager::_updateAutoConnectLinks(void)
         return;
     }
 
-    if (_autoconnectUDP && !_autoconnectUDPConfig) {
-        _autoconnectUDPConfig = new UDPConfiguration("Default UDP Link");
-        _autoconnectUDPConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
-        _autoconnectUDPConfig->setDynamic(true);
-        createConnectedLink(_autoconnectUDPConfig, true /* persistenLink */);
+    // Re-add UDP if we need to
+    bool foundUDP = false;
+    for (int i=0; i<_links.count(); i++) {
+        LinkConfiguration* linkConfig = _links.value<LinkInterface*>(i)->getLinkConfiguration();
+
+        if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _defaultUPDLinkName) {
+            foundUDP = true;
+            break;
+        }
+    }
+    if (!foundUDP) {
+        qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
+        UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
+        udpConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
+        udpConfig->setDynamic(true);
+        createConnectedLink(udpConfig);
     }
 
-    
 #ifndef __ios__
     QStringList currentPorts;
     QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
@@ -451,11 +451,22 @@ void LinkManager::_updateAutoConnectLinks(void)
         if (boardType != QGCSerialPortInfo::BoardTypeUnknown) {
             if (portInfo.isBootloader()) {
                 // Don't connect to bootloader
+                qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
                 continue;
             }
             
-            if (!_autoconnectConfigurationsContainsPort(portInfo.systemLocation())) {
+            if (_autoconnectConfigurationsContainsPort(portInfo.systemLocation())) {
+                qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
+            } else if (!_autoconnectWaitList.contains(portInfo.systemLocation())) {
+                // We don't connect to the port the first time we see it. The ability to correctly detect whether we
+                // are in the bootloader is flaky from a cross-platform standpoint. So by putting it on a wait list
+                // and only connect on the second pass we leave enough time for the board to boot up.
+                qCDebug(LinkManagerLog) << "Waiting for next autoconnect pass" << portInfo.systemLocation();
+                _autoconnectWaitList.append(portInfo.systemLocation());
+            } else {
                 SerialConfiguration* pSerialConfig = NULL;
+
+                _autoconnectWaitList.removeOne(portInfo.systemLocation());
 
                 switch (boardType) {
                 case QGCSerialPortInfo::BoardTypePX4FMUV1:
@@ -492,7 +503,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 
                     _autoconnectConfigurations.append(pSerialConfig);
 
-                    createConnectedLink(pSerialConfig, true /* persistenLink */);
+                    createConnectedLink(pSerialConfig);
                 }
             }
         }
@@ -505,19 +516,22 @@ void LinkManager::_updateAutoConnectLinks(void)
 
         if (linkConfig) {
             if (!currentPorts.contains(linkConfig->portName())) {
-                _confToDelete.append(linkConfig);
+                // We don't remove links which are still connected even though at this point the cable may
+                // have been pulled. This is due to the fact that whether a serial port goes away from the
+                // list when the cable is pulled is OS dependant. By not disconnecting in this case, we keep
+                // things working the same across all OS.
+                if (!linkConfig->link() || !linkConfig->link()->isConnected()) {
+                    _confToDelete.append(linkConfig);
+                }
             }
         } else {
             qWarning() << "Internal error";
         }
     }
 
-    // Now disconnect/remove all links that are gone
+    // Now remove all configs that are gone
     foreach (LinkConfiguration* pDeleteConfig, _confToDelete) {
-        LinkInterface* link = pDeleteConfig->link();
-        if (link) {
-            disconnectLink(link, true /* disconnectAutoconnectLink */);
-        }
+        qCDebug(LinkManagerLog) << "Removing unused autoconnect config" << pDeleteConfig->name();
         _autoconnectConfigurations.removeOne(pDeleteConfig);
         delete pDeleteConfig;
     }
@@ -538,21 +552,6 @@ bool LinkManager::anyConnectedLinks(void)
     return found;
 }
 
-bool LinkManager::anyNonAutoconnectConnectedLinks(void)
-{
-    // FIXME: Should remove this duplication with anyConnectedLinks
-    bool found = false;
-    for (int i=0; i<_links.count(); i++) {
-        LinkInterface* link = _links.value<LinkInterface*>(i);
-
-        if (link && !link->autoconnect() && link->isConnected()) {
-            found = true;
-            break;
-        }
-    }
-    return found;
-}
-
 bool LinkManager::anyActiveLinks(void)
 {
     bool found = false;
@@ -560,21 +559,6 @@ bool LinkManager::anyActiveLinks(void)
         LinkInterface* link = _links.value<LinkInterface*>(i);
 
         if (link && link->active()) {
-            found = true;
-            break;
-        }
-    }
-    return found;
-}
-
-bool LinkManager::anyNonAutoconnectActiveLinks(void)
-{
-    // FIXME: Should remove this duplication with anyActiveLinks
-    bool found = false;
-    for (int i=0; i<_links.count(); i++) {
-        LinkInterface* link = _links.value<LinkInterface*>(i);
-
-        if (link && !link->autoconnect() && link->active()) {
             found = true;
             break;
         }
@@ -607,7 +591,6 @@ void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int 
         }
 
         bool previousAnyActiveLinks = anyActiveLinks();
-        bool previousAnyNonAutoconnectActiveLinks = anyNonAutoconnectActiveLinks();
 
         link->setActive(true);
         emit linkActive(link, vehicleId, vehicleFirmwareType, vehicleType);
@@ -615,16 +598,13 @@ void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int 
         if (!previousAnyActiveLinks) {
             emit anyActiveLinksChanged(true);
         }
-        if (!previousAnyNonAutoconnectActiveLinks && anyNonAutoconnectActiveLinks()) {
-            emit anyNonAutoconnectActiveLinksChanged(true);
-        }
     }
 }
 
 void LinkManager::shutdown(void)
 {
     setConnectionsSuspended("Shutdown");
-    disconnectAll(true /* disconnectAutoconnectLink */);
+    disconnectAll();
 }
 
 void LinkManager::setAutoconnectUDP(bool autoconnect)
