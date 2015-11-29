@@ -421,6 +421,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         }
     }
     if (!foundUDP) {
+        qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
         UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
         udpConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
         udpConfig->setDynamic(true);
@@ -493,6 +494,8 @@ void LinkManager::_updateAutoConnectLinks(void)
 
                     createConnectedLink(pSerialConfig);
                 }
+            } else {
+                qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
             }
         }
     }
