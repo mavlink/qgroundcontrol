@@ -39,7 +39,7 @@ Item {
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
-        color:          "black"
+        color:          Qt.rgba(0,0,0,0.75)
         visible:        !_controller.videoRunning
         QGCLabel {
             text:               "NO VIDEO"
