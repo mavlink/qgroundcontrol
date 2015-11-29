@@ -67,6 +67,8 @@ QGCView {
         progressBar:    progressBar
         statusLog:      statusTextArea
 
+        property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
         Component.onCompleted: {
             controllerCompleted = true
             if (qgcView.completedSignalled) {
@@ -75,20 +77,30 @@ QGCView {
             }
         }
 
+        onActiveVehicleChanged: {
+            if (!activeVehicle) {
+                statusTextArea.append(plugInText)
+            }
+        }
+
         onNoBoardFound: {
             initialBoardSearch = false
-            statusTextArea.append(plugInText)
+            if (!QGroundControl.multiVehicleManager.activeVehicleAvailable) {
+                statusTextArea.append(plugInText)
+            }
         }
 
         onBoardGone: {
             initialBoardSearch = false
-            statusTextArea.append(plugInText)
+            if (!QGroundControl.multiVehicleManager.activeVehicleAvailable) {
+                statusTextArea.append(plugInText)
+            }
         }
 
         onBoardFound: {
             if (initialBoardSearch) {
                 // Board was found right away, so something is already plugged in before we've started upgrade
-                if (QGroundControl.linkManager.anyActiveLinks) {
+                if (QGroundControl.multiVehicleManager.activeVehicleAvailable) {
                     statusTextArea.append(qgcDisconnectText)
                 } else {
                     statusTextArea.append(usbUnplugText.replace('{0}', controller.boardType))
