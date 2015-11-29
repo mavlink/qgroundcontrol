@@ -46,10 +46,13 @@ Rectangle {
         stickPosition = Qt.point(width / 2, width / 2)
     }
 
+    /*
+      Keep in for debugging
     Column {
         QGCLabel { text: xAxis }
         QGCLabel { text: yAxis }
     }
+    */
 
     Rectangle {
         anchors.margins:    parent.width / 4
