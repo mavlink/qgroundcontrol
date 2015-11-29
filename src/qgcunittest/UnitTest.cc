@@ -387,7 +387,7 @@ void UnitTest::_disconnectMockLink(void)
     if (_mockLink) {
         QSignalSpy  linkSpy(_linkManager, SIGNAL(linkDeleted(LinkInterface*)));
 
-        _linkManager->disconnectLink(_mockLink, false /* disconnectAutoconnectLink */);
+        _linkManager->disconnectLink(_mockLink);
 
         // Wait for link to go away
         linkSpy.wait(1000);

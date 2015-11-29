@@ -150,7 +150,6 @@ protected:
     QString _type;
 
 private slots:
-    void _rerouteDisconnected(void);
     void _readBytes(void);
 
 private:

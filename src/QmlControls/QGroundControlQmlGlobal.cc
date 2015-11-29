@@ -81,7 +81,7 @@ void QGroundControlQmlGlobal::_startMockLink(MockConfiguration* mockConfig)
     mockConfig->setDynamic(true);
     linkManager->linkConfigurations()->append(mockConfig);
 
-    linkManager->createConnectedLink(mockConfig, false /* autoconnectLink */);
+    linkManager->createConnectedLink(mockConfig);
 }
 #endif
 
@@ -155,7 +155,7 @@ void QGroundControlQmlGlobal::stopAllMockLinks(void)
         MockLink* mockLink = qobject_cast<MockLink*>(link);
 
         if (mockLink) {
-            linkManager->disconnectLink(mockLink, false /* disconnectAutoconnectLink */);
+            linkManager->disconnectLink(mockLink);
         }
     }
 #endif
