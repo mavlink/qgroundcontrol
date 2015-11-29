@@ -228,8 +228,6 @@ Item {
 
         QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
 
-        Component.onCompleted: console.log("test", mapPal)
-
         MultiPointTouchArea {
             anchors.fill:       parent
             touchPoints: [
@@ -254,7 +252,6 @@ Item {
 
                 var point1
                 if (touchPoints.length > 0) {
-                    //console.log("Point1", touchPoints[0].x, touchPoints[0].y)
                     point1 = touchPoints[0]
                     if (pointInRect(leftRect, point1)) {
                         point1Location = -1
@@ -265,7 +262,6 @@ Item {
 
                 var point2
                 if (touchPoints.length == 2) {
-                    //console.log("Point2", touchPoints[1].x, touchPoints[1].y)
                     point2 = touchPoints[1]
                     if (pointInRect(leftRect, point2)) {
                         point2Location = -1

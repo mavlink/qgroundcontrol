@@ -152,10 +152,6 @@ Rectangle {
         toolBarMessageArea.visible = true
     }
 
-    function showMavStatus() {
-         return (multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout === 0);
-    }
-
     function getBatteryColor() {
         if(activeVehicle) {
             if(activeVehicle.batteryPercent > 75) {
@@ -554,29 +550,40 @@ Rectangle {
 
     Item {
         id:                     vehicleIndicators
-        visible:                showMavStatus() && !connectionStatus.visible
         height:                 mainWindow.tbCellHeight
-        width:                  (toolBar.width - viewRow.width)
-        anchors.left:           viewRow.right
         anchors.leftMargin:     mainWindow.tbSpacing * 2
+        anchors.left:           viewRow.right
+        anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        Loader {
-            source:             multiVehicleManager.activeVehicleAvailable ? "MainToolBarIndicators.qml" : ""
-            anchors.left:       parent.left
-            anchors.verticalCenter:   parent.verticalCenter
-        }
-    }
 
-    QGCLabel {
-        id:             connectionStatus
-        visible:        (_controller.connectionCount > 0 && multiVehicleManager.activeVehicleAvailable && activeVehicle.heartbeatTimeout != 0)
-        text:           "CONNECTION LOST"
-        font.pixelSize: tbFontLarge
-        font.weight:    Font.DemiBold
-        color:          colorRed
-        anchors.left:           viewRow.right
-        anchors.leftMargin:     mainWindow.tbSpacing * 2
-        anchors.verticalCenter: parent.verticalCenter
+        property bool vehicleInactive: activeVehicle ? activeVehicle.heartbeatTimeout != 0 : false
+
+        Loader {
+            source:                 activeVehicle && !parent.vehicleInactive ? "MainToolBarIndicators.qml" : ""
+            anchors.left:           parent.left
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        QGCLabel {
+            id:                     connectionLost
+            text:                   "CONNECTION LOST"
+            font.pixelSize:         tbFontLarge
+            font.weight:            Font.DemiBold
+            color:                  colorRed
+            anchors.left:           parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            visible:                parent.vehicleInactive
+
+        }
+
+        QGCButton {
+            anchors.rightMargin:     mainWindow.tbSpacing * 2
+            anchors.right:          parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text:                   "Disconnect"
+            visible:                parent.vehicleInactive
+            onClicked:              activeVehicle.disconnectInactiveVehicle()
+        }
     }
 
     // Progress bar

@@ -57,12 +57,9 @@ class LinkInterface : public QThread
     friend class LinkManager;
 
 public:
-    Q_PROPERTY(bool autoconnect READ autoconnect    WRITE setAutoconnect    NOTIFY autoconnectChanged)
     Q_PROPERTY(bool active      READ active         WRITE setActive         NOTIFY activeChanged)
 
     // Property accessors
-    bool autoconnect(void)                  { return _autoconnect; }
-    void setAutoconnect(bool autoconnect)   { _autoconnect = autoconnect; emit autoconnectChanged(autoconnect); }
     bool active(void)                       { return _active; }
     void setActive(bool active)             { _active = active; emit activeChanged(active); }
 
@@ -198,7 +195,6 @@ protected:
     LinkInterface() :
         QThread(0)
         , _mavlinkChannelSet(false)
-        , _autoconnect(false)
         , _active(false)
     {
         // Initialize everything for the data rate calculation buffers.
@@ -361,7 +357,6 @@ private:
     
     mutable QMutex _dataRateMutex; // Mutex for accessing the data rate member variables
 
-    bool _autoconnect;  ///< true: Link is an autoconnect connection and should never be disconnected
     bool _active;       ///< true: link is actively receiving mavlink messages
 };
 
