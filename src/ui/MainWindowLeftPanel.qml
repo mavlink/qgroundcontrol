@@ -34,7 +34,7 @@ import QGroundControl.ScreenTools   1.0
 
 //-- Left Menu
 Item {
-    id:             __leftPanel
+    id:             settingsMenu
     anchors.fill:   parent
 
     property alias animateShowDialog: __animateShowDialog
@@ -52,6 +52,11 @@ Item {
         }
     }
 
+    function closeSettings() {
+        __rightPanel.source = ""
+        mainWindow.hideLeftMenu()
+    }
+
     ParallelAnimation {
         id: __animateShowDialog
         NumberAnimation {
@@ -59,14 +64,14 @@ Item {
             properties: "opacity"
             from:       0.0
             to:         0.8
-            duration:   __leftPanel.__animationDuration
+            duration:   settingsMenu.__animationDuration
         }
         NumberAnimation {
             target:     __transparentSection
             properties: "width"
             from:       1
             to:         mainWindow.width
-            duration:   __leftPanel.__animationDuration
+            duration:   settingsMenu.__animationDuration
         }
     }
 
@@ -77,14 +82,14 @@ Item {
             properties: "opacity"
             from:       0.8
             to:         0.0
-            duration:   __leftPanel.__animationDuration
+            duration:   settingsMenu.__animationDuration
         }
         NumberAnimation {
             target:     __transparentSection
             properties: "width"
             from:       mainWindow.width
             to:         1
-            duration:   __leftPanel.__animationDuration
+            duration:   settingsMenu.__animationDuration
         }
         onRunningChanged: {
             if (!running) {
@@ -152,6 +157,19 @@ Item {
                 onClicked: {
                     if(__rightPanel.source != "GeneralSettings.qml") {
                         __rightPanel.source = "GeneralSettings.qml"
+                    }
+                    checked = true
+                }
+            }
+            QGCButton {
+                width:      parent.width * 0.8
+                height:     ScreenTools.defaultFontPixelHeight * 2.5
+                text:       "Comm Links"
+                exclusiveGroup: panelActionGroup
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    if(__rightPanel.source != "LinkSettings.qml") {
+                        __rightPanel.source = "LinkSettings.qml"
                     }
                     checked = true
                 }
