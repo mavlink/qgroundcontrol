@@ -212,6 +212,8 @@ Item {
         anchors.left:       parent.left
         anchors.bottom:     parent.bottom
         height:             availableHeight
+
+        property bool isBackgroundDark: root.isBackgroundDark
     }
 
     //-- Virtual Joystick

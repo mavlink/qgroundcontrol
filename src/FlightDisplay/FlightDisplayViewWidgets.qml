@@ -41,6 +41,8 @@ Item {
 
     property bool _isInstrumentVisible: QGroundControl.loadBoolGlobalSetting(_InstrumentVisibleKey, true)
 
+    QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
+
     function getGadgetWidth() {
         if(ScreenTools.isMobile) {
             if(ScreenTools.isTinyScreen)
@@ -71,6 +73,7 @@ Item {
                 visible:                !object.coordinateValid
                 text:                   "No GPS Lock for Vehicle #" + object.id
                 z:                      QGroundControl.zOrderMapItems - 2
+                color:                  mapPal.text
             }
         }
     }
