@@ -273,7 +273,7 @@ void MissionController::saveMissionToFile(void)
     _missionItems->setDirty(false);
 }
 
-double MissionController::_calcDistance(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2)
+void MissionController::_calcPrevWaypointValues(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2, double* azimuth, double* distance)
 {
     QGeoCoordinate  coord1 =        item1->coordinate();
     QGeoCoordinate  coord2 =        item2->coordinate();
@@ -302,9 +302,11 @@ double MissionController::_calcDistance(bool homePositionValid, double homeAlt, 
     qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
 
     if (distanceOk) {
-        return item1->coordinate().distanceTo(item2->coordinate());
+        *distance = item1->coordinate().distanceTo(item2->coordinate());
+        *azimuth = item1->coordinate().azimuthTo(item2->coordinate());
     } else {
-        return -1.0;
+        *azimuth = 0.0;
+        *distance = -1.0;
     }
 }
 
@@ -322,7 +324,8 @@ void MissionController::_recalcWaypointLines(void)
     // If home position is not valid we can only calculate distances between waypoints which are
     // both relative altitude.
 
-    // No distance for first item
+    // No values for first item
+    lastCoordinateItem->setAzimuth(0.0);
     lastCoordinateItem->setDistance(-1.0);
 
     _waypointLines.clear();
@@ -330,24 +333,36 @@ void MissionController::_recalcWaypointLines(void)
     for (int i=1; i<_missionItems->count(); i++) {
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
 
-        item->setDistance(-1.0);    // Assume the worst
+        // Assume the worst
+        item->setAzimuth(0.0);
+        item->setDistance(-1.0);
 
         if (item->specifiesCoordinate()) {
             if (firstCoordinateItem) {
                 if (item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
                     // The first coordinate we hit is a takeoff command so link back to home position if valid
                     if (homePositionValid) {
+                        double azimuth, distance;
+
                         _waypointLines.append(new CoordinateVector(homeItem->coordinate(), item->coordinate()));
-                        item->setDistance(_calcDistance(homePositionValid, homeAlt, homeItem, item));
+                        _calcPrevWaypointValues(homePositionValid, homeAlt, homeItem, item, &azimuth, &distance);
+                        qDebug() << azimuth << distance;
+                        item->setAzimuth(azimuth);
+                        item->setDistance(distance);
                     }
                 } else {
                     // First coordiante is not a takeoff command, it does not link backwards to anything
                 }
                 firstCoordinateItem = false;
             } else if (!lastCoordinateItem->homePosition() || lastCoordinateItem->homePositionValid()) {
+                double azimuth, distance;
+
                 // Subsequent coordinate items link to last coordinate item. If the last coordinate item
                 // is an invalid home position we skip the line
-                item->setDistance(_calcDistance(homePositionValid, homeAlt, lastCoordinateItem, item));
+                _calcPrevWaypointValues(homePositionValid, homeAlt, lastCoordinateItem, item, &azimuth, &distance);
+                qDebug() << azimuth << distance;
+                item->setAzimuth(azimuth);
+                item->setDistance(distance);
                 _waypointLines.append(new CoordinateVector(lastCoordinateItem->coordinate(), item->coordinate()));
             }
             lastCoordinateItem = item;
