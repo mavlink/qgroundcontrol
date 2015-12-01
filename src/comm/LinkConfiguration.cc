@@ -135,6 +135,9 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
             dupe = new MockConfiguration(dynamic_cast<MockConfiguration*>(source));
             break;
 #endif
+        case TypeLast:
+        default:
+            break;
     }
     return dupe;
 }
