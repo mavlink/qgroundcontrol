@@ -226,7 +226,7 @@ QGCView {
                         anchors.left:           parent.left
                         anchors.right:          applyButton.left
                         text:                   topHelpText
-                        font.pixelSize:         ScreenTools.mediumFontPixelSize
+                        font.pixelSize:         ScreenTools.defaultFontPixelSize
                         wrapMode:               Text.WordWrap
                     }
 
