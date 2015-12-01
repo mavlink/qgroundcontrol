@@ -154,28 +154,30 @@ bool SerialLink::_connect(void)
     qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(true);
 #endif
 
+    QSerialPort::SerialPortError    error;
+    QString                         errorString;
+
     // Initialize the connection
-    if (!_hardwareConnect(_type)) {
-        // Need to error out here.
-        QString err("Could not create port.");
-        if (_port) {
-            err = _port->errorString();
+    if (!_hardwareConnect(error, errorString)) {
+        if (qgcApp()->toolbox()->linkManager()->isAutoconnectLink(this)) {
+            // Be careful with spitting out open error related to trying to open a busy port using autoconnect
+            if (error == QSerialPort::PermissionError) {
+                // Device already open, ignore and fail connect
+                return false;
+            }
         }
-        _emitLinkError("Error connecting: " + err);
+
+        _emitLinkError(QString("Error connecting: Could not create port. %1").arg(errorString));
         return false;
     }
     return true;
 }
 
-/**
- * @brief This function is called indirectly by the _connect() call.
- *
- * The _connect() function starts the thread and indirectly calls this method.
- *
- * @return True if the connection could be established, false otherwise
- * @see _connect() For the right function to establish the connection.
- **/
-bool SerialLink::_hardwareConnect(QString &type)
+/// Performs the actual hardware port connection.
+///     @param[out] error if failed
+///     @param[out] error string if failed
+/// @return success/fail
+bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& errorString)
 {
     if (_port) {
         qCDebug(SerialLinkLog) << "SerialLink:" << QString::number((long)this, 16) << "closing port";
@@ -235,6 +237,9 @@ bool SerialLink::_hardwareConnect(QString &type)
     }
 #endif
     if (!_port->isOpen() ) {
+        qDebug() << "open failed" << _port->errorString() << _port->error() << getName() << qgcApp()->toolbox()->linkManager()->isAutoconnectLink(this);
+        error = _port->error();
+        errorString = _port->errorString();
         emit communicationUpdate(getName(),"Error opening port: " + _port->errorString());
         _port->close();
         delete _port;
@@ -252,7 +257,7 @@ bool SerialLink::_hardwareConnect(QString &type)
     emit communicationUpdate(getName(), "Opened port!");
     emit connected();
 
-    qCDebug(SerialLinkLog) << "CONNECTING LINK: " << __FILE__ << __LINE__ << "type:" << type << "with settings" << _config->portName()
+    qCDebug(SerialLinkLog) << "Connection SeriaLink: " << "with settings" << _config->portName()
              << _config->baud() << _config->dataBits() << _config->parity() << _config->stopBits();
 
     return true; // successful connection
