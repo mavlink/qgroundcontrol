@@ -38,8 +38,10 @@ class QGCMapPalette : public QObject
     Q_PROPERTY(bool lightColors READ lightColors WRITE setLightColors NOTIFY paletteChanged)
 
     // The colors are:
-    //      thumbJoystick - Thumb joystick indicator
+    //      text            - Text color
+    //      thumbJoystick   - Thumb joystick indicator
 
+    Q_PROPERTY(QColor text          READ text           NOTIFY paletteChanged)
     Q_PROPERTY(QColor thumbJoystick READ thumbJoystick NOTIFY paletteChanged)
 
 public:    
@@ -48,7 +50,8 @@ public:
     bool lightColors(void) const { return _lightColors; }
     void setLightColors(bool lightColors);
     
-    QColor thumbJoystick(void) const { return _thumbJoystick[_lightColors]; }
+    QColor text(void)           const { return _text[_lightColors]; }
+    QColor thumbJoystick(void)  const { return _thumbJoystick[_lightColors]; }
 
 signals:
     void paletteChanged(void);
@@ -59,6 +62,7 @@ private:
     static const int _cColorGroups = 2;
 
     static QColor _thumbJoystick[_cColorGroups];
+    static QColor _text[_cColorGroups];
 };
 
 #endif
