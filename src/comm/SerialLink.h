@@ -81,12 +81,17 @@ public:
     void setParity      (int parity);               ///< QSerialPort Enums
     void setPortName    (const QString& portName);
 
+    static QStringList supportedBaudRates();
+
     /// From LinkConfiguration
-    int  type() { return LinkConfiguration::TypeSerial; }
+    LinkType type() { return LinkConfiguration::TypeSerial; }
     void copyFrom(LinkConfiguration* source);
     void loadSettings(QSettings& settings, const QString& root);
     void saveSettings(QSettings& settings, const QString& root);
     void updateSettings();
+
+private:
+    static void _initBaudRates();
 
 private:
     int _baud;
@@ -109,10 +114,10 @@ private:
 class SerialLink : public LinkInterface
 {
     Q_OBJECT
-    
+
     friend class SerialConfiguration;
     friend class LinkManager;
-    
+
 public:
     // LinkInterface
 
@@ -156,7 +161,7 @@ private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
     SerialLink(SerialConfiguration* config);
     ~SerialLink();
-    
+
     // From LinkInterface
     virtual bool _connect(void);
     virtual void _disconnect(void);

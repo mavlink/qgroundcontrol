@@ -178,6 +178,9 @@ void QGCLinkConfiguration::_fixUnnamed(LinkConfiguration* config)
                     QString("Mock Link"));
                 break;
 #endif
+            case LinkConfiguration::TypeLast:
+            default:
+                break;
         }
     }
 }

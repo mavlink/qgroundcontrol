@@ -78,10 +78,17 @@ public:
     Q_PROPERTY(bool autoconnectPixhawk                  READ autoconnectPixhawk                 WRITE setAutoconnectPixhawk     NOTIFY autoconnectPixhawkChanged)
     Q_PROPERTY(bool autoconnect3DRRadio                 READ autoconnect3DRRadio                WRITE setAutoconnect3DRRadio    NOTIFY autoconnect3DRRadioChanged)
     Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
-    //-- LinkInterface
-    Q_PROPERTY(QmlObjectListModel* links                READ links                                                              CONSTANT)
-    //-- LinkConfiguration
-    Q_PROPERTY(QmlObjectListModel* linkConfigurations   READ linkConfigurations                                                 CONSTANT)
+
+    /// LinkInterface Accessor
+    Q_PROPERTY(QmlObjectListModel* links                READ links                              CONSTANT)
+    /// LinkConfiguration Accessor
+    Q_PROPERTY(QmlObjectListModel* linkConfigurations   READ linkConfigurations                 CONSTANT)
+    /// List of comm type strings
+    Q_PROPERTY(QStringList         linkTypeStrings      READ linkTypeStrings                    CONSTANT)
+    /// List of supported baud rates for serial links
+    Q_PROPERTY(QStringList         serialBaudRates      READ serialBaudRates                    CONSTANT)
+    /// List of comm ports
+    Q_PROPERTY(QStringList         serialPortStrings    READ serialPortStrings                                                    NOTIFY commPortStringsChanged)
 
     // Property accessors
 
@@ -92,14 +99,16 @@ public:
     bool autoconnect3DRRadio(void)  { return _autoconnect3DRRadio; }
     bool autoconnectPX4Flow(void)   { return _autoconnectPX4Flow; }
 
-    QmlObjectListModel* links(void)                 { return &_links; }
-    QmlObjectListModel* linkConfigurations(void)    { return &_linkConfigurations; }
+    QmlObjectListModel* links               (void) { return &_links; }
+    QmlObjectListModel* linkConfigurations  (void) { return &_linkConfigurations; }
+    QStringList         linkTypeStrings     (void) const;
+    QStringList         serialBaudRates     (void);
+    QStringList         serialPortStrings   (void);
 
-    void setAutoconnectUDP(bool autoconnect);
-    void setAutoconnectPixhawk(bool autoconnect);
-    void setAutoconnect3DRRadio(bool autoconnect);
-    void setAutoconnectPX4Flow(bool autoconnect);
-
+    void setAutoconnectUDP      (bool autoconnect);
+    void setAutoconnectPixhawk  (bool autoconnect);
+    void setAutoconnect3DRRadio (bool autoconnect);
+    void setAutoconnectPX4Flow  (bool autoconnect);
 
     /// Load list of link configurations from disk
     void loadLinkConfigurationList();
@@ -178,6 +187,7 @@ signals:
     void linkInactive(LinkInterface* link);
 
     void linkConfigurationChanged();
+    void commPortStringsChanged();
 
 private slots:
     void _linkConnected(void);
@@ -207,6 +217,7 @@ private:
     QmlObjectListModel  _autoconnectConfigurations;
 
     QStringList _autoconnectWaitList;
+    QStringList _commPortList;
 
     bool _autoconnectUDP;
     bool _autoconnectPixhawk;

@@ -54,7 +54,7 @@ public:
     bool sendStatusText(void) { return _sendStatusText; }
 
     // Overrides from LinkConfiguration
-    int  type(void) { return LinkConfiguration::TypeMock; }
+    LinkType type(void) { return LinkConfiguration::TypeMock; }
     void copyFrom(LinkConfiguration* source);
     void loadSettings(QSettings& settings, const QString& root);
     void saveSettings(QSettings& settings, const QString& root);
@@ -92,10 +92,10 @@ public:
     void setAPMMissionResponseMode(bool sendHomePositionOnEmptyList) { _apmSendHomePositionOnEmptyList = sendHomePositionOnEmptyList; }
 
     void emitRemoteControlChannelRawChanged(int channel, uint16_t raw);
-    
+
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t& msg);
-    
+
     MockLinkFileServer* getFileServer(void) { return _fileServer; }
 
     // Virtuals from LinkInterface
@@ -111,21 +111,21 @@ public:
     bool disconnect(void);
 
     LinkConfiguration* getLinkConfiguration() { return _config; }
-    
+
     /// Sets a failure mode for unit testing
     ///     @param failureMode Type of failure to simulate
     ///     @param firstTimeOnly true: fail first call, success subsequent calls, false: fail all calls
     void setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, bool firstTimeOnly);
-    
+
     /// Called to send a MISSION_ACK message while the MissionManager is in idle state
     void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType) { _missionItemHandler.sendUnexpectedMissionAck(ackType); }
-    
+
     /// Called to send a MISSION_ITEM message while the MissionManager is in idle state
     void sendUnexpectedMissionItem(void) { _missionItemHandler.sendUnexpectedMissionItem(); }
-    
+
     /// Called to send a MISSION_REQUEST message while the MissionManager is in idle state
     void sendUnexpectedMissionRequest(void) { _missionItemHandler.sendUnexpectedMissionRequest(); }
-    
+
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
     void resetMissionItemHandler(void) { _missionItemHandler.reset(); }
 
@@ -193,7 +193,7 @@ private:
     MockConfiguration*  _config;
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
-    
+
     MockLinkFileServer* _fileServer;
 
     bool _sendStatusText;
