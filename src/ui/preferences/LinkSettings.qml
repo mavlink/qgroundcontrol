@@ -23,6 +23,7 @@
 
 import QtQuick          2.5
 import QtQuick.Controls 1.4
+import QtQuick.Dialogs  1.1
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -92,7 +93,7 @@ Rectangle {
                     text:   object.name
                     width:  _linkRoot.width * 0.5
                     exclusiveGroup: linkGroup
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.horizontalCenter: settingsColumn.horizontalCenter
                     onClicked: {
                         checked = true
                         _currentSelection = object
@@ -111,8 +112,26 @@ Rectangle {
         QGCButton {
             width:      ScreenTools.defaultFontPixelWidth * 10
             text:       "Delete"
-            enabled:    _currentSelection && !_currentSelection.link
+            enabled:    _currentSelection && !_currentSelection.dynamic
             onClicked: {
+                if(_currentSelection)
+                    deleteDialog.visible = true
+            }
+            MessageDialog {
+                id:         deleteDialog
+                visible:    false
+                icon:       StandardIcon.Warning
+                standardButtons: StandardButton.Yes | StandardButton.No
+                title:      "Remove Link Configuration"
+                text:       _currentSelection ? "Remove " + _currentSelection.name + ". Is this really what you want?" : ""
+                onYes: {
+                    if(_currentSelection)
+                        QGroundControl.linkManager.removeConfiguration(_currentSelection)
+                    deleteDialog.visible = false
+                }
+                onNo: {
+                    deleteDialog.visible = false
+                }
             }
         }
         QGCButton {
@@ -154,6 +173,7 @@ Rectangle {
         anchors.fill:   parent
         visible:        false
         property var linkConfig: null
+        property var editConfig: null
     }
 
     //---------------------------------------------
@@ -163,6 +183,24 @@ Rectangle {
         Rectangle {
             color:          __qgcPal.window
             anchors.fill:   parent
+            Component.onCompleted: {
+                // If editing, create copy for editing
+                if(linkConfig) {
+                    editConfig = QGroundControl.linkManager.startConfigurationEditing(linkConfig)
+                } else {
+                    // Create new link configuration
+                    if(ScreenTools.isiOS)
+                        editConfig = QGroundControl.linkManager.createConfiguration(LinkConfiguration.TypeUdp, "Unnamed")
+                    else
+                        editConfig = QGroundControl.linkManager.createConfiguration(LinkConfiguration.TypeSerial, "Unnamed")
+                }
+            }
+            Component.onDestruction: {
+                if(editConfig) {
+                    QGroundControl.linkManager.cancelConfigurationEditing(editConfig)
+                    editConfig = null
+                }
+            }
             Flickable {
                 clip:               true
                 anchors.top:        parent.top
@@ -199,7 +237,8 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         QGCTextField {
-                            text:   linkConfig ? linkConfig.name : "Untitled"
+                            id:     nameField
+                            text:   editConfig ? editConfig.name : ""
                             width:  _secondColumn
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -220,8 +259,17 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             Component.onCompleted: {
                                 if(linkConfig != null) {
-                                    if(linkConfig.linkType === LinkConfiguration.TypeSerial)
+                                    var index = linkConfig.linkType
+                                    if(index === LinkConfiguration.TypeSerial)
                                         linkSettingLoader.sourceComponent = serialLinkSettings
+                                    if(index === LinkConfiguration.TypeUdp)
+                                        linkSettingLoader.sourceComponent = udpLinkSettings
+                                    if(index === LinkConfiguration.TypeTcp)
+                                        linkSettingLoader.sourceComponent = tcpLinkSettings
+                                    if(index === LinkConfiguration.TypeMock)
+                                        linkSettingLoader.sourceComponent = mockLinkSettings
+                                    if(index === LinkConfiguration.TypeLogReplay)
+                                        linkSettingLoader.sourceComponent = logLinkSettings
                                     linkSettingLoader.visible = true
                                 }
                             }
@@ -235,7 +283,14 @@ Rectangle {
                             model:          QGroundControl.linkManager.linkTypeStrings
                             anchors.verticalCenter: parent.verticalCenter
                             onActivated: {
-                                if (index != -1) {
+                                if (index != -1 && index !== editConfig.linkType) {
+                                    // Save current name
+                                    var name = editConfig.name
+                                    // Discard link configuration (old type)
+                                    QGroundControl.linkManager.cancelConfigurationEditing(editConfig)
+                                    // Create new link configuration
+                                    editConfig = QGroundControl.linkManager.createConfiguration(index, name)
+                                    // Load appropriate configuration panel
                                     linkSettingLoader.sourceComponent = null
                                     if(index === LinkConfiguration.TypeSerial)
                                         linkSettingLoader.sourceComponent = serialLinkSettings
@@ -252,10 +307,38 @@ Rectangle {
                             Component.onCompleted: {
                                 if(linkConfig == null) {
                                     linkTypeCombo.currentIndex = 0
-                                    linkSettingLoader.sourceComponent = serialLinkSettings
+                                    var index = editConfig.linkType
+                                    if(index === LinkConfiguration.TypeSerial)
+                                        linkSettingLoader.sourceComponent = serialLinkSettings
+                                    if(index === LinkConfiguration.TypeUdp)
+                                        linkSettingLoader.sourceComponent = udpLinkSettings
+                                    if(index === LinkConfiguration.TypeTcp)
+                                        linkSettingLoader.sourceComponent = tcpLinkSettings
+                                    if(index === LinkConfiguration.TypeMock)
+                                        linkSettingLoader.sourceComponent = mockLinkSettings
+                                    if(index === LinkConfiguration.TypeLogReplay)
+                                        linkSettingLoader.sourceComponent = logLinkSettings
                                     linkSettingLoader.visible = true
                                 }
                             }
+                        }
+                    }
+                    Item {
+                        height: ScreenTools.defaultFontPixelHeight * 0.5
+                        width:  parent.width
+                    }
+                    //-- Auto Connect
+                    QGCCheckBox {
+                        text:       "Automatically Connect on Start"
+                        checked:    false
+                        onCheckedChanged: {
+                            if(editConfig) {
+                                editConfig.autoConnect = checked
+                            }
+                        }
+                        Component.onCompleted: {
+                            if(editConfig)
+                                checked = editConfig.autoConnect
                         }
                     }
                     Item {
@@ -266,7 +349,7 @@ Rectangle {
                         id:             linkSettingLoader
                         width:          parent.width
                         visible:        false
-                        property var config: linkConfig
+                        property var subEditConfig: editConfig
                     }
                 }
             }
@@ -280,6 +363,16 @@ Rectangle {
                     width:      ScreenTools.defaultFontPixelWidth * 10
                     text:       "OK"
                     onClicked: {
+                        // Save editting
+                        editConfig.name = nameField.text
+                        if(linkConfig) {
+                            QGroundControl.linkManager.endConfigurationEditing(linkConfig, editConfig)
+                        } else {
+                            // If it was edited, it's no longer "dynamic"
+                            editConfig.dynamic = false
+                            QGroundControl.linkManager.endCreateConfiguration(editConfig)
+                        }
+                        editConfig = null
                         _linkRoot.closeCommSettings()
                     }
                 }
@@ -287,6 +380,8 @@ Rectangle {
                     width:      ScreenTools.defaultFontPixelWidth * 10
                     text:       "Cancel"
                     onClicked: {
+                        QGroundControl.linkManager.cancelConfigurationEditing(editConfig)
+                        editConfig = null
                         _linkRoot.closeCommSettings()
                     }
                 }
@@ -327,10 +422,21 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     onActivated: {
                         if (index != -1) {
+                            subEditConfig.portName = QGroundControl.linkManager.serialPorts[index]
                         }
                     }
                     Component.onCompleted: {
-                        if(config != null) {
+                        if(subEditConfig != null) {
+                            if(subEditConfig.portDisplayName === "")
+                                subEditConfig.portName = QGroundControl.linkManager.serialPorts[0]
+                            var index = commPortCombo.find(subEditConfig.portDisplayName)
+                            if (index === -1) {
+                                console.warn("Serial Port not present", subEditConfig.portName)
+                            } else {
+                                commPortCombo.currentIndex = index
+                            }
+                        } else {
+                            commPortCombo.currentIndex = 0
                         }
                     }
                 }
@@ -349,19 +455,142 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     onActivated: {
                         if (index != -1) {
+                            subEditConfig.baud = parseInt(QGroundControl.linkManager.serialBaudRates[index])
                         }
                     }
                     Component.onCompleted: {
                         var baud = "57600"
-                        if(config != null) {
-                            // Get baud from config
+                        if(subEditConfig != null) {
+                            baud = subEditConfig.baud.toString()
                         }
                         var index = baudCombo.find(baud)
-                        if (index == -1) {
+                        if (index === -1) {
                             console.warn("Baud rate name not in combo box", baud)
                         } else {
                             baudCombo.currentIndex = index
                         }
+                    }
+                }
+            }
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  parent.width
+            }
+            //-----------------------------------------------------------------
+            //-- Advanced Serial Settings
+            QGCCheckBox {
+                id:     showAdvanced
+                text:   "Show Advanced Serial Settings"
+            }
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  parent.width
+            }
+            //-- Flow Control
+            QGCCheckBox {
+                text:       "Enable Flow Control"
+                checked:    subEditConfig ? subEditConfig.flowControl !== 0 : false
+                visible:    showAdvanced.checked
+                onCheckedChanged: {
+                    if(subEditConfig) {
+                        subEditConfig.flowControl = checked ? 1 : 0
+                    }
+                }
+            }
+            //-- Parity
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+                visible:    showAdvanced.checked
+                QGCLabel {
+                    text:   "Parity:"
+                    width:  _firstColumn
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCComboBox {
+                    id:             parityCombo
+                    width:          _firstColumn
+                    model:          ["None", "Even", "Odd"]
+                    anchors.verticalCenter: parent.verticalCenter
+                    onActivated: {
+                        if (index != -1) {
+                            // Hard coded values from qserialport.h
+                            if(index == 0)
+                                subEditConfig.parity = 0
+                            else if(index == 1)
+                                subEditConfig.parity = 2
+                            else
+                                subEditConfig.parity = 3
+                        }
+                    }
+                    Component.onCompleted: {
+                        var index = 0
+                        if(subEditConfig != null) {
+                            index = subEditConfig.parity
+                        }
+                        if(index > 1) {
+                            index = index - 2
+                        }
+                        parityCombo.currentIndex = index
+                    }
+                }
+            }
+            //-- Data Bits
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+                visible:    showAdvanced.checked
+                QGCLabel {
+                    text:   "Data Bits:"
+                    width:  _firstColumn
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCComboBox {
+                    id:             dataCombo
+                    width:          _firstColumn
+                    model:          ["5", "6", "7", "8"]
+                    anchors.verticalCenter: parent.verticalCenter
+                    onActivated: {
+                        if (index != -1) {
+                            subEditConfig.dataBits = index + 5
+                        }
+                    }
+                    Component.onCompleted: {
+                        var index = 3
+                        if(subEditConfig != null) {
+                            index = subEditConfig.parity - 5
+                            if(index < 0)
+                                index = 3
+                        }
+                        dataCombo.currentIndex = index
+                    }
+                }
+            }
+            //-- Stop Bits
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+                visible:    showAdvanced.checked
+                QGCLabel {
+                    text:   "Stop Bits:"
+                    width:  _firstColumn
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCComboBox {
+                    id:             stopCombo
+                    width:          _firstColumn
+                    model:          ["1", "2"]
+                    anchors.verticalCenter: parent.verticalCenter
+                    onActivated: {
+                        if (index != -1) {
+                            subEditConfig.stopBits = index + 1
+                        }
+                    }
+                    Component.onCompleted: {
+                        var index = 0
+                        if(subEditConfig != null) {
+                            index = subEditConfig.stopBits - 1
+                            if(index < 0)
+                                index = 0
+                        }
+                        stopCombo.currentIndex = index
                     }
                 }
             }

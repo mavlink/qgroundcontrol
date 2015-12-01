@@ -80,15 +80,25 @@ public:
     Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
 
     /// LinkInterface Accessor
-    Q_PROPERTY(QmlObjectListModel* links                READ links                              CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  links               READ links                              CONSTANT)
     /// LinkConfiguration Accessor
-    Q_PROPERTY(QmlObjectListModel* linkConfigurations   READ linkConfigurations                 CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  linkConfigurations  READ linkConfigurations                                                 NOTIFY linkConfigurationsChanged)
     /// List of comm type strings
-    Q_PROPERTY(QStringList         linkTypeStrings      READ linkTypeStrings                    CONSTANT)
+    Q_PROPERTY(QStringList          linkTypeStrings     READ linkTypeStrings                    CONSTANT)
     /// List of supported baud rates for serial links
-    Q_PROPERTY(QStringList         serialBaudRates      READ serialBaudRates                    CONSTANT)
+    Q_PROPERTY(QStringList          serialBaudRates     READ serialBaudRates                    CONSTANT)
+    /// List of comm ports display names
+    Q_PROPERTY(QStringList          serialPortStrings   READ serialPortStrings                                                  NOTIFY commPortStringsChanged)
     /// List of comm ports
-    Q_PROPERTY(QStringList         serialPortStrings    READ serialPortStrings                                                    NOTIFY commPortStringsChanged)
+    Q_PROPERTY(QStringList          serialPorts         READ serialPorts                                                        NOTIFY commPortsChanged)
+
+    // Create/Edit Link Configuration
+    Q_INVOKABLE LinkConfiguration*  createConfiguration         (int type, const QString& name);
+    Q_INVOKABLE LinkConfiguration*  startConfigurationEditing   (LinkConfiguration* config);
+    Q_INVOKABLE void                cancelConfigurationEditing  (LinkConfiguration* config) { delete config; }
+    Q_INVOKABLE bool                endConfigurationEditing     (LinkConfiguration* config, LinkConfiguration* editedConfig);
+    Q_INVOKABLE bool                endCreateConfiguration      (LinkConfiguration* config);
+    Q_INVOKABLE void                removeConfiguration         (LinkConfiguration* config);
 
     // Property accessors
 
@@ -104,6 +114,7 @@ public:
     QStringList         linkTypeStrings     (void) const;
     QStringList         serialBaudRates     (void);
     QStringList         serialPortStrings   (void);
+    QStringList         serialPorts         (void);
 
     void setAutoconnectUDP      (bool autoconnect);
     void setAutoconnectPixhawk  (bool autoconnect);
@@ -186,8 +197,9 @@ signals:
     // No longer hearing from any vehicles on this link.
     void linkInactive(LinkInterface* link);
 
-    void linkConfigurationChanged();
     void commPortStringsChanged();
+    void commPortsChanged();
+    void linkConfigurationsChanged();
 
 private slots:
     void _linkConnected(void);
@@ -197,6 +209,8 @@ private slots:
 private:
     bool _connectionsSuspendedMsg(void);
     void _updateAutoConnectLinks(void);
+    void _updateSerialPorts();
+    void _fixUnnamed(LinkConfiguration* config);
 
 #ifndef __ios__
     SerialConfiguration* _autoconnectConfigurationsContainsPort(const QString& portName);
@@ -218,6 +232,7 @@ private:
 
     QStringList _autoconnectWaitList;
     QStringList _commPortList;
+    QStringList _commPortDisplayList;
 
     bool _autoconnectUDP;
     bool _autoconnectPixhawk;
