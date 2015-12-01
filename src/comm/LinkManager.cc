@@ -55,6 +55,14 @@ const char* LinkManager::_autoconnect3DRRadioKey =  "Autoconnect3DRRadio";
 const char* LinkManager::_autoconnectPX4FlowKey =   "AutoconnectPX4Flow";
 const char* LinkManager::_defaultUPDLinkName =      "Default UDP Link";
 
+const int LinkManager::_autoconnectUpdateTimerMSecs =   1000;
+#ifdef Q_OS_WIN
+// Have to manually let the bootloader go by on Windows to get a working connect
+const int LinkManager::_autoconnectConnectDelayMSecs =  6000;
+#else
+const int LinkManager::_autoconnectConnectDelayMSecs =  1000;
+#endif
+
 LinkManager::LinkManager(QGCApplication* app)
     : QGCTool(app)
     , _configUpdateSuspended(false)
@@ -96,7 +104,7 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &LinkManager::_vehicleHeartbeatInfo);
 
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
-    _portListTimer.start(6000); // timeout must be long enough to get past bootloader on second pass
+    _portListTimer.start(_autoconnectUpdateTimerMSecs); // timeout must be long enough to get past bootloader on second pass
 
 }
 
@@ -220,10 +228,16 @@ void LinkManager::disconnectLink(LinkInterface* link)
 
     link->_disconnect();
     LinkConfiguration* config = link->getLinkConfiguration();
-    if(config) {
-        config->setLink(NULL);
+    if (config) {
+        if (_autoconnectConfigurations.contains(config)) {
+            config->setLink(NULL);
+        }
     }
     _deleteLink(link);
+    if (_autoconnectConfigurations.contains(config)) {
+        _autoconnectConfigurations.removeOne(config);
+        delete config;
+    }
 }
 
 void LinkManager::_deleteLink(LinkInterface* link)
@@ -465,11 +479,11 @@ void LinkManager::_updateAutoConnectLinks(void)
                 // are in the bootloader is flaky from a cross-platform standpoint. So by putting it on a wait list
                 // and only connect on the second pass we leave enough time for the board to boot up.
                 qCDebug(LinkManagerLog) << "Waiting for next autoconnect pass" << portInfo.systemLocation();
-                _autoconnectWaitList.append(portInfo.systemLocation());
-            } else {
+                _autoconnectWaitList[portInfo.systemLocation()] = 1;
+            } else if (++_autoconnectWaitList[portInfo.systemLocation()] * _autoconnectUpdateTimerMSecs > _autoconnectConnectDelayMSecs) {
                 SerialConfiguration* pSerialConfig = NULL;
 
-                _autoconnectWaitList.removeOne(portInfo.systemLocation());
+                _autoconnectWaitList.remove(portInfo.systemLocation());
 
                 switch (boardType) {
                 case QGCSerialPortInfo::BoardTypePX4FMUV1:
@@ -706,4 +720,9 @@ QStringList LinkManager::serialBaudRates(void)
 #else
     return SerialConfiguration::supportedBaudRates();
 #endif
+}
+
+bool LinkManager::isAutoconnectLink(LinkInterface* link)
+{
+    return _autoconnectConfigurations.contains(link->getLinkConfiguration());
 }
