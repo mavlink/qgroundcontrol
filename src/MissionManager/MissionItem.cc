@@ -110,6 +110,7 @@ MissionItem::MissionItem(QObject* parent)
     , _dirty(false)
     , _sequenceNumber(0)
     , _isCurrentItem(false)
+    , _azimuth(0.0)
     , _distance(0.0)
     , _homePositionSpecialCase(false)
     , _homePositionValid(false)
@@ -157,6 +158,7 @@ MissionItem::MissionItem(int             sequenceNumber,
     , _dirty(false)
     , _sequenceNumber(sequenceNumber)
     , _isCurrentItem(isCurrentItem)
+    , _azimuth(0.0)
     , _distance(0.0)
     , _homePositionSpecialCase(false)
     , _homePositionValid(false)
@@ -204,6 +206,7 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     , _dirty(false)
     , _sequenceNumber(0)
     , _isCurrentItem(false)
+    , _azimuth(0.0)
     , _distance(0.0)
     , _homePositionSpecialCase(false)
     , _homePositionValid(false)
@@ -241,6 +244,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     setSequenceNumber(other._sequenceNumber);
     setAutoContinue(other.autoContinue());
     setIsCurrentItem(other._isCurrentItem);
+    setAzimuth(other._distance);
     setDistance(other._distance);
     setHomePositionSpecialCase(other._homePositionSpecialCase);
     setHomePositionValid(other._homePositionValid);
@@ -837,6 +841,12 @@ void MissionItem::setDistance(double distance)
 {
     _distance = distance;
     emit distanceChanged(_distance);
+}
+
+void MissionItem::setAzimuth(double azimuth)
+{
+    _azimuth = azimuth;
+    emit azimuthChanged(_azimuth);
 }
 
 void MissionItem::_sendCoordinateChanged(void)
