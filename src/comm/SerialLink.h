@@ -152,7 +152,6 @@ protected:
     int     _timeout;
     QMutex  _dataMutex;       // Mutex for reading data from _port
     QMutex  _writeMutex;      // Mutex for accessing the _transmitBuffer.
-    QString _type;
 
 private slots:
     void _readBytes(void);
@@ -168,7 +167,7 @@ private:
 
     // Internal methods
     void _emitLinkError(const QString& errorMsg);
-    bool _hardwareConnect(QString &_type);
+    bool _hardwareConnect(QSerialPort::SerialPortError& error, QString& errorString);
     bool _isBootloader();
     void _resetConfiguration();
 
