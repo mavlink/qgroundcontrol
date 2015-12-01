@@ -27,7 +27,8 @@
 #include "QGCLoggingCategory.h"
 
 // Add Global logging categories (not class specific) here using QGC_LOGGING_CATEGORY
-QGC_LOGGING_CATEGORY(FirmwareUpgradeLog, "FirmwareUpgradeLog")
+QGC_LOGGING_CATEGORY(FirmwareUpgradeLog,        "FirmwareUpgradeLog")
+QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "FirmwareUpgradeVerboseLog")
 
 QGCLoggingCategoryRegister* _instance = NULL;
 

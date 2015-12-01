@@ -132,13 +132,13 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
 bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType)
 {
     foreach (QGCSerialPortInfo info, QGCSerialPortInfo::availablePorts()) {
-        qCDebug(FirmwareUpgradeLog) << "Serial Port --------------";
-        qCDebug(FirmwareUpgradeLog) << "\tboard type" << info.boardType();
-        qCDebug(FirmwareUpgradeLog) << "\tport name:" << info.portName();
-        qCDebug(FirmwareUpgradeLog) << "\tdescription:" << info.description();
-        qCDebug(FirmwareUpgradeLog) << "\tsystem location:" << info.systemLocation();
-        qCDebug(FirmwareUpgradeLog) << "\tvendor ID:" << info.vendorIdentifier();
-        qCDebug(FirmwareUpgradeLog) << "\tproduct ID:" << info.productIdentifier();
+        qCDebug(FirmwareUpgradeVerboseLog) << "Serial Port --------------";
+        qCDebug(FirmwareUpgradeVerboseLog) << "\tboard type" << info.boardType();
+        qCDebug(FirmwareUpgradeVerboseLog) << "\tport name:" << info.portName();
+        qCDebug(FirmwareUpgradeVerboseLog) << "\tdescription:" << info.description();
+        qCDebug(FirmwareUpgradeVerboseLog) << "\tsystem location:" << info.systemLocation();
+        qCDebug(FirmwareUpgradeVerboseLog) << "\tvendor ID:" << info.vendorIdentifier();
+        qCDebug(FirmwareUpgradeVerboseLog) << "\tproduct ID:" << info.productIdentifier();
         
         boardType = info.boardType();
         if (boardType != QGCSerialPortInfo::BoardTypeUnknown) {
@@ -167,13 +167,8 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPor
     emit status("Putting radio into command mode");
     
     // Wait a little while for the USB port to initialize. 3DR Radio boot is really slow.
-    for (int i=0; i<12; i++) {
-        if (port.open(QIODevice::ReadWrite)) {
-            break;
-        } else {
-            QGC::SLEEP::msleep(250);
-        }
-    }
+    QGC::SLEEP::msleep(2000);
+    port.open(QIODevice::ReadWrite);
     
     if (!port.isOpen()) {
         emit error(QString("Unable to open port: %1 error: %2").arg(portInfo.systemLocation()).arg(port.errorString()));
@@ -181,6 +176,7 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPor
     }
 
     // Put radio into command mode
+    QGC::SLEEP::msleep(2000);
     port.write("+++", 3);
     if (!port.waitForReadyRead(1500)) {
         emit error("Unable to put radio into command mode");
@@ -188,6 +184,7 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPor
     }
     QByteArray bytes = port.readAll();
     if (!bytes.contains("OK")) {
+        qCDebug(FirmwareUpgradeLog) << bytes;
         emit error("Unable to put radio into command mode");
         return;
     }
@@ -196,10 +193,14 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPor
     
     port.write("AT&UPDATE\r\n");
     if (!port.waitForBytesWritten(1500)) {
-        emit error("Unable to reboot radio");
+        emit error("Unable to reboot radio (bytes written)");
         return;
     }
-    QGC::SLEEP::msleep(2000);
+    if (!port.waitForReadyRead(1500)) {
+        emit error("Unable to reboot radio (ready read)");
+        return;
+    }
+    QGC::SLEEP::msleep(700);
     port.close();
     
     // The bootloader should be waiting for us now
@@ -218,7 +219,10 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& po
     
     _bootloaderPort = new QextSerialPort(QextSerialPort::Polling);
     Q_CHECK_PTR(_bootloaderPort);
-    
+    if (radioMode) {
+        _bootloaderPort->setBaudRate(BAUD115200);
+    }
+
     // Wait a little while for the USB port to initialize.
     for (int i=0; i<10; i++) {
         if (_bootloader->open(_bootloaderPort, portInfo.systemLocation())) {
