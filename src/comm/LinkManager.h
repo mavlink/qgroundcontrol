@@ -158,6 +158,9 @@ public:
     // Called to signal app shutdown. Disconnects all links while turning off auto-connect.
     void shutdown(void);
 
+    /// @return true: specified link is an autoconnect link
+    bool isAutoconnectLink(LinkInterface* link);
+
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -216,7 +219,7 @@ private:
     QmlObjectListModel  _linkConfigurations;
     QmlObjectListModel  _autoconnectConfigurations;
 
-    QStringList _autoconnectWaitList;
+    QMap<QString, int>  _autoconnectWaitList;   ///< key: QGCSerialPortInfo.systemLocation, value: wait count
     QStringList _commPortList;
 
     bool _autoconnectUDP;
@@ -224,12 +227,14 @@ private:
     bool _autoconnect3DRRadio;
     bool _autoconnectPX4Flow;
 
-    static const char* _settingsGroup;
-    static const char* _autoconnectUDPKey;
-    static const char* _autoconnectPixhawkKey;
-    static const char* _autoconnect3DRRadioKey;
-    static const char* _autoconnectPX4FlowKey;
-    static const char* _defaultUPDLinkName;
+    static const char*  _settingsGroup;
+    static const char*  _autoconnectUDPKey;
+    static const char*  _autoconnectPixhawkKey;
+    static const char*  _autoconnect3DRRadioKey;
+    static const char*  _autoconnectPX4FlowKey;
+    static const char*  _defaultUPDLinkName;
+    static const int    _autoconnectUpdateTimerMSecs;
+    static const int    _autoconnectConnectDelayMSecs;
 };
 
 #endif
