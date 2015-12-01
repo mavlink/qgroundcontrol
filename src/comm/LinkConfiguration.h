@@ -33,14 +33,16 @@ class LinkInterface;
 class LinkConfiguration : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(LinkType)
 
 public:
     LinkConfiguration(const QString& name);
     LinkConfiguration(LinkConfiguration* copy);
     virtual ~LinkConfiguration() {}
 
-    Q_PROPERTY(QString name         READ name   WRITE setName   NOTIFY nameChanged)
-    Q_PROPERTY(LinkInterface* link  READ link   WRITE setLink   NOTIFY linkChanged)
+    Q_PROPERTY(QString          name        READ name           WRITE setName   NOTIFY nameChanged)
+    Q_PROPERTY(LinkInterface*   link        READ link           WRITE setLink   NOTIFY linkChanged)
+    Q_PROPERTY(LinkType         linkType    READ type           CONSTANT)
 
     // Property accessors
 
@@ -51,7 +53,7 @@ public:
     void            setLink(LinkInterface* link);
 
     ///  The link types supported by QGC
-    enum {
+    enum LinkType {
 #ifndef __ios__
         TypeSerial,     ///< Serial Link
 #endif
@@ -88,7 +90,7 @@ public:
      * Pure virtual method returning one of the -TypeXxx types above.
      * @return The type of links these settings belong to.
      */
-    virtual int type() = 0;
+    virtual LinkType type() = 0;
 
     /*!
      * @brief Load settings

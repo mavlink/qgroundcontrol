@@ -38,14 +38,14 @@ class LogReplayLinkConfiguration : public LinkConfiguration
 public:
     LogReplayLinkConfiguration(const QString& name);
     LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy);
-    
+
     QString logFilename(void) { return _logFilename; }
     void setLogFilename(const QString& logFilename) { _logFilename = logFilename; }
-    
+
     QString logFilenameShort(void);
 
     // Virtuals from LinkConfiguration
-    virtual int  type() { return LinkConfiguration::TypeLogReplay; }
+    virtual LinkType type() { return LinkConfiguration::TypeLogReplay; }
     virtual void copyFrom(LinkConfiguration* source);
     virtual void loadSettings(QSettings& settings, const QString& root);
     virtual void saveSettings(QSettings& settings, const QString& root);
@@ -61,23 +61,23 @@ class LogReplayLink : public LinkInterface
     Q_OBJECT
 
     friend class LinkManager;
-    
+
 public:
     /// @return true: log is currently playing, false: log playback is paused
     bool isPlaying(void) { return _readTickTimer.isActive(); }
-    
+
     /// Start replay at current position
     void play(void) { emit _playOnThread(); }
-    
+
     /// Pause replay
     void pause(void) { emit _pauseOnThread(); }
-    
+
     /// Move the playhead to the specified percent complete
     void movePlayhead(int percentComplete);
-    
+
     /// Sets the acceleration factor: -100: 0.01X, 0: 1.0X, 100: 100.0X
     void setAccelerationFactor(int factor) { emit _setAccelerationFactorOnThread(factor); }
-    
+
     // Virtuals from LinkInterface
     virtual QString getName(void) const { return _config->name(); }
     virtual void requestReset(void){ }
@@ -93,7 +93,7 @@ public:
 
 public slots:
     virtual void writeBytes(const char *bytes, qint64 cBytes);
-    
+
 signals:
     void logFileStats(bool logTimestamped, int logDurationSecs, int binaryBaudRate);
     void playbackStarted(void);
@@ -101,7 +101,7 @@ signals:
     void playbackAtEnd(void);
     void playbackError(void);
     void playbackPercentCompleteChanged(int percentComplete);
-    
+
     // Internal signals
     void _playOnThread(void);
     void _pauseOnThread(void);
@@ -110,7 +110,7 @@ signals:
 protected slots:
     // FIXME: This should not be part of LinkInterface. It is an internal link implementation detail.
     virtual void readBytes(void);
-    
+
 private slots:
     void _readNextLogEntry(void);
     void _play(void);
@@ -121,7 +121,7 @@ private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
     LogReplayLink(LogReplayLinkConfiguration* config);
     ~LogReplayLink();
-    
+
     void _replayError(const QString& errorMsg);
     quint64 _parseTimestamp(const QByteArray& bytes);
     quint64 _seekToNextMavlinkMessage(mavlink_message_t* nextMsg);
@@ -129,37 +129,37 @@ private:
     void _finishPlayback(void);
     void _playbackError(void);
     void _resetPlaybackToBeginning(void);
-    
+
     // Virtuals from LinkInterface
     virtual bool _connect(void);
     virtual void _disconnect(void);
-    
+
     // Virtuals from QThread
     virtual void run(void);
-    
+
     LogReplayLinkConfiguration* _config;
 
     bool    _connected;
     QTimer _readTickTimer;      ///< Timer which signals a read of next log record
-    
+
     static const char* _errorTitle; ///< Title for communicatorError signals
-    
+
     quint64 _logCurrentTimeUSecs;   ///< The timestamp of the next message in the log file.
     quint64 _logStartTimeUSecs;     ///< The first timestamp in the current log file.
     quint64 _logEndTimeUSecs;       ///< The last timestamp in the current log file.
     quint64 _logDurationUSecs;
-    
+
     static const int    _defaultBinaryBaudRate = 57600;
     int                 _binaryBaudRate;        ///< Playback rate for binary log format
-    
+
     float   _replayAccelerationFactor;  ///< Factor to apply to playback rate
     quint64 _playbackStartTimeMSecs;    ///< The time when the logfile was first played back. This is used to pace out replaying the messages to fix long-term drift/skew. 0 indicates that the player hasn't initiated playback of this log file.
-    
+
     MAVLinkProtocol*    _mavlink;
     QFile               _logFile;
     quint64             _logFileSize;
     bool                _logTimestamped;    ///< true: Timestamped log format, false: no timestamps
-    
+
     static const int cbTimestamp = sizeof(quint64);
 };
 
