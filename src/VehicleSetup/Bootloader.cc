@@ -273,7 +273,7 @@ bool Bootloader::_ihxProgram(QextSerialPort* port, const FirmwareImage* image)
             return false;
         }
         
-        qCDebug(FirmwareUpgradeLog) << QString("Bootloader::_ihxProgram - address:%1 size:%2 block:%3").arg(flashAddress).arg(bytes.count()).arg(index);
+        qCDebug(FirmwareUpgradeVerboseLog) << QString("Bootloader::_ihxProgram - address:%1 size:%2 block:%3").arg(flashAddress).arg(bytes.count()).arg(index);
         
         // Set flash address
         
@@ -348,7 +348,7 @@ bool Bootloader::verify(QextSerialPort* port, const FirmwareImage* image)
     return ret;
 }
 
-/// @brief Verify the flash on bootloader eading it back and comparing it against the original image->
+/// @brief Verify the flash on bootloader reading it back and comparing it against the original image
 bool Bootloader::_verifyBytes(QextSerialPort* port, const FirmwareImage* image)
 {
     if (image->imageIsBinFormat()) {
@@ -445,7 +445,7 @@ bool Bootloader::_ihxVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
             return false;
         }
         
-        qCDebug(FirmwareUpgradeLog) << QString("Bootloader::_ihxVerifyBytes - address:%1 size:%2 block:%3").arg(readAddress).arg(imageBytes.count()).arg(index);
+        qCDebug(FirmwareUpgradeLog) << QString("Bootloader::_ihxVerifyBytes - address:0x%1 size:%2 block:%3").arg(readAddress, 8, 16, QLatin1Char('0')).arg(imageBytes.count()).arg(index);
         
         // Set read address
         
