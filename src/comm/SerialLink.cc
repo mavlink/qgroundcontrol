@@ -495,7 +495,6 @@ void SerialConfiguration::_initBaudRates()
 {
     kSupportedBaudRates.clear();
 #if USE_ANCIENT_RATES
-    // Baud rates supported only by POSIX systems
 #if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
     kSupportedBaudRates << "50";
     kSupportedBaudRates << "75";
@@ -513,7 +512,6 @@ void SerialConfiguration::_initBaudRates()
     kSupportedBaudRates << "1800";
 #endif
 #endif
-    // Baud rates supported only by Windows
     kSupportedBaudRates << "2400";
     kSupportedBaudRates << "4800";
     kSupportedBaudRates << "9600";
@@ -536,7 +534,6 @@ void SerialConfiguration::_initBaudRates()
 #endif
     kSupportedBaudRates << "460800";
 #if defined(Q_OS_LINUX)
-    // Baud rates supported only by Linux
     kSupportedBaudRates << "500000";
     kSupportedBaudRates << "576000";
 #endif
