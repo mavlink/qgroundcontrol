@@ -136,7 +136,7 @@ public:
     void setLocalPort   (quint16 port);
 
     /// From LinkConfiguration
-    int  type() { return LinkConfiguration::TypeUdp; }
+    LinkType type() { return LinkConfiguration::TypeUdp; }
     void copyFrom(LinkConfiguration* source);
     void loadSettings(QSettings& settings, const QString& root);
     void saveSettings(QSettings& settings, const QString& root);
@@ -152,10 +152,10 @@ private:
 class UDPLink : public LinkInterface
 {
     Q_OBJECT
-    
+
     friend class UDPConfiguration;
     friend class LinkManager;
-    
+
 public:
     void requestReset() { }
     bool isConnected() const;
@@ -202,7 +202,7 @@ private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
     UDPLink(UDPConfiguration* config);
     ~UDPLink();
-    
+
     // From LinkInterface
     virtual bool _connect(void);
     virtual void _disconnect(void);

@@ -34,8 +34,10 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
 
 Rectangle {
-    id:     _generalRoot
-    color:  __qgcPal.window
+    id:                 _generalRoot
+    color:              __qgcPal.window
+    anchors.fill:       parent
+    anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     QGCPalette {
         id:                 qgcPal
@@ -45,7 +47,6 @@ Rectangle {
     Flickable {
         clip:               true
         anchors.fill:       parent
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
         contentHeight:      settingsColumn.height
         contentWidth:       _generalRoot.width
         flickableDirection: Flickable.VerticalFlick
@@ -56,12 +57,15 @@ Rectangle {
             width:              _generalRoot.width
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             spacing:            ScreenTools.defaultFontPixelHeight / 2
-
             QGCLabel {
                 text:   "General Settings"
                 font.pixelSize: ScreenTools.mediumFontPixelSize
             }
-
+            Rectangle {
+                height: 1
+                width:  parent.width
+                color:  qgcPal.button
+            }
             Item {
                 height: ScreenTools.defaultFontPixelHeight / 2
                 width:  parent.width

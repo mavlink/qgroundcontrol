@@ -34,8 +34,9 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
 
 Rectangle {
-    id:     __mavlinkRoot
-    color:  __qgcPal.window
+    id:             __mavlinkRoot
+    color:          __qgcPal.window
+    anchors.fill:   parent
 
     QGCPalette {
         id:                 qgcPal

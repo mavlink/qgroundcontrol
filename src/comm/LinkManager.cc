@@ -97,7 +97,7 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
 
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
     _portListTimer.start(6000); // timeout must be long enough to get past bootloader on second pass
-    
+
 }
 
 LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
@@ -124,6 +124,9 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
             pLink = new MockLink(dynamic_cast<MockConfiguration*>(config));
             break;
 #endif
+        case LinkConfiguration::TypeLast:
+        default:
+            break;
     }
     if(pLink) {
         _addLink(pLink);
@@ -164,7 +167,7 @@ void LinkManager::_addLink(LinkInterface* link)
                 break;
             }
         }
-        
+
         _links.append(link);
         emit newLink(link);
     }
@@ -367,7 +370,7 @@ void LinkManager::loadLinkConfigurationList()
             }
         }
     }
-    
+
     // Debug buids always add MockLink automatically
 #ifdef QT_DEBUG
     MockConfiguration* pMock = new MockConfiguration("Mock Link PX4");
@@ -454,7 +457,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                 qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
                 continue;
             }
-            
+
             if (_autoconnectConfigurationsContainsPort(portInfo.systemLocation())) {
                 qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
             } else if (!_autoconnectWaitList.contains(portInfo.systemLocation())) {
@@ -660,4 +663,47 @@ void LinkManager::setAutoconnectPX4Flow(bool autoconnect)
         emit autoconnectPX4FlowChanged(autoconnect);
     }
 
+}
+
+QStringList LinkManager::linkTypeStrings(void) const
+{
+    //-- Must follow same order as enum LinkType in LinkConfiguration.h
+    static QStringList list;
+    if(!list.size())
+    {
+#ifndef __ios__
+        list += "Serial";
+#endif
+        list += "UDP";
+        list += "TCP";
+        list += "Mock Link";
+        list += "Log Replay";
+    }
+    return list;
+}
+
+QStringList LinkManager::serialPortStrings(void)
+{
+#ifndef __ios__
+    if(!_commPortList.size())
+    {
+        QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
+        foreach (const QSerialPortInfo &info, portList)
+        {
+            QString name = info.portName();
+            _commPortList += name;
+        }
+    }
+#endif
+    return _commPortList;
+}
+
+QStringList LinkManager::serialBaudRates(void)
+{
+#ifdef __ios__
+    QStringList foo;
+    return foo;
+#else
+    return SerialConfiguration::supportedBaudRates();
+#endif
 }
