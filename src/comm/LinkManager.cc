@@ -286,17 +286,17 @@ void LinkManager::saveLinkConfigurationList()
 {
     QSettings settings;
     settings.remove(LinkConfiguration::settingsRoot());
-
-    for (int i=0; i<_linkConfigurations.count(); i++) {
+    int trueCount = 0;
+    for (int i = 0; i < _linkConfigurations.count(); i++) {
         LinkConfiguration* linkConfig = _linkConfigurations.value<LinkConfiguration*>(i);
-
         if (linkConfig) {
             if(!linkConfig->isDynamic())
             {
                 QString root = LinkConfiguration::settingsRoot();
-                root += QString("/Link%1").arg(i);
+                root += QString("/Link%1").arg(trueCount++);
                 settings.setValue(root + "/name", linkConfig->name());
                 settings.setValue(root + "/type", linkConfig->type());
+                settings.setValue(root + "/auto", linkConfig->isAutoConnect());
                 // Have the instance save its own values
                 linkConfig->saveSettings(settings, root);
             }
@@ -304,17 +304,16 @@ void LinkManager::saveLinkConfigurationList()
             qWarning() << "Internal error";
         }
     }
-
     QString root(LinkConfiguration::settingsRoot());
-    settings.setValue(root + "/count", _linkConfigurations.count());
-    emit linkConfigurationChanged();
+    settings.setValue(root + "/count", trueCount);
+    emit linkConfigurationsChanged();
 }
 
 void LinkManager::loadLinkConfigurationList()
 {
     bool linksChanged = false;
+    bool mockPresent  = false;
     QSettings settings;
-
     // Is the group even there?
     if(settings.contains(LinkConfiguration::settingsRoot() + "/count")) {
         // Find out how many configurations we have
@@ -324,12 +323,13 @@ void LinkManager::loadLinkConfigurationList()
             root += QString("/Link%1").arg(i);
             if(settings.contains(root + "/type")) {
                 int type = settings.value(root + "/type").toInt();
-                if(type < LinkConfiguration::TypeLast) {
+                if((LinkConfiguration::LinkType)type < LinkConfiguration::TypeLast) {
                     if(settings.contains(root + "/name")) {
                         QString name = settings.value(root + "/name").toString();
                         if(!name.isEmpty()) {
                             LinkConfiguration* pLink = NULL;
-                            switch(type) {
+                            bool autoConnect = settings.value(root + "/auto").toBool();
+                            switch((LinkConfiguration::LinkType)type) {
 #ifndef __ios__
                                 case LinkConfiguration::TypeSerial:
                                     pLink = (LinkConfiguration*)new SerialConfiguration(name);
@@ -347,42 +347,48 @@ void LinkManager::loadLinkConfigurationList()
 #ifdef QT_DEBUG
                                 case LinkConfiguration::TypeMock:
                                     pLink = (LinkConfiguration*)new MockConfiguration(name);
+                                    mockPresent = true;
                                     break;
 #endif
+                                default:
+                                case LinkConfiguration::TypeLast:
+                                    break;
                             }
                             if(pLink) {
-                                // Have the instance load its own values
+                                //-- Have the instance load its own values
+                                pLink->setAutoConnect(autoConnect);
                                 pLink->loadSettings(settings, root);
                                 _linkConfigurations.append(pLink);
                                 linksChanged = true;
                             }
                         } else {
-                            qWarning() << "Link Configuration " << root << " has an empty name." ;
+                            qWarning() << "Link Configuration" << root << "has an empty name." ;
                         }
                     } else {
-                        qWarning() << "Link Configuration " << root << " has no name." ;
+                        qWarning() << "Link Configuration" << root << "has no name." ;
                     }
                 } else {
-                    qWarning() << "Link Configuration " << root << " an invalid type: " << type;
+                    qWarning() << "Link Configuration" << root << "an invalid type: " << type;
                 }
             } else {
-                qWarning() << "Link Configuration " << root << " has no type." ;
+                qWarning() << "Link Configuration" << root << "has no type." ;
             }
         }
     }
-
-    // Debug buids always add MockLink automatically
+    // Debug buids always add MockLink automatically (if one is not already there)
 #ifdef QT_DEBUG
-    MockConfiguration* pMock = new MockConfiguration("Mock Link PX4");
-    pMock->setDynamic(true);
-    _linkConfigurations.append(pMock);
-    linksChanged = true;
+    if(!mockPresent)
+    {
+        MockConfiguration* pMock = new MockConfiguration("Mock Link PX4");
+        pMock->setDynamic(true);
+        _linkConfigurations.append(pMock);
+        linksChanged = true;
+    }
 #endif
 
     if(linksChanged) {
-        emit linkConfigurationChanged();
+        emit linkConfigurationsChanged();
     }
-
     // Enable automatic Serial PX4/3DR Radio hunting
     _configurationsLoaded = true;
 }
@@ -417,7 +423,6 @@ void LinkManager::_updateAutoConnectLinks(void)
     bool foundUDP = false;
     for (int i=0; i<_links.count(); i++) {
         LinkConfiguration* linkConfig = _links.value<LinkInterface*>(i)->getLinkConfiguration();
-
         if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _defaultUPDLinkName) {
             foundUDP = true;
             break;
@@ -428,7 +433,9 @@ void LinkManager::_updateAutoConnectLinks(void)
         UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
         udpConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
         udpConfig->setDynamic(true);
+        _linkConfigurations.append(udpConfig);
         createConnectedLink(udpConfig);
+        emit linkConfigurationsChanged();
     }
 
 #ifndef __ios__
@@ -503,9 +510,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                     pSerialConfig->setBaud(boardType == QGCSerialPortInfo::BoardType3drRadio ? 57600 : 115200);
                     pSerialConfig->setDynamic(true);
                     pSerialConfig->setPortName(portInfo.systemLocation());
-
                     _autoconnectConfigurations.append(pSerialConfig);
-
                     createConnectedLink(pSerialConfig);
                 }
             }
@@ -516,7 +521,6 @@ void LinkManager::_updateAutoConnectLinks(void)
     QList<LinkConfiguration*>  _confToDelete;
     for (int i=0; i<_autoconnectConfigurations.count(); i++) {
         SerialConfiguration* linkConfig = _autoconnectConfigurations.value<SerialConfiguration*>(i);
-
         if (linkConfig) {
             if (!currentPorts.contains(linkConfig->portName())) {
                 // We don't remove links which are still connected even though at this point the cable may
@@ -682,19 +686,36 @@ QStringList LinkManager::linkTypeStrings(void) const
     return list;
 }
 
-QStringList LinkManager::serialPortStrings(void)
+void LinkManager::_updateSerialPorts()
 {
+    _commPortList.clear();
+    _commPortDisplayList.clear();
 #ifndef __ios__
-    if(!_commPortList.size())
+    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
+    foreach (const QSerialPortInfo &info, portList)
     {
-        QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
-        foreach (const QSerialPortInfo &info, portList)
-        {
-            QString name = info.portName();
-            _commPortList += name;
-        }
+        QString port = info.systemLocation().trimmed();
+        _commPortList += port;
+        _commPortDisplayList += SerialConfiguration::cleanPortDisplayname(port);
     }
 #endif
+}
+
+QStringList LinkManager::serialPortStrings(void)
+{
+    if(!_commPortDisplayList.size())
+    {
+        _updateSerialPorts();
+    }
+    return _commPortDisplayList;
+}
+
+QStringList LinkManager::serialPorts(void)
+{
+    if(!_commPortList.size())
+    {
+        _updateSerialPorts();
+    }
     return _commPortList;
 }
 
@@ -706,4 +727,108 @@ QStringList LinkManager::serialBaudRates(void)
 #else
     return SerialConfiguration::supportedBaudRates();
 #endif
+}
+
+bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfiguration* editedConfig)
+{
+    Q_ASSERT(config != NULL);
+    Q_ASSERT(editedConfig != NULL);
+    _fixUnnamed(editedConfig);
+    config->copyFrom(editedConfig);
+    saveLinkConfigurationList();
+    // Tell link about changes (if any)
+    config->updateSettings();
+    // Discard temporary duplicate
+    delete editedConfig;
+    return true;
+}
+
+bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
+{
+    Q_ASSERT(config != NULL);
+    _fixUnnamed(config);
+    _linkConfigurations.append(config);
+    saveLinkConfigurationList();
+    return true;
+}
+
+LinkConfiguration* LinkManager::createConfiguration(int type, const QString& name)
+{
+    if((LinkConfiguration::LinkType)type == LinkConfiguration::TypeSerial)
+        _updateSerialPorts();
+    return LinkConfiguration::createSettings(type, name);
+}
+
+LinkConfiguration* LinkManager::startConfigurationEditing(LinkConfiguration* config)
+{
+    Q_ASSERT(config != NULL);
+    if(config->type() == LinkConfiguration::TypeSerial)
+        _updateSerialPorts();
+    return LinkConfiguration::duplicateSettings(config);
+}
+
+
+void LinkManager::_fixUnnamed(LinkConfiguration* config)
+{
+    Q_ASSERT(config != NULL);
+    //-- Check for "Unnamed"
+    if (config->name() == "Unnamed") {
+        switch(config->type()) {
+#ifndef __ios__
+            case LinkConfiguration::TypeSerial: {
+                QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
+#ifdef Q_OS_WIN32
+                tname.replace("\\\\.\\", "");
+#else
+                tname.replace("/dev/cu.", "");
+                tname.replace("/dev/", "");
+#endif
+                config->setName(QString("Serial Device on %1").arg(tname));
+                break;
+                }
+#endif
+            case LinkConfiguration::TypeUdp:
+                config->setName(
+                    QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
+                break;
+            case LinkConfiguration::TypeTcp: {
+                    TCPConfiguration* tconfig = dynamic_cast<TCPConfiguration*>(config);
+                    if(tconfig) {
+                        config->setName(
+                            QString("TCP Link %1:%2").arg(tconfig->address().toString()).arg((int)tconfig->port()));
+                    }
+                }
+                break;
+            case LinkConfiguration::TypeLogReplay: {
+                LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
+                if(tconfig) {
+                    config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
+                }
+            }
+                break;
+#ifdef QT_DEBUG
+            case LinkConfiguration::TypeMock:
+                config->setName(
+                    QString("Mock Link"));
+                break;
+#endif
+            case LinkConfiguration::TypeLast:
+            default:
+                break;
+        }
+    }
+}
+
+void LinkManager::removeConfiguration(LinkConfiguration* config)
+{
+    Q_ASSERT(config != NULL);
+    LinkInterface* iface = config->link();
+    if(iface) {
+        disconnectLink(iface);
+    }
+    // Remove configuration
+    _linkConfigurations.removeOne(config);
+    delete config;
+    // Save list
+    saveLinkConfigurationList();
 }
