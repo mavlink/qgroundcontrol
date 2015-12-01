@@ -94,7 +94,7 @@ private:
     void _autoSyncSend(void);
     void _setupMissionItems(bool loadFromVehicle, bool forceLoad);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
-    double _calcDistance(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2);
+    void _calcPrevWaypointValues(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2, double* azimuth, double* distance);
     double _findLastAltitude(void);
 
 private:

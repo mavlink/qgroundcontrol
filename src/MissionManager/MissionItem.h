@@ -69,6 +69,7 @@ public:
 
     const MissionItem& operator=(const MissionItem& other);
     
+    Q_PROPERTY(double           azimuth             READ azimuth                WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command            WRITE setCommand            NOTIFY commandChanged)
     Q_PROPERTY(QString          commandDescription  READ commandDescription                                 NOTIFY commandChanged)
     Q_PROPERTY(QString          commandName         READ commandName                                        NOTIFY commandChanged)
@@ -95,6 +96,7 @@ public:
 
     // Property accesors
     
+    double          azimuth             (void) const    { return _azimuth; }
     MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_commandFact.cookedValue().toInt(); };
     QString         commandDescription  (void) const;
     QString         commandName         (void) const;
@@ -132,6 +134,7 @@ public:
     void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
 
     void setDistance(double distance);
+    void setAzimuth(double azimuth);
 
     // C++ only methods
 
@@ -174,10 +177,11 @@ public slots:
     void setDefaultsForCommand(void);
 
 signals:
+    void azimuthChanged             (double azimuth);
     void commandChanged             (MavlinkQmlSingleton::Qml_MAV_CMD command);
     void coordinateChanged          (const QGeoCoordinate& coordinate);
     void dirtyChanged               (bool dirty);
-    void distanceChanged            (float distance);
+    void distanceChanged            (double distance);
     void frameChanged               (int frame);
     void friendlyEditAllowedChanged (bool friendlyEditAllowed);
     void headingDegreesChanged      (double heading);
@@ -232,6 +236,7 @@ private:
     bool        _dirty;
     int         _sequenceNumber;
     bool        _isCurrentItem;
+    double      _azimuth;                   ///< Azimuth to previous waypoint
     double      _distance;                  ///< Distance to previous waypoint
     bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
     bool        _homePositionValid;         ///< true: Home psition should be displayed

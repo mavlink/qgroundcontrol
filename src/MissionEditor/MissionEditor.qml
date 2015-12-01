@@ -94,10 +94,11 @@ QGCView {
 
     function showDistance(missionItem) {
         if (missionItem.distance < 0.0) {
-            waypointDistanceDisplay.visible = false
+            waypointValuesDisplay.visible = false
         } else {
-            waypointDistanceDisplay.distance = missionItem.distance
-            waypointDistanceDisplay.visible = true
+            waypointValuesDisplay.azimuth = missionItem.azimuth
+            waypointValuesDisplay.distance = missionItem.distance
+            waypointValuesDisplay.visible = true
         }
     }
 
@@ -897,27 +898,39 @@ QGCView {
                 }
 
                 Rectangle {
-                    id:                 waypointDistanceDisplay
+                    id:                 waypointValuesDisplay
                     anchors.margins:    margins
                     anchors.left:       parent.left
                     anchors.bottom:     parent.bottom
-                    width:              distanceLabel.width + margins
-                    height:             distanceLabel.height + margins
+                    width:              distanceLabel.width + (margins * 2)
+                    height:             valuesColumn.height + (margins * 2)
                     radius:             ScreenTools.defaultFontPixelWidth
                     color:              qgcPal.window
                     opacity:            0.80
                     visible:            false
 
+                    property real azimuth:  0
                     property real distance: 0
 
                     readonly property real margins: ScreenTools.defaultFontPixelWidth
 
-                    QGCLabel {
-                        id:                         distanceLabel
-                        anchors.verticalCenter:     parent.verticalCenter
-                        anchors.horizontalCenter:   parent.horizonalCenter
-                        color:                      qgcPal.text
-                        text:                       "Distance: " + Math.round(parent.distance) + " meters"
+                    Column {
+                        id:                 valuesColumn
+                        anchors.leftMargin: parent.margins
+                        anchors.topMargin:  parent.margins
+                        anchors.left:       parent.left
+                        anchors.top:        parent.top
+
+                        QGCLabel {
+                            color:  qgcPal.text
+                            text:   "Azimuth: " + Math.round(waypointValuesDisplay.azimuth)
+                        }
+
+                        QGCLabel {
+                            id:     distanceLabel
+                            color:  qgcPal.text
+                            text:   "Distance: " + Math.round(waypointValuesDisplay.distance) + " meters"
+                        }
                     }
                 }
             } // FlightMap
