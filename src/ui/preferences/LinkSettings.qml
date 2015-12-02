@@ -263,7 +263,7 @@ Rectangle {
                                     if(index === LinkConfiguration.TypeSerial)
                                         linkSettingLoader.sourceComponent = serialLinkSettings
                                     if(index === LinkConfiguration.TypeUdp)
-                                        linkSettingLoader.sourceComponent = udpLinkSettings
+                                        linkSettingLoader.source = "UdpSettings.qml"
                                     if(index === LinkConfiguration.TypeTcp)
                                         linkSettingLoader.sourceComponent = tcpLinkSettings
                                     if(index === LinkConfiguration.TypeMock)
@@ -284,6 +284,10 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             onActivated: {
                                 if (index != -1 && index !== editConfig.linkType) {
+                                    // Destroy current panel
+                                    linkSettingLoader.sourceComponent = null
+                                    linkSettingLoader.source = ""
+                                    linkSettingLoader.visible = false
                                     // Save current name
                                     var name = editConfig.name
                                     // Discard link configuration (old type)
@@ -291,17 +295,17 @@ Rectangle {
                                     // Create new link configuration
                                     editConfig = QGroundControl.linkManager.createConfiguration(index, name)
                                     // Load appropriate configuration panel
-                                    linkSettingLoader.sourceComponent = null
                                     if(index === LinkConfiguration.TypeSerial)
                                         linkSettingLoader.sourceComponent = serialLinkSettings
                                     if(index === LinkConfiguration.TypeUdp)
-                                        linkSettingLoader.sourceComponent = udpLinkSettings
+                                        linkSettingLoader.source = "UdpSettings.qml"
                                     if(index === LinkConfiguration.TypeTcp)
                                         linkSettingLoader.sourceComponent = tcpLinkSettings
                                     if(index === LinkConfiguration.TypeMock)
                                         linkSettingLoader.sourceComponent = mockLinkSettings
                                     if(index === LinkConfiguration.TypeLogReplay)
                                         linkSettingLoader.sourceComponent = logLinkSettings
+                                    linkSettingLoader.visible = true
                                 }
                             }
                             Component.onCompleted: {
@@ -311,7 +315,7 @@ Rectangle {
                                     if(index === LinkConfiguration.TypeSerial)
                                         linkSettingLoader.sourceComponent = serialLinkSettings
                                     if(index === LinkConfiguration.TypeUdp)
-                                        linkSettingLoader.sourceComponent = udpLinkSettings
+                                        linkSettingLoader.source = "UdpSettings.qml"
                                     if(index === LinkConfiguration.TypeTcp)
                                         linkSettingLoader.sourceComponent = tcpLinkSettings
                                     if(index === LinkConfiguration.TypeMock)
@@ -331,6 +335,7 @@ Rectangle {
                     QGCCheckBox {
                         text:       "Automatically Connect on Start"
                         checked:    false
+                        enabled:    editConfig ? editConfig.autoConnectAllowed : false
                         onCheckedChanged: {
                             if(editConfig) {
                                 editConfig.autoConnect = checked
@@ -362,8 +367,7 @@ Rectangle {
                 QGCButton {
                     width:      ScreenTools.defaultFontPixelWidth * 10
                     text:       "OK"
-                    //-- TODO: For now, only allow Serial (the only one completed)
-                    enabled:    editConfig && editConfig.linkType === LinkConfiguration.TypeSerial
+                    enabled:    nameField.text !== ""
                     onClicked: {
                         // Save editting
                         editConfig.name = nameField.text
@@ -599,42 +603,6 @@ Rectangle {
         }
     }
     //---------------------------------------------
-    // UDP Link Settings
-    Component {
-        id: udpLinkSettings
-        Column {
-            width:              udpLinkSettings.width
-            spacing:            ScreenTools.defaultFontPixelHeight / 2
-            QGCLabel {
-                id:     udpLabel
-                text:   "UDP Link Settings"
-            }
-            Rectangle {
-                height: 1
-                width:  udpLabel.width
-                color:  qgcPal.button
-            }
-            Item {
-                height: ScreenTools.defaultFontPixelHeight / 2
-                width:  parent.width
-            }
-            Row {
-                spacing:    ScreenTools.defaultFontPixelWidth
-                QGCLabel {
-                    text:   "Listening Port:"
-                    width:  _firstColumn
-                }
-                QGCLabel {
-                    text:   "14550"
-                    width:  _secondColumn
-                }
-            }
-            QGCLabel {
-                text:   "Target Hosts:"
-            }
-        }
-    }
-    //---------------------------------------------
     // TCP Link Settings
     Component {
         id: tcpLinkSettings
@@ -657,23 +625,40 @@ Rectangle {
             Row {
                 spacing:    ScreenTools.defaultFontPixelWidth
                 QGCLabel {
-                    text:   "TCP Port:"
+                    text:   "Host Address:"
                     width:  _firstColumn
+                    anchors.verticalCenter: parent.verticalCenter
                 }
-                QGCLabel {
-                    text:   "5760"
+                QGCTextField {
+                    id:     hostField
+                    text:   subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeTcp ? subEditConfig.host : ""
                     width:  _secondColumn
+                    anchors.verticalCenter: parent.verticalCenter
+                    onTextChanged: {
+                        if(subEditConfig) {
+                            subEditConfig.host = hostField.text
+                        }
+                    }
                 }
             }
             Row {
                 spacing:    ScreenTools.defaultFontPixelWidth
                 QGCLabel {
-                    text:   "Host Address:"
+                    text:   "TCP Port:"
                     width:  _firstColumn
+                    anchors.verticalCenter: parent.verticalCenter
                 }
-                QGCLabel {
-                    text:   "0.0.0.0"
-                    width:  _secondColumn
+                QGCTextField {
+                    id:     portField
+                    text:   subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeTcp ? subEditConfig.port.toString() : ""
+                    width:  _firstColumn
+                    inputMethodHints:       Qt.ImhFormattedNumbersOnly
+                    anchors.verticalCenter: parent.verticalCenter
+                    onTextChanged: {
+                        if(subEditConfig) {
+                            subEditConfig.port = parseInt(portField.text)
+                        }
+                    }
                 }
             }
         }
@@ -692,8 +677,46 @@ Rectangle {
                 height: ScreenTools.defaultFontPixelHeight / 2
                 width:  parent.width
             }
-            QGCButton {
-                text:   "Select Log File"
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+                QGCLabel {
+                    text:   "Log File:"
+                    width:  _firstColumn
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCTextField {
+                    id:     logField
+                    text:   subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeMock ? subEditConfig.fileName : ""
+                    width:  _secondColumn
+                    anchors.verticalCenter: parent.verticalCenter
+                    onTextChanged: {
+                        if(subEditConfig) {
+                            subEditConfig.filename = logField.text
+                        }
+                    }
+                }
+                QGCButton {
+                    text:   "Browse"
+                    onClicked: {
+                        fileDialog.visible = true
+                    }
+                }
+            }
+            FileDialog {
+                id:         fileDialog
+                title:      "Please choose a file"
+                folder:     shortcuts.home
+                visible:    false
+                selectExisting: true
+                onAccepted: {
+                    if(subEditConfig) {
+                        subEditConfig.fileName = fileDialog.fileUrl.toString().replace("file://", "")
+                    }
+                    fileDialog.visible = false
+                }
+                onRejected: {
+                    fileDialog.visible = false
+                }
             }
         }
     }

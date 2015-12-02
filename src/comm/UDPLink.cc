@@ -406,9 +406,9 @@ UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name
 UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration(source)
 {
     _localPort = source->localPort();
-    _hosts.clear();
     QString host;
     int port;
+    _hostList.clear();
     if(source->firstHost(host, port)) {
         do {
             addHost(host, port);
@@ -435,7 +435,7 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
 /**
  * @param host Hostname in standard formatt, e.g. localhost:14551 or 192.168.1.1:14551
  */
-void UDPConfiguration::addHost(const QString& host)
+void UDPConfiguration::addHost(const QString host)
 {
     // Handle x.x.x.x:p
     if (host.contains(":"))
@@ -495,9 +495,10 @@ void UDPConfiguration::addHost(const QString& host, int port)
             }
         }
     }
+    _updateHostList();
 }
 
-void UDPConfiguration::removeHost(const QString& host)
+void UDPConfiguration::removeHost(const QString host)
 {
     QMutexLocker locker(&_confMutex);
     QString tHost = host;
@@ -512,6 +513,7 @@ void UDPConfiguration::removeHost(const QString& host)
     } else {
         qWarning() << "UDP:" << "Could not remove unknown host:" << host;
     }
+    _updateHostList();
 }
 
 bool UDPConfiguration::firstHost(QString& host, int& port)
@@ -579,6 +581,7 @@ void UDPConfiguration::loadSettings(QSettings& settings, const QString& root)
         }
     }
     settings.endGroup();
+    _updateHostList();
 }
 
 void UDPConfiguration::updateSettings()
@@ -589,4 +592,16 @@ void UDPConfiguration::updateSettings()
             ulink->_restartConnection();
         }
     }
+}
+
+void UDPConfiguration::_updateHostList()
+{
+    _hostList.clear();
+    QMap<QString, int>::const_iterator it = _hosts.begin();
+    while(it != _hosts.end()) {
+        QString host = QString("%1").arg(it.key()) + ":" + QString("%1").arg(it.value());
+        _hostList += host;
+        it++;
+    }
+    emit hostListChanged();
 }

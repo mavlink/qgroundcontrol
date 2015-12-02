@@ -36,20 +36,26 @@ class LogReplayLinkConfiguration : public LinkConfiguration
     Q_OBJECT
 
 public:
+
+    Q_PROPERTY(QString  fileName    READ logFilename    WRITE setLogFilename    NOTIFY fileNameChanged)
+
     LogReplayLinkConfiguration(const QString& name);
     LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy);
 
     QString logFilename(void) { return _logFilename; }
-    void setLogFilename(const QString& logFilename) { _logFilename = logFilename; }
+    void setLogFilename(const QString& logFilename) { _logFilename = logFilename; emit fileNameChanged(); }
 
     QString logFilenameShort(void);
 
     // Virtuals from LinkConfiguration
-    virtual LinkType type() { return LinkConfiguration::TypeLogReplay; }
-    virtual void copyFrom(LinkConfiguration* source);
-    virtual void loadSettings(QSettings& settings, const QString& root);
-    virtual void saveSettings(QSettings& settings, const QString& root);
-    virtual void updateSettings();
+    LinkType    type                    () { return LinkConfiguration::TypeLogReplay; }
+    void        copyFrom                (LinkConfiguration* source);
+    void        loadSettings            (QSettings& settings, const QString& root);
+    void        saveSettings            (QSettings& settings, const QString& root);
+    void        updateSettings          ();
+    bool        isAutoConnectAllowed    () { return false; }
+signals:
+    void fileNameChanged();
 
 private:
     static const char*  _logFilenameKey;
