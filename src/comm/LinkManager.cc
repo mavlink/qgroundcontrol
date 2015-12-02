@@ -326,7 +326,9 @@ void LinkManager::saveLinkConfigurationList()
 void LinkManager::loadLinkConfigurationList()
 {
     bool linksChanged = false;
+#ifdef QT_DEBUG
     bool mockPresent  = false;
+#endif
     QSettings settings;
     // Is the group even there?
     if(settings.contains(LinkConfiguration::settingsRoot() + "/count")) {
