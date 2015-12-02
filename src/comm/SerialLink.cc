@@ -400,12 +400,13 @@ SerialConfiguration::SerialConfiguration(const QString& name) : LinkConfiguratio
 
 SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfiguration(copy)
 {
-    _baud       = copy->baud();
-    _flowControl= copy->flowControl();
-    _parity     = copy->parity();
-    _dataBits   = copy->dataBits();
-    _stopBits   = copy->stopBits();
-    _portName   = copy->portName();
+    _baud               = copy->baud();
+    _flowControl        = copy->flowControl();
+    _parity             = copy->parity();
+    _dataBits           = copy->dataBits();
+    _stopBits           = copy->stopBits();
+    _portName           = copy->portName();
+    _portDisplayName    = copy->portDisplayName();
 }
 
 void SerialConfiguration::copyFrom(LinkConfiguration *source)
@@ -413,12 +414,13 @@ void SerialConfiguration::copyFrom(LinkConfiguration *source)
     LinkConfiguration::copyFrom(source);
     SerialConfiguration* ssource = dynamic_cast<SerialConfiguration*>(source);
     Q_ASSERT(ssource != NULL);
-    _baud       = ssource->baud();
-    _flowControl= ssource->flowControl();
-    _parity     = ssource->parity();
-    _dataBits   = ssource->dataBits();
-    _stopBits   = ssource->stopBits();
-    _portName   = ssource->portName();
+    _baud               = ssource->baud();
+    _flowControl        = ssource->flowControl();
+    _parity             = ssource->parity();
+    _dataBits           = ssource->dataBits();
+    _stopBits           = ssource->stopBits();
+    _portName           = ssource->portName();
+    _portDisplayName    = ssource->portDisplayName();
 }
 
 void SerialConfiguration::updateSettings()
@@ -462,30 +464,45 @@ void SerialConfiguration::setPortName(const QString& portName)
     QString pname = portName.trimmed();
     if (!pname.isEmpty() && pname != _portName) {
         _portName = pname;
+        _portDisplayName = cleanPortDisplayname(pname);
     }
+}
+
+QString SerialConfiguration::cleanPortDisplayname(const QString name)
+{
+    QString pname = name.trimmed();
+#ifdef Q_OS_WIN32
+    pname.replace("\\\\.\\", "");
+#else
+    pname.replace("/dev/cu.", "");
+    pname.replace("/dev/", "");
+#endif
+    return pname;
 }
 
 void SerialConfiguration::saveSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
-    settings.setValue("baud",        _baud);
-    settings.setValue("dataBits",    _dataBits);
-    settings.setValue("flowControl", _flowControl);
-    settings.setValue("stopBits",    _stopBits);
-    settings.setValue("parity",      _parity);
-    settings.setValue("portName",    _portName);
+    settings.setValue("baud",           _baud);
+    settings.setValue("dataBits",       _dataBits);
+    settings.setValue("flowControl",    _flowControl);
+    settings.setValue("stopBits",       _stopBits);
+    settings.setValue("parity",         _parity);
+    settings.setValue("portName",       _portName);
+    settings.setValue("portDisplayName",_portDisplayName);
     settings.endGroup();
 }
 
 void SerialConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
-    if(settings.contains("baud"))        _baud         = settings.value("baud").toInt();
-    if(settings.contains("dataBits"))    _dataBits     = settings.value("dataBits").toInt();
-    if(settings.contains("flowControl")) _flowControl  = settings.value("flowControl").toInt();
-    if(settings.contains("stopBits"))    _stopBits     = settings.value("stopBits").toInt();
-    if(settings.contains("parity"))      _parity       = settings.value("parity").toInt();
-    if(settings.contains("portName"))    _portName     = settings.value("portName").toString();
+    if(settings.contains("baud"))           _baud           = settings.value("baud").toInt();
+    if(settings.contains("dataBits"))       _dataBits       = settings.value("dataBits").toInt();
+    if(settings.contains("flowControl"))    _flowControl    = settings.value("flowControl").toInt();
+    if(settings.contains("stopBits"))       _stopBits       = settings.value("stopBits").toInt();
+    if(settings.contains("parity"))         _parity         = settings.value("parity").toInt();
+    if(settings.contains("portName"))       _portName       = settings.value("portName").toString();
+    if(settings.contains("portDisplayName"))_portDisplayName= settings.value("portDisplayName").toString();
     settings.endGroup();
 }
 

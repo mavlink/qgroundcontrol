@@ -45,6 +45,7 @@ LinkConfiguration::LinkConfiguration(const QString& name)
     : _link(NULL)
     , _name(name)
     , _dynamic(false)
+    , _autoConnect(false)
 {
     _name = name;
     if (_name.isEmpty()) {
@@ -57,6 +58,7 @@ LinkConfiguration::LinkConfiguration(LinkConfiguration* copy)
     _link       = copy->link();
     _name       = copy->name();
     _dynamic    = copy->isDynamic();
+    _autoConnect= copy->isAutoConnect();
     Q_ASSERT(!_name.isEmpty());
 }
 
@@ -66,6 +68,7 @@ void LinkConfiguration::copyFrom(LinkConfiguration* source)
     _link       = source->link();
     _name       = source->name();
     _dynamic    = source->isDynamic();
+    _autoConnect= source->isAutoConnect();
 }
 
 /*!
