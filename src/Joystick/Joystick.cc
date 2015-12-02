@@ -347,9 +347,7 @@ void Joystick::run(void)
                     }
 
                     // Mark the button as pressed as long as its pressed
-                    if (buttonIndex < reservedButtonCount) {
-                        buttonPressedBits |= buttonBit;
-                    }
+                    buttonPressedBits |= buttonBit;
                 }
             }
             
