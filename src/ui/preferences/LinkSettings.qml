@@ -362,6 +362,8 @@ Rectangle {
                 QGCButton {
                     width:      ScreenTools.defaultFontPixelWidth * 10
                     text:       "OK"
+                    //-- TODO: For now, only allow Serial (the only one completed)
+                    enabled:    editConfig && editConfig.linkType === LinkConfiguration.TypeSerial
                     onClicked: {
                         // Save editting
                         editConfig.name = nameField.text
@@ -393,7 +395,7 @@ Rectangle {
     Component {
         id: serialLinkSettings
         Column {
-            width:              parent.width
+            width:              serialLinkSettings.width
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             QGCLabel {
                 id:     serialLabel
@@ -601,7 +603,7 @@ Rectangle {
     Component {
         id: udpLinkSettings
         Column {
-            width:              parent.width
+            width:              udpLinkSettings.width
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             QGCLabel {
                 id:     udpLabel
@@ -637,7 +639,7 @@ Rectangle {
     Component {
         id: tcpLinkSettings
         Column {
-            width:              parent.width
+            width:              tcpLinkSettings.width
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             QGCLabel {
                 id:     tcpLabel
@@ -681,7 +683,7 @@ Rectangle {
     Component {
         id: logLinkSettings
         Column {
-            width:              parent.width
+            width:              logLinkSettings.width
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             QGCLabel {
                 text:   "Log Replay Link Settings"
@@ -700,7 +702,7 @@ Rectangle {
     Component {
         id: mockLinkSettings
         Column {
-            width:              parent.width
+            width:              mockLinkSettings.width
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             QGCLabel {
                 text:   "Mock Link Settings"
