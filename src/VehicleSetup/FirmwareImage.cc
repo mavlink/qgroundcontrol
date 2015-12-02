@@ -165,7 +165,7 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
             
             if (appendToLastBlock) {
                 _ihxBlocks[_ihxBlocks.count() - 1].bytes += bytes;
-                qCDebug(FirmwareUpgradeLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
             } else {
                 IntelHexBlock_t block;
                 
@@ -173,7 +173,7 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
                 block.bytes = bytes;
                 
                 _ihxBlocks += block;
-                qCDebug(FirmwareUpgradeLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
             }
             
             _imageSize += blockByteCount;
