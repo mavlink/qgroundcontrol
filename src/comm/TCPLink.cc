@@ -237,6 +237,39 @@ void TCPLink::_restartConnection()
 //--------------------------------------------------------------------------
 //-- TCPConfiguration
 
+static bool is_ip(const QString& address)
+{
+    int a,b,c,d;
+    if (sscanf(address.toStdString().c_str(), "%d.%d.%d.%d", &a, &b, &c, &d) != 4
+            && strcmp("::1", address.toStdString().c_str())) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+static QString get_ip_address(const QString& address)
+{
+    if(is_ip(address))
+        return address;
+    // Need to look it up
+    QHostInfo info = QHostInfo::fromName(address);
+    if (info.error() == QHostInfo::NoError)
+    {
+        QList<QHostAddress> hostAddresses = info.addresses();
+        QHostAddress address;
+        for (int i = 0; i < hostAddresses.size(); i++)
+        {
+            // Exclude all IPv6 addresses
+            if (!hostAddresses.at(i).toString().contains(":"))
+            {
+                return hostAddresses.at(i).toString();
+            }
+        }
+    }
+    return QString("");
+}
+
 TCPConfiguration::TCPConfiguration(const QString& name) : LinkConfiguration(name)
 {
     _port    = QGC_TCP_PORT;
@@ -270,7 +303,12 @@ void TCPConfiguration::setAddress(const QHostAddress& address)
 
 void TCPConfiguration::setHost(const QString host)
 {
-    _address = host;
+    QString ipAdd = get_ip_address(host);
+    if(ipAdd.isEmpty()) {
+        qWarning() << "TCP:" << "Could not resolve host:" << host;
+    } else {
+        _address = ipAdd;
+    }
 }
 
 void TCPConfiguration::saveSettings(QSettings& settings, const QString& root)

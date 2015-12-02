@@ -43,7 +43,7 @@ public:
     LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy);
 
     QString logFilename(void) { return _logFilename; }
-    void setLogFilename(const QString& logFilename) { _logFilename = logFilename; emit fileNameChanged(); }
+    void setLogFilename(const QString logFilename) { _logFilename = logFilename; emit fileNameChanged(); }
 
     QString logFilenameShort(void);
 
@@ -54,6 +54,7 @@ public:
     void        saveSettings            (QSettings& settings, const QString& root);
     void        updateSettings          ();
     bool        isAutoConnectAllowed    () { return false; }
+    QString     settingsURL             () { return "LogReplaySettings.qml"; }
 signals:
     void fileNameChanged();
 
