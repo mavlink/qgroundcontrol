@@ -133,11 +133,25 @@ Rectangle {
                     Repeater {
                         model: missionItem.comboboxFacts
 
-                        FactComboBox {
-                            width:      valuesColumn.width
-                            indexModel: false
-                            model:      object.enumStrings
-                            fact:       object
+                        Item {
+                            width:  valuesColumn.width
+                            height: comboBoxFact.height
+
+                            QGCLabel {
+                                id:                 comboBoxLabel
+                                anchors.baseline:   comboBoxFact.baseline
+                                text:               object.name
+                                visible:            object.name != ""
+                            }
+
+                            FactComboBox {
+                                id:             comboBoxFact
+                                anchors.right:  parent.right
+                                width:          comboBoxLabel.visible ? _editFieldWidth : parent.width
+                                indexModel:     false
+                                model:          object.enumStrings
+                                fact:           object
+                            }
                         }
                     }
 

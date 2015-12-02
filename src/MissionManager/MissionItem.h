@@ -215,21 +215,23 @@ private:
 
 private:
     typedef struct {
-        int     param;
-        QString label;
-        QString units;
-        double  defaultValue;
-        int     decimalPlaces;
+        double          defaultValue;
+        int             decimalPlaces;
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+        QString         label;
+        int             param;
+        QString         units;
     } ParamInfo_t;
 
     typedef struct {
         MAV_CMD                 command;
-        QString                 rawName;
-        QString                 friendlyName;
         QString                 description;
-        bool                    specifiesCoordinate;
         bool                    friendlyEdit;
+        QString                 friendlyName;
         QMap<int, ParamInfo_t>  paramInfoMap;
+        QString                 rawName;
+        bool                    specifiesCoordinate;
     } MavCmdInfo_t;
     
     bool        _rawEdit;
@@ -266,6 +268,9 @@ private:
     FactMetaData    _param2MetaData;
     FactMetaData    _param3MetaData;
     FactMetaData    _param4MetaData;
+    FactMetaData    _param5MetaData;
+    FactMetaData    _param6MetaData;
+    FactMetaData    _param7MetaData;
 
     /// This is used to reference any subsequent mission items which do not specify a coordinate.
     QmlObjectListModel  _childItems;
@@ -279,6 +284,8 @@ private:
     static const QString _decimalPlacesJsonKey;
     static const QString _defaultJsonKey;
     static const QString _descriptionJsonKey;
+    static const QString _enumStringsJsonKey;
+    static const QString _enumValuesJsonKey;
     static const QString _friendlyNameJsonKey;
     static const QString _friendlyEditJsonKey;
     static const QString _idJsonKey;
@@ -295,6 +302,7 @@ private:
     static const QString _versionJsonKey;
 
     static const QString _degreesUnits;
+    static const QString _degreesConvertUnits;
 };
 
 QDebug operator<<(QDebug dbg, const MissionItem& missionItem);
