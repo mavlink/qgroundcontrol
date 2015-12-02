@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<airframes>
+  <version>1</version>
+  <airframe_group image="AirframeQuadRotorX.png" name="Quadrotor x"/>
+      <airframe id="10020" name="3DR Aero M" file="3DR_AERO_M.param"/>
+      <airframe id="10021" name="3DR Aero RTF" file="3DR_Aero_RTF.param"/>
+      <airframe id="10022" name="3DR Iris+" file="3DR_Iris+.param"/>
+      <airframe id="10023" name="3DR QUAD X4 RTF" file="3DR_QUAD_X4_RTF.param"/>
+      <airframe id="10024" name="3DR Rover" file="3DR_Rover.param"/>
+      <airframe id="10025" name="3DR Tarot" file="3DR_Tarot.bgsc"/>
+      <airframe id="10026" name="3DR X8+ RTF" file="3DR_X8+_RTF.param"/>
+      <airframe id="10027" name="3DR X8-M RTF" file="3DR_X8-M_RTF.param"/>
+      <airframe id="10028" name="3DR X8" file="3DR_X8_RTF.param"/>
+      <airframe id="10029" name="3DR Y6A" file="3DR_Y6A_RTF.param"/>
+      <airframe id="10030" name="3DR Y6B" file="3DR_Y6B_RTF.param"/>
+      <airframe id="10031" name="Iris with GoPro" file="Iris with Front Mount Go Pro.param"/>
+      <airframe id="10032" name="Iris with Tarot" file="Iris with Tarot Gimbal.param"/>
+      <airframe id="10033" name="Iris" file="Iris.param"/>
+      <airframe id="10034" name="Parrot Bebop" file="Parrot_Bebop.param"/>
+      <airframe id="10035" name="Storm32" file="SToRM32-MAVLink.param"/>
+  </airframe_group>
+<airframes>
