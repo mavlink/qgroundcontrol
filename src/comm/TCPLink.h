@@ -108,11 +108,12 @@ public:
     void setHost    (const QString host);
 
     /// From LinkConfiguration
-    LinkType type() { return LinkConfiguration::TypeTcp; }
-    void copyFrom(LinkConfiguration* source);
-    void loadSettings(QSettings& settings, const QString& root);
-    void saveSettings(QSettings& settings, const QString& root);
-    void updateSettings();
+    LinkType    type            () { return LinkConfiguration::TypeTcp; }
+    void        copyFrom        (LinkConfiguration* source);
+    void        loadSettings    (QSettings& settings, const QString& root);
+    void        saveSettings    (QSettings& settings, const QString& root);
+    void        updateSettings  ();
+    QString     settingsURL     () { return "TcpSettings.qml"; }
 
 signals:
     void portChanged();

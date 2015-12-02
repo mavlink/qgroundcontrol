@@ -35,6 +35,10 @@ Item {
     width:  parent ? parent.width : 0
     height: udpColumn.height
 
+    function saveSettings() {
+        // No need
+    }
+
     property var _currentHost: ""
 
     Column {
