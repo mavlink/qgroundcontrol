@@ -49,6 +49,8 @@ FactMetaData* MissionItem::_supportedCommandMetaData =  NULL;
 const QString MissionItem::_decimalPlacesJsonKey        (QStringLiteral("decimalPlaces"));
 const QString MissionItem::_defaultJsonKey              (QStringLiteral("default"));
 const QString MissionItem::_descriptionJsonKey          (QStringLiteral("description"));
+const QString MissionItem::_enumStringsJsonKey          (QStringLiteral("enumStrings"));
+const QString MissionItem::_enumValuesJsonKey           (QStringLiteral("enumValues"));
 const QString MissionItem::_friendlyEditJsonKey         (QStringLiteral("friendlyEdit"));
 const QString MissionItem::_friendlyNameJsonKey         (QStringLiteral("friendlyName"));
 const QString MissionItem::_idJsonKey                   (QStringLiteral("id"));
@@ -64,6 +66,7 @@ const QString MissionItem::_specifiesCoordinateJsonKey  (QStringLiteral("specifi
 const QString MissionItem::_unitsJsonKey                (QStringLiteral("units"));
 const QString MissionItem::_versionJsonKey              (QStringLiteral("version"));
 
+const QString MissionItem::_degreesConvertUnits         (QStringLiteral("degreesConvert"));
 const QString MissionItem::_degreesUnits                (QStringLiteral("degrees"));
 
 QMap<MAV_CMD, MissionItem::MavCmdInfo_t> MissionItem::_mavCmdInfoMap;
@@ -116,8 +119,8 @@ MissionItem::MissionItem(QObject* parent)
     , _homePositionValid(false)
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
     , _autoContinueFact             (0, "AutoContinue",                 FactMetaData::valueTypeUint32)
-    , _commandFact                  (0, "Command:",                     FactMetaData::valueTypeUint32)
-    , _frameFact                    (0, "Frame:",                       FactMetaData::valueTypeUint32)
+    , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
+    , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
     , _param1Fact                   (0, "Param1:",                      FactMetaData::valueTypeDouble)
     , _param2Fact                   (0, "Param2:",                      FactMetaData::valueTypeDouble)
     , _param3Fact                   (0, "Param3:",                      FactMetaData::valueTypeDouble)
@@ -130,6 +133,9 @@ MissionItem::MissionItem(QObject* parent)
     , _param2MetaData(FactMetaData::valueTypeDouble)
     , _param3MetaData(FactMetaData::valueTypeDouble)
     , _param4MetaData(FactMetaData::valueTypeDouble)
+    , _param5MetaData(FactMetaData::valueTypeDouble)
+    , _param6MetaData(FactMetaData::valueTypeDouble)
+    , _param7MetaData(FactMetaData::valueTypeDouble)
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
     , _syncingSupportedCommandAndCommand        (false)
@@ -177,6 +183,9 @@ MissionItem::MissionItem(int             sequenceNumber,
     , _param2MetaData(FactMetaData::valueTypeDouble)
     , _param3MetaData(FactMetaData::valueTypeDouble)
     , _param4MetaData(FactMetaData::valueTypeDouble)
+    , _param5MetaData(FactMetaData::valueTypeDouble)
+    , _param6MetaData(FactMetaData::valueTypeDouble)
+    , _param7MetaData(FactMetaData::valueTypeDouble)
     , _syncingAltitudeRelativeToHomeAndFrame    (false)
     , _syncingHeadingDegreesAndParam4           (false)
     , _syncingSupportedCommandAndCommand        (false)
@@ -293,6 +302,9 @@ void MissionItem::_connectSignals(void)
     connect(&_commandFact,      &Fact::valueChanged,        this, &MissionItem::_sendFriendlyEditAllowedChanged);
     connect(&_frameFact,        &Fact::valueChanged,        this, &MissionItem::_sendFriendlyEditAllowedChanged);
 
+    // When the command changes we need to set defaults. This must go out before the signals below so it must be registered first.
+    connect(&_commandFact,  &Fact::valueChanged, this, &MissionItem::setDefaultsForCommand);
+
     // Whenever these properties change the ui model changes as well
     connect(this, &MissionItem::commandChanged, this, &MissionItem::_sendUiModelChanged);
     connect(this, &MissionItem::rawEditChanged, this, &MissionItem::_sendUiModelChanged);
@@ -301,8 +313,6 @@ void MissionItem::_connectSignals(void)
     connect(&_commandFact,  &Fact::valueChanged, this, &MissionItem::_sendCommandChanged);
     connect(&_frameFact,    &Fact::valueChanged, this, &MissionItem::_sendFrameChanged);
 
-    // When the command changes we need to set defaults
-    connect(&_commandFact,  &Fact::valueChanged, this, &MissionItem::setDefaultsForCommand);
 }
 
 bool MissionItem::_validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types)
@@ -398,7 +408,7 @@ bool MissionItem::_loadMavCmdInfoJson(void)
 
         // Read params
 
-        for (int i=1; i<5; i++) {
+        for (int i=1; i<=7; i++) {
             QString paramKey = QString(_paramJsonKeyFormat).arg(i);
 
             if (jsonObject.contains(paramKey)) {
@@ -407,8 +417,8 @@ bool MissionItem::_loadMavCmdInfoJson(void)
                 // Validate key types
                 QStringList             keys;
                 QList<QJsonValue::Type> types;
-                keys << _labelJsonKey << _unitsJsonKey << _defaultJsonKey << _decimalPlacesJsonKey;
-                types << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Double;
+                keys << _defaultJsonKey << _decimalPlacesJsonKey << _enumStringsJsonKey << _enumValuesJsonKey << _labelJsonKey << _unitsJsonKey;
+                types << QJsonValue::Double <<  QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::String;
                 if (!_validateKeyTypes(paramObject, keys, types)) {
                     return false;
                 }
@@ -420,10 +430,41 @@ bool MissionItem::_loadMavCmdInfoJson(void)
                     return false;
                 }
 
-                _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].param =          i;
-                _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].units =          paramObject.value(_unitsJsonKey).toString();
+                _mavCmdInfoMap[mavCmdInfo.command].friendlyEdit = true; // Assume friendly edit if we have params
+
                 _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].defaultValue =   paramObject.value(_defaultJsonKey).toDouble(0.0);
                 _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].decimalPlaces =  paramObject.value(_decimalPlacesJsonKey).toInt(FactMetaData::defaultDecimalPlaces);
+                _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].enumStrings =    paramObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
+                _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].param =          i;
+                _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].units =          paramObject.value(_unitsJsonKey).toString();
+
+                QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
+                foreach (QString enumValue, enumValues) {
+                    bool    convertOk;
+                    double  value = enumValue.toDouble(&convertOk);
+
+                    if (!convertOk) {
+                        qWarning() << "Bad enumValue" << enumValue;
+                        return false;
+                    }
+
+                    _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].enumValues << QVariant(value);
+                }
+                if (_mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].enumStrings.count() != _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].enumStrings.count()) {
+                    qWarning() << "enum strings/values count mismatch" << _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].enumStrings.count() << _mavCmdInfoMap[mavCmdInfo.command].paramInfoMap[i].enumStrings.count();
+                    return false;
+                }
+            }
+        }
+
+        if (mavCmdInfo.friendlyEdit) {
+            if (mavCmdInfo.description.isEmpty()) {
+                qWarning() << "Missing description" << mavCmdInfo.rawName;
+                return false;
+            }
+            if (mavCmdInfo.rawName ==  mavCmdInfo.friendlyName) {
+                qWarning() << "Missing friendly name" << mavCmdInfo.rawName << mavCmdInfo.friendlyName;
+                return false;
             }
         }
     }
@@ -692,48 +733,26 @@ QmlObjectListModel* MissionItem::textFieldFacts(void)
 
         MAV_CMD command = (MAV_CMD)this->command();
 
-        if (_mavCmdInfoMap[command].paramInfoMap.contains(1)) {
-            _param1Fact._setName(_mavCmdInfoMap[command].paramInfoMap[1].label);
-            _param1MetaData.setUnits(_mavCmdInfoMap[command].paramInfoMap[1].units);
-            _param1MetaData.setDecimalPlaces(_mavCmdInfoMap[command].paramInfoMap[1].decimalPlaces);
-            if (_mavCmdInfoMap[command].paramInfoMap[1].units == _degreesUnits) {
-                _param1MetaData.setTranslators(_radiansToDegrees, _degreesToRadians);
-            }
-            _param1Fact.setMetaData(&_param1MetaData);
-            model->append(&_param1Fact);
-        }
+        Fact*           rgParamFacts[7] =       { &_param1Fact, &_param2Fact, &_param3Fact, &_param4Fact, &_param5Fact, &_param6Fact, &_param7Fact };
+        FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
 
-        if (_mavCmdInfoMap[command].paramInfoMap.contains(2)) {
-            _param2Fact._setName(_mavCmdInfoMap[command].paramInfoMap[2].label);
-            _param2MetaData.setUnits(_mavCmdInfoMap[command].paramInfoMap[2].units);
-            _param2MetaData.setDecimalPlaces(_mavCmdInfoMap[command].paramInfoMap[2].decimalPlaces);
-            if (_mavCmdInfoMap[command].paramInfoMap[2].units == _degreesUnits) {
-                _param2MetaData.setTranslators(_radiansToDegrees, _degreesToRadians);
-            }
-            _param2Fact.setMetaData(&_param2MetaData);
-            model->append(&_param2Fact);
-        }
+        for (int i=1; i<=7; i++) {
+            if (_mavCmdInfoMap[command].paramInfoMap.contains(i) && _mavCmdInfoMap[command].paramInfoMap[i].enumStrings.count() == 0) {
+                Fact*           paramFact =     rgParamFacts[i-1];
+                FactMetaData*   paramMetaData = rgParamMetaData[i-1];
 
-        if (_mavCmdInfoMap[command].paramInfoMap.contains(3)) {
-            _param3Fact._setName(_mavCmdInfoMap[command].paramInfoMap[3].label);
-            _param3MetaData.setUnits(_mavCmdInfoMap[command].paramInfoMap[3].units);
-            _param3MetaData.setDecimalPlaces(_mavCmdInfoMap[command].paramInfoMap[3].decimalPlaces);
-            if (_mavCmdInfoMap[command].paramInfoMap[3].units == _degreesUnits) {
-                _param3MetaData.setTranslators(_radiansToDegrees, _degreesToRadians);
+                paramFact->_setName(_mavCmdInfoMap[command].paramInfoMap[i].label);
+                paramMetaData->setDecimalPlaces(_mavCmdInfoMap[command].paramInfoMap[i].decimalPlaces);
+                paramMetaData->setEnumInfo(_mavCmdInfoMap[command].paramInfoMap[i].enumStrings, _mavCmdInfoMap[command].paramInfoMap[i].enumValues);
+                if (_mavCmdInfoMap[command].paramInfoMap[i].units == _degreesConvertUnits) {
+                    paramMetaData->setTranslators(_radiansToDegrees, _degreesToRadians);
+                    paramMetaData->setUnits(_degreesUnits);
+                } else {
+                    paramMetaData->setUnits(_mavCmdInfoMap[command].paramInfoMap[i].units);
+                }
+                paramFact->setMetaData(paramMetaData);
+                model->append(paramFact);
             }
-            _param3Fact.setMetaData(&_param3MetaData);
-            model->append(&_param3Fact);
-        }
-
-        if (_mavCmdInfoMap[command].paramInfoMap.contains(4)) {
-            _param4Fact._setName(_mavCmdInfoMap[command].paramInfoMap[4].label);
-            _param4MetaData.setUnits(_mavCmdInfoMap[command].paramInfoMap[4].units);
-            _param4MetaData.setDecimalPlaces(_mavCmdInfoMap[command].paramInfoMap[4].decimalPlaces);
-            if (_mavCmdInfoMap[command].paramInfoMap[4].units == _degreesUnits) {
-                _param4MetaData.setTranslators(_radiansToDegrees, _degreesToRadians);
-            }
-            _param4Fact.setMetaData(&_param4MetaData);
-            model->append(&_param4Fact);
         }
 
         if (specifiesCoordinate()) {
@@ -767,6 +786,30 @@ QmlObjectListModel* MissionItem::comboboxFacts(void)
     if (rawEdit()) {
         model->append(&_commandFact);
         model->append(&_frameFact);
+    } else {
+        Fact*           rgParamFacts[7] =       { &_param1Fact, &_param2Fact, &_param3Fact, &_param4Fact, &_param5Fact, &_param6Fact, &_param7Fact };
+        FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
+
+        MAV_CMD command = (MAV_CMD)this->command();
+
+        for (int i=1; i<=7; i++) {
+            if (_mavCmdInfoMap[command].paramInfoMap.contains(i) && _mavCmdInfoMap[command].paramInfoMap[i].enumStrings.count()) {
+                Fact*           paramFact =     rgParamFacts[i-1];
+                FactMetaData*   paramMetaData = rgParamMetaData[i-1];
+
+                paramFact->_setName(_mavCmdInfoMap[command].paramInfoMap[i].label);
+                paramMetaData->setDecimalPlaces(_mavCmdInfoMap[command].paramInfoMap[i].decimalPlaces);
+                paramMetaData->setEnumInfo(_mavCmdInfoMap[command].paramInfoMap[i].enumStrings, _mavCmdInfoMap[command].paramInfoMap[i].enumValues);
+                if (_mavCmdInfoMap[command].paramInfoMap[i].units == _degreesConvertUnits) {
+                    paramMetaData->setTranslators(_radiansToDegrees, _degreesToRadians);
+                    paramMetaData->setUnits(_degreesUnits);
+                } else {
+                    paramMetaData->setUnits(_mavCmdInfoMap[command].paramInfoMap[i].units);
+                }
+                paramFact->setMetaData(paramMetaData);
+                model->append(paramFact);
+            }
+        }
     }
 
     return model;
@@ -808,7 +851,7 @@ bool MissionItem::rawEdit(void) const
 
 void MissionItem::setRawEdit(bool rawEdit)
 {
-    if (_rawEdit != rawEdit) {
+    if (this->rawEdit() != rawEdit) {
         _rawEdit = rawEdit;
         emit rawEditChanged(this->rawEdit());
     }
@@ -893,22 +936,9 @@ void MissionItem::_syncCommandToSupportedCommand(const QVariant& value)
 void MissionItem::setDefaultsForCommand(void)
 {
     foreach (ParamInfo_t paramInfo, _mavCmdInfoMap[(MAV_CMD)command()].paramInfoMap) {
-        double defaultValue = paramInfo.defaultValue;
+        Fact* rgParamFacts[7] = { &_param1Fact, &_param2Fact, &_param3Fact, &_param4Fact, &_param5Fact, &_param6Fact, &_param7Fact };
 
-        switch (paramInfo.param) {
-            case 1:
-                _param1Fact.setRawValue(defaultValue);
-                break;
-            case 2:
-                _param2Fact.setRawValue(defaultValue);
-                break;
-            case 3:
-                _param3Fact.setRawValue(defaultValue);
-                break;
-            case 4:
-                _param4Fact.setRawValue(defaultValue);
-                break;
-        }
+        rgParamFacts[paramInfo.param-1]->setRawValue(paramInfo.defaultValue);
     }
 
     setParam7(defaultAltitude);
