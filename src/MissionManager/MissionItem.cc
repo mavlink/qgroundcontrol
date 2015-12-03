@@ -29,12 +29,7 @@ This file is part of the QGROUNDCONTROL project
 
 QGC_LOGGING_CATEGORY(MissionItemLog, "MissionItemLog")
 
-const double MissionItem::defaultTakeoffPitch =         15.0;
-const double MissionItem::defaultHeading =              0.0;
 const double MissionItem::defaultAltitude =             25.0;
-const double MissionItem::defaultAcceptanceRadius =     3.0;
-const double MissionItem::defaultLoiterOrbitRadius =    10.0;
-const double MissionItem::defaultLoiterTurns =          1.0;
 
 FactMetaData* MissionItem::_altitudeMetaData =          NULL;
 FactMetaData* MissionItem::_commandMetaData =           NULL;
@@ -122,6 +117,7 @@ MissionItem::MissionItem(QObject* parent)
     _connectSignals();
 
     setAutoContinue(true);
+    setDefaultsForCommand();
 }
 
 MissionItem::MissionItem(int             sequenceNumber,
@@ -770,13 +766,15 @@ void MissionItem::_syncCommandToSupportedCommand(const QVariant& value)
 
 void MissionItem::setDefaultsForCommand(void)
 {
+    // We set these global defaults first, then if there are param defaults they will get reset
+    setParam7(defaultAltitude);
+
     foreach (const MavCmdParamInfo* paramInfo, _mavCmdInfoMap[(MAV_CMD)command()]->paramInfoMap()) {
         Fact* rgParamFacts[7] = { &_param1Fact, &_param2Fact, &_param3Fact, &_param4Fact, &_param5Fact, &_param6Fact, &_param7Fact };
 
         rgParamFacts[paramInfo->param()-1]->setRawValue(paramInfo->defaultValue());
     }
 
-    setParam7(defaultAltitude);
     setAutoContinue(true);
     setFrame(specifiesCoordinate() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
     setRawEdit(false);

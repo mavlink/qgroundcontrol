@@ -25,6 +25,12 @@
                 "units":            "seconds",
                 "default":          0,
                 "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "Accept radius:",
+                "units":            "meters",
+                "default":          3.0,
+                "decimalPlaces":    2
             }
         },
         {
