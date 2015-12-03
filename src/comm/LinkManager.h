@@ -37,7 +37,9 @@ This file is part of the PIXHAWK project
 #include "QGCToolbox.h"
 #include "ProtocolInterface.h"
 #include "MAVLinkProtocol.h"
+#ifndef __mobile__
 #include "LogReplayLink.h"
+#endif
 #include "QmlObjectListModel.h"
 
 #ifndef __ios__
