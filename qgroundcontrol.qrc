@@ -11,21 +11,28 @@
         <file alias="APMAirframeComponent.qml">src/AutoPilotPlugins/APM/APMAirframeComponent.qml</file>
         <file alias="APMAirframeComponentSummary.qml">src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
-        <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
         <file alias="FlightModesComponent.qml">src/AutoPilotPlugins/PX4/FlightModesComponent.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
+
+        <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
         <file alias="GeneralSettings.qml">src/ui/preferences/GeneralSettings.qml</file>
         <file alias="LinkSettings.qml">src/ui/preferences/LinkSettings.qml</file>
+        <file alias="LogReplaySettings.qml">src/ui/preferences/LogReplaySettings.qml</file>
+        <file alias="MavlinkSettings.qml">src/ui/preferences/MavlinkSettings.qml</file>
+        <file alias="MockLink.qml">src/ui/preferences/MockLink.qml</file>
+        <file alias="MockLinkSettings.qml">src/ui/preferences/MockLinkSettings.qml</file>
+        <file alias="SerialSettings.qml">src/ui/preferences/SerialSettings.qml</file>
+        <file alias="TcpSettings.qml">src/ui/preferences/TcpSettings.qml</file>
+        <file alias="UdpSettings.qml">src/ui/preferences/UdpSettings.qml</file>
+
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="MainWindow.qml">src/ui/MainWindow.qml</file>
         <file alias="MainWindowLeftPanel.qml">src/ui/MainWindowLeftPanel.qml</file>
-        <file alias="MavlinkSettings.qml">src/ui/preferences/MavlinkSettings.qml</file>
         <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
         <file alias="MissionEditorHelp.qml">src/MissionEditor/MissionEditorHelp.qml</file>
-        <file alias="MockLink.qml">src/ui/preferences/MockLink.qml</file>
         <file alias="PowerComponent.qml">src/AutoPilotPlugins/PX4/PowerComponent.qml</file>
         <file alias="PowerComponentSummary.qml">src/AutoPilotPlugins/PX4/PowerComponentSummary.qml</file>
         <file alias="PX4FlowSensor.qml">src/VehicleSetup/PX4FlowSensor.qml</file>

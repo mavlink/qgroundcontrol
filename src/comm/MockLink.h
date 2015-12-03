@@ -40,25 +40,42 @@ class MockConfiguration : public LinkConfiguration
     Q_OBJECT
 
 public:
+
+    Q_PROPERTY(int      firmware    READ firmware           WRITE setFirmware       NOTIFY firmwareChanged)
+    Q_PROPERTY(int      vehicle     READ vehicle            WRITE setVehicle        NOTIFY vehicleChanged)
+    Q_PROPERTY(bool     sendStatus  READ sendStatusText     WRITE setSendStatusText NOTIFY sendStatusChanged)
+
+    // QML Access
+    int     firmware        () { return (int)_firmwareType; }
+    void    setFirmware     (int type) { _firmwareType = (MAV_AUTOPILOT)type; emit firmwareChanged(); }
+    int     vehicle         () { return (int)_vehicleType; }
+    void    setVehicle      (int type) { _vehicleType = (MAV_TYPE)type; emit vehicleChanged(); }
+
     MockConfiguration(const QString& name);
     MockConfiguration(MockConfiguration* source);
 
     MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
-    void setFirmwareType(MAV_AUTOPILOT firmwareType) { _firmwareType = firmwareType; }
+    void setFirmwareType(MAV_AUTOPILOT firmwareType) { _firmwareType = firmwareType; emit firmwareChanged(); }
 
     MAV_TYPE vehicleType(void) { return _vehicleType; }
-    void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; }
+    void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; emit vehicleChanged(); }
 
     /// @param sendStatusText true: mavlink status text messages will be sent for each severity, as well as voice output info message
-    void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; }
     bool sendStatusText(void) { return _sendStatusText; }
+    void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
 
     // Overrides from LinkConfiguration
-    LinkType type(void) { return LinkConfiguration::TypeMock; }
-    void copyFrom(LinkConfiguration* source);
-    void loadSettings(QSettings& settings, const QString& root);
-    void saveSettings(QSettings& settings, const QString& root);
-    void updateSettings(void);
+    LinkType    type            (void) { return LinkConfiguration::TypeMock; }
+    void        copyFrom        (LinkConfiguration* source);
+    void        loadSettings    (QSettings& settings, const QString& root);
+    void        saveSettings    (QSettings& settings, const QString& root);
+    void        updateSettings  (void);
+    QString     settingsURL     () { return "MockLinkSettings.qml"; }
+
+signals:
+    void firmwareChanged    ();
+    void vehicleChanged     ();
+    void sendStatusChanged  ();
 
 private:
     MAV_AUTOPILOT   _firmwareType;
