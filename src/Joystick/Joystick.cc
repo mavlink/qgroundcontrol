@@ -461,6 +461,10 @@ QStringList Joystick::actions(void)
     QStringList list;
 
     list << "Arm" << "Disarm";
+
+    if (_activeVehicle) {
+        list << _activeVehicle->flightModes();
+    }
     
     return list;
 }
@@ -558,6 +562,8 @@ void Joystick::_buttonAction(const QString& action)
         _activeVehicle->setArmed(true);
     } else if (action == "Disarm") {
         _activeVehicle->setArmed(false);
+    } else if (_activeVehicle->flightModes().contains(action)) {
+        _activeVehicle->setFlightMode(action);
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }

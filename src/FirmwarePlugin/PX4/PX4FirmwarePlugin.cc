@@ -174,7 +174,7 @@ bool PX4FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
 
 int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
 {
-    return 8;   // 8 buttons reserved for rc switch simulation
+    return 0;   // 0 buttons reserved for rc switch simulation
 }
 
 void PX4FirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
