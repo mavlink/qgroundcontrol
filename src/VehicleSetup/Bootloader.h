@@ -76,6 +76,7 @@ public:
     // Supported bootloader board ids
     static const int boardIDPX4FMUV1 = 5;   ///< PX4 V1 board
     static const int boardIDPX4FMUV2 = 9;   ///< PX4 V2 board
+    static const int boardIDPX4FMUV4 = 11;   ///< PX4 V4 board
     static const int boardIDPX4Flow = 6;    ///< PX4 Flow board
     static const int boardIDAeroCore = 98;  ///< Gumstix AeroCore board
     static const int boardID3DRRadio = 78;  ///< 3DR Radio
@@ -128,7 +129,7 @@ private:
         
         INFO_BL_REV         =   1,    ///< bootloader protocol revision
         BL_REV_MIN          =   2,    ///< Minimum supported bootlader protocol
-        BL_REV_MAX			=   4,    ///< Maximum supported bootloader protocol
+        BL_REV_MAX			=   5,    ///< Maximum supported bootloader protocol
         INFO_BOARD_ID		=   2,    ///< board type
         INFO_BOARD_REV		=   3,    ///< board revision
         INFO_FLASH_SIZE		=   4,    ///< max firmware size in bytes
