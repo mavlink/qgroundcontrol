@@ -43,7 +43,9 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
+#ifndef __mobile__
 #include "QGCMAVLinkLogPlayer.h"
+#endif
 #include "SettingsDialog.h"
 #include "MAVLinkDecoder.h"
 #include "QGCApplication.h"

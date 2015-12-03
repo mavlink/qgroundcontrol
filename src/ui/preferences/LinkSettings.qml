@@ -333,7 +333,7 @@ Rectangle {
                 spacing:            ScreenTools.defaultFontPixelWidth
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 anchors.bottom:     parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.right:      parent.right
                 QGCButton {
                     width:      ScreenTools.defaultFontPixelWidth * 10
                     text:       "OK"
