@@ -21,73 +21,78 @@
 
  ======================================================================*/
 
+#include "AutoPilotPluginManager.h"
+#include "FactSystem.h"
+#include "FirmwarePluginManager.h"
+#include "FlightMapSettings.h"
+#include "GAudioOutput.h"
+#include "HomePositionManager.h"
+#include "JoystickManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "FlightMapSettings.h"
-#include "HomePositionManager.h"
-#include "FirmwarePluginManager.h"
+#include "MissionCommands.h"
 #include "MultiVehicleManager.h"
-#include "JoystickManager.h"
-#include "GAudioOutput.h"
-#include "AutoPilotPluginManager.h"
-#include "UASMessageHandler.h"
-#include "FactSystem.h"
 #include "QGCImageProvider.h"
+#include "UASMessageHandler.h"
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
-    : _firmwarePluginManager(NULL)
+    : _audioOutput(NULL)
     , _autopilotPluginManager(NULL)
-    , _linkManager(NULL)
-    , _multiVehicleManager(NULL)
-    , _mavlinkProtocol(NULL)
+    , _factSystem(NULL)
+    , _firmwarePluginManager(NULL)
     , _flightMapSettings(NULL)
     , _homePositionManager(NULL)
-    , _joystickManager(NULL)
-    , _audioOutput(NULL)
-    , _uasMessageHandler(NULL)
-    , _factSystem(NULL)
     , _imageProvider(NULL)
+    , _joystickManager(NULL)
+    , _linkManager(NULL)
+    , _mavlinkProtocol(NULL)
+    , _missionCommands(NULL)
+    , _multiVehicleManager(NULL)
+    , _uasMessageHandler(NULL)
 {
-    _firmwarePluginManager =    new FirmwarePluginManager(app);
+    _audioOutput =              new GAudioOutput(app);
     _autopilotPluginManager =   new AutoPilotPluginManager(app);
+    _factSystem =               new FactSystem(app);
+    _firmwarePluginManager =    new FirmwarePluginManager(app);
     _flightMapSettings =        new FlightMapSettings(app);
     _homePositionManager =      new HomePositionManager(app);
-    _factSystem =               new FactSystem(app);
-    _linkManager =              new LinkManager(app);
-    _multiVehicleManager =      new MultiVehicleManager(app);
-    _mavlinkProtocol =          new MAVLinkProtocol(app);
-    _joystickManager =          new JoystickManager(app);
-    _audioOutput =              new GAudioOutput(app);
-    _uasMessageHandler =        new UASMessageHandler(app);
     _imageProvider =            new QGCImageProvider(app);
+    _joystickManager =          new JoystickManager(app);
+    _linkManager =              new LinkManager(app);
+    _mavlinkProtocol =          new MAVLinkProtocol(app);
+    _missionCommands =          new MissionCommands(app);
+    _multiVehicleManager =      new MultiVehicleManager(app);
+    _uasMessageHandler =        new UASMessageHandler(app);
 
-    _firmwarePluginManager->setToolbox(this);
+    _audioOutput->setToolbox(this);
     _autopilotPluginManager->setToolbox(this);
+    _factSystem->setToolbox(this);
+    _firmwarePluginManager->setToolbox(this);
     _flightMapSettings->setToolbox(this);
     _homePositionManager->setToolbox(this);
-    _factSystem->setToolbox(this);
-    _linkManager->setToolbox(this);
-    _multiVehicleManager->setToolbox(this);
-    _mavlinkProtocol->setToolbox(this);
-    _joystickManager->setToolbox(this);
-    _audioOutput->setToolbox(this);
-    _uasMessageHandler->setToolbox(this);
     _imageProvider->setToolbox(this);
+    _joystickManager->setToolbox(this);
+    _linkManager->setToolbox(this);
+    _mavlinkProtocol->setToolbox(this);
+    _missionCommands->setToolbox(this);
+    _multiVehicleManager->setToolbox(this);
+    _uasMessageHandler->setToolbox(this);
 }
 
 QGCToolbox::~QGCToolbox()
 {
-    delete _firmwarePluginManager;
+    delete _audioOutput;
     delete _autopilotPluginManager;
-    delete _linkManager;
-    delete _multiVehicleManager;
-    delete _mavlinkProtocol;
+    delete _factSystem;
+    delete _firmwarePluginManager;
     delete _flightMapSettings;
     delete _homePositionManager;
     delete _joystickManager;
-    delete _audioOutput;
+    delete _linkManager;
+    delete _mavlinkProtocol;
+    delete _missionCommands;
+    delete _multiVehicleManager;
     delete _uasMessageHandler;
-    delete _factSystem;
 }
 
 QGCTool::QGCTool(QGCApplication* app)

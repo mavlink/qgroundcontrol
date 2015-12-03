@@ -306,7 +306,7 @@ FactPanel {
 
                 QGCButton {
                     id:             __rejectButton
-                    anchors.right:  __acceptButton.left
+                    anchors.right:  __acceptButton.visible ?  __acceptButton.left : parent.right
                     anchors.bottom: parent.bottom
 
                     onClicked: __dialogComponentLoader.item.reject()
