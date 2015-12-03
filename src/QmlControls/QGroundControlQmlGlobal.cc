@@ -29,16 +29,17 @@
 
 #include <QSettings>
 
-static const char* kQmlGlobalKeyName =                                  "QGCQml";
+static const char* kQmlGlobalKeyName = "QGCQml";
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey = "VirtualTabletJoystick";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent)
     : QObject(parent)
-    , _multiVehicleManager(toolbox->multiVehicleManager())
-    , _linkManager(toolbox->linkManager())
-    , _homePositionManager(toolbox->homePositionManager())
     , _flightMapSettings(toolbox->flightMapSettings())
+    , _homePositionManager(toolbox->homePositionManager())
+    , _linkManager(toolbox->linkManager())
+    , _missionCommands(toolbox->missionCommands())
+    , _multiVehicleManager(toolbox->multiVehicleManager())
     , _virtualTabletJoystick(false)
 {
     QSettings settings;

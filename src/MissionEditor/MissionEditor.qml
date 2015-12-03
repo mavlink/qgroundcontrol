@@ -403,6 +403,7 @@ QGCView {
                             width:          parent.width
                             readOnly:       object.sequenceNumber == 0
                             visible:        !readOnly || object.homePositionValid
+                            qgcView:        _root
 
                             onClicked:  setCurrentItem(object.sequenceNumber)
 

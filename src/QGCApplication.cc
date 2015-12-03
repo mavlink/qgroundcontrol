@@ -88,6 +88,7 @@
 #include "CoordinateVector.h"
 #include "MainToolBarController.h"
 #include "MissionController.h"
+#include "MissionCommands.h"
 #include "FlightDisplayViewController.h"
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
@@ -338,6 +339,13 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<QGCPalette>     ("QGroundControl.Palette", 1, 0, "QGCPalette");
     qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
 
+    qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                  1, 0, "CoordinateVector",       "Reference only");
+    qmlRegisterUncreatableType<MissionCommands>     ("QGroundControl",                  1, 0, "MissionCommands",        "Reference only");
+    qmlRegisterUncreatableType<QGCQGeoCoordinate>   ("QGroundControl",                  1, 0, "QGCQGeoCoordinate",      "Reference only");
+    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
+    qmlRegisterUncreatableType<VideoReceiver>       ("QGroundControl",                  1, 0, "VideoReceiver",          "Reference only");
+    qmlRegisterUncreatableType<VideoSurface>        ("QGroundControl",                  1, 0, "VideoSurface",           "Reference only");
+
     qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",        "Reference only");
     qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",       "Reference only");
     qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",                "Reference only");
@@ -345,11 +353,6 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",         "Reference only");
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",        "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",               "Reference only");
-    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
-    qmlRegisterUncreatableType<QGCQGeoCoordinate>   ("QGroundControl",                  1, 0, "QGCQGeoCoordinate",      "Reference only");
-    qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                  1, 0, "CoordinateVector",       "Reference only");
-    qmlRegisterUncreatableType<VideoSurface>        ("QGroundControl",                  1, 0, "VideoSurface",           "Reference only");
-    qmlRegisterUncreatableType<VideoReceiver>       ("QGroundControl",                  1, 0, "VideoReceiver",          "Reference only");
 
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<FlightModesComponentController> ("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
