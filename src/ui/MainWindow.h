@@ -42,7 +42,9 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "LogCompressor.h"
 #include "QGCMAVLinkInspector.h"
+#ifndef __mobile__
 #include "QGCMAVLinkLogPlayer.h"
+#endif
 #include "MAVLinkDecoder.h"
 #include "Vehicle.h"
 #include "QGCDockWidget.h"
@@ -157,11 +159,12 @@ signals:
 #endif //QGC_MOUSE_ENABLED_LINUX
 
 public:
+#ifndef __mobile__
     QGCMAVLinkLogPlayer* getLogPlayer()
     {
         return logPlayer;
     }
-
+#endif
 protected:
     void connectCommonActions();
 
@@ -171,8 +174,9 @@ protected:
     QSettings settings;
 
     QPointer<MAVLinkDecoder> mavlinkDecoder;
+#ifndef __mobile__
     QGCMAVLinkLogPlayer* logPlayer;
-
+#endif
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
     Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK

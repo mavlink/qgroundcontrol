@@ -124,9 +124,11 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
         case LinkConfiguration::TypeTcp:
             pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
             break;
+#ifndef __mobile__
         case LinkConfiguration::TypeLogReplay:
             pLink = new LogReplayLink(dynamic_cast<LogReplayLinkConfiguration*>(config));
             break;
+#endif
 #ifdef QT_DEBUG
         case LinkConfiguration::TypeMock:
             pLink = new MockLink(dynamic_cast<MockConfiguration*>(config));
@@ -357,9 +359,11 @@ void LinkManager::loadLinkConfigurationList()
                                 case LinkConfiguration::TypeTcp:
                                     pLink = (LinkConfiguration*)new TCPConfiguration(name);
                                     break;
+#ifndef __mobile__
                                 case LinkConfiguration::TypeLogReplay:
                                     pLink = (LinkConfiguration*)new LogReplayLinkConfiguration(name);
                                     break;
+#endif
 #ifdef QT_DEBUG
                                 case LinkConfiguration::TypeMock:
                                     pLink = (LinkConfiguration*)new MockConfiguration(name);
@@ -697,8 +701,12 @@ QStringList LinkManager::linkTypeStrings(void) const
 #endif
         list += "UDP";
         list += "TCP";
+#ifdef QT_DEBUG
         list += "Mock Link";
+#endif
+#ifndef __mobile__
         list += "Log Replay";
+#endif
     }
     return list;
 }
@@ -771,16 +779,20 @@ bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
 
 LinkConfiguration* LinkManager::createConfiguration(int type, const QString& name)
 {
+#ifndef __ios__
     if((LinkConfiguration::LinkType)type == LinkConfiguration::TypeSerial)
         _updateSerialPorts();
+#endif
     return LinkConfiguration::createSettings(type, name);
 }
 
 LinkConfiguration* LinkManager::startConfigurationEditing(LinkConfiguration* config)
 {
     Q_ASSERT(config != NULL);
+#ifndef __ios__
     if(config->type() == LinkConfiguration::TypeSerial)
         _updateSerialPorts();
+#endif
     return LinkConfiguration::duplicateSettings(config);
 }
 
@@ -816,13 +828,15 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
                     }
                 }
                 break;
+#ifndef __mobile__
             case LinkConfiguration::TypeLogReplay: {
-                LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
+                    LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
+                    if(tconfig) {
+                        config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
+                    }
                 }
-            }
                 break;
+#endif
 #ifdef QT_DEBUG
             case LinkConfiguration::TypeMock:
                 config->setName(

@@ -33,7 +33,9 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "UDPLink.h"
 #include "TCPLink.h"
+#ifndef __mobile__
 #include "LogReplayLink.h"
+#endif
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -99,9 +101,11 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
         case LinkConfiguration::TypeTcp:
             config = new TCPConfiguration(name);
             break;
+#ifndef __mobile__
         case LinkConfiguration::TypeLogReplay:
             config = new LogReplayLinkConfiguration(name);
             break;
+#endif
 #ifdef QT_DEBUG
         case LinkConfiguration::TypeMock:
             config = new MockConfiguration(name);
@@ -130,9 +134,11 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
         case TypeTcp:
             dupe = new TCPConfiguration(dynamic_cast<TCPConfiguration*>(source));
             break;
+#ifndef __mobile__
         case TypeLogReplay:
             dupe = new LogReplayLinkConfiguration(dynamic_cast<LogReplayLinkConfiguration*>(source));
             break;
+#endif
 #ifdef QT_DEBUG
         case TypeMock:
             dupe = new MockConfiguration(dynamic_cast<MockConfiguration*>(source));

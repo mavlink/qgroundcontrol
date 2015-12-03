@@ -186,20 +186,22 @@ INCLUDEPATH += \
 
 FORMS += \
     src/QGCQmlWidgetHolder.ui \
-    src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MainWindow.ui \
     src/ui/MAVLinkSettingsWidget.ui \
-    src/ui/MockLinkConfiguration.ui \
     src/ui/QGCCommConfiguration.ui \
     src/ui/QGCLinkConfiguration.ui \
     src/ui/QGCMapRCToParamDialog.ui \
-    src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCPluginHost.ui \
     src/ui/QGCTCPLinkConfiguration.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/SettingsDialog.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/uas/UASMessageView.ui \
+
+DebugBuild {
+FORMS += \
+    src/ui/MockLinkConfiguration.ui \
+}
 
 !iOSBuild {
 FORMS += \
@@ -208,6 +210,8 @@ FORMS += \
 
 !MobileBuild {
 FORMS += \
+    src/ui/LogReplayLinkConfigurationWidget.ui \
+    src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/Linechart.ui \
     src/ui/MultiVehicleDockWidget.ui \
     src/ui/QGCDataPlot2D.ui \
@@ -230,11 +234,7 @@ HEADERS += \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
     src/comm/LinkManager.h \
-    src/comm/LogReplayLink.h \
     src/comm/MAVLinkProtocol.h \
-    src/comm/MockLink.h \
-    src/comm/MockLinkFileServer.h \
-    src/comm/MockLinkMissionItemHandler.h \
     src/comm/ProtocolInterface.h \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
@@ -276,15 +276,12 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
-    src/ui/LogReplayLinkConfigurationWidget.h \
     src/ui/MainWindow.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
-    src/ui/MockLinkConfiguration.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCLinkConfiguration.h \
     src/ui/QGCMapRCToParamDialog.h \
-    src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCPluginHost.h \
     src/ui/QGCTCPLinkConfiguration.h \
     src/ui/QGCUDPLinkConfiguration.h \
@@ -294,6 +291,14 @@ HEADERS += \
     src/ui/uas/UASMessageView.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
+
+DebugBuild {
+HEADERS += \
+    src/comm/MockLink.h \
+    src/comm/MockLinkFileServer.h \
+    src/comm/MockLinkMissionItemHandler.h \
+    src/ui/MockLinkConfiguration.h \
+}
 
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
@@ -309,6 +314,9 @@ HEADERS += \
 
 !MobileBuild {
 HEADERS += \
+    src/comm/LogReplayLink.h \
+    src/ui/LogReplayLinkConfigurationWidget.h \
+    src/ui/QGCMAVLinkLogPlayer.h \
     src/comm/QGCFlightGearLink.h \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
@@ -348,11 +356,7 @@ SOURCES += \
     src/CmdLineOptParser.cc \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkManager.cc \
-    src/comm/LogReplayLink.cc \
     src/comm/MAVLinkProtocol.cc \
-    src/comm/MockLink.cc \
-    src/comm/MockLinkFileServer.cc \
-    src/comm/MockLinkMissionItemHandler.cc \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayViewController.cc \
@@ -388,15 +392,12 @@ SOURCES += \
     src/uas/FileManager.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
-    src/ui/LogReplayLinkConfigurationWidget.cc \
     src/ui/MainWindow.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MAVLinkSettingsWidget.cc \
-    src/ui/MockLinkConfiguration.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCLinkConfiguration.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
-    src/ui/QGCMAVLinkLogPlayer.cc \
     src/ui/QGCPluginHost.cc \
     src/ui/QGCTCPLinkConfiguration.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
@@ -407,6 +408,14 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
 
+DebugBuild {
+SOURCES += \
+    src/comm/MockLink.cc \
+    src/comm/MockLinkFileServer.cc \
+    src/comm/MockLinkMissionItemHandler.cc \
+    src/ui/MockLinkConfiguration.cc \
+}
+
 !iOSBuild {
 SOURCES += \
     src/comm/QGCSerialPortInfo.cc \
@@ -416,6 +425,9 @@ SOURCES += \
 
 !MobileBuild {
 SOURCES += \
+    src/comm/LogReplayLink.cc \
+    src/ui/LogReplayLinkConfigurationWidget.cc \
+    src/ui/QGCMAVLinkLogPlayer.cc \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
