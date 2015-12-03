@@ -118,7 +118,8 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
             _startFlashWhenBootloaderFound = false;
             break;
         case QGCSerialPortInfo::BoardTypePX4FMUV2:
-            _foundBoardType = "Pixhawk";
+        case QGCSerialPortInfo::BoardTypePX4FMUV4:
+            _foundBoardType = "Pixhawk (any version)";
             _startFlashWhenBootloaderFound = false;
             break;
         case QGCSerialPortInfo::BoardTypeAeroCore:

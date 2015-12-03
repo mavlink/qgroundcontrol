@@ -42,6 +42,7 @@ public:
     typedef enum {
         BoardTypePX4FMUV1,
         BoardTypePX4FMUV2,
+        BoardTypePX4FMUV4,
         BoardTypePX4Flow,
         BoardType3drRadio,
         BoardTypeAeroCore,
@@ -52,6 +53,7 @@ public:
 
     static const int px4VendorId =                          9900;   ///< Vendor ID for Pixhawk board (V2 and V1) and PX4 Flow
 
+    static const int pixhawkFMUV4ProductId =                18;     ///< Product ID for Pixhawk V2 board
     static const int pixhawkFMUV2ProductId =                17;     ///< Product ID for Pixhawk V2 board
     static const int pixhawkFMUV2OldBootloaderProductId =   22;     ///< Product ID for Bootloader on older Pixhawk V2 boards
     static const int pixhawkFMUV1ProductId =                16;     ///< Product ID for PX4 FMU V1 board

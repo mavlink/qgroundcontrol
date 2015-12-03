@@ -47,7 +47,10 @@ QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::boardType(void) const
 
     switch (vendorIdentifier()) {
         case px4VendorId:
-            if (productIdentifier() == pixhawkFMUV2ProductId || productIdentifier() == pixhawkFMUV2OldBootloaderProductId) {
+            if (productIdentifier() == pixhawkFMUV4ProductId) {
+                qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU V4";
+                boardType = BoardTypePX4FMUV4;
+            } else if (productIdentifier() == pixhawkFMUV2ProductId || productIdentifier() == pixhawkFMUV2OldBootloaderProductId) {
                 qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU V2";
                 boardType = BoardTypePX4FMUV2;
             } else if (productIdentifier() == pixhawkFMUV1ProductId) {
@@ -72,7 +75,10 @@ QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::boardType(void) const
     if (boardType == BoardTypeUnknown) {
         // Fall back to port name matching which could lead to incorrect board mapping. But in some cases the
         // vendor and product id do not come through correctly so this is used as a last chance detection method.
-        if (description() == "PX4 FMU v2.x" || description() == "PX4 BL FMU v2.x") {
+        if (description() == "PX4 FMU v4.x" || description() == "PX4 BL FMU v4.x") {
+            qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU V4 (by name matching fallback)";
+            boardType = BoardTypePX4FMUV4;
+        } else if (description() == "PX4 FMU v2.x" || description() == "PX4 BL FMU v2.x") {
             qCDebug(QGCSerialPortInfoLog) << "Found PX4 FMU V2 (by name matching fallback)";
             boardType = BoardTypePX4FMUV2;
         } else if (description() == "PX4 FMU v1.x" || description() == "PX4 BL FMU v1.x") {
