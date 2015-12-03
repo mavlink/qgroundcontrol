@@ -188,7 +188,6 @@ FORMS += \
     src/QGCQmlWidgetHolder.ui \
     src/ui/MainWindow.ui \
     src/ui/MAVLinkSettingsWidget.ui \
-    src/ui/MockLinkConfiguration.ui \
     src/ui/QGCCommConfiguration.ui \
     src/ui/QGCLinkConfiguration.ui \
     src/ui/QGCMapRCToParamDialog.ui \
@@ -198,6 +197,11 @@ FORMS += \
     src/ui/SettingsDialog.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/uas/UASMessageView.ui \
+
+DebugBuild {
+FORMS += \
+    src/ui/MockLinkConfiguration.ui \
+}
 
 !iOSBuild {
 FORMS += \
@@ -231,9 +235,6 @@ HEADERS += \
     src/comm/LinkInterface.h \
     src/comm/LinkManager.h \
     src/comm/MAVLinkProtocol.h \
-    src/comm/MockLink.h \
-    src/comm/MockLinkFileServer.h \
-    src/comm/MockLinkMissionItemHandler.h \
     src/comm/ProtocolInterface.h \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
@@ -278,7 +279,6 @@ HEADERS += \
     src/ui/MainWindow.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
-    src/ui/MockLinkConfiguration.h \
     src/ui/QGCCommConfiguration.h \
     src/ui/QGCLinkConfiguration.h \
     src/ui/QGCMapRCToParamDialog.h \
@@ -291,6 +291,14 @@ HEADERS += \
     src/ui/uas/UASMessageView.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
+
+DebugBuild {
+HEADERS += \
+    src/comm/MockLink.h \
+    src/comm/MockLinkFileServer.h \
+    src/comm/MockLinkMissionItemHandler.h \
+    src/ui/MockLinkConfiguration.h \
+}
 
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
@@ -349,9 +357,6 @@ SOURCES += \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkManager.cc \
     src/comm/MAVLinkProtocol.cc \
-    src/comm/MockLink.cc \
-    src/comm/MockLinkFileServer.cc \
-    src/comm/MockLinkMissionItemHandler.cc \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayViewController.cc \
@@ -390,7 +395,6 @@ SOURCES += \
     src/ui/MainWindow.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MAVLinkSettingsWidget.cc \
-    src/ui/MockLinkConfiguration.cc \
     src/ui/QGCCommConfiguration.cc \
     src/ui/QGCLinkConfiguration.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
@@ -403,6 +407,14 @@ SOURCES += \
     src/ui/uas/UASMessageView.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
+
+DebugBuild {
+SOURCES += \
+    src/comm/MockLink.cc \
+    src/comm/MockLinkFileServer.cc \
+    src/comm/MockLinkMissionItemHandler.cc \
+    src/ui/MockLinkConfiguration.cc \
+}
 
 !iOSBuild {
 SOURCES += \

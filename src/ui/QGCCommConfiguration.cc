@@ -36,7 +36,9 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "QGCUDPLinkConfiguration.h"
 #include "QGCTCPLinkConfiguration.h"
+#ifdef QT_DEBUG
 #include "MockLinkConfiguration.h"
+#endif
 #ifndef __mobile__
 #include "LogReplayLinkConfigurationWidget.h"
 #endif
