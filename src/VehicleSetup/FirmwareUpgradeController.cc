@@ -78,7 +78,14 @@ FirmwareUpgradeController::~FirmwareUpgradeController()
 
 void FirmwareUpgradeController::startBoardSearch(void)
 {
-    qgcApp()->toolbox()->linkManager()->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
+    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
+
+    linkMgr->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
+
+    if (!linkMgr->anyActiveLinks()) {
+        // We have to disconnect any inactive links
+        linkMgr->disconnectAll();
+    }
     _bootloaderFound = false;
     _startFlashWhenBootloaderFound = false;
     _threadController->startFindBoardLoop();
