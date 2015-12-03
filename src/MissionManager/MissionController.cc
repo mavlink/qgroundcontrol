@@ -169,7 +169,14 @@ int MissionController::addMissionItem(QGeoCoordinate coordinate)
     }
     newItem->setDefaultsForCommand();
     if ((MAV_CMD)newItem->command() == MAV_CMD_NAV_WAYPOINT) {
-        newItem->setParam7(_findLastAltitude());
+        double lastValue;
+
+        if (_findLastAcceptanceRadius(&lastValue)) {
+            newItem->setParam2(lastValue);
+        }
+        if (_findLastAltitude(&lastValue)) {
+            newItem->setParam7(lastValue);
+        }
     }
     _missionItems->append(newItem);
 
@@ -611,17 +618,44 @@ QmlObjectListModel* MissionController::missionItems(void)
     return _missionItems;
 }
 
-double MissionController::_findLastAltitude(void)
+bool MissionController::_findLastAltitude(double* lastAltitude)
 {
-    double lastAltitude = MissionItem::defaultAltitude;
+    bool found = false;
+    double foundAltitude;
 
     for (int i=0; i<_missionItems->count(); i++) {
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
 
         if (item->specifiesCoordinate()) {
-            lastAltitude = item->param7();
+            foundAltitude = item->param7();
+            found = true;
         }
     }
 
-    return lastAltitude;
+    if (found) {
+        *lastAltitude = foundAltitude;
+    }
+
+    return found;
+}
+
+bool MissionController::_findLastAcceptanceRadius(double* lastAcceptanceRadius)
+{
+    bool found = false;
+    double foundAcceptanceRadius;
+
+    for (int i=0; i<_missionItems->count(); i++) {
+        MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
+
+        if ((MAV_CMD)item->command() == MAV_CMD_NAV_WAYPOINT) {
+            foundAcceptanceRadius = item->param2();
+            found = true;
+        }
+    }
+
+    if (found) {
+        *lastAcceptanceRadius = foundAcceptanceRadius;
+    }
+
+    return found;
 }
