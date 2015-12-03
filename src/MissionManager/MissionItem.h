@@ -167,12 +167,7 @@ public:
 
     bool relativeAltitude(void) { return frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 
-    static const double defaultTakeoffPitch;
-    static const double defaultHeading;
     static const double defaultAltitude;
-    static const double defaultAcceptanceRadius;
-    static const double defaultLoiterOrbitRadius;
-    static const double defaultLoiterTurns;
 
 public slots:
     void setDefaultsForCommand(void);
