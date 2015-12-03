@@ -497,6 +497,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                 switch (boardType) {
                 case QGCSerialPortInfo::BoardTypePX4FMUV1:
                 case QGCSerialPortInfo::BoardTypePX4FMUV2:
+                case QGCSerialPortInfo::BoardTypePX4FMUV4:
                     if (_autoconnectPixhawk) {
                         pSerialConfig = new SerialConfiguration(QString("Pixhawk on %1").arg(portInfo.portName().trimmed()));
                     }
