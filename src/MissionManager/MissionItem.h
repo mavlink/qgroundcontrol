@@ -29,8 +29,6 @@
 #include <QtQml>
 #include <QTextStream>
 #include <QGeoCoordinate>
-#include <QJsonObject>
-#include <QJsonValue>
 
 #include "QGCMAVLink.h"
 #include "QGC.h"
@@ -39,6 +37,7 @@
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
+#include "MissionCommands.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MissionItemLog)
 
@@ -70,6 +69,7 @@ public:
     const MissionItem& operator=(const MissionItem& other);
     
     Q_PROPERTY(double           azimuth             READ azimuth                WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
+    Q_PROPERTY(QString          category            READ category                                           NOTIFY commandChanged)
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command            WRITE setCommand            NOTIFY commandChanged)
     Q_PROPERTY(QString          commandDescription  READ commandDescription                                 NOTIFY commandChanged)
     Q_PROPERTY(QString          commandName         READ commandName                                        NOTIFY commandChanged)
@@ -97,6 +97,7 @@ public:
     // Property accesors
     
     double          azimuth             (void) const    { return _azimuth; }
+    QString         category            (void) const;
     MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_commandFact.cookedValue().toInt(); };
     QString         commandDescription  (void) const;
     QString         commandName         (void) const;
@@ -206,34 +207,12 @@ private slots:
 private:
     void _clearParamMetaData(void);
     void _connectSignals(void);
-    bool _loadMavCmdInfoJson(void);
     void _setupMetaData(void);
-    bool _validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types);
 
     static QVariant _degreesToRadians(const QVariant& degrees);
     static QVariant _radiansToDegrees(const QVariant& radians);
 
 private:
-    typedef struct {
-        double          defaultValue;
-        int             decimalPlaces;
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-        QString         label;
-        int             param;
-        QString         units;
-    } ParamInfo_t;
-
-    typedef struct {
-        MAV_CMD                 command;
-        QString                 description;
-        bool                    friendlyEdit;
-        QString                 friendlyName;
-        QMap<int, ParamInfo_t>  paramInfoMap;
-        QString                 rawName;
-        bool                    specifiesCoordinate;
-    } MavCmdInfo_t;
-    
     bool        _rawEdit;
     bool        _dirty;
     int         _sequenceNumber;
@@ -279,30 +258,7 @@ private:
     bool _syncingHeadingDegreesAndParam4;           ///< true: already in a sync signal, prevents signal loop
     bool _syncingSupportedCommandAndCommand;         ///< true: already in a sync signal, prevents signal loop
 
-    static QMap<MAV_CMD, MavCmdInfo_t> _mavCmdInfoMap;
-
-    static const QString _decimalPlacesJsonKey;
-    static const QString _defaultJsonKey;
-    static const QString _descriptionJsonKey;
-    static const QString _enumStringsJsonKey;
-    static const QString _enumValuesJsonKey;
-    static const QString _friendlyNameJsonKey;
-    static const QString _friendlyEditJsonKey;
-    static const QString _idJsonKey;
-    static const QString _labelJsonKey;
-    static const QString _mavCmdInfoJsonKey;
-    static const QString _param1JsonKey;
-    static const QString _param2JsonKey;
-    static const QString _param3JsonKey;
-    static const QString _param4JsonKey;
-    static const QString _paramJsonKeyFormat;
-    static const QString _rawNameJsonKey;
-    static const QString _specifiesCoordinateJsonKey;
-    static const QString _unitsJsonKey;
-    static const QString _versionJsonKey;
-
-    static const QString _degreesUnits;
-    static const QString _degreesConvertUnits;
+    const QMap<MAV_CMD, MavCmdInfo*>& _mavCmdInfoMap;
 };
 
 QDebug operator<<(QDebug dbg, const MissionItem& missionItem);

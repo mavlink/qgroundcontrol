@@ -34,6 +34,7 @@
 #include "LinkManager.h"
 #include "HomePositionManager.h"
 #include "FlightMapSettings.h"
+#include "MissionCommands.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -48,10 +49,11 @@ class QGroundControlQmlGlobal : public QObject
 public:
     QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent = NULL);
 
-    Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
-    Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
-    Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
+    Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
+    Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
+    Q_PROPERTY(MissionCommands*     missionCommands     READ missionCommands        CONSTANT)
+    Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
 
     Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -85,10 +87,11 @@ public:
 
     // Property accesors
 
-    LinkManager*            linkManager ()              { return _linkManager; }
-    MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
-    HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
     FlightMapSettings*      flightMapSettings   ()      { return _flightMapSettings; }
+    HomePositionManager*    homePositionManager ()      { return _homePositionManager; }
+    LinkManager*            linkManager ()              { return _linkManager; }
+    MissionCommands*        missionCommands ()          { return _missionCommands; }
+    MultiVehicleManager*    multiVehicleManager ()      { return _multiVehicleManager; }
 
     qreal                   zOrderTopMost       ()      { return 1000; }
     qreal                   zOrderWidgets       ()      { return 100; }
@@ -133,10 +136,11 @@ private:
     void _startMockLink(MockConfiguration* mockConfig);
 #endif
 
-    MultiVehicleManager*    _multiVehicleManager;
-    LinkManager*            _linkManager;
-    HomePositionManager*    _homePositionManager;
     FlightMapSettings*      _flightMapSettings;
+    HomePositionManager*    _homePositionManager;
+    LinkManager*            _linkManager;
+    MissionCommands*        _missionCommands;
+    MultiVehicleManager*    _multiVehicleManager;
 
     bool _virtualTabletJoystick;
 
