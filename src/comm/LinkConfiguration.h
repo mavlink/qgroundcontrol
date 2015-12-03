@@ -40,11 +40,13 @@ public:
     LinkConfiguration(LinkConfiguration* copy);
     virtual ~LinkConfiguration() {}
 
-    Q_PROPERTY(QString          name        READ name           WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(LinkInterface*   link        READ link           WRITE setLink           NOTIFY linkChanged)
-    Q_PROPERTY(LinkType         linkType    READ type           CONSTANT)
-    Q_PROPERTY(bool             dynamic     READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
-    Q_PROPERTY(bool             autoConnect READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
+    Q_PROPERTY(QString          name                READ name           WRITE setName           NOTIFY nameChanged)
+    Q_PROPERTY(LinkInterface*   link                READ link           WRITE setLink           NOTIFY linkChanged)
+    Q_PROPERTY(LinkType         linkType            READ type                                   CONSTANT)
+    Q_PROPERTY(bool             dynamic             READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
+    Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
+    Q_PROPERTY(bool             autoConnectAllowed  READ isAutoConnectAllowed                   CONSTANT)
+    Q_PROPERTY(QString          settingsURL         READ settingsURL                            CONSTANT)
 
     // Property accessors
 
@@ -99,6 +101,13 @@ public:
     /// Virtual Methods
 
     /*!
+     *
+     * Is Auto Connect allowed for this type?
+     * @return True if this type can be set as an Auto Connect configuration
+     */
+    virtual bool isAutoConnectAllowed() { return true; }
+
+    /*!
      * @brief Connection type
      *
      * Pure virtual method returning one of the -TypeXxx types above.
@@ -123,6 +132,13 @@ public:
      * @param[in] root The root path of the setting.
      */
     virtual void saveSettings(QSettings& settings, const QString& root) = 0;
+
+    /*!
+     * @brief Settings URL
+     *
+     * Pure virtual method providing the URL for the (QML) settings dialog
+     */
+    virtual QString settingsURL() = 0;
 
     /*!
      * @brief Update settings

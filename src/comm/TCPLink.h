@@ -56,6 +56,9 @@ class TCPConfiguration : public LinkConfiguration
 
 public:
 
+    Q_PROPERTY(quint16  port    READ port   WRITE setPort   NOTIFY portChanged)
+    Q_PROPERTY(QString  host    READ host   WRITE setHost   NOTIFY hostChanged)
+
     /*!
      * @brief Regular constructor
      *
@@ -94,6 +97,7 @@ public:
      * @return Host address
      */
     const QHostAddress& address   () { return _address; }
+    const QString       host      () { return _address.toString(); }
 
     /*!
      * @brief Set the host address
@@ -101,13 +105,19 @@ public:
      * @param[in] address Host address
      */
     void setAddress (const QHostAddress& address);
+    void setHost    (const QString host);
 
     /// From LinkConfiguration
-    LinkType type() { return LinkConfiguration::TypeTcp; }
-    void copyFrom(LinkConfiguration* source);
-    void loadSettings(QSettings& settings, const QString& root);
-    void saveSettings(QSettings& settings, const QString& root);
-    void updateSettings();
+    LinkType    type            () { return LinkConfiguration::TypeTcp; }
+    void        copyFrom        (LinkConfiguration* source);
+    void        loadSettings    (QSettings& settings, const QString& root);
+    void        saveSettings    (QSettings& settings, const QString& root);
+    void        updateSettings  ();
+    QString     settingsURL     () { return "TcpSettings.qml"; }
+
+signals:
+    void portChanged();
+    void hostChanged();
 
 private:
     QHostAddress _address;

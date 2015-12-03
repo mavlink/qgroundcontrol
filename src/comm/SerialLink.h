@@ -94,11 +94,12 @@ public:
     static QString cleanPortDisplayname(const QString name);
 
     /// From LinkConfiguration
-    LinkType type() { return LinkConfiguration::TypeSerial; }
-    void copyFrom(LinkConfiguration* source);
-    void loadSettings(QSettings& settings, const QString& root);
-    void saveSettings(QSettings& settings, const QString& root);
-    void updateSettings();
+    LinkType    type            () { return LinkConfiguration::TypeSerial; }
+    void        copyFrom        (LinkConfiguration* source);
+    void        loadSettings    (QSettings& settings, const QString& root);
+    void        saveSettings    (QSettings& settings, const QString& root);
+    void        updateSettings  ();
+    QString     settingsURL     () { return "SerialSettings.qml"; }
 
 signals:
     void baudChanged            ();

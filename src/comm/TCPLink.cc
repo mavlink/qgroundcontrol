@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 #include <QTimer>
@@ -61,7 +61,7 @@ TCPLink::~TCPLink()
 void TCPLink::run()
 {
     _hardwareConnect();
-	exec();
+    exec();
 }
 
 #ifdef TCPLINK_READWRITE_DEBUG
@@ -126,14 +126,14 @@ void TCPLink::readBytes()
  **/
 void TCPLink::_disconnect(void)
 {
-	quit();
-	wait();
+    quit();
+    wait();
     if (_socket) {
         _socketIsConnected = false;
-		_socket->deleteLater(); // Make sure delete happens on correct thread
-		_socket = NULL;
+        _socket->deleteLater(); // Make sure delete happens on correct thread
+        _socket = NULL;
         emit disconnected();
-	}
+    }
 }
 
 /**
@@ -143,11 +143,11 @@ void TCPLink::_disconnect(void)
  **/
 bool TCPLink::_connect(void)
 {
-	if (isRunning())
-	{
-		quit();
-		wait();
-	}
+    if (isRunning())
+    {
+        quit();
+        wait();
+    }
     start(HighPriority);
     return true;
 }
@@ -155,7 +155,7 @@ bool TCPLink::_connect(void)
 bool TCPLink::_hardwareConnect()
 {
     Q_ASSERT(_socket == NULL);
-	_socket = new QTcpSocket();
+    _socket = new QTcpSocket();
     QSignalSpy errorSpy(_socket, SIGNAL(error(QAbstractSocket::SocketError)));
     _socket->connectToHost(_config->address(), _config->port());
     QObject::connect(_socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
@@ -237,6 +237,39 @@ void TCPLink::_restartConnection()
 //--------------------------------------------------------------------------
 //-- TCPConfiguration
 
+static bool is_ip(const QString& address)
+{
+    int a,b,c,d;
+    if (sscanf(address.toStdString().c_str(), "%d.%d.%d.%d", &a, &b, &c, &d) != 4
+            && strcmp("::1", address.toStdString().c_str())) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+static QString get_ip_address(const QString& address)
+{
+    if(is_ip(address))
+        return address;
+    // Need to look it up
+    QHostInfo info = QHostInfo::fromName(address);
+    if (info.error() == QHostInfo::NoError)
+    {
+        QList<QHostAddress> hostAddresses = info.addresses();
+        QHostAddress address;
+        for (int i = 0; i < hostAddresses.size(); i++)
+        {
+            // Exclude all IPv6 addresses
+            if (!hostAddresses.at(i).toString().contains(":"))
+            {
+                return hostAddresses.at(i).toString();
+            }
+        }
+    }
+    return QString("");
+}
+
 TCPConfiguration::TCPConfiguration(const QString& name) : LinkConfiguration(name)
 {
     _port    = QGC_TCP_PORT;
@@ -266,6 +299,16 @@ void TCPConfiguration::setPort(quint16 port)
 void TCPConfiguration::setAddress(const QHostAddress& address)
 {
     _address = address;
+}
+
+void TCPConfiguration::setHost(const QString host)
+{
+    QString ipAdd = get_ip_address(host);
+    if(ipAdd.isEmpty()) {
+        qWarning() << "TCP:" << "Could not resolve host:" << host;
+    } else {
+        _address = ipAdd;
+    }
 }
 
 void TCPConfiguration::saveSettings(QSettings& settings, const QString& root)
