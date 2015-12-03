@@ -149,7 +149,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             QGCButton {
-                width:      parent.width * 0.8
+                width:      parent.width * 0.85
                 height:     ScreenTools.defaultFontPixelHeight * 2.5
                 text:       "General"
                 exclusiveGroup: panelActionGroup
@@ -162,7 +162,7 @@ Item {
                 }
             }
             QGCButton {
-                width:      parent.width * 0.8
+                width:      parent.width * 0.85
                 height:     ScreenTools.defaultFontPixelHeight * 2.5
                 text:       "Comm Links"
                 exclusiveGroup: panelActionGroup
@@ -175,7 +175,7 @@ Item {
                 }
             }
             QGCButton {
-                width:      parent.width * 0.8
+                width:      parent.width * 0.85
                 height:     ScreenTools.defaultFontPixelHeight * 2.5
                 text:       "MavLink"
                 exclusiveGroup: panelActionGroup
@@ -188,7 +188,7 @@ Item {
                 }
             }
             QGCButton {
-                width:      parent.width * 0.8
+                width:      parent.width * 0.85
                 height:     ScreenTools.defaultFontPixelHeight * 2.5
                 text:       "Mock Link"
                 visible:    ScreenTools.isDebug
@@ -202,7 +202,7 @@ Item {
                 }
             }
             QGCButton {
-                width:      parent.width * 0.8
+                width:      parent.width * 0.85
                 height:     ScreenTools.defaultFontPixelHeight * 2.5
                 text:       "Debug"
                 visible:    ScreenTools.isDebug

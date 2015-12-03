@@ -165,13 +165,15 @@ void QGCLinkConfiguration::_fixUnnamed(LinkConfiguration* config)
                     }
                 }
                 break;
+#ifndef __mobile__
             case LinkConfiguration::TypeLogReplay: {
-                LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
+                    LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
+                    if(tconfig) {
+                        config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
+                    }
                 }
-            }
                 break;
+#endif
 #ifdef QT_DEBUG
             case LinkConfiguration::TypeMock:
                 config->setName(

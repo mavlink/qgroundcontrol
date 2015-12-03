@@ -69,8 +69,12 @@ public:
         TypeXbee,       ///< XBee Proprietary Link
         TypeOpal,       ///< Opal-RT Link
 #endif
+#ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
+#endif
+#ifndef __mobile__
         TypeLogReplay,
+#endif
         TypeLast        // Last type value (type >= TypeLast == invalid)
     };
 
