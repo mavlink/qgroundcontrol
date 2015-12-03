@@ -44,8 +44,10 @@ public:
     
 private slots:
     void _test(void);
+    void _testDefaultValues(void);
     
 private:
+
     typedef struct {
         MAV_CMD        command;
         MAV_FRAME      frame;

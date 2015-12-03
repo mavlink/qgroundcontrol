@@ -95,7 +95,8 @@ private:
     void _setupMissionItems(bool loadFromVehicle, bool forceLoad);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
     void _calcPrevWaypointValues(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2, double* azimuth, double* distance);
-    double _findLastAltitude(void);
+    bool _findLastAltitude(double* lastAltitude);
+    bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
 
 private:
     bool                _editMode;
