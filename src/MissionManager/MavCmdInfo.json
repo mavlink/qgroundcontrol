@@ -150,6 +150,7 @@
             "friendlyName":         "Region of interest (nav)",
             "description":          "Sets the region of interest for cameras.",
             "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
             "friendlyEdit":         true,
             "category":             "Camera",
             "param1": {
@@ -393,11 +394,12 @@
         { "id": 191, "rawName": "MAV_CMD_DO_GO_AROUND", "friendlyName": "MAV_CMD_DO_GO_AROUND" },
         { "id": 200, "rawName": "MAV_CMD_DO_CONTROL_VIDEO", "friendlyName": "MAV_CMD_DO_CONTROL_VIDEO" },
         {
-            "id":           201,
-            "rawName":      "MAV_CMD_DO_SET_ROI",
-            "friendlyName": "Region of interest (cmd)" ,
-            "description":  "Sets the region of interest for cameras.",
+            "id":                   201,
+            "rawName":              "MAV_CMD_DO_SET_ROI",
+            "friendlyName":         "Region of interest (cmd)" ,
+            "description":          "Sets the region of interest for cameras.",
             "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
             "friendlyEdit":         true,
             "category":             "Camera",
             "param1": {
