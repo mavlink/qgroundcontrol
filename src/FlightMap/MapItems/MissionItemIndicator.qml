@@ -32,18 +32,37 @@ import QGroundControl.Vehicle       1.0
 MapQuickItem {
     id: _item
 
-    property alias  label:          _label.label
-    property alias  isCurrentItem:  _label.isCurrentItem
+    property var missionItem
 
     signal clicked
 
     anchorPoint.x:  sourceItem.width  / 2
     anchorPoint.y:  sourceItem.height / 2
 
+    Connections {
+        target: missionItem
+
+        onCoordinateChanged:        recalcLabel()
+        onRelativeAltitudeChanged:  recalcLabel()
+    }
+
+    Component.onCompleted: recalcLabel()
+
+    function recalcLabel() {
+        var label = Math.round(object.coordinate.altitude)
+        if (!object.relativeAltitude) {
+            label = "=" + label
+        }
+        if (object.homePosition) {
+            label = "H" + label
+        }
+        _label.label = label
+    }
+
     sourceItem:
         MissionItemIndexLabel {
-            id: _label
-
-            onClicked: _item.clicked()
+            id:             _label
+            isCurrentItem:  missionItem.isCurrentItem
+            onClicked:      _item.clicked()
         }
 }
