@@ -59,7 +59,8 @@ QGCView {
     readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
     readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
 
-    property var    _missionItems:  controller.missionItems
+    property var    _missionItems:          controller.missionItems
+    property var    _currentMissionItem
 
     property bool   gpsLock:        _activeVehicle ? _activeVehicle.coordinateValid : false
     property bool   _firstGpsLock:  true
@@ -92,16 +93,6 @@ QGCView {
         }
     }
 
-    function showDistance(missionItem) {
-        if (missionItem.distance < 0.0) {
-            waypointValuesDisplay.visible = false
-        } else {
-            waypointValuesDisplay.azimuth = missionItem.azimuth
-            waypointValuesDisplay.distance = missionItem.distance
-            waypointValuesDisplay.visible = true
-        }
-    }
-
     MissionController {
         id:         controller
 
@@ -131,8 +122,14 @@ QGCView {
     }
 
     function setCurrentItem(index) {
+        _currentMissionItem = undefined
         for (var i=0; i<_missionItems.count; i++) {
-            _missionItems.get(i).isCurrentItem = (i == index)
+            if (i == index) {
+                _currentMissionItem = _missionItems.get(i)
+                _currentMissionItem.isCurrentItem = true
+            } else {
+                _missionItems.get(i).isCurrentItem = false
+            }
         }
     }
 
@@ -300,7 +297,6 @@ QGCView {
                                 itemDragger.missionItem.coordinate = coordinate
                                 editorMap.latitude = itemDragger.missionItem.coordinate.latitude
                                 editorMap.longitude = itemDragger.missionItem.coordinate.longitude
-                                _root.showDistance(itemDragger.missionItem)
                             }
                         }
                     }
@@ -328,7 +324,6 @@ QGCView {
                         function updateItemIndicator()
                         {
                             if (object.isCurrentItem) {
-                                _root.showDistance(object)
                                 if (object.specifiesCoordinate) {
                                     // Setup our drag item
                                     if (object.sequenceNumber != 0) {
@@ -908,12 +903,13 @@ QGCView {
                     radius:             ScreenTools.defaultFontPixelWidth
                     color:              qgcPal.window
                     opacity:            0.80
-                    visible:            false
-
-                    property real azimuth:  0
-                    property real distance: 0
+                    visible:            _currentMissionItem ? _currentMissionItem.distance != -1 : false
 
                     readonly property real margins: ScreenTools.defaultFontPixelWidth
+
+                    property real _altDifference:   _currentMissionItem ? _currentMissionItem.altDifference : 0
+                    property real _azimuth:         _currentMissionItem ? _currentMissionItem.azimuth : 0
+                    property real _distance:        _currentMissionItem ? _currentMissionItem.distance : 0
 
                     Column {
                         id:                 valuesColumn
@@ -923,15 +919,21 @@ QGCView {
                         anchors.top:        parent.top
 
                         QGCLabel {
+                            id:     distanceLabel
                             color:  qgcPal.text
-                            text:   "Azimuth: " + Math.round(waypointValuesDisplay.azimuth)
+                            text:   "Distance: " + Math.round(waypointValuesDisplay._distance) + " meters"
                         }
 
                         QGCLabel {
-                            id:     distanceLabel
                             color:  qgcPal.text
-                            text:   "Distance: " + Math.round(waypointValuesDisplay.distance) + " meters"
+                            text:   "Alt diff: " + Math.round(waypointValuesDisplay._altDifference) + " meters"
                         }
+
+                        QGCLabel {
+                            color:  qgcPal.text
+                            text:   "Azimuth: " + Math.round(waypointValuesDisplay._azimuth)
+                        }
+
                     }
                 }
             } // FlightMap

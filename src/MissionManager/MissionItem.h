@@ -68,6 +68,7 @@ public:
 
     const MissionItem& operator=(const MissionItem& other);
     
+    Q_PROPERTY(double           altDifference       READ altDifference          WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
     Q_PROPERTY(double           azimuth             READ azimuth                WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
     Q_PROPERTY(QString          category            READ category                                           NOTIFY commandChanged)
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command            WRITE setCommand            NOTIFY commandChanged)
@@ -96,6 +97,7 @@ public:
 
     // Property accesors
     
+    double          altDifference       (void) const    { return _altDifference; }
     double          azimuth             (void) const    { return _azimuth; }
     QString         category            (void) const;
     MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_commandFact.cookedValue().toInt(); };
@@ -134,8 +136,9 @@ public:
     void setHomePositionValid(bool homePositionValid);
     void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
 
-    void setDistance(double distance);
+    void setAltDifference(double altDifference);
     void setAzimuth(double azimuth);
+    void setDistance(double distance);
 
     // C++ only methods
 
@@ -173,6 +176,7 @@ public slots:
     void setDefaultsForCommand(void);
 
 signals:
+    void altDifferenceChanged       (double altDifference);
     void azimuthChanged             (double azimuth);
     void commandChanged             (MavlinkQmlSingleton::Qml_MAV_CMD command);
     void coordinateChanged          (const QGeoCoordinate& coordinate);
@@ -212,6 +216,7 @@ private:
     bool        _dirty;
     int         _sequenceNumber;
     bool        _isCurrentItem;
+    double      _altDifference;             ///< Difference in altitude from previous waypoint
     double      _azimuth;                   ///< Azimuth to previous waypoint
     double      _distance;                  ///< Distance to previous waypoint
     bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
