@@ -431,6 +431,10 @@ void MissionController::_initAllMissionItems(void)
         // Add the home position item to the front
         homeItem = new MissionItem(this);
         homeItem->setHomePositionSpecialCase(true);
+        if (_activeVehicle) {
+            homeItem->setCoordinate(_activeVehicle->homePosition());
+            homeItem->setHomePositionValid(_activeVehicle->homePositionAvailable());
+        }
         homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_LAST);
         homeItem->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
         homeItem->setSequenceNumber(0);
@@ -531,7 +535,7 @@ void MissionController::_setupActiveVehicle(Vehicle* activeVehicle, bool forceLo
         MissionManager* missionManager = activeVehicle->missionManager();
 
         connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
-        connect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
+        connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
         connect(_activeVehicle, &Vehicle::homePositionAvailableChanged,     this, &MissionController::_activeVehicleHomePositionAvailableChanged);
         connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
 
@@ -548,6 +552,7 @@ void MissionController::_activeVehicleHomePositionAvailableChanged(bool homePosi
     _liveHomePositionAvailable = homePositionAvailable;
     qobject_cast<MissionItem*>(_missionItems->get(0))->setHomePositionValid(homePositionAvailable);
     emit liveHomePositionAvailableChanged(_liveHomePositionAvailable);
+    _recalcWaypointLines();
 }
 
 void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
@@ -555,6 +560,7 @@ void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& 
     _liveHomePosition = homePosition;
     qobject_cast<MissionItem*>(_missionItems->get(0))->setCoordinate(_liveHomePosition);
     emit liveHomePositionChanged(_liveHomePosition);
+    _recalcWaypointLines();
 }
 
 void MissionController::deleteCurrentMissionItem(void)
