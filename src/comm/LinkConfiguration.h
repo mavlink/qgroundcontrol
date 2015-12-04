@@ -57,12 +57,16 @@ public:
     void            setLink(LinkInterface* link);
 
     ///  The link types supported by QGC
+    ///  Any changes here MUST be reflected in LinkManager::linkTypeStrings()
     enum LinkType {
 #ifndef __ios__
         TypeSerial,     ///< Serial Link
 #endif
         TypeUdp,        ///< UDP Link
         TypeTcp,        ///< TCP Link
+#ifndef Q_OS_WIN
+        TypeBluetooth,  ///< Bluetooth Link
+#endif
 #if 0
         // TODO Below is not yet implemented
         TypeForwarding, ///< Forwarding Link

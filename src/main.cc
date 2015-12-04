@@ -50,6 +50,10 @@ This file is part of the QGROUNDCONTROL project
     #endif
 #endif
 
+#ifndef Q_OS_WIN
+#include <QtBluetooth/QBluetoothSocket>
+#endif
+
 #include <iostream>
 
 /* SDL does ugly things to main() */
@@ -135,6 +139,10 @@ int main(int argc, char *argv[])
     // anyway to silence the debug output.
 #ifndef __ios__
     qRegisterMetaType<QSerialPort::SerialPortError>();
+#endif
+#ifndef Q_OS_WIN
+    qRegisterMetaType<QBluetoothSocket::SocketError>();
+    qRegisterMetaType<QBluetoothServiceInfo>();
 #endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
 #ifndef __mobile__
