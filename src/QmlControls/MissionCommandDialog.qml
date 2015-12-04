@@ -49,7 +49,6 @@ QGCViewDialog {
 
         function categorySelected(category) {
             commandList.model = QGroundControl.missionCommands.getCommandsForCategory(category)
-            console.log("changing model", category)
         }
 
         Component.onCompleted: {
@@ -71,33 +70,13 @@ QGCViewDialog {
         spacing:            ScreenTools.defaultFontPixelHeight / 2
         orientation:        ListView.Vertical
 
-        onModelChanged: {
-            var currentCategory = categoryCombo.currentText
-
-            currentIndex = -1
-            if (missionItem.category == currentCategory) {
-                var commandList = QGroundControl.missionCommands.getCommandsForCategory(currentCategory)
-                for (var i=0; i<commandList.count; i++) {
-                    if (commandList.get(i).command == missionItem.command) {
-                        currentIndex = i
-                        break
-                    }
-                }
-            }
-        }
-
-        highlight: Rectangle {
-            color: qgcPal.buttonHighlight
-        }
-
         delegate: Rectangle {
             width:  parent.width
             height: commandColumn.height + ScreenTools.defaultFontPixelSize
-            color:  currentItem ? qgcPal.buttonHighlight : qgcPal.button
+            color:  qgcPal.button
 
-            property var    mavCmdInfo:     object
-            property bool   currentItem:    commandList.currentItem == this
-            property var    textColor:      currentItem ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            property var    mavCmdInfo: object
+            property var    textColor:  qgcPal.buttonText
 
             Column {
                 id:                 commandColumn
