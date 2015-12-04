@@ -68,23 +68,24 @@ public:
 
     const MissionItem& operator=(const MissionItem& other);
     
-    Q_PROPERTY(double           altDifference       READ altDifference          WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
-    Q_PROPERTY(double           azimuth             READ azimuth                WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
-    Q_PROPERTY(QString          category            READ category                                           NOTIFY commandChanged)
-    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command            WRITE setCommand            NOTIFY commandChanged)
-    Q_PROPERTY(QString          commandDescription  READ commandDescription                                 NOTIFY commandChanged)
-    Q_PROPERTY(QString          commandName         READ commandName                                        NOTIFY commandChanged)
-    Q_PROPERTY(QGeoCoordinate   coordinate          READ coordinate             WRITE setCoordinate         NOTIFY coordinateChanged)
-    Q_PROPERTY(bool             dirty               READ dirty                  WRITE setDirty              NOTIFY dirtyChanged)
-    Q_PROPERTY(double           distance            READ distance               WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
-    Q_PROPERTY(bool             friendlyEditAllowed READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
-    Q_PROPERTY(bool             homePosition        READ homePosition                                       CONSTANT)                           ///< true: This item is being used as a home position indicator
-    Q_PROPERTY(bool             homePositionValid   READ homePositionValid      WRITE setHomePositionValid  NOTIFY homePositionValidChanged)    ///< true: Home position should be shown
-    Q_PROPERTY(bool             isCurrentItem       READ isCurrentItem          WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
-    Q_PROPERTY(bool             rawEdit             READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
-    Q_PROPERTY(int              sequenceNumber      READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
-    Q_PROPERTY(bool             specifiesCoordinate READ specifiesCoordinate                                NOTIFY commandChanged)
-    Q_PROPERTY(Fact*            supportedCommand    READ supportedCommand                                   NOTIFY commandChanged)
+    Q_PROPERTY(double           altDifference           READ altDifference          WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
+    Q_PROPERTY(double           azimuth                 READ azimuth                WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
+    Q_PROPERTY(QString          category                READ category                                           NOTIFY commandChanged)
+    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand            NOTIFY commandChanged)
+    Q_PROPERTY(QString          commandDescription      READ commandDescription                                 NOTIFY commandChanged)
+    Q_PROPERTY(QString          commandName             READ commandName                                        NOTIFY commandChanged)
+    Q_PROPERTY(QGeoCoordinate   coordinate              READ coordinate             WRITE setCoordinate         NOTIFY coordinateChanged)
+    Q_PROPERTY(bool             dirty                   READ dirty                  WRITE setDirty              NOTIFY dirtyChanged)
+    Q_PROPERTY(double           distance                READ distance               WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
+    Q_PROPERTY(bool             friendlyEditAllowed     READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
+    Q_PROPERTY(bool             homePosition            READ homePosition                                       CONSTANT)                           ///< true: This item is being used as a home position indicator
+    Q_PROPERTY(bool             homePositionValid       READ homePositionValid      WRITE setHomePositionValid  NOTIFY homePositionValidChanged)    ///< true: Home position should be shown
+    Q_PROPERTY(bool             isCurrentItem           READ isCurrentItem          WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
+    Q_PROPERTY(bool             rawEdit                 READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
+    Q_PROPERTY(int              sequenceNumber          READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
+    Q_PROPERTY(bool             standaloneCoordinate    READ standaloneCoordinate                               NOTIFY commandChanged)
+    Q_PROPERTY(bool             specifiesCoordinate     READ specifiesCoordinate                                NOTIFY commandChanged)
+    Q_PROPERTY(Fact*            supportedCommand        READ supportedCommand                                   NOTIFY commandChanged)
 
     // These properties are used to display the editing ui
     Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
@@ -112,6 +113,7 @@ public:
     bool            isCurrentItem       (void) const    { return _isCurrentItem; }
     bool            rawEdit             (void) const;
     int             sequenceNumber      (void) const    { return _sequenceNumber; }
+    bool            standaloneCoordinate(void) const;
     bool            specifiesCoordinate (void) const;
     Fact*           supportedCommand    (void)          { return &_supportedCommandFact; }
 
