@@ -313,11 +313,10 @@ QGCView {
 
                     MissionItemIndicator {
                         id:             itemIndicator
-                        label:          object.homePosition ? "H" : object.sequenceNumber
-                        isCurrentItem:  object.isCurrentItem
                         coordinate:     object.coordinate
                         visible:        object.specifiesCoordinate && (!object.homePosition || object.homePositionValid)
                         z:              QGroundControl.zOrderMapItems
+                        missionItem:    object
 
                         onClicked: setCurrentItem(object.sequenceNumber)
 
@@ -348,6 +347,9 @@ QGCView {
                             onCommandChanged:       updateItemIndicator()
                         }
 
+                        /*
+                          Disabled for now: Not sure if they will come back
+
                         // These are the non-coordinate child mission items attached to this item
                         Row {
                             anchors.top:    parent.top
@@ -365,6 +367,7 @@ QGCView {
                                 }
                             }
                         }
+                        */
                     }
                 }
 
@@ -413,282 +416,6 @@ QGCView {
                         }
                     } // ListView
                 } // Item - Mission Item editor
-
-                /*
-                  Home Position Manager temporarily disbled till more work is done on it
-
-                // Home Position Manager
-                Rectangle {
-                    id:             homePositionManager
-                    anchors.top:    parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.right:  parent.right
-                    width:          _rightPanelWidth
-                    visible:        homePositionManagerButton.checked
-                    color:          qgcPal.window
-                    opacity:        _rightPanelOpacity
-                    z:              QGroundControl.zOrderTopMost
-
-                    Column {
-                        anchors.margins:    _margin
-                        anchors.fill:       parent
-                        visible:            !liveHomePositionAvailable
-
-                        QGCLabel {
-                            font.pixelSize: ScreenTools.mediumFontPixelSize
-                            text:           "Flying Field Manager"
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text:       "This is used to save locations associated with your flying field for use while creating missions with no vehicle connection."
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        QGCLabel {
-                            text:       "Select field to use:"
-                        }
-
-                        QGCComboBox {
-                            id:         homePosCombo
-                            width:      parent.width
-                            textRole:   "text"
-                            model:      _homePositionManager.homePositions
-
-                            onCurrentIndexChanged: {
-                                if (currentIndex != -1) {
-                                    var homePos = _homePositionManager.homePositions.get(currentIndex)
-                                    _homePositionName = homePos.name
-                                    offlineHomePosition = homePos.coordinate
-                                    editorMap.latitude = offlineHomePosition.latitude
-                                    editorMap.longitude = offlineHomePosition.longitude
-                                }
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text:       "To add a new flying field, click on the Map to set the position. " +
-                                        "Then give it a new name and click Add/Update. " +
-                                        "To change the current field position, click on the Map to set the new position. " +
-                                        "Then click Add/Update without changing the name."
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: nameField.height
-
-                            QGCLabel {
-                                anchors.baseline:   nameField.baseline
-                                text:               "Name:"
-                            }
-
-                            QGCTextField {
-                                id:             nameField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           _homePositionName
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: offlineLatitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   offlineLatitudeField.baseline
-                                text:               "Lat:"
-                            }
-
-                            QGCTextField {
-                                id:             offlineLatitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           offlineHomePosition.latitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: offlineLongitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   offlineLongitudeField.baseline
-                                text:               "Lon:"
-                            }
-
-                            QGCTextField {
-                                id:             offlineLongitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           offlineHomePosition.longitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: offlineAltitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   offlineAltitudeField.baseline
-                                text:               "Alt:"
-                            }
-
-                            QGCTextField {
-                                id:             offlineAltitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           offlineHomePosition.altitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-
-                            QGCButton {
-                                text: "Add/Update"
-
-                                onClicked: {
-                                    offlineHomePosition = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
-                                    _homePositionManager.updateHomePosition(nameField.text, offlineHomePosition)
-                                    homePosCombo.currentIndex = homePosCombo.find(nameField.text)
-                                }
-                            }
-
-                            QGCButton {
-                                text: "Delete"
-
-                                onClicked: {
-                                    homePosCombo.currentIndex = -1
-                                    _homePositionManager.deleteHomePosition(nameField.text)
-                                    homePosCombo.currentIndex = 0
-                                    var homePos = _homePositionManager.homePositions.get(0)
-                                    _homePositionName = homePos.name
-                                    offlineHomePosition = homePos.coordinate
-                                }
-                            }
-                        }
-                    } // Column - Offline view
-
-                    Column {
-                        anchors.margins:    _margin
-                        anchors.fill:       parent
-                        visible:            liveHomePositionAvailable
-
-                        QGCLabel {
-                            font.pixelSize: ScreenTools.mediumFontPixelSize
-                            text:           "Vehicle Home Position"
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: liveLatitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   liveLatitudeField.baseline
-                                text:               "Lat:"
-                            }
-
-                            QGCLabel {
-                                id:             liveLatitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           liveHomePosition.latitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: liveLongitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   liveLongitudeField.baseline
-                                text:               "Lon:"
-                            }
-
-                            QGCLabel {
-                                id:             liveLongitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           liveHomePosition.longitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: liveAltitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   liveAltitudeField.baseline
-                                text:               "Alt:"
-                            }
-
-                            QGCLabel {
-                                id:             liveAltitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           liveHomePosition.altitude
-                            }
-                        }
-                    } // Column - Online view
-                } // Item - Home Position Manager
-                */
 
                 //-- Dismiss Drop Down (if any)
                 MouseArea {
