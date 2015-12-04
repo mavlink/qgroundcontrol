@@ -88,13 +88,14 @@ public:
 
     }
 
-    Q_PROPERTY(QString  category            READ category               CONSTANT)
-    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command    CONSTANT)
-    Q_PROPERTY(QString  description         READ description            CONSTANT)
-    Q_PROPERTY(bool     friendlyEdit        READ friendlyEdit           CONSTANT)
-    Q_PROPERTY(QString  friendlyName        READ friendlyName           CONSTANT)
-    Q_PROPERTY(QString  rawName             READ rawName                CONSTANT)
-    Q_PROPERTY(bool     specifiesCoordinate READ specifiesCoordinate    CONSTANT)
+    Q_PROPERTY(QString  category                READ category               CONSTANT)
+    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command        CONSTANT)
+    Q_PROPERTY(QString  description             READ description            CONSTANT)
+    Q_PROPERTY(bool     friendlyEdit            READ friendlyEdit           CONSTANT)
+    Q_PROPERTY(QString  friendlyName            READ friendlyName           CONSTANT)
+    Q_PROPERTY(QString  rawName                 READ rawName                CONSTANT)
+    Q_PROPERTY(bool     standaloneCoordinate    READ standaloneCoordinate   CONSTANT)
+    Q_PROPERTY(bool     specifiesCoordinate     READ specifiesCoordinate    CONSTANT)
 
     QString category            (void) const { return _category; }
     MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_command; }
@@ -102,6 +103,7 @@ public:
     bool    friendlyEdit        (void) const { return _friendlyEdit; }
     QString friendlyName        (void) const { return _friendlyName; }
     QString rawName             (void) const { return _rawName; }
+    bool    standaloneCoordinate(void) const { return _standaloneCoordinate; }
     bool    specifiesCoordinate (void) const { return _specifiesCoordinate; }
 
     const QMap<int, MavCmdParamInfo*>& paramInfoMap(void) const { return _paramInfoMap; }
@@ -114,6 +116,7 @@ private:
     QString                     _friendlyName;
     QMap<int, MavCmdParamInfo*> _paramInfoMap;
     QString                     _rawName;
+    bool                        _standaloneCoordinate;
     bool                        _specifiesCoordinate;
 
     friend class MissionCommands;
@@ -170,6 +173,7 @@ private:
     static const QString _param4JsonKey;
     static const QString _paramJsonKeyFormat;
     static const QString _rawNameJsonKey;
+    static const QString _standaloneCoordinateJsonKey;
     static const QString _specifiesCoordinateJsonKey;
     static const QString _unitsJsonKey;
     static const QString _versionJsonKey;

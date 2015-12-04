@@ -346,7 +346,7 @@ void MissionController::_recalcWaypointLines(void)
         item->setAzimuth(0.0);
         item->setDistance(-1.0);
 
-        if (item->specifiesCoordinate()) {
+        if (item->specifiesCoordinate() && !item->standaloneCoordinate()) {
             if (firstCoordinateItem) {
                 if (item->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
                     // The first coordinate we hit is a takeoff command so link back to home position if valid
@@ -628,7 +628,7 @@ bool MissionController::_findLastAltitude(double* lastAltitude)
     for (int i=0; i<_missionItems->count(); i++) {
         MissionItem* item = qobject_cast<MissionItem*>(_missionItems->get(i));
 
-        if (item->specifiesCoordinate()) {
+        if (item->specifiesCoordinate() && !item->standaloneCoordinate()) {
             foundAltitude = item->param7();
             found = true;
         }
