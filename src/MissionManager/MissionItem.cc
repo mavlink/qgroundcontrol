@@ -112,6 +112,7 @@ MissionItem::MissionItem(QObject* parent)
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
     _frameFact.setRawValue(MAV_FRAME_GLOBAL_RELATIVE_ALT);
+    _altitudeRelativeToHomeFact.setRawValue(true);
 
     _setupMetaData();
     _connectSignals();
@@ -169,6 +170,7 @@ MissionItem::MissionItem(int             sequenceNumber,
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
     _frameFact.setRawValue(MAV_FRAME_GLOBAL_RELATIVE_ALT);
+    _altitudeRelativeToHomeFact.setRawValue(true);
 
     _setupMetaData();
     _connectSignals();
@@ -223,6 +225,7 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
     _frameFact.setRawValue(MAV_FRAME_GLOBAL_RELATIVE_ALT);
+    _altitudeRelativeToHomeFact.setRawValue(true);
 
     _setupMetaData();
     _connectSignals();
