@@ -49,11 +49,11 @@ Rectangle {
             onClicked: _root.clicked()
         }
 
-        MissionItemIndexLabel {
+        QGCLabel {
             id:                     label
             anchors.verticalCenter: commandPicker.verticalCenter
-            isCurrentItem:          missionItem.isCurrentItem
-            label:                  missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
+            color:                  missionItem.isCurrentItem ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            text:                   missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
         }
 
         Image {
@@ -92,18 +92,12 @@ Rectangle {
             onClicked:              qgcView.showDialog(commandDialog, "Select Mission Command", 40, StandardButton.Cancel)
         }
 
-        Rectangle {
-            anchors.fill:   commandPicker
-            color:          qgcPal.button
-            visible:        missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem
-
-            QGCLabel {
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-                anchors.fill:       parent
-                verticalAlignment:  Text.AlignVCenter
-                text:               missionItem.sequenceNumber == 0 ? "Home" : missionItem.commandName
-                color:              qgcPal.buttonText
-            }
+        QGCLabel {
+            anchors.fill:       commandPicker
+            visible:            missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem
+            verticalAlignment:  Text.AlignVCenter
+            text:               missionItem.sequenceNumber == 0 ? "Home" : missionItem.commandName
+            color:              qgcPal.buttonText
         }
 
         Rectangle {
