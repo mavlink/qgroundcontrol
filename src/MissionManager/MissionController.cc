@@ -435,7 +435,7 @@ void MissionController::_initAllMissionItems(void)
             homeItem->setCoordinate(_activeVehicle->homePosition());
             homeItem->setHomePositionValid(_activeVehicle->homePositionAvailable());
         }
-        homeItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_LAST);
+        homeItem->setCommand(MAV_CMD_NAV_WAYPOINT);
         homeItem->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
         homeItem->setSequenceNumber(0);
         _missionItems->insert(0, homeItem);
