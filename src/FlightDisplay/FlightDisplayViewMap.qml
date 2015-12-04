@@ -59,18 +59,6 @@ FlightMap {
         Component.onCompleted: start(false /* editMode */)
     }
 
-    // Home position
-    MissionItemIndicator {
-        label:          "H"
-        coordinate:     (_activeVehicle && _activeVehicle.homePositionAvailable) ? _activeVehicle.homePosition : QtPositioning.coordinate(0, 0)
-        visible: {
-            if(!_mainIsMap)
-                return false;
-            return _activeVehicle ? _activeVehicle.homePositionAvailable : false
-        }
-        z:              QGroundControl.zOrderMapItems
-    }
-
     // Add trajectory points to the map
     MapItemView {
         model: _mainIsMap ? multiVehicleManager.activeVehicle ? multiVehicleManager.activeVehicle.trajectoryPoints : 0 : 0
