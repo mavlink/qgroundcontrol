@@ -368,7 +368,7 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
 {
     mavlink_mission_ack_t missionAck;
     
-    // Save th retry ack before calling _stopAckTimeout since we'll need it to determine what
+    // Save the retry ack before calling _stopAckTimeout since we'll need it to determine what
     // type of a protocol sequence we are in.
     AckType_t savedRetryAck = _retryAck;
     
@@ -418,7 +418,8 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
             } else {
                 qCDebug(MissionManagerLog) << "_handleMissionAck ack error:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
                 if (!_retrySequence(AckMissionRequest)) {
-                    _sendError(VehicleError, QString("Vehicle returned error: %1.  Vehicle only has partial list of mission items.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+                    _sendError(VehicleError,
+                               QString("Vehicle returned error: %1 on item %2.  Vehicle only has partial list of mission items.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)).arg(_expectedSequenceNumber));
                 }
             }
             break;
