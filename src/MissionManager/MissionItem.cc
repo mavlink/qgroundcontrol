@@ -504,6 +504,11 @@ void MissionItem::setParam7(double param)
     }
 }
 
+bool MissionItem::standaloneCoordinate(void) const
+{
+    return _mavCmdInfoMap[(MAV_CMD)command()]->standaloneCoordinate();
+}
+
 bool MissionItem::specifiesCoordinate(void) const
 {
     return _mavCmdInfoMap[(MAV_CMD)command()]->specifiesCoordinate();
