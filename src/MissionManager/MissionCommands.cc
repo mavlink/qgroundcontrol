@@ -49,6 +49,7 @@ const QString MissionCommands::_param3JsonKey               (QStringLiteral("par
 const QString MissionCommands::_param4JsonKey               (QStringLiteral("param4"));
 const QString MissionCommands::_paramJsonKeyFormat          (QStringLiteral("param%1"));
 const QString MissionCommands::_rawNameJsonKey              (QStringLiteral("rawName"));
+const QString MissionCommands::_standaloneCoordinateJsonKey (QStringLiteral("standaloneCoordinate"));
 const QString MissionCommands::_specifiesCoordinateJsonKey  (QStringLiteral("specifiesCoordinate"));
 const QString MissionCommands::_unitsJsonKey                (QStringLiteral("units"));
 const QString MissionCommands::_versionJsonKey              (QStringLiteral("version"));
@@ -129,9 +130,9 @@ void MissionCommands::_loadMavCmdInfoJson(void)
 
         QStringList             keys;
         QList<QJsonValue::Type> types;
-        keys << _idJsonKey << _rawNameJsonKey << _friendlyNameJsonKey << _descriptionJsonKey << _specifiesCoordinateJsonKey << _friendlyEditJsonKey
+        keys << _idJsonKey << _rawNameJsonKey << _friendlyNameJsonKey << _descriptionJsonKey << _standaloneCoordinateJsonKey << _specifiesCoordinateJsonKey <<_friendlyEditJsonKey
              << _param1JsonKey << _param2JsonKey << _param3JsonKey << _param4JsonKey << _categoryJsonKey;
-        types << QJsonValue::Double << QJsonValue::String << QJsonValue::String<< QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool
+        types << QJsonValue::Double << QJsonValue::String << QJsonValue::String<< QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool << QJsonValue::Bool
               << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::String;
         if (!_validateKeyTypes(jsonObject, keys, types)) {
             return;
@@ -144,6 +145,7 @@ void MissionCommands::_loadMavCmdInfoJson(void)
         mavCmdInfo->_rawName =                jsonObject.value(_rawNameJsonKey).toString();
         mavCmdInfo->_friendlyName =           jsonObject.value(_friendlyNameJsonKey).toString(QString());
         mavCmdInfo->_description =            jsonObject.value(_descriptionJsonKey).toString(QString());
+        mavCmdInfo->_standaloneCoordinate =   jsonObject.value(_standaloneCoordinateJsonKey).toBool(false);
         mavCmdInfo->_specifiesCoordinate =    jsonObject.value(_specifiesCoordinateJsonKey).toBool(false);
         mavCmdInfo->_friendlyEdit =           jsonObject.value(_friendlyEditJsonKey).toBool(false);
 
@@ -153,6 +155,7 @@ void MissionCommands::_loadMavCmdInfoJson(void)
                                     << mavCmdInfo->_rawName
                                     << mavCmdInfo->_friendlyName
                                     << mavCmdInfo->_description
+                                    << mavCmdInfo->_standaloneCoordinate
                                     << mavCmdInfo->_specifiesCoordinate
                                     << mavCmdInfo->_friendlyEdit;
 
