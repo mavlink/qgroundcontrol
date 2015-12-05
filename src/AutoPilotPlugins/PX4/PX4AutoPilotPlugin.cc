@@ -99,7 +99,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
             
-            _radioComponent = new RadioComponent(_vehicle, this);
+            _radioComponent = new PX4RadioComponent(_vehicle, this);
             Q_CHECK_PTR(_radioComponent);
             _radioComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));

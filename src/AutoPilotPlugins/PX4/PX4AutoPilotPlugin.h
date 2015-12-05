@@ -27,7 +27,7 @@
 #include "AutoPilotPlugin.h"
 #include "PX4AirframeLoader.h"
 #include "AirframeComponent.h"
-#include "RadioComponent.h"
+#include "PX4RadioComponent.h"
 #include "FlightModesComponent.h"
 #include "SensorsComponent.h"
 #include "SafetyComponent.h"
@@ -53,7 +53,7 @@ public:
 
     // These methods should only be used by objects within the plugin
     AirframeComponent*      airframeComponent(void)     { return _airframeComponent; }
-    RadioComponent*         radioComponent(void)        { return _radioComponent; }
+    PX4RadioComponent*      radioComponent(void)        { return _radioComponent; }
     FlightModesComponent*   flightModesComponent(void)  { return _flightModesComponent; }
     SensorsComponent*       sensorsComponent(void)      { return _sensorsComponent; }
     SafetyComponent*        safetyComponent(void)       { return _safetyComponent; }
@@ -67,7 +67,7 @@ private:
     PX4AirframeLoader*      _airframeFacts;
     QVariantList            _components;
     AirframeComponent*      _airframeComponent;
-    RadioComponent*         _radioComponent;
+    PX4RadioComponent*      _radioComponent;
     FlightModesComponent*   _flightModesComponent;
     SensorsComponent*       _sensorsComponent;
     SafetyComponent*        _safetyComponent;

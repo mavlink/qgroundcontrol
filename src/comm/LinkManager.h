@@ -171,6 +171,11 @@ public:
     // Called to signal app shutdown. Disconnects all links while turning off auto-connect.
     void shutdown(void);
 
+#ifdef QT_DEBUG
+    // Only used by unit test tp restart after a shutdown
+    void restart(void) { setConnectionsAllowed(); }
+#endif
+
     /// @return true: specified link is an autoconnect link
     bool isAutoconnectLink(LinkInterface* link);
 

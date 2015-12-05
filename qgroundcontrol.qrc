@@ -97,8 +97,9 @@
         <file alias="QGroundControl/ScreenTools/qmldir">src/QmlControls/QGroundControl.ScreenTools.qmldir</file>
         <file alias="QGroundControl/ScreenTools/ScreenTools.qml">src/QmlControls/ScreenTools.qml</file>
         <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
-        <file alias="RadioComponent.qml">src/AutoPilotPlugins/PX4/RadioComponent.qml</file>
-        <file alias="RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/RadioComponentSummary.qml</file>
+        <file alias="RadioComponent.qml">src/AutoPilotPlugins/Common/RadioComponent.qml</file>
+        <file alias="PX4RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml</file>
+        <file alias="APMRadioComponentSummary.qml">src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>

@@ -21,42 +21,38 @@
  
  ======================================================================*/
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#include "RadioComponent.h"
-#include "QGCQmlWidgetHolder.h"
+#include "PX4RadioComponent.h"
 #include "PX4AutoPilotPlugin.h"
 
-RadioComponent::RadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
+PX4RadioComponent::PX4RadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(vehicle, autopilot, parent),
     _name(tr("Radio"))
 {
 }
 
-QString RadioComponent::name(void) const
+QString PX4RadioComponent::name(void) const
 {
     return _name;
 }
 
-QString RadioComponent::description(void) const
+QString PX4RadioComponent::description(void) const
 {
     return tr("The Radio Component is used to setup which channels on your RC Transmitter you will use for each vehicle control such as Roll, Pitch, Yaw and Throttle. "
               "It also allows you to assign switches and dials to the various flight modes. "
               "Prior to flight you must also calibrate the extents for all of your channels.");
 }
 
-QString RadioComponent::iconResource(void) const
+QString PX4RadioComponent::iconResource(void) const
 {
     return "/qmlimages/RadioComponentIcon.png";
 }
 
-bool RadioComponent::requiresSetup(void) const
+bool PX4RadioComponent::requiresSetup(void) const
 {
     return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
 }
 
-bool RadioComponent::setupComplete(void) const
+bool PX4RadioComponent::setupComplete(void) const
 {
     if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
         // The best we can do to detect the need for a radio calibration is look for attitude
@@ -73,7 +69,7 @@ bool RadioComponent::setupComplete(void) const
     return true;
 }
 
-QString RadioComponent::setupStateDescription(void) const
+QString PX4RadioComponent::setupStateDescription(void) const
 {
     const char* stateDescription;
     
@@ -85,7 +81,7 @@ QString RadioComponent::setupStateDescription(void) const
     return QString(stateDescription);
 }
 
-QStringList RadioComponent::setupCompleteChangedTriggerList(void) const
+QStringList PX4RadioComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
     
@@ -94,7 +90,7 @@ QStringList RadioComponent::setupCompleteChangedTriggerList(void) const
     return triggers;
 }
 
-QStringList RadioComponent::paramFilterList(void) const
+QStringList PX4RadioComponent::paramFilterList(void) const
 {
     QStringList list;
     
@@ -103,21 +99,20 @@ QStringList RadioComponent::paramFilterList(void) const
     return list;
 }
 
-QUrl RadioComponent::setupSource(void) const
+QUrl PX4RadioComponent::setupSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/RadioComponent.qml");
 }
 
-QUrl RadioComponent::summaryQmlSource(void) const
+QUrl PX4RadioComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/RadioComponentSummary.qml");
+    return QUrl::fromUserInput("qrc:/qml/PX4RadioComponentSummary.qml");
 }
 
-QString RadioComponent::prerequisiteSetup(void) const
+QString PX4RadioComponent::prerequisiteSetup(void) const
 {
     if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
         PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-        Q_ASSERT(plugin);
         
         if (!plugin->airframeComponent()->setupComplete()) {
             return plugin->airframeComponent()->name();

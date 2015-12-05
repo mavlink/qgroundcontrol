@@ -47,12 +47,11 @@ public:
     RadioConfigTest(void);
     
 private slots:
-    void init(void);
     void cleanup(void);
     
-    void _minRCChannels_test(void);
-    void _fullCalibration_test(void);
-    
+    void _fullCalibration_px4_test(void);
+    void _fullCalibration_apm_test(void);
+
 private:
     /// @brief Modes to run worker functions
     enum TestMode {
@@ -67,15 +66,6 @@ private:
         moveToCenter,
     };
     
-    void _channelHomePosition(void);
-    void _minRCChannels(void);
-    void _beginCalibration(void);
-    void _stickMoveWaitForSettle(int channel, int value);
-    void _stickMoveAutoStep(const char* functionStr, enum RadioComponentController::rcCalFunctions function, enum MoveToDirection direction, bool identifyStep);
-    void _switchMinMaxStep(void);
-    void _flapsDetectStep(void);
-    void _switchSelectAutoStep(const char* functionStr, RadioComponentController::rcCalFunctions function);
-    
     enum {
         validateMinMaxMask =    1 << 0,
         validateTrimsMask =     1 << 1,
@@ -85,12 +75,28 @@ private:
     };
 
     struct ChannelSettings {
-		int function;
+        int function;
         int rcMin;
         int rcMax;
         int rcTrim;
         int reversed;
     };
+
+    void _init(MAV_AUTOPILOT firmwareType);
+    void _channelHomePosition(void);
+    void _minRCChannels(void);
+    void _beginCalibration(void);
+    void _stickMoveWaitForSettle(int channel, int value);
+    void _stickMoveAutoStep(const char* functionStr, enum RadioComponentController::rcCalFunctions function, enum MoveToDirection direction, bool identifyStep);
+    void _switchMinMaxStep(void);
+    void _flapsDetectStep(void);
+    void _switchSelectAutoStep(const char* functionStr, RadioComponentController::rcCalFunctions function);
+    bool _px4Vehicle(void) const;
+    const struct RadioComponentController::FunctionInfo* _functionInfo(void) const;
+    const struct ChannelSettings* _channelSettings(void) const;
+    const struct ChannelSettings* _channelSettingsValidate(void) const;
+    void _fullCalibrationWorker(MAV_AUTOPILOT firmwareType);
+    int _chanMax(void) const;
     
     void _validateParameters(void);
     
@@ -113,12 +119,13 @@ private:
     static const int _testMaxValue;
     static const int _testCenterValue;
     
-	static const int _availableChannels = 18;	///< Simulate 18 channel RC Transmitter
     static const int _stickSettleWait;
 	
-    static const struct ChannelSettings _rgChannelSettings[_availableChannels];
-    static const struct ChannelSettings _rgChannelSettingsValidate[RadioComponentController::_chanMax];
-	
+    static const struct ChannelSettings _rgChannelSettingsPX4[RadioComponentController::_chanMaxPX4];
+    static const struct ChannelSettings _rgChannelSettingsAPM[RadioComponentController::_chanMaxAPM];
+    static const struct ChannelSettings _rgChannelSettingsValidatePX4[RadioComponentController::_chanMaxPX4];
+    static const struct ChannelSettings _rgChannelSettingsValidateAPM[RadioComponentController::_chanMaxAPM];
+
 	int _rgFunctionChannelMap[RadioComponentController::rcCalFunctionMax];
     
     RadioComponentController*   _controller;
