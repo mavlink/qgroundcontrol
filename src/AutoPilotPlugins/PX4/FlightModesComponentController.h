@@ -43,7 +43,6 @@ class FlightModesComponentController : public FactPanelController
     
 public:
     FlightModesComponentController(void);
-    ~FlightModesComponentController();
     
     Q_PROPERTY(bool validConfiguration MEMBER _validConfiguration CONSTANT)
     Q_PROPERTY(QString configurationErrors MEMBER _configurationErrors CONSTANT)
@@ -183,7 +182,7 @@ signals:
     void modeRowsChanged(void);
     
 private slots:
-    void _remoteControlChannelRawChanged(int chan, float fval);
+    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
     
 private:
     double _switchLiveRange(const QString& param);

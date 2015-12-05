@@ -119,10 +119,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     setLatitude(_uas->getLatitude());
     setLongitude(_uas->getLongitude());
 
-    connect(_uas, &UAS::latitudeChanged,            this, &Vehicle::setLatitude);
-    connect(_uas, &UAS::longitudeChanged,           this, &Vehicle::setLongitude);
-    connect(_uas, &UAS::imageReady,                 this, &Vehicle::_imageReady);
-    connect(_uas, &UAS::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
+    connect(_uas, &UAS::latitudeChanged,                this, &Vehicle::setLatitude);
+    connect(_uas, &UAS::longitudeChanged,               this, &Vehicle::setLongitude);
+    connect(_uas, &UAS::imageReady,                     this, &Vehicle::_imageReady);
+    connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
     _firmwarePlugin     = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
     _autopilotPlugin    = _autopilotPluginManager->newAutopilotPluginForVehicle(this);
@@ -211,12 +211,18 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _firmwarePlugin->adjustMavlinkMessage(&message);
 
     switch (message.msgid) {
-        case MAVLINK_MSG_ID_HOME_POSITION:
-            _handleHomePosition(message);
-            break;
-        case MAVLINK_MSG_ID_HEARTBEAT:
-            _handleHeartbeat(message);
-            break;
+    case MAVLINK_MSG_ID_HOME_POSITION:
+        _handleHomePosition(message);
+        break;
+    case MAVLINK_MSG_ID_HEARTBEAT:
+        _handleHeartbeat(message);
+        break;
+    case MAVLINK_MSG_ID_RC_CHANNELS:
+        _handleRCChannels(message);
+        break;
+    case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
+        _handleRCChannelsRaw(message);
+        break;
     }
 
     emit mavlinkMessageReceived(message);
@@ -279,6 +285,89 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
         _custom_mode = heartbeat.custom_mode;
         emit flightModeChanged(flightMode());
     }
+}
+
+void Vehicle::_handleRCChannels(mavlink_message_t& message)
+{
+    mavlink_rc_channels_t channels;
+
+    mavlink_msg_rc_channels_decode(&message, &channels);
+
+    uint16_t* _rgChannelvalues[cMaxRcChannels] = {
+        &channels.chan1_raw,
+        &channels.chan2_raw,
+        &channels.chan3_raw,
+        &channels.chan4_raw,
+        &channels.chan5_raw,
+        &channels.chan6_raw,
+        &channels.chan7_raw,
+        &channels.chan8_raw,
+        &channels.chan9_raw,
+        &channels.chan10_raw,
+        &channels.chan11_raw,
+        &channels.chan12_raw,
+        &channels.chan13_raw,
+        &channels.chan14_raw,
+        &channels.chan15_raw,
+        &channels.chan16_raw,
+        &channels.chan17_raw,
+        &channels.chan18_raw,
+    };
+    int pwmValues[cMaxRcChannels];
+
+    for (int i=0; i<cMaxRcChannels; i++) {
+        uint16_t channelValue = *_rgChannelvalues[i];
+
+        if (i < channels.chancount) {
+            pwmValues[i] = channelValue == UINT16_MAX ? -1 : channelValue;
+        } else {
+            pwmValues[i] = -1;
+        }
+    }
+
+    emit remoteControlRSSIChanged(channels.rssi);
+    emit rcChannelsChanged(channels.chancount, pwmValues);
+}
+
+void Vehicle::_handleRCChannelsRaw(mavlink_message_t& message)
+{
+    // We handle both RC_CHANNLES and RC_CHANNELS_RAW since different firmware will only
+    // send one or the other.
+
+    mavlink_rc_channels_raw_t channels;
+
+    mavlink_msg_rc_channels_raw_decode(&message, &channels);
+
+    uint16_t* _rgChannelvalues[cMaxRcChannels] = {
+        &channels.chan1_raw,
+        &channels.chan2_raw,
+        &channels.chan3_raw,
+        &channels.chan4_raw,
+        &channels.chan5_raw,
+        &channels.chan6_raw,
+        &channels.chan7_raw,
+        &channels.chan8_raw,
+    };
+
+    int pwmValues[cMaxRcChannels];
+    int channelCount = 0;
+
+    for (int i=0; i<8; i++) {
+        uint16_t channelValue = *_rgChannelvalues[i];
+
+        if (channelValue == UINT16_MAX) {
+            pwmValues[i] = -1;
+        } else {
+            channelCount = i;
+            pwmValues[i] = channelValue;
+        }
+    }
+    for (int i=9; i<18; i++) {
+        pwmValues[i] = -1;
+    }
+
+    emit remoteControlRSSIChanged(channels.rssi);
+    emit rcChannelsChanged(channelCount, pwmValues);
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)

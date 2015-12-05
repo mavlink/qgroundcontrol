@@ -302,13 +302,6 @@ signals:
     /** @brief Differential pressure / airspeed status changed */
     void airspeedStatusChanged(bool supported, bool enabled, bool ok);
 
-    /** @brief Value of a remote control channel (raw) */
-    void remoteControlChannelRawChanged(int channelId, float raw);
-    /** @brief Value of a remote control channel (scaled)*/
-    void remoteControlChannelScaledChanged(int channelId, float normalized);
-    /** @brief Remote control RSSI changed  (0% - 100%)*/
-    void remoteControlRSSIChanged(uint8_t rssi);
-
     /**
      * @brief Localization quality changed
      * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
