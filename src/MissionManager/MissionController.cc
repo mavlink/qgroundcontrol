@@ -426,21 +426,21 @@ void MissionController::_initAllMissionItems(void)
 
     if (_activeVehicle && _activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() && _missionItems->count() != 0) {
         homeItem = qobject_cast<MissionItem*>(_missionItems->get(0));
-        homeItem->setHomePositionSpecialCase(true);
     } else {
         // Add the home position item to the front
         homeItem = new MissionItem(this);
-        homeItem->setHomePositionSpecialCase(true);
-        if (_activeVehicle) {
-            homeItem->setCoordinate(_activeVehicle->homePosition());
-            homeItem->setHomePositionValid(_activeVehicle->homePositionAvailable());
-        }
-        homeItem->setCommand(MAV_CMD_NAV_WAYPOINT);
-        homeItem->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
         homeItem->setSequenceNumber(0);
         _missionItems->insert(0, homeItem);
     }
-    homeItem->setHomePositionValid(false);
+    homeItem->setHomePositionSpecialCase(true);
+    if (_activeVehicle) {
+        homeItem->setCoordinate(_activeVehicle->homePosition());
+        homeItem->setHomePositionValid(_activeVehicle->homePositionAvailable());
+    } else {
+        homeItem->setHomePositionValid(false);
+    }
+    homeItem->setCommand(MAV_CMD_NAV_WAYPOINT);
+    homeItem->setFrame(MAV_FRAME_GLOBAL);
 
     for (int i=0; i<_missionItems->count(); i++) {
         _initMissionItem(qobject_cast<MissionItem*>(_missionItems->get(i)));

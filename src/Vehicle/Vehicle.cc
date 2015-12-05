@@ -236,17 +236,18 @@ void Vehicle::_handleHomePosition(mavlink_message_t& message)
     QGeoCoordinate newHomePosition (homePos.latitude / 10000000.0,
                                     homePos.longitude / 10000000.0,
                                     homePos.altitude / 1000.0);
-    if (newHomePosition != _homePosition) {
+    if (!_homePositionAvailable || newHomePosition != _homePosition) {
         emitHomePositionChanged = true;
         _homePosition = newHomePosition;
     }
 
     if (!_homePositionAvailable) {
         emitHomePositionAvailableChanged = true;
+        _homePositionAvailable = true;
     }
-    _homePositionAvailable = true;
 
     if (emitHomePositionChanged) {
+        qCDebug(VehicleLog) << "New home position" << newHomePosition;
         emit homePositionChanged(_homePosition);
     }
     if (emitHomePositionAvailableChanged) {
