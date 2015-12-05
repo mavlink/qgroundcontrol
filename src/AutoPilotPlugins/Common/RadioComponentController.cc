@@ -70,7 +70,7 @@ const char*  RadioComponentController::_imageSwitchMinMax = "radioSwitchMinMax.p
 const char* RadioComponentController::_settingsGroup = "RadioCalibration";
 const char* RadioComponentController::_settingsKeyTransmitterMode = "TransmitterMode";
 
-const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfo[RadioComponentController::rcCalFunctionMax] = {
+const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoPX4[RadioComponentController::rcCalFunctionMax] = {
     //Parameter          required
     { "RC_MAP_ROLL" },
     { "RC_MAP_PITCH" },
@@ -84,6 +84,22 @@ const struct RadioComponentController::FunctionInfo RadioComponentController::_r
     { "RC_MAP_FLAPS" },
     { "RC_MAP_AUX1" },
     { "RC_MAP_AUX2" },
+};
+
+const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoAPM[RadioComponentController::rcCalFunctionMax] = {
+    //Parameter          required
+    { "RCMAP_ROLL" },
+    { "RCMAP_PITCH" },
+    { "RCMAP_YAW" },
+    { "RCMAP_THROTTLE" },
+    { NULL },
+    { NULL },
+    { NULL },
+    { NULL },
+    { NULL },
+    { NULL },
+    { NULL },
+    { NULL },
 };
 
 RadioComponentController::RadioComponentController(void) :
@@ -102,7 +118,7 @@ RadioComponentController::RadioComponentController(void) :
     _unitTestController = this;
 #endif
 
-    connect(_uas, &UASInterface::remoteControlChannelRawChanged, this, &RadioComponentController::_remoteControlChannelRawChanged);
+    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RadioComponentController::_rcChannelsChanged);
     _loadSettings();
     
     _resetInternalCalibrationValues();
@@ -120,35 +136,38 @@ RadioComponentController::~RadioComponentController()
 }
 
 /// @brief Returns the state machine entry for the specified state.
-const RadioComponentController::stateMachineEntry* RadioComponentController::_getStateMachineEntry(int step)
+const RadioComponentController::stateMachineEntry* RadioComponentController::_getStateMachineEntry(int step) const
 {
-    static const char* msgBegin = "Lower the Throttle stick all the way down as shown in diagram.\nReset all transmitter trims to center.\n\n"
-                                 "It is recommended to disconnect all motors for additional safety, however, the system is designed to not arm during the calibration.\n\n"
-                                 "Click Next to continue";
-    static const char* msgThrottleUp = "Move the Throttle stick all the way up and hold it there...";
-    static const char* msgThrottleDown = "Move the Throttle stick all the way down and leave it there...";
-    static const char* msgYawLeft = "Move the Yaw stick all the way to the left and hold it there...";
-    static const char* msgYawRight = "Move the Yaw stick all the way to the right and hold it there...";
-    static const char* msgRollLeft = "Move the Roll stick all the way to the left and hold it there...";
-    static const char* msgRollRight = "Move the Roll stick all the way to the right and hold it there...";
-    static const char* msgPitchDown = "Move the Pitch stick all the way down and hold it there...";
-    static const char* msgPitchUp = "Move the Pitch stick all the way up and hold it there...";
-    static const char* msgPitchCenter = "Allow the Pitch stick to move back to center...";
-    static const char* msgAux1Switch = "Move the switch or dial you want to use for Aux1.\n\n"
+    static const char* msgBeginPX4 =        "Lower the Throttle stick all the way down as shown in diagram.\nReset all transmitter trims to center.\n\n"
+                                            "It is recommended to disconnect all motors for additional safety, however, the system is designed to not arm during the calibration.\n\n"
+                                            "Click Next to continue";
+    static const char* msgBeginAPM =        "Lower the Throttle stick all the way down as shown in diagram.\nReset all transmitter trims to center.\n\n"
+                                            "Please ensure all motor power is disconnected AND all props are removed from the vehicle.\n\n"
+                                            "Click Next to continue";
+    static const char* msgThrottleUp =      "Move the Throttle stick all the way up and hold it there...";
+    static const char* msgThrottleDown =    "Move the Throttle stick all the way down and leave it there...";
+    static const char* msgYawLeft =         "Move the Yaw stick all the way to the left and hold it there...";
+    static const char* msgYawRight =        "Move the Yaw stick all the way to the right and hold it there...";
+    static const char* msgRollLeft =        "Move the Roll stick all the way to the left and hold it there...";
+    static const char* msgRollRight =       "Move the Roll stick all the way to the right and hold it there...";
+    static const char* msgPitchDown =       "Move the Pitch stick all the way down and hold it there...";
+    static const char* msgPitchUp =         "Move the Pitch stick all the way up and hold it there...";
+    static const char* msgPitchCenter =     "Allow the Pitch stick to move back to center...";
+    static const char* msgAux1Switch =      "Move the switch or dial you want to use for Aux1.\n\n"
                                             "You can click Skip if you don't want to assign.";
-    static const char* msgAux2Switch = "Move the switch or dial you want to use for Aux2.\n\n"
+    static const char* msgAux2Switch =      "Move the switch or dial you want to use for Aux2.\n\n"
                                             "You can click Skip if you don't want to assign.";
-    static const char* msgSwitchMinMax = "Move all the transmitter switches and/or dials back and forth to their extreme positions.";
-    static const char* msgFlapsDetect = "Move the switch or dial you want to use for Flaps back and forth a few times. "
+    static const char* msgSwitchMinMax =    "Move all the transmitter switches and/or dials back and forth to their extreme positions.";
+    static const char* msgFlapsDetect =     "Move the switch or dial you want to use for Flaps back and forth a few times. "
                                             "Then leave the switch/dial at the position you want to use for Flaps fully extended.\n\n"
                                             "Click Next to continue.\n"
                                             "If you won't be using Flaps, click Skip.";
-    static const char* msgFlapsUp = "Move the switch or dial you want to use for Flaps to the position you want to use for Flaps fully retracted.";
-    static const char* msgComplete = "All settings have been captured. Click Next to write the new parameters to your board.";
+    static const char* msgFlapsUp =         "Move the switch or dial you want to use for Flaps to the position you want to use for Flaps fully retracted.";
+    static const char* msgComplete =        "All settings have been captured. Click Next to write the new parameters to your board.";
     
-    static const stateMachineEntry rgStateMachine[] = {
+    static const stateMachineEntry rgStateMachinePX4[] = {
         //Function
-        { rcCalFunctionMax,                 msgBegin,           _imageHome,         &RadioComponentController::_inputCenterWaitBegin,   &RadioComponentController::_saveAllTrims,       NULL },
+        { rcCalFunctionMax,                 msgBeginPX4,        _imageHome,         &RadioComponentController::_inputCenterWaitBegin,   &RadioComponentController::_saveAllTrims,       NULL },
         { rcCalFunctionThrottle,            msgThrottleUp,      _imageThrottleUp,   &RadioComponentController::_inputStickDetect,       NULL,                                           NULL },
         { rcCalFunctionThrottle,            msgThrottleDown,    _imageThrottleDown, &RadioComponentController::_inputStickMin,          NULL,                                           NULL },
         { rcCalFunctionYaw,                 msgYawRight,        _imageYawRight,     &RadioComponentController::_inputStickDetect,       NULL,                                           NULL },
@@ -166,9 +185,43 @@ const RadioComponentController::stateMachineEntry* RadioComponentController::_ge
         { rcCalFunctionMax,                 msgComplete,        _imageThrottleDown, NULL,                                               &RadioComponentController::_writeCalibration,   NULL },
     };
     
-    Q_ASSERT(step >=0 && step < (int)(sizeof(rgStateMachine) / sizeof(rgStateMachine[0])));
+    static const stateMachineEntry rgStateMachineAPM[] = {
+        //Function
+        { rcCalFunctionMax,                 msgBeginAPM,        _imageHome,         &RadioComponentController::_inputCenterWaitBegin,   &RadioComponentController::_saveAllTrims,       NULL },
+        { rcCalFunctionThrottle,            msgThrottleUp,      _imageThrottleUp,   &RadioComponentController::_inputStickDetect,       NULL,                                           NULL },
+        { rcCalFunctionThrottle,            msgThrottleDown,    _imageThrottleDown, &RadioComponentController::_inputStickMin,          NULL,                                           NULL },
+        { rcCalFunctionYaw,                 msgYawRight,        _imageYawRight,     &RadioComponentController::_inputStickDetect,       NULL,                                           NULL },
+        { rcCalFunctionYaw,                 msgYawLeft,         _imageYawLeft,      &RadioComponentController::_inputStickMin,          NULL,                                           NULL },
+        { rcCalFunctionRoll,                msgRollRight,       _imageRollRight,    &RadioComponentController::_inputStickDetect,       NULL,                                           NULL },
+        { rcCalFunctionRoll,                msgRollLeft,        _imageRollLeft,     &RadioComponentController::_inputStickMin,          NULL,                                           NULL },
+        { rcCalFunctionPitch,               msgPitchUp,         _imagePitchUp,      &RadioComponentController::_inputStickDetect,       NULL,                                           NULL },
+        { rcCalFunctionPitch,               msgPitchDown,       _imagePitchDown,    &RadioComponentController::_inputStickMin,          NULL,                                           NULL },
+        { rcCalFunctionPitch,               msgPitchCenter,     _imageHome,         &RadioComponentController::_inputCenterWait,        NULL,                                           NULL },
+        { rcCalFunctionMax,                 msgSwitchMinMax,    _imageSwitchMinMax, &RadioComponentController::_inputSwitchMinMax,      &RadioComponentController::_advanceState,       NULL },
+        { rcCalFunctionMax,                 msgComplete,        _imageThrottleDown, NULL,                                               &RadioComponentController::_writeCalibration,   NULL },
+    };
+
+    bool badStep = false;
+    if (step < 0) {
+        badStep = true;
+    }
+    if (_px4Vehicle()) {
+        if (step >= (int)(sizeof(rgStateMachinePX4) / sizeof(rgStateMachinePX4[0]))) {
+            badStep = true;
+        }
+    } else {
+        if (step >= (int)(sizeof(rgStateMachineAPM) / sizeof(rgStateMachineAPM[0]))) {
+            badStep = true;
+        }
+    }
+    if (badStep) {
+        qWarning() << "Bad step value" << step;
+        step = 0;
+    }
+
+    const stateMachineEntry* stateMachine = _px4Vehicle() ? rgStateMachinePX4 : rgStateMachineAPM;
     
-    return &rgStateMachine[step];
+    return &stateMachine[step];
 }
 
 void RadioComponentController::_advanceState(void)
@@ -187,7 +240,7 @@ void RadioComponentController::_setupCurrentState(void)
     
     _setHelpImage(state->image);
     
-    _stickDetectChannel = _chanMax;
+    _stickDetectChannel = _chanMax();
     _stickDetectSettleStarted = false;
     
     _rcCalSaveCurrentValues();
@@ -196,53 +249,52 @@ void RadioComponentController::_setupCurrentState(void)
     _skipButton->setEnabled(state->skipFn != NULL);
 }
 
-/// @brief This routine is called whenever a raw value for an RC channel changes. It will call the input
-/// function as specified by the state machine.
-///     @param chan RC channel on which signal is coming from (0-based)
-///     @param fval Current value for channel
-void RadioComponentController::_remoteControlChannelRawChanged(int chan, float fval)
+/// Connected to Vehicle::rcChannelsChanged signal
+void RadioComponentController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
-    if (chan >= 0 && chan <= _chanMax) {
-        // We always update raw values
-        _rcRawValue[chan] = fval;
-        emit channelRCValueChanged(chan, _rcRawValue[chan]);
-        
-        // Signal attitude rc values to Qml if mapped
-        if (_rgChannelInfo[chan].function != rcCalFunctionMax) {
-            switch (_rgChannelInfo[chan].function) {
+    int maxChannel = std::min(channelCount, _chanMax());
+
+    for (int channel=0; channel<maxChannel; channel++) {
+        int channelValue = pwmValues[channel];
+
+        if (channelValue != -1) {
+            qCDebug(RadioComponentControllerLog) << "Raw value" << channel << channelValue;
+
+            _rcRawValue[channel] = channelValue;
+            emit channelRCValueChanged(channel, channelValue);
+
+            // Signal attitude rc values to Qml if mapped
+            if (_rgChannelInfo[channel].function != rcCalFunctionMax) {
+                switch (_rgChannelInfo[channel].function) {
                 case rcCalFunctionRoll:
-                    emit rollChannelRCValueChanged(_rcRawValue[chan]);
+                    emit rollChannelRCValueChanged(channelValue);
                     break;
                 case rcCalFunctionPitch:
-                    emit pitchChannelRCValueChanged(_rcRawValue[chan]);
+                    emit pitchChannelRCValueChanged(channelValue);
                     break;
                 case rcCalFunctionYaw:
-                    emit yawChannelRCValueChanged(_rcRawValue[chan]);
+                    emit yawChannelRCValueChanged(channelValue);
                     break;
                 case rcCalFunctionThrottle:
-                    emit throttleChannelRCValueChanged(_rcRawValue[chan]);
+                    emit throttleChannelRCValueChanged(channelValue);
                     break;
                 default:
                     break;
 
+                }
             }
-        }
-            
-        qCDebug(RadioComponentControllerLog) << "Raw value" << chan << fval;
-        
-        if (_currentStep == -1) {
-            // Track the receiver channel count by keeping track of how many channels we see
-            if (chan + 1 > (int)_chanCount) {
-                _chanCount = chan + 1;
-                emit channelCountChanged(_chanCount);
-            }
-        }
-        
-        if (_currentStep != -1) {
-            const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
-            Q_ASSERT(state);
-            if (state->rcInputFn) {
-                (this->*state->rcInputFn)(state->function, chan, fval);
+
+            if (_currentStep == -1) {
+                if (_chanCount != channelCount) {
+                    _chanCount = channelCount;
+                    emit channelCountChanged(_chanCount);
+                }
+            } else {
+                const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
+                Q_ASSERT(state);
+                if (state->rcInputFn) {
+                    (this->*state->rcInputFn)(state->function, channel, channelValue);
+                }
             }
         }
     }
@@ -346,14 +398,14 @@ bool RadioComponentController::_stickSettleComplete(int value)
 
 void RadioComponentController::_inputStickDetect(enum rcCalFunctions function, int channel, int value)
 {
-    qCDebug(RadioComponentControllerLog) << "_inputStickDetect function:channel:value" << _rgFunctionInfo[function].parameterName << channel << value;
+    qCDebug(RadioComponentControllerLog) << "_inputStickDetect function:channel:value" << _functionInfo()[function].parameterName << channel << value;
     
     // If this channel is already used in a mapping we can't use it again
     if (_rgChannelInfo[channel].function != rcCalFunctionMax) {
         return;
     }
     
-    if (_stickDetectChannel == _chanMax) {
+    if (_stickDetectChannel == _chanMax()) {
         // We have not detected enough movement on a channel yet
         
         if (abs(_rcValueSave[channel] - value) > _rcCalMoveDelta) {
@@ -400,7 +452,7 @@ void RadioComponentController::_inputStickMin(enum rcCalFunctions function, int 
         return;
     }
 
-    if (_stickDetectChannel == _chanMax) {
+    if (_stickDetectChannel == _chanMax()) {
         // Setup up to detect stick being pegged to extreme position
         if (_rgChannelInfo[channel].reversed) {
             if (value > _rcCalPWMCenterPoint + _rcCalMoveDelta) {
@@ -447,7 +499,7 @@ void RadioComponentController::_inputCenterWait(enum rcCalFunctions function, in
         return;
     }
     
-    if (_stickDetectChannel == _chanMax) {
+    if (_stickDetectChannel == _chanMax()) {
         // Sticks have not yet moved close enough to center
         
         if (abs(_rcCalPWMCenterPoint - value) < _rcCalRoughCenterDelta) {
@@ -499,7 +551,7 @@ void RadioComponentController::_skipFlaps(void)
             _rgChannelInfo[i].function = rcCalFunctionMax;
         }
     }
-    _rgFunctionChannelMapping[RadioComponentController::rcCalFunctionFlaps] = _chanMax;
+    _rgFunctionChannelMapping[RadioComponentController::rcCalFunctionFlaps] = _chanMax();
 
     // Skip over flap steps
     _currentStep += 2;
@@ -510,7 +562,7 @@ void RadioComponentController::_saveFlapsDown(void)
 {
     int channel = _rgFunctionChannelMapping[rcCalFunctionFlaps];
     
-    if (channel == _chanMax) {
+    if (channel == _chanMax()) {
         // Channel not yet mapped, still waiting for switch to move
         if (_unitTestMode) {
             emit nextButtonMessageBoxDisplayed();
@@ -552,7 +604,7 @@ void RadioComponentController::_inputFlapsUp(enum rcCalFunctions function, int c
         return;
     }
     
-    if (_stickDetectChannel == _chanMax) {
+    if (_stickDetectChannel == _chanMax()) {
         // Setup up to detect stick being pegged to extreme position
         if (_rgChannelInfo[channel].reversed) {
             if (value > _rcCalPWMCenterPoint + _rcCalMoveDelta) {
@@ -624,7 +676,7 @@ void RadioComponentController::_inputFlapsDetect(enum rcCalFunctions function, i
 void RadioComponentController::_resetInternalCalibrationValues(void)
 {
     // Set all raw channels to not reversed and center point values
-    for (int i=0; i<_chanMax; i++) {
+    for (int i=0; i<_chanMax(); i++) {
         struct ChannelInfo* info = &_rgChannelInfo[i];
         info->function = rcCalFunctionMax;
         info->reversed = false;
@@ -635,33 +687,35 @@ void RadioComponentController::_resetInternalCalibrationValues(void)
     
     // Initialize attitude function mapping to function channel not set
     for (size_t i=0; i<rcCalFunctionMax; i++) {
-        _rgFunctionChannelMapping[i] = _chanMax;
+        _rgFunctionChannelMapping[i] = _chanMax();
     }
     
-    // Reserve the existing Flight Mode switch settings channels so we don't re-use them
-    
-    static const rcCalFunctions rgFlightModeFunctions[] = {
-        rcCalFunctionModeSwitch,
-        rcCalFunctionPosCtlSwitch,
-        rcCalFunctionLoiterSwitch,
-        rcCalFunctionReturnSwitch };
-    static const size_t crgFlightModeFunctions = sizeof(rgFlightModeFunctions) / sizeof(rgFlightModeFunctions[0]);
+    if (_px4Vehicle()) {
+        // Reserve the existing Flight Mode switch settings channels so we don't re-use them
 
-    for (size_t i=0; i < crgFlightModeFunctions; i++) {
-        QVariant value;
-        enum rcCalFunctions curFunction = rgFlightModeFunctions[i];
-        
-        bool ok;
-        int switchChannel = getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[curFunction].parameterName)->rawValue().toInt(&ok);
-        Q_ASSERT(ok);
-        
-        // Parameter: 1-based channel, 0=not mapped
-        // _rgFunctionChannelMapping: 0-based channel, _chanMax=not mapped
-        
-        if (switchChannel != 0) {
-            qCDebug(RadioComponentControllerLog) << "Reserving 0-based switch channel" << switchChannel - 1;
-            _rgFunctionChannelMapping[curFunction] = switchChannel - 1;
-            _rgChannelInfo[switchChannel - 1].function = curFunction;
+        static const rcCalFunctions rgFlightModeFunctions[] = {
+            rcCalFunctionModeSwitch,
+            rcCalFunctionPosCtlSwitch,
+            rcCalFunctionLoiterSwitch,
+            rcCalFunctionReturnSwitch };
+        static const size_t crgFlightModeFunctions = sizeof(rgFlightModeFunctions) / sizeof(rgFlightModeFunctions[0]);
+
+        for (size_t i=0; i < crgFlightModeFunctions; i++) {
+            QVariant value;
+            enum rcCalFunctions curFunction = rgFlightModeFunctions[i];
+
+            bool ok;
+            int switchChannel = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[curFunction].parameterName)->rawValue().toInt(&ok);
+            Q_ASSERT(ok);
+
+            // Parameter: 1-based channel, 0=not mapped
+            // _rgFunctionChannelMapping: 0-based channel, _chanMax=not mapped
+
+            if (switchChannel != 0) {
+                qCDebug(RadioComponentControllerLog) << "Reserving 0-based switch channel" << switchChannel - 1;
+                _rgFunctionChannelMapping[curFunction] = switchChannel - 1;
+                _rgChannelInfo[switchChannel - 1].function = curFunction;
+            }
         }
     }
     
@@ -673,13 +727,13 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
 {
     // Initialize all function mappings to not set
     
-    for (int i=0; i<_chanMax; i++) {
+    for (int i=0; i<_chanMax(); i++) {
         struct ChannelInfo* info = &_rgChannelInfo[i];
         info->function = rcCalFunctionMax;
     }
     
     for (size_t i=0; i<rcCalFunctionMax; i++) {
-        _rgFunctionChannelMapping[i] = _chanMax;
+        _rgFunctionChannelMapping[i] = _chanMax();
     }
     
     // Pull parameters and update
@@ -691,7 +745,7 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
     
     bool convertOk;
     
-    for (int i = 0; i < _chanMax; ++i) {
+    for (int i = 0; i < _chanMax(); ++i) {
         struct ChannelInfo* info = &_rgChannelInfo[i];
         
         info->rcTrim = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(i+1))->rawValue().toInt(&convertOk);
@@ -712,12 +766,15 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
     for (int i=0; i<rcCalFunctionMax; i++) {
         int32_t paramChannel;
         
-        paramChannel = getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[i].parameterName)->rawValue().toInt(&convertOk);
-        Q_ASSERT(convertOk);
-        
-        if (paramChannel != 0) {
-            _rgFunctionChannelMapping[i] = paramChannel - 1;
-            _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
+        const char* paramName = _functionInfo()[i].parameterName;
+        if (paramName) {
+            paramChannel = getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt(&convertOk);
+            Q_ASSERT(convertOk);
+
+            if (paramChannel != 0) {
+                _rgFunctionChannelMapping[i] = paramChannel - 1;
+                _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
+            }
         }
     }
     
@@ -732,7 +789,7 @@ void RadioComponentController::spektrumBindMode(int mode)
 /// @brief Validates the current settings against the calibration rules resetting values as necessary.
 void RadioComponentController::_validateCalibration(void)
 {
-    for (int chan = 0; chan<_chanMax; chan++) {
+    for (int chan = 0; chan<_chanMax(); chan++) {
         struct ChannelInfo* info = &_rgChannelInfo[chan];
         
         if (chan < _chanCount) {
@@ -790,7 +847,7 @@ void RadioComponentController::_writeCalibration(void)
     QString revTpl("RC%1_REV");
     
     // Note that the rc parameters are all float, so you must cast to float in order to get the right QVariant
-    for (int chan = 0; chan<_chanMax; chan++) {
+    for (int chan = 0; chan<_chanMax(); chan++) {
         struct ChannelInfo* info = &_rgChannelInfo[chan];
         int                 oneBasedChannel = chan + 1;
         
@@ -801,25 +858,40 @@ void RadioComponentController::_writeCalibration(void)
     }
     
     // Write function mapping parameters
+    bool functionMappingChanged = false;
     for (size_t i=0; i<rcCalFunctionMax; i++) {
         int32_t paramChannel;
-        if (_rgFunctionChannelMapping[i] == _chanMax) {
+        if (_rgFunctionChannelMapping[i] == _chanMax()) {
             // 0 signals no mapping
             paramChannel = 0;
         } else {
             // Note that the channel value is 1-based
             paramChannel = _rgFunctionChannelMapping[i] + 1;
         }
-        getParameterFact(FactSystem::defaultComponentId, _rgFunctionInfo[i].parameterName)->setRawValue(paramChannel);
+        const char* paramName = _functionInfo()[i].parameterName;
+        if (paramName) {
+            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
+
+            if (paramFact->rawValue().toInt() != paramChannel) {
+                functionMappingChanged = true;
+                getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName)->setRawValue(paramChannel);
+            }
+        }
     }
     
-    // If the RC_CHAN_COUNT parameter is available write the channel count
-    if (parameterExists(FactSystem::defaultComponentId, "RC_CHAN_CNT")) {
-        getParameterFact(FactSystem::defaultComponentId, "RC_CHAN_CNT")->setRawValue(_chanCount);
+    if (_px4Vehicle()) {
+        // If the RC_CHAN_COUNT parameter is available write the channel count
+        if (parameterExists(FactSystem::defaultComponentId, "RC_CHAN_CNT")) {
+            getParameterFact(FactSystem::defaultComponentId, "RC_CHAN_CNT")->setRawValue(_chanCount);
+        }
     }
     
     _stopCalibration();
     _setInternalCalibrationValuesFromParameters();
+
+    if (_vehicle->apmFirmware() && functionMappingChanged) {
+        emit functionMappingChangedAPMReboot();
+    }
 }
 
 /// @brief Starts the calibration process
@@ -865,7 +937,7 @@ void RadioComponentController::_stopCalibration(void)
 void RadioComponentController::_rcCalSaveCurrentValues(void)
 {
 	qCDebug(RadioComponentControllerLog) << "_rcCalSaveCurrentValues";
-    for (int i = 0; i < _chanMax; i++) {
+    for (int i = 0; i < _chanMax(); i++) {
         _rcValueSave[i] = _rcRawValue[i];
     }
 }
@@ -936,7 +1008,7 @@ int RadioComponentController::channelCount(void)
 
 int RadioComponentController::rollChannelRCValue(void)
 {    
-    if (_rgFunctionChannelMapping[rcCalFunctionRoll] != _chanMax) {
+    if (_rgFunctionChannelMapping[rcCalFunctionRoll] != _chanMax()) {
         return _rcRawValue[rcCalFunctionRoll];
     } else {
         return 1500;
@@ -945,7 +1017,7 @@ int RadioComponentController::rollChannelRCValue(void)
 
 int RadioComponentController::pitchChannelRCValue(void)
 {
-    if (_rgFunctionChannelMapping[rcCalFunctionPitch] != _chanMax) {
+    if (_rgFunctionChannelMapping[rcCalFunctionPitch] != _chanMax()) {
         return _rcRawValue[rcCalFunctionPitch];
     } else {
         return 1500;
@@ -954,7 +1026,7 @@ int RadioComponentController::pitchChannelRCValue(void)
 
 int RadioComponentController::yawChannelRCValue(void)
 {
-    if (_rgFunctionChannelMapping[rcCalFunctionYaw] != _chanMax) {
+    if (_rgFunctionChannelMapping[rcCalFunctionYaw] != _chanMax()) {
         return _rcRawValue[rcCalFunctionYaw];
     } else {
         return 1500;
@@ -963,7 +1035,7 @@ int RadioComponentController::yawChannelRCValue(void)
 
 int RadioComponentController::throttleChannelRCValue(void)
 {
-    if (_rgFunctionChannelMapping[rcCalFunctionThrottle] != _chanMax) {
+    if (_rgFunctionChannelMapping[rcCalFunctionThrottle] != _chanMax()) {
         return _rcRawValue[rcCalFunctionThrottle];
     } else {
         return 1500;
@@ -972,27 +1044,27 @@ int RadioComponentController::throttleChannelRCValue(void)
 
 bool RadioComponentController::rollChannelMapped(void)
 {
-    return _rgFunctionChannelMapping[rcCalFunctionRoll] != _chanMax;
+    return _rgFunctionChannelMapping[rcCalFunctionRoll] != _chanMax();
 }
 
 bool RadioComponentController::pitchChannelMapped(void)
 {
-    return _rgFunctionChannelMapping[rcCalFunctionPitch] != _chanMax;
+    return _rgFunctionChannelMapping[rcCalFunctionPitch] != _chanMax();
 }
 
 bool RadioComponentController::yawChannelMapped(void)
 {
-    return _rgFunctionChannelMapping[rcCalFunctionYaw] != _chanMax;
+    return _rgFunctionChannelMapping[rcCalFunctionYaw] != _chanMax();
 }
 
 bool RadioComponentController::throttleChannelMapped(void)
 {
-    return _rgFunctionChannelMapping[rcCalFunctionThrottle] != _chanMax;
+    return _rgFunctionChannelMapping[rcCalFunctionThrottle] != _chanMax();
 }
 
 bool RadioComponentController::rollChannelReversed(void)
 {
-    if (_rgFunctionChannelMapping[rcCalFunctionRoll] != _chanMax) {
+    if (_rgFunctionChannelMapping[rcCalFunctionRoll] != _chanMax()) {
         return _rgChannelInfo[_rgFunctionChannelMapping[rcCalFunctionRoll]].reversed;
     } else {
         return false;
@@ -1001,7 +1073,7 @@ bool RadioComponentController::rollChannelReversed(void)
 
 bool RadioComponentController::pitchChannelReversed(void)
 {
-    if (_rgFunctionChannelMapping[rcCalFunctionPitch] != _chanMax) {
+    if (_rgFunctionChannelMapping[rcCalFunctionPitch] != _chanMax()) {
         return _rgChannelInfo[_rgFunctionChannelMapping[rcCalFunctionPitch]].reversed;
     } else {
         return false;
@@ -1010,7 +1082,7 @@ bool RadioComponentController::pitchChannelReversed(void)
 
 bool RadioComponentController::yawChannelReversed(void)
 {
-    if (_rgFunctionChannelMapping[rcCalFunctionYaw] != _chanMax) {
+    if (_rgFunctionChannelMapping[rcCalFunctionYaw] != _chanMax()) {
         return _rgChannelInfo[_rgFunctionChannelMapping[rcCalFunctionYaw]].reversed;
     } else {
         return false;
@@ -1019,7 +1091,7 @@ bool RadioComponentController::yawChannelReversed(void)
 
 bool RadioComponentController::throttleChannelReversed(void)
 {
-    if (_rgFunctionChannelMapping[rcCalFunctionThrottle] != _chanMax) {
+    if (_rgFunctionChannelMapping[rcCalFunctionThrottle] != _chanMax()) {
         return _rgChannelInfo[_rgFunctionChannelMapping[rcCalFunctionThrottle]].reversed;
     } else {
         return false;
@@ -1053,4 +1125,19 @@ void RadioComponentController::_signalAllAttiudeValueChanges(void)
 void RadioComponentController::copyTrims(void)
 {
     _uas->startCalibration(UASInterface::StartCalibrationCopyTrims);
+}
+
+bool RadioComponentController::_px4Vehicle(void) const
+{
+    return _vehicle->firmwareType() == MAV_AUTOPILOT_PX4;
+}
+
+const struct RadioComponentController::FunctionInfo* RadioComponentController::_functionInfo(void) const
+{
+    return _px4Vehicle() ? _rgFunctionInfoPX4 : _rgFunctionInfoAPM;
+}
+
+int RadioComponentController::_chanMax(void) const
+{
+    return _px4Vehicle() ? _chanMaxPX4 : _chanMaxAPM;
 }

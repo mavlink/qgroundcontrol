@@ -21,20 +21,17 @@
 
  ======================================================================*/
 
-/// @file
-///     @brief Radio Calibration
-///     @author Don Gagne <don@thegagnes.com>
-
-import QtQuick 2.2
+import QtQuick          2.5
 import QtQuick.Controls 1.2
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs  1.2
 
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.ScreenTools 1.0
-import QGroundControl.Controllers 1.0
+import QGroundControl               1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controllers   1.0
 
 QGCView {
     id:         rootQGCView
@@ -42,19 +39,14 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
-    readonly property string dialogTitle: "Radio"
-    readonly property real labelToMonitorMargin: defaultTextWidth * 3
-    property bool controllerCompleted: false
-    property bool controllerAndViewReady: false
+    readonly property string    dialogTitle:            "Radio"
+    readonly property real      labelToMonitorMargin:   defaultTextWidth * 3
 
-    property Fact rcInMode: controller.getParameterFact(-1, "COM_RC_IN_MODE")
+    property bool controllerCompleted:      false
+    property bool controllerAndViewReady:   false
 
     function updateChannelCount()
     {
-        if (controllerAndViewReady) {
-            if (rcInMode.value == 1) {
-                showDialog(joystickEnabledDialogComponent, dialogTitle, 50, 0)
-            }
 /*
             FIXME: Turned off for now, since it prevents binding. Need to restructure to
             allow binding and still check channel count
@@ -64,7 +56,6 @@ QGCView {
                 hideDialog()
             }
 */
-        }
     }
 
     RadioComponentController {
@@ -75,8 +66,6 @@ QGCView {
         nextButton:     nextButton
         skipButton:     skipButton
 
-        onChannelCountChanged: updateChannelCount()
-
         Component.onCompleted: {
             controllerCompleted = true
             if (rootQGCView.completedSignalled) {
@@ -85,6 +74,9 @@ QGCView {
                 updateChannelCount()
             }
         }
+
+        onChannelCountChanged:              updateChannelCount()
+        onFunctionMappingChangedAPMReboot:    showMessage("Reboot required", "Your stick mappings have changed, you must reboot the vehicle for correct operation.", StandardButton.Ok)
     }
 
     onCompleted: {
@@ -130,14 +122,6 @@ QGCView {
 
             QGCViewMessage {
                 message: controller.channelCount == 0 ? "Please turn on transmitter." : controller.minChannelCount + " channels or more are needed to fly."
-            }
-        }
-
-        Component {
-            id: joystickEnabledDialogComponent
-
-            QGCViewMessage {
-                message: "Radio Config is disabled since you have a Joystick enabled."
             }
         }
 
@@ -482,6 +466,7 @@ QGCView {
             QGCButton {
                 showBorder: true
                 text:       "Copy Trims"
+                visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
                 onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, 50, StandardButton.Ok | StandardButton.Cancel)
             }
 
