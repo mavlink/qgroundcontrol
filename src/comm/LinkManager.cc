@@ -44,6 +44,9 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 #include "UDPLink.h"
 #include "TCPLink.h"
+#ifdef __mobile__
+#include "BluetoothLink.h"
+#endif
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
@@ -124,6 +127,11 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
         case LinkConfiguration::TypeTcp:
             pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
             break;
+#ifdef __mobile__
+        case LinkConfiguration::TypeBluetooth:
+            pLink = new BluetoothLink(dynamic_cast<BluetoothConfiguration*>(config));
+            break;
+#endif
 #ifndef __mobile__
         case LinkConfiguration::TypeLogReplay:
             pLink = new LogReplayLink(dynamic_cast<LogReplayLinkConfiguration*>(config));
@@ -359,6 +367,11 @@ void LinkManager::loadLinkConfigurationList()
                                 case LinkConfiguration::TypeTcp:
                                     pLink = (LinkConfiguration*)new TCPConfiguration(name);
                                     break;
+#ifdef __mobile__
+                                case LinkConfiguration::TypeBluetooth:
+                                    pLink = (LinkConfiguration*)new BluetoothConfiguration(name);
+                                    break;
+#endif
 #ifndef __mobile__
                                 case LinkConfiguration::TypeLogReplay:
                                     pLink = (LinkConfiguration*)new LogReplayLinkConfiguration(name);
@@ -701,12 +714,16 @@ QStringList LinkManager::linkTypeStrings(void) const
 #endif
         list += "UDP";
         list += "TCP";
+#ifdef __mobile__
+        list += "Bluetooth";
+#endif
 #ifdef QT_DEBUG
         list += "Mock Link";
 #endif
 #ifndef __mobile__
         list += "Log Replay";
 #endif
+        Q_ASSERT(list.size() == (int)LinkConfiguration::TypeLast);
     }
     return list;
 }
@@ -806,7 +823,7 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
 #ifndef __ios__
             case LinkConfiguration::TypeSerial: {
                 QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
-#ifdef Q_OS_WIN32
+#ifdef Q_OS_WIN
                 tname.replace("\\\\.\\", "");
 #else
                 tname.replace("/dev/cu.", "");
@@ -828,6 +845,15 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
                     }
                 }
                 break;
+#ifdef __mobile__
+            case LinkConfiguration::TypeBluetooth: {
+                    BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);
+                    if(tconfig) {
+                        config->setName(QString("%1 (Bluetooth Device)").arg(tconfig->device().name));
+                    }
+                }
+                break;
+#endif
 #ifndef __mobile__
             case LinkConfiguration::TypeLogReplay: {
                     LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);

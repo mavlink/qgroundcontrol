@@ -75,7 +75,7 @@ Item {
                 }
                 Component.onCompleted: {
                     if(subEditConfig != null) {
-                        if(subEditConfig.portDisplayName === "")
+                        if(subEditConfig.portDisplayName === "" && QGroundControl.linkManager.serialPorts.length > 0)
                             subEditConfig.portName = QGroundControl.linkManager.serialPorts[0]
                         var index = commPortCombo.find(subEditConfig.portDisplayName)
                         if (index === -1) {
