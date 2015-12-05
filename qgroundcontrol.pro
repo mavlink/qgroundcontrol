@@ -69,9 +69,14 @@ QT += \
     xml \
 
 !MobileBuild {
-    QT += \
+QT += \
     printsupport \
     serialport \
+}
+
+MobileBuild {
+QT += \
+    bluetooth \
 }
 
 contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
@@ -306,6 +311,11 @@ WindowsBuild {
     HEADERS += src/stable_headers.h
 }
 
+MobileBuild {
+    HEADERS += \
+    src/comm/BluetoothLink.h \
+}
+
 !iOSBuild {
 HEADERS += \
     src/comm/QGCSerialPortInfo.h \
@@ -423,6 +433,11 @@ SOURCES += \
     src/comm/QGCSerialPortInfo.cc \
     src/comm/SerialLink.cc \
     src/ui/SerialConfigurationWindow.cc \
+}
+
+MobileBuild {
+    SOURCES += \
+    src/comm/BluetoothLink.cc \
 }
 
 !MobileBuild {

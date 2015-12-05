@@ -143,7 +143,7 @@ void QGCLinkConfiguration::_fixUnnamed(LinkConfiguration* config)
 #ifndef __ios__
             case LinkConfiguration::TypeSerial: {
                 QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
-#ifdef Q_OS_WIN32
+#ifdef Q_OS_WIN
                 tname.replace("\\\\.\\", "");
 #else
                 tname.replace("/dev/cu.", "");
