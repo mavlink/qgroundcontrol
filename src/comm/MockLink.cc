@@ -70,7 +70,7 @@ union px4_custom_mode {
 
 float MockLink::_vehicleLatitude =  47.633033f;
 float MockLink::_vehicleLongitude = -122.08794f;
-float MockLink::_vehicleAltitude =  9872.5f;
+float MockLink::_vehicleAltitude =  3.5f;
 
 const char* MockConfiguration::_firmwareTypeKey =   "FirmwareType";
 const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
