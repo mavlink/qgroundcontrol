@@ -74,28 +74,10 @@ bool QGroundControlQmlGlobal::loadBoolGlobalSetting (const QString& key, bool de
     return settings.value(key, defaultValue).toBool();
 }
 
-#ifdef QT_DEBUG
-void QGroundControlQmlGlobal::_startMockLink(MockConfiguration* mockConfig)
-{
-    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
-
-    mockConfig->setDynamic(true);
-    linkManager->linkConfigurations()->append(mockConfig);
-
-    linkManager->createConnectedLink(mockConfig);
-}
-#endif
-
 void QGroundControlQmlGlobal::startPX4MockLink(bool sendStatusText)
 {
 #ifdef QT_DEBUG
-    MockConfiguration* mockConfig = new MockConfiguration("PX4 MockLink");
-
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
-    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
-    mockConfig->setSendStatusText(sendStatusText);
-
-    _startMockLink(mockConfig);
+    MockLink::startPX4MockLink(sendStatusText);
 #else
     Q_UNUSED(sendStatusText);
 #endif
@@ -104,13 +86,7 @@ void QGroundControlQmlGlobal::startPX4MockLink(bool sendStatusText)
 void QGroundControlQmlGlobal::startGenericMockLink(bool sendStatusText)
 {
 #ifdef QT_DEBUG
-    MockConfiguration* mockConfig = new MockConfiguration("Generic MockLink");
-
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_GENERIC);
-    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
-    mockConfig->setSendStatusText(sendStatusText);
-
-    _startMockLink(mockConfig);
+    MockLink::startGenericMockLink(sendStatusText);
 #else
     Q_UNUSED(sendStatusText);
 #endif
@@ -119,13 +95,7 @@ void QGroundControlQmlGlobal::startGenericMockLink(bool sendStatusText)
 void QGroundControlQmlGlobal::startAPMArduCopterMockLink(bool sendStatusText)
 {
 #ifdef QT_DEBUG
-    MockConfiguration* mockConfig = new MockConfiguration("APM ArduCopter MockLink");
-
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
-    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
-    mockConfig->setSendStatusText(sendStatusText);
-
-    _startMockLink(mockConfig);
+    MockLink::startAPMArduCopterMockLink(sendStatusText);
 #else
     Q_UNUSED(sendStatusText);
 #endif
@@ -134,13 +104,7 @@ void QGroundControlQmlGlobal::startAPMArduCopterMockLink(bool sendStatusText)
 void QGroundControlQmlGlobal::startAPMArduPlaneMockLink(bool sendStatusText)
 {
 #ifdef QT_DEBUG
-    MockConfiguration* mockConfig = new MockConfiguration("APM ArduPlane MockLink");
-
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
-    mockConfig->setVehicleType(MAV_TYPE_FIXED_WING);
-    mockConfig->setSendStatusText(sendStatusText);
-
-    _startMockLink(mockConfig);
+    MockLink::startAPMArduPlaneMockLink(sendStatusText);
 #else
     Q_UNUSED(sendStatusText);
 #endif

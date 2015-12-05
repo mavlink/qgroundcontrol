@@ -132,9 +132,6 @@ signals:
     void virtualTabletJoystickChanged   (bool enabled);
 
 private:
-#ifdef QT_DEBUG
-    void _startMockLink(MockConfiguration* mockConfig);
-#endif
 
     FlightMapSettings*      _flightMapSettings;
     HomePositionManager*    _homePositionManager;
