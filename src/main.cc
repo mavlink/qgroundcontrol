@@ -50,7 +50,7 @@ This file is part of the QGROUNDCONTROL project
     #endif
 #endif
 
-#ifndef Q_OS_WIN
+#ifdef __mobile__
 #include <QtBluetooth/QBluetoothSocket>
 #endif
 
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 #ifndef __ios__
     qRegisterMetaType<QSerialPort::SerialPortError>();
 #endif
-#ifndef Q_OS_WIN
+#ifdef __mobile__
     qRegisterMetaType<QBluetoothSocket::SocketError>();
     qRegisterMetaType<QBluetoothServiceInfo>();
 #endif

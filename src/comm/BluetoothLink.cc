@@ -42,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "BluetoothLink.h"
 #include "QGC.h"
 
+/*
 static void print_device_info(QBluetoothDeviceInfo info)
 {
     qDebug() << "Bluetooth:      " << info.name();
@@ -53,13 +54,14 @@ static void print_device_info(QBluetoothDeviceInfo info)
     qDebug() << "   Service UUID:" << info.serviceUuids();
     qDebug() << "    Core Config:" << info.coreConfigurations();
     qDebug() << "          Valid:" << info.isValid();
+    qDebug() << "        Address:" << info.address().toString();
 }
+*/
 
 BluetoothLink::BluetoothLink(BluetoothConfiguration* config)
     : _connectState(false)
     , _targetSocket(NULL)
     , _targetDevice(NULL)
-    , _deviceDiscover(NULL)
     , _running(false)
 {
     Q_ASSERT(config != NULL);
@@ -67,7 +69,7 @@ BluetoothLink::BluetoothLink(BluetoothConfiguration* config)
     _config->setLink(this);
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
-    //moveToThread(this);
+    moveToThread(this);
 }
 
 BluetoothLink::~BluetoothLink()
@@ -85,36 +87,8 @@ BluetoothLink::~BluetoothLink()
 
 void BluetoothLink::run()
 {
-    while (!_targetDevice && _running)
-        this->msleep(50);
     if(_running && _hardwareConnect()) {
         exec();
-    }
-}
-
-void BluetoothLink::deviceDiscovered(QBluetoothDeviceInfo info)
-{
-    if(info.name() == _config->device())
-    {
-        if(!_targetDevice)
-        {
-            print_device_info(info);
-            _targetDevice = new QBluetoothDeviceInfo(info);
-            //-- Start Thread
-            _running = true;
-            start(NormalPriority);
-        }
-    }
-}
-
-void BluetoothLink::doneScanning()
-{
-    if(!_targetDevice)
-    {
-        _connectState = false;
-        qWarning() << "Bluetooth scanning did not find device" << _config->device();
-        emit communicationError("Bluetooth Link Error", "Device Not Found");
-        _running = false;
     }
 }
 
@@ -182,12 +156,6 @@ void BluetoothLink::_disconnect(void)
         _targetSocket = NULL;
         emit disconnected();
     }
-    if(_deviceDiscover)
-    {
-        _deviceDiscover->stop();
-        delete _deviceDiscover;
-        _deviceDiscover = NULL;
-    }
     _connectState = false;
 }
 
@@ -199,23 +167,14 @@ bool BluetoothLink::_connect(void)
         quit();
         wait();
     }
-    if(_deviceDiscover)
-    {
-        _deviceDiscover->stop();
-        delete _deviceDiscover;
-        _deviceDiscover = NULL;
-    }
     if(_targetDevice)
     {
         delete _targetDevice;
         _targetDevice = NULL;
     }
-    //-- Scan devices
-    _deviceDiscover = new QBluetoothDeviceDiscoveryAgent();
-    QObject::connect(_deviceDiscover, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(deviceDiscovered(QBluetoothDeviceInfo)));
-    QObject::connect(_deviceDiscover, SIGNAL(finished()), this, SLOT(doneScanning()));
-    _deviceDiscover->setInquiryType(QBluetoothDeviceDiscoveryAgent::GeneralUnlimitedInquiry);
-    _deviceDiscover->start();
+    //-- Start Thread
+    _running = true;
+    start(NormalPriority);
     return true;
 }
 
@@ -226,35 +185,17 @@ bool BluetoothLink::_hardwareConnect()
         delete _targetSocket;
         _targetSocket = NULL;
     }
-    // Build Device Class Descriptor
-    /*
-    quint32 device_class = 0;
-    device_class |= ((0x20 | 0x100) << 13); // Service Class
-    device_class |= (0x04 << 8);            // Audio Device (CLASS MAJOR) The Crossfire presents itself as an "Audio Service"
-    device_class |= (0x01 << 2);            // WearableHeadsetDevice (CLASS MINOR)
-    qDebug() << _config->address() << _config->device() << device_class;
-    _targetDevice = new QBluetoothDeviceInfo(QBluetoothAddress(_config->address()), _config->device(), device_class);
+    _targetDevice = new QBluetoothDeviceInfo(QBluetoothAddress(_config->device().address), _config->device().name, _config->device().bits);
     _targetDevice->setCoreConfigurations(QBluetoothDeviceInfo::BaseRateCoreConfiguration);
-    */
-
     _targetSocket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
     _targetSocket->moveToThread(this);
-
-    qDebug() << "Connecting...";
-    print_device_info(*_targetDevice);
-
+    //print_device_info(*_targetDevice);
     QObject::connect(_targetSocket, SIGNAL(connected()), this, SLOT(deviceConnected()));
     QObject::connect(_targetSocket, SIGNAL(error(QBluetoothSocket::SocketError)), this, SLOT(deviceError(QBluetoothSocket::SocketError)));
     QObject::connect(_targetSocket, SIGNAL(readyRead()), this, SLOT(readBytes()));
     QObject::connect(_targetSocket, SIGNAL(disconnected()), this, SLOT(deviceDisconnected()));
-    QObject::connect(_targetSocket, SIGNAL(stateChanged(QBluetoothSocket::SocketState)), this, SLOT(stateChanged(QBluetoothSocket::SocketState)));
     _targetSocket->connectToService(_targetDevice->address(), QBluetoothUuid(QBluetoothUuid::Rfcomm));
     return true;
-}
-
-void BluetoothLink::stateChanged(QBluetoothSocket::SocketState state)
-{
-    qDebug() << "Bluetooth state:" << state;
 }
 
 void BluetoothLink::deviceConnected()
@@ -310,8 +251,7 @@ BluetoothConfiguration::BluetoothConfiguration(BluetoothConfiguration* source)
     : LinkConfiguration(source)
     , _deviceDiscover(NULL)
 {
-    _address = source->address();
-    _device  = source->device();
+    _device = source->device();
 }
 
 BluetoothConfiguration::~BluetoothConfiguration()
@@ -328,25 +268,24 @@ void BluetoothConfiguration::copyFrom(LinkConfiguration *source)
     LinkConfiguration::copyFrom(source);
     BluetoothConfiguration* usource = dynamic_cast<BluetoothConfiguration*>(source);
     Q_ASSERT(usource != NULL);
-    _address = usource->address();
-    _device  = usource->device();
+    _device = usource->device();
 }
 
 void BluetoothConfiguration::saveSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
-    settings.setValue("device",  _device);
-    settings.setValue("address", _address);
+    settings.setValue("name",    _device.name);
+    settings.setValue("address", _device.address);
+    settings.setValue("bits",    _device.bits);
     settings.endGroup();
 }
 
 void BluetoothConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
-    QString device      = settings.value("device",  _device).toString();
-    QString address     = settings.value("address", _address).toString();
-    _device    = device;
-    _address   = address;
+    _device.name    = settings.value("name",    _device.name).toString();
+    _device.address = settings.value("address", _device.address).toString();
+    _device.bits    = settings.value("bits",    _device.bits).toUInt();
     settings.endGroup();
 }
 
@@ -364,7 +303,10 @@ void BluetoothConfiguration::stopScan()
 {
     if(_deviceDiscover)
     {
-
+        _deviceDiscover->stop();
+        _deviceDiscover->deleteLater();
+        _deviceDiscover = NULL;
+        emit scanningChanged();
     }
 }
 
@@ -373,27 +315,40 @@ void BluetoothConfiguration::startScan()
     if(!_deviceDiscover)
     {
         _deviceDiscover = new QBluetoothDeviceDiscoveryAgent(this);
-        connect(_deviceDiscover,    &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,  this, &BluetoothConfiguration::deviceDiscovered);
-        connect(_deviceDiscover,    &QBluetoothDeviceDiscoveryAgent::finished,          this, &BluetoothConfiguration::doneScanning);
+        connect(_deviceDiscover, &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,  this, &BluetoothConfiguration::deviceDiscovered);
+        connect(_deviceDiscover, &QBluetoothDeviceDiscoveryAgent::finished,          this, &BluetoothConfiguration::doneScanning);
         emit scanningChanged();
     }
     else
     {
         _deviceDiscover->stop();
     }
+    _nameList.clear();
     _deviceList.clear();
-    _addressList.clear();
-    emit deviceListChanged();
+    emit nameListChanged();
     _deviceDiscover->setInquiryType(QBluetoothDeviceDiscoveryAgent::GeneralUnlimitedInquiry);
     _deviceDiscover->start();
 }
 
 void BluetoothConfiguration::deviceDiscovered(QBluetoothDeviceInfo info)
 {
-    _deviceList  += info.name();
-    _addressList += info.address().toString();
-    print_device_info(info);
-    emit deviceListChanged();
+    //print_device_info(info);
+    if(!info.name().isEmpty() && info.isValid())
+    {
+        BluetoothData data;
+        data.name    = info.name();
+        data.address = info.address().toString();
+        data.bits |= ((qint32)info.serviceClasses()   << 13);   // Service Class
+        data.bits |= ((qint32)info.majorDeviceClass() << 8);    // CLASS MAJOR
+        data.bits |= ((qint32)info.minorDeviceClass() << 2);    // CLASS MINOR
+        if(!_deviceList.contains(data))
+        {
+            _deviceList += data;
+            _nameList   += data.name;
+            emit nameListChanged();
+            return;
+        }
+    }
 }
 
 void BluetoothConfiguration::doneScanning()
@@ -406,15 +361,17 @@ void BluetoothConfiguration::doneScanning()
     }
 }
 
-void BluetoothConfiguration::setDevice(QString device)
+void BluetoothConfiguration::setDevName(const QString &name)
 {
-    int idx = _deviceList.indexOf(device);
-    if(idx >= 0)
+    foreach(const BluetoothData& data, _deviceList)
     {
-        _address = _addressList.at(idx);
-        _device  = device;
-        emit deviceChanged();
-        emit addressChanged();
+        if(data.name == name)
+        {
+            _device = data;
+            emit devNameChanged();
+            emit addressChanged();
+            return;
+        }
     }
 }
 

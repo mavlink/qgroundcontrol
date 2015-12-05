@@ -44,7 +44,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCApplication.h"
 #include "UDPLink.h"
 #include "TCPLink.h"
-#ifndef Q_OS_WIN
+#ifdef __mobile__
 #include "BluetoothLink.h"
 #endif
 
@@ -127,7 +127,7 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
         case LinkConfiguration::TypeTcp:
             pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
             break;
-#ifndef Q_OS_WIN
+#ifdef __mobile__
         case LinkConfiguration::TypeBluetooth:
             pLink = new BluetoothLink(dynamic_cast<BluetoothConfiguration*>(config));
             break;
@@ -367,7 +367,7 @@ void LinkManager::loadLinkConfigurationList()
                                 case LinkConfiguration::TypeTcp:
                                     pLink = (LinkConfiguration*)new TCPConfiguration(name);
                                     break;
-#ifndef Q_OS_WIN
+#ifdef __mobile__
                                 case LinkConfiguration::TypeBluetooth:
                                     pLink = (LinkConfiguration*)new BluetoothConfiguration(name);
                                     break;
@@ -714,7 +714,7 @@ QStringList LinkManager::linkTypeStrings(void) const
 #endif
         list += "UDP";
         list += "TCP";
-#ifndef Q_OS_WIN
+#ifdef __mobile__
         list += "Bluetooth";
 #endif
 #ifdef QT_DEBUG
@@ -823,7 +823,7 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
 #ifndef __ios__
             case LinkConfiguration::TypeSerial: {
                 QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
-#ifdef Q_OS_WIN32
+#ifdef Q_OS_WIN
                 tname.replace("\\\\.\\", "");
 #else
                 tname.replace("/dev/cu.", "");
@@ -845,11 +845,11 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
                     }
                 }
                 break;
-#ifndef Q_OS_WIN
+#ifdef __mobile__
             case LinkConfiguration::TypeBluetooth: {
                     BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);
                     if(tconfig) {
-                        config->setName(QString("Bluetooth Device on %1").arg(tconfig->device()));
+                        config->setName(QString("%1 (Bluetooth Device)").arg(tconfig->device().name));
                     }
                 }
                 break;

@@ -64,7 +64,7 @@ public:
 #endif
         TypeUdp,        ///< UDP Link
         TypeTcp,        ///< TCP Link
-#ifndef Q_OS_WIN
+#ifdef __mobile__
         TypeBluetooth,  ///< Bluetooth Link
 #endif
 #if 0

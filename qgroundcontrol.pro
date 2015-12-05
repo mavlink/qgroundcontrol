@@ -74,7 +74,7 @@ QT += \
     serialport \
 }
 
-!WindowsBuild {
+MobileBuild {
 QT += \
     bluetooth \
 }
@@ -309,7 +309,9 @@ HEADERS += \
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
     HEADERS += src/stable_headers.h
-} else {
+}
+
+MobileBuild {
     HEADERS += \
     src/comm/BluetoothLink.h \
 }
@@ -433,7 +435,7 @@ SOURCES += \
     src/ui/SerialConfigurationWindow.cc \
 }
 
-!WindowsBuild {
+MobileBuild {
     SOURCES += \
     src/comm/BluetoothLink.cc \
 }

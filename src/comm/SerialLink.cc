@@ -471,7 +471,7 @@ void SerialConfiguration::setPortName(const QString& portName)
 QString SerialConfiguration::cleanPortDisplayname(const QString name)
 {
     QString pname = name.trimmed();
-#ifdef Q_OS_WIN32
+#ifdef Q_OS_WIN
     pname.replace("\\\\.\\", "");
 #else
     pname.replace("/dev/cu.", "");
