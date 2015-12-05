@@ -202,6 +202,7 @@ Rectangle {
                 }
             }
             Flickable {
+                id:                 settingsFlick
                 clip:               true
                 anchors.top:        parent.top
                 width:              parent.width

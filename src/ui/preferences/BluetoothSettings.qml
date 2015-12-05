@@ -39,8 +39,6 @@ Item {
         // No need
     }
 
-    property var _currentDevice: ""
-
     Column {
         id:         btColumn
         spacing:    ScreenTools.defaultFontPixelHeight / 2
@@ -73,7 +71,7 @@ Item {
             }
             QGCLabel {
                 id:     deviceField
-                text:   subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth ? subEditConfig.device : ""
+                text:   subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth ? subEditConfig.devName : ""
             }
         }
         Row {
@@ -111,10 +109,10 @@ Item {
                         height:  1
                         width:   _secondColumn
                         color:   qgcPal.button
-                        visible: subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth && subEditConfig.deviceList.length > 0
+                        visible: subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth && subEditConfig.nameList.length > 0
                     }
                     Repeater {
-                        model: subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth ? subEditConfig.deviceList : ""
+                        model: subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth ? subEditConfig.nameList : ""
                         delegate:
                         QGCButton {
                             text:   modelData
@@ -123,7 +121,8 @@ Item {
                             exclusiveGroup: linkGroup
                             onClicked: {
                                 checked = true
-                                _btSettings._currentDevice = modelData
+                                if(subEditConfig && modelData !== "")
+                                    subEditConfig.devName = modelData
                             }
                         }
                     }
@@ -159,15 +158,6 @@ Item {
                                 onClicked: {
                                     if(subEditConfig)
                                         subEditConfig.stopScan()
-                                }
-                            }
-                            QGCButton {
-                                width:      ScreenTools.defaultFontPixelWidth * 10
-                                enabled:    _btSettings._currentDevice && _btSettings._currentDevice !== ""
-                                text:       "Select"
-                                onClicked: {
-                                    if(subEditConfig)
-                                        subEditConfig.device = _btSettings._currentDevice
                                 }
                             }
                         }

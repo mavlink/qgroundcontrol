@@ -45,6 +45,33 @@ This file is part of the QGROUNDCONTROL project
 
 class QBluetoothDeviceDiscoveryAgent;
 
+class BluetoothData
+{
+public:
+    BluetoothData()
+    {
+        bits = 0;
+    }
+    BluetoothData(const BluetoothData& other)
+    {
+        *this = other;
+    }
+    bool operator==(const BluetoothData& other)
+    {
+        return bits == other.bits && name == other.name && address == other.address;
+    }
+    BluetoothData& operator=(const BluetoothData& other)
+    {
+        bits = other.bits;
+        name = other.name;
+        address = other.address;
+        return *this;
+    }
+    quint32 bits;
+    QString name;
+    QString address;
+};
+
 class BluetoothConfiguration : public LinkConfiguration
 {
     Q_OBJECT
@@ -55,21 +82,22 @@ public:
     BluetoothConfiguration(BluetoothConfiguration* source);
     ~BluetoothConfiguration();
 
-    Q_PROPERTY(QString      device      READ device    WRITE setDevice    NOTIFY deviceChanged)
-    Q_PROPERTY(QString      address     READ address   WRITE setAddress   NOTIFY addressChanged)
-    Q_PROPERTY(QStringList  deviceList  READ deviceList                   NOTIFY deviceListChanged)
+    Q_PROPERTY(QString      devName     READ devName    WRITE setDevName  NOTIFY devNameChanged)
+    Q_PROPERTY(QString      address     READ address                      NOTIFY addressChanged)
+    Q_PROPERTY(QStringList  nameList    READ nameList                     NOTIFY nameListChanged)
     Q_PROPERTY(bool         scanning    READ scanning                     NOTIFY scanningChanged)
 
     Q_INVOKABLE void        startScan   ();
     Q_INVOKABLE void        stopScan    ();
 
-    QString     device                  () { return _device; }
-    QString     address                 () { return _address; }
-    QStringList deviceList              () { return _deviceList; }
+    QString     devName                 () { return _device.name; }
+    QString     address                 () { return _device.address; }
+    QStringList nameList                () { return _nameList; }
     bool        scanning                () { return _deviceDiscover != NULL; }
 
-    void        setDevice               (QString device);
-    void        setAddress              (QString address) { _address = address; emit addressChanged(); }
+    BluetoothData    device             () { return _device; }
+
+    void        setDevName              (const QString& name);
 
     /// From LinkConfiguration
     LinkType    type                    () { return LinkConfiguration::TypeBluetooth; }
@@ -85,19 +113,16 @@ public slots:
 
 signals:
     void        newDevice               (QBluetoothDeviceInfo info);
-    void        deviceChanged           ();
+    void        devNameChanged          ();
     void        addressChanged          ();
-    void        deviceListChanged       ();
+    void        nameListChanged         ();
     void        scanningChanged         ();
 
 private:
-
-private:
     QBluetoothDeviceDiscoveryAgent*     _deviceDiscover;
-    QString                             _device;
-    QString                             _address;
-    QStringList                         _deviceList;
-    QStringList                         _addressList;
+    BluetoothData                       _device;
+    QStringList                         _nameList;
+    QList<BluetoothData>                _deviceList;
 };
 
 class BluetoothLink : public LinkInterface
@@ -133,9 +158,6 @@ public slots:
     void    deviceConnected         ();
     void    deviceDisconnected      ();
     void    deviceError             (QBluetoothSocket::SocketError error);
-    void    stateChanged            (QBluetoothSocket::SocketState state);
-    void    deviceDiscovered        (QBluetoothDeviceInfo info);
-    void    doneScanning            ();
 
 protected:
 
@@ -159,7 +181,6 @@ private:
 
     QBluetoothSocket*                   _targetSocket;
     QBluetoothDeviceInfo*               _targetDevice;
-    QBluetoothDeviceDiscoveryAgent*     _deviceDiscover;
     bool                                _running;
 };
 
