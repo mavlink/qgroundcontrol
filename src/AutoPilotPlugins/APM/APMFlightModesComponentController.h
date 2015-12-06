@@ -42,25 +42,26 @@ class APMFlightModesComponentController : public FactPanelController
 public:
     APMFlightModesComponentController(void);
     
-    Q_PROPERTY(int      channelCount        MEMBER _channelCount        CONSTANT)
-    Q_PROPERTY(bool     fixedWing           MEMBER _fixedWing           CONSTANT)
-    Q_PROPERTY(QString  reservedChannels    MEMBER _reservedChannels    CONSTANT)
+    Q_PROPERTY(int      activeFlightMode            READ activeFlightMode       NOTIFY activeFlightModeChanged)
+    Q_PROPERTY(int      channelCount                MEMBER _channelCount        CONSTANT)
+    Q_PROPERTY(QVariantList channelOptionEnabled    READ channelOptionEnabled   NOTIFY channelOptionEnabledChanged)
+    Q_PROPERTY(bool     fixedWing                   MEMBER _fixedWing           CONSTANT)
+
+    int activeFlightMode(void) { return _activeFlightMode; }
+    QVariantList channelOptionEnabled(void) { return _rgChannelOptionEnabled; }
+
+signals:
+    void activeFlightModeChanged(int activeFlightMode);
+    void channelOptionEnabledChanged(void);
     
 private slots:
     void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
     
 private:
-    void _init(void);
-    void _validateConfiguration(void);
-    
-    bool _fixedWing;
-    
-    int _rcValues[Vehicle::cMaxRcChannels];
-    
-    bool    _validConfiguration;
-    QString _configurationErrors;
-    int     _channelCount;
-    QString _reservedChannels;
+    int             _activeFlightMode;
+    int             _channelCount;
+    QVariantList    _rgChannelOptionEnabled;
+    bool            _fixedWing;
 };
 
 #endif

@@ -29,7 +29,9 @@
 #include <QQmlProperty>
 
 APMFlightModesComponentController::APMFlightModesComponentController(void)
-    : _channelCount(Vehicle::cMaxRcChannels)
+    : _activeFlightMode(0)
+    , _channelCount(Vehicle::cMaxRcChannels)
+    , _fixedWing(_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
 {
     QStringList usedParams;
     usedParams << "FLTMODE1" << "FLTMODE2" << "FLTMODE3" << "FLTMODE4" << "FLTMODE5" << "FLTMODE6";
@@ -37,78 +39,37 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
         return;
     }
 
-    _init();
-    _validateConfiguration();
+    _rgChannelOptionEnabled << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false);
     
     connect(_vehicle, &Vehicle::rcChannelsChanged, this, &APMFlightModesComponentController::_rcChannelsChanged);
-}
-
-void APMFlightModesComponentController::_init(void)
-{
-    _fixedWing = _vehicle->vehicleType() == MAV_TYPE_FIXED_WING;
-}
-
-/// This will look for parameter settings which would cause the config to not run correctly.
-/// It will set _validConfiguration and _configurationErrors as needed.
-void APMFlightModesComponentController::_validateConfiguration(void)
-{
-    _validConfiguration = true;
-#if 0
-    
-    // Make sure switches are valid and within channel range
-    
-    QStringList switchParams;
-    QList<int> switchMappings;
-    
-    switchParams << "RC_MAP_MODE_SW"  << "RC_MAP_ACRO_SW"  << "RC_MAP_POSCTL_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_OFFB_SW";
-    
-    for(int i=0; i<switchParams.count(); i++) {
-        int map = getParameterFact(FactSystem::defaultComponentId, switchParams[i])->rawValue().toInt();
-        switchMappings << map;
-        
-        if (map < 0 || map > _channelCount) {
-            _validConfiguration = false;
-            _configurationErrors += QString("%1 is set to %2. Mapping must between 0 and %3 (inclusive).\n").arg(switchParams[i]).arg(map).arg(_channelCount);
-        }
-    }
-    
-    // Make sure mode switches are not double-mapped
-    
-    QStringList attitudeParams;
-    
-    attitudeParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2";
-
-    for (int i=0; i<attitudeParams.count(); i++) {
-        int map = getParameterFact(FactSystem::defaultComponentId, attitudeParams[i])->rawValue().toInt();
-
-        for (int j=0; j<switchParams.count(); j++) {
-            if (map != 0 && map == switchMappings[j]) {
-                _validConfiguration = false;
-                _configurationErrors += QString("%1 is set to same channel as %2.\n").arg(switchParams[j]).arg(attitudeParams[i]);
-            }
-        }
-    }
-    
-    // Validate thresholds within range
-    
-    QStringList thresholdParams;
-    
-    thresholdParams << "RC_ASSIST_TH" << "RC_AUTO_TH" << "RC_ACRO_TH" << "RC_POSCTL_TH" << "RC_LOITER_TH" << "RC_RETURN_TH" << "RC_OFFB_TH";
-    
-    foreach(QString thresholdParam, thresholdParams) {
-        float threshold = getParameterFact(-1, thresholdParam)->rawValue().toFloat();
-        if (threshold < 0.0f || threshold > 1.0f) {
-            _validConfiguration = false;
-            _configurationErrors += QString("%1 is set to %2. Threshold must between 0.0 and 1.0 (inclusive).\n").arg(thresholdParam).arg(threshold);
-        }
-    }
-#endif
 }
 
 /// Connected to Vehicle::rcChannelsChanged signal
 void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
-    for (int channel=0; channel<channelCount; channel++) {
-        _rcValues[channel] = pwmValues[channel];
+    Q_UNUSED(channelCount);
+
+    _activeFlightMode = 0;
+
+    int channelValue = pwmValues[4];
+    if (channelValue != -1) {
+        int rgThreshold[] = { 1230, 1360, 1490, 1620, 1749 };
+        for (int i=0; i<5; i++) {
+            if (channelValue <= rgThreshold[i]) {
+                _activeFlightMode = i + 1;
+                break;
+            }
+        }
+        _activeFlightMode = 5;
     }
+    emit activeFlightModeChanged(_activeFlightMode);
+
+    for (int i=0; i<6; i++) {
+        _rgChannelOptionEnabled[i] = QVariant(false);
+        channelValue = pwmValues[i+7];
+        if (channelValue != -1 && channelValue > 1800) {
+            _rgChannelOptionEnabled[i] = QVariant(true);
+        }
+    }
+    emit channelOptionEnabledChanged();
 }
