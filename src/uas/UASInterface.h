@@ -41,7 +41,9 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
 
+#ifndef __mobile__
 class FileManager;
+#endif
 
 /**
  * @brief Interface for all robots.
@@ -71,7 +73,9 @@ public:
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
 
+#ifndef __mobile__
     virtual FileManager* getFileManager() = 0;
+#endif
 
     /**
      * @brief Get the color for this UAS

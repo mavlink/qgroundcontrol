@@ -98,10 +98,10 @@ public:
     Q_INVOKABLE void acceptWindowClose(void);
 
 public slots:
-    /** @brief Show the application settings */
+#ifndef __mobile__
     void showSettings();
-
     void manageLinks();
+#endif
 
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { _lowPowerMode = enabled; }

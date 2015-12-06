@@ -28,7 +28,6 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
-#include "QGCMessageBox.h"
 #include "UASMessageHandler.h"
 #include "FirmwarePlugin.h"
 #include "UAS.h"

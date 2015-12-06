@@ -121,19 +121,22 @@ QGCView {
                             text:           "Search..."
                             onTriggered:    showDialog(searchDialogComponent, "Parameter Search", 50, StandardButton.Reset | StandardButton.Apply)
                         }
-                        MenuSeparator { }
+                        MenuSeparator { visible: !ScreenTools.isMobile }
                         MenuItem {
                             text:           "Load from file..."
                             onTriggered:	controller.loadFromFile()
+                            visible:        !ScreenTools.isMobile
                         }
                         MenuItem {
                             text:           "Save to file..."
                             onTriggered:	controller.saveToFile()
+                            visible:        !ScreenTools.isMobile
                         }
-                        MenuSeparator { }
+                        MenuSeparator { visible: !ScreenTools.isMobile }
                         MenuItem {
                             text:           "Clear RC to Param"
                             onTriggered:	controller.clearRCToParam()
+                            visible:        !ScreenTools.isMobile
                         }
                     }
                 }
