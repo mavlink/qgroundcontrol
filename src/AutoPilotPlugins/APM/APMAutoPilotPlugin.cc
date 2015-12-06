@@ -33,6 +33,8 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
     , _incorrectParameterVersion(false)
     , _airframeComponent(NULL)
+    , _flightModesComponent(NULL)
+    , _radioComponent(NULL)
 {
     Q_ASSERT(vehicle);
 }
@@ -52,6 +54,11 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+
+            _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
+            Q_CHECK_PTR(_flightModesComponent);
+            _flightModesComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
 
             _radioComponent = new APMRadioComponent(_vehicle, this);
             Q_CHECK_PTR(_radioComponent);
