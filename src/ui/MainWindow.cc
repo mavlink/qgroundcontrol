@@ -425,24 +425,20 @@ void MainWindow::showStatusBarCallback(bool checked)
     checked ? statusBar()->show() : statusBar()->hide();
 }
 
+void MainWindow::acceptWindowClose(void)
+{
+    qgcApp()->toolbox()->linkManager()->shutdown();
+    // The above shutdown causes a flurry of activity as the vehicle components are removed. This in turn
+    // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
+    // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
+    QTimer::singleShot(1500, this, &MainWindow::_closeWindow);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Disallow window close if there are active connections
     if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count()) {
-        QGCMessageBox::StandardButton button =
-            QGCMessageBox::warning(
-                tr("QGroundControl close"),
-                tr("There are still active connections to vehicles. Do you want to disconnect these before closing?"),
-                QMessageBox::Yes | QMessageBox::Cancel,
-                QMessageBox::Cancel);
-        if (button == QMessageBox::Yes) {
-            qgcApp()->toolbox()->linkManager()->shutdown();
-            // The above disconnect causes a flurry of activity as the vehicle components are removed. This in turn
-            // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
-            // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
-            QTimer::singleShot(1500, this, &MainWindow::_closeWindow);
-        }
-
+        emit showWindowCloseMessage();
         event->ignore();
         return;
     }
