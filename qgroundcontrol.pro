@@ -191,6 +191,7 @@ INCLUDEPATH += \
 
 FORMS += \
     src/ui/MainWindow.ui \
+    src/QGCQmlWidgetHolder.ui \
 
 DebugBuild {
 FORMS += \
@@ -204,7 +205,6 @@ FORMS += \
 
 !MobileBuild {
 FORMS += \
-    src/QGCQmlWidgetHolder.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/uas/UASMessageView.ui \
     src/ui/Linechart.ui \
