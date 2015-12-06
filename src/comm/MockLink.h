@@ -146,6 +146,11 @@ public:
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
     void resetMissionItemHandler(void) { _missionItemHandler.reset(); }
 
+    static MockLink* startPX4MockLink            (bool sendStatusText);
+    static MockLink* startGenericMockLink        (bool sendStatusText);
+    static MockLink* startAPMArduCopterMockLink  (bool sendStatusText);
+    static MockLink* startAPMArduPlaneMockLink   (bool sendStatusText);
+
 signals:
     /// @brief Used internally to move data to the thread.
     void _incomingBytes(const QByteArray bytes);
@@ -188,6 +193,8 @@ private:
     void _sendHomePosition(void);
     void _sendGpsRawInt(void);
     void _sendStatusTextMessages(void);
+
+    static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
     MockLinkMissionItemHandler  _missionItemHandler;
 

@@ -112,6 +112,9 @@ public:
     Q_PROPERTY(bool                 active                  READ active             WRITE setActive     NOTIFY activeChanged)
     Q_PROPERTY(int                  flowImageIndex          READ flowImageIndex                         NOTIFY flowImageIndexChanged)
     Q_PROPERTY(int                  rcRSSI                  READ rcRSSI                                 NOTIFY rcRSSIChanged)
+    Q_PROPERTY(bool                 px4Firmware             READ px4Firmware                            CONSTANT)
+    Q_PROPERTY(bool                 apmFirmware             READ apmFirmware                            CONSTANT)
+    Q_PROPERTY(bool                 genericFirmware         READ genericFirmware                        CONSTANT)
 
     /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
     /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
@@ -253,8 +256,13 @@ public:
     int             satelliteLock       () { return _satelliteLock; }
     unsigned int    heartbeatTimeout    () { return _currentHeartbeatTimeout; }
     int             rcRSSI              () { return _rcRSSI; }
+    bool            px4Firmware         () { return _firmwareType == MAV_AUTOPILOT_PX4; }
+    bool            apmFirmware         () { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
+    bool            genericFirmware     () { return !px4Firmware() && !apmFirmware(); }
 
     ParameterLoader* getParameterLoader(void);
+
+    static const int cMaxRcChannels = 18;
 
 public slots:
     void setLatitude(double latitude);
@@ -305,6 +313,14 @@ signals:
     void flowImageIndexChanged  ();
     void rcRSSIChanged          (int rcRSSI);
 
+    /// New RC channel values
+    ///     @param channelCount Number of available channels, cMaxRcChannels max
+    ///     @param pwmValues -1 signals channel not available
+    void rcChannelsChanged(int channelCount, int pwmValues[cMaxRcChannels]);
+
+    /// Remote control RSSI changed  (0% - 100%)
+    void remoteControlRSSIChanged(uint8_t rssi);
+
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
     void _linkInactiveOrDeleted(LinkInterface* link);
@@ -342,6 +358,8 @@ private:
     void _startJoystick(bool start);
     void _handleHomePosition(mavlink_message_t& message);
     void _handleHeartbeat(mavlink_message_t& message);
+    void _handleRCChannels(mavlink_message_t& message);
+    void _handleRCChannelsRaw(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);

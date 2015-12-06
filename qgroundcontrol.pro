@@ -514,7 +514,7 @@ HEADERS += \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
     src/qgcunittest/MultiSignalSpy.h \
-    src/qgcunittest/PX4RCCalibrationTest.h \
+    src/qgcunittest/RadioConfigTest.h \
     src/qgcunittest/TCPLinkTest.h \
     src/qgcunittest/TCPLoopBackServer.h \
     src/qgcunittest/UnitTest.h \
@@ -537,7 +537,7 @@ SOURCES += \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
     src/qgcunittest/MultiSignalSpy.cc \
-    src/qgcunittest/PX4RCCalibrationTest.cc \
+    src/qgcunittest/RadioConfigTest.cc \
     src/qgcunittest/TCPLinkTest.cc \
     src/qgcunittest/TCPLoopBackServer.cc \
     src/qgcunittest/UnitTest.cc \
@@ -551,6 +551,7 @@ SOURCES += \
 #
 
 INCLUDEPATH += \
+    src/AutoPilotPlugins/Common \
     src/AutoPilotPlugins/PX4 \
     src/FirmwarePlugin \
     src/Vehicle \
@@ -562,6 +563,8 @@ HEADERS+= \
     src/AutoPilotPlugins/APM/APMAutoPilotPlugin.h \
     src/AutoPilotPlugins/APM/APMAirframeComponent.h \
     src/AutoPilotPlugins/APM/APMComponent.h \
+    src/AutoPilotPlugins/APM/APMRadioComponent.h \
+    src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
@@ -572,8 +575,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/PowerComponentController.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4Component.h \
-    src/AutoPilotPlugins/PX4/RadioComponent.h \
-    src/AutoPilotPlugins/PX4/RadioComponentController.h \
+    src/AutoPilotPlugins/PX4/PX4RadioComponent.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
@@ -606,6 +608,8 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
     src/AutoPilotPlugins/APM/APMAirframeComponent.cc \
     src/AutoPilotPlugins/APM/APMComponent.cc \
+    src/AutoPilotPlugins/APM/APMRadioComponent.cc \
+    src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
@@ -616,8 +620,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PowerComponentController.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
-    src/AutoPilotPlugins/PX4/RadioComponent.cc \
-    src/AutoPilotPlugins/PX4/RadioComponentController.cc \
+    src/AutoPilotPlugins/PX4/PX4RadioComponent.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
