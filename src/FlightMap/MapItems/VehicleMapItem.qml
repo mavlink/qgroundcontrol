@@ -39,7 +39,7 @@ MapQuickItem {
 
     anchorPoint.x:  vehicleIcon.width  / 2
     anchorPoint.y:  vehicleIcon.height / 2
-    visible:        vehicle.coordinateValid
+    visible:        vehicle && vehicle.coordinateValid
 
     sourceItem: Image {
         id:         vehicleIcon
@@ -51,7 +51,7 @@ MapQuickItem {
         transform: Rotation {
             origin.x:   vehicleIcon.width  / 2
             origin.y:   vehicleIcon.height / 2
-            angle:      vehicle.heading
+            angle:      vehicle ? vehicle.heading : 0
         }
     }
 }
