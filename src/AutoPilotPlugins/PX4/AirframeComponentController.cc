@@ -30,7 +30,6 @@
 #include "MultiVehicleManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
-#include "QGCMessageBox.h"
 
 #include <QVariant>
 #include <QQmlProperty>
@@ -98,7 +97,7 @@ AirframeComponentController::~AirframeComponentController()
 void AirframeComponentController::changeAutostart(void)
 {
     if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() > 1) {
-		QGCMessageBox::warning("Airframe Config", "You cannot change airframe configuration while connected to multiple vehicles.");
+        qgcApp()->showMessage("You cannot change airframe configuration while connected to multiple vehicles.");
 		return;
 	}
 	

@@ -39,7 +39,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkManager.h"
 #include "MainWindow.h"
-#include "QGCMessageBox.h"
 #include "QGCApplication.h"
 #include "QGCApplication.h"
 #include "UDPLink.h"
@@ -276,8 +275,7 @@ void LinkManager::_deleteLink(LinkInterface* link)
 bool LinkManager::_connectionsSuspendedMsg(void)
 {
     if (_connectionsSuspended) {
-        QGCMessageBox::information(tr("Connect not allowed"),
-                                   tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
+        qgcApp()->showMessage(QString("Connect not allowed: %1").arg(_connectionsSuspendedReason));
         return true;
     } else {
         return false;
@@ -618,14 +616,14 @@ void LinkManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int 
                                 << vehicleType;
 
         if (vehicleId == _mavlinkProtocol->getSystemId()) {
-            _app->showToolBarMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
+            _app->showMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
         }
 
         QSettings settings;
         bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
         if (mavlinkVersionCheck && vehicleMavlinkVersion != MAVLINK_VERSION) {
             _ignoreVehicleIds += vehicleId;
-            _app->showToolBarMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
+            _app->showMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
                                                  "It is unsafe to use different MAVLink versions. "
                                                  "QGroundControl therefore refuses to connect to vehicle #%1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(vehicleId).arg(vehicleMavlinkVersion).arg(MAVLINK_VERSION));
             return;
