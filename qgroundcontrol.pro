@@ -553,6 +553,7 @@ SOURCES += \
 INCLUDEPATH += \
     src/AutoPilotPlugins/Common \
     src/AutoPilotPlugins/PX4 \
+    src/AutoPilotPlugins/APM \
     src/FirmwarePlugin \
     src/Vehicle \
     src/VehicleSetup \
@@ -564,6 +565,8 @@ HEADERS+= \
     src/AutoPilotPlugins/APM/APMAirframeComponent.h \
     src/AutoPilotPlugins/APM/APMComponent.h \
     src/AutoPilotPlugins/APM/APMRadioComponent.h \
+    src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
+    src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
@@ -609,6 +612,8 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMAirframeComponent.cc \
     src/AutoPilotPlugins/APM/APMComponent.cc \
     src/AutoPilotPlugins/APM/APMRadioComponent.cc \
+    src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
+    src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \

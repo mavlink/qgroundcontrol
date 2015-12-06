@@ -62,6 +62,7 @@
 #include "ParameterEditorController.h"
 #include "CustomCommandWidgetController.h"
 #include "FlightModesComponentController.h"
+#include "APMFlightModesComponentController.h"
 #include "AirframeComponentController.h"
 #include "SensorsComponentController.h"
 #include "PowerComponentController.h"
@@ -354,16 +355,17 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",        "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",               "Reference only");
 
-    qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
-    qmlRegisterType<FlightModesComponentController> ("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
-    qmlRegisterType<AirframeComponentController>    ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
-    qmlRegisterType<SensorsComponentController>     ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
-    qmlRegisterType<PowerComponentController>       ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
-    qmlRegisterType<RadioComponentController>       ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
-    qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
-    qmlRegisterType<MainToolBarController>          ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
-    qmlRegisterType<MissionController>              ("QGroundControl.Controllers", 1, 0, "MissionController");
-    qmlRegisterType<FlightDisplayViewController>    ("QGroundControl.Controllers", 1, 0, "FlightDisplayViewController");
+    qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<APMFlightModesComponentController>  ("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
+    qmlRegisterType<FlightModesComponentController>     ("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
+    qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
+    qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
+    qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
+    qmlRegisterType<RadioComponentController>           ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+    qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
+    qmlRegisterType<MainToolBarController>              ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
+    qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");
+    qmlRegisterType<FlightDisplayViewController>        ("QGroundControl.Controllers", 1, 0, "FlightDisplayViewController");
 
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
