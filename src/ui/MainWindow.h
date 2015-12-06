@@ -94,6 +94,9 @@ public:
     /// @brief Show message in lower message window
     void showMessage(const QString message);
 
+    // Called from MainWindow.qml when the user accepts the window close dialog
+    Q_INVOKABLE void acceptWindowClose(void);
+
 public slots:
     /** @brief Show the application settings */
     void showSettings();
@@ -135,6 +138,7 @@ protected slots:
      * this incoherent.
      */
     void handleActiveViewActionState(bool triggered);
+
 signals:
     // Signals the Qml to show the specified view
     void showFlyView(void);
@@ -142,6 +146,7 @@ signals:
     void showSetupView(void);
 
     void showCriticalMessage(const QString& message);
+    void showWindowCloseMessage(void);
 
     // These are used for unit testing
     void showSetupFirmware(void);

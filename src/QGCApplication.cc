@@ -455,9 +455,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     /// settings.
     QString savedFilesLocation = settings.value(_savedFilesLocationKey).toString();
     if (savedFilesLocation.isEmpty()) {
-        QGCMessageBox::warning(
-            tr("Bad save location"),
-            tr("The location to save files to is invalid, or cannot be written to. Please provide a new one."));
+        showMessage("The location to save files to is invalid, or cannot be written to. Please provide a new one.");
         mainWindow->showSettings();
     }
 
@@ -705,10 +703,7 @@ void QGCApplication::_missingParamsDisplay(void)
     }
     _missingParams.clear();
 
-    QGCMessageBox::critical(
-        "Missing Parameters",
-        QString("Parameters missing from firmware: %1.\n\n"
-                "You should quit QGroundControl immediately and update your firmware.").arg(params));
+    showMessage(QString("Parameters missing from firmware: %1.\n\nYou should quit QGroundControl immediately and update your firmware.").arg(params));
 }
 
 void QGCApplication::showMessage(const QString& message)
@@ -717,6 +712,6 @@ void QGCApplication::showMessage(const QString& message)
     if (mainWindow) {
         mainWindow->showMessage(message);
     } else {
-        QGCMessageBox::information("", message);
+        qWarning() << "showMessage with no mainWindow" << message;
     }
 }

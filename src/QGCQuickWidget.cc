@@ -60,7 +60,7 @@ bool QGCQuickWidget::setSource(const QUrl& qmlUrl)
             errorList += error.toString();
             errorList += "\n";
         }
-        QGCMessageBox::warning(tr("Qml Error"), tr("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
+        qgcApp()->showMessage(QString("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
         return false;
     }
     
