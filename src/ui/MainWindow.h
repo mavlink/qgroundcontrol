@@ -91,6 +91,9 @@ public:
     /// @brief Saves the last used connection
     void saveLastUsedConnection(const QString connection);
 
+    /// @brief Show message in lower message window
+    void showMessage(const QString message);
+
     // Called from MainWindow.qml when the user accepts the window close dialog
     Q_INVOKABLE void acceptWindowClose(void);
 
@@ -142,7 +145,7 @@ signals:
     void showPlanView(void);
     void showSetupView(void);
 
-    void showToolbarMessage(const QString& message);
+    void showCriticalMessage(const QString& message);
     void showWindowCloseMessage(void);
 
     // These are used for unit testing

@@ -58,10 +58,12 @@ Row {
                 return colorOrange;
             if (activeVehicle.messageTypeError)
                 return colorRed;
+            // Cannot be so make make it obnoxious to show error
+            console.log("Invalid vehicle message type")
+            return "purple";
         }
-        // Cannot be so make make it obnoxious to show error
-        console.log("Invalid vehicle message type")
-        return "purple";
+        //-- It can only get here when closing (vehicle gone while window active)
+        return "white";
     }
 
     function getBatteryVoltageText() {
