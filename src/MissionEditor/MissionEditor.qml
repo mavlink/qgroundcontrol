@@ -322,7 +322,7 @@ QGCView {
 
                         function updateItemIndicator()
                         {
-                            if (object.isCurrentItem) {
+                            if (object.isCurrentItem && itemIndicator.visible) {
                                 if (object.specifiesCoordinate) {
                                     // Setup our drag item
                                     if (object.sequenceNumber != 0) {
