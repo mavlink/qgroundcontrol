@@ -675,3 +675,8 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
     settings.setValue(_visibleWidgetsKey, widgetNames);
 }
 #endif
+
+void MainWindow::showMessage(const QString message)
+{
+    emit showCriticalMessage(message);
+}

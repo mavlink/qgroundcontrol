@@ -46,15 +46,12 @@ MainToolBarController::MainToolBarController(QObject* parent)
     , _progressBarValue(0.0f)
     , _telemetryRRSSI(0)
     , _telemetryLRSSI(0)
-    , _toolbarMessageVisible(false)
 {
     _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
-
     // RSSI (didn't like standard connection)
     connect(qgcApp()->toolbox()->mavlinkProtocol(),
         SIGNAL(radioStatusChanged(LinkInterface*, unsigned, unsigned, int, int, unsigned, unsigned, unsigned)), this,
         SLOT(_telemetryChanged(LinkInterface*, unsigned, unsigned, int, int, unsigned, unsigned, unsigned)));
-
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MainToolBarController::_activeVehicleChanged);
 }
 
@@ -132,46 +129,6 @@ void MainToolBarController::_setProgressBarValue(float value)
 {
     _progressBarValue = value;
     emit progressBarValueChanged(value);
-}
-
-void MainToolBarController::showToolBarMessage(const QString& message)
-{
-    _toolbarMessageQueueMutex.lock();
-
-    if (_toolbarMessageQueue.count() == 0 && !_toolbarMessageVisible) {
-        QTimer::singleShot(500, this, &MainToolBarController::_delayedShowToolBarMessage);
-    }
-
-    _toolbarMessageQueue += message;
-
-    _toolbarMessageQueueMutex.unlock();
-}
-
-void MainToolBarController::_delayedShowToolBarMessage(void)
-{
-    QString messages;
-
-    if (!_toolbarMessageVisible) {
-        _toolbarMessageQueueMutex.lock();
-
-        foreach (QString message, _toolbarMessageQueue) {
-            messages += message + "\n";
-        }
-        _toolbarMessageQueue.clear();
-
-        _toolbarMessageQueueMutex.unlock();
-
-        if (!messages.isEmpty()) {
-            _toolbarMessageVisible = true;
-            emit showMessage(messages);
-        }
-    }
-}
-
-void MainToolBarController::onToolBarMessageClosed(void)
-{
-    _toolbarMessageVisible = false;
-    _delayedShowToolBarMessage();
 }
 
 void MainToolBarController::showSettings(void)
