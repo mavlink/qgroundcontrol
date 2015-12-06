@@ -94,7 +94,7 @@ Item {
             planViewLoader.visible      = false
         }
 
-        onShowToolbarMessage: toolBar.showToolbarMessage(message)
+        onShowCriticalMessage: showCriticalMessage(message)
 
         onShowWindowCloseMessage: windowCloseDialog.open()
 
@@ -124,6 +124,18 @@ Item {
                 }
             }
             positionSource.stop()
+        }
+    }
+
+    property var messageQueue: []
+
+    function showCriticalMessage(message) {
+        if(criticalMmessageArea.visible) {
+            messageQueue.push(message)
+        } else {
+            criticalMessageText.text = message
+            criticalMmessageArea.visible = true
+            mainWindow.setMapInteractive(false)
         }
     }
 
@@ -278,7 +290,7 @@ Item {
 
         width:              mainWindow.width  * 0.5
         height:             mainWindow.height * 0.5
-        color:              Qt.rgba(0,0,0,0.75)
+        color:              Qt.rgba(0,0,0,0.8)
         visible:            false
         radius:             ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter:   parent.horizontalCenter
@@ -315,6 +327,95 @@ Item {
                 anchors.fill:   parent
                 onClicked: {
                     messageArea.close()
+                }
+            }
+        }
+    }
+    //-------------------------------------------------------------------------
+    //-- Critical Message Area
+    Rectangle {
+        id:                 criticalMmessageArea
+
+        function close() {
+            //-- Are there messages in the waiting queue?
+            if(mainWindow.messageQueue.length) {
+                criticalMessageText.text = ""
+                //-- Show all messages in queue
+                for (var i = 0; i < mainWindow.messageQueue.length; i++) {
+                    criticalMessageText.append(mainWindow.messageQueue[i])
+                }
+                //-- Clear it
+                mainWindow.messageQueue = []
+            } else {
+                criticalMessageText.text = ""
+                mainWindow.setMapInteractive(true)
+                criticalMmessageArea.visible = false
+            }
+        }
+
+        width:              mainWindow.width  * 0.55
+        height:             ScreenTools.defaultFontPixelHeight * ScreenTools.fontHRatio * 6
+        color:              Qt.rgba(0,0,0,0.8)
+        visible:            false
+        radius:             ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.bottom:             parent.bottom
+        anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight
+        Flickable {
+            id:                 criticalMessageFlick
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.fill:       parent
+            contentHeight:      criticalMessageText.height
+            contentWidth:       criticalMessageText.width
+            boundsBehavior:     Flickable.StopAtBounds
+            pixelAligned:       true
+            clip:               true
+            TextEdit {
+                id:             criticalMessageText
+                width:          criticalMmessageArea.width - criticalClose.width - (ScreenTools.defaultFontPixelHeight * 2)
+                anchors.left:   parent.left
+                readOnly:       true
+                textFormat:     TextEdit.RichText
+                font.weight:    Font.DemiBold
+                wrapMode:       TextEdit.WordWrap
+                color:          "#fdfd3b"
+            }
+        }
+        //-- Dismiss Critical Message
+        Image {
+            id:                 criticalClose
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.top:        parent.top
+            anchors.right:      parent.right
+            width:              ScreenTools.defaultFontPixelHeight * 1.5
+            height:             ScreenTools.defaultFontPixelHeight * 1.5
+            source:             "/res/XDelete.svg"
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    criticalMmessageArea.close()
+                }
+            }
+        }
+        //-- More text below indicator
+        Image {
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.bottom:     parent.bottom
+            anchors.right:      parent.right
+            width:              ScreenTools.defaultFontPixelHeight * 1.5
+            height:             ScreenTools.defaultFontPixelHeight * 1.5
+            source:             "/res/ArrowDown.svg"
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            visible:            criticalMessageText.lineCount > 5
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    criticalMessageFlick.flick(0,-500)
                 }
             }
         }
