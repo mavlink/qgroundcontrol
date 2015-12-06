@@ -27,9 +27,9 @@
 #include "ParameterEditorController.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCFileDialog.h"
-#include "QGCMessageBox.h"
 #include "QGCMapRCToParamDialog.h"
 #include "MainWindow.h"
+#include "QGCApplication.h"
 
 /// @Brief Constructs a new ParameterEditorController Widget. This widget is used within the PX4VehicleConfig set of screens.
 ParameterEditorController::ParameterEditorController(void)
@@ -106,7 +106,7 @@ void ParameterEditorController::saveToFile(void)
 		QFile file(fileName);
         
 		if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QGCMessageBox::critical(msgTitle, "Unable to create file");
+            qgcApp()->showMessage("Unable to create file");
 			return;
 		}
         
@@ -132,7 +132,7 @@ void ParameterEditorController::loadFromFile(void)
         QFile file(fileName);
         
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QGCMessageBox::critical(msgTitle, "Unable to open file");
+            qgcApp()->showMessage("Unable to open file");
             return;
         }
         

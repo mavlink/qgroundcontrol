@@ -34,10 +34,10 @@
 #endif
 #include <Eigen/Geometry>
 #include "FirmwarePluginManager.h"
-#include "QGCMessageBox.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "Joystick.h"
+#include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 

@@ -308,7 +308,7 @@ void RadioComponentController::nextButtonClicked(void)
             if (_unitTestMode) {
                 emit nextButtonMessageBoxDisplayed();
             } else {
-                QGCMessageBox::warning(tr("Receiver"), tr("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
+                qgcApp()->showMessage(QString("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
             }
             return;
         }
@@ -567,7 +567,7 @@ void RadioComponentController::_saveFlapsDown(void)
         if (_unitTestMode) {
             emit nextButtonMessageBoxDisplayed();
         } else {
-            QGCMessageBox::warning(tr("Flaps switch"), tr("Flaps switch has not yet been detected."));
+            qgcApp()->showMessage("Flaps switch has not yet been detected.");
         }
         return;
     }

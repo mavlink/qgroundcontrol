@@ -26,8 +26,8 @@ This file is part of the QGROUNDCONTROL project
 #include "MissionManager.h"
 #include "QGCFileDialog.h"
 #include "CoordinateVector.h"
-#include "QGCMessageBox.h"
 #include "FirmwarePlugin.h"
+#include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
 

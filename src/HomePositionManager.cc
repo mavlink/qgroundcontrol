@@ -31,7 +31,6 @@
 #include "UASInterface.h"
 #include "HomePositionManager.h"
 #include "QGC.h"
-#include "QGCMessageBox.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 

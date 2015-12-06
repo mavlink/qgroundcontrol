@@ -198,7 +198,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     emit textMessageCountChanged(count);
     
     if (_showErrorsInToolbar && message->severityIsError()) {
-        _app->showToolBarMessage(message->getText());
+        _app->showMessage(message->getText());
     }
 }
 

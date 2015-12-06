@@ -26,7 +26,6 @@
 
 #include "AutoPilotPlugin.h"
 #include "QGCApplication.h"
-#include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "ParameterLoader.h"
 #include "UAS.h"
@@ -63,7 +62,7 @@ void AutoPilotPlugin::_parametersReadyChanged(bool parametersReady)
 	if (parametersReady) {
 		_recalcSetupComplete();
 		if (!_setupComplete) {
-            qgcApp()->showToolBarMessage("One or more vehicle components require setup prior to flight.");
+            qgcApp()->showMessage("One or more vehicle components require setup prior to flight.");
 			
 			// Take the user to Vehicle Summary
             MainWindow::instance()->showSetupView();

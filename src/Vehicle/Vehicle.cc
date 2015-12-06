@@ -1080,7 +1080,7 @@ void Vehicle::sendMessageMultiple(mavlink_message_t message)
 void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
 {
     Q_UNUSED(errorCode);
-    qgcApp()->showToolBarMessage(QString("Error during Mission communication with Vehicle: %1").arg(errorMsg));
+    qgcApp()->showMessage(QString("Error during Mission communication with Vehicle: %1").arg(errorMsg));
 }
 
 void Vehicle::_addNewMapTrajectoryPoint(void)

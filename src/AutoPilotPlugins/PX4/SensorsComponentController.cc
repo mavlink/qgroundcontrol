@@ -26,8 +26,8 @@
 
 #include "SensorsComponentController.h"
 #include "QGCMAVLink.h"
-#include "QGCMessageBox.h"
 #include "UAS.h"
+#include "QGCApplication.h"
 
 #include <QVariant>
 #include <QQmlProperty>
@@ -181,7 +181,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
         default:
             // Assume failed
             _hideAllCalAreas();
-            QGCMessageBox::warning("Calibration", "Calibration failed. Calibration log will be displayed.");
+            qgcApp()->showMessage("Calibration failed. Calibration log will be displayed.");
             break;
     }
     

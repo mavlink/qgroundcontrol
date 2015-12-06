@@ -393,9 +393,8 @@ void QGCApplication::_initCommon(void)
     if (settingsUpgraded) {
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
-        QGCMessageBox::information(tr("Settings Cleared"),
-                                   tr("The format for QGroundControl saved settings has been modified. "
-                                      "Your saved settings have been reset to defaults."));
+        showMessage("The format for QGroundControl saved settings has been modified. "
+                    "Your saved settings have been reset to defaults.");
     }
 
     // Load saved files location and validate
@@ -588,7 +587,8 @@ QGCApplication* qgcApp(void)
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
-    QGCMessageBox::information(title, msg);
+    Q_UNUSED(title);
+    showMessage(msg);
 }
 
 void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
@@ -709,7 +709,7 @@ void QGCApplication::_missingParamsDisplay(void)
                 "You should quit QGroundControl immediately and update your firmware.").arg(params));
 }
 
-void QGCApplication::showToolBarMessage(const QString& message)
+void QGCApplication::showMessage(const QString& message)
 {
     MainWindow* mainWindow = MainWindow::instance();
     if (mainWindow) {
