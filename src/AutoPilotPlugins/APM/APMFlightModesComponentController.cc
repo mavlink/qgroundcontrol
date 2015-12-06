@@ -50,23 +50,26 @@ void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int
     Q_UNUSED(channelCount);
 
     _activeFlightMode = 0;
-
     int channelValue = pwmValues[4];
     if (channelValue != -1) {
+        bool found = false;
         int rgThreshold[] = { 1230, 1360, 1490, 1620, 1749 };
         for (int i=0; i<5; i++) {
             if (channelValue <= rgThreshold[i]) {
                 _activeFlightMode = i + 1;
+                found = true;
                 break;
             }
         }
-        _activeFlightMode = 5;
+        if (!found) {
+            _activeFlightMode = 6;
+        }
     }
     emit activeFlightModeChanged(_activeFlightMode);
 
     for (int i=0; i<6; i++) {
         _rgChannelOptionEnabled[i] = QVariant(false);
-        channelValue = pwmValues[i+7];
+        channelValue = pwmValues[i+6];
         if (channelValue != -1 && channelValue > 1800) {
             _rgChannelOptionEnabled[i] = QVariant(true);
         }
