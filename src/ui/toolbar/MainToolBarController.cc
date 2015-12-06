@@ -130,13 +130,3 @@ void MainToolBarController::_setProgressBarValue(float value)
     _progressBarValue = value;
     emit progressBarValueChanged(value);
 }
-
-void MainToolBarController::showSettings(void)
-{
-    MainWindow::instance()->showSettings();
-}
-
-void MainToolBarController::manageLinks(void)
-{
-    MainWindow::instance()->manageLinks();
-}

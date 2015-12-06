@@ -36,11 +36,11 @@ This file is part of the QGROUNDCONTROL project
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
 #include "QGCMAVLink.h"
-#include "FileManager.h"
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
 
 #ifndef __mobile__
+#include "FileManager.h"
 #include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
@@ -353,7 +353,9 @@ public:
         temperature_var = var;
     }
 
+#ifndef __mobile__
     friend class FileManager;
+#endif
 
 protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
@@ -431,7 +433,9 @@ protected: //COMMENTS FOR TEST UNIT
     double airSpeed;             ///< Airspeed
     double groundSpeed;          ///< Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
+#ifndef __mobile__
     FileManager   fileManager;
+#endif
 
     /// ATTITUDE
     bool attitudeKnown;             ///< True if attitude was received, false else
@@ -483,9 +487,9 @@ public:
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
 
-    virtual FileManager* getFileManager() {
-        return &fileManager;
-    }
+#ifndef __mobile__
+    virtual FileManager* getFileManager() { return &fileManager; }
+#endif
 
     /** @brief Get the HIL simulation */
 #ifndef __mobile__

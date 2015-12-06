@@ -24,10 +24,13 @@ This file is part of the QGROUNDCONTROL project
 #include "MissionController.h"
 #include "MultiVehicleManager.h"
 #include "MissionManager.h"
-#include "QGCFileDialog.h"
 #include "CoordinateVector.h"
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
+
+#ifndef __mobile__
+#include "QGCFileDialog.h"
+#endif
 
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
 
@@ -206,6 +209,7 @@ void MissionController::removeMissionItem(int index)
 
 void MissionController::loadMissionFromFile(void)
 {
+#ifndef __mobile__
     QString errorString;
     QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Mission File to load");
 
@@ -252,10 +256,12 @@ void MissionController::loadMissionFromFile(void)
     }
 
     _initAllMissionItems();
+#endif
 }
 
 void MissionController::saveMissionToFile(void)
 {
+#ifndef __mobile__
     QString errorString;
     QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save mission to");
 
@@ -278,6 +284,7 @@ void MissionController::saveMissionToFile(void)
     }
 
     _missionItems->setDirty(false);
+#endif
 }
 
 void MissionController::_calcPrevWaypointValues(bool homePositionValid, double homeAlt, MissionItem* currentItem, MissionItem* prevItem, double* azimuth, double* distance, double* altDifference)

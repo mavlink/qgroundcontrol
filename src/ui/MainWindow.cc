@@ -46,11 +46,8 @@ This file is part of the QGROUNDCONTROL project
 #ifndef __mobile__
 #include "QGCMAVLinkLogPlayer.h"
 #endif
-#include "SettingsDialog.h"
 #include "MAVLinkDecoder.h"
 #include "QGCApplication.h"
-#include "QGCFileDialog.h"
-#include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 #include "HomePositionManager.h"
 #include "LogCompressor.h"
@@ -58,6 +55,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCImageProvider.h"
 
 #ifndef __mobile__
+#include "SettingsDialog.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
@@ -573,18 +571,24 @@ void MainWindow::handleActiveViewActionState(bool triggered)
 void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
 {
     if(!QDesktopServices::openUrl(QUrl(url))) {
-        QMessageBox::critical(
-            this,
-            tr("Could not open information in browser"),
-            errorMessage);
+        qgcApp()->showMessage(QString("Could not open information in browser: %1").arg(errorMessage));
     }
 }
 
+#ifndef __mobile__
 void MainWindow::showSettings()
 {
     SettingsDialog settings(this);
     settings.exec();
 }
+
+void MainWindow::manageLinks()
+{
+    SettingsDialog settings(this, SettingsDialog::ShowCommLinks);
+    settings.exec();
+}
+
+#endif
 
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {
@@ -601,12 +605,6 @@ void MainWindow::_storeCurrentViewState(void)
 #endif
 
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
-}
-
-void MainWindow::manageLinks()
-{
-    SettingsDialog settings(this, SettingsDialog::ShowCommLinks);
-    settings.exec();
 }
 
 /// @brief Saves the last used connection

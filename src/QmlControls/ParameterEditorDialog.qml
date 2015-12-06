@@ -24,16 +24,15 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick 2.3
+import QtQuick          2.5
 import QtQuick.Controls 1.3
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Dialogs 1.2
 
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controllers 1.0
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.ScreenTools   1.0
 
 QGCViewDialog {
     property Fact   fact
@@ -172,7 +171,7 @@ QGCViewDialog {
         anchors.right:  parent.right
         anchors.bottom: parent.bottom
         text:           "Set RC to Param..."
-        visible:        !validate
+        visible:        !validate && !ScreenTools.isMobile
         onClicked:      controller.setRCToParam(fact.name)
     }
 } // QGCViewDialog

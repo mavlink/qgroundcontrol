@@ -46,7 +46,6 @@
 #include "MainWindow.h"
 #include "GAudioOutput.h"
 #include "CmdLineOptParser.h"
-#include "QGCMessageBox.h"
 #include "MainWindow.h"
 #include "UDPLink.h"
 #include "LinkManager.h"
@@ -54,7 +53,6 @@
 #include "UASMessageHandler.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
-#include "QGCFileDialog.h"
 #include "QGCPalette.h"
 #include "QGCMapPalette.h"
 #include "QGCLoggingCategory.h"
@@ -99,6 +97,8 @@
 #endif
 
 #ifndef __mobile__
+    #include "QGCFileDialog.h"
+    #include "QGCMessageBox.h"
     #include "FirmwareUpgradeController.h"
     #include "JoystickConfigController.h"
 #endif
@@ -450,6 +450,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     MainWindow* mainWindow = MainWindow::_create();
     Q_CHECK_PTR(mainWindow);
 
+#ifndef __mobile__
     // If we made it this far and we still don't have a location. Either the specfied location was invalid
     // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
     /// settings.
@@ -459,7 +460,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
         mainWindow->showSettings();
     }
 
-#ifndef __mobile__
     // Now that main window is up check for lost log files
     connect(this, &QGCApplication::checkForLostLogFiles, toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
@@ -593,14 +593,25 @@ void QGCApplication::informationMessageBoxOnMainThread(const QString& title, con
 
 void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
+#ifdef __mobile__
+    Q_UNUSED(title)
+    showMessage(msg);
+#else
     QGCMessageBox::warning(title, msg);
+#endif
 }
 
 void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
+#ifdef __mobile__
+    Q_UNUSED(title)
+    showMessage(msg);
+#else
     QGCMessageBox::critical(title, msg);
+#endif
 }
 
+#ifndef __mobile__
 void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
 {
     bool saveError;
@@ -628,6 +639,7 @@ void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
     } while(saveError); // if the file could not be overwritten, ask for new file
     QFile::remove(tempLogfile);
 }
+#endif
 
 void QGCApplication::setStyle(bool styleIsDark)
 {
