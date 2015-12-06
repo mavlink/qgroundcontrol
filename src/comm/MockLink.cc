@@ -279,7 +279,7 @@ void MockLink::_sendHeartBeat(void)
     mavlink_msg_heartbeat_pack(_vehicleSystemId,
                                _vehicleComponentId,
                                &msg,
-                               MAV_TYPE_QUADROTOR,  // MAV_TYPE
+                               _vehicleType,        // MAV_TYPE
                                _firmwareType,      // MAV_AUTOPILOT
                                _mavBaseMode,        // MAV_MODE
                                _mavCustomMode,      // custom mode
