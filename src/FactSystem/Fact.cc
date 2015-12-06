@@ -25,6 +25,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "Fact.h"
+#include "QGCMAVLink.h"
 
 #include <QtQml>
 
@@ -168,7 +169,7 @@ QString Fact::enumStringValue(void) const
 {
     if (_metaData) {
         int enumIndex = this->enumIndex();
-        if (enumIndex > 0 && enumIndex < _metaData->enumStrings().count()) {
+        if (enumIndex >= 0 && enumIndex < _metaData->enumStrings().count()) {
             return _metaData->enumStrings()[enumIndex];
         }
     } else {
@@ -364,6 +365,41 @@ QString Fact::group(void) const
 
 void Fact::setMetaData(FactMetaData* metaData)
 {
+    static QStringList  apmFlightModeParamList;
+    static QStringList  apmFlightModeEnumStrings;
+    static QVariantList apmFlightModeEnumValues;
+
+    static QStringList  apmChannelOptParamList;
+    static QStringList  apmChannelOptEnumStrings;
+    static QVariantList apmChannelOptEnumValues;
+
+    // FIXME: Hack to stuff enums into APM parameters, wating on real APM metadata
+
+    if (apmFlightModeEnumStrings.count() == 0) {
+        apmFlightModeParamList << "FLTMODE1" << "FLTMODE2" << "FLTMODE3" << "FLTMODE4" << "FLTMODE5" << "FLTMODE6";
+        apmFlightModeEnumStrings << "Stabilize" << "Acro" << "AltHold" << "Auto" << "Guided" << "Loiter" << "RTL" << "Circle"
+                                 << "Land" << "Drift" << "Sport" << "Flip" << "AutoTune" << "PosHold" << "Brake";
+        for (int i=0; i<apmFlightModeEnumStrings.count(); i++) {
+            apmFlightModeEnumValues << QVariant(i);
+        }
+
+        apmChannelOptParamList << "CH7_OPT" << "CH8_OPT" << "CH9_OPT" << "CH10_OPT" << "CH11_OPT" << "CH12_OPT";
+        apmChannelOptEnumStrings << "Do Nothing" << "Flip" << "Simple Mode" << "RTL" << "Save Trim" << "Save WP" << "Camera Trigger" << "RangeFinder"
+                                 << "Fence" << "ResetToArmedYaw" << "Super Simple Mode" << "Acro Trainer" << "Auto" << "AutoTune" << "Land" << "EPM"
+                                 << "Parachute Enable" << "Parachute Release" << "Parachute 3pos" << "Auto Mission Reset" << "AttCon Feed Forward"
+                                 << "AttCon Accel Limits" << "Retract Mount" << "Relay On/Off" << "Landing Gear" << "Lost Copter Sound"
+                                 << "Motor Emergency Stop" << "Motor Interlock" << "Brake";
+        for (int i=0; i<apmChannelOptEnumStrings.count(); i++) {
+            apmChannelOptEnumValues << QVariant(i);
+        }
+    }
+
+    if (apmFlightModeParamList.contains(name())) {
+        metaData->setEnumInfo(apmFlightModeEnumStrings, apmFlightModeEnumValues);
+    } else if (apmChannelOptParamList.contains(name())) {
+        metaData->setEnumInfo(apmChannelOptEnumStrings, apmChannelOptEnumValues);
+    }
+
     _metaData = metaData;
     emit valueChanged(cookedValue());
 }
