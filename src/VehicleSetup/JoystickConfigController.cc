@@ -23,7 +23,6 @@
 
 #include "JoystickConfigController.h"
 #include "JoystickManager.h"
-#include "QGCMessageBox.h"
 #include "QGCApplication.h"
 
 #include <QSettings>
@@ -197,7 +196,7 @@ void JoystickConfigController::nextButtonClicked(void)
     if (_currentStep == -1) {
         // Need to have enough channels
         if (_axisCount < _axisMinimum) {
-            QGCMessageBox::warning(tr("Joystick"), tr("Detected %1 joystick axes. To operate PX4, you need at least %2 axes.").arg(_axisCount).arg(_axisMinimum));
+            qgcApp()->showMessage(QString("Detected %1 joystick axes. To operate PX4, you need at least %2 axes.").arg(_axisCount).arg(_axisMinimum));
             return;
         }
         _startCalibration();
