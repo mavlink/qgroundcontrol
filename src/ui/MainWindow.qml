@@ -23,6 +23,7 @@ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 import QtQuick          2.5
 import QtQuick.Controls 1.2
+import QtQuick.Dialogs  1.2
 import QtPositioning    5.2
 
 import QGroundControl                       1.0
@@ -94,6 +95,8 @@ Item {
         }
 
         onShowCriticalMessage: showCriticalMessage(message)
+
+        onShowWindowCloseMessage: windowCloseDialog.open()
 
         // The following are use for unit testing only
 
@@ -185,11 +188,22 @@ Item {
     function showPopUp(dropItem, centerX) {
         if(currentPopUp) {
             currentPopUp.close()
-        }
+          }
         indicatorDropdown.centerX = centerX
         indicatorDropdown.sourceComponent = dropItem
         indicatorDropdown.visible = true
         currentPopUp = indicatorDropdown
+    }
+
+    MessageDialog {
+        id:                 windowCloseDialog
+        title:              "QGroundControl close"
+        text:               "There are still active connections to vehicles. Do you want to disconnect these before closing?"
+        standardButtons:    StandardButton.Yes | StandardButton.Cancel
+        modality:           Qt.ApplicationModal
+        visible:            false
+
+        onYes: controller.acceptWindowClose()
     }
 
     //-- Left Settings Menu

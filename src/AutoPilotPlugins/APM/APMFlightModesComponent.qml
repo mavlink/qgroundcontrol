@@ -77,11 +77,14 @@ QGCView {
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
 
-                                property int index: modelData + 1
+                                property int index:         modelData + 1
+                                property var pwmStrings:    [ "PWM 0 - 1230", "PWM 1231 - 1360", "PWM 1361 - 1490", "PWM 1491 - 1620", "PWM 1621 - 1749", "PWM 1750 +"]
+
 
                                 QGCLabel {
                                     anchors.baseline:   modeCombo.baseline
                                     text:               "Flight Mode " + index + ":"
+                                    color:              controller.activeFlightMode == index ? qgcPal.buttonHighlight : qgcPal.text
                                 }
 
                                 FactComboBox {
@@ -91,56 +94,9 @@ QGCView {
                                     indexModel: false
                                 }
 
-                                QGCCheckBox {
-                                    id:                 simple
+                                QGCLabel {
                                     anchors.baseline:   modeCombo.baseline
-                                    text:               "Simple Mode"
-                                    visible:            !controller.fixedWing
-                                    checked:            isChecked()
-
-                                    onClicked: {
-                                        var simpleFact = controller.getParameterFact(-1, "SIMPLE")
-                                        if (checked) {
-                                            simpleFact.value |= 1 << modelData
-                                        } else {
-                                            simpleFact.value &= ~modelData
-                                        }
-                                    }
-
-                                    function isChecked() {
-                                        if (simple.visible) {
-                                            var simpleFact = controller.getParameterFact(-1, "SIMPLE")
-                                            return simpleFact.value & (1 << modelData)
-                                        } else {
-                                            return false;
-                                        }
-                                    }
-                                }
-
-                                QGCCheckBox {
-                                    id:                 superSimple
-                                    anchors.baseline:   modeCombo.baseline
-                                    text:               "Super Simple Mode"
-                                    visible:            !controller.fixedWing
-                                    checked:            isChecked()
-
-                                    onClicked: {
-                                        var simpleFact = controller.getParameterFact(-1, "SUPER_SIMPLE")
-                                        if (checked) {
-                                            simpleFact.value |= 1 << modelData
-                                        } else {
-                                            simpleFact.value &= ~modelData
-                                        }
-                                    }
-
-                                    function isChecked() {
-                                        if (superSimple.visible) {
-                                            var simpleFact = controller.getParameterFact(-1, "SUPER_SIMPLE")
-                                            return simpleFact.value & (1 << modelData)
-                                        } else {
-                                            return false;
-                                        }
-                                    }
+                                    text:               pwmStrings[modelData]
                                 }
                             }
                         } // Repeater - Flight Modes
@@ -176,6 +132,9 @@ QGCView {
                                 QGCLabel {
                                     anchors.baseline:   optCombo.baseline
                                     text:               "Channel option " + index + ":"
+                                    color:              controller.channelOptionEnabled[modelData] ? qgcPal.buttonHighlight : qgcPal.text
+
+                                    Component.onCompleted: console.log(index, controller.channelOptionEnabled[modelData])
                                 }
 
                                 FactComboBox {
