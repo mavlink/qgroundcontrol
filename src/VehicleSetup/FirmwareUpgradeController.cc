@@ -28,8 +28,7 @@
 #include "FirmwareUpgradeController.h"
 #include "Bootloader.h"
 #include "QGCFileDialog.h"
-#include "QGCMessageBox.h"
-
+#include "QGCApplication.h"
 
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t    stackType;

@@ -23,7 +23,6 @@
 
 #include "APMAutoPilotPlugin.h"
 #include "AutoPilotPluginManager.h"
-#include "QGCMessageBox.h"
 #include "UAS.h"
 #include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
@@ -76,8 +75,8 @@ void APMAutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
     // should be used instead.
     if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF")) {
         _incorrectParameterVersion = true;
-        QGCMessageBox::warning("Setup", "This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
-										"Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
+        qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
+                              "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
 	}
 #endif
 	

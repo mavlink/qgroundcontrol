@@ -23,8 +23,8 @@
 
 #include "FactPanelController.h"
 #include "MultiVehicleManager.h"
-#include "QGCMessageBox.h"
 #include "UAS.h"
+#include "QGCApplication.h"
 
 #include <QQmlEngine>
 
@@ -150,5 +150,5 @@ void FactPanelController::_showInternalError(const QString& errorMsg)
 {
     _notifyPanelErrorMsg(QString("Internal Error: %1").arg(errorMsg));
     qCWarning(FactPanelControllerLog) << "Internal Error" << errorMsg;
-    QGCMessageBox::critical("Internal Error", errorMsg);
+    qgcApp()->showMessage(errorMsg);
 }

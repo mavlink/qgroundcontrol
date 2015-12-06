@@ -26,8 +26,8 @@
 
 #include "SetupViewTest.h"
 #include "MockLink.h"
-#include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
+#include "QGCApplication.h"
 
 void SetupViewTest::_clickThrough_test(void)
 {

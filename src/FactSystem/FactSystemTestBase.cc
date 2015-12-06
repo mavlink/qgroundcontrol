@@ -31,7 +31,6 @@
 #endif
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "QGCMessageBox.h"
 #include "QGCQuickWidget.h"
 
 #include <QQuickItem>

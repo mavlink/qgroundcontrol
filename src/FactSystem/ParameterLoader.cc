@@ -848,18 +848,17 @@ void ParameterLoader::_checkInitialLoadComplete(void)
 
         if (errorsFound) {
             QString errorMsg = QString("<b>Critical safety issue detected:</b><br>%1").arg(errors);
-            qgcApp()->showToolBarMessage(errorMsg);
+            qgcApp()->showMessage(errorMsg);
         }
     }
 
     // Warn of parameter load failure
 
     if (initialLoadFailures) {
-        QGCMessageBox::critical("Parameter Load Failure",
-                                "QGroundControl was unable to retrieve the full set of parameters from the vehicle. "
-                                "This will cause QGroundControl to be unable to display it's full user interface. "
-                                "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
-                                "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.");
+        qgcApp()->showMessage("QGroundControl was unable to retrieve the full set of parameters from the vehicle. "
+                              "This will cause QGroundControl to be unable to display it's full user interface. "
+                              "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
+                              "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.");
         qCWarning(ParameterLoaderLog) << "The following parameter indices could not be loaded after the maximum number of retries: " << indexList;
         emit parametersReady(true);
     } else {
