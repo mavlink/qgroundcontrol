@@ -21,7 +21,7 @@
  
  ======================================================================*/
 
-#include "PX4RCCalibrationTest.h"
+#include "RadioConfigTest.h"
 #include "RadioComponentController.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -67,7 +67,7 @@ const int RadioConfigTest::_testMinValue = RadioComponentController::_rcCalPWMDe
 const int RadioConfigTest::_testMaxValue = RadioComponentController::_rcCalPWMDefaultMaxValue - 10;
 const int RadioConfigTest::_testCenterValue = RadioConfigTest::_testMinValue + ((RadioConfigTest::_testMaxValue - RadioConfigTest::_testMinValue) / 2);
 
-const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSettings[RadioConfigTest::_availableChannels] = {
+const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSettingsPX4[RadioComponentController::_chanMaxPX4] = {
 	// Function										Min                 Max                 #  Reversed
 	
 	// Channel 0 : Not mapped to function, Simulate invalid Min/Max
@@ -104,9 +104,9 @@ const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSetting
 	{ RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
 };
 
-// Note the: 1500/*RadioComponentController::_rcCalPWMCenterPoint*/ entires. For some reason I couldn't get the compiler to do the
+// Note the: 1500/*RadioComponentController::_rcCalPWMCenterPoint*/ entries. For some reason I couldn't get the compiler to do the
 // right thing with the constant. So I just hacked inthe real value instead of fighting with it any longer.
-const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSettingsValidate[RadioComponentController::_chanMax] = {
+const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSettingsValidatePX4[RadioComponentController::_chanMaxPX4] = {
     // Function										Min Value									Max Value									Trim Value										Reversed
 	
     // Channels 0: not mapped and should be set to defaults
@@ -138,6 +138,62 @@ const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSetting
     { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
 };
 
+const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSettingsAPM[RadioComponentController::_chanMaxAPM] = {
+    // Function										Min                 Max                 #  Reversed
+
+    // Channel 0 : Not mapped to function, Simulate invalid Min/Max
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,	_testCenterValue,   0, false },
+
+    // Channels 1-4: Mapped to attitude control function
+    { RadioComponentController::rcCalFunctionRoll,			_testMinValue,      _testMaxValue,      0, true },
+    { RadioComponentController::rcCalFunctionPitch,			_testMinValue,      _testMaxValue,      0, false },
+    { RadioComponentController::rcCalFunctionYaw,			_testMinValue,      _testMaxValue,      0, true },
+    { RadioComponentController::rcCalFunctionThrottle,		_testMinValue,      _testMaxValue,      0,  false },
+
+    // Channels 5-11: Not mapped to function, Simulate invalid Min/Max, since available channel Min/Max is still shown.
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,   _testCenterValue,   0,	false },
+
+    // Channel 12 : Not mapped to function, Simulate invalid Min, valid Max
+    { RadioComponentController::rcCalFunctionMax,			_testCenterValue,	_testMaxValue,      0,  false },
+
+    // Channel 13 : Not mapped to function, Simulate valid Min, invalid Max
+    { RadioComponentController::rcCalFunctionMax,           _testMinValue,      _testCenterValue,   0,	false },
+};
+
+// Note the: 1500/*RadioComponentController::_rcCalPWMCenterPoint*/ entries. For some reason I couldn't get the compiler to do the
+// right thing with the constant. So I just hacked inthe real value instead of fighting with it any longer.
+const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSettingsValidateAPM[RadioComponentController::_chanMaxAPM] = {
+    // Function										Min Value									Max Value									Trim Value										Reversed
+
+    // Channels 0: not mapped and should be set to defaults
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+
+    // Channels 1-4: Mapped to attitude control function
+    { RadioComponentController::rcCalFunctionRoll,			_testMinValue, _testMaxValue, _testCenterValue, true },
+    { RadioComponentController::rcCalFunctionPitch,			_testMinValue, _testMaxValue, _testCenterValue, false },
+    { RadioComponentController::rcCalFunctionYaw,			_testMinValue, _testMaxValue, _testCenterValue, true },
+    { RadioComponentController::rcCalFunctionThrottle,		_testMinValue, _testMaxValue, _testMinValue,    false },
+
+    // Channels 5-11: not mapped and should be set to defaults
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+
+    // Channels 12-13 are not mapped and should be set to defaults
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+    { RadioComponentController::rcCalFunctionMax,			RadioComponentController::_rcCalPWMDefaultMinValue,	RadioComponentController::_rcCalPWMDefaultMaxValue,	1500/*RadioComponentController::_rcCalPWMCenterPoint*/,         false },
+};
+
 RadioConfigTest::RadioConfigTest(void) :
     _calWidget(NULL),
     _controller(NULL)
@@ -145,11 +201,9 @@ RadioConfigTest::RadioConfigTest(void) :
     
 }
 
-void RadioConfigTest::init(void)
+void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
 {
-    UnitTest::init();
-    
-    _connectMockLink();
+    _connectMockLink(firmwareType);
     
     _autopilot = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_autopilot);
@@ -184,43 +238,6 @@ void RadioConfigTest::cleanup(void)
     setExpectedFileDialog(getSaveFileName, QStringList());
     
     UnitTest::cleanup();
-}
-
-/// @brief Test for correct behavior in determining minimum numbers of channels for flight.
-void RadioConfigTest::_minRCChannels_test(void)
-{
-    // Next button won't be enabled until we see the minimum number of channels.
-    for (int chan=0; chan<RadioComponentController::_chanMinimum; chan++) {
-        _mockLink->emitRemoteControlChannelRawChanged(chan, (float)RadioComponentController::_rcCalPWMCenterPoint);
-        
-        // We use _chanCount internally so we should validate it
-        QCOMPARE(_controller->_chanCount, chan+1);
-        
-        // Validate Next button state
-        _controller->nextButtonClicked();
-        bool signalFound = _multiSpyNextButtonMessageBox->waitForSignalByIndex(0, 200);
-        if (chan == RadioComponentController::_chanMinimum - 1) {
-            // Last channel should trigger Calibration available
-            QCOMPARE(signalFound, false);
-            QCOMPARE(_controller->_currentStep, 0);
-        } else {
-            // Still less than the minimum channels. Next button should show message box. Calibration should not start.
-            QCOMPARE(signalFound, true);
-            QCOMPARE(_controller->_currentStep, -1);
-        }
-        _multiSpyNextButtonMessageBox->clearAllSignals();
-
-        // The following test code no longer works since view update doesn't happens until parameters are received.
-        // Leaving code here because RC Cal could be restructured to handle this case at some point.
-#if 0
-        // Only available channels should have visible widget. A ui update cycle needs to have passed so we wait a little.
-        QTest::qWait(RadioComponentController::_updateInterval * 2);
-        for (int chanWidget=0; chanWidget<RadioComponentController::_chanMax; chanWidget++) {
-            qCDebug(RadioConfigTestLog) << _rgValueWidget[chanWidget]->objectName() << chanWidget << chan;
-            QCOMPARE(_rgValueWidget[chanWidget]->isVisible(), !!(chanWidget <= chan));
-        }
-#endif
-    }
 }
 
 void RadioConfigTest::_beginCalibration(void)
@@ -261,13 +278,13 @@ void RadioConfigTest::_stickMoveAutoStep(const char* functionStr, enum RadioComp
     int channel = _rgFunctionChannelMap[function];
     int saveStep = _controller->_currentStep;
     
-    bool reversed = _rgChannelSettings[channel].reversed;
+    bool reversed = _channelSettings()[channel].reversed;
     
     if (!identifyStep && direction != moveToCenter) {
         // We have already identified the function channel mapping. Move other channels around to make sure there is no impact.
         
         int otherChannel = channel + 1;
-        if (otherChannel >= RadioComponentController::_chanMax) {
+        if (otherChannel >= _chanMax()) {
             otherChannel = 0;
         }
         
@@ -306,9 +323,9 @@ void RadioConfigTest::_switchMinMaxStep(void)
     _mockLink->emitRemoteControlChannelRawChanged(0, (float)(RadioComponentController::_rcCalPWMValidMaxValue - 1));
     
     // Send min/max values switch channels
-    for (int chan=0; chan<_availableChannels; chan++) {
-        _mockLink->emitRemoteControlChannelRawChanged(chan, _rgChannelSettings[chan].rcMin);
-        _mockLink->emitRemoteControlChannelRawChanged(chan, _rgChannelSettings[chan].rcMax);
+    for (int chan=0; chan<_chanMax(); chan++) {
+        _mockLink->emitRemoteControlChannelRawChanged(chan, _channelSettings()[chan].rcMin);
+        _mockLink->emitRemoteControlChannelRawChanged(chan, _channelSettings()[chan].rcMax);
     }
     
     _channelHomePosition();
@@ -325,7 +342,7 @@ void RadioConfigTest::_flapsDetectStep(void)
     qCDebug(RadioConfigTestLog) << "_flapsDetectStep channel" << channel;
     
     // Test code can't handle reversed flaps channel
-    Q_ASSERT(!_rgChannelSettings[channel].reversed);
+    Q_ASSERT(!_channelSettings()[channel].reversed);
     
     CHK_BUTTONS(nextButtonMask | cancelButtonMask | skipButtonMask);
     
@@ -367,8 +384,10 @@ void RadioConfigTest::_switchSelectAutoStep(const char* functionStr, RadioCompon
     QCOMPARE(_controller->_currentStep, saveStep + 1);
 }
 
-void RadioConfigTest::_fullCalibration_test(void)
+void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
 {
+    _init(firmwareType);
+
     // IMPORTANT NOTE: We used channels 1-5 for attitude mapping in the test below.
     // MockLink.params file cannot have flight mode switches mapped to those channels.
     // If it does it will cause errors since the stick will not be detetected where
@@ -380,16 +399,17 @@ void RadioConfigTest::_fullCalibration_test(void)
         bool found = false;
         
         // If we are mapping this function during cal set it into _rgFunctionChannelMap
-        for (int channel=0; channel<RadioConfigTest::_availableChannels; channel++) {
-            if (_rgChannelSettings[channel].function == function) {
+        for (int channel=0; channel<_chanMax(); channel++) {
+            if (_channelSettings()[channel].function == function) {
                 
-                // First make sure this function isn't being use for a switch
-                
-                QStringList switchList;
-                switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
-                
-                foreach (QString switchParam, switchList) {
-                    Q_ASSERT(_autopilot->getParameterFact(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
+                if (_px4Vehicle()) {
+                    // Make sure this function isn't being use for a switch
+                    QStringList switchList;
+                    switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
+
+                    foreach (QString switchParam, switchList) {
+                        Q_ASSERT(_autopilot->getParameterFact(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
+                    }
                 }
                 
                 _rgFunctionChannelMap[function] = channel;
@@ -401,12 +421,17 @@ void RadioConfigTest::_fullCalibration_test(void)
         
         // If we aren't mapping this function during calibration, set it to the previous setting
         if (!found) {
-            _rgFunctionChannelMap[function] = _autopilot->getParameterFact(FactSystem::defaultComponentId, RadioComponentController::_rgFunctionInfo[function].parameterName)->rawValue().toInt();
-            qCDebug(RadioConfigTestLog) << "Assigning switch" << function << _rgFunctionChannelMap[function];
-            if (_rgFunctionChannelMap[function] == 0) {
-                _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
+            const char* paramName = _functionInfo()[function].parameterName;
+            if (paramName) {
+                _rgFunctionChannelMap[function] = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
+                qCDebug(RadioConfigTestLog) << "Assigning switch" << function << _rgFunctionChannelMap[function];
+                if (_rgFunctionChannelMap[function] == 0) {
+                    _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
+                } else {
+                    _rgFunctionChannelMap[function]--;   // parameter is 1-based, _rgFunctionChannelMap is not
+                }
             } else {
-                _rgFunctionChannelMap[function]--;   // parameter is 1-based, _rgFunctionChannelMap is not
+                _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
             }
         }
     }
@@ -424,21 +449,34 @@ void RadioConfigTest::_fullCalibration_test(void)
     _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToMin, false /* not identify step */);
     _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToCenter, false /* not identify step */);
     _switchMinMaxStep();
-    _flapsDetectStep();
-    _stickMoveAutoStep("Flaps", RadioComponentController::rcCalFunctionFlaps, moveToMin, false /* not identify step */);
-    _switchSelectAutoStep("Aux1", RadioComponentController::rcCalFunctionAux1);
-    _switchSelectAutoStep("Aux2", RadioComponentController::rcCalFunctionAux2);
+    if (firmwareType == MAV_AUTOPILOT_PX4) {
+        _flapsDetectStep();
+        _stickMoveAutoStep("Flaps", RadioComponentController::rcCalFunctionFlaps, moveToMin, false /* not identify step */);
+        _switchSelectAutoStep("Aux1", RadioComponentController::rcCalFunctionAux1);
+        _switchSelectAutoStep("Aux2", RadioComponentController::rcCalFunctionAux2);
+    }
 
     // One more click and the parameters should get saved
     _controller->nextButtonClicked();
     _validateParameters();
 }
 
+void RadioConfigTest::_fullCalibration_px4_test(void)
+{
+    _fullCalibrationWorker(MAV_AUTOPILOT_PX4);
+}
+
+
+void RadioConfigTest::_fullCalibration_apm_test(void)
+{
+    _fullCalibrationWorker(MAV_AUTOPILOT_ARDUPILOTMEGA);
+}
+
 /// @brief Sets rc input to Throttle down home position. Centers all other channels.
 void RadioConfigTest::_channelHomePosition(void)
 {
     // Initialize available channels to center point.
-    for (int i=0; i<_availableChannels; i++) {
+    for (int i=0; i<_chanMax(); i++) {
         _mockLink->emitRemoteControlChannelRawChanged(i, (float)RadioComponentController::_rcCalPWMCenterPoint);
     }
     
@@ -465,20 +503,23 @@ void RadioConfigTest::_validateParameters(void)
             expectedParameterValue = chanIndex + 1; // 1-based parameter value
         }
         
-        qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _autopilot->getParameterFact(FactSystem::defaultComponentId, RadioComponentController::_rgFunctionInfo[chanFunction].parameterName)->rawValue().toInt();
-        QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, RadioComponentController::_rgFunctionInfo[chanFunction].parameterName)->rawValue().toInt(), expectedParameterValue);
+        const char* paramName = _functionInfo()[chanFunction].parameterName;
+        if (paramName) {
+            qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
+            QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedParameterValue);
+        }
     }
 
     // Validate the channel settings. Note the channels are 1-based in parameter names.
-    for (int chan = 0; chan<RadioComponentController::_chanMax; chan++) {
+    for (int chan = 0; chan<_chanMax(); chan++) {
         int oneBasedChannel = chan + 1;
         bool convertOk;
         
         // Required channels have min/max set on them. Remaining channels are left to default.
-		int rcMinExpected = _rgChannelSettingsValidate[chan].rcMin;
-		int rcMaxExpected = _rgChannelSettingsValidate[chan].rcMax;
-		int rcTrimExpected = _rgChannelSettingsValidate[chan].rcTrim;
-        bool rcReversedExpected = _rgChannelSettingsValidate[chan].reversed;
+        int rcMinExpected = _channelSettingsValidate()[chan].rcMin;
+        int rcMaxExpected = _channelSettingsValidate()[chan].rcMax;
+        int rcTrimExpected = _channelSettingsValidate()[chan].rcTrim;
+        bool rcReversedExpected = _channelSettingsValidate()[chan].reversed;
 
         int rcMinActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
@@ -507,7 +548,35 @@ void RadioConfigTest::_validateParameters(void)
         } else {
             expectedValue = _rgFunctionChannelMap[chanFunction] + 1; // 1-based
         }
-        // qCDebug(RadioConfigTestLog) << chanFunction << expectedValue << mapParamsSet[RadioComponentController::_rgFunctionInfo[chanFunction].parameterName].toInt();
-        QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, RadioComponentController::_rgFunctionInfo[chanFunction].parameterName)->rawValue().toInt(), expectedValue);
+        const char* paramName = _functionInfo()[chanFunction].parameterName;
+        if (paramName) {
+            // qCDebug(RadioConfigTestLog) << chanFunction << expectedValue << mapParamsSet[paramName].toInt();
+            QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedValue);
+        }
     }
+}
+
+bool RadioConfigTest::_px4Vehicle(void) const
+{
+    return _vehicle->firmwareType() == MAV_AUTOPILOT_PX4;
+}
+
+const struct RadioConfigTest::ChannelSettings* RadioConfigTest::_channelSettings(void) const
+{
+    return _px4Vehicle() ? _rgChannelSettingsPX4 : _rgChannelSettingsAPM;
+}
+
+const struct RadioConfigTest::ChannelSettings* RadioConfigTest::_channelSettingsValidate(void) const
+{
+    return _px4Vehicle() ? _rgChannelSettingsValidatePX4 : _rgChannelSettingsValidateAPM;
+}
+
+const struct RadioComponentController::FunctionInfo* RadioConfigTest::_functionInfo(void) const
+{
+    return _px4Vehicle() ? RadioComponentController::_rgFunctionInfoPX4 : RadioComponentController::_rgFunctionInfoAPM;
+}
+
+int RadioConfigTest::_chanMax(void) const
+{
+    return _px4Vehicle() ? RadioComponentController::_chanMaxPX4 : RadioComponentController::_chanMaxAPM;
 }

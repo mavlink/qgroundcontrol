@@ -140,9 +140,12 @@ signals:
     // @brief Signalled when in unit test mode and a message box should be displayed by the next button
     void nextButtonMessageBoxDisplayed(void);
 
+    // Signaled to QML to indicator reboot is required
+    void functionMappingChangedAPMReboot(void);
+
 private slots:
-    void _remoteControlChannelRawChanged(int chan, float val);
-    
+    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
+
 private:
     /// @brief These identify the various controls functions. They are also used as indices into the _rgFunctioInfo
     /// array.
@@ -209,7 +212,9 @@ private:
     
     int _currentStep;  ///< Current step of state machine
     
-    const struct stateMachineEntry* _getStateMachineEntry(int step);
+    const struct stateMachineEntry* _getStateMachineEntry(int step) const;
+    const struct FunctionInfo* _functionInfo(void) const;
+    bool _px4Vehicle(void) const;
     
     void _advanceState(void);
     void _setupCurrentState(void);
@@ -251,6 +256,8 @@ private:
     void _storeSettings(void);
     
     void _signalAllAttiudeValueChanges(void);
+
+    int _chanMax(void) const;
     
     // @brief Called by unit test code to set the mode to unit testing
     void _setUnitTestMode(void){ _unitTestMode = true; }
@@ -279,16 +286,20 @@ private:
     
     static const int _updateInterval;   ///< Interval for ui update timer
     
-    static const struct FunctionInfo _rgFunctionInfo[rcCalFunctionMax]; ///< Information associated with each function.
+    static const struct FunctionInfo _rgFunctionInfoAPM[rcCalFunctionMax]; ///< Information associated with each function, PX4 firmware
+    static const struct FunctionInfo _rgFunctionInfoPX4[rcCalFunctionMax]; ///< Information associated with each function, APM firmware
+
     int _rgFunctionChannelMapping[rcCalFunctionMax];                    ///< Maps from rcCalFunctions to channel index. _chanMax indicates channel not set for this function.
 
     static const int _attitudeControls = 5;
     
     int _chanCount;                     ///< Number of actual rc channels available
-    static const int _chanMax = 18;     ///< Maximum number of supported rc channels
-    static const int _chanMinimum = 5;  ///< Minimum numner of channels required to run PX4
+    static const int _chanMaxPX4 = 18;  ///< Maximum number of supported rc channels, PX4 Firmware
+    static const int _chanMaxAPM = 14;  ///< Maximum number of supported rc channels, APM firmware
+    static const int _chanMaxAny = 18;  ///< Maximum number of support rc channels by this implementation
+    static const int _chanMinimum = 5;  ///< Minimum numner of channels required to run
     
-    struct ChannelInfo _rgChannelInfo[_chanMax];    ///< Information associated with each rc channel
+    struct ChannelInfo _rgChannelInfo[_chanMaxAny];    ///< Information associated with each rc channel
     
     enum rcCalStates _rcCalState;       ///< Current calibration state
     int _rcCalStateCurrentChannel;      ///< Current channel being worked on in rcCalStateIdentify and rcCalStateDetectInversion
@@ -306,9 +317,9 @@ private:
     static const int _rcCalSettleDelta;
     static const int _rcCalMinDelta;
     
-    int _rcValueSave[_chanMax];        ///< Saved values prior to detecting channel movement
+    int _rcValueSave[_chanMaxAny];        ///< Saved values prior to detecting channel movement
     
-    int _rcRawValue[_chanMax];         ///< Current set of raw channel values
+    int _rcRawValue[_chanMaxAny];         ///< Current set of raw channel values
     
     int     _stickDetectChannel;
     int     _stickDetectInitialValue;

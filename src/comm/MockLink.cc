@@ -929,3 +929,58 @@ void MockConfiguration::updateSettings()
         }
     }
 }
+
+MockLink*  MockLink::_startMockLink(MockConfiguration* mockConfig)
+{
+    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
+
+    mockConfig->setDynamic(true);
+    linkManager->linkConfigurations()->append(mockConfig);
+
+    return qobject_cast<MockLink*>(linkManager->createConnectedLink(mockConfig));
+}
+
+MockLink*  MockLink::startPX4MockLink(bool sendStatusText)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("PX4 MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
+    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig->setSendStatusText(sendStatusText);
+
+    return _startMockLink(mockConfig);
+}
+
+MockLink*  MockLink::startGenericMockLink(bool sendStatusText)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("Generic MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_GENERIC);
+    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig->setSendStatusText(sendStatusText);
+
+    return _startMockLink(mockConfig);
+}
+
+MockLink*  MockLink::startAPMArduCopterMockLink(bool sendStatusText)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("APM ArduCopter MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig->setSendStatusText(sendStatusText);
+
+    return _startMockLink(mockConfig);
+}
+
+MockLink*  MockLink::startAPMArduPlaneMockLink(bool sendStatusText)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("APM ArduPlane MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig->setVehicleType(MAV_TYPE_FIXED_WING);
+    mockConfig->setSendStatusText(sendStatusText);
+
+    return _startMockLink(mockConfig);
+}
+

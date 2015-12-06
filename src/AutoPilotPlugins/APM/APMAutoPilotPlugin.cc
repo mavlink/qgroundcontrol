@@ -52,6 +52,11 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+
+            _radioComponent = new APMRadioComponent(_vehicle, this);
+            Q_CHECK_PTR(_radioComponent);
+            _radioComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
         } else {
             qWarning() << "Call to vehicleCompenents prior to parametersReady";
         }

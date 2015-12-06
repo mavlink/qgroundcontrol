@@ -55,12 +55,7 @@ FlightModesComponentController::FlightModesComponentController(void) :
     _init();
     _validateConfiguration();
     
-    connect(_uas, &UASInterface::remoteControlChannelRawChanged, this, &FlightModesComponentController::_remoteControlChannelRawChanged);
-}
-
-FlightModesComponentController::~FlightModesComponentController()
-{
-    disconnect(_uas, &UASInterface::remoteControlChannelRawChanged, this, &FlightModesComponentController::_remoteControlChannelRawChanged);
+    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &FlightModesComponentController::_rcChannelsChanged);
 }
 
 void FlightModesComponentController::_init(void)
@@ -209,26 +204,28 @@ void FlightModesComponentController::_validateConfiguration(void)
     }
 }
 
-/// @brief This routine is called whenever a raw value for an RC channel changes.
-///     @param chan RC channel on which signal is coming from (0-based)
-///     @param fval Current value for channel
-void FlightModesComponentController::_remoteControlChannelRawChanged(int chan, float fval)
+/// Connected to Vehicle::rcChannelsChanged signal
+void FlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
-    Q_ASSERT(chan >= 0 && chan <= _chanMax);
-    
-    if (fval < _rgRCMin[chan]) {
-        fval= _rgRCMin[chan];
+    for (int channel=0; channel<channelCount; channel++) {
+        int channelValue = pwmValues[channel];
+
+        if (channelValue != -1) {
+            if (channelValue < _rgRCMin[channel]) {
+                channelValue= _rgRCMin[channel];
+            }
+            if (channelValue > _rgRCMax[channel]) {
+                channelValue= _rgRCMax[channel];
+            }
+
+            float percentRange = (channelValue - _rgRCMin[channel]) / (float)(_rgRCMax[channel] - _rgRCMin[channel]);
+            if (_rgRCReversed[channel]) {
+                percentRange = 1.0 - percentRange;
+            }
+
+            _rcValues[channel] = percentRange;
+        }
     }
-    if (fval > _rgRCMax[chan]) {
-        fval= _rgRCMax[chan];
-    }
-    
-    float percentRange = (fval - _rgRCMin[chan]) / (float)(_rgRCMax[chan] - _rgRCMin[chan]);
-    if (_rgRCReversed[chan]) {
-        percentRange = 1.0 - percentRange;
-    }
-    
-    _rcValues[chan] = percentRange;
     
     _recalcModeSelections();
     

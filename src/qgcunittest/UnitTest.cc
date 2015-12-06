@@ -30,6 +30,7 @@
 #include "QGCApplication.h"
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
+#include "Vehicle.h"
 
 bool UnitTest::_messageBoxRespondedTo = false;
 bool UnitTest::_badResponseButton = false;
@@ -46,6 +47,7 @@ UnitTest::UnitTest(void)
     : _linkManager(NULL)
     , _mockLink(NULL)
     , _mainWindow(NULL)
+    , _vehicle(NULL)
     , _expectMissedFileDialog(false)
     , _expectMissedMessageBox(false)
     , _unitTestRun(false)
@@ -110,6 +112,8 @@ void UnitTest::init(void)
         _linkManager = qgcApp()->toolbox()->linkManager();
         connect(_linkManager, &LinkManager::linkDeleted, this, &UnitTest::_linkDeleted);
     }
+
+    _linkManager->restart();
     
     _messageBoxRespondedTo = false;
     _missedMessageBoxCount = 0;
@@ -369,17 +373,27 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
 {
     Q_ASSERT(!_mockLink);
 
-    _mockLink = new MockLink();
-    _mockLink->setFirmwareType(autopilot);
-
-    _linkManager->_addLink(_mockLink);
-    _linkManager->connectLink(_mockLink);
+    switch (autopilot) {
+    case MAV_AUTOPILOT_PX4:
+        _mockLink = MockLink::startPX4MockLink(false);
+        break;
+    case MAV_AUTOPILOT_ARDUPILOTMEGA:
+        _mockLink = MockLink::startAPMArduCopterMockLink(false);
+        break;
+    case MAV_AUTOPILOT_GENERIC:
+        _mockLink = MockLink::startGenericMockLink(false);
+        break;
+    default:
+        qWarning() << "Type not supported";
+        break;
+    }
 
     // Wait for the Vehicle to get created
     QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
     QCOMPARE(spyVehicle.wait(5000), true);
     QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->parameterReadyVehicleAvailable());
-    QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
+    _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    QVERIFY(_vehicle);
 }
 
 void UnitTest::_disconnectMockLink(void)
@@ -392,6 +406,8 @@ void UnitTest::_disconnectMockLink(void)
         // Wait for link to go away
         linkSpy.wait(1000);
         QCOMPARE(linkSpy.count(), 1);
+
+        _vehicle = NULL;
     }
 }
 

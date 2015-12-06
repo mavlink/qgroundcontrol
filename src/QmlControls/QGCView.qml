@@ -119,9 +119,9 @@ FactPanel {
         }
     }
 
-    function __checkForEarlyDialog() {
+    function __checkForEarlyDialog(title) {
         if (!completedSignalled) {
-            console.warn("showDialog|Message called before QGCView.completed signalled")
+            console.warn("showDialog|Message called before QGCView.completed signalled", title)
         }
     }
 
@@ -131,7 +131,7 @@ FactPanel {
     ///     @param charWidth Width of dialog in characters (-1 for full parent width)
     ///     @param buttons Buttons to show in dialog using StandardButton enum
     function showDialog(component, title, charWidth, buttons) {
-        if (__checkForEarlyDialog()) {
+        if (__checkForEarlyDialog(title)) {
             return
         }
 
@@ -150,7 +150,7 @@ FactPanel {
     }
 
     function showMessage(title, message, buttons) {
-        if (__checkForEarlyDialog()) {
+        if (__checkForEarlyDialog(title)) {
             return
         }
 
