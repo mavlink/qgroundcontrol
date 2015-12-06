@@ -23,9 +23,9 @@
 
 #include "QGCQuickWidget.h"
 #include "AutoPilotPluginManager.h"
-#include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"
+#include "QGCApplication.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>

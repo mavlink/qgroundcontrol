@@ -108,7 +108,9 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
+#ifndef __mobile__
     fileManager(this, vehicle),
+#endif
 
     attitudeKnown(false),
     attitudeStamped(false),
@@ -178,7 +180,9 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
         componentMulti[i] = false;
     }
 
+#ifndef __mobile__
     connect(mavlink, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), &fileManager, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+#endif
 
     color = UASInterface::getNextColor();
     connect(&statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));

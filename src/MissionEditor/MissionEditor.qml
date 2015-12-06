@@ -709,6 +709,7 @@ QGCView {
 
             Row {
                 spacing: ScreenTools.defaultFontPixelWidth
+                visible: !ScreenTools.isMobile
 
                 QGCButton {
                     text:       "Save to file..."

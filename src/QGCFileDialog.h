@@ -24,6 +24,10 @@
 #ifndef QGCFILEDIALOG_H
 #define QGCFILEDIALOG_H
 
+#ifdef __mobile__
+#error Should not be included in mobile builds
+#endif
+
 #include <QFileDialog>
 
 /// @file
