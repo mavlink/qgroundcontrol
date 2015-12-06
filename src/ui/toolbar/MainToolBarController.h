@@ -53,8 +53,6 @@ public:
     Q_INVOKABLE void    onSetupView();
     Q_INVOKABLE void    onPlanView();
     Q_INVOKABLE void    onFlyView();
-    Q_INVOKABLE void    showSettings(void);
-    Q_INVOKABLE void    manageLinks(void);
 
     Q_PROPERTY(double       height              MEMBER _toolbarHeight           NOTIFY heightChanged)
     Q_PROPERTY(float        progressBarValue    MEMBER _progressBarValue        NOTIFY progressBarValueChanged)

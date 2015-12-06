@@ -24,6 +24,10 @@
 #ifndef QGCMESSAGEBOX_H
 #define QGCMESSAGEBOX_H
 
+#ifdef __mobile__
+#error Should not be included in mobile builds
+#endif
+
 #include <QMessageBox>
 
 #include "MainWindow.h"

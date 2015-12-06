@@ -106,7 +106,9 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    _heartbeatTimer.start(1000/_heartbeatRate);
 
    connect(this, &MAVLinkProtocol::protocolStatusMessage, _app, &QGCApplication::criticalMessageBoxOnMainThread);
+#ifndef __mobile__
    connect(this, &MAVLinkProtocol::saveTempFlightDataLog, _app, &QGCApplication::saveTempFlightDataLogOnMainThread);
+#endif
 
    connect(_multiVehicleManager->vehicles(), &QmlObjectListModel::countChanged, this, &MAVLinkProtocol::_vehicleCountChanged);
 

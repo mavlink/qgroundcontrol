@@ -138,8 +138,10 @@ public slots:
     /// You can connect to this slot to show a critical message box from a different thread.
     void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
     
+#ifndef __mobile__
     /// Save the specified Flight Data Log
     void saveTempFlightDataLogOnMainThread(QString tempLogfile);
+#endif
 
 signals:
     /// Signals that the style has changed
