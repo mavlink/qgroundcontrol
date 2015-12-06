@@ -91,6 +91,9 @@ public:
     /// @brief Saves the last used connection
     void saveLastUsedConnection(const QString connection);
 
+    /// @brief Show message in lower message window
+    void showMessage(const QString message);
+
 public slots:
     /** @brief Show the application settings */
     void showSettings();
@@ -138,7 +141,7 @@ signals:
     void showPlanView(void);
     void showSetupView(void);
 
-    void showToolbarMessage(const QString& message);
+    void showCriticalMessage(const QString& message);
 
     // These are used for unit testing
     void showSetupFirmware(void);

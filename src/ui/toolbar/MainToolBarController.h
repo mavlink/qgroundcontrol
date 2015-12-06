@@ -53,7 +53,6 @@ public:
     Q_INVOKABLE void    onSetupView();
     Q_INVOKABLE void    onPlanView();
     Q_INVOKABLE void    onFlyView();
-    Q_INVOKABLE void    onToolBarMessageClosed(void);
     Q_INVOKABLE void    showSettings(void);
     Q_INVOKABLE void    manageLinks(void);
 
@@ -77,8 +76,6 @@ public:
     unsigned int telemetryLNoise        () { return _telemetryLNoise; }
     unsigned int telemetryRNoise        () { return _telemetryRNoise; }
 
-    void showToolBarMessage(const QString& message);
-
 signals:
     void progressBarValueChanged        (float value);
     void telemetryRRSSIChanged          (int value);
@@ -90,14 +87,10 @@ signals:
     void telemetryLNoiseChanged         (unsigned int value);
     void telemetryRNoiseChanged         (unsigned int value);
 
-    /// Shows a non-modal message below the toolbar
-    void showMessage(const QString& message);
-
 private slots:
     void _activeVehicleChanged          (Vehicle* vehicle);
     void _setProgressBarValue           (float value);
     void _telemetryChanged              (LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
-    void _delayedShowToolBarMessage     (void);
 
 private:
     Vehicle*        _vehicle;
@@ -114,7 +107,6 @@ private:
 
     double          _toolbarHeight;
 
-    bool            _toolbarMessageVisible;
     QStringList     _toolbarMessageQueue;
     QMutex          _toolbarMessageQueueMutex;
 };

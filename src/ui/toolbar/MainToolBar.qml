@@ -147,11 +147,6 @@ Rectangle {
 
     MainToolBarController { id: _controller }
 
-    function showToolbarMessage(message) {
-        toolBarMessage.text = message
-        toolBarMessageArea.visible = true
-    }
-
     function getBatteryColor() {
         if(activeVehicle) {
             if(activeVehicle.batteryPercent > 75) {
@@ -595,44 +590,4 @@ Rectangle {
         color:          colorGreen
     }
 
-    // Toolbar message area
-    Rectangle {
-        id:             toolBarMessageArea
-        x:              toolBar.parent.width * 0.225
-        y:              toolBar.parent.height - (ScreenTools.defaultFontPixelHeight * ScreenTools.fontHRatio * 6)
-        width:          toolBar.parent.width * 0.55
-        height:         ScreenTools.defaultFontPixelHeight * ScreenTools.fontHRatio * 6
-        color:          Qt.rgba(0,0,0,0.65)
-        visible:        false
-        ScrollView {
-            width:              toolBarMessageArea.width - toolBarMessageCloseButton.width
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            frameVisible:       false
-            horizontalScrollBarPolicy:  Qt.ScrollBarAlwaysOff
-            verticalScrollBarPolicy:    Qt.ScrollBarAlwaysOff
-            QGCLabel {
-                id:                 toolBarMessage
-                width:              toolBarMessageArea.width - toolBarMessageCloseButton.width
-                wrapMode:           Text.WordWrap
-                color:              "#e4e428"
-                lineHeightMode:     Text.ProportionalHeight
-                lineHeight:         1.15
-                anchors.margins:    mainWindow.tbSpacing
-            }
-        }
-        QGCButton {
-            id:                 toolBarMessageCloseButton
-            primary:            true
-            text:               "Close"
-            anchors.right:      parent.right
-            anchors.bottom:     parent.bottom
-            anchors.margins:    mainWindow.tbSpacing
-            onClicked: {
-                toolBarMessageArea.visible = false
-                _controller.onToolBarMessageClosed()
-            }
-        }
-    }
-
-} // Rectangle
+}

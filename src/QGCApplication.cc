@@ -715,7 +715,7 @@ void QGCApplication::showMessage(const QString& message)
 {
     MainWindow* mainWindow = MainWindow::instance();
     if (mainWindow) {
-        mainWindow->showToolbarMessage(message);
+        mainWindow->showMessage(message);
     } else {
         QGCMessageBox::information("", message);
     }
