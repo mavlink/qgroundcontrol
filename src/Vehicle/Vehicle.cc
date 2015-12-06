@@ -353,6 +353,10 @@ void Vehicle::_handleRCChannelsRaw(mavlink_message_t& message)
     int pwmValues[cMaxRcChannels];
     int channelCount = 0;
 
+    for (int i=0; i<cMaxRcChannels; i++) {
+        pwmValues[i] = -1;
+    }
+
     for (int i=0; i<8; i++) {
         uint16_t channelValue = *_rgChannelvalues[i];
 
