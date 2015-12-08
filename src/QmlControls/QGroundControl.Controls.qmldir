@@ -9,6 +9,7 @@ MainToolBar             1.0 MainToolBar.qml
 MissionCommandDialog    1.0 MissionCommandDialog.qml
 MissionItemEditor       1.0 MissionItemEditor.qml
 MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
+MissionItemStatus       1.0 MissionItemStatus.qml
 ModeSwitchDisplay       1.0 ModeSwitchDisplay.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
