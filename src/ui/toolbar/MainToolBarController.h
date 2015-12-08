@@ -50,10 +50,6 @@ public:
     MainToolBarController(QObject* parent = NULL);
     ~MainToolBarController();
 
-    Q_INVOKABLE void    onSetupView();
-    Q_INVOKABLE void    onPlanView();
-    Q_INVOKABLE void    onFlyView();
-
     Q_PROPERTY(double       height              MEMBER _toolbarHeight           NOTIFY heightChanged)
     Q_PROPERTY(float        progressBarValue    MEMBER _progressBarValue        NOTIFY progressBarValueChanged)
     Q_PROPERTY(int          telemetryRRSSI      READ telemetryRRSSI             NOTIFY telemetryRRSSIChanged)

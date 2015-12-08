@@ -33,9 +33,9 @@ import QGroundControl.FlightDisplay         1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
-/// Qml for MainWindow
+/// Inner common QML for MainWindow
 Item {
-    id: mainWindow
+    id:         mainWindow
 
     readonly property string _planViewSource:   "MissionEditor.qml"
     readonly property string _setupViewSource:  "SetupView.qml"
@@ -57,53 +57,62 @@ Item {
     property var    activeVehicle:      multiVehicleManager.activeVehicle
     property string formatedMessage:    activeVehicle ? activeVehicle.formatedMessage : ""
 
-    Connections {
-
-        target: controller
-
-        onShowFlyView: {
-            if(currentPopUp) {
-                currentPopUp.close()
-            }
-            flightView.visible          = true
-            setupViewLoader.visible     = false
-            planViewLoader.visible      = false
+    function showFlyView() {
+        if(currentPopUp) {
+            currentPopUp.close()
         }
+        flightView.visible          = true
+        setupViewLoader.visible     = false
+        planViewLoader.visible      = false
+        toolbar.checkFlyButton()
+    }
 
-        onShowPlanView: {
-            if(currentPopUp) {
-                currentPopUp.close()
-            }
-            if (planViewLoader.source   != _planViewSource) {
-                planViewLoader.source   = _planViewSource
-            }
-            flightView.visible          = false
-            setupViewLoader.visible     = false
-            planViewLoader.visible      = true
+    function showPlanView() {
+        if(currentPopUp) {
+            currentPopUp.close()
         }
-
-        onShowSetupView: {
-            if(currentPopUp) {
-                currentPopUp.close()
-            }
-            if (setupViewLoader.source  != _setupViewSource) {
-                setupViewLoader.source  = _setupViewSource
-            }
-            flightView.visible          = false
-            setupViewLoader.visible     = true
-            planViewLoader.visible      = false
+        if (planViewLoader.source   != _planViewSource) {
+            planViewLoader.source   = _planViewSource
         }
+        flightView.visible          = false
+        setupViewLoader.visible     = false
+        planViewLoader.visible      = true
+        toolBar.checkPlanButton()
+    }
 
-        onShowCriticalMessage: showCriticalMessage(message)
+    function showSetupView() {
+        if(currentPopUp) {
+            currentPopUp.close()
+        }
+        if (setupViewLoader.source  != _setupViewSource) {
+            setupViewLoader.source  = _setupViewSource
+        }
+        flightView.visible          = false
+        setupViewLoader.visible     = true
+        planViewLoader.visible      = false
+        toolBar.checkSetupButton()
+    }
 
-        onShowWindowCloseMessage: windowCloseDialog.open()
+    function showWindowCloseMessage() {
+        windowCloseDialog.open()
+    }
 
-        // The following are use for unit testing only
+    // The following are use for unit testing only
 
-        onShowSetupFirmware:            setupViewLoader.item.showFirmwarePanel()
-        onShowSetupParameters:          setupViewLoader.item.showParametersPanel()
-        onShowSetupSummary:             setupViewLoader.item.showSummaryPanel()
-        onShowSetupVehicleComponent:    setupViewLoader.item.showVehicleComponentPanel(vehicleComponent)
+    function showSetupFirmware() {
+        setupViewLoader.item.showFirmwarePanel()
+    }
+
+    function showSetupParameters() {
+        setupViewLoader.item.showParametersPanel()
+    }
+
+    function showSetupSummary() {
+        setupViewLoader.item.showSummaryPanel()
+    }
+
+    function showSetupVehicleComponent(vehicleComponent) {
+        setupViewLoader.item.showVehicleComponentPanel(vehicleComponent)
     }
 
     //-- Detect tablet position
@@ -129,7 +138,7 @@ Item {
 
     property var messageQueue: []
 
-    function showCriticalMessage(message) {
+    function showMessage(message) {
         if(criticalMmessageArea.visible) {
             messageQueue.push(message)
         } else {
@@ -209,7 +218,7 @@ Item {
     //-- Left Settings Menu
     Loader {
         id:                 leftPanel
-        anchors.fill:       mainWindow
+        anchors.fill:       parent
         visible:            false
         z:                  QGroundControl.zOrderTopMost + 100
     }
@@ -226,9 +235,14 @@ Item {
         opaqueBackground:   leftPanel.visible
         isBackgroundDark:   flightView.isBackgroundDark
         z:                  QGroundControl.zOrderTopMost
+
         Component.onCompleted: {
             leftPanel.source = "MainWindowLeftPanel.qml"
         }
+
+        onShowSetupView:    mainWindow.showSetupView()
+        onShowPlanView:     mainWindow.showPlanView()
+        onShowFlyView:      mainWindow.showFlyView()
     }
 
     FlightDisplayView {
@@ -420,5 +434,5 @@ Item {
             }
         }
     }
-
 }
+

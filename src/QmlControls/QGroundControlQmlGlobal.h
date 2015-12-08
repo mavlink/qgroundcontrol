@@ -30,7 +30,6 @@
 #include <QObject>
 
 #include "QGCApplication.h"
-#include "MainWindow.h"
 #include "LinkManager.h"
 #include "HomePositionManager.h"
 #include "FlightMapSettings.h"
@@ -63,7 +62,6 @@ public:
     Q_PROPERTY(bool     isAdvancedMode          READ isAdvancedMode                                                 CONSTANT)                               ///< Global "Advance Mode" preference. Certain UI elements and features are different based on this.
     Q_PROPERTY(bool     isDarkStyle             READ isDarkStyle                WRITE setIsDarkStyle                NOTIFY isDarkStyleChanged)              // TODO: Should be in ScreenTools?
     Q_PROPERTY(bool     isAudioMuted            READ isAudioMuted               WRITE setIsAudioMuted               NOTIFY isAudioMutedChanged)
-    Q_PROPERTY(bool     isLowPowerMode          READ isLowPowerMode             WRITE setIsLowPowerMode             NOTIFY isLowPowerModeChanged)
     Q_PROPERTY(bool     isSaveLogPrompt         READ isSaveLogPrompt            WRITE setIsSaveLogPrompt            NOTIFY isSaveLogPromptChanged)
     Q_PROPERTY(bool     isSaveLogPromptNotArmed READ isSaveLogPromptNotArmed    WRITE setIsSaveLogPromptNotArmed    NOTIFY isSaveLogPromptNotArmedChanged)
     Q_PROPERTY(bool     isHeartBeatEnabled      READ isHeartBeatEnabled         WRITE setIsHeartBeatEnabled         NOTIFY isHeartBeatEnabledChanged)
@@ -99,7 +97,6 @@ public:
 
     bool    isDarkStyle             () { return qgcApp()->styleIsDark(); }
     bool    isAudioMuted            () { return qgcApp()->toolbox()->audioOutput()->isMuted(); }
-    bool    isLowPowerMode          () { return MainWindow::instance()->lowPowerModeEnabled(); }
     bool    isSaveLogPrompt         () { return qgcApp()->promptFlightDataSave(); }
     bool    isSaveLogPromptNotArmed () { return qgcApp()->promptFlightDataSaveNotArmed(); }
     bool    isHeartBeatEnabled      () { return qgcApp()->toolbox()->mavlinkProtocol()->heartbeatsEnabled(); }
@@ -112,7 +109,6 @@ public:
 
     void    setIsDarkStyle              (bool dark);
     void    setIsAudioMuted             (bool muted);
-    void    setIsLowPowerMode           (bool low);
     void    setIsSaveLogPrompt          (bool prompt);
     void    setIsSaveLogPromptNotArmed  (bool prompt);
     void    setIsHeartBeatEnabled       (bool enable);
@@ -123,7 +119,6 @@ public:
 signals:
     void isDarkStyleChanged             (bool dark);
     void isAudioMutedChanged            (bool muted);
-    void isLowPowerModeChanged          (bool lowPower);
     void isSaveLogPromptChanged         (bool prompt);
     void isSaveLogPromptNotArmedChanged (bool prompt);
     void isHeartBeatEnabledChanged      (bool enabled);
