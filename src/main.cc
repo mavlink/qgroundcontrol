@@ -34,7 +34,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QProcessEnvironment>
 
 #include "QGCApplication.h"
-#include "MainWindow.h"
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"

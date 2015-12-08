@@ -159,7 +159,7 @@ MainWindow::MainWindow()
     _mainQmlWidgetHolder->setVisible(true);
 
     _mainQmlWidgetHolder->setContextPropertyObject("controller", this);
-    _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindow.qml"));
+    _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
 
     // Image provider
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
@@ -436,7 +436,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Disallow window close if there are active connections
     if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count()) {
-        emit showWindowCloseMessage();
+        qgcApp()->showWindowCloseMessage();
         event->ignore();
         return;
     }
@@ -548,12 +548,12 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
 
     // Views actions
-    connect(_ui.actionFlight,   &QAction::triggered,    this, &MainWindow::showFlyView);
-    connect(_ui.actionPlan,     &QAction::triggered,    this, &MainWindow::showPlanView);
-    connect(_ui.actionSetup,    &QAction::triggered,    this, &MainWindow::showSetupView);
-    connect(_ui.actionFlight,   &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
-    connect(_ui.actionPlan,     &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
-    connect(_ui.actionSetup,    &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
+    connect(_ui.actionFlight,   &QAction::triggered,    qgcApp(),   &QGCApplication::showFlyView);
+    connect(_ui.actionPlan,     &QAction::triggered,    qgcApp(),   &QGCApplication::showPlanView);
+    connect(_ui.actionSetup,    &QAction::triggered,    qgcApp(),   &QGCApplication::showSetupView);
+    connect(_ui.actionFlight,   &QAction::triggered,    this,       &MainWindow::handleActiveViewActionState);
+    connect(_ui.actionPlan,     &QAction::triggered,    this,       &MainWindow::handleActiveViewActionState);
+    connect(_ui.actionSetup,    &QAction::triggered,    this,       &MainWindow::handleActiveViewActionState);
 
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
@@ -670,7 +670,7 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
 }
 #endif
 
-void MainWindow::showMessage(const QString message)
+QObject* MainWindow::rootQmlObject(void)
 {
-    emit showCriticalMessage(message);
+    return _mainQmlWidgetHolder->getRootObject();
 }

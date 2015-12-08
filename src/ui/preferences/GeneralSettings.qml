@@ -81,15 +81,6 @@ Rectangle {
                 }
             }
             //-----------------------------------------------------------------
-            //-- Low power mode
-            QGCCheckBox {
-                text:       "Enable low power mode"
-                checked:    QGroundControl.isLowPowerMode
-                onClicked: {
-                    QGroundControl.isLowPowerMode = checked
-                }
-            }
-            //-----------------------------------------------------------------
             //-- Prompt Save Log
             QGCCheckBox {
                 id:         promptSaveLog

@@ -169,7 +169,7 @@ public:
     void _addLink(LinkInterface* link);
 
     // Called to signal app shutdown. Disconnects all links while turning off auto-connect.
-    void shutdown(void);
+    Q_INVOKABLE void shutdown(void);
 
 #ifdef QT_DEBUG
     // Only used by unit test tp restart after a shutdown
