@@ -43,10 +43,8 @@
 
 #include "QGC.h"
 #include "QGCApplication.h"
-#include "MainWindow.h"
 #include "GAudioOutput.h"
 #include "CmdLineOptParser.h"
-#include "MainWindow.h"
 #include "UDPLink.h"
 #include "LinkManager.h"
 #include "HomePositionManager.h"
@@ -101,6 +99,7 @@
     #include "QGCMessageBox.h"
     #include "FirmwareUpgradeController.h"
     #include "JoystickConfigController.h"
+    #include "MainWindow.h"
 #endif
 
 #ifdef QGC_RTLAB_ENABLED
@@ -154,7 +153,12 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
  **/
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
+#ifdef __mobile__
+    : QGuiApplication(argc, argv)
+    , _qmlAppEngine(NULL)
+#else
     : QApplication(argc, argv)
+#endif
     , _runningUnitTests(unitTesting)
 #if defined (__mobile__)
     , _styleIsDark(false)
@@ -323,10 +327,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
 QGCApplication::~QGCApplication()
 {
+#ifndef __mobile__
     MainWindow* mainWindow = MainWindow::instance();
     if (mainWindow) {
         delete mainWindow;
     }
+#endif
     shutdownVideoStreaming();
     delete _toolbox;
 }
@@ -446,18 +452,23 @@ bool QGCApplication::_initForNormalAppBoot(void)
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
 
+#ifdef __mobile__
+    _qmlAppEngine = new QQmlApplicationEngine(this);
+    _qmlAppEngine->addImportPath("qrc:/qml");
+    _qmlAppEngine->rootContext()->setContextProperty("multiVehicleManager", toolbox()->multiVehicleManager());
+    _qmlAppEngine->rootContext()->setContextProperty("joystickManager", toolbox()->joystickManager());
+    _qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+#else
     // Start the user interface
     MainWindow* mainWindow = MainWindow::_create();
     Q_CHECK_PTR(mainWindow);
 
-#ifndef __mobile__
     // If we made it this far and we still don't have a location. Either the specfied location was invalid
     // or we coudn't create a default location. Either way, we need to let the user know and prompt for a new
     /// settings.
     QString savedFilesLocation = settings.value(_savedFilesLocationKey).toString();
     if (savedFilesLocation.isEmpty()) {
         showMessage("The location to save files to is invalid, or cannot be written to. Please provide a new one.");
-        mainWindow->showSettings();
     }
 
     // Now that main window is up check for lost log files
@@ -653,11 +664,9 @@ void QGCApplication::setStyle(bool styleIsDark)
 
 void QGCApplication::_loadCurrentStyle(void)
 {
+#ifndef __mobile__
     bool success = true;
     QString styles;
-
-    // Signal to the user that the app will pause to apply a new stylesheet
-    setOverrideCursor(Qt::WaitCursor);
 
     // The dark style sheet is the master. Any other selected style sheet just overrides
     // the colors of the master sheet.
@@ -687,11 +696,9 @@ void QGCApplication::_loadCurrentStyle(void)
         // Fall back to plastique if we can't load our own
         setStyle("plastique");
     }
+#endif
 
     QGCPalette::setGlobalTheme(_styleIsDark ? QGCPalette::Dark : QGCPalette::Light);
-
-    // Finally restore the cursor before returning.
-    restoreOverrideCursor();
 }
 
 void QGCApplication::reportMissingParameter(int componentId, const QString& name)
@@ -718,12 +725,64 @@ void QGCApplication::_missingParamsDisplay(void)
     showMessage(QString("Parameters missing from firmware: %1.\n\nYou should quit QGroundControl immediately and update your firmware.").arg(params));
 }
 
+QObject* QGCApplication::_rootQmlObject(void)
+{
+#ifdef __mobile__
+    return _qmlAppEngine->rootObjects()[0];
+#else
+    return MainWindow::instance()->rootQmlObject();
+#endif
+}
+
+
 void QGCApplication::showMessage(const QString& message)
 {
-    MainWindow* mainWindow = MainWindow::instance();
-    if (mainWindow) {
-        mainWindow->showMessage(message);
-    } else {
-        qWarning() << "showMessage with no mainWindow" << message;
-    }
+    QVariant varReturn;
+    QVariant varMessage = QVariant::fromValue(message);
+
+    QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+}
+
+void QGCApplication::showFlyView(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showFlyView");
+}
+
+void QGCApplication::showPlanView(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showPlanView");
+}
+
+void QGCApplication::showSetupView(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
+}
+
+void QGCApplication::showWindowCloseMessage(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showWindowCloseMessage");
+}
+
+
+void QGCApplication::_showSetupFirmware(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupFirmware");
+}
+
+void QGCApplication::_showSetupParameters(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupParameters");
+}
+
+void QGCApplication::_showSetupSummary(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupSummary");
+}
+
+void QGCApplication::_showSetupVehicleComponent(VehicleComponent* vehicleComponent)
+{
+    QVariant varReturn;
+    QVariant varComponent = QVariant::fromValue(vehicleComponent);
+
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupVehicleComponent", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varComponent));
 }

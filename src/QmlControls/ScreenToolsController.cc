@@ -25,7 +25,6 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #include "ScreenToolsController.h"
-#include "MainWindow.h"
 
 #ifdef Q_OS_WIN
 const double ScreenToolsController::_defaultFontPixelSizeRatio  = 1.0;

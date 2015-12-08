@@ -38,7 +38,6 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 #include "LinkManager.h"
-#include "MainWindow.h"
 #include "QGCApplication.h"
 #include "QGCApplication.h"
 #include "UDPLink.h"
@@ -189,14 +188,11 @@ void LinkManager::_addLink(LinkInterface* link)
         emit newLink(link);
     }
 
-    // MainWindow may be around when doing things like running unit tests
-    if (MainWindow::instance()) {
-        connect(link, &LinkInterface::communicationError, _app, &QGCApplication::criticalMessageBoxOnMainThread);
-    }
+    connect(link, &LinkInterface::communicationError,   _app,               &QGCApplication::criticalMessageBoxOnMainThread);
+    connect(link, &LinkInterface::bytesReceived,        _mavlinkProtocol,   &MAVLinkProtocol::receiveBytes);
+    connect(link, &LinkInterface::connected,            _mavlinkProtocol,   &MAVLinkProtocol::linkConnected);
+    connect(link, &LinkInterface::disconnected,         _mavlinkProtocol,   &MAVLinkProtocol::linkDisconnected);
 
-    connect(link, &LinkInterface::bytesReceived,    _mavlinkProtocol, &MAVLinkProtocol::receiveBytes);
-    connect(link, &LinkInterface::connected,        _mavlinkProtocol, &MAVLinkProtocol::linkConnected);
-    connect(link, &LinkInterface::disconnected,     _mavlinkProtocol, &MAVLinkProtocol::linkDisconnected);
     _mavlinkProtocol->resetMetadataForLink(link);
 
     connect(link, &LinkInterface::connected,    this, &LinkManager::_linkConnected);

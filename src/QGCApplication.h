@@ -64,7 +64,12 @@ class QGCToolbox;
  * the central management unit of the groundstation application.
  *
  **/
-class QGCApplication : public QApplication
+class QGCApplication : public
+#ifdef __mobile__
+    QGuiApplication // Native Qml based application
+#else
+    QApplication    // QtWidget based application
+#endif
 {
     Q_OBJECT
     
@@ -138,6 +143,12 @@ public slots:
     /// You can connect to this slot to show a critical message box from a different thread.
     void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
     
+    void showFlyView(void);
+    void showPlanView(void);
+    void showSetupView(void);
+
+    void showWindowCloseMessage(void);
+
 #ifndef __mobile__
     /// Save the specified Flight Data Log
     void saveTempFlightDataLogOnMainThread(QString tempLogfile);
@@ -166,6 +177,11 @@ public:
     /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
     ///         unit tests. Although public should only be called by main.
     bool _initForUnitTests(void);
+
+    void _showSetupFirmware(void);
+    void _showSetupParameters(void);
+    void _showSetupSummary(void);
+    void _showSetupVehicleComponent(VehicleComponent* vehicleComponent);
     
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
     
@@ -174,6 +190,11 @@ private slots:
     
 private:
     void _loadCurrentStyle(void);
+    QObject* _rootQmlObject(void);
+
+#ifdef __mobile__
+    QQmlApplicationEngine* _qmlAppEngine;
+#endif
     
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted

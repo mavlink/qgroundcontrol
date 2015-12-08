@@ -26,12 +26,12 @@
 
 #include "ParameterEditorController.h"
 #include "AutoPilotPluginManager.h"
-#include "MainWindow.h"
 #include "QGCApplication.h"
 
 #ifndef __mobile__
 #include "QGCFileDialog.h"
 #include "QGCMapRCToParamDialog.h"
+#include "MainWindow.h"
 #endif
 
 /// @Brief Constructs a new ParameterEditorController Widget. This widget is used within the PX4VehicleConfig set of screens.
