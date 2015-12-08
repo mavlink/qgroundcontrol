@@ -39,30 +39,11 @@ MapQuickItem {
     anchorPoint.x:  sourceItem.width  / 2
     anchorPoint.y:  sourceItem.height / 2
 
-    Connections {
-        target: missionItem
-
-        onCoordinateChanged:        recalcLabel()
-        onRelativeAltitudeChanged:  recalcLabel()
-    }
-
-    Component.onCompleted: recalcLabel()
-
-    function recalcLabel() {
-        var label = Math.round(object.coordinate.altitude)
-        if (!object.relativeAltitude) {
-            label = "=" + label
-        }
-        if (object.homePosition) {
-            label = "H" + label
-        }
-        _label.label = label
-    }
-
     sourceItem:
         MissionItemIndexLabel {
             id:             _label
             isCurrentItem:  missionItem.isCurrentItem
+            label:          missionItem.sequenceNumber
             onClicked:      _item.clicked()
         }
 }
