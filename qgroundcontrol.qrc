@@ -32,7 +32,9 @@
 
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
         <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
-        <file alias="MainWindow.qml">src/ui/MainWindow.qml</file>
+        <file alias="MainWindowHybrid.qml">src/ui/MainWindowHybrid.qml</file>
+        <file alias="MainWindowInner.qml">src/ui/MainWindowInner.qml</file>
+        <file alias="MainWindowNative.qml">src/ui/MainWindowNative.qml</file>
         <file alias="MainWindowLeftPanel.qml">src/ui/MainWindowLeftPanel.qml</file>
         <file alias="MissionEditor.qml">src/MissionEditor/MissionEditor.qml</file>
         <file alias="MissionEditorHelp.qml">src/MissionEditor/MissionEditorHelp.qml</file>

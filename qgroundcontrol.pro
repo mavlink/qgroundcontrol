@@ -278,7 +278,6 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
-    src/ui/MainWindow.h \
     src/ui/toolbar/MainToolBarController.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
@@ -327,6 +326,7 @@ HEADERS += \
     src/ui/linechart/Scrollbar.h \
     src/ui/linechart/ScrollZoomer.h \
     src/ui/LogReplayLinkConfigurationWidget.h \
+    src/ui/MainWindow.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
     src/ui/MultiVehicleDockWidget.h \
@@ -400,7 +400,6 @@ SOURCES += \
     src/QmlControls/QmlObjectListModel.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
-    src/ui/MainWindow.cc \
     src/ui/toolbar/MainToolBarController.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
@@ -453,6 +452,7 @@ SOURCES += \
     src/ui/linechart/LinechartWidget.cc \
     src/ui/linechart/Scrollbar.cc \
     src/ui/linechart/ScrollZoomer.cc \
+    src/ui/MainWindow.cc \
     src/ui/MultiVehicleDockWidget.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/QGCHilConfiguration.cc \

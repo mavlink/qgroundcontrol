@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "MainToolBarController.h"
 #include "ScreenToolsController.h"
-#include "MainWindow.h"
 #include "UASMessageView.h"
 #include "UASMessageHandler.h"
 #include "QGCApplication.h"
@@ -58,21 +57,6 @@ MainToolBarController::MainToolBarController(QObject* parent)
 MainToolBarController::~MainToolBarController()
 {
 
-}
-
-void MainToolBarController::onSetupView()
-{
-    MainWindow::instance()->showSetupView();
-}
-
-void MainToolBarController::onPlanView()
-{
-    MainWindow::instance()->showPlanView();
-}
-
-void MainToolBarController::onFlyView()
-{
-    MainWindow::instance()->showFlyView();
 }
 
 void MainToolBarController::_activeVehicleChanged(Vehicle* vehicle)

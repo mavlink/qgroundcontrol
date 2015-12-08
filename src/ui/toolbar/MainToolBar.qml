@@ -145,7 +145,23 @@ Rectangle {
     readonly property var   colorBlue:      "#636efe"
     readonly property var   colorWhite:     "#ffffff"
 
+    signal showSetupView()
+    signal showPlanView()
+    signal showFlyView()
+
     MainToolBarController { id: _controller }
+
+    function checkSetupButton() {
+        setupButton.checked = true
+    }
+
+    function checkPlanButton() {
+        planButton.checked = true
+    }
+
+    function checkFlyButton() {
+        flyButton.checked = true
+    }
 
     function getBatteryColor() {
         if(activeVehicle) {
@@ -191,13 +207,6 @@ Rectangle {
     Component.onCompleted: {
         //-- TODO: Get this from the actual state
         flyButton.checked = true
-    }
-
-    Connections {
-        target:         controller
-        onShowFlyView:  { flyButton.checked   = true }
-        onShowPlanView: { planButton.checked  = true }
-        onShowSetupView:{ setupButton.checked = true }
     }
 
     //---------------------------------------------
@@ -496,9 +505,7 @@ Rectangle {
             height:             mainWindow.tbCellHeight
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Gears.svg"
-            onClicked: {
-                _controller.onSetupView();
-            }
+            onClicked:          toolBar.showSetupView()
         }
 
         Rectangle {
@@ -513,9 +520,7 @@ Rectangle {
             height:             mainWindow.tbCellHeight
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/Plan.svg"
-            onClicked: {
-                _controller.onPlanView();
-            }
+            onClicked:          toolBar.showPlanView()
         }
 
         Rectangle {
@@ -530,9 +535,7 @@ Rectangle {
             height:             mainWindow.tbCellHeight
             exclusiveGroup:     mainActionGroup
             source:             "/qmlimages/PaperPlane.svg"
-            onClicked: {
-                _controller.onFlyView();
-            }
+            onClicked:          toolBar.showFlyView()
         }
 
         Rectangle {

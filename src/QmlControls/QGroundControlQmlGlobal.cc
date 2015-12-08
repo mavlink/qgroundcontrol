@@ -138,12 +138,6 @@ void QGroundControlQmlGlobal::setIsAudioMuted(bool muted)
     emit isAudioMutedChanged(muted);
 }
 
-void QGroundControlQmlGlobal::setIsLowPowerMode(bool low)
-{
-    MainWindow::instance()->enableLowPowerMode(low);
-    emit isLowPowerModeChanged(low);
-}
-
 void QGroundControlQmlGlobal::setIsSaveLogPrompt(bool prompt)
 {
     qgcApp()->setPromptFlightDataSave(prompt);

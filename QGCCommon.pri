@@ -37,7 +37,6 @@ linux {
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS
         target.path = $$DESTDIR
-        warning("Android build is experimental and not fully functional")
     } else {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
