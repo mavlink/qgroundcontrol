@@ -60,7 +60,6 @@
     </property>
     <addaction name="separator"/>
     <addaction name="actionMuteAudioOutput"/>
-    <addaction name="actionAdd_Link"/>
     <addaction name="actionSettings"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>

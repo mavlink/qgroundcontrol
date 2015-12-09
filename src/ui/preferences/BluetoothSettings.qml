@@ -75,6 +75,7 @@ Item {
             }
         }
         Row {
+            visible:    !ScreenTools.isiOS
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
                 text:   "Address:"

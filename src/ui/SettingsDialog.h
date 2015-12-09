@@ -43,7 +43,6 @@ public:
 
     enum {
         ShowDefault,
-        ShowCommLinks,
         ShowControllers,
         ShowMavlink
     };

@@ -31,7 +31,6 @@
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
-#include "QGCLinkConfiguration.h"
 #include "GAudioOutput.h"
 #include "QGCApplication.h"
 #include "QGCFileDialog.h"
@@ -53,11 +52,8 @@ SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags fla
     position.moveCenter(QApplication::desktop()->availableGeometry(screen).center());
     move(position.topLeft());
 
-    QGCLinkConfiguration*  pLinkConf     = new QGCLinkConfiguration(this);
     MAVLinkSettingsWidget* pMavsettings  = new MAVLinkSettingsWidget(qgcApp()->toolbox()->mavlinkProtocol(), this);
 
-    // Add the link settings pane
-    _ui->tabWidget->addTab(pLinkConf,     "Comm Links");
     // Add the MAVLink settings pane
     _ui->tabWidget->addTab(pMavsettings,  "MAVLink");
 
@@ -68,14 +64,9 @@ SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags fla
     // Connect signals
     connect(_ui->browseSavedFilesLocation, &QPushButton::clicked, this, &SettingsDialog::_selectSavedFilesDirectory);
     connect(_ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::_validateBeforeClose);
-    
-    switch (showTab) {
-        case ShowCommLinks:
-            _ui->tabWidget->setCurrentWidget(pLinkConf);
-            break;
-        case ShowMavlink:
-            _ui->tabWidget->setCurrentWidget(pMavsettings);
-            break;
+
+    if (showTab == ShowMavlink) {
+        _ui->tabWidget->setCurrentWidget(pMavsettings);
     }
 }
 
