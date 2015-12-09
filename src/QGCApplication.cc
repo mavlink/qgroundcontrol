@@ -37,6 +37,10 @@
 #include <QStyleFactory>
 #include <QAction>
 
+#ifdef QGC_ENABLE_BLUETOOTH
+#include <QBluetoothLocalDevice>
+#endif
+
 #include <QDebug>
 
 #include "VideoStreaming.h"
@@ -170,6 +174,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _testHighDPI(false)
 #endif
     , _toolbox(NULL)
+    , _bluetoothAvailable(false)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -318,6 +323,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
     }
+
+    // Initialize Bluetooth
+#ifdef QGC_ENABLE_BLUETOOTH
+    QBluetoothLocalDevice localDevice;
+    if (localDevice.isValid())
+    {
+        _bluetoothAvailable = true;
+    }
+#endif
 
     // Initialize Video Streaming
     initializeVideoStreaming(argc, argv);

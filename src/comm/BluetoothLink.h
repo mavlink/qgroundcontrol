@@ -39,18 +39,20 @@ This file is part of the QGROUNDCONTROL project
 #include <QByteArray>
 #include <QBluetoothDeviceInfo>
 #include <QtBluetooth/QBluetoothSocket>
+#include <qbluetoothserviceinfo.h>
+#include <qbluetoothservicediscoveryagent.h>
 
 #include "QGCConfig.h"
 #include "LinkManager.h"
 
 class QBluetoothDeviceDiscoveryAgent;
+class QBluetoothServiceDiscoveryAgent;
 
 class BluetoothData
 {
 public:
     BluetoothData()
     {
-        bits = 0;
     }
     BluetoothData(const BluetoothData& other)
     {
@@ -58,18 +60,28 @@ public:
     }
     bool operator==(const BluetoothData& other)
     {
-        return bits == other.bits && name == other.name && address == other.address;
+#ifdef __ios__
+        return uuid == other.uuid && name == other.name;
+#else
+        return name == other.name && address == other.address;
+#endif
     }
     BluetoothData& operator=(const BluetoothData& other)
     {
-        bits = other.bits;
         name = other.name;
+#ifdef __ios__
+        uuid = other.uuid;
+#else
         address = other.address;
+#endif
         return *this;
     }
-    quint32 bits;
     QString name;
+#ifdef __ios__
+    QBluetoothUuid uuid;
+#else
     QString address;
+#endif
 };
 
 class BluetoothConfiguration : public LinkConfiguration
@@ -91,7 +103,7 @@ public:
     Q_INVOKABLE void        stopScan    ();
 
     QString     devName                 () { return _device.name; }
-    QString     address                 () { return _device.address; }
+    QString     address                 ();
     QStringList nameList                () { return _nameList; }
     bool        scanning                () { return _deviceDiscover != NULL; }
 
@@ -159,6 +171,11 @@ public slots:
     void    deviceConnected         ();
     void    deviceDisconnected      ();
     void    deviceError             (QBluetoothSocket::SocketError error);
+#ifdef __ios__
+    void    serviceDiscovered       (const QBluetoothServiceInfo &info);
+    void    discoveryFinished       ();
+    void    discoveryError          (QBluetoothServiceDiscoveryAgent::Error error);
+#endif
 
 protected:
 
@@ -177,12 +194,17 @@ private:
     bool _hardwareConnect       ();
     void _restartConnection     ();
     void _sendBytes             (const char* data, qint64 size);
+    void _createSocket          ();
 
 private:
 
-    QBluetoothSocket*                   _targetSocket;
-    QBluetoothDeviceInfo*               _targetDevice;
-    bool                                _running;
+    QBluetoothSocket*           _targetSocket;
+#ifdef __ios__
+    QBluetoothServiceDiscoveryAgent* _discoveryAgent;
+#endif
+
+    bool                        _shutDown;
+
 };
 
 #endif // BTLINK_H

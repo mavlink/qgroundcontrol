@@ -39,10 +39,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkManager.h"
 #include "QGCApplication.h"
-#include "QGCApplication.h"
 #include "UDPLink.h"
 #include "TCPLink.h"
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
 
@@ -125,7 +124,7 @@ LinkInterface* LinkManager::createConnectedLink(LinkConfiguration* config)
         case LinkConfiguration::TypeTcp:
             pLink = new TCPLink(dynamic_cast<TCPConfiguration*>(config));
             break;
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
         case LinkConfiguration::TypeBluetooth:
             pLink = new BluetoothLink(dynamic_cast<BluetoothConfiguration*>(config));
             break;
@@ -361,7 +360,7 @@ void LinkManager::loadLinkConfigurationList()
                                 case LinkConfiguration::TypeTcp:
                                     pLink = (LinkConfiguration*)new TCPConfiguration(name);
                                     break;
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
                                 case LinkConfiguration::TypeBluetooth:
                                     pLink = (LinkConfiguration*)new BluetoothConfiguration(name);
                                     break;
@@ -708,7 +707,7 @@ QStringList LinkManager::linkTypeStrings(void) const
 #endif
         list += "UDP";
         list += "TCP";
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
         list += "Bluetooth";
 #endif
 #ifdef QT_DEBUG
@@ -839,7 +838,7 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
                     }
                 }
                 break;
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
             case LinkConfiguration::TypeBluetooth: {
                     BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);
                     if(tconfig) {
@@ -887,4 +886,9 @@ void LinkManager::removeConfiguration(LinkConfiguration* config)
 bool LinkManager::isAutoconnectLink(LinkInterface* link)
 {
     return _autoconnectConfigurations.contains(link->getLinkConfiguration());
+}
+
+bool LinkManager::isBluetoothAvailable(void)
+{
+    return qgcApp()->isBluetoothAvailable();
 }

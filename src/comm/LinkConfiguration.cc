@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef __mobile__
 #include "LogReplayLink.h"
 #endif
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
 #ifdef QT_DEBUG
@@ -103,7 +103,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
         case LinkConfiguration::TypeTcp:
             config = new TCPConfiguration(name);
             break;
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
     case LinkConfiguration::TypeBluetooth:
         config = new BluetoothConfiguration(name);
         break;
@@ -141,10 +141,10 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
         case TypeTcp:
             dupe = new TCPConfiguration(dynamic_cast<TCPConfiguration*>(source));
             break;
-#ifdef __mobile__
-    case TypeBluetooth:
-        dupe = new BluetoothConfiguration(dynamic_cast<BluetoothConfiguration*>(source));
-        break;
+#ifdef QGC_ENABLE_BLUETOOTH
+        case TypeBluetooth:
+            dupe = new BluetoothConfiguration(dynamic_cast<BluetoothConfiguration*>(source));
+            break;
 #endif
 #ifndef __mobile__
         case TypeLogReplay:
