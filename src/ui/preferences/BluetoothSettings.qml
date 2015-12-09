@@ -39,9 +39,16 @@ Item {
         // No need
     }
 
+    QGCLabel {
+        text:       "Bluetooth Not Available"
+        visible:    !QGroundControl.linkManager.isBluetoothAvailable
+        anchors.centerIn: parent
+    }
+
     Column {
         id:         btColumn
         spacing:    ScreenTools.defaultFontPixelHeight / 2
+        visible:    QGroundControl.linkManager.isBluetoothAvailable
 
         ExclusiveGroup { id: linkGroup }
 
