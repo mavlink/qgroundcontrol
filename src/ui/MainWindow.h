@@ -104,7 +104,6 @@ public:
 public slots:
 #ifndef __mobile__
     void showSettings();
-    void manageLinks();
 #endif
 
     /** @brief Save power by reducing update rates */

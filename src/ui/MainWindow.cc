@@ -536,9 +536,6 @@ void MainWindow::configureWindowName()
 **/
 void MainWindow::connectCommonActions()
 {
-    // Connect actions from ui
-    connect(_ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(manageLinks()));
-
     // Audio output
     _ui.actionMuteAudioOutput->setChecked(qgcApp()->toolbox()->audioOutput()->isMuted());
     connect(qgcApp()->toolbox()->audioOutput(), SIGNAL(mutedChanged(bool)), _ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
@@ -581,13 +578,6 @@ void MainWindow::showSettings()
     SettingsDialog settings(this);
     settings.exec();
 }
-
-void MainWindow::manageLinks()
-{
-    SettingsDialog settings(this, SettingsDialog::ShowCommLinks);
-    settings.exec();
-}
-
 #endif
 
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
