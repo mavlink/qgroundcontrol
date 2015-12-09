@@ -74,7 +74,7 @@ Rectangle {
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             QGCLabel {
-                text:   "Comm Link Settings (WIP)"
+                text:   "Comm Link Settings"
                 font.pixelSize: ScreenTools.mediumFontPixelSize
             }
             Rectangle {

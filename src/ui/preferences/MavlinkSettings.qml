@@ -67,6 +67,25 @@ Rectangle {
                 color:  qgcPal.button
             }
             //-----------------------------------------------------------------
+            //-- System ID
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+                QGCLabel {
+                    text:   "Ground Station MavLink System ID:"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCTextField {
+                    id:     sysidField
+                    text:   QGroundControl.mavlinkSystemID.toString()
+                    width:  ScreenTools.defaultFontPixelWidth * 6
+                    inputMethodHints:       Qt.ImhFormattedNumbersOnly
+                    anchors.verticalCenter: parent.verticalCenter
+                    onEditingFinished: {
+                        QGroundControl.mavlinkSystemID = parseInt(sysidField.text)
+                    }
+                }
+            }
+            //-----------------------------------------------------------------
             //-- Mavlink Heartbeats
             QGCCheckBox {
                 text:       "Emit heartbeat"

@@ -193,11 +193,6 @@ FORMS += \
     src/ui/MainWindow.ui \
     src/QGCQmlWidgetHolder.ui \
 
-DebugBuild {
-FORMS += \
-    src/ui/MockLinkConfiguration.ui \
-}
-
 !iOSBuild {
 FORMS += \
     src/ui/SerialSettings.ui \
@@ -208,21 +203,16 @@ FORMS += \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/uas/UASMessageView.ui \
     src/ui/Linechart.ui \
-    src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MultiVehicleDockWidget.ui \
     src/ui/MAVLinkSettingsWidget.ui \
-    src/ui/QGCCommConfiguration.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
     src/ui/QGCHilXPlaneConfiguration.ui \
-    src/ui/QGCLinkConfiguration.ui \
     src/ui/QGCMapRCToParamDialog.ui \
     src/ui/QGCMAVLinkInspector.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
-    src/ui/QGCTCPLinkConfiguration.ui \
-    src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCTabbedInfoView.ui \
     src/ui/QGCUASFileView.ui \
     src/ui/QGCUASFileViewMulti.ui \
@@ -287,7 +277,6 @@ HEADERS += \
     src/comm/MockLink.h \
     src/comm/MockLinkFileServer.h \
     src/comm/MockLinkMissionItemHandler.h \
-    src/ui/MockLinkConfiguration.h \
 }
 
 WindowsBuild {
@@ -325,17 +314,12 @@ HEADERS += \
     src/ui/linechart/LinechartWidget.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/linechart/ScrollZoomer.h \
-    src/ui/LogReplayLinkConfigurationWidget.h \
     src/ui/MainWindow.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/MAVLinkSettingsWidget.h \
     src/ui/MultiVehicleDockWidget.h \
-    src/ui/QGCCommConfiguration.h \
-    src/ui/QGCLinkConfiguration.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCMapRCToParamDialog.h \
-    src/ui/QGCTCPLinkConfiguration.h \
-    src/ui/QGCUDPLinkConfiguration.h \
     src/ui/SettingsDialog.h \
     src/ui/uas/UASMessageView.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
@@ -409,7 +393,6 @@ SOURCES += \
     src/comm/MockLink.cc \
     src/comm/MockLinkFileServer.cc \
     src/comm/MockLinkMissionItemHandler.cc \
-    src/ui/MockLinkConfiguration.cc \
 }
 
 !iOSBuild {
@@ -430,16 +413,11 @@ SOURCES += \
     src/uas/FileManager.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/SettingsDialog.cc \
-    src/ui/QGCTCPLinkConfiguration.cc \
-    src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/MAVLinkSettingsWidget.cc \
-    src/ui/QGCCommConfiguration.cc \
-    src/ui/QGCLinkConfiguration.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
     src/comm/LogReplayLink.cc \
     src/QGCFileDialog.cc \
-    src/ui/LogReplayLinkConfigurationWidget.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
