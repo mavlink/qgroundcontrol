@@ -24,16 +24,15 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick 2.3
+import QtQuick          2.5
 import QtQuick.Controls 1.3
-import QtQuick.Controls.Styles 1.2
-import QtQuick.Dialogs 1.2
 
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controllers 1.0
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.ScreenTools   1.0
 
 QGCViewDialog {
     property Fact   fact
@@ -59,7 +58,8 @@ QGCViewDialog {
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
             forceSave.visible = true
         }
-        valueField.forceActiveFocus();
+        // This was causing problems where it would never give up focus even when hidden!
+        //valueField.forceActiveFocus()
     }
 
     Column {
@@ -83,6 +83,7 @@ QGCViewDialog {
         QGCTextField {
             id:     valueField
             text:   validate ? validateValue : fact.valueString
+            focus:  true
 
             // At this point all Facts are numeric
             inputMethodHints:   Qt.ImhFormattedNumbersOnly
@@ -110,7 +111,7 @@ QGCViewDialog {
             visible: !fact.minIsDefaultForType
 
             QGCLabel { text: "Minimum value:" }
-            QGCLabel { text: fact.min }
+            QGCLabel { text: fact.minString }
         }
 
         Row {
@@ -118,14 +119,14 @@ QGCViewDialog {
             visible: !fact.maxIsDefaultForType
 
             QGCLabel { text: "Maximum value:" }
-            QGCLabel { text: fact.max }
+            QGCLabel { text: fact.maxString }
         }
 
         Row {
             spacing: defaultTextWidth
 
             QGCLabel { text: "Default value:" }
-            QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValue : "none" }
+            QGCLabel { text: fact.defaultValueAvailable ? fact.defaultValueString : "none" }
         }
 
         QGCLabel {
@@ -170,7 +171,7 @@ QGCViewDialog {
         anchors.right:  parent.right
         anchors.bottom: parent.bottom
         text:           "Set RC to Param..."
-        visible:        !validate
+        visible:        !validate && !ScreenTools.isMobile
         onClicked:      controller.setRCToParam(fact.name)
     }
 } // QGCViewDialog

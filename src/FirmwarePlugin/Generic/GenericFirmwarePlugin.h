@@ -47,6 +47,7 @@ public:
     virtual bool sendHomePositionToVehicle(void);
     virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
     virtual QString getDefaultComponentIdParam(void) const { return QString(); }
+    virtual QList<MAV_CMD> supportedMissionCommands(void);
 };
 
 #endif

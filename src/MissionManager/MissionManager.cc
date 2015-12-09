@@ -35,7 +35,6 @@ QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 MissionManager::MissionManager(Vehicle* vehicle)
     : _vehicle(vehicle)
     , _cMissionItems(0)
-    , _canEdit(true)
     , _ackTimeoutTimer(NULL)
     , _retryAck(AckNone)
 {
@@ -287,23 +286,20 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message)
         return;
     }
         
-    MissionItem* item = new MissionItem(this,
-                                        missionItem.seq,
-                                        QGeoCoordinate(missionItem.x, missionItem.y, missionItem.z),
-                                        missionItem.command,
+    MissionItem* item = new MissionItem(missionItem.seq,
+                                        (MAV_CMD)missionItem.command,
+                                        (MAV_FRAME)missionItem.frame,
                                         missionItem.param1,
                                         missionItem.param2,
                                         missionItem.param3,
                                         missionItem.param4,
+                                        missionItem.x,
+                                        missionItem.y,
+                                        missionItem.z,
                                         missionItem.autocontinue,
                                         missionItem.current,
-                                        missionItem.frame);
+                                        this);
     _missionItems.append(item);
-    
-    if (!item->canEdit()) {
-        _canEdit = false;
-        emit canEditChanged(false);
-    }
     
     int nextSequenceNumber = missionItem.seq + 1;
     if (nextSequenceNumber == _cMissionItems) {
@@ -372,7 +368,7 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
 {
     mavlink_mission_ack_t missionAck;
     
-    // Save th retry ack before calling _stopAckTimeout since we'll need it to determine what
+    // Save the retry ack before calling _stopAckTimeout since we'll need it to determine what
     // type of a protocol sequence we are in.
     AckType_t savedRetryAck = _retryAck;
     
@@ -422,7 +418,8 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
             } else {
                 qCDebug(MissionManagerLog) << "_handleMissionAck ack error:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
                 if (!_retrySequence(AckMissionRequest)) {
-                    _sendError(VehicleError, QString("Vehicle returned error: %1.  Vehicle only has partial list of mission items.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+                    _sendError(VehicleError,
+                               QString("Vehicle returned error: %1 on item %2.  Vehicle only has partial list of mission items.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)).arg(_expectedSequenceNumber));
                 }
             }
             break;

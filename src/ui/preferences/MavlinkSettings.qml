@@ -34,8 +34,9 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
 
 Rectangle {
-    id:     __mavlinkRoot
-    color:  __qgcPal.window
+    id:             __mavlinkRoot
+    color:          __qgcPal.window
+    anchors.fill:   parent
 
     QGCPalette {
         id:                 qgcPal
@@ -64,6 +65,25 @@ Rectangle {
                 height: 1
                 width:  parent.width
                 color:  qgcPal.button
+            }
+            //-----------------------------------------------------------------
+            //-- System ID
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth
+                QGCLabel {
+                    text:   "Ground Station MavLink System ID:"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCTextField {
+                    id:     sysidField
+                    text:   QGroundControl.mavlinkSystemID.toString()
+                    width:  ScreenTools.defaultFontPixelWidth * 6
+                    inputMethodHints:       Qt.ImhFormattedNumbersOnly
+                    anchors.verticalCenter: parent.verticalCenter
+                    onEditingFinished: {
+                        QGroundControl.mavlinkSystemID = parseInt(sysidField.text)
+                    }
+                }
             }
             //-----------------------------------------------------------------
             //-- Mavlink Heartbeats

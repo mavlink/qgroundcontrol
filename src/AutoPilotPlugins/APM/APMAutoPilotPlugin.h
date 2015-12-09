@@ -27,6 +27,8 @@
 #include "AutoPilotPlugin.h"
 #include "Vehicle.h"
 #include "APMAirframeComponent.h"
+#include "APMRadioComponent.h"
+#include "APMFlightModesComponent.h"
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -40,6 +42,10 @@ public:
     // Overrides from AutoPilotPlugin
     virtual const QVariantList& vehicleComponents(void);
 
+    APMAirframeComponent*       airframeComponent   (void) { return _airframeComponent; }
+    APMFlightModesComponent*    flightModesComponent(void) { return _flightModesComponent; }
+    APMRadioComponent*          radioComponent      (void) { return _radioComponent; }
+
 public slots:
     // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
     void _parametersReadyPreChecks(bool missingParameters);
@@ -47,7 +53,10 @@ public slots:
 private:
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
     QVariantList            _components;
-    APMAirframeComponent*   _airframeComponent;
+
+    APMAirframeComponent*       _airframeComponent;
+    APMFlightModesComponent*    _flightModesComponent;
+    APMRadioComponent*          _radioComponent;
 };
 
 #endif

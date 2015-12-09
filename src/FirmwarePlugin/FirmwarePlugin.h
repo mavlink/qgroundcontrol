@@ -108,7 +108,14 @@ public:
     virtual QString getDefaultComponentIdParam(void) const = 0;
 
     /// Adds the parameter meta data to the Fact
+<<<<<<< HEAD
     virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType) = 0;
+=======
+    virtual void addMetaDataToFact(Fact* fact) = 0;
+
+    /// List of supported mission commands. Empty list for all commands supported.
+    virtual QList<MAV_CMD> supportedMissionCommands(void) = 0;
+>>>>>>> ec3047af438cde5f90af9d60a0039dc195d5dd92
 };
 
 #endif

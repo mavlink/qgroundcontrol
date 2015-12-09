@@ -25,7 +25,6 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #include "ScreenToolsController.h"
-#include "MainWindow.h"
 
 #ifdef Q_OS_WIN
 const double ScreenToolsController::_defaultFontPixelSizeRatio  = 1.0;
@@ -43,15 +42,5 @@ const double ScreenToolsController::_largeFontPixelSizeRatio    = 1.66;
 
 ScreenToolsController::ScreenToolsController()
 {
-    MainWindow* mainWindow = MainWindow::instance();
-    // Unit tests can run Qml without MainWindow
-    if (mainWindow) {
-        connect(mainWindow, &MainWindow::repaintCanvas, this, &ScreenToolsController::_updateCanvas);
-    }
-}
 
-void ScreenToolsController::_updateCanvas()
-{
-    emit repaintRequested();
 }
-

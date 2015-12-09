@@ -23,7 +23,6 @@
 
 #include "APMAutoPilotPlugin.h"
 #include "AutoPilotPluginManager.h"
-#include "QGCMessageBox.h"
 #include "UAS.h"
 #include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
@@ -33,6 +32,8 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
     , _incorrectParameterVersion(false)
     , _airframeComponent(NULL)
+    , _flightModesComponent(NULL)
+    , _radioComponent(NULL)
 {
     Q_ASSERT(vehicle);
 }
@@ -52,6 +53,16 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+
+            _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
+            Q_CHECK_PTR(_flightModesComponent);
+            _flightModesComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+
+            _radioComponent = new APMRadioComponent(_vehicle, this);
+            Q_CHECK_PTR(_radioComponent);
+            _radioComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
         } else {
             qWarning() << "Call to vehicleCompenents prior to parametersReady";
         }
@@ -71,8 +82,8 @@ void APMAutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
     // should be used instead.
     if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF")) {
         _incorrectParameterVersion = true;
-        QGCMessageBox::warning("Setup", "This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
-										"Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
+        qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
+                              "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
 	}
 #endif
 	

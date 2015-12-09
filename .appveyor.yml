@@ -22,18 +22,14 @@ install:
 build_script:
   - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt\5.5\msvc2013\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
   - cd %SHADOW_BUILD_DIR% && jom
+  - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\release\qgroundcontrol-installer.exe %APPVEYOR_BUILD_FOLDER%\qgroundcontrol-installer.exe )
 
 test_script:
   - if "%CONFIG%" EQU "debug" ( %SHADOW_BUILD_DIR%\debug\qgroundcontrol --unittest )
 
-before_deploy:
-  - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\release\qgroundcontrol-installer.exe %APPVEYOR_BUILD_FOLDER%\qgroundcontrol-installer.exe )
-  - dir %SHADOW_BUILD_DIR%
-  - dir %APPVEYOR_BUILD_FOLDER%
-
 artifacts:
-  - path: './qgroundcontrol-installer.exe'
-    name: s3
+  - path: qgroundcontrol-installer.exe
+    name: qgcinstaller
 
 deploy:
   - provider: S3
@@ -44,11 +40,13 @@ deploy:
     bucket: qgroundcontrol
     set_public: true
     folder: $(APPVEYOR_REPO_BRANCH)
-    artifact: './qgroundcontrol-installer.exe'
+    artifact: qgcinstaller
     on:
       CONFIG: installer
   - provider: GitHub
-    artifact: './qgroundcontrol-installer.exe'
+    auth_token:
+      secure: dzWLqd0eTKjrAWC5LgqVnwLemmrNdddGA2ZZn/OthAP37mwCLkP2C1zil7ivmEE8
+    artifact: qgcinstaller
     draft: false
     prerelease: false
     on:

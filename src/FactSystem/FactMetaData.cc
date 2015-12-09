@@ -36,28 +36,33 @@ FactMetaData::FactMetaData(QObject* parent)
     : QObject(parent)
     , _group("*Default Group")
     , _type(valueTypeUnknown)
+    , _decimalPlaces(defaultDecimalPlaces)
     , _defaultValue(0)
     , _defaultValueAvailable(false)
-    , _min(_minForType())
+    , _group("*Default Group")
     , _max(_maxForType())
-    , _minIsDefaultForType(true)
     , _maxIsDefaultForType(true)
-    , _decimalPlaces(defaultDecimalPlaces)
+    , _min(_minForType())
+    , _minIsDefaultForType(true)
+    , _rawTranslator(defaultTranslator)
+    , _cookedTranslator(defaultTranslator)
 {
 
 }
 
 FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     : QObject(parent)
-    , _group("*Default Group")
     , _type(type)
+    , _decimalPlaces(defaultDecimalPlaces)
     , _defaultValue(0)
     , _defaultValueAvailable(false)
-    , _min(_minForType())
+    , _group("*Default Group")
     , _max(_maxForType())
-    , _minIsDefaultForType(true)
     , _maxIsDefaultForType(true)
-    , _decimalPlaces(defaultDecimalPlaces)
+    , _min(_minForType())
+    , _minIsDefaultForType(true)
+    , _rawTranslator(defaultTranslator)
+    , _cookedTranslator(defaultTranslator)
 {
 
 }
@@ -70,16 +75,24 @@ FactMetaData::FactMetaData(const FactMetaData& other, QObject* parent)
 
 const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
 {
-    _group                  = other._group;
-    _type                   = other._type;
+    _decimalPlaces          = other._decimalPlaces;
     _defaultValue           = other._defaultValue;
     _defaultValueAvailable  = other._defaultValueAvailable;
-    _min                    = other._min;
+    _enumStrings            = other._enumStrings;
+    _enumValues             = other._enumValues;
+    _group                  = other._group;
+    _longDescription        = other._longDescription;
     _max                    = other._max;
-    _minIsDefaultForType    = other._minIsDefaultForType;
     _maxIsDefaultForType    = other._maxIsDefaultForType;
-    _decimalPlaces          = other._decimalPlaces;
-    
+    _min                    = other._min;
+    _minIsDefaultForType    = other._minIsDefaultForType;
+    _name                   = other._name;
+    _shortDescription       = other._shortDescription;
+    _type                   = other._type;
+    _units                  = other._units;
+    _rawTranslator          = other._rawTranslator;
+    _cookedTranslator       = other._cookedTranslator;
+
     return *this;
 }
 
@@ -260,4 +273,21 @@ bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, Q
     }
     
     return convertOk && errorString.isEmpty();
+}
+
+void FactMetaData::setEnumInfo(const QStringList& strings, const QVariantList& values)
+{
+    if (strings.count() != values.count()) {
+        qWarning() << "Count mismatch strings:values" << strings.count() << values.count();
+        return;
+    }
+
+    _enumStrings = strings;
+    _enumValues = values;
+}
+
+void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTranslator)
+{
+    _rawTranslator = rawTranslator;
+    _cookedTranslator = cookedTranslator;
 }

@@ -26,10 +26,10 @@
 #include "PX4AirframeLoader.h"
 #include "FlightModesComponentController.h"
 #include "AirframeComponentController.h"
-#include "QGCMessageBox.h"
 #include "UAS.h"
 #include "FirmwarePlugin/PX4/PX4ParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h"  // FIXME: Hack
+#include "QGCApplication.h"
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
@@ -99,7 +99,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
             
-            _radioComponent = new RadioComponent(_vehicle, this);
+            _radioComponent = new PX4RadioComponent(_vehicle, this);
             Q_CHECK_PTR(_radioComponent);
             _radioComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
@@ -139,8 +139,8 @@ void PX4AutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
     // should be used instead.
     if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF")) {
         _incorrectParameterVersion = true;
-        QGCMessageBox::warning("Setup", "This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
-										"Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
+        qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
+                              "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
 	}
 	
     _parametersReady = true;

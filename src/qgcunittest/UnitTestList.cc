@@ -33,10 +33,11 @@
 #include "MessageBoxTest.h"
 #include "MissionItemTest.h"
 #include "MissionControllerTest.h"
-#include "PX4RCCalibrationTest.h"
+#include "RadioConfigTest.h"
 #include "SetupViewTest.h"
 #include "MavlinkLogTest.h"
 
+UT_REGISTER_TEST(SetupViewTest)
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
 UT_REGISTER_TEST(FileDialogTest)
@@ -48,7 +49,6 @@ UT_REGISTER_TEST(MessageBoxTest)
 UT_REGISTER_TEST(MissionItemTest)
 UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(RadioConfigTest)
-UT_REGISTER_TEST(SetupViewTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.

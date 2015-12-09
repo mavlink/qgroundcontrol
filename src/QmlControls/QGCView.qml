@@ -37,8 +37,9 @@ import QGroundControl.FactControls 1.0
 FactPanel {
     id: __rootItem
 
-    property var qgcView:               __rootItem  /// Used by Fact controls for validation dialogs
+    property var qgcView:               __rootItem  ///< Used by Fact controls for validation dialogs
     property bool completedSignalled:   false
+    property real topDialogMargin:      0           ///< Set a top margin for dialog
 
     property var viewPanel
 
@@ -118,9 +119,9 @@ FactPanel {
         }
     }
 
-    function __checkForEarlyDialog() {
+    function __checkForEarlyDialog(title) {
         if (!completedSignalled) {
-            console.warn("showDialog|Message called before QGCView.completed signalled")
+            console.warn("showDialog|Message called before QGCView.completed signalled", title)
         }
     }
 
@@ -130,7 +131,7 @@ FactPanel {
     ///     @param charWidth Width of dialog in characters (-1 for full parent width)
     ///     @param buttons Buttons to show in dialog using StandardButton enum
     function showDialog(component, title, charWidth, buttons) {
-        if (__checkForEarlyDialog()) {
+        if (__checkForEarlyDialog(title)) {
             return
         }
 
@@ -149,7 +150,7 @@ FactPanel {
     }
 
     function showMessage(title, message, buttons) {
-        if (__checkForEarlyDialog()) {
+        if (__checkForEarlyDialog(title)) {
             return
         }
 
@@ -278,11 +279,13 @@ FactPanel {
 
         // This is the main dialog panel which is anchored to the right edge
         Rectangle {
-            id:             __dialogPanel
-            width:          __dialogCharWidth == -1 ? parent.width : defaultTextWidth * __dialogCharWidth
-            height:         parent.height
-            anchors.left:   __transparentSection.right
-            color:          __qgcPal.windowShadeDark
+            id:                 __dialogPanel
+            width:              __dialogCharWidth == -1 ? parent.width : defaultTextWidth * __dialogCharWidth
+            anchors.topMargin:  topDialogMargin
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.left:       __transparentSection.right
+            color:              __qgcPal.windowShadeDark
 
             Rectangle {
                 id:     __header
@@ -303,7 +306,7 @@ FactPanel {
 
                 QGCButton {
                     id:             __rejectButton
-                    anchors.right:  __acceptButton.left
+                    anchors.right:  __acceptButton.visible ?  __acceptButton.left : parent.right
                     anchors.bottom: parent.bottom
 
                     onClicked: __dialogComponentLoader.item.reject()

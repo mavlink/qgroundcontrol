@@ -367,27 +367,30 @@ void Joystick::run(void)
 
 void Joystick::startPolling(Vehicle* vehicle)
 {
-    if (isRunning()) {
-        if (vehicle != _activeVehicle) {
-            // Joystick was previously disabled, but now enabled from config screen
-            
-            if (_calibrationMode == CalibrationModeOff) {
-                qWarning() << "Incorrect usage pattern";
-                return;
-            }
-            
-            _activeVehicle = vehicle;
-            _pollingStartedForCalibration = false;
+    if (vehicle) {
+
+        // If a vehicle is connected, disconnect it
+        if (_activeVehicle) {
+            UAS* uas = _activeVehicle->uas();
+            disconnect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
         }
-    } else {
+
+        // Always set up the new vehicle
         _activeVehicle = vehicle;
-        
-        UAS* uas = _activeVehicle->uas();
-        
-        connect(this, &Joystick::manualControl,         uas, &UAS::setExternalControlSetpoint);
-        // FIXME: ****
-        //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
-        
+
+        // Only connect the new vehicle if it wants joystick data
+        if (vehicle->joystickEnabled()) {
+            _pollingStartedForCalibration = false;
+
+            UAS* uas = _activeVehicle->uas();
+            connect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
+            // FIXME: ****
+            //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
+        }
+    }
+
+
+    if (!isRunning()) {
         _exitThread = false;
         start();
     }
@@ -396,9 +399,12 @@ void Joystick::startPolling(Vehicle* vehicle)
 void Joystick::stopPolling(void)
 {
     if (isRunning()) {
-        UAS* uas = _activeVehicle->uas();
-        
-        disconnect(this, &Joystick::manualControl,          uas, &UAS::setExternalControlSetpoint);
+
+        if (_activeVehicle && _activeVehicle->joystickEnabled()) {
+            UAS* uas = _activeVehicle->uas();
+
+            disconnect(this, &Joystick::manualControl,          uas, &UAS::setExternalControlSetpoint);
+        }
         // FIXME: ****
         //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
         
@@ -455,6 +461,10 @@ QStringList Joystick::actions(void)
     QStringList list;
 
     list << "Arm" << "Disarm";
+
+    if (_activeVehicle) {
+        list << _activeVehicle->flightModes();
+    }
     
     return list;
 }
@@ -544,10 +554,16 @@ void Joystick::stopCalibrationMode(CalibrationMode_t mode)
 
 void Joystick::_buttonAction(const QString& action)
 {
+    if (!_activeVehicle || !_activeVehicle->joystickEnabled()) {
+        return;
+    }
+
     if (action == "Arm") {
         _activeVehicle->setArmed(true);
     } else if (action == "Disarm") {
         _activeVehicle->setArmed(false);
+    } else if (_activeVehicle->flightModes().contains(action)) {
+        _activeVehicle->setFlightMode(action);
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }

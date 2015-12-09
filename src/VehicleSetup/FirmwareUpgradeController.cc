@@ -28,8 +28,7 @@
 #include "FirmwareUpgradeController.h"
 #include "Bootloader.h"
 #include "QGCFileDialog.h"
-#include "QGCMessageBox.h"
-
+#include "QGCApplication.h"
 
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t    stackType;
@@ -68,13 +67,24 @@ FirmwareUpgradeController::FirmwareUpgradeController(void) :
     connect(_threadController, &PX4FirmwareUpgradeThreadController::flashComplete,          this, &FirmwareUpgradeController::_flashComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
     
-    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &FirmwareUpgradeController::_linkDisconnected);
-
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
+}
+
+FirmwareUpgradeController::~FirmwareUpgradeController()
+{
+    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
 }
 
 void FirmwareUpgradeController::startBoardSearch(void)
 {
+    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
+
+    linkMgr->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
+
+    if (!linkMgr->anyActiveLinks()) {
+        // We have to disconnect any inactive links
+        linkMgr->disconnectAll();
+    }
     _bootloaderFound = false;
     _startFlashWhenBootloaderFound = false;
     _threadController->startFindBoardLoop();
@@ -114,6 +124,7 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
             _startFlashWhenBootloaderFound = false;
             break;
         case QGCSerialPortInfo::BoardTypePX4FMUV2:
+        case QGCSerialPortInfo::BoardTypePX4FMUV4:
             _foundBoardType = "Pixhawk";
             _startFlashWhenBootloaderFound = false;
             break;
@@ -182,6 +193,16 @@ void FirmwareUpgradeController::_initFirmwareHash()
     if (!_rgPX4FMUV2Firmware.isEmpty()) {
         return;
     }
+
+    //////////////////////////////////// PX4FMUV4 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgPX4FMV4FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v4_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v4_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v4_default.px4"},
+        { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://firmware.diydrones.com/Copter/stable/PX4-quad/ArduCopter-v4.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      QuadFirmware,           "http://firmware.diydrones.com/Copter/beta/PX4-quad/ArduCopter-v4.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, QuadFirmware,           "http://firmware.diydrones.com/Copter/latest/PX4-quad/ArduCopter-v4.px4"}
+    };
 
     //////////////////////////////////// PX4FMUV2 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMV2FirmwareArray[] = {
@@ -269,7 +290,13 @@ void FirmwareUpgradeController::_initFirmwareHash()
     };
 
     // populate hashes now
-    int size = sizeof(rgPX4FMV2FirmwareArray)/sizeof(rgPX4FMV2FirmwareArray[0]);
+    int size = sizeof(rgPX4FMV4FirmwareArray)/sizeof(rgPX4FMV4FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgPX4FMV4FirmwareArray[i];
+        _rgPX4FMUV4Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
+    size = sizeof(rgPX4FMV2FirmwareArray)/sizeof(rgPX4FMV2FirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgPX4FMV2FirmwareArray[i];
         _rgPX4FMUV2Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
@@ -328,6 +355,10 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
             
         case Bootloader::boardIDPX4FMUV2:
             prgFirmware = _rgPX4FMUV2Firmware;
+            break;
+
+        case Bootloader::boardIDPX4FMUV4:
+            prgFirmware = _rgPX4FMUV4Firmware;
             break;
             
         case Bootloader::boardIDAeroCore:
@@ -505,6 +536,7 @@ void FirmwareUpgradeController::_flashComplete(void)
     _appendStatusLog("Upgrade complete", true);
     _appendStatusLog("------------------------------------------", false);
     emit flashComplete();
+    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
 }
 
 void FirmwareUpgradeController::_error(const QString& errorString)
@@ -556,17 +588,6 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
                               Q_ARG(QVariant, varText));
 }
 
-bool FirmwareUpgradeController::qgcConnections(void)
-{
-    return qgcApp()->toolbox()->linkManager()->anyConnectedLinks();
-}
-
-void FirmwareUpgradeController::_linkDisconnected(LinkInterface* link)
-{
-    Q_UNUSED(link);
-    emit qgcConnectionsChanged(qgcConnections());
-}
-
 void FirmwareUpgradeController::_errorCancel(const QString& msg)
 {
     _appendStatusLog(msg, false);
@@ -574,6 +595,7 @@ void FirmwareUpgradeController::_errorCancel(const QString& msg)
     _appendStatusLog("------------------------------------------", false);
     emit error();
     cancel();
+    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
 }
 
 void FirmwareUpgradeController::_eraseStarted(void)

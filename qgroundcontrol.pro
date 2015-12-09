@@ -69,9 +69,14 @@ QT += \
     xml \
 
 !MobileBuild {
-    QT += \
+QT += \
     printsupport \
     serialport \
+}
+
+MobileBuild {
+QT += \
+    bluetooth \
 }
 
 contains(DEFINES, QGC_NOTIFY_TUNES_ENABLED) {
@@ -185,21 +190,8 @@ INCLUDEPATH += \
     src/ViewWidgets \
 
 FORMS += \
-    src/QGCQmlWidgetHolder.ui \
-    src/ui/LogReplayLinkConfigurationWidget.ui \
     src/ui/MainWindow.ui \
-    src/ui/MAVLinkSettingsWidget.ui \
-    src/ui/MockLinkConfiguration.ui \
-    src/ui/QGCCommConfiguration.ui \
-    src/ui/QGCLinkConfiguration.ui \
-    src/ui/QGCMapRCToParamDialog.ui \
-    src/ui/QGCMAVLinkLogPlayer.ui \
-    src/ui/QGCPluginHost.ui \
-    src/ui/QGCTCPLinkConfiguration.ui \
-    src/ui/QGCUDPLinkConfiguration.ui \
-    src/ui/SettingsDialog.ui \
-    src/ui/uas/QGCUnconnectedInfoWidget.ui \
-    src/ui/uas/UASMessageView.ui \
+    src/QGCQmlWidgetHolder.ui \
 
 !iOSBuild {
 FORMS += \
@@ -208,17 +200,23 @@ FORMS += \
 
 !MobileBuild {
 FORMS += \
+    src/ui/uas/QGCUnconnectedInfoWidget.ui \
+    src/ui/uas/UASMessageView.ui \
     src/ui/Linechart.ui \
     src/ui/MultiVehicleDockWidget.ui \
+    src/ui/MAVLinkSettingsWidget.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
     src/ui/QGCHilXPlaneConfiguration.ui \
+    src/ui/QGCMapRCToParamDialog.ui \
     src/ui/QGCMAVLinkInspector.ui \
+    src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCTabbedInfoView.ui \
     src/ui/QGCUASFileView.ui \
     src/ui/QGCUASFileViewMulti.ui \
+    src/ui/SettingsDialog.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
     src/ui/UASInfo.ui \
@@ -230,11 +228,7 @@ HEADERS += \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
     src/comm/LinkManager.h \
-    src/comm/LogReplayLink.h \
     src/comm/MAVLinkProtocol.h \
-    src/comm/MockLink.h \
-    src/comm/MockLinkFileServer.h \
-    src/comm/MockLinkMissionItemHandler.h \
     src/comm/ProtocolInterface.h \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
@@ -247,17 +241,18 @@ HEADERS += \
     src/Joystick/JoystickManager.h \
     src/LogCompressor.h \
     src/MG.h \
-    src/MissionManager/MissionManager.h \
+    src/MissionManager/MissionCommands.h \
     src/MissionManager/MissionController.h \
+    src/MissionManager/MissionItem.h \
+    src/MissionManager/MissionManager.h \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
     src/QGCConfig.h \
     src/QGCDockWidget.h \
-    src/QGCFileDialog.h \
     src/QGCGeo.h \
     src/QGCLoggingCategory.h \
-    src/QGCMessageBox.h \
+    src/QGCMapPalette.h \
     src/QGCPalette.h \
     src/QGCQmlWidgetHolder.h \
     src/QGCQuickWidget.h \
@@ -270,34 +265,28 @@ HEADERS += \
     src/QmlControls/QGCQGeoCoordinate.h \
     src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
-    src/SerialPortIds.h \
-    src/uas/FileManager.h \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
-    src/ui/LogReplayLinkConfigurationWidget.h \
-    src/ui/MainWindow.h \
-    src/ui/MAVLinkDecoder.h \
-    src/ui/MAVLinkSettingsWidget.h \
-    src/ui/MockLinkConfiguration.h \
-    src/ui/QGCCommConfiguration.h \
-    src/ui/QGCLinkConfiguration.h \
-    src/ui/QGCMapRCToParamDialog.h \
-    src/ui/QGCMAVLinkLogPlayer.h \
-    src/ui/QGCPluginHost.h \
-    src/ui/QGCTCPLinkConfiguration.h \
-    src/ui/QGCUDPLinkConfiguration.h \
-    src/ui/SettingsDialog.h \
     src/ui/toolbar/MainToolBarController.h \
-    src/ui/uas/QGCUnconnectedInfoWidget.h \
-    src/ui/uas/UASMessageView.h \
-    src/MissionItem.h \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
     src/QmlControls/QGCImageProvider.h \
+
+DebugBuild {
+HEADERS += \
+    src/comm/MockLink.h \
+    src/comm/MockLinkFileServer.h \
+    src/comm/MockLinkMissionItemHandler.h \
+}
 
 WindowsBuild {
     PRECOMPILED_HEADER += src/stable_headers.h
     HEADERS += src/stable_headers.h
+}
+
+MobileBuild {
+    HEADERS += \
+    src/comm/BluetoothLink.h \
 }
 
 !iOSBuild {
@@ -309,10 +298,14 @@ HEADERS += \
 
 !MobileBuild {
 HEADERS += \
+    src/comm/LogReplayLink.h \
     src/comm/QGCFlightGearLink.h \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
+    src/QGCFileDialog.h \
+    src/QGCMessageBox.h \
+    src/uas/FileManager.h \
     src/ui/HILDockWidget.h \
     src/ui/linechart/ChartPlot.h \
     src/ui/linechart/IncrementalPlot.h \
@@ -321,7 +314,15 @@ HEADERS += \
     src/ui/linechart/LinechartWidget.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/linechart/ScrollZoomer.h \
+    src/ui/MainWindow.h \
+    src/ui/MAVLinkDecoder.h \
+    src/ui/MAVLinkSettingsWidget.h \
     src/ui/MultiVehicleDockWidget.h \
+    src/ui/QGCMAVLinkLogPlayer.h \
+    src/ui/QGCMapRCToParamDialog.h \
+    src/ui/SettingsDialog.h \
+    src/ui/uas/UASMessageView.h \
+    src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
@@ -348,11 +349,7 @@ SOURCES += \
     src/CmdLineOptParser.cc \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkManager.cc \
-    src/comm/LogReplayLink.cc \
     src/comm/MAVLinkProtocol.cc \
-    src/comm/MockLink.cc \
-    src/comm/MockLinkFileServer.cc \
-    src/comm/MockLinkMissionItemHandler.cc \
     src/comm/TCPLink.cc \
     src/comm/UDPLink.cc \
     src/FlightDisplay/FlightDisplayViewController.cc \
@@ -363,17 +360,19 @@ SOURCES += \
     src/Joystick/JoystickManager.cc \
     src/LogCompressor.cc \
     src/main.cc \
-    src/MissionManager/MissionManager.cc \
+    src/MissionManager/MissionCommands.cc \
     src/MissionManager/MissionController.cc \
+    src/MissionManager/MissionItem.cc \
+    src/MissionManager/MissionManager.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
     src/QGCDockWidget.cc \
-    src/QGCFileDialog.cc \
     src/QGCLoggingCategory.cc \
+    src/QGCMapPalette.cc \
     src/QGCPalette.cc \
-    src/QGCQmlWidgetHolder.cpp \
     src/QGCQuickWidget.cc \
+    src/QGCQmlWidgetHolder.cpp \
     src/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
     src/QGCGeo.cc \
@@ -383,28 +382,18 @@ SOURCES += \
     src/QmlControls/QGCQGeoCoordinate.cc \
     src/QmlControls/QGroundControlQmlGlobal.cc \
     src/QmlControls/QmlObjectListModel.cc \
-    src/uas/FileManager.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
-    src/ui/LogReplayLinkConfigurationWidget.cc \
-    src/ui/MainWindow.cc \
-    src/ui/MAVLinkDecoder.cc \
-    src/ui/MAVLinkSettingsWidget.cc \
-    src/ui/MockLinkConfiguration.cc \
-    src/ui/QGCCommConfiguration.cc \
-    src/ui/QGCLinkConfiguration.cc \
-    src/ui/QGCMapRCToParamDialog.cpp \
-    src/ui/QGCMAVLinkLogPlayer.cc \
-    src/ui/QGCPluginHost.cc \
-    src/ui/QGCTCPLinkConfiguration.cc \
-    src/ui/QGCUDPLinkConfiguration.cc \
-    src/ui/SettingsDialog.cc \
     src/ui/toolbar/MainToolBarController.cc \
-    src/ui/uas/QGCUnconnectedInfoWidget.cc \
-    src/ui/uas/UASMessageView.cc \
-    src/MissionItem.cc \
     src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
     src/QmlControls/QGCImageProvider.cc \
+
+DebugBuild {
+SOURCES += \
+    src/comm/MockLink.cc \
+    src/comm/MockLinkFileServer.cc \
+    src/comm/MockLinkMissionItemHandler.cc \
+}
 
 !iOSBuild {
 SOURCES += \
@@ -413,8 +402,23 @@ SOURCES += \
     src/ui/SerialConfigurationWindow.cc \
 }
 
+MobileBuild {
+    SOURCES += \
+    src/comm/BluetoothLink.cc \
+}
+
 !MobileBuild {
 SOURCES += \
+    src/ui/uas/UASMessageView.cc \
+    src/uas/FileManager.cc \
+    src/ui/uas/QGCUnconnectedInfoWidget.cc \
+    src/ui/SettingsDialog.cc \
+    src/ui/MAVLinkDecoder.cc \
+    src/ui/MAVLinkSettingsWidget.cc \
+    src/ui/QGCMapRCToParamDialog.cpp \
+    src/comm/LogReplayLink.cc \
+    src/QGCFileDialog.cc \
+    src/ui/QGCMAVLinkLogPlayer.cc \
     src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
@@ -426,6 +430,7 @@ SOURCES += \
     src/ui/linechart/LinechartWidget.cc \
     src/ui/linechart/Scrollbar.cc \
     src/ui/linechart/ScrollZoomer.cc \
+    src/ui/MainWindow.cc \
     src/ui/MultiVehicleDockWidget.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/QGCHilConfiguration.cc \
@@ -471,9 +476,9 @@ HEADERS += \
     src/FactSystem/FactSystemTestBase.h \
     src/FactSystem/FactSystemTestGeneric.h \
     src/FactSystem/FactSystemTestPX4.h \
-    src/MissionItemTest.h \
     src/MissionManager/MissionControllerTest.h \
     src/MissionManager/MissionControllerManagerTest.h \
+    src/MissionManager/MissionItemTest.h \
     src/MissionManager/MissionManagerTest.h \
     src/qgcunittest/GeoTest.h \
     src/qgcunittest/FileDialogTest.h \
@@ -484,7 +489,7 @@ HEADERS += \
     src/qgcunittest/MavlinkLogTest.h \
     src/qgcunittest/MessageBoxTest.h \
     src/qgcunittest/MultiSignalSpy.h \
-    src/qgcunittest/PX4RCCalibrationTest.h \
+    src/qgcunittest/RadioConfigTest.h \
     src/qgcunittest/TCPLinkTest.h \
     src/qgcunittest/TCPLoopBackServer.h \
     src/qgcunittest/UnitTest.h \
@@ -494,9 +499,9 @@ SOURCES += \
     src/FactSystem/FactSystemTestBase.cc \
     src/FactSystem/FactSystemTestGeneric.cc \
     src/FactSystem/FactSystemTestPX4.cc \
-    src/MissionItemTest.cc \
     src/MissionManager/MissionControllerTest.cc \
     src/MissionManager/MissionControllerManagerTest.cc \
+    src/MissionManager/MissionItemTest.cc \
     src/MissionManager/MissionManagerTest.cc \
     src/qgcunittest/GeoTest.cc \
     src/qgcunittest/FileDialogTest.cc \
@@ -507,7 +512,7 @@ SOURCES += \
     src/qgcunittest/MavlinkLogTest.cc \
     src/qgcunittest/MessageBoxTest.cc \
     src/qgcunittest/MultiSignalSpy.cc \
-    src/qgcunittest/PX4RCCalibrationTest.cc \
+    src/qgcunittest/RadioConfigTest.cc \
     src/qgcunittest/TCPLinkTest.cc \
     src/qgcunittest/TCPLoopBackServer.cc \
     src/qgcunittest/UnitTest.cc \
@@ -521,7 +526,9 @@ SOURCES += \
 #
 
 INCLUDEPATH += \
+    src/AutoPilotPlugins/Common \
     src/AutoPilotPlugins/PX4 \
+    src/AutoPilotPlugins/APM \
     src/FirmwarePlugin \
     src/Vehicle \
     src/VehicleSetup \
@@ -532,6 +539,10 @@ HEADERS+= \
     src/AutoPilotPlugins/APM/APMAutoPilotPlugin.h \
     src/AutoPilotPlugins/APM/APMAirframeComponent.h \
     src/AutoPilotPlugins/APM/APMComponent.h \
+    src/AutoPilotPlugins/APM/APMRadioComponent.h \
+    src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
+    src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
+    src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
@@ -542,8 +553,7 @@ HEADERS+= \
     src/AutoPilotPlugins/PX4/PowerComponentController.h \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/PX4Component.h \
-    src/AutoPilotPlugins/PX4/RadioComponent.h \
-    src/AutoPilotPlugins/PX4/RadioComponentController.h \
+    src/AutoPilotPlugins/PX4/PX4RadioComponent.h \
     src/AutoPilotPlugins/PX4/SafetyComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponent.h \
     src/AutoPilotPlugins/PX4/SensorsComponentController.h \
@@ -576,6 +586,10 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
     src/AutoPilotPlugins/APM/APMAirframeComponent.cc \
     src/AutoPilotPlugins/APM/APMComponent.cc \
+    src/AutoPilotPlugins/APM/APMRadioComponent.cc \
+    src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
+    src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
+    src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
     src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
@@ -586,8 +600,7 @@ SOURCES += \
     src/AutoPilotPlugins/PX4/PowerComponentController.cc \
     src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/PX4Component.cc \
-    src/AutoPilotPlugins/PX4/RadioComponent.cc \
-    src/AutoPilotPlugins/PX4/RadioComponentController.cc \
+    src/AutoPilotPlugins/PX4/PX4RadioComponent.cc \
     src/AutoPilotPlugins/PX4/SafetyComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponent.cc \
     src/AutoPilotPlugins/PX4/SensorsComponentController.cc \

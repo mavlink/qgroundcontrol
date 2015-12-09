@@ -41,7 +41,9 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
 
+#ifndef __mobile__
 class FileManager;
+#endif
 
 /**
  * @brief Interface for all robots.
@@ -71,7 +73,9 @@ public:
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
 
+#ifndef __mobile__
     virtual FileManager* getFileManager() = 0;
+#endif
 
     /**
      * @brief Get the color for this UAS
@@ -301,13 +305,6 @@ signals:
     void baroStatusChanged(bool supported, bool enabled, bool ok);
     /** @brief Differential pressure / airspeed status changed */
     void airspeedStatusChanged(bool supported, bool enabled, bool ok);
-
-    /** @brief Value of a remote control channel (raw) */
-    void remoteControlChannelRawChanged(int channelId, float raw);
-    /** @brief Value of a remote control channel (scaled)*/
-    void remoteControlChannelScaledChanged(int channelId, float normalized);
-    /** @brief Remote control RSSI changed  (0% - 100%)*/
-    void remoteControlRSSIChanged(uint8_t rssi);
 
     /**
      * @brief Localization quality changed

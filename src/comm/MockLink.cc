@@ -70,7 +70,7 @@ union px4_custom_mode {
 
 float MockLink::_vehicleLatitude =  47.633033f;
 float MockLink::_vehicleLongitude = -122.08794f;
-float MockLink::_vehicleAltitude =  9872.5f;
+float MockLink::_vehicleAltitude =  3.5f;
 
 const char* MockConfiguration::_firmwareTypeKey =   "FirmwareType";
 const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
@@ -98,6 +98,7 @@ MockLink::MockLink(MockConfiguration* config)
         _firmwareType = config->firmwareType();
         _vehicleType = config->vehicleType();
         _sendStatusText = config->sendStatusText();
+        _config->setLink(this);
     }
 
     union px4_custom_mode   px4_cm;
@@ -136,7 +137,7 @@ bool MockLink::_connect(void)
     return true;
 }
 
-bool MockLink::_disconnect(void)
+void MockLink::_disconnect(void)
 {
     if (_connected) {
         _connected = false;
@@ -144,8 +145,6 @@ bool MockLink::_disconnect(void)
         wait();
         emit disconnected();
     }
-
-    return true;
 }
 
 void MockLink::run(void)
@@ -280,7 +279,7 @@ void MockLink::_sendHeartBeat(void)
     mavlink_msg_heartbeat_pack(_vehicleSystemId,
                                _vehicleComponentId,
                                &msg,
-                               MAV_TYPE_QUADROTOR,  // MAV_TYPE
+                               _vehicleType,        // MAV_TYPE
                                _firmwareType,      // MAV_AUTOPILOT
                                _mavBaseMode,        // MAV_MODE
                                _mavCustomMode,      // custom mode
@@ -930,3 +929,58 @@ void MockConfiguration::updateSettings()
         }
     }
 }
+
+MockLink*  MockLink::_startMockLink(MockConfiguration* mockConfig)
+{
+    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
+
+    mockConfig->setDynamic(true);
+    linkManager->linkConfigurations()->append(mockConfig);
+
+    return qobject_cast<MockLink*>(linkManager->createConnectedLink(mockConfig));
+}
+
+MockLink*  MockLink::startPX4MockLink(bool sendStatusText)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("PX4 MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
+    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig->setSendStatusText(sendStatusText);
+
+    return _startMockLink(mockConfig);
+}
+
+MockLink*  MockLink::startGenericMockLink(bool sendStatusText)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("Generic MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_GENERIC);
+    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig->setSendStatusText(sendStatusText);
+
+    return _startMockLink(mockConfig);
+}
+
+MockLink*  MockLink::startAPMArduCopterMockLink(bool sendStatusText)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("APM ArduCopter MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig->setSendStatusText(sendStatusText);
+
+    return _startMockLink(mockConfig);
+}
+
+MockLink*  MockLink::startAPMArduPlaneMockLink(bool sendStatusText)
+{
+    MockConfiguration* mockConfig = new MockConfiguration("APM ArduPlane MockLink");
+
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig->setVehicleType(MAV_TYPE_FIXED_WING);
+    mockConfig->setSendStatusText(sendStatusText);
+
+    return _startMockLink(mockConfig);
+}
+

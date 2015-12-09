@@ -30,7 +30,6 @@
 #include "MultiVehicleManager.h"
 #include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
-#include "QGCMessageBox.h"
 
 #include <QVariant>
 #include <QQmlProperty>
@@ -57,8 +56,7 @@ AirframeComponentController::AirframeComponentController(void) :
     // Load up member variables
     
     bool autostartFound = false;
-    _autostartId = getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->value().toInt();
-
+    _autostartId = getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
 
     
     for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
@@ -99,7 +97,7 @@ AirframeComponentController::~AirframeComponentController()
 void AirframeComponentController::changeAutostart(void)
 {
     if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() > 1) {
-		QGCMessageBox::warning("Airframe Config", "You cannot change airframe configuration while connected to multiple vehicles.");
+        qgcApp()->showMessage("You cannot change airframe configuration while connected to multiple vehicles.");
 		return;
 	}
 	
@@ -114,8 +112,8 @@ void AirframeComponentController::changeAutostart(void)
     connect(sysAutoConfigFact, &Fact::vehicleUpdated, this, &AirframeComponentController::_waitParamWriteSignal);
     
     // We use forceSetValue to params are sent even if the previous value is that same as the new value
-    sysAutoStartFact->forceSetValue(_autostartId);
-    sysAutoConfigFact->forceSetValue(1);
+    sysAutoStartFact->forceSetRawValue(_autostartId);
+    sysAutoConfigFact->forceSetRawValue(1);
 }
 
 void AirframeComponentController::_waitParamWriteSignal(QVariant value)

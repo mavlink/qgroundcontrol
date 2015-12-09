@@ -90,19 +90,24 @@
         <file alias="Signal60.svg">src/ui/toolbar/Images/Signal60.svg</file>
         <file alias="Signal80.svg">src/ui/toolbar/Images/Signal80.svg</file>
         <file alias="Signal100.svg">src/ui/toolbar/Images/Signal100.svg</file>
+        <file alias="TelemRSSI.svg">src/ui/toolbar/Images/TelemRSSI.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
+        <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
     </qresource>
     <qresource prefix="/res">
-        <file alias="Play">resources/Play.svg</file>
-        <file alias="Pause">resources/Pause.svg</file>
-        <file alias="Stop">resources/Stop.svg</file>
-        <file alias="AntennaT">resources/Antenna_T.svg</file>
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
-        <file alias="SplashScreen">resources/SplashScreen.png</file>
-        <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
-        <file alias="PowerButton">resources/PowerButton.svg</file>
+        <file alias="AntennaT">resources/Antenna_T.svg</file>
+        <file alias="ArrowDown.svg">resources/ArrowDown.svg</file>
         <file alias="buttonLeft.svg">resources/buttonLeft.svg</file>
         <file alias="buttonRight.svg">resources/buttonRight.svg</file>
+        <file alias="JoystickBezel.png">resources/JoystickBezel.png</file>
+        <file alias="JoystickBezelLight.png">resources/JoystickBezelLight.png</file>
+        <file alias="Pause">resources/Pause.svg</file>
+        <file alias="Play">resources/Play.svg</file>
+        <file alias="PowerButton">resources/PowerButton.svg</file>
+        <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
+        <file alias="SplashScreen">resources/SplashScreen.png</file>
+        <file alias="Stop">resources/Stop.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
     </qresource>

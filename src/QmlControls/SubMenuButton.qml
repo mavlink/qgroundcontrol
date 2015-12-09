@@ -14,7 +14,7 @@ Button {
     text: "Button"  ///< Pass in your own button text
 
     checkable:  true
-    height:     ScreenTools.defaultFontPixelHeight * 5
+    height:     ScreenTools.defaultFontPixelHeight * 2.5
 
     style: ButtonStyle {
         id: buttonStyle
@@ -30,44 +30,27 @@ Button {
             id:     innerRect
             color:  showHighlight ? qgcPal.buttonHighlight : qgcPal.windowShade
 
-            readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.5
+            QGCColoredImage {
+                id:                     image
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
+                anchors.left:           parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width:                  ScreenTools.defaultFontPixelHeight * 2
+                height:                 ScreenTools.defaultFontPixelHeight * 2
+                fillMode:               Image.PreserveAspectFit
+                smooth:                 true
+                color:                  control.setupComplete ? qgcPal.button : "red"
+                source:                 control.imageResource
+            }
 
             QGCLabel {
                 id:                     titleBar
-                width:                  parent.width
-                height:                 parent.titleHeight
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
+                anchors.left:           image.right
+                anchors.verticalCenter: parent.verticalCenter
                 verticalAlignment:      TextEdit.AlignVCenter
-                horizontalAlignment:    TextEdit.AlignHCenter
                 color:                  showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                font.pixelSize:         ScreenTools.isMobile ? ScreenTools.defaultFontPixelSize * 0.75 : ScreenTools.defaultFontPixelSize
                 text:                   control.text
-
-                Rectangle {
-                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 3
-                    anchors.right:          parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    width:                  ScreenTools.defaultFontPixelWidth
-                    height:                 width
-                    radius:                 width / 2
-                    color:                  control.setupComplete ? "#00d932" : "red"
-                    visible:                control.setupIndicator
-                }
-            }
-
-            Rectangle {
-                anchors.top:    titleBar.bottom
-                anchors.bottom: parent.bottom
-                width:          parent.width
-                color:          qgcPal.windowShadeDark
-
-                QGCColoredImage {
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight * .75
-                    anchors.fill:       parent
-                    fillMode:           Image.PreserveAspectFit
-                    smooth:             true
-                    color:              showHighlight ? qgcPal.buttonHighlight : qgcPal.button
-                    source:             control.imageResource
-                }
             }
         }
 

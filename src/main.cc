@@ -34,7 +34,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QProcessEnvironment>
 
 #include "QGCApplication.h"
-#include "MainWindow.h"
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
@@ -48,6 +47,10 @@ This file is part of the QGROUNDCONTROL project
     #ifdef Q_OS_WIN
         #include <crtdbg.h>
     #endif
+#endif
+
+#ifdef __mobile__
+#include <QtBluetooth/QBluetoothSocket>
 #endif
 
 #include <iostream>
@@ -135,6 +138,10 @@ int main(int argc, char *argv[])
     // anyway to silence the debug output.
 #ifndef __ios__
     qRegisterMetaType<QSerialPort::SerialPortError>();
+#endif
+#ifdef __mobile__
+    qRegisterMetaType<QBluetoothSocket::SocketError>();
+    qRegisterMetaType<QBluetoothServiceInfo>();
 #endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
 #ifndef __mobile__

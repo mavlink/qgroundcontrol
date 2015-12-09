@@ -37,26 +37,45 @@ Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
 
 class MockConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
+
+    Q_PROPERTY(int      firmware    READ firmware           WRITE setFirmware       NOTIFY firmwareChanged)
+    Q_PROPERTY(int      vehicle     READ vehicle            WRITE setVehicle        NOTIFY vehicleChanged)
+    Q_PROPERTY(bool     sendStatus  READ sendStatusText     WRITE setSendStatusText NOTIFY sendStatusChanged)
+
+    // QML Access
+    int     firmware        () { return (int)_firmwareType; }
+    void    setFirmware     (int type) { _firmwareType = (MAV_AUTOPILOT)type; emit firmwareChanged(); }
+    int     vehicle         () { return (int)_vehicleType; }
+    void    setVehicle      (int type) { _vehicleType = (MAV_TYPE)type; emit vehicleChanged(); }
+
     MockConfiguration(const QString& name);
     MockConfiguration(MockConfiguration* source);
 
     MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
-    void setFirmwareType(MAV_AUTOPILOT firmwareType) { _firmwareType = firmwareType; }
+    void setFirmwareType(MAV_AUTOPILOT firmwareType) { _firmwareType = firmwareType; emit firmwareChanged(); }
 
     MAV_TYPE vehicleType(void) { return _vehicleType; }
-    void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; }
+    void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; emit vehicleChanged(); }
 
     /// @param sendStatusText true: mavlink status text messages will be sent for each severity, as well as voice output info message
-    void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; }
     bool sendStatusText(void) { return _sendStatusText; }
+    void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
 
     // Overrides from LinkConfiguration
-    int  type(void) { return LinkConfiguration::TypeMock; }
-    void copyFrom(LinkConfiguration* source);
-    void loadSettings(QSettings& settings, const QString& root);
-    void saveSettings(QSettings& settings, const QString& root);
-    void updateSettings(void);
+    LinkType    type            (void) { return LinkConfiguration::TypeMock; }
+    void        copyFrom        (LinkConfiguration* source);
+    void        loadSettings    (QSettings& settings, const QString& root);
+    void        saveSettings    (QSettings& settings, const QString& root);
+    void        updateSettings  (void);
+    QString     settingsURL     () { return "MockLinkSettings.qml"; }
+
+signals:
+    void firmwareChanged    ();
+    void vehicleChanged     ();
+    void sendStatusChanged  ();
 
 private:
     MAV_AUTOPILOT   _firmwareType;
@@ -90,10 +109,10 @@ public:
     void setAPMMissionResponseMode(bool sendHomePositionOnEmptyList) { _apmSendHomePositionOnEmptyList = sendHomePositionOnEmptyList; }
 
     void emitRemoteControlChannelRawChanged(int channel, uint16_t raw);
-    
+
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t& msg);
-    
+
     MockLinkFileServer* getFileServer(void) { return _fileServer; }
 
     // Virtuals from LinkInterface
@@ -109,23 +128,28 @@ public:
     bool disconnect(void);
 
     LinkConfiguration* getLinkConfiguration() { return _config; }
-    
+
     /// Sets a failure mode for unit testing
     ///     @param failureMode Type of failure to simulate
     ///     @param firstTimeOnly true: fail first call, success subsequent calls, false: fail all calls
     void setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, bool firstTimeOnly);
-    
+
     /// Called to send a MISSION_ACK message while the MissionManager is in idle state
     void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType) { _missionItemHandler.sendUnexpectedMissionAck(ackType); }
-    
+
     /// Called to send a MISSION_ITEM message while the MissionManager is in idle state
     void sendUnexpectedMissionItem(void) { _missionItemHandler.sendUnexpectedMissionItem(); }
-    
+
     /// Called to send a MISSION_REQUEST message while the MissionManager is in idle state
     void sendUnexpectedMissionRequest(void) { _missionItemHandler.sendUnexpectedMissionRequest(); }
-    
+
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
     void resetMissionItemHandler(void) { _missionItemHandler.reset(); }
+
+    static MockLink* startPX4MockLink            (bool sendStatusText);
+    static MockLink* startGenericMockLink        (bool sendStatusText);
+    static MockLink* startAPMArduCopterMockLink  (bool sendStatusText);
+    static MockLink* startAPMArduPlaneMockLink   (bool sendStatusText);
 
 signals:
     /// @brief Used internally to move data to the thread.
@@ -146,7 +170,7 @@ private slots:
 private:
     // From LinkInterface
     virtual bool _connect(void);
-    virtual bool _disconnect(void);
+    virtual void _disconnect(void);
 
     // QThread override
     virtual void run(void);
@@ -170,6 +194,8 @@ private:
     void _sendGpsRawInt(void);
     void _sendStatusTextMessages(void);
 
+    static MockLink* _startMockLink(MockConfiguration* mockConfig);
+
     MockLinkMissionItemHandler  _missionItemHandler;
 
     QString _name;
@@ -191,7 +217,7 @@ private:
     MockConfiguration*  _config;
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
-    
+
     MockLinkFileServer* _fileServer;
 
     bool _sendStatusText;

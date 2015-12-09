@@ -1,6 +1,7 @@
 import QtQuick                  2.2
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
+import QtQuick.Dialogs          1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
@@ -15,6 +16,7 @@ Rectangle {
 
     property var    missionItem ///< MissionItem associated with this editor
     property bool   readOnly    ///< true: read only view, false: full editing view
+    property var    qgcView     ///< QGCView control used for showing dialogs
 
     signal clicked
     signal remove
@@ -40,13 +42,6 @@ Rectangle {
         anchors.right:      parent.right
         height:             valuesRect.visible ? valuesRect.y + valuesRect.height : valuesRect.y
 
-        MissionItemIndexLabel {
-            id:                     label
-            anchors.verticalCenter: commandPicker.verticalCenter
-            isCurrentItem:          missionItem.isCurrentItem
-            label:                  missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
-        }
-
         MouseArea {
             anchors.fill:   parent
             visible:        !missionItem.isCurrentItem
@@ -54,31 +49,55 @@ Rectangle {
             onClicked: _root.clicked()
         }
 
-        QGCComboBox {
-            id:                 commandPicker
-            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 10
-            anchors.left:       label.right
-            anchors.right:      parent.right
-            currentIndex:       missionItem.commandByIndex
-            model:              missionItem.commandNames
-            visible:            missionItem.sequenceNumber != 0 && missionItem.isCurrentItem
-
-            onActivated: missionItem.commandByIndex = index
+        QGCLabel {
+            id:                     label
+            anchors.verticalCenter: commandPicker.verticalCenter
+            color:                  missionItem.isCurrentItem ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            text:                   missionItem.sequenceNumber == 0 ? "H" : missionItem.sequenceNumber
         }
 
-        Rectangle {
-            anchors.fill:   commandPicker
-            color:          qgcPal.button
-            visible:        !commandPicker.visible
+        Image {
+            id:                     rawEdit
+            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+            anchors.right:          parent.right
+            anchors.verticalCenter: commandPicker.verticalCenter
+            width:                  commandPicker.height
+            height:                 commandPicker.height
+            visible:                missionItem.friendlyEditAllowed && missionItem.sequenceNumber != 0 && missionItem.isCurrentItem
+            source:                 "qrc:/qmlimages/CogWheel.svg"
 
-            QGCLabel {
-                id:                 homeLabel
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-                anchors.fill:       parent
-                verticalAlignment:  Text.AlignVCenter
-                text:               missionItem.sequenceNumber == 0 ? "Home" : missionItem.commandName
-                color:              qgcPal.buttonText
+            MouseArea {
+                anchors.fill:   parent
+                onClicked:      missionItem.rawEdit = !missionItem.rawEdit
             }
+        }
+
+        QGCButton {
+            id:                     commandPicker
+            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
+            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+            anchors.left:           label.right
+            anchors.right:          rawEdit.left
+            visible:                missionItem.sequenceNumber != 0 && missionItem.isCurrentItem && !missionItem.rawEdit
+            text:                   missionItem.commandName
+
+            Component {
+                id: commandDialog
+
+                MissionCommandDialog {
+                    missionItem: _root.missionItem
+                }
+            }
+
+            onClicked:              qgcView.showDialog(commandDialog, "Select Mission Command", 40, StandardButton.Cancel)
+        }
+
+        QGCLabel {
+            anchors.fill:       commandPicker
+            visible:            missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem
+            verticalAlignment:  Text.AlignVCenter
+            text:               missionItem.sequenceNumber == 0 ? "Home" : missionItem.commandName
+            color:              qgcPal.buttonText
         }
 
         Rectangle {
@@ -89,7 +108,7 @@ Rectangle {
             anchors.right:      parent.right
             height:             valuesItem.height
             color:              qgcPal.windowShadeDark
-            visible:            missionItem.isCurrentItem
+            visible:            missionItem.sequenceNumber != 0 && missionItem.isCurrentItem
             radius:             _radius
 
             Item {
@@ -110,7 +129,34 @@ Rectangle {
                     QGCLabel {
                         width:      parent.width
                         wrapMode:   Text.WordWrap
-                        text:       missionItem.commandDescription
+                        text:       missionItem.rawEdit ?
+                                        "Provides advanced access to all commands/parameters. Be very careful!" :
+                                        missionItem.commandDescription
+                    }
+
+                    Repeater {
+                        model: missionItem.comboboxFacts
+
+                        Item {
+                            width:  valuesColumn.width
+                            height: comboBoxFact.height
+
+                            QGCLabel {
+                                id:                 comboBoxLabel
+                                anchors.baseline:   comboBoxFact.baseline
+                                text:               object.name
+                                visible:            object.name != ""
+                            }
+
+                            FactComboBox {
+                                id:             comboBoxFact
+                                anchors.right:  parent.right
+                                width:          comboBoxLabel.visible ? _editFieldWidth : parent.width
+                                indexModel:     false
+                                model:          object.enumStrings
+                                fact:           object
+                            }
+                        }
                     }
 
                     Repeater {
@@ -148,7 +194,6 @@ Rectangle {
                         model: missionItem.checkboxFacts
 
                         FactCheckBox {
-                            id:     textField
                             text:   object.name
                             fact:   object
                         }

@@ -52,7 +52,12 @@ This file is part of the QGROUNDCONTROL project
 
 class UDPConfiguration : public LinkConfiguration
 {
+    Q_OBJECT
+
 public:
+
+    Q_PROPERTY(quint16      localPort   READ localPort  WRITE setLocalPort  NOTIFY localPortChanged)
+    Q_PROPERTY(QStringList  hostList    READ hostList                       NOTIFY  hostListChanged)
 
     /*!
      * @brief Regular constructor
@@ -109,7 +114,7 @@ public:
      *
      * @param[in] host Host name in standard formatt, e.g. localhost:14551 or 192.168.1.1:14551
      */
-    void addHost        (const QString& host);
+    Q_INVOKABLE void addHost (const QString host);
 
     /*!
      * @brief Add a target host
@@ -124,7 +129,7 @@ public:
      *
      * @param[in] host Host name, e.g. localhost or 192.168.1.1
      */
-    void removeHost     (const QString& host);
+    Q_INVOKABLE void removeHost  (const QString host);
 
     /*!
      * @brief Set the UDP port we bind to
@@ -133,27 +138,41 @@ public:
      */
     void setLocalPort   (quint16 port);
 
+    /*!
+     * @brief QML Interface
+     */
+    QStringList hostList    () { return _hostList; }
+
     /// From LinkConfiguration
-    int  type() { return LinkConfiguration::TypeUdp; }
-    void copyFrom(LinkConfiguration* source);
-    void loadSettings(QSettings& settings, const QString& root);
-    void saveSettings(QSettings& settings, const QString& root);
-    void updateSettings();
+    LinkType    type            () { return LinkConfiguration::TypeUdp; }
+    void        copyFrom        (LinkConfiguration* source);
+    void        loadSettings    (QSettings& settings, const QString& root);
+    void        saveSettings    (QSettings& settings, const QString& root);
+    void        updateSettings  ();
+    QString     settingsURL     () { return "UdpSettings.qml"; }
+
+signals:
+    void localPortChanged   ();
+    void hostListChanged    ();
+
+private:
+    void _updateHostList    ();
 
 private:
     QMutex _confMutex;
     QMap<QString, int>::iterator _it;
     QMap<QString, int> _hosts;  ///< ("host", port)
+    QStringList _hostList;      ///< Exposed to QML
     quint16 _localPort;
 };
 
 class UDPLink : public LinkInterface
 {
     Q_OBJECT
-    
+
     friend class UDPConfiguration;
     friend class LinkManager;
-    
+
 public:
     void requestReset() { }
     bool isConnected() const;
@@ -200,10 +219,10 @@ private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
     UDPLink(UDPConfiguration* config);
     ~UDPLink();
-    
+
     // From LinkInterface
     virtual bool _connect(void);
-    virtual bool _disconnect(void);
+    virtual void _disconnect(void);
 
     bool _hardwareConnect();
     void _restartConnection();

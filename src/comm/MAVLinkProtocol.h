@@ -158,12 +158,6 @@ public slots:
     void linkConnected(void);
     void linkDisconnected(void);
     
-    /** @brief Send MAVLink message through serial interface */
-    void sendMessage(mavlink_message_t message);
-    /** @brief Send MAVLink message */
-    void sendMessage(LinkInterface* link, mavlink_message_t message);
-    /** @brief Send MAVLink message with correct system / component ID */
-    void sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid);
     /** @brief Set the rate at which heartbeats are emitted */
     void setHeartbeatRate(int rate);
     /** @brief Set the system id of this application */
@@ -238,6 +232,9 @@ protected:
     int systemId;
 
 signals:
+    /// Heartbeat received on link
+    void vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
+
     /** @brief Message received and directly copied via signal */
     void messageReceived(LinkInterface* link, mavlink_message_t message);
     /** @brief Emitted if heartbeat emission mode is changed */
@@ -272,13 +269,13 @@ signals:
      *
      * @param rxerrors receive errors
      * @param fixed count of error corrected packets
-     * @param rssi local signal strength
-     * @param remrssi remote signal strength
+     * @param rssi local signal strength in dBm
+     * @param remrssi remote signal strength in dBm
      * @param txbuf how full the tx buffer is as a percentage
      * @param noise background noise level
      * @param remnoise remote background noise level
      */
-    void radioStatusChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi,
+    void radioStatusChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi,
     unsigned txbuf, unsigned noise, unsigned remnoise);
     
     /// @brief Emitted when a temporary log file is ready for saving
@@ -289,6 +286,9 @@ private slots:
     
 private:
     void _linkStatusChanged(LinkInterface* link, bool connected);
+    void _sendMessage(mavlink_message_t message);
+    void _sendMessage(LinkInterface* link, mavlink_message_t message);
+    void _sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid);
 
 #ifndef __mobile__
     bool _closeLogFile(void);
@@ -297,18 +297,13 @@ private:
 
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay
-    bool _logWasArmed;          ///< true: vehicle was armed during logging
+    bool _logPromptForSave;     ///< true: Prompt for log save when appropriate
 
     QGCTemporaryFile    _tempLogFile;            ///< File to log to
     static const char*  _tempLogFileTemplate;    ///< Template for temporary log file
     static const char*  _logFileExtension;       ///< Extension for log files
 #endif
-    
-    /// List of all links connected to protocol. We keep SharedLinkInterface objects
-    /// which are QSharedPointer's in order to maintain reference counts across threads.
-    /// This way Link deletion works correctly.
-    QList<SharedLinkInterface> _connectedLinks;
-    
+
     QTimer  _heartbeatTimer;    ///< Timer to emit heartbeats
     int     _heartbeatRate;     ///< Heartbeat rate, controls the timer interval
     bool    _heartbeatsEnabled; ///< Enabled/disable heartbeat emission

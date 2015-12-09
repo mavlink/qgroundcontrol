@@ -43,12 +43,11 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
+#ifndef __mobile__
 #include "QGCMAVLinkLogPlayer.h"
-#include "SettingsDialog.h"
+#endif
 #include "MAVLinkDecoder.h"
 #include "QGCApplication.h"
-#include "QGCFileDialog.h"
-#include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 #include "HomePositionManager.h"
 #include "LogCompressor.h"
@@ -56,6 +55,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCImageProvider.h"
 
 #ifndef __mobile__
+#include "SettingsDialog.h"
 #include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
@@ -129,8 +129,7 @@ void MainWindow::deleteInstance(void)
 ///         by MainWindow::_create method. Hence no other code should have access to
 ///         constructor.
 MainWindow::MainWindow()
-    : _autoReconnect(false)
-    , _lowPowerMode(false)
+    : _lowPowerMode(false)
     , _showStatusBar(false)
     , _mainQmlWidgetHolder(NULL)
 {
@@ -160,7 +159,7 @@ MainWindow::MainWindow()
     _mainQmlWidgetHolder->setVisible(true);
 
     _mainQmlWidgetHolder->setContextPropertyObject("controller", this);
-    _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindow.qml"));
+    _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
 
     // Image provider
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
@@ -207,16 +206,6 @@ MainWindow::MainWindow()
     mouse = new Mouse6dofInput(this);
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
 #endif //QGC_MOUSE_ENABLED_LINUX
-
-    // These also cause the screen to redraw so we need to update any OpenGL canvases in QML controls
-    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkConnected,    this, &MainWindow::_linkStateChange);
-    connect(qgcApp()->toolbox()->linkManager(), &LinkManager::linkDisconnected, this, &MainWindow::_linkStateChange);
-
-    // Connect link
-    if (_autoReconnect)
-    {
-        restoreLastUsedConnection();
-    }
 
     // Set low power mode
     enableLowPowerMode(_lowPowerMode);
@@ -434,33 +423,35 @@ void MainWindow::showStatusBarCallback(bool checked)
     checked ? statusBar()->show() : statusBar()->hide();
 }
 
+void MainWindow::acceptWindowClose(void)
+{
+    qgcApp()->toolbox()->linkManager()->shutdown();
+    // The above shutdown causes a flurry of activity as the vehicle components are removed. This in turn
+    // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
+    // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
+    QTimer::singleShot(1500, this, &MainWindow::_closeWindow);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Disallow window close if there are active connections
     if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count()) {
-        QGCMessageBox::StandardButton button =
-            QGCMessageBox::warning(
-                tr("QGroundControl close"),
-                tr("There are still active connections to vehicles. Do you want to disconnect these before closing?"),
-                QMessageBox::Yes | QMessageBox::Cancel,
-                QMessageBox::Cancel);
-        if (button == QMessageBox::Yes) {
-            qgcApp()->toolbox()->linkManager()->disconnectAll();
-            // The above disconnect causes a flurry of activity as the vehicle components are removed. This in turn
-            // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
-            // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
-            QTimer::singleShot(1500, this, &MainWindow::_closeWindow);
-        }
-
+        qgcApp()->showWindowCloseMessage();
         event->ignore();
         return;
     }
+
+    // We still need to shutdown LinkManager even though no active connections so that we don't get any
+    // more auto-connect links during shutdown.
+    qgcApp()->toolbox()->linkManager()->shutdown();
 
     // This will process any remaining flight log save dialogs
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
 
     // Should not be any active connections
-    Q_ASSERT(!qgcApp()->toolbox()->linkManager()->anyConnectedLinks());
+    if (qgcApp()->toolbox()->linkManager()->anyActiveLinks()) {
+        qWarning() << "All links should be disconnected by now";
+    }
 
     // We have to pull out the QmlWidget from the main window and delete it here, before
     // the MainWindow ends up getting deleted. Otherwise the Qml has a reference to MainWindow
@@ -494,7 +485,6 @@ void MainWindow::loadSettings()
     // Why the screaming?
     QSettings settings;
     settings.beginGroup(MAIN_SETTINGS_GROUP);
-    _autoReconnect  = settings.value("AUTO_RECONNECT",      _autoReconnect).toBool();
     _lowPowerMode   = settings.value("LOW_POWER_MODE",      _lowPowerMode).toBool();
     _showStatusBar  = settings.value("SHOW_STATUSBAR",      _showStatusBar).toBool();
     settings.endGroup();
@@ -504,7 +494,6 @@ void MainWindow::storeSettings()
 {
     QSettings settings;
     settings.beginGroup(MAIN_SETTINGS_GROUP);
-    settings.setValue("AUTO_RECONNECT",     _autoReconnect);
     settings.setValue("LOW_POWER_MODE",     _lowPowerMode);
     settings.setValue("SHOW_STATUSBAR",     _showStatusBar);
     settings.endGroup();
@@ -541,20 +530,12 @@ void MainWindow::configureWindowName()
     setWindowTitle(windowname);
 }
 
-void MainWindow::enableAutoReconnect(bool enabled)
-{
-    _autoReconnect = enabled;
-}
-
 /**
 * @brief Create all actions associated to the main window
 *
 **/
 void MainWindow::connectCommonActions()
 {
-    // Connect actions from ui
-    connect(_ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(manageLinks()));
-
     // Audio output
     _ui.actionMuteAudioOutput->setChecked(qgcApp()->toolbox()->audioOutput()->isMuted());
     connect(qgcApp()->toolbox()->audioOutput(), SIGNAL(mutedChanged(bool)), _ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
@@ -564,12 +545,12 @@ void MainWindow::connectCommonActions()
     connect(_ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
 
     // Views actions
-    connect(_ui.actionFlight,   &QAction::triggered,    this, &MainWindow::showFlyView);
-    connect(_ui.actionPlan,     &QAction::triggered,    this, &MainWindow::showPlanView);
-    connect(_ui.actionSetup,    &QAction::triggered,    this, &MainWindow::showSetupView);
-    connect(_ui.actionFlight,   &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
-    connect(_ui.actionPlan,     &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
-    connect(_ui.actionSetup,    &QAction::triggered,    this, &MainWindow::handleActiveViewActionState);
+    connect(_ui.actionFlight,   &QAction::triggered,    qgcApp(),   &QGCApplication::showFlyView);
+    connect(_ui.actionPlan,     &QAction::triggered,    qgcApp(),   &QGCApplication::showPlanView);
+    connect(_ui.actionSetup,    &QAction::triggered,    qgcApp(),   &QGCApplication::showSetupView);
+    connect(_ui.actionFlight,   &QAction::triggered,    this,       &MainWindow::handleActiveViewActionState);
+    connect(_ui.actionPlan,     &QAction::triggered,    this,       &MainWindow::handleActiveViewActionState);
+    connect(_ui.actionSetup,    &QAction::triggered,    this,       &MainWindow::handleActiveViewActionState);
 
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
@@ -587,18 +568,17 @@ void MainWindow::handleActiveViewActionState(bool triggered)
 void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
 {
     if(!QDesktopServices::openUrl(QUrl(url))) {
-        QMessageBox::critical(
-            this,
-            tr("Could not open information in browser"),
-            errorMessage);
+        qgcApp()->showMessage(QString("Could not open information in browser: %1").arg(errorMessage));
     }
 }
 
+#ifndef __mobile__
 void MainWindow::showSettings()
 {
-    SettingsDialog settings(qgcApp()->toolbox()->audioOutput(), qgcApp()->toolbox()->flightMapSettings(), this);
+    SettingsDialog settings(this);
     settings.exec();
 }
+#endif
 
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {
@@ -617,12 +597,6 @@ void MainWindow::_storeCurrentViewState(void)
     settings.setValue(_getWindowGeometryKey(), saveGeometry());
 }
 
-void MainWindow::manageLinks()
-{
-    SettingsDialog settings(qgcApp()->toolbox()->audioOutput(), qgcApp()->toolbox()->flightMapSettings(), this, SettingsDialog::ShowCommLinks);
-    settings.exec();
-}
-
 /// @brief Saves the last used connection
 void MainWindow::saveLastUsedConnection(const QString connection)
 {
@@ -630,28 +604,6 @@ void MainWindow::saveLastUsedConnection(const QString connection)
     QString key(MAIN_SETTINGS_GROUP);
     key += "/LAST_CONNECTION";
     settings.setValue(key, connection);
-}
-
-/// @brief Restore (and connects) the last used connection (if any)
-void MainWindow::restoreLastUsedConnection()
-{
-    // TODO This should check and see of the port/whatever is present
-    // first. That is, if the last connection was to a PX4 on some serial
-    // port, it should check and see if the port is present before making
-    // the connection.
-    QSettings settings;
-    QString key(MAIN_SETTINGS_GROUP);
-    key += "/LAST_CONNECTION";
-    if(settings.contains(key)) {
-        QString connection = settings.value(key).toString();
-        // Create a link for it
-        qgcApp()->toolbox()->linkManager()->createConnectedLink(connection);
-    }
-}
-
-void MainWindow::_linkStateChange(LinkInterface*)
-{
-    emit repaintCanvas();
 }
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
@@ -707,3 +659,8 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
     settings.setValue(_visibleWidgetsKey, widgetNames);
 }
 #endif
+
+QObject* MainWindow::rootQmlObject(void)
+{
+    return _mainQmlWidgetHolder->getRootObject();
+}

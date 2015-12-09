@@ -109,7 +109,7 @@ void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
     if (vehicle)
     {
         UAS* uas = vehicle->uas();
-        
+
         // Connect to the new UAS.
         clearMessages();
         _activeUAS = uas;
@@ -135,18 +135,17 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     case MAV_SEVERITY_ALERT:
     case MAV_SEVERITY_CRITICAL:
     case MAV_SEVERITY_ERROR:
-        //Use set RGB values from given color from QGC
-        style = QString("color: rgb(%1, %2, %3); font-weight:bold").arg(QGC::colorRed.red()).arg(QGC::colorRed.green()).arg(QGC::colorRed.blue());
+        style = QString("color: #f95e5e; font-weight:bold");
         _errorCount++;
         _errorCountTotal++;
         break;
     case MAV_SEVERITY_NOTICE:
     case MAV_SEVERITY_WARNING:
-        style = QString("color: rgb(%1, %2, %3); font-weight:bold").arg(QGC::colorOrange.red()).arg(QGC::colorOrange.green()).arg(QGC::colorOrange.blue());
+        style = QString("color: #f9b55e; font-weight:bold");
         _warningCount++;
         break;
     default:
-        style = QString("color:white; font-weight:bold");
+        style = QString("color: #ffffff; font-weight:bold");
         _normalCount++;
         break;
     }
@@ -187,7 +186,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     // Finally preppend the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
     UASMessage* message = new UASMessage(compId, severity, text);
-    message->_setFormatedText(QString("<p style=\"color:#CCCCCC\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
+    message->_setFormatedText(QString("<p style=\"color:#e0e0f0\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
     _messages.append(message);
     int count = _messages.count();
     if (message->severityIsError()) {
@@ -196,9 +195,9 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     _mutex.unlock();
     emit textMessageReceived(message);
     emit textMessageCountChanged(count);
-    
+
     if (_showErrorsInToolbar && message->severityIsError()) {
-        _app->showToolBarMessage(message->getText());
+        _app->showMessage(message->getText());
     }
 }
 

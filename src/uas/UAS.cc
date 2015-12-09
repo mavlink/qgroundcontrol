@@ -34,10 +34,10 @@
 #endif
 #include <Eigen/Geometry>
 #include "FirmwarePluginManager.h"
-#include "QGCMessageBox.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "Joystick.h"
+#include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 
@@ -108,7 +108,9 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
+#ifndef __mobile__
     fileManager(this, vehicle),
+#endif
 
     attitudeKnown(false),
     attitudeStamped(false),
@@ -178,7 +180,9 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
         componentMulti[i] = false;
     }
 
+#ifndef __mobile__
     connect(mavlink, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), &fileManager, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+#endif
 
     color = UASInterface::getNextColor();
     connect(&statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
@@ -757,80 +761,7 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit homePositionChanged(uasId, pos.latitude / 10000000.0, pos.longitude / 10000000.0, pos.altitude / 1000.0);
         }
             break;
-        case MAVLINK_MSG_ID_RC_CHANNELS:
-        {
-            mavlink_rc_channels_t channels;
-            mavlink_msg_rc_channels_decode(&message, &channels);
 
-            emit remoteControlRSSIChanged(channels.rssi);
-
-            if (channels.chan1_raw != UINT16_MAX && channels.chancount > 0)
-                emit remoteControlChannelRawChanged(0, channels.chan1_raw);
-            if (channels.chan2_raw != UINT16_MAX && channels.chancount > 1)
-                emit remoteControlChannelRawChanged(1, channels.chan2_raw);
-            if (channels.chan3_raw != UINT16_MAX && channels.chancount > 2)
-                emit remoteControlChannelRawChanged(2, channels.chan3_raw);
-            if (channels.chan4_raw != UINT16_MAX && channels.chancount > 3)
-                emit remoteControlChannelRawChanged(3, channels.chan4_raw);
-            if (channels.chan5_raw != UINT16_MAX && channels.chancount > 4)
-                emit remoteControlChannelRawChanged(4, channels.chan5_raw);
-            if (channels.chan6_raw != UINT16_MAX && channels.chancount > 5)
-                emit remoteControlChannelRawChanged(5, channels.chan6_raw);
-            if (channels.chan7_raw != UINT16_MAX && channels.chancount > 6)
-                emit remoteControlChannelRawChanged(6, channels.chan7_raw);
-            if (channels.chan8_raw != UINT16_MAX && channels.chancount > 7)
-                emit remoteControlChannelRawChanged(7, channels.chan8_raw);
-            if (channels.chan9_raw != UINT16_MAX && channels.chancount > 8)
-                emit remoteControlChannelRawChanged(8, channels.chan9_raw);
-            if (channels.chan10_raw != UINT16_MAX && channels.chancount > 9)
-                emit remoteControlChannelRawChanged(9, channels.chan10_raw);
-            if (channels.chan11_raw != UINT16_MAX && channels.chancount > 10)
-                emit remoteControlChannelRawChanged(10, channels.chan11_raw);
-            if (channels.chan12_raw != UINT16_MAX && channels.chancount > 11)
-                emit remoteControlChannelRawChanged(11, channels.chan12_raw);
-            if (channels.chan13_raw != UINT16_MAX && channels.chancount > 12)
-                emit remoteControlChannelRawChanged(12, channels.chan13_raw);
-            if (channels.chan14_raw != UINT16_MAX && channels.chancount > 13)
-                emit remoteControlChannelRawChanged(13, channels.chan14_raw);
-            if (channels.chan15_raw != UINT16_MAX && channels.chancount > 14)
-                emit remoteControlChannelRawChanged(14, channels.chan15_raw);
-            if (channels.chan16_raw != UINT16_MAX && channels.chancount > 15)
-                emit remoteControlChannelRawChanged(15, channels.chan16_raw);
-            if (channels.chan17_raw != UINT16_MAX && channels.chancount > 16)
-                emit remoteControlChannelRawChanged(16, channels.chan17_raw);
-            if (channels.chan18_raw != UINT16_MAX && channels.chancount > 17)
-                emit remoteControlChannelRawChanged(17, channels.chan18_raw);
-
-        }
-            break;
-
-        // TODO: (gg 20150420) PX4 Firmware does not seem to send this message. Don't know what to do about it.
-        case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
-        {
-            mavlink_rc_channels_scaled_t channels;
-            mavlink_msg_rc_channels_scaled_decode(&message, &channels);
-
-            const unsigned int portWidth = 8; // XXX magic number
-
-            emit remoteControlRSSIChanged(channels.rssi);
-            if (static_cast<uint16_t>(channels.chan1_scaled) != UINT16_MAX)
-                emit remoteControlChannelScaledChanged(channels.port * portWidth + 0, channels.chan1_scaled/10000.0f);
-            if (static_cast<uint16_t>(channels.chan2_scaled) != UINT16_MAX)
-                emit remoteControlChannelScaledChanged(channels.port * portWidth + 1, channels.chan2_scaled/10000.0f);
-            if (static_cast<uint16_t>(channels.chan3_scaled) != UINT16_MAX)
-                emit remoteControlChannelScaledChanged(channels.port * portWidth + 2, channels.chan3_scaled/10000.0f);
-            if (static_cast<uint16_t>(channels.chan4_scaled) != UINT16_MAX)
-                emit remoteControlChannelScaledChanged(channels.port * portWidth + 3, channels.chan4_scaled/10000.0f);
-            if (static_cast<uint16_t>(channels.chan5_scaled) != UINT16_MAX)
-                emit remoteControlChannelScaledChanged(channels.port * portWidth + 4, channels.chan5_scaled/10000.0f);
-            if (static_cast<uint16_t>(channels.chan6_scaled) != UINT16_MAX)
-                emit remoteControlChannelScaledChanged(channels.port * portWidth + 5, channels.chan6_scaled/10000.0f);
-            if (static_cast<uint16_t>(channels.chan7_scaled) != UINT16_MAX)
-                emit remoteControlChannelScaledChanged(channels.port * portWidth + 6, channels.chan7_scaled/10000.0f);
-            if (static_cast<uint16_t>(channels.chan8_scaled) != UINT16_MAX)
-                emit remoteControlChannelScaledChanged(channels.port * portWidth + 7, channels.chan8_scaled/10000.0f);
-        }
-            break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
         {
             mavlink_param_value_t rawValue;
@@ -1508,7 +1439,6 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-#ifndef __mobile__
 void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode)
 {
     if (!_vehicle) {
@@ -1690,7 +1620,6 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
     }
 }
-#endif
 
 #ifndef __mobile__
 void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw)

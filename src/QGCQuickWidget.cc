@@ -23,9 +23,9 @@
 
 #include "QGCQuickWidget.h"
 #include "AutoPilotPluginManager.h"
-#include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"
+#include "QGCApplication.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -39,6 +39,7 @@
 QGCQuickWidget::QGCQuickWidget(QWidget* parent) :
     QQuickWidget(parent)
 {
+    setAttribute(Qt::WA_AcceptTouchEvents);
     rootContext()->engine()->addImportPath("qrc:/qml");
     rootContext()->setContextProperty("multiVehicleManager", qgcApp()->toolbox()->multiVehicleManager());
     rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
@@ -59,7 +60,7 @@ bool QGCQuickWidget::setSource(const QUrl& qmlUrl)
             errorList += error.toString();
             errorList += "\n";
         }
-        QGCMessageBox::warning(tr("Qml Error"), tr("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
+        qgcApp()->showMessage(QString("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
         return false;
     }
     

@@ -40,7 +40,8 @@ import QGroundControl.Controllers   1.0
 QGCView {
     id:         _root
 
-    viewPanel:  panel
+    viewPanel:          panel
+    topDialogMargin:    height - mainWindow.availableHeight
 
     // zOrder comes from the Loader in MainWindow.qml
     z: QGroundControl.zOrderTopMost
@@ -58,7 +59,8 @@ QGCView {
     readonly property int       _addMissionItemsButtonAutoOffTimeout:   10000
     readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
 
-    property var    _missionItems:  controller.missionItems
+    property var    _missionItems:          controller.missionItems
+    property var    _currentMissionItem
 
     property bool   gpsLock:        _activeVehicle ? _activeVehicle.coordinateValid : false
     property bool   _firstGpsLock:  true
@@ -91,15 +93,6 @@ QGCView {
         }
     }
 
-    function showDistance(missionItem) {
-        if (missionItem.distance < 0.0) {
-            waypointDistanceDisplay.visible = false
-        } else {
-            waypointDistanceDisplay.distance = missionItem.distance
-            waypointDistanceDisplay.visible = true
-        }
-    }
-
     MissionController {
         id:         controller
 
@@ -129,8 +122,14 @@ QGCView {
     }
 
     function setCurrentItem(index) {
+        _currentMissionItem = undefined
         for (var i=0; i<_missionItems.count; i++) {
-            _missionItems.get(i).isCurrentItem = (i == index)
+            if (i == index) {
+                _currentMissionItem = _missionItems.get(i)
+                _currentMissionItem.isCurrentItem = true
+            } else {
+                _missionItems.get(i).isCurrentItem = false
+            }
         }
     }
 
@@ -147,10 +146,6 @@ QGCView {
                 mapName:        "MissionEditor"
                 latitude:       mainWindow.tabletPosition.latitude
                 longitude:      mainWindow.tabletPosition.longitude
-
-                Component.onCompleted: {
-                    console.log("Init coordinate " + mainWindow.tabletPosition.latitude)
-                }
 
                 readonly property real animationDuration: 500
 
@@ -200,84 +195,34 @@ QGCView {
                     id:             itemDragger
                     x:              missionItemIndicator ? (missionItemIndicator.x + missionItemIndicator.anchorPoint.x - (itemDragger.width / 2)) : 100
                     y:              missionItemIndicator ? (missionItemIndicator.y + missionItemIndicator.anchorPoint.y - (itemDragger.height / 2)) : 100
-                    width:          _radius * 2
-                    height:         _radius * 2
-                    //radius:         _radius
-                    //border.width:   2
-                    //border.color:   "white"
+                    width:          ScreenTools.defaultFontPixelHeight * 2
+                    height:         ScreenTools.defaultFontPixelHeight * 2
                     color:          "transparent"
                     visible:        false
                     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
 
                     property var    missionItem
                     property var    missionItemIndicator
-                    property real   heading: missionItem ? missionItem.heading : 0
+                    property bool   preventCoordinateBindingLoop: false
 
-                    readonly property real _radius:         ScreenTools.defaultFontPixelHeight * 4
-                    readonly property real _arrowHeight:    ScreenTools.defaultFontPixelHeight
+                    onXChanged: liveDrag()
+                    onYChanged: liveDrag()
+
+                    function liveDrag() {
+                        if (!itemDragger.preventCoordinateBindingLoop && Drag.active) {
+                            var point = Qt.point(itemDragger.x + (itemDragger.width  / 2), itemDragger.y + (itemDragger.height / 2))
+                            var coordinate = editorMap.toCoordinate(point)
+                            coordinate.altitude = itemDragger.missionItem.coordinate.altitude
+                            itemDragger.preventCoordinateBindingLoop = true
+                            itemDragger.missionItem.coordinate = coordinate
+                            itemDragger.preventCoordinateBindingLoop = false
+                        }
+                    }
 
                     function clearItem() {
                         itemDragger.visible = false
                         itemDragger.missionItem = undefined
                         itemDragger.missionItemIndicator = undefined
-                    }
-
-                    Image {
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        anchors.top:                parent.top
-                        height:                     parent._arrowHeight
-                        fillMode:                   Image.PreserveAspectFit
-                        mipmap:                     true
-                        smooth:                     true
-                        source:                     "/qmlimages/ArrowHead.svg"
-                    }
-
-                    Image {
-                        id:                     arrowUp
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right:          parent.right
-                        height:                 parent._arrowHeight
-                        fillMode:               Image.PreserveAspectFit
-                        mipmap:                 true
-                        smooth:                 true
-                        source:                 "/qmlimages/ArrowHead.svg"
-                        transform:              Rotation { origin.x: arrowUp.width / 2; origin.y: arrowUp.height / 2; angle: 90}
-                    }
-
-                    Image {
-                        id:                         arrowDown
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        anchors.bottom:             parent.bottom
-                        height:                     parent._arrowHeight
-                        fillMode:                   Image.PreserveAspectFit
-                        mipmap:                     true
-                        smooth:                     true
-                        source:                     "/qmlimages/ArrowHead.svg"
-                        transform:                  Rotation { origin.x: arrowDown.width / 2; origin.y: arrowDown.height / 2; angle: 180}
-                    }
-
-                    Image {
-                        id:                     arrowLeft
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left:           parent.left
-                        height:                 parent._arrowHeight
-                        fillMode:               Image.PreserveAspectFit
-                        mipmap:                 true
-                        smooth:                 true
-                        source:                 "/qmlimages/ArrowHead.svg"
-                        transform:              Rotation { origin.x: arrowLeft.width / 2; origin.y: arrowLeft.height / 2; angle: -90}
-                    }
-
-                    Rectangle {
-                        width:                      _radius * 2
-                        height:                     _radius * 2
-                        radius:                     _radius
-                        anchors.verticalCenter:     parent.verticalCenter
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        border.width:               1
-                        border.color:               "white"
-
-                        readonly property real _radius: ScreenTools.defaultFontPixelWidth / 4
                     }
 
                     Drag.active:    itemDrag.drag.active
@@ -292,20 +237,6 @@ QGCView {
                         drag.minimumY:  0
                         drag.maximumX:  itemDragger.parent.width - parent.width
                         drag.maximumY:  itemDragger.parent.height - parent.height
-
-                        property bool dragActive: drag.active
-
-                        onDragActiveChanged: {
-                            if (!drag.active) {
-                                var point = Qt.point(itemDragger.x + (itemDragger.width  / 2), itemDragger.y + (itemDragger.height / 2))
-                                var coordinate = editorMap.toCoordinate(point)
-                                coordinate.altitude = itemDragger.missionItem.coordinate.altitude
-                                itemDragger.missionItem.coordinate = coordinate
-                                editorMap.latitude = itemDragger.missionItem.coordinate.latitude
-                                editorMap.longitude = itemDragger.missionItem.coordinate.longitude
-                                _root.showDistance(itemDragger.missionItem)
-                            }
-                        }
                     }
                 }
 
@@ -320,37 +251,42 @@ QGCView {
 
                     MissionItemIndicator {
                         id:             itemIndicator
-                        label:          object.homePosition ? "H" : object.sequenceNumber
-                        isCurrentItem:  object.isCurrentItem
                         coordinate:     object.coordinate
                         visible:        object.specifiesCoordinate && (!object.homePosition || object.homePositionValid)
                         z:              QGroundControl.zOrderMapItems
+                        missionItem:    object
 
                         onClicked: setCurrentItem(object.sequenceNumber)
+
+                        function updateItemIndicator()
+                        {
+                            if (object.isCurrentItem && itemIndicator.visible) {
+                                if (object.specifiesCoordinate) {
+                                    // Setup our drag item
+                                    if (object.sequenceNumber != 0) {
+                                        itemDragger.visible = true
+                                        itemDragger.missionItem = Qt.binding(function() { return object })
+                                        itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
+                                    } else {
+                                        itemDragger.clearItem()
+                                    }
+
+                                    // Move to the new position
+                                    editorMap.latitude = object.coordinate.latitude
+                                    editorMap.longitude = object.coordinate.longitude
+                                }
+                            }
+                        }
 
                         Connections {
                             target: object
 
-                            onIsCurrentItemChanged: {
-                                if (object.isCurrentItem) {
-                                    _root.showDistance(object)
-                                    if (object.specifiesCoordinate) {
-                                        // Setup our drag item
-                                        if (object.sequenceNumber != 0) {
-                                            itemDragger.visible = true
-                                            itemDragger.missionItem = Qt.binding(function() { return object })
-                                            itemDragger.missionItemIndicator = Qt.binding(function() { return itemIndicator })
-                                        } else {
-                                            itemDragger.clearItem()
-                                        }
-
-                                        // Move to the new position
-                                        editorMap.latitude = object.coordinate.latitude
-                                        editorMap.longitude = object.coordinate.longitude
-                                    }
-                                }
-                            }
+                            onIsCurrentItemChanged: updateItemIndicator()
+                            onCommandChanged:       updateItemIndicator()
                         }
+
+                        /*
+                          Disabled for now: Not sure if they will come back
 
                         // These are the non-coordinate child mission items attached to this item
                         Row {
@@ -369,6 +305,7 @@ QGCView {
                                 }
                             }
                         }
+                        */
                     }
                 }
 
@@ -380,7 +317,7 @@ QGCView {
                 // Mission Item Editor
                 Item {
                     id:             missionItemEditor
-                    height:         mainWindow.avaiableHeight
+                    height:         mainWindow.availableHeight
                     anchors.bottom: parent.bottom
                     anchors.right:  parent.right
                     width:          _rightPanelWidth
@@ -389,11 +326,10 @@ QGCView {
                     z:              QGroundControl.zOrderTopMost
 
                     ListView {
-                        id:             missionItemSummaryList
                         anchors.fill:   parent
                         spacing:        _margin / 2
                         orientation:    ListView.Vertical
-                        model:          controller.canEdit ? controller.missionItems : 0
+                        model:          controller.missionItems
 
                         property real _maxItemHeight: 0
 
@@ -403,6 +339,7 @@ QGCView {
                             width:          parent.width
                             readOnly:       object.sequenceNumber == 0
                             visible:        !readOnly || object.homePositionValid
+                            qgcView:        _root
 
                             onClicked:  setCurrentItem(object.sequenceNumber)
 
@@ -416,291 +353,7 @@ QGCView {
                             }
                         }
                     } // ListView
-
-                    QGCLabel {
-                        anchors.fill:   parent
-                        visible:        !controller.canEdit
-                        wrapMode:       Text.WordWrap
-                        text:           "The set of mission items you have loaded cannot be edited by QGroundControl. " +
-                                        "You will only be able to save these to a file, or send them to a vehicle."
-                    }
                 } // Item - Mission Item editor
-
-                /*
-                  Home Position Manager temporarily disbled till more work is done on it
-
-                // Home Position Manager
-                Rectangle {
-                    id:             homePositionManager
-                    anchors.top:    parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.right:  parent.right
-                    width:          _rightPanelWidth
-                    visible:        homePositionManagerButton.checked
-                    color:          qgcPal.window
-                    opacity:        _rightPanelOpacity
-                    z:              QGroundControl.zOrderTopMost
-
-                    Column {
-                        anchors.margins:    _margin
-                        anchors.fill:       parent
-                        visible:            !liveHomePositionAvailable
-
-                        QGCLabel {
-                            font.pixelSize: ScreenTools.mediumFontPixelSize
-                            text:           "Flying Field Manager"
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text:       "This is used to save locations associated with your flying field for use while creating missions with no vehicle connection."
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        QGCLabel {
-                            text:       "Select field to use:"
-                        }
-
-                        QGCComboBox {
-                            id:         homePosCombo
-                            width:      parent.width
-                            textRole:   "text"
-                            model:      _homePositionManager.homePositions
-
-                            onCurrentIndexChanged: {
-                                if (currentIndex != -1) {
-                                    var homePos = _homePositionManager.homePositions.get(currentIndex)
-                                    _homePositionName = homePos.name
-                                    offlineHomePosition = homePos.coordinate
-                                    editorMap.latitude = offlineHomePosition.latitude
-                                    editorMap.longitude = offlineHomePosition.longitude
-                                }
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        QGCLabel {
-                            width:      parent.width
-                            wrapMode:   Text.WordWrap
-                            text:       "To add a new flying field, click on the Map to set the position. " +
-                                        "Then give it a new name and click Add/Update. " +
-                                        "To change the current field position, click on the Map to set the new position. " +
-                                        "Then click Add/Update without changing the name."
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: nameField.height
-
-                            QGCLabel {
-                                anchors.baseline:   nameField.baseline
-                                text:               "Name:"
-                            }
-
-                            QGCTextField {
-                                id:             nameField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           _homePositionName
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: offlineLatitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   offlineLatitudeField.baseline
-                                text:               "Lat:"
-                            }
-
-                            QGCTextField {
-                                id:             offlineLatitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           offlineHomePosition.latitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: offlineLongitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   offlineLongitudeField.baseline
-                                text:               "Lon:"
-                            }
-
-                            QGCTextField {
-                                id:             offlineLongitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           offlineHomePosition.longitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: offlineAltitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   offlineAltitudeField.baseline
-                                text:               "Alt:"
-                            }
-
-                            QGCTextField {
-                                id:             offlineAltitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           offlineHomePosition.altitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
-
-                            QGCButton {
-                                text: "Add/Update"
-
-                                onClicked: {
-                                    offlineHomePosition = QtPositioning.coordinate(latitudeField.text, longitudeField.text, altitudeField.text)
-                                    _homePositionManager.updateHomePosition(nameField.text, offlineHomePosition)
-                                    homePosCombo.currentIndex = homePosCombo.find(nameField.text)
-                                }
-                            }
-
-                            QGCButton {
-                                text: "Delete"
-
-                                onClicked: {
-                                    homePosCombo.currentIndex = -1
-                                    _homePositionManager.deleteHomePosition(nameField.text)
-                                    homePosCombo.currentIndex = 0
-                                    var homePos = _homePositionManager.homePositions.get(0)
-                                    _homePositionName = homePos.name
-                                    offlineHomePosition = homePos.coordinate
-                                }
-                            }
-                        }
-                    } // Column - Offline view
-
-                    Column {
-                        anchors.margins:    _margin
-                        anchors.fill:       parent
-                        visible:            liveHomePositionAvailable
-
-                        QGCLabel {
-                            font.pixelSize: ScreenTools.mediumFontPixelSize
-                            text:           "Vehicle Home Position"
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: liveLatitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   liveLatitudeField.baseline
-                                text:               "Lat:"
-                            }
-
-                            QGCLabel {
-                                id:             liveLatitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           liveHomePosition.latitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: liveLongitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   liveLongitudeField.baseline
-                                text:               "Lon:"
-                            }
-
-                            QGCLabel {
-                                id:             liveLongitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           liveHomePosition.longitude
-                            }
-                        }
-
-                        Item {
-                            width: 10
-                            height: ScreenTools.defaultFontPixelHeight / 3
-                        }
-
-                        Item {
-                            width:  parent.width
-                            height: liveAltitudeField.height
-
-                            QGCLabel {
-                                anchors.baseline:   liveAltitudeField.baseline
-                                text:               "Alt:"
-                            }
-
-                            QGCLabel {
-                                id:             liveAltitudeField
-                                anchors.right:  parent.right
-                                width:          _editFieldWidth
-                                text:           liveHomePosition.altitude
-                            }
-                        }
-                    } // Column - Online view
-                } // Item - Home Position Manager
-                */
 
                 //-- Dismiss Drop Down (if any)
                 MouseArea {
@@ -906,27 +559,46 @@ QGCView {
                 }
 
                 Rectangle {
-                    id:                 waypointDistanceDisplay
+                    id:                 waypointValuesDisplay
                     anchors.margins:    margins
                     anchors.left:       parent.left
                     anchors.bottom:     parent.bottom
-                    width:              distanceLabel.width + margins
-                    height:             distanceLabel.height + margins
+                    width:              distanceLabel.width + (margins * 2)
+                    height:             valuesColumn.height + (margins * 2)
                     radius:             ScreenTools.defaultFontPixelWidth
                     color:              qgcPal.window
                     opacity:            0.80
-                    visible:            false
-
-                    property real distance: 0
+                    visible:            _currentMissionItem ? _currentMissionItem.distance != -1 : false
 
                     readonly property real margins: ScreenTools.defaultFontPixelWidth
 
-                    QGCLabel {
-                        id:                         distanceLabel
-                        anchors.verticalCenter:     parent.verticalCenter
-                        anchors.horizontalCenter:   parent.horizonalCenter
-                        color:                      qgcPal.text
-                        text:                       "Distance: " + Math.round(parent.distance) + " meters"
+                    property real _altDifference:   _currentMissionItem ? _currentMissionItem.altDifference : 0
+                    property real _azimuth:         _currentMissionItem ? _currentMissionItem.azimuth : 0
+                    property real _distance:        _currentMissionItem ? _currentMissionItem.distance : 0
+
+                    Column {
+                        id:                 valuesColumn
+                        anchors.leftMargin: parent.margins
+                        anchors.topMargin:  parent.margins
+                        anchors.left:       parent.left
+                        anchors.top:        parent.top
+
+                        QGCLabel {
+                            id:     distanceLabel
+                            color:  qgcPal.text
+                            text:   "Distance: " + Math.round(waypointValuesDisplay._distance) + " meters"
+                        }
+
+                        QGCLabel {
+                            color:  qgcPal.text
+                            text:   "Alt diff: " + Math.round(waypointValuesDisplay._altDifference) + " meters"
+                        }
+
+                        QGCLabel {
+                            color:  qgcPal.text
+                            text:   "Azimuth: " + Math.round(waypointValuesDisplay._azimuth)
+                        }
+
                     }
                 }
             } // FlightMap
@@ -975,6 +647,7 @@ QGCView {
 
             Row {
                 spacing: ScreenTools.defaultFontPixelWidth
+                visible: !ScreenTools.isMobile
 
                 QGCButton {
                     text:       "Save to file..."

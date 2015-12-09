@@ -48,7 +48,6 @@ exists($$MAVLINKPATH/common) {
             error(Only a single mavlink dialect can be specified in MAVLINK_CONF)
         }
     } else {
-        warning("No MAVLink dialect specified, only common messages supported.")
         INCLUDEPATH += $$MAVLINKPATH/common
     }
 } else {

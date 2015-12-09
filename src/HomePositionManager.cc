@@ -31,7 +31,6 @@
 #include "UASInterface.h"
 #include "HomePositionManager.h"
 #include "QGC.h"
-#include "QGCMessageBox.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 
@@ -50,14 +49,13 @@ HomePositionManager::HomePositionManager(QGCApplication* app)
     , homeLon(8.549444)
     , homeAlt(470.0)
 {
-
+    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl", 1, 0, "HomePositionManager", "Reference only");
 }
 
 void HomePositionManager::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    qmlRegisterUncreatableType<HomePositionManager> ("QGroundControl", 1, 0, "HomePositionManager", "Reference only");
 
     _loadSettings();
 }

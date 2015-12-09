@@ -55,12 +55,7 @@ FlightModesComponentController::FlightModesComponentController(void) :
     _init();
     _validateConfiguration();
     
-    connect(_uas, &UASInterface::remoteControlChannelRawChanged, this, &FlightModesComponentController::_remoteControlChannelRawChanged);
-}
-
-FlightModesComponentController::~FlightModesComponentController()
-{
-    disconnect(_uas, &UASInterface::remoteControlChannelRawChanged, this, &FlightModesComponentController::_remoteControlChannelRawChanged);
+    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &FlightModesComponentController::_rcChannelsChanged);
 }
 
 void FlightModesComponentController::_init(void)
@@ -78,10 +73,10 @@ void FlightModesComponentController::_init(void)
         
         QVariant value;
         
-        _rgRCMin[channel] = getParameterFact(FactSystem::defaultComponentId, rcMinParam)->value().toInt();
-        _rgRCMax[channel] = getParameterFact(FactSystem::defaultComponentId, rcMaxParam)->value().toInt();
+        _rgRCMin[channel] = getParameterFact(FactSystem::defaultComponentId, rcMinParam)->rawValue().toInt();
+        _rgRCMax[channel] = getParameterFact(FactSystem::defaultComponentId, rcMaxParam)->rawValue().toInt();
         
-        float floatReversed = getParameterFact(-1, rcRevParam)->value().toFloat();
+        float floatReversed = getParameterFact(-1, rcRevParam)->rawValue().toFloat();
         _rgRCReversed[channel] = floatReversed == -1.0f;
         
         _rcValues[channel] = 0.0;
@@ -89,7 +84,7 @@ void FlightModesComponentController::_init(void)
 
     // RC_CHAN_CNT parameter is set by Radio Cal to specify the number of radio channels.
     if (parameterExists(FactSystem::defaultComponentId, "RC_CHAN_CNT")) {
-        _channelCount = getParameterFact(FactSystem::defaultComponentId, "RC_CHAN_CNT")->value().toInt();
+        _channelCount = getParameterFact(FactSystem::defaultComponentId, "RC_CHAN_CNT")->rawValue().toInt();
     } else {
         _channelCount =_chanMax;
     }
@@ -98,9 +93,9 @@ void FlightModesComponentController::_init(void)
         _channelCount = _chanMax;
     }
     
-    int modeChannel = getParameterFact(-1, "RC_MAP_MODE_SW")->value().toInt();
-    int posCtlChannel = getParameterFact(-1, "RC_MAP_POSCTL_SW")->value().toInt();
-    int loiterChannel = getParameterFact(-1, "RC_MAP_LOITER_SW")->value().toInt();
+    int modeChannel = getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt();
+    int posCtlChannel = getParameterFact(-1, "RC_MAP_POSCTL_SW")->rawValue().toInt();
+    int loiterChannel = getParameterFact(-1, "RC_MAP_LOITER_SW")->rawValue().toInt();
     
     if (posCtlChannel == 0) {
         // PosCtl disabled so AltCtl must move back to main Mode switch
@@ -125,7 +120,7 @@ void FlightModesComponentController::_init(void)
     
     attitudeParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2";
     foreach(QString attitudeParam, attitudeParams) {
-        int channel = getParameterFact(-1, attitudeParam)->value().toInt();
+        int channel = getParameterFact(-1, attitudeParam)->rawValue().toInt();
         if (channel != 0) {
             usedChannels << channel;
         }
@@ -168,7 +163,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     switchParams << "RC_MAP_MODE_SW"  << "RC_MAP_ACRO_SW"  << "RC_MAP_POSCTL_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_OFFB_SW";
     
     for(int i=0; i<switchParams.count(); i++) {
-        int map = getParameterFact(FactSystem::defaultComponentId, switchParams[i])->value().toInt();
+        int map = getParameterFact(FactSystem::defaultComponentId, switchParams[i])->rawValue().toInt();
         switchMappings << map;
         
         if (map < 0 || map > _channelCount) {
@@ -184,7 +179,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     attitudeParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2";
 
     for (int i=0; i<attitudeParams.count(); i++) {
-        int map = getParameterFact(FactSystem::defaultComponentId, attitudeParams[i])->value().toInt();
+        int map = getParameterFact(FactSystem::defaultComponentId, attitudeParams[i])->rawValue().toInt();
 
         for (int j=0; j<switchParams.count(); j++) {
             if (map != 0 && map == switchMappings[j]) {
@@ -201,7 +196,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     thresholdParams << "RC_ASSIST_TH" << "RC_AUTO_TH" << "RC_ACRO_TH" << "RC_POSCTL_TH" << "RC_LOITER_TH" << "RC_RETURN_TH" << "RC_OFFB_TH";
     
     foreach(QString thresholdParam, thresholdParams) {
-        float threshold = getParameterFact(-1, thresholdParam)->value().toFloat();
+        float threshold = getParameterFact(-1, thresholdParam)->rawValue().toFloat();
         if (threshold < 0.0f || threshold > 1.0f) {
             _validConfiguration = false;
             _configurationErrors += QString("%1 is set to %2. Threshold must between 0.0 and 1.0 (inclusive).\n").arg(thresholdParam).arg(threshold);
@@ -209,26 +204,28 @@ void FlightModesComponentController::_validateConfiguration(void)
     }
 }
 
-/// @brief This routine is called whenever a raw value for an RC channel changes.
-///     @param chan RC channel on which signal is coming from (0-based)
-///     @param fval Current value for channel
-void FlightModesComponentController::_remoteControlChannelRawChanged(int chan, float fval)
+/// Connected to Vehicle::rcChannelsChanged signal
+void FlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
-    Q_ASSERT(chan >= 0 && chan <= _chanMax);
-    
-    if (fval < _rgRCMin[chan]) {
-        fval= _rgRCMin[chan];
+    for (int channel=0; channel<channelCount; channel++) {
+        int channelValue = pwmValues[channel];
+
+        if (channelValue != -1) {
+            if (channelValue < _rgRCMin[channel]) {
+                channelValue= _rgRCMin[channel];
+            }
+            if (channelValue > _rgRCMax[channel]) {
+                channelValue= _rgRCMax[channel];
+            }
+
+            float percentRange = (channelValue - _rgRCMin[channel]) / (float)(_rgRCMax[channel] - _rgRCMin[channel]);
+            if (_rgRCReversed[channel]) {
+                percentRange = 1.0 - percentRange;
+            }
+
+            _rcValues[channel] = percentRange;
+        }
     }
-    if (fval > _rgRCMax[chan]) {
-        fval= _rgRCMax[chan];
-    }
-    
-    float percentRange = (fval - _rgRCMin[chan]) / (float)(_rgRCMax[chan] - _rgRCMin[chan]);
-    if (_rgRCReversed[chan]) {
-        percentRange = 1.0 - percentRange;
-    }
-    
-    _rcValues[chan] = percentRange;
     
     _recalcModeSelections();
     
@@ -239,7 +236,7 @@ double FlightModesComponentController::_switchLiveRange(const QString& param)
 {
     QVariant value;
     
-    int channel = getParameterFact(-1, param)->value().toInt();
+    int channel = getParameterFact(-1, param)->rawValue().toInt();
     if (channel == 0) {
         return 0.0;
     } else {
@@ -269,7 +266,7 @@ double FlightModesComponentController::acroModeRcValue(void)
 
 double FlightModesComponentController::altCtlModeRcValue(void)
 {
-    int posCtlSwitchChannel = getParameterFact(-1, "RC_MAP_POSCTL_SW")->value().toInt();
+    int posCtlSwitchChannel = getParameterFact(-1, "RC_MAP_POSCTL_SW")->rawValue().toInt();
     
     if (posCtlSwitchChannel == 0) {
         return _switchLiveRange("RC_MAP_MODE_SW");
@@ -285,8 +282,8 @@ double FlightModesComponentController::posCtlModeRcValue(void)
 
 double FlightModesComponentController::missionModeRcValue(void)
 {
-    int returnSwitchChannel = getParameterFact(-1, "RC_MAP_RETURN_SW")->value().toInt();
-    int loiterSwitchChannel = getParameterFact(-1, "RC_MAP_LOITER_SW")->value().toInt();
+    int returnSwitchChannel = getParameterFact(-1, "RC_MAP_RETURN_SW")->rawValue().toInt();
+    int loiterSwitchChannel = getParameterFact(-1, "RC_MAP_LOITER_SW")->rawValue().toInt();
 
     const char* switchChannelParam = "RC_MAP_MODE_SW";
     
@@ -334,20 +331,20 @@ void FlightModesComponentController::_recalcModeSelections(void)
     _offboardModeSelected = false;
     
     // Convert channels to 0-based, -1 signals not mapped
-    int modeSwitchChannel =     getParameterFact(-1, "RC_MAP_MODE_SW")->value().toInt() - 1;
-    int acroSwitchChannel =     getParameterFact(-1, "RC_MAP_ACRO_SW")->value().toInt() - 1;
-    int posCtlSwitchChannel =   getParameterFact(-1, "RC_MAP_POSCTL_SW")->value().toInt() - 1;
-    int loiterSwitchChannel =   getParameterFact(-1, "RC_MAP_LOITER_SW")->value().toInt() - 1;
-    int returnSwitchChannel =   getParameterFact(-1, "RC_MAP_RETURN_SW")->value().toInt() - 1;
-    int offboardSwitchChannel = getParameterFact(-1, "RC_MAP_OFFB_SW")->value().toInt() - 1;
+    int modeSwitchChannel =     getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt() - 1;
+    int acroSwitchChannel =     getParameterFact(-1, "RC_MAP_ACRO_SW")->rawValue().toInt() - 1;
+    int posCtlSwitchChannel =   getParameterFact(-1, "RC_MAP_POSCTL_SW")->rawValue().toInt() - 1;
+    int loiterSwitchChannel =   getParameterFact(-1, "RC_MAP_LOITER_SW")->rawValue().toInt() - 1;
+    int returnSwitchChannel =   getParameterFact(-1, "RC_MAP_RETURN_SW")->rawValue().toInt() - 1;
+    int offboardSwitchChannel = getParameterFact(-1, "RC_MAP_OFFB_SW")->rawValue().toInt() - 1;
     
-    double autoThreshold =      getParameterFact(-1, "RC_AUTO_TH")->value().toDouble();
-    double assistThreshold =    getParameterFact(-1, "RC_ASSIST_TH")->value().toDouble();
-    double acroThreshold =      getParameterFact(-1, "RC_ACRO_TH")->value().toDouble();
-    double posCtlThreshold =    getParameterFact(-1, "RC_POSCTL_TH")->value().toDouble();
-    double loiterThreshold =    getParameterFact(-1, "RC_LOITER_TH")->value().toDouble();
-    double returnThreshold =    getParameterFact(-1, "RC_RETURN_TH")->value().toDouble();
-    double offboardThreshold =  getParameterFact(-1, "RC_OFFB_TH")->value().toDouble();
+    double autoThreshold =      getParameterFact(-1, "RC_AUTO_TH")->rawValue().toDouble();
+    double assistThreshold =    getParameterFact(-1, "RC_ASSIST_TH")->rawValue().toDouble();
+    double acroThreshold =      getParameterFact(-1, "RC_ACRO_TH")->rawValue().toDouble();
+    double posCtlThreshold =    getParameterFact(-1, "RC_POSCTL_TH")->rawValue().toDouble();
+    double loiterThreshold =    getParameterFact(-1, "RC_LOITER_TH")->rawValue().toDouble();
+    double returnThreshold =    getParameterFact(-1, "RC_RETURN_TH")->rawValue().toDouble();
+    double offboardThreshold =  getParameterFact(-1, "RC_OFFB_TH")->rawValue().toDouble();
     
     if (modeSwitchChannel >= 0) {
         if (offboardSwitchChannel >= 0 && _rcValues[offboardSwitchChannel] >= offboardThreshold) {
@@ -382,12 +379,12 @@ void FlightModesComponentController::_recalcModeSelections(void)
 
 void FlightModesComponentController::_recalcModeRows(void)
 {
-    int modeSwitchChannel =     getParameterFact(-1, "RC_MAP_MODE_SW")->value().toInt();
-    int acroSwitchChannel =     getParameterFact(-1, "RC_MAP_ACRO_SW")->value().toInt();
-    int posCtlSwitchChannel =   getParameterFact(-1, "RC_MAP_POSCTL_SW")->value().toInt();
-    int loiterSwitchChannel =   getParameterFact(-1, "RC_MAP_LOITER_SW")->value().toInt();
-    int returnSwitchChannel =   getParameterFact(-1, "RC_MAP_RETURN_SW")->value().toInt();
-    int offboardSwitchChannel = getParameterFact(-1, "RC_MAP_OFFB_SW")->value().toInt();
+    int modeSwitchChannel =     getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt();
+    int acroSwitchChannel =     getParameterFact(-1, "RC_MAP_ACRO_SW")->rawValue().toInt();
+    int posCtlSwitchChannel =   getParameterFact(-1, "RC_MAP_POSCTL_SW")->rawValue().toInt();
+    int loiterSwitchChannel =   getParameterFact(-1, "RC_MAP_LOITER_SW")->rawValue().toInt();
+    int returnSwitchChannel =   getParameterFact(-1, "RC_MAP_RETURN_SW")->rawValue().toInt();
+    int offboardSwitchChannel = getParameterFact(-1, "RC_MAP_OFFB_SW")->rawValue().toInt();
     
     if (modeSwitchChannel == 0) {
         _acroModeRow =      0;
@@ -477,65 +474,65 @@ double FlightModesComponentController::manualModeThreshold(void)
 
 double FlightModesComponentController::assistModeThreshold(void)
 {
-    return getParameterFact(-1, "RC_ASSIST_TH")->value().toDouble();
+    return getParameterFact(-1, "RC_ASSIST_TH")->rawValue().toDouble();
 }
 
 double FlightModesComponentController::autoModeThreshold(void)
 {
-    return getParameterFact(-1, "RC_AUTO_TH")->value().toDouble();
+    return getParameterFact(-1, "RC_AUTO_TH")->rawValue().toDouble();
 }
 
 double FlightModesComponentController::acroModeThreshold(void)
 {
-    return getParameterFact(-1, "RC_ACRO_TH")->value().toDouble();
+    return getParameterFact(-1, "RC_ACRO_TH")->rawValue().toDouble();
 }
 
 double FlightModesComponentController::altCtlModeThreshold(void)
 {
-    return _assistModeVisible ? 0.0 : getParameterFact(-1, "RC_ASSIST_TH")->value().toDouble();
+    return _assistModeVisible ? 0.0 : getParameterFact(-1, "RC_ASSIST_TH")->rawValue().toDouble();
 }
 
 double FlightModesComponentController::posCtlModeThreshold(void)
 {
-    return getParameterFact(-1, "RC_POSCTL_TH")->value().toDouble();
+    return getParameterFact(-1, "RC_POSCTL_TH")->rawValue().toDouble();
 }
 
 double FlightModesComponentController::missionModeThreshold(void)
 {
-    return _autoModeVisible ? 0.0 : getParameterFact(-1, "RC_AUTO_TH")->value().toDouble();
+    return _autoModeVisible ? 0.0 : getParameterFact(-1, "RC_AUTO_TH")->rawValue().toDouble();
 }
 
 
 double FlightModesComponentController::loiterModeThreshold(void)
 {
-    return getParameterFact(-1, "RC_LOITER_TH")->value().toDouble();
+    return getParameterFact(-1, "RC_LOITER_TH")->rawValue().toDouble();
 }
 
 double FlightModesComponentController::returnModeThreshold(void)
 {
-    return getParameterFact(-1, "RC_RETURN_TH")->value().toDouble();
+    return getParameterFact(-1, "RC_RETURN_TH")->rawValue().toDouble();
 }
 
 double FlightModesComponentController::offboardModeThreshold(void)
 {
-    return getParameterFact(-1, "RC_OFFB_TH")->value().toDouble();
+    return getParameterFact(-1, "RC_OFFB_TH")->rawValue().toDouble();
 }
 
 void FlightModesComponentController::setAssistModeThreshold(double threshold)
 {
-    getParameterFact(-1, "RC_ASSIST_TH")->setValue(threshold);
+    getParameterFact(-1, "RC_ASSIST_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
 void FlightModesComponentController::setAutoModeThreshold(double threshold)
 {
-    getParameterFact(-1, "RC_AUTO_TH")->setValue(threshold);
+    getParameterFact(-1, "RC_AUTO_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
 void FlightModesComponentController::setAcroModeThreshold(double threshold)
 {
-    getParameterFact(-1, "RC_ACRO_TH")->setValue(threshold);
+    getParameterFact(-1, "RC_ACRO_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
@@ -546,7 +543,7 @@ void FlightModesComponentController::setAltCtlModeThreshold(double threshold)
 
 void FlightModesComponentController::setPosCtlModeThreshold(double threshold)
 {
-    getParameterFact(-1, "RC_POSCTL_TH")->setValue(threshold);
+    getParameterFact(-1, "RC_POSCTL_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
@@ -557,19 +554,19 @@ void FlightModesComponentController::setMissionModeThreshold(double threshold)
 
 void FlightModesComponentController::setLoiterModeThreshold(double threshold)
 {
-    getParameterFact(-1, "RC_LOITER_TH")->setValue(threshold);
+    getParameterFact(-1, "RC_LOITER_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
 void FlightModesComponentController::setReturnModeThreshold(double threshold)
 {
-    getParameterFact(-1, "RC_RETURN_TH")->setValue(threshold);
+    getParameterFact(-1, "RC_RETURN_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
 void FlightModesComponentController::setOffboardModeThreshold(double threshold)
 {
-    getParameterFact(-1, "RC_OFFB_TH")->setValue(threshold);
+    getParameterFact(-1, "RC_OFFB_TH")->setRawValue(threshold);
     _recalcModeSelections();
 }
 
@@ -580,7 +577,7 @@ int FlightModesComponentController::_channelToChannelIndex(int channel)
 
 int FlightModesComponentController::_channelToChannelIndex(const QString& channelParam)
 {
-    return _channelToChannelIndex(getParameterFact(-1, channelParam)->value().toInt());
+    return _channelToChannelIndex(getParameterFact(-1, channelParam)->rawValue().toInt());
 }
 
 int FlightModesComponentController::manualModeChannelIndex(void)
@@ -605,7 +602,7 @@ int FlightModesComponentController::acroModeChannelIndex(void)
 
 int FlightModesComponentController::altCtlModeChannelIndex(void)
 {
-    int posCtlSwitchChannel = getParameterFact(-1, "RC_MAP_POSCTL_SW")->value().toInt();
+    int posCtlSwitchChannel = getParameterFact(-1, "RC_MAP_POSCTL_SW")->rawValue().toInt();
     
     if (posCtlSwitchChannel == 0) {
         return _channelToChannelIndex("RC_MAP_MODE_SW");
@@ -626,7 +623,7 @@ int FlightModesComponentController::loiterModeChannelIndex(void)
 
 int FlightModesComponentController::missionModeChannelIndex(void)
 {
-    int loiterSwitchChannel = getParameterFact(-1, "RC_MAP_LOITER_SW")->value().toInt();
+    int loiterSwitchChannel = getParameterFact(-1, "RC_MAP_LOITER_SW")->rawValue().toInt();
     
     if (loiterSwitchChannel == 0) {
         return _channelToChannelIndex("RC_MAP_MODE_SW");
@@ -652,7 +649,7 @@ int FlightModesComponentController::_channelIndexToChannel(int index)
 
 void FlightModesComponentController::setManualModeChannelIndex(int index)
 {
-    getParameterFact(-1, "RC_MAP_MODE_SW")->setValue(_channelIndexToChannel(index));
+    getParameterFact(-1, "RC_MAP_MODE_SW")->setRawValue(_channelIndexToChannel(index));
     
     _recalcModeSelections();
     _recalcModeRows();
@@ -662,7 +659,7 @@ void FlightModesComponentController::setManualModeChannelIndex(int index)
 
 void FlightModesComponentController::setAcroModeChannelIndex(int index)
 {
-    getParameterFact(-1, "RC_MAP_ACRO_SW")->setValue(_channelIndexToChannel(index));
+    getParameterFact(-1, "RC_MAP_ACRO_SW")->setRawValue(_channelIndexToChannel(index));
     
     _recalcModeSelections();
     _recalcModeRows();
@@ -672,14 +669,14 @@ void FlightModesComponentController::setPosCtlModeChannelIndex(int index)
 {
     int channel = _channelIndexToChannel(index);
     
-    getParameterFact(-1, "RC_MAP_POSCTL_SW")->setValue(channel);
+    getParameterFact(-1, "RC_MAP_POSCTL_SW")->setRawValue(channel);
     
     if (channel == 0) {
         // PosCtl disabled so AltCtl must move back to main Mode switch
         _assistModeVisible = false;
     } else {
         // Assist mode is visible if AltCtl/PosCtl are on seperate channel from main Mode switch
-        _assistModeVisible = channel != getParameterFact(-1, "RC_MAP_MODE_SW")->value().toInt();
+        _assistModeVisible = channel != getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt();
     }
     
     emit modesVisibleChanged();
@@ -694,14 +691,14 @@ void FlightModesComponentController::setLoiterModeChannelIndex(int index)
 {
     int channel = _channelIndexToChannel(index);
     
-    getParameterFact(-1, "RC_MAP_LOITER_SW")->setValue(channel);
+    getParameterFact(-1, "RC_MAP_LOITER_SW")->setRawValue(channel);
     
     if (channel == 0) {
         // Loiter disabled so Mission must move back to main Mode switch
         _autoModeVisible = false;
     } else {
         // Auto mode is visible if Mission/Loiter are on seperate channel from main Mode switch
-        _autoModeVisible = channel != getParameterFact(-1, "RC_MAP_MODE_SW")->value().toInt();
+        _autoModeVisible = channel != getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt();
     }
     
     emit modesVisibleChanged();
@@ -714,7 +711,7 @@ void FlightModesComponentController::setLoiterModeChannelIndex(int index)
 
 void FlightModesComponentController::setReturnModeChannelIndex(int index)
 {
-    getParameterFact(-1, "RC_MAP_RETURN_SW")->setValue(_channelIndexToChannel(index));
+    getParameterFact(-1, "RC_MAP_RETURN_SW")->setRawValue(_channelIndexToChannel(index));
     _recalcModeSelections();
     _recalcModeRows();
     emit channelIndicesChanged();
@@ -723,7 +720,7 @@ void FlightModesComponentController::setReturnModeChannelIndex(int index)
 
 void FlightModesComponentController::setOffboardModeChannelIndex(int index)
 {
-    getParameterFact(-1, "RC_MAP_OFFB_SW")->setValue(_channelIndexToChannel(index));
+    getParameterFact(-1, "RC_MAP_OFFB_SW")->setRawValue(_channelIndexToChannel(index));
     _recalcModeSelections();
     _recalcModeRows();
     emit channelIndicesChanged();
@@ -739,17 +736,17 @@ void FlightModesComponentController::generateThresholds(void)
     thresholdParams << "RC_ASSIST_TH" << "RC_AUTO_TH" << "RC_ACRO_TH" << "RC_POSCTL_TH" << "RC_LOITER_TH" << "RC_RETURN_TH" << "RC_OFFB_TH";
     
     foreach(QString thresholdParam, thresholdParams) {
-        getParameterFact(-1, thresholdParam)->setValue(0.0f);
+        getParameterFact(-1, thresholdParam)->setRawValue(0.0f);
     }
     
     // Redistribute
     
-    int modeChannel =       getParameterFact(-1, "RC_MAP_MODE_SW")->value().toInt();
-    int acroChannel =       getParameterFact(-1, "RC_MAP_ACRO_SW")->value().toInt();
-    int posCtlChannel =     getParameterFact(-1, "RC_MAP_POSCTL_SW")->value().toInt();
-    int loiterChannel =     getParameterFact(-1, "RC_MAP_LOITER_SW")->value().toInt();
-    int returnChannel =     getParameterFact(-1, "RC_MAP_RETURN_SW")->value().toInt();
-    int offboardChannel =   getParameterFact(-1, "RC_MAP_OFFB_SW")->value().toInt();
+    int modeChannel =       getParameterFact(-1, "RC_MAP_MODE_SW")->rawValue().toInt();
+    int acroChannel =       getParameterFact(-1, "RC_MAP_ACRO_SW")->rawValue().toInt();
+    int posCtlChannel =     getParameterFact(-1, "RC_MAP_POSCTL_SW")->rawValue().toInt();
+    int loiterChannel =     getParameterFact(-1, "RC_MAP_LOITER_SW")->rawValue().toInt();
+    int returnChannel =     getParameterFact(-1, "RC_MAP_RETURN_SW")->rawValue().toInt();
+    int offboardChannel =   getParameterFact(-1, "RC_MAP_OFFB_SW")->rawValue().toInt();
     
     if (modeChannel != 0) {
         int positions = 3;  // Manual/Assist/Auto always exist
@@ -771,35 +768,35 @@ void FlightModesComponentController::generateThresholds(void)
         
         if (acroOnModeSwitch) {
             currentThreshold += increment;
-            getParameterFact(-1, "RC_ACRO_TH")->setValue(currentThreshold);
+            getParameterFact(-1, "RC_ACRO_TH")->setRawValue(currentThreshold);
             acroChannel = 0;
         }
         
         currentThreshold += increment;
-        getParameterFact(-1, "RC_ASSIST_TH")->setValue(currentThreshold);
+        getParameterFact(-1, "RC_ASSIST_TH")->setRawValue(currentThreshold);
         if (posCtlOnModeSwitch) {
             currentThreshold += increment;
-            getParameterFact(-1, "RC_POSCTL_TH")->setValue(currentThreshold);
+            getParameterFact(-1, "RC_POSCTL_TH")->setRawValue(currentThreshold);
             posCtlChannel = 0;
         }
         
         currentThreshold += increment;
-        getParameterFact(-1, "RC_AUTO_TH")->setValue(currentThreshold);
+        getParameterFact(-1, "RC_AUTO_TH")->setRawValue(currentThreshold);
         if (loiterOnModeSwitch) {
             currentThreshold += increment;
-            getParameterFact(-1, "RC_LOITER_TH")->setValue(currentThreshold);
+            getParameterFact(-1, "RC_LOITER_TH")->setRawValue(currentThreshold);
             loiterChannel = 0;
         }
         
         if (returnOnModeSwitch) {
             currentThreshold += increment;
-            getParameterFact(-1, "RC_RETURN_TH")->setValue(currentThreshold);
+            getParameterFact(-1, "RC_RETURN_TH")->setRawValue(currentThreshold);
             returnChannel = 0;
         }
         
         if (offboardOnModeSwitch) {
             currentThreshold += increment;
-            getParameterFact(-1, "RC_OFFB_TH")->setValue(currentThreshold);
+            getParameterFact(-1, "RC_OFFB_TH")->setRawValue(currentThreshold);
             offboardChannel = 0;
         }
     }
@@ -807,23 +804,23 @@ void FlightModesComponentController::generateThresholds(void)
     if (acroChannel != 0) {
         // If only two positions don't set threshold at midrange. Setting to 0.25
         // allows for this channel to work with either a two or three position switch
-        getParameterFact(-1, "RC_ACRO_TH")->setValue(0.25f);
+        getParameterFact(-1, "RC_ACRO_TH")->setRawValue(0.25f);
     }
     
     if (posCtlChannel != 0) {
-        getParameterFact(-1, "RC_POSCTL_TH")->setValue(0.25f);
+        getParameterFact(-1, "RC_POSCTL_TH")->setRawValue(0.25f);
     }
     
     if (loiterChannel != 0) {
-        getParameterFact(-1, "RC_LOITER_TH")->setValue(0.25f);
+        getParameterFact(-1, "RC_LOITER_TH")->setRawValue(0.25f);
     }
     
     if (returnChannel != 0) {
-        getParameterFact(-1, "RC_RETURN_TH")->setValue(0.25f);
+        getParameterFact(-1, "RC_RETURN_TH")->setRawValue(0.25f);
     }
     
     if (offboardChannel != 0) {
-        getParameterFact(-1, "RC_OFFB_TH")->setValue(0.25f);
+        getParameterFact(-1, "RC_OFFB_TH")->setRawValue(0.25f);
     }
     
     emit thresholdsChanged();

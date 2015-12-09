@@ -42,7 +42,6 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  missionItems                READ missionItems                   NOTIFY missionItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines               READ waypointLines                  NOTIFY waypointLinesChanged)
-    Q_PROPERTY(bool                 canEdit                     READ canEdit                        NOTIFY canEditChanged)
     Q_PROPERTY(bool                 liveHomePositionAvailable   READ liveHomePositionAvailable      NOTIFY liveHomePositionAvailableChanged)
     Q_PROPERTY(QGeoCoordinate       liveHomePosition            READ liveHomePosition               NOTIFY liveHomePositionChanged)
     Q_PROPERTY(bool                 autoSync                    READ autoSync   WRITE setAutoSync   NOTIFY autoSyncChanged)
@@ -60,7 +59,6 @@ public:
 
     QmlObjectListModel* missionItems(void);
     QmlObjectListModel* waypointLines(void) { return &_waypointLines; }
-    bool canEdit(void) { return _canEdit; }
     bool liveHomePositionAvailable(void) { return _liveHomePositionAvailable; }
     QGeoCoordinate liveHomePosition(void) { return _liveHomePosition; }
     bool autoSync(void) { return _autoSync; }
@@ -68,7 +66,6 @@ public:
 
 signals:
     void missionItemsChanged(void);
-    void canEditChanged(bool canEdit);
     void waypointLinesChanged(void);
     void liveHomePositionAvailableChanged(bool homePositionAvailable);
     void liveHomePositionChanged(const QGeoCoordinate& homePosition);
@@ -97,13 +94,14 @@ private:
     void _autoSyncSend(void);
     void _setupMissionItems(bool loadFromVehicle, bool forceLoad);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
-    double _calcDistance(bool homePositionValid, double homeAlt, MissionItem* item1, MissionItem* item2);
+    void _calcPrevWaypointValues(bool homePositionValid, double homeAlt, MissionItem* currentItem, MissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
+    bool _findLastAltitude(double* lastAltitude);
+    bool _findLastAcceptanceRadius(double* lastAcceptanceRadius);
 
 private:
     bool                _editMode;
     QmlObjectListModel* _missionItems;
     QmlObjectListModel  _waypointLines;
-    bool                _canEdit;           ///< true: UI can edit these items, false: can't edit, can only send to vehicle or save
     Vehicle*            _activeVehicle;
     bool                _liveHomePositionAvailable;
     QGeoCoordinate      _liveHomePosition;

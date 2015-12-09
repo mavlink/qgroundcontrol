@@ -64,7 +64,12 @@ class QGCToolbox;
  * the central management unit of the groundstation application.
  *
  **/
-class QGCApplication : public QApplication
+class QGCApplication : public
+#ifdef __mobile__
+    QGuiApplication // Native Qml based application
+#else
+    QApplication    // QtWidget based application
+#endif
 {
     Q_OBJECT
     
@@ -93,11 +98,14 @@ public:
     /// @brief Validates that the specified location will work for the saved files location.
     bool validatePossibleSavedFilesLocation(QString& location);
     
-    /// @brief Returns true is all mavlink connections should be logged
+    /// @return true: Prompt to save log file when vehicle goes away
     bool promptFlightDataSave(void);
     
-    /// @brief Sets the flag to log all mavlink connections
+    /// @return true: Prompt to save log file even if vehicle was not armed
+    bool promptFlightDataSaveNotArmed(void);
+
     void setPromptFlightDataSave(bool promptForSave);
+    void setPromptFlightDataSaveNotArmed(bool promptForSave);
 
     /// @brief Returns truee if unit test are being run
     bool runningUnitTests(void) { return _runningUnitTests; }
@@ -113,7 +121,7 @@ public:
     void reportMissingParameter(int componentId, const QString& name);
 
     /// Show a non-modal message to the user
-    void showToolBarMessage(const QString& message);
+    void showMessage(const QString& message);
 
 	/// @return true: Fake ui into showing mobile interface
 	bool fakeMobile(void) { return _fakeMobile; }
@@ -135,8 +143,16 @@ public slots:
     /// You can connect to this slot to show a critical message box from a different thread.
     void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
     
+    void showFlyView(void);
+    void showPlanView(void);
+    void showSetupView(void);
+
+    void showWindowCloseMessage(void);
+
+#ifndef __mobile__
     /// Save the specified Flight Data Log
     void saveTempFlightDataLogOnMainThread(QString tempLogfile);
+#endif
 
 signals:
     /// Signals that the style has changed
@@ -161,6 +177,11 @@ public:
     /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
     ///         unit tests. Although public should only be called by main.
     bool _initForUnitTests(void);
+
+    void _showSetupFirmware(void);
+    void _showSetupParameters(void);
+    void _showSetupSummary(void);
+    void _showSetupVehicleComponent(VehicleComponent* vehicleComponent);
     
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
     
@@ -169,11 +190,17 @@ private slots:
     
 private:
     void _loadCurrentStyle(void);
+    QObject* _rootQmlObject(void);
+
+#ifdef __mobile__
+    QQmlApplicationEngine* _qmlAppEngine;
+#endif
     
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
     static const char* _savedFilesLocationKey;          ///< Settings key for user visible saved files location
-    static const char* _promptFlightDataSave;           ///< Settings key to prompt for saving Flight Data Log for all flights
+    static const char* _promptFlightDataSave;           ///< Settings key for promptFlightDataSave
+    static const char* _promptFlightDataSaveNotArmed;   ///< Settings key for promptFlightDataSaveNotArmed
     static const char* _styleKey;                       ///< Settings key for UI style
     
     static const char* _defaultSavedFileDirectoryName;      ///< Default name for user visible save file directory

@@ -47,6 +47,7 @@ public:
     virtual bool sendHomePositionToVehicle(void);
     virtual void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
     virtual QString getDefaultComponentIdParam(void) const { return QString("SYS_AUTOSTART"); }
+    virtual QList<MAV_CMD> supportedMissionCommands(void);
 
 private:
     PX4ParameterMetaData    _parameterMetaData;

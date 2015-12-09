@@ -98,3 +98,7 @@ WindowsBuild {
 
 }
 
+LinuxBuild {
+    QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
+}
+

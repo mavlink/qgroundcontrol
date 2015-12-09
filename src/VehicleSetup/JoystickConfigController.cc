@@ -23,7 +23,6 @@
 
 #include "JoystickConfigController.h"
 #include "JoystickManager.h"
-#include "QGCMessageBox.h"
 #include "QGCApplication.h"
 
 #include <QSettings>
@@ -99,7 +98,7 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static const char* msgPitchDown =       "Move the Pitch stick all the way down and hold it there...";
     static const char* msgPitchUp =         "Move the Pitch stick all the way up and hold it there...";
     static const char* msgPitchCenter =     "Allow the Pitch stick to move back to center...";
-    static const char* msgComplete =        "All settings have been captured. Click Next to Save.";
+    static const char* msgComplete =        "All settings have been captured. Click Next to enable the joystick.";
     
     static const stateMachineEntry rgStateMachine[] = {
         //Function
@@ -197,7 +196,7 @@ void JoystickConfigController::nextButtonClicked(void)
     if (_currentStep == -1) {
         // Need to have enough channels
         if (_axisCount < _axisMinimum) {
-            QGCMessageBox::warning(tr("Joystick"), tr("Detected %1 joystick axes. To operate PX4, you need at least %2 axes.").arg(_axisCount).arg(_axisMinimum));
+            qgcApp()->showMessage(QString("Detected %1 joystick axes. To operate PX4, you need at least %2 axes.").arg(_axisCount).arg(_axisMinimum));
             return;
         }
         _startCalibration();
@@ -564,6 +563,11 @@ void JoystickConfigController::_writeCalibration(void)
     
     _stopCalibration();
     _setInternalCalibrationValuesFromSettings();
+
+    Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    if (vehicle) {
+        vehicle->setJoystickEnabled(true);
+    }
 }
 
 /// @brief Starts the calibration process

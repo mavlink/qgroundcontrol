@@ -136,10 +136,9 @@ QGCView {
         running:    true
 
         onTriggered: {
+            recalcModePositions()
             if (rcInMode.value == 1) {
                 showDialog(joystickEnabledDialogComponent, title, 50, 0)
-            } else {
-                recalcModePositions()
             }
         }
     }
@@ -227,7 +226,7 @@ QGCView {
                         anchors.left:           parent.left
                         anchors.right:          applyButton.left
                         text:                   topHelpText
-                        font.pixelSize:         ScreenTools.mediumFontPixelSize
+                        font.pixelSize:         ScreenTools.defaultFontPixelSize
                         wrapMode:               Text.WordWrap
                     }
 

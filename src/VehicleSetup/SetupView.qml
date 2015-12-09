@@ -46,7 +46,7 @@ Rectangle {
     readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
     readonly property real      _margin:            _defaultTextHeight / 2
-    readonly property real      _buttonWidth:       _defaultTextWidth * 17
+    readonly property real      _buttonWidth:       _defaultTextWidth * 18
     readonly property string    _armedVehicleText:  "This operation cannot be performed while vehicle is armed."
 
     property string _messagePanelText:              "missing message panel text"
@@ -159,7 +159,7 @@ Rectangle {
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
                 font.pixelSize:         ScreenTools.largeFontPixelSize
-                text:                   "Click Connect on the top right to Fly. Click Firmware on the left to upgrade your vehicle."
+                text:                   "Connect vehicle to your device and QGroundControl will automatically detect to it. Click Firmware on the left to upgrade your vehicle."
 
                 onLinkActivated: Qt.openUrlExternally(link)
             }
@@ -205,7 +205,7 @@ Rectangle {
     Rectangle {
         //-- Limit height to available height (below tool bar)
         anchors.topMargin:  _margin
-        height:             mainWindow.avaiableHeight
+        height:             mainWindow.availableHeight
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
         anchors.right:      parent.right
@@ -235,7 +235,7 @@ Rectangle {
                     setupIndicator: false
                     checked:        true
                     exclusiveGroup: setupButtonGroup
-                    text:           "SUMMARY"
+                    text:           "Summary"
 
                     onClicked: showSummaryPanel()
                 }
@@ -247,7 +247,7 @@ Rectangle {
                     setupIndicator: false
                     exclusiveGroup: setupButtonGroup
                     visible:        !ScreenTools.isMobile
-                    text:           "FIRMWARE"
+                    text:           "Firmware"
 
                     onClicked: showFirmwarePanel()
                 }
@@ -258,7 +258,7 @@ Rectangle {
                     exclusiveGroup: setupButtonGroup
                     visible:        _fullParameterVehicleAvailable
                     setupIndicator: false
-                    text:           "PX4FLOW"
+                    text:           "PX4Flow"
                     onClicked:      showPX4FlowPanel()
                 }
 
@@ -269,7 +269,7 @@ Rectangle {
                     setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
                     exclusiveGroup: setupButtonGroup
                     visible:        _fullParameterVehicleAvailable && joystickManager.joysticks.length != 0
-                    text:           "JOYSTICK"
+                    text:           "Joystick"
 
                     onClicked: showJoystickPanel()
                 }
@@ -283,7 +283,7 @@ Rectangle {
                         setupIndicator: modelData.requiresSetup
                         setupComplete:  modelData.setupComplete
                         exclusiveGroup: setupButtonGroup
-                        text:           modelData.name.toUpperCase()
+                        text:           modelData.name
 
                         onClicked: showVehicleComponentPanel(modelData)
                     }
@@ -294,7 +294,7 @@ Rectangle {
                     setupIndicator: false
                     exclusiveGroup: setupButtonGroup
                     visible:        multiVehicleManager.parameterReadyVehicleAvailable
-                    text:           "PARAMETERS"
+                    text:           "Parameters"
 
                     onClicked: showParametersPanel()
                 }

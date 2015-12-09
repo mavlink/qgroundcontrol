@@ -28,7 +28,6 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
-#include "QGCMessageBox.h"
 #include "UASMessageHandler.h"
 #include "FirmwarePlugin.h"
 #include "UAS.h"
@@ -245,14 +244,14 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
         _mapParameterName2Variant[componentId][parameterName] = QVariant::fromValue(fact);
 
         // We need to know when the fact changes from QML so that we can send the new value to the parameter manager
-        connect(fact, &Fact::_containerValueChanged, this, &ParameterLoader::_valueUpdated);
+        connect(fact, &Fact::_containerRawValueChanged, this, &ParameterLoader::_valueUpdated);
     }
 
     Q_ASSERT(_mapParameterName2Variant[componentId].contains(parameterName));
 
     Fact* fact = _mapParameterName2Variant[componentId][parameterName].value<Fact*>();
     Q_ASSERT(fact);
-    fact->_containerSetValue(value);
+    fact->_containerSetRawValue(value);
 
     if (setMetaData) {
         _vehicle->firmwarePlugin()->addMetaDataToFact(fact, _vehicle->vehicleType());
@@ -465,7 +464,7 @@ void ParameterLoader::_waitingParamTimeout(void)
             foreach(QString paramName, _waitingWriteParamNameMap[componentId].keys()) {
                 paramsRequested = true;
                 _waitingWriteParamNameMap[componentId][paramName]++;   // Bump retry count
-                _writeParameterRaw(componentId, paramName, _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->value());
+                _writeParameterRaw(componentId, paramName, _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->rawValue());
                 qCDebug(ParameterLoaderLog) << "Write resend for (componentId:" << componentId << "paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
 
                 if (++batchCount > maxBatchSize) {
@@ -586,7 +585,7 @@ void ParameterLoader::_writeLocalParamCache()
         foreach(int id, _mapParameterId2Name[component].keys()) {
             const QString name(_mapParameterId2Name[component][id]);
             const Fact *fact = _mapParameterName2Variant[component][name].value<Fact*>();
-            cache_map[component][id] = NamedParam(name, ParamTypeVal(fact->type(), fact->value()));
+            cache_map[component][id] = NamedParam(name, ParamTypeVal(fact->type(), fact->rawValue()));
         }
     }
 
@@ -657,7 +656,6 @@ void ParameterLoader::_saveToEEPROM(void)
 QString ParameterLoader::readParametersFromStream(QTextStream& stream)
 {
     QString errors;
-    bool userWarned = false;
 
     while (!stream.atEnd()) {
         QString line = stream.readLine();
@@ -665,16 +663,8 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
             QStringList wpParams = line.split("\t");
             int lineMavId = wpParams.at(0).toInt();
             if (wpParams.size() == 5) {
-                if (!userWarned && (_vehicle->id() != lineMavId)) {
-                    userWarned = true;
-                    QString msg("The parameters in the stream have been saved from System Id %1, but the current vehicle has the System Id %2.");
-                    QGCMessageBox::StandardButton button = QGCMessageBox::warning("Parameter Load",
-                                                                                  msg.arg(lineMavId).arg(_vehicle->id()),
-                                                                                  QGCMessageBox::Ok | QGCMessageBox::Cancel,
-                                                                                  QGCMessageBox::Cancel);
-                    if (button == QGCMessageBox::Cancel) {
-                        return QString();
-                    }
+                if (_vehicle->id() != lineMavId) {
+                    return QString("The parameters in the stream have been saved from System Id %1, but the current vehicle has the System Id %2.").arg(lineMavId).arg(_vehicle->id());
                 }
 
                 int     componentId = wpParams.at(1).toInt();
@@ -700,7 +690,7 @@ QString ParameterLoader::readParametersFromStream(QTextStream& stream)
                 }
 
                 qCDebug(ParameterLoaderLog) << "Updating parameter" << componentId << paramName << valStr;
-                fact->setValue(valStr);
+                fact->setRawValue(valStr);
             }
         }
     }
@@ -848,18 +838,17 @@ void ParameterLoader::_checkInitialLoadComplete(void)
 
         if (errorsFound) {
             QString errorMsg = QString("<b>Critical safety issue detected:</b><br>%1").arg(errors);
-            qgcApp()->showToolBarMessage(errorMsg);
+            qgcApp()->showMessage(errorMsg);
         }
     }
 
     // Warn of parameter load failure
 
     if (initialLoadFailures) {
-        QGCMessageBox::critical("Parameter Load Failure",
-                                "QGroundControl was unable to retrieve the full set of parameters from the vehicle. "
-                                "This will cause QGroundControl to be unable to display it's full user interface. "
-                                "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
-                                "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.");
+        qgcApp()->showMessage("QGroundControl was unable to retrieve the full set of parameters from the vehicle. "
+                              "This will cause QGroundControl to be unable to display it's full user interface. "
+                              "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
+                              "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.");
         qCWarning(ParameterLoaderLog) << "The following parameter indices could not be loaded after the maximum number of retries: " << indexList;
         emit parametersReady(true);
     } else {

@@ -146,7 +146,7 @@ APMFirmwarePlugin::APMFirmwarePlugin(void)
 
 bool APMFirmwarePlugin::isCapable(FirmwareCapabilities capabilities)
 {
-    return (capabilities & (MavCmdPreflightStorageCapability | SetFlightModeCapability)) == capabilities;
+    return (capabilities & SetFlightModeCapability) == capabilities;
 }
 
 QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
@@ -388,4 +388,21 @@ bool APMFirmwarePlugin::sendHomePositionToVehicle(void)
 void APMFirmwarePlugin::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 {
     _parameterMetaData.addMetaDataToFact(fact, vehicleType);
+}
+
+QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
+{
+    QList<MAV_CMD> list;
+
+    list << MAV_CMD_NAV_WAYPOINT
+         << MAV_CMD_NAV_LOITER_UNLIM << MAV_CMD_NAV_LOITER_TURNS << MAV_CMD_NAV_LOITER_TIME
+         << MAV_CMD_NAV_RETURN_TO_LAUNCH << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF
+         << MAV_CMD_NAV_GUIDED_ENABLE
+         << MAV_CMD_DO_SET_ROI << MAV_CMD_DO_GUIDED_LIMITS << MAV_CMD_DO_JUMP << MAV_CMD_DO_CHANGE_SPEED << MAV_CMD_DO_SET_CAM_TRIGG_DIST
+         << MAV_CMD_DO_SET_RELAY << MAV_CMD_DO_REPEAT_RELAY
+         << MAV_CMD_DO_SET_SERVO << MAV_CMD_DO_REPEAT_SERVO
+         << MAV_CMD_DO_DIGICAM_CONFIGURE << MAV_CMD_DO_DIGICAM_CONTROL
+         << MAV_CMD_DO_MOUNT_CONTROL
+         << MAV_CMD_CONDITION_DELAY  << MAV_CMD_CONDITION_CHANGE_ALT << MAV_CMD_CONDITION_DISTANCE << MAV_CMD_CONDITION_YAW;
+    return list;
 }
