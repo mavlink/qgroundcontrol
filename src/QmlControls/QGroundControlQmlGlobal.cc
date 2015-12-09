@@ -168,6 +168,12 @@ void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
     emit isVersionCheckEnabledChanged(enable);
 }
 
+void QGroundControlQmlGlobal::setMavlinkSystemID(int id)
+{
+    qgcApp()->toolbox()->mavlinkProtocol()->setSystemId(id);
+    emit mavlinkSystemIDChanged(id);
+}
+
 void QGroundControlQmlGlobal::setVirtualTabletJoystick(bool enabled)
 {
     if (_virtualTabletJoystick != enabled) {
