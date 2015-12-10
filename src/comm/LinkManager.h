@@ -80,6 +80,7 @@ public:
     Q_PROPERTY(bool autoconnectPixhawk                  READ autoconnectPixhawk                 WRITE setAutoconnectPixhawk     NOTIFY autoconnectPixhawkChanged)
     Q_PROPERTY(bool autoconnect3DRRadio                 READ autoconnect3DRRadio                WRITE setAutoconnect3DRRadio    NOTIFY autoconnect3DRRadioChanged)
     Q_PROPERTY(bool autoconnectPX4Flow                  READ autoconnectPX4Flow                 WRITE setAutoconnectPX4Flow     NOTIFY autoconnectPX4FlowChanged)
+    Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable               CONSTANT)
 
     /// LinkInterface Accessor
     Q_PROPERTY(QmlObjectListModel*  links               READ links                              CONSTANT)
@@ -104,12 +105,13 @@ public:
 
     // Property accessors
 
-    bool anyConnectedLinks(void);
-    bool anyActiveLinks(void);
-    bool autoconnectUDP(void)       { return _autoconnectUDP; }
-    bool autoconnectPixhawk(void)   { return _autoconnectPixhawk; }
-    bool autoconnect3DRRadio(void)  { return _autoconnect3DRRadio; }
-    bool autoconnectPX4Flow(void)   { return _autoconnectPX4Flow; }
+    bool anyConnectedLinks          (void);
+    bool anyActiveLinks             (void);
+    bool autoconnectUDP             (void)  { return _autoconnectUDP; }
+    bool autoconnectPixhawk         (void)  { return _autoconnectPixhawk; }
+    bool autoconnect3DRRadio        (void)  { return _autoconnect3DRRadio; }
+    bool autoconnectPX4Flow         (void)  { return _autoconnectPX4Flow; }
+    bool isBluetoothAvailable       (void);
 
     QmlObjectListModel* links               (void) { return &_links; }
     QmlObjectListModel* linkConfigurations  (void) { return &_linkConfigurations; }

@@ -44,6 +44,18 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
     message($$sprintf("Using user-supplied additional config: '%1' specified in user_config.pri", $$fromfile(user_config.pri, CONFIG)))
 }
 
+# Bluetooth
+contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
+    message("Skipping support for Bluetooth (manual override from command line)")
+    DEFINES -= QGC_ENABLE_BLUETOOTH
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_BLUETOOTH) {
+    message("Skipping support for Bluetooth (manual override from user_config.pri)")
+    DEFINES -= QGC_ENABLE_BLUETOOTH
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_BLUETOOTH) {
+    message("Including support for Bluetooth (manual override from user_config.pri)")
+    DEFINES += QGC_ENABLE_BLUETOOTH
+}
+
 LinuxBuild {
     CONFIG += link_pkgconfig
 }
@@ -74,7 +86,7 @@ QT += \
     serialport \
 }
 
-MobileBuild {
+contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 QT += \
     bluetooth \
 }
@@ -284,7 +296,7 @@ WindowsBuild {
     HEADERS += src/stable_headers.h
 }
 
-MobileBuild {
+contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
     HEADERS += \
     src/comm/BluetoothLink.h \
 }
@@ -402,7 +414,7 @@ SOURCES += \
     src/ui/SerialConfigurationWindow.cc \
 }
 
-MobileBuild {
+contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
     SOURCES += \
     src/comm/BluetoothLink.cc \
 }
