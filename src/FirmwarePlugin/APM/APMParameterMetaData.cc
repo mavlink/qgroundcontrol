@@ -35,7 +35,7 @@
 
 QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "APMParameterMetaDataLog")
 
-bool APMParameterMetaData::_parameterMetaDataLoaded = false;
+bool                                          APMParameterMetaData::_parameterMetaDataLoaded = false;
 QMap<QString, ParameterNametoFactMetaDataMap> APMParameterMetaData::_vehicleTypeToParametersMap;
 
 APMParameterMetaData::APMParameterMetaData(QObject* parent) :
@@ -141,7 +141,8 @@ void APMParameterMetaData::_loadParameterFactMetaData()
 
     QString parameterFilename;
 
-    // We want unit test builds to always use the resource based meta data to provide repeatable results
+    // Fixme:: always picking up the bundled xml, we would like to update it from web
+    // just not sure right now as the xml is in bad shape.
     if (parameterFilename.isEmpty() || !QFile(parameterFilename).exists()) {
         parameterFilename = ":/FirmwarePlugin/APM/apm.pdef.xml";
     }
@@ -309,12 +310,12 @@ void APMParameterMetaData::_loadParameterFactMetaData()
         xml.readNext();
     }
 
-    foreach(const QString& vehicle, _vehicleTypeToParametersMap.keys()) {
-        qDebug() << "dumpig metadata for behcile type " << vehicle;
-        foreach(const QString& name, _vehicleTypeToParametersMap[vehicle].keys()) {
-            qDebug() << "has meta data for " << name << _vehicleTypeToParametersMap[vehicle][name]->name ;
-        }
-    }
+//    foreach(const QString& vehicle, _vehicleTypeToParametersMap.keys()) {
+//        qDebug() << "dumpig metadata for behcile type " << vehicle;
+//        foreach(const QString& name, _vehicleTypeToParametersMap[vehicle].keys()) {
+//            qDebug() << "has meta data for " << name << _vehicleTypeToParametersMap[vehicle][name]->name ;
+//        }
+//    }
 }
 
 void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap,

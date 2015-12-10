@@ -88,7 +88,8 @@ public:
     void setMin             (const QVariant& max);
     void setName            (const QString& name)               { _name = name; }
     void setShortDescription(const QString& shortDescription)   { _shortDescription = shortDescription; }
-    void setUnits(const QString& units)                         { _units = units; }
+    void setUnits           (const QString& units)              { _units = units; }
+
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
     static QVariant defaultTranslator(const QVariant& from) { return from; }
 
