@@ -390,6 +390,7 @@ void APMFirmwarePlugin::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     _parameterMetaData.addMetaDataToFact(fact, vehicleType);
 }
 
+
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
 {
     QList<MAV_CMD> list;

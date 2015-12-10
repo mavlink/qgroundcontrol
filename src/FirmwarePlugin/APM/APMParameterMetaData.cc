@@ -49,7 +49,8 @@ APMParameterMetaData::APMParameterMetaData(QObject* parent) :
 ///     @param type Type for Fact which dictates the QVariant type as well
 ///     @param convertOk Returned: true: conversion success, false: conversion failure
 /// @return Returns the correctly type QVariant
-QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk)
+QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string,
+                                                     FactMetaData::ValueType_t type, bool* convertOk)
 {
     QVariant var(string);
 
@@ -70,10 +71,6 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string, Fact
             break;
         case FactMetaData::valueTypeDouble:
             convertTo = QVariant::Double;
-            break;
-        case FactMetaData::valueTypeUnknown: // keep compiler happy
-            *convertOk = false;
-            return var;
             break;
     }
     
@@ -132,7 +129,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
 /// Load Parameter Fact meta data
 ///
 /// The meta data comes from firmware parameters.xml file.
-void APMParameterMetaData::_loadParameterFactMetaData(void)
+void APMParameterMetaData::_loadParameterFactMetaData()
 {
     if (_parameterMetaDataLoaded) {
         return;
@@ -165,10 +162,10 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
         return;
     }
 
-    QString           errorString;
-    FactMetaData*     metaData = NULL;
-    bool              badMetaData = true;
-    QStack<int>       xmlState;
+    QString             errorString;
+    bool                badMetaData = true;
+    QStack<int>         xmlState;
+    APMFactMetaDataRaw* rawMetaData = NULL;
 
     xmlState.push(XmlStateNone);
 
@@ -254,27 +251,24 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                           << "user level: " << userLevel
                           << "group: " << group;
 
-                metaData = new FactMetaData();
-                Q_CHECK_PTR(metaData);
+                Q_ASSERT(!rawMetaData);
+                rawMetaData = new APMFactMetaDataRaw();
                 if (_vehicleTypeToParametersMap[currentCategory].contains(name)) {
                     // We can't trust the meta dafa since we have dups
                     qCWarning(APMParameterMetaDataLog) << "Duplicate parameter found:" << name;
                     badMetaData = true;
-                    // Reset to default meta data
-                    _vehicleTypeToParametersMap[currentCategory][name] = metaData;
                 } else {
                     qCDebug(APMParameterMetaDataLog) << "inserting metadata for field" << name;
-                    _vehicleTypeToParametersMap[currentCategory][name] = metaData;
-                    metaData->setName(name);
-                    metaData->setGroup(group);
-                    metaData->setShortDescription(shortDescription);
-                    metaData->setLongDescription(longDescription);
+                    _vehicleTypeToParametersMap[currentCategory][name] = rawMetaData;
+                    rawMetaData->name = name;
+                    rawMetaData->group = group;
+                    rawMetaData->shortDescription = shortDescription;
+                    rawMetaData->longDescription = longDescription;
 
                     groupMembers[group] << name;
                     if (name == "AUTOTUNE_AGGR") {
                         qDebug() << "nothing here";
                     }
-
                     qCDebug(APMParameterMetaDataLog) << "APM parameter description doesn't specify a default value";
                 }
 
@@ -285,7 +279,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                     return;
                 }
                 if (!badMetaData) {
-                    if (!parseParameterAttributes(xml, metaData)) {
+                    if (!parseParameterAttributes(xml, rawMetaData)) {
                         qCDebug(APMParameterMetaDataLog) << "Badly formed XML, failed to read parameter attributes";
                         return;
                     }
@@ -299,7 +293,7 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
                 // Done loading this parameter
                 // Reset for next parameter
                 qCDebug(APMParameterMetaDataLog) << "done loading parameter";
-                metaData = NULL;
+                rawMetaData = NULL;
                 badMetaData = false;
                 xmlState.pop();
             } else if (elementName == "parameters") {
@@ -315,15 +309,21 @@ void APMParameterMetaData::_loadParameterFactMetaData(void)
         xml.readNext();
     }
 
-
+    foreach(const QString& vehicle, _vehicleTypeToParametersMap.keys()) {
+        qDebug() << "dumpig metadata for behcile type " << vehicle;
+        foreach(const QString& name, _vehicleTypeToParametersMap[vehicle].keys()) {
+            qDebug() << "has meta data for " << name << _vehicleTypeToParametersMap[vehicle][name]->name ;
+        }
+    }
 }
 
-void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap, QMap<QString,QStringList>& groupMembers)
+void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap,
+                                                   QMap<QString,QStringList>& groupMembers)
 {
     foreach(const QString& groupName, groupMembers.keys()) {
             if (groupMembers[groupName].count() == 1) {
                 foreach(const QString& parameter, groupMembers.value(groupName)) {
-                    parameterToFactMetaDataMap[parameter]->setGroup("others");
+                    parameterToFactMetaDataMap[parameter]->group = "others";
                 }
             }
         }
@@ -339,9 +339,8 @@ bool APMParameterMetaData::skipXMLBlock(QXmlStreamReader& xml, const QString& bl
     return !xml.isEndDocument();
 }
 
-bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, FactMetaData *metaData)
+bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFactMetaDataRaw* rawMetaData)
 {
-    Q_ASSERT(metaData);
     QString elementName = xml.name().toString();
     QList<QPair<QString,QString> > values;
     // as long as param doens't end
@@ -350,35 +349,52 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, FactM
             // skip empty elements. Somehow I am getting lot of these. Dont know what to do with them.
         } else if (elementName == "field") {
             QString attributeName = xml.attributes().value("name").toString();
-            if ( attributeName == "range") {
-                QString range = xml.readElementText();
+            if ( attributeName == "Range") {
+                QString range = xml.readElementText().trimmed();
                 QStringList rangeList = range.split(' ');
                 if (rangeList.count() != 2) {
-                    qCWarning(APMParameterMetaDataLog) << "something wrong with range, ignoring error";
+                    qCWarning(APMParameterMetaDataLog) << "space seperator didn't work',trying 'to' separator";
+                    rangeList = range.split("to");
+                    if (rangeList.count() != 2) {
+                        qCWarning(APMParameterMetaDataLog) << " 'to' seperaator didn't work', trying '-' as seperator";
+                        rangeList = range.split('-');
+                        if (rangeList.count() != 2) {
+                            qCWarning(APMParameterMetaDataLog) << "something wrong with range, all three separators have failed" << range;
+                            // just crash the debug build, this is just too much to handle.
+                            Q_ASSERT(false);
+                        }
+                    }
                 }
-                QString min = rangeList.first();
-                QString max = rangeList.last();
-                metaData->setMin(min);
-                metaData->setMax(max);
-                qCDebug(APMParameterMetaDataLog) << "read field parameter " << "min: " << min << "max: " << max;
+                rawMetaData->min = rangeList.first().trimmed();
+                rawMetaData->max = rangeList.last().trimmed();
+
+                // sanitize min and max off any comments that they may have
+                if (rawMetaData->min.contains(' ')) {
+                    rawMetaData->min = rawMetaData->min.split(' ').first();
+                }
+                if(rawMetaData->max.contains(' ')) {
+                    rawMetaData->max = rawMetaData->max.split(' ').first();
+                }
+                qCDebug(APMParameterMetaDataLog) << "read field parameter " << "min: " << rawMetaData->min
+                                                 << "max: " << rawMetaData->max;
             } else if (attributeName == "Increment") {
                 QString increment = xml.readElementText();
                 qCDebug(APMParameterMetaDataLog) << "read Increment: " << increment;
-                // TODO:: some better way of using the increment size.
-                metaData->setShortDescription(metaData->shortDescription() + ", increment size: " + increment);
+                rawMetaData->incrementSize = increment;
             } else if (attributeName == "Units") {
                 QString units = xml.readElementText();
                 qCDebug(APMParameterMetaDataLog) << "read Units: " << units;
-                metaData->setUnits(units);
+                rawMetaData->units = units;
             }
         } else if (elementName == "values") {
             // doing nothing value will follow anyway. May be used for sanity checking.
         } else if (elementName == "value") {
             QString valueValue = xml.attributes().value("code").toString();
             QString valueName = xml.readElementText();
-            qCDebug(APMParameterMetaDataLog) << "read value parameter " << "value desc: " << valueName << "code: " << valueValue;
+            qCDebug(APMParameterMetaDataLog) << "read value parameter " << "value desc: "
+                                             << valueName << "code: " << valueValue;
             values << QPair<QString,QString>(valueValue, valueName);
-            // TODO:: not using values for anything as of now.
+            rawMetaData->values = values;
         } else {
             qCDebug(APMParameterMetaDataLog) << "Unknown parameter element in XML: " << elementName;
         }
@@ -394,25 +410,64 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     _loadParameterFactMetaData();
 
     const QString mavTypeString = mavTypeToString(vehicleType);
-    FactMetaData *metaData = NULL;
+    APMFactMetaDataRaw* rawMetaData = NULL;
 
     // check if we have metadata for fact, use generic otherwise
     if (_vehicleTypeToParametersMap[mavTypeString].contains(fact->name())) {
-        metaData = _vehicleTypeToParametersMap[mavTypeString][fact->name()];
+        rawMetaData = _vehicleTypeToParametersMap[mavTypeString][fact->name()];
     } else if (_vehicleTypeToParametersMap["libraries"].contains(fact->name())) {
-        metaData = _vehicleTypeToParametersMap["libraries"][fact->name()];
-    } else {
-        qCWarning(APMParameterMetaDataLog) << "No metaData for " << fact->name() << "using generic metadata";
-        metaData = new FactMetaData(fact->type(), fact);
+        rawMetaData = _vehicleTypeToParametersMap["libraries"][fact->name()];
     }
 
-    metaData->setType(fact->type());
-    fact->setMetaData(metaData);
+    FactMetaData *metaData = new FactMetaData(fact->type(), fact);
 
-//    if (metaData->defaultValueAvailable()) {
-//        QVariant var;
-//        if (!metaData->convertAndValidate(metaData->defaultValue(), false /* convertOnly */, var, errorString)) {
-//            qCWarning(APMParameterMetaDataLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->defaultValue() << " error:" << errorString;
-//        }
-//    }
+    // we don't have data for this fact
+    if (!rawMetaData) {
+        fact->setMetaData(metaData);
+        qCWarning(APMParameterMetaDataLog) << "No metaData for " << fact->name() << "using generic metadata";
+        return;
+    }
+
+    metaData->setName(rawMetaData->name);
+    metaData->setGroup(rawMetaData->group);
+
+    if (!rawMetaData->shortDescription.isEmpty()) {
+        metaData->setShortDescription(rawMetaData->shortDescription);
+    }
+    
+    if (!rawMetaData->longDescription.isEmpty()) {
+        metaData->setLongDescription(rawMetaData->longDescription);
+    }
+
+    if (!rawMetaData->units.isEmpty()) {
+        metaData->setUnits(rawMetaData->units);
+    }
+
+
+    if (!rawMetaData->min.isEmpty()) {
+        QVariant varMin;
+        QString errorString;
+        if (metaData->convertAndValidate(rawMetaData->min, true /* convertOnly */, varMin, errorString)) {
+            metaData->setMin(varMin);
+        } else {
+            qCWarning(APMParameterMetaDataLog) << "Invalid min value, name:" << metaData->name()
+                                               << " type:" << metaData->type() << " min:" << rawMetaData->min
+                                               << " error:" << errorString;
+        }
+    }
+
+    if (!rawMetaData->max.isEmpty()) {
+        QVariant varMax;
+        QString errorString;
+        if (metaData->convertAndValidate(rawMetaData->max, true /* convertOnly */, varMax, errorString)) {
+            metaData->setMax(varMax);
+        } else {
+            qCWarning(APMParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:"
+                                               << metaData->type() << " max:" << rawMetaData->max
+                                               << " error:" << errorString;
+        }
+    }
+
+    // FixMe:: not handling values and increment size as their is no place for them in FactMetaData and no ui
+    fact->setMetaData(metaData);
 }

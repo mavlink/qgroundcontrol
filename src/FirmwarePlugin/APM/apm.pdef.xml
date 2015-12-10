@@ -596,7 +596,7 @@
 <param humanName="Pitch angle offset" name="ArduPlane:TRIM_PITCH_CD" documentation="offset to add to pitch - used for in-flight pitch trimming. It is recommended that instead of using this parameter you level your plane correctly on the ground for good flight attitude." user="Advanced">
 <field name="Units">centi-Degrees</field>
 </param>
-<param humanName="RTL altitude" name="ArduPlane:ALT_HOLD_RTL" documentation="Return to launch target altitude. This is the altitude the plane will aim for and loiter at when returning home. If this is negative (usually -1) then the plane will use the current altitude at the time of entering RTL. Note that when transiting to a Rally Point the altitude of the Rally Point is used instead of ALT_HOLD_RTL." user="User">
+<param humanName="RTL altitude" name="ArduPlane:ALT_HOLD_RTL" documentation="Return to launch target altitude. This is the relative altitude the plane will aim for and loiter at when returning home. If this is negative (usually -1) then the plane will use the current altitude at the time of entering RTL. Note that when transiting to a Rally Point the altitude of the Rally Point is used instead of ALT_HOLD_RTL." user="User">
 <field name="Units">centimeters</field>
 </param>
 <param humanName="Minimum altitude for FBWB mode" name="ArduPlane:ALT_HOLD_FBWCM" documentation="This is the minimum altitude in centimeters that FBWB and CRUISE modes will allow. If you attempt to descend below this altitude then the plane will level off. A value of zero means no limit." user="User">
@@ -762,7 +762,7 @@
 <value code="4">Yaw</value>
 </values>
 </param>
-<param humanName="RTL Altitude" name="ArduCopter:RTL_ALT" documentation="The minimum altitude the model will move to before Returning to Launch.  Set to zero to return at current altitude." user="Standard">
+<param humanName="RTL Altitude" name="ArduCopter:RTL_ALT" documentation="The minimum relative altitude the model will move to before Returning to Launch.  Set to zero to return at current altitude." user="Standard">
 <field name="Range">0 8000</field>
 <field name="Increment">1</field>
 <field name="Units">Centimeters</field>
@@ -2156,8 +2156,8 @@
 <param humanName="Raw data logging" name="GPS_RAW_DATA" documentation="Enable logging of RXM raw data from uBlox which includes carrier phase and pseudo range information. This allows for post processing of dataflash logs for more precise positioning. Note that this requires a raw capable uBlox such as the 6P or 6T.">
 <values>
 <value code="0">Disabled</value>
-<value code="1">log at 1MHz</value>
-<value code="5">log at 5MHz</value>
+<value code="1">log every sample</value>
+<value code="5">log every 5 samples</value>
 </values>
 <field name="RebootRequired">True</field>
 </param>
@@ -2733,6 +2733,21 @@
 <param humanName="Terrain grid spacing" name="TERRAIN_SPACING" documentation="Distance between terrain grid points in meters. This controls the horizontal resolution of the terrain data that is stored on te SD card and requested from the ground station. If your GCS is using the worldwide SRTM database then a resolution of 100 meters is appropriate. Some parts of the world may have higher resolution data available, such as 30 meter data available in the SRTM database in the USA. The grid spacing also controls how much data is kept in memory during flight. A larger grid spacing will allow for a larger amount of data in memory. A grid spacing of 100 meters results in the vehicle keeping 12 grid squares in memory with each grid square having a size of 2.7 kilometers by 3.2 kilometers. Any additional grid squares are stored on the SD once they are fetched from the GCS and will be demand loaded as needed.">
 <field name="Units">meters</field>
 <field name="Increment">1</field>
+</param>
+</parameters>
+<parameters name="ADSB_">
+<param humanName="Enable ADSB" name="ADSB_ENABLE" documentation="Enable ADS-B" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
+<param humanName="ADSB based Collision Avoidance Behavior" name="ADSB_BEHAVIOR" documentation="ADSB based Collision Avoidance Behavior selector" user="Advanced">
+<values>
+<value code="0">None</value>
+<value code="1">Loiter</value>
+<value code="2">LoiterAndDescend</value>
+</values>
 </param>
 </parameters>
 <parameters name="RC1_">
@@ -4632,6 +4647,18 @@
 </values>
 </param>
 </parameters>
+<parameters name="LOG">
+<param humanName="DataFlash Backend Storage type" name="LOG_BACKEND_TYPE" documentation="0 for None, 1 for File, 2 for dataflash mavlink, 3 for both file and dataflash" user="Standard">
+<values>
+<value code="0">None</value>
+<value code="1">File</value>
+<value code="2">MAVLink</value>
+<value code="3">BothFileAndMAVLink</value>
+</values>
+</param>
+<param humanName="Maximum DataFlash File Backend buffer size (in kilobytes)" name="LOG_FILE_BUFSIZE" documentation='The DataFlash_File backend uses a buffer to store data before writing to the block device.  Raising this value may reduce "gaps" in your SD card logging.  This buffer size may be reduced depending on available memory.  PixHawk requires at least 4 kilobytes.  Maximum value available here is 64 kilobytes.' user="Standard">
+</param>
+</parameters>
 <parameters name="BATT">
 <param humanName="Battery monitoring" name="BATT_MONITOR" documentation="Controls enabling monitoring of the battery's voltage and current" user="Standard">
 <values>
@@ -5187,6 +5214,12 @@
 </param>
 <param humanName="Maximum RPM" name="RPM_MAX" documentation="Maximum RPM to report">
 <field name="Increment">1</field>
+</param>
+<param humanName="Minimum RPM" name="RPM_MIN" documentation="Minimum RPM to report">
+<field name="Increment">1</field>
+</param>
+<param humanName="Minimum Quality" name="RPM_MIN_QUAL" documentation="Minimum data quality to be used">
+<field name="Increment">0.1</field>
 </param>
 <param humanName="Second RPM type" name="RPM2_TYPE" documentation="What type of RPM sensor is connected">
 <values>

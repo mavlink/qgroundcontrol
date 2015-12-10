@@ -34,8 +34,7 @@
 
 FactMetaData::FactMetaData(QObject* parent)
     : QObject(parent)
-    , _group("*Default Group")
-    , _type(valueTypeUnknown)
+    , _type(valueTypeInt32)
     , _decimalPlaces(defaultDecimalPlaces)
     , _defaultValue(0)
     , _defaultValueAvailable(false)
@@ -108,9 +107,7 @@ QVariant FactMetaData::defaultValue(void) const
 
 void FactMetaData::setDefaultValue(const QVariant& defaultValue)
 {
-    if (_type == valueTypeUnknown) {
-        _defaultValue = defaultValue;
-    } else if (_min <= defaultValue && defaultValue <= _max) {
+    if (_min <= defaultValue && defaultValue <= _max) {
         _defaultValue = defaultValue;
         _defaultValueAvailable = true;
     } else {
@@ -120,9 +117,7 @@ void FactMetaData::setDefaultValue(const QVariant& defaultValue)
 
 void FactMetaData::setMin(const QVariant& min)
 {
-    if (_type == valueTypeUnknown) {
-        _min = min;
-    } else if (min > _minForType()) {
+    if (min > _minForType()) {
         _min = min;
         _minIsDefaultForType = false;
     } else {
@@ -135,33 +130,12 @@ void FactMetaData::setMin(const QVariant& min)
 
 void FactMetaData::setMax(const QVariant& max)
 {
-    if (_type == valueTypeUnknown) {
-        _max = max;
-        return;
-    }
-
     if (max > _maxForType()) {
         qWarning() << "Attempt to set max above allowable value";
         _max = _maxForType();
     } else {
         _max = max;
         _maxIsDefaultForType = false;
-    }
-}
-
-void FactMetaData::setType(ValueType_t type)
-{
-    bool needsValidation = (_type != type);
-
-    _type = type;
-
-    // validate that everything is in order
-    if (needsValidation) {
-        setMin(min());
-        setMax(max());
-        if (defaultValueAvailable()) {
-            setDefaultValue(defaultValue());
-        }
     }
 }
 
@@ -222,11 +196,6 @@ bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, Q
     errorString.clear();
     
     switch (type()) {
-        case FactMetaData::valueTypeUnknown:
-            convertOk = true; // keep the code at the end of the function happy
-            errorString = "can't validate a value whose type is not known yet";
-            break;
-
         case FactMetaData::valueTypeInt8:
         case FactMetaData::valueTypeInt16:
         case FactMetaData::valueTypeInt32:

@@ -42,7 +42,6 @@ class FactMetaData : public QObject
     
 public:
     typedef enum {
-        valueTypeUnknown = -1,
         valueTypeUint8,
         valueTypeInt8,
         valueTypeUint16,
@@ -90,8 +89,6 @@ public:
     void setName            (const QString& name)               { _name = name; }
     void setShortDescription(const QString& shortDescription)   { _shortDescription = shortDescription; }
     void setUnits(const QString& units)                         { _units = units; }
-    void setDecimalPlaces(int decimalPlaces)                    { _decimalPlaces = decimalPlaces; }
-    void setType(ValueType_t type);
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
     static QVariant defaultTranslator(const QVariant& from) { return from; }
 

@@ -34,6 +34,20 @@
 #include "AutoPilotPlugin.h"
 #include "Vehicle.h"
 
+class APMFactMetaDataRaw
+{
+public:
+    QString                  name;
+    QString                  group;
+    QString                  shortDescription;
+    QString                  longDescription;
+    QString                  min;
+    QString                  max;
+    QString                  incrementSize;
+    QString                  units;
+    QList<QPair<QString, QString> > values;
+};
+
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -41,7 +55,7 @@ Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
 
 /// Collection of Parameter Facts for PX4 AutoPilot
 
-typedef QMap<QString, FactMetaData*> ParameterNametoFactMetaDataMap;
+typedef QMap<QString, APMFactMetaDataRaw*> ParameterNametoFactMetaDataMap;
 
 class APMParameterMetaData : public QObject
 {
@@ -56,6 +70,7 @@ public:
     
     // Overrides from ParameterLoader
     static void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
+    static void addMetaDataToFacts(QVariantMap &facts, MAV_TYPE vehicleType);
 
 private:
     enum {
@@ -71,10 +86,10 @@ private:
     };
     
 
-    static void _loadParameterFactMetaData(void);
+    static void _loadParameterFactMetaData();
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
     static bool skipXMLBlock(QXmlStreamReader& xml, const QString& blockName);
-    static bool parseParameterAttributes(QXmlStreamReader& xml, FactMetaData* metaData);
+    static bool parseParameterAttributes(QXmlStreamReader& xml, APMFactMetaDataRaw *rawMetaData);
     static void correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap, QMap<QString,QStringList>& groupMembers);
     static QString mavTypeToString(MAV_TYPE vehicleTypeEnum);
 
