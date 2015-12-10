@@ -49,7 +49,7 @@ This file is part of the QGROUNDCONTROL project
     #endif
 #endif
 
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
 #include <QtBluetooth/QBluetoothSocket>
 #endif
 
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 #ifndef __ios__
     qRegisterMetaType<QSerialPort::SerialPortError>();
 #endif
-#ifdef __mobile__
+#ifdef QGC_ENABLE_BLUETOOTH
     qRegisterMetaType<QBluetoothSocket::SocketError>();
     qRegisterMetaType<QBluetoothServiceInfo>();
 #endif
