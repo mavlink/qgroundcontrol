@@ -64,7 +64,7 @@ Item {
         flightView.visible          = true
         setupViewLoader.visible     = false
         planViewLoader.visible      = false
-        toolbar.checkFlyButton()
+        toolBar.checkFlyButton()
     }
 
     function showPlanView() {
@@ -91,10 +91,6 @@ Item {
         setupViewLoader.visible     = true
         planViewLoader.visible      = false
         toolBar.checkSetupButton()
-    }
-
-    function showWindowCloseMessage() {
-        windowCloseDialog.open()
     }
 
     // The following are use for unit testing only
@@ -202,17 +198,6 @@ Item {
         indicatorDropdown.sourceComponent = dropItem
         indicatorDropdown.visible = true
         currentPopUp = indicatorDropdown
-    }
-
-    MessageDialog {
-        id:                 windowCloseDialog
-        title:              "QGroundControl close"
-        text:               "There are still active connections to vehicles. Do you want to disconnect these before closing?"
-        standardButtons:    StandardButton.Yes | StandardButton.Cancel
-        modality:           Qt.ApplicationModal
-        visible:            false
-
-        onYes: controller.acceptWindowClose()
     }
 
     //-- Left Settings Menu
