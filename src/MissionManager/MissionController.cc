@@ -52,9 +52,7 @@ MissionController::MissionController(QObject *parent)
 
 MissionController::~MissionController()
 {
-    // Start with empty list
-    _missionItems = new QmlObjectListModel(this);
-    _initAllMissionItems();
+
 }
 
 void MissionController::start(bool editMode)
