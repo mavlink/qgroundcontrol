@@ -70,9 +70,6 @@ MapItemView {
             }
         }
 
-        /*
-          Turned off for now
-
         // These are the non-coordinate child mission items attached to this item
         Row {
             anchors.top:    parent.top
@@ -90,6 +87,5 @@ MapItemView {
                 }
             }
         }
-        */
     }
 }

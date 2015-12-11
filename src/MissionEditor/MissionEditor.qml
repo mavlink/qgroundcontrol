@@ -285,9 +285,6 @@ QGCView {
                             onCommandChanged:       updateItemIndicator()
                         }
 
-                        /*
-                          Disabled for now: Not sure if they will come back
-
                         // These are the non-coordinate child mission items attached to this item
                         Row {
                             anchors.top:    parent.top
@@ -305,7 +302,6 @@ QGCView {
                                 }
                             }
                         }
-                        */
                     }
                 }
 
@@ -423,16 +419,6 @@ QGCView {
                             checked = false
                         }
                     }
-
-                    /*
-                      Home Position manager temporarily disable
-                    RoundButton {
-                        id:                 homePositionManagerButton
-                        buttonImage:        "/qmlimages/MapHome.svg"
-                        //exclusiveGroup:     _dropButtonsExclusiveGroup
-                        z:                  QGroundControl.zOrderWidgets
-                    }
-                    */
 
                     DropButton {
                         id:                 syncButton
@@ -558,48 +544,16 @@ QGCView {
                     }
                 }
 
-                Rectangle {
+                MissionItemStatus {
                     id:                 waypointValuesDisplay
-                    anchors.margins:    margins
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.left:       parent.left
                     anchors.bottom:     parent.bottom
-                    width:              distanceLabel.width + (margins * 2)
-                    height:             valuesColumn.height + (margins * 2)
-                    radius:             ScreenTools.defaultFontPixelWidth
-                    color:              qgcPal.window
-                    opacity:            0.80
-                    visible:            _currentMissionItem ? _currentMissionItem.distance != -1 : false
-
-                    readonly property real margins: ScreenTools.defaultFontPixelWidth
-
-                    property real _altDifference:   _currentMissionItem ? _currentMissionItem.altDifference : 0
-                    property real _azimuth:         _currentMissionItem ? _currentMissionItem.azimuth : 0
-                    property real _distance:        _currentMissionItem ? _currentMissionItem.distance : 0
-
-                    Column {
-                        id:                 valuesColumn
-                        anchors.leftMargin: parent.margins
-                        anchors.topMargin:  parent.margins
-                        anchors.left:       parent.left
-                        anchors.top:        parent.top
-
-                        QGCLabel {
-                            id:     distanceLabel
-                            color:  qgcPal.text
-                            text:   "Distance: " + Math.round(waypointValuesDisplay._distance) + " meters"
-                        }
-
-                        QGCLabel {
-                            color:  qgcPal.text
-                            text:   "Alt diff: " + Math.round(waypointValuesDisplay._altDifference) + " meters"
-                        }
-
-                        QGCLabel {
-                            color:  qgcPal.text
-                            text:   "Azimuth: " + Math.round(waypointValuesDisplay._azimuth)
-                        }
-
-                    }
+                    z:                  QGroundControl.zOrderTopMost
+                    currentMissionItem: _currentMissionItem
+                    missionItems:       controller.missionItems
+                    expandedWidth:      missionItemEditor.x - (ScreenTools.defaultFontPixelWidth * 2)
+                    homePositionValid: liveHomePositionAvailable
                 }
             } // FlightMap
         } // Item - split view container
