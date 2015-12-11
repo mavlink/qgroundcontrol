@@ -81,6 +81,8 @@ MissionItem::MissionItem(QObject* parent)
     , _dirty(false)
     , _sequenceNumber(0)
     , _isCurrentItem(false)
+    , _altDifference(0.0)
+    , _altPercent(0.0)
     , _azimuth(0.0)
     , _distance(0.0)
     , _homePositionSpecialCase(false)
@@ -140,6 +142,7 @@ MissionItem::MissionItem(int             sequenceNumber,
     , _sequenceNumber(sequenceNumber)
     , _isCurrentItem(isCurrentItem)
     , _altDifference(0.0)
+    , _altPercent(0.0)
     , _azimuth(0.0)
     , _distance(0.0)
     , _homePositionSpecialCase(false)
@@ -198,6 +201,7 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     , _sequenceNumber(0)
     , _isCurrentItem(false)
     , _altDifference(0.0)
+    , _altPercent(0.0)
     , _azimuth(0.0)
     , _distance(0.0)
     , _homePositionSpecialCase(false)
@@ -243,6 +247,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     setAutoContinue(other.autoContinue());
     setIsCurrentItem(other._isCurrentItem);
     setAltDifference(other._altDifference);
+    setAltPercent(other._altPercent);
     setAzimuth(other._azimuth);
     setDistance(other._distance);
     setHomePositionSpecialCase(other._homePositionSpecialCase);
@@ -732,6 +737,12 @@ void MissionItem::setAltDifference(double altDifference)
 {
     _altDifference = altDifference;
     emit altDifferenceChanged(_altDifference);
+}
+
+void MissionItem::setAltPercent(double altPercent)
+{
+    _altPercent = altPercent;
+    emit altPercentChanged(_altPercent);
 }
 
 void MissionItem::setAzimuth(double azimuth)
