@@ -308,7 +308,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     qDebug() << "Settings location" << settings.fileName() << settings.isWritable();
 
 #ifdef UNITTEST_BUILD
-    Q_ASSERT(settings.isWritable());
+    if (!settings.isWritable()) {
+        qWarning() << "Setings location is not writable";
+    }
 #endif
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
