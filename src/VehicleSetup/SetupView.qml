@@ -256,7 +256,7 @@ Rectangle {
                     id:             px4FlowButton
                     width:          mainWindow.menuButtonWidth
                     exclusiveGroup: setupButtonGroup
-                    visible:        _fullParameterVehicleAvailable
+                    visible:        QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.genericFirmware : false
                     setupIndicator: false
                     text:           "PX4Flow"
                     onClicked:      showPX4FlowPanel()
