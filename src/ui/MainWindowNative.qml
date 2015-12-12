@@ -23,12 +23,14 @@ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 import QtQuick          2.5
 import QtQuick.Window   2.2
+import QtQuick.Dialogs  1.2
 
 import QGroundControl   1.0
 
 /// Native QML top level window
 Window {
-    visible: true
+    id:         _rootWindow
+    visible:    true
 
     onClosing: {
         // Disallow window close if there are active connections
@@ -56,7 +58,7 @@ Window {
     }
 
     function showWindowCloseMessage() {
-        mainWindowInner.item.showWindowCloseMessage()
+        windowCloseDialog.open()
     }
 
     // The following are use for unit testing only
@@ -86,5 +88,32 @@ Window {
         anchors.fill:   parent
         source:         "MainWindowInner.qml"
     }
+
+    MessageDialog {
+        id:                 windowCloseDialog
+        title:              "QGroundControl close"
+        text:               "There are still active connections to vehicles. Do you want to disconnect these before closing?"
+        standardButtons:    StandardButton.Yes | StandardButton.Cancel
+        modality:           Qt.ApplicationModal
+        visible:            false
+
+        onYes: {
+            QGroundControl.linkManager.shutdown()
+            // The above shutdown causes a flurry of activity as the vehicle components are removed. This in turn
+            // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
+            // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
+            delayedWindowCloseTimer.start()
+        }
+    }
+
+    Timer {
+        id:         delayedWindowCloseTimer
+        interval:   1500
+        running:    false
+        repeat:     false
+
+        onTriggered: _rootWindow.close()
+    }
+
 }
 
