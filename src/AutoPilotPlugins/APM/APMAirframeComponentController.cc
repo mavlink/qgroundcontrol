@@ -60,7 +60,7 @@ APMAirframeComponentController::~APMAirframeComponentController()
 
 void APMAirframeComponentController::_factFrameChanged(QVariant value)
 {
-    FrameId v(value.value<FrameId>());
+    FrameId v = (FrameId) value.toInt();
 
     for(int i = 0, size = _airframeTypesModel->count(); i < size; i++ ) {
         APMAirframeType *airframeType = qobject_cast<APMAirframeType*>(_airframeTypesModel->get(i));
@@ -202,10 +202,8 @@ void APMAirframeComponentController::setCurrentAirframe(APMAirframe *t)
 
 void APMAirframeComponentController::setCurrentAirframeType(APMAirframeType *t)
 {
-    _currentAirframeType = t;
     Fact *param = getParameterFact(-1, "FRAME");
     Q_ASSERT(param);
-    param->setRawValue(_currentAirframeType->type());
-    emit currentAirframeTypeChanged(t);
+    param->setRawValue(t->type());
 }
 
