@@ -1,5 +1,5 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
  
  (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -50,19 +50,36 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
 
         if (parametersReady()) {
             _airframeComponent = new APMAirframeComponent(_vehicle, this);
-            Q_CHECK_PTR(_airframeComponent);
-            _airframeComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+            if (_airframeComponent) {
+                _airframeComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+            } else {
+                qWarning() << "new APMAirframeComponent failed";
+            }
 
             _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
-            Q_CHECK_PTR(_flightModesComponent);
-            _flightModesComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+            if (_flightModesComponent) {
+                _flightModesComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+            } else {
+                qWarning() << "new APMFlightModesComponent failed";
+            }
 
             _radioComponent = new APMRadioComponent(_vehicle, this);
-            Q_CHECK_PTR(_radioComponent);
-            _radioComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
+            if (_radioComponent) {
+                _radioComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
+            } else {
+                qWarning() << "new APMRadioComponent failed";
+            }
+
+            _sensorsComponent = new APMSensorsComponent(_vehicle, this);
+            if (_sensorsComponent) {
+                _sensorsComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
+            } else {
+                qWarning() << "new APMSensorsComponent failed";
+            }
         } else {
             qWarning() << "Call to vehicleCompenents prior to parametersReady";
         }
@@ -76,17 +93,17 @@ void APMAutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
 {
 #if 0
     I believe APM has parameter version stamp, we should check that
-    
-    // Check for older parameter version set
-    // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
-    // should be used instead.
-    if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF")) {
+
+            // Check for older parameter version set
+            // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
+            // should be used instead.
+            if (parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF")) {
         _incorrectParameterVersion = true;
         qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
                               "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
-	}
+    }
 #endif
-	
+
     _parametersReady = true;
     _missingParameters = missingParameters;
     emit missingParametersChanged(_missingParameters);

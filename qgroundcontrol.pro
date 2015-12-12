@@ -554,6 +554,8 @@ HEADERS+= \
     src/AutoPilotPlugins/APM/APMRadioComponent.h \
     src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
     src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
+    src/AutoPilotPlugins/APM/APMSensorsComponent.h \
+    src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
@@ -601,6 +603,8 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMRadioComponent.cc \
     src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
     src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
+    src/AutoPilotPlugins/APM/APMSensorsComponent.cc \
+    src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \

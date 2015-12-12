@@ -27,8 +27,9 @@
 #include "AutoPilotPlugin.h"
 #include "Vehicle.h"
 #include "APMAirframeComponent.h"
-#include "APMRadioComponent.h"
 #include "APMFlightModesComponent.h"
+#include "APMRadioComponent.h"
+#include "APMSensorsComponent.h"
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -45,6 +46,7 @@ public:
     APMAirframeComponent*       airframeComponent   (void) { return _airframeComponent; }
     APMFlightModesComponent*    flightModesComponent(void) { return _flightModesComponent; }
     APMRadioComponent*          radioComponent      (void) { return _radioComponent; }
+    APMSensorsComponent*        sensorsComponent    (void) { return _sensorsComponent; }
 
 public slots:
     // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
@@ -57,6 +59,7 @@ private:
     APMAirframeComponent*       _airframeComponent;
     APMFlightModesComponent*    _flightModesComponent;
     APMRadioComponent*          _radioComponent;
+    APMSensorsComponent*        _sensorsComponent;
 };
 
 #endif
