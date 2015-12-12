@@ -111,6 +111,8 @@
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
         <file alias="SensorsComponentSummary.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
         <file alias="SensorsComponentSummaryFixedWing.qml">src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml</file>
+        <file alias="APMSensorsComponent.qml">src/AutoPilotPlugins/APM/APMSensorsComponent.qml</file>
+        <file alias="APMSensorsComponentSummary.qml">src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml</file>
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
         <file alias="test.qml">src/test.qml</file>
