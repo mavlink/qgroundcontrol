@@ -744,17 +744,37 @@ QObject* QGCApplication::_rootQmlObject(void)
 #ifdef __mobile__
     return _qmlAppEngine->rootObjects()[0];
 #else
-    return MainWindow::instance()->rootQmlObject();
+    MainWindow * mainWindow = MainWindow::instance();
+    if (mainWindow) {
+        return mainWindow->rootQmlObject();
+    } else if (runningUnitTests()){
+        // Unit test can run without a main window
+        return NULL;
+    } else {
+        qWarning() << "Why is MainWindow missing?";
+        return NULL;
+    }
 #endif
 }
 
 
 void QGCApplication::showMessage(const QString& message)
 {
-    QVariant varReturn;
-    QVariant varMessage = QVariant::fromValue(message);
+    QObject* rootQmlObject = _rootQmlObject();
 
-    QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+    if (rootQmlObject) {
+        QVariant varReturn;
+        QVariant varMessage = QVariant::fromValue(message);
+
+        QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+#ifndef __mobile__
+    } else if (runningUnitTests()){
+        // Unit test can run without a main window which will lead to no root qml object. Use QGCMessageBox instead
+        QGCMessageBox::information("Unit Test", message);
+#endif
+    } else {
+        qWarning() << "Internal error";
+    }
 }
 
 void QGCApplication::showFlyView(void)
