@@ -26,6 +26,7 @@
 #include "UAS.h"
 #include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
+#include "FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h"
 #include "APMComponent.h"
 #include "APMAirframeComponent.h"
 #include "APMAirframeComponentAirframes.h"
@@ -59,10 +60,13 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
         Q_ASSERT(_vehicle);
 
         if (parametersReady()) {
-            _airframeComponent = new APMAirframeComponent(_vehicle, this);
-            Q_CHECK_PTR(_airframeComponent);
-            _airframeComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+            if (dynamic_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin())){
+                _vehicle->firmwarePlugin();
+                _airframeComponent = new APMAirframeComponent(_vehicle, this);
+                Q_CHECK_PTR(_airframeComponent);
+                _airframeComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+            }
 
             _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
             Q_CHECK_PTR(_flightModesComponent);
