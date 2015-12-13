@@ -29,6 +29,7 @@
 #include "UASInterface.h"
 #include "FactPanelController.h"
 #include "QGCLoggingCategory.h"
+#include "APMSensorsComponent.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMSensorsComponentControllerLog)
 
@@ -50,7 +51,10 @@ public:
     Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
     Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
     Q_PROPERTY(QQuickItem* orientationCalAreaHelpText MEMBER _orientationCalAreaHelpText)
-    
+
+    Q_PROPERTY(bool compassSetupNeeded  READ compassSetupNeeded NOTIFY setupNeededChanged)
+    Q_PROPERTY(bool accelSetupNeeded    READ accelSetupNeeded   NOTIFY setupNeededChanged)
+
     Q_PROPERTY(bool showOrientationCalArea MEMBER _showOrientationCalArea NOTIFY showOrientationCalAreaChanged)
     
     Q_PROPERTY(bool orientationCalDownSideDone MEMBER _orientationCalDownSideDone NOTIFY orientationCalSidesDoneChanged)
@@ -84,14 +88,14 @@ public:
     Q_PROPERTY(bool waitingForCancel MEMBER _waitingForCancel NOTIFY waitingForCancelChanged)
     
     Q_INVOKABLE void calibrateCompass(void);
-    Q_INVOKABLE void calibrateGyro(void);
     Q_INVOKABLE void calibrateAccel(void);
-    Q_INVOKABLE void calibrateLevel(void);
-    Q_INVOKABLE void calibrateAirspeed(void);
     Q_INVOKABLE void cancelCalibration(void);
     Q_INVOKABLE void nextClicked(void);
 
     bool fixedWing(void);
+
+    bool compassSetupNeeded(void) const;
+    bool accelSetupNeeded(void) const;
     
 signals:
     void showGyroCalAreaChanged(void);
@@ -103,6 +107,7 @@ signals:
     void resetStatusTextArea(void);
     void waitingForCancelChanged(void);
     void setCompassRotations(void);
+    void setupNeededChanged(void);
     
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
@@ -123,6 +128,8 @@ private:
     void _stopCalibration(StopCalibrationCode code);
     
     void _updateAndEmitShowOrientationCalArea(bool show);
+
+    APMSensorsComponent*    _sensorsComponent;
 
     QQuickItem* _statusLog;
     QQuickItem* _progressBar;
