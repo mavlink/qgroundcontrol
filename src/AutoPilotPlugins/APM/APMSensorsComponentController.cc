@@ -25,6 +25,7 @@
 #include "QGCMAVLink.h"
 #include "UAS.h"
 #include "QGCApplication.h"
+#include "APMAutoPilotPlugin.h"
 
 #include <QVariant>
 #include <QQmlProperty>
@@ -68,7 +69,10 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     _orientationCalTailDownSideRotate(false),
     _waitingForCancel(false)
 {
+    APMAutoPilotPlugin * apmPlugin = qobject_cast<APMAutoPilotPlugin*>(_vehicle->autopilotPlugin());
 
+    _sensorsComponent = apmPlugin->sensorsComponent();
+    connect(apmPlugin, &APMAutoPilotPlugin::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
 }
 
 /// Appends the specified text to the status log area in the ui
@@ -180,12 +184,6 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     _gyroCalInProgress = false;
 }
 
-void APMSensorsComponentController::calibrateGyro(void)
-{
-    _startLogCalibration();
-    _uas->startCalibration(UASInterface::StartCalibrationGyro);
-}
-
 void APMSensorsComponentController::calibrateCompass(void)
 {
     _startLogCalibration();
@@ -196,18 +194,6 @@ void APMSensorsComponentController::calibrateAccel(void)
 {
     _startLogCalibration();
     _uas->startCalibration(UASInterface::StartCalibrationAccel);
-}
-
-void APMSensorsComponentController::calibrateLevel(void)
-{
-    _startLogCalibration();
-    _uas->startCalibration(UASInterface::StartCalibrationLevel);
-}
-
-void APMSensorsComponentController::calibrateAirspeed(void)
-{
-    _startLogCalibration();
-    _uas->startCalibration(UASInterface::StartCalibrationAirspeed);
 }
 
 void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
@@ -466,4 +452,14 @@ void APMSensorsComponentController::nextClicked(void)
     mavlink_msg_command_ack_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(), qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &msg, &ack);
 
     _vehicle->sendMessage(msg);
+}
+
+bool APMSensorsComponentController::compassSetupNeeded(void) const
+{
+    return _sensorsComponent->compassSetupNeeded();
+}
+
+bool APMSensorsComponentController::accelSetupNeeded(void) const
+{
+    return _sensorsComponent->accelSetupNeeded();
 }
