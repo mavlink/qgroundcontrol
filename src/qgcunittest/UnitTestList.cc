@@ -33,6 +33,7 @@
 #include "MessageBoxTest.h"
 #include "MissionItemTest.h"
 #include "MissionControllerTest.h"
+#include "MissionManagerTest.h"
 #include "RadioConfigTest.h"
 #include "SetupViewTest.h"
 #include "MavlinkLogTest.h"
@@ -48,6 +49,7 @@ UT_REGISTER_TEST(MavlinkLogTest)
 UT_REGISTER_TEST(MessageBoxTest)
 UT_REGISTER_TEST(MissionItemTest)
 UT_REGISTER_TEST(MissionControllerTest)
+UT_REGISTER_TEST(MissionManagerTest)
 UT_REGISTER_TEST(RadioConfigTest)
 
 // List of unit test which are currently disabled.
@@ -58,11 +60,6 @@ UT_REGISTER_TEST(RadioConfigTest)
 
 // FIXME: Temporarily disabled until this can be stabilized
 //UT_REGISTER_TEST(MainWindowTest)
-
-// FIXME: Temporarily disabled until this can be stabilized
-
-// FIXME: Temporarily disabled until this can be stabilized
-//UT_REGISTER_TEST(MissionManagerTest)
 
 // This unit test has gotten too flaky to run reliably under TeamCity. Removing for now till there is
 // time to debug.
