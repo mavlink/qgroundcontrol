@@ -292,22 +292,34 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
         mavlink_msg_param_set_encode(message->sysid, message->compid, message, &paramSet);
     }
 
-    if (message->msgid == MAVLINK_MSG_ID_STATUSTEXT)
-    {
-        if (!_firmwareVersion.isValid()) {
+    if (message->msgid == MAVLINK_MSG_ID_STATUSTEXT) {
+        mavlink_statustext_t statusText;
+        mavlink_msg_statustext_decode(message, &statusText);
+
+        // APM user facing calibration messages come through as high severity, we need to parse them out
+        // and lower the severity on them so that they don't pop in the users face.
+
+        if (!_firmwareVersion.isValid() || statusText.severity < MAV_SEVERITY_NOTICE) {
             QByteArray b;
             b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
             mavlink_msg_statustext_get_text(message, b.data());
             // Ensure NUL-termination
             b[b.length()-1] = '\0';
-            QString text = QString(b);
-            qCDebug(APMFirmwarePluginLog) << text;
+            QString messageText = QString(b);
+            qCDebug(APMFirmwarePluginLog) << messageText;
 
-            // if don't know firmwareVersion yet, try and see this message contains it
-            if (text.contains(APM_COPTER_REXP) || text.contains(APM_PLANE_REXP) || text.contains(APM_ROVER_REXP)) {
-                // found version string
-                _firmwareVersion = APMFirmwareVersion(text);
-                _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(_firmwareVersion);
+            if (!_firmwareVersion.isValid()) {
+                // if don't know firmwareVersion yet, try and see if this message contains it
+                if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP)) {
+                    // found version string
+                    _firmwareVersion = APMFirmwareVersion(messageText);
+                    _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(_firmwareVersion);
+                }
+            }
+
+            if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
+                _adjustCalibrationMessageSeverity(message);
+                return;
             }
         }
 
@@ -359,6 +371,14 @@ void APMFirmwarePlugin::_adjustSeverity(mavlink_message_t* message) const
             break;
     }
 
+    mavlink_msg_statustext_encode(message->sysid, message->compid, message, &statusText);
+}
+
+void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* message) const
+{
+    mavlink_statustext_t statusText;
+    mavlink_msg_statustext_decode(message, &statusText);
+    statusText.severity = MAV_SEVERITY_INFO;
     mavlink_msg_statustext_encode(message->sysid, message->compid, message, &statusText);
 }
 

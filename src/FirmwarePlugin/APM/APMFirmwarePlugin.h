@@ -100,6 +100,7 @@ protected:
     
 private:
     void _adjustSeverity(mavlink_message_t* message) const;
+    void _adjustCalibrationMessageSeverity(mavlink_message_t* message) const;
     static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
 
     APMFirmwareVersion      _firmwareVersion;
