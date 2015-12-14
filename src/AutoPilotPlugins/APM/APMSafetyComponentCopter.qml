@@ -40,7 +40,7 @@ QGCView {
 
     QGCPalette { id: palette; colorGroupEnabled: enabled }
 
-    property Fact _failsafeBattEnabled: controller.getParameterFact(-1, "FS_BATT_ENABLE")
+    property Fact _failsafeBattEnable:  controller.getParameterFact(-1, "FS_BATT_ENABLE")
     property Fact _failsafeBattMah:     controller.getParameterFact(-1, "FS_BATT_MAH")
     property Fact _failsafeBattVoltage: controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
     property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "FS_THR_ENABLE")
@@ -72,6 +72,7 @@ QGCView {
             clip:               true
             anchors.fill:       parent
             boundsBehavior:     Flickable.StopAtBounds
+            contentHeight:      rtlSettings.y + rtlSettings.height
             flickableDirection: Flickable.VerticalFlick
 
             QGCLabel {
@@ -81,13 +82,14 @@ QGCView {
             }
 
             Rectangle {
-                id:                 failsafeSettings
-                anchors.topMargin:  _margins / 2
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.top:        failsafeLabel.bottom
-                height:             fenceAltMaxField.y + fenceAltMaxField.height + _margins
-                color:              palette.windowShade
+                id:                     failsafeSettings
+                anchors.topMargin:      _margins / 2
+                anchors.rightMargin:    _margins
+                anchors.left:           parent.left
+                anchors.top:            failsafeLabel.bottom
+                width:                  throttleEnableCombo.x + throttleEnableCombo.x + _margins
+                height:                 mahField.y + mahField.height + _margins
+                color:                  palette.windowShade
 
                 QGCLabel {
                     id:                 throttleEnableLabel
@@ -141,9 +143,9 @@ QGCView {
                     anchors.top:        throttlePWMField.bottom
                     width:              voltageField.width
                     model:              ["Disabled", "Land", "Return to Launch"]
-                    currentIndex:       _failsafeBattEnabled.value
+                    currentIndex:       _failsafeBattEnable.value
 
-                    onActivated: _failsafeBattEnabled.value = index
+                    onActivated: _failsafeBattEnable.value = index
                 }
 
                 QGCCheckBox {
@@ -190,21 +192,20 @@ QGCView {
 
             QGCLabel {
                 id:                 geoFenceLabel
-                anchors.topMargin:  _margins
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.top:        failsafeSettings.bottom
-                text:       "GeoFence"
-                font.weight: Font.DemiBold
+                anchors.leftMargin: _margins
+                anchors.left:       failsafeSettings.right
+                anchors.top:        parent.top
+                text:               "GeoFence"
+                font.weight:        Font.DemiBold
             }
 
             Rectangle {
                 id:                 geoFenceSettings
                 anchors.topMargin:  _margins / 2
-                anchors.left:       parent.left
-                anchors.right:      parent.right
+                anchors.left:       geoFenceLabel.left
                 anchors.top:        geoFenceLabel.bottom
-                height:             fenceAltMaxField.y + fenceAltMaxField.height + _margins
+                anchors.bottom:     failsafeSettings.bottom
+                width:              fenceAltMaxField.x + fenceAltMaxField.width + _margins
                 color:              palette.windowShade
 
                 QGCCheckBox {
@@ -324,10 +325,11 @@ QGCView {
             }
 
             Rectangle {
+                id:                 rtlSettings
                 anchors.topMargin:  _margins / 2
                 anchors.left:       parent.left
-                anchors.right:      parent.right
                 anchors.top:        rtlLabel.bottom
+                width:              rltAltFinalField.x + rltAltFinalField.width + _margins
                 height:             rltAltFinalField.y + rltAltFinalField.height + _margins
                 color:              palette.windowShade
 
