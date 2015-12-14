@@ -440,7 +440,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     if (!rawMetaData->min.isEmpty()) {
         QVariant varMin;
         QString errorString;
-        if (metaData->convertAndValidate(rawMetaData->min, true /* convertOnly */, varMin, errorString)) {
+        if (metaData->convertAndValidate(rawMetaData->min, false /* validate as well */, varMin, errorString)) {
             metaData->setMin(varMin);
         } else {
             qCDebug(APMParameterMetaDataLog) << "Invalid min value, name:" << metaData->name()
@@ -452,7 +452,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     if (!rawMetaData->max.isEmpty()) {
         QVariant varMax;
         QString errorString;
-        if (metaData->convertAndValidate(rawMetaData->max, true /* convertOnly */, varMax, errorString)) {
+        if (metaData->convertAndValidate(rawMetaData->max, false /* validate as well */, varMax, errorString)) {
             metaData->setMax(varMax);
         } else {
             qCDebug(APMParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:"
