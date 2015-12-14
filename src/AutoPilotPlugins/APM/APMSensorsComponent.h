@@ -32,7 +32,10 @@ class APMSensorsComponent : public APMComponent
     
 public:
     APMSensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
-    
+
+    bool compassSetupNeeded(void) const;
+    bool accelSetupNeeded(void) const;
+
     // Virtuals from APMComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;
     
