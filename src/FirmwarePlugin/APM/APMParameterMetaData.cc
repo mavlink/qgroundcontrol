@@ -351,7 +351,7 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
                         qCDebug(APMParameterMetaDataLog) << " 'to' seperaator didn't work', trying '-' as seperator";
                         rangeList = range.split('-');
                         if (rangeList.count() != 2) {
-                            qCWarning(APMParameterMetaDataLog) << "something wrong with range, all three separators have failed" << range;
+                            qCDebug(APMParameterMetaDataLog) << "something wrong with range, all three separators have failed" << range;
                         }
                     }
                 }
