@@ -108,6 +108,7 @@ private slots:
     void _restartWaitingParamTimer(void);
     void _waitingParamTimeout(void);
     void _tryCacheLookup(void);
+    void _initialRequestTimeout(void);
     
 private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
@@ -148,6 +149,7 @@ private:
     
     int _totalParamCount;   ///< Number of parameters across all components
     
+    QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;
     QTimer _cacheTimeoutTimer;
     
