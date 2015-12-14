@@ -34,6 +34,8 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _airframeComponent(NULL)
     , _flightModesComponent(NULL)
     , _radioComponent(NULL)
+    , _safetyComponent(NULL)
+    , _sensorsComponent(NULL)
 {
     Q_ASSERT(vehicle);
 }
@@ -79,6 +81,14 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
             } else {
                 qWarning() << "new APMSensorsComponent failed";
+            }
+
+            _safetyComponent = new APMSafetyComponent(_vehicle, this);
+            if (_safetyComponent) {
+                _safetyComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+            } else {
+                qWarning() << "new APMSafetyComponent failed";
             }
         } else {
             qWarning() << "Call to vehicleCompenents prior to parametersReady";
