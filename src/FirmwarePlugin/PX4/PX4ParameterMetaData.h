@@ -47,7 +47,7 @@ class PX4ParameterMetaData : public QObject
 public:
     PX4ParameterMetaData(QObject* parent = NULL);
 
-    void addMetaDataToFact(Fact* fact);
+    void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
 
 private:
     enum {
