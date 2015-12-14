@@ -40,6 +40,19 @@ QGCView {
 
     QGCPalette { id: palette; colorGroupEnabled: enabled }
 
+    property Fact _failsafeBattEnabled: controller.getParameterFact(-1, "FS_BATT_ENABLE")
+    property Fact _failsafeBattMah:     controller.getParameterFact(-1, "FS_BATT_MAH")
+    property Fact _failsafeBattVoltage: controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
+    property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "FS_THR_ENABLE")
+    property Fact _failsafeThrValue:    controller.getParameterFact(-1, "FS_THR_VALUE")
+
+    property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
+    property Fact _fenceAltMax: controller.getParameterFact(-1, "FENCE_ALT_MAX")
+    property Fact _fenceEnable: controller.getParameterFact(-1, "FENCE_ENABLE")
+    property Fact _fenceMargin: controller.getParameterFact(-1, "FENCE_MARGIN")
+    property Fact _fenceRadius: controller.getParameterFact(-1, "FENCE_RADIUS")
+    property Fact _fenceType:   controller.getParameterFact(-1, "FENCE_TYPE")
+
     property Fact _landSpeedFact:   controller.getParameterFact(-1, "LAND_SPEED")
     property Fact _rtlAltFact:      controller.getParameterFact(-1, "RTL_ALT")
     property Fact _rtlLoitTimeFact: controller.getParameterFact(-1, "RTL_LOIT_TIME")
@@ -47,6 +60,7 @@ QGCView {
 
     property real _margins: ScreenTools.defaultFontPixelHeight
 
+    ExclusiveGroup { id: fenceActionRadioGroup }
     ExclusiveGroup { id: landLoiterRadioGroup }
     ExclusiveGroup { id: returnAltRadioGroup }
 
@@ -61,9 +75,252 @@ QGCView {
             flickableDirection: Flickable.VerticalFlick
 
             QGCLabel {
-                id:         rtlLabel
-                text:       "Return Home Settings"
+                id:         failsafeLabel
+                text:       "Failsafe Triggers"
                 font.weight: Font.DemiBold
+            }
+
+            Rectangle {
+                id:                 failsafeSettings
+                anchors.topMargin:  _margins / 2
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                anchors.top:        failsafeLabel.bottom
+                height:             fenceAltMaxField.y + fenceAltMaxField.height + _margins
+                color:              palette.windowShade
+
+                QGCLabel {
+                    id:                 throttleEnableLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   throttleEnableCombo.baseline
+                    text:               "Throttle failsafe:"
+                }
+
+                QGCComboBox {
+                    id:                 throttleEnableCombo
+                    anchors.topMargin:  _margins
+                    anchors.left:       voltageField.left
+                    anchors.top:        parent.top
+                    width:              voltageField.width
+                    model:              ["Disabled", "Always RTL", "Continue with Mission in Auto Mode", "Always Land"]
+                    currentIndex:       _failsafeThrEnable.value
+
+                    onActivated: _failsafeThrEnable.value = index
+                }
+
+                QGCLabel {
+                    id:                 throttlePWMLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   throttlePWMField.baseline
+                    text:               "PWM threshold:"
+                }
+
+                FactTextField {
+                    id:                 throttlePWMField
+                    anchors.topMargin:  _margins / 2
+                    anchors.left:       voltageField.left
+                    anchors.top:        throttleEnableCombo.bottom
+                    fact:               _failsafeThrValue
+                    showUnits:          true
+                }
+
+                QGCLabel {
+                    id:                 batteryEnableLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   batteryEnableCombo.baseline
+                    text:               "Battery failsafe:"
+                }
+
+                QGCComboBox {
+                    id:                 batteryEnableCombo
+                    anchors.topMargin:  _margins
+                    anchors.left:       voltageField.left
+                    anchors.top:        throttlePWMField.bottom
+                    width:              voltageField.width
+                    model:              ["Disabled", "Land", "Return to Launch"]
+                    currentIndex:       _failsafeBattEnabled.value
+
+                    onActivated: _failsafeBattEnabled.value = index
+                }
+
+                QGCCheckBox {
+                    id:                 voltageLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   voltageField.baseline
+                    text:               "Voltage threshold:"
+                    checked:            _failsafeBattVoltage.value != 0
+
+                    onClicked: _failsafeBattVoltage.value = checked ? 10.5 : 0
+                }
+
+                FactTextField {
+                    id:                 voltageField
+                    anchors.topMargin:  _margins / 2
+                    anchors.leftMargin: _margins
+                    anchors.left:       voltageLabel.right
+                    anchors.top:        batteryEnableCombo.bottom
+                    fact:               _failsafeBattVoltage
+                    showUnits:          true
+                }
+
+                QGCCheckBox {
+                    id:                 mahLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   mahField.baseline
+                    text:               "MAH threshold:"
+                    checked:            _failsafeBattMah.value != 0
+
+                    onClicked: _failsafeBattMah.value = checked ? 600 : 0
+                }
+
+                FactTextField {
+                    id:                 mahField
+                    anchors.topMargin:  _margins / 2
+                    anchors.left:       voltageField.left
+                    anchors.top:        voltageField.bottom
+                    fact:               _failsafeBattMah
+                    showUnits:          true
+                }
+            } // Rectangle - Failsafe Settings
+
+            QGCLabel {
+                id:                 geoFenceLabel
+                anchors.topMargin:  _margins
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                anchors.top:        failsafeSettings.bottom
+                text:       "GeoFence"
+                font.weight: Font.DemiBold
+            }
+
+            Rectangle {
+                id:                 geoFenceSettings
+                anchors.topMargin:  _margins / 2
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                anchors.top:        geoFenceLabel.bottom
+                height:             fenceAltMaxField.y + fenceAltMaxField.height + _margins
+                color:              palette.windowShade
+
+                QGCCheckBox {
+                    id:                 circleGeo
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    text:               "Circle GeoFence enabled"
+                    checked:            _fenceEnable.value != 0 && _fenceType.value & 2
+
+                    onClicked: {
+                        if (checked) {
+                            if (_fenceEnable.value == 1) {
+                                _fenceType.value |= 2
+                            } else {
+                                _fenceEnable.value = 1
+                                _fenceType.value = 2
+                            }
+                        } else if (altitudeGeo.checked) {
+                            _fenceType.value &= ~2
+                        } else {
+                            _fenceEnable.value = 0
+                            _fenceType.value = 0
+                        }
+                    }
+                }
+
+                QGCCheckBox {
+                    id:                 altitudeGeo
+                    anchors.topMargin:  _margins / 2
+                    anchors.left:       circleGeo.left
+                    anchors.top:        circleGeo.bottom
+                    text:               "Altitude GeoFence enabled"
+                    checked:            _fenceEnable.value != 0 && _fenceType.value & 1
+
+                    onClicked: {
+                        if (checked) {
+                            if (_fenceEnable.value == 1) {
+                                _fenceType.value |= 1
+                            } else {
+                                _fenceEnable.value = 1
+                                _fenceType.value = 1
+                            }
+                        } else if (circleGeo.checked) {
+                            _fenceType.value &= ~1
+                        } else {
+                            _fenceEnable.value = 0
+                            _fenceType.value = 0
+                        }
+                    }
+                }
+
+                QGCRadioButton {
+                    id:                 geoReportRadio
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.top:        altitudeGeo.bottom
+                    text:               "Report only"
+                    exclusiveGroup:     fenceActionRadioGroup
+                    checked:            _fenceAction.value == 0
+
+                    onClicked: _fenceAction.value = 0
+                }
+
+                QGCRadioButton {
+                    id:                 geoRTLRadio
+                    anchors.topMargin:  _margins / 2
+                    anchors.left:       circleGeo.left
+                    anchors.top:        geoReportRadio.bottom
+                    text:               "RTL or Land"
+                    exclusiveGroup:     fenceActionRadioGroup
+                    checked:            _fenceAction.value == 1
+
+                    onClicked: _fenceAction.value = 1
+                }
+
+                QGCLabel {
+                    id:                 fenceRadiusLabel
+                    anchors.left:       circleGeo.left
+                    anchors.baseline:   fenceRadiusField.baseline
+                    text:               "Max radius:"
+                }
+
+                FactTextField {
+                    id:                 fenceRadiusField
+                    anchors.topMargin:  _margins
+                    anchors.left:       fenceAltMaxField.left
+                    anchors.top:        geoRTLRadio.bottom
+                    fact:               _fenceRadius
+                    showUnits:          true
+                }
+
+                QGCLabel {
+                    id:                 fenceAltMaxLabel
+                    anchors.left:       circleGeo.left
+                    anchors.baseline:   fenceAltMaxField.baseline
+                    text:               "Max altitude:"
+                }
+
+                FactTextField {
+                    id:                 fenceAltMaxField
+                    anchors.topMargin:  _margins / 2
+                    anchors.leftMargin: _margin
+                    anchors.left:       fenceAltMaxLabel.right
+                    anchors.top:        fenceRadiusField.bottom
+                    fact:               _fenceAltMax
+                    showUnits:          true
+                }
+            } // Rectangle - GeoFence Settings
+
+            QGCLabel {
+                id:                 rtlLabel
+                anchors.topMargin:  _margins
+                anchors.top:        geoFenceSettings.bottom
+                text:               "Return to Launch"
+                font.weight:        Font.DemiBold
             }
 
             Rectangle {
@@ -134,7 +391,7 @@ QGCView {
                     checked:            _rtlLoitTimeFact.value > 0
                     text:               "Loiter above Home for:"
 
-                    onClicked: _rtlLoitTimeFact.value = checked ? 60 : 0
+                    onClicked: _rtlLoitTimeFact.value = (checked ? 60 : 0)
                 }
 
                 FactTextField {
