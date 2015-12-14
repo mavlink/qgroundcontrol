@@ -105,7 +105,14 @@
         <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
         <file alias="RadioComponent.qml">src/AutoPilotPlugins/Common/RadioComponent.qml</file>
         <file alias="PX4RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml</file>
+        <file alias="APMNotSupported.qml">src/AutoPilotPlugins/APM/APMNotSupported.qml</file>
         <file alias="APMRadioComponentSummary.qml">src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml</file>
+        <file alias="APMSafetyComponentCopter.qml">src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml</file>
+        <file alias="APMSafetyComponentPlane.qml">src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml</file>
+        <file alias="APMSafetyComponentRover.qml">src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml</file>
+        <file alias="APMSafetyComponentSummaryCopter.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml</file>
+        <file alias="APMSafetyComponentSummaryPlane.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml</file>
+        <file alias="APMSafetyComponentSummaryRover.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
