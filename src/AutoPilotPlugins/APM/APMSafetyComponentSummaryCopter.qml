@@ -14,6 +14,10 @@ FactPanel {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
 
+    property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
+    property Fact _fenceEnable: controller.getParameterFact(-1, "FENCE_ENABLE")
+    property Fact _fenceType:   controller.getParameterFact(-1, "FENCE_TYPE")
+
     property Fact _rtlAltFact:      controller.getParameterFact(-1, "RTL_ALT")
     property Fact _rtlLoitTimeFact: controller.getParameterFact(-1, "RTL_LOIT_TIME")
     property Fact _rtlAltFinalFact: controller.getParameterFact(-1, "RTL_ALT_FINAL")
@@ -22,6 +26,22 @@ FactPanel {
     Column {
         anchors.fill:       parent
         anchors.margins:    8
+
+        VehicleSummaryRow {
+            labelText: "GeoFence:"
+            valueText: _fenceEnable.value == 0 || _fenceType == 0 ?
+                           "Disabled" :
+                           (_fenceType.value == 1 ?
+                                "Altitude" :
+                                (_fenceType.value == 2 ? "Circle" : "Altitude,Circle"))
+        }
+
+        VehicleSummaryRow {
+            labelText: "GeoFence:"
+            valueText: _fenceAction.value == 0 ?
+                           "Report only" :
+                           (_fenceAction.value == 1 ? "RTL or Land" : "Unknown")
+        }
 
         VehicleSummaryRow {
             labelText: "RTL min alt:"
