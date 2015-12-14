@@ -289,7 +289,7 @@ QGCView {
                         QGCLabel {
                             id:     valueLabel
                             width:  ScreenTools.defaultFontPixelWidth  * 20
-                            color:  factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText
+                            color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? __qgcPal.text : __qgcPal.warningText) : __qgcPal.text
                             text:   factRow.modelFact.valueString + " " + factRow.modelFact.units
                         }
                         QGCLabel {
