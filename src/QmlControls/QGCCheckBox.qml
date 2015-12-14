@@ -11,7 +11,7 @@ CheckBox {
     style: CheckBoxStyle {
         label: Item {
             implicitWidth: text.implicitWidth + 2
-            implicitHeight: ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 3 * 0.75 : text.implicitHeight
+            implicitHeight: text.implicitHeight
             baselineOffset: text.baselineOffset
             Rectangle {
                 anchors.fill: text
