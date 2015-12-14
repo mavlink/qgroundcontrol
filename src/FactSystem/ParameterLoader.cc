@@ -62,6 +62,10 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
     // We signal this to ouselves in order to start timer on our thread
     connect(this, &ParameterLoader::restartWaitingParamTimer, this, &ParameterLoader::_restartWaitingParamTimer);
 
+    _initialRequestTimeoutTimer.setSingleShot(true);
+    _initialRequestTimeoutTimer.setInterval(6000);
+    connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_initialRequestTimeout);
+
     _waitingParamTimeoutTimer.setSingleShot(true);
     _waitingParamTimeoutTimer.setInterval(1000);
     connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::_waitingParamTimeout);
@@ -91,6 +95,8 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     if (uasId != _vehicle->id()) {
         return;
     }
+
+    _initialRequestTimeoutTimer.stop();
 
     qCDebug(ParameterLoaderLog) << "_parameterUpdate (usaId:" << uasId <<
                                     "componentId:" << componentId <<
@@ -295,6 +301,10 @@ void ParameterLoader::_valueUpdated(const QVariant& value)
 void ParameterLoader::refreshAllParameters(void)
 {
     _dataMutex.lock();
+
+    if (!_initialLoadComplete) {
+        _initialRequestTimeoutTimer.start();
+    }
 
     // Reset index wait lists
     foreach (int componentId, _paramCountMap.keys()) {
@@ -858,4 +868,11 @@ void ParameterLoader::_checkInitialLoadComplete(void)
         _setupGroupMap();
         emit parametersReady(false);
     }
+}
+
+void ParameterLoader::_initialRequestTimeout(void)
+{
+    qgcApp()->showMessage("Vehicle did not respond to request for parameters, retrying");
+    refreshAllParameters();
+    _initialRequestTimeoutTimer.start();
 }
