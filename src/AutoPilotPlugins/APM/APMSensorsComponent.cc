@@ -57,13 +57,7 @@ bool APMSensorsComponent::requiresSetup(void) const
 
 bool APMSensorsComponent::setupComplete(void) const
 {
-    foreach(QString triggerParam, setupCompleteChangedTriggerList()) {
-        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, triggerParam)->rawValue().toFloat() == 0.0f) {
-            return false;
-        }
-    }
-
-    return true;
+    return !compassSetupNeeded() && !accelSetupNeeded();
 }
 
 QString APMSensorsComponent::setupStateDescription(void) const
@@ -82,8 +76,17 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
     
-    triggers << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X"
-             << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
+    // Compass triggers
+    triggers << "COMPASS_DEV_ID" << "COMPASS_DEV_ID2" << "COMPASS_DEV_ID3"
+             << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X"
+             << "COMPASS_OFS2_X" << "COMPASS_OFS2_X" << "COMPASS_OFS2_X"
+             << "COMPASS_OFS3_X" << "COMPASS_OFS3_X" << "COMPASS_OFS3_X";
+
+    // Acceleromter triggers
+    triggers << "INS_USE" << "INS_USE2" << "INS_USE3"
+             << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z"
+             << "INS_ACC2OFFS_X" << "INS_ACC2OFFS_Y" << "INS_ACC2OFFS_Z"
+             << "INS_ACC3OFFS_X" << "INS_ACC3OFFS_Y" << "INS_ACC3OFFS_Z";
 
     return triggers;
 }
@@ -114,3 +117,54 @@ QString APMSensorsComponent::prerequisiteSetup(void) const
     
     return QString();
 }
+
+bool APMSensorsComponent::compassSetupNeeded(void) const
+{
+    const size_t cCompass = 3;
+    const size_t cOffset = 3;
+    QStringList devicesIds;
+    QStringList rgOffsets[cCompass];
+
+    devicesIds << "COMPASS_DEV_ID" << "COMPASS_DEV_ID2" << "COMPASS_DEV_ID3";
+    rgOffsets[0] << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X";
+    rgOffsets[1] << "COMPASS_OFS2_X" << "COMPASS_OFS2_X" << "COMPASS_OFS2_X";
+    rgOffsets[2] << "COMPASS_OFS3_X" << "COMPASS_OFS3_X" << "COMPASS_OFS3_X";
+
+    for (size_t i=0; i<cCompass; i++) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, devicesIds[i])->rawValue().toInt() != 0) {
+            for (size_t j=0; j<cOffset; j++) {
+                if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool APMSensorsComponent::accelSetupNeeded(void) const
+{
+    const size_t cAccel = 3;
+    const size_t cOffset = 3;
+    QStringList insUse;
+    QStringList rgOffsets[cAccel];
+
+    insUse << "INS_USE" << "INS_USE2" << "INS_USE3";
+    rgOffsets[0] << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
+    rgOffsets[1] << "INS_ACC2OFFS_X" << "INS_ACC2OFFS_Y" << "INS_ACC2OFFS_Z";
+    rgOffsets[2] << "INS_ACC3OFFS_X" << "INS_ACC3OFFS_Y" << "INS_ACC3OFFS_Z";
+
+    for (size_t i=0; i<cAccel; i++) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, insUse[i])->rawValue().toInt() != 0) {
+            for (size_t j=0; j<cOffset; j++) {
+                if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+

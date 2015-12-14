@@ -112,24 +112,8 @@ QGCView {
 
     property Fact sens_board_rot:   controller.getParameterFact(-1, "AHRS_ORIENTATION")
 
-    /*
-    property Fact cal_gyro0_id:     controller.getParameterFact(-1, "CAL_GYRO0_ID")
-    property Fact cal_acc0_id:      controller.getParameterFact(-1, "CAL_ACC0_ID")
-
-    property Fact sens_board_x_off: controller.getParameterFact(-1, "SENS_BOARD_X_OFF")
-    property Fact sens_dpres_off:   controller.getParameterFact(-1, "SENS_DPRES_OFF")
-    */
-
-    property Fact ins_accoffs_x:    controller.getParameterFact(-1, "INS_ACCOFFS_X")
-    property Fact ins_accoffs_y:    controller.getParameterFact(-1, "INS_ACCOFFS_Y")
-    property Fact ins_accoffs_z:    controller.getParameterFact(-1, "INS_ACCOFFS_Z")
-
-    property Fact compass_ofs_x:    controller.getParameterFact(-1, "COMPASS_OFS_X")
-    property Fact compass_ofs_y:    controller.getParameterFact(-1, "COMPASS_OFS_Y")
-    property Fact compass_ofs_z:    controller.getParameterFact(-1, "COMPASS_OFS_Z")
-
-    property bool accelCalNeeded:   ins_accoffs_x.value == 0 && ins_accoffs_y.value == 0 && ins_accoffs_z.value == 0
-    property bool compassCalNeeded: compass_ofs_x.value == 0 && compass_ofs_y.value == 0 && compass_ofs_y.value == 0
+    property bool accelCalNeeded:   controller.accelSetupNeeded
+    property bool compassCalNeeded: controller.compassSetupNeeded
 
     // Id > = signals compass available, rot < 0 signals internal compass
     property bool showCompass0Rot: cal_mag0_id.value > 0 && cal_mag0_rot.value >= 0
