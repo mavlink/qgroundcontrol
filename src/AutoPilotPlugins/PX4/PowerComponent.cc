@@ -62,28 +62,9 @@ bool PowerComponent::setupComplete(void) const
         _autopilot->getParameterFact(FactSystem::defaultComponentId, "BAT_N_CELLS")->rawValue().toInt() != 0;
 }
 
-QString PowerComponent::setupStateDescription(void) const
-{
-    const char* stateDescription;
-
-    if (requiresSetup()) {
-        stateDescription = "Requires setup";
-    } else {
-        stateDescription = "Setup complete";
-    }
-    return QString(stateDescription);
-}
-
 QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
 {
     return QStringList();
-}
-
-QStringList PowerComponent::paramFilterList(void) const
-{
-    QStringList list;
-
-    return list;
 }
 
 QUrl PowerComponent::setupSource(void) const
