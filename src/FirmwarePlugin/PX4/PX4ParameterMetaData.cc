@@ -188,7 +188,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                 
                 QString name = xml.attributes().value("name").toString();
                 QString type = xml.attributes().value("type").toString();
-                QString strDefault = xml.attributes().value("default").toString();
+                QString strDefault =    xml.attributes().value("default").toString();
                 
                 qCDebug(PX4ParameterMetaDataLog) << "Found parameter name:" << name << " type:" << type << " default:" << strDefault;
 
@@ -345,8 +345,10 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
 }
 
 /// Override from FactLoad which connects the meta data to the fact
-void PX4ParameterMetaData::addMetaDataToFact(Fact* fact)
+void PX4ParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 {
+    Q_UNUSED(vehicleType)
+
     _loadParameterFactMetaData();
     if (_mapParameterName2FactMetaData.contains(fact->name())) {
         fact->setMetaData(_mapParameterName2FactMetaData[fact->name()]);

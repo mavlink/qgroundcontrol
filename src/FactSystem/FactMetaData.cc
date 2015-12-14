@@ -121,7 +121,9 @@ void FactMetaData::setMin(const QVariant& min)
         _min = min;
         _minIsDefaultForType = false;
     } else {
-        qWarning() << "Attempt to set min below allowable value";
+        qWarning() << "Attempt to set min below allowable value for fact: " << name()
+                   << ", value attempted: " << min
+                   << ", type: " << type() << ", min for type: " << _minForType();
         _min = _minForType();
     }
 }
@@ -189,7 +191,7 @@ QVariant FactMetaData::_maxForType(void) const
 
 bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, QVariant& typedValue, QString& errorString)
 {
-    bool convertOk;
+    bool convertOk = false;
     
     errorString.clear();
     
@@ -236,7 +238,7 @@ bool FactMetaData::convertAndValidate(const QVariant& value, bool convertOnly, Q
     }
     
     if (!convertOk) {
-        errorString = "Invalid number";
+        errorString += "Invalid number";
     }
     
     return convertOk && errorString.isEmpty();
