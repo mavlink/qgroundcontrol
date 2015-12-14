@@ -355,18 +355,22 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
                         }
                     }
                 }
-                rawMetaData->min = rangeList.first().trimmed();
-                rawMetaData->max = rangeList.last().trimmed();
 
-                // sanitize min and max off any comments that they may have
-                if (rawMetaData->min.contains(' ')) {
-                    rawMetaData->min = rawMetaData->min.split(' ').first();
+                // everything should be good. lets collect min and max
+                if (rangeList.count() == 2) {
+                    rawMetaData->min = rangeList.first().trimmed();
+                    rawMetaData->max = rangeList.last().trimmed();
+
+                    // sanitize min and max off any comments that they may have
+                    if (rawMetaData->min.contains(' ')) {
+                        rawMetaData->min = rawMetaData->min.split(' ').first();
+                    }
+                    if(rawMetaData->max.contains(' ')) {
+                        rawMetaData->max = rawMetaData->max.split(' ').first();
+                    }
+                    qCDebug(APMParameterMetaDataLog) << "read field parameter " << "min: " << rawMetaData->min
+                                                     << "max: " << rawMetaData->max;
                 }
-                if(rawMetaData->max.contains(' ')) {
-                    rawMetaData->max = rawMetaData->max.split(' ').first();
-                }
-                qCDebug(APMParameterMetaDataLog) << "read field parameter " << "min: " << rawMetaData->min
-                                                 << "max: " << rawMetaData->max;
             } else if (attributeName == "Increment") {
                 QString increment = xml.readElementText();
                 qCDebug(APMParameterMetaDataLog) << "read Increment: " << increment;
