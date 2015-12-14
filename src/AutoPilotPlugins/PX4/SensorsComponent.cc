@@ -70,18 +70,6 @@ bool SensorsComponent::setupComplete(void) const
     return true;
 }
 
-QString SensorsComponent::setupStateDescription(void) const
-{
-    const char* stateDescription;
-    
-    if (requiresSetup()) {
-        stateDescription = "Requires calibration";
-    } else {
-        stateDescription = "Calibrated";
-    }
-    return QString(stateDescription);
-}
-
 QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
@@ -103,15 +91,6 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
     }
     
     return triggers;
-}
-
-QStringList SensorsComponent::paramFilterList(void) const
-{
-    QStringList list;
-    
-    list << "SENS_*" << "CAL_*";
-    
-    return list;
 }
 
 QUrl SensorsComponent::setupSource(void) const

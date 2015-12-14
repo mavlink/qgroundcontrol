@@ -69,18 +69,6 @@ bool PX4RadioComponent::setupComplete(void) const
     return true;
 }
 
-QString PX4RadioComponent::setupStateDescription(void) const
-{
-    const char* stateDescription;
-    
-    if (requiresSetup()) {
-        stateDescription = "Requires calibration";
-    } else {
-        stateDescription = "Calibrated";
-    }
-    return QString(stateDescription);
-}
-
 QStringList PX4RadioComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
@@ -88,15 +76,6 @@ QStringList PX4RadioComponent::setupCompleteChangedTriggerList(void) const
     triggers << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
     
     return triggers;
-}
-
-QStringList PX4RadioComponent::paramFilterList(void) const
-{
-    QStringList list;
-    
-    list << "RC*";
-    
-    return list;
 }
 
 QUrl PX4RadioComponent::setupSource(void) const

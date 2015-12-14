@@ -145,30 +145,9 @@ bool AirframeComponent::setupComplete(void) const
     return _autopilot->getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt() != 0;
 }
 
-QString AirframeComponent::setupStateDescription(void) const
-{
-    const char* stateDescription;
-    
-    if (requiresSetup()) {
-        stateDescription = "Requires calibration";
-    } else {
-        stateDescription = "Calibrated";
-    }
-    return QString(stateDescription);
-}
-
 QStringList AirframeComponent::setupCompleteChangedTriggerList(void) const
 {
     return QStringList("SYS_AUTOSTART");
-}
-
-QStringList AirframeComponent::paramFilterList(void) const
-{
-    QStringList list;
-    
-    list << "SYS_AUTOSTART";
-    
-    return list;
 }
 
 QUrl AirframeComponent::setupSource(void) const

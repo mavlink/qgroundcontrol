@@ -60,18 +60,6 @@ bool APMSensorsComponent::setupComplete(void) const
     return !compassSetupNeeded() && !accelSetupNeeded();
 }
 
-QString APMSensorsComponent::setupStateDescription(void) const
-{
-    const char* stateDescription;
-    
-    if (requiresSetup()) {
-        stateDescription = "Requires calibration";
-    } else {
-        stateDescription = "Calibrated";
-    }
-    return QString(stateDescription);
-}
-
 QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
@@ -89,11 +77,6 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
              << "INS_ACC3OFFS_X" << "INS_ACC3OFFS_Y" << "INS_ACC3OFFS_Z";
 
     return triggers;
-}
-
-QStringList APMSensorsComponent::paramFilterList(void) const
-{
-    return QStringList();
 }
 
 QUrl APMSensorsComponent::setupSource(void) const
