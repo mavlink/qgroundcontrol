@@ -26,9 +26,9 @@ Each time you pull new source to your repository you should run `git submodule u
 
 ### Supported Builds
 QGroundControl builds are supported for OSX, Linux, Windows and Android. QGroundControl uses [Qt](http://www.qt.io) as it's cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as it's default build environment.
-* OSX: 64 bit, clang compiler
+* OSX: OSX 10.7 or higher, 64 bit, clang compiler
 * Ubuntu: 64 bit, gcc compiler
-* Windows: 32 bit, [Visual Studio 2013 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
+* Windows: Vista or higher, 32 bit, [Visual Studio 2013 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
 * Android: Jelly Bean (4.1) and higher
 * Qt version: 5.5.1 (or higher)
 
