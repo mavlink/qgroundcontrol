@@ -60,24 +60,7 @@ bool APMSafetyComponent::setupComplete(void) const
     return true;
 }
 
-QString APMSafetyComponent::setupStateDescription(void) const
-{
-    const char* stateDescription;
-
-    if (requiresSetup()) {
-        stateDescription = "Requires setup";
-    } else {
-        stateDescription = "Setup complete";
-    }
-    return QString(stateDescription);
-}
-
 QStringList APMSafetyComponent::setupCompleteChangedTriggerList(void) const
-{
-    return QStringList();
-}
-
-QStringList APMSafetyComponent::paramFilterList(void) const
 {
     return QStringList();
 }

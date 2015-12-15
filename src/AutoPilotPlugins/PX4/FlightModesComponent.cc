@@ -33,16 +33,6 @@ struct SwitchListItem {
     const char* name;
 };
 
-/// @brief Used to translate from RC_MAP_* parameters name to user string
-static const SwitchListItem switchList[] = {
-    { "RC_MAP_MODE_SW",     "Mode Switch:" },                // First entry must be mode switch
-    { "RC_MAP_POSCTL_SW",   "Position Control Switch:" },
-    { "RC_MAP_LOITER_SW",   "Loiter Switch:" },
-    { "RC_MAP_RETURN_SW",   "Return Switch:" },
-    { "RC_MAP_ACRO_SW",     "Acro Switch:" },
-};
-static const size_t cSwitchList = sizeof(switchList) / sizeof(switchList[0]);
-
 FlightModesComponent::FlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     PX4Component(vehicle, autopilot, parent),
     _name(tr("Flight Modes"))
@@ -77,32 +67,9 @@ bool FlightModesComponent::setupComplete(void) const
             _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0;
 }
 
-QString FlightModesComponent::setupStateDescription(void) const
-{
-    const char* stateDescription;
-    
-    if (requiresSetup()) {
-        stateDescription = "Requires calibration";
-    } else {
-        stateDescription = "Calibrated";
-    }
-    return QString(stateDescription);
-}
-
 QStringList FlightModesComponent::setupCompleteChangedTriggerList(void) const
 {
     return QStringList("RC_MAP_MODE_SW");
-}
-
-QStringList FlightModesComponent::paramFilterList(void) const
-{
-    QStringList list;
-    
-    for (size_t i=0; i<cSwitchList; i++) {
-        list << switchList[i].param;
-    }
-
-    return list;
 }
 
 QUrl FlightModesComponent::setupSource(void) const
