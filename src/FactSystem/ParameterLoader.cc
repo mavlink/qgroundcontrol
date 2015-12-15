@@ -253,6 +253,8 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
         connect(fact, &Fact::_containerRawValueChanged, this, &ParameterLoader::_valueUpdated);
     }
 
+    _dataMutex.unlock();
+
     Q_ASSERT(_mapParameterName2Variant[componentId].contains(parameterName));
 
     Fact* fact = _mapParameterName2Variant[componentId][parameterName].value<Fact*>();
@@ -262,8 +264,6 @@ void ParameterLoader::_parameterUpdate(int uasId, int componentId, QString param
     if (setMetaData) {
         _vehicle->firmwarePlugin()->addMetaDataToFact(fact, _vehicle->vehicleType());
     }
-
-    _dataMutex.unlock();
 
     if (waitingParamCount == 0) {
         // Now that we know vehicle is up to date persist
