@@ -25,22 +25,22 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: "Roll:"
-            valueText: mapRollFact.value == 0 ? "Setup required" : mapRollFact.valueString
+            valueText: mapRollFact.value == 0 ? "Setup required" : "Channel " + mapRollFact.valueString
         }
 
         VehicleSummaryRow {
             labelText: "Pitch:"
-            valueText: mapPitchFact.value == 0 ? "Setup required" : mapPitchFact.valueString
+            valueText: mapPitchFact.value == 0 ? "Setup required" : "Channel " + mapPitchFact.valueString
         }
 
         VehicleSummaryRow {
             labelText: "Yaw:"
-            valueText: mapYawFact.value == 0 ? "Setup required" : mapYawFact.valueString
+            valueText: mapYawFact.value == 0 ? "Setup required" : "Channel " + mapYawFact.valueString
         }
 
         VehicleSummaryRow {
             labelText: "Throttle:"
-            valueText: mapThrottleFact.value == 0 ? "Setup required" : mapThrottleFact.valueString
+            valueText: mapThrottleFact.value == 0 ? "Setup required" : "Channel " + mapThrottleFact.valueString
         }
     }
 }
