@@ -557,6 +557,7 @@ HEADERS+= \
     src/AutoPilotPlugins/APM/APMSafetyComponent.h \
     src/AutoPilotPlugins/APM/APMSensorsComponent.h \
     src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
+    src/AutoPilotPlugins/APM/APMTuningComponent.h \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/AutoPilotPlugins/PX4/AirframeComponent.h \
@@ -607,6 +608,7 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMSafetyComponent.cc \
     src/AutoPilotPlugins/APM/APMSensorsComponent.cc \
     src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
+    src/AutoPilotPlugins/APM/APMTuningComponent.cc \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/AutoPilotPlugins/PX4/AirframeComponent.cc \
