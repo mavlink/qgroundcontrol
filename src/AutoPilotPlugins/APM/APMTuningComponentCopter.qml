@@ -45,6 +45,8 @@ QGCView {
     property Fact _rateRollI:   controller.getParameterFact(-1, "RATE_RLL_I")
     property Fact _ratePitchP:  controller.getParameterFact(-1, "RATE_PIT_P")
     property Fact _ratePitchI:  controller.getParameterFact(-1, "RATE_PIT_I")
+    property Fact _rateClimbP:  controller.getParameterFact(-1, "ACCEL_Z_P")
+    property Fact _rateClimbI:  controller.getParameterFact(-1, "ACCEL_Z_I")
 
     property real _margins: ScreenTools.defaultFontPixelHeight
 
@@ -136,6 +138,31 @@ QGCView {
                                 _ratePitchP.value = value
                                 _ratePitchI.value = value
                             }
+                        }
+                    }
+
+                    Column {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+
+                        QGCLabel {
+                            text:       "Climb Sensitivity"
+                            font.weight: Font.DemiBold
+                        }
+
+                        QGCLabel {
+                            text: "Slide to the right to climb more aggressively or slide to the left to climb more gently"
+                        }
+
+                        Slider {
+                            id:                 climb
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            minimumValue:       0.1
+                            maximumValue:       1.0
+                            value:              _rateClimbP.value
+
+                            onValueChanged: _rateClimbI.value = value
                         }
                     }
 
