@@ -31,6 +31,7 @@
 #include "APMRadioComponent.h"
 #include "APMSafetyComponent.h"
 #include "APMSensorsComponent.h"
+#include "APMTuningComponent.h"
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -49,6 +50,7 @@ public:
     APMRadioComponent*          radioComponent      (void) { return _radioComponent; }
     APMSafetyComponent*         safetyComponent     (void) { return _safetyComponent; }
     APMSensorsComponent*        sensorsComponent    (void) { return _sensorsComponent; }
+    APMTuningComponent*         tuningComponent     (void) { return _tuningComponent; }
 
 public slots:
     // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
@@ -63,6 +65,7 @@ private:
     APMRadioComponent*          _radioComponent;
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;
+    APMTuningComponent*         _tuningComponent;
 };
 
 #endif
