@@ -113,6 +113,9 @@
         <file alias="APMSafetyComponentSummaryCopter.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml</file>
         <file alias="APMSafetyComponentSummaryPlane.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml</file>
         <file alias="APMSafetyComponentSummaryRover.qml">src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml</file>
+        <file alias="APMTuningComponentCopter.qml">src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml</file>
+        <file alias="APMTuningComponentPlane.qml">src/AutoPilotPlugins/APM/APMTuningComponentPlane.qml</file>
+        <file alias="APMTuningComponentRover.qml">src/AutoPilotPlugins/APM/APMTuningComponentRover.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
         <file alias="SensorsComponent.qml">src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
