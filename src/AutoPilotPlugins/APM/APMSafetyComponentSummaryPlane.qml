@@ -1,33 +1,49 @@
-/*=====================================================================
+import QtQuick 2.2
+import QtQuick.Controls 1.2
 
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
-
-import QtQuick 2.5
-
+import QGroundControl.FactSystem 1.0
+import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
+import QGroundControl.Palette 1.0
 
-QGCLabel {
-    anchors.fill:           parent
-    text:                   "Not supported"
-    horizontalAlignment:    Text.AlignHCenter
-    verticalAlignment:      Text.AlignVCenter
+FactPanel {
+    id:             panel
+    anchors.fill:   parent
+    color:          qgcPal.windowShadeDark
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+    FactPanelController { id: controller; factPanel: panel }
+
+    property Fact _failsafeBattMah:     controller.getParameterFact(-1, "FS_BATT_MAH")
+    property Fact _failsafeBattVoltage: controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
+    property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "THR_FAILSAFE")
+    property Fact _failsafeThrValue:    controller.getParameterFact(-1, "THR_FS_VALUE")
+    property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABL")
+
+    property Fact _rtlAltFact: controller.getParameterFact(-1, "ALT_HOLD_RTL")
+
+    Column {
+        anchors.fill:       parent
+        anchors.margins:    8
+
+        VehicleSummaryRow {
+            labelText: "Throttle failsafe:"
+            valueText:  _failsafeThrEnable.value != 0 ? _failsafeThrValue.valueString : "Disabled"
+        }
+
+        VehicleSummaryRow {
+            labelText: "Voltage failsafe:"
+            valueText:  _failsafeBattVoltage.value == 0 ? "Disabled" : _failsafeBattVoltage.valueString
+        }
+
+        VehicleSummaryRow {
+            labelText: "mAh failsafe:"
+            valueText:  _failsafeBattMah.value == 0 ? "Disabled" : _failsafeBattMah.valueString
+        }
+
+        VehicleSummaryRow {
+            labelText: "RTL min alt:"
+            valueText: _rtlAltFact.value < 0 ? "current" : _rtlAltFact.valueString
+        }
+    }
 }
