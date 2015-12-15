@@ -86,6 +86,9 @@ Row {
             if(activeVehicle.batteryPercent > 0.1) {
                 return activeVehicle.batteryPercent.toFixed(0) + "%"
             }
+            if(activeVehicle.batteryVoltage > 0) {
+                return activeVehicle.batteryVoltage.toFixed(1) + "V"
+            }
         }
         return "N/A"
     }
