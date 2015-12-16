@@ -23,6 +23,7 @@
 
 #include "APMTuningComponent.h"
 #include "APMAutoPilotPlugin.h"
+#include "APMAirframeComponent.h"
 
 APMTuningComponent::APMTuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : APMComponent(vehicle, autopilot, parent)
