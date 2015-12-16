@@ -165,7 +165,7 @@ QVariant Fact::cookedValue(void) const
     }
 }
 
-QString Fact::enumStringValue(void) const
+QString Fact::enumStringValue(void)
 {
     if (_metaData) {
         int enumIndex = this->enumIndex();
@@ -179,16 +179,23 @@ QString Fact::enumStringValue(void) const
     return QString();
 }
 
-int Fact::enumIndex(void) const
+int Fact::enumIndex(void)
 {
     if (_metaData) {
         int index = 0;
+
         foreach (QVariant enumValue, _metaData->enumValues()) {
             if (enumValue == rawValue()) {
                 return index;
             }
             index ++;
         }
+
+        // Current value is not in list, add it manually
+        _metaData->addEnumInfo(QString("Unknown: %1").arg(rawValue().toString()), rawValue());
+        emit enumStringsChanged();
+        emit enumValuesChanged();
+        return index;
     } else {
         qWarning() << "Meta data pointer missing";
     }
