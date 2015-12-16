@@ -52,9 +52,9 @@ public:
     Q_PROPERTY(QString      defaultValueString      READ defaultValueString                                 CONSTANT)
     Q_PROPERTY(bool         defaultValueAvailable   READ defaultValueAvailable                              CONSTANT)
     Q_PROPERTY(int          enumIndex               READ enumIndex              WRITE setEnumIndex          NOTIFY valueChanged)
-    Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                        CONSTANT)
+    Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                        NOTIFY enumStringsChanged)
     Q_PROPERTY(QString      enumStringValue         READ enumStringValue        WRITE setEnumStringValue    NOTIFY valueChanged)
-    Q_PROPERTY(QVariantList enumValues              READ enumValues                                         CONSTANT)
+    Q_PROPERTY(QVariantList enumValues              READ enumValues                                         NOTIFY enumValuesChanged)
     Q_PROPERTY(QString      group                   READ group                                              CONSTANT)
     Q_PROPERTY(QString      longDescription         READ longDescription                                    CONSTANT)
     Q_PROPERTY(QVariant     max                     READ max                                                CONSTANT)
@@ -81,9 +81,9 @@ public:
     QVariant        defaultValue            (void) const;
     bool            defaultValueAvailable   (void) const;
     QString         defaultValueString      (void) const;
-    int             enumIndex               (void) const;
+    int             enumIndex               (void);         // This is not const, since an unknown value can modify the enum lists
     QStringList     enumStrings             (void) const;
-    QString         enumStringValue         (void) const;
+    QString         enumStringValue         (void);         // This is not const, since an unknown value can modify the enum lists
     QVariantList    enumValues              (void) const;
     QString         group                   (void) const;
     QString         longDescription         (void) const;
@@ -120,6 +120,9 @@ public:
     void _setName(const QString& name) { _name = name; }
     
 signals:
+    void enumStringsChanged(void);
+    void enumValuesChanged(void);
+
     /// QObject Property System signal for value property changes
     ///
     /// This signal is only meant for use by the QT property system. It should not be connected to by client code.
