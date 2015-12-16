@@ -87,7 +87,7 @@ QGCView {
                 anchors.rightMargin:    _margins
                 anchors.left:           parent.left
                 anchors.top:            failsafeLabel.bottom
-                width:                  throttleEnableCombo.x + throttleEnableCombo.x + _margins
+                width:                  throttleEnableCombo.x + throttleEnableCombo.width + _margins
                 height:                 mahField.y + mahField.height + _margins
                 color:                  palette.windowShade
 

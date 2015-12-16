@@ -176,9 +176,11 @@
 1	50	FW_YR_IMAX	                      0.2	9
 1	50	FW_YR_P	                     0.05	9
 1	50	FW_Y_RMAX	                        0	9
+1	50	GF_ACTION	1	6
 1	50	GF_ALTMODE	0	6
 1	50	GF_COUNT	-1	6
-1	50	GF_ON	1	6
+1	50	GF_MAX_HOR_DIST	-1	6
+1	50	GF_MAX_VER_DIST	-1	6
 1	50	GF_SOURCE	0	6
 1	50	INAV_DELAY_GPS	                      0.2	9
 1	50	INAV_ENABLED	0	6
