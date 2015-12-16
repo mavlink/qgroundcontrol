@@ -289,7 +289,7 @@ QGCView {
                     id:             px4FlightStack
                     checked:        true
                     exclusiveGroup: firmwareGroup
-                    text:           "PX4 Flight Stack (full QGC support)"
+                    text:           "PX4 Flight Stack"
                     visible:        !px4Flow
 
                     onClicked: parent.firmwareVersionChanged(firmwareTypeList)
@@ -298,7 +298,7 @@ QGCView {
                 QGCRadioButton {
                     id:             apmFlightStack
                     exclusiveGroup: firmwareGroup
-                    text:           "APM Flight Stack (partial QGC support)"
+                    text:           "APM Flight Stack"
                     visible:        !px4Flow
 
                     onClicked: {
