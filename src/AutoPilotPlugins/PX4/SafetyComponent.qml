@@ -56,7 +56,7 @@ QGCView {
         Flickable {
             clip:               true
             anchors.fill:       parent
-            contentHeight:      7000 //rtlSettings.height
+            contentHeight:      screenBottom.y + screenBottom.height
             contentWidth:       parent.width
             boundsBehavior:     Flickable.StopAtBounds
             flickableDirection: Flickable.VerticalFlick
@@ -287,27 +287,40 @@ QGCView {
                 }
             }
 
-                /*
             QGCLabel {
-                width:          parent.width
-                font.pixelSize: ScreenTools.mediumFontPixelSize
-                text:           "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
-                visible:        fact.value !== 0
-                wrapMode:       Text.Wrap
+                id:                 navRclObc
+                anchors.topMargin:  _margins
+                anchors.top:        rtlSettings.bottom
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                font.pixelSize:     ScreenTools.mediumFontPixelSize
+                text:               "Warning: You have an advanced safety configuration set using the NAV_RCL_OBC parameter. The above settings may not apply.";
+                visible:            fact.value !== 0
+                wrapMode:           Text.Wrap
 
                 property Fact fact: controller.getParameterFact(-1, "NAV_RCL_OBC")
             }
 
             QGCLabel {
-                width:          parent.width
-                font.pixelSize: ScreenTools.mediumFontPixelSize
-                text:           "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
-                visible:        fact.value !== 0
-                wrapMode:       Text.Wrap
+                id:                 navDllObc
+                anchors.topMargin:  _margins / 2
+                anchors.top:        navRclObc.bottom
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                font.pixelSize:     ScreenTools.mediumFontPixelSize
+                text:               "Warning: You have an advanced safety configuration set using the NAV_DLL_OBC parameter. The above settings may not apply.";
+                visible:            fact.value !== 0
+                wrapMode:           Text.Wrap
 
                 property Fact fact: controller.getParameterFact(-1, "NAV_DLL_OBC")
             }
-            */
-            } // Flickable
-        } // QGCViewPanel
-    } // QGCView
+
+            Item {
+                id:             screenBottom
+                anchors.top:    navDllObc.bottom
+                width:          1
+                height:         1
+            }
+        } // Flickable
+    } // QGCViewPanel
+} // QGCView
