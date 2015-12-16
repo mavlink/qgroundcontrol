@@ -79,6 +79,9 @@ public:
     Translator      rawTranslator           (void) const { return _rawTranslator; }
     Translator      cookedTranslator        (void) const { return _cookedTranslator; }
 
+    /// Used to add new values to the enum lists after the meta data has been loaded
+    void addEnumInfo(const QString& name, const QVariant& value);
+
     void setDecimalPlaces   (int decimalPlaces)                 { _decimalPlaces = decimalPlaces; }
     void setDefaultValue    (const QVariant& defaultValue);
     void setEnumInfo        (const QStringList& strings, const QVariantList& values);
