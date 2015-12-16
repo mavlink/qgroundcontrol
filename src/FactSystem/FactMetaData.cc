@@ -260,3 +260,9 @@ void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTra
     _rawTranslator = rawTranslator;
     _cookedTranslator = cookedTranslator;
 }
+
+void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
+{
+    _enumStrings << name;
+    _enumValues << value;
+}
