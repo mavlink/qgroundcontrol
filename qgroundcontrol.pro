@@ -662,19 +662,21 @@ INCLUDEPATH += \
 
 HEADERS += \
     src/FactSystem/Fact.h \
+    src/FactSystem/FactControls/FactPanelController.h \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactSystem.h \
     src/FactSystem/FactValidator.h \
     src/FactSystem/ParameterLoader.h \
-    src/FactSystem/FactControls/FactPanelController.h \
+    src/FactSystem/SettingsFact.h \
 
 SOURCES += \
     src/FactSystem/Fact.cc \
+    src/FactSystem/FactControls/FactPanelController.cc \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactSystem.cc \
     src/FactSystem/FactValidator.cc \
     src/FactSystem/ParameterLoader.cc \
-    src/FactSystem/FactControls/FactPanelController.cc \
+    src/FactSystem/SettingsFact.cc \
 
 #-------------------------------------------------------------------------------------
 # Video Streaming
