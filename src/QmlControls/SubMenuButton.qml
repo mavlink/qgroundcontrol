@@ -13,8 +13,8 @@ Button {
 
     text: "Button"  ///< Pass in your own button text
 
-    checkable:  true
-    height:     ScreenTools.defaultFontPixelHeight * 2.5
+    checkable:      true
+    implicitHeight: ScreenTools.defaultFontPixelHeight * 2.5
 
     style: ButtonStyle {
         id: buttonStyle
@@ -29,6 +29,8 @@ Button {
         background: Rectangle {
             id:     innerRect
             color:  showHighlight ? qgcPal.buttonHighlight : qgcPal.windowShade
+
+            implicitWidth: titleBar.x + titleBar.contentWidth + ScreenTools.defaultFontPixelWidth
 
             QGCColoredImage {
                 id:                     image
