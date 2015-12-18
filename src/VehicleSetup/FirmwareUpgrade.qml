@@ -164,7 +164,7 @@ QGCView {
                 var firmwareType = firmwareVersionCombo.model.get(firmwareVersionCombo.currentIndex).firmwareType
                 var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
                 if (apmFlightStack.checked) {
-                    vehicleType = vehicleTypeSelectionCombo.model.get(vehicleTypeSelectionCombo.currentIndex).vehicleType
+                    vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
                 }
                 controller.flash(stack, firmwareType, vehicleType)
             }
@@ -197,47 +197,6 @@ QGCView {
                     text:           "Custom firmware file...";
                     firmwareType:   FirmwareUpgradeController.CustomFirmware
                  }
-            }
-
-            ListModel {
-                id: vehicleTypeList
-
-                ListElement {
-                    text: "Quad"
-                    vehicleType: FirmwareUpgradeController.QuadFirmware
-                }
-                ListElement {
-                    text: "X8"
-                    vehicleType: FirmwareUpgradeController.X8Firmware
-                }
-                ListElement {
-                    text: "Hexa"
-                    vehicleType: FirmwareUpgradeController.HexaFirmware
-                }
-                ListElement {
-                    text: "Octo"
-                    vehicleType: FirmwareUpgradeController.OctoFirmware
-                }
-                ListElement {
-                    text: "Y"
-                    vehicleType: FirmwareUpgradeController.YFirmware
-                }
-                ListElement {
-                    text: "Y6"
-                    vehicleType: FirmwareUpgradeController.Y6Firmware
-                }
-                ListElement {
-                    text: "Heli"
-                    vehicleType: FirmwareUpgradeController.HeliFirmware
-                }
-                ListElement {
-                    text: "Plane"
-                    vehicleType: FirmwareUpgradeController.PlaneFirmware
-                }
-                ListElement {
-                    text: "Rover"
-                    vehicleType: FirmwareUpgradeController.RoverFirmware
-                }
             }
 
             ListModel {
@@ -274,17 +233,6 @@ QGCView {
                     firmwareVersionCombo.currentIndex = 0
                 }
 
-                function vehicleTypeChanged(model) {
-                    vehicleTypeSelectionCombo.model = null
-                    // All of this bizarre, setting model to null and index to 1 and then to 0 is to work around
-                    // strangeness in the combo box implementation. This sequence of steps correctly changes the combo model
-                    // without generating any warnings and correctly updates the combo text with the new selection.
-                    vehicleTypeSelectionCombo.model = null
-                    vehicleTypeSelectionCombo.model = model
-                    vehicleTypeSelectionCombo.currentIndex = 1
-                    vehicleTypeSelectionCombo.currentIndex = 0
-                }
-
                 QGCRadioButton {
                     id:             px4FlightStack
                     checked:        true
@@ -301,10 +249,7 @@ QGCView {
                     text:           "APM Flight Stack"
                     visible:        !px4Flow
 
-                    onClicked: {
-                        parent.firmwareVersionChanged(firmwareTypeList)
-                        parent.vehicleTypeChanged(vehicleTypeList)
-                    }
+                    onClicked: parent.firmwareVersionChanged(firmwareTypeList)
                 }
 
                 QGCLabel {
@@ -317,19 +262,21 @@ QGCView {
                 Row {
                     spacing: 10
                     QGCComboBox {
-                        id:         firmwareVersionCombo
-                        width:      200
-                        visible:    showFirmwareTypeSelection
-                        model:      px4Flow ? px4FlowTypeList : firmwareTypeList
+                        id:             firmwareVersionCombo
+                        width:          200
+                        visible:        showFirmwareTypeSelection
+                        model:          px4Flow ? px4FlowTypeList : firmwareTypeList
+                        currentIndex:   controller.selectedFirmwareType
 
                         onActivated: {
-                            if (model.get(index).firmwareType == FirmwareUpgradeController.PX4BetaFirmware || FirmwareUpgradeController.APMBetaFirmware ) {
+                            controller.selectedFirmwareType = index
+                            if (model.get(index).firmwareType == FirmwareUpgradeController.BetaFirmware) {
                                 firmwareVersionWarningLabel.visible = true
                                 firmwareVersionWarningLabel.text = "WARNING: BETA FIRMWARE. " +
                                         "This firmware version is ONLY intended for beta testers. " +
                                         "Although it has received FLIGHT TESTING, it represents actively changed code. " +
                                         "Do NOT use for normal operation."
-                            } else if (model.get(index).firmwareType == FirmwareUpgradeController.PX4DeveloperFirmware || FirmwareUpgradeController.APMDeveloperFirmware) {
+                            } else if (model.get(index).firmwareType == FirmwareUpgradeController.DeveloperFirmware) {
                                 firmwareVersionWarningLabel.visible = true
                                 firmwareVersionWarningLabel.text = "WARNING: CONTINUOUS BUILD FIRMWARE. " +
                                         "This firmware has NOT BEEN FLIGHT TESTED. " +
@@ -347,7 +294,7 @@ QGCView {
                         id:         vehicleTypeSelectionCombo
                         width:      200
                         visible:    apmFlightStack.checked
-                        model:      vehicleTypeList
+                        model:      controller.apmAvailableVersions
                     }
                 }
 
