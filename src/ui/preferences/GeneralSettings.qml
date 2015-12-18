@@ -28,6 +28,7 @@ import QtQuick.Dialogs          1.1
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
+import QGroundControl.FactControls          1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
@@ -194,31 +195,35 @@ Rectangle {
             //-- Autoconnect settings
             QGCLabel { text: "Autoconnect to the following devices:" }
 
-            QGCCheckBox {
-                text:       "Pixhawk"
-                visible:    !ScreenTools.isiOS
-                checked:    QGroundControl.linkManager.autoconnectPixhawk
-                onClicked:  QGroundControl.linkManager.autoconnectPixhawk = checked
-            }
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth * 2
 
-            QGCCheckBox {
-                text:       "3DR Radio"
-                visible:    !ScreenTools.isiOS
-                checked:    QGroundControl.linkManager.autoconnect3DRRadio
-                onClicked:  QGroundControl.linkManager.autoconnect3DRRadio = checked
-            }
+                QGCCheckBox {
+                    text:       "Pixhawk"
+                    visible:    !ScreenTools.isiOS
+                    checked:    QGroundControl.linkManager.autoconnectPixhawk
+                    onClicked:  QGroundControl.linkManager.autoconnectPixhawk = checked
+                }
 
-            QGCCheckBox {
-                text:       "PX4 Flow"
-                visible:    !ScreenTools.isiOS
-                checked:    QGroundControl.linkManager.autoconnectPX4Flow
-                onClicked:  QGroundControl.linkManager.autoconnectPX4Flow = checked
-            }
+                QGCCheckBox {
+                    text:       "3DR Radio"
+                    visible:    !ScreenTools.isiOS
+                    checked:    QGroundControl.linkManager.autoconnect3DRRadio
+                    onClicked:  QGroundControl.linkManager.autoconnect3DRRadio = checked
+                }
 
-            QGCCheckBox {
-                text:       "UDP"
-                checked:    QGroundControl.linkManager.autoconnectUDP
-                onClicked:  QGroundControl.linkManager.autoconnectUDP = checked
+                QGCCheckBox {
+                    text:       "PX4 Flow"
+                    visible:    !ScreenTools.isiOS
+                    checked:    QGroundControl.linkManager.autoconnectPX4Flow
+                    onClicked:  QGroundControl.linkManager.autoconnectPX4Flow = checked
+                }
+
+                QGCCheckBox {
+                    text:       "UDP"
+                    checked:    QGroundControl.linkManager.autoconnectUDP
+                    onClicked:  QGroundControl.linkManager.autoconnectUDP = checked
+                }
             }
 
             Item {
@@ -232,6 +237,27 @@ Rectangle {
                 text:       "Virtual Joystick"
                 checked:    QGroundControl.virtualTabletJoystick
                 onClicked:  QGroundControl.virtualTabletJoystick = checked
+            }
+
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  parent.width
+            }
+
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth
+
+                QGCLabel {
+                    text:               "Offline mission editing vehicle type:"
+                    anchors.baseline:   offlineTypeCombo.baseline
+                }
+
+                FactComboBox {
+                    id:         offlineTypeCombo
+                    width:      ScreenTools.defaultFontPixelWidth * 25
+                    fact:       QGroundControl.offlineEditingFirmwareType
+                    indexModel: false
+                }
             }
         }
     }

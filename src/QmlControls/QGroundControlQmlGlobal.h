@@ -27,13 +27,13 @@
 #ifndef QGroundControlQmlGlobal_H
 #define QGroundControlQmlGlobal_H
 
-#include <QObject>
-
+#include "QGCToolbox.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "HomePositionManager.h"
 #include "FlightMapSettings.h"
 #include "MissionCommands.h"
+#include "SettingsFact.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -41,12 +41,14 @@
 
 class QGCToolbox;
 
-class QGroundControlQmlGlobal : public QObject
+class QGroundControlQmlGlobal : public QGCTool
 {
     Q_OBJECT
 
 public:
-    QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent = NULL);
+    QGroundControlQmlGlobal(QGCApplication* app);
+    ~QGroundControlQmlGlobal();
+
 
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
     Q_PROPERTY(HomePositionManager* homePositionManager READ homePositionManager    CONSTANT)
@@ -72,13 +74,15 @@ public:
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
 
+    Q_PROPERTY(Fact*    offlineEditingFirmwareType READ offlineEditingFirmwareType CONSTANT)
+
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
     Q_INVOKABLE bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
 
-    Q_INVOKABLE void    deleteAllSettingsNextBoot       () { qgcApp()->deleteAllSettingsNextBoot(); }
-    Q_INVOKABLE void    clearDeleteAllSettingsNextBoot  () { qgcApp()->clearDeleteAllSettingsNextBoot(); }
+    Q_INVOKABLE void    deleteAllSettingsNextBoot       () { _app->deleteAllSettingsNextBoot(); }
+    Q_INVOKABLE void    clearDeleteAllSettingsNextBoot  () { _app->clearDeleteAllSettingsNextBoot(); }
 
     Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText);
     Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText);
@@ -98,16 +102,18 @@ public:
     qreal                   zOrderWidgets       ()      { return 100; }
     qreal                   zOrderMapItems      ()      { return 50; }
 
-    bool    isDarkStyle             () { return qgcApp()->styleIsDark(); }
-    bool    isAudioMuted            () { return qgcApp()->toolbox()->audioOutput()->isMuted(); }
-    bool    isSaveLogPrompt         () { return qgcApp()->promptFlightDataSave(); }
-    bool    isSaveLogPromptNotArmed () { return qgcApp()->promptFlightDataSaveNotArmed(); }
+    bool    isDarkStyle             () { return _app->styleIsDark(); }
+    bool    isAudioMuted            () { return _toolbox->audioOutput()->isMuted(); }
+    bool    isSaveLogPrompt         () { return _app->promptFlightDataSave(); }
+    bool    isSaveLogPromptNotArmed () { return _app->promptFlightDataSaveNotArmed(); }
     bool    virtualTabletJoystick   () { return _virtualTabletJoystick; }
 
-    bool    isHeartBeatEnabled      () { return qgcApp()->toolbox()->mavlinkProtocol()->heartbeatsEnabled(); }
-    bool    isMultiplexingEnabled   () { return qgcApp()->toolbox()->mavlinkProtocol()->multiplexingEnabled(); }
-    bool    isVersionCheckEnabled   () { return qgcApp()->toolbox()->mavlinkProtocol()->versionCheckEnabled(); }
-    int     mavlinkSystemID         () { return qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(); }
+    bool    isHeartBeatEnabled      () { return _toolbox->mavlinkProtocol()->heartbeatsEnabled(); }
+    bool    isMultiplexingEnabled   () { return _toolbox->mavlinkProtocol()->multiplexingEnabled(); }
+    bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
+    int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
+
+    Fact*   offlineEditingFirmwareType () { return &_offlineEditingFirmwareTypeFact; }
 
     //-- TODO: Make this into an actual preference.
     bool    isAdvancedMode          () { return false; }
@@ -122,6 +128,9 @@ public:
     void    setIsMultiplexingEnabled    (bool enable);
     void    setIsVersionCheckEnabled    (bool enable);
     void    setMavlinkSystemID          (int  id);
+
+    // Overrides from QGCTool
+    virtual void setToolbox(QGCToolbox* toolbox);
 
 signals:
     void isDarkStyleChanged             (bool dark);
@@ -143,6 +152,9 @@ private:
     MultiVehicleManager*    _multiVehicleManager;
 
     bool _virtualTabletJoystick;
+
+    SettingsFact    _offlineEditingFirmwareTypeFact;
+    FactMetaData    _offlineEditingFirmwareTypeMetaData;
 
     static const char*  _virtualTabletJoystickKey;
 };
