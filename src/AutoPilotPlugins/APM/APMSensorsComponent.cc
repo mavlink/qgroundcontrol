@@ -24,6 +24,7 @@
 #include "APMSensorsComponent.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMSensorsComponentController.h"
+#include "APMAirframeComponent.h"
 
 // These two list must be kept in sync
 
