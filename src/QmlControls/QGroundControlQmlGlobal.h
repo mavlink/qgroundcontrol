@@ -27,7 +27,7 @@
 #ifndef QGroundControlQmlGlobal_H
 #define QGroundControlQmlGlobal_H
 
-#include "QGCToolBox.h"
+#include "QGCToolbox.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "HomePositionManager.h"
