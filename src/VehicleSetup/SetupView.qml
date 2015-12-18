@@ -213,24 +213,42 @@ Rectangle {
 
         Flickable {
             id:                 buttonScroll
-            width:              mainWindow.menuButtonWidth
+            width:              buttonColumn.width
             anchors.topMargin:  _defaultTextHeight / 2
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             clip:               true
             contentHeight:      buttonColumn.height
-            contentWidth:       parent.width
+            contentWidth:       buttonColumn.width
             boundsBehavior:     Flickable.StopAtBounds
             flickableDirection: Flickable.VerticalFlick
 
             Column {
                 id:         buttonColumn
-                width:      mainWindow.menuButtonWidth
+                width:      _maxButtonWidth
                 spacing:    _defaultTextHeight / 2
+
+                property real _maxButtonWidth: 0
+
+                Component.onCompleted: reflowWidths()
+
+                Connections {
+                    target: componentRepeater
+
+                    onModelChanged: buttonColumn.reflowWidths()
+                }
+
+                function reflowWidths() {
+                    for (var i=0; i<children.length; i++) {
+                        _maxButtonWidth = Math.max(_maxButtonWidth, children[i].width)
+                    }
+                    for (var i=0; i<children.length; i++) {
+                        children[i].width = _maxButtonWidth
+                    }
+                }
 
                 SubMenuButton {
                     id:             summaryButton
-                    width:          mainWindow.menuButtonWidth
                     imageResource: "/qmlimages/VehicleSummaryIcon.png"
                     setupIndicator: false
                     checked:        true
@@ -242,7 +260,6 @@ Rectangle {
 
                 SubMenuButton {
                     id:             firmwareButton
-                    width:          mainWindow.menuButtonWidth
                     imageResource:  "/qmlimages/FirmwareUpgradeIcon.png"
                     setupIndicator: false
                     exclusiveGroup: setupButtonGroup
@@ -254,7 +271,6 @@ Rectangle {
 
                 SubMenuButton {
                     id:             px4FlowButton
-                    width:          mainWindow.menuButtonWidth
                     exclusiveGroup: setupButtonGroup
                     visible:        QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.genericFirmware : false
                     setupIndicator: false
@@ -264,7 +280,6 @@ Rectangle {
 
                 SubMenuButton {
                     id:             joystickButton
-                    width:          mainWindow.menuButtonWidth
                     setupIndicator: true
                     setupComplete:  joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
                     exclusiveGroup: setupButtonGroup
@@ -275,10 +290,10 @@ Rectangle {
                 }
 
                 Repeater {
-                    model: _fullParameterVehicleAvailable ? multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
+                    id:     componentRepeater
+                    model:  _fullParameterVehicleAvailable ? multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
 
                     SubMenuButton {
-                        width:          mainWindow.menuButtonWidth
                         imageResource:  modelData.iconResource
                         setupIndicator: modelData.requiresSetup
                         setupComplete:  modelData.setupComplete
@@ -290,7 +305,6 @@ Rectangle {
                 }
 
                 SubMenuButton {
-                    width:          mainWindow.menuButtonWidth
                     setupIndicator: false
                     exclusiveGroup: setupButtonGroup
                     visible:        multiVehicleManager.parameterReadyVehicleAvailable
