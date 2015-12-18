@@ -25,7 +25,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "QGroundControlQmlGlobal.h"
-#include "QGCApplication.h"
 
 #include <QSettings>
 
@@ -33,18 +32,48 @@ static const char* kQmlGlobalKeyName = "QGCQml";
 
 const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey = "VirtualTabletJoystick";
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCToolbox* toolbox, QObject* parent)
-    : QObject(parent)
-    , _flightMapSettings(toolbox->flightMapSettings())
-    , _homePositionManager(toolbox->homePositionManager())
-    , _linkManager(toolbox->linkManager())
-    , _missionCommands(toolbox->missionCommands())
-    , _multiVehicleManager(toolbox->multiVehicleManager())
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
+    : QGCTool(app)
+    , _flightMapSettings(NULL)
+    , _homePositionManager(NULL)
+    , _linkManager(NULL)
+    , _missionCommands(NULL)
+    , _multiVehicleManager(NULL)
     , _virtualTabletJoystick(false)
+    , _offlineEditingFirmwareTypeFact(QString(), "OfflineEditingFirmwareType", FactMetaData::valueTypeUint32, (uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA)
+    , _offlineEditingFirmwareTypeMetaData(FactMetaData::valueTypeUint32)
+
 {
     QSettings settings;
     _virtualTabletJoystick = settings.value(_virtualTabletJoystickKey, false). toBool();
+
+    QStringList     firmwareEnumStrings;
+    QVariantList    firmwareEnumValues;
+
+    firmwareEnumStrings << "APM Flight Stack" << "PX4 Flight Stack" << "Mavlink Generic Flight Stack";
+    firmwareEnumValues << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_ARDUPILOTMEGA) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_PX4) << QVariant::fromValue((uint32_t)MAV_AUTOPILOT_GENERIC);
+
+    _offlineEditingFirmwareTypeMetaData.setEnumInfo(firmwareEnumStrings, firmwareEnumValues);
+    _offlineEditingFirmwareTypeFact.setMetaData(&_offlineEditingFirmwareTypeMetaData);
 }
+
+QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
+{
+
+}
+
+
+void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
+{
+    QGCTool::setToolbox(toolbox);
+
+    _flightMapSettings =    toolbox->flightMapSettings();
+    _homePositionManager =  toolbox->homePositionManager();
+    _linkManager =          toolbox->linkManager();
+    _missionCommands =      toolbox->missionCommands();
+    _multiVehicleManager =  toolbox->multiVehicleManager();
+}
+
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
 {

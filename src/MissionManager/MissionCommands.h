@@ -38,6 +38,7 @@
 Q_DECLARE_LOGGING_CATEGORY(MissionCommandsLog)
 
 class MissionCommands;
+class Vehicle;
 
 class MavCmdParamInfo : public QObject {
 
@@ -129,16 +130,14 @@ class MissionCommands : public QGCTool
 public:
     MissionCommands(QGCApplication* app);
 
-    Q_PROPERTY(QStringList                  categories  READ categories CONSTANT)
-    Q_PROPERTY(const QmlObjectListModel*    commands    READ commands   CONSTANT)
-
-    Q_INVOKABLE QString         categoryFromCommand(MavlinkQmlSingleton::Qml_MAV_CMD command) { return _mavCmdInfoMap[(MAV_CMD)command]->category(); }
-    Q_INVOKABLE const QVariant  getCommandsForCategory(const QString& category) const { return QVariant::fromValue(_categoryToMavCmdInfoListMap[category]); }
-
-    const QStringList           categories  (void) const { return _categories; }
-    const QmlObjectListModel*   commands    (void) const { return &_commandList; }
+    Q_INVOKABLE const QStringList           categories              (Vehicle* vehicle) const;
+    Q_INVOKABLE QString                     categoryFromCommand     (MavlinkQmlSingleton::Qml_MAV_CMD command) const;
+    Q_INVOKABLE QVariant                    getCommandsForCategory  (Vehicle* vehicle, const QString& category) const;
 
     const QMap<MAV_CMD, MavCmdInfo*>& commandInfoMap(void) const { return _mavCmdInfoMap; };
+
+    // Overrides from QGCTool
+    virtual void setToolbox(QGCToolbox* toolbox);
 
     static const QString _degreesUnits;
     static const QString _degreesConvertUnits;
@@ -147,14 +146,14 @@ signals:
     
 private:
     void _loadMavCmdInfoJson(void);
+    void _createFirmwareSpecificLists(void);
     void _setupMetaData(void);
     bool _validateKeyTypes(QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types);
+    MAV_AUTOPILOT _firmwareTypeFromVehicle(Vehicle* vehicle) const;
 
 private:
-    QStringList                         _categories;
-    QMap<QString, QmlObjectListModel*>  _categoryToMavCmdInfoListMap;
-    QmlObjectListModel                  _commandList;
-    QMap<MAV_CMD, MavCmdInfo*>          _mavCmdInfoMap;
+    QMap<MAV_AUTOPILOT, QMap<QString, QmlObjectListModel*> >    _categoryToMavCmdInfoListMap;
+    QMap<MAV_CMD, MavCmdInfo*>                                  _mavCmdInfoMap;
 
     static const QString _categoryJsonKey;
     static const QString _decimalPlacesJsonKey;

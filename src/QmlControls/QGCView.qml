@@ -96,7 +96,7 @@ FactPanel {
             __rejectButton.text = "Cancel"
             __rejectButton.visible = true
         } else if (buttons & StandardButton.Close) {
-            __rejectButton.text = "Cancel"
+            __rejectButton.text = "Close"
             __rejectButton.visible = true
         } else if (buttons & StandardButton.No) {
             __rejectButton.text = "No"

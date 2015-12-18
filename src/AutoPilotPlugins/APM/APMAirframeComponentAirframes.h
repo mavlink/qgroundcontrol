@@ -2,7 +2,7 @@
  
  QGroundControl Open Source Ground Control Station
  
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  
  This file is part of the QGROUNDCONTROL project
  
@@ -24,28 +24,39 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "APMComponent.h"
-#include "Fact.h"
+#ifndef APMAirframeComponentAirframes_H
+#define APMAirframeComponentAirframes_H
+
+#include <QObject>
+#include <QQuickItem>
+#include <QList>
+#include <QMap>
+
+#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 
-APMComponent::APMComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent)
-{
-    Q_ASSERT(vehicle);
-    Q_ASSERT(autopilot);
-}
+class APMAirframe;
 
-void APMComponent::setupTriggerSignals(void)
+/// MVC Controller for AirframeComponent.qml.
+class APMAirframeComponentAirframes
 {
-    foreach (const QString& paramName, setupCompleteChangedTriggerList()) {
-        Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
-        connect(fact, &Fact::valueChanged, this, &APMComponent::_triggerUpdated);
-    }
-}
+public:
+    typedef struct {
+        QString name;
+        QString imageResource;
+        int type;
+        QList<APMAirframe*> rgAirframeInfo;
+    } AirframeType_t;
+    typedef QMap<QString, AirframeType_t*> AirframeTypeMap;
 
+    static AirframeTypeMap& get();
+    static void clear();
+    static void insert(const QString& group, int groupId, const QString& image,const QString& name = QString(), const QString& file = QString());
+    
+protected:
+    static AirframeTypeMap rgAirframeTypes;
+    
+private:
+};
 
-void APMComponent::_triggerUpdated(QVariant value)
-{
-    Q_UNUSED(value);
-    emit setupCompleteChanged(setupComplete());
-}
+#endif

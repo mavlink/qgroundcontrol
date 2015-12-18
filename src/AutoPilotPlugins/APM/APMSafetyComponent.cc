@@ -27,6 +27,7 @@
 #include "APMSafetyComponent.h"
 #include "QGCQmlWidgetHolder.h"
 #include "APMAutoPilotPlugin.h"
+#include "APMAirframeComponent.h"
 
 APMSafetyComponent::APMSafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : APMComponent(vehicle, autopilot, parent)

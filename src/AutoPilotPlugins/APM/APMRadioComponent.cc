@@ -23,6 +23,7 @@
 
 #include "APMRadioComponent.h"
 #include "APMAutoPilotPlugin.h"
+#include "APMAirframeComponent.h"
 
 APMRadioComponent::APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     APMComponent(vehicle, autopilot, parent),

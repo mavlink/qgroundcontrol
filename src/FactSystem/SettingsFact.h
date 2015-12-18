@@ -24,28 +24,28 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "APMComponent.h"
+#ifndef SettingsFact_H
+#define SettingsFact_H
+
 #include "Fact.h"
-#include "AutoPilotPlugin.h"
 
-APMComponent::APMComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent)
+/// @brief A SettingsFact is Fact which holds a QSettings value.
+class SettingsFact : public Fact
 {
-    Q_ASSERT(vehicle);
-    Q_ASSERT(autopilot);
-}
+    Q_OBJECT
+    
+public:
+    SettingsFact(QObject* parent = NULL);
+    SettingsFact(QString settingGroup, QString settingName, FactMetaData::ValueType_t type, const QVariant& defaultValue, QObject* parent = NULL);
+    SettingsFact(const SettingsFact& other, QObject* parent = NULL);
 
-void APMComponent::setupTriggerSignals(void)
-{
-    foreach (const QString& paramName, setupCompleteChangedTriggerList()) {
-        Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
-        connect(fact, &Fact::valueChanged, this, &APMComponent::_triggerUpdated);
-    }
-}
+    const SettingsFact& operator=(const SettingsFact& other);
 
+private slots:
+    void _valueChanged(QVariant value);
 
-void APMComponent::_triggerUpdated(QVariant value)
-{
-    Q_UNUSED(value);
-    emit setupCompleteChanged(setupComplete());
-}
+private:
+    QString _settingGroup;
+};
+
+#endif

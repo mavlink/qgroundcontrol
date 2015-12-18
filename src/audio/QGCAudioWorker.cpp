@@ -262,6 +262,12 @@ QString QGCAudioWorker::fixTextMessageForAudio(const QString& string) {
     if(result.contains("CMD", Qt::CaseInsensitive)) {
         result.replace("CMD", "command", Qt::CaseInsensitive);
     }
+    if(result.contains("COMPID", Qt::CaseInsensitive)) {
+        result.replace("COMPID", "component eye dee", Qt::CaseInsensitive);
+    }
+    if(result.contains(" params ", Qt::CaseInsensitive)) {
+        result.replace(" params ", " parameters ", Qt::CaseInsensitive);
+    }
     if(result.contains(" id ", Qt::CaseInsensitive)) {
         result.replace(" id ", " eye dee ", Qt::CaseInsensitive);
     }
