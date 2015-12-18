@@ -145,7 +145,11 @@ static QObject* mavlinkQmlSingletonFactory(QQmlEngine*, QJSEngine*)
 
 static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    return new QGroundControlQmlGlobal(qgcApp()->toolbox());
+    // We create this object as a QGCTool even though it isn't int he toolbox
+    QGroundControlQmlGlobal* qmlGlobal = new QGroundControlQmlGlobal(qgcApp());
+    qmlGlobal->setToolbox(qgcApp()->toolbox());
+
+    return qmlGlobal;
 }
 
 /**

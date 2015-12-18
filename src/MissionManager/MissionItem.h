@@ -87,7 +87,6 @@ public:
     Q_PROPERTY(int              sequenceNumber          READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
     Q_PROPERTY(bool             standaloneCoordinate    READ standaloneCoordinate                               NOTIFY commandChanged)
     Q_PROPERTY(bool             specifiesCoordinate     READ specifiesCoordinate                                NOTIFY commandChanged)
-    Q_PROPERTY(Fact*            supportedCommand        READ supportedCommand                                   NOTIFY commandChanged)
 
     // These properties are used to display the editing ui
     Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
@@ -118,7 +117,6 @@ public:
     int             sequenceNumber      (void) const    { return _sequenceNumber; }
     bool            standaloneCoordinate(void) const;
     bool            specifiesCoordinate (void) const;
-    Fact*           supportedCommand    (void)          { return &_supportedCommandFact; }
 
 
     QmlObjectListModel* textFieldFacts  (void);
@@ -206,9 +204,7 @@ private slots:
     void _sendFriendlyEditAllowedChanged(void);
     void _sendUiModelChanged(void);
     void _syncAltitudeRelativeToHomeToFrame(const QVariant& value);
-    void _syncCommandToSupportedCommand(const QVariant& value);
     void _syncFrameToAltitudeRelativeToHome(void);
-    void _syncSupportedCommandToCommand(const QVariant& value);
 
 private:
     void _clearParamMetaData(void);
@@ -249,7 +245,6 @@ private:
     static FactMetaData*    _frameMetaData;
     static FactMetaData*    _latitudeMetaData;
     static FactMetaData*    _longitudeMetaData;
-    static FactMetaData*    _supportedCommandMetaData;
 
     FactMetaData    _param1MetaData;
     FactMetaData    _param2MetaData;
@@ -264,7 +259,6 @@ private:
 
     bool _syncingAltitudeRelativeToHomeAndFrame;    ///< true: already in a sync signal, prevents signal loop
     bool _syncingHeadingDegreesAndParam4;           ///< true: already in a sync signal, prevents signal loop
-    bool _syncingSupportedCommandAndCommand;         ///< true: already in a sync signal, prevents signal loop
 
     const QMap<MAV_CMD, MavCmdInfo*>& _mavCmdInfoMap;
 };

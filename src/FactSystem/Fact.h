@@ -136,7 +136,7 @@ signals:
     /// This signal is meant for use by Fact container implementations.
     void _containerRawValueChanged(const QVariant& value);
     
-private:
+protected:
     QString _variantToString(const QVariant& variant) const;
 
     QString                     _name;
