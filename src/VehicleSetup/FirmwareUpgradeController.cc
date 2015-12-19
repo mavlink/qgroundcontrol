@@ -363,7 +363,7 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
 
 QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardType(QGCSerialPortInfo::BoardType_t boardType)
 {
-    int boardId;
+    int boardId = Bootloader::boardIDPX4FMUV2;
 
     switch (boardType) {
     case QGCSerialPortInfo::BoardTypePX4FMUV1:
