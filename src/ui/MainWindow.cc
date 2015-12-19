@@ -415,6 +415,12 @@ void MainWindow::normalActionItemCallback(bool)
     if (!_ui.actionNormal->isChecked())
         _ui.actionNormal->setChecked(true);
     _ui.actionFullscreen->setChecked(false);
+
+    // Qt documentation says that just call showNormal and it will return properly
+    // So calling showMaximized.
+    if (isFullScreen()) {
+        showMaximized();
+    }
 }
 
 void MainWindow::showStatusBarCallback(bool checked)
