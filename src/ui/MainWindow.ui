@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -250,22 +250,6 @@
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>showFullScreen()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>249</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionNormal</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>showNormal()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
