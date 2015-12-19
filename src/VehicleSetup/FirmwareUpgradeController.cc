@@ -1,5 +1,5 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
  
  (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -29,6 +29,7 @@
 #include "Bootloader.h"
 #include "QGCFileDialog.h"
 #include "QGCApplication.h"
+#include "QGCFileDownload.h"
 
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t    stackType;
@@ -45,11 +46,12 @@ uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 }
 
 /// @Brief Constructs a new FirmwareUpgradeController Widget. This widget is used within the PX4VehicleConfig set of screens.
-FirmwareUpgradeController::FirmwareUpgradeController(void) :
-    _downloadManager(NULL),
-    _downloadNetworkReply(NULL),
-    _statusLog(NULL),
-    _image(NULL)
+FirmwareUpgradeController::FirmwareUpgradeController(void)
+    : _downloadManager(NULL)
+    , _downloadNetworkReply(NULL)
+    , _statusLog(NULL)
+    , _selectedFirmwareType(StableFirmware)
+    , _image(NULL)
 {
     _threadController = new PX4FirmwareUpgradeThreadController(this);
     Q_CHECK_PTR(_threadController);
@@ -68,6 +70,8 @@ FirmwareUpgradeController::FirmwareUpgradeController(void) :
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
     
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
+
+    _initFirmwareHash();
 }
 
 FirmwareUpgradeController::~FirmwareUpgradeController()
@@ -115,42 +119,45 @@ void FirmwareUpgradeController::cancel(void)
     _threadController->cancel();
 }
 
-void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int type)
+void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int boardType)
 {
     _foundBoardInfo = info;
-    switch (type) {
-        case QGCSerialPortInfo::BoardTypePX4FMUV1:
-            _foundBoardType = "PX4 FMU V1";
-            _startFlashWhenBootloaderFound = false;
-            break;
-        case QGCSerialPortInfo::BoardTypePX4FMUV2:
-        case QGCSerialPortInfo::BoardTypePX4FMUV4:
-            _foundBoardType = "Pixhawk";
-            _startFlashWhenBootloaderFound = false;
-            break;
-        case QGCSerialPortInfo::BoardTypeAeroCore:
-            _foundBoardType = "AeroCore";
-            _startFlashWhenBootloaderFound = false;
-            break;
-        case QGCSerialPortInfo::BoardTypePX4Flow:
-            _foundBoardType = "PX4 Flow";
-            _startFlashWhenBootloaderFound = false;
-            break;
-        case QGCSerialPortInfo::BoardType3drRadio:
-            _foundBoardType = "3DR Radio";
-            if (!firstAttempt) {
-                // Radio always flashes latest firmware, so we can start right away without
-                // any further user input.
-                _startFlashWhenBootloaderFound = true;
-                _startFlashWhenBootloaderFoundFirmwareIdentity = FirmwareIdentifier(ThreeDRRadio,
-                                                                                    StableFirmware,
-                                                                                    DefaultVehicleFirmware);
-            }
-            break;
+    _foundBoardType = (QGCSerialPortInfo::BoardType_t)boardType;
+
+    switch (boardType) {
+    case QGCSerialPortInfo::BoardTypePX4FMUV1:
+        _foundBoardTypeName = "PX4 FMU V1";
+        _startFlashWhenBootloaderFound = false;
+        break;
+    case QGCSerialPortInfo::BoardTypePX4FMUV2:
+    case QGCSerialPortInfo::BoardTypePX4FMUV4:
+        _foundBoardTypeName = "Pixhawk";
+        _startFlashWhenBootloaderFound = false;
+        break;
+    case QGCSerialPortInfo::BoardTypeAeroCore:
+        _foundBoardTypeName = "AeroCore";
+        _startFlashWhenBootloaderFound = false;
+        break;
+    case QGCSerialPortInfo::BoardTypePX4Flow:
+        _foundBoardTypeName = "PX4 Flow";
+        _startFlashWhenBootloaderFound = false;
+        break;
+    case QGCSerialPortInfo::BoardType3drRadio:
+        _foundBoardTypeName = "3DR Radio";
+        if (!firstAttempt) {
+            // Radio always flashes latest firmware, so we can start right away without
+            // any further user input.
+            _startFlashWhenBootloaderFound = true;
+            _startFlashWhenBootloaderFoundFirmwareIdentity = FirmwareIdentifier(ThreeDRRadio,
+                                                                                StableFirmware,
+                                                                                DefaultVehicleFirmware);
+        }
+        break;
     }
     
     qCDebug(FirmwareUpgradeLog) << _foundBoardType;
     emit boardFound();
+    _loadAPMVersions(_foundBoardType);
 }
 
 
@@ -334,46 +341,65 @@ void FirmwareUpgradeController::_bootloaderSyncFailed(void)
     _errorCancel("Unable to sync with bootloader.");
 }
 
+QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardId(int boardId)
+{
+    switch (boardId) {
+    case Bootloader::boardIDPX4FMUV1:
+        return &_rgPX4FMUV1Firmware;
+    case Bootloader::boardIDPX4Flow:
+        return &_rgPX4FLowFirmware;
+    case Bootloader::boardIDPX4FMUV2:
+        return &_rgPX4FMUV2Firmware;
+    case Bootloader::boardIDPX4FMUV4:
+        return &_rgPX4FMUV4Firmware;
+    case Bootloader::boardIDAeroCore:
+        return &_rgAeroCoreFirmware;
+    case Bootloader::boardID3DRRadio:
+        return &_rg3DRRadioFirmware;
+    default:
+        return NULL;
+    }
+}
+
+QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardType(QGCSerialPortInfo::BoardType_t boardType)
+{
+    int boardId = Bootloader::boardIDPX4FMUV2;
+
+    switch (boardType) {
+    case QGCSerialPortInfo::BoardTypePX4FMUV1:
+        boardId = Bootloader::boardIDPX4FMUV1;
+        break;
+    case QGCSerialPortInfo::BoardTypePX4FMUV2:
+        boardId = Bootloader::boardIDPX4FMUV2;
+        break;
+    case QGCSerialPortInfo::BoardTypePX4FMUV4:
+        boardId = Bootloader::boardIDPX4FMUV4;
+        break;
+    case QGCSerialPortInfo::BoardTypeAeroCore:
+        boardId = Bootloader::boardIDAeroCore;
+        break;
+    case QGCSerialPortInfo::BoardTypePX4Flow:
+        boardId = Bootloader::boardIDPX4Flow;
+        break;
+    case QGCSerialPortInfo::BoardType3drRadio:
+        boardId = Bootloader::boardID3DRRadio;
+        break;
+    case QGCSerialPortInfo::BoardTypeUnknown:
+        qWarning() << "Internal error";
+        boardId = Bootloader::boardIDPX4FMUV2;
+        break;
+    }
+
+    return _firmwareHashForBoardId(boardId);
+}
+
+
 /// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
-    // make sure the firmware hashes are populated
-    _initFirmwareHash();
-
-    // Select the firmware set based on board type
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(_bootloaderBoardID);
     
-    QHash<FirmwareIdentifier, QString> prgFirmware;
-    
-    switch (_bootloaderBoardID) {
-        case Bootloader::boardIDPX4FMUV1:
-            prgFirmware = _rgPX4FMUV1Firmware;
-            break;
-            
-        case Bootloader::boardIDPX4Flow:
-            prgFirmware = _rgPX4FLowFirmware;
-            break;
-            
-        case Bootloader::boardIDPX4FMUV2:
-            prgFirmware = _rgPX4FMUV2Firmware;
-            break;
-
-        case Bootloader::boardIDPX4FMUV4:
-            prgFirmware = _rgPX4FMUV4Firmware;
-            break;
-            
-        case Bootloader::boardIDAeroCore:
-            prgFirmware = _rgAeroCoreFirmware;
-            break;
-            
-        case Bootloader::boardID3DRRadio:
-            prgFirmware = _rg3DRRadioFirmware;
-            break;
-            
-        default:
-            break;
-    }
-    
-    if (prgFirmware.isEmpty() && firmwareId.firmwareType != CustomFirmware) {
+    if (!prgFirmware && firmwareId.firmwareType != CustomFirmware) {
         _errorCancel("Attempting to flash an unknown board type, you must select 'Custom firmware file'");
         return;
     }
@@ -385,8 +411,8 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
                                                            "Firmware Files (*.px4 *.bin *.ihx)");                               // File filter
     } else {
 
-        if (prgFirmware.contains(firmwareId)) {
-            _firmwareFilename = prgFirmware.value(firmwareId);
+        if (prgFirmware->contains(firmwareId)) {
+            _firmwareFilename = prgFirmware->value(firmwareId);
         } else {
             _errorCancel("Unable to find specified firmware download location");
             return;
@@ -608,4 +634,124 @@ void FirmwareUpgradeController::_eraseStarted(void)
 void FirmwareUpgradeController::_eraseComplete(void)
 {
     _eraseTimer.stop();
+}
+
+void FirmwareUpgradeController::_loadAPMVersions(QGCSerialPortInfo::BoardType_t boardType)
+{
+    _apmVersionMap.clear();
+
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardType(boardType);
+
+    foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
+        if (firmwareId.autopilotStackType == AutoPilotStackAPM) {
+            QString versionFile = QFileInfo(prgFirmware->value(firmwareId)).path() + "/git-version.txt";
+
+            qCDebug(FirmwareUpgradeLog) << "Downloading" << versionFile;
+            QGCFileDownload* downloader = new QGCFileDownload(this);
+            connect(downloader, &QGCFileDownload::downloadFinished, this, &FirmwareUpgradeController::_apmVersionDownloadFinished);
+            downloader->download(versionFile);
+        }
+    }
+}
+
+
+void FirmwareUpgradeController::_apmVersionDownloadFinished(QString remoteFile, QString localFile)
+{
+    qCDebug(FirmwareUpgradeLog) << "Download complete" << remoteFile << localFile;
+
+    // Now read the version file and pull out the version string
+
+    QFile versionFile(localFile);
+    versionFile.open(QIODevice::ReadOnly | QIODevice::Text);
+    QTextStream stream(&versionFile);
+    QString versionContents = stream.readAll();
+
+    QString version;
+    QRegularExpression re("APMVERSION: (.*)$");
+    QRegularExpressionMatch match = re.match(versionContents);
+    if (match.hasMatch()) {
+        version = match.captured(1);
+    }
+
+    if (version.isEmpty()) {
+        qWarning() << "Unable to parse version info from file" << remoteFile;
+        return;
+    }
+
+    // In order to determine the firmware and vehicle type for this file we find the matching entry in the firmware list
+
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardType(_foundBoardType);
+
+    QString remotePath = QFileInfo(remoteFile).path();
+    foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
+        if (remotePath == QFileInfo((*prgFirmware)[firmwareId]).path()) {
+            qCDebug(FirmwareUpgradeLog) << "Adding version to map, version:firwmareType:vehicleType" << version << firmwareId.firmwareType << firmwareId.firmwareVehicleType;
+            _apmVersionMap[firmwareId.firmwareType][firmwareId.firmwareVehicleType] = version;
+        }
+    }
+
+    emit apmAvailableVersionsChanged();
+}
+
+void FirmwareUpgradeController::setSelectedFirmwareType(FirmwareType_t firmwareType)
+{
+    _selectedFirmwareType = firmwareType;
+    emit selectedFirmwareTypeChanged(_selectedFirmwareType);
+    emit apmAvailableVersionsChanged();
+}
+
+QStringList FirmwareUpgradeController::apmAvailableVersions(void)
+{
+    QStringList list;
+
+    _apmVehicleTypeFromCurrentVersionList.clear();
+
+    foreach (FirmwareVehicleType_t vehicleType, _apmVersionMap[_selectedFirmwareType].keys()) {
+        QString version;
+
+        switch (vehicleType) {
+        case QuadFirmware:
+            version = "Quad - ";
+            break;
+        case X8Firmware:
+            version = "X8 - ";
+            break;
+        case HexaFirmware:
+            version = "Hexa - ";
+            break;
+        case OctoFirmware:
+            version = "Octo - ";
+            break;
+        case YFirmware:
+            version = "Y - ";
+            break;
+        case Y6Firmware:
+            version = "Y6 - ";
+            break;
+        case HeliFirmware:
+            version = "Heli - ";
+            break;
+        case PlaneFirmware:
+        case RoverFirmware:
+        case DefaultVehicleFirmware:
+            break;
+        }
+
+        version += _apmVersionMap[_selectedFirmwareType][vehicleType];
+        _apmVehicleTypeFromCurrentVersionList.append(vehicleType);
+
+        list << version;
+    }
+
+    return list;
+}
+
+FirmwareUpgradeController::FirmwareVehicleType_t FirmwareUpgradeController::vehicleTypeFromVersionIndex(int index)
+{
+    if (index < 0 || index >= _apmVehicleTypeFromCurrentVersionList.count()) {
+        qWarning() << "Invalid index, index:count" << index << _apmVehicleTypeFromCurrentVersionList.count();
+        return QuadFirmware;
+    }
+
+    return _apmVehicleTypeFromCurrentVersionList[index];
 }
