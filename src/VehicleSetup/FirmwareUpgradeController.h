@@ -106,10 +106,12 @@ public:
     FirmwareUpgradeController(void);
     ~FirmwareUpgradeController();
 
-    Q_PROPERTY(QString boardPort READ boardPort NOTIFY boardFound)
-    Q_PROPERTY(QString boardDescription READ boardDescription NOTIFY boardFound)
-    Q_PROPERTY(QString boardType MEMBER _foundBoardType NOTIFY boardFound)
-    
+    Q_PROPERTY(QString          boardPort                   READ boardPort                                              NOTIFY boardFound)
+    Q_PROPERTY(QString          boardDescription            READ boardDescription                                       NOTIFY boardFound)
+    Q_PROPERTY(QString          boardType                   MEMBER _foundBoardTypeName                                  NOTIFY boardFound)
+    Q_PROPERTY(FirmwareType_t   selectedFirmwareType        READ selectedFirmwareType   WRITE setSelectedFirmwareType   NOTIFY selectedFirmwareTypeChanged)
+    Q_PROPERTY(QStringList      apmAvailableVersions        READ apmAvailableVersions                                   NOTIFY apmAvailableVersionsChanged)
+
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
     
@@ -126,6 +128,8 @@ public:
     Q_INVOKABLE void flash(AutoPilotStackType_t stackType,
                            FirmwareType_t firmwareType = StableFirmware,
                            FirmwareVehicleType_t vehicleType = DefaultVehicleFirmware );
+
+    Q_INVOKABLE FirmwareVehicleType_t vehicleTypeFromVersionIndex(int index);
     
     // overload, not exposed to qml side
     void flash(const FirmwareIdentifier& firmwareId);
@@ -140,6 +144,11 @@ public:
     
     QString boardPort(void) { return _foundBoardInfo.portName(); }
     QString boardDescription(void) { return _foundBoardInfo.description(); }
+
+    FirmwareType_t selectedFirmwareType(void) { return _selectedFirmwareType; }
+    void setSelectedFirmwareType(FirmwareType_t firmwareType);
+
+    QStringList apmAvailableVersions(void);
     
 signals:
     void boardFound(void);
@@ -148,12 +157,14 @@ signals:
     void flashComplete(void);
     void flashCancelled(void);
     void error(void);
+    void selectedFirmwareTypeChanged(FirmwareType_t firmwareType);
+    void apmAvailableVersionsChanged(void);
     
 private slots:
     void _downloadProgress(qint64 curr, qint64 total);
     void _downloadFinished(void);
     void _downloadError(QNetworkReply::NetworkError code);
-    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int type);
+    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int boardType);
     void _noBoardFound(void);
     void _boardGone();
     void _foundBootloader(int bootloaderVersion, int boardID, int flashSize);
@@ -165,6 +176,7 @@ private slots:
     void _eraseStarted(void);
     void _eraseComplete(void);
     void _eraseProgressTick(void);
+    void _apmVersionDownloadFinished(QString remoteFile, QString localFile);
 
 private:
     void _getFirmwareFile(FirmwareIdentifier firmwareId);
@@ -172,7 +184,10 @@ private:
     void _downloadFirmware(void);
     void _appendStatusLog(const QString& text, bool critical = false);
     void _errorCancel(const QString& msg);
-    
+    void _loadAPMVersions(QGCSerialPortInfo::BoardType_t boardType);
+    QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardId(int boardId);
+    QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardType(QGCSerialPortInfo::BoardType_t boardType);
+
     QString _portName;
     QString _portDescription;
 
@@ -183,6 +198,9 @@ private:
     QHash<FirmwareIdentifier, QString> _rgPX4FMUV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
+
+    QMap<FirmwareType_t, QMap<FirmwareVehicleType_t, QString> > _apmVersionMap;
+    QList<FirmwareVehicleType_t>                                _apmVehicleTypeFromCurrentVersionList;
 
     /// Information which comes back from the bootloader
     bool        _bootloaderFound;           ///< true: we have received the foundBootloader signals
@@ -216,9 +234,12 @@ private:
     
     bool _searchingForBoard;    ///< true: searching for board, false: search for bootloader
     
-    QSerialPortInfo _foundBoardInfo;
-    QString         _foundBoardType;
-    
+    QSerialPortInfo                 _foundBoardInfo;
+    QGCSerialPortInfo::BoardType_t  _foundBoardType;
+    QString                         _foundBoardTypeName;
+
+    FirmwareType_t                  _selectedFirmwareType;
+
     FirmwareImage*  _image;
 };
 

@@ -262,6 +262,7 @@ HEADERS += \
     src/QGCComboBox.h \
     src/QGCConfig.h \
     src/QGCDockWidget.h \
+    src/QGCFileDownload.h \
     src/QGCGeo.h \
     src/QGCLoggingCategory.h \
     src/QGCMapPalette.h \
@@ -382,6 +383,7 @@ SOURCES += \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
     src/QGCDockWidget.cc \
+    src/QGCFileDownload.cc \
     src/QGCLoggingCategory.cc \
     src/QGCMapPalette.cc \
     src/QGCPalette.cc \
