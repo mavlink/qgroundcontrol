@@ -299,6 +299,8 @@ Rectangle {
                         setupComplete:  modelData.setupComplete
                         exclusiveGroup: setupButtonGroup
                         text:           modelData.name
+                        visible:        modelData.setupSource.toString() != ""
+
 
                         onClicked: showVehicleComponentPanel(modelData)
                     }

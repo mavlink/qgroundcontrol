@@ -36,6 +36,7 @@ QGCView {
     viewPanel:  panel
 
     property real _margins: ScreenTools.defaultFontPixelHeight
+    property bool _channelOptionsAvailable: controller.parameterExists(-1, "CH7_OPT")   // Not available in all firmware types
 
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
@@ -116,6 +117,7 @@ QGCView {
                 anchors.left:       flightModeSettings.right
                 text:               "Channel Options"
                 font.weight:        Font.DemiBold
+                visible:            _channelOptionsAvailable
             }
 
             Rectangle {
@@ -126,6 +128,7 @@ QGCView {
                 width:              channelOptColumn.width + (_margins * 2)
                 height:             channelOptColumn.height + ScreenTools.defaultFontPixelHeight
                 color:              qgcPal.windowShade
+                visible:            _channelOptionsAvailable
 
                 Column {
                     id:                 channelOptColumn
@@ -141,19 +144,18 @@ QGCView {
                             spacing: ScreenTools.defaultFontPixelWidth
 
                             property int index: modelData + 7
+                            property Fact nullFact: Fact { }
 
                             QGCLabel {
                                 anchors.baseline:   optCombo.baseline
                                 text:               "Channel option " + index + ":"
                                 color:              controller.channelOptionEnabled[modelData] ? qgcPal.buttonHighlight : qgcPal.text
-
-                                Component.onCompleted: console.log(index, controller.channelOptionEnabled[modelData])
                             }
 
                             FactComboBox {
                                 id:         optCombo
                                 width:      ScreenTools.defaultFontPixelWidth * 15
-                                fact:       controller.getParameterFact(-1, "CH" + index + "_OPT")
+                                fact:       _channelOptionsAvailable ? controller.getParameterFact(-1, "CH" + index + "_OPT") : nullFact
                                 indexModel: false
                             }
                         }
