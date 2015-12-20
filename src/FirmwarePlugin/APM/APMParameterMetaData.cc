@@ -215,7 +215,7 @@ void APMParameterMetaData::_loadParameterFactMetaData()
                         // so not setting currentCategory
                         xmlState.push(XmlStateFoundParameters);
                     } else {
-                        qCDebug(APMParameterMetaDataLog) << "not interested in this block of parameters skip";
+                        qCDebug(APMParameterMetaDataLog) << "not interested in this block of parameters, skipping:" << nameValue;
                         if (skipXMLBlock(xml, "parameters")) {
                             qCWarning(APMParameterMetaDataLog) << "something wrong with the xml, skip of the xml failed";
                             return;
@@ -461,6 +461,33 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
         }
     }
 
-    // FixMe:: not handling values and increment size as their is no place for them in FactMetaData and no ui
+    if (rawMetaData->values.count() > 0) {
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        for (int i=0; i<rawMetaData->values.count(); i++) {
+            QVariant    enumValue;
+            QString     errorString;
+            QPair<QString, QString> enumPair = rawMetaData->values[i];
+
+            if (metaData->convertAndValidate(enumPair.first, false /* validate */, enumValue, errorString)) {
+                enumValues << enumValue;
+                enumStrings << enumPair.second;
+            } else {
+                qCDebug(APMParameterMetaDataLog) << "Invalid enum value, name:" << metaData->name()
+                                                 << " type:" << metaData->type() << " value:" << enumPair.first
+                                                 << " error:" << errorString;
+                enumStrings.clear();
+                enumValues.clear();
+                break;
+            }
+        }
+
+        if (enumStrings.count() != 0) {
+            metaData->setEnumInfo(enumStrings, enumValues);
+        }
+    }
+
+    // FixMe:: not handling increment size as their is no place for it in FactMetaData and no ui
     fact->setMetaData(metaData);
 }

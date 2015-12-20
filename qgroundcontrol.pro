@@ -559,9 +559,10 @@ HEADERS+= \
     src/AutoPilotPlugins/APM/APMAirframeComponentController.h \
     src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.h \
     src/AutoPilotPlugins/APM/APMComponent.h \
-    src/AutoPilotPlugins/APM/APMRadioComponent.h \
     src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
     src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
+    src/AutoPilotPlugins/APM/APMPowerComponent.h \
+    src/AutoPilotPlugins/APM/APMRadioComponent.h \
     src/AutoPilotPlugins/APM/APMSafetyComponent.h \
     src/AutoPilotPlugins/APM/APMSensorsComponent.h \
     src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
@@ -611,9 +612,10 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMAirframeComponent.cc \
     src/AutoPilotPlugins/APM/APMAirframeComponentController.cc \
     src/AutoPilotPlugins/APM/APMComponent.cc \
-    src/AutoPilotPlugins/APM/APMRadioComponent.cc \
     src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
     src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
+    src/AutoPilotPlugins/APM/APMPowerComponent.cc \
+    src/AutoPilotPlugins/APM/APMRadioComponent.cc \
     src/AutoPilotPlugins/APM/APMSafetyComponent.cc \
     src/AutoPilotPlugins/APM/APMSensorsComponent.cc \
     src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
