@@ -67,14 +67,12 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
         Q_ASSERT(_vehicle);
 
         if (parametersReady()) {
-            if (dynamic_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin())){
-                _airframeComponent = new APMAirframeComponent(_vehicle, this);
-                if(_airframeComponent) {
-                    _airframeComponent->setupTriggerSignals();
-                    _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
-                } else {
-                    qWarning() << "new APMAirframeComponent failed";
-                }
+            _airframeComponent = new APMAirframeComponent(_vehicle, this);
+            if(_airframeComponent) {
+                _airframeComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
+            } else {
+                qWarning() << "new APMAirframeComponent failed";
             }
 
             _flightModesComponent = new APMFlightModesComponent(_vehicle, this);

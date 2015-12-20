@@ -544,10 +544,12 @@ SOURCES += \
 #
 
 INCLUDEPATH += \
+    src/AutoPilotPlugins/APM \
     src/AutoPilotPlugins/Common \
     src/AutoPilotPlugins/PX4 \
-    src/AutoPilotPlugins/APM \
     src/FirmwarePlugin \
+    src/FirmwarePlugin/APM \
+    src/FirmwarePlugin/PX4 \
     src/Vehicle \
     src/VehicleSetup \
 
