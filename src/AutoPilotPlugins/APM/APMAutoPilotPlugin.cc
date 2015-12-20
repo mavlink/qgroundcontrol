@@ -38,6 +38,7 @@
 #include "APMSafetyComponent.h"
 #include "APMTuningComponent.h"
 #include "APMSensorsComponent.h"
+#include "APMPowerComponent.h"
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
@@ -45,6 +46,7 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _incorrectParameterVersion(false)
     , _airframeComponent(NULL)
     , _flightModesComponent(NULL)
+    , _powerComponent(NULL)
     , _radioComponent(NULL)
     , _safetyComponent(NULL)
     , _sensorsComponent(NULL)
@@ -81,6 +83,14 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
             } else {
                 qWarning() << "new APMFlightModesComponent failed";
+            }
+
+            _powerComponent = new APMPowerComponent(_vehicle, this);
+            if (_powerComponent) {
+                _powerComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
+            } else {
+                qWarning() << "new APMPowerComponent failed";
             }
 
             _radioComponent = new APMRadioComponent(_vehicle, this);
