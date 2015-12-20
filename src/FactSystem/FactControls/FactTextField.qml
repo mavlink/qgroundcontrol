@@ -11,11 +11,13 @@ import QGroundControl.Controls 1.0
 QGCTextField {
     id: _textField
 
+    text:       fact.valueString
+    unitsLabel: fact.units
+    showUnits:  true
+
     property Fact   fact:           null
     property string _validateString
 
-    text:               fact.valueString
-    unitsLabel:         fact.units
 
     // At this point all Facts are numeric
     inputMethodHints:   Qt.ImhFormattedNumbersOnly
