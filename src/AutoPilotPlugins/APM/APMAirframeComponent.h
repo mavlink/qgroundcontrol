@@ -47,8 +47,8 @@ public:
     virtual QString prerequisiteSetup(void) const;
 
 private:
+    bool            _copterFirmware;
     const QString   _name;
-    QVariantList    _summaryItems;
 };
 
 #endif
