@@ -34,6 +34,7 @@ class APMRadioComponent;
 class APMTuningComponent;
 class APMSafetyComponent;
 class APMSensorsComponent;
+class APMPowerComponent;
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -49,6 +50,7 @@ public:
 
     APMAirframeComponent*       airframeComponent   (void) { return _airframeComponent; }
     APMFlightModesComponent*    flightModesComponent(void) { return _flightModesComponent; }
+    APMPowerComponent*          powerComponent      (void) { return _powerComponent; }
     APMRadioComponent*          radioComponent      (void) { return _radioComponent; }
     APMSafetyComponent*         safetyComponent     (void) { return _safetyComponent; }
     APMSensorsComponent*        sensorsComponent    (void) { return _sensorsComponent; }
@@ -64,6 +66,7 @@ private:
 
     APMAirframeComponent*       _airframeComponent;
     APMFlightModesComponent*    _flightModesComponent;
+    APMPowerComponent*          _powerComponent;
     APMRadioComponent*          _radioComponent;
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;
