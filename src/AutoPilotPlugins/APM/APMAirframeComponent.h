@@ -47,7 +47,7 @@ public:
     virtual QString prerequisiteSetup(void) const;
 
 private:
-    bool            _copterFirmware;
+    bool            _requiresFrameSetup; ///< true: FRAME parameter must be set
     const QString   _name;
 };
 
