@@ -124,17 +124,17 @@ public:
     void showMessage(const QString& message);
 
     /// @return true: Fake ui into showing mobile interface
-    bool fakeMobile(void) { return _fakeMobile; }
+    bool fakeMobile(void) const { return _fakeMobile; }
 
 #ifdef QT_DEBUG
-    bool testHighDPI(void) { return _testHighDPI; }
+    bool testHighDPI(void) const { return _testHighDPI; }
 #endif
 
     // Still working on getting rid of this and using dependency injection instead for everything
-    QGCToolbox* toolbox(void) { return _toolbox; }
+    QGCToolbox* toolbox(void) const { return _toolbox; }
 
     /// Do we have Bluetooth Support?
-    bool isBluetoothAvailable() { return _bluetoothAvailable; }
+    bool isBluetoothAvailable() const { return _bluetoothAvailable; }
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
