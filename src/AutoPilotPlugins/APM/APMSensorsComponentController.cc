@@ -175,7 +175,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
         default:
             // Assume failed
             _hideAllCalAreas();
-            qgcApp()->showMessage("Calibration failed. Calibration log will be displayed.");
+            qgcApp()->showMessage(QStringLiteral("Calibration failed. Calibration log will be displayed."));
             break;
     }
     
@@ -207,11 +207,12 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         return;
     }
 
-    if (text.startsWith("PreArm:") || text.startsWith("EKF") || text.startsWith("Arm") || text.startsWith("Initialising")) {
+    if (text.startsWith(QStringLiteral("PreArm:")) || text.startsWith(QStringLiteral("EKF"))
+            || text.startsWith(QStringLiteral("Arm")) || text.startsWith(QStringLiteral("Initialising"))) {
         return;
     }
 
-    QString anyKey("and press any");
+    QString anyKey = QStringLiteral("and press any");
     if (text.contains(anyKey)) {
         text = text.left(text.indexOf(anyKey)) + "and click Next to continue.";
     }
@@ -219,12 +220,12 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
     _appendStatusLog(text);
     qCDebug(APMSensorsComponentControllerLog) << text << severity;
 
-    if (text.contains("Calibration successful")) {
+    if (text.contains(QStringLiteral("Calibration successful"))) {
         _stopCalibration(StopCalibrationSuccess);
         return;
     }
 
-    if (text.contains("FAILED")) {
+    if (text.contains(QStringLiteral("FAILED"))) {
         _stopCalibration(StopCalibrationFailed);
         return;
     }
