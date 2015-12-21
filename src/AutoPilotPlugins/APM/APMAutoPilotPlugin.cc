@@ -67,7 +67,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
         Q_ASSERT(_vehicle);
 
         if (parametersReady()) {
-            _airframeComponent = new APMAirframeComponent(_vehicle, this);
+            _airframeComponent = new (std::nothrow) APMAirframeComponent(_vehicle, this);
             if(_airframeComponent) {
                 _airframeComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
@@ -75,7 +75,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 qWarning() << "new APMAirframeComponent failed";
             }
 
-            _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
+            _flightModesComponent = new (std::nothrow) APMFlightModesComponent(_vehicle, this);
             if (_flightModesComponent) {
                 _flightModesComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
@@ -83,7 +83,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 qWarning() << "new APMFlightModesComponent failed";
             }
 
-            _powerComponent = new APMPowerComponent(_vehicle, this);
+            _powerComponent = new (std::nothrow) APMPowerComponent(_vehicle, this);
             if (_powerComponent) {
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
@@ -91,7 +91,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 qWarning() << "new APMPowerComponent failed";
             }
 
-            _radioComponent = new APMRadioComponent(_vehicle, this);
+            _radioComponent = new (std::nothrow) APMRadioComponent(_vehicle, this);
             if (_radioComponent) {
                 _radioComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
@@ -99,7 +99,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 qWarning() << "new APMRadioComponent failed";
             }
 
-            _sensorsComponent = new APMSensorsComponent(_vehicle, this);
+            _sensorsComponent = new (std::nothrow) APMSensorsComponent(_vehicle, this);
             if (_sensorsComponent) {
                 _sensorsComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
@@ -107,7 +107,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 qWarning() << "new APMSensorsComponent failed";
             }
 
-            _safetyComponent = new APMSafetyComponent(_vehicle, this);
+            _safetyComponent = new (std::nothrow) APMSafetyComponent(_vehicle, this);
             if (_safetyComponent) {
                 _safetyComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
@@ -115,7 +115,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 qWarning() << "new APMSafetyComponent failed";
             }
 
-            _tuningComponent = new APMTuningComponent(_vehicle, this);
+            _tuningComponent = new (std::nothrow) APMTuningComponent(_vehicle, this);
             if (_tuningComponent) {
                 _tuningComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
