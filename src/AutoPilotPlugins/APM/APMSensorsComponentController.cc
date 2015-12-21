@@ -393,15 +393,17 @@ void APMSensorsComponentController::_refreshParams(void)
 {
     QStringList fastRefreshList;
     
-    fastRefreshList << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X"
-                    << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
-    foreach (QString paramName, fastRefreshList) {
+    fastRefreshList << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X")
+                    << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("INS_ACCOFFS_X")
+                    << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
+
+    foreach (const QString& paramName, fastRefreshList) {
         _autopilot->refreshParameter(FactSystem::defaultComponentId, paramName);
     }
     
     // Now ask for all to refresh
-    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "COMPASS_");
-    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "INS_");
+    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("COMPASS_"));
+    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, QStringLiteral("INS_"));
 }
 
 bool APMSensorsComponentController::fixedWing(void)
