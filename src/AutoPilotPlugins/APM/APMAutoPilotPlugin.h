@@ -26,6 +26,7 @@
 
 #include "AutoPilotPlugin.h"
 #include "Vehicle.h"
+#include <cmath>
 
 class APMAirframeComponent;
 class APMAirframeLoader;
@@ -35,6 +36,9 @@ class APMTuningComponent;
 class APMSafetyComponent;
 class APMSensorsComponent;
 class APMPowerComponent;
+
+/* Macro to check if two floating points are the same. */
+#define IS_FP_SAME(_a, _b) (fabs((_a) - (_b)) <= 0.000001 * qMax(fabs(_a), fabs(_b)))
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
