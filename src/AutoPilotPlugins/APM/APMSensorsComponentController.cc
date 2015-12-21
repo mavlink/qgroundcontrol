@@ -452,8 +452,8 @@ void APMSensorsComponentController::nextClicked(void)
 
     ack.command = 0;
     ack.result = 1;
-    mavlink_msg_command_ack_encode(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), &msg, &ack);
+    MAVLinkProtocol *protocol = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_command_ack_encode(protocol->getSystemId(), protocol->getComponentId(), &msg, &ack);
 
     _vehicle->sendMessage(msg);
 }
