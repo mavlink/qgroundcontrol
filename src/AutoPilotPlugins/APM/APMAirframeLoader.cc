@@ -57,7 +57,7 @@ void APMAirframeLoader::loadAirframeFactMetaData(void)
 
     Q_ASSERT(APMAirframeComponentAirframes::get().count() == 0);
 
-    QString airframeFilename = ":/AutoPilotPlugins/APM/AirframeFactMetaData.xml";
+    QString airframeFilename = ":/AutoPilotPlugins/APM/APMAirframeFactMetaData.xml";
 
     qCDebug(APMAirframeLoaderLog) << "Loading meta data file:" << airframeFilename;
 

@@ -29,10 +29,16 @@
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : APMComponent(vehicle, autopilot, parent)
-    , _copterFirmware(false)
+    , _requiresFrameSetup(false)
     , _name("Airframe")
 {
-    _copterFirmware = qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) != NULL;
+    if (qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) != NULL) {
+        _requiresFrameSetup = true;
+        MAV_TYPE vehicleType = vehicle->vehicleType();
+        if (vehicleType == MAV_TYPE_TRICOPTER || vehicleType == MAV_TYPE_HELICOPTER) {
+            _requiresFrameSetup = false;
+        }
+    }
 }
 
 QString APMAirframeComponent::name(void) const
@@ -53,12 +59,12 @@ QString APMAirframeComponent::iconResource(void) const
 
 bool APMAirframeComponent::requiresSetup(void) const
 {
-    return _copterFirmware;
+    return _requiresFrameSetup;
 }
 
 bool APMAirframeComponent::setupComplete(void) const
 {
-    if (_copterFirmware) {
+    if (_requiresFrameSetup) {
         return _autopilot->getParameterFact(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() >= 0;
     } else {
         return true;
@@ -69,7 +75,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList list;
 
-    if (_copterFirmware) {
+    if (_requiresFrameSetup) {
         list << "FRAME";
     }
 
@@ -78,7 +84,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl APMAirframeComponent::setupSource(void) const
 {
-    if (_copterFirmware) {
+    if (_requiresFrameSetup) {
         return QUrl::fromUserInput("qrc:/qml/APMAirframeComponent.qml");
     } else {
         return QUrl();
@@ -87,7 +93,7 @@ QUrl APMAirframeComponent::setupSource(void) const
 
 QUrl APMAirframeComponent::summaryQmlSource(void) const
 {
-    if (_copterFirmware) {
+    if (_requiresFrameSetup) {
         return QUrl::fromUserInput("qrc:/qml/APMAirframeComponentSummary.qml");
     } else {
         return QUrl();
