@@ -37,17 +37,17 @@ public:
     bool accelSetupNeeded(void) const;
 
     // Virtuals from APMComponent
-    virtual QStringList setupCompleteChangedTriggerList(void) const;
+    QStringList setupCompleteChangedTriggerList(void) const Q_DECL_FINAL;
     
     // Virtuals from VehicleComponent
-    virtual QString name(void) const;
-    virtual QString description(void) const;
-    virtual QString iconResource(void) const;
-    virtual bool requiresSetup(void) const;
-    virtual bool setupComplete(void) const;
-    virtual QUrl setupSource(void) const;
-    virtual QUrl summaryQmlSource(void) const;
-    virtual QString prerequisiteSetup(void) const;
+    QString name(void) const Q_DECL_FINAL;
+    QString description(void) const Q_DECL_FINAL;
+    QString iconResource(void) const Q_DECL_FINAL;
+    bool requiresSetup(void) const Q_DECL_FINAL;
+    bool setupComplete(void) const Q_DECL_FINAL;
+    QUrl setupSource(void) const Q_DECL_FINAL;
+    QUrl summaryQmlSource(void) const Q_DECL_FINAL;
+    QString prerequisiteSetup(void) const Q_DECL_FINAL;
     
 private:
     const QString   _name;
