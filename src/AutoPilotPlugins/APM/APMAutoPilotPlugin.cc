@@ -68,59 +68,22 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
 
         if (parametersReady()) {
             _airframeComponent = new APMAirframeComponent(_vehicle, this);
-            if(_airframeComponent) {
-                _airframeComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
-            } else {
-                qWarning() << "new APMAirframeComponent failed";
-            }
-
             _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
-            if (_flightModesComponent) {
-                _flightModesComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
-            } else {
-                qWarning() << "new APMFlightModesComponent failed";
-            }
-
             _powerComponent = new APMPowerComponent(_vehicle, this);
-            if (_powerComponent) {
-                _powerComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
-            } else {
-                qWarning() << "new APMPowerComponent failed";
-            }
-
             _radioComponent = new APMRadioComponent(_vehicle, this);
-            if (_radioComponent) {
-                _radioComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
-            } else {
-                qWarning() << "new APMRadioComponent failed";
-            }
-
             _sensorsComponent = new APMSensorsComponent(_vehicle, this);
-            if (_sensorsComponent) {
-                _sensorsComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
-            } else {
-                qWarning() << "new APMSensorsComponent failed";
-            }
-
             _safetyComponent = new APMSafetyComponent(_vehicle, this);
-            if (_safetyComponent) {
-                _safetyComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
-            } else {
-                qWarning() << "new APMSafetyComponent failed";
-            }
-
             _tuningComponent = new APMTuningComponent(_vehicle, this);
-            if (_tuningComponent) {
-                _tuningComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
-            } else {
-                qWarning() << "new APMTuningComponent failed";
+
+#define QVAR(X) QVariant::fromValue<APMComponent*>( X )
+            _components << QVAR(_airframeComponent) << QVAR(_flightModesComponent) << QVAR(_powerComponent)
+                       << QVAR(_radioComponent) << QVAR(_sensorsComponent) << QVAR(_safetyComponent)
+                       << QVAR(_tuningComponent);
+#undef QVAR
+
+            foreach(const QVariant& component, _components) {
+                APMComponent* cmp = component.value<APMComponent*>();
+                cmp->setupTriggerSignals();
             }
         } else {
             qWarning() << "Call to vehicleCompenents prior to parametersReady";

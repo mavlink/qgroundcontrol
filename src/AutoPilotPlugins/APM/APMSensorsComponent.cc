@@ -117,7 +117,8 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
     for (size_t i=0; i<cCompass; i++) {
         if (_autopilot->getParameterFact(FactSystem::defaultComponentId, devicesIds[i])->rawValue().toInt() != 0) {
             for (size_t j=0; j<cOffset; j++) {
-                if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+                float val = _autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat();
+                if (IS_FP_SAME(val, 0.0f)) {
                     return true;
                 }
             }
@@ -142,7 +143,8 @@ bool APMSensorsComponent::accelSetupNeeded(void) const
     for (size_t i=0; i<cAccel; i++) {
         if (_autopilot->getParameterFact(FactSystem::defaultComponentId, insUse[i])->rawValue().toInt() != 0) {
             for (size_t j=0; j<cOffset; j++) {
-                if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+                float val = _autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat();
+                if (IS_FP_SAME(val, 0.0f)) {
                     return true;
                 }
             }

@@ -48,18 +48,18 @@ public:
     QGCToolbox(QGCApplication* app);
     ~QGCToolbox();
 
-    AutoPilotPluginManager*     autopilotPluginManager(void)    { return _autopilotPluginManager; }
-    FirmwarePluginManager*      firmwarePluginManager(void)     { return _firmwarePluginManager; }
-    FlightMapSettings*          flightMapSettings(void)         { return _flightMapSettings; }
-    GAudioOutput*               audioOutput(void)               { return _audioOutput; }
-    HomePositionManager*        homePositionManager(void)       { return _homePositionManager; }
-    JoystickManager*            joystickManager(void)           { return _joystickManager; }
-    LinkManager*                linkManager(void)               { return _linkManager; }
-    MAVLinkProtocol*            mavlinkProtocol(void)           { return _mavlinkProtocol; }
-    MissionCommands*            missionCommands(void)           { return _missionCommands; }
-    MultiVehicleManager*        multiVehicleManager(void)       { return _multiVehicleManager; }
-    QGCImageProvider*           imageProvider()                 { return _imageProvider; }
-    UASMessageHandler*          uasMessageHandler(void)         { return _uasMessageHandler; }
+    AutoPilotPluginManager*     autopilotPluginManager(void) const { return _autopilotPluginManager; }
+    FirmwarePluginManager*      firmwarePluginManager(void)  const { return _firmwarePluginManager; }
+    FlightMapSettings*          flightMapSettings(void)      const { return _flightMapSettings; }
+    GAudioOutput*               audioOutput(void)            const { return _audioOutput; }
+    HomePositionManager*        homePositionManager(void)    const { return _homePositionManager; }
+    JoystickManager*            joystickManager(void)        const { return _joystickManager; }
+    LinkManager*                linkManager(void)            const { return _linkManager; }
+    MAVLinkProtocol*            mavlinkProtocol(void)        const { return _mavlinkProtocol; }
+    MissionCommands*            missionCommands(void)        const { return _missionCommands; }
+    MultiVehicleManager*        multiVehicleManager(void)    const { return _multiVehicleManager; }
+    QGCImageProvider*           imageProvider()              const { return _imageProvider; }
+    UASMessageHandler*          uasMessageHandler(void)      const { return _uasMessageHandler; }
 
 private:
     GAudioOutput*               _audioOutput;

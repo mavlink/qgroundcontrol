@@ -94,32 +94,32 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
         Q_ASSERT(_vehicle);
         
         if (parametersReady()) {
-            _airframeComponent = new AirframeComponent(_vehicle, this);
+            _airframeComponent = new (std::nothrow) AirframeComponent(_vehicle, this);
             Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
             
-            _radioComponent = new PX4RadioComponent(_vehicle, this);
+            _radioComponent = new (std::nothrow) PX4RadioComponent(_vehicle, this);
             Q_CHECK_PTR(_radioComponent);
             _radioComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
             
-            _flightModesComponent = new FlightModesComponent(_vehicle, this);
+            _flightModesComponent = new (std::nothrow) FlightModesComponent(_vehicle, this);
             Q_CHECK_PTR(_flightModesComponent);
             _flightModesComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
             
-            _sensorsComponent = new SensorsComponent(_vehicle, this);
+            _sensorsComponent = new (std::nothrow) SensorsComponent(_vehicle, this);
             Q_CHECK_PTR(_sensorsComponent);
             _sensorsComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
             
-            _powerComponent = new PowerComponent(_vehicle, this);
+            _powerComponent = new (std::nothrow) PowerComponent(_vehicle, this);
             Q_CHECK_PTR(_powerComponent);
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
             
-            _safetyComponent = new SafetyComponent(_vehicle, this);
+            _safetyComponent = new (std::nothrow) SafetyComponent(_vehicle, this);
             Q_CHECK_PTR(_safetyComponent);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
