@@ -51,7 +51,7 @@ void MavlinkLogTest::init(void)
     // Make sure temp directory is clear of mavlink logs
     QDir tmpDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
     QStringList logFiles(tmpDir.entryList(QStringList(QString("*.%1").arg(_logFileExtension)), QDir::Files));
-    foreach(QString logFile, logFiles) {
+    foreach(const QString &logFile, logFiles) {
         bool success = tmpDir.remove(logFile);
         Q_UNUSED(success);
         Q_ASSERT(success);

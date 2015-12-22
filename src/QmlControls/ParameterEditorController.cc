@@ -69,7 +69,7 @@ QStringList ParameterEditorController::searchParametersForComponent(int componen
 {
     QStringList list;
     
-    foreach(QString paramName, _autopilot->parameterNames(componentId)) {
+    foreach(const QString &paramName, _autopilot->parameterNames(componentId)) {
         if (searchText.isEmpty()) {
             list += paramName;
         } else {

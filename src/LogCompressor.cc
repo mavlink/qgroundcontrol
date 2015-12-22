@@ -172,7 +172,7 @@ void LogCompressor::run()
             // Fill holes if necessary
             if (holeFillingEnabled) {
                 int index = 0;
-                foreach (QString str, list) {
+                foreach (const QString& str, list) {
                     if (str == "" || str == "NaN") {
                         list.replace(index, lastList.at(index));
                     }

@@ -59,7 +59,7 @@ bool APMRadioComponent::setupComplete(void) const
     // controls to be mapped.
     QStringList attitudeMappings;
     attitudeMappings << "RCMAP_ROLL" << "RCMAP_PITCH" << "RCMAP_YAW" << "RCMAP_THROTTLE";
-    foreach(QString mapParam, attitudeMappings) {
+    foreach(const QString &mapParam, attitudeMappings) {
         if (_autopilot->getParameterFact(FactSystem::defaultComponentId, mapParam)->rawValue().toInt() == 0) {
             return false;
         }

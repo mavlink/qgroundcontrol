@@ -673,7 +673,7 @@ void LinechartWidget::removeCurve(QString curve)
 void LinechartWidget::recolor()
 {
     activePlot->styleChanged(qgcApp()->styleIsDark());
-    foreach (QString key, colorIcons.keys())
+    foreach (const QString &key, colorIcons.keys())
     {
         QWidget* colorIcon = colorIcons.value(key, 0);
         if (colorIcon && !colorIcon->styleSheet().isEmpty())
@@ -713,7 +713,7 @@ void LinechartWidget::filterCurves(const QString &filter)
     {
         /* Hide Elements which do not match the filter pattern */
         QStringMatcher stringMatcher(filter, Qt::CaseInsensitive);
-        foreach (QString key, colorIcons.keys())
+        foreach (const QString &key, colorIcons.keys())
         {
             if (stringMatcher.indexIn(key) < 0)
             {
@@ -728,7 +728,7 @@ void LinechartWidget::filterCurves(const QString &filter)
     else
     {
         /* Show all Elements */
-        foreach (QString key, colorIcons.keys())
+        foreach (const QString &key, colorIcons.keys())
         {
             filterCurve(key, true);
         }
@@ -796,7 +796,7 @@ QString LinechartWidget::getCurveName(const QString& key, bool shortEnabled)
 
 void LinechartWidget::setShortNames(bool enable)
 {
-    foreach (QString key, curveNames.keys())
+    foreach (const QString &key, curveNames.keys())
     {
         curveNameLabels.value(key)->setText(getCurveName(key, enable));
     }
