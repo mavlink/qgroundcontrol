@@ -395,7 +395,7 @@ void APMSensorsComponentController::_refreshParams(void)
     
     fastRefreshList << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X"
                     << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
-    foreach (QString paramName, fastRefreshList) {
+    foreach (const QString &paramName, fastRefreshList) {
         _autopilot->refreshParameter(FactSystem::defaultComponentId, paramName);
     }
     

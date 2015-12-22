@@ -59,7 +59,7 @@ bool PX4RadioComponent::setupComplete(void) const
         // controls to be mapped.
         QStringList attitudeMappings;
         attitudeMappings << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
-        foreach(QString mapParam, attitudeMappings) {
+        foreach(const QString &mapParam, attitudeMappings) {
             if (_autopilot->getParameterFact(FactSystem::defaultComponentId, mapParam)->rawValue().toInt() == 0) {
                 return false;
             }
