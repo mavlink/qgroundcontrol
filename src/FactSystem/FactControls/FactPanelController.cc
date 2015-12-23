@@ -61,7 +61,7 @@ void FactPanelController::setFactPanel(QQuickItem* panel)
     // missing fact notices that were waiting to go out
 
     _factPanel = panel;
-    foreach (QString missingParam, _delayedMissingParams) {
+    foreach (const QString &missingParam, _delayedMissingParams) {
         _notifyPanelMissingParameter(missingParam);
     }
     _delayedMissingParams.clear();
@@ -112,7 +112,7 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
 {
     bool noMissingFacts = true;
 
-    foreach (QString name, names) {
+    foreach (const QString &name, names) {
         if (_autopilot && !_autopilot->parameterExists(componentId, name)) {
             _reportMissingParameter(componentId, name);
             noMissingFacts = false;

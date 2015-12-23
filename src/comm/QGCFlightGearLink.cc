@@ -988,7 +988,7 @@ void QGCFlightGearLink::_printFgfsOutput(void)
    QByteArray byteArray = _fgProcess->readAllStandardOutput();
    QStringList strLines = QString(byteArray).split("\n");
 
-   foreach (QString line, strLines){
+   foreach (const QString &line, strLines){
     qDebug() << line;
    }
 }
@@ -1000,7 +1000,7 @@ void QGCFlightGearLink::_printFgfsError(void)
    QByteArray byteArray = _fgProcess->readAllStandardError();
    QStringList strLines = QString(byteArray).split("\n");
 
-   foreach (QString line, strLines){
+   foreach (const QString &line, strLines){
     qDebug() << line;
    }
 }

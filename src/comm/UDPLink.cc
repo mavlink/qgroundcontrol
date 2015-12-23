@@ -231,7 +231,7 @@ void UDPLink::_sendBytes(const char* data, qint64 size)
             }
         } while (_config->nextHost(host, port));
         //-- Remove hosts that are no longer there
-        foreach (QString ghost, goneHosts) {
+        foreach (const QString& ghost, goneHosts) {
             _config->removeHost(ghost);
         }
     }

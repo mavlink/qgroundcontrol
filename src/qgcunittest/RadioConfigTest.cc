@@ -407,7 +407,7 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
                     QStringList switchList;
                     switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
 
-                    foreach (QString switchParam, switchList) {
+                    foreach (const QString &switchParam, switchList) {
                         Q_ASSERT(_autopilot->getParameterFact(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
                     }
                 }

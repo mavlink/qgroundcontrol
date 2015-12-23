@@ -97,7 +97,7 @@ void HomePositionManager::_loadSettings(void)
     
     settings.beginGroup(_settingsGroup);
     
-    foreach(QString name, settings.childGroups()) {
+    foreach(const QString &name, settings.childGroups()) {
         QGeoCoordinate coordinate;
         
         qDebug() << "Load setting" << name;

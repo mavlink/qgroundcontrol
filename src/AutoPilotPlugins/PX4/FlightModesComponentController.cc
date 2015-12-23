@@ -119,7 +119,7 @@ void FlightModesComponentController::_init(void)
     QStringList attitudeParams;
     
     attitudeParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2";
-    foreach(QString attitudeParam, attitudeParams) {
+    foreach(const QString &attitudeParam, attitudeParams) {
         int channel = getParameterFact(-1, attitudeParam)->rawValue().toInt();
         if (channel != 0) {
             usedChannels << channel;
@@ -195,7 +195,7 @@ void FlightModesComponentController::_validateConfiguration(void)
     
     thresholdParams << "RC_ASSIST_TH" << "RC_AUTO_TH" << "RC_ACRO_TH" << "RC_POSCTL_TH" << "RC_LOITER_TH" << "RC_RETURN_TH" << "RC_OFFB_TH";
     
-    foreach(QString thresholdParam, thresholdParams) {
+    foreach(const QString &thresholdParam, thresholdParams) {
         float threshold = getParameterFact(-1, thresholdParam)->rawValue().toFloat();
         if (threshold < 0.0f || threshold > 1.0f) {
             _validConfiguration = false;
@@ -735,7 +735,7 @@ void FlightModesComponentController::generateThresholds(void)
     
     thresholdParams << "RC_ASSIST_TH" << "RC_AUTO_TH" << "RC_ACRO_TH" << "RC_POSCTL_TH" << "RC_LOITER_TH" << "RC_RETURN_TH" << "RC_OFFB_TH";
     
-    foreach(QString thresholdParam, thresholdParams) {
+    foreach(const QString &thresholdParam, thresholdParams) {
         getParameterFact(-1, thresholdParam)->setRawValue(0.0f);
     }
     
