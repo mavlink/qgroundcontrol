@@ -380,7 +380,7 @@ void ParameterLoader::refreshParametersPrefix(int componentId, const QString& na
     componentId = _actualComponentId(componentId);
     qCDebug(ParameterLoaderLog) << "refreshParametersPrefix (component id:" << componentId << "name:" << namePrefix << ")";
 
-    foreach(QString name, _mapParameterName2Variant[componentId].keys()) {
+    foreach(const QString &name, _mapParameterName2Variant[componentId].keys()) {
         if (name.startsWith(namePrefix)) {
             refreshParameter(componentId, name);
         }
@@ -415,7 +415,7 @@ QStringList ParameterLoader::parameterNames(int componentId)
 {
     QStringList names;
 
-    foreach(QString paramName, _mapParameterName2Variant[_actualComponentId(componentId)].keys()) {
+    foreach(const QString &paramName, _mapParameterName2Variant[_actualComponentId(componentId)].keys()) {
         names << paramName;
     }
 
@@ -425,7 +425,7 @@ QStringList ParameterLoader::parameterNames(int componentId)
 void ParameterLoader::_setupGroupMap(void)
 {
     foreach (int componentId, _mapParameterName2Variant.keys()) {
-        foreach (QString name, _mapParameterName2Variant[componentId].keys()) {
+        foreach (const QString &name, _mapParameterName2Variant[componentId].keys()) {
             Fact* fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
             _mapGroup2ParameterName[componentId][fact->group()] += name;
         }
@@ -471,7 +471,7 @@ void ParameterLoader::_waitingParamTimeout(void)
 
     if (!paramsRequested) {
         foreach(int componentId, _waitingWriteParamNameMap.keys()) {
-            foreach(QString paramName, _waitingWriteParamNameMap[componentId].keys()) {
+            foreach(const QString &paramName, _waitingWriteParamNameMap[componentId].keys()) {
                 paramsRequested = true;
                 _waitingWriteParamNameMap[componentId][paramName]++;   // Bump retry count
                 _writeParameterRaw(componentId, paramName, _autopilot->getFact(FactSystem::ParameterProvider, componentId, paramName)->rawValue());
@@ -486,7 +486,7 @@ void ParameterLoader::_waitingParamTimeout(void)
 
     if (!paramsRequested) {
         foreach(int componentId, _waitingReadParamNameMap.keys()) {
-            foreach(QString paramName, _waitingReadParamNameMap[componentId].keys()) {
+            foreach(const QString &paramName, _waitingReadParamNameMap[componentId].keys()) {
                 paramsRequested = true;
                 _waitingReadParamNameMap[componentId][paramName]++;   // Bump retry count
                 _readParameterRaw(componentId, paramName, -1);
@@ -715,7 +715,7 @@ void ParameterLoader::writeParametersToStream(QTextStream &stream)
     stream << "# MAV ID  COMPONENT ID  PARAM NAME  VALUE (FLOAT)\n";
 
     foreach (int componentId, _mapParameterName2Variant.keys()) {
-        foreach (QString paramName, _mapParameterName2Variant[componentId].keys()) {
+        foreach (const QString &paramName, _mapParameterName2Variant[componentId].keys()) {
             Fact* fact = _mapParameterName2Variant[componentId][paramName].value<Fact*>();
             Q_ASSERT(fact);
 

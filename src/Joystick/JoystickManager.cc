@@ -145,7 +145,7 @@ QVariantList JoystickManager::joysticks(void)
 {
     QVariantList list;
     
-    foreach (QString name, _name2JoystickMap.keys()) {
+    foreach (const QString &name, _name2JoystickMap.keys()) {
         list += QVariant::fromValue(_name2JoystickMap[name]);
     }
     

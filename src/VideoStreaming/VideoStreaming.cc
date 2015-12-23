@@ -98,7 +98,7 @@ void initializeVideoStreaming(int &argc, char* argv[])
     qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
     qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
 //    QStringList env = QProcessEnvironment::systemEnvironment().keys();
-//    foreach(QString key, env) {
+//    foreach(const QString &key, env) {
 //        qDebug() << key << QProcessEnvironment::systemEnvironment().value(key);
 //    }
 #endif

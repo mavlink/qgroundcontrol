@@ -226,7 +226,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
                 filterRules += ".debug=false\n";
             }
         } else {
-            foreach(QString rule, logList) {
+            foreach(const QString &rule, logList) {
                 filterRules += rule;
                 filterRules += ".debug=true\n";
             }
@@ -261,7 +261,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
                     QTextStream out(&loggingFile);
                     out << "[Rules]\n";
                     out << "*Log.debug=false\n";
-                    foreach(QString category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
+                    foreach(const QString &category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
                         out << category << ".debug=false\n";
                     }
                 } else {
@@ -737,7 +737,7 @@ void QGCApplication::_missingParamsDisplay(void)
     Q_ASSERT(_missingParams.count());
 
     QString params;
-    foreach (QString name, _missingParams) {
+    foreach (const QString &name, _missingParams) {
         if (params.isEmpty()) {
             params += name;
         } else {
