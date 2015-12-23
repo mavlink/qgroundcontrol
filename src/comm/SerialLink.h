@@ -73,12 +73,14 @@ public:
     Q_PROPERTY(int      parity          READ parity             WRITE setParity             NOTIFY parityChanged)
     Q_PROPERTY(QString  portName        READ portName           WRITE setPortName           NOTIFY portNameChanged)
     Q_PROPERTY(QString  portDisplayName READ portDisplayName                                NOTIFY portDisplayNameChanged)
+    Q_PROPERTY(bool     usbDirect       READ usbDirect          WRITE setUsbDirect          NOTIFY usbDirectChanged)        ///< true: direct usb connection to board
 
     int  baud()         { return _baud; }
     int  dataBits()     { return _dataBits; }
     int  flowControl()  { return _flowControl; }    ///< QSerialPort Enums
     int  stopBits()     { return _stopBits; }
     int  parity()       { return _parity; }         ///< QSerialPort Enums
+    bool usbDirect()    { return _usbDirect; }
 
     const QString portName          () { return _portName; }
     const QString portDisplayName   () { return _portDisplayName; }
@@ -89,6 +91,7 @@ public:
     void setStopBits        (int stopBits);
     void setParity          (int parity);               ///< QSerialPort Enums
     void setPortName        (const QString& portName);
+    void setUsbDirect       (bool usbDirect);
 
     static QStringList supportedBaudRates();
     static QString cleanPortDisplayname(const QString name);
@@ -109,6 +112,7 @@ signals:
     void parityChanged          ();
     void portNameChanged        ();
     void portDisplayNameChanged ();
+    void usbDirectChanged       (bool usbDirect);
 
 private:
     static void _initBaudRates();
@@ -121,6 +125,7 @@ private:
     int _parity;
     QString _portName;
     QString _portDisplayName;
+    bool _usbDirect;
 };
 
 /**

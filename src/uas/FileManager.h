@@ -87,7 +87,7 @@ signals:
     void commandProgress(int value);
 
 public slots:
-    void receiveMessage(LinkInterface* link, mavlink_message_t message);
+    void receiveMessage(mavlink_message_t message);
 	
 private slots:
 	void _ackTimeout(void);
