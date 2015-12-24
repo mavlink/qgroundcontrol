@@ -31,6 +31,12 @@ const unsigned int CalWorkerThread::calibration_sides = 6;
 const unsigned int CalWorkerThread::calibration_total_points = 240;
 const unsigned int CalWorkerThread::calibraton_duration_seconds = CalWorkerThread::calibration_sides * 10;
 
+const char* CalWorkerThread::rgCompassParams[3][4] = {
+    { "COMPASS_OFS_X", "COMPASS_OFS_Y", "COMPASS_OFS_Z", "COMPASS_DEV_ID" },
+    { "COMPASS_OFS2_X", "COMPASS_OFS2_Y", "COMPASS_OFS2_Z", "COMPASS_DEV_ID2" },
+    { "COMPASS_OFS3_X", "COMPASS_OFS3_Y", "COMPASS_OFS3_Z", "COMPASS_DEV_ID3" },
+};
+
 CalWorkerThread::CalWorkerThread(Vehicle* vehicle, QObject* parent)
     : QThread(parent)
     , _vehicle(vehicle)
@@ -137,23 +143,17 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
         free(worker_data.z[cur_mag]);
     }
 
-    static const char* rgCompassOffsetParam[3][3] = {
-        { "COMPASS_OFS_X", "COMPASS_OFS_Y", "COMPASS_OFS_Z" },
-        { "COMPASS_OFS2_X", "COMPASS_OFS2_Y", "COMPASS_OFS2_Z" },
-        { "COMPASS_OFS3_X", "COMPASS_OFS3_Y", "COMPASS_OFS3_Z" },
-    };
-
     AutoPilotPlugin* plugin = _vehicle->autopilotPlugin();
     if (result == calibrate_return_ok) {
         for (unsigned cur_mag=0; cur_mag<max_mags; cur_mag++) {
             if (rgCompassAvailable[cur_mag]) {
                 _emitVehicleTextMessage(QString("[cal] mag #%1 off: x:%2 y:%3 z:%4").arg(cur_mag).arg(-sphere_x[cur_mag]).arg(-sphere_y[cur_mag]).arg(-sphere_z[cur_mag]));
 
-                const char* offsetParam = rgCompassOffsetParam[cur_mag][0];
+                const char* offsetParam = rgCompassParams[cur_mag][0];
                 plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_x[cur_mag]);
-                offsetParam = rgCompassOffsetParam[cur_mag][1];
+                offsetParam = rgCompassParams[cur_mag][1];
                 plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_y[cur_mag]);
-                offsetParam = rgCompassOffsetParam[cur_mag][2];
+                offsetParam = rgCompassParams[cur_mag][2];
                 plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_z[cur_mag]);
             }
         }
@@ -613,24 +613,21 @@ void APMCompassCal::startCalibration(void)
     _calWorkerThread = new CalWorkerThread(_vehicle, this);
     connect(_calWorkerThread, &CalWorkerThread::vehicleTextMessage, this, &APMCompassCal::vehicleTextMessage);
 
-    static const char* rgCompassOffsetParam[3][4] = {
-        { "COMPASS_OFS_X", "COMPASS_OFS_Y", "COMPASS_OFS_Z", "COMPASS_DEV_ID" },
-        { "COMPASS_OFS2_X", "COMPASS_OFS2_Y", "COMPASS_OFS2_Z", "COMPASS_DEV_ID2" },
-        { "COMPASS_OFS3_X", "COMPASS_OFS3_Y", "COMPASS_OFS3_Z", "COMPASS_DEV_ID3" },
-    };
-
     // Clear the offset parameters so we get raw data
     AutoPilotPlugin* plugin = _vehicle->autopilotPlugin();
     for (int i=0; i<3; i++) {
         _calWorkerThread->rgCompassAvailable[i] = true;
 
-        const char* deviceIdParam = rgCompassOffsetParam[i][3];
+        const char* deviceIdParam = CalWorkerThread::rgCompassParams[i][3];
         if (plugin->parameterExists(-1, deviceIdParam)) {
             if (plugin->getParameterFact(-1, deviceIdParam)->rawValue().toInt() > 0) {
                 for (int j=0; j<3; j++) {
-                    const char* offsetParam = rgCompassOffsetParam[i][j];
+                    const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
                     if (plugin->parameterExists(-1, offsetParam)) {
-                        plugin->getParameterFact(-1, offsetParam)->setRawValue(0.0);
+                        Fact* paramFact = plugin->getParameterFact(-1, offsetParam);
+
+                        _rgSavedCompassOffsets[i][j] = paramFact->rawValue().toFloat();
+                        paramFact->setRawValue(0.0);
                     } else {
                         _calWorkerThread->rgCompassAvailable[i] = false;
                     }
@@ -651,6 +648,17 @@ void APMCompassCal::startCalibration(void)
 void APMCompassCal::cancelCalibration(void)
 {
     _stopCalibration();
+
+    // Put the original offsets back
+    AutoPilotPlugin* plugin = _vehicle->autopilotPlugin();
+    for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) {
+            const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
+            if (plugin->parameterExists(-1, offsetParam)) {
+                plugin->getParameterFact(-1, offsetParam)-> setRawValue(_rgSavedCompassOffsets[i][j]);
+            }
+        }
+    }
 
     // Simulate a cancelled message
     _emitVehicleTextMessage("[cal] calibration cancelled");
