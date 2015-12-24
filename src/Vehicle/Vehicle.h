@@ -204,7 +204,8 @@ public:
     /// Requests the specified data stream from the vehicle
     ///     @param stream Stream which is being requested
     ///     @param rate Rate at which to send stream in Hz
-    void requestDataStream(MAV_DATA_STREAM stream, uint16_t rate);
+    ///     @param sendMultiple Send multiple time to guarantee Vehicle reception
+    void requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool sendMultiple = true);
 
     bool missingParameters(void);
 
@@ -320,6 +321,11 @@ signals:
 
     /// Remote control RSSI changed  (0% - 100%)
     void remoteControlRSSIChanged(uint8_t rssi);
+
+    void mavlinkRawImu(mavlink_message_t message);
+    void mavlinkScaledImu1(mavlink_message_t message);
+    void mavlinkScaledImu2(mavlink_message_t message);
+    void mavlinkScaledImu3(mavlink_message_t message);
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
