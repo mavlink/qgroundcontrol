@@ -30,6 +30,7 @@
 #include "FactPanelController.h"
 #include "QGCLoggingCategory.h"
 #include "APMSensorsComponent.h"
+#include "APMCompassCal.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMSensorsComponentControllerLog)
 
@@ -106,7 +107,6 @@ signals:
     void orientationCalSidesRotateChanged(void);
     void resetStatusTextArea(void);
     void waitingForCancelChanged(void);
-    void setCompassRotations(void);
     void setupNeededChanged(void);
     
 private slots:
@@ -129,6 +129,7 @@ private:
     
     void _updateAndEmitShowOrientationCalArea(bool show);
 
+    APMCompassCal           _compassCal;
     APMSensorsComponent*    _sensorsComponent;
 
     QQuickItem* _statusLog;
@@ -139,10 +140,8 @@ private:
     QQuickItem* _cancelButton;
     QQuickItem* _orientationCalAreaHelpText;
     
-    bool _showGyroCalArea;
     bool _showOrientationCalArea;
     
-    bool _gyroCalInProgress;
     bool _magCalInProgress;
     bool _accelCalInProgress;
     
