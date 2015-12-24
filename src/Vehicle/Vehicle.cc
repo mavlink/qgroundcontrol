@@ -207,11 +207,15 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _addLink(link);
     }
 
+#if 0
+    // Unsure if this is the correct thing to do at this point. Trying without it.
+
     LinkInterface* usbDirectLink = _usbDirectLink();
     if (usbDirectLink && usbDirectLink != link) {
         // If we have a direct connection only listen to messages from that link
         return;
     }
+#endif
 
     // Give the plugin a change to adjust the message contents
     _firmwarePlugin->adjustMavlinkMessage(&message);
