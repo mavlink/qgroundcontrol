@@ -54,6 +54,8 @@ public:
     mavlink_raw_imu_t       lastRawImu;
     mavlink_scaled_imu_t    rgLastScaledImu[max_mags];
 
+    static const char*      rgCompassParams[3][4];
+
 signals:
     void vehicleTextMessage(int vehicleId, int compId, int severity, QString text);
 
@@ -135,8 +137,6 @@ private:
                             bool	side_data_collected[detect_orientation_side_count],	///< Sides for which data still needs calibration
                             void*	worker_data);                                       ///< Opaque data passed to worker routine
 
-    bool reject_sample(float sx, float sy, float sz, float x[], float y[], float z[], unsigned count, unsigned max_count);
-
     calibrate_return calibrate(void);
     calibrate_return mag_calibration_worker(detect_orientation_return orientation, void* data);
     unsigned progress_percentage(mag_worker_data_t* worker_data);
@@ -174,6 +174,7 @@ private:
 
     Vehicle*            _vehicle;
     CalWorkerThread*    _calWorkerThread;
+    float               _rgSavedCompassOffsets[3][3];
 };
 
 #endif

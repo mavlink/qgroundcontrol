@@ -74,7 +74,7 @@ APMSensorsComponentController::APMSensorsComponentController(void) :
     APMAutoPilotPlugin * apmPlugin = qobject_cast<APMAutoPilotPlugin*>(_vehicle->autopilotPlugin());
 
     _sensorsComponent = apmPlugin->sensorsComponent();
-    connect(apmPlugin, &APMAutoPilotPlugin::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
+    connect(_sensorsComponent, &VehicleComponent::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
 }
 
 /// Appends the specified text to the status log area in the ui
