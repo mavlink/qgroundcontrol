@@ -50,7 +50,7 @@ void CalWorkerThread::run(void)
 void CalWorkerThread::_emitVehicleTextMessage(const QString& message)
 {
     emit vehicleTextMessage(_vehicle->id(), 0, MAV_SEVERITY_INFO, message);
-    qDebug() << message;
+    qCDebug(APMCompassCalLog) << message;
 }
 
 unsigned CalWorkerThread::progress_percentage(mag_worker_data_t* worker_data)
@@ -198,14 +198,6 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
             lastScaledImuMutex.lock();
             mavlink_scaled_imu_t copyLastScaledImu = rgLastScaledImu[cur_mag];
             lastScaledImuMutex.unlock();
-
-#if 0
-            // Check if this measurement is good to go in
-            rejected = rejected || reject_sample(copyLastScaledImu.xmag, copyLastScaledImu.ymag, copyLastScaledImu.zmag,
-                                                 worker_data->x[cur_mag], worker_data->y[cur_mag], worker_data->z[cur_mag],
-                                                 worker_data->calibration_counter_total[cur_mag],
-                                                 calibration_sides * worker_data->calibration_points_perside);
-#endif
 
             worker_data->x[cur_mag][worker_data->calibration_counter_total[cur_mag]] = copyLastScaledImu.xmag;
             worker_data->y[cur_mag][worker_data->calibration_counter_total[cur_mag]] = copyLastScaledImu.ymag;
@@ -409,28 +401,6 @@ const char* CalWorkerThread::detect_orientation_str(enum detect_orientation_retu
 
     return rgOrientationStrs[orientation];
 }
-
-#if 0
-bool CalWorkerThread::reject_sample(float sx, float sy, float sz, float x[], float y[], float z[], unsigned count, unsigned max_count)
-{
-    float min_sample_dist = fabsf(5.4f * mag_sphere_radius / sqrtf(max_count)) / 3.0f;
-
-    for (size_t i = 0; i < count; i++) {
-        float dx = sx - x[i];
-        float dy = sy - y[i];
-        float dz = sz - z[i];
-        float dist = sqrtf(dx * dx + dy * dy + dz * dz);
-
-        qDebug() << dist << min_sample_dist;
-
-        if (dist < min_sample_dist) {
-            return true;
-        }
-    }
-
-    return false;
-}
-#endif
 
 int CalWorkerThread::sphere_fit_least_squares(const float x[], const float y[], const float z[],
                                               unsigned int size, unsigned int max_iterations, float delta, float *sphere_x, float *sphere_y, float *sphere_z,
@@ -706,7 +676,6 @@ void APMCompassCal::_handleMavlinkScaledImu2(mavlink_message_t message)
 {
     _calWorkerThread->lastScaledImuMutex.lock();
     mavlink_msg_scaled_imu2_decode(&message, (mavlink_scaled_imu2_t*)&_calWorkerThread->rgLastScaledImu[1]);
-    qDebug() << "IMU2" << _calWorkerThread->rgLastScaledImu[1].xmag << _calWorkerThread->rgLastScaledImu[1].ymag << _calWorkerThread->rgLastScaledImu[1].zmag;
     _calWorkerThread->lastScaledImuMutex.unlock();
 }
 
