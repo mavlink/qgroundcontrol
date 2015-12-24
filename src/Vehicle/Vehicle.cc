@@ -223,6 +223,18 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
         _handleRCChannelsRaw(message);
         break;
+    case MAVLINK_MSG_ID_RAW_IMU:
+        emit mavlinkRawImu(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_IMU:
+        emit mavlinkScaledImu1(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_IMU2:
+        emit mavlinkScaledImu2(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_IMU3:
+        emit mavlinkScaledImu3(message);
+        break;
     }
 
     emit mavlinkMessageReceived(message);
@@ -1035,7 +1047,7 @@ bool Vehicle::missingParameters(void)
     return _autopilotPlugin->missingParameters();
 }
 
-void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate)
+void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool sendMultiple)
 {
     mavlink_message_t               msg;
     mavlink_request_data_stream_t   dataStream;
@@ -1048,8 +1060,12 @@ void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate)
 
     mavlink_msg_request_data_stream_encode(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, &dataStream);
 
-    // We use sendMessageMultiple since we really want these to make it to the vehicle
-    sendMessageMultiple(msg);
+    if (sendMultiple) {
+        // We use sendMessageMultiple since we really want these to make it to the vehicle
+        sendMessageMultiple(msg);
+    } else {
+        sendMessage(msg);
+    }
 }
 
 void Vehicle::_sendMessageMultipleNext(void)
