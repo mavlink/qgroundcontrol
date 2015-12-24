@@ -38,7 +38,7 @@
 #include "MainToolBarController.h"
 #include "FlightMapSettings.h"
 
-SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags flags)
+SettingsDialog::SettingsDialog(QWidget *parent, Qt::WindowFlags flags)
     : QDialog(parent, flags)
     , _ui(new Ui::SettingsDialog)
 {
@@ -59,49 +59,10 @@ SettingsDialog::SettingsDialog(QWidget *parent, int showTab, Qt::WindowFlags fla
 
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 
-    _ui->savedFilesLocation->setText(qgcApp()->savedFilesLocation());
-
-    // Connect signals
-    connect(_ui->browseSavedFilesLocation, &QPushButton::clicked, this, &SettingsDialog::_selectSavedFilesDirectory);
-    connect(_ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::_validateBeforeClose);
-
-    if (showTab == ShowMavlink) {
-        _ui->tabWidget->setCurrentWidget(pMavsettings);
-    }
+    _ui->tabWidget->setCurrentWidget(pMavsettings);
 }
 
 SettingsDialog::~SettingsDialog()
 {
     delete _ui;
-}
-
-/// @brief Validates the settings before closing
-void SettingsDialog::_validateBeforeClose(void)
-{
-    QGCApplication* app = qgcApp();
-    // Validate the saved file location
-    QString saveLocation = _ui->savedFilesLocation->text();
-    if (!app->validatePossibleSavedFilesLocation(saveLocation)) {
-        QGCMessageBox::warning(
-            tr("Invalid Save Location"),
-            tr("The location to save files is invalid, or cannot be written to. Please provide a valid directory."));
-        return;
-    }
-    // Locations is valid, save
-    app->setSavedFilesLocation(saveLocation);
-
-    // Close dialog
-    accept();
-}
-
-/// @brief Displays a directory picker dialog to allow the user to select a saved file location
-void SettingsDialog::_selectSavedFilesDirectory(void)
-{
-    QString newLocation = QGCFileDialog::getExistingDirectory(
-        this,
-        tr("Select the directory where you want to save files to."),
-        _ui->savedFilesLocation->text());
-    if (!newLocation.isEmpty()) {
-        _ui->savedFilesLocation->setText(newLocation);
-    }
 }
