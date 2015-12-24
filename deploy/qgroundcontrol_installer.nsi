@@ -34,3 +34,13 @@ Section "create Start Menu Shortcuts"
   CreateDirectory "$SMPROGRAMS\QGroundControl"
   CreateShortCut "$SMPROGRAMS\QGroundControl\QGroundControl.lnk" "$INSTDIR\qgroundcontrol.exe" "" "$INSTDIR\qgroundcontrol.exe" 0
 SectionEnd
+
+Function .onInit
+  ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "UninstallString"
+  StrCmp $R0 "" done
+ 
+  MessageBox MB_OK|MB_ICONEXCLAMATION \
+  	"QGroundControl is already installed. $\n$\nYou must uninstall the previous version before installing a new one."
+  Abort
+done: 
+FunctionEnd
