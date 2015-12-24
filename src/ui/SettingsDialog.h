@@ -40,19 +40,8 @@ class SettingsDialog : public QDialog
     Q_OBJECT
 
 public:
-
-    enum {
-        ShowDefault,
-        ShowControllers,
-        ShowMavlink
-    };
-
-    SettingsDialog(QWidget *parent = 0, int showTab = ShowDefault, Qt::WindowFlags flags = Qt::Sheet);
+    SettingsDialog(QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
     ~SettingsDialog();
-
-private slots:
-    void _selectSavedFilesDirectory(void);
-    void _validateBeforeClose(void);
 
 private:
     Ui::SettingsDialog* _ui;

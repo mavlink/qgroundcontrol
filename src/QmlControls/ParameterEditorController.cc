@@ -96,13 +96,16 @@ void ParameterEditorController::clearRCToParam(void)
 void ParameterEditorController::saveToFile(void)
 {
 #ifndef __mobile__
-	Q_ASSERT(_autopilot);
-	
+    if (!_autopilot) {
+        qWarning() << "Internal error _autopilot==NULL";
+        return;
+    }
+
     QString msgTitle("Save Parameters");
     
 	QString fileName = QGCFileDialog::getSaveFileName(NULL,
                                                       msgTitle,
-                                                      qgcApp()->savedParameterFilesLocation(),
+                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
                                                       "Parameter Files (*.params)",
                                                       "params",
                                                       true);
@@ -126,13 +129,16 @@ void ParameterEditorController::loadFromFile(void)
 #ifndef __mobile__
     QString errors;
     
-    Q_ASSERT(_autopilot);
-    
+    if (!_autopilot) {
+        qWarning() << "Internal error _autopilot==NULL";
+        return;
+    }
+
     QString msgTitle("Load Parameters");
     
 	QString fileName = QGCFileDialog::getOpenFileName(NULL,
                                                       msgTitle,
-                                                      qgcApp()->savedParameterFilesLocation(),
+                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
 													  "Parameter Files (*.params);;All Files (*)");
     if (!fileName.isEmpty()) {
         QFile file(fileName);
