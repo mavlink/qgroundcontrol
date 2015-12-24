@@ -83,21 +83,6 @@ public:
     /// @brief Clears the persistent flag to delete all settings the next time QGroundControl is started.
     void clearDeleteAllSettingsNextBoot(void);
 
-    /// @brief Returns the location of user visible saved file associated with QGroundControl
-    QString savedFilesLocation(void);
-
-    /// @brief Sets the location of user visible saved file associated with QGroundControl
-    void setSavedFilesLocation(QString& location);
-
-    /// @brief Location to save and load parameter files from.
-    QString savedParameterFilesLocation(void);
-
-    /// @brief Location to save and load mavlink log files from
-    QString mavlinkLogFilesLocation(void);
-
-    /// @brief Validates that the specified location will work for the saved files location.
-    bool validatePossibleSavedFilesLocation(QString& location);
-
     /// @return true: Prompt to save log file when vehicle goes away
     bool promptFlightDataSave(void);
 
@@ -201,14 +186,9 @@ private:
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
-    static const char* _savedFilesLocationKey;          ///< Settings key for user visible saved files location
     static const char* _promptFlightDataSave;           ///< Settings key for promptFlightDataSave
     static const char* _promptFlightDataSaveNotArmed;   ///< Settings key for promptFlightDataSaveNotArmed
     static const char* _styleKey;                       ///< Settings key for UI style
-
-    static const char* _defaultSavedFileDirectoryName;      ///< Default name for user visible save file directory
-    static const char* _savedFileMavlinkLogDirectoryName;   ///< Name of mavlink log subdirectory
-    static const char* _savedFileParameterDirectoryName;    ///< Name of parameter subdirectory
 
     bool _runningUnitTests; ///< true: running unit tests, false: normal app
 

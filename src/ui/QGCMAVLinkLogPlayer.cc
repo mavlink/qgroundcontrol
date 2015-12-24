@@ -68,7 +68,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
     QString logFilename = QGCFileDialog::getOpenFileName(
         this,
         tr("Load MAVLink Log File"),
-        qgcApp()->mavlinkLogFilesLocation(),
+        QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
         tr("MAVLink Log Files (*.mavlink);;All Files (*)"));
 
     if (logFilename.isEmpty()) {
