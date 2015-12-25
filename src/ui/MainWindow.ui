@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -80,8 +80,6 @@
     <addaction name="actionPlan"/>
     <addaction name="actionFlight"/>
     <addaction name="separator"/>
-    <addaction name="actionFullscreen"/>
-    <addaction name="actionNormal"/>
     <addaction name="separator"/>
     <addaction name="actionStatusBar"/>
    </widget>
@@ -159,31 +157,6 @@
     <enum>QAction::PreferencesRole</enum>
    </property>
   </action>
-  <action name="actionFullscreen">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Fullscreen</string>
-   </property>
-  </action>
-  <action name="actionNormal">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Normal</string>
-   </property>
-   <property name="shortcut">
-    <string>Esc</string>
-   </property>
-  </action>
   <action name="actionSetup">
    <property name="checkable">
     <bool>true</bool>
@@ -242,22 +215,6 @@
     <hint type="destinationlabel">
      <x>299</x>
      <y>199</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionFullscreen</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>showFullScreen()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>249</y>
     </hint>
    </hints>
   </connection>
