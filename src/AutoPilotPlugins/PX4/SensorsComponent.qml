@@ -428,7 +428,7 @@ QGCView {
                             calValid:           controller.orientationCalUpsideDownSideDone
                             calInProgress:      controller.orientationCalUpsideDownSideInProgress
                             calInProgressText:  controller.orientationCalUpsideDownSideRotate ? "Rotate" : "Hold Still"
-                            imageSource:        "qrc:///qmlimages/VehicleUpsideDown.png"
+                            imageSource:        controller.orientationCalUpsideDownSideRotate ? "qrc:///qmlimages/VehicleUpsideDownRotate.png" : "qrc:///qmlimages/VehicleUpsideDown.png"
                         }
                         VehicleRotationCal {
                             visible:            controller.orientationCalNoseDownSideVisible
@@ -442,7 +442,7 @@ QGCView {
                             calValid:           controller.orientationCalTailDownSideDone
                             calInProgress:      controller.orientationCalTailDownSideInProgress
                             calInProgressText:  controller.orientationCalTailDownSideRotate ? "Rotate" : "Hold Still"
-                            imageSource:        "qrc:///qmlimages/VehicleTailDown.png"
+                            imageSource:        controller.orientationCalTailDownSideRotate ? "qrc:///qmlimages/VehicleTailDownRotate.png" : "qrc:///qmlimages/VehicleTailDown.png"
                         }
                         VehicleRotationCal {
                             visible:            controller.orientationCalLeftSideVisible
@@ -456,7 +456,7 @@ QGCView {
                             calValid:           controller.orientationCalRightSideDone
                             calInProgress:      controller.orientationCalRightSideInProgress
                             calInProgressText:  controller.orientationCalRightSideRotate ? "Rotate" : "Hold Still"
-                            imageSource:        "qrc:///qmlimages/VehicleRight.png"
+                            imageSource:        controller.orientationCalRightSideRotate ? "qrc:///qmlimages/VehicleRightRotate.png" : "qrc:///qmlimages/VehicleRight.png"
                         }
                     }
                 }
