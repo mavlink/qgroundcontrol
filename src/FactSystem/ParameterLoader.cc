@@ -349,7 +349,9 @@ int ParameterLoader::_actualComponentId(int componentId)
 {
     if (componentId == FactSystem::defaultComponentId) {
         componentId = _defaultComponentId;
-        Q_ASSERT(componentId != FactSystem::defaultComponentId);
+        if (componentId != FactSystem::defaultComponentId) {
+            qWarning() << "Default component id not set";
+        }
     }
 
     return componentId;
