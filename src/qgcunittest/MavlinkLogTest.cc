@@ -104,7 +104,7 @@ void MavlinkLogTest::_bootLogDetectionSave_test(void)
     
     // We should get a message box, followed by a getSaveFileName dialog.
     setExpectedMessageBox(QMessageBox::Ok);
-    QDir logSaveDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+    QDir logSaveDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
     QString logSaveFile(logSaveDir.filePath(_saveLogFilename));
     setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
     
@@ -144,7 +144,7 @@ void MavlinkLogTest::_connectLogWorker(bool arm)
         QTest::qWait(1500); // Wait long enough for heartbeat to come through
         
         // On Disconnect: We should get a getSaveFileName dialog.
-        logSaveDir.setPath(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        logSaveDir.setPath(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
         QString logSaveFile(logSaveDir.filePath(_saveLogFilename));
         setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
     }
