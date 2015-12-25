@@ -365,6 +365,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         } else if (side == "up") {
             _orientationCalUpsideDownSideInProgress = false;
             _orientationCalUpsideDownSideDone = true;
+            _orientationCalUpsideDownSideRotate = false;
         } else if (side == "left") {
             _orientationCalLeftSideInProgress = false;
             _orientationCalLeftSideDone = true;
@@ -372,6 +373,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         } else if (side == "right") {
             _orientationCalRightSideInProgress = false;
             _orientationCalRightSideDone = true;
+            _orientationCalRightSideRotate = false;
         } else if (side == "front") {
             _orientationCalNoseDownSideInProgress = false;
             _orientationCalNoseDownSideDone = true;
@@ -379,6 +381,7 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         } else if (side == "back") {
             _orientationCalTailDownSideInProgress = false;
             _orientationCalTailDownSideDone = true;
+            _orientationCalTailDownSideRotate = false;
         }
         
         _orientationCalAreaHelpText->setProperty("text", "Place you vehicle into one of the orientations shown below and hold it still");
