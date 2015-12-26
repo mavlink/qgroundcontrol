@@ -43,7 +43,7 @@ QString APMTuningComponent::description(void) const
 
 QString APMTuningComponent::iconResource(void) const
 {
-    return "/qmlimages/subMenuButtonImage.png";
+    return "/qmlimages/TuningComponentIcon.png";
 }
 
 bool APMTuningComponent::requiresSetup(void) const

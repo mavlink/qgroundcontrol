@@ -39,12 +39,14 @@
 #include "APMTuningComponent.h"
 #include "APMSensorsComponent.h"
 #include "APMPowerComponent.h"
+#include "APMCameraComponent.h"
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
     , _incorrectParameterVersion(false)
     , _airframeComponent(NULL)
+    , _cameraComponent(NULL)
     , _flightModesComponent(NULL)
     , _powerComponent(NULL)
     , _radioComponent(NULL)
@@ -74,6 +76,10 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             } else {
                 qWarning() << "new APMAirframeComponent failed";
             }
+
+            _cameraComponent = new APMCameraComponent(_vehicle, this);
+            _cameraComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));
 
             _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
             if (_flightModesComponent) {

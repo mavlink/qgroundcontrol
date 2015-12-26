@@ -560,6 +560,7 @@ HEADERS+= \
     src/AutoPilotPlugins/APM/APMAirframeComponent.h \
     src/AutoPilotPlugins/APM/APMAirframeComponentController.h \
     src/AutoPilotPlugins/APM/APMAirframeComponentAirframes.h \
+    src/AutoPilotPlugins/APM/APMCameraComponent.h \
     src/AutoPilotPlugins/APM/APMCompassCal.h \
     src/AutoPilotPlugins/APM/APMComponent.h \
     src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
@@ -614,6 +615,7 @@ SOURCES += \
     src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
     src/AutoPilotPlugins/APM/APMAirframeComponent.cc \
     src/AutoPilotPlugins/APM/APMAirframeComponentController.cc \
+    src/AutoPilotPlugins/APM/APMCameraComponent.cc \
     src/AutoPilotPlugins/APM/APMCompassCal.cc \
     src/AutoPilotPlugins/APM/APMComponent.cc \
     src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \

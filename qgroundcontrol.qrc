@@ -106,6 +106,8 @@
         <file alias="RadioComponent.qml">src/AutoPilotPlugins/Common/RadioComponent.qml</file>
         <file alias="PX4RadioComponentSummary.qml">src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml</file>
         <file alias="APMNotSupported.qml">src/AutoPilotPlugins/APM/APMNotSupported.qml</file>
+        <file alias="APMCameraComponent.qml">src/AutoPilotPlugins/APM/APMCameraComponent.qml</file>
+        <file alias="APMCameraComponentSummary.qml">src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml</file>
         <file alias="APMPowerComponent.qml">src/AutoPilotPlugins/APM/APMPowerComponent.qml</file>
         <file alias="APMPowerComponentSummary.qml">src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml</file>
         <file alias="APMRadioComponentSummary.qml">src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml</file>
