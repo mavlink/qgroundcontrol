@@ -36,122 +36,63 @@ Rectangle {
     anchors.fill:   parent
     color:          qgcPal.window
 
-    property real _minSummaryW:     ScreenTools.defaultFontPixelWidth * 30
-    property real _summaryBoxWidth: _minSummaryW
-    property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth
-
-    function computeSummaryBoxSize() {
-        var sw  = 0
-        var rw  = 0
-        var idx = Math.floor(_summaryRoot.width / (_minSummaryW + ScreenTools.defaultFontPixelWidth))
-        if(idx < 1) {
-            _summaryBoxWidth = _summaryRoot.width
-            _summaryBoxSpace = 0
-        } else {
-            _summaryBoxSpace = 0
-            if(idx > 1) {
-                _summaryBoxSpace = ScreenTools.defaultFontPixelWidth
-                sw = _summaryBoxSpace * (idx - 1)
-            }
-            rw = _summaryRoot.width - sw
-            _summaryBoxWidth = rw / idx
-        }
-    }
+    readonly property real _margins: ScreenTools.defaultFontPixelHeight
 
     function capitalizeWords(sentence) {
         return sentence.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
     }
 
-    QGCPalette {
-        id:                 qgcPal
-        colorGroupEnabled:  enabled
-    }
-
-    Component.onCompleted: {
-        computeSummaryBoxSize()
-    }
-
-    onWidthChanged: {
-        computeSummaryBoxSize()
-    }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Flickable {
         clip:               true
         anchors.fill:       parent
-        contentHeight:      summaryColumn.height
-        contentWidth:       _summaryRoot.width
+        contentHeight:      summaryFlow.y + summaryFlow.height
         flickableDirection: Flickable.VerticalFlick
-        boundsBehavior:     Flickable.StopAtBounds
 
-        Column {
-            id:             summaryColumn
-            width:          _summaryRoot.width
-            spacing:        ScreenTools.defaultFontPixelHeight
+        QGCLabel {
+            id:             topLabel
+            width:			parent.width
+            wrapMode:		Text.WordWrap
+            color:			setupComplete ? qgcPal.text : qgcPal.warningText
+            font.weight:    setupComplete ? Font.Normal : Font.DemiBold
+            text:           setupComplete ?
+                                "Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component." :
+                                "WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left."
+            property bool setupComplete: multiVehicleManager.activeVehicle.autopilot.setupComplete
+        }
 
-            QGCLabel {
-                width:			parent.width
-                wrapMode:		Text.WordWrap
-                color:			setupComplete ? qgcPal.text : qgcPal.warningText
-                font.weight:    Font.DemiBold
-                text:           setupComplete ?
-                    "Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component." :
-                    "WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left."
-                property bool setupComplete: multiVehicleManager.activeVehicle.autopilot.setupComplete
-            }
+        Flow {
+            id:                 summaryFlow
+            anchors.topMargin:  _margins
+            anchors.top:        topLabel.bottom
+            width:              parent.width
+            spacing:            ScreenTools.defaultFontPixelWidth
 
-            Flow {
-                id:         _flowCtl
-                width:      _summaryRoot.width
-                spacing:    _summaryBoxSpace
+            Repeater {
+                model: multiVehicleManager.activeVehicle.autopilot.vehicleComponents
 
-                Repeater {
-                    model: multiVehicleManager.activeVehicle.autopilot.vehicleComponents
+                QGCLabel {
+                    width:          summaryRectangle.width
+                    height:         summaryRectangle.y + summaryRectangle.height
+                    text:           capitalizeWords(modelData.name)
+                    font.weight:    Font.DemiBold
+                    visible:        modelData.summaryQmlSource.toString() != ""
+                    color:          modelData.setupComplete ? qgcPal.text : "red"
 
-                    // Outer summary item rectangle
                     Rectangle {
-                        width:      _summaryBoxWidth
-                        height:     ScreenTools.defaultFontPixelHeight * 13
-                        color:      qgcPal.window
-                        visible:    modelData.summaryQmlSource.toString() != ""
+                        id:     summaryRectangle
+                        y:      parent.contentHeight + (_margins / 2)
+                        width:  summaryLoader.width + _margins
+                        height: summaryLoader.height + _margins
+                        color:  qgcPal.windowShade
 
-                        readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
-
-                        // Title bar
-                        Rectangle {
-                            id:     titleBar
-                            width:  parent.width
-                            height: titleHeight
-                            color:  qgcPal.windowShade
-
-                            // Title text
-                            QGCLabel {
-                                anchors.fill:           parent
-                                verticalAlignment:      TextEdit.AlignVCenter
-                                horizontalAlignment:    TextEdit.AlignHCenter
-                                text:                   capitalizeWords(modelData.name)
-                            }
-
-                            // Setup indicator
-                            Rectangle {
-                                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 3
-                                anchors.right:          parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                width:                  ScreenTools.defaultFontPixelWidth
-                                height:                 width
-                                radius:                 width / 2
-                                color:                  modelData.setupComplete ? "#00d932" : "red"
-                                visible:                modelData.requiresSetup
-                            }
-                        }
-
-                        // Summary Qml
-                        Rectangle {
-                            anchors.top:    titleBar.bottom
-                            width:          parent.width
-                            Loader {
-                                anchors.fill:   parent
-                                source:         modelData.summaryQmlSource
-                            }
+                        Loader {
+                            id:                 summaryLoader
+                            anchors.margins:    _margins / 2
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            source:             modelData.summaryQmlSource
                         }
                     }
                 }

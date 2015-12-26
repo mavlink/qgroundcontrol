@@ -1,15 +1,18 @@
-import QtQuick 2.2
+import QtQuick          2.5
 import QtQuick.Controls 1.2
 
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 
 FactPanel {
-    id:             panel
-    anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
+    id:     panel
+    width:  grid.width
+    height: grid.height
+    color:  qgcPal.windowShade
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
@@ -19,28 +22,22 @@ FactPanel {
     property Fact mapYawFact:       controller.getParameterFact(-1, "RCMAP_YAW")
     property Fact mapThrottleFact:  controller.getParameterFact(-1, "RCMAP_THROTTLE")
 
-    Column {
-        anchors.fill:       parent
-        anchors.margins:    8
+    Grid {
+        id:         grid
+        rows:       4
+        columns:    2
+        spacing:    ScreenTools.defaultFontPixelWidth / 2
 
-        VehicleSummaryRow {
-            labelText: "Roll:"
-            valueText: mapRollFact.value == 0 ? "Setup required" : "Channel " + mapRollFact.valueString
-        }
+        QGCLabel { text: "Roll:" }
+        QGCLabel { text: mapRollFact.value == 0 ? "Setup required" : "Channel " + mapRollFact.valueString }
 
-        VehicleSummaryRow {
-            labelText: "Pitch:"
-            valueText: mapPitchFact.value == 0 ? "Setup required" : "Channel " + mapPitchFact.valueString
-        }
+        QGCLabel { text: "Pitch:" }
+        QGCLabel { text: mapPitchFact.value == 0 ? "Setup required" : "Channel " + mapPitchFact.valueString }
 
-        VehicleSummaryRow {
-            labelText: "Yaw:"
-            valueText: mapYawFact.value == 0 ? "Setup required" : "Channel " + mapYawFact.valueString
-        }
+        QGCLabel { text: "Yaw:" }
+        QGCLabel { text: mapYawFact.value == 0 ? "Setup required" : "Channel " + mapYawFact.valueString }
 
-        VehicleSummaryRow {
-            labelText: "Throttle:"
-            valueText: mapThrottleFact.value == 0 ? "Setup required" : "Channel " + mapThrottleFact.valueString
-        }
+        QGCLabel { text: "Throttle:" }
+        QGCLabel { text: mapThrottleFact.value == 0 ? "Setup required" : "Channel " + mapThrottleFact.valueString }
     }
 }
