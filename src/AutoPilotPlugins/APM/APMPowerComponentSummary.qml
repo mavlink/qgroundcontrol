@@ -27,12 +27,15 @@ import QtQuick.Controls 1.2
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.Controllers   1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 
 FactPanel {
-    id:             panel
-    anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
+    id:     panel
+    width:  grid.width
+    height: grid.height
+    color:  qgcPal.windowShade
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
@@ -40,18 +43,16 @@ FactPanel {
     property Fact battCapacity: controller.getParameterFact(-1, "BATT_CAPACITY")
     property Fact battMonitor:  controller.getParameterFact(-1, "BATT_MONITOR")
 
-    Column {
-        anchors.fill:       parent
-        anchors.margins:    8
+    Grid {
+        id:         grid
+        rows:       2
+        columns:    2
+        spacing:    ScreenTools.defaultFontPixelWidth / 2
 
-        VehicleSummaryRow {
-            labelText: "Battery monitor:"
-            valueText: battMonitor.enumStringValue
-        }
+        QGCLabel { text: "Battery monitor:" }
+        QGCLabel { text: battMonitor.enumStringValue }
 
-        VehicleSummaryRow {
-            labelText: "Battery capacity:"
-            valueText: battCapacity.valueString
-        }
+        QGCLabel { text: "Battery capacity:" }
+        FactLabel { fact: battCapacity }
     }
 }

@@ -1,15 +1,17 @@
-import QtQuick 2.2
+import QtQuick          2.5
 import QtQuick.Controls 1.2
 
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 
 FactPanel {
-    id:             panel
-    anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
+    id:     panel
+    width:  grid.width
+    height: grid.height
+    color:  qgcPal.windowShade
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
@@ -81,55 +83,42 @@ FactPanel {
         }
     }
 
-    Column {
-        anchors.fill:       parent
-        anchors.margins:    8
+    Grid {
+        id:         grid
+        rows:       8
+        columns:    2
+        spacing:    ScreenTools.defaultFontPixelWidth / 2
 
-        VehicleSummaryRow {
-            labelText: "Throttle failsafe:"
-            valueText:  _failsafeThrEnableText
+        QGCLabel { text: "Throttle failsafe:" }
+        QGCLabel { text: _failsafeThrEnableText }
+
+        QGCLabel { text: "Battery failsafe:" }
+        QGCLabel { text: _failsafeBattEnableText }
+
+        QGCLabel { text: "GeoFence:" }
+        QGCLabel { text: _fenceEnable.value == 0 || _fenceType == 0 ?
+                             "Disabled" :
+                             (_fenceType.value == 1 ?
+                                  "Altitude" :
+                                  (_fenceType.value == 2 ? "Circle" : "Altitude,Circle")) }
+
+        QGCLabel { text: "GeoFence:"; visible: _fenceEnable.value != 0 }
+        QGCLabel { text: _fenceAction.value == 0 ?
+                             "Report only" :
+                             (_fenceAction.value == 1 ? "RTL or Land" : "Unknown")
+            visible: _fenceEnable.value != 0
         }
 
-        VehicleSummaryRow {
-            labelText: "Battery failsafe:"
-            valueText:  _failsafeBattEnableText
-        }
+        QGCLabel { text: "RTL min alt:" }
+        QGCLabel { text: _rtlAltFact.value == 0 ? "current" : _rtlAltFact.valueString }
 
-        VehicleSummaryRow {
-            labelText: "GeoFence:"
-            valueText: _fenceEnable.value == 0 || _fenceType == 0 ?
-                           "Disabled" :
-                           (_fenceType.value == 1 ?
-                                "Altitude" :
-                                (_fenceType.value == 2 ? "Circle" : "Altitude,Circle"))
-        }
+        QGCLabel { text: "RTL loiter time:" }
+        QGCLabel { text: _rtlLoitTimeFact.valueString }
 
-        VehicleSummaryRow {
-            labelText: "GeoFence:"
-            valueText: _fenceAction.value == 0 ?
-                           "Report only" :
-                           (_fenceAction.value == 1 ? "RTL or Land" : "Unknown")
-            visible:    _fenceEnable.value != 0
-        }
+        QGCLabel { text: "RTL final alt:" }
+        QGCLabel { text: _rtlAltFinalFact.value == 0 ? "Land" : _rtlAltFinalFact.valueString }
 
-        VehicleSummaryRow {
-            labelText: "RTL min alt:"
-            valueText: _rtlAltFact.value == 0 ? "current" : _rtlAltFact.valueString
-        }
-
-        VehicleSummaryRow {
-            labelText: "RTL loiter time:"
-            valueText: _rtlLoitTimeFact.valueString
-        }
-
-        VehicleSummaryRow {
-            labelText: "RTL final alt:"
-            valueText: _rtlAltFinalFact.value == 0 ? "Land" : _rtlAltFinalFact.valueString
-        }
-
-        VehicleSummaryRow {
-            labelText: "Descent speed:"
-            valueText: _landSpeedFact.valueString
-        }
+        QGCLabel { text: "Descent speed:" }
+        QGCLabel { text: _landSpeedFact.valueString }
     }
 }
