@@ -121,7 +121,7 @@ bool QGCSerialPortInfo::boardTypePixhawk(void) const
 {
     BoardType_t boardType = this->boardType();
 
-    return boardType == BoardTypePX4FMUV1 || boardType == BoardTypePX4FMUV2 || boardType == BoardTypeAeroCore;
+    return boardType == BoardTypePX4FMUV1 || boardType == BoardTypePX4FMUV2 || boardType == BoardTypePX4FMUV4 || boardType == BoardTypeAeroCore;
 }
 
 bool QGCSerialPortInfo::isBootloader(void) const
