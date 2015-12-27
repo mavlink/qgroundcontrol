@@ -3,6 +3,7 @@ Module QGroundControl.Controls
 ClickableColor          1.0 ClickableColor.qml
 DropButton              1.0 DropButton.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
+FactSliderPanel         1.0 FactSliderPanel.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
 MainToolBar             1.0 MainToolBar.qml

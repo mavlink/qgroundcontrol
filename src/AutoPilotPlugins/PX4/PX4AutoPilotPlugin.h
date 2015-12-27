@@ -32,6 +32,7 @@
 #include "SensorsComponent.h"
 #include "SafetyComponent.h"
 #include "PowerComponent.h"
+#include "PX4TuningComponent.h"
 #include "Vehicle.h"
 
 #include <QImage>
@@ -58,6 +59,7 @@ public:
     SensorsComponent*       sensorsComponent(void)      { return _sensorsComponent; }
     SafetyComponent*        safetyComponent(void)       { return _safetyComponent; }
     PowerComponent*         powerComponent(void)        { return _powerComponent; }
+    PX4TuningComponent*     tuningComponent(void)       { return _tuningComponent; }
 
 public slots:
     // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
@@ -72,6 +74,7 @@ private:
     SensorsComponent*       _sensorsComponent;
     SafetyComponent*        _safetyComponent;
     PowerComponent*         _powerComponent;
+    PX4TuningComponent*     _tuningComponent;
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
 };
 
