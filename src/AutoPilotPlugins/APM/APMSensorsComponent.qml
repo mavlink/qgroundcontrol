@@ -58,6 +58,12 @@ QGCView {
     // Used to pass help text to the preCalibrationDialog dialog
     property string preCalibrationDialogHelp
 
+    property string _postCalibrationDialogText
+    property var    _postCalibrationDialogParams
+
+    readonly property string _badCompassCalText: "The calibration for Compass %1 appears to be poor. " +
+                                                 "Check the compass position within your vehicle and re-do the calibration."
+
     readonly property int sideBarH1PointSize:  ScreenTools.mediumFontPixelSize
     readonly property int mainTextH1PointSize: ScreenTools.mediumFontPixelSize // Seems to be unused
 
@@ -86,6 +92,13 @@ QGCView {
     property bool showCompass2Rot: compass2Id.value > 0 && compass2External.value != 0 && compass2Use.value != 0
     property bool showCompass3Rot: compass3Id.value > 0 && compass3External.value != 0 && compass3Use.value != 0
 
+    function validCompassOffsets(compassParamPrefix) {
+        var ofsX = controller.getParameterFact(-1, compassParamPrefix + "X")
+        var ofsY = controller.getParameterFact(-1, compassParamPrefix + "Y")
+        var ofsZ = controller.getParameterFact(-1, compassParamPrefix + "Z")
+        return Math.sqrt(ofsX.value^2 + ofsY.value^2 + ofsZ.value^2) < 600
+    }
+
     APMSensorsComponentController {
         id:                         controller
         factPanel:                  panel
@@ -105,6 +118,46 @@ QGCView {
             } else {
                 hideDialog()
             }
+        }
+
+        onCalibrationComplete: {
+            if (preCalibrationDialogType == "accel") {
+                _postCalibrationDialogText = "Accelerometer calibration complete."
+                _postCalibrationDialogParams = [ "INS_ACCSCAL_X", "INS_ACCSCAL_Y", "INS_ACCSCAL_Z",
+                                                "INS_ACC2SCAL_X", "INS_ACC2SCAL_Y", "INS_ACC2SCAL_Z",
+                                                "INS_ACC3SCAL_X", "INS_ACC3SCAL_Y", "INS_ACC3SCAL_Z",
+                                                "INS_GYROFFS_X", "INS_GYROFFS_Y", "INS_GYROFFS_Z",
+                                                "INS_GYR2OFFS_X", "INS_GYR2OFFS_Y", "INS_GYR2OFFS_Z",
+                                                "INS_GYR3OFFS_X", "INS_GYR3OFFS_Y", "INS_GYR3OFFS_Z" ]
+            } else if (preCalibrationDialogType == "compass") {
+                _postCalibrationDialogText = "Compass calibration complete. "
+                _postCalibrationDialogParams = [];
+                if (compass1Id.value > 0) {
+                    if (!validCompassOffsets("COMPASS_OFS_")) {
+                        _postCalibrationDialogText += _badCompassCalText.replace("%1", 1)
+                    }
+                    _postCalibrationDialogParams.push("COMPASS_OFS_X")
+                    _postCalibrationDialogParams.push("COMPASS_OFS_Y")
+                    _postCalibrationDialogParams.push("COMPASS_OFS_Z")
+                }
+                if (compass2Id.value > 0) {
+                    if (!validCompassOffsets("COMPASS_OFS_")) {
+                        _postCalibrationDialogText += _badCompassCalText.replace("%1", 2)
+                    }
+                    _postCalibrationDialogParams.push("COMPASS_OFS2_X")
+                    _postCalibrationDialogParams.push("COMPASS_OFS2_Y")
+                    _postCalibrationDialogParams.push("COMPASS_OFS2_Z")
+                }
+                if (compass3Id.value > 0) {
+                    if (!validCompassOffsets("COMPASS_OFS_")) {
+                        _postCalibrationDialogText += _badCompassCalText.replace("%1", 3)
+                    }
+                    _postCalibrationDialogParams.push("COMPASS_OFS3_X")
+                    _postCalibrationDialogParams.push("COMPASS_OFS3_Y")
+                    _postCalibrationDialogParams.push("COMPASS_OFS3_Z")
+                }
+            }
+            showDialog(postCalibrationDialogComponent, "Calibration complete", 50, StandardButton.Ok)
         }
     }
 
@@ -142,6 +195,50 @@ QGCView {
                 sourceComponent:    rotationCombosComponent
 
                 property bool showCompassRotations: preCalibrationDialogType == "accel" ? false : true
+            }
+        }
+    }
+
+    Component {
+        id: postCalibrationDialogComponent
+
+        QGCViewDialog {
+            QGCLabel {
+                id:             textLabel
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                wrapMode:       Text.WordWrap
+                text:           _postCalibrationDialogText
+            }
+
+            QGCCheckBox {
+                id:                 showValues
+                anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                anchors.top:        textLabel.bottom
+                text:               "Show values"
+            }
+
+            Flickable {
+                anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                anchors.top:        showValues.bottom
+                anchors.bottom:     parent.bottom
+                contentHeight:      valueColumn.height
+                flickableDirection: Flickable.VerticalFlick
+                visible:            showValues.checked
+
+                Column {
+                    id: valueColumn
+
+                    Repeater {
+                        model: _postCalibrationDialogParams
+
+                        QGCLabel {
+                            text: fact.name +": " + fact.valueString
+
+                            property Fact fact: controller.getParameterFact(-1, modelData)
+                        }
+                    }
+                }
             }
         }
     }
@@ -304,10 +401,11 @@ QGCView {
             anchors.topMargin:  ScreenTools.defaultFontPixelHeight
             anchors.top:        buttonsRow.bottom
             anchors.left:       parent.left
-            anchors.right:      rotationsLoader.left
+            anchors.right:      centerPanel.right
         }
 
         Item {
+            id:                     centerPanel
             anchors.topMargin:      ScreenTools.defaultFontPixelHeight
             anchors.rightMargin:    ScreenTools.defaultFontPixelHeight
             anchors.top:            progressBar.bottom
@@ -400,7 +498,8 @@ QGCView {
 
         Loader {
             id:                 rotationsLoader
-            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+            anchors.top:        centerPanel.top
+            anchors.bottom:     parent.bottom
             anchors.right:      parent.right
             width:              rotationColumnWidth
             sourceComponent:    rotationCombosComponent

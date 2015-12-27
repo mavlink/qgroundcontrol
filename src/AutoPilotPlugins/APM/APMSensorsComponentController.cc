@@ -166,6 +166,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     case StopCalibrationSuccess:
         _orientationCalAreaHelpText->setProperty("text", "Calibration complete");
         emit resetStatusTextArea();
+        emit calibrationComplete();
         break;
 
     case StopCalibrationCancelled:
