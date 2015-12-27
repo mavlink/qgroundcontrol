@@ -250,6 +250,7 @@ QGCView {
                                 }
 
                                 onActivated: {
+                                    applyButton.primary = true
                                     controller.autostartId = modelData.airframes[index].autostartId
                                     airframeCheckBox.checked = true;
                                 }
