@@ -31,18 +31,18 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.Palette 1.0
 
-Rectangle {
-    color: qgcPal.window
+FocusScope {
+    property alias color: rectangle.color
+
+    property string __missingParams:    ""
+    property string __errorMsg:         ""
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    property string __missingParams: ""
-    property string __errorMsg: ""
-
     function showMissingParameterOverlay(missingParamName) {
-            if (__missingParams.length != 0) {
-                __missingParams = __missingParams.concat(", ")
-            }
+        if (__missingParams.length != 0) {
+            __missingParams = __missingParams.concat(", ")
+        }
         __missingParams = __missingParams.concat(missingParamName)
         __missingParamsOverlay.visible = true
     }
@@ -53,17 +53,22 @@ Rectangle {
     }
 
     Rectangle {
-        id:             __missingParamsOverlay
-        anchors.fill:   parent
-        z:              9999
-        visible:        false
-        color:          qgcPal.window
-        opacity:        0.85
+        id:     rectangle
+        color: qgcPal.window
 
-        QGCLabel {
+        Rectangle {
+            id:             __missingParamsOverlay
             anchors.fill:   parent
-            wrapMode:       Text.WordWrap
-            text:           __errorMsg.length ? __errorMsg : "Parameters(s) missing: " + __missingParams
+            z:              9999
+            visible:        false
+            color:          qgcPal.window
+            opacity:        0.85
+
+            QGCLabel {
+                anchors.fill:   parent
+                wrapMode:       Text.WordWrap
+                text:           __errorMsg.length ? __errorMsg : "Parameters(s) missing: " + __missingParams
+            }
         }
     }
 }

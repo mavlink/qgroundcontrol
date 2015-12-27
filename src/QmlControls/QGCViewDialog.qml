@@ -34,18 +34,34 @@ import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 
 FactPanel {
+    property var qgcTextFieldforwardKeysTo: this    ///< Causes all QGCTextFields to forward keys here if they have focus
+
     QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
 
     signal hideDialog
 
+    Keys.onReleased: {
+        if (event.key == Qt.Key_Escape) {
+            reject()
+            event.accepted = true
+        } else if (event.key == Qt.Key_Return) {
+            accept()
+            event.accepted = true
+        }
+    }
+
     function accept() {
-        Qt.inputMethod.hide()
-        hideDialog()
+        if (acceptAllowed) {
+            Qt.inputMethod.hide()
+            hideDialog()
+        }
     }
 
     function reject() {
-        Qt.inputMethod.hide()
-        hideDialog()
+        if (rejectAllowed) {
+            Qt.inputMethod.hide()
+            hideDialog()
+        }
     }
 
     color: __qgcPal.windowShadeDark
