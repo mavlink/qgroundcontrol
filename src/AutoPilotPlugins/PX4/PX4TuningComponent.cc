@@ -96,8 +96,9 @@ QString PX4TuningComponent::prerequisiteSetup(void) const
         if (!plugin->airframeComponent()->setupComplete()) {
             return plugin->airframeComponent()->name();
         }
+    } else {
+        qWarning() << "Internal error: plugin cast failed";
     }
 
-    qWarning() << "Internal error: plugin cast failed";
     return QString();
 }
