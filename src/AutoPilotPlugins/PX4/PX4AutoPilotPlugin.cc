@@ -95,34 +95,32 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
         
         if (parametersReady()) {
             _airframeComponent = new AirframeComponent(_vehicle, this);
-            Q_CHECK_PTR(_airframeComponent);
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
             
             _radioComponent = new PX4RadioComponent(_vehicle, this);
-            Q_CHECK_PTR(_radioComponent);
             _radioComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
             
             _flightModesComponent = new FlightModesComponent(_vehicle, this);
-            Q_CHECK_PTR(_flightModesComponent);
             _flightModesComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
             
             _sensorsComponent = new SensorsComponent(_vehicle, this);
-            Q_CHECK_PTR(_sensorsComponent);
             _sensorsComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
             
             _powerComponent = new PowerComponent(_vehicle, this);
-            Q_CHECK_PTR(_powerComponent);
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
             
             _safetyComponent = new SafetyComponent(_vehicle, this);
-            Q_CHECK_PTR(_safetyComponent);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+
+            _tuningComponent = new PX4TuningComponent(_vehicle, this);
+            _tuningComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
         } else {
             qWarning() << "Call to vehicleCompenents prior to parametersReady";
         }
