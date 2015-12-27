@@ -30,44 +30,8 @@ FactSliderPanel {
     anchors.fill: parent
 
     sliderModel: ListModel {
-
         ListElement {
-            title:          "Hover Roll sensitivity"
-            description:    "Slide to the left to make roll control during hover faster and more accurate. Slide to the right if roll oscillates or is too twitchy."
-            param:          "MC_ROLL_TC"
-            min:            0.15
-            max:            0.25
-            step:           0.01
-        }
-
-        ListElement {
-            title:          "Hover Pitch sensitivity"
-            description:    "Slide to the left to make pitch control during hover faster and more accurate. Slide to the right if pitch oscillates or is too twitchy."
-            param:          "MC_PITCH_TC"
-            min:            0.15
-            max:            0.25
-            step:           0.01
-        }
-
-        ListElement {
-            title:          "Hover Altitude control sensitivity"
-            description:    "Slide to the left to make altitude control during hover smoother and less twitchy. Slide to the right to make altitude control more accurate and more aggressive."
-            param:          "MPC_Z_FF"
-            min:            0
-            max:            1.0
-            step:           0.1
-        }
-
-        ListElement {
-            title:          "Hover Position control sensitivity"
-            description:    "Slide to the left to make flight during hover in position control mode smoother and less twitchy. Slide to the right to make position control more accurate and more aggressive."
-            param:          "MPC_XY_FF"
-            min:            0
-            max:            1.0
-            step:           0.1
-        }
-        ListElement {
-            title:          "Plane Roll sensitivity"
+            title:          "Roll sensitivity"
             description:    "Slide to the left to make roll control faster and more accurate. Slide to the right if roll oscillates or is too twitchy."
             param:          "FW_R_TC"
             min:            0.2
@@ -76,7 +40,7 @@ FactSliderPanel {
         }
 
         ListElement {
-            title:          "Plane Pitch sensitivity"
+            title:          "Pitch sensitivity"
             description:    "Slide to the left to make pitch control faster and more accurate. Slide to the right if pitch oscillates or is too twitchy."
             param:          "FW_P_TC"
             min:            0.2
@@ -85,7 +49,7 @@ FactSliderPanel {
         }
 
         ListElement {
-            title:          "Plane Cruise throttle"
+            title:          "Cruise throttle"
             description:    "This is the throttle setting required to achieve the desired cruise speed. Most planes need 50-60%."
             param:          "FW_THR_CRUISE"
             min:            0.2
@@ -94,7 +58,7 @@ FactSliderPanel {
         }
 
         ListElement {
-            title:          "Plane Mission mode sensitivity"
+            title:          "Mission mode sensitivity"
             description:    "Slide to the left to make position control more accurate and more aggressive. Slide to the right to make flight in mission mode smoother and less twitchy."
             param:          "FW_L1_PERIOD"
             min:            12
