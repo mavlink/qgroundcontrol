@@ -146,6 +146,8 @@ FactPanel {
         viewPanel.enabled = false
         __dialogOverlay.visible = true
 
+        __dialogComponentLoader.item.forceActiveFocus()
+
         __animateShowDialog.start()
     }
 
@@ -166,10 +168,13 @@ FactPanel {
         viewPanel.enabled = false
         __dialogOverlay.visible = true
 
+        __dialogComponentLoader.item.forceActiveFocus()
+
         __animateShowDialog.start()
     }
 
     function hideDialog() {
+        __dialogComponentLoader.item.focus = false
         viewPanel.enabled = true
         __animateHideDialog.start()
     }
@@ -336,6 +341,9 @@ FactPanel {
                 anchors.top:        __spacer.bottom
                 anchors.bottom:     parent.bottom
                 sourceComponent:    __dialogComponent
+
+                property bool acceptAllowed: __acceptButton.visible
+                property bool rejectAllowed: __rejectButton.visible
             }
         } // Rectangle - Dialog panel
     } // Item - Dialog overlay
