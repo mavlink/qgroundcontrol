@@ -58,8 +58,7 @@ QGCViewDialog {
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
             forceSave.visible = true
         }
-        // This was causing problems where it would never give up focus even when hidden!
-        //valueField.forceActiveFocus()
+        valueField.forceActiveFocus()
     }
 
     Column {
@@ -87,14 +86,6 @@ QGCViewDialog {
 
             // At this point all Facts are numeric
             inputMethodHints:   Qt.ImhFormattedNumbersOnly
-
-            onAccepted: accept()
-
-            Keys.onReleased: {
-                if (event.key == Qt.Key_Escape) {
-                    reject()
-                }
-            }
         }
 
         QGCLabel { text: fact.name }
