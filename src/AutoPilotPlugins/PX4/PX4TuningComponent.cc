@@ -21,80 +21,83 @@
 
  ======================================================================*/
 
-#include "APMTuningComponent.h"
-#include "APMAutoPilotPlugin.h"
-#include "APMAirframeComponent.h"
+#include "PX4TuningComponent.h"
+#include "PX4AutoPilotPlugin.h"
+#include "AirframeComponent.h"
 
-APMTuningComponent::APMTuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : APMComponent(vehicle, autopilot, parent)
+PX4TuningComponent::PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : PX4Component(vehicle, autopilot, parent)
     , _name("Tuning")
 {
 }
 
-QString APMTuningComponent::name(void) const
+QString PX4TuningComponent::name(void) const
 {
     return _name;
 }
 
-QString APMTuningComponent::description(void) const
+QString PX4TuningComponent::description(void) const
 {
     return tr("The Tuning Component is used to tune the flight characteristics of the Vehicle.");
 }
 
-QString APMTuningComponent::iconResource(void) const
+QString PX4TuningComponent::iconResource(void) const
 {
     return "/qmlimages/TuningComponentIcon.png";
 }
 
-bool APMTuningComponent::requiresSetup(void) const
+bool PX4TuningComponent::requiresSetup(void) const
 {
     return false;
 }
 
-bool APMTuningComponent::setupComplete(void) const
+bool PX4TuningComponent::setupComplete(void) const
 {
     return true;
 }
 
-QStringList APMTuningComponent::setupCompleteChangedTriggerList(void) const
+QStringList PX4TuningComponent::setupCompleteChangedTriggerList(void) const
 {
     return QStringList();
 }
 
-QUrl APMTuningComponent::setupSource(void) const
+QUrl PX4TuningComponent::setupSource(void) const
 {
     QString qmlFile;
 
     switch (_vehicle->vehicleType()) {
+        case MAV_TYPE_FIXED_WING:
+            qmlFile = "qrc:/qml/PX4TuningComponentPlane.qml";
+            break;
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
         case MAV_TYPE_HELICOPTER:
         case MAV_TYPE_HEXAROTOR:
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
-            qmlFile = "qrc:/qml/APMTuningComponentCopter.qml";
+            qmlFile = "qrc:/qml/PX4TuningComponentCopter.qml";
             break;
         default:
-            // No tuning panel
             break;
     }
 
     return QUrl::fromUserInput(qmlFile);
 }
 
-QUrl APMTuningComponent::summaryQmlSource(void) const
+QUrl PX4TuningComponent::summaryQmlSource(void) const
 {
     return QUrl();
 }
 
-QString APMTuningComponent::prerequisiteSetup(void) const
+QString PX4TuningComponent::prerequisiteSetup(void) const
 {
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
+    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
+    if (plugin) {
+        if (!plugin->airframeComponent()->setupComplete()) {
+            return plugin->airframeComponent()->name();
+        }
     }
 
+    qWarning() << "Internal error: plugin cast failed";
     return QString();
 }

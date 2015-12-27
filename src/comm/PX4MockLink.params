@@ -250,10 +250,12 @@
 1	50	MC_PITCHRATE_I	                        0	9
 1	50	MC_PITCHRATE_P	                     0.13	9
 1	50	MC_PITCH_P	                        7	9
+1	50	MC_PITCH_TC	0.200	9
 1	50	MC_ROLLRATE_D	                    0.004	9
 1	50	MC_ROLLRATE_I	                        0	9
 1	50	MC_ROLLRATE_P	                     0.13	9
 1	50	MC_ROLL_P	                        7	9
+1	50	MC_ROLL_TC	0.200	9
 1	50	MC_YAWRATE_D	                        0	9
 1	50	MC_YAWRATE_I	                     0.25	9
 1	50	MC_YAWRATE_MAX	                      120	9
