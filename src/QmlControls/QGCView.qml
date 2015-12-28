@@ -272,7 +272,7 @@ FactPanel {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
             anchors.left:   parent.left
-            anchors.right:  _dialogPanel.left
+            anchors.right:  __dialogPanel.left
             opacity:        0.0
             color:          __qgcPal.window
         }
