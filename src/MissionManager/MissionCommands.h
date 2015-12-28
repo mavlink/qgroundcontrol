@@ -139,9 +139,6 @@ public:
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
-    static const QString _degreesUnits;
-    static const QString _degreesConvertUnits;
-
 signals:
     
 private:

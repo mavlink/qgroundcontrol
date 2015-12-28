@@ -113,7 +113,7 @@
             },
             "param4": {
                 "label":            "Heading:",
-                "units":            "degreesConvert",
+                "units":            "radians",
                 "default":          0.0,
                 "decimalPlaces":    2
             }
@@ -128,13 +128,13 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Pitch:",
-                "units":            "degreesConvert",
+                "units":            "radians",
                 "default":          0.26179939,
                 "decimalPlaces":    2
             },
             "param4": {
                 "label":            "Heading:",
-                "units":            "degreesConvert",
+                "units":            "radians",
                 "default":          0.0,
                 "decimalPlaces":    2
             }

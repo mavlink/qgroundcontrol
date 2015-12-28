@@ -309,7 +309,7 @@ void MissionItem::_setupMetaData(void)
 
     if (!_altitudeMetaData) {
         _altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
-        _altitudeMetaData->setUnits("meters");
+        _altitudeMetaData->setRawUnits("meters");
         _altitudeMetaData->setDecimalPlaces(3);
 
         enumStrings.clear();
@@ -336,11 +336,11 @@ void MissionItem::_setupMetaData(void)
         _frameMetaData->setEnumInfo(enumStrings, enumValues);
 
         _latitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
-        _latitudeMetaData->setUnits("deg");
+        _latitudeMetaData->setRawUnits("deg");
         _latitudeMetaData->setDecimalPlaces(7);
 
         _longitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
-        _longitudeMetaData->setUnits("deg");
+        _longitudeMetaData->setRawUnits("deg");
         _longitudeMetaData->setDecimalPlaces(7);
 
     }
@@ -516,18 +516,14 @@ QString MissionItem::commandDescription(void) const
 
 void MissionItem::_clearParamMetaData(void)
 {
-    _param1MetaData.setUnits("");
+    _param1MetaData.setRawUnits("");
     _param1MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
-    _param1MetaData.setTranslators(FactMetaData::defaultTranslator, FactMetaData::defaultTranslator);
-    _param2MetaData.setUnits("");
+    _param2MetaData.setRawUnits("");
     _param2MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
-    _param2MetaData.setTranslators(FactMetaData::defaultTranslator, FactMetaData::defaultTranslator);
-    _param3MetaData.setUnits("");
+    _param3MetaData.setRawUnits("");
     _param3MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
-    _param3MetaData.setTranslators(FactMetaData::defaultTranslator, FactMetaData::defaultTranslator);
-    _param4MetaData.setUnits("");
+    _param4MetaData.setRawUnits("");
     _param4MetaData.setDecimalPlaces(FactMetaData::defaultDecimalPlaces);
-    _param4MetaData.setTranslators(FactMetaData::defaultTranslator, FactMetaData::defaultTranslator);
 }
 
 QmlObjectListModel* MissionItem::textFieldFacts(void)
@@ -575,12 +571,7 @@ QmlObjectListModel* MissionItem::textFieldFacts(void)
                 paramFact->_setName(paramInfo->label());
                 paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                 paramMetaData->setEnumInfo(paramInfo->enumStrings(), paramInfo->enumValues());
-                if (paramInfo->units() == MissionCommands::_degreesConvertUnits) {
-                    paramMetaData->setTranslators(_radiansToDegrees, _degreesToRadians);
-                    paramMetaData->setUnits(MissionCommands::_degreesUnits);
-                } else {
-                    paramMetaData->setUnits(paramInfo->units());
-                }
+                paramMetaData->setRawUnits(paramInfo->units());
                 paramFact->setMetaData(paramMetaData);
                 model->append(paramFact);
             }
@@ -634,12 +625,7 @@ QmlObjectListModel* MissionItem::comboboxFacts(void)
                 paramFact->_setName(paramInfo->label());
                 paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                 paramMetaData->setEnumInfo(paramInfo->enumStrings(), paramInfo->enumValues());
-                if (paramInfo->units() == MissionCommands::_degreesConvertUnits) {
-                    paramMetaData->setTranslators(_radiansToDegrees, _degreesToRadians);
-                    paramMetaData->setUnits(MissionCommands::_degreesUnits);
-                } else {
-                    paramMetaData->setUnits(paramInfo->units());
-                }
+                paramMetaData->setRawUnits(paramInfo->units());
                 paramFact->setMetaData(paramMetaData);
                 model->append(paramFact);
             }
@@ -802,16 +788,6 @@ QString MissionItem::commandName(void) const
     } else {
         return QString("Unknown: %1").arg(command());
     }
-}
-
-QVariant MissionItem::_degreesToRadians(const QVariant& degrees)
-{
-    return QVariant(degrees.toDouble() * (M_PI / 180.0));
-}
-
-QVariant MissionItem::_radiansToDegrees(const QVariant& radians)
-{
-    return QVariant(radians.toDouble() * (180 / M_PI));
 }
 
 void MissionItem::_sendFriendlyEditAllowedChanged(void)
