@@ -239,8 +239,8 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                     if (xml.attributes().hasAttribute("default") && !strDefault.isEmpty()) {
                         QVariant varDefault;
                         
-                        if (metaData->convertAndValidate(strDefault, false, varDefault, errorString)) {
-                            metaData->setDefaultValue(varDefault);
+                        if (metaData->convertAndValidateRaw(strDefault, false, varDefault, errorString)) {
+                            metaData->setRawDefaultValue(varDefault);
                         } else {
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid default value, name:" << name << " type:" << type << " default:" << strDefault << " error:" << errorString;
                         }
@@ -275,8 +275,8 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                         qCDebug(PX4ParameterMetaDataLog) << "Min:" << text;
                         
                         QVariant varMin;
-                        if (metaData->convertAndValidate(text, true /* convertOnly */, varMin, errorString)) {
-                            metaData->setMin(varMin);
+                        if (metaData->convertAndValidateRaw(text, true /* convertOnly */, varMin, errorString)) {
+                            metaData->setRawMin(varMin);
                         } else {
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid min value, name:" << metaData->name() << " type:" << metaData->type() << " min:" << text << " error:" << errorString;
                         }
@@ -287,8 +287,8 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                         qCDebug(PX4ParameterMetaDataLog) << "Max:" << text;
                         
                         QVariant varMax;
-                        if (metaData->convertAndValidate(text, true /* convertOnly */, varMax, errorString)) {
-                            metaData->setMax(varMax);
+                        if (metaData->convertAndValidateRaw(text, true /* convertOnly */, varMax, errorString)) {
+                            metaData->setRawMax(varMax);
                         } else {
                             qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
                         }
@@ -297,7 +297,7 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                         Q_ASSERT(metaData);
                         QString text = xml.readElementText();
                         qCDebug(PX4ParameterMetaDataLog) << "Unit:" << text;
-                        metaData->setUnits(text);
+                        metaData->setRawUnits(text);
                         
                     } else if (elementName == "decimal") {
                         Q_ASSERT(metaData);
@@ -325,8 +325,8 @@ void PX4ParameterMetaData::_loadParameterFactMetaData(void)
                 if (metaData->defaultValueAvailable()) {
                     QVariant var;
                     
-                    if (!metaData->convertAndValidate(metaData->defaultValue(), false /* convertOnly */, var, errorString)) {
-                        qCWarning(PX4ParameterMetaDataLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->defaultValue() << " error:" << errorString;
+                    if (!metaData->convertAndValidateRaw(metaData->rawDefaultValue(), false /* convertOnly */, var, errorString)) {
+                        qCWarning(PX4ParameterMetaDataLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->rawDefaultValue() << " error:" << errorString;
                     }
                 }
                 

@@ -721,7 +721,7 @@ void ParameterLoader::writeParametersToStream(QTextStream &stream)
             Fact* fact = _mapParameterName2Variant[componentId][paramName].value<Fact*>();
             Q_ASSERT(fact);
 
-            stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->valueString() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
+            stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->rawValueString() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
         }
     }
 
