@@ -40,7 +40,6 @@ class PowerComponentController : public FactPanelController
     
 public:
     PowerComponentController(void);
-    ~PowerComponentController();
     
     Q_INVOKABLE void calibrateEsc(void);
     Q_INVOKABLE void busConfigureActuators(void);
