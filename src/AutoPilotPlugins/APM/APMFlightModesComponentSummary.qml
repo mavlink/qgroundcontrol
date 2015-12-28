@@ -4,15 +4,12 @@ import QtQuick.Controls 1.2
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
 import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
 
 FactPanel {
-    id:     panel
-    width:  grid.width
-    height: grid.height
-    color:  qgcPal.windowShade
+    id:             panel
+    anchors.fill:   parent
+    color:          qgcPal.windowShadeDark
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
@@ -24,28 +21,38 @@ FactPanel {
     property Fact flightMode5: controller.getParameterFact(-1, "FLTMODE5")
     property Fact flightMode6: controller.getParameterFact(-1, "FLTMODE6")
 
-    Grid {
-        id:         grid
-        rows:       6
-        columns:    2
-        spacing:    ScreenTools.defaultFontPixelWidth / 2
+    Column {
+        anchors.fill:       parent
+        anchors.margins:    8
 
-        QGCLabel { text: "Flight Mode 1:" }
-        QGCLabel { text: flightMode1.enumStringValue }
+        VehicleSummaryRow {
+            labelText: "Flight Mode 1:"
+            valueText: flightMode1.enumStringValue
+        }
 
-        QGCLabel { text: "Flight Mode 2:" }
-        QGCLabel { text: flightMode2.enumStringValue }
+        VehicleSummaryRow {
+            labelText: "Flight Mode 2:"
+            valueText: flightMode2.enumStringValue
+        }
 
-        QGCLabel { text: "Flight Mode 3:" }
-        QGCLabel { text: flightMode3.enumStringValue }
+        VehicleSummaryRow {
+            labelText: "Flight Mode 3:"
+            valueText: flightMode3.enumStringValue
+        }
 
-        QGCLabel { text: "Flight Mode 4:" }
-        QGCLabel { text: flightMode4.enumStringValue }
+        VehicleSummaryRow {
+            labelText: "Flight Mode 4:"
+            valueText: flightMode4.enumStringValue
+        }
 
-        QGCLabel { text: "Flight Mode 5:" }
-        QGCLabel { text: flightMode5.enumStringValue }
+        VehicleSummaryRow {
+            labelText: "Flight Mode 5:"
+            valueText: flightMode5.enumStringValue
+        }
 
-        QGCLabel { text: "Flight Mode 6:" }
-        QGCLabel { text: flightMode6.enumStringValue }
+        VehicleSummaryRow {
+            labelText: "Flight Mode 6:"
+            valueText: flightMode6.enumStringValue
+        }
     }
 }

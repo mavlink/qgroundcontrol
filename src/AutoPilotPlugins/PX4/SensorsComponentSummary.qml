@@ -1,17 +1,20 @@
-import QtQuick          2.5
+import QtQuick 2.2
 import QtQuick.Controls 1.2
+import QtQuick.Controls.Styles 1.2
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem 1.0
+import QGroundControl.FactControls 1.0
+import QGroundControl.Controls 1.0
+import QGroundControl.Palette 1.0
+
+/*
+    IMPORTANT NOTE: Any changes made here must also be made to SensorsComponentSummary.qml
+*/
 
 FactPanel {
-    id:     panel
-    width:  grid.width
-    height: grid.height
-    color:  qgcPal.windowShade
+    id:             panel
+    anchors.fill:   parent
+    color:          qgcPal.windowShadeDark
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
@@ -20,19 +23,23 @@ FactPanel {
     property Fact gyro0IdFact:  controller.getParameterFact(-1, "CAL_GYRO0_ID")
     property Fact accel0IdFact: controller.getParameterFact(-1, "CAL_ACC0_ID")
 
-    Grid {
-        id:         grid
-        rows:       3
-        columns:    2
-        spacing:    ScreenTools.defaultFontPixelWidth / 2
+    Column {
+        anchors.fill:       parent
+        anchors.margins:    8
 
-        QGCLabel { text: "Compass:" }
-        QGCLabel { text: mag0IdFact.value  == 0 ? "Setup required" : "Ready" }
+        VehicleSummaryRow {
+            labelText: "Compass:"
+            valueText: mag0IdFact.value  == 0 ? "Setup required" : "Ready"
+        }
 
-        QGCLabel { text: "Gyro:" }
-        QGCLabel { text: gyro0IdFact.value  == 0 ? "Setup required" : "Ready" }
+        VehicleSummaryRow {
+            labelText: "Gyro:"
+            valueText: gyro0IdFact.value  == 0 ? "Setup required" : "Ready"
+        }
 
-        QGCLabel { text: "Accelerometer:" }
-        QGCLabel { text: accel0IdFact.value  == 0 ? "Setup required" : "Ready" }
+        VehicleSummaryRow {
+            labelText: "Accelerometer:"
+            valueText: accel0IdFact.value  == 0 ? "Setup required" : "Ready"
+        }
     }
 }
