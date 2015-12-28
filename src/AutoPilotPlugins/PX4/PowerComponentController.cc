@@ -36,11 +36,6 @@ PowerComponentController::PowerComponentController(void)
 
 }
 
-PowerComponentController::~PowerComponentController()
-{
-    _stopCalibration();
-}
-
 void PowerComponentController::calibrateEsc(void)
 {
     _warningMessages.clear();
