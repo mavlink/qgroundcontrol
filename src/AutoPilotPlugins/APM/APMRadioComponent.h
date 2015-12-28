@@ -25,6 +25,7 @@
 #define APMRadioComponent_H
 
 #include "APMComponent.h"
+#include "Fact.h"
 
 class APMRadioComponent : public APMComponent
 {
@@ -45,10 +46,16 @@ public:
     virtual QUrl setupSource(void) const;
     virtual QUrl summaryQmlSource(void) const;
     virtual QString prerequisiteSetup(void) const;
+
+private slots:
+    void _triggerChanged(void);
     
 private:
+    void _connectSetupTriggers(void);
+
     const QString   _name;
-    QVariantList    _summaryItems;
+    QStringList     _mapParams;
+    QList<Fact*>    _triggerFacts;
 };
 
 #endif
