@@ -365,7 +365,7 @@ QVariant FactMetaData::_centiDegreesToDegrees(const QVariant& centiDegrees)
 
 QVariant FactMetaData::_degreesToCentiDegrees(const QVariant& degrees)
 {
-    return QVariant((uint32_t)(degrees.toFloat() * 100.0f));
+    return QVariant((unsigned int)(degrees.toFloat() * 100.0f));
 }
 
 void FactMetaData::setRawUnits(const QString& rawUnits)
