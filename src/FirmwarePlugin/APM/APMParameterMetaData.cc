@@ -434,14 +434,14 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     }
 
     if (!rawMetaData->units.isEmpty()) {
-        metaData->setUnits(rawMetaData->units);
+        metaData->setRawUnits(rawMetaData->units);
     }
 
     if (!rawMetaData->min.isEmpty()) {
         QVariant varMin;
         QString errorString;
-        if (metaData->convertAndValidate(rawMetaData->min, false /* validate as well */, varMin, errorString)) {
-            metaData->setMin(varMin);
+        if (metaData->convertAndValidateRaw(rawMetaData->min, false /* validate as well */, varMin, errorString)) {
+            metaData->setRawMin(varMin);
         } else {
             qCDebug(APMParameterMetaDataLog) << "Invalid min value, name:" << metaData->name()
                                              << " type:" << metaData->type() << " min:" << rawMetaData->min
@@ -452,8 +452,8 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     if (!rawMetaData->max.isEmpty()) {
         QVariant varMax;
         QString errorString;
-        if (metaData->convertAndValidate(rawMetaData->max, false /* validate as well */, varMax, errorString)) {
-            metaData->setMax(varMax);
+        if (metaData->convertAndValidateRaw(rawMetaData->max, false /* validate as well */, varMax, errorString)) {
+            metaData->setRawMax(varMax);
         } else {
             qCDebug(APMParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:"
                                              << metaData->type() << " max:" << rawMetaData->max
@@ -470,7 +470,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
             QString     errorString;
             QPair<QString, QString> enumPair = rawMetaData->values[i];
 
-            if (metaData->convertAndValidate(enumPair.first, false /* validate */, enumValue, errorString)) {
+            if (metaData->convertAndValidateRaw(enumPair.first, false /* validate */, enumValue, errorString)) {
                 enumValues << enumValue;
                 enumStrings << enumPair.second;
             } else {

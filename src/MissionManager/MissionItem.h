@@ -211,9 +211,6 @@ private:
     void _connectSignals(void);
     void _setupMetaData(void);
 
-    static QVariant _degreesToRadians(const QVariant& degrees);
-    static QVariant _radiansToDegrees(const QVariant& radians);
-
 private:
     bool        _rawEdit;
     bool        _dirty;
