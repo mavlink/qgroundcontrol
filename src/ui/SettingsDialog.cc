@@ -60,6 +60,8 @@ SettingsDialog::SettingsDialog(QWidget *parent, Qt::WindowFlags flags)
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 
     _ui->tabWidget->setCurrentWidget(pMavsettings);
+
+    connect(_ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::accept);
 }
 
 SettingsDialog::~SettingsDialog()
