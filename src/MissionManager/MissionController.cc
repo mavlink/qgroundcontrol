@@ -205,6 +205,17 @@ void MissionController::removeMissionItem(int index)
     }
 }
 
+void MissionController::removeAllMissionItems(void)
+{
+    if (_missionItems) {
+        _deinitAllMissionItems();
+        _missionItems->deleteLater();
+    }
+    _missionItems = new QmlObjectListModel(this);
+
+    _initAllMissionItems();
+}
+
 void MissionController::loadMissionFromFile(void)
 {
 #ifndef __mobile__
@@ -604,17 +615,6 @@ void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& 
     qobject_cast<MissionItem*>(_missionItems->get(0))->setCoordinate(_liveHomePosition);
     emit liveHomePositionChanged(_liveHomePosition);
     _recalcWaypointLines();
-}
-
-void MissionController::deleteCurrentMissionItem(void)
-{
-    for (int i=0; i<_missionItems->count(); i++) {
-        MissionItem* item =  qobject_cast<MissionItem*>(_missionItems->get(i));
-        if (item->isCurrentItem() && i != 0) {
-            removeMissionItem(i);
-            return;
-        }
-    }
 }
 
 void MissionController::setAutoSync(bool autoSync)
