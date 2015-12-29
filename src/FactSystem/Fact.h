@@ -47,6 +47,8 @@ public:
     const Fact& operator=(const Fact& other);
 
     Q_PROPERTY(int          componentId             READ componentId                                        CONSTANT)
+    Q_PROPERTY(QStringList  bitmaskStrings          READ bitmaskStrings                                     NOTIFY bitmaskStringsChanged)
+    Q_PROPERTY(QVariantList bitmaskValues           READ bitmaskValues                                      NOTIFY bitmaskValuesChanged)
     Q_PROPERTY(int          decimalPlaces           READ decimalPlaces                                      CONSTANT)
     Q_PROPERTY(QVariant     defaultValue            READ cookedDefaultValue                                 CONSTANT)
     Q_PROPERTY(QString      defaultValueString      READ cookedDefaultValueString                           CONSTANT)
@@ -74,7 +76,7 @@ public:
     /// Convert and validate value
     ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
     Q_INVOKABLE QString validate(const QString& cookedValue, bool convertOnly);
-    
+
     QVariant        cookedValue             (void) const;   /// Value after translation
     QVariant        rawValue                (void) const { return _rawValue; }  /// value prior to translation, careful
     int             componentId             (void) const;
@@ -83,6 +85,8 @@ public:
     QVariant        cookedDefaultValue      (void) const;
     bool            defaultValueAvailable   (void) const;
     QString         cookedDefaultValueString(void) const;
+    QStringList     bitmaskStrings             (void) const;
+    QVariantList    bitmaskValues              (void) const;
     int             enumIndex               (void);         // This is not const, since an unknown value can modify the enum lists
     QStringList     enumStrings             (void) const;
     QString         enumStringValue         (void);         // This is not const, since an unknown value can modify the enum lists
@@ -125,6 +129,8 @@ public:
     void _setName(const QString& name) { _name = name; }
     
 signals:
+    void bitmaskStringsChanged(void);
+    void bitmaskValuesChanged(void);
     void enumStringsChanged(void);
     void enumValuesChanged(void);
 
