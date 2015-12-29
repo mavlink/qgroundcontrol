@@ -27,7 +27,7 @@
 # the project file.
 
 linux {
-    linux-g++ | linux-g++-64 {
+    linux-g++ | linux-g++-64  | linux-g++-32 {
         message("Linux build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
@@ -39,7 +39,7 @@ linux {
         DEFINES += QGC_ENABLE_BLUETOOTH
         target.path = $$DESTDIR
     } else {
-        error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
+        error("Unsupported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
 } else : win32 {
     win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
