@@ -27,7 +27,7 @@
 # the project file.
 
 linux {
-    linux-g++ | linux-g++-64 {
+    linux-g++ | linux-g++-64 | linux-g++-32 {
         message("Linux build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
