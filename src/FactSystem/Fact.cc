@@ -223,6 +223,26 @@ QVariantList Fact::enumValues(void) const
     }
 }
 
+QStringList Fact::bitmaskStrings(void) const
+{
+    if (_metaData) {
+        return _metaData->bitmaskStrings();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QStringList();
+    }
+}
+
+QVariantList Fact::bitmaskValues(void) const
+{
+    if (_metaData) {
+        return _metaData->bitmaskValues();
+    } else {
+        qWarning() << "Meta data pointer missing";
+        return QVariantList();
+    }
+}
+
 QString Fact::_variantToString(const QVariant& variant) const
 {
     QString valueString;

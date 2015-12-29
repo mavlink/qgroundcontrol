@@ -83,6 +83,8 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _decimalPlaces          = other._decimalPlaces;
     _rawDefaultValue        = other._rawDefaultValue;
     _defaultValueAvailable  = other._defaultValueAvailable;
+    _bitmaskStrings         = other._bitmaskStrings;
+    _bitmaskValues          = other._bitmaskValues;
     _enumStrings            = other._enumStrings;
     _enumValues             = other._enumValues;
     _group                  = other._group;
@@ -306,6 +308,24 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     return convertOk && errorString.isEmpty();
 }
 
+void FactMetaData::setBitmaskInfo(const QStringList& strings, const QVariantList& values)
+{
+    if (strings.count() != values.count()) {
+        qWarning() << "Count mismatch strings:values" << strings.count() << values.count();
+        return;
+    }
+
+    _bitmaskStrings = strings;
+    _bitmaskValues = values;
+    _setBuiltInTranslator();
+}
+
+void FactMetaData::addBitmaskInfo(const QString& name, const QVariant& value)
+{
+    _bitmaskStrings << name;
+    _bitmaskValues << value;
+}
+
 void FactMetaData::setEnumInfo(const QStringList& strings, const QVariantList& values)
 {
     if (strings.count() != values.count()) {
@@ -316,6 +336,12 @@ void FactMetaData::setEnumInfo(const QStringList& strings, const QVariantList& v
     _enumStrings = strings;
     _enumValues = values;
     _setBuiltInTranslator();
+}
+
+void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
+{
+    _enumStrings << name;
+    _enumValues << value;
 }
 
 void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTranslator)
@@ -340,12 +366,6 @@ void FactMetaData::_setBuiltInTranslator(void)
             }
         }
     }
-}
-
-void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
-{
-    _enumStrings << name;
-    _enumValues << value;
 }
 
 QVariant FactMetaData::_degreesToRadians(const QVariant& degrees)
