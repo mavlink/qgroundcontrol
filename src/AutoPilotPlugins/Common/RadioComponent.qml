@@ -108,7 +108,8 @@ QGCView {
             id: zeroTrimsDialogComponent
 
             QGCViewMessage {
-                message: "Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration."
+                message: "Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n" +
+                         (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : "Please ensure all motor power is disconnected AND all props are removed from the vehicle.")
 
                 function accept() {
                     hideDialog()
