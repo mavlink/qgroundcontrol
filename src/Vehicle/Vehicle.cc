@@ -375,7 +375,7 @@ void Vehicle::_handleRCChannelsRaw(mavlink_message_t& message)
         if (channelValue == UINT16_MAX) {
             pwmValues[i] = -1;
         } else {
-            channelCount = i;
+            channelCount = i + 1;
             pwmValues[i] = channelValue;
         }
     }

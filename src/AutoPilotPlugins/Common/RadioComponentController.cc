@@ -854,7 +854,15 @@ void RadioComponentController::_writeCalibration(void)
         getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->setRawValue((float)info->rcTrim);
         getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->setRawValue((float)info->rcMin);
         getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->setRawValue((float)info->rcMax);
-        getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->setRawValue(info->reversed ? -1.0f : 1.0f);
+
+        // APM has a backwards interpretation of "reversed" on the Pitch control. So be careful.
+        float reversedParamValue;
+        if (_px4Vehicle() || info->function != rcCalFunctionPitch) {
+            reversedParamValue = info->reversed ? -1.0f : 1.0f;
+        } else {
+            reversedParamValue = info->reversed ? 1.0f : -1.0f;
+        }
+        getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->setRawValue(reversedParamValue);
     }
     
     // Write function mapping parameters
