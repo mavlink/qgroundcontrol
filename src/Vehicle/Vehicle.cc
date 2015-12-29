@@ -90,6 +90,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _batteryConsumed(-1.0)
     , _currentHeartbeatTimeout(0)
     , _satelliteCount(-1)
+    , _satRawHDOP(1e10f)
+    , _satRawVDOP(1e10f)
+    , _satRawCOG(0.0)
     , _satelliteLock(0)
     , _updateCount(0)
     , _rcRSSI(0)
@@ -137,9 +140,16 @@ Vehicle::Vehicle(LinkInterface*             link,
     emit heartbeatTimeoutChanged();
 
     _mav = uas();
-    // Reset satellite count (no GPS)
+    // Reset satellite data (no GPS)
     _satelliteCount = -1;
+    _satRawHDOP     = 1e10f;
+    _satRawVDOP     = 1e10f;
+    _satRawCOG      = 0.0;
+    emit satRawHDOPChanged();
+    emit satRawVDOPChanged();
+    emit satRawCOGChanged();
     emit satelliteCountChanged();
+
     // Reset connection lost (if any)
     _currentHeartbeatTimeout = 0;
     emit heartbeatTimeoutChanged();
@@ -161,7 +171,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     UAS* pUas = dynamic_cast<UAS*>(_mav);
     if(pUas) {
         _setSatelliteCount(pUas->getSatelliteCount(), QString(""));
-        connect(pUas, &UAS::satelliteCountChanged, this, &Vehicle::_setSatelliteCount);
+        connect(pUas, &UAS::satelliteCountChanged,  this, &Vehicle::_setSatelliteCount);
+        connect(pUas, &UAS::satRawHDOPChanged,      this, &Vehicle::_setSatRawHDOP);
+        connect(pUas, &UAS::satRawVDOPChanged,      this, &Vehicle::_setSatRawVDOP);
+        connect(pUas, &UAS::satRawCOGChanged,       this, &Vehicle::_setSatRawCOG);
     }
 
     _loadSettings();
@@ -751,6 +764,30 @@ void Vehicle::_setSatelliteCount(double val, QString)
     if(_satelliteCount != (int)val) {
         _satelliteCount = (int)val;
         emit satelliteCountChanged();
+    }
+}
+
+void Vehicle::_setSatRawHDOP(double val)
+{
+    if(_satRawHDOP != val) {
+        _satRawHDOP = val;
+        emit satRawHDOPChanged();
+    }
+}
+
+void Vehicle::_setSatRawVDOP(double val)
+{
+    if(_satRawVDOP != val) {
+        _satRawVDOP = val;
+        emit satRawVDOPChanged();
+    }
+}
+
+void Vehicle::_setSatRawCOG(double val)
+{
+    if(_satRawCOG != val) {
+        _satRawCOG = val;
+        emit satRawCOGChanged();
     }
 }
 

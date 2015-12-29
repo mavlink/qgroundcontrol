@@ -93,6 +93,9 @@ public:
     Q_PROPERTY(double               batteryPercent          READ batteryPercent                         NOTIFY batteryPercentChanged)
     Q_PROPERTY(double               batteryConsumed         READ batteryConsumed                        NOTIFY batteryConsumedChanged)
     Q_PROPERTY(int                  satelliteCount          READ satelliteCount                         NOTIFY satelliteCountChanged)
+    Q_PROPERTY(double               satRawHDOP              READ satRawHDOP                             NOTIFY satRawHDOPChanged)
+    Q_PROPERTY(double               satRawVDOP              READ satRawVDOP                             NOTIFY satRawVDOPChanged)
+    Q_PROPERTY(double               satRawCOG               READ satRawCOG                              NOTIFY satRawCOGChanged)
     Q_PROPERTY(QString              currentState            READ currentState                           NOTIFY currentStateChanged)
     Q_PROPERTY(int                  satelliteLock           READ satelliteLock                          NOTIFY satelliteLockChanged)
     Q_PROPERTY(unsigned int         heartbeatTimeout        READ heartbeatTimeout                       NOTIFY heartbeatTimeoutChanged)
@@ -250,6 +253,9 @@ public:
     float           longitude           () { return _coordinate.longitude(); }
     bool            mavPresent          () { return _mav != NULL; }
     int             satelliteCount      () { return _satelliteCount; }
+    double          satRawHDOP          () { return _satRawHDOP; }
+    double          satRawVDOP          () { return _satRawVDOP; }
+    double          satRawCOG           () { return _satRawCOG; }
     double          batteryVoltage      () { return _batteryVoltage; }
     double          batteryPercent      () { return _batteryPercent; }
     double          batteryConsumed     () { return _batteryConsumed; }
@@ -309,6 +315,9 @@ signals:
     void heartbeatTimeoutChanged();
     void currentConfigChanged   ();
     void satelliteCountChanged  ();
+    void satRawHDOPChanged      ();
+    void satRawVDOPChanged      ();
+    void satRawCOGChanged       ();
     void currentStateChanged    ();
     void satelliteLockChanged   ();
     void flowImageIndexChanged  ();
@@ -352,6 +361,9 @@ private slots:
     void _updateState                       (UASInterface* system, QString name, QString description);
     void _heartbeatTimeout                  (bool timeout, unsigned int ms);
     void _setSatelliteCount                 (double val, QString name);
+    void _setSatRawHDOP                     (double val);
+    void _setSatRawVDOP                     (double val);
+    void _setSatRawCOG                      (double val);
     void _setSatLoc                         (UASInterface* uas, int fix);
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
@@ -425,6 +437,9 @@ private:
     QString         _currentState;
     unsigned int    _currentHeartbeatTimeout;
     int             _satelliteCount;
+    double          _satRawHDOP;
+    double          _satRawVDOP;
+    double          _satRawCOG;
     int             _satelliteLock;
     int             _updateCount;
     QString         _formatedMessage;
