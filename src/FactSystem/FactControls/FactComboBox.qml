@@ -18,7 +18,7 @@ QGCComboBox {
         if (indexModel) {
             fact.value = index
         } else {
-            fact.enumIndex = index
+            fact.value = fact.enumValues[index]
         }
     }
 }
