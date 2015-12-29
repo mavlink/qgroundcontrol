@@ -64,6 +64,8 @@ public:
     QVariant        rawDefaultValue         (void) const;
     QVariant        cookedDefaultValue      (void) const { return _rawTranslator(rawDefaultValue()); }
     bool            defaultValueAvailable   (void) const { return _defaultValueAvailable; }
+    QStringList     bitmaskStrings          (void) const { return _bitmaskStrings; }
+    QVariantList    bitmaskValues           (void) const { return _bitmaskValues; }
     QStringList     enumStrings             (void) const { return _enumStrings; }
     QVariantList    enumValues              (void) const { return _enumValues; }
     QString         group                   (void) const { return _group; }
@@ -83,11 +85,15 @@ public:
     Translator      rawTranslator           (void) const { return _rawTranslator; }
     Translator      cookedTranslator        (void) const { return _cookedTranslator; }
 
+    /// Used to add new values to the bitmask lists after the meta data has been loaded
+    void addBitmaskInfo(const QString& name, const QVariant& value);
+
     /// Used to add new values to the enum lists after the meta data has been loaded
     void addEnumInfo(const QString& name, const QVariant& value);
 
     void setDecimalPlaces   (int decimalPlaces)                 { _decimalPlaces = decimalPlaces; }
     void setRawDefaultValue (const QVariant& rawDefaultValue);
+    void setBitmaskInfo     (const QStringList& strings, const QVariantList& values);
     void setEnumInfo        (const QStringList& strings, const QVariantList& values);
     void setGroup           (const QString& group)              { _group = group; }
     void setLongDescription (const QString& longDescription)    { _longDescription = longDescription;}
@@ -128,6 +134,8 @@ private:
     int             _decimalPlaces;
     QVariant        _rawDefaultValue;
     bool            _defaultValueAvailable;
+    QStringList     _bitmaskStrings;
+    QVariantList    _bitmaskValues;
     QStringList     _enumStrings;
     QVariantList    _enumValues;
     QString         _group;
