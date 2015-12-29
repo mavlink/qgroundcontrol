@@ -30,6 +30,8 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 
 QGCViewDialog {
+    id: root
+
     property var missionItem
 
     property var _vehicle: QGroundControl.multiVehicleManager.activeVehicle
@@ -106,7 +108,7 @@ QGCViewDialog {
                 anchors.fill:   parent
                 onClicked: {
                     missionItem.command = mavCmdInfo.command
-                    accept()
+                    root.reject()
                 }
             }
         }
