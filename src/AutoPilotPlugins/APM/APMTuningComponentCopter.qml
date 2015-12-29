@@ -48,6 +48,20 @@ QGCView {
     property Fact _rateClimbP:  controller.getParameterFact(-1, "ACCEL_Z_P")
     property Fact _rateClimbI:  controller.getParameterFact(-1, "ACCEL_Z_I")
 
+    property Fact _ch7Opt:  controller.getParameterFact(-1, "CH7_OPT")
+    property Fact _ch8Opt:  controller.getParameterFact(-1, "CH8_OPT")
+    property Fact _ch9Opt:  controller.getParameterFact(-1, "CH9_OPT")
+    property Fact _ch10Opt: controller.getParameterFact(-1, "CH10_OPT")
+    property Fact _ch11Opt: controller.getParameterFact(-1, "CH11_OPT")
+    property Fact _ch12Opt: controller.getParameterFact(-1, "CH12_OPT")
+
+    readonly property int   _firstOptionChannel:    7
+    readonly property int   _lastOptionChannel:     12
+
+    property Fact   _autoTuneAxes:                  controller.getParameterFact(-1, "AUTOTUNE_AXES")
+    property int    _autoTuneSwitchChannelIndex:    0
+    readonly property int _autoTuneOption:          17
+
     property real _margins: ScreenTools.defaultFontPixelHeight
 
     property bool _loadComplete: false
@@ -67,7 +81,46 @@ QGCView {
         climb.value = _rateClimbP.value
         rcFeel.value = _rcFeel.value
         _loadComplete = true
+
+        calcAutoTuneChannel()
     }
+
+    /// The AutoTune switch is stored in one of the RC#_FUNCTION parameters. We need to loop through those
+    /// to find them and setup the ui accordindly.
+    function calcAutoTuneChannel() {
+        _autoTuneSwitchChannelIndex = 0
+        for (var channel=_firstOptionChannel; channel<=_lastOptionChannel; channel++) {
+            var optionFact = controller.getParameterFact(-1, "CH" + channel + "_OPT")
+            if (optionFact.value == _autoTuneOption) {
+                _autoTuneSwitchChannelIndex = channel - _firstOptionChannel + 1
+                break
+            }
+        }
+    }
+
+    /// We need to clear AutoTune from any previous channel before setting it to a new one
+    function setChannelAutoTuneOption(channel) {
+        // First clear any previous settings for AutTune
+        for (var optionChannel=_firstOptionChannel; optionChannel<=_lastOptionChannel; optionChannel++) {
+            var optionFact = controller.getParameterFact(-1, "CH" + optionChannel + "_OPT")
+            if (optionFact.value == _autoTuneOption) {
+                optionFact.value = 0
+            }
+        }
+
+        // Now set the function into the new channel
+        if (channel != 0) {
+            var optionFact = controller.getParameterFact(-1, "CH" + channel + "_OPT")
+            optionFact.value = _autoTuneOption
+        }
+    }
+
+    Connections { target: _ch7Opt; onValueChanged: calcAutoTuneChannel() }
+    Connections { target: _ch8Opt; onValueChanged: calcAutoTuneChannel() }
+    Connections { target: _ch9Opt; onValueChanged: calcAutoTuneChannel() }
+    Connections { target: _ch10Opt; onValueChanged: calcAutoTuneChannel() }
+    Connections { target: _ch11Opt; onValueChanged: calcAutoTuneChannel() }
+    Connections { target: _ch12Opt; onValueChanged: calcAutoTuneChannel() }
 
     QGCViewPanel {
         id:             panel
@@ -77,7 +130,7 @@ QGCView {
             clip:               true
             anchors.fill:       parent
             boundsBehavior:     Flickable.StopAtBounds
-            contentHeight:      basicTuning.y + basicTuning.height
+            contentHeight:      autoTuneRect.y + autoTuneRect.height
             flickableDirection: Flickable.VerticalFlick
 
             QGCLabel {
@@ -87,7 +140,7 @@ QGCView {
             }
 
             Rectangle {
-                id:                 basicTuning
+                id:                 basicTuningRect
                 anchors.topMargin:  _margins / 2
                 anchors.left:       parent.left
                 anchors.right:      parent.right
@@ -229,6 +282,64 @@ QGCView {
                     }
                 }
             } // Rectangle - Basic tuning
+
+            QGCLabel {
+                id:                 autoTuneLabel
+                anchors.topMargin:  _margins
+                anchors.top:        basicTuningRect.bottom
+                text:               "AutoTune"
+                font.weight:        Font.DemiBold
+            }
+
+            Rectangle {
+                id:                 autoTuneRect
+                anchors.topMargin:  _margins / 2
+                anchors.left:       parent.left
+                anchors.top:        autoTuneLabel.bottom
+                width:              autoTuneColumn.x + autoTuneColumn.width + _margins
+                height:             autoTuneColumn.y + autoTuneColumn.height + _margins
+                color:              palette.windowShade
+
+                Column {
+                    id:                 autoTuneColumn
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    spacing:            _margins
+
+                    Row {
+                        spacing: _margins
+
+                        QGCLabel { text: "Axes to AutoTune:" }
+                        FactBitmask { fact: _autoTuneAxes }
+                    }
+
+                    Row {
+                        spacing:    _margins
+
+                        QGCLabel {
+                            anchors.baseline:   autoTuneChannelCombo.baseline
+                            text:               "Channel for AutoTune switch:"
+                        }
+
+                        QGCComboBox {
+                            id:             autoTuneChannelCombo
+                            width:          ScreenTools.defaultFontPixelWidth * 14
+                            model:          ["None", "Channel 7", "Channel 8", "Channel 9", "Channel 10", "Channel 11", "Channel 12" ]
+                            currentIndex:   _autoTuneSwitchChannelIndex
+
+                            onActivated: {
+                                var channel = index
+
+                                if (channel > 0) {
+                                    channel += 6
+                                }
+                                setChannelAutoTuneOption(channel)
+                            }
+                        }
+                    }
+                }
+            } // Rectangle - AutoTune
         } // Flickable
     } // QGCViewPanel
 } // QGCView
