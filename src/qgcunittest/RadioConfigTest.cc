@@ -176,7 +176,7 @@ const struct RadioConfigTest::ChannelSettings RadioConfigTest::_rgChannelSetting
 
     // Channels 1-4: Mapped to attitude control function
     { RadioComponentController::rcCalFunctionRoll,			_testMinValue, _testMaxValue, _testCenterValue, true },
-    { RadioComponentController::rcCalFunctionPitch,			_testMinValue, _testMaxValue, _testCenterValue, false },
+    { RadioComponentController::rcCalFunctionPitch,			_testMinValue, _testMaxValue, _testCenterValue, true },
     { RadioComponentController::rcCalFunctionYaw,			_testMinValue, _testMaxValue, _testCenterValue, true },
     { RadioComponentController::rcCalFunctionThrottle,		_testMinValue, _testMaxValue, _testMinValue,    false },
 
