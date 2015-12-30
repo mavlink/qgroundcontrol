@@ -26,6 +26,8 @@ FactPanel {
     property Fact _rtlAltFinalFact: controller.getParameterFact(-1, "RTL_ALT_FINAL")
     property Fact _landSpeedFact:   controller.getParameterFact(-1, "LAND_SPEED")
 
+    property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
+
     property string _failsafeBattEnableText
     property string _failsafeThrEnableText
 
@@ -84,6 +86,11 @@ FactPanel {
     Column {
         anchors.fill:       parent
         anchors.margins:    8
+
+        VehicleSummaryRow {
+            labelText: "Arming Checks:"
+            valueText:  _armingCheck.value & 1 ? "Enabled" : "Some disabled"
+        }
 
         VehicleSummaryRow {
             labelText: "Throttle failsafe:"
