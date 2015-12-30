@@ -58,7 +58,7 @@ QGCViewDialog {
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
             forceSave.visible = true
         }
-        valueField.forceActiveFocus()
+        //valueField.forceActiveFocus()
     }
 
     Column {
@@ -82,7 +82,7 @@ QGCViewDialog {
         QGCTextField {
             id:     valueField
             text:   validate ? validateValue : fact.valueString
-            focus:  true
+            //focus:  true
 
             // At this point all Facts are numeric
             inputMethodHints:   Qt.ImhFormattedNumbersOnly
