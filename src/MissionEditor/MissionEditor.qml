@@ -133,6 +133,43 @@ QGCView {
         }
     }
 
+    property int _moveDialogMissionItemIndex
+
+    Component {
+        id: moveDialog
+
+        QGCViewDialog {
+            function accept() {
+                var toIndex = toCombo.currentIndex
+
+                if (toIndex == 0) {
+                    toIndex = 1
+                }
+                controller.moveMissionItem(_moveDialogMissionItemIndex, toIndex)
+                hideDialog()
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           "Move the selected mission item to the be after following mission item:"
+                }
+
+                QGCComboBox {
+                    id:             toCombo
+                    model:          _missionItems.count
+                    currentIndex:   _moveDialogMissionItemIndex
+                }
+            }
+        }
+    }
+
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
@@ -340,12 +377,13 @@ QGCView {
                             onClicked:  setCurrentItem(object.sequenceNumber)
 
                             onRemove: {
-                                var newCurrentItem = object.sequenceNumber - 1
+                                itemDragger.clearItem()
                                 controller.removeMissionItem(object.sequenceNumber)
-                                if (_missionItems.count > 1) {
-                                    newCurrentItem = Math.min(_missionItems.count - 1, newCurrentItem)
-                                    setCurrentItem(newCurrentItem)
-                                }
+                            }
+
+                            onRemoveAll: {
+                                itemDragger.clearItem()
+                                controller.removeAllMissionItems()
                             }
                         }
                     } // ListView
@@ -405,18 +443,6 @@ QGCView {
                             repeat:     false
 
                             onTriggered: addMissionItemsButton.checked = false
-                        }
-                    }
-
-                    RoundButton {
-                        id:                 deleteMissionItemButton
-                        buttonImage:        "/qmlimages/TrashDelete.svg"
-                        z:                  QGroundControl.zOrderWidgets
-                        onClicked: {
-                            addMissionItemsButton.checked = false
-                            itemDragger.clearItem()
-                            controller.deleteCurrentMissionItem()
-                            checked = false
                         }
                     }
 
