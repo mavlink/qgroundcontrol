@@ -254,6 +254,30 @@ Rectangle {
                         text:   getGpsLockStatus()
                         color:  colorWhite
                     }
+                    QGCLabel {
+                        text:   "HDOP:"
+                        color:  colorWhite
+                    }
+                    QGCLabel {
+                        text:   activeVehicle ? (activeVehicle.satRawHDOP.toFixed(0)) : "N/A"
+                        color:  colorWhite
+                    }
+                    QGCLabel {
+                        text:   "VDOP:"
+                        color:  colorWhite
+                    }
+                    QGCLabel {
+                        text:   activeVehicle ? (activeVehicle.satRawVDOP.toFixed(0)) : "N/A"
+                        color:  colorWhite
+                    }
+                    QGCLabel {
+                        text:   "Course Over Ground:"
+                        color:  colorWhite
+                    }
+                    QGCLabel {
+                        text:   activeVehicle ? (activeVehicle.satRawCOG).toFixed(2) : "N/A"
+                        color:  colorWhite
+                    }
                 }
             }
             Component.onCompleted: {
