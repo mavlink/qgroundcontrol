@@ -58,6 +58,8 @@ QGCView {
     property Fact _rtlLoitTimeFact: controller.getParameterFact(-1, "RTL_LOIT_TIME")
     property Fact _rtlAltFinalFact: controller.getParameterFact(-1, "RTL_ALT_FINAL")
 
+    property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
+
     property real _margins: ScreenTools.defaultFontPixelHeight
 
     ExclusiveGroup { id: fenceActionRadioGroup }
@@ -71,9 +73,8 @@ QGCView {
         Flickable {
             clip:               true
             anchors.fill:       parent
-            boundsBehavior:     Flickable.StopAtBounds
-            contentHeight:      rtlSettings.y + rtlSettings.height
-            flickableDirection: Flickable.VerticalFlick
+            contentHeight:      armingCheckSettings.y + armingCheckSettings.height
+            contentWidth:       armingCheckSettings.x + armingCheckSettings.width
 
             QGCLabel {
                 id:         failsafeLabel
@@ -447,6 +448,33 @@ QGCView {
                     showUnits:          true
                 }
             } // Rectangle - RTL Settings
+
+            QGCLabel {
+                id:                 armingCheckLabel
+                anchors.topMargin:  _margins
+                anchors.left:       parent.left
+                anchors.top:        rtlSettings.bottom
+                text:               "Arming Checks"
+                font.weight:        Font.DemiBold
+            }
+
+            Rectangle {
+                id:                 armingCheckSettings
+                anchors.topMargin:  _margins / 2
+                anchors.left:       parent.left
+                anchors.top:        armingCheckLabel.bottom
+                width:              armingCheckColumn.x + armingCheckColumn.width + _margins
+                height:             armingCheckColumn.y + armingCheckColumn.height + _margins
+                color:              palette.windowShade
+
+                Column {
+                    id:         armingCheckColumn
+                    spacing:    _margins
+
+                    QGCLabel { text: "Be very careful when turning off arming checks. Could lead to loss of Vehicle control." }
+                    FactBitmask { fact: _armingCheck }
+                }
+            }
         } // Flickable
     } // QGCViewPanel
 } // QGCView
