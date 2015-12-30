@@ -68,8 +68,6 @@ QGCView {
     property Fact _mountAngMinPan:      controller.getParameterFact(-1, "MNT_ANGMIN_PAN")
     property Fact _mountAngMaxPan:      controller.getParameterFact(-1, "MNT_ANGMAX_PAN")
 
-    // FIXME: WHat do we set this to? APM Planner sets to RC Tracking whenever a value is changed.
-    // Check default iris settings.
     property Fact _mountDefaultMode:    controller.getParameterFact(-1, "MNT_DEFLT_MODE")
     property Fact _mountType:           controller.getParameterFact(-1, "MNT_TYPE")
 
@@ -391,7 +389,7 @@ QGCView {
             clip:           true
             anchors.fill:   parent
             contentHeight:  gimbalDirectionPanLoader.y + gimbalDirectionPanLoader.height
-            contentWidth:   gimbalTypeRectangle.x + gimbalTypeRectangle.width
+            contentWidth:   settingsRectangle.x + settingsRectangle.width
 
             Loader {
                 id:                 gimbalDirectionTiltLoader
@@ -449,40 +447,68 @@ QGCView {
             }
 
             QGCLabel {
-                id:                 typeLabel
+                id:                 settingsLabel
                 anchors.leftMargin: _margins
                 anchors.left:       gimbalDirectionTiltLoader.right
-                text:               "Gimbal Type"
+                text:               "Gimbal Settings"
                 font.weight:        Font.DemiBold
             }
 
             Rectangle {
-                id:                 gimbalTypeRectangle
+                id:                 settingsRectangle
                 anchors.topMargin:  _margins / 2
-                anchors.left:       typeLabel.left
-                anchors.top:        typeLabel.bottom
-                width:              rebootLabel.x + rebootLabel.width + _margins
-                height:             rebootLabel.y + rebootLabel.height + _margins
+                anchors.left:       settingsLabel.left
+                anchors.top:        settingsLabel.bottom
+                width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
+                height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
                 color:              palette.windowShade
+
+                QGCLabel {
+                    id:                 gimbalTypeLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   gimbalTypeCombo.baseline
+                    text:               "Type:"
+                }
 
                 FactComboBox {
                     id:                 gimbalTypeCombo
-                    anchors.margins:    _margins
+                    anchors.topMargin:  _margins
                     anchors.top:        parent.top
-                    anchors.left:       parent.left
-                    width:              ScreenTools.defaultFontPixelWidth * 15
+                    anchors.left:       gimbalModeCombo.left
+                    width:              gimbalModeCombo.width
                     fact:               _mountType
                     indexModel:         false
                 }
 
                 QGCLabel {
-                    id:                 rebootLabel
-                    anchors.topMargin:  _margins / 2
-                    anchors.left:       gimbalTypeCombo.left
-                    anchors.top:        gimbalTypeCombo.bottom
-                    width:              ScreenTools.defaultFontPixelWidth * 25
-                    wrapMode:           Text.WordWrap
-                    text:               "Gimbal Type changes takes affect next reboot of autopilot"
+                    id:                     rebootLabel
+                    anchors.topMargin:      _margins / 2
+                    anchors.leftMargin:     _margins
+                    anchors.rightMargin:    _margins
+                    anchors.left:           parent.left
+                    anchors.right:          parent.right
+                    anchors.top:            gimbalTypeCombo.bottom
+                    wrapMode:               Text.WordWrap
+                    text:                   "Gimbal Type changes takes affect next reboot of autopilot"
+                }
+
+                QGCLabel {
+                    id:                 gimbalModeLabel
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.baseline:   gimbalModeCombo.baseline
+                    text:               "Default Mode:"
+                }
+
+                FactComboBox {
+                    id:                 gimbalModeCombo
+                    anchors.margins:    _margins
+                    anchors.top:        rebootLabel.bottom
+                    anchors.left:       gimbalModeLabel.right
+                    width:              ScreenTools.defaultFontPixelWidth * 15
+                    fact:               _mountDefaultMode
+                    indexModel:         false
                 }
             }
         } // Flickable
