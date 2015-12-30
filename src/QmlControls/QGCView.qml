@@ -146,7 +146,7 @@ FactPanel {
         viewPanel.enabled = false
         __dialogOverlay.visible = true
 
-        __dialogComponentLoader.item.forceActiveFocus()
+        //__dialogComponentLoader.item.forceActiveFocus()
 
         __animateShowDialog.start()
     }
@@ -174,7 +174,7 @@ FactPanel {
     }
 
     function hideDialog() {
-        __dialogComponentLoader.item.focus = false
+        //__dialogComponentLoader.item.focus = false
         viewPanel.enabled = true
         __animateHideDialog.start()
     }
