@@ -523,21 +523,51 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
             bool ok = false;
             unsigned int bitSet = bitmaskPair.first.toUInt(&ok);
             bitSet = 1 << bitSet;
+
+            QVariant typedBitSet;
+
+            switch (fact->type()) {
+            case FactMetaData::valueTypeInt8:
+                typedBitSet = QVariant((signed char)bitSet);
+                break;
+
+            case FactMetaData::valueTypeInt16:
+                typedBitSet = QVariant((short int)bitSet);
+                break;
+
+            case FactMetaData::valueTypeInt32:
+                typedBitSet = QVariant((int)bitSet);
+                break;
+
+            case FactMetaData::valueTypeUint8:
+            case FactMetaData::valueTypeUint16:
+            case FactMetaData::valueTypeUint32:
+                typedBitSet = QVariant(bitSet);
+                break;
+
+            default:
+                break;
+            }
+            if (typedBitSet.isNull()) {
+                qCDebug(APMParameterMetaDataLog) << "Invalid type for bitmask, name:" << metaData->name()
+                                                 << " type:" << metaData->type();
+            }
+
             if (!ok) {
                 qCDebug(APMParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
-                                                 << " type:" << metaData->type() << " value:" << bitmaskPair.first
-                                                 << " error:" << errorString;
+                                                 << " type:" << metaData->type() << " value:" << bitSet
+                                                 << " error: toUInt failed";
                 bitmaskStrings.clear();
                 bitmaskValues.clear();
                 break;
             }
 
-            if (metaData->convertAndValidateRaw(bitSet, false /* validate */, bitmaskValue, errorString)) {
+            if (metaData->convertAndValidateRaw(typedBitSet, false /* validate */, bitmaskValue, errorString)) {
                 bitmaskValues << bitmaskValue;
                 bitmaskStrings << bitmaskPair.second;
             } else {
                 qCDebug(APMParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
-                                                 << " type:" << metaData->type() << " value:" << bitmaskPair.first
+                                                 << " type:" << metaData->type() << " value:" << typedBitSet
                                                  << " error:" << errorString;
                 bitmaskStrings.clear();
                 bitmaskValues.clear();
