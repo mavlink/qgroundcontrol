@@ -88,25 +88,25 @@ public:
     static QColor getNextColor() {
         /* Create color map */
         static QList<QColor> colors = QList<QColor>()
-		<< QColor(231,72,28)
-		<< QColor(104,64,240)
-		<< QColor(203,254,121)
-		<< QColor(161,252,116)
-               	<< QColor(232,33,47)
-		<< QColor(116,251,110)
-		<< QColor(234,38,107)
-		<< QColor(104,250,138)
+        << QColor(231,72,28)
+        << QColor(104,64,240)
+        << QColor(203,254,121)
+        << QColor(161,252,116)
+                << QColor(232,33,47)
+        << QColor(116,251,110)
+        << QColor(234,38,107)
+        << QColor(104,250,138)
                 << QColor(235,43,165)
-		<< QColor(98,248,176)
-		<< QColor(236,48,221)
-		<< QColor(92,247,217)
+        << QColor(98,248,176)
+        << QColor(236,48,221)
+        << QColor(92,247,217)
                 << QColor(200,54,238)
-		<< QColor(87,231,246)
-		<< QColor(151,59,239)
-		<< QColor(81,183,244)
+        << QColor(87,231,246)
+        << QColor(151,59,239)
+        << QColor(81,183,244)
                 << QColor(75,133,243)
-		<< QColor(242,255,128)
-		<< QColor(230,126,23);
+        << QColor(242,255,128)
+        << QColor(230,126,23);
 
         static int nextColor = -1;
         if(nextColor == 18){//if at the end of the list
@@ -139,10 +139,10 @@ public:
         StartBusConfigActuators,
         EndBusConfigActuators,
     };
-    
+
     /// Starts the specified calibration
     virtual void startCalibration(StartCalibrationType calType) = 0;
-    
+
     /// Ends any current calibration
     virtual void stopCalibration(void) = 0;
 
@@ -232,11 +232,11 @@ signals:
       *
       * Typically this is used to send lowlevel information like the battery voltage to the plotting facilities of
       * the groundstation. The data here should be converted to human-readable values before being passed, so ideally
-	  * SI units.
+      * SI units.
       *
       * @param uasId ID of this system
       * @param name name of the value, e.g. "battery voltage"
-	  * @param unit The units this variable is in as an abbreviation. For system-dependent (such as raw ADC values) use "raw", for bitfields use "bits", for true/false or on/off use "bool", for unitless values use "-".
+      * @param unit The units this variable is in as an abbreviation. For system-dependent (such as raw ADC values) use "raw", for bitfields use "bits", for true/false or on/off use "bool", for unitless values use "-".
       * @param value the value that changed
       * @param msec the timestamp of the message, in milliseconds
       */
@@ -322,6 +322,10 @@ signals:
 
     // HOME POSITION / ORIGIN CHANGES
     void homePositionChanged(int uas, double lat, double lon, double alt);
+
+    // Log Download Signals
+    void logEntry   (UASInterface* uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
+    void logData    (UASInterface* uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data);
 
 protected:
 

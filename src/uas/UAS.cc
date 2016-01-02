@@ -960,6 +960,23 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit NavigationControllerDataChanged(this, p.nav_roll, p.nav_pitch, p.nav_bearing, p.target_bearing, p.wp_dist);
         }
             break;
+
+        case MAVLINK_MSG_ID_LOG_ENTRY:
+        {
+            mavlink_log_entry_t log;
+            mavlink_msg_log_entry_decode(&message, &log);
+            emit logEntry(this, log.time_utc, log.size, log.id, log.num_logs, log.last_log_num);
+        }
+            break;
+
+        case MAVLINK_MSG_ID_LOG_DATA:
+        {
+            mavlink_log_data_t log;
+            mavlink_msg_log_data_decode(&message, &log);
+            emit logData(this, log.ofs, log.id, log.count, log.data);
+        }
+            break;
+
         default:
             break;
         }
