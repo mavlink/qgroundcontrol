@@ -329,53 +329,56 @@ void MainWindow::_showDockWidget(const QString& name, bool show)
 {
     // Create the inner widget if we need to
     if (!_mapName2DockWidget.contains(name)) {
-        _createInnerDockWidget(name);
+        if(!_createInnerDockWidget(name)) {
+            qWarning() << "Trying to load non existing widget:" << name;
+            return;
+        }
     }
-
     Q_ASSERT(_mapName2DockWidget.contains(name));
     QGCDockWidget* dockWidget = _mapName2DockWidget[name];
     Q_ASSERT(dockWidget);
-
     dockWidget->setVisible(show);
-
     Q_ASSERT(_mapName2Action.contains(name));
     _mapName2Action[name]->setChecked(show);
 }
 
 /// Creates the specified inner dock widget and adds to the QDockWidget
-void MainWindow::_createInnerDockWidget(const QString& widgetName)
+bool MainWindow::_createInnerDockWidget(const QString& widgetName)
 {
     QGCDockWidget* widget = NULL;
     QAction *action = _mapName2Action[widgetName];
-
-    switch(action->data().toInt()) {
-        case MAVLINK_INSPECTOR:
-            widget = new QGCMAVLinkInspector(widgetName, action, qgcApp()->toolbox()->mavlinkProtocol(),this);
-            break;
-        case CUSTOM_COMMAND:
-            widget = new CustomCommandWidget(widgetName, action, this);
-            break;
-        case ONBOARD_FILES:
-            widget = new QGCUASFileViewMulti(widgetName, action, this);
-            break;
-        case STATUS_DETAILS:
-            widget = new UASInfoWidget(widgetName, action, this);
-            break;
-        case HIL_CONFIG:
-            widget = new HILDockWidget(widgetName, action, this);
-            break;
-        case ANALYZE:
-            widget = new Linecharts(widgetName, action, mavlinkDecoder, this);
-            break;
-        case INFO_VIEW:
-            widget= new QGCTabbedInfoView(widgetName, action, this);
-            break;
+    if(action) {
+        switch(action->data().toInt()) {
+            case MAVLINK_INSPECTOR:
+                widget = new QGCMAVLinkInspector(widgetName, action, qgcApp()->toolbox()->mavlinkProtocol(),this);
+                break;
+            case CUSTOM_COMMAND:
+                widget = new CustomCommandWidget(widgetName, action, this);
+                break;
+            case ONBOARD_FILES:
+                widget = new QGCUASFileViewMulti(widgetName, action, this);
+                break;
+            case STATUS_DETAILS:
+                widget = new UASInfoWidget(widgetName, action, this);
+                break;
+            case HIL_CONFIG:
+                widget = new HILDockWidget(widgetName, action, this);
+                break;
+            case ANALYZE:
+                widget = new Linecharts(widgetName, action, mavlinkDecoder, this);
+                break;
+            case INFO_VIEW:
+                widget= new QGCTabbedInfoView(widgetName, action, this);
+                break;
+        }
+        if(action->data().toInt() == INFO_VIEW) {
+            qobject_cast<QGCTabbedInfoView*>(widget)->addSource(mavlinkDecoder);
+        }
+        if(widget) {
+            _mapName2DockWidget[widgetName] = widget;
+        }
     }
-
-    if(action->data().toInt() == INFO_VIEW) {
-        qobject_cast<QGCTabbedInfoView*>(widget)->addSource(mavlinkDecoder);
-    }
-    _mapName2DockWidget[widgetName] = widget;
+    return widget != NULL;
 }
 
 void MainWindow::_hideAllDockWidgets(void)
