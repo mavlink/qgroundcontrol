@@ -49,7 +49,7 @@ QColor QGCPalette::_windowShadeDark[QGCPalette::_cThemes][QGCPalette::_cColorGro
 };
 
 QColor QGCPalette::_text[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#cccccc"), QColor("#000000") },
+    { QColor("#9d9d9d"), QColor("#000000") },
     { QColor(0x58, 0x58, 0x58), QColor(0xFF, 0xFF, 0xFF) }
 };
 
@@ -64,7 +64,7 @@ QColor QGCPalette::_button[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
 };
 
 QColor QGCPalette::_buttonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#dedede"), QColor("#000000") },
+    { QColor("#9d9d9d"), QColor("#000000") },
     { QColor(0x2c, 0x2c, 0x2c), QColor(0xFF, 0xFF, 0xFF) },
 };
 
