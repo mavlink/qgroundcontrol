@@ -221,7 +221,7 @@ private:
     void _loadCurrentViewState(void);
 
 #ifndef __mobile__
-    void _createInnerDockWidget(const QString& widgetName);
+    bool _createInnerDockWidget(const QString& widgetName);
     void _buildCommonWidgets(void);
     void _hideAllDockWidgets(void);
     void _showDockWidget(const QString &name, bool show);
