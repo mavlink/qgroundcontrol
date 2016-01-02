@@ -553,7 +553,7 @@
         {
             "id":           222,
             "rawName":      "MAV_CMD_DO_GUIDED_LIMITS",
-            "friendlyName": "Exetrnal control limits",
+            "friendlyName": "External control limits",
             "description":  "Set limits for external control",
             "param1": {
                 "label":            "Timeout:",
@@ -588,7 +588,20 @@
         { "id": 2500, "rawName": "MAV_CMD_VIDEO_START_CAPTURE", "friendlyName": "MAV_CMD_VIDEO_START_CAPTURE" },
         { "id": 2501, "rawName": "MAV_CMD_VIDEO_STOP_CAPTURE", "friendlyName": "MAV_CMD_VIDEO_STOP_CAPTURE" },
         { "id": 2800, "rawName": "MAV_CMD_PANORAMA_CREATE", "friendlyName": "MAV_CMD_PANORAMA_CREATE" },
-        { "id": 3000, "rawName": "MAV_CMD_DO_VTOL_TRANSITION", "friendlyName": "MAV_CMD_DO_VTOL_TRANSITION" },
+        {
+            "id": 3000,
+            "rawName": "MAV_CMD_DO_VTOL_TRANSITION",
+            "friendlyName": "VTOL Transition",
+            "description":  "Perform flight mode transition",
+            "category":     "Basic",
+            "param7": {
+                "label":            "Mode:",
+                "default":          0,
+                "decimalPlaces":    0,
+                "enumStrings":      "Hover Mode,Plane Mode",
+                "enumValues":       "3,4"
+            }
+        },
         { "id": 30001, "rawName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY", "friendlyName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY" },
         { "id": 30002, "rawName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY", "friendlyName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY" }
     ]
