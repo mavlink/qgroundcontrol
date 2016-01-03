@@ -127,7 +127,7 @@ QGCView {
                 id:             applyButton
                 anchors.right:  parent.right
                 text:           "Load common parameters"
-                onClicked:      showDialog(applyRestartDialogComponent, qsTr("Load common parameters"), 50, StandardButton.Close)
+                onClicked:      showDialog(applyRestartDialogComponent, "Load common parameters", qgcView.showDialogDefaultWidth, StandardButton.Close)
             }
         }
 

@@ -119,7 +119,7 @@ QGCView {
                         }
                         MenuItem {
                             text:           "Search..."
-                            onTriggered:    showDialog(searchDialogComponent, "Parameter Search", 50, StandardButton.Reset | StandardButton.Apply)
+                            onTriggered:    showDialog(searchDialogComponent, "Parameter Search", panel.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Apply)
                         }
                         MenuSeparator { visible: !ScreenTools.isMobile }
                         MenuItem {
@@ -314,7 +314,7 @@ QGCView {
                         acceptedButtons:    Qt.LeftButton
                         onClicked: {
                             __editorDialogFact = factRow.modelFact
-                            showDialog(editorDialogComponent, "Parameter Editor", 50, StandardButton.Cancel | StandardButton.Save)
+                            showDialog(editorDialogComponent, "Parameter Editor", qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
                         }
                     }
                 }

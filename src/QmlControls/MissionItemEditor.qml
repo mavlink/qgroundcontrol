@@ -95,7 +95,7 @@ Rectangle {
                     MenuItem {
                         text:           "Delete all"
 
-                        onTriggered: qgcView.showDialog(deleteAllPromptDialog, "Delete all", 40, StandardButton.Yes | StandardButton.No)
+                        onTriggered: qgcView.showDialog(deleteAllPromptDialog, "Delete all", qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                     }
 
                     MenuSeparator { }
@@ -139,7 +139,7 @@ Rectangle {
                 }
             }
 
-            onClicked:              qgcView.showDialog(commandDialog, "Select Mission Command", 40, StandardButton.Cancel)
+            onClicked:              qgcView.showDialog(commandDialog, "Select Mission Command", qgcView.showDialogDefaultWidth, StandardButton.Cancel)
         }
 
         QGCLabel {
