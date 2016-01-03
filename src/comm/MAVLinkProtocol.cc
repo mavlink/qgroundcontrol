@@ -173,41 +173,6 @@ void MAVLinkProtocol::resetMetadataForLink(const LinkInterface *link)
     currLossCounter[channel] = 0;
 }
 
-void MAVLinkProtocol::linkConnected(void)
-{
-    LinkInterface* link = qobject_cast<LinkInterface*>(QObject::sender());
-    Q_ASSERT(link);
-    
-    _linkStatusChanged(link, true);
-}
-
-void MAVLinkProtocol::linkDisconnected(void)
-{
-    LinkInterface* link = qobject_cast<LinkInterface*>(QObject::sender());
-    Q_ASSERT(link);
-    
-    _linkStatusChanged(link, false);
-}
-
-void MAVLinkProtocol::_linkStatusChanged(LinkInterface* link, bool connected)
-{
-    qCDebug(MAVLinkProtocolLog) << "_linkStatusChanged" << QString("%1").arg((long)link, 0, 16) << connected;
-    Q_ASSERT(link);
-    
-    if (connected) {
-        if (link->requiresUSBMavlinkStart()) {
-            // Send command to start MAVLink
-            // XXX hacky but safe
-            // Start NSH
-            const char init[] = {0x0d, 0x0d, 0x0d, 0x0d};
-            link->writeBytes(init, sizeof(init));
-            const char* cmd = "sh /etc/init.d/rc.usb\n";
-            link->writeBytes(cmd, strlen(cmd));
-            link->writeBytes(init, 4);
-        }
-    }
-}
-
 /**
  * This method parses all incoming bytes and constructs a MAVLink packet.
  * It can handle multiple links in parallel, as each link has it's own buffer/
