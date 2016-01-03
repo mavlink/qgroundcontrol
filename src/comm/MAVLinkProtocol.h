@@ -155,9 +155,6 @@ public slots:
     /** @brief Receive bytes from a communication interface */
     void receiveBytes(LinkInterface* link, QByteArray b);
     
-    void linkConnected(void);
-    void linkDisconnected(void);
-    
     /** @brief Set the rate at which heartbeats are emitted */
     void setHeartbeatRate(int rate);
     /** @brief Set the system id of this application */
@@ -285,7 +282,6 @@ private slots:
     void _vehicleCountChanged(int count);
     
 private:
-    void _linkStatusChanged(LinkInterface* link, bool connected);
     void _sendMessage(mavlink_message_t message);
     void _sendMessage(LinkInterface* link, mavlink_message_t message);
     void _sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid);
