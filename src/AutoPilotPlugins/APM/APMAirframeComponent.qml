@@ -150,7 +150,7 @@ QGCView {
                 anchors.right:  parent.right
                 text:           qsTr("Load common parameters")
 
-                onClicked:      showDialog(applyRestartDialogComponent, qsTr("Load common parameters"), 50, StandardButton.Close)
+                onClicked:      showDialog(applyRestartDialogComponent, qsTr("Load common parameters"), qgcView.showDialogDefaultWidth, StandardButton.Close)
             }
         }
 
