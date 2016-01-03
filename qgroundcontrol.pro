@@ -17,10 +17,6 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-exists($${OUT_PWD}/qgroundcontrol.pro) {
-    error("You must use shadow build.")
-}
-
 message(Qt version $$[QT_VERSION])
 
 !equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 3) {
