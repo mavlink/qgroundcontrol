@@ -381,6 +381,8 @@ private:
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
+    void _sendMessageOnLink(LinkInterface* link, mavlink_message_t* message);
+    LinkInterface* _usbDirectLink(void);
 
     void    _addChange                      (int id);
     float   _oneDecimal                     (float value);

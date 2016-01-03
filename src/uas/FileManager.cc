@@ -308,10 +308,8 @@ void FileManager::_writeFileDatablock(void)
     _sendRequest(&request);
 }
 
-void FileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
+void FileManager::receiveMessage(mavlink_message_t message)
 {
-    Q_UNUSED(link);
-
     // receiveMessage is signalled will all mavlink messages so we need to filter everything else out but ours.
     if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) {
         return;

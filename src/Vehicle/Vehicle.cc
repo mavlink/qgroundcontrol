@@ -220,6 +220,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _addLink(link);
     }
 
+#if 0
+    // Unsure if this is the correct thing to do at this point. Trying without it.
+
+    LinkInterface* usbDirectLink = _usbDirectLink();
+    if (usbDirectLink && usbDirectLink != link) {
+        // If we have a direct connection only listen to messages from that link
+        return;
+    }
+#endif
+
     // Give the plugin a change to adjust the message contents
     _firmwarePlugin->adjustMavlinkMessage(&message);
 
@@ -434,24 +444,55 @@ void Vehicle::sendMessage(mavlink_message_t message)
     emit _sendMessageOnThread(message);
 }
 
+void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t* message)
+{
+    // Give the plugin a chance to adjust
+    _firmwarePlugin->adjustMavlinkMessage(message);
+
+    static const uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
+    mavlink_finalize_message_chan(message, _mavlink->getSystemId(), _mavlink->getComponentId(), link->getMavlinkChannel(), message->len, messageKeys[message->msgid]);
+
+    // Write message into buffer, prepending start sign
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    int len = mavlink_msg_to_send_buffer(buffer, message);
+
+    link->writeBytes((const char*)buffer, len);
+}
+
+/// @return Direct usb connection link to board if one, NULL if none
+LinkInterface* Vehicle::_usbDirectLink(void)
+{
+    foreach (LinkInterface* link, _links) {
+        if (link->isConnected()) {
+            SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);
+            if (pSerialLink) {
+                LinkConfiguration* pLinkConfig = pSerialLink->getLinkConfiguration();
+                if (pLinkConfig) {
+                    SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(pLinkConfig);
+                    if (pSerialConfig && pSerialConfig->usbDirect()) {
+                        return link;
+                    }
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+
 void Vehicle::_sendMessage(mavlink_message_t message)
 {
+    // If we have a USB direct connection to the board, we only send messages on that link.
+    LinkInterface* usbDirectLink = _usbDirectLink();
+    if (usbDirectLink) {
+        _sendMessageOnLink(usbDirectLink, &message);
+        return;
+    }
+
     // Emit message on all links that are currently connected
     foreach (LinkInterface* link, _links) {
         if (link->isConnected()) {
-            MAVLinkProtocol* mavlink = _mavlink;
-
-            // Give the plugin a chance to adjust
-            _firmwarePlugin->adjustMavlinkMessage(&message);
-
-            static const uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
-            mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getMavlinkChannel(), message.len, messageKeys[message.msgid]);
-
-            // Write message into buffer, prepending start sign
-            uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-            int len = mavlink_msg_to_send_buffer(buffer, &message);
-
-            link->writeBytes((const char*)buffer, len);
+            _sendMessageOnLink(link, &message);
         }
     }
 }
