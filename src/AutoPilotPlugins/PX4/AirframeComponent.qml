@@ -67,7 +67,7 @@ QGCView {
 
         Component.onCompleted: {
             if (controller.showCustomConfigPanel) {
-                showDialog(customConfigDialogComponent, "Custom Airframe Config", 50, StandardButton.Reset)
+                showDialog(customConfigDialogComponent, "Custom Airframe Config", qgcView.showDialogDefaultWidth, StandardButton.Reset)
             }
         }
     }
@@ -138,7 +138,7 @@ QGCView {
                 anchors.right:  parent.right
                 text:           "Apply and Restart"
 
-                onClicked:      showDialog(applyRestartDialogComponent, "Apply and Restart", 50, StandardButton.Apply | StandardButton.Cancel)
+                onClicked:      showDialog(applyRestartDialogComponent, "Apply and Restart", qgcView.showDialogDefaultWidth, StandardButton.Apply | StandardButton.Cancel)
             }
         }
 
