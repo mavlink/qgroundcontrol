@@ -596,7 +596,7 @@
             "category":     "Basic",
             "param7": {
                 "label":            "Mode:",
-                "default":          0,
+                "default":          3,
                 "decimalPlaces":    0,
                 "enumStrings":      "Hover Mode,Plane Mode",
                 "enumValues":       "3,4"
