@@ -128,8 +128,12 @@ FactPanel {
     /// Shows a QGCViewDialog component
     ///     @param compoent QGCViewDialog component
     ///     @param title Title for dialog
-    ///     @param charWidth Width of dialog in characters (-1 for full parent width)
+    ///     @param charWidth Width of dialog in characters
     ///     @param buttons Buttons to show in dialog using StandardButton enum
+
+    readonly property int showDialogFullWidth:      -1  ///< Use for full width dialog
+    readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
+
     function showDialog(component, title, charWidth, buttons) {
         if (__checkForEarlyDialog(title)) {
             return
@@ -158,7 +162,7 @@ FactPanel {
 
         __stopAllAnimations()
 
-        __dialogCharWidth = 50
+        __dialogCharWidth = showDialogDefaultWidth
         __dialogTitle = title
         __messageDialogText = message
 
@@ -285,7 +289,7 @@ FactPanel {
         // This is the main dialog panel which is anchored to the right edge
         Rectangle {
             id:                 __dialogPanel
-            width:              __dialogCharWidth == -1 ? parent.width : defaultTextWidth * __dialogCharWidth
+            width:              __dialogCharWidth == showDialogFullWidth ? parent.width : defaultTextWidth * __dialogCharWidth
             anchors.topMargin:  topDialogMargin
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
