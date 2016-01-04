@@ -17,18 +17,19 @@ class APMRemoteParamsDownloader : public QObject
 public:
     explicit APMRemoteParamsDownloader(const QString& file);
     QString statusText() const;
-public slots:
     void refreshParamList();
     void httpParamListFinished();
     void httpFinished();
     void httpReadyRead();
     void updateDataReadProgress(qint64 bytesRead, qint64 totalBytes);
+
 private:
     void setStatusText(const QString& text);
     void startFileDownloadRequest();
     void manualListSetup();
     void processDownloadedVersionObject(const QByteArray& listObject);
     void startDownloadingRemoteParams();
+
 signals:
     void finished();
 private:
