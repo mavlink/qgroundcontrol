@@ -134,7 +134,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_autopilotPlugin, &AutoPilotPlugin::missingParametersChanged,   this, &Vehicle::missingParametersChanged);
 
     // Refresh timer
-    connect(_refreshTimer, SIGNAL(timeout()), this, SLOT(_checkUpdate()));
+    connect(_refreshTimer, &QTimer::timeout, this, &Vehicle::_checkUpdate);
     _refreshTimer->setInterval(UPDATE_TIMER);
     _refreshTimer->start(UPDATE_TIMER);
     emit heartbeatTimeoutChanged();
@@ -159,10 +159,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Now connect the new UAS
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
-    connect(_mav, SIGNAL(speedChanged                       (UASInterface*, double, double, quint64)),                  this, SLOT(_updateSpeed(UASInterface*, double, double, quint64)));
-    connect(_mav, SIGNAL(altitudeChanged                    (UASInterface*, double, double, double, double, quint64)),  this, SLOT(_updateAltitude(UASInterface*, double, double, double, double, quint64)));
-    connect(_mav, SIGNAL(navigationControllerErrorsChanged  (UASInterface*, double, double, double)),                   this, SLOT(_updateNavigationControllerErrors(UASInterface*, double, double, double)));
     connect(_mav, SIGNAL(statusChanged                      (UASInterface*,QString,QString)),                           this, SLOT(_updateState(UASInterface*, QString,QString)));
+
+    connect(_mav, &UASInterface::speedChanged, this, &Vehicle::_updateSpeed);
+    connect(_mav, &UASInterface::altitudeChanged, this, &Vehicle::_updateAltitude);
+    connect(_mav, &UASInterface::navigationControllerErrorsChanged,this, &Vehicle::_updateNavigationControllerErrors);
     connect(_mav, &UASInterface::NavigationControllerDataChanged,   this, &Vehicle::_updateNavigationControllerData);
     connect(_mav, &UASInterface::heartbeatTimeout,                  this, &Vehicle::_heartbeatTimeout);
     connect(_mav, &UASInterface::batteryChanged,                    this, &Vehicle::_updateBatteryRemaining);
@@ -183,8 +184,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
 
     _parameterLoader = new ParameterLoader(_autopilotPlugin, this /* Vehicle */, this /* parent */);
-    connect(_parameterLoader, SIGNAL(parametersReady(bool)),        _autopilotPlugin, SLOT(_parametersReadyPreChecks(bool)));
-    connect(_parameterLoader, SIGNAL(parameterListProgress(float)), _autopilotPlugin, SIGNAL(parameterListProgress(float)));
+    connect(_parameterLoader, &ParameterLoader::parametersReady, _autopilotPlugin, &AutoPilotPlugin::_parametersReadyPreChecks);
+    connect(_parameterLoader, &ParameterLoader::parameterListProgress, _autopilotPlugin, &AutoPilotPlugin::parameterListProgress);
 
     _firmwarePlugin->initializeVehicle(this);
 
