@@ -335,12 +335,18 @@ void ParameterLoader::_determineDefaultComponentId(void)
         // the set of parameters. Better than nothing!
 
         _defaultComponentId = -1;
+        int largestCompParamCount = 0;
         foreach(int componentId, _mapParameterName2Variant.keys()) {
-            if (_mapParameterName2Variant[componentId].count() > _defaultComponentId) {
+            int compParamCount = _mapParameterName2Variant[componentId].count();
+            if (compParamCount > largestCompParamCount) {
+                largestCompParamCount = compParamCount;
                 _defaultComponentId = componentId;
             }
         }
-        Q_ASSERT(_defaultComponentId != -1);
+
+        if (_defaultComponentId == -1) {
+            qWarning() << "All parameters missing, unable to determine default componet id";
+        }
     }
 }
 
