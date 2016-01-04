@@ -158,10 +158,12 @@ bool BluetoothLink::_hardwareConnect()
         _discoveryAgent = NULL;
     }
     _discoveryAgent = new QBluetoothServiceDiscoveryAgent(this);
-    connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::serviceDiscovered, this, &BluetoothLink::serviceDiscovered);
-    connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::finished, this, &BluetoothLink::discoveryFinished);
-    connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::canceled, this, &BluetoothLink::discoveryFinished);
-    connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::error,this, BluetoothLink::discoveryError);
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::serviceDiscovered, this, &BluetoothLink::serviceDiscovered);
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::finished, this, &BluetoothLink::discoveryFinished);
+    QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::canceled, this, &BluetoothLink::discoveryFinished);
+
+    QObject::connect(_discoveryAgent, static_cast<void (QBluetoothServiceDiscoveryAgent::*)(QBluetoothSocket::SocketError)>(&QBluetoothServiceDiscoveryAgent::error),
+            this, &BluetoothLink::discoveryError);
     _shutDown = false;
     _discoveryAgent->start();
 #else
@@ -180,9 +182,12 @@ void BluetoothLink::_createSocket()
     }
     _targetSocket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
     QObject::connect(_targetSocket, &QBluetoothSocket::connected, this, &BluetoothLink::deviceConnected);
-    QObject::connect(_targetSocket, &QBluetoothSocket::error, this, &BluetoothLink::deviceError);
+
     QObject::connect(_targetSocket, &QBluetoothSocket::readyRead, this, &BluetoothLink::readBytes);
     QObject::connect(_targetSocket, &QBluetoothSocket::disconnected, this, &BluetoothLink::deviceDisconnected);
+
+    QObject::connect(_targetSocket, static_cast<void (QBluetoothSocket::*)(QBluetoothSocket::SocketError)>(&QBluetoothSocket::error),
+            this, &BluetoothLink::deviceError);
 }
 
 #ifdef __ios__
