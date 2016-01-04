@@ -151,7 +151,7 @@ void QmlObjectListModel::clear(void)
 QObject* QmlObjectListModel::removeAt(int i)
 {
     QObject* removedObject = _objectList[i];
-    
+
     // Look for a dirtyChanged signal on the object
     if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
         if (!_skipDirtyFirstItem || i != 0) {

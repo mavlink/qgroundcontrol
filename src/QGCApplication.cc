@@ -434,7 +434,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     _loadCurrentStyle();
 
     // Exit main application when last window is closed
-    connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
+    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 
 #ifdef __mobile__
     _qmlAppEngine = new QQmlApplicationEngine(this);

@@ -81,7 +81,8 @@ bool QGCFileDownload::download(const QString& remoteFile)
 
     connect(networkReply, &QNetworkReply::downloadProgress, this, &QGCFileDownload::downloadProgress);
     connect(networkReply, &QNetworkReply::finished, this, &QGCFileDownload::_downloadFinished);
-    connect(networkReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(_downloadError(QNetworkReply::NetworkError)));
+    connect(networkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+            this, &QGCFileDownload::_downloadError);
 
     return true;
 }
