@@ -16,7 +16,10 @@
 namespace Eigen { 
 
 namespace internal {
-template<typename MatrixType, int UpLo> struct LDLT_Traits;
+  template<typename MatrixType, int UpLo> struct LDLT_Traits;
+
+  // PositiveSemiDef means positive semi-definite and non-zero; same for NegativeSemiDef
+  enum SignMatrix { PositiveSemiDef, NegativeSemiDef, ZeroSign, Indefinite };
 }
 
 /** \ingroup Cholesky_Module
@@ -69,7 +72,12 @@ template<typename _MatrixType, int _UpLo> class LDLT
       * The default constructor is useful in cases in which the user intends to
       * perform decompositions via LDLT::compute(const MatrixType&).
       */
-    LDLT() : m_matrix(), m_transpositions(), m_isInitialized(false) {}
+    LDLT() 
+      : m_matrix(), 
+        m_transpositions(), 
+        m_sign(internal::ZeroSign),
+        m_isInitialized(false) 
+    {}
 
     /** \brief Default Constructor with memory preallocation
       *
@@ -81,6 +89,7 @@ template<typename _MatrixType, int _UpLo> class LDLT
       : m_matrix(size, size),
         m_transpositions(size),
         m_temporary(size),
+        m_sign(internal::ZeroSign),
         m_isInitialized(false)
     {}
 
@@ -93,6 +102,7 @@ template<typename _MatrixType, int _UpLo> class LDLT
       : m_matrix(matrix.rows(), matrix.cols()),
         m_transpositions(matrix.rows()),
         m_temporary(matrix.rows()),
+        m_sign(internal::ZeroSign),
         m_isInitialized(false)
     {
       compute(matrix);
@@ -139,7 +149,7 @@ template<typename _MatrixType, int _UpLo> class LDLT
     inline bool isPositive() const
     {
       eigen_assert(m_isInitialized && "LDLT is not initialized.");
-      return m_sign == 1;
+      return m_sign == internal::PositiveSemiDef || m_sign == internal::ZeroSign;
     }
     
     #ifdef EIGEN2_SUPPORT
@@ -153,7 +163,7 @@ template<typename _MatrixType, int _UpLo> class LDLT
     inline bool isNegative(void) const
     {
       eigen_assert(m_isInitialized && "LDLT is not initialized.");
-      return m_sign == -1;
+      return m_sign == internal::NegativeSemiDef || m_sign == internal::ZeroSign;
     }
 
     /** \returns a solution x of \f$ A x = b \f$ using the current decomposition of A.
@@ -225,6 +235,11 @@ template<typename _MatrixType, int _UpLo> class LDLT
     }
 
   protected:
+    
+    static void check_template_parameters()
+    {
+      EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
+    }
 
     /** \internal
       * Used to compute and store the Cholesky decomposition A = L D L^* = U^* D U.
@@ -235,7 +250,7 @@ template<typename _MatrixType, int _UpLo> class LDLT
     MatrixType m_matrix;
     TranspositionType m_transpositions;
     TmpMatrixType m_temporary;
-    int m_sign;
+    internal::SignMatrix m_sign;
     bool m_isInitialized;
 };
 
@@ -246,7 +261,7 @@ template<int UpLo> struct ldlt_inplace;
 template<> struct ldlt_inplace<Lower>
 {
   template<typename MatrixType, typename TranspositionType, typename Workspace>
-  static bool unblocked(MatrixType& mat, TranspositionType& transpositions, Workspace& temp, int* sign=0)
+  static bool unblocked(MatrixType& mat, TranspositionType& transpositions, Workspace& temp, SignMatrix& sign)
   {
     using std::abs;
     typedef typename MatrixType::Scalar Scalar;
@@ -258,35 +273,18 @@ template<> struct ldlt_inplace<Lower>
     if (size <= 1)
     {
       transpositions.setIdentity();
-      if(sign)
-        *sign = numext::real(mat.coeff(0,0))>0 ? 1:-1;
+      if (numext::real(mat.coeff(0,0)) > 0) sign = PositiveSemiDef;
+      else if (numext::real(mat.coeff(0,0)) < 0) sign = NegativeSemiDef;
+      else sign = ZeroSign;
       return true;
     }
-
-    RealScalar cutoff(0), biggest_in_corner;
 
     for (Index k = 0; k < size; ++k)
     {
       // Find largest diagonal element
       Index index_of_biggest_in_corner;
-      biggest_in_corner = mat.diagonal().tail(size-k).cwiseAbs().maxCoeff(&index_of_biggest_in_corner);
+      mat.diagonal().tail(size-k).cwiseAbs().maxCoeff(&index_of_biggest_in_corner);
       index_of_biggest_in_corner += k;
-
-      if(k == 0)
-      {
-        // The biggest overall is the point of reference to which further diagonals
-        // are compared; if any diagonal is negligible compared
-        // to the largest overall, the algorithm bails.
-        cutoff = abs(NumTraits<Scalar>::epsilon() * biggest_in_corner);
-      }
-
-      // Finish early if the matrix is not full rank.
-      if(biggest_in_corner < cutoff)
-      {
-        for(Index i = k; i < size; i++) transpositions.coeffRef(i) = i;
-        if(sign) *sign = 0;
-        break;
-      }
 
       transpositions.coeffRef(k) = index_of_biggest_in_corner;
       if(k != index_of_biggest_in_corner)
@@ -318,22 +316,27 @@ template<> struct ldlt_inplace<Lower>
 
       if(k>0)
       {
-        temp.head(k) = mat.diagonal().head(k).asDiagonal() * A10.adjoint();
+        temp.head(k) = mat.diagonal().real().head(k).asDiagonal() * A10.adjoint();
         mat.coeffRef(k,k) -= (A10 * temp.head(k)).value();
         if(rs>0)
           A21.noalias() -= A20 * temp.head(k);
       }
-      if((rs>0) && (abs(mat.coeffRef(k,k)) > cutoff))
-        A21 /= mat.coeffRef(k,k);
       
-      if(sign)
-      {
-        // LDLT is not guaranteed to work for indefinite matrices, but let's try to get the sign right
-        int newSign = numext::real(mat.diagonal().coeff(index_of_biggest_in_corner)) > 0;
-        if(k == 0)
-          *sign = newSign;
-        else if(*sign != newSign)
-          *sign = 0;
+      // In some previous versions of Eigen (e.g., 3.2.1), the scaling was omitted if the pivot
+      // was smaller than the cutoff value. However, soince LDLT is not rank-revealing
+      // we should only make sure we do not introduce INF or NaN values.
+      // LAPACK also uses 0 as the cutoff value.
+      RealScalar realAkk = numext::real(mat.coeffRef(k,k));
+      if((rs>0) && (abs(realAkk) > RealScalar(0)))
+        A21 /= realAkk;
+
+      if (sign == PositiveSemiDef) {
+        if (realAkk < 0) sign = Indefinite;
+      } else if (sign == NegativeSemiDef) {
+        if (realAkk > 0) sign = Indefinite;
+      } else if (sign == ZeroSign) {
+        if (realAkk > 0) sign = PositiveSemiDef;
+        else if (realAkk < 0) sign = NegativeSemiDef;
       }
     }
 
@@ -399,7 +402,7 @@ template<> struct ldlt_inplace<Lower>
 template<> struct ldlt_inplace<Upper>
 {
   template<typename MatrixType, typename TranspositionType, typename Workspace>
-  static EIGEN_STRONG_INLINE bool unblocked(MatrixType& mat, TranspositionType& transpositions, Workspace& temp, int* sign=0)
+  static EIGEN_STRONG_INLINE bool unblocked(MatrixType& mat, TranspositionType& transpositions, Workspace& temp, SignMatrix& sign)
   {
     Transpose<MatrixType> matt(mat);
     return ldlt_inplace<Lower>::unblocked(matt, transpositions, temp, sign);
@@ -436,6 +439,8 @@ template<typename MatrixType> struct LDLT_Traits<MatrixType,Upper>
 template<typename MatrixType, int _UpLo>
 LDLT<MatrixType,_UpLo>& LDLT<MatrixType,_UpLo>::compute(const MatrixType& a)
 {
+  check_template_parameters();
+  
   eigen_assert(a.rows()==a.cols());
   const Index size = a.rows();
 
@@ -444,8 +449,9 @@ LDLT<MatrixType,_UpLo>& LDLT<MatrixType,_UpLo>::compute(const MatrixType& a)
   m_transpositions.resize(size);
   m_isInitialized = false;
   m_temporary.resize(size);
+  m_sign = internal::ZeroSign;
 
-  internal::ldlt_inplace<UpLo>::unblocked(m_matrix, m_transpositions, m_temporary, &m_sign);
+  internal::ldlt_inplace<UpLo>::unblocked(m_matrix, m_transpositions, m_temporary, m_sign);
 
   m_isInitialized = true;
   return *this;
@@ -458,7 +464,7 @@ LDLT<MatrixType,_UpLo>& LDLT<MatrixType,_UpLo>::compute(const MatrixType& a)
   */
 template<typename MatrixType, int _UpLo>
 template<typename Derived>
-LDLT<MatrixType,_UpLo>& LDLT<MatrixType,_UpLo>::rankUpdate(const MatrixBase<Derived>& w, const typename NumTraits<typename MatrixType::Scalar>::Real& sigma)
+LDLT<MatrixType,_UpLo>& LDLT<MatrixType,_UpLo>::rankUpdate(const MatrixBase<Derived>& w, const typename LDLT<MatrixType,_UpLo>::RealScalar& sigma)
 {
   const Index size = w.rows();
   if (m_isInitialized)
@@ -473,7 +479,7 @@ LDLT<MatrixType,_UpLo>& LDLT<MatrixType,_UpLo>::rankUpdate(const MatrixBase<Deri
     for (Index i = 0; i < size; i++)
       m_transpositions.coeffRef(i) = i;
     m_temporary.resize(size);
-    m_sign = sigma>=0 ? 1 : -1;
+    m_sign = sigma>=0 ? internal::PositiveSemiDef : internal::NegativeSemiDef;
     m_isInitialized = true;
   }
 
@@ -504,16 +510,21 @@ struct solve_retval<LDLT<_MatrixType,_UpLo>, Rhs>
     using std::abs;
     using std::max;
     typedef typename LDLTType::MatrixType MatrixType;
-    typedef typename LDLTType::Scalar Scalar;
     typedef typename LDLTType::RealScalar RealScalar;
-    const Diagonal<const MatrixType> vectorD = dec().vectorD();
-    RealScalar tolerance = (max)(vectorD.array().abs().maxCoeff() * NumTraits<Scalar>::epsilon(),
-				 RealScalar(1) / NumTraits<RealScalar>::highest()); // motivated by LAPACK's xGELSS
+    const typename Diagonal<const MatrixType>::RealReturnType vectorD(dec().vectorD());
+    // In some previous versions, tolerance was set to the max of 1/highest and the maximal diagonal entry * epsilon
+    // as motivated by LAPACK's xGELSS:
+    // RealScalar tolerance = (max)(vectorD.array().abs().maxCoeff() *NumTraits<RealScalar>::epsilon(),RealScalar(1) / NumTraits<RealScalar>::highest());
+    // However, LDLT is not rank revealing, and so adjusting the tolerance wrt to the highest
+    // diagonal element is not well justified and to numerical issues in some cases.
+    // Moreover, Lapack's xSYTRS routines use 0 for the tolerance.
+    RealScalar tolerance = RealScalar(1) / NumTraits<RealScalar>::highest();
+    
     for (Index i = 0; i < vectorD.size(); ++i) {
       if(abs(vectorD(i)) > tolerance)
-	dst.row(i) /= vectorD(i);
+        dst.row(i) /= vectorD(i);
       else
-	dst.row(i).setZero();
+        dst.row(i).setZero();
     }
 
     // dst = L^-T (D^-1 L^-1 P b)
@@ -566,7 +577,7 @@ MatrixType LDLT<MatrixType,_UpLo>::reconstructedMatrix() const
   // L^* P
   res = matrixU() * res;
   // D(L^*P)
-  res = vectorD().asDiagonal() * res;
+  res = vectorD().real().asDiagonal() * res;
   // L(DL^*P)
   res = matrixL() * res;
   // P^T (LDL^*P)
