@@ -90,8 +90,9 @@ public:
     /// Called before any mavlink message is processed by Vehicle such taht the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.
+    ///     @param vehicle Vehicle message came from
     ///     @param message[in,out] Mavlink message to adjust if needed.
-    virtual void adjustMavlinkMessage(mavlink_message_t* message) = 0;
+    virtual void adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) = 0;
     
     /// Called when Vehicle is first created to send any necessary mavlink messages to the firmware.
     virtual void initializeVehicle(Vehicle* vehicle) = 0;

@@ -28,6 +28,7 @@
 #include "Generic/GenericFirmwarePlugin.h"
 #include "AutoPilotPlugins/APM/APMAutoPilotPlugin.h"    // FIXME: Hack
 #include "QGCMAVLink.h"
+#include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
@@ -211,7 +212,7 @@ int APMFirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
-void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
+void APMFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     if (message->msgid == MAVLINK_MSG_ID_PARAM_VALUE) {
         mavlink_param_value_t paramValue;
@@ -296,9 +297,6 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
         mavlink_statustext_t statusText;
         mavlink_msg_statustext_decode(message, &statusText);
 
-        // APM user facing calibration messages come through as high severity, we need to parse them out
-        // and lower the severity on them so that they don't pop in the users face.
-
         if (!_firmwareVersion.isValid() || statusText.severity < MAV_SEVERITY_NOTICE) {
             QByteArray b;
             b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
@@ -314,8 +312,41 @@ void APMFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
                     // found version string
                     _firmwareVersion = APMFirmwareVersion(messageText);
                     _textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(_firmwareVersion);
+
+                    if (!_firmwareVersion.isBeta() && !_firmwareVersion.isDev()) {
+                        int supportedMajorNumber = -1;
+                        int supportedMinorNumber = -1;
+
+                        switch (vehicle->vehicleType()) {
+                        case MAV_TYPE_FIXED_WING:
+                            supportedMajorNumber = 3;
+                            supportedMinorNumber = 4;
+                            break;
+                        case MAV_TYPE_QUADROTOR:
+                        case MAV_TYPE_COAXIAL:
+                        case MAV_TYPE_HELICOPTER:
+                        case MAV_TYPE_SUBMARINE:
+                        case MAV_TYPE_HEXAROTOR:
+                        case MAV_TYPE_OCTOROTOR:
+                        case MAV_TYPE_TRICOPTER:
+                            supportedMajorNumber = 3;
+                            supportedMinorNumber = 3;
+                            break;
+                        default:
+                            break;
+                        }
+
+                        if (supportedMajorNumber != -1) {
+                            if (_firmwareVersion.majorNumber() < supportedMajorNumber || _firmwareVersion.minorNumber() < supportedMinorNumber) {
+                                qgcApp()->showMessage(QString("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
+                            }
+                        }
+                    }
                 }
             }
+
+            // APM user facing calibration messages come through as high severity, we need to parse them out
+            // and lower the severity on them so that they don't pop in the users face.
 
             if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
                 _adjustCalibrationMessageSeverity(message);
