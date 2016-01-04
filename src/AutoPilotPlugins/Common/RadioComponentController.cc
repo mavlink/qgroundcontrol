@@ -870,7 +870,9 @@ void RadioComponentController::_writeCalibration(void)
 {
     if (!_uas) return;
     
-    _uas->stopCalibration();
+    if (_px4Vehicle()) {
+        _uas->stopCalibration();
+    }
     
     _validateCalibration();
     
@@ -964,7 +966,9 @@ void RadioComponentController::_startCalibration(void)
     _resetInternalCalibrationValues();
     
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
-    _uas->startCalibration(UASInterface::StartCalibrationRadio);
+    if (_px4Vehicle()) {
+        _uas->startCalibration(UASInterface::StartCalibrationRadio);
+    }
     
     _nextButton->setProperty("text", "Next");
     _cancelButton->setEnabled(true);
@@ -979,7 +983,9 @@ void RadioComponentController::_stopCalibration(void)
     _currentStep = -1;
     
     if (_uas) {
-        _uas->stopCalibration();
+        if (_px4Vehicle()) {
+            _uas->stopCalibration();
+        }
         _setInternalCalibrationValuesFromParameters();
     } else {
         _resetInternalCalibrationValues();
