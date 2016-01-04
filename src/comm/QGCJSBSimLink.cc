@@ -80,20 +80,19 @@ void QGCJSBSimLink::run()
     socket->moveToThread(this);
     connectState = socket->bind(host, port, QAbstractSocket::ReuseAddressHint);
 
-    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    QObject::connect(socket, &QUdpSocket::readyRead, this, &QGCJSBSimLink::readBytes);
 
     process = new QProcess(this);
 
-    connect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-
+    connect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCJSBSimLink::updateControls);
+    connect(this, &QGCJSBSimLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
 
     _vehicle->uas()->startHil();
 
     //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
     // Catch process error
-    QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
-                      this, SLOT(processError(QProcess::ProcessError)));
+    connect(process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+            this, &QGCJSBSimLink::processError);
 
     // Start Flightgear
     QStringList arguments;
@@ -358,10 +357,10 @@ qint64 QGCJSBSimLink::bytesAvailable()
  **/
 bool QGCJSBSimLink::disconnectSimulation()
 {
-    disconnect(process, SIGNAL(error(QProcess::ProcessError)),
-               this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    disconnect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCJSBSimLink::updateControls);
+    disconnect(this, &QGCJSBSimLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
+    disconnect(process, static_cast<void (QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+            this, &QGCJSBSimLink::processError);
 
     if (process)
     {
