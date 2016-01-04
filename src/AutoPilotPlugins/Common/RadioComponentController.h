@@ -300,6 +300,8 @@ private:
     static const int _chanMinimum = 5;  ///< Minimum numner of channels required to run
     
     struct ChannelInfo _rgChannelInfo[_chanMaxAny];    ///< Information associated with each rc channel
+
+    QList<int> _apmPossibleMissingRCChannelParams;  ///< List of possible missing RC*_* params for APM stack
     
     enum rcCalStates _rcCalState;       ///< Current calibration state
     int _rcCalStateCurrentChannel;      ///< Current channel being worked on in rcCalStateIdentify and rcCalStateDetectInversion
