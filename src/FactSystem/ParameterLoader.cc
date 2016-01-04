@@ -74,8 +74,7 @@ ParameterLoader::ParameterLoader(AutoPilotPlugin* autopilot, Vehicle* vehicle, Q
     _cacheTimeoutTimer.setInterval(2500);
     connect(&_cacheTimeoutTimer, &QTimer::timeout, this, &ParameterLoader::refreshAllParameters);
 
-    // FIXME: Why not direct connect?
-    connect(_vehicle->uas(), SIGNAL(parameterUpdate(int, int, QString, int, int, int, QVariant)), this, SLOT(_parameterUpdate(int, int, QString, int, int, int, QVariant)));
+    connect(_vehicle->uas(), &UASInterface::parameterUpdate, this, &ParameterLoader::_parameterUpdate);
 
     /* Initially attempt a local cache load, refresh over the link if it fails */
     _tryCacheLookup();
