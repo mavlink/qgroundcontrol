@@ -90,8 +90,9 @@ int GenericFirmwarePlugin::manualControlReservedButtonCount(void)
     return -1;
 }
 
-void GenericFirmwarePlugin::adjustMavlinkMessage(mavlink_message_t* message)
+void GenericFirmwarePlugin::adjustMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
+    Q_UNUSED(vehicle);
     Q_UNUSED(message);
     
     // Generic plugin does no message adjustment
