@@ -64,7 +64,6 @@ class UAS : public UASInterface
     Q_OBJECT
 public:
     UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager);
-    ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
     float lipoEmpty; ///< Discharged voltage
@@ -100,7 +99,8 @@ public:
     Q_PROPERTY(double   satRawVDOP              READ getSatRawVDOP                                      NOTIFY satRawVDOPChanged)
     Q_PROPERTY(double   satRawCOG               READ getSatRawCOG                                       NOTIFY satRawCOGChanged)
 
-    void clearVehicle(void) { _vehicle = NULL; }
+    /// Vehicle is about to go away
+    void shutdownVehicle(void);
 
     void setGroundSpeed(double val)
     {
