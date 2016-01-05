@@ -262,8 +262,8 @@ void LinechartWidget::createLayout()
     timeButton->setToolTip(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     timeButton->setWhatsThis(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     hlayout->addWidget(timeButton);
-    connect(timeButton, &QCheckBox::clicked, activePlot, &LinechartPlot::enforceGroundTime);
-    connect(timeButton, &QCheckBox::clicked, this, &LinechartWidget::writeSettings);
+    connect(timeButton.data(), &QCheckBox::clicked, activePlot, &LinechartPlot::enforceGroundTime);
+    connect(timeButton.data(), &QCheckBox::clicked, this, &LinechartWidget::writeSettings);
 
     hlayout->addStretch();
 
@@ -615,7 +615,6 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 
     // Set stretch factors so that the label gets the whole space
 
-plot;
     // Load visibility settings
     // TODO
 
