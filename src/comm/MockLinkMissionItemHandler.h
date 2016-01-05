@@ -74,8 +74,7 @@ public:
 
     /// Sets a failure mode for unit testing
     ///     @param failureMode Type of failure to simulate
-    ///     @param firstTimeOnly true: fail first call, success subsequent calls, false: fail all calls
-    void setMissionItemFailureMode(FailureMode_t failureMode, bool firstTimeOnly);
+    void setMissionItemFailureMode(FailureMode_t failureMode);
     
     /// Called to send a MISSION_ACK message while the MissionManager is in idle state
     void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType);
@@ -114,7 +113,6 @@ private:
     
     QTimer*             _missionItemResponseTimer;
     FailureMode_t       _failureMode;
-    bool                _failureFirstTimeOnly;
     bool                _sendHomePositionOnEmptyList;
     MAVLinkProtocol*    _mavlinkProtocol;
 };

@@ -40,14 +40,14 @@ public:
     MissionManagerTest(void);
     
 private slots:
-    void _testWriteFailureHandlingAPM(void);
-    void _testReadFailureHandlingAPM(void);
     void _testWriteFailureHandlingPX4(void);
+    void _testWriteFailureHandlingAPM(void);
     void _testReadFailureHandlingPX4(void);
+    void _testReadFailureHandlingAPM(void);
 
 private:
-    void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly);
-    void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MissionManager::ErrorCode_t errorCode, bool failFirstTimeOnly);
+    void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode);
+    void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode);
     void _testWriteFailureHandlingWorker(void);
     void _testReadFailureHandlingWorker(void);
     
