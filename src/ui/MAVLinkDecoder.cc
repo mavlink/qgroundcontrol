@@ -52,7 +52,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_INT, false);
 //    textMessageFilter.insert(MAVLINK_MSG_ID_HIGHRES_IMU, false);
 
-    connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+    connect(protocol, &MAVLinkProtocol::messageReceived, this, &MAVLinkDecoder::receiveMessage);
 
     start(LowPriority);
 }

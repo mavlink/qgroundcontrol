@@ -248,7 +248,7 @@ void QGCXPlaneLink::run()
     disconnect(this, &QGCXPlaneLink::sensorHilRawImuChanged, _vehicle->uas(), &UAS::sendHilSensors);
     connectState = false;
 
-    disconnect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    disconnect(socket, &QUdpSocket::readyRead, this, &QGCXPlaneLink::readBytes);
 
     socket->close();
     socket->deleteLater();

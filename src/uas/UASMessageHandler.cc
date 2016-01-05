@@ -100,7 +100,7 @@ void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
     // If we were already attached to an autopilot, disconnect it.
     if (_activeUAS)
     {
-        disconnect(_activeUAS, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(handleTextMessage(int,int,int,QString)));
+        disconnect(_activeUAS, &UASInterface::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
         _activeUAS = NULL;
         clearMessages();
         emit textMessageReceived(NULL);
@@ -113,7 +113,7 @@ void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
         // Connect to the new UAS.
         clearMessages();
         _activeUAS = uas;
-        connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(handleTextMessage(int,int,int,QString)));
+        connect(uas, &UASInterface::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
     }
 }
 
