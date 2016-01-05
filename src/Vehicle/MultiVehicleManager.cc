@@ -109,7 +109,7 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     }
 
     vehicle->setActive(false);
-    vehicle->uas()->clearVehicle();
+    vehicle->uas()->shutdownVehicle();
 
     // First we must signal that a vehicle is no longer available.
     _activeVehicleAvailable = false;
