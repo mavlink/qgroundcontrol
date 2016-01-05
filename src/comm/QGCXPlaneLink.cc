@@ -180,17 +180,17 @@ void QGCXPlaneLink::run()
 
     emit statusMessage(tr("Waiting for XPlane.."));
 
-    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    QObject::connect(socket, &QUdpSocket::readyRead, this, &QGCXPlaneLink::readBytes);
 
-    connect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)), Qt::QueuedConnection);
-    connect(_vehicle->uas(), SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCXPlaneLink::updateControls, Qt::QueuedConnection);
+    connect(_vehicle->uas(), &UAS::hilActuatorsChanged, this, &QGCXPlaneLink::updateActuators, Qt::QueuedConnection);
 
-    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), _vehicle->uas(), SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), Qt::QueuedConnection);
-    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), Qt::QueuedConnection);
+    connect(this, &QGCXPlaneLink::hilGroundTruthChanged, _vehicle->uas(), &UAS::sendHilGroundTruth, Qt::QueuedConnection);
+    connect(this, &QGCXPlaneLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState, Qt::QueuedConnection);
+    connect(this, &QGCXPlaneLink::sensorHilGpsChanged, _vehicle->uas(), &UAS::sendHilGps, Qt::QueuedConnection);
+    connect(this, &QGCXPlaneLink::sensorHilRawImuChanged, _vehicle->uas(), &UAS::sendHilSensors, Qt::QueuedConnection);
 
-        _vehicle->uas()->startHil();
+    _vehicle->uas()->startHil();
 
 #pragma pack(push, 1)
     struct iset_struct
@@ -239,17 +239,16 @@ void QGCXPlaneLink::run()
         QGC::SLEEP::msleep(5);
     }
 
-    disconnect(_vehicle->uas(), SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    disconnect(_vehicle->uas(), SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
+    disconnect(_vehicle->uas(), &UAS::hilControlsChanged, this, &QGCXPlaneLink::updateControls);
+    disconnect(_vehicle->uas(), &UAS::hilActuatorsChanged, this, &QGCXPlaneLink::updateActuators);
 
-    disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), _vehicle->uas(), SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), _vehicle->uas(), SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
-    disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), _vehicle->uas(), SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-
+    disconnect(this, &QGCXPlaneLink::hilGroundTruthChanged, _vehicle->uas(), &UAS::sendHilGroundTruth);
+    disconnect(this, &QGCXPlaneLink::hilStateChanged, _vehicle->uas(), &UAS::sendHilState);
+    disconnect(this, &QGCXPlaneLink::sensorHilGpsChanged, _vehicle->uas(), &UAS::sendHilGps);
+    disconnect(this, &QGCXPlaneLink::sensorHilRawImuChanged, _vehicle->uas(), &UAS::sendHilSensors);
     connectState = false;
 
-    QObject::disconnect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    disconnect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
     socket->close();
     socket->deleteLater();
