@@ -113,21 +113,26 @@ LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t 
         return;
     }
     //-- If this is the first, pre-fill it
-    if(!_logEntriesModel.count()) {
+    if(!_logEntriesModel.count() && num_logs > 0) {
         for(int i = 0; i < num_logs; i++) {
             QGCLogEntry *entry = new QGCLogEntry(i);
             _logEntriesModel.append(entry);
         }
     }
     //-- Update this log record
-    if(id < _logEntriesModel.count()) {
-        QGCLogEntry* entry = _logEntriesModel[id];
-        entry->setSize(size);
-        entry->setTime(QDateTime::fromTime_t(time_utc));
-        entry->setReceived(true);
-        entry->setStatus(QString("Available"));
+    if(num_logs > 0) {
+        if(id < _logEntriesModel.count()) {
+            QGCLogEntry* entry = _logEntriesModel[id];
+            entry->setSize(size);
+            entry->setTime(QDateTime::fromTime_t(time_utc));
+            entry->setReceived(true);
+            entry->setStatus(QString("Available"));
+        } else {
+            qWarning() << "Received log entry for out-of-bound index:" << id;
+        }
     } else {
-        qWarning() << "Received log entry for out-of-bound index:" << id;
+        //-- No logs to list
+        _receivedAllEntries();
     }
     //-- Reset retry count
     _retries = 0;
@@ -515,6 +520,7 @@ LogDownloadController::eraseAll(void)
             &msg,
             qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), MAV_COMP_ID_ALL);
         _vehicle->sendMessage(msg);
+        refresh();
     }
 }
 

@@ -131,10 +131,6 @@ public:
     /// set into the link when it is added to LinkManager
     uint8_t getMavlinkChannel(void) const { Q_ASSERT(_mavlinkChannelSet); return _mavlinkChannel; }
 
-    /// @return true: "sh /etc/init.d/rc.usb" must be sent on link to start mavlink
-    virtual bool requiresUSBMavlinkStart(void) const { return false; }
-
-
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
     bool connect(void);

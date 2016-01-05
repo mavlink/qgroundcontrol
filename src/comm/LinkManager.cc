@@ -189,8 +189,6 @@ void LinkManager::_addLink(LinkInterface* link)
 
     connect(link, &LinkInterface::communicationError,   _app,               &QGCApplication::criticalMessageBoxOnMainThread);
     connect(link, &LinkInterface::bytesReceived,        _mavlinkProtocol,   &MAVLinkProtocol::receiveBytes);
-    connect(link, &LinkInterface::connected,            _mavlinkProtocol,   &MAVLinkProtocol::linkConnected);
-    connect(link, &LinkInterface::disconnected,         _mavlinkProtocol,   &MAVLinkProtocol::linkDisconnected);
 
     _mavlinkProtocol->resetMetadataForLink(link);
 
