@@ -31,7 +31,7 @@
 #include "Vehicle.h"
 #include "MainWindow.h"
 
-#include <qDebug>
+#include <QDebug>
 #include <QSettings>
 #include <QUrl>
 
