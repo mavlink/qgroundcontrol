@@ -397,8 +397,6 @@ Row {
             id: flightModeMenuItemComponent
 
             MenuItem {
-                checkable:      true
-                checked:        activeVehicle ? (activeVehicle.flightMode === text) : false
                 onTriggered: {
                     if(activeVehicle) {
                         activeVehicle.flightMode = text
