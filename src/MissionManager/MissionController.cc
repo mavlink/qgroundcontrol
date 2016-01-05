@@ -214,6 +214,7 @@ void MissionController::removeAllMissionItems(void)
     _missionItems = new QmlObjectListModel(this);
 
     _initAllMissionItems();
+    _missionItems->setDirty(true);
 }
 
 void MissionController::loadMissionFromFile(void)
