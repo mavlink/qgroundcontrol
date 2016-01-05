@@ -104,15 +104,17 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     QLabel* mean;
     QLabel* variance;
 
-    connect(ui.recolorButton, SIGNAL(clicked()), this, SLOT(recolor()));
-    connect(ui.shortNameCheckBox, SIGNAL(clicked(bool)), this, SLOT(setShortNames(bool)));
-    connect(ui.plotFilterLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(filterCurves(const QString&)));
-    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, SLOT(setPlotFilterLineEditFocus()));
+    connect(ui.recolorButton, &QPushButton::clicked, this, &LinechartWidget::recolor);
+    connect(ui.shortNameCheckBox, &QCheckBox::clicked, this, &LinechartWidget::setShortNames);
+    connect(ui.plotFilterLineEdit, &QLineEdit::textChanged, this, &LinechartWidget::filterCurves);
+    QShortcut *shortcut  = new QShortcut(this);
+    shortcut->setKey(QKeySequence(Qt::CTRL + Qt::Key_F));
+    connect(shortcut, &QShortcut::activated, this, &LinechartWidget::setPlotFilterLineEditFocus);
 
     int labelRow = curvesWidgetLayout->rowCount();
 
     selectAllCheckBox = new QCheckBox("", this);
-    connect(selectAllCheckBox, SIGNAL(clicked(bool)), this, SLOT(selectAllCurves(bool)));
+    connect(selectAllCheckBox, &QCheckBox::clicked, this, &LinechartWidget::selectAllCurves);
     curvesWidgetLayout->addWidget(selectAllCheckBox, labelRow, 0, 1, 2);
 
     label = new QLabel(this);
@@ -144,8 +146,9 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     connect(qgcApp(), &QGCApplication::styleChanged, this, &LinechartWidget::recolor);
 
     updateTimer->setInterval(updateInterval);
-    connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
-    connect(ui.uasSelectionBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectActiveSystem(int)));
+    connect(updateTimer, &QTimer::timeout, this, &LinechartWidget::refresh);
+    connect(ui.uasSelectionBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, &LinechartWidget::selectActiveSystem);
     readSettings();
 }
 
@@ -243,7 +246,7 @@ void LinechartWidget::createLayout()
     setAverageWindow(200);
     averageSpinBox->setMaximum(9999);
     hlayout->addWidget(averageSpinBox);
-    connect(averageSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAverageWindow(int)));
+    connect(averageSpinBox,static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &LinechartWidget::setAverageWindow);
 
     // Log Button
     logButton = new QToolButton(this);
@@ -251,7 +254,7 @@ void LinechartWidget::createLayout()
     logButton->setWhatsThis(tr("Start to log curve data into a CSV or TXT file"));
     logButton->setText(tr("Start Logging"));
     hlayout->addWidget(logButton);
-    connect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
+    connect(logButton, &QToolButton::clicked, this, &LinechartWidget::startLogging);
 
     // Ground time button
     timeButton = new QCheckBox(this);
@@ -259,8 +262,8 @@ void LinechartWidget::createLayout()
     timeButton->setToolTip(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     timeButton->setWhatsThis(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     hlayout->addWidget(timeButton);
-    connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
-    connect(timeButton, SIGNAL(clicked()), this, SLOT(writeSettings()));
+    connect(timeButton, &QCheckBox::clicked, activePlot, &LinechartPlot::enforceGroundTime);
+    connect(timeButton, &QCheckBox::clicked, this, &LinechartWidget::writeSettings);
 
     hlayout->addStretch();
 
@@ -283,27 +286,30 @@ void LinechartWidget::createLayout()
     timeScaleCmb->setMinimumContentsLength(12);
 
     hlayout->addWidget(timeScaleCmb);
-    connect(timeScaleCmb, SIGNAL(currentIndexChanged(int)), this, SLOT(timeScaleChanged(int)));
+    connect(timeScaleCmb, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, &LinechartWidget::timeScaleChanged);
 
     // Initialize the "Show units" checkbox. This is configured in the .ui file, so all
     // we do here is attach the clicked() signal.
-    connect(ui.showUnitsCheckBox, SIGNAL(clicked()), this, SLOT(writeSettings()));
+    connect(ui.showUnitsCheckBox, &QCheckBox::clicked, this, &LinechartWidget::writeSettings);
 
     // Add actions
     averageSpinBox->setValue(activePlot->getAverageWindow());
 
     // Connect notifications from the user interface to the plot
-    connect(this, SIGNAL(curveRemoved(QString)), activePlot, SLOT(hideCurve(QString)));
+    connect(this, &LinechartWidget::curveRemoved, activePlot, &LinechartPlot::hideCurve);
 
     // Update scrollbar when plot window changes (via translator method setPlotWindowPosition()
 //    connect(activePlot, SIGNAL(windowPositionChanged(quint64)), this, SLOT(setPlotWindowPosition(quint64)));
-    connect(activePlot, SIGNAL(curveRemoved(QString)), this, SLOT(removeCurve(QString)));
+    connect(activePlot, &LinechartPlot::curveRemoved, this, &LinechartWidget::removeCurve);
 
     // Update plot when scrollbar is moved (via translator method setPlotWindowPosition()
-    connect(this, SIGNAL(plotWindowPositionUpdated(quint64)), activePlot, SLOT(setWindowPosition(quint64)));
+    //TODO: impossible to
+    connect(this, static_cast<void (LinechartWidget::*)(quint64)>(&LinechartWidget::plotWindowPositionUpdated),
+            activePlot, &LinechartPlot::setWindowPosition);
 
     // Set scaling
-    connect(scalingLogButton, SIGNAL(toggled(bool)), this, SLOT(toggleLogarithmicScaling(bool)));
+    connect(scalingLogButton, &QToolButton::toggled, this, &LinechartWidget::toggleLogarithmicScaling);
 }
 
 void LinechartWidget::timeScaleChanged(int index)
@@ -466,8 +472,8 @@ void LinechartWidget::startLogging()
             curvesWidget->setEnabled(false);
             logindex++;
             logButton->setText(tr("Stop logging"));
-            disconnect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
-            connect(logButton, SIGNAL(clicked()), this, SLOT(stopLogging()));
+            disconnect(logButton, &QToolButton::clicked, this, &LinechartWidget::startLogging);
+            connect(logButton, &QToolButton::clicked, this, &LinechartWidget::stopLogging);
         }
     }
 }
@@ -481,28 +487,20 @@ void LinechartWidget::stopLogging()
         logFile->close();
         // Postprocess log file
         compressor = new LogCompressor(logFile->fileName(), logFile->fileName());
-        connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
+        connect(compressor, &LogCompressor::finishedFile, this, &LinechartWidget::logfileWritten);
 
         QMessageBox::StandardButton button = QGCMessageBox::question(
             tr("Starting Log Compression"),
             tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"),
             QMessageBox::Yes | QMessageBox::No,
             QMessageBox::No);
-        bool fill;
-        if (button == QMessageBox::Yes)
-        {
-            fill = true;
-        }
-        else
-        {
-            fill = false;
-        }
+        bool fill = (button == QMessageBox::Yes);
 
         compressor->startCompression(fill);
     }
     logButton->setText(tr("Start logging"));
-    disconnect(logButton, SIGNAL(clicked()), this, SLOT(stopLogging()));
-    connect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
+    disconnect(logButton, &QToolButton::clicked, this, &LinechartWidget::stopLogging);
+    connect(logButton, &QToolButton::clicked, this, &LinechartWidget::startLogging);
 }
 
 /**
@@ -580,7 +578,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     curveUnits.insert(curve+unit, unitLabel);
     curvesWidgetLayout->addWidget(unitLabel, labelRow, 4);
     unitLabel->setVisible(ui.showUnitsCheckBox->isChecked());
-    connect(ui.showUnitsCheckBox, SIGNAL(clicked(bool)), unitLabel, SLOT(setVisible(bool)));
+    connect(ui.showUnitsCheckBox, &QCheckBox::clicked, unitLabel, &QLabel::setVisible);
 
     // Mean
     mean = new QLabel(this);
@@ -617,14 +615,14 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 
     // Set stretch factors so that the label gets the whole space
 
-
+plot;
     // Load visibility settings
     // TODO
 
     // Connect actions
-    connect(selectAllCheckBox, SIGNAL(clicked(bool)), checkBox, SLOT(setChecked(bool)));
-    QObject::connect(checkBox, SIGNAL(clicked(bool)), this, SLOT(takeButtonClick(bool)));
-    QObject::connect(this, SIGNAL(curveVisible(QString, bool)), plot, SLOT(setVisibleById(QString, bool)));
+    connect(selectAllCheckBox, &QCheckBox::clicked, checkBox, &QCheckBox::setChecked);
+    QObject::connect(checkBox, &QCheckBox::clicked, this, &LinechartWidget::takeButtonClick);
+    QObject::connect(this, &LinechartWidget::curveVisible, plot, &LinechartPlot::setVisibleById);
 
     // Set UI components to initial state
     checkBox->setChecked(false);

@@ -35,10 +35,11 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QGCHilCon
         // XXX not implemented yet
         //ui->airframeComboBox->hide();
         ui->sensorHilCheckBox->setChecked(xplane->sensorHilEnabled());
-        connect(xplane, SIGNAL(sensorHilChanged(bool)), ui->sensorHilCheckBox, SLOT(setChecked(bool)));
-        connect(ui->sensorHilCheckBox, SIGNAL(clicked(bool)), xplane, SLOT(enableSensorHIL(bool)));
+        connect(xplane, &QGCXPlaneLink::sensorHilChanged, ui->sensorHilCheckBox, &QCheckBox::setChecked);
+        connect(ui->sensorHilCheckBox, &QCheckBox::clicked, xplane, &QGCXPlaneLink::enableSensorHIL);
 
-        connect(link, SIGNAL(versionChanged(int)), this, SLOT(setVersion(int)));
+        connect(link, static_cast<void (QGCHilLink::*)(int)>(&QGCHilLink::versionChanged),
+                this, &QGCHilXPlaneConfiguration::setVersion);
     }
 
     ui->hostComboBox->clear();
