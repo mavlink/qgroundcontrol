@@ -78,7 +78,7 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     connect(m_ui->systemIdSpinBox,static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), protocol, &MAVLinkProtocol::setSystemId);
     // Multiplexing
     connect(protocol, &MAVLinkProtocol::multiplexingChanged, m_ui->multiplexingCheckBox, &QCheckBox::setChecked);
-    connect(m_ui->multiplexingCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableMultiplexing(bool)));
+    connect(m_ui->multiplexingCheckBox, &QCheckBox::toggled, protocol, &MAVLinkProtocol::enableMultiplexing);
     // Parameter guard
     connect(protocol, &MAVLinkProtocol::paramGuardChanged, m_ui->paramGuardCheckBox, &QCheckBox::setChecked);
     connect(m_ui->paramGuardCheckBox, &QCheckBox::toggled, protocol, &MAVLinkProtocol::enableParamGuard);
