@@ -194,23 +194,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 }
 
 /**
-* Saves the settings of name, airframe, autopilot type and battery specifications
-* by calling writeSettings.
-*/
-UAS::~UAS()
-{
-#ifndef __mobile__
-    stopHil();
-    if (simulation) {
-        // wait for the simulator to exit
-        simulation->wait();
-        simulation->disconnectSimulation();
-        simulation->deleteLater();
-    }
-#endif
-}
-
-/**
 * @ return the id of the uas
 */
 int UAS::getUASID() const
@@ -2215,4 +2198,18 @@ void UAS::_say(const QString& text, int severity)
 {
     if (!qgcApp()->runningUnitTests())
         qgcApp()->toolbox()->audioOutput()->say(text, severity);
+}
+
+void UAS::shutdownVehicle(void)
+{
+#ifndef __mobile__
+    stopHil();
+    if (simulation) {
+        // wait for the simulator to exit
+        simulation->wait();
+        simulation->disconnectSimulation();
+        simulation->deleteLater();
+    }
+#endif
+    _vehicle = NULL;
 }
