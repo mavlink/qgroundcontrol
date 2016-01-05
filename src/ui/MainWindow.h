@@ -206,12 +206,6 @@ private:
 
     void _openUrl(const QString& url, const QString& errorMessage);
 
-    // Center widgets
-    QPointer<QWidget> _planView;
-    QPointer<QWidget> _flightView;
-    QPointer<QWidget> _setupView;
-    QPointer<QWidget> _missionEditorView;
-
 #ifndef __mobile__
     QMap<QString, QGCDockWidget*>   _mapName2DockWidget;
     QMap<QString, QAction*>         _mapName2Action;

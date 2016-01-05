@@ -302,7 +302,7 @@ void MainWindow::_buildCommonWidgets(void)
     // Add generic MAVLink decoder
     // TODO: This is never deleted
     mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol(), this);
-    connect(mavlinkDecoder, &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
+    connect(mavlinkDecoder.data(), &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
 
     // Log player
     // TODO: Make this optional with a preferences setting or under a "View" menu
