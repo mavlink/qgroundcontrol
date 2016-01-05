@@ -36,7 +36,6 @@ QGCDockWidget::QGCDockWidget(const QString& title, QAction* action, QWidget* par
     if (action) {
         setWindowTitle(title);
         setWindowFlags(Qt::Tool);
-        
         loadSettings();
     }
 }
@@ -55,11 +54,11 @@ void QGCDockWidget::loadSettings(void)
 {
     if (_action) {
         QSettings settings;
-        
         settings.beginGroup(_settingsGroup);
         if (settings.contains(_title)) {
             restoreGeometry(settings.value(_title).toByteArray());
         }
+        settings.endGroup();
     }
 }
 
@@ -67,8 +66,8 @@ void QGCDockWidget::saveSettings(void)
 {
     if (_action) {
         QSettings settings;
-        
         settings.beginGroup(_settingsGroup);
         settings.setValue(_title, saveGeometry());
+        settings.endGroup();
     }
 }

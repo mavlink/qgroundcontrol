@@ -65,6 +65,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCDockWidget.h"
 #include "UASInfoWidget.h"
 #include "HILDockWidget.h"
+#include "LogDownload.h"
 #endif
 
 #ifndef __ios__
@@ -86,7 +87,8 @@ enum DockWidgetTypes {
     STATUS_DETAILS,
     INFO_VIEW,
     HIL_CONFIG,
-    ANALYZE
+    ANALYZE,
+    LOG_DOWNLOAD
 };
 
 static const char *rgDockWidgetNames[] = {
@@ -96,7 +98,8 @@ static const char *rgDockWidgetNames[] = {
     "Status Details",
     "Info View",
     "HIL Config",
-    "Analyze"
+    "Analyze",
+    "Log Download"
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -357,6 +360,9 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case ONBOARD_FILES:
                 widget = new QGCUASFileViewMulti(widgetName, action, this);
+                break;
+            case LOG_DOWNLOAD:
+                widget = new LogDownload(widgetName, action, this);
                 break;
             case STATUS_DETAILS:
                 widget = new UASInfoWidget(widgetName, action, this);
